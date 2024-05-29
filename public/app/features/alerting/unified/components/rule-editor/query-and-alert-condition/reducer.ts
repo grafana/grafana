@@ -1,8 +1,7 @@
 import { createAction, createReducer } from '@reduxjs/toolkit';
 
-import { DataQuery, getDefaultRelativeTimeRange, rangeUtil, RelativeTimeRange } from '@grafana/data';
-import { getNextRefIdChar } from 'app/core/utils/query';
-import { findDataSourceFromExpressionRecursive } from 'app/features/alerting/utils/dataSourceFromExpression';
+import { DataQuery, getDefaultRelativeTimeRange, getNextRefId, rangeUtil, RelativeTimeRange } from '@grafana/data';
+import { findDataSourceFromExpressionRecursive } from 'app/features/alerting/unified/utils/dataSourceFromExpression';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
@@ -213,7 +212,7 @@ const addQuery = (
   queries: AlertQuery[],
   queryToAdd: Pick<AlertQuery, 'model' | 'datasourceUid' | 'relativeTimeRange'>
 ): AlertQuery[] => {
-  const refId = getNextRefIdChar(queries);
+  const refId = getNextRefId(queries);
   const query: AlertQuery = {
     ...queryToAdd,
     refId,

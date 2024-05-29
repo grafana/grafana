@@ -5,12 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	alertingModels "github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -53,6 +58,8 @@ func NoDataStateFromString(state string) (NoDataState, error) {
 		return NoData, nil
 	case string(OK):
 		return OK, nil
+	case string(KeepLast):
+		return KeepLast, nil
 	default:
 		return "", fmt.Errorf("unknown NoData state option %s", state)
 	}
@@ -62,6 +69,7 @@ const (
 	Alerting NoDataState = "Alerting"
 	NoData   NoDataState = "NoData"
 	OK       NoDataState = "OK"
+	KeepLast NoDataState = "KeepLast"
 )
 
 // swagger:enum ExecutionErrorState
@@ -79,6 +87,8 @@ func ErrStateFromString(opt string) (ExecutionErrorState, error) {
 		return ErrorErrState, nil
 	case string(OkErrState):
 		return OkErrState, nil
+	case string(KeepLastErrState):
+		return KeepLastErrState, nil
 	default:
 		return "", fmt.Errorf("unknown Error state option %s", opt)
 	}
@@ -88,6 +98,7 @@ const (
 	AlertingErrState ExecutionErrorState = "Alerting"
 	ErrorErrState    ExecutionErrorState = "Error"
 	OkErrState       ExecutionErrorState = "OK"
+	KeepLastErrState ExecutionErrorState = "KeepLast"
 )
 
 const (
@@ -137,7 +148,12 @@ const (
 	StateReasonPaused        = "Paused"
 	StateReasonUpdated       = "Updated"
 	StateReasonRuleDeleted   = "RuleDeleted"
+	StateReasonKeepLast      = "KeepLast"
 )
+
+func ConcatReasons(reasons ...string) string {
+	return strings.Join(reasons, ", ")
+}
 
 var (
 	// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.
@@ -227,7 +243,8 @@ type AlertRule struct {
 	DashboardUID    *string `xorm:"dashboard_uid"`
 	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
-	RuleGroupIndex  int `xorm:"rule_group_idx"`
+	RuleGroupIndex  int     `xorm:"rule_group_idx"`
+	Record          *Record `xorm:"json"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -281,6 +298,10 @@ func (s AlertRulesSorter) Len() int           { return len(s.rules) }
 func (s AlertRulesSorter) Swap(i, j int)      { s.rules[i], s.rules[j] = s.rules[j], s.rules[i] }
 func (s AlertRulesSorter) Less(i, j int) bool { return s.by(s.rules[i], s.rules[j]) }
 
+func (alertRule *AlertRule) GetNamespaceUID() string {
+	return alertRule.NamespaceUID
+}
+
 // GetDashboardUID returns the DashboardUID or "".
 func (alertRule *AlertRule) GetDashboardUID() string {
 	if alertRule.DashboardUID != nil {
@@ -321,6 +342,12 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 }
 
 func (alertRule *AlertRule) GetEvalCondition() Condition {
+	if alertRule.IsRecordingRule() {
+		return Condition{
+			Condition: alertRule.Record.From,
+			Data:      alertRule.Data,
+		}
+	}
 	return Condition{
 		Condition: alertRule.Condition,
 		Data:      alertRule.Data,
@@ -334,7 +361,11 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 
 	// json.RawMessage is a slice of bytes and therefore cmp's default behavior is to compare it by byte, which is not really useful
 	var jsonCmp = cmp.Transformer("", func(in json.RawMessage) string {
-		return string(in)
+		b, err := json.Marshal(in)
+		if err != nil {
+			return string(in)
+		}
+		return string(b)
 	})
 	ops = append(
 		ops,
@@ -478,12 +509,14 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ErrAlertRuleFailedValidation)
 	}
 
-	if _, err := ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
-		return err
-	}
+	if !alertRule.IsRecordingRule() {
+		if _, err := ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
+			return err
+		}
 
-	if _, err := NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
-		return err
+		if _, err := NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
+			return err
+		}
 	}
 
 	if alertRule.For < 0 {
@@ -528,6 +561,10 @@ func (alertRule *AlertRule) GetFolderKey() FolderKey {
 	}
 }
 
+func (alertRule *AlertRule) IsRecordingRule() bool {
+	return alertRule.Record != nil
+}
+
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
 type AlertRuleVersion struct {
 	ID               int64  `xorm:"pk autoincr 'id'"`
@@ -545,6 +582,7 @@ type AlertRuleVersion struct {
 	Condition       string
 	Data            []AlertQuery
 	IntervalSeconds int64
+	Record          *Record `xorm:"json"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -740,4 +778,27 @@ func GroupByAlertRuleGroupKey(rules []*AlertRule) map[AlertRuleGroupKey]RulesGro
 		group.SortByGroupIndex()
 	}
 	return result
+}
+
+// Record contains mapping information for Recording Rules.
+type Record struct {
+	// Metric indicates a metric name to send results to.
+	Metric string
+	// From contains a query RefID, indicating which expression node is the output of the recording rule.
+	From string
+}
+
+func (r *Record) Fingerprint() data.Fingerprint {
+	h := fnv.New64()
+
+	writeString := func(s string) {
+		// save on extra slice allocation when string is converted to bytes.
+		_, _ = h.Write(unsafe.Slice(unsafe.StringData(s), len(s))) //nolint:gosec
+		// ignore errors returned by Write method because fnv never returns them.
+		_, _ = h.Write([]byte{255}) // use an invalid utf-8 sequence as separator
+	}
+
+	writeString(r.Metric)
+	writeString(r.From)
+	return data.Fingerprint(h.Sum64())
 }

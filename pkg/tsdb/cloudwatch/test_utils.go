@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -210,7 +211,8 @@ func testInstanceManager(pageLimit int) instancemgmt.InstanceManager {
 			},
 			GrafanaSettings: awsds.AuthSettings{ListMetricsPageLimit: pageLimit},
 		},
-			sessions: &fakeSessionCache{}}, nil
+			sessions:      &fakeSessionCache{},
+			tagValueCache: cache.New(0, 0)}, nil
 	}))
 }
 

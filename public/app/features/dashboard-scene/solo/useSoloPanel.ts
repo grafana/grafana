@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 
 import { VizPanel, SceneObject, SceneGridRow, getUrlSyncManager } from '@grafana/scenes';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
-import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardRepeatsProcessedEvent } from '../scene/types';
 import { findVizPanelByKey, isPanelClone } from '../utils/utils';
@@ -64,7 +64,7 @@ function findRepeatClone(dashboard: DashboardScene, panelId: string): Promise<Vi
 
 function activateAllRepeaters(layout: SceneObject) {
   layout.forEachChild((child) => {
-    if (child instanceof PanelRepeaterGridItem && !child.isActive) {
+    if (child instanceof DashboardGridItem && !child.isActive) {
       child.activate();
       return;
     }
@@ -77,7 +77,7 @@ function activateAllRepeaters(layout: SceneObject) {
         }
       }
 
-      // Activate any panel PanelRepeaterGridItem inside the row
+      // Activate any panel DashboardGridItem inside the row
       activateAllRepeaters(child);
     }
   });

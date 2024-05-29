@@ -14,10 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestDynamicAngularDetectorsProvider(t *testing.T) {
@@ -314,6 +313,22 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 	})
 }
 
+func TestDynamicAngularDetectorsProviderCloudVsOnPrem(t *testing.T) {
+	gcom := newDefaultGCOMScenario()
+	srv := gcom.newHTTPTestServer()
+	t.Cleanup(srv.Close)
+
+	t.Run("should use cloud interval if stack_id is set", func(t *testing.T) {
+		svc := provideDynamic(t, srv.URL, provideDynamicOpts{cfg: &setting.Cfg{StackID: "1234"}})
+		require.Equal(t, backgroundJobIntervalCloud, svc.backgroundJobInterval)
+	})
+
+	t.Run("should use on-prem interval if stack_id is not set", func(t *testing.T) {
+		svc := provideDynamic(t, srv.URL, provideDynamicOpts{cfg: &setting.Cfg{StackID: ""}})
+		require.Equal(t, backgroundJobIntervalOnPrem, svc.backgroundJobInterval)
+	})
+}
+
 func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 	mockGCOMPatterns := newMockGCOMPatterns()
 	gcom := newDefaultGCOMScenario()
@@ -321,22 +336,10 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 	t.Cleanup(srv.Close)
 
 	t.Run("background service", func(t *testing.T) {
-		oldBackgroundJobInterval := backgroundJobInterval
-		backgroundJobInterval = time.Millisecond * 500
+		oldBackgroundJobInterval := backgroundJobIntervalOnPrem
+		backgroundJobIntervalOnPrem = time.Millisecond * 500
 		t.Cleanup(func() {
-			backgroundJobInterval = oldBackgroundJobInterval
-		})
-
-		t.Run("is disabled if feature flag is not present", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL)
-			svc.features = featuremgmt.WithFeatures()
-			require.True(t, svc.IsDisabled(), "background service should be disabled")
-		})
-
-		t.Run("is enabled if feature flag is present", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL)
-			svc.features = featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns)
-			require.False(t, svc.IsDisabled(), "background service should be enabled")
+			backgroundJobIntervalOnPrem = oldBackgroundJobInterval
 		})
 
 		t.Run("fetches value from gcom on start if too much time has passed", func(t *testing.T) {
@@ -563,6 +566,7 @@ func newError500GCOMScenario() *gcomScenario {
 
 type provideDynamicOpts struct {
 	store angularpatternsstore.Service
+	cfg   *setting.Cfg
 }
 
 func provideDynamic(t *testing.T, gcomURL string, opts ...provideDynamicOpts) *Dynamic {
@@ -573,11 +577,11 @@ func provideDynamic(t *testing.T, gcomURL string, opts ...provideDynamicOpts) *D
 	if opt.store == nil {
 		opt.store = angularpatternsstore.ProvideService(kvstore.NewFakeKVStore())
 	}
-	d, err := ProvideDynamic(
-		&config.PluginManagementCfg{GrafanaComURL: gcomURL},
-		opt.store,
-		featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns),
-	)
+	if opt.cfg == nil {
+		opt.cfg = setting.NewCfg()
+	}
+	opt.cfg.GrafanaComAPIURL = gcomURL + "/api"
+	d, err := ProvideDynamic(opt.cfg, opt.store)
 	require.NoError(t, err)
 	return d
 }

@@ -1,19 +1,10 @@
 import { collectorTypes } from '@opentelemetry/exporter-collector';
 
-import {
-  FieldType,
-  createDataFrame,
-  PluginType,
-  DataSourceInstanceSettings,
-  dateTime,
-  PluginMetaInfo,
-} from '@grafana/data';
+import { PluginType, DataSourceInstanceSettings, PluginMetaInfo } from '@grafana/data';
 
 import {
-  createTableFrame,
   transformToOTLP,
   transformFromOTLP,
-  createTableFrameFromSearch,
   createTableFrameFromTraceQlQuery,
   createTableFrameFromTraceQlQueryAsSpans,
 } from './resultTransformer';
@@ -22,7 +13,6 @@ import {
   otlpDataFrameToResponse,
   otlpDataFrameFromResponse,
   otlpResponse,
-  tempoSearchResponse,
   traceQlResponse,
 } from './testResponse';
 import { TraceSearchMetadata } from './types';
@@ -45,41 +35,6 @@ const defaultSettings: DataSourceInstanceSettings = {
   jsonData: {},
 };
 
-describe('transformTraceList()', () => {
-  const lokiDataFrame = createDataFrame({
-    fields: [
-      {
-        name: 'ts',
-        type: FieldType.time,
-        values: ['2020-02-12T15:05:14.265Z', '2020-02-12T15:05:15.265Z', '2020-02-12T15:05:16.265Z'],
-      },
-      {
-        name: 'line',
-        type: FieldType.string,
-        values: [
-          't=2020-02-12T15:04:51+0000 lvl=info msg="Starting Grafana" logger=server',
-          't=2020-02-12T15:04:52+0000 lvl=info msg="Starting Grafana" logger=server traceID=asdfa1234',
-          't=2020-02-12T15:04:53+0000 lvl=info msg="Starting Grafana" logger=server traceID=asdf88',
-        ],
-      },
-    ],
-    meta: {
-      preferredVisualisationType: 'table',
-    },
-  });
-
-  test('extracts traceIDs from log lines', () => {
-    const frame = createTableFrame(lokiDataFrame, 't1', 'tempo', ['traceID=(\\w+)', 'traceID=(\\w\\w)']);
-    expect(frame.fields[0].name).toBe('Time');
-    expect(frame.fields[0].values[0]).toBe('2020-02-12T15:05:15.265Z');
-    expect(frame.fields[1].name).toBe('traceID');
-    expect(frame.fields[1].values[0]).toBe('asdfa1234');
-    // Second match in new line
-    expect(frame.fields[0].values[1]).toBe('2020-02-12T15:05:15.265Z');
-    expect(frame.fields[1].values[1]).toBe('as');
-  });
-});
-
 describe('transformToOTLP()', () => {
   test('transforms dataframe to OTLP format', () => {
     const otlp = transformToOTLP(otlpDataFrameToResponse);
@@ -97,32 +52,6 @@ describe('transformFromOTLP()', () => {
       ...otlpDataFrameFromResponse,
       creator: expect.any(Function),
     });
-  });
-});
-
-describe('createTableFrameFromSearch()', () => {
-  const mockTimeUnix = dateTime(1643357709095).valueOf();
-  global.Date.now = jest.fn(() => mockTimeUnix);
-  test('transforms search response to dataFrame', () => {
-    const frame = createTableFrameFromSearch(tempoSearchResponse.traces as TraceSearchMetadata[], defaultSettings);
-    expect(frame.fields[0].name).toBe('traceID');
-    expect(frame.fields[0].values[0]).toBe('e641dcac1c3a0565');
-
-    // TraceID must have unit = 'string' to prevent the ID from rendering as Infinity
-    expect(frame.fields[0].config.unit).toBe('string');
-
-    expect(frame.fields[1].name).toBe('traceService');
-    expect(frame.fields[1].values[0]).toBe('requester');
-
-    expect(frame.fields[2].name).toBe('traceName');
-    expect(frame.fields[2].values[0]).toBe('app');
-
-    expect(frame.fields[3].name).toBe('startTime');
-    expect(frame.fields[3].values[0]).toBe(1643356828724);
-    expect(frame.fields[3].values[1]).toBe(1643342166678.0002);
-
-    expect(frame.fields[4].name).toBe('traceDuration');
-    expect(frame.fields[4].values[0]).toBe(65);
   });
 });
 
@@ -150,6 +79,7 @@ describe('createTableFrameFromTraceQlQuery()', () => {
     expect(frame.fields[4].name).toBe('traceDuration');
     expect(frame.fields[4].type).toBe('number');
     expect(frame.fields[4].values[2]).toBe(44);
+    expect(frame.fields[4].values[1]).toBe('<1ms');
     // Subframes field
     expect(frame.fields[5].name).toBe('nested');
     expect(frame.fields[5].type).toBe('nestedFrames');

@@ -216,6 +216,7 @@ describe('jsonDiff', () => {
     const expected = {
       description: [
         {
+          endLineNumber: 14,
           op: 'add',
           originalValue: undefined,
           path: ['description'],
@@ -225,6 +226,7 @@ describe('jsonDiff', () => {
       ],
       graphTooltip: [
         {
+          endLineNumber: 17,
           op: 'replace',
           originalValue: 0,
           path: ['graphTooltip'],
@@ -234,6 +236,7 @@ describe('jsonDiff', () => {
       ],
       panels: [
         {
+          endLineNumber: 23,
           op: 'add',
           originalValue: undefined,
           path: ['panels', '0'],
@@ -245,6 +248,7 @@ describe('jsonDiff', () => {
       ],
       tags: [
         {
+          endLineNumber: 27,
           op: 'add',
           originalValue: undefined,
           path: ['tags', '0'],
@@ -254,6 +258,7 @@ describe('jsonDiff', () => {
       ],
       timepicker: [
         {
+          endLineNumber: 49,
           op: 'add',
           originalValue: undefined,
           path: ['timepicker', 'refresh_intervals'],
@@ -263,6 +268,7 @@ describe('jsonDiff', () => {
       ],
       timezone: [
         {
+          endLineNumber: 51,
           op: 'replace',
           originalValue: '',
           path: ['timezone'],
@@ -272,6 +278,7 @@ describe('jsonDiff', () => {
       ],
       title: [
         {
+          endLineNumber: 52,
           op: 'replace',
           originalValue: 'test dashboard',
           path: ['title'],
@@ -281,6 +288,7 @@ describe('jsonDiff', () => {
       ],
       version: [
         {
+          endLineNumber: 54,
           op: 'replace',
           originalValue: 2,
           path: ['version'],

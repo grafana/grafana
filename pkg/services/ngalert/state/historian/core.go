@@ -41,6 +41,12 @@ func ShouldRecordAnnotation(t state.StateTransition) bool {
 		return false
 	}
 
+	// Do not log transitions when keeping last state
+	toKeepLast := strings.Contains(t.StateReason, models.StateReasonKeepLast) && !strings.Contains(t.PreviousStateReason, models.StateReasonKeepLast)
+	if toKeepLast {
+		return false
+	}
+
 	// Do not record transitions between Normal and Normal (NoData)
 	if t.State.State == eval.Normal && t.PreviousState == eval.Normal {
 		if (t.State.StateReason == "" && t.PreviousStateReason == models.StateReasonNoData) ||

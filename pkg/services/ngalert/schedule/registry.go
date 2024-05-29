@@ -17,65 +17,78 @@ import (
 
 var errRuleDeleted = errors.New("rule deleted")
 
-type alertRuleInfoRegistry struct {
-	mu            sync.Mutex
-	alertRuleInfo map[models.AlertRuleKey]*alertRuleInfo
+type ruleFactory interface {
+	new(context.Context, *models.AlertRule) Rule
 }
 
-// getOrCreateInfo gets rule routine information from registry by the key. If it does not exist, it creates a new one.
-// Returns a pointer to the rule routine information and a flag that indicates whether it is a new struct or not.
-func (r *alertRuleInfoRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey) (*alertRuleInfo, bool) {
+type ruleRegistry struct {
+	mu    sync.Mutex
+	rules map[models.AlertRuleKey]Rule
+}
+
+func newRuleRegistry() ruleRegistry {
+	return ruleRegistry{rules: make(map[models.AlertRuleKey]Rule)}
+}
+
+// getOrCreate gets a rule routine from registry for the provided rule. If it does not exist, it creates a new one.
+// Returns a pointer to the rule routine and a flag that indicates whether it is a new struct or not.
+func (r *ruleRegistry) getOrCreate(context context.Context, item *models.AlertRule, factory ruleFactory) (Rule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	info, ok := r.alertRuleInfo[key]
+	key := item.GetKey()
+	rule, ok := r.rules[key]
 	if !ok {
-		info = newAlertRuleInfo(context)
-		r.alertRuleInfo[key] = info
+		rule = factory.new(context, item)
+		r.rules[key] = rule
 	}
-	return info, !ok
+	return rule, !ok
 }
 
-func (r *alertRuleInfoRegistry) exists(key models.AlertRuleKey) bool {
+func (r *ruleRegistry) exists(key models.AlertRuleKey) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	_, ok := r.alertRuleInfo[key]
+	_, ok := r.rules[key]
 	return ok
 }
 
-// del removes pair that has specific key from alertRuleInfo.
+// del removes pair that has specific key from the registry.
 // Returns 2-tuple where the first element is value of the removed pair
 // and the second element indicates whether element with the specified key existed.
-func (r *alertRuleInfoRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) {
+func (r *ruleRegistry) del(key models.AlertRuleKey) (Rule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	info, ok := r.alertRuleInfo[key]
+	rule, ok := r.rules[key]
 	if ok {
-		delete(r.alertRuleInfo, key)
+		delete(r.rules, key)
 	}
-	return info, ok
+	return rule, ok
 }
 
-func (r *alertRuleInfoRegistry) keyMap() map[models.AlertRuleKey]struct{} {
+func (r *ruleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	definitionsIDs := make(map[models.AlertRuleKey]struct{}, len(r.alertRuleInfo))
-	for k := range r.alertRuleInfo {
+	definitionsIDs := make(map[models.AlertRuleKey]struct{}, len(r.rules))
+	for k := range r.rules {
 		definitionsIDs[k] = struct{}{}
 	}
 	return definitionsIDs
 }
 
-type ruleVersionAndPauseStatus struct {
+type RuleVersionAndPauseStatus struct {
 	Fingerprint fingerprint
 	IsPaused    bool
 }
 
-type evaluation struct {
+type Evaluation struct {
 	scheduledAt time.Time
 	rule        *models.AlertRule
 	folderTitle string
+}
+
+func (e *Evaluation) Fingerprint() fingerprint {
+	return ruleWithFolder{e.rule, e.folderTitle}.Fingerprint()
 }
 
 type alertRulesRegistry struct {
@@ -209,6 +222,7 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 			writeBytes(nil)
 			return
 		}
+		// #nosec G103
 		// avoid allocation when converting string to byte slice
 		writeBytes(unsafe.Slice(unsafe.StringData(s), len(s)))
 	}
@@ -291,9 +305,7 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	// TODO consider removing fields below from the fingerprint
 	writeInt(rule.ID)
 	writeInt(rule.OrgID)
-	writeInt(rule.IntervalSeconds)
 	writeInt(int64(rule.For))
-	writeLabels(rule.Annotations)
 	if rule.DashboardUID != nil {
 		writeString(*rule.DashboardUID)
 	}
@@ -304,5 +316,10 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	writeInt(int64(rule.RuleGroupIndex))
 	writeString(string(rule.NoDataState))
 	writeString(string(rule.ExecErrState))
+	if rule.Record != nil {
+		binary.LittleEndian.PutUint64(tmp, uint64(rule.Record.Fingerprint()))
+		writeBytes(tmp)
+	}
+
 	return fingerprint(sum.Sum64())
 }

@@ -8,7 +8,7 @@ Make sure you have the following dependencies installed before setting up your d
 
 - [Git](https://git-scm.com/)
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
-- [Node.js (Long Term Support)](https://nodejs.org), with [corepack enabled](https://nodejs.org/api/corepack.html#enabling-the-feature). See [.nvmrc](../nvm.rc) for supported version. It's recommend you use a version manager such as [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or similar.
+- [Node.js (Long Term Support)](https://nodejs.org), with [corepack enabled](https://nodejs.org/api/corepack.html#enabling-the-feature). See [.nvmrc](../.nvmrc) for supported version. It's recommend you use a version manager such as [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or similar.
 - GCC (required for Cgo dependencies)
 
 ### macOS
@@ -76,9 +76,37 @@ After the command has finished, we can start building our source code:
 yarn start
 ```
 
-Once `yarn start` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets every time you change the code.
+This command will generate sass theme files, build all external plugins, then build the frontend assets.
+Once `yarn start` has built the assets, it will continue to do so whenever any of the core Grafana application files change. This means you don't have to manually build the assets every time you change the code.
 
 > Troubleshooting: if your first build works, but after pulling updates you see unexpected errors in the "Type-checking in progress..." stage, these can be caused by the [tsbuildinfo cache supporting incremental builds](https://www.typescriptlang.org/tsconfig#incremental). You can `rm tsconfig.tsbuildinfo` and re-try.
+
+#### Plugins
+
+If you are looking to contribute to any of the plugins listed below (that are found within the `public/app/plugins` directory) they require running additional commands to watch and rebuild them.
+
+- azuremonitor
+- cloud-monitoring
+- grafana-postgresql-datasource
+- grafana-pyroscope-datasource
+- grafana-testdata-datasource
+- jaegar
+- mysql
+- parca
+- tempo
+- zipkin
+
+To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
+
+```
+yarn plugin:build:dev
+```
+
+If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/tempo`.
+
+```
+yarn workspace <name_of_plugin> dev
+```
 
 Next, we'll build & run the web server that will serve the frontend assets we just built.
 
@@ -171,7 +199,7 @@ make test-go-integration-postgres
 
 ### Run end-to-end tests
 
-The end to end tests in Grafana use [Cypress](https://www.cypress.io/) and [Playwright](https://playwright.dev/) to run automated scripts in a browser. Read more about our Cypress [e2e framework](/contribute/style-guides/e2e.md).
+Grafana uses [Cypress](https://www.cypress.io/) to end-to-end test core features. Core plugins use [Playwright](https://playwright.dev/) to run automated end-to-end tests. You can find more information on how to add end-to-end tests to your core plugin [here](./style-guides/e2e-plugins.md)
 
 #### Running Cypress tests
 
@@ -331,6 +359,10 @@ ulimit: open files: cannot modify limit: Operation not permitted
 ```
 
 If that happens to you, chances are you've already set a lower limit and your shell won't let you set a higher one. Try looking in your shell initialization files (~/.bashrc typically), if there's already an ulimit command that you can tweak.
+
+### Getting `AggregateError` when building frontend tests
+
+If you encounter an `AggregateError` when building new tests, this is probably due to a call to our client [backend service](https://github.com/grafana/grafana/blob/main/public/app/core/services/backend_srv.ts) not being mocked. Our backend service anticipates multiple responses being returned and was built to return errors as an array. A test encountering errors from the service will group those errors as an `AggregateError` without breaking down the individual errors within. `backend_srv.processRequestError` is called once per error and is a great place to return information on what the individual errors might contain.
 
 ## Next steps
 

@@ -38,7 +38,7 @@ Windows users might need to make additional adjustments. Look for special instru
 
 You can have more than one InfluxDB data source defined in Grafana.
 
-1. Follow the general instructions to [add a data source]({{< relref "../administration/data-source-management#add-a-data-source" >}}).
+1. Follow the general instructions to [add a data source]({{< relref "../datasources#add-a-data-source" >}}).
 1. Decide if you will use InfluxQL or Flux as your query language.
    - [Configure the data source]({{< relref "../datasources/influxdb#configure-the-data-source" >}}) for your chosen query language.
      Each query language has its own unique data source settings.

@@ -2,7 +2,7 @@ import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 
-import { createTimeFormatter, formatTimeTransformer } from './formatTime';
+import { applyFormatTime, formatTimeTransformer } from './formatTime';
 
 describe('Format Time Transformer', () => {
   beforeAll(() => {
@@ -16,7 +16,6 @@ describe('Format Time Transformer', () => {
       timezone: 'utc',
     };
 
-    const formatter = createTimeFormatter(options.timeField, options.outputFormat, options.timezone);
     const frame = toDataFrame({
       fields: [
         {
@@ -27,8 +26,32 @@ describe('Format Time Transformer', () => {
       ],
     });
 
-    const newFrame = formatter(frame.fields);
-    expect(newFrame[0].values).toEqual(['2021-02', '2023-07', '2023-04', '2023-07', '2023-08']);
+    const newFrames = applyFormatTime(options, [frame]);
+    expect(newFrames[0].fields[0].values).toEqual(['2021-02', '2023-07', '2023-04', '2023-07', '2023-08']);
+  });
+
+  it('will match on getFieldDisplayName', () => {
+    const options = {
+      timeField: 'Created',
+      outputFormat: 'YYYY-MM',
+      timezone: 'utc',
+    };
+
+    const frame = toDataFrame({
+      fields: [
+        {
+          name: 'created',
+          type: FieldType.time,
+          values: [1612939600000, 1689192000000, 1682025600000, 1690328089000, 1691011200000],
+          config: {
+            displayName: 'Created',
+          },
+        },
+      ],
+    });
+
+    const newFrames = applyFormatTime(options, [frame]);
+    expect(newFrames[0].fields[0].values).toEqual(['2021-02', '2023-07', '2023-04', '2023-07', '2023-08']);
   });
 
   it('will handle formats with times', () => {
@@ -38,7 +61,6 @@ describe('Format Time Transformer', () => {
       timezone: 'utc',
     };
 
-    const formatter = createTimeFormatter(options.timeField, options.outputFormat, options.timezone);
     const frame = toDataFrame({
       fields: [
         {
@@ -49,8 +71,8 @@ describe('Format Time Transformer', () => {
       ],
     });
 
-    const newFrame = formatter(frame.fields);
-    expect(newFrame[0].values).toEqual([
+    const newFrames = applyFormatTime(options, [frame]);
+    expect(newFrames[0].fields[0].values).toEqual([
       '2021-02 6:46:40 am',
       '2023-07 8:00:00 pm',
       '2023-04 9:20:00 pm',
@@ -66,7 +88,6 @@ describe('Format Time Transformer', () => {
       timezone: 'utc',
     };
 
-    const formatter = createTimeFormatter(options.timeField, options.outputFormat, options.timezone);
     const frame = toDataFrame({
       fields: [
         {
@@ -77,8 +98,8 @@ describe('Format Time Transformer', () => {
       ],
     });
 
-    const newFrame = formatter(frame.fields);
-    expect(newFrame[0].values).toEqual([
+    const newFrames = applyFormatTime(options, [frame]);
+    expect(newFrames[0].fields[0].values).toEqual([
       '2021-02 6:46:40 am',
       '2023-07 8:00:00 pm',
       '2023-04 9:20:00 pm',

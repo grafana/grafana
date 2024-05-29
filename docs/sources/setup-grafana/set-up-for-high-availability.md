@@ -41,11 +41,9 @@ Once you have a Postgres or MySQL database available, you can configure your mul
 
 ## Alerting high availability
 
-Grafana Alerting provides a [high availability mode]({{< relref "../alerting/fundamentals/high-availability" >}}).
+Grafana Alerting provides a high availability mode. It preserves the semantics of legacy dashboard alerting by executing all alerts on every server and by sending notifications only once per alert. Load distribution between servers is not supported at this time.
 
-It preserves the semantics of legacy dashboard alerting by executing all alerts on every server and by sending notifications only once per alert. Load distribution between servers is not supported at this time.
-
-For instructions on setting up alerting high availability, refer to [Enable alerting high availability]({{< relref "../alerting/set-up/configure-high-availability" >}}).
+For further information and instructions on setting up alerting high availability, refer to [Enable alerting high availability]({{< relref "../alerting/set-up/configure-high-availability" >}}).
 
 **Legacy dashboard alerts**
 

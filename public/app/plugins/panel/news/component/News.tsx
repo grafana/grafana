@@ -19,9 +19,10 @@ function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
   const styles = useStyles2(getStyles);
   const useWideLayout = width > 600;
   const newsItem = data.get(index);
+  const titleId = encodeURI(newsItem.title);
 
   return (
-    <article className={cx(styles.item, useWideLayout && styles.itemWide)}>
+    <article aria-labelledby={titleId} className={cx(styles.item, useWideLayout && styles.itemWide)}>
       {showImage && newsItem.ogImage && (
         <a
           tabIndex={-1}
@@ -39,7 +40,9 @@ function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
           {dateTimeFormat(newsItem.date, { format: 'MMM DD' })}{' '}
         </time>
         <a className={styles.link} href={textUtil.sanitizeUrl(newsItem.link)} target="_blank" rel="noopener noreferrer">
-          <h3 className={styles.title}>{newsItem.title}</h3>
+          <h3 className={styles.title} id={titleId}>
+            {newsItem.title}
+          </h3>
         </a>
         <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(newsItem.content) }} />
       </div>

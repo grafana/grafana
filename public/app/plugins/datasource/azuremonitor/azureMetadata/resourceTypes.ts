@@ -413,6 +413,7 @@ export const multiResourceCompatibleTypes: { [ns: string]: boolean } = {
   'microsoft.databoxedge/databoxedgedevices': true, // 'Azure Stack Edge / Data Box Gateway'
   'microsoft.dataprotection/backupvaults': true, // 'Backup vaults'
   'microsoft.netapp/netappaccounts/capacitypools': true, // 'Capacity pools'
+  'microsoft.netapp/netappaccounts/capacitypools/volumes': true, // 'Capacity pool volumes'
   'microsoft.network/networkwatchers/connectionmonitors': true, // 'Connection Monitors'
   'microsoft.keyvault/vaults': true, // 'Key vaults'
   'microsoft.recoveryservices/vaults': true, // 'Recovery Services vaults'

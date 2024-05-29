@@ -47,7 +47,7 @@ const (
 
 var searchWordsRegex = regexp.MustCompile(regexp.QuoteMeta(es.HighlightPreTagsString) + `(.*?)` + regexp.QuoteMeta(es.HighlightPostTagsString))
 
-func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields, keepLabelsInResponse bool, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
@@ -117,7 +117,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 				resSpan.End()
 				return &backend.QueryDataResponse{}, err
 			}
-			nameFields(queryRes, target)
+			nameFields(queryRes, target, keepLabelsInResponse)
 			trimDatapoints(queryRes, target)
 
 			result.Responses[target.RefID] = queryRes
@@ -888,7 +888,7 @@ func getSortedLabelValues(labels data.Labels) []string {
 	return values
 }
 
-func nameFields(queryResult backend.DataResponse, target *Query) {
+func nameFields(queryResult backend.DataResponse, target *Query, keepLabelsInResponse bool) {
 	set := make(map[string]struct{})
 	frames := queryResult.Frames
 	for _, v := range frames {
@@ -907,10 +907,18 @@ func nameFields(queryResult backend.DataResponse, target *Query) {
 			// another is "number"
 			valueField := frame.Fields[1]
 			fieldName := getFieldName(*valueField, target, metricTypeCount)
-			// We need to remove labels so they are not added to legend as duplicates
-			// ensures backward compatibility with "frontend" version of the plugin
-			valueField.Labels = nil
-			frame.Name = fieldName
+			// If we  need to keep the labels in the response, to prevent duplication in names and to keep
+			// backward compatibility with alerting and expressions we use DisplayNameFromDS
+			if keepLabelsInResponse {
+				if valueField.Config == nil {
+					valueField.Config = &data.FieldConfig{}
+				}
+				valueField.Config.DisplayNameFromDS = fieldName
+				// If we don't need to keep labels (how frontend mode worked), we use frame.Name and remove labels
+			} else {
+				valueField.Labels = nil
+				frame.Name = fieldName
+			}
 		}
 	}
 }

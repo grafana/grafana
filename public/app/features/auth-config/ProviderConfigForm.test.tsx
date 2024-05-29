@@ -77,24 +77,54 @@ describe('ProviderConfigForm', () => {
     jest.clearAllMocks();
   });
 
-  it('renders all fields correctly', async () => {
+  it('renders all general settings fields correctly', async () => {
     setup(<ProviderConfigForm config={testConfig} provider={testConfig.provider} />);
     expect(screen.getByRole('textbox', { name: /Client ID/i })).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: /Team IDs/i })).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: /Allowed organizations/i })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /Client secret/i })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /Scopes/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Allow Sign Up/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Auto login/i })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /Sign out redirect URL/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Save/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Discard/i })).toBeInTheDocument();
   });
 
+  it('renders all user mapping fields correctly', async () => {
+    const { user } = setup(<ProviderConfigForm config={testConfig} provider={testConfig.provider} />);
+    await user.click(screen.getByText('User mapping'));
+    expect(screen.getByRole('textbox', { name: /Role attribute path/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Role attribute strict mode/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Skip organization role sync/i })).toBeInTheDocument();
+  });
+
+  it('renders all extra security fields correctly', async () => {
+    const { user } = setup(<ProviderConfigForm config={testConfig} provider={testConfig.provider} />);
+    await user.click(screen.getByText('Extra security measures'));
+    expect(screen.getByRole('combobox', { name: /Allowed organizations/i })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /Allowed domains/i })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /Team Ids/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Use PKCE/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Use refresh token/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /TLS skip verify/i })).toBeInTheDocument();
+  });
+
   it('should save and enable on form submit', async () => {
     const { user } = setup(<ProviderConfigForm config={emptyConfig} provider={emptyConfig.provider} />);
+
     await user.type(screen.getByRole('textbox', { name: /Client ID/i }), 'test-client-id');
     await user.type(screen.getByLabelText(/Client secret/i), 'test-client-secret');
-    // Type a team name and press enter to select it
-    await user.type(screen.getByRole('combobox', { name: /Team IDs/i }), '12324{enter}');
-    // Add two orgs
-    await user.type(screen.getByRole('combobox', { name: /Allowed organizations/i }), 'test-org1{enter}');
-    await user.type(screen.getByRole('combobox', { name: /Allowed organizations/i }), 'test-org2{enter}');
+    // Type a scope and press enter to select it
+    await user.type(screen.getByRole('combobox', { name: /Scopes/i }), 'user:email{enter}');
+    await user.click(screen.getByRole('checkbox', { name: /Auto login/i }));
+
+    await user.click(screen.getByText('User mapping'));
+    await user.type(screen.getByRole('textbox', { name: /Role attribute path/i }), 'new-attribute-path');
+    await user.click(screen.getByRole('checkbox', { name: /Role attribute strict mode/i }));
+
+    await user.click(screen.getByText('Extra security measures'));
+    await user.type(screen.getByRole('combobox', { name: /Allowed domains/i }), 'grafana.com{enter}');
+    await user.click(screen.getByRole('checkbox', { name: /Use PKCE/i }));
+
     await user.click(screen.getByRole('button', { name: /Save and enable/i }));
 
     await waitFor(() => {
@@ -104,12 +134,27 @@ describe('ProviderConfigForm', () => {
           id: '300f9b7c-0488-40db-9763-a22ce8bf6b3e',
           provider: 'github',
           settings: {
-            name: 'GitHub',
-            allowedOrganizations: 'test-org1,test-org2',
+            allowAssignGrafanaAdmin: false,
+            allowSignUp: false,
+            allowedDomains: 'grafana.com',
+            allowedOrganizations: '',
+            autoLogin: true,
             clientId: 'test-client-id',
             clientSecret: 'test-client-secret',
-            teamIds: '12324',
             enabled: true,
+            name: 'GitHub',
+            roleAttributePath: 'new-attribute-path',
+            roleAttributeStrict: true,
+            scopes: 'user:email',
+            signoutRedirectUrl: '',
+            skipOrgRoleSync: false,
+            teamIds: '',
+            tlsClientCa: '',
+            tlsClientCert: '',
+            tlsClientKey: '',
+            tlsSkipVerifyInsecure: false,
+            usePkce: true,
+            useRefreshToken: false,
           },
         },
         { showErrorAlert: false }
@@ -126,11 +171,9 @@ describe('ProviderConfigForm', () => {
     const { user } = setup(<ProviderConfigForm config={emptyConfig} provider={emptyConfig.provider} />);
     await user.type(screen.getByRole('textbox', { name: /Client ID/i }), 'test-client-id');
     await user.type(screen.getByLabelText(/Client secret/i), 'test-client-secret');
-    // Type a team name and press enter to select it
-    await user.type(screen.getByRole('combobox', { name: /Team IDs/i }), '12324{enter}');
-    // Add two orgs
-    await user.type(screen.getByRole('combobox', { name: /Allowed organizations/i }), 'test-org1{enter}');
-    await user.type(screen.getByRole('combobox', { name: /Allowed organizations/i }), 'test-org2{enter}');
+    // Type a scope and press enter to select it
+    await user.type(screen.getByRole('combobox', { name: /Scopes/i }), 'user:email{enter}');
+    await user.click(screen.getByRole('checkbox', { name: /Auto login/i }));
     await user.click(screen.getByText('Save'));
 
     await waitFor(() => {
@@ -140,12 +183,26 @@ describe('ProviderConfigForm', () => {
           id: '300f9b7c-0488-40db-9763-a22ce8bf6b3e',
           provider: 'github',
           settings: {
-            name: 'GitHub',
-            allowedOrganizations: 'test-org1,test-org2',
+            allowAssignGrafanaAdmin: false,
+            allowSignUp: false,
+            allowedDomains: '',
+            allowedOrganizations: '',
+            autoLogin: true,
             clientId: 'test-client-id',
             clientSecret: 'test-client-secret',
-            teamIds: '12324',
             enabled: false,
+            name: 'GitHub',
+            roleAttributePath: '',
+            roleAttributeStrict: false,
+            scopes: 'user:email',
+            signoutRedirectUrl: '',
+            skipOrgRoleSync: false,
+            teamIds: '',
+            tlsClientCa: '',
+            tlsClientCert: '',
+            tlsClientKey: '',
+            usePkce: false,
+            useRefreshToken: false,
           },
         },
         { showErrorAlert: false }

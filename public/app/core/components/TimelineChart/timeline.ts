@@ -53,8 +53,6 @@ export interface TimelineCoreOptions {
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: unknown) => string;
   getFieldConfig: (seriesIdx: number) => StateTimeLineFieldConfig | StatusHistoryFieldConfig;
-  onHover: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
-  onLeave: () => void;
   hoverMulti: boolean;
 }
 
@@ -78,8 +76,6 @@ export function getConfig(opts: TimelineCoreOptions) {
     getTimeRange,
     getValueColor,
     getFieldConfig,
-    onHover,
-    onLeave,
     hoverMulti,
   } = opts;
 
@@ -426,17 +422,7 @@ export function getConfig(opts: TimelineCoreOptions) {
         let cx = u.cursor.left! * uPlot.pxRatio;
         let cy = u.cursor.top! * uPlot.pxRatio;
 
-        let prevHovered = hoveredAtCursor;
-
         setHovered(cx, cy, u.cursor.event == null);
-
-        if (hoveredAtCursor != null) {
-          if (hoveredAtCursor !== prevHovered) {
-            onHover(hoveredAtCursor.sidx, hoveredAtCursor.didx, hoveredAtCursor);
-          }
-        } else if (prevHovered != null) {
-          onLeave();
-        }
       }
 
       return hovered[seriesIdx]?.didx;

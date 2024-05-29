@@ -2,7 +2,7 @@ import { from, map, Observable, of } from 'rxjs';
 
 import { CustomVariableSupport, DataQueryRequest, DataQueryResponse, MetricFindValue } from '@grafana/data';
 
-import { VariableQueryEditor } from './VariableQueryEditor';
+import { getProfileTypeLabel, VariableQueryEditor } from './VariableQueryEditor';
 import { PyroscopeDataSource } from './datasource';
 import { ProfileTypeMessage, VariableQuery } from './types';
 
@@ -34,7 +34,7 @@ export class VariableSupport extends CustomVariableSupport<PyroscopeDataSource> 
       }
       return from(
         this.dataAPI.getLabelNames(
-          request.targets[0].profileTypeId + '{}',
+          getProfileTypeLabel(request.targets[0].profileTypeId),
           request.range.from.valueOf(),
           request.range.to.valueOf()
         )
@@ -51,7 +51,7 @@ export class VariableSupport extends CustomVariableSupport<PyroscopeDataSource> 
       }
       return from(
         this.dataAPI.getLabelValues(
-          request.targets[0].profileTypeId + '{}',
+          getProfileTypeLabel(request.targets[0].profileTypeId),
           request.targets[0].labelName,
           request.range.from.valueOf(),
           request.range.to.valueOf()

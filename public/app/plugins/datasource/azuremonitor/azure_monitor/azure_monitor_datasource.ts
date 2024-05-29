@@ -44,6 +44,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   providerApiVersion = '2021-04-01';
   locationsApiVersion = '2020-01-01';
   defaultSubscriptionId?: string;
+  basicLogsEnabled?: boolean;
   resourcePath: string;
   azurePortalUrl: string;
   declare resourceGroup: string;
@@ -56,6 +57,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     super(instanceSettings);
 
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
+    this.basicLogsEnabled = instanceSettings.jsonData.basicLogsEnabled;
 
     const cloud = getAzureCloud(instanceSettings);
     this.resourcePath = routeNames.azureMonitor;
@@ -329,7 +331,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   private replaceSingleTemplateVariables<T extends { [K in keyof T]: string }>(query: T, scopedVars?: ScopedVars) {
     // This method evaluates template variables supporting multiple values but only returns the first value.
-    // This will work as far as the the first combination of variables is valid.
+    // This will work as far as the first combination of variables is valid.
     // For example if 'rg1' contains 'res1' and 'rg2' contains 'res2' then
     // { resourceGroup: ['rg1', 'rg2'], resourceName: ['res1', 'res2'] } would return
     // { resourceGroup: 'rg1', resourceName: 'res1' } which is valid but

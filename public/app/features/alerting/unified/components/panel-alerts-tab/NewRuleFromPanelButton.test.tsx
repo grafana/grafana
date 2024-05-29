@@ -26,6 +26,7 @@ jest.mock('react-router-dom', () => ({
 jest.spyOn(analytics, 'logInfo');
 
 jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
   useAsync: () => ({ loading: false, value: {} }),
 }));
 

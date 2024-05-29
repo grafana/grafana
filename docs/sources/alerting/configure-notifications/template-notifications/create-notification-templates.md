@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../../manage-notifications/template-notifications/create-notification-templates/ # /docs/grafana/latest/alerting/manage-notifications/template-notifications/create-notification-templates/
+  - ../../manage-notifications/template-notifications/create-notification-templates/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/template-notifications/create-notification-templates/
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/create-notification-templates/
 description: Create notification templates to sent to your contact points
 keywords:
@@ -65,7 +65,7 @@ To preview your notification templates:
 
    Default data is provided and you can add or edit alert data to it as well as alert instances. You can add alert data directly in the Payload data window itself or click **Select alert instances** or **Add custom alerts**.
 
-1. [Optional] To add alert data from existing alert instances:
+1. Optional: To add alert data from existing alert instances:
 
    a. Click **Select alert instances**.
 
@@ -73,7 +73,7 @@ To preview your notification templates:
 
    c. Click **Confirm** to add the alert instance(s) to the payload.
 
-1. [Optional] To add alert data using the Alert data editor, click **Add custom data:**
+1. Optional: To add alert data using the Alert data editor, click **Add custom data:**
 
    a. Add annotations, custom labels and/or set a dashboard or a panel.
 

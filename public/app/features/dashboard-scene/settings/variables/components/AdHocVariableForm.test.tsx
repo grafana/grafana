@@ -1,11 +1,11 @@
-import { act, render } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
-import { AdHocVariableForm } from './AdHocVariableForm';
+import { AdHocVariableForm, AdHocVariableFormProps } from './AdHocVariableForm';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -29,13 +29,15 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
 }));
 
 describe('AdHocVariableForm', () => {
+  const onDataSourceChange = jest.fn();
+  const defaultProps: AdHocVariableFormProps = {
+    datasource: defaultDatasource,
+    onDataSourceChange,
+    infoText: 'Test Info',
+  };
+
   it('should render the form with the provided data source', async () => {
-    const onDataSourceChange = jest.fn();
-    const { renderer } = await setup({
-      datasource: defaultDatasource,
-      onDataSourceChange,
-      infoText: 'Test Info',
-    });
+    const { renderer } = await setup(defaultProps);
 
     const dataSourcePicker = renderer.getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.datasourceSelect
@@ -51,12 +53,7 @@ describe('AdHocVariableForm', () => {
   });
 
   it('should call the onDataSourceChange callback when the data source is changed', async () => {
-    const onDataSourceChange = jest.fn();
-    const { renderer, user } = await setup({
-      datasource: defaultDatasource,
-      onDataSourceChange,
-      infoText: 'Test Info',
-    });
+    const { renderer, user } = await setup(defaultProps);
 
     // Simulate changing the data source
     await user.click(renderer.getByTestId(selectors.components.DataSourcePicker.inputV2));
@@ -64,6 +61,52 @@ describe('AdHocVariableForm', () => {
 
     expect(onDataSourceChange).toHaveBeenCalledTimes(1);
     expect(onDataSourceChange).toHaveBeenCalledWith(promDatasource, undefined);
+  });
+
+  it('should not render code editor when no default keys provided', async () => {
+    await setup(defaultProps);
+
+    expect(screen.queryByTestId(selectors.components.CodeEditor.container)).not.toBeInTheDocument();
+  });
+
+  it('should render code editor when defaultKeys and onDefaultKeysChange are provided', async () => {
+    const mockOnStaticKeysChange = jest.fn();
+    await setup({
+      ...defaultProps,
+      defaultKeys: [{ text: 'test', value: 'test' }],
+      onDefaultKeysChange: mockOnStaticKeysChange,
+    });
+
+    expect(await screen.findByTestId(selectors.components.CodeEditor.container)).toBeInTheDocument();
+  });
+
+  it('should call onDefaultKeysChange when toggling on default options', async () => {
+    const mockOnStaticKeysChange = jest.fn();
+    await setup({
+      ...defaultProps,
+      onDefaultKeysChange: mockOnStaticKeysChange,
+    });
+
+    await userEvent.click(
+      screen.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle)
+    );
+    expect(mockOnStaticKeysChange).toHaveBeenCalledTimes(1);
+    expect(mockOnStaticKeysChange).toHaveBeenCalledWith([]);
+  });
+
+  it('should call onDefaultKeysChange when toggling off default options', async () => {
+    const mockOnStaticKeysChange = jest.fn();
+    await setup({
+      ...defaultProps,
+      defaultKeys: [{ text: 'test', value: 'test' }],
+      onDefaultKeysChange: mockOnStaticKeysChange,
+    });
+
+    await userEvent.click(
+      screen.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle)
+    );
+    expect(mockOnStaticKeysChange).toHaveBeenCalledTimes(1);
+    expect(mockOnStaticKeysChange).toHaveBeenCalledWith(undefined);
   });
 });
 

@@ -16,7 +16,7 @@ func WithSpanProcessor(sp tracesdk.SpanProcessor) TracerForTestOption {
 
 func InitializeTracerForTest(opts ...TracerForTestOption) Tracer {
 	exp := tracetest.NewInMemoryExporter()
-	tp, _ := initTracerProvider(exp, "testing", tracesdk.AlwaysSample())
+	tp, _ := initTracerProvider(exp, "grafana", "testing", tracesdk.AlwaysSample())
 
 	for _, opt := range opts {
 		opt(tp)
@@ -24,7 +24,9 @@ func InitializeTracerForTest(opts ...TracerForTestOption) Tracer {
 
 	otel.SetTracerProvider(tp)
 
-	ots := &TracingService{Propagation: "jaeger,w3c", tracerProvider: tp}
+	cfg := NewEmptyTracingConfig()
+	cfg.Propagation = "jaeger,w3c"
+	ots := &TracingService{cfg: cfg, tracerProvider: tp}
 	_ = ots.initOpentelemetryTracer()
 	return ots
 }

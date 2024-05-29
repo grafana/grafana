@@ -1,9 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { sceneGraph } from '@grafana/scenes';
+import { SceneObject, sceneGraph } from '@grafana/scenes';
 import { Select } from '@grafana/ui';
-import { VizPanelManager } from 'app/features/dashboard-scene/panel-edit/VizPanelManager';
 import { useSelector } from 'app/types';
 
 import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';
@@ -45,14 +44,14 @@ export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
 };
 
 interface Props2 {
-  panelManager: VizPanelManager;
+  parent: SceneObject;
+  repeat: string | undefined;
   id?: string;
   onChange: (name?: string) => void;
 }
 
-export const RepeatRowSelect2 = ({ panelManager, id, onChange }: Props2) => {
-  const { panel, repeat } = panelManager.useState();
-  const sceneVars = useMemo(() => sceneGraph.getVariables(panel), [panel]);
+export const RepeatRowSelect2 = ({ parent, repeat, id, onChange }: Props2) => {
+  const sceneVars = useMemo(() => sceneGraph.getVariables(parent), [parent]);
   const variables = sceneVars.useState().variables;
 
   const variableOptions = useMemo(() => {

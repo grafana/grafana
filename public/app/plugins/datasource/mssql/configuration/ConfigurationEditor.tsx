@@ -37,6 +37,8 @@ import {
   MssqlSecureOptions,
 } from '../types';
 
+import { KerberosConfig, KerberosAdvancedSettings, UsernameMessage } from './Kerberos';
+
 const LONG_WIDTH = 40;
 
 export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<MssqlOptions, MssqlSecureOptions>) => {
@@ -74,7 +76,14 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     onOptionsChange({
       ...dsSettings,
       ...{
-        jsonData: { ...jsonData, ...{ authenticationType: value.value }, azureCredentials: undefined },
+        jsonData: {
+          ...jsonData,
+          ...{ authenticationType: value.value },
+          azureCredentials: undefined,
+          keytabFilePath: undefined,
+          credentialCache: undefined,
+          credentialCacheLookupFile: undefined,
+        },
         secureJsonData: { ...dsSettings.secureJsonData, ...{ password: '' } },
         secureJsonFields: { ...dsSettings.secureJsonFields, ...{ password: false } },
         user: '',
@@ -90,6 +99,10 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     const basicAuthenticationOptions: Array<SelectableValue<MSSQLAuthenticationType>> = [
       { value: MSSQLAuthenticationType.sqlAuth, label: 'SQL Server Authentication' },
       { value: MSSQLAuthenticationType.windowsAuth, label: 'Windows Authentication' },
+      { value: MSSQLAuthenticationType.kerberosRaw, label: 'Windows AD: Username + password' },
+      { value: MSSQLAuthenticationType.kerberosKeytab, label: 'Windows AD: Keytab file' },
+      { value: MSSQLAuthenticationType.kerberosCredentialCache, label: 'Windows AD: Credential cache' },
+      { value: MSSQLAuthenticationType.kerberosCredentialCacheLookupFile, label: 'Windows AD: Credential cache file' },
     ];
 
     if (azureAuthIsSupported) {
@@ -238,6 +251,21 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
                   Azure AD credentials - Managed Service Identity and Client Secret Credentials are supported.
                 </li>
               )}
+              <li>
+                <i>Windows AD: Username + password</i> Windows Active Directory - Sign on for domain user via
+                username/password.
+              </li>
+              <li>
+                <i>Windows AD: Keytab</i> Windows Active Directory - Sign on for domain user via keytab file.
+              </li>
+              <li>
+                <i>Windows AD: Credential cache</i> Windows Active Directory - Sign on for domain user via credential
+                cache.
+              </li>
+              <li>
+                <i>Windows AD: Credential cache file</i> Windows Active Directory - Sign on for domain user via
+                credential cache file.
+              </li>
             </ul>
           }
         >
@@ -251,14 +279,27 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
           />
         </Field>
 
+        <KerberosConfig {...props} />
+
         {/* Basic SQL auth. Render if authType === MSSQLAuthenticationType.sqlAuth OR
+        authType === MSSQLAuthenticationType.kerberosRaw OR
         if no authType exists, which will be the case when creating a new data source */}
-        {(jsonData.authenticationType === MSSQLAuthenticationType.sqlAuth || !jsonData.authenticationType) && (
+        {(jsonData.authenticationType === MSSQLAuthenticationType.sqlAuth ||
+          jsonData.authenticationType === MSSQLAuthenticationType.kerberosRaw ||
+          !jsonData.authenticationType) && (
           <>
-            <Field label="Username" required invalid={!dsSettings.user} error={'Username is required'}>
+            <Field
+              label="Username"
+              required
+              invalid={!dsSettings.user}
+              error={'Username is required'}
+              description={jsonData.authenticationType === MSSQLAuthenticationType.kerberosRaw ? UsernameMessage : ''}
+            >
               <Input
                 value={dsSettings.user || ''}
-                placeholder="user"
+                placeholder={
+                  jsonData.authenticationType === MSSQLAuthenticationType.kerberosRaw ? 'name@EXAMPLE.COM' : 'user'
+                }
                 onChange={onDSOptionChanged('user')}
                 width={LONG_WIDTH}
               />
@@ -335,6 +376,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         {config.secureSocksDSProxyEnabled && (
           <SecureSocksProxySettings options={dsSettings} onOptionsChange={onOptionsChange} />
         )}
+        <KerberosAdvancedSettings {...props} />
       </ConfigSection>
     </>
   );

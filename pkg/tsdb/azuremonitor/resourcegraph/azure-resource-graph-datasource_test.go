@@ -116,7 +116,7 @@ func TestAzureResourceGraphCreateRequest(t *testing.T) {
 
 func TestAddConfigData(t *testing.T) {
 	field := data.Field{}
-	dataLink := data.DataLink{Title: "View in Azure Portal", TargetBlank: true, URL: "http://ds"}
+	dataLink := data.DataLink{Title: "View query in Azure Portal", TargetBlank: true, URL: "http://ds"}
 	frame := data.Frame{
 		Fields: []*data.Field{&field},
 	}

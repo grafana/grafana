@@ -17,6 +17,7 @@ import {
   TypedVariableModel,
   UrlQueryValue,
 } from '@grafana/data';
+import { PromQuery } from '@grafana/prometheus';
 import { RefreshEvent, TimeRangeUpdatedEvent, config } from '@grafana/runtime';
 import { Dashboard, DashboardLink } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
@@ -27,7 +28,6 @@ import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angu
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { DashboardMetaChangedEvent, DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 
@@ -44,7 +44,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
-import { PanelModel } from './PanelModel';
+import { explicitlyControlledMigrationPanels, PanelModel } from './PanelModel';
 import { TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
@@ -117,7 +117,7 @@ export class DashboardModel implements TimeModel {
     appEventsSubscription: true,
     panelsAffectedByVariableChange: true,
     lastRefresh: true,
-    timeRangeUpdatedDuringEdit: true,
+    timeRangeUpdatedDuringEditOrView: true,
     originalDashboard: true,
   };
 
@@ -127,9 +127,6 @@ export class DashboardModel implements TimeModel {
     options?: {
       // By default this uses variables from redux state
       getVariablesFromState?: GetVariables;
-
-      // Force the loader to migrate panels
-      autoMigrateOldPanels?: boolean;
     }
   ) {
     this.getVariablesFromState = options?.getVariablesFromState ?? getVariablesByKey;
@@ -168,59 +165,6 @@ export class DashboardModel implements TimeModel {
 
     this.initMeta(meta);
     this.updateSchema(data);
-
-    // Auto-migrate old angular panels
-    const shouldMigrateAllAngularPanels =
-      options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels;
-
-    const shouldMigrateExplicitAngularPanels =
-      config.featureToggles.autoMigrateGraphPanel ||
-      config.featureToggles.autoMigrateTablePanel ||
-      config.featureToggles.autoMigratePiechartPanel ||
-      config.featureToggles.autoMigrateWorldmapPanel ||
-      config.featureToggles.autoMigrateStatPanel;
-
-    // Handles both granular and all angular panel migration
-    if (shouldMigrateAllAngularPanels || shouldMigrateExplicitAngularPanels) {
-      for (const panel of this.panelIterator()) {
-        if (
-          !panel.autoMigrateFrom &&
-          panel.type === 'graph' &&
-          (config.featureToggles.autoMigrateGraphPanel || shouldMigrateAllAngularPanels)
-        ) {
-          panel.autoMigrateFrom = panel.type;
-          panel.type = 'timeseries';
-        } else if (
-          !panel.autoMigrateFrom &&
-          panel.type === 'table-old' &&
-          (config.featureToggles.autoMigrateTablePanel || shouldMigrateAllAngularPanels)
-        ) {
-          panel.autoMigrateFrom = panel.type;
-          panel.type = 'table';
-        } else if (
-          !panel.autoMigrateFrom &&
-          panel.type === 'grafana-piechart-panel' &&
-          (config.featureToggles.autoMigratePiechartPanel || shouldMigrateAllAngularPanels)
-        ) {
-          panel.autoMigrateFrom = panel.type;
-          panel.type = 'piechart';
-        } else if (
-          !panel.autoMigrateFrom &&
-          panel.type === 'grafana-worldmap-panel' &&
-          (config.featureToggles.autoMigrateWorldmapPanel || shouldMigrateAllAngularPanels)
-        ) {
-          panel.autoMigrateFrom = panel.type;
-          panel.type = 'geomap';
-        } else if (
-          !panel.autoMigrateFrom &&
-          (panel.type === 'singlestat' || panel.type === 'grafana-singlestat-panel') &&
-          (config.featureToggles.autoMigrateStatPanel || shouldMigrateAllAngularPanels)
-        ) {
-          panel.autoMigrateFrom = panel.type;
-          panel.type = 'stat';
-        }
-      }
-    }
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
@@ -440,10 +384,21 @@ export class DashboardModel implements TimeModel {
       return;
     }
 
-    for (const panel of this.panels) {
-      if (!this.otherPanelInFullscreen(panel) && (event.refreshAll || event.panelIds.includes(panel.id))) {
-        panel.refresh();
+    const panelsToRefresh = this.panels.filter(
+      (panel) => !this.otherPanelInFullscreen(panel) && (event.refreshAll || event.panelIds.includes(panel.id))
+    );
+
+    // We have to mark every panel as refreshWhenInView /before/ we actually refresh any
+    // in case there is a shared query, as otherwise that might refresh before the source panel is
+    // marked for refresh, preventing the panel from updating
+    if (!this.isSnapshot()) {
+      for (const panel of panelsToRefresh) {
+        panel.refreshWhenInView = true;
       }
+    }
+
+    for (const panel of panelsToRefresh) {
+      panel.refresh();
     }
   }
 
@@ -1339,8 +1294,10 @@ export class DashboardModel implements TimeModel {
     return this.panels.some((panel) => {
       // Return false for plugins that are angular but have angular.hideDeprecation = false
       // We cannot use panel.plugin.isAngularPlugin() because panel.plugin may not be initialized at this stage.
+      // We also have to check for old core angular plugins (explicitlyControlledMigrationPanels).
       const isAngularPanel =
-        config.panels[panel.type]?.angular?.detected && !config.panels[panel.type]?.angular?.hideDeprecation;
+        (config.panels[panel.type]?.angular?.detected || explicitlyControlledMigrationPanels.includes(panel.type)) &&
+        !config.panels[panel.type]?.angular?.hideDeprecation;
       let isAngularDs = false;
       if (panel.datasource?.uid) {
         isAngularDs = isAngularDatasourcePluginAndNotHidden(panel.datasource?.uid);

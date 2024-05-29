@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../configure-alertmanager/
+  - ../configure-alertmanager/ # /docs/grafana/<GRAFANA_VERSION>/configure-alertmanager/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alertmanager/
 description: Configure an Alertmanager to receive all of your alerts
 keywords:
@@ -25,7 +25,7 @@ Set up Grafana to use an external Alertmanager as a single Alertmanager to recei
 Grafana Alerting does not support sending alerts to the AWS Managed Service for Prometheus due to the lack of sigv4 support in Prometheus.
 {{% /admonition %}}
 
-Once you have added the Alertmanager, you can use the Grafana Alerting UI to manage silences, contact points, and notification policies. A drop-down option in these pages allows you to switch between alertmanagers.
+After you have added the Alertmanager, you can use the Grafana Alerting UI to manage silences, contact points, and notification policies. A drop-down option in these pages allows you to switch between alertmanagers.
 
 External alertmanagers should now be configured as data sources using Grafana Configuration from the main Grafana navigation menu. This enables you to manage the contact points and notification policies of external alertmanagers from within Grafana and also encrypts HTTP basic authentication credentials.
 
@@ -44,3 +44,11 @@ To add an external Alertmanager, complete the following steps.
    **Note:** Prometheus, Grafana Mimir, and Cortex implementations of Alertmanager are supported. For Prometheus, contact points and notification policies are read-only in the Grafana Alerting UI.
 
 1. Click **Save & test**.
+
+{{< admonition type="note" >}}
+On the Settings page, you can manage your Alertmanager configurations and configure where Grafana-managed alert instances are forwarded.
+
+- Manage which Alertmanagers receive alert instances from Grafana-managed rules without navigating and editing data sources.
+- Manage version snapshots for the built-in Alertmanager, which allows administrators to roll back unintentional changes or mistakes in the Alertmanager configuration.
+- Compare the historical snapshot with the latest configuration to see which changes were made.
+  {{< /admonition >}}

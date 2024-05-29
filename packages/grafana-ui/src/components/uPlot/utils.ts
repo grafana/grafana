@@ -1,18 +1,24 @@
 import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
 
-import { DataFrame, ensureTimeField, FieldType } from '@grafana/data';
+import {
+  DataFrame,
+  DisplayProcessor,
+  DisplayValue,
+  ensureTimeField,
+  Field,
+  fieldReducers,
+  FieldType,
+  getDisplayProcessor,
+  GrafanaTheme2,
+  reduceField,
+  ReducerID,
+} from '@grafana/data';
 import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
 
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
 
 import { buildScaleKey } from './internal';
-
-const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
-
-export function timeFormatToTemplate(f: string) {
-  return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, (match) => `{${match}}`);
-}
 
 const paddingSide: PaddingSide = (u, side, sidesWithAxes) => {
   let hasCrossAxis = side % 2 ? sidesWithAxes[0] || sidesWithAxes[2] : sidesWithAxes[1] || sidesWithAxes[3];
@@ -153,8 +159,8 @@ export function preparePlotData2(
   frame: DataFrame,
   stackingGroups: StackingGroup[],
   onStackMeta?: (meta: StackMeta) => void
-) {
-  let data: AlignedData = Array(frame.fields.length);
+): AlignedData {
+  let data = Array(frame.fields.length);
 
   let stacksQty = stackingGroups.length;
 
@@ -192,9 +198,9 @@ export function preparePlotData2(
 
     if (i === 0) {
       if (field.type === FieldType.time) {
-        data[i] = ensureTimeField(field).values;
+        data[0] = ensureTimeField(field).values;
       } else {
-        data[i] = vals;
+        data[0] = vals;
       }
       return;
     }
@@ -254,7 +260,7 @@ export function preparePlotData2(
     });
 
     onStackMeta({
-      totals: accumsBySeriesIdx as AlignedData,
+      totals: accumsBySeriesIdx,
     });
   }
 
@@ -397,6 +403,65 @@ function hasNegSample(data: unknown[], samples = 100) {
 
   return false;
 }
+
+export const getDisplayValuesForCalcs = (calcs: string[], field: Field, theme: GrafanaTheme2) => {
+  if (!calcs?.length) {
+    return [];
+  }
+
+  const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
+  const fmt = field.display ?? defaultFormatter;
+  let countFormatter: DisplayProcessor | null = null;
+
+  const fieldCalcs = reduceField({
+    field: field,
+    reducers: calcs,
+  });
+
+  return calcs.map<DisplayValue>((reducerId) => {
+    const fieldReducer = fieldReducers.get(reducerId);
+    let formatter = fmt;
+
+    if (fieldReducer.id === ReducerID.diffperc) {
+      formatter = getDisplayProcessor({
+        field: {
+          ...field,
+          config: {
+            ...field.config,
+            unit: 'percent',
+          },
+        },
+        theme,
+      });
+    }
+
+    if (
+      fieldReducer.id === ReducerID.count ||
+      fieldReducer.id === ReducerID.changeCount ||
+      fieldReducer.id === ReducerID.distinctCount
+    ) {
+      if (!countFormatter) {
+        countFormatter = getDisplayProcessor({
+          field: {
+            ...field,
+            config: {
+              ...field.config,
+              unit: 'none',
+            },
+          },
+          theme,
+        });
+      }
+      formatter = countFormatter;
+    }
+
+    return {
+      ...formatter(fieldCalcs[reducerId]),
+      title: fieldReducer.name,
+      description: fieldReducer.description,
+    };
+  });
+};
 
 // Dev helpers
 

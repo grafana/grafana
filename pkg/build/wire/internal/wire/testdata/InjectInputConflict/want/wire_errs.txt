@@ -1,0 +1,6 @@
+example.com/foo/wire.go:x:y: multiple bindings for example.com/foo.Foo
+current:
+<- provider "provideFoo" (example.com/foo/foo.go:x:y)
+<- provider set "Set" (example.com/foo/foo.go:x:y)
+previous:
+<- argument foo to injector function injectBar (example.com/foo/wire.go:x:y)

@@ -1862,6 +1862,6 @@ func executeElasticsearchDataQuery(c es.Client, body string, from, to time.Time)
 			},
 		},
 	}
-	query := newElasticsearchDataQuery(context.Background(), c, dataRequest.Queries, log.New("test.logger"), tracing.InitializeTracerForTest())
+	query := newElasticsearchDataQuery(context.Background(), c, &dataRequest, log.New("test.logger"), tracing.InitializeTracerForTest())
 	return query.execute()
 }

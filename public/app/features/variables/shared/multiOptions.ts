@@ -1,4 +1,4 @@
-import { VariableOption } from 'app/features/variables/types';
+import { VariableOption } from '@grafana/data';
 
 export const alignCurrentWithMulti = (current: VariableOption, value: boolean): VariableOption => {
   if (!current) {

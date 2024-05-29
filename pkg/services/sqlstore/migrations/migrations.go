@@ -112,11 +112,17 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 		accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
 	}
 
+	addCloudMigrationsMigrations(mg)
+
 	addKVStoreMySQLValueTypeLongTextMigration(mg)
 
 	ualert.AddRuleNotificationSettingsColumns(mg)
 
 	accesscontrol.AddAlertingScopeRemovalMigration(mg)
+
+	accesscontrol.AddManagedFolderAlertingSilencesActionsMigrator(mg)
+
+	ualert.AddRecordingRuleColumns(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

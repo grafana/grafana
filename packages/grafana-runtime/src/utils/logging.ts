@@ -59,6 +59,22 @@ export function logError(err: Error, contexts?: LogContext) {
 }
 
 /**
+ * Log a measurement
+ *
+ * @public
+ */
+export type MeasurementValues = Record<string, number>;
+export function logMeasurement(type: string, values: MeasurementValues, context?: LogContext) {
+  if (config.grafanaJavascriptAgent.enabled) {
+    faro.api.pushMeasurement({
+      type,
+      values,
+      context,
+    });
+  }
+}
+
+/**
  * Creates a monitoring logger with four levels of logging methods: `logDebug`, `logInfo`, `logWarning`, and `logError`.
  * These methods use `faro.api.pushX` web SDK methods to report these logs or errors to the Faro collector.
  *
@@ -70,6 +86,7 @@ export function logError(err: Error, contexts?: LogContext) {
  * - `logInfo(message: string, contexts?: LogContext)`: Logs an informational message.
  * - `logWarning(message: string, contexts?: LogContext)`: Logs a warning message.
  * - `logError(error: Error, contexts?: LogContext)`: Logs an error message.
+ * - `logMeasurement(measurement: Omit<MeasurementEvent, 'timestamp'>, contexts?: LogContext)`: Logs a measurement.
  * Each method combines the `defaultContext` (if provided), the `source`, and an optional `LogContext` parameter into a full context that is included with the log message.
  */
 export function createMonitoringLogger(source: string, defaultContext?: LogContext) {
@@ -107,5 +124,13 @@ export function createMonitoringLogger(source: string, defaultContext?: LogConte
      * @param {LogContext} [contexts] - Optional additional context to be included.
      */
     logError: (error: Error, contexts?: LogContext) => logError(error, createFullContext(contexts)),
+
+    /**
+     * Logs an measurement with optional additional context.
+     * @param {MeasurementEvent} measurement - The measurement object to be recorded.
+     * @param {LogContext} [contexts] - Optional additional context to be included.
+     */
+    logMeasurement: (type: string, measurement: MeasurementValues, contexts?: LogContext) =>
+      logMeasurement(type, measurement, createFullContext(contexts)),
   };
 }

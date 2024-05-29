@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -12,12 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestDashboardService(t *testing.T) {
@@ -28,11 +27,11 @@ func TestDashboardService(t *testing.T) {
 		folderSvc := foldertest.NewFakeService()
 
 		service := &DashboardServiceImpl{
-			cfg:                setting.NewCfg(),
-			log:                log.New("test.logger"),
-			dashboardStore:     &fakeStore,
-			folderService:      folderSvc,
-			dashAlertExtractor: &dummyDashAlertExtractor{},
+			cfg:            setting.NewCfg(),
+			log:            log.New("test.logger"),
+			dashboardStore: &fakeStore,
+			folderService:  folderSvc,
+			features:       featuremgmt.WithFeatures(),
 		}
 
 		origNewDashboardGuardian := guardian.New
@@ -80,7 +79,7 @@ func TestDashboardService(t *testing.T) {
 					if tc.Error == nil {
 						fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
 					}
-					_, err := service.BuildSaveDashboardCommand(context.Background(), dto, true, false)
+					_, err := service.BuildSaveDashboardCommand(context.Background(), dto, false)
 					require.Equal(t, err, tc.Error)
 				}
 			})
@@ -115,33 +114,6 @@ func TestDashboardService(t *testing.T) {
 				dto.User = &user.SignedInUser{UserID: 1}
 				_, err := service.SaveDashboard(context.Background(), dto, true)
 				require.NoError(t, err)
-			})
-
-			t.Run("Should return validation error if alert data is invalid", func(t *testing.T) {
-				origAlertingEnabledSet := service.cfg.AlertingEnabled != nil
-				origAlertingEnabledVal := false
-				if origAlertingEnabledSet {
-					origAlertingEnabledVal = *(service.cfg.AlertingEnabled)
-				}
-				service.cfg.AlertingEnabled = util.Pointer(true)
-				t.Cleanup(func() {
-					if !origAlertingEnabledSet {
-						service.cfg.AlertingEnabled = nil
-					} else {
-						service.cfg.AlertingEnabled = &origAlertingEnabledVal
-					}
-				})
-
-				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(nil, nil).Once()
-				fakeStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
-				fakeStore.On("SaveAlerts", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("alert validation error")).Once()
-
-				dto.Dashboard = dashboards.NewDashboard("Dash")
-				dto.User = &user.SignedInUser{UserID: 1}
-				_, err := service.SaveDashboard(context.Background(), dto, false)
-				require.Error(t, err)
-				require.Equal(t, err.Error(), "alert validation error")
 			})
 		})
 
@@ -239,6 +211,13 @@ func TestDashboardService(t *testing.T) {
 		t.Run("Delete dashboards in folder", func(t *testing.T) {
 			args := &dashboards.DeleteDashboardsInFolderRequest{OrgID: 1, FolderUIDs: []string{"uid"}}
 			fakeStore.On("DeleteDashboardsInFolders", mock.Anything, args).Return(nil).Once()
+			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
+			require.NoError(t, err)
+		})
+
+		t.Run("Soft Delete dashboards in folder", func(t *testing.T) {
+			service.features = featuremgmt.WithFeatures(featuremgmt.FlagDashboardRestore)
+			fakeStore.On("SoftDeleteDashboardsInFolders", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
 			require.NoError(t, err)
 		})

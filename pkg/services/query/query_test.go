@@ -465,7 +465,7 @@ func setup(t *testing.T) *testContext {
 	dc := &fakeDataSourceCache{cache: dss}
 	rv := &fakePluginRequestValidator{}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	ss := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	fakeDatasourceService := &fakeDatasources.FakeDataSourceService{
@@ -473,7 +473,7 @@ func setup(t *testing.T) *testContext {
 		SimulatePluginFailure: false,
 	}
 
-	pCtxProvider := plugincontext.ProvideService(sqlStore.Cfg,
+	pCtxProvider := plugincontext.ProvideService(cfg,
 		localcache.ProvideService(), &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "postgres"}},
@@ -484,7 +484,7 @@ func setup(t *testing.T) *testContext {
 		pluginSettings.ProvideService(sqlStore, secretsService), pluginconfig.NewFakePluginRequestConfigProvider(),
 	)
 	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, pCtxProvider,
-		&featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest())
+		featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest())
 	queryService := ProvideService(setting.NewCfg(), dc, exprService, rv, pc, pCtxProvider) // provider belonging to this package
 	return &testContext{
 		pluginContext:          pc,

@@ -1,6 +1,6 @@
 import { Column as RTColumn } from 'react-table';
 
-import { ExpanderCell } from './ExpanderCell';
+import { ExpanderCell, ExpanderHeader } from './Expander';
 import { Column } from './types';
 
 export const EXPANDER_CELL_ID = '__expander' as const;
@@ -10,11 +10,17 @@ type InternalColumn<T extends object> = RTColumn<T> & {
 };
 
 // Returns the columns in a "react-table" acceptable format
-export function getColumns<K extends object>(columns: Array<Column<K>>): Array<InternalColumn<K>> {
+export function getColumns<K extends object>(
+  columns: Array<Column<K>>,
+  showExpandAll = false
+): Array<InternalColumn<K>> {
   return [
     {
       id: EXPANDER_CELL_ID,
       Cell: ExpanderCell,
+      ...(showExpandAll && {
+        Header: ExpanderHeader,
+      }),
       disableSortBy: true,
       width: 0,
     },

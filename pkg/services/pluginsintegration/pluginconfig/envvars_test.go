@@ -10,14 +10,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -216,53 +216,24 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 			cfg: &PluginInstanceCfg{
 				AWSAssumeRoleEnabled: false,
 				Tracing:              config.Tracing{},
-				Features:             featuremgmt.WithFeatures(),
 			},
 			plugin: defaultPlugin,
 			exp:    expNoTracing,
 		},
 		{
-			name: "otel not configured but plugin-tracing enabled",
+			name: "otlp no propagation",
 			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
-				Tracing:        config.Tracing{},
-				Features:       featuremgmt.WithFeatures(),
-			},
-			plugin: defaultPlugin,
-			exp:    expNoTracing,
-		},
-		{
-			name: "otlp no propagation plugin enabled",
-			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{
-					pluginID: {"tracing": "true"},
-				},
 				Tracing: config.Tracing{
 					OpenTelemetry: defaultOTelCfg,
 				},
-				Features: featuremgmt.WithFeatures(),
 			},
 
 			plugin: defaultPlugin,
 			exp:    expDefaultOtlp,
 		},
 		{
-			name: "otlp no propagation disabled by default",
-			cfg: &PluginInstanceCfg{
-				Tracing: config.Tracing{
-					OpenTelemetry: defaultOTelCfg,
-				},
-				Features: featuremgmt.WithFeatures(),
-			},
-			plugin: defaultPlugin,
-			exp:    expNoTracing,
-		},
-		{
 			name: "otlp propagation plugin enabled",
 			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{
-					pluginID: {"tracing": "true"},
-				},
 				AWSAssumeRoleEnabled: true,
 				Tracing: config.Tracing{
 					OpenTelemetry: config.OpenTelemetryCfg{
@@ -275,11 +246,10 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 						SamplerRemoteURL: "",
 					},
 				},
-				Features: featuremgmt.WithFeatures(),
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
-				assert.Len(t, envVars, 8)
+				assert.Len(t, envVars, 7)
 				assert.Equal(t, "GF_VERSION=", envVars[0])
 				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[1])
 				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c", envVars[2])
@@ -287,15 +257,11 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_PARAM=1.000000", envVars[4])
 				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=", envVars[5])
 				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[6])
-				assert.Equal(t, "GF_PLUGIN_TRACING=true", envVars[7])
 			},
 		},
 		{
 			name: "otlp enabled composite propagation",
 			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{
-					pluginID: {"tracing": "true"},
-				},
 				AWSAssumeRoleEnabled: true,
 				Tracing: config.Tracing{
 					OpenTelemetry: config.OpenTelemetryCfg{
@@ -308,11 +274,10 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 						SamplerRemoteURL: "",
 					},
 				},
-				Features: featuremgmt.WithFeatures(),
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
-				assert.Len(t, envVars, 8)
+				assert.Len(t, envVars, 7)
 				assert.Equal(t, "GF_VERSION=", envVars[0])
 				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[1])
 				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c,jaeger", envVars[2])
@@ -320,98 +285,14 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_PARAM=1.000000", envVars[4])
 				assert.Equal(t, "GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=", envVars[5])
 				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[6])
-				assert.Equal(t, "GF_PLUGIN_TRACING=true", envVars[7])
 			},
-		},
-		{
-			name: "otlp no propagation disabled by default",
-			cfg: &PluginInstanceCfg{
-				Tracing: config.Tracing{
-					OpenTelemetry: config.OpenTelemetryCfg{
-						Address:     "127.0.0.1:4317",
-						Propagation: "w3c",
-					},
-				},
-				Features: featuremgmt.WithFeatures(),
-			},
-			plugin: defaultPlugin,
-			exp:    expNoTracing,
-		},
-		{
-			name: "disabled on plugin",
-			cfg: &PluginInstanceCfg{
-				PluginSettings: setting.PluginSettings{
-					pluginID: map[string]string{"tracing": "false"},
-				},
-				Tracing: config.Tracing{
-					OpenTelemetry: defaultOTelCfg,
-				},
-				Features: featuremgmt.WithFeatures(),
-			},
-			plugin: defaultPlugin,
-			exp:    expNoTracing,
-		},
-		{
-			name: "disabled on plugin with other plugin settings",
-			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{
-					pluginID: {"some_other_option": "true"},
-				},
-				AWSAssumeRoleEnabled: true,
-				Tracing: config.Tracing{
-					OpenTelemetry: defaultOTelCfg,
-				},
-				Features: featuremgmt.WithFeatures(),
-			},
-			plugin: defaultPlugin,
-			exp:    expNoTracing,
-		},
-		{
-			name: "enabled on plugin with other plugin settings",
-			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{
-					pluginID: {"some_other_option": "true", "tracing": "true"},
-				},
-				Tracing: config.Tracing{
-					OpenTelemetry: defaultOTelCfg,
-				},
-				Features: featuremgmt.WithFeatures(),
-			},
-			plugin: defaultPlugin,
-			exp:    expDefaultOtlp,
-		},
-		{
-			name: `enabled on plugin with no "tracing" plugin setting but with enablePluginsTracingByDefault feature flag`,
-			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{pluginID: {}},
-				Tracing: config.Tracing{
-					OpenTelemetry: defaultOTelCfg,
-				},
-				Features: featuremgmt.WithFeatures(featuremgmt.FlagEnablePluginsTracingByDefault),
-			},
-			plugin: defaultPlugin,
-			exp:    expDefaultOtlp,
-		},
-		{
-			name: `enabled on plugin with plugin setting "tracing=false" but with enablePluginsTracingByDefault feature flag`,
-			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "false"}},
-				Tracing: config.Tracing{
-					OpenTelemetry: defaultOTelCfg,
-				},
-				Features: featuremgmt.WithFeatures(featuremgmt.FlagEnablePluginsTracingByDefault),
-			},
-			plugin: defaultPlugin,
-			exp:    expDefaultOtlp,
 		},
 		{
 			name: "GF_PLUGIN_VERSION is not present if tracing is disabled",
 			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
 				Tracing: config.Tracing{
 					OpenTelemetry: config.OpenTelemetryCfg{},
 				},
-				Features: featuremgmt.WithFeatures(),
 			},
 			plugin: defaultPlugin,
 			exp:    expGfPluginVersionNotPresent,
@@ -419,11 +300,9 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "GF_PLUGIN_VERSION is present if tracing is enabled and plugin has version",
 			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
 				Tracing: config.Tracing{
 					OpenTelemetry: defaultOTelCfg,
 				},
-				Features: featuremgmt.WithFeatures(),
 			},
 			plugin: defaultPlugin,
 			exp:    expGfPluginVersionPresent,
@@ -431,11 +310,9 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "GF_PLUGIN_VERSION is not present if tracing is enabled but plugin doesn't have a version",
 			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
 				Tracing: config.Tracing{
 					OpenTelemetry: config.OpenTelemetryCfg{},
 				},
-				Features: featuremgmt.WithFeatures(),
 			},
 			plugin: pluginWithoutVersion,
 			exp:    expGfPluginVersionNotPresent,
@@ -443,7 +320,6 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "no sampling (neversample)",
 			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
 				Tracing: config.Tracing{
 					OpenTelemetry: config.OpenTelemetryCfg{
 						Address:          "127.0.0.1:4317",
@@ -453,7 +329,6 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 						SamplerRemoteURL: "",
 					},
 				},
-				Features: featuremgmt.WithFeatures(),
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
@@ -465,7 +340,6 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "empty sampler with param",
 			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
 				Tracing: config.Tracing{
 					OpenTelemetry: config.OpenTelemetryCfg{
 						Address:          "127.0.0.1:4317",
@@ -475,7 +349,6 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 						SamplerRemoteURL: "",
 					},
 				},
-				Features: featuremgmt.WithFeatures(),
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
@@ -487,7 +360,6 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "const sampler with param",
 			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
 				Tracing: config.Tracing{
 					OpenTelemetry: config.OpenTelemetryCfg{
 						Address:          "127.0.0.1:4317",
@@ -497,7 +369,6 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 						SamplerRemoteURL: "",
 					},
 				},
-				Features: featuremgmt.WithFeatures(),
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
@@ -509,7 +380,6 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "rateLimiting sampler",
 			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
 				Tracing: config.Tracing{
 					OpenTelemetry: config.OpenTelemetryCfg{
 						Address:          "127.0.0.1:4317",
@@ -519,7 +389,6 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 						SamplerRemoteURL: "",
 					},
 				},
-				Features: featuremgmt.WithFeatures(),
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
@@ -531,8 +400,6 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "remote sampler",
 			cfg: &PluginInstanceCfg{
-				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "true"}},
-				Features:       featuremgmt.WithFeatures(),
 				Tracing: config.Tracing{
 					OpenTelemetry: config.OpenTelemetryCfg{
 						Address:          "127.0.0.1:4317",
@@ -590,7 +457,7 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:  "test",
-				IAM: &plugindef.IAM{},
+				IAM: &pfs.IAM{},
 			},
 			ExternalService: &auth.ExternalService{
 				ClientID:     "clientID",
@@ -699,9 +566,9 @@ func TestPluginEnvVarsProvider_featureToggleEnvVar(t *testing.T) {
 func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 	t.Run("backend datasource with azure settings", func(t *testing.T) {
 		cfg := &setting.Cfg{
-			Raw:                  ini.Empty(),
-			AWSAssumeRoleEnabled: true,
+			Raw: ini.Empty(),
 			Azure: &azsettings.AzureSettings{
+				AzureAuthEnabled:        true,
 				Cloud:                   azsettings.AzurePublic,
 				ManagedIdentityEnabled:  true,
 				ManagedIdentityClientId: "mock_managed_identity_client_id",
@@ -711,7 +578,8 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 					ClientId:  "mock_workload_identity_client_id",
 					TokenFile: "mock_workload_identity_token_file",
 				},
-				UserIdentityEnabled: true,
+				UserIdentityEnabled:                    true,
+				UserIdentityFallbackCredentialsEnabled: true,
 				UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{
 					TokenUrl:          "mock_user_identity_token_url",
 					ClientId:          "mock_user_identity_client_id",
@@ -726,13 +594,15 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 
 		provider := NewEnvVarsProvider(pCfg, nil)
 		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{})
-		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED=true",
+		assert.ElementsMatch(t, []string{"GF_VERSION=", "GFAZPL_AZURE_CLOUD=AzureCloud", "GFAZPL_AZURE_AUTH_ENABLED=true",
+			"GFAZPL_MANAGED_IDENTITY_ENABLED=true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID=mock_managed_identity_client_id",
 			"GFAZPL_WORKLOAD_IDENTITY_ENABLED=true",
 			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID=mock_workload_identity_tenant_id",
 			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID=mock_workload_identity_client_id",
 			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE=mock_workload_identity_token_file",
 			"GFAZPL_USER_IDENTITY_ENABLED=true",
+			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED=true",
 			"GFAZPL_USER_IDENTITY_TOKEN_URL=mock_user_identity_token_url",
 			"GFAZPL_USER_IDENTITY_CLIENT_ID=mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET=mock_user_identity_client_secret",

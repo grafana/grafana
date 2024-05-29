@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 
 import {
-  evaluteFieldMappings,
+  evaluateFieldMappings,
   FieldToConfigMapping,
   getFieldConfigFromFrame,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
@@ -42,7 +42,7 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
     length: 1,
   };
 
-  const mappingResult = evaluteFieldMappings(configFrame, options.mappings ?? [], false);
+  const mappingResult = evaluateFieldMappings(configFrame, options.mappings ?? [], false);
 
   // reduce config frame
   for (const field of configFrame.fields) {

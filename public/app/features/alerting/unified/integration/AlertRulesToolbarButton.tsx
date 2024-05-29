@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useContext } from 'react';
 
-import { ToolbarButton } from '@grafana/ui';
+import { ModalsContext, ToolbarButton } from '@grafana/ui';
 
 import { t } from '../../../../core/internationalization';
-import { useDashNavModalController } from '../../../dashboard/components/DashNav/DashNav';
 import { alertRuleApi } from '../api/alertRuleApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -14,7 +13,7 @@ interface AlertRulesToolbarButtonProps {
 }
 
 export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesToolbarButtonProps) {
-  const { showModal, hideModal } = useDashNavModalController();
+  const { showModal, hideModal } = useContext(ModalsContext);
 
   const { data: namespaces = [] } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
     ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
@@ -25,11 +24,18 @@ export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesTool
     return null;
   }
 
+  const onShowDrawer = () => {
+    showModal(AlertRulesDrawer, {
+      dashboardUid: dashboardUid,
+      onDismiss: hideModal,
+    });
+  };
+
   return (
     <ToolbarButton
       tooltip={t('dashboard.toolbar.alert-rules', 'Alert rules')}
       icon="bell"
-      onClick={() => showModal(<AlertRulesDrawer dashboardUid={dashboardUid} onClose={hideModal} />)}
+      onClick={onShowDrawer}
       key="button-alerting"
     />
   );

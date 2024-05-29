@@ -33,6 +33,17 @@ menuTitle: Sharing
 title: Share dashboards and panels
 description: Share Grafana dashboards and panels within your organization and publicly
 weight: 85
+refs:
+  image-rendering:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
+  grafana-enterprise:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
 ---
 
 # Share dashboards and panels
@@ -85,13 +96,23 @@ A dashboard snapshot shares an interactive dashboard publicly. Grafana strips se
 You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by Grafana Labs that enables you to publish dashboard snapshots to an external Grafana instance. Anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
 1. Click the **Snapshot** tab.
-1. Click **Publish to snapshots.raintank.io** or **Local Snapshot**.
+1. Click **Publish to snapshots.raintank.io** or **Publish Snapshot**.
 
    Grafana generates a link of the snapshot.
 
 1. Copy the snapshot link, and share it either within your organization or publicly on the web.
 
-If you created a snapshot by mistake, click **Delete snapshot** to remove the snapshot from your Grafana instance.
+If you created a snapshot by mistake, click **Delete snapshot** in the dialog box to remove the snapshot from your Grafana instance.
+
+#### Delete a snapshot
+
+To delete existing snapshots, follow these steps:
+
+1. In the primary menu, click **Dashboards**.
+1. Click **Snapshots** to go to the snapshots management page.
+1. Click the red **x** next to the snapshot URL that you want to delete.
+
+The snapshot is immediately deleted. You may need to clear your browser cache or use a private or incognito browser to confirm this.
 
 ### Export a dashboard as JSON
 
@@ -118,7 +139,7 @@ A template variable of the type `Constant` is automatically hidden in the dashbo
 
 You can generate and save PDF files of any dashboard.
 
-> **Note:** Available in [Grafana Enterprise][] and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 
 1. Click **Dashboards** in the left-side menu.
 1. Click the dashboard you want to share.
@@ -148,7 +169,7 @@ The **Link** tab shows the current time range, template variables, and the defau
 1. Send the copied URL to a Grafana user with authorization to view the link.
 1. You also optionally click **Direct link rendered image** to share an image of the panel.
 
-For more information, refer to [Image rendering][].
+For more information, refer to [Image rendering](ref:image-rendering).
 
 The following example shows a link to a server-side rendered PNG:
 
@@ -168,16 +189,32 @@ https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=156871968017
 
 A panel snapshot shares an interactive panel publicly. Grafana strips sensitive data leaving only the visible metric data and series names embedded in the dashboard. Panel snapshots can be accessed by anyone with the link.
 
-You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by [Grafana Labs](https://grafana.com), that enables you to publish dashboard snapshots to an external Grafana instance. You can optionally set an expiration time if you want the snapshot to be removed after a certain time period.
+You can publish snapshots to your local instance or to [snapshots.raintank.io](http://snapshots.raintank.io). The latter is a free service provided by [Grafana Labs](https://grafana.com), that enables you to publish dashboard snapshots to an external Grafana instance.
+
+{{< admonition type="note" >}}
+As of Grafana 11, the option to publish to [snapshots.raintank.io](http://snapshots.raintank.io) is no longer available for Grafana Cloud.
+{{< /admonition >}}
+
+You can optionally set an expiration time if you want the snapshot to be removed after a certain time period.
 
 1. In the **Share Panel** dialog, click **Snapshot** to go to the tab.
-1. Click **Publish to snapshots.raintank.io** or **Local Snapshot**.
+1. Click **Publish to snapshots.raintank.io** or **Publish Snapshot**.
 
    Grafana generates the link of the snapshot.
 
 1. Copy the snapshot link, and share it either within your organization or publicly on the web.
 
-If you created a snapshot by mistake, click **Delete snapshot** to remove the snapshot from your Grafana instance.
+If you created a snapshot by mistake, click **Delete snapshot** in the dialog box to remove the snapshot from your Grafana instance.
+
+#### Delete a snapshot
+
+To delete existing snapshots, follow these steps:
+
+1. In the primary menu, click **Dashboards**.
+1. Click **Snapshots** to go to the snapshots management page.
+1. Click the red **x** next to the snapshot URL that you want to delete.
+
+The snapshot is immediately deleted. You may need to clear your browser cache or use a private or incognito browser to confirm this.
 
 ### Embed panel
 
@@ -207,11 +244,3 @@ To create a library panel from the **Share Panel** dialog:
 1. In **Save in folder**, select the folder in which to save the library panel. By default, the root level is selected.
 1. Click **Create library panel** to save your changes.
 1. Save the dashboard.
-
-{{% docs/reference %}}
-[Grafana Enterprise]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
-[Grafana Enterprise]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
-
-[Image rendering]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
-[Image rendering]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
-{{% /docs/reference %}}

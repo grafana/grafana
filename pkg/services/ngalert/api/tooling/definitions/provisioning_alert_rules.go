@@ -17,6 +17,13 @@ import (
 //
 // Export all alert rules in provisioning file format.
 //
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
+//
 //     Responses:
 //       200: AlertingFileExport
 //       404: description: Not found.
@@ -36,7 +43,9 @@ import (
 //     Produces:
 //     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
 //     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
@@ -184,7 +193,9 @@ type ProvisionedAlertRule struct {
 //     Produces:
 //     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
 //     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
@@ -192,7 +203,7 @@ type ProvisionedAlertRule struct {
 
 // swagger:route PUT /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
 //
-// Update the interval of a rule group.
+// Create or update alert rule group.
 //
 //     Consumes:
 //     - application/json
@@ -249,7 +260,7 @@ type AlertRuleExport struct {
 	Title        string              `json:"title" yaml:"title" hcl:"name"`
 	Condition    string              `json:"condition" yaml:"condition" hcl:"condition"`
 	Data         []AlertQueryExport  `json:"data" yaml:"data" hcl:"data,block"`
-	DashboardUID *string             `json:"dasboardUid,omitempty" yaml:"dashboardUid,omitempty"`
+	DashboardUID *string             `json:"dashboardUid,omitempty" yaml:"dashboardUid,omitempty"`
 	PanelID      *int64              `json:"panelId,omitempty" yaml:"panelId,omitempty"`
 	NoDataState  NoDataState         `json:"noDataState" yaml:"noDataState" hcl:"no_data_state"`
 	ExecErrState ExecutionErrorState `json:"execErrState" yaml:"execErrState" hcl:"exec_err_state"`
@@ -281,11 +292,12 @@ type RelativeTimeRangeExport struct {
 
 // AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.
 type AlertRuleNotificationSettingsExport struct {
-	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty" hcl:"receiver"`
+	// Field name mismatches with Terraform provider schema are noted where applicable.
 
+	Receiver          string   `yaml:"receiver,omitempty" json:"receiver,omitempty" hcl:"contact_point"` // TF -> `contact_point`
 	GroupBy           []string `yaml:"group_by,omitempty" json:"group_by,omitempty" hcl:"group_by"`
 	GroupWait         *string  `yaml:"group_wait,omitempty" json:"group_wait,omitempty" hcl:"group_wait,optional"`
 	GroupInterval     *string  `yaml:"group_interval,omitempty" json:"group_interval,omitempty" hcl:"group_interval,optional"`
 	RepeatInterval    *string  `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty" hcl:"repeat_interval,optional"`
-	MuteTimeIntervals []string `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty" hcl:"mute_time_intervals"`
+	MuteTimeIntervals []string `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty" hcl:"mute_timings"` // TF -> `mute_timings`
 }

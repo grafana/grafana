@@ -7,6 +7,7 @@ import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { CanvasFrameOptions } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { SetBackground } from './components/SetBackground';
@@ -61,13 +62,19 @@ export class CanvasPanel extends Component<Props, State> {
       moveableAction: false,
     };
 
+    // TODO: Will need to update this approach for dashboard scenes
+    // migration (new dashboard edit experience)
+    const dashboard = getDashboardSrv().getCurrent();
+    const allowEditing = this.props.options.inlineEditing && dashboard?.editable;
+
     // Only the initial options are ever used.
     // later changes are all controlled by the scene
     this.scene = new Scene(
       this.props.options.root,
-      this.props.options.inlineEditing,
+      allowEditing,
       this.props.options.showAdvancedTypes,
       this.props.options.panZoom,
+      this.props.options.infinitePan,
       this.onUpdateScene,
       this
     );
@@ -229,7 +236,14 @@ export class CanvasPanel extends Component<Props, State> {
     const shouldShowAdvancedTypesSwitched =
       this.props.options.showAdvancedTypes !== nextProps.options.showAdvancedTypes;
     const panZoomSwitched = this.props.options.panZoom !== nextProps.options.panZoom;
-    if (this.needsReload || inlineEditingSwitched || shouldShowAdvancedTypesSwitched || panZoomSwitched) {
+    const infinitePanSwitched = this.props.options.infinitePan !== nextProps.options.infinitePan;
+    if (
+      this.needsReload ||
+      inlineEditingSwitched ||
+      shouldShowAdvancedTypesSwitched ||
+      panZoomSwitched ||
+      infinitePanSwitched
+    ) {
       if (inlineEditingSwitched) {
         // Replace scene div to prevent selecto instance leaks
         this.scene.revId++;
@@ -240,7 +254,8 @@ export class CanvasPanel extends Component<Props, State> {
         nextProps.options.root,
         nextProps.options.inlineEditing,
         nextProps.options.showAdvancedTypes,
-        nextProps.options.panZoom
+        nextProps.options.panZoom,
+        nextProps.options.infinitePan
       );
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);

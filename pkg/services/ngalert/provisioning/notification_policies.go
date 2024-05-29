@@ -70,6 +70,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		return err
 	}
 
+	receivers[""] = struct{}{} // Allow empty receiver (inheriting from parent)
 	err = tree.ValidateReceivers(receivers)
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())

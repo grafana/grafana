@@ -75,7 +75,7 @@ func RunTargetServer(opts ServerOptions) error {
 		}
 	}()
 
-	setBuildInfo(opts)
+	SetBuildInfo(opts)
 	checkPrivileges()
 
 	configOptions := strings.Split(ConfigOverrides, " ")
@@ -89,7 +89,7 @@ func RunTargetServer(opts ServerOptions) error {
 		return err
 	}
 
-	metrics.SetBuildInformation(metrics.ProvideRegisterer(cfg), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
+	metrics.SetBuildInformation(metrics.ProvideRegisterer(), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
 
 	s, err := server.InitializeModuleServer(
 		cfg,

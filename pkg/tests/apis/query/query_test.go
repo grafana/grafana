@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -43,21 +43,36 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 	})
 	require.Equal(t, "test", ds.UID)
 
-	t.Run("Call query", func(t *testing.T) {
+	t.Run("Call query with expression", func(t *testing.T) {
 		client := helper.Org1.Admin.RESTClient(t, &schema.GroupVersion{
 			Group:   "query.grafana.app",
 			Version: "v0alpha1",
 		})
 
-		q := query.GenericDataQuery{
-			Datasource: &query.DataSourceRef{
-				Type: "grafana-testdata-datasource",
-				UID:  ds.UID,
+		body, err := json.Marshal(&data.QueryDataRequest{
+			Queries: []data.DataQuery{
+				data.NewDataQuery(map[string]any{
+					"refId": "X",
+					"datasource": data.DataSourceRef{
+						Type: "grafana-testdata-datasource",
+						UID:  ds.UID,
+					},
+					"scenarioId": "csv_content",
+					"csvContent": "a\n1",
+				}),
+				data.NewDataQuery(map[string]any{
+					"refId": "Y",
+					"datasource": data.DataSourceRef{
+						UID: "__expr__",
+					},
+					"type":       "math",
+					"expression": "$X + 2",
+				}),
 			},
-		}
-		q.AdditionalProperties()["csvContent"] = "a,b,c\n1,hello,true"
-		q.AdditionalProperties()["scenarioId"] = "csv_content"
-		body, err := json.Marshal(&query.GenericQueryRequest{Queries: []query.GenericDataQuery{q}})
+		})
+
+		//fmt.Printf("%s", string(body))
+
 		require.NoError(t, err)
 
 		result := client.Post().
@@ -69,6 +84,10 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 
 		require.NoError(t, result.Error())
 
+		contentType := "?"
+		result.ContentType(&contentType)
+		require.Equal(t, "application/json", contentType)
+
 		body, err = result.Raw()
 		require.NoError(t, err)
 		fmt.Printf("OUT: %s", string(body))
@@ -76,28 +95,75 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 		rsp := &backend.QueryDataResponse{}
 		err = json.Unmarshal(body, rsp)
 		require.NoError(t, err)
-		require.Equal(t, 1, len(rsp.Responses))
+		require.Equal(t, 2, len(rsp.Responses))
 
-		frame := rsp.Responses["A"].Frames[0]
-		disp, err := frame.StringTable(100, 10)
+		frameX := rsp.Responses["X"].Frames[0]
+		frameY := rsp.Responses["Y"].Frames[0]
+
+		vX, _ := frameX.Fields[0].ConcreteAt(0)
+		vY, _ := frameY.Fields[0].ConcreteAt(0)
+
+		require.Equal(t, int64(1), vX)
+		require.Equal(t, float64(3), vY) // 1 + 2, but always float64
+	})
+
+	t.Run("Gets an error with invalid queries", func(t *testing.T) {
+		client := helper.Org1.Admin.RESTClient(t, &schema.GroupVersion{
+			Group:   "query.grafana.app",
+			Version: "v0alpha1",
+		})
+
+		body, err := json.Marshal(&data.QueryDataRequest{
+			Queries: []data.DataQuery{
+				data.NewDataQuery(map[string]any{
+					"refId": "Y",
+					"datasource": data.DataSourceRef{
+						UID: "__expr__",
+					},
+					"type":       "math",
+					"expression": "$X + 2", // invalid X does not exit
+				}),
+			},
+		})
 		require.NoError(t, err)
-		fmt.Printf("%s\n", disp)
 
-		type expect struct {
-			idx  int
-			name string
-			val  any
-		}
-		for _, check := range []expect{
-			{0, "a", int64(1)},
-			{1, "b", "hello"},
-			{2, "c", true},
-		} {
-			field := frame.Fields[check.idx]
-			require.Equal(t, check.name, field.Name)
+		result := client.Post().
+			Namespace("default").
+			Suffix("query").
+			SetHeader("Content-type", "application/json").
+			Body(body).
+			Do(context.Background())
 
-			v, _ := field.ConcreteAt(0)
-			require.Equal(t, check.val, v)
-		}
+		body, err = result.Raw()
+		//fmt.Printf("OUT: %s", string(body))
+
+		require.Error(t, err, "expecting a 400")
+		require.JSONEq(t, `{
+			"kind": "Status",
+			"apiVersion": "v1",
+			"metadata": {},
+			"status": "Failure",
+			"message": "did not execute expression [Y] due to a failure to of the dependent expression or query [X]",
+			"reason": "BadRequest",
+			"details": { "uid": "sse.dependencyError" },
+			"code": 400
+		  }`, string(body))
+		// require.JSONEq(t, `{
+		// 	"status": "Failure",
+		// 	"metadata": {},
+		// 	"message": "did not execute expression [Y] due to a failure to of the dependent expression or query [X]",
+		// 	"reason": "BadRequest",
+		// 	"details": { "group": "query.grafana.app" },
+		// 	"code": 400,
+		// 	"messageId": "sse.dependencyError",
+		// 	"extra": { "depRefId": "X", "refId": "Y" }
+		//   }`, string(body))
+
+		statusCode := -1
+		contentType := "?"
+		result.ContentType(&contentType)
+		result.StatusCode(&statusCode)
+		require.Equal(t, "application/json", contentType)
+		require.Equal(t, http.StatusBadRequest, statusCode)
 	})
 }

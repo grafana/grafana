@@ -229,7 +229,7 @@ function IdFilter(props: IdFilterProps) {
         label={`Filter by ${props.type} ID`}
         labelWidth={26}
         grow
-        tooltip={`Filters logs by ${props.type} ID`}
+        tooltip={`Filters logs by ${props.type} ID, where the ${props.type} ID should be part of the log line`}
       >
         <InlineSwitch
           id={props.id}

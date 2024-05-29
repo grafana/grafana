@@ -16,6 +16,7 @@ import {
   FolderDTO,
   FolderListItemDTO,
   ImportDashboardResponseDTO,
+  PermissionLevelString,
   SaveDashboardResponseDTO,
 } from 'app/types';
 
@@ -74,6 +75,7 @@ export interface ListFolderQueryArgs {
   page: number;
   parentUid: string | undefined;
   limit: number;
+  permission?: PermissionLevelString;
 }
 
 export const browseDashboardsAPI = createApi({
@@ -83,7 +85,10 @@ export const browseDashboardsAPI = createApi({
   endpoints: (builder) => ({
     listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
       providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
-      query: ({ page, parentUid, limit }) => ({ url: '/folders', params: { page, parentUid, limit } }),
+      query: ({ parentUid, limit, page, permission }) => ({
+        url: '/folders',
+        params: { parentUid, limit, page, permission },
+      }),
     }),
 
     // get folder info (e.g. title, parents) but *not* children

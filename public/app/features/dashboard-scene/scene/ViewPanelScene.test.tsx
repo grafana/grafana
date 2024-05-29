@@ -1,12 +1,6 @@
-import {
-  LocalValueVariable,
-  SceneGridItem,
-  SceneGridLayout,
-  SceneGridRow,
-  SceneVariableSet,
-  VizPanel,
-} from '@grafana/scenes';
+import { LocalValueVariable, SceneGridLayout, SceneGridRow, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
+import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { ViewPanelScene } from './ViewPanelScene';
 
@@ -56,7 +50,7 @@ function buildScene(options?: SceneOptions) {
             : undefined,
           height: 1,
           children: [
-            new SceneGridItem({
+            new DashboardGridItem({
               body: panel,
             }),
           ],

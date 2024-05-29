@@ -4,14 +4,17 @@ import (
 	"testing"
 	"time"
 
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/require"
+
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestJitter(t *testing.T) {
+	gen := ngmodels.RuleGen
+	genWithInterval10to600 := gen.With(gen.WithIntervalBetween(10, 600))
 	t.Run("when strategy is JitterNever", func(t *testing.T) {
 		t.Run("offset is always zero", func(t *testing.T) {
-			rules := createTestRules(100, ngmodels.WithIntervalBetween(10, 600))
+			rules := genWithInterval10to600.GenerateManyRef(100)
 			baseInterval := 10 * time.Second
 
 			for _, r := range rules {
@@ -23,7 +26,7 @@ func TestJitter(t *testing.T) {
 
 	t.Run("when strategy is JitterByGroup", func(t *testing.T) {
 		t.Run("offset is stable for the same rule", func(t *testing.T) {
-			rule := ngmodels.AlertRuleGen(ngmodels.WithIntervalBetween(10, 600))()
+			rule := genWithInterval10to600.GenerateRef()
 			baseInterval := 10 * time.Second
 			original := jitterOffsetInTicks(rule, baseInterval, JitterByGroup)
 
@@ -35,7 +38,7 @@ func TestJitter(t *testing.T) {
 
 		t.Run("offset is on the interval [0, interval/baseInterval)", func(t *testing.T) {
 			baseInterval := 10 * time.Second
-			rules := createTestRules(1000, ngmodels.WithIntervalBetween(10, 600))
+			rules := genWithInterval10to600.GenerateManyRef(1000)
 
 			for _, r := range rules {
 				offset := jitterOffsetInTicks(r, baseInterval, JitterByGroup)
@@ -49,8 +52,8 @@ func TestJitter(t *testing.T) {
 			baseInterval := 10 * time.Second
 			group1 := ngmodels.AlertRuleGroupKey{}
 			group2 := ngmodels.AlertRuleGroupKey{}
-			rules1 := createTestRules(1000, ngmodels.WithInterval(60*time.Second), ngmodels.WithGroupKey(group1))
-			rules2 := createTestRules(1000, ngmodels.WithInterval(1*time.Hour), ngmodels.WithGroupKey(group2))
+			rules1 := gen.With(gen.WithInterval(60*time.Second), gen.WithGroupKey(group1)).GenerateManyRef(1000)
+			rules2 := gen.With(gen.WithInterval(1*time.Hour), gen.WithGroupKey(group2)).GenerateManyRef(1000)
 
 			group1Offset := jitterOffsetInTicks(rules1[0], baseInterval, JitterByGroup)
 			for _, r := range rules1 {
@@ -67,7 +70,7 @@ func TestJitter(t *testing.T) {
 
 	t.Run("when strategy is JitterByRule", func(t *testing.T) {
 		t.Run("offset is stable for the same rule", func(t *testing.T) {
-			rule := ngmodels.AlertRuleGen(ngmodels.WithIntervalBetween(10, 600))()
+			rule := genWithInterval10to600.GenerateRef()
 			baseInterval := 10 * time.Second
 			original := jitterOffsetInTicks(rule, baseInterval, JitterByRule)
 
@@ -79,7 +82,7 @@ func TestJitter(t *testing.T) {
 
 		t.Run("offset is on the interval [0, interval/baseInterval)", func(t *testing.T) {
 			baseInterval := 10 * time.Second
-			rules := createTestRules(1000, ngmodels.WithIntervalBetween(10, 600))
+			rules := genWithInterval10to600.GenerateManyRef(1000)
 
 			for _, r := range rules {
 				offset := jitterOffsetInTicks(r, baseInterval, JitterByRule)
@@ -89,12 +92,4 @@ func TestJitter(t *testing.T) {
 			}
 		})
 	})
-}
-
-func createTestRules(n int, mutators ...ngmodels.AlertRuleMutator) []*ngmodels.AlertRule {
-	result := make([]*ngmodels.AlertRule, 0, n)
-	for i := 0; i < n; i++ {
-		result = append(result, ngmodels.AlertRuleGen(mutators...)())
-	}
-	return result
 }

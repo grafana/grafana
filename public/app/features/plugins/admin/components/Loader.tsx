@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { LoadingPlaceholder } from '@grafana/ui';
+import { Box, LoadingPlaceholder } from '@grafana/ui';
 
 export interface Props {
   text?: string;
@@ -8,8 +8,8 @@ export interface Props {
 
 export const Loader = ({ text = 'Loading...' }: Props) => {
   return (
-    <div className="page-loader-wrapper">
+    <Box display="flex" alignItems="center" direction="column" justifyContent="center" paddingTop={10}>
       <LoadingPlaceholder text={text} />
-    </div>
+    </Box>
   );
 };

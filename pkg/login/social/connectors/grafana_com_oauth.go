@@ -37,14 +37,14 @@ type OrgRecord struct {
 	Login string `json:"login"`
 }
 
-func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGrafanaCom {
+func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGrafanaCom {
 	// Override necessary settings
 	info.AuthUrl = cfg.GrafanaComURL + "/oauth2/authorize"
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
 	info.AuthStyle = "inheader"
 
 	provider := &SocialGrafanaCom{
-		SocialBase:           newSocialBase(social.GrafanaComProviderName, info, features, cfg),
+		SocialBase:           newSocialBase(social.GrafanaComProviderName, orgRoleMapper, info, features, cfg),
 		url:                  cfg.GrafanaComURL,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 	}
@@ -87,7 +87,7 @@ func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSet
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(social.GrafanaComProviderName, newInfo)
+	s.updateInfo(ctx, social.GrafanaComProviderName, newInfo)
 
 	s.url = s.cfg.GrafanaComURL
 	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
@@ -99,7 +99,7 @@ func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {
 	return true
 }
 
-func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool {
+func (s *SocialGrafanaCom) isOrganizationMember(organizations []OrgRecord) bool {
 	if len(s.allowedOrganizations) == 0 {
 		return true
 	}
@@ -117,6 +117,9 @@ func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool 
 
 // UserInfo is used for login credentials for the user
 func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ *oauth2.Token) (*social.BasicUserInfo, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	var data struct {
 		Id    int         `json:"id"`
 		Name  string      `json:"name"`
@@ -125,8 +128,6 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 		Role  string      `json:"role"`
 		Orgs  []OrgRecord `json:"orgs"`
 	}
-
-	info := s.GetOAuthInfo()
 
 	response, err := s.httpGet(ctx, client, s.url+"/api/oauth2/user")
 
@@ -141,7 +142,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 
 	// on login we do not want to display the role from the external provider
 	var role roletype.RoleType
-	if !info.SkipOrgRoleSync {
+	if !s.info.SkipOrgRoleSync {
 		role = org.RoleType(data.Role)
 	}
 	userInfo := &social.BasicUserInfo{
@@ -152,7 +153,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 		Role:  role,
 	}
 
-	if !s.IsOrganizationMember(data.Orgs) {
+	if !s.isOrganizationMember(data.Orgs) {
 		return nil, ErrMissingOrganizationMembership.Errorf(
 			"User is not a member of any of the allowed organizations: %v. Returned Organizations: %v",
 			s.allowedOrganizations, data.Orgs)

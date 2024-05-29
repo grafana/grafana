@@ -96,6 +96,7 @@ type TempUserDTO struct {
 	Name           string         `json:"name"`
 	Email          string         `json:"email"`
 	Role           org.RoleType   `json:"role"`
+	InvitedByID    int64          `json:"-" xorm:"invited_by_id"`
 	InvitedByLogin string         `json:"invitedByLogin"`
 	InvitedByEmail string         `json:"invitedByEmail"`
 	InvitedByName  string         `json:"invitedByName"`

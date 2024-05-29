@@ -1,4 +1,12 @@
-import { MultiValueVariable, sceneGraph } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import {
+  AdHocFiltersVariable,
+  GroupByVariable,
+  MultiValueVariable,
+  sceneGraph,
+  SceneRefreshPicker,
+} from '@grafana/scenes';
+import { VariableModel } from '@grafana/schema';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -36,30 +44,188 @@ describe('getDashboardChangesFromScene', () => {
     expect(result.diffCount).toBe(1);
   });
 
-  it('Can detect variable change', () => {
+  it('Can detect folder change', () => {
     const dashboard = setup();
 
-    const appVar = sceneGraph.lookupVariable('app', dashboard) as MultiValueVariable;
-    appVar.changeValueTo('app2');
+    dashboard.state.meta.folderUid = 'folder-2';
 
-    const result = getDashboardChangesFromScene(dashboard, false, false);
-
-    expect(result.hasVariableValueChanges).toBe(true);
-    expect(result.hasChanges).toBe(false);
-    expect(result.diffCount).toBe(0);
+    const result = getDashboardChangesFromScene(dashboard, false);
+    expect(result.hasChanges).toBe(true);
+    expect(result.diffCount).toBe(0); // Diff count is 0 because the diff contemplate only the model
+    expect(result.hasFolderChanges).toBe(true);
   });
 
-  it('Can save variable value change', () => {
+  it('Can detect refresh changed', () => {
     const dashboard = setup();
 
-    const appVar = sceneGraph.lookupVariable('app', dashboard) as MultiValueVariable;
-    appVar.changeValueTo('app2');
+    const refreshPicker = sceneGraph.findObject(dashboard, (obj) => obj instanceof SceneRefreshPicker);
+    if (refreshPicker instanceof SceneRefreshPicker) {
+      refreshPicker.setState({ refresh: '5s' });
+    }
 
-    const result = getDashboardChangesFromScene(dashboard, false, true);
+    const result = getDashboardChangesFromScene(dashboard, false, false, false);
+    expect(result.hasChanges).toBe(false);
+    expect(result.diffCount).toBe(0);
+    expect(result.hasRefreshChange).toBe(true);
+  });
 
-    expect(result.hasVariableValueChanges).toBe(true);
+  it('Can save refresh change', () => {
+    const dashboard = setup();
+
+    const refreshPicker = sceneGraph.findObject(dashboard, (obj) => obj instanceof SceneRefreshPicker);
+    if (refreshPicker instanceof SceneRefreshPicker) {
+      refreshPicker.setState({ refresh: '5s' });
+    }
+
+    const result = getDashboardChangesFromScene(dashboard, false, false, true);
     expect(result.hasChanges).toBe(true);
-    expect(result.diffCount).toBe(2);
+    expect(result.diffCount).toBe(1);
+  });
+
+  describe('variable changes', () => {
+    it('Can detect variable change', () => {
+      const dashboard = setup();
+
+      const appVar = sceneGraph.lookupVariable('app', dashboard) as MultiValueVariable;
+      appVar.changeValueTo('app2');
+
+      const result = getDashboardChangesFromScene(dashboard, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(true);
+      expect(result.hasChanges).toBe(false);
+      expect(result.diffCount).toBe(0);
+    });
+
+    it('Can save variable value change', () => {
+      const dashboard = setup();
+
+      const appVar = sceneGraph.lookupVariable('app', dashboard) as MultiValueVariable;
+      appVar.changeValueTo('app2');
+
+      const result = getDashboardChangesFromScene(dashboard, false, true);
+
+      expect(result.hasVariableValueChanges).toBe(true);
+      expect(result.hasChanges).toBe(true);
+      expect(result.diffCount).toBe(2);
+    });
+
+    describe('Experimental variables', () => {
+      beforeAll(() => {
+        config.featureToggles.groupByVariable = true;
+      });
+
+      afterAll(() => {
+        config.featureToggles.groupByVariable = false;
+      });
+
+      it('Can detect group by static options change', () => {
+        const dashboard = transformSaveModelToScene({
+          dashboard: {
+            title: 'hello',
+            uid: 'my-uid',
+            schemaVersion: 30,
+            panels: [
+              {
+                id: 1,
+                title: 'Panel 1',
+                type: 'text',
+              },
+            ],
+            version: 10,
+            templating: {
+              list: [
+                {
+                  type: 'groupby',
+                  datasource: {
+                    type: 'ds',
+                    uid: 'ds-uid',
+                  },
+                  name: 'GroupBy',
+                  options: [
+                    {
+                      text: 'Host',
+                      value: 'host',
+                    },
+                    {
+                      text: 'Region',
+                      value: 'region',
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+          meta: {},
+        });
+        const initialSaveModel = transformSceneToSaveModel(dashboard);
+        dashboard.setInitialSaveModel(initialSaveModel);
+
+        const variable = sceneGraph.lookupVariable('GroupBy', dashboard) as GroupByVariable;
+        variable.setState({ defaultOptions: [{ text: 'Host', value: 'host' }] });
+        const result = getDashboardChangesFromScene(dashboard, false, true);
+
+        expect(result.hasVariableValueChanges).toBe(false);
+        expect(result.hasChanges).toBe(true);
+        expect(result.diffCount).toBe(1);
+      });
+
+      it('Can detect adhoc filter static options change', () => {
+        const adhocVar = {
+          id: 'adhoc',
+          name: 'adhoc',
+          label: 'Adhoc Label',
+          description: 'Adhoc Description',
+          type: 'adhoc',
+          datasource: {
+            uid: 'gdev-prometheus',
+            type: 'prometheus',
+          },
+          filters: [],
+          baseFilters: [],
+          defaultKeys: [
+            {
+              text: 'Host',
+              value: 'host',
+            },
+            {
+              text: 'Region',
+              value: 'region',
+            },
+          ],
+        } as VariableModel;
+
+        const dashboard = transformSaveModelToScene({
+          dashboard: {
+            title: 'hello',
+            uid: 'my-uid',
+            schemaVersion: 30,
+            panels: [
+              {
+                id: 1,
+                title: 'Panel 1',
+                type: 'text',
+              },
+            ],
+            version: 10,
+            templating: {
+              list: [adhocVar],
+            },
+          },
+          meta: {},
+        });
+
+        const initialSaveModel = transformSceneToSaveModel(dashboard);
+        dashboard.setInitialSaveModel(initialSaveModel);
+
+        const variable = sceneGraph.lookupVariable('adhoc', dashboard) as AdHocFiltersVariable;
+        variable.setState({ defaultKeys: [{ text: 'Host', value: 'host' }] });
+        const result = getDashboardChangesFromScene(dashboard, false, false);
+
+        expect(result.hasVariableValueChanges).toBe(false);
+        expect(result.hasChanges).toBe(true);
+        expect(result.diffCount).toBe(1);
+      });
+    });
   });
 
   describe('Saving from panel edit', () => {

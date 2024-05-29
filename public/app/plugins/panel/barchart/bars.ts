@@ -1,6 +1,6 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 
-import { DataFrame, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { DataFrame, dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import {
   StackingMode,
@@ -10,9 +10,11 @@ import {
   VizTextDisplayOptions,
   VizLegendOptions,
 } from '@grafana/schema';
-import { measureText, PlotTooltipInterpolator } from '@grafana/ui';
-import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
+import { measureText } from '@grafana/ui';
+import { timeUnitSize } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { StackingGroup, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
+
+const intervals = systemDateFormats.interval;
 
 import { distribute, SPACE_BETWEEN } from './distribute';
 import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
@@ -54,8 +56,6 @@ export interface BarsOptions {
   formatShortValue: (seriesIdx: number, value: unknown) => string;
   timeZone?: TimeZone;
   text?: VizTextDisplayOptions;
-  onHover?: (seriesIdx: number, valueIdx: number) => void;
-  onLeave?: (seriesIdx: number, valueIdx: number) => void;
   hoverMulti?: boolean;
   legend?: VizLegendOptions;
   xSpacing?: number;
@@ -130,6 +130,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     showValue,
     xSpacing = 0,
     hoverMulti = false,
+    timeZone = 'browser',
   } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
@@ -179,22 +180,25 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   // the splits passed into here are data[0] values looked up by the indices returned from splits()
   const xValues: Axis.Values = (u, splits, axisIdx, foundSpace, foundIncr) => {
     if (opts.xTimeAuto) {
-      // bit of a hack:
-      // temporarily set x scale range to temporal (as expected by formatTime()) rather than ordinal
-      let xScale = u.scales.x;
-      let oMin = xScale.min;
-      let oMax = xScale.max;
+      let format = intervals.year;
 
-      xScale.min = u.data[0][0];
-      xScale.max = u.data[0][u.data[0].length - 1];
+      if (foundIncr < timeUnitSize.second) {
+        format = intervals.millisecond;
+      } else if (foundIncr < timeUnitSize.minute) {
+        format = intervals.second;
+      } else if (foundIncr < timeUnitSize.hour) {
+        format = intervals.minute;
+      } else if (foundIncr < timeUnitSize.day) {
+        format = intervals.hour;
+      } else if (foundIncr < timeUnitSize.month) {
+        format = intervals.day;
+      } else if (foundIncr < timeUnitSize.year) {
+        format = intervals.month;
+      } else {
+        format = intervals.year;
+      }
 
-      let vals = formatTime(u, splits, axisIdx, foundSpace, foundIncr);
-
-      // revert
-      xScale.min = oMin;
-      xScale.max = oMax;
-
-      return vals;
+      return splits.map((v) => (v == null ? '' : dateTimeFormat(v, { format, timeZone })));
     }
 
     return splits.map((v) => (isXHorizontal ? formatShortValue(0, v) : formatValue(0, v)));
@@ -628,22 +632,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     u.ctx.restore();
   };
 
-  // handle hover interaction with quadtree probing
-  const interpolateTooltip: PlotTooltipInterpolator = (
-    updateActiveSeriesIdx,
-    updateActiveDatapointIdx,
-    updateTooltipPosition,
-    u
-  ) => {
-    if (hRect) {
-      updateActiveSeriesIdx(hRect.sidx);
-      updateActiveDatapointIdx(hRect.didx);
-      updateTooltipPosition();
-    } else {
-      updateTooltipPosition(true);
-    }
-  };
-
   let alignedTotals: AlignedData | null = null;
 
   function prepData(frames: DataFrame[], stackingGroups: StackingGroup[]) {
@@ -667,7 +655,6 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     init,
     drawClear,
     draw,
-    interpolateTooltip,
     prepData,
   };
 }

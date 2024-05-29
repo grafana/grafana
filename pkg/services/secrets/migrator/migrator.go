@@ -45,6 +45,7 @@ func ProvideSecretsMigrator(
 		jsonSecret{tableName: "plugin_setting"},
 		b64Secret{simpleSecret: simpleSecret{tableName: "signing_key", columnName: "private_key"}, encoding: base64.StdEncoding},
 		alertingSecret{},
+		ssoSettingsSecret{},
 	}
 
 	return &SecretsMigrator{
@@ -156,6 +157,8 @@ type jsonSecret struct {
 }
 
 type alertingSecret struct{}
+
+type ssoSettingsSecret struct{}
 
 func nowInUTC() string {
 	return time.Now().UTC().Format("2006-01-02 15:04:05")

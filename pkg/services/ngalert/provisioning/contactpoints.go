@@ -338,7 +338,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 		}
 	}
 	if fullRemoval && isContactPointInUse(name, []*apimodels.Route{revision.cfg.AlertmanagerConfig.Route}) {
-		return fmt.Errorf("contact point '%s' is currently used by a notification policy", name)
+		return ErrContactPointReferenced
 	}
 
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {

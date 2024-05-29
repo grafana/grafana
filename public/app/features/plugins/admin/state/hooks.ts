@@ -84,7 +84,10 @@ export const useLocalFetchStatus = () => {
 };
 
 export const useFetchStatus = () => {
-  const isLoading = useSelector(selectIsRequestPending(fetchAll.typePrefix));
+  const isAllLoading = useSelector(selectIsRequestPending(fetchAll.typePrefix));
+  const isLocalLoading = useSelector(selectIsRequestPending('plugins/fetchLocal'));
+  const isRemoteLoading = useSelector(selectIsRequestPending('plugins/fetchRemote'));
+  const isLoading = isAllLoading || isLocalLoading || isRemoteLoading;
   const error = useSelector(selectRequestError(fetchAll.typePrefix));
 
   return { isLoading, error };

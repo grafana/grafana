@@ -39,11 +39,6 @@ if [ "$1" = configure ]; then
     cp "${GRAFANA_HOME}/conf/provisioning/datasources/sample.yaml" $PROVISIONING_CFG_DIR/datasources/sample.yaml
   fi
 
-  if [ ! -d $PROVISIONING_CFG_DIR/notifiers ]; then
-    mkdir -p $PROVISIONING_CFG_DIR/notifiers
-    cp "${GRAFANA_HOME}/conf/provisioning/notifiers/sample.yaml" $PROVISIONING_CFG_DIR/notifiers/sample.yaml
-  fi
-
   if [ ! -d $PROVISIONING_CFG_DIR/plugins ]; then
     mkdir -p $PROVISIONING_CFG_DIR/plugins
     cp "${GRAFANA_HOME}/conf/provisioning/plugins/sample.yaml" $PROVISIONING_CFG_DIR/plugins/sample.yaml

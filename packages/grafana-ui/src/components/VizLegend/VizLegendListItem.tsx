@@ -70,7 +70,13 @@ export const VizLegendListItem = <T = unknown,>({
       className={cx(styles.itemWrapper, item.disabled && styles.itemDisabled, className)}
       data-testid={selectors.components.VizLegend.seriesName(item.label)}
     >
-      <VizLegendSeriesIcon seriesName={item.label} color={item.color} gradient={item.gradient} readonly={readonly} />
+      <VizLegendSeriesIcon
+        seriesName={item.fieldName ?? item.label}
+        color={item.color}
+        gradient={item.gradient}
+        readonly={readonly}
+        lineStyle={item.lineStyle}
+      />
       <button
         disabled={readonly}
         type="button"

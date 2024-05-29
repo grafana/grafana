@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { isEmptyObject, SelectableValue } from '@grafana/data';
+import { isEmptyObject, SelectableValue, VariableRefresh } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -8,10 +8,10 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
-import { VariableRefresh } from '../../../variables/types';
 import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
 
 import { ShareModalTabProps } from './types';
+import { getTrackingSource } from './utils';
 
 interface Props extends ShareModalTabProps {}
 
@@ -118,11 +118,13 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         DashboardInteractions.publishSnapshotClicked({
           expires: snapshotExpires,
           timeout: timeoutSeconds,
+          shareResource: getTrackingSource(this.props.panel),
         });
       } else {
         DashboardInteractions.publishSnapshotLocalClicked({
           expires: snapshotExpires,
           timeout: timeoutSeconds,
+          shareResource: getTrackingSource(this.props.panel),
         });
       }
       this.setState({ isLoading: false });

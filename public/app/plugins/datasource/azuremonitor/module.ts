@@ -1,7 +1,7 @@
 import { DataSourcePlugin, DashboardLoadedEvent } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 
-import { ConfigEditor } from './components/ConfigEditor';
+import { ConfigEditor } from './components/ConfigEditor/ConfigEditor';
 import AzureMonitorQueryEditor from './components/QueryEditor';
 import Datasource from './datasource';
 import pluginJson from './plugin.json';

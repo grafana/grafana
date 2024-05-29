@@ -44,7 +44,6 @@ Grafana supports configuration as code through _provisioning_. The resources tha
 
 - [Dashboards](/docs/grafana/latest/administration/provisioning/#dashboards)
 - [Data sources](/docs/grafana/latest/administration/provisioning/#datasources)
-- [Alert notification channels](/docs/grafana/latest/administration/provisioning/#alert-notification-channels)
 
 ## Set the provisioning directory
 
@@ -68,8 +67,6 @@ provisioning/
   datasources/
     <yaml files>
   dashboards/
-    <yaml files>
-  notifiers/
     <yaml files>
 ```
 

@@ -2,10 +2,11 @@ import * as H from 'history';
 
 import { NavIndex } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { SceneGridItem, SceneGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
-import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
-import { getPanelIdForVizPanel, getDashboardSceneFor } from '../utils/utils';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
@@ -13,11 +14,14 @@ import { PanelOptionsPane } from './PanelOptionsPane';
 import { VizPanelManager, VizPanelManagerState } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
+  isNewPanel: boolean;
   isDirty?: boolean;
   panelId: number;
   optionsPane: PanelOptionsPane;
   dataPane?: PanelDataPane;
   vizManager: VizPanelManager;
+  showLibraryPanelSaveModal?: boolean;
+  showLibraryPanelUnlinkModal?: boolean;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
@@ -56,12 +60,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     return () => {
       if (!this._discardChanges) {
         this.commitChanges();
+      } else if (this.state.isNewPanel) {
+        getDashboardSceneFor(this).removePanel(panelManager.state.sourcePanel.resolve()!);
       }
     };
   }
 
   private _initDataPane(pluginId: string) {
-    const skipDataQuery = config.panels[pluginId].skipDataQuery;
+    const skipDataQuery = config.panels[pluginId]?.skipDataQuery;
 
     if (skipDataQuery && this.state.dataPane) {
       locationService.partial({ tab: null }, true);
@@ -101,81 +107,26 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const panelManager = this.state.vizManager;
     const sourcePanel = panelManager.state.sourcePanel.resolve();
     const sourcePanelParent = sourcePanel!.parent;
+    const isLibraryPanel = sourcePanelParent instanceof LibraryVizPanel;
 
-    const normalToRepeat = !this._initialRepeatOptions.repeat && panelManager.state.repeat;
-    const repeatToNormal = this._initialRepeatOptions.repeat && !panelManager.state.repeat;
+    const gridItem = isLibraryPanel ? sourcePanelParent.parent : sourcePanelParent;
 
-    if (sourcePanelParent instanceof SceneGridItem) {
-      if (normalToRepeat) {
-        this.replaceSceneGridItemWithPanelRepeater(sourcePanelParent);
-      } else {
-        panelManager.commitChanges();
-      }
-    } else if (sourcePanelParent instanceof PanelRepeaterGridItem) {
-      if (repeatToNormal) {
-        this.replacePanelRepeaterWithGridItem(sourcePanelParent);
-      } else {
-        this.handleRepeatOptionChanges(sourcePanelParent);
-      }
-    } else {
+    if (isLibraryPanel) {
+      // Library panels handled separately
+      return;
+    }
+
+    if (!(gridItem instanceof DashboardGridItem)) {
       console.error('Unsupported scene object type');
-    }
-  }
-
-  private replaceSceneGridItemWithPanelRepeater(gridItem: SceneGridItem) {
-    const gridLayout = gridItem.parent;
-    if (!(gridLayout instanceof SceneGridLayout)) {
-      console.error('Expected grandparent to be SceneGridLayout!');
       return;
     }
 
-    const panelManager = this.state.vizManager;
-    const repeatDirection = panelManager.state.repeatDirection ?? 'h';
-    const repeater = new PanelRepeaterGridItem({
-      key: gridItem.state.key,
-      x: gridItem.state.x,
-      y: gridItem.state.y,
-      width: repeatDirection === 'h' ? 24 : gridItem.state.width,
-      height: gridItem.state.height,
-      itemHeight: gridItem.state.height,
-      source: panelManager.getPanelCloneWithData(),
-      variableName: panelManager.state.repeat!,
-      repeatedPanels: [],
-      repeatDirection: panelManager.state.repeatDirection,
-      maxPerRow: panelManager.state.maxPerRow,
-    });
-    gridLayout.setState({
-      children: gridLayout.state.children.map((child) => (child.state.key === gridItem.state.key ? repeater : child)),
-    });
+    this.commitChangesToSource(gridItem);
   }
 
-  private replacePanelRepeaterWithGridItem(panelRepeater: PanelRepeaterGridItem) {
-    const gridLayout = panelRepeater.parent;
-    if (!(gridLayout instanceof SceneGridLayout)) {
-      console.error('Expected grandparent to be SceneGridLayout!');
-      return;
-    }
-
-    const panelManager = this.state.vizManager;
-    const panelClone = panelManager.getPanelCloneWithData();
-    const gridItem = new SceneGridItem({
-      key: panelRepeater.state.key,
-      x: panelRepeater.state.x,
-      y: panelRepeater.state.y,
-      width: this._initialRepeatOptions.repeatDirection === 'h' ? 8 : panelRepeater.state.width,
-      height: this._initialRepeatOptions.repeatDirection === 'v' ? 8 : panelRepeater.state.height,
-      body: panelClone,
-    });
-    gridLayout.setState({
-      children: gridLayout.state.children.map((child) =>
-        child.state.key === panelRepeater.state.key ? gridItem : child
-      ),
-    });
-  }
-
-  private handleRepeatOptionChanges(panelRepeater: PanelRepeaterGridItem) {
-    let width = panelRepeater.state.width ?? 1;
-    let height = panelRepeater.state.height;
+  private commitChangesToSource(gridItem: DashboardGridItem) {
+    let width = gridItem.state.width ?? 1;
+    let height = gridItem.state.height;
 
     const panelManager = this.state.vizManager;
     const horizontalToVertical =
@@ -183,13 +134,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const verticalToHorizontal =
       this._initialRepeatOptions.repeatDirection === 'v' && panelManager.state.repeatDirection === 'h';
     if (horizontalToVertical) {
-      width = Math.floor(width / (panelRepeater.state.maxPerRow ?? 1));
+      width = Math.floor(width / (gridItem.state.maxPerRow ?? 1));
     } else if (verticalToHorizontal) {
       width = 24;
     }
 
-    panelRepeater.setState({
-      source: panelManager.getPanelCloneWithData(),
+    gridItem.setState({
+      body: panelManager.state.panel.clone(),
       repeatDirection: panelManager.state.repeatDirection,
       variableName: panelManager.state.repeat,
       maxPerRow: panelManager.state.maxPerRow,
@@ -197,12 +148,39 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       height,
     });
   }
+
+  public onSaveLibraryPanel = () => {
+    this.setState({ showLibraryPanelSaveModal: true });
+  };
+
+  public onConfirmSaveLibraryPanel = () => {
+    this.state.vizManager.commitChanges();
+    locationService.partial({ editPanel: null });
+  };
+
+  public onDismissLibraryPanelSaveModal = () => {
+    this.setState({ showLibraryPanelSaveModal: false });
+  };
+
+  public onUnlinkLibraryPanel = () => {
+    this.setState({ showLibraryPanelUnlinkModal: true });
+  };
+
+  public onDismissUnlinkLibraryPanelModal = () => {
+    this.setState({ showLibraryPanelUnlinkModal: false });
+  };
+
+  public onConfirmUnlinkLibraryPanel = () => {
+    this.state.vizManager.unlinkLibraryPanel();
+    this.setState({ showLibraryPanelUnlinkModal: false });
+  };
 }
 
-export function buildPanelEditScene(panel: VizPanel): PanelEditor {
+export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
   return new PanelEditor({
     panelId: getPanelIdForVizPanel(panel),
     optionsPane: new PanelOptionsPane({}),
     vizManager: VizPanelManager.createFor(panel),
+    isNewPanel,
   });
 }

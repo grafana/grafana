@@ -17,7 +17,7 @@ import {
   AdHocFiltersVariable,
   SceneVariableState,
 } from '@grafana/scenes';
-import { VariableType } from '@grafana/schema';
+import { VariableHide, VariableType } from '@grafana/schema';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
@@ -127,7 +127,7 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'query':
       return new QueryVariable(initialState);
     case 'constant':
-      return new ConstantVariable(initialState);
+      return new ConstantVariable({ ...initialState, hide: VariableHide.hideVariable });
     case 'interval':
       return new IntervalVariable(initialState);
     case 'datasource':

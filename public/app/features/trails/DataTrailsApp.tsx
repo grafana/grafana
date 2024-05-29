@@ -4,13 +4,15 @@ import { Route, Switch } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { getUrlSyncManager, SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, getUrlSyncManager } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
+import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
+import { HOME_ROUTE, TRAILS_ROUTE } from './shared';
 import { getMetricName, getUrlForTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsAppState extends SceneObjectState {
@@ -36,18 +38,21 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
       <Switch>
         <Route
           exact={true}
-          path="/explore/metrics"
+          path={HOME_ROUTE}
           render={() => (
-            <Page navId="explore/metrics" layout={PageLayoutType.Custom}>
-              <div className={styles.customPage}>
-                <home.Component model={home} />
-              </div>
+            <Page
+              navId="explore/metrics"
+              layout={PageLayoutType.Standard}
+              renderTitle={() => <MetricsHeader />}
+              subTitle=""
+            >
+              <home.Component model={home} />
             </Page>
           )}
         />
         <Route
           exact={true}
-          path="/explore/metrics/trail"
+          path={TRAILS_ROUTE}
           render={() => (
             <Page
               navId="explore/metrics"
@@ -70,7 +75,6 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
 
   useEffect(() => {
     if (!isInitialized) {
-      getUrlSyncManager().initSync(trail);
       getTrailStore().setRecentTrail(trail);
       setIsInitialized(true);
     }
@@ -88,12 +92,40 @@ let dataTrailsApp: DataTrailsApp;
 export function getDataTrailsApp() {
   if (!dataTrailsApp) {
     dataTrailsApp = new DataTrailsApp({
-      trail: newMetricsTrail(),
+      trail: getInitialTrail(),
       home: new DataTrailsHome({}),
     });
   }
 
   return dataTrailsApp;
+}
+
+/**
+ * Get the initial trail for the app to work with based on the current URL
+ *
+ * It will either be a new trail that will be started based on the state represented
+ * in the URL parameters, or it will be the most recently used trail (according to the trail store)
+ * which has its current history step matching the URL parameters.
+ *
+ * The reason for trying to reinitialize from the recent trail is to resolve an issue
+ * where refreshing the browser would wipe the step history. This allows you to preserve
+ * it between browser refreshes, or when reaccessing the same URL.
+ */
+function getInitialTrail() {
+  const newTrail = newMetricsTrail();
+
+  // Set the initial state of the newTrail based on the URL,
+  // In case we are initializing from an externally created URL or a page reload
+  getUrlSyncManager().initSync(newTrail);
+  // Remove the URL sync for now. It will be restored on the trail if it is activated.
+  getUrlSyncManager().cleanUp(newTrail);
+
+  // If one of the recent trails is a match to the newTrail derived from the current URL,
+  // let's restore that trail so that a page refresh doesn't create a new trail.
+  const recentMatchingTrail = getTrailStore().findMatchingRecentTrail(newTrail)?.resolve();
+
+  // If there is a matching trail, initialize with that. Otherwise, use the new trail.
+  return recentMatchingTrail || newTrail;
 }
 
 function getStyles(theme: GrafanaTheme2) {

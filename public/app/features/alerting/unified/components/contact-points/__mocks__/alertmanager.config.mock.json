@@ -73,6 +73,19 @@
             "secureFields": { "token": true }
           }
         ]
+      },
+      {
+        "name": "OnCall Conctact point",
+        "grafana_managed_receiver_configs": [
+          {
+            "name": "Oncall-integration",
+            "type": "oncall",
+            "settings": {
+              "url": "https://oncall-endpoint.example.com"
+            },
+            "disableResolveMessage": false
+          }
+        ]
       }
     ]
   }

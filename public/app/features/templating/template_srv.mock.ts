@@ -1,4 +1,4 @@
-import { ScopedVars, TimeRange, TypedVariableModel } from '@grafana/data';
+import { ScopedVars, TimeRange, TypedVariableModel, VariableOption } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
 import { variableRegex } from '../variables/utils';
@@ -13,18 +13,37 @@ import { variableRegex } from '../variables/utils';
  */
 export class TemplateSrvMock implements TemplateSrv {
   private regex = variableRegex;
-  constructor(private variables: Record<string, string>) {}
+  constructor(private variables: TypedVariableModel[]) {}
 
   getVariables(): TypedVariableModel[] {
-    return Object.keys(this.variables).map((key) => {
-      return {
-        type: 'custom',
-        name: key,
-        label: key,
+    if (!this.variables) {
+      return [];
+    }
+
+    return this.variables.reduce((acc: TypedVariableModel[], variable) => {
+      const commonProps = {
+        type: variable.type ?? 'custom',
+        name: variable.name ?? 'test',
+        label: variable.label ?? 'test',
       };
-      // TODO: we remove this type assertion in a later PR
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    }) as TypedVariableModel[];
+      if (variable.type === 'datasource') {
+        acc.push({
+          ...commonProps,
+          current: {
+            text: variable.current?.text,
+            value: variable.current?.value,
+          } as VariableOption,
+          options: variable.options ?? [],
+          multi: variable.multi ?? false,
+          includeAll: variable.includeAll ?? false,
+        } as TypedVariableModel);
+      } else {
+        acc.push({
+          ...commonProps,
+        } as TypedVariableModel);
+      }
+      return acc as TypedVariableModel[];
+    }, []);
   }
 
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
@@ -35,8 +54,7 @@ export class TemplateSrvMock implements TemplateSrv {
     this.regex.lastIndex = 0;
 
     return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
-      const variableName = var1 || var2 || var3;
-      return this.variables[variableName];
+      return var1 || var2 || var3;
     });
   }
 

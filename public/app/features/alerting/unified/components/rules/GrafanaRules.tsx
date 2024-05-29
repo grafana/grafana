@@ -3,7 +3,7 @@ import React from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, LoadingPlaceholder, Pagination, Spinner, useStyles2 } from '@grafana/ui';
+import { Button, LoadingPlaceholder, Pagination, Spinner, useStyles2, Text } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -58,7 +58,9 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
     <section className={styles.wrapper}>
       <div className={styles.sectionHeader}>
         <div className={styles.headerRow}>
-          <h5>Grafana</h5>
+          <Text element="h2" variant="h5">
+            Grafana
+          </Text>
           {loading ? <LoadingPlaceholder className={styles.loader} text="Loading..." /> : <div />}
           {hasGrafanaAlerts && canExportRules && (
             <Button
@@ -99,21 +101,21 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  loader: css`
-    margin-bottom: 0;
-  `,
-  sectionHeader: css`
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  wrapper: css`
-    margin-bottom: ${theme.spacing(4)};
-  `,
-  spinner: css`
-    text-align: center;
-    padding: ${theme.spacing(2)};
-  `,
+  loader: css({
+    marginBottom: 0,
+  }),
+  sectionHeader: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing(1),
+  }),
+  wrapper: css({
+    marginBottom: theme.spacing(4),
+  }),
+  spinner: css({
+    textAlign: 'center',
+    padding: theme.spacing(2),
+  }),
   pagination: getPaginationStyles(theme),
   headerRow: css({
     display: 'flex',

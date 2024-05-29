@@ -41,7 +41,7 @@ const fieldNameMatcher: FieldMatcherInfo<string> = {
   defaultOptions: '',
 
   get: (name: string): FieldMatcher => {
-    const uniqueNames = new Set<string>([name] ?? []);
+    const uniqueNames = new Set<string>([name]);
 
     const fallback = fieldNameFallback(uniqueNames);
 

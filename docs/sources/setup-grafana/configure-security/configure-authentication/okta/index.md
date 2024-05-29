@@ -16,6 +16,10 @@ weight: 1400
 
 {{< docs/shared lookup="auth/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
+{{% admonition type="note" %}}
+If Users use the same email address in Okta that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) documentation for more information.
+{{% /admonition %}}
+
 ## Before you begin
 
 To follow this guide, ensure you have permissions in your Okta workspace to create an OIDC app.

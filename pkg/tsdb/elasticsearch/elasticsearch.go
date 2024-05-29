@@ -24,11 +24,19 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
 var eslog = log.New("tsdb.elasticsearch")
+
+const (
+	// headerFromExpression is used by data sources to identify expression queries
+	headerFromExpression = "X-Grafana-From-Expr"
+	// headerFromAlert is used by data sources to identify alert queries
+	headerFromAlert = "FromAlert"
+	// this is the default value for the maxConcurrentShardRequests setting - it should be in sync with the default value in the datasource config settings
+	defaultMaxConcurrentShardRequests = int64(5)
+)
 
 type Service struct {
 	httpClientProvider httpclient.Provider
@@ -48,7 +56,7 @@ func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Trace
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
+	_, fromAlert := req.Headers[headerFromAlert]
 	logger := s.logger.FromContext(ctx).New("fromAlert", fromAlert)
 
 	if err != nil {
@@ -56,20 +64,20 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return queryData(ctx, req.Queries, dsInfo, logger, s.tracer)
+	return queryData(ctx, req, dsInfo, logger, s.tracer)
 }
 
 // separate function to allow testing the whole transformation and query flow
-func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
-	if len(queries) == 0 {
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *es.DatasourceInfo, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+	if len(req.Queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange, logger, tracer)
+	client, err := es.NewClient(ctx, dsInfo, logger, tracer)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
-	query := newElasticsearchDataQuery(ctx, client, queries, logger, tracer)
+	query := newElasticsearchDataQuery(ctx, client, req, logger, tracer)
 	return query.execute()
 }
 
@@ -132,28 +140,28 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			index = settings.Database
 		}
 
-		var maxConcurrentShardRequests float64
+		var maxConcurrentShardRequests int64
 
 		switch v := jsonData["maxConcurrentShardRequests"].(type) {
+		// unmarshalling from JSON will return float64 for numbers, so we need to handle that and convert to int64
 		case float64:
-			maxConcurrentShardRequests = v
+			maxConcurrentShardRequests = int64(v)
 		case string:
-			maxConcurrentShardRequests, err = strconv.ParseFloat(v, 64)
+			maxConcurrentShardRequests, err = strconv.ParseInt(v, 10, 64)
 			if err != nil {
-				maxConcurrentShardRequests = 256
+				maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
 			}
 		default:
-			maxConcurrentShardRequests = 256
+			maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
+		}
+
+		if maxConcurrentShardRequests <= 0 {
+			maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
 		}
 
 		includeFrozen, ok := jsonData["includeFrozen"].(bool)
 		if !ok {
 			includeFrozen = false
-		}
-
-		xpack, ok := jsonData["xpack"].(bool)
-		if !ok {
-			xpack = false
 		}
 
 		configuredFields := es.ConfiguredFields{
@@ -167,11 +175,10 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			URL:                        settings.URL,
 			HTTPClient:                 httpCli,
 			Database:                   index,
-			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
+			MaxConcurrentShardRequests: maxConcurrentShardRequests,
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
 			IncludeFrozen:              includeFrozen,
-			XPack:                      xpack,
 		}
 		return model, nil
 	}

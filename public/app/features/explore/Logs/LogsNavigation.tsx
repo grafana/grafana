@@ -173,6 +173,11 @@ function LogsNavigation({
     [changeTime, scrollToTopLogs]
   );
 
+  const onScrollToTopClick = useCallback(() => {
+    reportInteraction('grafana_explore_logs_scroll_top_clicked');
+    scrollToTopLogs();
+  }, [scrollToTopLogs]);
+
   return (
     <div className={styles.navContainer}>
       {!config.featureToggles.logsInfiniteScrolling && (
@@ -193,7 +198,7 @@ function LogsNavigation({
         data-testid="scrollToTop"
         className={styles.scrollToTopButton}
         variant="secondary"
-        onClick={scrollToTopLogs}
+        onClick={onScrollToTopClick}
         title="Scroll to top"
       >
         <Icon name="arrow-up" size="lg" />

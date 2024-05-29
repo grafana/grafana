@@ -36,8 +36,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'block',
     whiteSpace: 'nowrap',
     cursor: 'pointer',
-    transition:
-      'color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), padding 0.15s cubic-bezier(0.645, 0.045, 0.355, 1)',
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition:
+        'color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), padding 0.15s cubic-bezier(0.645, 0.045, 0.355, 1)',
+    },
   }),
 
   typeaheadItemSelected: css({

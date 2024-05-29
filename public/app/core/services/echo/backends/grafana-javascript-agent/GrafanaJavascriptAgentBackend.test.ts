@@ -53,6 +53,7 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     version: '1.0',
     commit: 'abcd123',
     env: 'production',
+    versionString: 'Grafana v1.0 (abcd123)',
     edition: GrafanaEdition.OpenSource,
     latestVersion: 'ba',
     hasUpdate: false,

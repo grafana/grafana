@@ -3,6 +3,7 @@ import { Unsubscribable } from 'rxjs';
 import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
+  SceneGridLayout,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectUrlSyncHandler,
@@ -14,7 +15,7 @@ import appEvents from 'app/core/app_events';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
-import { findVizPanelByKey, getDashboardSceneFor, isLibraryPanelChild, isPanelClone } from '../utils/utils';
+import { findVizPanelByKey, getDashboardSceneFor, getLibraryPanel, isPanelClone } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
@@ -27,13 +28,14 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editPanel', 'editview'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels'];
   }
 
   getUrlState(): SceneObjectUrlValues {
     const state = this._scene.state;
     return {
       inspect: state.inspectPanelKey,
+      autofitpanels: state.body instanceof SceneGridLayout && !!state.body.state.UNSAFE_fitPanels ? 'true' : undefined,
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
@@ -49,9 +51,13 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
       // If we are not in editing (for example after full page reload)
       if (!isEditing) {
-        // Not sure what is best to do here.
-        // The reason for the timeout is for this change to happen after the url sync has completed
-        setTimeout(() => this._scene.onEnterEditMode());
+        if (this._scene.state.editable) {
+          // Not sure what is best to do here.
+          // The reason for the timeout is for this change to happen after the url sync has completed
+          setTimeout(() => this._scene.onEnterEditMode());
+        } else {
+          update.editview = undefined;
+        }
       }
     } else if (values.hasOwnProperty('editview')) {
       update.editview = undefined;
@@ -63,6 +69,20 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       if (!panel) {
         appEvents.emit(AppEvents.alertError, ['Panel not found']);
         locationService.partial({ inspect: null });
+        return;
+      }
+
+      if (getLibraryPanel(panel)) {
+        this._handleLibraryPanel(panel, (p) => {
+          if (p.state.key === undefined) {
+            // Inspect drawer require a panel key to be set
+            throw new Error('library panel key is undefined');
+          }
+          const drawer = new PanelInspectDrawer({
+            $behaviors: [new ResolveInspectPanelByKey({ panelKey: p.state.key })],
+          });
+          this._scene.setState({ overlay: drawer, inspectPanelKey: p.state.key });
+        });
         return;
       }
 
@@ -91,7 +111,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      if (isLibraryPanelChild(panel)) {
+      if (getLibraryPanel(panel)) {
         this._handleLibraryPanel(panel, (p) => this._buildLibraryPanelViewScene(p));
         return;
       }
@@ -104,22 +124,39 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // Handle edit panel state
     if (typeof values.editPanel === 'string') {
       const panel = findVizPanelByKey(this._scene, values.editPanel);
+
       if (!panel) {
+        console.warn(`Panel ${values.editPanel} not found`);
         return;
+      }
+
+      // We cannot simultaneously be in edit and view panel state.
+      if (this._scene.state.viewPanelScene) {
+        this._scene.setState({ viewPanelScene: undefined });
       }
 
       // If we are not in editing (for example after full page reload)
       if (!isEditing) {
         this._scene.onEnterEditMode();
       }
-      if (isLibraryPanelChild(panel)) {
+      if (getLibraryPanel(panel)) {
         this._handleLibraryPanel(panel, (p) => {
           this._scene.setState({ editPanel: buildPanelEditScene(p) });
         });
+        return;
       }
+
       update.editPanel = buildPanelEditScene(panel);
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;
+    }
+
+    if (this._scene.state.body instanceof SceneGridLayout) {
+      const UNSAFE_fitPanels = typeof values.autofitpanels === 'string';
+
+      if (!!this._scene.state.body.state.UNSAFE_fitPanels !== UNSAFE_fitPanels) {
+        this._scene.state.body.setState({ UNSAFE_fitPanels });
+      }
     }
 
     if (Object.keys(update).length > 0) {

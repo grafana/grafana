@@ -2,12 +2,11 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep, isString } from 'lodash';
 
-import { containsSearchFilter } from '@grafana/data';
+import { containsSearchFilter, VariableOption, VariableWithOptions } from '@grafana/data';
 
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
 import { ALL_VARIABLE_VALUE } from '../../constants';
 import { isMulti, isQuery } from '../../guard';
-import { VariableOption, VariableWithOptions } from '../../types';
 
 export interface ToggleOption {
   option?: VariableOption;
@@ -267,12 +266,30 @@ const optionsPickerSlice = createSlice({
           }
 
           // always sort $__all to the top, even if exact match exists?
-          opts.sort((a, b) => (a.value === '$__all' ? -1 : 0) - (b.value === '$__all' ? -1 : 0));
+          opts.sort((a, b) => (a.value === ALL_VARIABLE_VALUE ? -1 : 0) - (b.value === ALL_VARIABLE_VALUE ? -1 : 0));
+        }
+      }
+
+      state.highlightIndex = 0;
+
+      if (needle !== '') {
+        // top ranked match index
+        let firstMatchIdx = opts.findIndex((o) => o.value !== ALL_VARIABLE_VALUE);
+
+        // if there's no match or no exact match, prepend as-typed option
+        if (firstMatchIdx === -1 || opts[firstMatchIdx].value !== needle) {
+          opts.unshift({
+            selected: false,
+            text: '> ' + needle,
+            value: needle,
+          });
+
+          // if no match at all, select as-typed, else select best match
+          state.highlightIndex = firstMatchIdx === -1 ? 0 : firstMatchIdx + 1;
         }
       }
 
       state.options = opts;
-      state.highlightIndex = 0;
 
       return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },

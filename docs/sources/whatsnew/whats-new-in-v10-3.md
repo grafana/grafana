@@ -365,7 +365,7 @@ Derived fields or data links are a concept to add correlations based on your log
 
 The following example would add the derived field `traceID regex` based on a regular expression and another `app label` field based on the `app` label.
 
-{{< figure src="/media/docs/grafana/2024-01-05_loki-derived-fields.png" >}}
+{{< figure src="/media/docs/grafana/2024-01-05_loki-derived-fields.png" alt="Derived fields added based on a regular expression and an app label">}}
 
 ### InfluxDB native SQL support
 

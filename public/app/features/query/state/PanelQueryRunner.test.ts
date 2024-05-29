@@ -3,8 +3,9 @@ const applyFieldOverridesMock = jest.fn(); // needs to be first in this file
 import { Subject } from 'rxjs';
 
 // Importing this way to be able to spy on grafana/data
+
 import * as grafanaData from '@grafana/data';
-import { DataSourceApi } from '@grafana/data';
+import { DataSourceApi, TypedVariableModel } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
@@ -46,7 +47,27 @@ jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
 }));
 
 jest.mock('app/features/templating/template_srv', () => ({
-  getTemplateSrv: () => new TemplateSrvMock({}),
+  ...jest.requireActual('app/features/templating/template_srv'),
+  getTemplateSrv: () =>
+    new TemplateSrvMock([
+      {
+        name: 'server',
+        type: 'datasource',
+        current: { text: 'Server1', value: 'server' },
+        options: [{ text: 'Server1', value: 'server1' }],
+      },
+      //multi value variable
+      {
+        name: 'multi',
+        type: 'datasource',
+        multi: true,
+        current: { text: 'Server1,Server2', value: ['server-1', 'server-2'] },
+        options: [
+          { text: 'Server1', value: 'server1' },
+          { text: 'Server2', value: 'server2' },
+        ],
+      },
+    ] as TypedVariableModel[]),
 }));
 
 interface ScenarioContext {
@@ -403,6 +424,55 @@ describe('PanelQueryRunner', () => {
     {
       ...defaultPanelConfig,
       snapshotData,
+    }
+  );
+
+  describeQueryRunnerScenario(
+    'shouldAddErrorwhenDatasourceVariableIsMultiple',
+    (ctx) => {
+      it('should add error when datasource variable is multiple and not repeated', async () => {
+        // scopedVars is an object that represent the variables repeated in a panel
+        const scopedVars = {
+          server: { text: 'Server1', value: 'server-1' },
+        };
+
+        // We are spying on the replace method of the TemplateSrvMock to check if the custom format function is being called
+        const spyReplace = jest.spyOn(TemplateSrvMock.prototype, 'replace');
+
+        const response = {
+          data: [
+            {
+              target: 'hello',
+              datapoints: [
+                [1, 1000],
+                [2, 2000],
+              ],
+            },
+          ],
+        };
+
+        const datasource = {
+          name: '${multi}',
+          uid: '${multi}',
+          interval: ctx.dsInterval,
+          query: (options: grafanaData.DataQueryRequest) => {
+            ctx.queryCalledWith = options;
+            return Promise.resolve(response);
+          },
+          getRef: () => ({ type: 'test', uid: 'TestDB-uid' }),
+          testDatasource: jest.fn(),
+        } as unknown as DataSourceApi;
+
+        ctx.runner.shouldAddErrorWhenDatasourceVariableIsMultiple(datasource, scopedVars);
+
+        // the test is checking implementation details :(, but it is the only way to check if the error will be added
+        // if the getTemplateSrv.replace is called with the custom format function,it means we will check
+        // if the error should be added
+        expect(spyReplace.mock.calls[0][2]).toBeInstanceOf(Function);
+      });
+    },
+    {
+      ...defaultPanelConfig,
     }
   );
 });

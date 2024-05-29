@@ -3,10 +3,12 @@ package serverlock
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -48,6 +50,7 @@ func (sl *ServerLockService) LockAndExecute(ctx context.Context, actionName stri
 	rowLock, err := sl.getOrCreate(ctx, actionName)
 	if err != nil {
 		span.RecordError(err)
+		span.SetStatus(codes.Error, fmt.Sprintf("failed to getOrCreate serverlock: %v", err))
 		return err
 	}
 
@@ -60,6 +63,7 @@ func (sl *ServerLockService) LockAndExecute(ctx context.Context, actionName stri
 	acquiredLock, err := sl.acquireLock(ctx, rowLock)
 	if err != nil {
 		span.RecordError(err)
+		span.SetStatus(codes.Error, fmt.Sprintf("failed to acquire serverlock: %v", err))
 		return err
 	}
 
@@ -147,6 +151,7 @@ func (sl *ServerLockService) LockExecuteAndRelease(ctx context.Context, actionNa
 	// could not get the lock, returning
 	if err != nil {
 		span.RecordError(err)
+		span.SetStatus(codes.Error, fmt.Sprintf("failed to acquire serverlock: %v", err))
 		return err
 	}
 
@@ -155,6 +160,7 @@ func (sl *ServerLockService) LockExecuteAndRelease(ctx context.Context, actionNa
 	err = sl.releaseLock(ctx, actionName)
 	if err != nil {
 		span.RecordError(err)
+		span.SetStatus(codes.Error, fmt.Sprintf("failed to release serverlock: %v", err))
 		ctxLogger.Error("Failed to release the lock", "error", err)
 	}
 
@@ -207,6 +213,7 @@ func (sl *ServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Contex
 				continue
 			}
 			span.RecordError(err)
+			span.SetStatus(codes.Error, fmt.Sprintf("failed to acquire serverlock: %v", err))
 			return err
 		}
 
@@ -218,6 +225,7 @@ func (sl *ServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Contex
 
 	if err := sl.releaseLock(ctx, actionName); err != nil {
 		span.RecordError(err)
+		span.SetStatus(codes.Error, fmt.Sprintf("failed to release serverlock: %v", err))
 		ctxLogger.Error("Failed to release the lock", "error", err)
 	}
 

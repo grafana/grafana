@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	entitystorage "github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -161,6 +162,7 @@ func ProvideService(
 	s.rr.Group("/readyz", proxyHandler)
 	s.rr.Group("/healthz", proxyHandler)
 	s.rr.Group("/openapi", proxyHandler)
+	s.rr.Group("/version", proxyHandler)
 
 	return s, nil
 }
@@ -191,6 +193,7 @@ func (s *service) start(ctx context.Context) error {
 
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 	// Install schemas
+	initialSize := len(aggregator.APIVersionPriorities)
 	for i, b := range builders {
 		groupVersions = append(groupVersions, b.GetGroupVersion())
 		if err := b.InstallSchema(Scheme); err != nil {
@@ -199,7 +202,7 @@ func (s *service) start(ctx context.Context) error {
 
 		if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
 			// set the priority for the group+version
-			aggregator.APIVersionPriorities[b.GetGroupVersion()] = aggregator.Priority{Group: 15000, Version: int32(i + 1)}
+			aggregator.APIVersionPriorities[b.GetGroupVersion()] = aggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
 		}
 
 		auth := b.GetAuthorizer()
@@ -209,7 +212,10 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	o := grafanaapiserveroptions.NewOptions(Codecs.LegacyCodec(groupVersions...))
-	applyGrafanaConfig(s.cfg, s.features, o)
+	err := applyGrafanaConfig(s.cfg, s.features, o)
+	if err != nil {
+		return err
+	}
 
 	if errs := o.Validate(); len(errs) != 0 {
 		// TODO: handle multiple errors
@@ -240,15 +246,15 @@ func (s *service) start(ctx context.Context) error {
 
 	case grafanaapiserveroptions.StorageTypeUnified:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
-			return fmt.Errorf("unified storage requires the unifiedStorage feature flag (and app_mode = development)")
+			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
-		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features)
+		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features, s.tracing)
 		if err != nil {
 			return err
 		}
 
-		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB)
+		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
 		if err != nil {
 			return err
 		}
@@ -259,8 +265,7 @@ func (s *service) start(ctx context.Context) error {
 
 	case grafanaapiserveroptions.StorageTypeUnifiedGrpc:
 		// Create a connection to the gRPC server
-		// TODO: support configuring the gRPC server address
-		conn, err := grpc.Dial("localhost:10000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return err
 		}
@@ -276,11 +281,15 @@ func (s *service) start(ctx context.Context) error {
 	case grafanaapiserveroptions.StorageTypeLegacy:
 		fallthrough
 	case grafanaapiserveroptions.StorageTypeFile:
-		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
+		restOptionsGetter, err := filestorage.NewRESTOptionsGetter(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
+		if err != nil {
+			return err
+		}
+		serverConfig.RESTOptionsGetter = restOptionsGetter
 	}
 
 	// Add OpenAPI specs for each group+version
-	err := builder.SetupConfig(
+	err = builder.SetupConfig(
 		Scheme,
 		serverConfig,
 		builders,
@@ -366,16 +375,14 @@ func (s *service) startAggregator(
 	serverConfig *genericapiserver.RecommendedConfig,
 	server *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
-	externalNamesNamespace := "default"
-	if s.cfg.StackID != "" {
-		externalNamesNamespace = s.cfg.StackID
-	}
-	aggregatorConfig, err := aggregator.CreateAggregatorConfig(s.options, *serverConfig, externalNamesNamespace)
+	namespaceMapper := request.GetNamespaceMapper(s.cfg)
+
+	aggregatorConfig, err := aggregator.CreateAggregatorConfig(s.options, *serverConfig, namespaceMapper(1))
 	if err != nil {
 		return nil, err
 	}
 
-	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig.KubeAggregatorConfig, aggregatorConfig.Informers, aggregatorConfig.RemoteServicesConfig, server)
+	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, server)
 	if err != nil {
 		return nil, err
 	}

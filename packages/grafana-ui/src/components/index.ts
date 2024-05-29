@@ -30,6 +30,7 @@ export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { ColorPickerInput } from './ColorPicker/ColorPickerInput';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
+export { EmptyState } from './EmptyState/EmptyState';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
@@ -174,7 +175,8 @@ export {
 } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './VizLegend/SeriesIcon';
 export { InfoBox } from './InfoBox/InfoBox';
-export { FeatureBadge, FeatureInfoBox } from './InfoBox/FeatureInfoBox';
+export { FeatureInfoBox } from './InfoBox/FeatureInfoBox';
+export { FeatureBadge } from './FeatureBadge/FeatureBadge';
 
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
@@ -310,3 +312,6 @@ export { TimeSeries } from '../graveyard/TimeSeries/TimeSeries';
 export { useGraphNGContext } from '../graveyard/GraphNG/hooks';
 export { preparePlotFrame, buildScaleKey } from '../graveyard/GraphNG/utils';
 export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';
+
+export { ZoomPlugin } from '../graveyard/uPlot/plugins/ZoomPlugin';
+export { TooltipPlugin } from '../graveyard/uPlot/plugins/TooltipPlugin';

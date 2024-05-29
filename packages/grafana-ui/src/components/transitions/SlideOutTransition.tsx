@@ -26,7 +26,7 @@ export function SlideOutTransition(props: Props) {
   );
 }
 
-const getStyles = (_theme: GrafanaTheme2, duration: number, measurement: 'width' | 'height', size: number) => ({
+const getStyles = (theme: GrafanaTheme2, duration: number, measurement: 'width' | 'height', size: number) => ({
   enter: css({
     label: 'enter',
     [`${measurement}`]: 0,
@@ -36,7 +36,12 @@ const getStyles = (_theme: GrafanaTheme2, duration: number, measurement: 'width'
     label: 'enterActive',
     [`${measurement}`]: `${size}px`,
     opacity: 1,
-    transition: `opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out`,
+    [theme.transitions.handleMotion('no-preference')]: {
+      transition: `opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out`,
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      transition: `opacity ${duration}ms ease-out`,
+    },
   }),
   exit: css({
     label: 'exit',
@@ -47,6 +52,11 @@ const getStyles = (_theme: GrafanaTheme2, duration: number, measurement: 'width'
     label: 'exitActive',
     opacity: 0,
     [`${measurement}`]: 0,
-    transition: `opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out`,
+    [theme.transitions.handleMotion('no-preference')]: {
+      transition: `opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out`,
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      transition: `opacity ${duration}ms ease-out`,
+    },
   }),
 });

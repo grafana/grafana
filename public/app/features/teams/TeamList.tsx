@@ -9,19 +9,19 @@ import {
   CellProps,
   Column,
   DeleteButton,
+  EmptyState,
   FilterInput,
-  Icon,
   InlineField,
   InteractiveTable,
   LinkButton,
   Pagination,
   Stack,
-  Tooltip,
+  TextLink,
   useStyles2,
 } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
@@ -92,11 +92,21 @@ export const TeamList = ({
       {
         id: 'name',
         header: 'Name',
-        cell: ({ cell: { value } }: Cell<'name'>) => {
+        cell: ({ cell: { value }, row: { original } }: Cell<'name'>) => {
           if (!hasFetched) {
             return <Skeleton width={100} />;
           }
-          return value;
+
+          const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
+          if (!canReadTeam) {
+            return value;
+          }
+
+          return (
+            <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.id}`} title="Edit team">
+              {value}
+            </TextLink>
+          );
         },
         sortType: 'string',
       },
@@ -168,13 +178,16 @@ export const TeamList = ({
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
           const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
           return (
-            <Stack direction="row" justifyContent="flex-end">
+            <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
-                <Tooltip content={'Edit team'}>
-                  <a href={`org/teams/edit/${original.id}`} aria-label={`Edit team ${original.name}`}>
-                    <Icon name={'pen'} />
-                  </a>
-                </Tooltip>
+                <LinkButton
+                  href={`org/teams/edit/${original.id}`}
+                  aria-label={`Edit team ${original.name}`}
+                  icon="pen"
+                  size="sm"
+                  variant="secondary"
+                  tooltip={'Edit team'}
+                />
               )}
               <DeleteButton
                 aria-label={`Delete team ${original.name}`}
@@ -194,24 +207,31 @@ export const TeamList = ({
     <Page
       navId="teams"
       actions={
-        <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
-          New Team
-        </LinkButton>
+        !noTeams ? (
+          <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
+            New Team
+          </LinkButton>
+        ) : undefined
       }
     >
       <Page.Contents>
         {noTeams ? (
-          <EmptyListCTA
-            title="You haven't created any teams yet."
-            buttonIcon="users-alt"
-            buttonLink="org/teams/new"
-            buttonTitle=" New team"
-            buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)}
-            proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."
-            proTipLink=""
-            proTipLinkTitle=""
-            proTipTarget="_blank"
-          />
+          <EmptyState
+            variant="call-to-action"
+            button={
+              <LinkButton disabled={!canCreate} href="org/teams/new" icon="users-alt" size="lg">
+                <Trans i18nKey="teams.empty-state.button-title">New team</Trans>
+              </LinkButton>
+            }
+            message={t('teams.empty-state.title', "You haven't created any teams yet")}
+          >
+            <Trans i18nKey="teams.empty-state.pro-tip">
+              Assign folder and dashboard permissions to teams instead of users to ease administration.{' '}
+              <TextLink external href="https://grafana.com/docs/grafana/latest/administration/team-management">
+                Learn more
+              </TextLink>
+            </Trans>
+          </EmptyState>
         ) : (
           <>
             <div className="page-action-bar">
@@ -219,17 +239,26 @@ export const TeamList = ({
                 <FilterInput placeholder="Search teams" value={query} onChange={changeQuery} />
               </InlineField>
             </div>
-            <Stack direction={'column'} gap={2}>
-              <InteractiveTable
-                columns={columns}
-                data={hasFetched ? teams : skeletonData}
-                getRowId={(team) => String(team.id)}
-                fetchData={changeSort}
-              />
-              <Stack justifyContent="flex-end">
-                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
+            {hasFetched && teams.length === 0 ? (
+              <EmptyState variant="not-found" message={t('teams.empty-state.message', 'No teams found')} />
+            ) : (
+              <Stack direction={'column'} gap={2}>
+                <InteractiveTable
+                  columns={columns}
+                  data={hasFetched ? teams : skeletonData}
+                  getRowId={(team) => String(team.id)}
+                  fetchData={changeSort}
+                />
+                <Stack justifyContent="flex-end">
+                  <Pagination
+                    hideWhenSinglePage
+                    currentPage={page}
+                    numberOfPages={totalPages}
+                    onNavigate={changePage}
+                  />
+                </Stack>
               </Stack>
-            </Stack>
+            )}
           </>
         )}
       </Page.Contents>

@@ -5,13 +5,18 @@ import React, { PureComponent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
+import { withTheme2 } from '../../themes';
+import { Themeable2 } from '../../types';
 import { Icon } from '../Icon/Icon';
+import { IconButton } from '../IconButton/IconButton';
 import { Input } from '../Input/Input';
+import { Stack } from '../Layout/Stack/Stack';
 import { Select } from '../Select/Select';
 
 import { onChangeCascader } from './optionMappings';
+import { getCascaderStyles } from './styles';
 
-export interface CascaderProps {
+export interface CascaderProps extends Themeable2 {
   /** The separator between levels in the search */
   separator?: string;
   placeholder?: string;
@@ -38,6 +43,10 @@ export interface CascaderProps {
       cascader is hidden after selection. */
   hideActiveLevelLabel?: boolean;
   disabled?: boolean;
+  /** ID for the underlying Select/Cascader component */
+  id?: string;
+  /** Whether you can clear the selected value or not */
+  isClearable?: boolean;
 }
 
 interface CascaderState {
@@ -46,6 +55,7 @@ interface CascaderState {
   //Array for cascade navigation
   rcValue: SelectableValue<string[]>;
   activeLabel: string;
+  inputValue: string;
 }
 
 export interface CascaderOption {
@@ -74,7 +84,7 @@ const disableDivFocus = css({
 
 const DEFAULT_SEPARATOR = ' / ';
 
-export class Cascader extends PureComponent<CascaderProps, CascaderState> {
+class UnthemedCascader extends PureComponent<CascaderProps, CascaderState> {
   constructor(props: CascaderProps) {
     super(props);
     const searchableOptions = this.getSearchableOptions(props.options);
@@ -84,6 +94,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
       focusCascade: false,
       rcValue,
       activeLabel,
+      inputValue: '',
     };
   }
 
@@ -141,6 +152,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
       focusCascade: true,
       activeLabel,
       isSearching: false,
+      inputValue: activeLabel,
     };
     this.setState(state);
     this.props.onSelect(selectedOptions[selectedOptions.length - 1].value);
@@ -152,6 +164,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
     const activeLabel = this.props.displayAllSelectedLevels ? obj.label : obj.singleLabel || '';
     const state: CascaderState = {
       activeLabel: activeLabel,
+      inputValue: activeLabel,
       rcValue: { value: valueArray, label: activeLabel },
       isSearching: false,
       focusCascade: false,
@@ -163,6 +176,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
   onCreateOption = (value: string) => {
     this.setState({
       activeLabel: value,
+      inputValue: value,
       rcValue: [],
       isSearching: false,
     });
@@ -192,28 +206,40 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
   };
 
   onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (['ArrowDown', 'ArrowUp', 'Enter', 'ArrowLeft', 'ArrowRight', 'Backspace'].includes(e.key)) {
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
       return;
     }
+    const { activeLabel } = this.state;
     this.setState({
       focusCascade: false,
       isSearching: true,
+      inputValue: activeLabel,
     });
   };
 
   onSelectInputChange = (value: string) => {
-    if (value === '') {
-      this.setState({
-        isSearching: false,
-      });
-    }
+    this.setState({
+      inputValue: value,
+    });
   };
 
   render() {
-    const { allowCustomValue, formatCreateLabel, placeholder, width, changeOnSelect, options, disabled } = this.props;
-    const { focusCascade, isSearching, rcValue, activeLabel } = this.state;
+    const {
+      allowCustomValue,
+      formatCreateLabel,
+      placeholder,
+      width,
+      changeOnSelect,
+      options,
+      disabled,
+      id,
+      isClearable,
+      theme,
+    } = this.props;
+    const { focusCascade, isSearching, rcValue, activeLabel, inputValue } = this.state;
 
     const searchableOptions = this.getSearchableOptions(options);
+    const styles = getCascaderStyles(theme);
 
     return (
       <div>
@@ -230,6 +256,8 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
             width={width}
             onInputChange={this.onSelectInputChange}
             disabled={disabled}
+            inputValue={inputValue}
+            inputId={id}
           />
         ) : (
           <RCCascader
@@ -241,6 +269,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
             expandIcon={null}
             open={this.props.alwaysOpen}
             disabled={disabled}
+            dropdownClassName={styles.dropdown}
           >
             <div className={disableDivFocus}>
               <Input
@@ -252,13 +281,24 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
                 onKeyDown={this.onInputKeyDown}
                 onChange={() => {}}
                 suffix={
-                  focusCascade ? (
-                    <Icon name="angle-up" />
-                  ) : (
-                    <Icon name="angle-down" style={{ marginBottom: 0, marginLeft: '4px' }} />
-                  )
+                  <Stack gap={0.5}>
+                    {isClearable && activeLabel !== '' && (
+                      <IconButton
+                        name="times"
+                        aria-label="Clear selection"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          this.setState({ rcValue: [], activeLabel: '', inputValue: '' });
+                          this.props.onSelect('');
+                        }}
+                      />
+                    )}
+                    <Icon name={focusCascade ? 'angle-up' : 'angle-down'} />
+                  </Stack>
                 }
                 disabled={disabled}
+                id={id}
               />
             </div>
           </RCCascader>
@@ -267,3 +307,5 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
     );
   }
 }
+
+export const Cascader = withTheme2(UnthemedCascader);

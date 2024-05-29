@@ -1,4 +1,4 @@
-import { expect, test, PanelEditPage, DashboardPage } from '@grafana/plugin-e2e';
+import { expect, test, DashboardPage } from '@grafana/plugin-e2e';
 
 import { formatExpectError } from '../errors';
 import { successfulDataQuery } from '../mocks/queries';
@@ -6,17 +6,8 @@ import { successfulDataQuery } from '../mocks/queries';
 const REACT_TABLE_DASHBOARD = { uid: 'U_bZIMRMk' };
 
 test.describe('panel edit page', () => {
-  test('table panel data assertions with provisioned dashboard', async ({
-    page,
-    selectors,
-    grafanaVersion,
-    request,
-  }) => {
-    const panelEditPage = new PanelEditPage(
-      { page, selectors, grafanaVersion, request },
-      { dashboard: REACT_TABLE_DASHBOARD, id: '4' }
-    );
-    await panelEditPage.goto();
+  test('table panel data assertions with provisioned dashboard', async ({ gotoPanelEditPage }) => {
+    const panelEditPage = await gotoPanelEditPage({ dashboard: REACT_TABLE_DASHBOARD, id: '4' });
     await expect(
       panelEditPage.panel.locator,
       formatExpectError('Could not locate panel in panel edit page')
@@ -70,15 +61,15 @@ test.describe('panel edit page', () => {
 });
 
 test.describe('dashboard page', () => {
-  test('getting panel by title', async ({ page, selectors, grafanaVersion, request }) => {
-    const dashboardPage = new DashboardPage({ page, selectors, grafanaVersion, request }, REACT_TABLE_DASHBOARD);
+  test('getting panel by title', async ({ gotoDashboardPage }) => {
+    const dashboardPage = await gotoDashboardPage(REACT_TABLE_DASHBOARD);
     await dashboardPage.goto();
     const panel = await dashboardPage.getPanelByTitle('Colored background');
     await expect(panel.fieldNames).toContainText(['Field', 'Max', 'Mean', 'Last']);
   });
 
-  test('getting panel by id', async ({ page, selectors, grafanaVersion, request }) => {
-    const dashboardPage = new DashboardPage({ page, selectors, grafanaVersion, request }, REACT_TABLE_DASHBOARD);
+  test('getting panel by id', async ({ gotoDashboardPage }) => {
+    const dashboardPage = await gotoDashboardPage(REACT_TABLE_DASHBOARD);
     await dashboardPage.goto();
     const panel = await dashboardPage.getPanelById('4');
     await expect(panel.fieldNames, formatExpectError('Could not locate header elements in table panel')).toContainText([

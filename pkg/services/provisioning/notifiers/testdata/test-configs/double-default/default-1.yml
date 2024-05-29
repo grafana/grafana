@@ -1,7 +1,0 @@
-notifiers:
-  - name: first-default
-    type: slack
-    uid: notifier1
-    is_default: true
-    settings:
-      url: https://slack.com

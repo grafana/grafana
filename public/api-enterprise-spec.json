@@ -48,7 +48,7 @@
     },
     "/access-control/roles": {
       "get": {
-        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
+        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.\n\nThe `delegatable` flag reduces the set of roles to only those for which the signed-in user has permissions to assign.",
         "tags": [
           "access_control",
           "enterprise"
@@ -59,6 +59,11 @@
           {
             "type": "boolean",
             "name": "delegatable",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "includeHidden",
             "in": "query"
           }
         ],
@@ -755,6 +760,227 @@
         }
       }
     },
+    "/datasources/uid/{uid}/lbac/teams": {
+      "get": {
+        "tags": [
+          "enterprise"
+        ],
+        "summary": "Retrieves LBAC rules for a team.",
+        "operationId": "getTeamLBACRulesApi",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "enterprise"
+        ],
+        "summary": "Updates LBAC rules for a team.",
+        "operationId": "updateTeamLBACRulesApi",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{dataSourceUID}/cache": {
+      "get": {
+        "description": "get cache config for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "getDataSourceCacheConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "set cache config for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "setDataSourceCacheConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CacheConfigSetter"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/clean": {
+      "post": {
+        "description": "clean cache for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "cleanDataSourceCache",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/disable": {
+      "post": {
+        "description": "disable cache for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "disableDataSourceCache",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/enable": {
+      "post": {
+        "description": "enable cache for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "enableDataSourceCache",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/licensing/check": {
       "get": {
         "tags": [
@@ -1323,74 +1549,6 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/reports/render/pdf/{dashboardID}": {
-      "get": {
-        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
-        "produces": [
-          "application/pdf"
-        ],
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
-        "summary": "Render report for dashboard.",
-        "operationId": "renderReportPDF",
-        "deprecated": true,
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "dashboardID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "title",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "variables",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "from",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "to",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "orientation",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "name": "layout",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/contentResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -2280,200 +2438,6 @@
         }
       }
     },
-    "AlertListItemDTO": {
-      "type": "object",
-      "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardSlug": {
-          "type": "string"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
-        "evalData": {
-          "$ref": "#/definitions/Json"
-        },
-        "evalDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "executionError": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "newStateDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "state": {
-          "$ref": "#/definitions/AlertStateType"
-        },
-        "url": {
-          "type": "string"
-        }
-      }
-    },
-    "AlertNotification": {
-      "type": "object",
-      "properties": {
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureFields": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "boolean"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "AlertNotificationLookup": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
-    "AlertStateInfoDTO": {
-      "type": "object",
-      "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "newStateDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "state": {
-          "$ref": "#/definitions/AlertStateType"
-        }
-      }
-    },
-    "AlertStateType": {
-      "type": "string"
-    },
-    "AlertTestCommand": {
-      "type": "object",
-      "properties": {
-        "dashboard": {
-          "$ref": "#/definitions/Json"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "AlertTestResult": {
-      "type": "object",
-      "properties": {
-        "conditionEvals": {
-          "type": "string"
-        },
-        "error": {
-          "type": "string"
-        },
-        "firing": {
-          "type": "boolean"
-        },
-        "logs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/AlertTestResultLog"
-          }
-        },
-        "matches": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/EvalMatch"
-          }
-        },
-        "state": {
-          "$ref": "#/definitions/AlertStateType"
-        },
-        "timeMs": {
-          "type": "string"
-        }
-      }
-    },
-    "AlertTestResultLog": {
-      "type": "object",
-      "properties": {
-        "data": {},
-        "message": {
-          "type": "string"
-        }
-      }
-    },
     "Annotation": {
       "type": "object",
       "properties": {
@@ -2759,6 +2723,123 @@
         "Value": {}
       }
     },
+    "CacheConfig": {
+      "description": "Config defines the internal representation of a cache configuration, including fields not set by the API caller",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dataSourceID": {
+          "description": "Fields that can be set by the API caller - read/write",
+          "type": "integer",
+          "format": "int64"
+        },
+        "dataSourceUID": {
+          "type": "string"
+        },
+        "defaultTTLMs": {
+          "description": "These are returned by the HTTP API, but are managed internally - read-only\nNote: 'created' and 'updated' are special properties managed automatically by xorm, but we are setting them manually",
+          "type": "integer",
+          "format": "int64"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "ttlQueriesMs": {
+          "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+          "type": "integer",
+          "format": "int64"
+        },
+        "ttlResourcesMs": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "useDefaultTTL": {
+          "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+          "type": "boolean"
+        }
+      }
+    },
+    "CacheConfigResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dataSourceID": {
+          "description": "Fields that can be set by the API caller - read/write",
+          "type": "integer",
+          "format": "int64"
+        },
+        "dataSourceUID": {
+          "type": "string"
+        },
+        "defaultTTLMs": {
+          "description": "These are returned by the HTTP API, but are managed internally - read-only\nNote: 'created' and 'updated' are special properties managed automatically by xorm, but we are setting them manually",
+          "type": "integer",
+          "format": "int64"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        },
+        "ttlQueriesMs": {
+          "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+          "type": "integer",
+          "format": "int64"
+        },
+        "ttlResourcesMs": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "useDefaultTTL": {
+          "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+          "type": "boolean"
+        }
+      }
+    },
+    "CacheConfigSetter": {
+      "description": "ConfigSetter defines the cache parameters that users can configure per datasource\nThis is only intended to be consumed by the SetCache HTTP Handler",
+      "type": "object",
+      "properties": {
+        "dataSourceID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dataSourceUID": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "ttlQueriesMs": {
+          "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+          "type": "integer",
+          "format": "int64"
+        },
+        "ttlResourcesMs": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "useDefaultTTL": {
+          "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+          "type": "boolean"
+        }
+      }
+    },
     "CalculateDiffTarget": {
       "type": "object",
       "properties": {
@@ -2923,7 +3004,15 @@
             "type": "string"
           }
         },
+        "Policies": {
+          "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OID"
+          }
+        },
         "PolicyIdentifiers": {
+          "description": "PolicyIdentifiers contains asn1.ObjectIdentifiers, the components\nof which are limited to int32. If a certificate contains a policy which\ncannot be represented by asn1.ObjectIdentifier, it will not be included in\nPolicyIdentifiers, but will be present in Policies, which contains all parsed\npolicy OIDs.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/ObjectIdentifier"
@@ -3024,6 +3113,47 @@
         },
         "oldPassword": {
           "$ref": "#/definitions/Password"
+        }
+      }
+    },
+    "CloudMigrationListResponse": {
+      "type": "object",
+      "properties": {
+        "migrations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CloudMigrationResponse"
+          }
+        }
+      }
+    },
+    "CloudMigrationResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "stack": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "CloudMigrationRunList": {
+      "type": "object",
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseListDTO"
+          }
         }
       }
     },
@@ -3169,37 +3299,10 @@
         }
       }
     },
-    "CreateAlertNotificationCommand": {
+    "CreateAccessTokenResponseDTO": {
       "type": "object",
       "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
+        "token": {
           "type": "string"
         }
       }
@@ -3343,13 +3446,6 @@
     "CreateOrUpdateReportConfig": {
       "type": "object",
       "properties": {
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
         "dashboards": {
           "type": "array",
           "items": {
@@ -3392,9 +3488,6 @@
         },
         "state": {
           "$ref": "#/definitions/State"
-        },
-        "templateVars": {
-          "type": "object"
         }
       }
     },
@@ -3731,9 +3824,6 @@
         },
         "publicDashboardEnabled": {
           "type": "boolean"
-        },
-        "publicDashboardUid": {
-          "type": "string"
         },
         "slug": {
           "type": "string"
@@ -4178,23 +4268,6 @@
       "description": "ErrorSource type defines the source of the error",
       "type": "string"
     },
-    "EvalMatch": {
-      "type": "object",
-      "properties": {
-        "metric": {
-          "type": "string"
-        },
-        "tags": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "value": {
-          "type": "string"
-        }
-      }
-    },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
     },
@@ -4538,7 +4611,7 @@
       }
     },
     "FrameType": {
-      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
       "type": "string"
     },
     "FrameTypeVersion": {
@@ -4594,7 +4667,6 @@
       "type": "object",
       "properties": {
         "folderId": {
-          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -4613,6 +4685,9 @@
         },
         "isStarred": {
           "type": "boolean"
+        },
+        "remainingTrashAtAge": {
+          "type": "string"
         },
         "slug": {
           "type": "string"
@@ -4657,7 +4732,7 @@
       "type": "string"
     },
     "IPMask": {
-      "description": "See type IPNet and func ParseCIDR for details.",
+      "description": "See type [IPNet] and func [ParseCIDR] for details.",
       "type": "array",
       "title": "An IPMask is a bitmask that can be used to manipulate\nIP addresses for IP addressing and routing.",
       "items": {
@@ -4814,8 +4889,8 @@
       }
     },
     "JSONWebKey": {
+      "description": "JSONWebKey represents a public or private key in JWK format. It can be\nmarshaled into JSON and unmarshaled from JSON.",
       "type": "object",
-      "title": "JSONWebKey represents a public or private key in JWK format.",
       "properties": {
         "Algorithm": {
           "description": "Key algorithm, parsed from `alg` header.",
@@ -4848,7 +4923,7 @@
           "$ref": "#/definitions/URL"
         },
         "Key": {
-          "description": "Cryptographic key, can be a symmetric or asymmetric key."
+          "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\ned25519.PublicKey\ned25519.PrivateKey\necdsa.PublicKey\necdsa.PrivateKey\nrsa.PublicKey\nrsa.PrivateKey\n[]byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
         },
         "KeyID": {
           "description": "Key identifier, parsed from `kid` header.",
@@ -4867,82 +4942,6 @@
       "description": "KeyUsage represents the set of actions that are valid for a given key. It's\na bitmap of the KeyUsage* constants.",
       "type": "integer",
       "format": "int64"
-    },
-    "LegacyAlert": {
-      "type": "object",
-      "properties": {
-        "Created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "DashboardID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "EvalData": {
-          "$ref": "#/definitions/Json"
-        },
-        "ExecutionError": {
-          "type": "string"
-        },
-        "For": {
-          "$ref": "#/definitions/Duration"
-        },
-        "Frequency": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Handler": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "ID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Message": {
-          "type": "string"
-        },
-        "Name": {
-          "type": "string"
-        },
-        "NewStateDate": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "OrgID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "PanelID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "Severity": {
-          "type": "string"
-        },
-        "Silenced": {
-          "type": "boolean"
-        },
-        "State": {
-          "$ref": "#/definitions/AlertStateType"
-        },
-        "StateChanges": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "Version": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
     },
     "LibraryElementArrayResponse": {
       "type": "object",
@@ -5226,6 +5225,59 @@
         }
       }
     },
+    "MigrateDataResponseDTO": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseItemDTO"
+          }
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "MigrateDataResponseItemDTO": {
+      "type": "object",
+      "required": [
+        "type",
+        "refId",
+        "status"
+      ],
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "refId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "ERROR"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "DASHBOARD",
+            "DATASOURCE",
+            "FOLDER"
+          ]
+        }
+      }
+    },
+    "MigrateDataResponseListDTO": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
     "MoveFolderCommand": {
       "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
       "type": "object",
@@ -5236,7 +5288,7 @@
       }
     },
     "Name": {
-      "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an RDNSequence.",
+      "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an [RDNSequence].",
       "type": "object",
       "properties": {
         "Country": {
@@ -5319,38 +5371,9 @@
       "format": "int64",
       "title": "NoticeSeverity is a type for the Severity property of a Notice."
     },
-    "NotificationTestCommand": {
+    "OID": {
       "type": "object",
-      "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        }
-      }
+      "title": "An OID represents an ASN.1 OBJECT IDENTIFIER."
     },
     "ObjectIdentifier": {
       "type": "array",
@@ -5358,6 +5381,20 @@
       "items": {
         "type": "integer",
         "format": "int64"
+      }
+    },
+    "ObjectMatcher": {
+      "type": "array",
+      "title": "ObjectMatcher is a matcher that can be used to filter alerts.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ObjectMatchers": {
+      "type": "array",
+      "title": "ObjectMatchers is a list of matchers that can be used to filter alerts.",
+      "items": {
+        "$ref": "#/definitions/ObjectMatcher"
       }
     },
     "OrgDTO": {
@@ -5562,26 +5599,6 @@
         "comment": {
           "description": "Updated comment",
           "type": "string"
-        }
-      }
-    },
-    "PauseAlertCommand": {
-      "type": "object",
-      "properties": {
-        "alertId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "paused": {
-          "type": "boolean"
-        }
-      }
-    },
-    "PauseAllAlertsCommand": {
-      "type": "object",
-      "properties": {
-        "paused": {
-          "type": "boolean"
         }
       }
     },
@@ -5959,7 +5976,7 @@
       "type": "object",
       "title": "QueryDataResponse contains the results from a QueryDataRequest.",
       "properties": {
-        "Responses": {
+        "results": {
           "$ref": "#/definitions/Responses"
         }
       }
@@ -6216,16 +6233,6 @@
           "type": "string",
           "format": "date-time"
         },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "dashboardName": {
-          "type": "string"
-        },
-        "dashboardUid": {
-          "type": "string"
-        },
         "dashboards": {
           "type": "array",
           "items": {
@@ -6277,8 +6284,8 @@
         "state": {
           "$ref": "#/definitions/State"
         },
-        "templateVars": {
-          "type": "object"
+        "uid": {
+          "type": "string"
         },
         "updated": {
           "type": "string",
@@ -6342,9 +6349,6 @@
     "ReportEmail": {
       "type": "object",
       "properties": {
-        "email": {
-          "type": "string"
-        },
         "emails": {
           "description": "Comma-separated list of emails to which to send the report to.",
           "type": "string"
@@ -6377,9 +6381,6 @@
     "ReportSchedule": {
       "type": "object",
       "properties": {
-        "day": {
-          "type": "string"
-        },
         "dayOfMonth": {
           "type": "string"
         },
@@ -6390,20 +6391,12 @@
         "frequency": {
           "type": "string"
         },
-        "hour": {
-          "type": "integer",
-          "format": "int64"
-        },
         "intervalAmount": {
           "type": "integer",
           "format": "int64"
         },
         "intervalFrequency": {
           "type": "string"
-        },
-        "minute": {
-          "type": "integer",
-          "format": "int64"
         },
         "startDate": {
           "type": "string",
@@ -6462,6 +6455,14 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "RestoreDeletedDashboardCommand": {
+      "type": "object",
+      "properties": {
+        "folderUid": {
+          "type": "string"
         }
       }
     },
@@ -6936,6 +6937,23 @@
           "items": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      }
+    },
+    "SetTeamMembershipsCommand": {
+      "type": "object",
+      "properties": {
+        "admins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }
@@ -7435,7 +7453,7 @@
       }
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
       "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
@@ -7482,80 +7500,6 @@
           "description": "Object is a JSON compatible map with string, float, int, bool, []interface{},\nor map[string]interface{} children.",
           "type": "object",
           "additionalProperties": {}
-        }
-      }
-    },
-    "UpdateAlertNotificationCommand": {
-      "type": "object",
-      "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
-    "UpdateAlertNotificationWithUidCommand": {
-      "type": "object",
-      "properties": {
-        "disableResolveMessage": {
-          "type": "boolean"
-        },
-        "frequency": {
-          "type": "string"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureSettings": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "sendReminder": {
-          "type": "boolean"
-        },
-        "settings": {
-          "$ref": "#/definitions/Json"
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
         }
       }
     },
@@ -8121,7 +8065,7 @@
       }
     },
     "Userinfo": {
-      "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
+      "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a [URL]. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
       "type": "object"
     },
     "ValueMapping": {
@@ -8326,6 +8270,36 @@
         }
       }
     },
+    "cloudMigrationCreateTokenResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CreateAccessTokenResponseDTO"
+      }
+    },
+    "cloudMigrationListResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationListResponse"
+      }
+    },
+    "cloudMigrationResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationResponse"
+      }
+    },
+    "cloudMigrationRunListResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationRunList"
+      }
+    },
+    "cloudMigrationRunResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/MigrateDataResponseDTO"
+      }
+    },
     "conflictError": {
       "description": "ConflictError",
       "schema": {
@@ -8512,28 +8486,6 @@
         }
       }
     },
-    "deleteAlertNotificationChannelResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "required": [
-          "id",
-          "message"
-        ],
-        "properties": {
-          "id": {
-            "description": "ID Identifier of the deleted notification channel.",
-            "type": "integer",
-            "format": "int64",
-            "example": 65
-          },
-          "message": {
-            "description": "Message Message of the deleted notificatiton channel.",
-            "type": "string"
-          }
-        }
-      }
-    },
     "deleteCorrelationResponse": {
       "description": "",
       "schema": {
@@ -8545,17 +8497,11 @@
       "schema": {
         "type": "object",
         "required": [
-          "id",
+          "uid",
           "title",
           "message"
         ],
         "properties": {
-          "id": {
-            "description": "ID Identifier of the deleted dashboard.",
-            "type": "integer",
-            "format": "int64",
-            "example": 65
-          },
           "message": {
             "description": "Message Message of the deleted dashboard.",
             "type": "string",
@@ -8565,6 +8511,11 @@
             "description": "Title Title of the deleted dashboard.",
             "type": "string",
             "example": "My Dashboard"
+          },
+          "uid": {
+            "description": "UID Identifier of the deleted dashboard.",
+            "type": "string",
+            "example": "65"
           }
         }
       }
@@ -8675,45 +8626,6 @@
         "$ref": "#/definitions/Status"
       }
     },
-    "getAlertNotificationChannelResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/AlertNotification"
-      }
-    },
-    "getAlertNotificationChannelsResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertNotification"
-        }
-      }
-    },
-    "getAlertNotificationLookupResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertNotificationLookup"
-        }
-      }
-    },
-    "getAlertResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/LegacyAlert"
-      }
-    },
-    "getAlertsResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertListItemDTO"
-        }
-      }
-    },
     "getAllRolesResponse": {
       "description": "",
       "schema": {
@@ -8785,15 +8697,6 @@
     },
     "getDashboardSnapshotResponse": {
       "description": ""
-    },
-    "getDashboardStatesResponse": {
-      "description": "",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/AlertStateInfoDTO"
-        }
-      }
     },
     "getDashboardsTagsResponse": {
       "description": "",
@@ -9346,53 +9249,6 @@
         "$ref": "#/definitions/SuccessResponseBody"
       }
     },
-    "pauseAlertResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "required": [
-          "alertId",
-          "message"
-        ],
-        "properties": {
-          "alertId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          },
-          "state": {
-            "description": "Alert result state\nrequired true",
-            "type": "string"
-          }
-        }
-      }
-    },
-    "pauseAlertsResponse": {
-      "description": "",
-      "schema": {
-        "type": "object",
-        "required": [
-          "alertsAffected",
-          "message"
-        ],
-        "properties": {
-          "alertsAffected": {
-            "description": "AlertsAffected is the number of the affected alerts.",
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          },
-          "state": {
-            "description": "Alert result state\nrequired true",
-            "type": "string"
-          }
-        }
-      }
-    },
     "postAPIkeyResponse": {
       "description": "",
       "schema": {
@@ -9603,12 +9459,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/RoleAssignmentsDTO"
-      }
-    },
-    "testAlertResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/AlertTestResult"
       }
     },
     "unauthorisedError": {

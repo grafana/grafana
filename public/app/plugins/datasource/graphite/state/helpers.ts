@@ -4,7 +4,7 @@ import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
 import { FuncInstance } from '../gfunc';
-import { GraphiteQuery, GraphiteTagOperator } from '../types';
+import { GraphiteTagOperator } from '../types';
 
 import { GraphiteQueryEditorState } from './store';
 
@@ -164,7 +164,7 @@ export function handleTargetChanged(state: GraphiteQueryEditorState): void {
   // is used for interpolation we should check required properties are passed though in theory it allows to interpolate
   // with queries that contain "target" property as well.
   state.queryModel.updateModelTarget(
-    (state.queries || []).filter((query) => 'target' in query && typeof (query as GraphiteQuery).target === 'string')
+    (state.queries || []).filter((query) => 'target' in query && typeof query.target === 'string')
   );
 
   // remove spaces from old and new targets

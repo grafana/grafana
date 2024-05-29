@@ -92,6 +92,31 @@ func TestNotificationPolicyService(t *testing.T) {
 		require.Equal(t, "slack receiver", updated.Receiver)
 	})
 
+	t.Run("no root receiver will error", func(t *testing.T) {
+		sut := createNotificationPolicyServiceSut()
+
+		newRoute := createTestRoutingTree()
+		newRoute.Receiver = ""
+		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
+			Receiver: "",
+		})
+
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
+		require.EqualError(t, err, "invalid object specification: root route must specify a default receiver")
+	})
+
+	t.Run("allow receiver inheritance", func(t *testing.T) {
+		sut := createNotificationPolicyServiceSut()
+
+		newRoute := createTestRoutingTree()
+		newRoute.Routes = append(newRoute.Routes, &definitions.Route{
+			Receiver: "",
+		})
+
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
+		require.NoError(t, err)
+	})
+
 	t.Run("not existing receiver reference will error", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 

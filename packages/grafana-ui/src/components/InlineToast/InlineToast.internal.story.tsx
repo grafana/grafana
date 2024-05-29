@@ -1,4 +1,4 @@
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
@@ -27,7 +27,7 @@ const story: Meta = {
 
 export default story;
 
-export const InlineToast: Story<InlineToastProps> = (args) => {
+export const InlineToast: StoryFn<InlineToastProps> = (args) => {
   const [el, setEl] = useState<null | HTMLInputElement>(null);
 
   return (
@@ -44,7 +44,7 @@ InlineToast.args = {
   suffixIcon: 'check',
 };
 
-export const WithAButton: Story<InlineToastProps> = () => {
+export const WithAButton: StoryFn<InlineToastProps> = () => {
   return (
     <ClipboardButton icon="copy" getText={() => 'hello world'}>
       Copy surprise

@@ -18,7 +18,7 @@ weight: 1000
 
 # Set up image rendering
 
-Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in alert notifications, [PDF export]({{< relref "../../dashboards/create-reports#export-dashboard-as-pdf" >}}), and [Reporting]({{< relref "../../dashboards/create-reports" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
+Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in alert notifications, [PDF export]({{< relref "../../dashboards/create-reports#export-dashboard-as-pdf" >}}), and [Reporting]({{< relref "../../dashboards/create-reports" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 
 > **Note:** Image rendering of dashboards is not supported at this time.
 
@@ -30,7 +30,7 @@ You can also render a PNG by hovering over the panel to display the actions menu
 
 ## Alerting and render limits
 
-Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [concurrent_render_limit]({{< relref "../configure-grafana#concurrent_render_limit" >}}).
+Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [max_concurrent_screenshots]({{< relref "../configure-grafana#max_concurrent_screenshots" >}}).
 
 ## Install Grafana Image Renderer plugin
 

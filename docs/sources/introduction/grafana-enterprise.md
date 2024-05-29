@@ -75,6 +75,7 @@ Grafana Enterprise adds the following features:
 With a Grafana Enterprise license, you also get access to premium data sources, including:
 
 - [AppDynamics](/grafana/plugins/dlopes7-appdynamics-datasource)
+- [Azure CosmosDB](/grafana/plugins/grafana-azurecosmosdb-datasource)
 - [Azure Devops](/grafana/plugins/grafana-azuredevops-datasource)
 - [Databricks](/grafana/plugins/grafana-databricks-datasource)
 - [DataDog](/grafana/plugins/grafana-datadog-datasource)

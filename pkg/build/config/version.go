@@ -57,7 +57,7 @@ func (md *Metadata) GetReleaseMode() (ReleaseMode, error) {
 	return md.ReleaseMode, nil
 }
 
-// VersionMap is a map of versions. Each key of the Versions map is an event that uses the the config as the value for that key.
+// VersionMap is a map of versions. Each key of the Versions map is an event that uses the config as the value for that key.
 // For example, the 'pull_request' key will have data in it that might cause Grafana to be built differently in a pull request,
 // than the way it will be built in 'main'
 type VersionMap map[VersionMode]BuildConfig

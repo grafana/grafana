@@ -2,18 +2,20 @@ import React from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { SelectableValue } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { getDashboardSnapshotSrv, SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
 
-import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serialization/transformSceneToSaveModel';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { SceneShareTabState } from './types';
+
+const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
 
 const getExpireOptions = () => {
   const DEFAULT_EXPIRE_OPTION: SelectableValue<number> = {
@@ -44,7 +46,6 @@ const getDefaultExpireOption = () => {
 
 export interface ShareSnapshotTabState extends SceneShareTabState {
   panelRef?: SceneObjectRef<VizPanel>;
-  dashboardRef: SceneObjectRef<DashboardScene>;
   snapshotName?: string;
   selectedExpireOption?: SelectableValue<number>;
 
@@ -126,9 +127,15 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
       return await getDashboardSnapshotSrv().create(cmdData);
     } finally {
       if (external) {
-        DashboardInteractions.publishSnapshotClicked({ expires: cmdData.expires });
+        DashboardInteractions.publishSnapshotClicked({
+          expires: cmdData.expires,
+          shareResource: getTrackingSource(this.state.panelRef),
+        });
       } else {
-        DashboardInteractions.publishSnapshotLocalClicked({ expires: cmdData.expires });
+        DashboardInteractions.publishSnapshotLocalClicked({
+          expires: cmdData.expires,
+          shareResource: getTrackingSource(this.state.panelRef),
+        });
       }
     }
   };
@@ -210,7 +217,12 @@ function ShareSnapshoTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab
                 {snapshotSharingOptions?.externalSnapshotName}
               </Button>
             )}
-            <Button variant="primary" disabled={snapshotResult.loading} onClick={() => createSnapshot()}>
+            <Button
+              variant="primary"
+              disabled={snapshotResult.loading}
+              onClick={() => createSnapshot()}
+              data-testid={selectors.PublishSnapshot}
+            >
               <Trans i18nKey="share-modal.snapshot.local-button">Publish Snapshot</Trans>
             </Button>
           </Modal.ButtonRow>
@@ -222,11 +234,17 @@ function ShareSnapshoTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab
         <>
           <Field label={t('share-modal.snapshot.url-label', 'Snapshot URL')}>
             <Input
+              data-testid={selectors.CopyUrlInput}
               id="snapshot-url-input"
               value={snapshotResult.value.url}
               readOnly
               addonAfter={
-                <ClipboardButton icon="copy" variant="primary" getText={() => snapshotResult.value!.url}>
+                <ClipboardButton
+                  data-testid={selectors.CopyUrlButton}
+                  icon="copy"
+                  variant="primary"
+                  getText={() => snapshotResult.value!.url}
+                >
                   <Trans i18nKey="share-modal.snapshot.copy-link-button">Copy</Trans>
                 </ClipboardButton>
               }

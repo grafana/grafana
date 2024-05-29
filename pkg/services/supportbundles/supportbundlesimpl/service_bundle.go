@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"filippo.io/age"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 )
@@ -66,6 +67,10 @@ func (s *Service) startBundleWork(ctx context.Context, collectors []string, uid 
 }
 
 func (s *Service) bundle(ctx context.Context, collectors []string, uid string) ([]byte, error) {
+	ctxTracer, span := s.tracer.Start(ctx, "SupportBundle.bundle")
+	span.SetAttributes(attribute.String("SupportBundle.bundle.uid", uid))
+	defer span.End()
+
 	lookup := make(map[string]bool, len(collectors))
 	for _, c := range collectors {
 		lookup[c] = true
@@ -83,7 +88,11 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 			continue
 		}
 
-		item, err := collector.Fn(ctx)
+		// Trace the collector run
+		ctxBundler, span := s.tracer.Start(ctxTracer, "SupportBundle.bundle.collector")
+		span.SetAttributes(attribute.String("SupportBundle.bundle.collector.uid", collector.UID))
+
+		item, err := collector.Fn(ctxBundler)
 		if err != nil {
 			s.log.Warn("Failed to collect support bundle item", "error", err, "collector", collector.UID)
 		}
@@ -92,6 +101,8 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 		if item != nil {
 			files[item.Filename] = item.FileBytes
 		}
+
+		span.End()
 	}
 
 	// create tar.gz file

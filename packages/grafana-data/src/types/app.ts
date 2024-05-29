@@ -111,9 +111,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this;
   }
 
-  configureExtensionComponent<Context extends object>(
-    extension: Omit<PluginExtensionComponentConfig<Context>, 'type'>
-  ) {
+  configureExtensionComponent<Props = {}>(extension: Omit<PluginExtensionComponentConfig<Props>, 'type'>) {
     this._extensionConfigs.push({
       ...extension,
       type: PluginExtensionTypes.component,
@@ -128,6 +126,14 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
  * @internal
  */
 export enum FeatureState {
+  /** @deprecated in favor of experimental */
   alpha = 'alpha',
+  /** @deprecated in favor of preview */
   beta = 'beta',
+  /** used to mark experimental features with high/unknown risk */
+  experimental = 'experimental',
+  /** used to mark features that are in public preview with medium/hight risk */
+  privatePreview = 'private preview',
+  /** used to mark features that are in public preview with low/medium risk, or as a shared badge for public and private previews */
+  preview = 'preview',
 }

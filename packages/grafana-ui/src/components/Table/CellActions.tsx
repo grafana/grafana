@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 
 import { IconSize } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
-import { HorizontalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 import { TooltipPlacement } from '../Tooltip';
 
 import { TableCellInspectModal } from './TableCellInspectModal';
@@ -48,8 +48,8 @@ export function CellActions({ field, cell, previewMode, showFilters, onCellFilte
 
   return (
     <>
-      <div className={`cellActions ${isRightAligned ? 'cellActionsLeft' : ''}`}>
-        <HorizontalGroup spacing="xs">
+      <div className={`cellActions${isRightAligned ? ' cellActionsLeft' : ''}`}>
+        <Stack gap={0.5}>
           {inspectEnabled && (
             <IconButton
               name="eye"
@@ -66,7 +66,7 @@ export function CellActions({ field, cell, previewMode, showFilters, onCellFilte
           {showFilters && (
             <IconButton name={'search-minus'} onClick={onFilterOut} tooltip="Filter out value" {...commonButtonProps} />
           )}
-        </HorizontalGroup>
+        </Stack>
       </div>
 
       {isInspecting && (

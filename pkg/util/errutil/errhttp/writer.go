@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"reflect"
 
+	"k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -43,10 +45,21 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 
 	logError(ctx, gErr, opt)
 
+	var rsp any
 	pub := gErr.Public()
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(pub.StatusCode)
-	err = json.NewEncoder(w).Encode(pub)
+	rsp = pub
+
+	// When running in k8s, this will return a v1 status
+	// Typically, k8s handlers should directly support error negotiation, however
+	// when implementing handlers directly this will maintain compatibility with client-go
+	_, ok := request.RequestInfoFrom(ctx)
+	if ok {
+		rsp = gErr.Status()
+	}
+
+	err = json.NewEncoder(w).Encode(rsp)
 	if err != nil {
 		defaultLogger.FromContext(ctx).Error("error while writing error", "error", err)
 	}

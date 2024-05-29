@@ -65,6 +65,8 @@ export enum PromApplication {
   Thanos = 'Thanos',
 }
 
+export type RulesSourceApplication = PromApplication | 'loki' | 'grafana';
+
 export interface PromBuildInfoResponse {
   data: {
     application?: string;
@@ -178,7 +180,7 @@ export interface RulerAlertingRuleDTO extends RulerRuleBaseDTO {
 export enum GrafanaAlertStateDecision {
   Alerting = 'Alerting',
   NoData = 'NoData',
-  KeepLastState = 'KeepLastState',
+  KeepLast = 'KeepLast',
   OK = 'OK',
   Error = 'Error',
 }

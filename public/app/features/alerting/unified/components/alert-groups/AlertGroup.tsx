@@ -36,6 +36,7 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
           {Object.keys(group.labels).length ? (
             <Stack direction="row" alignItems="center">
               <AlertLabels labels={group.labels} size="sm" />
+
               {receiverInGroup && (
                 <MetaText icon="at">
                   Delivered to <Strong>{group.receiver.name}</Strong>

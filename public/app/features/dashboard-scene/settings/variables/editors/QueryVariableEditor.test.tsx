@@ -152,6 +152,8 @@ describe('QueryVariableEditor', () => {
     });
 
     expect(variable.state.datasource).toEqual({ uid: 'mock-ds-3', type: 'prometheus' });
+    expect(variable.state.query).toBe('');
+    expect(variable.state.definition).toBe('');
   });
 
   it('should update the variable state when changing the query', async () => {

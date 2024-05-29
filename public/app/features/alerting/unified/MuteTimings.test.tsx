@@ -351,7 +351,6 @@ describe('Mute timings', () => {
             name: 'default-mute',
             time_intervals: [
               {
-                times: [],
                 weekdays: ['monday'],
                 days_of_month: ['-7:-1'],
                 months: ['3', '6', '9', '12'],

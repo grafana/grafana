@@ -1,9 +1,11 @@
 package options
 
 import (
+	"log/slog"
 	"strconv"
 
-	"github.com/go-logr/logr"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
 	"github.com/spf13/pflag"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/component-base/logs"
@@ -36,10 +38,12 @@ func (o *ExtraOptions) Validate() []error {
 }
 
 func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
-	logger := logr.New(newLogAdapter(o.Verbosity))
-	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
+	handler := slogadapter.New(log.New("grafana-apiserver"))
+	logger := slog.New(handler)
+
+	klog.SetSlogLogger(logger)
 	if _, err := logs.GlogSetter(strconv.Itoa(o.Verbosity)); err != nil {
-		logger.Error(err, "failed to set log level")
+		logger.Error("failed to set log level", "error", err)
 	}
 	c.ExternalAddress = o.ExternalAddress
 	return nil

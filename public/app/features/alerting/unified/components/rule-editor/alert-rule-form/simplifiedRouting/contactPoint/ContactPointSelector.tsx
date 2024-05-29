@@ -1,6 +1,6 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
@@ -8,7 +8,6 @@ import {
   Field,
   FieldValidationMessage,
   IconButton,
-  InputControl,
   Select,
   Stack,
   TextLink,
@@ -78,8 +77,8 @@ export function ContactPointSelector({
   return (
     <Stack direction="column">
       <Stack direction="row" alignItems="center">
-        <Field label="Contact point">
-          <InputControl
+        <Field label="Contact point" data-testid="contact-point-picker">
+          <Controller
             render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
               <>
                 <div className={styles.contactPointsSelector}>
@@ -150,6 +149,15 @@ function LinkToContactPoints() {
   );
 }
 
+const rotation = keyframes({
+  from: {
+    transform: 'rotate(720deg)',
+  },
+  to: {
+    transform: 'rotate(0deg)',
+  },
+});
+
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointsSelector: css({
     display: 'flex',
@@ -173,14 +181,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   loading: css({
     pointerEvents: 'none',
-    animation: 'rotation 2s infinite linear',
-    '@keyframes rotation': {
-      from: {
-        transform: 'rotate(720deg)',
-      },
-      to: {
-        transform: 'rotate(0deg)',
-      },
+    [theme.transitions.handleMotion('no-preference')]: {
+      animation: `${rotation} 2s infinite linear`,
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      animation: `${rotation} 6s infinite linear`,
     },
   }),
   warn: css({

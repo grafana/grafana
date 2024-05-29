@@ -29,7 +29,7 @@ In [Introduction to time series][time-series-databases], the concept of _labels_
 
 With time series data, the data often contain more than a single series, and is a set of multiple time series. Many Grafana data sources support this type of data.
 
-{{< figure src="/static/img/docs/example_graph_multi_dim.png" class="docs-image--no-shadow" max-width="850px" >}}
+{{< figure src="/static/img/docs/example_graph_multi_dim.png" class="docs-image--no-shadow" max-width="850px" alt="Temperature by location" >}}
 
 The common case is issuing a single query for a measurement with one or more additional properties as dimensions. For example, querying a temperature measurement along with a location property. In this case, multiple series are returned back from that single query and each series has unique location as a dimension.
 

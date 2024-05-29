@@ -1,12 +1,26 @@
 import React from 'react';
 
-import { MenuItem, MenuGroup, ContextMenu } from '@grafana/ui';
+import { DataFrame } from '@grafana/data';
+import { MenuItem, MenuGroup, ContextMenu, IconName } from '@grafana/ui';
 
-import { ClickedItemData } from '../types';
+import { ClickedItemData, SelectedView } from '../types';
 
-import { CollapseConfig } from './dataTransform';
+import { CollapseConfig, FlameGraphDataContainer } from './dataTransform';
+
+export type GetExtraContextMenuButtonsFunction = (
+  clickedItemData: ClickedItemData,
+  data: DataFrame,
+  state: { selectedView: SelectedView; isDiff: boolean; search: string; collapseConfig?: CollapseConfig }
+) => ExtraContextMenuButton[];
+
+export type ExtraContextMenuButton = {
+  label: string;
+  icon: IconName;
+  onClick: () => void;
+};
 
 type Props = {
+  data: FlameGraphDataContainer;
   itemData: ClickedItemData;
   onMenuItemClick: () => void;
   onItemFocus: () => void;
@@ -15,13 +29,17 @@ type Props = {
   onCollapseGroup: () => void;
   onExpandAllGroups: () => void;
   onCollapseAllGroups: () => void;
+  getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   collapseConfig?: CollapseConfig;
   collapsing?: boolean;
   allGroupsCollapsed?: boolean;
   allGroupsExpanded?: boolean;
+  selectedView: SelectedView;
+  search: string;
 };
 
 const FlameGraphContextMenu = ({
+  data,
   itemData,
   onMenuItemClick,
   onItemFocus,
@@ -31,11 +49,21 @@ const FlameGraphContextMenu = ({
   onCollapseGroup,
   onExpandAllGroups,
   onCollapseAllGroups,
+  getExtraContextMenuButtons,
   collapsing,
   allGroupsExpanded,
   allGroupsCollapsed,
+  selectedView,
+  search,
 }: Props) => {
   function renderItems() {
+    const extraButtons =
+      getExtraContextMenuButtons?.(itemData, data.data, {
+        selectedView,
+        isDiff: data.isDiffFlamegraph(),
+        search,
+        collapseConfig,
+      }) || [];
     return (
       <>
         <MenuItem
@@ -63,7 +91,9 @@ const FlameGraphContextMenu = ({
             onMenuItemClick();
           }}
         />
-
+        {extraButtons.map(({ label, icon, onClick }) => {
+          return <MenuItem label={label} icon={icon} onClick={() => onClick()} key={label} />;
+        })}
         {collapsing && (
           <MenuGroup label={'Grouping'}>
             {collapseConfig ? (
