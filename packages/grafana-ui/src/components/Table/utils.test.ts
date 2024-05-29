@@ -13,7 +13,7 @@ import {
   sortNumber,
   sortOptions,
   valuesToOptions,
-  guessLongestField
+  guessLongestField,
 } from './utils';
 import { wrap } from 'module';
 
@@ -81,7 +81,6 @@ function getWrappableData(numRecords: number) {
     data.fields[1].values[i] = faker.lorem.paragraphs(9);
     data.fields[2].values[i] = faker.lorem.paragraphs(11);
   }
-
 
   return data;
 }
@@ -547,7 +546,6 @@ describe('Table utils', () => {
   });
 
   describe('guessLongestField', () => {
-
     it('should guess the longest field correct if there are few records', () => {
       const data = getWrappableData(10);
       const config = {
@@ -555,9 +553,9 @@ describe('Table utils', () => {
           custom: {
             cellOptions: {
               wrapText: true,
-            }
-          }
-        }
+            },
+          },
+        },
       };
 
       const longestField = guessLongestField(config, data);
@@ -571,9 +569,9 @@ describe('Table utils', () => {
           custom: {
             cellOptions: {
               wrapText: true,
-            }
-          }
-        }
+            },
+          },
+        },
       };
 
       const longestField = guessLongestField(config, data);
@@ -587,13 +585,13 @@ describe('Table utils', () => {
           custom: {
             cellOptions: {
               wrapText: true,
-            }
-          }
-        }
+            },
+          },
+        },
       };
 
       const longestField = guessLongestField(config, data);
       expect(longestField).toBe(undefined);
-    })
-  })
+    });
+  });
 });
