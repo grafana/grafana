@@ -54,7 +54,7 @@ export const RichHistoryAddToLibraryForm = ({ onCancel, onSave, query }: Props) 
         <DataSourcePicker current={datasource?.uid} disabled={true} />
       </Field>
       <Field label={t('explore.add-to-library-modal.data-source-type', 'Data source type')}>
-        <Input disabled={true} value={datasource?.meta.name}></Input>
+        <Input disabled={true} defaultValue={datasource?.meta.name}></Input>
       </Field>
       <Field label={t('explore.add-to-library-modal.description', 'Description')}>
         <Input id="query-template-description" autoFocus={true} {...register('description')}></Input>
