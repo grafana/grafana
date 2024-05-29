@@ -322,9 +322,6 @@ type Cfg struct {
 	// GrafanaJavascriptAgent config
 	GrafanaJavascriptAgent GrafanaJavascriptAgent
 
-	// accessactionsets
-	OnlyStoreAccessActionSets bool
-
 	// Data sources
 	DataSourceLimit int
 	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
@@ -463,14 +460,7 @@ type Cfg struct {
 	OAuth2ServerGeneratedKeyTypeForClient string
 	OAuth2ServerAccessTokenLifespan       time.Duration
 
-	// Access Control
-	RBACPermissionCache bool
-	// Enable Permission validation during role creation and provisioning
-	RBACPermissionValidationEnabled bool
-	// Reset basic roles permissions on start-up
-	RBACResetBasicRoles bool
-	// RBAC single organization. This configuration option is subject to change.
-	RBACSingleOrganization bool
+	RBAC RBACSettings
 
 	// GRPC Server.
 	GRPCServerNetwork        string
@@ -1109,7 +1099,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	readOAuth2ServerSettings(cfg)
 
-	readAccessControlSettings(iniFile, cfg)
+	cfg.readRBACSettings()
+
 	if err := cfg.readRenderingSettings(iniFile); err != nil {
 		return err
 	}
@@ -1628,15 +1619,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		cfg.SSOSettingsConfigurableProviders[provider] = true
 	}
 	return nil
-}
-
-func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
-	rbac := iniFile.Section("rbac")
-	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
-	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
-	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
-	cfg.RBACSingleOrganization = rbac.Key("single_organization").MustBool(false)
-	cfg.OnlyStoreAccessActionSets = rbac.Key("only_store_access_action_sets").MustBool(false)
 }
 
 func readOAuth2ServerSettings(cfg *Cfg) {
