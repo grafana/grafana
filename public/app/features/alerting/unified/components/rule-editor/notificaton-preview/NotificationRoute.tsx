@@ -68,8 +68,7 @@ function NotificationRouteHeader({
         <Spacer />
         <Stack gap={2} direction="row" alignItems="center">
           <MetaText icon="layers-alt" data-testid="matching-instances">
-            {instancesCount ?? '-'}
-            <span>{pluralize('instance', instancesCount)}</span>
+            {instancesCount ?? '-'} {pluralize('instance', instancesCount)}
           </MetaText>
           <Stack gap={1} direction="row" alignItems="center">
             <div>
