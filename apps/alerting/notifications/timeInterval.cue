@@ -7,7 +7,7 @@ timeInterval: {
 		groupOverride: "notifications.alerting.grafana.app"
 	}
 	codegen: {
-		frontend: false
+		frontend: true
 		backend:  true
 	}
 	pluralName: "TimeIntervals"
