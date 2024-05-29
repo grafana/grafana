@@ -246,7 +246,6 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	cmd.Database = settings.Database
 	cmd.SecureJsonData = settings.DecryptedSecureJSONData
 	cmd.JsonData = nil
-	cmd.APIVersion = settings.APIVersion
 	if settings.JSONData != nil {
 		cmd.JsonData = simplejson.New()
 		err := cmd.JsonData.FromDB(settings.JSONData)
