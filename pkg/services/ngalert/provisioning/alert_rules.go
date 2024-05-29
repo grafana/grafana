@@ -266,7 +266,7 @@ func (service *AlertRuleService) GetRuleGroup(ctx context.Context, user identity
 	q := models.ListAlertRulesQuery{
 		OrgID:         user.GetOrgID(),
 		NamespaceUIDs: []string{namespaceUID},
-		RuleGroup:     group,
+		RuleGroups:    []string{group},
 	}
 	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
 	if err != nil {
@@ -308,7 +308,7 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 		query := &models.ListAlertRulesQuery{
 			OrgID:         user.GetOrgID(),
 			NamespaceUIDs: []string{namespaceUID},
-			RuleGroup:     ruleGroup,
+			RuleGroups:    []string{ruleGroup},
 		}
 		ruleList, err := service.ruleStore.ListAlertRules(ctx, query)
 		if err != nil {
@@ -436,7 +436,7 @@ func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Re
 		listRulesQuery := models.ListAlertRulesQuery{
 			OrgID:         user.GetOrgID(),
 			NamespaceUIDs: []string{group.FolderUID},
-			RuleGroup:     group.Title,
+			RuleGroups:    []string{group.Title},
 		}
 		ruleList, err := service.ruleStore.ListAlertRules(ctx, &listRulesQuery)
 		if err != nil {
