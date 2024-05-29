@@ -702,7 +702,7 @@ export function guessLongestField(fieldConfig: any, data: DataFrame) {
   ) {
     const stringFields = data.fields.filter((field: Field) => field.type === FieldType.string);
 
-    if (stringFields.length >= 1) {
+    if (stringFields.length >= 1 && stringFields[0].values.length > 0) {
       const numValues = stringFields[0].values.length;
       let longestLength = 0;
 
