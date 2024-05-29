@@ -30,16 +30,34 @@ export function getAuthType(options: AzureDataSourceSettings | AzureDataSourceIn
   return options.jsonData.azureAuthType;
 }
 
+function resolveLegacyCloudName(cloudName: string | undefined): string | undefined {
+  if (!cloudName) {
+    return undefined;
+  }
+  switch (cloudName) {
+    case 'azuremonitor':
+      return AzureCloud.Public;
+    case 'chinaazuremonitor':
+      return AzureCloud.China;
+    case 'govazuremonitor':
+      return AzureCloud.USGovernment;
+    default:
+      return cloudName;
+  }
+}
+
 function getDefaultAzureCloud(): string {
-  switch (config.azure.cloud) {
+ const cloudName = resolveLegacyCloudName(config.azure.cloud);
+
+  switch (cloudName) {
     case AzureCloud.Public:
     case AzureCloud.None:
     case undefined:
-      return 'azuremonitor';
+      return AzureCloud.Public;
     case AzureCloud.China:
-      return 'chinaazuremonitor';
+      return AzureCloud.China;
     case AzureCloud.USGovernment:
-      return 'govazuremonitor';
+      return AzureCloud.USGovernment;
     default:
       const cloudInfo = getAzureClouds();
 
@@ -48,7 +66,7 @@ function getDefaultAzureCloud(): string {
           return cloud.name;
         }
       }
-      throw new Error(`The cloud '${config.azure.cloud}' not supported.`);
+      throw new Error(`The cloud '${config.azure.cloud}' is unsupported.`);
   }
 }
 
@@ -61,7 +79,7 @@ export function getAzureCloud(options: AzureDataSourceSettings | AzureDataSource
       return getDefaultAzureCloud();
     case 'clientsecret':
     case 'currentuser':
-      return options.jsonData.cloudName || getDefaultAzureCloud();
+      return resolveLegacyCloudName(options.jsonData.cloudName) || getDefaultAzureCloud();
   }
 }
 
@@ -126,7 +144,7 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
     case 'clientsecret':
       return {
         authType,
-        azureCloud: options.jsonData.cloudName || getDefaultAzureCloud(),
+        azureCloud: resolveLegacyCloudName(options.jsonData.cloudName) || getDefaultAzureCloud(),
         tenantId: options.jsonData.tenantId,
         clientId: options.jsonData.clientId,
         clientSecret: getSecret(options),
@@ -184,7 +202,7 @@ export function updateCredentials(
         jsonData: {
           ...options.jsonData,
           azureAuthType: credentials.authType,
-          cloudName: credentials.azureCloud || getDefaultAzureCloud(),
+          cloudName: resolveLegacyCloudName(credentials.azureCloud) || getDefaultAzureCloud(),
           tenantId: credentials.tenantId,
           clientId: credentials.clientId,
           azureCredentials: undefined,

@@ -134,6 +134,7 @@ func resolveLegacyCloudName(cloudName string) (string, error) {
 	case "":
 		return azsettings.AzurePublic, nil
 	default:
-		return cloudName, nil
+		err := fmt.Errorf("the Azure cloud '%s' not supported by Azure Monitor datasource", cloudName)
+		return "", err
 	}
 }

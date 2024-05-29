@@ -11,12 +11,6 @@ import { AzureAuthType, AzureCredentials } from '../../types';
 import { AppRegistrationCredentials } from './AppRegistrationCredentials';
 import CurrentUserFallbackCredentials from './CurrentUserFallbackCredentials';
 
-const legacyAzureClouds: SelectableValue[] = [
-  { value: 'azuremonitor', label: 'Azure' },
-  { value: 'govazuremonitor', label: 'Azure US Government' },
-  { value: 'chinaazuremonitor', label: 'Azure China' },
-];
-
 export interface Props {
   managedIdentityEnabled: boolean;
   workloadIdentityEnabled: boolean;
@@ -31,17 +25,10 @@ export interface Props {
 export function getAzureCloudOptions(): Array<SelectableValue<string>> {
   const cloudInfo = getAzureClouds();
 
-  const cloudInfoOptions = cloudInfo.map((cloud) => ({
+  return cloudInfo.map((cloud) => ({
     value: cloud.name,
     label: cloud.displayName,
   }));
-
-  const uniqueCloudOptions = [
-    ...legacyAzureClouds,
-    ...cloudInfoOptions.filter((cloud) => !legacyAzureClouds.some((legacyCloud) => legacyCloud.label === cloud.label)),
-  ];
-
-  return uniqueCloudOptions;
 }
 
 export const AzureCredentialsForm = (props: Props) => {
