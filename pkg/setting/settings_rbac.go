@@ -1,5 +1,9 @@
 package setting
 
+import (
+	"github.com/grafana/grafana/pkg/util"
+)
+
 type RBACSettings struct {
 	// Enable permission cache
 	PermissionCache bool
@@ -11,6 +15,9 @@ type RBACSettings struct {
 	SingleOrganization bool
 
 	OnlyStoreAccessActionSets bool
+
+	// set of resources that should generate managed permissions when created
+	managedPermissionsOnCreation map[string]struct{}
 }
 
 func (c *Cfg) readRBACSettings() {
@@ -23,5 +30,16 @@ func (c *Cfg) readRBACSettings() {
 	s.SingleOrganization = rbac.Key("single_organization").MustBool(false)
 	s.OnlyStoreAccessActionSets = rbac.Key("only_store_access_action_sets").MustBool(false)
 
+	resoruces := util.SplitString(rbac.Key("managed_permissions_on_creation").MustString(""))
+	s.managedPermissionsOnCreation = map[string]struct{}{}
+	for _, resource := range resoruces {
+		s.managedPermissionsOnCreation[resource] = struct{}{}
+	}
+
 	c.RBAC = s
+}
+
+func (r RBACSettings) PermissionsOnCreation(resource string) bool {
+	_, ok := r.managedPermissionsOnCreation[resource]
+	return ok
 }
