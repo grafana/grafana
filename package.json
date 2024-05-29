@@ -82,7 +82,7 @@
     "@manypkg/get-packages": "^2.2.0",
     "@playwright/test": "1.44.1",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.13",
-    "@react-types/button": "3.9.3",
+    "@react-types/button": "3.9.4",
     "@react-types/menu": "3.9.8",
     "@react-types/overlays": "3.8.6",
     "@react-types/shared": "3.23.0",
