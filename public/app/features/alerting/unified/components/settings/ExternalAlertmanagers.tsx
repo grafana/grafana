@@ -20,8 +20,13 @@ interface Props {
 }
 
 export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
-  const { externalAlertmanagerDataSourcesWithStatus, configuration, enableAlertmanager, disableAlertmanager } =
-    useSettings();
+  const {
+    externalAlertmanagerDataSourcesWithStatus,
+    configuration,
+    enableAlertmanager,
+    disableAlertmanager,
+    forwardingDisabled,
+  } = useSettings();
 
   // determine if the alertmanger is receiving alerts
   // this is true if Grafana is configured to send to either "both" or "external" and the Alertmanager datasource _wants_ to receive alerts.
@@ -51,6 +56,8 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
         const detailHref = createUrl(DATASOURCES_ROUTES.Edit.replace(/:uid/gi, uid));
 
         const handleEditConfiguration = () => onEditConfiguration(name);
+        const handleEnable = forwardingDisabled ? undefined : () => enableAlertmanager(uid);
+        const handleDisable = forwardingDisabled ? undefined : () => disableAlertmanager(uid);
 
         return (
           <AlertmanagerCard
@@ -60,12 +67,13 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
             url={url}
             provisioned={isProvisioned}
             readOnly={isReadOnly}
+            showStatus={!forwardingDisabled}
             implementation={jsonData.implementation ?? 'Prometheus'}
             receiving={isReceiving}
             status={status}
             onEditConfiguration={handleEditConfiguration}
-            onDisable={() => disableAlertmanager(uid)}
-            onEnable={() => enableAlertmanager(uid)}
+            onDisable={handleDisable}
+            onEnable={handleEnable}
           />
         );
       })}
