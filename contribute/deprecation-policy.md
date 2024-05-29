@@ -2,7 +2,7 @@
 
 We do our best to limit breaking changes and the deprecation of features to major releases. We always do our best _not_ to introduce breaking changes in order to make upgrading Grafana as easy and reliable as possible. However, at times we have to introduce a breaking change by changing behavior or by removing a feature.
 
-To minimize the negative effects of removing a feature, we require a deprecation plan. A typical deprecation plan includes these features: 
+To minimize the negative effects of removing a feature, we require a deprecation plan. A typical deprecation plan includes these features:
 
 - Determine usage levels of the feature.
 - Find alternative solutions and possible migration paths.
@@ -12,7 +12,7 @@ To minimize the negative effects of removing a feature, we require a deprecation
 - Disable the feature by default.
 - Remove the feature from the code base.
 
-We want the deprecation plan to be in the form of written communication for all parties so we know it's intentional and that a reasonable attempt was made to avoid breaking changes unnecessarily. Depending on the size and importance of the feature the plan can be a design doc or an issue. 
+We want the deprecation plan to be in the form of written communication for all parties so we know it's intentional and that a reasonable attempt was made to avoid breaking changes unnecessarily. Depending on the size and importance of the feature the plan can be a design doc or an issue.
 
 > Grafana employees can find more details in our internal docs.
 

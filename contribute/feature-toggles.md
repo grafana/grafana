@@ -1,6 +1,6 @@
 # Feature toggle guide
 
-This guide helps you to add your feature behind a _feature flag_, code that lets you enable or disable a feature without redeploying Grafana. 
+This guide helps you to add your feature behind a _feature flag_, code that lets you enable or disable a feature without redeploying Grafana.
 
 ## Steps to adding a feature toggle
 
@@ -9,7 +9,7 @@ This guide helps you to add your feature behind a _feature flag_, code that lets
 
 ## How to use the toggle in your code
 
-Once your feature toggle is defined, you can then wrap your feature around a check if the feature flag is enabled on that Grafana instance. 
+Once your feature toggle is defined, you can then wrap your feature around a check if the feature flag is enabled on that Grafana instance.
 
 Examples:
 

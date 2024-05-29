@@ -57,8 +57,9 @@ make lefthook-uninstall
 
 ## Build Grafana
 
-When building Grafana, be aware that it consists of two components: 
-- The _frontend_, and 
+When building Grafana, be aware that it consists of two components:
+
+- The _frontend_, and
 - The _backend_.
 
 ### Frontend
@@ -161,7 +162,7 @@ By default, grafana runs SQLite. To run test with SQLite:
 go test -covermode=atomic -tags=integration ./pkg/...
 ```
 
-To run PostgreSQL and MySQL integration tests locally, start the Docker blocks for test data sources for MySQL, PostgreSQL, or both, by running `make devenv sources=mysql_tests,postgres_tests`. 
+To run PostgreSQL and MySQL integration tests locally, start the Docker blocks for test data sources for MySQL, PostgreSQL, or both, by running `make devenv sources=mysql_tests,postgres_tests`.
 
 When your test data sources are running, you can execute integration tests by running for MySQL:
 
