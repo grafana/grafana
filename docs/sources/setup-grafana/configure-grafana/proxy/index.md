@@ -9,7 +9,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Configure data source proxy
-title: Configure a data source connection proxy
+title: Configure a data source SOCKS5 connection proxy
 weight: 1110
 ---
 
