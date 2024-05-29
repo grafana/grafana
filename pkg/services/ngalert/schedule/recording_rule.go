@@ -7,12 +7,14 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/util"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -36,9 +38,11 @@ type recordingRule struct {
 	logger  log.Logger
 	metrics *metrics.Scheduler
 	tracer  tracing.Tracer
+
+	writer writer.Writer
 }
 
-func newRecordingRule(parent context.Context, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, ft featuremgmt.FeatureToggles, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer) *recordingRule {
+func newRecordingRule(parent context.Context, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, ft featuremgmt.FeatureToggles, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer writer.Writer) *recordingRule {
 	ctx, stop := util.WithCancelCause(parent)
 	return &recordingRule{
 		ctx:            ctx,
@@ -51,6 +55,7 @@ func newRecordingRule(parent context.Context, maxAttempts int64, clock clock.Clo
 		logger:         logger,
 		metrics:        metrics,
 		tracer:         tracer,
+		writer:         writer,
 	}
 }
 
@@ -164,10 +169,10 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	evalAttemptFailures := r.metrics.EvalAttemptFailures.WithLabelValues(orgID)
 	evalTotalFailures := r.metrics.EvalFailures.WithLabelValues(orgID)
 
-	start := r.clock.Now()
+	evalStart := r.clock.Now()
 	evalCtx := eval.NewContext(ctx, SchedulerUserFor(ev.rule.OrgID))
 	result, err := r.buildAndExecutePipeline(ctx, evalCtx, ev, logger)
-	dur := r.clock.Now().Sub(start)
+	evalDur := r.clock.Now().Sub(evalStart)
 
 	evalAttemptTotal.Inc()
 	span := trace.SpanFromContext(ctx)
@@ -184,10 +189,33 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		return fmt.Errorf("server side expressions pipeline returned an error: %w", err)
 	}
 
-	logger.Debug("Alert rule evaluated", "results", result, "duration", dur)
+	logger.Debug("Alert rule evaluated", "results", result, "duration", evalDur)
 	span.AddEvent("rule evaluated", trace.WithAttributes(
 		attribute.Int64("results", int64(len(result.Responses))),
 	))
+
+	frames, err := r.frameRef(ev.rule.Record.From, result)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to extract frames from rule evaluation")
+		span.RecordError(err)
+		return fmt.Errorf("failed to extract frames from rule evaluation: %w", err)
+	}
+
+	writeStart := r.clock.Now()
+	err = r.writer.Write(ctx, ev.rule.Record.Metric, writeStart, frames, ev.rule.Labels)
+	writeDur := r.clock.Now().Sub(writeStart)
+
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to write metrics")
+		span.RecordError(err)
+		return fmt.Errorf("metric remote write failed: %w", err)
+	}
+
+	logger.Debug("Metrics written", "duration", writeDur)
+	span.AddEvent("metrics written", trace.WithAttributes(
+		attribute.Int64("frames", int64(len(frames))),
+	))
+
 	return nil
 }
 
@@ -211,4 +239,18 @@ func (r *recordingRule) evaluationDoneTestHook(ev *Evaluation) {
 	}
 
 	r.evalAppliedHook(ev.rule.GetKey(), ev.scheduledAt)
+}
+
+func (r *recordingRule) frameRef(refID string, resp *backend.QueryDataResponse) (data.Frames, error) {
+	if len(resp.Responses) == 0 {
+		return nil, fmt.Errorf("no responses returned from rule evaluation")
+	}
+
+	for ref, resp := range resp.Responses {
+		if ref == refID {
+			return resp.Frames, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no response with refID %s found in rule evaluation", refID)
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -56,6 +57,7 @@ func newRuleFactory(
 	met *metrics.Scheduler,
 	logger log.Logger,
 	tracer tracing.Tracer,
+	recordingWriter writer.Writer,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
 ) ruleFactoryFunc {
@@ -70,6 +72,7 @@ func newRuleFactory(
 				logger,
 				met,
 				tracer,
+				recordingWriter,
 			)
 		}
 		return newAlertRule(

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/util/ticker"
 )
 
@@ -92,6 +93,8 @@ type schedule struct {
 	schedulableAlertRules alertRulesRegistry
 
 	tracer tracing.Tracer
+
+	recordingWriter writer.Writer
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -110,6 +113,7 @@ type SchedulerCfg struct {
 	AlertSender          AlertsSender
 	Tracer               tracing.Tracer
 	Log                  log.Logger
+	RecordingWriter      writer.Writer
 }
 
 // NewScheduler returns a new scheduler.
@@ -138,6 +142,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
 		alertsSender:          cfg.AlertSender,
 		tracer:                cfg.Tracer,
+		recordingWriter:       cfg.RecordingWriter,
 	}
 
 	return &sch
@@ -254,6 +259,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.metrics,
 		sch.log,
 		sch.tracer,
+		sch.recordingWriter,
 		sch.evalAppliedFunc,
 		sch.stopAppliedFunc,
 	)
