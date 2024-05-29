@@ -39,7 +39,8 @@ function getMessages(panel: Panel, dashboard: Dashboard): Message[] {
       role: Role.system,
     },
     {
-      content: `The panel is part of a dashboard with the title: ${dashboard.title}\n` +
+      content:
+        `The panel is part of a dashboard with the title: ${dashboard.title}\n` +
         `The panel is part of a dashboard with the description: ${dashboard.description}\n` +
         `Use this JSON object which defines the panel: ${panelString}`,
       role: Role.user,
