@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { withTheme2, Themeable2 } from '@grafana/ui';
+import { withTheme2, Themeable2, PopoverContent } from '@grafana/ui';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
@@ -50,7 +50,7 @@ export interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
-  pinLineButtonTooltipTitle?: string;
+  pinLineButtonTooltipTitle?: PopoverContent;
   onLogRowHover?: (row?: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   getRowContextQuery?: (

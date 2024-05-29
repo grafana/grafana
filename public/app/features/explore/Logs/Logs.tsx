@@ -39,6 +39,7 @@ import {
   InlineFieldRow,
   InlineSwitch,
   PanelChrome,
+  PopoverContent,
   RadioButtonGroup,
   SeriesVisibilityChangeMode,
   Themeable2,
@@ -132,7 +133,7 @@ interface State {
   tableFrame?: DataFrame;
   visualisationType?: LogsVisualisationType;
   logsContainer?: HTMLDivElement;
-  pinLineButtonTooltipTitle?: string;
+  pinLineButtonTooltipTitle?: PopoverContent;
 }
 
 // we need to define the order of these explicitly
@@ -659,7 +660,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
   onPinToContentOutlineClick = (row: LogRowModel) => {
     if (this.getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
       this.setState({
-        pinLineButtonTooltipTitle: `❗️Maximum of ${PINNED_LOGS_LIMIT} pinned logs reached. Unpin a log to add another`,
+        pinLineButtonTooltipTitle: (
+          <span style={{ display: 'flex', textAlign: 'center' }}>
+            ❗️Maximum of {PINNED_LOGS_LIMIT} pinned logs reached. <br />
+            Unpin a log to add another.
+          </span>
+        ),
       });
       return;
     }

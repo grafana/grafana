@@ -2,7 +2,7 @@ import React, { FocusEvent, SyntheticEvent, useCallback } from 'react';
 
 import { LogRowContextOptions, LogRowModel, getDefaultTimeRange, locationUtil, urlUtil } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
-import { ClipboardButton, IconButton } from '@grafana/ui';
+import { ClipboardButton, IconButton, PopoverContent } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 
 import { LogRowStyles } from './getLogRowStyles';
@@ -20,7 +20,7 @@ interface Props {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
-  pinLineButtonTooltipTitle?: string;
+  pinLineButtonTooltipTitle?: PopoverContent;
   pinned?: boolean;
   styles: LogRowStyles;
   mouseIsOver: boolean;
