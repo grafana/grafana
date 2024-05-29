@@ -361,6 +361,20 @@ func GetOrgRoles(user identity.Requester) []string {
 	return roles
 }
 
+// PermissionsForActions generate Permissions for all actions provided scoped to provided scope.
+func PermissionsForActions(actions []string, scope string) []Permission {
+	permissions := make([]Permission, len(actions))
+
+	for _, action := range actions {
+		permissions = append(permissions, Permission{
+			Action: action,
+			Scope:  scope,
+		})
+	}
+
+	return permissions
+}
+
 func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) identity.Requester {
 	return &user.SignedInUser{
 		OrgID:   orgID,
