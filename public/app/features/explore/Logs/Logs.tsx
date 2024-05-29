@@ -132,6 +132,7 @@ interface State {
   tableFrame?: DataFrame;
   visualisationType?: LogsVisualisationType;
   logsContainer?: HTMLDivElement;
+  pinLineButtonTooltipTitle?: string;
 }
 
 // we need to define the order of these explicitly
@@ -155,6 +156,8 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
   }
   return 'logs';
 };
+
+const PINNED_LOGS_LIMIT = 3;
 
 class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
@@ -183,6 +186,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     tableFrame: undefined,
     visualisationType: this.props.panelState?.logs?.visualisationType ?? getDefaultVisualisationType(),
     logsContainer: undefined,
+    pinLineButtonTooltipTitle: 'Pin to content outline',
   };
 
   constructor(props: Props) {
@@ -653,6 +657,13 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onPinToContentOutlineClick = (row: LogRowModel) => {
+    if (this.getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
+      this.setState({
+        pinLineButtonTooltipTitle: `❗️Maximum of ${PINNED_LOGS_LIMIT} pinned logs reached. Unpin a log to add another`,
+      });
+      return;
+    }
+
     this.context?.register({
       icon: 'gf-logs',
       title: 'Pinned log',
@@ -664,8 +675,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
       onClick: () => this.onOpenContext(row, () => {}),
       onRemove: (id: string) => {
         this.context?.unregister(id);
+        if (this.getPinnedLogsCount() < PINNED_LOGS_LIMIT) {
+          this.setState({
+            pinLineButtonTooltipTitle: 'Pin to content outline',
+          });
+        }
       },
     });
+  };
+
+  getPinnedLogsCount = () => {
+    const logsParent = this.context?.outlineItems.find((item) => item.panelId === 'Logs' && item.level === 'root');
+    return logsParent?.children?.filter((child) => child.title === 'Pinned log').length ?? 0;
   };
 
   render() {
@@ -962,7 +983,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     onClickFilterValue={this.props.onClickFilterValue}
                     onClickFilterOutValue={this.props.onClickFilterOutValue}
                     onPinLine={this.onPinToContentOutlineClick}
-                    pinLineButtonTooltipTitle="Pin to content outline"
+                    pinLineButtonTooltipTitle={this.state.pinLineButtonTooltipTitle}
                   />
                 </InfiniteScroll>
               </div>
