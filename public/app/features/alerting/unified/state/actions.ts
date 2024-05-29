@@ -316,14 +316,6 @@ export function fetchAllPromRulesAction(force = false): ThunkResult<void> {
   };
 }
 
-export const fetchEditableRuleAction = createAsyncThunk(
-  'unifiedalerting/fetchEditableRule',
-  (ruleIdentifier: RuleIdentifier, thunkAPI): Promise<RuleWithLocation | null> => {
-    const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, ruleIdentifier.ruleSourceName);
-    return withSerializedError(getRulerClient(rulerConfig).findEditableRule(ruleIdentifier));
-  }
-);
-
 export function deleteRulesGroupAction(
   namespace: CombinedRuleNamespace,
   ruleGroup: CombinedRuleGroup
