@@ -23,7 +23,12 @@ import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
 import { TableCell } from './TableCell';
 import { TableStyles } from './styles';
 import { CellColors, TableFieldOptions, TableFilterActionCallback } from './types';
-import { calculateAroundPointThreshold, getCellColors, isPointTimeValAroundTableTimeVal } from './utils';
+import {
+  calculateAroundPointThreshold,
+  getCellColors,
+  isPointTimeValAroundTableTimeVal,
+  guessTextBoundingBox,
+} from './utils';
 
 interface RowsListProps {
   data: DataFrame;
@@ -281,7 +286,7 @@ export const RowsList = (props: RowsListProps) => {
       if (textWrapField) {
         const seriesIndex = textWrapField.state?.seriesIndex ?? 0;
         const pxLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
-        const bbox = getTextBoundingBox(
+        const bbox = guessTextBoundingBox(
           textWrapField.values[index],
           headerGroups[0].headers[seriesIndex],
           osContext,
@@ -363,7 +368,7 @@ export const RowsList = (props: RowsListProps) => {
     if (textWrapField) {
       const seriesIndex = textWrapField.state?.seriesIndex ?? 0;
       const pxLineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
-      return getTextBoundingBox(
+      return guessTextBoundingBox(
         textWrapField.values[index],
         headerGroups[0].headers[seriesIndex],
         osContext,
@@ -402,54 +407,3 @@ export const RowsList = (props: RowsListProps) => {
     </>
   );
 };
-
-/**
- * Calculate an estimated bounding box for a block
- * of text using an offscreen canvas.
- *
- * TODO: Move this 🚚
- */
-function getTextBoundingBox(
-  text: string,
-  headerGroup: HeaderGroup,
-  osContext: OffscreenCanvasRenderingContext2D | null,
-  lineHeight: number,
-  defaultRowHeight: number
-) {
-  const width = Number(headerGroup.width ?? 300);
-  const LINE_SCALE_FACTOR = 1.15;
-  const LOW_LINE_PAD = 42;
-
-  if (osContext !== null && typeof text === 'string') {
-    const words = text.split(/\s/);
-    const lines = [];
-    let currentLine = '';
-
-    // Let's just wrap the lines and see how well the measurement works
-    for (let i = 0; i < words.length; i++) {
-      const currentWord = words[i];
-      let lineWidth = osContext.measureText(currentLine + ' ' + currentWord).width;
-
-      if (lineWidth < width) {
-        currentLine += ' ' + currentWord;
-      } else {
-        lines.push(currentLine);
-        currentLine = currentWord;
-      }
-    }
-
-    // Estimated height would be lines multiplied
-    // by the line height
-    let lineNumber = lines.length;
-    let height = 38;
-    if (lineNumber > 5) {
-      height = lineNumber * lineHeight * LINE_SCALE_FACTOR;
-    } else {
-      height = lineNumber * lineHeight + LOW_LINE_PAD;
-    }
-
-    return { width, height };
-  }
-
-  return { width, height: defaultRowHeight };
-}
