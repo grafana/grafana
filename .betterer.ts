@@ -114,11 +114,6 @@ function countEslintErrors() {
       'no-barrel-files/no-barrel-files': 'error',
     };
 
-    const noPluginsRules: Partial<Linter.RulesRecord> = {
-      ...nonTestFilesRules,
-      '@grafana/no-untranslated-strings': 'error',
-    };
-
     // group files by eslint config file
     // this will create two file groups for each eslint config file
     // one for test files and one for non-test files
@@ -155,9 +150,6 @@ function countEslintErrors() {
         rules = baseRules;
       } else if (configPath.endsWith('-grafana')) {
         rules = grafanaRules;
-      } else if (!configPath.includes('public/app/plugins') || configPath.includes('packages/grafana-ui/')) {
-        console.log('no plugins rules');
-        rules = noPluginsRules;
       } else {
         rules = nonTestFilesRules;
       }
