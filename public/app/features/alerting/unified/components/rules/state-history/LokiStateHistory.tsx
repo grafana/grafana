@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataFrame, dateTime, GrafanaTheme2, TimeRange } from '@grafana/data';
-import { Alert, Button, Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Icon, Input, Label, Tooltip, useStyles2, Stack } from '@grafana/ui';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
@@ -19,7 +19,7 @@ interface Props {
   ruleUID: string;
 }
 
-export const STATE_HISTORY_POLLING_INTERVAL = 10 * 1000; // 10 seconds
+const STATE_HISTORY_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 const MAX_TIMELINE_SERIES = 12;
 
 const LokiStateHistory = ({ ruleUID }: Props) => {

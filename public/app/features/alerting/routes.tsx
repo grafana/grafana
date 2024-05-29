@@ -170,16 +170,6 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/history/',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingInstanceRead,
-        AccessControlAction.AlertingInstancesExternalRead,
-      ]),
-      component: importAlertingComponent(
-        () => import(/* webpackChunkName: "CentralAlertHistory" */ 'app/features/alerting/unified/CentralAlertHistory')
-      ),
-    },
-    {
       path: '/alerting/new/:type?',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]),
