@@ -29,7 +29,10 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
 
     this.addActivationHandler(() => {
       const scopesUpdated = this.subscribeToEvent(ScopesUpdate, ({ payload }) => {
-        this.state.dashboards.fetchDashboards(payload);
+        if (this.state.isExpanded) {
+          this.state.dashboards.fetchDashboards(payload);
+        }
+
         sceneGraph.getTimeRange(this.parent!).onRefresh();
       });
 
@@ -57,7 +60,13 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
   }
 
   public toggleIsExpanded() {
-    this.setState({ isExpanded: !this.state.isExpanded });
+    const isExpanded = !this.state.isExpanded;
+
+    if (isExpanded) {
+      this.state.dashboards.fetchDashboards(this.getSelectedScopes());
+    }
+
+    this.setState({ isExpanded });
   }
 
   private enterViewMode() {

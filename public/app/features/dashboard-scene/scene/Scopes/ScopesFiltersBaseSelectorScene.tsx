@@ -1,22 +1,10 @@
-import { AppEvents, Scope, ScopeSpec, ScopeTreeItemSpec } from '@grafana/data';
-import { config, getAppEvents, getBackendSrv } from '@grafana/runtime';
+import { Scope } from '@grafana/data';
 import { sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { ScopedResourceServer } from 'app/features/apiserver/server';
 
 import { ScopesScene } from './ScopesScene';
+import { fetchScope, fetchScopeTreeItems, getBasicScope } from './api/scopes';
 import { ScopesUpdate } from './events';
-
-export interface Node {
-  item: ScopeTreeItemSpec;
-  hasChildren: boolean;
-  isSelectable: boolean;
-  children: Record<string, Node>;
-}
-
-export interface ExpandedNode {
-  nodeId: string;
-  query: string;
-}
+import { ExpandedNode } from './types';
 
 export interface ScopesFiltersBaseSelectorSceneState extends SceneObjectState {
   nodes: Record<string, Node>;
@@ -33,16 +21,6 @@ const baseExpandedNode: ExpandedNode = {
 };
 
 export abstract class ScopesFiltersBaseSelectorScene extends SceneObjectBase<ScopesFiltersBaseSelectorSceneState> {
-  private readonly serverGroup = 'scope.grafana.app';
-  private readonly serverVersion = 'v0alpha1';
-  private readonly serverNamespace = config.namespace ?? 'default';
-
-  protected readonly server = new ScopedResourceServer<ScopeSpec, 'Scope'>({
-    group: this.serverGroup,
-    version: this.serverVersion,
-    resource: 'scopes',
-  });
-
   protected constructor(state: Partial<ScopesFiltersBaseSelectorSceneState> = {}) {
     super({
       nodes: {},
@@ -134,7 +112,7 @@ export abstract class ScopesFiltersBaseSelectorScene extends SceneObjectBase<Sco
     const selectedIdx = initialScopes.findIndex((scope) => scope.metadata.name === linkId);
 
     if (selectedIdx === -1) {
-      let scope = this.getBasicScope(linkId);
+      let scope = getBasicScope(linkId);
 
       let siblings = this.state.nodes;
 
@@ -150,7 +128,7 @@ export abstract class ScopesFiltersBaseSelectorScene extends SceneObjectBase<Sco
 
       this.setState({ scopes, isLoadingScopes: true });
 
-      scope = await this.fetchScope(linkId);
+      scope = await fetchScope(linkId);
       scopes = !selectedFromSameNode ? [scope] : [...initialScopes, scope];
 
       this.setState({ scopes, isLoadingScopes: false });
@@ -161,78 +139,19 @@ export abstract class ScopesFiltersBaseSelectorScene extends SceneObjectBase<Sco
     }
   }
 
-  public getBasicScope(name: string): Scope {
-    return {
-      metadata: { name },
-      spec: {
-        filters: [],
-        title: name,
-        type: '',
-        category: '',
-        description: '',
-      },
-    };
-  }
-
-  public async fetchScope(name: string): Promise<Scope> {
-    const basicScope: Scope = this.getBasicScope(name);
-
-    try {
-      const scope = await this.server.get(name);
-
-      return {
-        ...basicScope,
-        metadata: {
-          ...basicScope,
-          ...scope.metadata,
-        },
-        spec: {
-          ...basicScope,
-          ...scope.spec,
-        },
-      };
-    } catch (err) {
-      getAppEvents().publish({
-        type: AppEvents.alertError.name,
-        payload: ['Failed to fetch scope'],
-      });
-
-      return basicScope;
-    }
-  }
-
   protected emitScopesUpdated() {
     this.publishEvent(new ScopesUpdate(this.state.scopes), true);
   }
 
-  private async fetchScopeTreeItem(parent: string, query: string): Promise<ScopeTreeItemSpec[]> {
-    try {
-      return (
-        (
-          await getBackendSrv().get<{ items: ScopeTreeItemSpec[] }>(
-            `/apis/${this.serverGroup}/${this.serverVersion}/namespaces/${this.serverNamespace}/find`,
-            { parent, query }
-          )
-        )?.items ?? []
-      );
-    } catch (err) {
-      getAppEvents().publish({
-        type: AppEvents.alertError.name,
-        payload: ['Failed to fetch nodes'],
-      });
-
-      return [];
-    }
-  }
-
   private async fetchNodes(parent: string, query: string): Promise<Record<string, Node>> {
-    return (await this.fetchScopeTreeItem(parent, query)).reduce<Record<string, Node>>((acc, item) => {
+    return (await fetchScopeTreeItems(parent, query)).reduce<Record<string, Node>>((acc, item) => {
       acc[item.nodeId] = {
         item,
         hasChildren: item.nodeType === 'container',
         isSelectable: item.linkType === 'scope',
         children: {},
       };
+
       return acc;
     }, {});
   }

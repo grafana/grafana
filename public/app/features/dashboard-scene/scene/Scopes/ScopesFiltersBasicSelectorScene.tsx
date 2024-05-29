@@ -13,6 +13,7 @@ import { useStyles2 } from '@grafana/ui/';
 
 import { ScopesFiltersBaseSelectorScene } from './ScopesFiltersBaseSelectorScene';
 import { ScopesTreeLevel } from './ScopesTreeLevel';
+import { fetchScope, getBasicScope } from './api/scopes';
 import { ScopesFiltersOpenAdvanced } from './events';
 
 export class ScopesFiltersBasicSelectorScene extends ScopesFiltersBaseSelectorScene implements SceneObjectWithUrlSync {
@@ -36,14 +37,14 @@ export class ScopesFiltersBasicSelectorScene extends ScopesFiltersBaseSelectorSc
     scopesNames = Array.isArray(scopesNames) ? scopesNames : [scopesNames];
 
     if (scopesNames.length > 0) {
-      let scopes = scopesNames.map(this.getBasicScope);
+      let scopes = scopesNames.map(getBasicScope);
 
       // First set the basic scopes for display purposes
       // We don't emit the scopes update yet as we wait for the scopes to load properly
       // This avoids unnecessary re-renders
       this.setState({ scopes, isLoadingScopes: true });
 
-      scopes = await Promise.all(scopesNames.map((scopeName) => this.fetchScope(scopeName)));
+      scopes = await Promise.all(scopesNames.map((scopeName) => fetchScope(scopeName)));
 
       // Then load the actual scopes
       this.setState({ scopes, isLoadingScopes: false });

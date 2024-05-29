@@ -2,18 +2,13 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { AppEvents, GrafanaTheme2, Scope, ScopeDashboardBindingSpec, urlUtil } from '@grafana/data';
-import { getAppEvents, getBackendSrv } from '@grafana/runtime';
+import { GrafanaTheme2, Scope, urlUtil } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { ScopedResourceClient } from 'app/features/apiserver/client';
 
-export interface ScopeDashboard {
-  uid: string;
-  title: string;
-  url: string;
-}
+import { fetchDashboards } from './api/dashboards';
+import { ScopeDashboard } from './types';
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
   dashboards: ScopeDashboard[];
@@ -24,12 +19,6 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
 
 export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsSceneState> {
   static Component = ScopesDashboardsSceneRenderer;
-
-  private server = new ScopedResourceClient<ScopeDashboardBindingSpec, 'ScopeDashboardBinding'>({
-    group: 'scope.grafana.app',
-    version: 'v0alpha1',
-    resource: 'scopedashboardbindings',
-  });
 
   constructor() {
     super({
@@ -47,10 +36,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 
     this.setState({ isLoading: true });
 
-    const dashboardUids = await Promise.all(
-      scopes.map((scope) => this.fetchDashboardsUids(scope.metadata.name).catch(() => []))
-    );
-    const dashboards = await this.fetchDashboardsDetails(dashboardUids.flat());
+    const dashboards = await fetchDashboards(scopes);
 
     this.setState({
       dashboards,
@@ -68,57 +54,9 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
   }
 
-  private async fetchDashboardsUids(scope: string): Promise<string[]> {
-    try {
-      const response = await this.server.list({
-        fieldSelector: [
-          {
-            key: 'spec.scope',
-            operator: '=',
-            value: scope,
-          },
-        ],
-      });
-
-      return response.items.map((item) => item.spec.dashboard).filter((dashboardUid) => !!dashboardUid) ?? [];
-    } catch (err) {
-      return [];
-    }
-  }
-
-  private async fetchDashboardsDetails(dashboardUids: string[]): Promise<ScopeDashboard[]> {
-    try {
-      const dashboards = await Promise.all(
-        dashboardUids.map((dashboardUid) => this.fetchDashboardDetails(dashboardUid))
-      );
-
-      return dashboards.filter((dashboard): dashboard is ScopeDashboard => !!dashboard);
-    } catch (err) {
-      getAppEvents().publish({
-        type: AppEvents.alertError.name,
-        payload: ['Failed to fetch suggested dashboards'],
-      });
-
-      return [];
-    }
-  }
-
-  private async fetchDashboardDetails(dashboardUid: string): Promise<ScopeDashboard | undefined> {
-    try {
-      const dashboard = await getBackendSrv().get(`/api/dashboards/uid/${dashboardUid}`);
-
-      return {
-        uid: dashboard.dashboard.uid,
-        title: dashboard.dashboard.title,
-        url: dashboard.meta.url,
-      };
-    } catch (err) {
-      return undefined;
-    }
-  }
-
   private filterDashboards(dashboards: ScopeDashboard[], searchQuery: string) {
     const lowerCasedSearchQuery = searchQuery.toLowerCase();
+
     return dashboards.filter((dashboard) => dashboard.title.toLowerCase().includes(lowerCasedSearchQuery));
   }
 }

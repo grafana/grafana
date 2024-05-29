@@ -6,17 +6,35 @@ import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana
 import { ScopesFiltersAdvancedSelectorScene } from './ScopesFiltersAdvancedSelectorScene';
 import { ScopesFiltersBasicSelectorScene } from './ScopesFiltersBasicSelectorScene';
 import { ScopesFiltersOpenAdvanced, ScopesFiltersSaveAdvanced } from './events';
+import { ExpandedNode } from './types';
 
 export interface ScopesFiltersSceneState extends SceneObjectState {
+  nodes: Record<string, Node>;
+  expandedNodes: ExpandedNode[];
+  scopes: Scope[];
+  isLoadingScopes: boolean;
+  isLoadingNodes: boolean;
+
   basicSelector: ScopesFiltersBasicSelectorScene;
   advancedSelector: ScopesFiltersAdvancedSelectorScene;
 }
+
+const baseExpandedNode: ExpandedNode = {
+  nodeId: '',
+  query: '',
+};
 
 export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState> {
   static Component = ScopesFiltersSceneRenderer;
 
   constructor() {
     super({
+      nodes: {},
+      expandedNodes: [baseExpandedNode],
+      scopes: [],
+      isLoadingScopes: false,
+      isLoadingNodes: false,
+
       basicSelector: new ScopesFiltersBasicSelectorScene(),
       advancedSelector: new ScopesFiltersAdvancedSelectorScene(),
     });
