@@ -68,9 +68,16 @@ function heatMapQuery(groupings: string[] = []): PromQuery {
 function percentileQuery(percentile: number, groupings: string[] = []) {
   const percent = percentile / 100;
 
+  let legendFormat = `${percentile}th Percentile`;
+
+  // For the breakdown view, show the label value variable we are grouping by
+  if (groupings[0]) {
+    legendFormat = `{{${groupings[0]}}}`;
+  }
+
   return {
     refId: `Percentile${percentile}`,
     expr: `histogram_quantile(${percent}, ${baseQuery(groupings)})`,
-    legendFormat: `${percentile}th Percentile`,
+    legendFormat,
   };
 }

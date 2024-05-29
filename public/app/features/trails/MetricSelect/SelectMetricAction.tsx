@@ -3,7 +3,7 @@ import React from 'react';
 import { SceneObjectState, SceneObjectBase, SceneComponentProps } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 
-import { MetricSelectedEvent } from './shared';
+import { MetricSelectedEvent } from '../shared';
 
 export interface SelectMetricActionState extends SceneObjectState {
   title: string;
@@ -16,9 +16,10 @@ export class SelectMetricAction extends SceneObjectBase<SelectMetricActionState>
   };
 
   public static Component = ({ model }: SceneComponentProps<SelectMetricAction>) => {
+    const { title } = model.useState();
     return (
       <Button variant="secondary" size="sm" fill="solid" onClick={model.onClick}>
-        {model.state.title}
+        {title}
       </Button>
     );
   };
