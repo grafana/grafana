@@ -11,8 +11,8 @@ import {
   SceneObjectWithUrlSync,
 } from '@grafana/scenes';
 
-import { ScopesFiltersAdvancedSelectorScene } from './ScopesFiltersAdvancedSelectorScene';
-import { ScopesFiltersBasicSelectorScene } from './ScopesFiltersBasicSelectorScene';
+import { ScopesFiltersAdvancedSelector } from './ScopesFiltersAdvancedSelectorScene';
+import { ScopesFiltersBasicSelector } from './ScopesFiltersBasicSelectorScene';
 import { fetchNodes, fetchScope } from './api/scopes';
 import { Node, NodesMap } from './types';
 
@@ -21,9 +21,8 @@ export interface ScopesFiltersSceneState extends SceneObjectState {
   loadingNodeId: string | undefined;
   scopes: Scope[];
   isLoadingScopes: boolean;
-
-  basicSelector: ScopesFiltersBasicSelectorScene;
-  advancedSelector: ScopesFiltersAdvancedSelectorScene;
+  isBasicOpened: boolean;
+  isAdvancedOpened: boolean;
 }
 
 export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState> implements SceneObjectWithUrlSync {
@@ -46,13 +45,9 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       loadingNodeId: undefined,
       scopes: [],
       isLoadingScopes: false,
-
-      basicSelector: new ScopesFiltersBasicSelectorScene(),
-      advancedSelector: new ScopesFiltersAdvancedSelectorScene(),
+      isBasicOpened: false,
+      isAdvancedOpened: false,
     });
-
-    this.updateNode = this.updateNode.bind(this);
-    this.openAdvancedSelector = this.openAdvancedSelector.bind(this);
 
     this.addActivationHandler(() => {
       this.fetchBaseNodes();
@@ -97,9 +92,20 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     this.setState({ nodes, loadingNodeId: undefined });
   }
 
+  public openBasicSelector() {
+    this.setState({ isBasicOpened: true, isAdvancedOpened: false });
+  }
+
+  public closeBasicSelector() {
+    this.setState({ isBasicOpened: false });
+  }
+
   public openAdvancedSelector() {
-    this.state.basicSelector.close();
-    this.state.advancedSelector.open();
+    this.setState({ isBasicOpened: false, isAdvancedOpened: true });
+  }
+
+  public closeAdvancedSelector() {
+    this.setState({ isAdvancedOpened: false });
   }
 
   public getSelectedScopes(): Scope[] {
@@ -124,18 +130,49 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public enterViewMode() {
-    this.state.basicSelector.close();
-    this.state.advancedSelector.close();
+    this.setState({ isBasicOpened: false, isAdvancedOpened: true });
+  }
+
+  public getScopesNames(scopes: Scope[]): string[] {
+    return scopes.map(({ metadata: { name } }) => name);
+  }
+
+  public getNewScopeNames(path: string[], scopeNames: string[]): string[] {
+    scopeNames = [...scopeNames];
+
+    let siblings = this.state.nodes;
+
+    for (let idx = 0; idx < path.length - 1; idx++) {
+      siblings = siblings[path[idx]].nodes;
+    }
+
+    const nodeId = path[path.length - 1];
+    const {
+      item: { linkId },
+    } = siblings[nodeId];
+
+    const selectedIdx = scopeNames.findIndex((scopeName) => scopeName === linkId);
+
+    if (selectedIdx === -1) {
+      fetchScope(linkId!);
+
+      const selectedFromSameNode =
+        scopeNames.length === 0 || Object.values(siblings).some((node) => node.item.linkId === scopeNames[0]);
+
+      return !selectedFromSameNode ? [linkId!] : [...scopeNames, linkId!];
+    } else {
+      scopeNames.splice(selectedIdx, 1);
+
+      return scopeNames;
+    }
   }
 }
 
 export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<ScopesFiltersScene>) {
-  const { basicSelector, advancedSelector } = model.useState();
-
   return (
     <>
-      <basicSelector.Component model={basicSelector} />
-      <advancedSelector.Component model={advancedSelector} />
+      <ScopesFiltersBasicSelector model={model} />
+      <ScopesFiltersAdvancedSelector model={model} />
     </>
   );
 }

@@ -1,8 +1,7 @@
 import { Scope, ScopeSpec, ScopeTreeItemSpec } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-
-import { NodesMap } from '../types';
+import { NodesMap } from 'app/features/dashboard-scene/scene/Scopes/types';
 
 import { group, namespace, version } from './common';
 
@@ -38,8 +37,12 @@ export async function fetchNodes(parent: string, query: string): Promise<NodesMa
   }, {});
 }
 
-export function getBasicScope(name: string): Scope {
-  return {
+export async function fetchScope(name: string): Promise<Scope> {
+  if (cache[name]) {
+    return cache[name];
+  }
+
+  const basicScope: Scope = {
     metadata: { name },
     spec: {
       filters: [],
@@ -49,14 +52,6 @@ export function getBasicScope(name: string): Scope {
       description: '',
     },
   };
-}
-
-export async function fetchScope(name: string): Promise<Scope> {
-  if (cache[name]) {
-    return cache[name];
-  }
-
-  const basicScope: Scope = getBasicScope(name);
 
   try {
     const serverScope = await client.get(name);

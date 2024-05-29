@@ -1,67 +1,68 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Icon, Input, Toggletip, useStyles2 } from '@grafana/ui';
+import { Icon, Input, Spinner, Toggletip, useStyles2 } from '@grafana/ui';
 
-import { ScopesFiltersBaseSelectorScene } from './ScopesFiltersBaseSelectorScene';
+import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { ScopesTreeLevel } from './ScopesTreeLevel';
 
-export class ScopesFiltersBasicSelectorScene extends ScopesFiltersBaseSelectorScene {
-  static Component = ScopesFiltersBasicSelectorSceneRenderer;
-}
-
-export function ScopesFiltersBasicSelectorSceneRenderer({
-  model,
-}: SceneComponentProps<ScopesFiltersBasicSelectorScene>) {
+export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<ScopesFiltersScene>) {
   const styles = useStyles2(getStyles);
-  const { isOpened, scopeNames } = model.useState();
-  const { nodes, loadingNodeId, scopes, isLoadingScopes } = model.filtersParent.useState();
-  const basicNode = nodes[''];
+  const {
+    nodes: { '': basicNode },
+    loadingNodeId,
+    scopes,
+    isLoadingScopes,
+    isBasicOpened,
+  } = model.useState();
+
+  const [scopeNames, setScopeNames] = useState(model.getScopesNames(scopes));
+
+  useEffect(() => {
+    setScopeNames(model.getScopesNames(scopes));
+  }, [model, scopes]);
+
+  const { nodes, query } = basicNode;
   const scopesTitles = useMemo(() => scopes.map(({ spec: { title } }) => title).join(', '), [scopes]);
-  const isLoading = !!loadingNodeId || isLoadingScopes;
-  const isLoadingNotOpened = isLoading && !isOpened;
 
   return (
     <div className={styles.container}>
       <Toggletip
-        show={isOpened}
-        onClose={model.save}
-        onOpen={model.open}
+        show={isBasicOpened}
+        onClose={() => {
+          model.closeBasicSelector();
+          model.updateScopes(scopeNames);
+        }}
+        onOpen={() => model.openBasicSelector()}
         content={
           <div className={styles.innerContainer}>
-            <ScopesTreeLevel
-              showQuery={false}
-              nodes={basicNode.nodes}
-              isExpanded={true}
-              query={basicNode.query}
-              path={['']}
-              loadingNodeId={loadingNodeId}
-              scopeNames={scopeNames}
-              isLoadingScopes={isLoadingScopes}
-              onNodeUpdate={model.filtersParent.updateNode}
-              onNodeSelectToggle={model.toggleNodeSelect}
-            />
+            {isLoadingScopes ? (
+              <Spinner />
+            ) : (
+              <ScopesTreeLevel
+                showQuery={false}
+                nodes={nodes}
+                isExpanded={true}
+                query={query}
+                path={['']}
+                loadingNodeId={loadingNodeId}
+                scopeNames={scopeNames}
+                onNodeUpdate={(path, isExpanded, query) => model.updateNode(path, isExpanded, query)}
+                onNodeSelectToggle={(path) => setScopeNames(model.getNewScopeNames(path, scopeNames))}
+              />
+            )}
           </div>
         }
         footer={
-          <button
-            className={styles.openAdvancedButton}
-            disabled={isLoading}
-            onClick={model.filtersParent.openAdvancedSelector}
-          >
+          <button className={styles.openAdvancedButton} onClick={() => model.openAdvancedSelector()}>
             Open advanced scope selector <Icon name="arrow-right" />
           </button>
         }
         closeButton={false}
       >
-        <Input
-          readOnly
-          placeholder={isLoadingNotOpened ? 'Loading scopes...' : 'Select scopes...'}
-          loading={isLoadingNotOpened}
-          value={scopesTitles}
-        />
+        <Input readOnly placeholder="Select scopes..." loading={isLoadingScopes} value={scopesTitles} />
       </Toggletip>
     </div>
   );

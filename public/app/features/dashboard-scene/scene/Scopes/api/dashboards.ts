@@ -3,8 +3,7 @@ import { uniq, uniqBy } from 'lodash';
 import { Scope, ScopeDashboardBindingSpec } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-
-import { ScopeDashboard } from '../types';
+import { ScopeDashboard } from 'app/features/dashboard-scene/scene/Scopes/types';
 
 import { group, version } from './common';
 

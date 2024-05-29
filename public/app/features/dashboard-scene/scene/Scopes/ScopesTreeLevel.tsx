@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { ChangeEvent, KeyboardEvent, MouseEvent } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, Input, useStyles2 } from '@grafana/ui';
@@ -15,7 +15,6 @@ export interface ScopesTreeLevelProps {
   path: string[];
   loadingNodeId: string | undefined;
   scopeNames: string[];
-  isLoadingScopes: boolean;
   onNodeUpdate: (path: string[], isExpanded: boolean, query: string) => void;
   onNodeSelectToggle: (path: string[]) => void;
 }
@@ -28,7 +27,6 @@ export function ScopesTreeLevel({
   path,
   loadingNodeId,
   scopeNames,
-  isLoadingScopes,
   onNodeUpdate,
   onNodeSelectToggle,
 }: ScopesTreeLevelProps) {
@@ -38,13 +36,9 @@ export function ScopesTreeLevel({
     return null;
   }
 
-  const isLoading = isLoadingScopes || !!loadingNodeId;
+  const isLoading = !!loadingNodeId;
 
   const anyChildExpanded = Object.values(nodes).some((node) => node.isExpanded);
-
-  const handleInputChange = debounce((evt: ChangeEvent<HTMLInputElement>) => {
-    onNodeUpdate(path, true, evt.target.value);
-  }, 500);
 
   return (
     <>
@@ -55,7 +49,9 @@ export function ScopesTreeLevel({
           disabled={isLoading}
           placeholder="Filter"
           defaultValue={query}
-          onChange={handleInputChange}
+          onChange={debounce((evt) => {
+            onNodeUpdate(path, true, evt.target.value);
+          }, 500)}
         />
       )}
 
@@ -70,9 +66,7 @@ export function ScopesTreeLevel({
             query,
           } = node;
 
-          const isSelectedIdx = scopeNames.findIndex((scopeName) => scopeName === linkId);
-          const isSelected = isSelectedIdx !== -1;
-          const isLastSelected = isSelected && isSelectedIdx === scopeNames.length - 1;
+          const isSelected = isSelectable && scopeNames.includes(linkId!);
 
           if (anyChildExpanded && !isExpanded && !isSelected) {
             return null;
@@ -80,64 +74,44 @@ export function ScopesTreeLevel({
 
           const nodePath = [...path, nodeId];
 
-          const handleTitleClick = (evt: MouseEvent<HTMLSpanElement | SVGElement>) => {
-            evt.stopPropagation();
-
-            if (isLoading) {
-              return;
-            }
-
-            if (isExpandable) {
-              onNodeUpdate(nodePath, !isExpanded, query);
-            } else if (linkId) {
-              onNodeSelectToggle(nodePath);
-            }
-          };
-
-          const handleTitleKeyDown = (evt: KeyboardEvent<HTMLDivElement>) => {
-            evt.stopPropagation();
-
-            if (isLoading) {
-              return;
-            }
-
-            if (linkId && evt.key === 'Space') {
-              return onNodeSelectToggle(nodePath);
-            }
-
-            if (isExpandable && evt.key === 'Enter') {
-              return onNodeUpdate(nodePath, !isExpanded, query);
-            }
-          };
-
-          const handleCheckboxClick = (evt: MouseEvent<HTMLInputElement>) => {
-            evt.stopPropagation();
-
-            if (isLoading) {
-              return;
-            }
-
-            if (linkId) {
-              onNodeSelectToggle(nodePath);
-            }
-          };
-
           return (
             <div key={nodeId} role="treeitem" aria-selected={isExpanded}>
               <div role="button" tabIndex={0} className={styles.itemTitle}>
                 {isSelectable ? (
-                  isLastSelected && isLoadingScopes ? (
-                    <Icon name="spinner" />
-                  ) : (
-                    <Checkbox checked={isSelected} disabled={isLoading} onChange={handleCheckboxClick} />
-                  )
+                  <Checkbox
+                    checked={isSelected}
+                    disabled={isLoading}
+                    onChange={(evt) => {
+                      evt.stopPropagation();
+
+                      if (isLoading) {
+                        return;
+                      }
+
+                      if (linkId) {
+                        onNodeSelectToggle(nodePath);
+                      }
+                    }}
+                  />
                 ) : null}
 
                 {isExpandable && (
                   <Icon
                     className={styles.itemIcon}
                     name={!isExpanded ? 'folder' : loadingNodeId === nodeId ? 'spinner' : 'folder-open'}
-                    onClick={handleTitleClick}
+                    onClick={(evt) => {
+                      evt.stopPropagation();
+
+                      if (isLoading) {
+                        return;
+                      }
+
+                      if (isExpandable) {
+                        onNodeUpdate(nodePath, !isExpanded, query);
+                      } else if (linkId) {
+                        onNodeSelectToggle(nodePath);
+                      }
+                    }}
                   />
                 )}
 
@@ -145,8 +119,32 @@ export function ScopesTreeLevel({
                   role="button"
                   tabIndex={0}
                   className={styles.itemText}
-                  onClick={handleTitleClick}
-                  onKeyDown={handleTitleKeyDown}
+                  onClick={(evt) => {
+                    evt.stopPropagation();
+
+                    if (isLoading) {
+                      return;
+                    }
+
+                    if (isExpandable) {
+                      onNodeUpdate(nodePath, !isExpanded, query);
+                    } else if (linkId) {
+                      onNodeSelectToggle(nodePath);
+                    }
+                  }}
+                  onKeyDown={(evt) => {
+                    evt.stopPropagation();
+
+                    if (isLoading) {
+                      return;
+                    }
+
+                    if (linkId && evt.key === 'Space') {
+                      onNodeSelectToggle(nodePath);
+                    } else if (isExpandable && evt.key === 'Enter') {
+                      onNodeUpdate(nodePath, !isExpanded, query);
+                    }
+                  }}
                 >
                   {node.item.title}
                 </span>
@@ -161,7 +159,6 @@ export function ScopesTreeLevel({
                   path={nodePath}
                   loadingNodeId={loadingNodeId}
                   scopeNames={scopeNames}
-                  isLoadingScopes={isLoadingScopes}
                   onNodeUpdate={onNodeUpdate}
                   onNodeSelectToggle={onNodeSelectToggle}
                 />
