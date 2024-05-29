@@ -18,6 +18,9 @@ type RBACSettings struct {
 
 	// set of resources that should generate managed permissions when created
 	managedPermissionsOnCreation map[string]struct{}
+
+	// set of resources that should we should seed wildcard scopes for
+	managedPermissionsWildcardSeed map[string]struct{}
 }
 
 func (c *Cfg) readRBACSettings() {
@@ -36,10 +39,22 @@ func (c *Cfg) readRBACSettings() {
 		s.managedPermissionsOnCreation[resource] = struct{}{}
 	}
 
+	resoruces = util.SplitString(rbac.Key("managed_permissions_wildcard_seeds").MustString(""))
+	s.managedPermissionsWildcardSeed = map[string]struct{}{}
+	for _, resource := range resoruces {
+		s.managedPermissionsWildcardSeed[resource] = struct{}{}
+	}
+
 	c.RBAC = s
 }
 
 func (r RBACSettings) PermissionsOnCreation(resource string) bool {
 	_, ok := r.managedPermissionsOnCreation[resource]
 	return ok
+}
+
+func (r RBACSettings) PermissionsWildcardSeed(resource string) bool {
+	_, ok := r.managedPermissionsWildcardSeed[resource]
+	return ok
+
 }
