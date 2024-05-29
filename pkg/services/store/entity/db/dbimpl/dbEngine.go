@@ -26,11 +26,12 @@ func getEngineMySQL(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, erro
 	}
 	config.Collation = "utf8mb4_unicode_ci"
 	config.Loc = time.UTC
-	config.ServerPubKey = getter.String("db_server_pub_key")
-	config.TLSConfig = getter.String("db_tls_config_name")
 	config.AllowNativePasswords = true
-	config.CheckConnLiveness = true
 	config.ClientFoundRows = true
+
+	// TODO: do we want to support these?
+	//	config.ServerPubKey = getter.String("db_server_pub_key")
+	//	config.TLSConfig = getter.String("db_tls_config_name")
 
 	if err := getter.Err(); err != nil {
 		return nil, fmt.Errorf("config error: %w", err)
@@ -55,14 +56,23 @@ func getEngineMySQL(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, erro
 
 func getEnginePostgres(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, error) {
 	dsnKV := map[string]string{
+		"user":     getter.String("db_user"),
 		"password": getter.String("db_pass"),
 		"dbname":   getter.String("db_name"),
 		"sslmode":  cmp.Or(getter.String("db_sslmode"), "disable"),
 	}
 
-	addKV(getter, dsnKV, "user", "passfile", "connect_timeout", "sslkey",
-		"sslcert", "sslrootcert", "sslpassword", "sslsni", "krbspn",
-		"krbsrvname", "target_session_attrs", "service", "servicefile")
+	// TODO: probably interesting:
+	//	"passfile", "statement_timeout", "lock_timeout", "connect_timeout"
+
+	// TODO: for CockroachDB, we probably need to use the following:
+	//	dsnKV["options"] = "-c enable_experimental_alter_column_type_general=true"
+	// Or otherwise specify it as:
+	//	dsnKV["enable_experimental_alter_column_type_general"] = "true"
+
+	// TODO: do we want to support these options in the DSN as well?
+	//	"sslkey", "sslcert", "sslrootcert", "sslpassword", "sslsni", "krbspn",
+	//	"krbsrvname", "target_session_attrs", "service", "servicefile"
 
 	hostport := getter.String("db_host")
 
