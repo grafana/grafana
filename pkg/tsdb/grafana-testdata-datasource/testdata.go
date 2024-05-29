@@ -47,6 +47,13 @@ func ProvideService() *Service {
 	return s
 }
 
+var (
+	_ backend.QueryDataHandler      = (*Service)(nil)
+	_ backend.CallResourceHandler   = (*Service)(nil)
+	_ backend.AdmissionHandler      = (*Service)(nil)
+	_ backend.CollectMetricsHandler = (*Service)(nil)
+)
+
 type Service struct {
 	logger          log.Logger
 	scenarios       map[kinds.TestDataQueryType]*Scenario

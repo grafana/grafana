@@ -58,7 +58,9 @@ export const OnlyWorkingHoursEnabled: StoryFn<typeof DateTimePicker> = ({ label,
       showSeconds={showSeconds}
       onChange={(newValue) => {
         action('on change')(newValue);
-        setDate(newValue);
+        if (newValue) {
+          setDate(newValue);
+        }
       }}
     />
   );
@@ -81,7 +83,9 @@ export const Basic: StoryFn<typeof DateTimePicker> = ({ label, minDate, maxDate,
       clearable={clearable}
       onChange={(newValue) => {
         action('on change')(newValue);
-        setDate(newValue);
+        if (newValue) {
+          setDate(newValue);
+        }
       }}
     />
   );
@@ -101,7 +105,9 @@ export const Clearable: StoryFn<typeof DateTimePicker> = ({ label, showSeconds, 
       clearable={clearable}
       onChange={(newValue) => {
         action('on change')(newValue);
-        setDate(newValue);
+        if (newValue) {
+          setDate(newValue);
+        }
       }}
     />
   );
