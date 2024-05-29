@@ -2,39 +2,35 @@ import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import React, { ChangeEvent, KeyboardEvent, MouseEvent } from 'react';
 
-import { GrafanaTheme2, Scope } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, Input, useStyles2 } from '@grafana/ui';
 
-import { ExpandedNode, NodesMap } from './types';
+import { NodesMap } from './types';
 
 export interface ScopesTreeLevelProps {
-  isLoadingNodes: boolean;
-  isLoadingScopes: boolean;
+  showQuery: boolean;
   nodes: NodesMap;
-  expandedNodes: ExpandedNode[];
-  scopes: Scope[];
-  onNodeQuery: (nodeId: string, query: string) => void;
-  onNodeExpandToggle: (nodeId: string) => void;
-  onNodeSelectToggle: (linkId: string, path: string[]) => void;
-
-  isExpanded?: boolean;
-  showQuery?: boolean;
-  upperNodePath?: string[];
+  isExpanded: boolean;
+  query: string;
+  path: string[];
+  loadingNodeId: string | undefined;
+  scopeNames: string[];
+  isLoadingScopes: boolean;
+  onNodeUpdate: (path: string[], isExpanded: boolean, query: string) => void;
+  onNodeSelectToggle: (path: string[]) => void;
 }
 
 export function ScopesTreeLevel({
-  isLoadingNodes,
-  isLoadingScopes,
+  showQuery,
   nodes,
-  expandedNodes,
-  scopes,
-  onNodeQuery,
-  onNodeExpandToggle,
-  onNodeSelectToggle,
-
   isExpanded = true,
-  showQuery = false,
-  upperNodePath = [''],
+  query,
+  path,
+  loadingNodeId,
+  scopeNames,
+  isLoadingScopes,
+  onNodeUpdate,
+  onNodeSelectToggle,
 }: ScopesTreeLevelProps) {
   const styles = useStyles2(getStyles);
 
@@ -42,16 +38,12 @@ export function ScopesTreeLevel({
     return null;
   }
 
-  const isLoading = isLoadingScopes || isLoadingNodes;
+  const isLoading = isLoadingScopes || !!loadingNodeId;
 
-  const upperNodeId = upperNodePath[upperNodePath.length - 1] ?? '';
-
-  const anyChildExpanded = Object.values(nodes).some((node) =>
-    expandedNodes.some((expandedNode) => expandedNode.nodeId === node.item.nodeId)
-  );
+  const anyChildExpanded = Object.values(nodes).some((node) => node.isExpanded);
 
   const handleInputChange = debounce((evt: ChangeEvent<HTMLInputElement>) => {
-    onNodeQuery(upperNodeId, evt.target.value);
+    onNodeUpdate(path, true, evt.target.value);
   }, 500);
 
   return (
@@ -62,7 +54,7 @@ export function ScopesTreeLevel({
           className={styles.searchInput}
           disabled={isLoading}
           placeholder="Filter"
-          defaultValue={expandedNodes.find((expandedNode) => expandedNode.nodeId === upperNodeId)?.query ?? ''}
+          defaultValue={query}
           onChange={handleInputChange}
         />
       )}
@@ -71,24 +63,22 @@ export function ScopesTreeLevel({
         {Object.values(nodes).map((node) => {
           const {
             item: { nodeId, linkId },
+            isExpandable,
             isSelectable,
-            hasChildren,
-            children,
+            nodes,
+            isExpanded,
+            query,
           } = node;
 
-          const isExpandedIdx = expandedNodes.findIndex((expandedNode) => expandedNode.nodeId === nodeId);
-          const isExpanded = isExpandedIdx !== -1;
-          const isLastExpanded = isExpanded && isExpandedIdx === expandedNodes.length - 1;
-
-          const isSelectedIdx = scopes.findIndex((scope) => scope.metadata.name === linkId);
+          const isSelectedIdx = scopeNames.findIndex((scopeName) => scopeName === linkId);
           const isSelected = isSelectedIdx !== -1;
-          const isLastSelected = isSelected && isSelectedIdx === scopes.length - 1;
+          const isLastSelected = isSelected && isSelectedIdx === scopeNames.length - 1;
 
           if (anyChildExpanded && !isExpanded && !isSelected) {
             return null;
           }
 
-          const nodePath = [...upperNodePath, nodeId];
+          const nodePath = [...path, nodeId];
 
           const handleTitleClick = (evt: MouseEvent<HTMLSpanElement | SVGElement>) => {
             evt.stopPropagation();
@@ -97,10 +87,10 @@ export function ScopesTreeLevel({
               return;
             }
 
-            if (hasChildren) {
-              onNodeExpandToggle(nodeId);
+            if (isExpandable) {
+              onNodeUpdate(nodePath, !isExpanded, query);
             } else if (linkId) {
-              onNodeSelectToggle(linkId, nodePath);
+              onNodeSelectToggle(nodePath);
             }
           };
 
@@ -112,11 +102,11 @@ export function ScopesTreeLevel({
             }
 
             if (linkId && evt.key === 'Space') {
-              return onNodeSelectToggle(linkId, nodePath);
+              return onNodeSelectToggle(nodePath);
             }
 
-            if (hasChildren && evt.key === 'Enter') {
-              return onNodeExpandToggle(nodeId);
+            if (isExpandable && evt.key === 'Enter') {
+              return onNodeUpdate(nodePath, !isExpanded, query);
             }
           };
 
@@ -128,7 +118,7 @@ export function ScopesTreeLevel({
             }
 
             if (linkId) {
-              onNodeSelectToggle(linkId, nodePath);
+              onNodeSelectToggle(nodePath);
             }
           };
 
@@ -143,10 +133,10 @@ export function ScopesTreeLevel({
                   )
                 ) : null}
 
-                {hasChildren && (
+                {isExpandable && (
                   <Icon
                     className={styles.itemIcon}
-                    name={!isExpanded ? 'folder' : isLastExpanded && isLoadingNodes ? 'spinner' : 'folder-open'}
+                    name={!isExpanded ? 'folder' : loadingNodeId === nodeId ? 'spinner' : 'folder-open'}
                     onClick={handleTitleClick}
                   />
                 )}
@@ -164,16 +154,15 @@ export function ScopesTreeLevel({
 
               <div className={styles.itemChildren}>
                 <ScopesTreeLevel
-                  isLoadingNodes={isLoadingNodes}
-                  isLoadingScopes={isLoadingScopes}
                   showQuery={showQuery}
+                  nodes={nodes}
                   isExpanded={isExpanded}
-                  upperNodePath={nodePath}
-                  nodes={children}
-                  expandedNodes={expandedNodes}
-                  scopes={scopes}
-                  onNodeQuery={onNodeQuery}
-                  onNodeExpandToggle={onNodeExpandToggle}
+                  query={query}
+                  path={nodePath}
+                  loadingNodeId={loadingNodeId}
+                  scopeNames={scopeNames}
+                  isLoadingScopes={isLoadingScopes}
+                  onNodeUpdate={onNodeUpdate}
                   onNodeSelectToggle={onNodeSelectToggle}
                 />
               </div>

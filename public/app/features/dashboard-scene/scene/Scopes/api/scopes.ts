@@ -2,6 +2,8 @@ import { Scope, ScopeSpec, ScopeTreeItemSpec } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 
+import { NodesMap } from '../types';
+
 import { group, namespace, version } from './common';
 
 const nodesEndpoint = `/apis/${group}/${version}/namespaces/${namespace}/find`;
@@ -14,6 +16,28 @@ const client = new ScopedResourceClient<ScopeSpec, 'Scope'>({
 
 const cache: Record<string, Scope> = {};
 
+async function fetchScopeTreeItems(parent: string, query: string): Promise<ScopeTreeItemSpec[]> {
+  try {
+    return (await getBackendSrv().get<{ items: ScopeTreeItemSpec[] }>(nodesEndpoint, { parent, query }))?.items ?? [];
+  } catch (err) {
+    return [];
+  }
+}
+
+export async function fetchNodes(parent: string, query: string): Promise<NodesMap> {
+  return (await fetchScopeTreeItems(parent, query)).reduce<NodesMap>((acc, item) => {
+    acc[item.nodeId] = {
+      item,
+      isExpandable: item.nodeType === 'container',
+      isSelectable: item.linkType === 'scope',
+      isExpanded: false,
+      query: '',
+      nodes: {},
+    };
+    return acc;
+  }, {});
+}
+
 export function getBasicScope(name: string): Scope {
   return {
     metadata: { name },
@@ -25,14 +49,6 @@ export function getBasicScope(name: string): Scope {
       description: '',
     },
   };
-}
-
-export async function fetchScopeTreeItems(parent: string, query: string): Promise<ScopeTreeItemSpec[]> {
-  try {
-    return (await getBackendSrv().get<{ items: ScopeTreeItemSpec[] }>(nodesEndpoint, { parent, query }))?.items ?? [];
-  } catch (err) {
-    return [];
-  }
 }
 
 export async function fetchScope(name: string): Promise<Scope> {

@@ -7,7 +7,6 @@ import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { ScopesDashboardsScene } from './ScopesDashboardsScene';
 import { ScopesFiltersScene } from './ScopesFiltersScene';
-import { ScopesUpdate } from './events';
 
 export interface ScopesSceneState extends SceneObjectState {
   dashboards: ScopesDashboardsScene;
@@ -28,12 +27,14 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
     });
 
     this.addActivationHandler(() => {
-      const scopesUpdated = this.subscribeToEvent(ScopesUpdate, ({ payload }) => {
-        if (this.state.isExpanded) {
-          this.state.dashboards.fetchDashboards(payload);
-        }
+      const filtersStateSubscription = this.state.filters.subscribeToState((newState, prevState) => {
+        if (newState.scopes !== prevState.scopes) {
+          if (this.state.isExpanded) {
+            this.state.dashboards.fetchDashboards(newState.scopes);
+          }
 
-        sceneGraph.getTimeRange(this.parent!).onRefresh();
+          sceneGraph.getTimeRange(this.parent!).onRefresh();
+        }
       });
 
       const dashboardEditModeSubscription = this.parent?.subscribeToState((newState) => {
@@ -49,7 +50,7 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
       });
 
       return () => {
-        scopesUpdated.unsubscribe();
+        filtersStateSubscription.unsubscribe();
         dashboardEditModeSubscription?.unsubscribe();
       };
     });

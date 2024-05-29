@@ -7,40 +7,19 @@ import { Button, Drawer, useStyles2 } from '@grafana/ui';
 
 import { ScopesFiltersBaseSelectorScene } from './ScopesFiltersBaseSelectorScene';
 import { ScopesTreeLevel } from './ScopesTreeLevel';
-import { ScopesFiltersSaveAdvanced, ScopesUpdate } from './events';
 
 export class ScopesFiltersAdvancedSelectorScene extends ScopesFiltersBaseSelectorScene {
   static Component = ScopesFiltersAdvancedSelectorSceneRenderer;
-
-  constructor() {
-    super();
-
-    this.save = this.save.bind(this);
-  }
-
-  public save() {
-    this.publishEvent(
-      new ScopesFiltersSaveAdvanced({
-        nodes: this.state.nodes,
-        expandedNodes: this.state.expandedNodes,
-        scopes: this.state.scopes,
-      }),
-      true
-    );
-
-    this.publishEvent(new ScopesUpdate(this.state.scopes));
-
-    this.close();
-  }
 }
 
 export function ScopesFiltersAdvancedSelectorSceneRenderer({
   model,
 }: SceneComponentProps<ScopesFiltersAdvancedSelectorScene>) {
   const styles = useStyles2(getStyles);
-  const state = model.useState();
-  const { nodes, expandedNodes, scopes, isOpened, isLoadingNodes, isLoadingScopes } = state;
-  const isLoading = isLoadingNodes || isLoadingScopes;
+  const { isOpened, scopeNames } = model.useState();
+  const { nodes, loadingNodeId, isLoadingScopes } = model.filtersParent.useState();
+  const basicNode = nodes[''];
+  const isLoading = !!loadingNodeId || isLoadingScopes;
 
   if (!isOpened) {
     return null;
@@ -49,14 +28,15 @@ export function ScopesFiltersAdvancedSelectorSceneRenderer({
   return (
     <Drawer title="Select scopes" size="sm" onClose={model.close}>
       <ScopesTreeLevel
-        isLoadingNodes={isLoadingNodes}
+        showQuery={false}
+        nodes={basicNode.nodes}
+        isExpanded={true}
+        query={basicNode.query}
+        path={['']}
+        loadingNodeId={loadingNodeId}
+        scopeNames={scopeNames}
         isLoadingScopes={isLoadingScopes}
-        showQuery
-        nodes={nodes}
-        expandedNodes={expandedNodes}
-        scopes={scopes}
-        onNodeQuery={model.queryNode}
-        onNodeExpandToggle={model.toggleNodeExpand}
+        onNodeUpdate={model.filtersParent.updateNode}
         onNodeSelectToggle={model.toggleNodeSelect}
       />
       <div className={styles.buttonGroup}>

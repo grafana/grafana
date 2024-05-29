@@ -2,107 +2,55 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import {
-  SceneComponentProps,
-  SceneObjectUrlSyncConfig,
-  SceneObjectUrlValues,
-  SceneObjectWithUrlSync,
-} from '@grafana/scenes';
+import { SceneComponentProps } from '@grafana/scenes';
 import { Icon, Input, Toggletip, useStyles2 } from '@grafana/ui';
 
 import { ScopesFiltersBaseSelectorScene } from './ScopesFiltersBaseSelectorScene';
 import { ScopesTreeLevel } from './ScopesTreeLevel';
-import { fetchScope } from './api/scopes';
-import { ScopesFiltersOpenAdvanced } from './events';
 
-export class ScopesFiltersBasicSelectorScene extends ScopesFiltersBaseSelectorScene implements SceneObjectWithUrlSync {
+export class ScopesFiltersBasicSelectorScene extends ScopesFiltersBaseSelectorScene {
   static Component = ScopesFiltersBasicSelectorSceneRenderer;
-
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scopes'] });
-
-  constructor() {
-    super();
-
-    this.toggleNodeSelect = this.toggleNodeSelect.bind(this);
-    this.openAdvancedSelector = this.openAdvancedSelector.bind(this);
-  }
-
-  getUrlState() {
-    return { scopes: this.state.scopes.map((scope) => scope.metadata.name) };
-  }
-
-  async updateFromUrl(values: SceneObjectUrlValues) {
-    let scopesNames = values.scopes ?? [];
-    scopesNames = Array.isArray(scopesNames) ? scopesNames : [scopesNames];
-
-    if (scopesNames.length > 0) {
-      let scopes = scopesNames.map(this.getBasicScope);
-
-      // First set the basic scopes for display purposes
-      // We don't emit the scopes update yet as we wait for the scopes to load properly
-      // This avoids unnecessary re-renders
-      this.setState({ scopes, isLoadingScopes: true });
-
-      scopes = await Promise.all(scopesNames.map((scopeName) => fetchScope(scopeName)));
-
-      // Then load the actual scopes
-      this.setState({ scopes, isLoadingScopes: false });
-
-      this.emitScopesUpdated();
-    }
-  }
-
-  public async toggleNodeSelect(linkId: string, path: string[]) {
-    await super.toggleNodeSelect(linkId, path);
-
-    this.emitScopesUpdated();
-  }
-
-  public openAdvancedSelector() {
-    this.publishEvent(
-      new ScopesFiltersOpenAdvanced({
-        nodes: this.state.nodes,
-        expandedNodes: this.state.expandedNodes,
-        scopes: this.state.scopes,
-      }),
-      true
-    );
-
-    this.close();
-  }
 }
 
 export function ScopesFiltersBasicSelectorSceneRenderer({
   model,
 }: SceneComponentProps<ScopesFiltersBasicSelectorScene>) {
   const styles = useStyles2(getStyles);
-  const { nodes, expandedNodes, scopes, isOpened, isLoadingScopes, isLoadingNodes } = model.useState();
+  const { isOpened, scopeNames } = model.useState();
+  const { nodes, loadingNodeId, scopes, isLoadingScopes } = model.filtersParent.useState();
+  const basicNode = nodes[''];
   const scopesTitles = useMemo(() => scopes.map(({ spec: { title } }) => title).join(', '), [scopes]);
-  const isLoading = isLoadingNodes || isLoadingScopes;
+  const isLoading = !!loadingNodeId || isLoadingScopes;
   const isLoadingNotOpened = isLoading && !isOpened;
 
   return (
     <div className={styles.container}>
       <Toggletip
         show={isOpened}
-        onClose={model.close}
+        onClose={model.save}
         onOpen={model.open}
         content={
           <div className={styles.innerContainer}>
             <ScopesTreeLevel
-              isLoadingNodes={isLoadingNodes}
+              showQuery={false}
+              nodes={basicNode.nodes}
+              isExpanded={true}
+              query={basicNode.query}
+              path={['']}
+              loadingNodeId={loadingNodeId}
+              scopeNames={scopeNames}
               isLoadingScopes={isLoadingScopes}
-              nodes={nodes}
-              expandedNodes={expandedNodes}
-              scopes={scopes}
-              onNodeQuery={model.queryNode}
-              onNodeExpandToggle={model.toggleNodeExpand}
+              onNodeUpdate={model.filtersParent.updateNode}
               onNodeSelectToggle={model.toggleNodeSelect}
             />
           </div>
         }
         footer={
-          <button className={styles.openAdvancedButton} disabled={isLoading} onClick={model.openAdvancedSelector}>
+          <button
+            className={styles.openAdvancedButton}
+            disabled={isLoading}
+            onClick={model.filtersParent.openAdvancedSelector}
+          >
             Open advanced scope selector <Icon name="arrow-right" />
           </button>
         }

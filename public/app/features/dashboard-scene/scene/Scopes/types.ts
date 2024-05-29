@@ -2,14 +2,11 @@ import { ScopeTreeItemSpec } from '@grafana/data';
 
 export interface Node {
   item: ScopeTreeItemSpec;
-  hasChildren: boolean;
+  isExpandable: boolean;
   isSelectable: boolean;
-  children: NodesMap;
-}
-
-export interface ExpandedNode {
-  nodeId: string;
+  isExpanded: boolean;
   query: string;
+  nodes: NodesMap;
 }
 
 export interface ScopeDashboard {
