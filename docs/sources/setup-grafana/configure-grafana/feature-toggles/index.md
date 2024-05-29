@@ -190,6 +190,7 @@ Experimental features might be changed or removed without prior notice.
 | `alertingListViewV2`                        | Enables the new alert list view design                                                                                                                                                                                                                                            |
 | `notificationBanner`                        | Enables the notification banner UI and API                                                                                                                                                                                                                                        |
 | `dashboardRestore`                          | Enables deleted dashboard restore feature                                                                                                                                                                                                                                         |
+| `alertingCentralAlertHistory`               | Enables the new central alert history.                                                                                                                                                                                                                                            |
 
 ## Development feature toggles
 
