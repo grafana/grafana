@@ -38,11 +38,59 @@ var FolderEditActions = append(FolderViewActions, []string{
 }...)
 var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
 
+func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, service accesscontrol.Service) error {
+	if !cfg.RBAC.PermissionsWildcardSeed("folder") {
+		return nil
+	}
+
+	viewer := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:folders:viewer",
+			DisplayName: "Viewer",
+			Description: "View all folders and dashboards.",
+			Group:       "Folders",
+			Permissions: permissionsForActions(append(getDashboardViewActions(features), FolderViewActions...), dashboards.ScopeFoldersAll),
+			Hidden:      true,
+		},
+		Grants: []string{"Viewer"},
+	}
+
+	editor := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:folders:editor",
+			DisplayName: "Editor",
+			Description: "Edit all folders and dashboards.",
+			Group:       "Folders",
+			Permissions: permissionsForActions(append(getDashboardEditActions(features), FolderEditActions...), dashboards.ScopeFoldersAll),
+			Hidden:      true,
+		},
+		Grants: []string{"Editor"},
+	}
+
+	admin := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:folders:admin",
+			DisplayName: "Admin",
+			Description: "Administer all folders and dashboards",
+			Group:       "folders",
+			Permissions: permissionsForActions(append(getDashboardAdminActions(features), FolderAdminActions...), dashboards.ScopeFoldersAll),
+			Hidden:      true,
+		},
+		Grants: []string{"Admin"},
+	}
+
+	return service.DeclareFixedRoles(viewer, editor, admin)
+}
+
 func ProvideFolderPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
 	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*FolderPermissionsService, error) {
+	if err := registerFolderRoles(cfg, features, service); err != nil {
+		return nil, err
+	}
+
 	options := resourcepermissions.Options{
 		Resource:          "folders",
 		ResourceAttribute: "uid",
