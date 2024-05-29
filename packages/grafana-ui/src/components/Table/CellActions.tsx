@@ -5,7 +5,7 @@ import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 import { TooltipPlacement } from '../Tooltip';
 
-import { TableCellInspectModal } from './TableCellInspectModal';
+import { TableCellInspector } from './TableCellInspector';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';
 import { getTextAlign } from './utils';
 
@@ -70,7 +70,7 @@ export function CellActions({ field, cell, previewMode, showFilters, onCellFilte
       </div>
 
       {isInspecting && (
-        <TableCellInspectModal
+        <TableCellInspector
           mode={previewMode}
           value={cell.value}
           onDismiss={() => {
