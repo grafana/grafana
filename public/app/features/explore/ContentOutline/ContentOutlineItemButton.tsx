@@ -118,12 +118,13 @@ function OutlineIcon({ icon }: { icon: IconName | React.ReactNode }) {
 const getStyles = (theme: GrafanaTheme2, color?: string) => {
   return {
     buttonContainer: css({
+      position: 'relative',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'flex-start',
       flexGrow: 1,
       gap: theme.spacing(1),
       width: '100%',
+      overflow: 'hidden',
     }),
     button: css({
       label: 'content-outline-item-button',
@@ -137,7 +138,6 @@ const getStyles = (theme: GrafanaTheme2, color?: string) => {
       background: 'transparent',
       overflow: 'hidden',
       border: 'none',
-      flexGrow: 1,
     }),
     collapseButton: css({
       display: 'flex',
