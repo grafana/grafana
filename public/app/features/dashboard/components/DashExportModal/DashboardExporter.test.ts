@@ -1,10 +1,11 @@
 import { find } from 'lodash';
 
-import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta } from '@grafana/data';
-import { Dashboard, ThresholdsMode } from '@grafana/schema';
+import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariableModel } from '@grafana/data';
+import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
 import config from 'app/core/config';
 
 import { LibraryElementKind } from '../../../library-panels/types';
+import { DashboardJson } from '../../../manage-dashboards/types';
 import { variableAdapters } from '../../../variables/adapters';
 import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
@@ -92,6 +93,54 @@ it('handles a default datasource in a template variable', async () => {
   const exporter = new DashboardExporter();
   const exported: any = await exporter.makeExportable(dashboardModel);
   expect(exported.templating.list[0].datasource.uid).toBe('${DS_GFDB}');
+});
+
+it('do not expose datasource name and id in a in a template variable of type datasource', async () => {
+  const dashboard: Dashboard = {
+    title: 'My dashboard',
+    revision: 1,
+    editable: false,
+    graphTooltip: DashboardCursorSync.Off,
+    schemaVersion: 1,
+    timepicker: { hidden: true },
+    timezone: '',
+    panels: [
+      {
+        id: 1,
+        type: 'timeseries',
+        title: 'My panel title',
+        gridPos: { x: 0, y: 0, w: 1, h: 1 },
+      },
+    ],
+    templating: {
+      list: [
+        {
+          current: {
+            selected: false,
+            text: 'my-prometheus-datasource',
+            value: 'my-prometheus-datasource-uid',
+          },
+          hide: 0,
+          includeAll: false,
+          multi: false,
+          name: 'query1',
+          options: [],
+          query: 'prometheus',
+          refresh: 1,
+          regex: '',
+          skipUrlSync: false,
+          type: 'datasource',
+        },
+      ],
+    },
+  };
+  const dashboardModel = new DashboardModel(dashboard, undefined, {
+    getVariablesFromState: () => dashboard.templating!.list! as TypedVariableModel[],
+  });
+  const exporter = new DashboardExporter();
+  const exported = (await exporter.makeExportable(dashboardModel)) as DashboardJson;
+  const value = exported?.templating?.list ? exported?.templating?.list[0].current : '';
+  expect(value).toEqual({});
 });
 
 it('replaces datasource ref in library panel', async () => {
