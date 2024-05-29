@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
@@ -81,12 +82,7 @@ func (r *VersionsREST) Connect(ctx context.Context, uid string, opts runtime.Obj
 					Name:              uid,
 					CreationTimestamp: metav1.NewTime(dto.Created),
 				},
-				Spec: dashboard.Spec{
-					Title:   data["title"].(string),
-					UID:     uid,
-					ID:      int64(data["id"].(int)),
-					Version: int64(version),
-				},
+				Spec: common.Unstructured{Object: data},
 			}
 			responder.Object(100, dash)
 			return

@@ -3,7 +3,6 @@ package access
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"time"
@@ -347,13 +346,13 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 		row.Bytes = len(data)
 		if row.Bytes > 0 {
-			err = json.Unmarshal(data, &dash.Spec)
+			err = dash.Spec.UnmarshalJSON(data)
 			if err != nil {
 				return row, err
 			}
-			dash.Spec.ID = dashboard_id // add it so we can get it from the body later
-			row.Title = dash.Spec.Title
-			row.Tags = []string{} // TODO: get tags from the body
+			dash.Spec.Set("id", dashboard_id) // add it so we can get it from the body later
+			row.Title = dash.Spec.GetNestedString("title")
+			row.Tags = dash.Spec.GetNestedStringSlice("tags")
 		}
 	}
 	return row, err
@@ -366,7 +365,7 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 		return nil, false, err
 	}
 
-	id := dash.Spec.ID
+	id := dash.Spec.GetNestedInt64("id")
 	if id == 0 {
 		return nil, false, fmt.Errorf("could not find id in saved body")
 	}
@@ -389,7 +388,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		return nil, created, err
 	}
 	if dash.Name != "" {
-		dash.Spec.UID = dash.Name
+		dash.Spec.Set("uid", dash.Name)
 
 		// Get the previous version to set the internal ID
 		old, _ := a.dashStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
@@ -397,14 +396,14 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 			UID:   dash.Name,
 		})
 		if old != nil {
-			dash.Spec.ID = old.ID
+			dash.Spec.Set("id", old.ID)
 		} else {
-			dash.Spec.ID = 0 // existing of "id" makes it an update
+			dash.Spec.Remove("id") // existing of "id" makes it an update
 			created = true
 		}
 	} else {
-		dash.Spec.ID = 0
-		dash.Spec.UID = ""
+		dash.Spec.Remove("id")
+		dash.Spec.Remove("uid")
 	}
 
 	meta, err := utils.MetaAccessor(dash)
@@ -413,7 +412,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
-		Dashboard: simplejson.NewFromAny(dash.Spec),
+		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
 		FolderUID: meta.GetFolder(),
 		Overwrite: true, // already passed the revisionVersion checks!
 		UserID:    user.UserID,
