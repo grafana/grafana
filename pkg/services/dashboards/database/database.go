@@ -779,7 +779,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	go func() {
 		start := time.Now()
-		dashRes, err := d.findDashboardsZanzanaList(ctx, query)
+		dashRes, err := d.findDashboardsZanzanaListFilter(ctx, query)
 		res <- evalResult{"zanzana", dashRes, err, time.Since(start)}
 	}()
 
