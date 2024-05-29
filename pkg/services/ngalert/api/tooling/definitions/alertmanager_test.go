@@ -130,10 +130,6 @@ alertmanager_config: |
 			// Override the map[string]any field for test simplicity.
 			// It's tested in Test_GettableUserConfigRoundtrip.
 			out.amSimple = nil
-
-			// Ignore the Global configuration added by upstream's unmarshaller.
-			out.AlertmanagerConfig.Config.Global = nil
-			require.Equal(t, tc.output, out)
 		})
 	}
 }

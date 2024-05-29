@@ -3,7 +3,6 @@ package notifier
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -254,7 +253,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 	require.Equal(t, defaultConfig, cfgs[3].AlertmanagerConfiguration)
 
 	// Now let's save a new config for org 2.
-	newConfig := fmt.Sprintf(`{"template_files":null,"alertmanager_config":{%s,"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`, defaultGlobalConfig)
+	newConfig := `{"template_files":null,"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
 	am, err := mam.alertmanagerForOrg(2)
 	require.NoError(t, err)
 
@@ -267,7 +266,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 	// Verify that the org has the new config.
 	cfgs, err = mam.getLatestConfigs(ctx)
 	require.NoError(t, err)
-	require.JSONEq(t, newConfig, cfgs[2].AlertmanagerConfiguration)
+	require.Equal(t, newConfig, cfgs[2].AlertmanagerConfiguration)
 
 	// First, let's try to activate a historical alertmanager config that doesn't exist.
 	{
@@ -389,13 +388,10 @@ func setupMam(t *testing.T, cfg *setting.Cfg) *MultiOrgAlertmanager {
 	return mam
 }
 
-const defaultGlobalConfig = `"global":{"resolve_timeout":"5m","http_config":{"tls_config":{"insecure_skip_verify":false},"follow_redirects":true,"enable_http2":true,"proxy_url":null},"smtp_hello":"localhost","smtp_smarthost":"","smtp_require_tls":true,"pagerduty_url":"https://events.pagerduty.com/v2/enqueue","opsgenie_api_url":"https://api.opsgenie.com/","wechat_api_url":"https://qyapi.weixin.qq.com/cgi-bin/","victorops_api_url":"https://alert.victorops.com/integrations/generic/20131114/alert/","telegram_api_url":"https://api.telegram.org","webex_api_url":"https://webexapis.com/v1/messages"}`
-
-var defaultConfig = fmt.Sprintf(`
+var defaultConfig = `
 {
 	"template_files": null,
 	"alertmanager_config": {
-		%s,
 		"route": {
 			"receiver": "grafana-default-email",
 			"group_by": [
@@ -414,17 +410,16 @@ var defaultConfig = fmt.Sprintf(`
 						"disableResolveMessage": false,
 						"settings": {
 							"addresses": "\u003cexample@email.com\u003e"
-						}
+						},
 					}
 				]
 			}
 		]
 	}
-}`, defaultGlobalConfig)
+}`
 
-var brokenConfig = fmt.Sprintf(`
+var brokenConfig = `
 	"alertmanager_config": {
-		%s,
 		"route": {
 			"receiver": "grafana-default-email"
 		},
@@ -442,4 +437,4 @@ var brokenConfig = fmt.Sprintf(`
 			}]
 		}]
 	}
-}`, defaultGlobalConfig)
+}`
