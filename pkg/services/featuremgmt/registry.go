@@ -94,6 +94,7 @@ var (
 			Description:    "Correlations page",
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaExploreSquad,
+			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 		},
 		{
@@ -204,14 +205,6 @@ var (
 			Stage:       FeatureStageDeprecated,
 			Expression:  "true", // enabled by default
 			Owner:       grafanaFrontendPlatformSquad,
-		},
-		{
-			Name:         "returnToPrevious",
-			Description:  "Enables the return to previous context functionality",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:              "grpcServer",
@@ -776,6 +769,13 @@ var (
 			RequiresRestart: true, // changes the API routing
 		},
 		{
+			Name:            "datasourceQueryTypes",
+			Description:     "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:            "queryService",
 			Description:     "Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query",
 			Stage:           FeatureStageExperimental,
@@ -1261,6 +1261,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "alertingListViewV2",
+			Description:  "Enables the new alert list view design",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "notificationBanner",
 			Description:  "Enables the notification banner UI and API",
 			Stage:        FeatureStageExperimental,
@@ -1272,7 +1279,6 @@ var (
 			Description:       "Enables deleted dashboard restore feature",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaFrontendPlatformSquad,
-			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
 		{
@@ -1281,6 +1287,23 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
+		},
+		{
+			Name:              "alertingDisableSendAlertsExternal",
+			Description:       "Disables the ability to send alerts to an external Alertmanager datasource.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "preserveDashboardStateWhenNavigating",
+			Description:       "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 	}
 )

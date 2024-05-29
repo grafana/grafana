@@ -68,7 +68,7 @@ Some common types of query components include:
 **Grouping**: Group the data by specific dimensions or tags to create aggregated views or breakdowns.
 
 {{% admonition type="note" %}}
-Grafana doesn't support alert queries with template variables. More details [here.](https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514)
+Grafana doesn't support alert queries with template variables. More details [here](https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514).
 {{% /admonition %}}
 
 ## Expression queries
@@ -81,7 +81,7 @@ In Alerting, you can only use expressions for Grafana-managed alert rules. For e
 
 **Reduce**
 
-Aggregates time series values in the selected time range into a single value. It's not necessary for [rules using numeric data.](#alert-on-numeric-data)
+Aggregates time series values in the selected time range into a single value. It's not necessary for [rules using numeric data](#alert-on-numeric-data).
 
 **Math**
 
