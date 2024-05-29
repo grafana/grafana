@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -93,7 +94,9 @@ func TestIntegrationPlaylist(t *testing.T) {
 			APIServerStorageType: "file", // write the files to disk
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
-				featuremgmt.FlagDualWritePlaylistsMode2,
+			},
+			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
+				"playlist": grafanarest.Mode2,
 			},
 		}))
 	})
@@ -106,7 +109,9 @@ func TestIntegrationPlaylist(t *testing.T) {
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagUnifiedStorage,
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
-				featuremgmt.FlagDualWritePlaylistsMode2,
+			},
+			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
+				"playlist": grafanarest.Mode2,
 			},
 		}))
 	})
@@ -121,7 +126,9 @@ func TestIntegrationPlaylist(t *testing.T) {
 			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
-				featuremgmt.FlagDualWritePlaylistsMode2,
+			},
+			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
+				"playlist": grafanarest.Mode2,
 			},
 		})
 

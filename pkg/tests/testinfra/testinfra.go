@@ -17,6 +17,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/fs"
@@ -384,6 +385,13 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = grafanaComSection.NewKey("api_url", o.GrafanaComAPIURL)
 			require.NoError(t, err)
 		}
+
+		if o.DualWriterDesiredModes != nil && o.DualWriterDesiredModes["playlist"] != grafanarest.Mode0 {
+			unifiedStorageMode, err := getOrCreateSection("unified_storage_mode")
+			require.NoError(t, err)
+			_, err = unifiedStorageMode.NewKey("playlist", fmt.Sprint(o.DualWriterDesiredModes["playlist"]))
+			require.NoError(t, err)
+		}
 	}
 	logSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
@@ -431,6 +439,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 	APIServerStorageType                  string
 	GrafanaComAPIURL                      string
+	DualWriterDesiredModes                map[string]grafanarest.DualWriterMode
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {
