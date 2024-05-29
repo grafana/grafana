@@ -4,7 +4,7 @@ export interface Node {
   item: ScopeTreeItemSpec;
   hasChildren: boolean;
   isSelectable: boolean;
-  children: Record<string, Node>;
+  children: NodesMap;
 }
 
 export interface ExpandedNode {
@@ -17,3 +17,5 @@ export interface ScopeDashboard {
   title: string;
   url: string;
 }
+
+export type NodesMap = Record<string, Node>;

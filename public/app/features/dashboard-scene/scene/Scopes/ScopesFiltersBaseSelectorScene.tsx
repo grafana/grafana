@@ -2,9 +2,9 @@ import { Scope } from '@grafana/data';
 import { sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 
 import { ScopesScene } from './ScopesScene';
-import { fetchScope, fetchScopeTreeItems, getBasicScope } from './api/scopes';
+import { fetchScope, fetchScopeTreeItems } from './api/scopes';
 import { ScopesUpdate } from './events';
-import { ExpandedNode } from './types';
+import { ExpandedNode, Node, NodesMap } from './types';
 
 export interface ScopesFiltersBaseSelectorSceneState extends SceneObjectState {
   nodes: Record<string, Node>;
@@ -112,7 +112,7 @@ export abstract class ScopesFiltersBaseSelectorScene extends SceneObjectBase<Sco
     const selectedIdx = initialScopes.findIndex((scope) => scope.metadata.name === linkId);
 
     if (selectedIdx === -1) {
-      let scope = getBasicScope(linkId);
+      let scope = this.getBasicScope(linkId);
 
       let siblings = this.state.nodes;
 
@@ -139,24 +139,36 @@ export abstract class ScopesFiltersBaseSelectorScene extends SceneObjectBase<Sco
     }
   }
 
+  public getBasicScope(name: string): Scope {
+    return {
+      metadata: { name },
+      spec: {
+        filters: [],
+        title: name,
+        type: '',
+        category: '',
+        description: '',
+      },
+    };
+  }
+
   protected emitScopesUpdated() {
     this.publishEvent(new ScopesUpdate(this.state.scopes), true);
   }
 
-  private async fetchNodes(parent: string, query: string): Promise<Record<string, Node>> {
-    return (await fetchScopeTreeItems(parent, query)).reduce<Record<string, Node>>((acc, item) => {
+  private async fetchNodes(parent: string, query: string): Promise<NodesMap> {
+    return (await fetchScopeTreeItems(parent, query)).reduce<NodesMap>((acc, item) => {
       acc[item.nodeId] = {
         item,
         hasChildren: item.nodeType === 'container',
         isSelectable: item.linkType === 'scope',
         children: {},
       };
-
       return acc;
     }, {});
   }
 
-  private async getNodesMap(path: ExpandedNode[]): Promise<Record<string, Node>> {
+  private async getNodesMap(path: ExpandedNode[]): Promise<NodesMap> {
     let nodes = { ...this.state.nodes };
     let currentLevel = nodes;
 

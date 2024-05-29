@@ -8,12 +8,11 @@ import {
   SceneObjectUrlValues,
   SceneObjectWithUrlSync,
 } from '@grafana/scenes';
-import { Icon, Input, Toggletip } from '@grafana/ui';
-import { useStyles2 } from '@grafana/ui/';
+import { Icon, Input, Toggletip, useStyles2 } from '@grafana/ui';
 
 import { ScopesFiltersBaseSelectorScene } from './ScopesFiltersBaseSelectorScene';
 import { ScopesTreeLevel } from './ScopesTreeLevel';
-import { fetchScope, getBasicScope } from './api/scopes';
+import { fetchScope } from './api/scopes';
 import { ScopesFiltersOpenAdvanced } from './events';
 
 export class ScopesFiltersBasicSelectorScene extends ScopesFiltersBaseSelectorScene implements SceneObjectWithUrlSync {
@@ -37,7 +36,7 @@ export class ScopesFiltersBasicSelectorScene extends ScopesFiltersBaseSelectorSc
     scopesNames = Array.isArray(scopesNames) ? scopesNames : [scopesNames];
 
     if (scopesNames.length > 0) {
-      let scopes = scopesNames.map(getBasicScope);
+      let scopes = scopesNames.map(this.getBasicScope);
 
       // First set the basic scopes for display purposes
       // We don't emit the scopes update yet as we wait for the scopes to load properly

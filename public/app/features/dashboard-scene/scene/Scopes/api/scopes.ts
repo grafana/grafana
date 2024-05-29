@@ -1,12 +1,12 @@
 import { Scope, ScopeSpec, ScopeTreeItemSpec } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { ScopedResourceServer } from 'app/features/apiserver/server';
+import { ScopedResourceClient } from 'app/features/apiserver/client';
 
 import { group, namespace, version } from './common';
 
 const nodesEndpoint = `/apis/${group}/${version}/namespaces/${namespace}/find`;
 
-const server = new ScopedResourceServer<ScopeSpec, 'Scope'>({
+const client = new ScopedResourceClient<ScopeSpec, 'Scope'>({
   group,
   version,
   resource: 'scopes',
@@ -43,7 +43,7 @@ export async function fetchScope(name: string): Promise<Scope> {
   const basicScope: Scope = getBasicScope(name);
 
   try {
-    const serverScope = await server.get(name);
+    const serverScope = await client.get(name);
 
     const scope = {
       ...basicScope,

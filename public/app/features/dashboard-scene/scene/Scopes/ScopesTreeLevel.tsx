@@ -5,12 +5,12 @@ import React, { ChangeEvent, KeyboardEvent, MouseEvent } from 'react';
 import { GrafanaTheme2, Scope } from '@grafana/data';
 import { Checkbox, Icon, Input, useStyles2 } from '@grafana/ui';
 
-import { ExpandedNode, Node } from './ScopesFiltersBaseSelectorScene';
+import { ExpandedNode, NodesMap } from './types';
 
 export interface ScopesTreeLevelProps {
   isLoadingNodes: boolean;
   isLoadingScopes: boolean;
-  nodes: Record<string, Node>;
+  nodes: NodesMap;
   expandedNodes: ExpandedNode[];
   scopes: Scope[];
   onNodeQuery: (nodeId: string, query: string) => void;

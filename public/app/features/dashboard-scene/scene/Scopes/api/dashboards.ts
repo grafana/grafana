@@ -2,7 +2,7 @@ import { uniq, uniqBy } from 'lodash';
 
 import { Scope, ScopeDashboardBindingSpec } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { ScopedResourceServer } from 'app/features/apiserver/server';
+import { ScopedResourceClient } from 'app/features/apiserver/client';
 
 import { ScopeDashboard } from '../types';
 
@@ -10,7 +10,7 @@ import { group, version } from './common';
 
 const dashboardDetailsEndpoint = '/api/dashboards/uid';
 
-const server = new ScopedResourceServer<ScopeDashboardBindingSpec, 'ScopeDashboardBinding'>({
+const client = new ScopedResourceClient<ScopeDashboardBindingSpec, 'ScopeDashboardBinding'>({
   group,
   version,
   resource: 'scopedashboardbindings',
@@ -28,7 +28,7 @@ async function fetchUids(scope: Scope): Promise<string[]> {
   }
 
   try {
-    const response = await server.list({
+    const response = await client.list({
       fieldSelector: [
         {
           key: 'spec.scope',
