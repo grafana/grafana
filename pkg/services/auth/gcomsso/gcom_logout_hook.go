@@ -19,24 +19,25 @@ type GComLogoutRequest struct {
 }
 
 type GComSSOService struct {
-	cfg *setting.Cfg
-	log *slog.Logger
+	cfg    *setting.Cfg
+	logger *slog.Logger
 }
 
 func ProvideGComSSOService(cfg *setting.Cfg) *GComSSOService {
 	return &GComSSOService{
-		cfg: cfg,
-		log: slog.Default().With("logger", "gcomsso-service"),
+		cfg:    cfg,
+		logger: slog.Default().With("logger", "gcomsso-service"),
 	}
 }
 
 func (s *GComSSOService) LogoutHook(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) error {
+	s.logger.Debug("Logging out from Grafana.com", "user", user.GetID(), "session", sessionToken.Id)
 	data, err := json.Marshal(&GComLogoutRequest{
 		Token:     user.GetIDToken(),
 		SessionID: fmt.Sprint(sessionToken.Id),
 	})
 	if err != nil {
-		s.log.Error("failed to marshal request", "error", err)
+		s.logger.Error("failed to marshal request", "error", err)
 		return err
 	}
 
@@ -50,7 +51,7 @@ func (s *GComSSOService) LogoutHook(ctx context.Context, user identity.Requester
 	c := http.DefaultClient
 	resp, err := c.Do(hReq)
 	if err != nil {
-		s.log.Error("failed to send request", "error", err)
+		s.logger.Error("failed to send request", "error", err)
 		return err
 	}
 	defer resp.Body.Close()
