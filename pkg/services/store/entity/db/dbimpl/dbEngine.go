@@ -74,6 +74,9 @@ func getEnginePostgres(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, e
 	//	"sslkey", "sslcert", "sslrootcert", "sslpassword", "sslsni", "krbspn",
 	//	"krbsrvname", "target_session_attrs", "service", "servicefile"
 
+	// More on Postgres connection string parameters:
+	//	https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
+
 	hostport := getter.String("db_host")
 
 	if err := getter.Err(); err != nil {
@@ -99,10 +102,4 @@ func getEnginePostgres(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, e
 	}
 
 	return engine, nil
-}
-
-func addKV(getter *sectionGetter, m map[string]string, keys ...string) {
-	for _, k := range keys {
-		m[k] = getter.String("db_" + k)
-	}
 }
