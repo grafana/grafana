@@ -75,6 +75,7 @@ function regexp(pattern: RegExp, issueMessage: string) {
 
 function countEslintErrors() {
   return new BettererFileTest(async (filePaths, fileTestResult, resolver) => {
+    // Just bail early if there's no files to test. Prevents trying to get the base config from failing
     if (filePaths.length === 0) {
       return;
     }
@@ -108,6 +109,8 @@ function countEslintErrors() {
       ...baseConfig,
       rules: baseRules,
 
+      // Be careful when specifying overrides for the same rules as in baseRules - it will... override
+      // the same rule, not merge them with different configurations
       overrides: [
         {
           files: ['**/*.{ts,tsx}'],
@@ -135,9 +138,7 @@ function countEslintErrors() {
     const lintResults = await runner.lintFiles(Array.from(filePaths));
     lintResults
       .filter((lintResult) => lintResult.source)
-      .forEach((lintResult) => {
-        const { messages } = lintResult;
-        const filePath = lintResult.filePath;
+      .forEach(({ messages, filePath }) => {
         const file = fileTestResult.addFile(filePath, '');
         messages.forEach((message, index) => {
           file.addIssue(0, 0, message.message, `${index}`);
