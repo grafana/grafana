@@ -5,13 +5,14 @@ import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema'
 import config from 'app/core/config';
 
 import { LibraryElementKind } from '../../../library-panels/types';
+import { DashboardJson } from '../../../manage-dashboards/types';
 import { variableAdapters } from '../../../variables/adapters';
 import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { DashboardModel } from '../../state/DashboardModel';
 
-import { DashboardExporter, ExternalDashboard, LibraryElementExport } from './DashboardExporter';
+import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
 
 jest.mock('app/core/store', () => {
   return {
@@ -137,9 +138,7 @@ it('do not expose datasource name and id in a in a template variable of type dat
     getVariablesFromState: () => dashboard.templating!.list! as TypedVariableModel[],
   });
   const exporter = new DashboardExporter();
-  const exported: ExternalDashboard | { error: unknown } = (await exporter.makeExportable(
-    dashboardModel
-  )) as ExternalDashboard;
+  const exported = (await exporter.makeExportable(dashboardModel)) as DashboardJson;
   const value = exported?.templating?.list ? exported?.templating?.list[0].current : '';
   expect(value).toEqual({});
 });

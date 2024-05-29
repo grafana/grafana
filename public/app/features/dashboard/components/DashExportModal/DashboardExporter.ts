@@ -1,6 +1,6 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh, VariableWithOptions } from '@grafana/data';
+import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -9,6 +9,7 @@ import { variableRegex } from 'app/features/variables/utils';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
+import { DashboardJson } from '../../../manage-dashboards/types';
 import { isConstant } from '../../../variables/guard';
 import { DashboardModel } from '../../state/DashboardModel';
 import { GridPos } from '../../state/PanelModel';
@@ -44,9 +45,6 @@ export interface ExternalDashboard {
   __elements?: Record<string, LibraryElementExport>;
   __requires?: Array<Requires[string]>;
   panels: Array<PanelModel | PanelWithExportableLibraryPanel>;
-  templating?: {
-    list?: VariableWithOptions[];
-  };
 }
 
 interface PanelWithExportableLibraryPanel {
@@ -297,7 +295,7 @@ export class DashboardExporter {
       );
 
       // make inputs and requires a top thing
-      const newObj: ExternalDashboard = defaults(
+      const newObj: DashboardJson = defaults(
         {
           __inputs: inputs,
           __elements,
