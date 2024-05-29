@@ -111,10 +111,6 @@ const (
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
-	// FlagReturnToPrevious
-	// Enables the return to previous context functionality
-	FlagReturnToPrevious = "returnToPrevious"
-
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -710,4 +706,8 @@ const (
 	// FlagPreserveDashboardStateWhenNavigating
 	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
 	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"
+
+	// FlagAlertingCentralAlertHistory
+	// Enables the new central alert history.
+	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
 )

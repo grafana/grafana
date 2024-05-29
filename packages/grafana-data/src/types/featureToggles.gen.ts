@@ -44,7 +44,6 @@ export interface FeatureToggles {
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   topnav?: boolean;
-  returnToPrevious?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
   dualWritePlaylistsMode2?: boolean;
@@ -194,4 +193,5 @@ export interface FeatureToggles {
   datasourceProxyDisableRBAC?: boolean;
   alertingDisableSendAlertsExternal?: boolean;
   preserveDashboardStateWhenNavigating?: boolean;
+  alertingCentralAlertHistory?: boolean;
 }
