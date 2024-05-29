@@ -19,6 +19,22 @@ labels:
 menuTitle: Query editor
 title: Graphite query editor
 weight: 300
+refs:
+  query-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+  annotate-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+  set-up-grafana-monitoring:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
 ---
 
 # Graphite query editor
@@ -27,7 +43,7 @@ Grafana includes a Graphite-specific query editor to help you build queries.
 The query editor helps you quickly navigate the metric space, add functions, and change function parameters.
 It can handle all types of Graphite queries, including complex nested queries through the use of query references.
 
-For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
+For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
 
 ## View the raw query
 
@@ -114,7 +130,7 @@ This is more efficient than adding a query for each time series, such as `cpu.pe
 
 ## Apply annotations
 
-[Annotations][annotate-visualizations] overlay rich event information on top of graphs.
+[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 Graphite supports two ways to query annotations:
@@ -125,21 +141,10 @@ Graphite supports two ways to query annotations:
 ## Get Grafana metrics into Graphite
 
 Grafana exposes metrics for Graphite on the `/metrics` endpoint.
-For detailed instructions, refer to [Internal Grafana metrics][set-up-grafana-monitoring].
+For detailed instructions, refer to [Internal Grafana metrics](ref:set-up-grafana-monitoring).
 
 ## Integration with Loki
 
 Graphite queries get converted to Loki queries when the data source selection changes in Explore. Loki label names and values are extracted from the Graphite queries according to mappings information provided in Graphite data source configuration. Queries using tags with `seriesByTags()` are also transformed without any additional setup.
 
 Refer to the Graphite data source settings for more details.
-
-{{% docs/reference %}}
-[annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
-[annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
-
-[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-
-[set-up-grafana-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
-[set-up-grafana-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
-{{% /docs/reference %}}

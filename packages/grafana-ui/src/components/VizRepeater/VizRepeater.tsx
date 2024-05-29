@@ -54,12 +54,12 @@ interface State<V> {
   values: V[];
 }
 
-export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>> {
+export class VizRepeater<V, D = {}> extends PureComponent<PropsWithDefaults<V, D>, State<V>> {
   static defaultProps: DefaultProps = {
     itemSpacing: 8,
   };
 
-  constructor(props: Props<V, D>) {
+  constructor(props: PropsWithDefaults<V, D>) {
     super(props);
 
     this.state = {
@@ -89,8 +89,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
   }
 
   renderGrid() {
-    const { renderValue, height, width, itemSpacing, getAlignmentFactors, orientation } = this
-      .props as PropsWithDefaults<V, D>;
+    const { renderValue, height, width, itemSpacing, getAlignmentFactors, orientation } = this.props;
 
     const { values } = this.state;
     const grid = calculateGridDimensions(width, height, itemSpacing, values.length);
@@ -154,7 +153,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
       maxVizHeight,
       minVizWidth,
       minVizHeight,
-    } = this.props as PropsWithDefaults<V, D>;
+    } = this.props;
     const { values } = this.state;
 
     if (autoGrid && orientation === VizOrientation.Auto) {
