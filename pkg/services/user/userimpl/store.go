@@ -290,7 +290,7 @@ func (ss *sqlStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLa
 	if cmd.UserID <= 0 {
 		return user.ErrUpdateInvalidID
 	}
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{
 			ID:         cmd.UserID,
 			LastSeenAt: time.Now(),
