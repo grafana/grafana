@@ -198,16 +198,16 @@ func (s *SilenceService) WithRuleMetadata(ctx context.Context, user identity.Req
 		// This can be improved by adding a method to ruleAuthz that does the filtering itself or a method that exposes
 		// an access fingerprint for a rule that callers can use to do their own caching.
 		fp := rule.NamespaceUID
-		if canAccess, ok := accessCacheByFolder[fp]; ok && !canAccess {
-			continue
-		}
-
-		canAccess, err := s.ruleAuthz.HasAccessInFolder(ctx, user, rule)
-		if err == nil {
+		canAccess, ok := accessCacheByFolder[fp]
+		if !ok {
+			var err error
+			if canAccess, err = s.ruleAuthz.HasAccessInFolder(ctx, user, rule); err != nil {
+				continue // Assume no access if there is an error but don't cache.
+			}
 			accessCacheByFolder[fp] = canAccess // Only cache if there is no error.
 		}
-		if err != nil || !canAccess {
-			continue // Assume no access if there is an error.
+		if !canAccess {
+			continue
 		}
 
 		if ruleSilences, ok := byRuleUID[rule.UID]; ok {
