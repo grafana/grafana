@@ -120,7 +120,7 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 		return nil
 	}
 
-	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+	usr, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
 		UserID: userID,
 		OrgID:  r.OrgID,
 	})
