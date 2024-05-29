@@ -779,7 +779,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	go func() {
 		start := time.Now()
-		dashRes, err := d.findDashboardsZanzanaList(ctx, query)
+		dashRes, err := d.findDashboardsZanzanaListFilter(ctx, query)
 		res <- evalResult{"zanzana", dashRes, err, time.Since(start)}
 	}()
 
@@ -1027,6 +1027,69 @@ func (d *dashboardStore) findDashboardsZanzanaList(ctx context.Context, query *d
 	}
 
 	return resFiltered, nil
+}
+
+func (d *dashboardStore) findDashboardsZanzanaListFilter(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	limit := query.Limit
+	if limit < 1 {
+		limit = 1000
+	}
+
+	page := query.Page
+	if page < 1 {
+		page = 1
+	}
+
+	// List dashboards and folders
+	foldersRes, err := d.zClient.ListObjects(ctx, &openfgav1.ListObjectsRequest{
+		StoreId:              d.zClient.MustStoreID(ctx),
+		AuthorizationModelId: d.zClient.AuthorizationModelID,
+		User:                 query.SignedInUser.GetID(),
+		// TODO: fix `read` relation and use it (returns only directly assigned folders without inheritance now)
+		Relation: "dashboard_read",
+		Type:     "folder",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	dashRes, err := d.zClient.ListObjects(ctx, &openfgav1.ListObjectsRequest{
+		StoreId:              d.zClient.MustStoreID(ctx),
+		AuthorizationModelId: d.zClient.AuthorizationModelID,
+		User:                 query.SignedInUser.GetID(),
+		Relation:             "read",
+		Type:                 "dashboard",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	folderUIDs := make([]string, 0, len(foldersRes.GetObjects()))
+	for _, f := range foldersRes.GetObjects() {
+		folderUIDs = append(folderUIDs, strings.TrimLeft(f, "folder:"))
+	}
+	dashboardUIDs := make([]string, 0, len(dashRes.GetObjects()))
+	for _, d := range dashRes.GetObjects() {
+		dashboardUIDs = append(dashboardUIDs, strings.TrimLeft(d, "dashboard:"))
+	}
+
+	var res []dashboards.DashboardSearchProjection
+
+	// Search for folders and dashboards
+	query.DashboardUIDs = append(folderUIDs, dashboardUIDs...)
+	sb := d.buildZanzanaSearchQuery(ctx, query)
+	sql, params := sb.ToSQL(limit, page)
+	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(sql, params...).Find(&res)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(res) > int(limit) {
+		return res[:limit], nil
+	}
+
+	return res, nil
 }
 
 func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
