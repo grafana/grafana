@@ -128,9 +128,18 @@ func (d *DualWriterMode3) DeleteCollection(ctx context.Context, deleteValidation
 }
 
 func (d *DualWriterMode3) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	//TODO: implement List
-	klog.Error("List not implemented")
-	return nil, nil
+	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", options.ResourceVersion, "kind", options.Kind)
+	ctx = klog.NewContext(ctx, log)
+
+	sl, err := d.Storage.List(ctx, options)
+	if err != nil {
+		log.Error(err, "unable to list objects from storage")
+		return sl, err
+	}
+
+	// Todo legacy list
+
+	return sl, nil
 }
 
 func (d *DualWriterMode3) Destroy() {
