@@ -23,7 +23,7 @@ const mode1Str = "1"
 
 // NewDualWriterMode1 returns a new DualWriter in mode 1.
 // Mode 1 represents writing to and reading from LegacyStorage.
-func NewDualWriterMode1(legacy LegacyStorage, storage Storage) *DualWriterMode1 {
+func newDualWriterMode1(legacy LegacyStorage, storage Storage) *DualWriterMode1 {
 	metrics := &dualWriterMetrics{}
 	metrics.init()
 	return &DualWriterMode1{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode1"), dualWriterMetrics: metrics}
@@ -235,4 +235,8 @@ func (d *DualWriterMode1) NewList() runtime.Object {
 
 func (d *DualWriterMode1) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return d.Legacy.ConvertToTable(ctx, object, tableOptions)
+}
+
+func (d *DualWriterMode1) Compare(storageObj, legacyObj runtime.Object) bool {
+	return d.Storage.Compare(storageObj, legacyObj)
 }

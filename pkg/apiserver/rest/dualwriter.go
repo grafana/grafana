@@ -35,6 +35,8 @@ type Storage interface {
 	rest.CreaterUpdater
 	rest.GracefulDeleter
 	rest.CollectionDeleter
+	// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
+	Compare(storageObj, legacyObj runtime.Object) bool
 }
 
 // LegacyStorage is a storage implementation that writes to the Grafana SQL database.
@@ -91,18 +93,18 @@ func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage) D
 	switch mode {
 	case Mode1:
 		// read and write only from legacy storage
-		return NewDualWriterMode1(legacy, storage)
+		return newDualWriterMode1(legacy, storage)
 	case Mode2:
 		// write to both, read from storage but use legacy as backup
-		return NewDualWriterMode2(legacy, storage)
+		return newDualWriterMode2(legacy, storage)
 	case Mode3:
 		// write to both, read from storage only
-		return NewDualWriterMode3(legacy, storage)
+		return newDualWriterMode3(legacy, storage)
 	case Mode4:
 		// read and write only from storage
-		return NewDualWriterMode4(legacy, storage)
+		return newDualWriterMode4(legacy, storage)
 	default:
-		return NewDualWriterMode1(legacy, storage)
+		return newDualWriterMode1(legacy, storage)
 	}
 }
 

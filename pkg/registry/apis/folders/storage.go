@@ -38,3 +38,9 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, le
 	}
 	return &storage{Store: store}, nil
 }
+
+// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
+func (s *storage) Compare(storageObj, legacyObj runtime.Object) bool {
+	//TODO: define the comparison logic between a folder returned by the storage and a folder returned by the legacy storage
+	return false
+}
