@@ -3144,12 +3144,12 @@ __metadata:
   linkType: hard
 
 "@grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.7.2":
-  version: 1.7.2
-  resolution: "@grafana/faro-core@npm:1.7.2"
+  version: 1.7.3
+  resolution: "@grafana/faro-core@npm:1.7.3"
   dependencies:
     "@opentelemetry/api": "npm:^1.7.0"
     "@opentelemetry/otlp-transformer": "npm:^0.48.0"
-  checksum: 10/4460a9160875af52da7f411c9407a58415378ae17e7f8dea2f5dc0c00f6ca2ca588b87b501d2f45477f106a20a6c3020dc9bc7855009ba8246da72012b645d54
+  checksum: 10/d08a1f9182eacc5016a413b9f43654baa6e8202ed68aa4c0b1cfa1f9cc00d5ac99f2804c30eb7a81825d812f642e7a1d82725b5c461c9458f368a974d26ece7c
   languageName: node
   linkType: hard
 
