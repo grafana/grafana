@@ -93,7 +93,7 @@ Grafana loads the message catalog JSON before the initial render.
 
 ### Phrase ID naming convention
 
-We set explicit IDs for phrases to make it easier to identify phrases out of context, and to track where they're used. 
+We set explicit IDs for phrases to make it easier to identify phrases out of context, and to track where they're used.
 
 IDs follow a naming scheme that includes _where_ the phrase is used. The exception is the rare case of a single reoccurring word like "Cancel", but the default is to use a feature-specific phrase.
 
@@ -213,8 +213,8 @@ To provide feedback on translations, sign into Crowdin and follow these steps:
    `grafana/main > public > locales > 'language denomination' > grafana.json`
    <br>
    Click the `grafana.json` file.
-5. In the left section, click the **Search in file** input. Search for the string that you want to comment on. You can search in English, as it's the default language, or in the language the string is translated into.
-6. Once you have found the string, on the right hand side there is a **Comments** section where you can send your feedback about the translation. Tag `@Translated` to be sure the team of linguists gets notified.
+1. In the left section, click the **Search in file** input. Search for the string that you want to comment on. You can search in English, as it's the default language, or in the language the string is translated into.
+1. Once you have found the string, on the right hand side there is a **Comments** section where you can send your feedback about the translation. Tag `@Translated` to be sure the team of linguists gets notified.
 
 ## Documentation
 

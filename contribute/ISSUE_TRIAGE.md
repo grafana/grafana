@@ -69,6 +69,7 @@ Triage helps ensure issues resolve quickly by:
 - Streamlining the development process by preventing duplicate discussions.
 
 If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
+
 ### 1. Find uncategorized issues
 
 To get started with issue triage and finding issues that haven't been triaged you have two alternatives.
@@ -87,7 +88,7 @@ Instructions for setting up filters in Gmail can be found [here](#setting-up-gma
 
 ### 2. Ensure the issue contains basic information
 
-Before triaging an issue very far, make sure that the issue's author provided the standard  information. This helps you make an educated recommendation on how to categorize the issue. The Grafana project uses [GitHub issue templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository) to guide contributors to provide standard information that must be included for each type of template or type of issue.
+Before triaging an issue very far, make sure that the issue's author provided the standard information. This helps you make an educated recommendation on how to categorize the issue. The Grafana project uses [GitHub issue templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository) to guide contributors to provide standard information that must be included for each type of template or type of issue.
 
 #### Standard issue information that must be included
 
@@ -95,7 +96,7 @@ Grafana uses various [issue templates](https://github.com/grafana/grafana/issues
 
 ##### Bug reports
 
-Bug reports should explain what happened, what was expected, and how to reproduce it. Also, it should include additional information that may help giving a complete picture of what happened such as screenshots, [query inspector](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630) output, and any relevant information about the environment. For example: 
+Bug reports should explain what happened, what was expected, and how to reproduce it. Also, it should include additional information that may help giving a complete picture of what happened such as screenshots, [query inspector](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630) output, and any relevant information about the environment. For example:
 
 - Grafana version:
 - Data source type & version:
@@ -150,18 +151,18 @@ An issue can have multiple labels. Typically, a properly categorized issue shoul
 - One label identifying its type (`type/*`).
 - One or multiple labels identifying the functional areas of interest or component (`area/*`) and/or data source (`datasource/*`), if applicable.
 
-| Label                    | Description                                                               |
-| ------------------------ | ------------------------------------------------------------------------- |
-| `type/bug`               | A feature isn't working as expected given design, or documentation.        |
-| `type/feature-request`   | Request for a new feature, or enhancement.                                 |
-| `type/docs`              | Documentation problem, or enhancement.                                     |
-| `type/accessibility`     | Accessibility problem, or enhancement.                                     |
-| `type/question`          | Issue is a question or is perceived as such.                              |
-| `type/duplicate`         | An existing issue of the same subject has already been reported. |
-| `type/works-as-intended` | A reported bug works as intended (that is, by design).                               |
-| `type/build-packaging`   | Build or packaging problem, or enhancement.                                |
-| `area/*`                 | Subject is related to a functional area of interest, or component.         |
-| `datasource/*`           | Subject is related to a core data source plugin.                          |
+| Label                    | Description                                                         |
+| ------------------------ | ------------------------------------------------------------------- |
+| `type/bug`               | A feature isn't working as expected given design, or documentation. |
+| `type/feature-request`   | Request for a new feature, or enhancement.                          |
+| `type/docs`              | Documentation problem, or enhancement.                              |
+| `type/accessibility`     | Accessibility problem, or enhancement.                              |
+| `type/question`          | Issue is a question or is perceived as such.                        |
+| `type/duplicate`         | An existing issue of the same subject has already been reported.    |
+| `type/works-as-intended` | A reported bug works as intended (that is, by design).              |
+| `type/build-packaging`   | Build or packaging problem, or enhancement.                         |
+| `area/*`                 | Subject is related to a functional area of interest, or component.  |
+| `datasource/*`           | Subject is related to a core data source plugin.                    |
 
 #### Duplicate issues
 
@@ -232,20 +233,20 @@ There's a minor typo, error, or lack of information that adds a lot of confusion
 
 In general, bugs and enhancement issues should be labeled with a priority.
 
-This is the most difficult thing with triaging issues since it requires a lot of knowledge, context and experience before it is possible to skillfully add a specific priority label. 
+This is the most difficult thing with triaging issues since it requires a lot of knowledge, context and experience before it is possible to skillfully add a specific priority label.
 
 The key here is to ask for help and discuss issues to understand how more experienced project members think and reason. By doing that you learn more and eventually be more and more comfortable with prioritizing issues.
 
 In case there is an uncertainty around the prioritization of an issue, please ask the maintainers for help.
 
-| Label                             | Description                                                                                                              |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `priority/critical`               | Highest priority. Must be actively worked on as someone's top priority right now.                                        |
-| `priority/support-subscription`   | This is important for one or several customers having a paid Grafana support subscription.                               |
-| `priority/important-soon`         | Must be staffed and worked on either currently, or very soon, ideally in time for the next release.                      |
-| `priority/important-longterm`     | Important over the long term, but may need multiple releases to complete.                      |
-| `priority/nice-to-have`           | It's a good idea, but not scheduled for any release.                                                                     |
-| `priority/awaiting-more-evidence` | Lowest priority. Possibly useful, but not yet enough interest in it.                                                     |
+| Label                             | Description                                                                                                   |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `priority/critical`               | Highest priority. Must be actively worked on as someone's top priority right now.                             |
+| `priority/support-subscription`   | This is important for one or several customers having a paid Grafana support subscription.                    |
+| `priority/important-soon`         | Must be staffed and worked on either currently, or very soon, ideally in time for the next release.           |
+| `priority/important-longterm`     | Important over the long term, but may need multiple releases to complete.                                     |
+| `priority/nice-to-have`           | It's a good idea, but not scheduled for any release.                                                          |
+| `priority/awaiting-more-evidence` | Lowest priority. Possibly useful, but not yet enough interest in it.                                          |
 | `priority/unscheduled`            | Something to look into before and to be discussed during the planning of the next major/minor stable release. |
 
 **Critical bugs**
@@ -292,7 +293,7 @@ It's generally a good idea to consider signaling to the community that help is a
 
 In many cases the issue author or community as a whole is more suitable to contribute changes since they're experts in their domain. It's also quite common that someone has tried to get something to work using the documentation without success, made an effort to get it to work, reached out to the [community site](https://community.grafana.com/) to get the missing information, or some combination of these things.
 
-In certain areas there probably exist domain experts who may be able to help: 
+In certain areas there probably exist domain experts who may be able to help:
 
 - Database setups
 - Authentication like OAuth providers and LDAP setups
@@ -302,7 +303,7 @@ In certain areas there probably exist domain experts who may be able to help:
 
 1. Kindly and politely add a comment to signal to users subscribed to updates of the issue.
    - Explain that the issue would be nice to get resolved, but it isn't prioritized to work on by maintainers for an unforeseen future.
-   - If possible or applicable, try to help contributors getting starting by adding pointers and references to what code needs to be changed. Note any suggests for good ways of solving or implementing the issue. 
+   - If possible or applicable, try to help contributors getting starting by adding pointers and references to what code needs to be changed. Note any suggests for good ways of solving or implementing the issue.
 1. Label the issue with `help wanted`.
 1. If applicable, label the issue with `beginner friendly` to denote that the issue is suitable for a beginner to work on.
 1. If possible, try to estimate the amount of work by adding `effort/small`, `effort/medium` or `effort/large`.
