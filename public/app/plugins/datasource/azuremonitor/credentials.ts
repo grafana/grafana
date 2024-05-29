@@ -190,7 +190,9 @@ export function updateCredentials(
         jsonData: {
           ...options.jsonData,
           azureAuthType: credentials.authType,
-          azureCredentials: undefined,
+          azureCredentials: {
+            authType: credentials.authType,
+          },
         },
       };
 
@@ -205,7 +207,12 @@ export function updateCredentials(
           cloudName: resolveLegacyCloudName(credentials.azureCloud) || getDefaultAzureCloud(),
           tenantId: credentials.tenantId,
           clientId: credentials.clientId,
-          azureCredentials: undefined,
+          azureCredentials: {
+            authType: credentials.authType,
+            azureCloud: resolveLegacyCloudName(credentials.azureCloud) || getDefaultAzureCloud(),
+            tenantId: credentials.tenantId,
+            clientId: credentials.clientId,
+          },
         },
         secureJsonData: {
           ...options.secureJsonData,
