@@ -1806,8 +1806,11 @@
     {
       "metadata": {
         "name": "nodeGraphDotLayout",
-        "resourceVersion": "1716888253619",
-        "creationTimestamp": "2024-05-28T09:24:13Z"
+        "resourceVersion": "1717013772166",
+        "creationTimestamp": "2024-05-28T09:24:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-29 20:16:12.166494928 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Changed the layout algorithm for the node graph",
@@ -2297,6 +2300,19 @@
         "description": "Enables dual writing of dashboards to both legacy and k8s storage in mode 3",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingCentralAlertHistory",
+        "resourceVersion": "1717013772166",
+        "creationTimestamp": "2024-05-29T20:16:12Z"
+      },
+      "spec": {
+        "description": "Enables the new central alert history.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true
       }
     }
   ]

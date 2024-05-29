@@ -197,4 +197,5 @@ export interface FeatureToggles {
   datasourceProxyDisableRBAC?: boolean;
   alertingDisableSendAlertsExternal?: boolean;
   preserveDashboardStateWhenNavigating?: boolean;
+  alertingCentralAlertHistory?: boolean;
 }
