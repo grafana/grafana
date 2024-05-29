@@ -202,7 +202,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	}
 
 	writeStart := r.clock.Now()
-	err = r.writer.Write(ctx, ev.rule.Record.Metric, evalStart, frames)
+	err = r.writer.Write(ctx, ev.rule.Record.Metric, writeStart, frames)
 	writeDur := r.clock.Now().Sub(writeStart)
 
 	if err != nil {
