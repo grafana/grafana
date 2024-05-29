@@ -410,6 +410,20 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.Truef(t, ErrTimeIntervalInvalid.Base.Is(err), "expected ErrTimeIntervalInvalid but got %s", err)
 	})
 
+	t.Run("rejects mute timings if provenance is not right", func(t *testing.T) {
+		sut, _, prov := createMuteTimingSvcSut()
+		timing := definitions.MuteTimeInterval{
+			MuteTimeInterval: expected,
+			Provenance:       definitions.Provenance(models.ProvenanceFile),
+		}
+
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedProvenance, nil)
+
+		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
+
+		require.ErrorContains(t, err, "cannot change provenance")
+	})
+
 	t.Run("returns ErrMuteTimingsNotFound if mute timing does not exist", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
@@ -572,6 +586,23 @@ func TestDeleteMuteTimings(t *testing.T) {
 		require.EqualValues(t, initialConfig().AlertmanagerConfig.MuteTimeIntervals, revision.cfg.AlertmanagerConfig.MuteTimeIntervals)
 
 		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, &definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval{Name: "no-timing"}, Provenance: definitions.Provenance(models.ProvenanceAPI)}, orgID)
+	})
+
+	t.Run("fails if it was created with different provenance", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return &cfgRevision{cfg: initialConfig()}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
+		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		err := sut.DeleteMuteTiming(context.Background(), "no-timing", orgID, definitions.Provenance(models.ProvenanceNone))
+		require.ErrorContains(t, err, "cannot delete with provided provenance")
+
+		err = sut.DeleteMuteTiming(context.Background(), "no-timing", orgID, definitions.Provenance(models.ProvenanceFile))
+		require.ErrorContains(t, err, "cannot delete with provided provenance")
+
+		require.Len(t, store.Calls, 0)
 	})
 
 	t.Run("returns ErrTimeIntervalInUse if mute timing is used", func(t *testing.T) {
