@@ -66,7 +66,6 @@ func (s *dashboardStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	// Why do we modify p in Save Dashboard?
 	p, ok := obj.(*v0alpha1.Dashboard)
 	if !ok {
 		return nil, fmt.Errorf("expected dashboard?")
@@ -80,7 +79,6 @@ func (s *dashboardStorage) Create(ctx context.Context,
 	}
 
 	dash, _, err := s.access.SaveDashboard(ctx, info.OrgID, p)
-	// Given we return dash here?
 	return dash, err
 }
 
