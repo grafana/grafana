@@ -192,6 +192,16 @@ Set whether percent change is displayed or not. Disabled by default.
 This option is not applicable when the **Show** setting, under **Value options**, is set to **All values**.
 {{% /admonition %}}
 
+### Percent change color mode
+
+- **Standard** -- Green if the percent change is positive, red if the percent change is negative.
+- **Inverted** -- Red if the percent change is positive, green if the percent change is negative.
+- **Same as Value** -- Use the same color as the value.
+
+{{% admonition type="note" %}}
+This option only appears when **Show percent change** is enabled.
+{{% /admonition %}}
+
 ## Text size
 
 Adjust the sizes of the gauge text.
