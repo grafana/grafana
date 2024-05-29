@@ -56,13 +56,13 @@
       "method": "DELETE",
       "path": "/config/v1/rules",
       "reqRole": "Editor",
-      "reqAction": "datasources:write"
+      "reqAction": "datasources:query"
     },
     {
       "method": "POST",
       "path": "/config/v1/rules",
       "reqRole": "Editor",
-      "reqAction": "datasources:write"
+      "reqAction": "datasources:query"
     }
   ],
   "includes": [
