@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { AppEvents, GrafanaTheme2, Scope, ScopeSpec, ScopeTreeItemSpec } from '@grafana/data';
-import { getAppEvents, getBackendSrv } from '@grafana/runtime';
+import { config, getAppEvents, getBackendSrv } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -32,7 +32,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   private serverGroup = 'scope.grafana.app';
   private serverVersion = 'v0alpha1';
-  private serverNamespace = 'default';
+  private serverNamespace = config.namespace;
 
   private server = new ScopedResourceClient<ScopeSpec, 'Scope'>({
     group: this.serverGroup,
