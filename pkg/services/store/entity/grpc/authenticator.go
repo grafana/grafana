@@ -6,13 +6,35 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+
+	authnlib "github.com/grafana/authlib/authn"
 )
 
-type Authenticator struct{}
+type Authenticator struct {
+	verifier authnlib.Verifier[authnlib.IDTokenClaims]
+}
+
+func ProvideAuthenticator(cfg *setting.Cfg) *Authenticator {
+	section := cfg.SectionWithEnvOverrides("entity_authn")
+
+	// TODO modify the authzlib to use a key retriever
+	// share it with the authenticator
+	keyConfig := authnlib.KeyRetrieverConfig{
+		SigningKeysURL: section.Key("signing_keys_url").MustString("https://localhost:3000/api/signing-keys/keys"),
+	}
+
+	// TODO specify the allowed audience?
+	// TODO allow trusting self signed https certificates in the verifier
+	return &Authenticator{
+		verifier: authnlib.NewIDTokenVerifier(authnlib.VerifierConfig{}, authnlib.NewKeyRetriever(keyConfig)),
+	}
+}
 
 func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -21,39 +43,51 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 	}
 
 	// TODO: use id token instead of these fields
-	login := md.Get("grafana-login")[0]
-	if login == "" {
-		return nil, fmt.Errorf("no login found in context")
+	// login := md.Get("grafana-login")[0]
+	// if login == "" {
+	// 	return nil, fmt.Errorf("no login found in context")
+	// }
+	// userID, err := strconv.ParseInt(md.Get("grafana-userid")[0], 10, 64)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("invalid user id: %w", err)
+	// }
+	// orgID, err := strconv.ParseInt(md.Get("grafana-orgid")[0], 10, 64)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("invalid org id: %w", err)
+	// }
+
+	// TODO: validate grafana access token as well
+
+	// Validate ID token
+	idToken := md.Get("grafana-idtoken")[0]
+	if idToken == "" {
+		return nil, fmt.Errorf("no id token found in context")
 	}
-	userID, err := strconv.ParseInt(md.Get("grafana-userid")[0], 10, 64)
+
+	claims, err := f.verifier.Verify(ctx, idToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify id token: %w", err)
+	}
+
+	id := authn.MustParseNamespaceID(claims.Subject)
+
+	if !id.IsNamespace(authn.NamespaceUser, authn.NamespaceServiceAccount) {
+		return nil, fmt.Errorf("invalid namespace: %s", id.Namespace().String())
+	}
+
+	userID, err := id.UserID()
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
+
+	// TODO add orgID to claims ?
 	orgID, err := strconv.ParseInt(md.Get("grafana-orgid")[0], 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid org id: %w", err)
 	}
 
-	// TODO: validate id token
-	/*
-		idToken := md.Get("grafana-idtoken")[0]
-		if idToken == "" {
-			return nil, fmt.Errorf("no id token found in context")
-		}
-		jwtToken, err := jwt.ParseSigned(idToken)
-		if err != nil {
-			return nil, fmt.Errorf("invalid id token: %w", err)
-		}
-		claims := jwt.Claims{}
-		err = jwtToken.UnsafeClaimsWithoutVerification(&claims)
-		if err != nil {
-			return nil, fmt.Errorf("invalid id token: %w", err)
-		}
-		// fmt.Printf("JWT CLAIMS: %+v\n", claims)
-	*/
-
 	return appcontext.WithUser(ctx, &user.SignedInUser{
-		Login:  login,
+		Login:  claims.Rest.Email,
 		UserID: userID,
 		OrgID:  orgID,
 	}), nil

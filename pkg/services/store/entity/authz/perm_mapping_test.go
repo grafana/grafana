@@ -3,6 +3,7 @@ package authz
 import (
 	"testing"
 
+	authzlib "github.com/grafana/authlib/authz"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,7 +15,7 @@ func Test_toRBAC(t *testing.T) {
 		folder     string
 		method     string
 		wantAction string
-		wantScope  string
+		wantScope  authzlib.Resource
 	}{
 		{
 			name:       "create",
@@ -23,7 +24,7 @@ func Test_toRBAC(t *testing.T) {
 			folder:     "",
 			method:     "/entity.EntityStore/Create",
 			wantAction: "dashboards:create",
-			wantScope:  "",
+			wantScope:  authzlib.Resource{},
 		},
 		{
 			name:       "create in folder",
@@ -32,7 +33,7 @@ func Test_toRBAC(t *testing.T) {
 			folder:     "fold",
 			method:     "/entity.EntityStore/Create",
 			wantAction: "dashboards:create",
-			wantScope:  "folders:uid:fold",
+			wantScope:  authzlib.Resource{Kind: "folders", Attr: "uid", ID: "fold"},
 		},
 		{
 			name:       "read",
@@ -41,7 +42,7 @@ func Test_toRBAC(t *testing.T) {
 			folder:     "",
 			method:     "/entity.EntityStore/Read",
 			wantAction: "dashboards:read",
-			wantScope:  "dashboards:uid:dash",
+			wantScope:  authzlib.Resource{Kind: "dashboards", Attr: "uid", ID: "dash"},
 		},
 		{
 			name:       "read",
@@ -50,7 +51,7 @@ func Test_toRBAC(t *testing.T) {
 			folder:     "fold",
 			method:     "/entity.EntityStore/Read",
 			wantAction: "dashboards:read",
-			wantScope:  "folders:uid:fold",
+			wantScope:  authzlib.Resource{Kind: "folders", Attr: "uid", ID: "fold"},
 			// Normally for dashboard it should be both scopes (folder and dash)
 		},
 	}

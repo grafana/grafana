@@ -74,8 +74,8 @@ func ProvideService(
 		return nil, err
 	}
 
-	authn := &grpc.Authenticator{}
-	authz := &authz.AuthorizerImpl{}
+	authn := grpc.ProvideAuthenticator(cfg)
+	authz := authz.ProvideAuthorizer(cfg)
 
 	s := &service{
 		config:        newConfig(cfg),
