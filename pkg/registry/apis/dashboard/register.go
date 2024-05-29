@@ -1,15 +1,11 @@
 package dashboard
 
 import (
-	"fmt"
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/registry/generic"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
@@ -24,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/access"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -119,43 +114,10 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
 	resourceInfo := v0alpha1.DashboardResourceInfo
-	strategy := grafanaregistry.NewStrategy(scheme)
-	store := &genericregistry.Store{
-		NewFunc:                   resourceInfo.NewFunc,
-		NewListFunc:               resourceInfo.NewListFunc,
-		PredicateFunc:             grafanaregistry.Matcher,
-		DefaultQualifiedResource:  resourceInfo.GroupResource(),
-		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		CreateStrategy:            strategy,
-		UpdateStrategy:            strategy,
-		DeleteStrategy:            strategy,
+	store, err := newStorage(scheme)
+	if err != nil {
+		return nil, err
 	}
-	store.TableConvertor = utils.NewTableConverter(
-		store.DefaultQualifiedResource,
-		[]metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Format: "string", Description: "The dashboard name"},
-			{Name: "Created At", Type: "date"},
-		},
-		func(obj any) ([]interface{}, error) {
-			dash, ok := obj.(*v0alpha1.Dashboard)
-			if ok {
-				return []interface{}{
-					dash.Name,
-					dash.Spec.GetNestedString("title"),
-					dash.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			}
-			summary, ok := obj.(*v0alpha1.DashboardSummary)
-			if ok {
-				return []interface{}{
-					dash.Name,
-					summary.Spec.Title,
-					dash.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			}
-			return nil, fmt.Errorf("expected dashboard or summary")
-		})
 
 	legacyStore := &dashboardStorage{
 		resource:       resourceInfo,
