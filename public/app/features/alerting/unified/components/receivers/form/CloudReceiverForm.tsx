@@ -1,19 +1,14 @@
 import React, { useMemo } from 'react';
+import { useHistory } from 'react-router-dom';
 
 import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
 
-import { alertmanagerApi } from '../../../api/alertmanagerApi';
-import { updateAlertManagerConfigAction } from '../../../state/actions';
 import { CloudChannelValues, ReceiverFormValues, CloudChannelMap } from '../../../types/receiver-form';
 import { cloudNotifierTypes } from '../../../utils/cloud-alertmanager-notifier-types';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
-import {
-  cloudReceiverToFormValues,
-  formValuesToCloudReceiver,
-  updateConfigWithReceiver,
-} from '../../../utils/receiver-form';
+import { cloudReceiverToFormValues } from '../../../utils/receiver-form';
+import { useUpsertCloudContactPoint } from '../../contact-points/useContactPoints';
 
 import { CloudCommonChannelSettings } from './CloudCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
@@ -26,7 +21,7 @@ interface Props {
   readOnly?: boolean;
 }
 
-const defaultChannelValues: CloudChannelValues = Object.freeze({
+export const defaultChannelValues: CloudChannelValues = Object.freeze({
   __id: '',
   sendResolved: true,
   secureSettings: {},
@@ -38,8 +33,9 @@ const defaultChannelValues: CloudChannelValues = Object.freeze({
 const cloudNotifiers = cloudNotifierTypes.map<Notifier>((n) => ({ dto: n }));
 
 export const CloudReceiverForm = ({ existing, alertManagerSourceName, config, readOnly = false }: Props) => {
-  const dispatch = useDispatch();
+  const history = useHistory();
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
+  const [upsert] = useUpsertCloudContactPoint();
 
   // transform receiver DTO to form values
   const [existingValue] = useMemo((): [ReceiverFormValues<CloudChannelValues> | undefined, CloudChannelMap] => {
@@ -50,18 +46,8 @@ export const CloudReceiverForm = ({ existing, alertManagerSourceName, config, re
   }, [existing]);
 
   const onSubmit = async (values: ReceiverFormValues<CloudChannelValues>) => {
-    const newReceiver = formValuesToCloudReceiver(values, defaultChannelValues);
-    await dispatch(
-      updateAlertManagerConfigAction({
-        newConfig: updateConfigWithReceiver(config, newReceiver, existing?.name),
-        oldConfig: config,
-        alertManagerSourceName,
-        successMessage: existing ? 'Contact point updated.' : 'Contact point created.',
-        redirectPath: '/alerting/notifications',
-      })
-    ).then(() => {
-      dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
-    });
+    await upsert(values, existing?.name);
+    history.push('/alerting/notifications');
   };
 
   const takenReceiverNames = useMemo(

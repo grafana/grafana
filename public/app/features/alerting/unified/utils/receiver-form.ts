@@ -164,7 +164,7 @@ export function updateConfigWithReceiver(
   return updated;
 }
 
-function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
+export function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
   const updated: Route = {
     ...route,
   };

@@ -98,7 +98,7 @@ const ContactPoints = () => {
   const [activeTab, setActiveTab] = useTabQueryParam();
 
   let { isLoading, error, contactPoints } = useContactPointsWithStatus();
-  const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
+  const [deleteTrigger, updateAlertmanagerState] = useDeleteContactPoint();
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.CreateContactPoint
   );
