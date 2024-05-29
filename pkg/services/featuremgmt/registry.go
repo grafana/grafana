@@ -240,6 +240,24 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
+			Name:        "dualWriteDashboardsMode3",
+			Description: "Enables dual writing of dashboards to both legacy and k8s storage in mode 3",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
+			Name:        "dualWriteFoldersMode2",
+			Description: "Enables dual writing of folders to both legacy and k8s storage in mode 2",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
+			Name:        "dualWriteFoldersMode3",
+			Description: "Enables dual writing of folders to both legacy and k8s storage in mode 3",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
 			Name:           "cloudWatchCrossAccountQuerying",
 			Description:    "Enables cross-account querying in CloudWatch datasources",
 			Stage:          FeatureStageGeneralAvailability,

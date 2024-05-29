@@ -140,6 +140,9 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	if b.features.IsEnabledGlobally(featuremgmt.FlagDualWriteDashboardsMode2) {
 		mode = grafanarest.Mode2
 	}
+	if b.features.IsEnabledGlobally(featuremgmt.FlagDualWriteDashboardsMode3) {
+		mode = grafanarest.Mode3
+	}
 
 	// Dual writes if a RESTOptionsGetter is provided
 	if dualWrite && optsGetter != nil {

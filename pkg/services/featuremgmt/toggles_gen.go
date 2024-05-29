@@ -131,6 +131,18 @@ const (
 	// Enables dual writing of dashboards to both legacy and k8s storage in mode 2
 	FlagDualWriteDashboardsMode2 = "dualWriteDashboardsMode2"
 
+	// FlagDualWriteDashboardsMode3
+	// Enables dual writing of dashboards to both legacy and k8s storage in mode 3
+	FlagDualWriteDashboardsMode3 = "dualWriteDashboardsMode3"
+
+	// FlagDualWriteFoldersMode2
+	// Enables dual writing of folders to both legacy and k8s storage in mode 2
+	FlagDualWriteFoldersMode2 = "dualWriteFoldersMode2"
+
+	// FlagDualWriteFoldersMode3
+	// Enables dual writing of folders to both legacy and k8s storage in mode 3
+	FlagDualWriteFoldersMode3 = "dualWriteFoldersMode3"
+
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"

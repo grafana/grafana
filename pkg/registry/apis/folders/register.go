@@ -133,13 +133,21 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 	storage[resourceInfo.StoragePath("count")] = &subCountREST{b.folderSvc}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
 
+	mode := grafanarest.Mode1
+	if b.features.IsEnabledGlobally(featuremgmt.FlagDualWriteFoldersMode2) {
+		mode = grafanarest.Mode2
+	}
+	if b.features.IsEnabledGlobally(featuremgmt.FlagDualWriteFoldersMode3) {
+		mode = grafanarest.Mode3
+	}
+
 	// enable dual writes if a RESTOptionsGetter is provided
 	if dualWrite && optsGetter != nil {
 		store, err := newStorage(scheme, optsGetter, legacyStore)
 		if err != nil {
 			return nil, err
 		}
-		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(grafanarest.Mode2, legacyStore, store)
+		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(mode, legacyStore, store)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
