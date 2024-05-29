@@ -12,7 +12,7 @@ GO = go
 GO_VERSION = 1.22.3
 GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
-GO_RACE  ?= $(if $(GO_BUILD_DEV),1)
+GO_RACE  := $(shell [ -n "$(GO_BUILD_DEV)$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(if $(GO_RACE),-race)
@@ -410,6 +410,18 @@ scripts/drone/TAGS: $(shell find scripts/drone -name '*.star')
 .PHONY: format-drone
 format-drone:
 	buildifier --lint=fix -r scripts/drone
+
+.PHONY: go-race-is-enabled
+go-race-is-enabled:
+	@if [ -n "$(GO_RACE)" ]; then \
+		echo "The Go race detector is enabled locally, yey!"; \
+	else \
+		echo "The Go race detector is NOT enabled locally, boo!"; \
+	fi;
+
+.PHONY: enable-go-race
+enable-go-race:
+	@touch .go-race-enabled-locally
 
 .PHONY: help
 help: ## Display this help.
