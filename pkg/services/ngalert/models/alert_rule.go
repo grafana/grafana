@@ -16,6 +16,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	prommodels "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
@@ -504,14 +505,14 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ErrAlertRuleFailedValidation)
 	}
 
-	if !alertRule.IsRecordingRule() {
-		if _, err := ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
-			return err
-		}
-
-		if _, err := NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
-			return err
-		}
+	var err error
+	if alertRule.IsRecordingRule() {
+		err = validateRecordingRuleFields(alertRule)
+	} else {
+		err = validateAlertRuleFields(alertRule)
+	}
+	if err != nil {
+		return err
 	}
 
 	if alertRule.For < 0 {
@@ -533,6 +534,29 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		if err := alertRule.NotificationSettings[0].Validate(); err != nil {
 			return errors.Join(ErrAlertRuleFailedValidation, fmt.Errorf("invalid notification settings: %w", err))
 		}
+	}
+	return nil
+}
+
+func validateAlertRuleFields(rule *AlertRule) error {
+	if _, err := ErrStateFromString(string(rule.ExecErrState)); err != nil {
+		return err
+	}
+
+	if _, err := NoDataStateFromString(string(rule.NoDataState)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateRecordingRuleFields(rule *AlertRule) error {
+	metricName := prommodels.LabelValue(rule.Record.Metric)
+	if !metricName.IsValid() {
+		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid utf8 string")
+	}
+	if !prommodels.IsValidMetricName(metricName) {
+		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
 	}
 	return nil
 }
