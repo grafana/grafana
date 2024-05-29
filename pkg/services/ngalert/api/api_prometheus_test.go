@@ -629,8 +629,6 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, result.Data.RuleGroups[0].Rules, 1)
 			require.Len(t, result.Data.RuleGroups[1].Rules, 1)
 
-			fmt.Println(result.Data.RuleGroups[0], result.Data.RuleGroups[1])
-			require.True(t, false)
 			if result.Data.RuleGroups[0].Name == "rule-group-2" {
 				require.Equal(t, expectedRuleInGroup2.Title, result.Data.RuleGroups[0].Rules[0].Name)
 				require.Equal(t, expectedRuleInGroup3.Title, result.Data.RuleGroups[1].Rules[0].Name)
