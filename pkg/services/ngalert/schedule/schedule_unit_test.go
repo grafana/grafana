@@ -436,7 +436,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 
 	var evaluator = evalMock
 	if evalMock == nil {
-		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()), &pluginstore.FakePluginStore{})
+		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, &datasources.FakeCacheService{}, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()), &pluginstore.FakePluginStore{})
 	}
 
 	if registry == nil {
@@ -466,6 +466,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		AppURL:           appUrl,
 		EvaluatorFactory: evaluator,
 		RuleStore:        rs,
+		FeatureToggles:   featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),
 		Metrics:          m.GetSchedulerMetrics(),
 		AlertSender:      senderMock,
 		Tracer:           testTracer,
