@@ -11,8 +11,8 @@ import {
   SceneObjectWithUrlSync,
 } from '@grafana/scenes';
 
-import { ScopesFiltersAdvancedSelector } from './ScopesFiltersAdvancedSelectorScene';
-import { ScopesFiltersBasicSelector } from './ScopesFiltersBasicSelectorScene';
+import { ScopesFiltersAdvancedSelector } from './ScopesFiltersAdvancedSelector';
+import { ScopesFiltersBasicSelector } from './ScopesFiltersBasicSelector';
 import { fetchNodes, fetchScope } from './api/scopes';
 import { Node, NodesMap } from './types';
 
