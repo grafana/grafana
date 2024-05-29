@@ -28,7 +28,7 @@ func NewPeakQAPIBuilder() *PeakQAPIBuilder {
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *PeakQAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) || true {
 		return nil // skip registration unless opting into experimental apis
 	}
 	builder := NewPeakQAPIBuilder()

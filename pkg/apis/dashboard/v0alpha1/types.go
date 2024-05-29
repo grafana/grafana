@@ -2,8 +2,6 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -15,7 +13,7 @@ type Dashboard struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// The dashboard body (unstructured for now)
-	Spec common.Unstructured `json:"spec"`
+	Spec Spec `json:"spec"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -111,4 +109,14 @@ type AnnotationActions struct {
 	CanAdd    bool `json:"canAdd"`
 	CanEdit   bool `json:"canEdit"`
 	CanDelete bool `json:"canDelete"`
+}
+
+type Spec struct {
+	Version int64 `json:"version"`
+
+	UID string `json:"uid"`
+
+	Title string `json:"title"`
+
+	ID int64 `json:"id"`
 }

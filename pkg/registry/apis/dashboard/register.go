@@ -39,7 +39,8 @@ type DashboardsAPIBuilder struct {
 	access                  access.DashboardAccess
 	dashStore               dashboards.Store
 
-	log log.Logger
+	features featuremgmt.FeatureToggles
+	log      log.Logger
 }
 
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
@@ -57,13 +58,14 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 
 	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &DashboardsAPIBuilder{
+		access:                  access.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
+		accessControl:           accessControl,
 		dashboardService:        dashboardService,
 		dashboardVersionService: dashboardVersionService,
 		dashStore:               dashStore,
-		accessControl:           accessControl,
-		namespacer:              namespacer,
-		access:                  access.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
+		features:                features,
 		log:                     log.New("grafana-apiserver.dashboards"),
+		namespacer:              namespacer,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -134,13 +136,18 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		builder: b,
 	}
 
+	mode := grafanarest.Mode1
+	if b.features.IsEnabledGlobally(featuremgmt.FlagDualWriteDashboardsMode2) {
+		mode = grafanarest.Mode2
+	}
+
 	// Dual writes if a RESTOptionsGetter is provided
 	if dualWrite && optsGetter != nil {
 		options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
 		if err := store.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, store)
+		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(mode, legacyStore, store)
 	}
 
 	// Summary

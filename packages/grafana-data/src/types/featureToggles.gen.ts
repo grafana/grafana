@@ -48,6 +48,7 @@ export interface FeatureToggles {
   unifiedStorage?: boolean;
   dualWritePlaylistsMode2?: boolean;
   dualWritePlaylistsMode3?: boolean;
+  dualWriteDashboardsMode2?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;

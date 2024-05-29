@@ -66,19 +66,21 @@ func (s *dashboardStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
+	// Why do we modify p in Save Dashboard?
 	p, ok := obj.(*v0alpha1.Dashboard)
 	if !ok {
 		return nil, fmt.Errorf("expected dashboard?")
 	}
 
 	// HACK to simplify unique name testing from kubectl
-	t := p.Spec.GetNestedString("title")
+	t := p.Spec.Title
 	if strings.Contains(t, "${NOW}") {
 		t = strings.ReplaceAll(t, "${NOW}", fmt.Sprintf("%d", time.Now().Unix()))
-		p.Spec.Set("title", t)
+		p.Spec.Title = t
 	}
 
 	dash, _, err := s.access.SaveDashboard(ctx, info.OrgID, p)
+	// Given we return dash here?
 	return dash, err
 }
 
