@@ -53,13 +53,17 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
-    let scopes = values.scopes ?? [];
-    scopes = Array.isArray(scopes) ? scopes : [scopes];
+    let scopesNames = values.scopes ?? [];
+    scopesNames = Array.isArray(scopesNames) ? scopesNames : [scopesNames];
 
-    const scopesPromises = scopes.map((scopeName) => this.server.get(scopeName));
+    const scopesPromises = scopesNames.map((scopeName) => this.server.get(scopeName));
 
     Promise.all(scopesPromises).then((scopes) => {
-      this.setState({ scopes });
+      this.setState({
+        scopes: scopesNames.map((scopeName, scopeNameIdx) =>
+          this.mergeScopeNameWithScopes(scopeName, scopes[scopeNameIdx] ?? {})
+        ),
+      });
     });
   }
 
@@ -134,20 +138,36 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public async toggleScope(linkId: string) {
-    let scopes = this.state.scopes;
+    let scopes = [...this.state.scopes];
     const selectedIdx = scopes.findIndex((scope) => scope.metadata.name === linkId);
 
     if (selectedIdx === -1) {
-      const scope = await this.server.get(linkId);
+      const receivedScope = await this.server.get(linkId);
 
-      if (scope) {
-        scopes = [...scopes, scope];
-      }
+      scopes.push(this.mergeScopeNameWithScopes(linkId, receivedScope ?? {}));
     } else {
       scopes.splice(selectedIdx, 1);
     }
 
     this.setState({ scopes });
+  }
+
+  private mergeScopeNameWithScopes(scopeName: string, scope: Partial<Scope>): Scope {
+    return {
+      ...scope,
+      metadata: {
+        name: scopeName,
+        ...scope.metadata,
+      },
+      spec: {
+        filters: [],
+        title: scopeName,
+        type: '',
+        category: '',
+        description: '',
+        ...scope.spec,
+      },
+    };
   }
 }
 
