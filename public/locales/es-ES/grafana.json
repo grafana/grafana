@@ -25,6 +25,14 @@
       "user": "Usuario"
     }
   },
+  "annotations": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
+    }
+  },
   "api-keys": {
     "empty-state": {
       "message": ""
@@ -71,6 +79,12 @@
       "select-all-header-checkbox": "Seleccionar todo",
       "select-checkbox": "Seleccionar",
       "tags-column": "Etiquetas"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": "",
+      "title-folder": ""
     },
     "folder-actions-button": {
       "delete": "Eliminar",
@@ -158,6 +172,11 @@
       "label-required": "Este campo es obligatorio.",
       "sub-text": "<0>Defina el texto que describirá la correlación.</0>",
       "title": "Definir la etiqueta de correlación (paso 1 de 3)"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
     },
     "list": {
       "delete": "eliminar correlación",
@@ -355,11 +374,18 @@
       "validation-required": "Se necesita un modelo JSON del tablero"
     }
   },
+  "dashboard-links": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "title": ""
+    }
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Anotaciones"
     },
-    "dashboard-delete-button": "Eliminar tablero",
+    "dashboard-delete-button": "",
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "Actualización automática",
@@ -405,6 +431,13 @@
       "title": "Versiones"
     }
   },
+  "data-source-list": {
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
+    }
+  },
   "data-source-picker": {
     "add-new-data-source": "Configurar una nueva fuente de datos",
     "built-in-list": {
@@ -439,12 +472,14 @@
       "newest-first": "El más reciente primero",
       "oldest-first": "El más antiguo primero",
       "query-history": "Historial de consultas",
+      "query-library": "",
       "settings": "Configuración",
       "starred": "Destacado"
     },
     "rich-history-card": {
       "add-comment-form": "Añadir formulario de comentarios",
       "add-comment-tooltip": "Añadir comentario",
+      "add-to-library": "",
       "cancel": "Cancelar",
       "confirm-delete": "Eliminar",
       "copy-query-tooltip": "Copiar consulta al portapapeles",
@@ -457,15 +492,12 @@
       "delete-query-tooltip": "Eliminar consulta",
       "delete-starred-query-confirmation-text": "¿Seguro que desea eliminar permanentemente su consulta destacada?",
       "edit-comment-tooltip": "Editar comentario",
-      "left-pane": "",
       "optional-description": "Una descripción opcional de lo que hace la consulta.",
       "query-comment-label": "Comentario de la consulta",
+      "query-template-added": "",
       "query-text-label": "Texto de la consulta",
-      "right-pane": "",
-      "run-query-button": "Ejecutar consulta",
       "save-comment": "Guardar comentario",
       "star-query-tooltip": "Consulta destacada",
-      "switch-datasource-button": "Cambiar la fuente de datos y ejecutar la consulta",
       "unstar-query-tooltip": "Desmarcar consulta",
       "update-comment-form": "Actualizar el formulario de comentarios"
     },
@@ -534,6 +566,12 @@
       "saving-failed": "Error al guardar el historial enriquecido",
       "update-failed": "Error al actualizar el extenso historial"
     },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
+    },
     "secondary-actions": {
       "query-add-button": "Añadir consulta",
       "query-add-button-aria-label": "Añadir consulta",
@@ -584,6 +622,9 @@
     "select": {
       "no-options-label": "No se ha encontrado ninguna opción",
       "placeholder": "Elegir"
+    },
+    "spinner": {
+      "aria-label": ""
     }
   },
   "graph": {
@@ -657,6 +698,10 @@
     },
     "add-widget": {
       "title": "Añadir panel de la biblioteca de paneles"
+    },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
     }
   },
   "library-panels": {
@@ -689,10 +734,12 @@
     "forgot-password": "¿Has olvidado tu contraseña?",
     "form": {
       "password-label": "Contraseña",
+      "password-placeholder": "",
       "password-required": "La contraseña es obligatoria",
       "submit-label": "Iniciar sesión",
       "submit-loading-label": "Iniciando sesión...",
       "username-label": "Correo o nombre de usuario",
+      "username-placeholder": "",
       "username-required": "El correo o el nombre de usuario es obligatorio"
     },
     "services": {
@@ -847,7 +894,8 @@
       "title": "Alertas"
     },
     "alerting-admin": {
-      "title": "Administrador"
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Determinar cómo se enrutan las alertas a los puntos de contacto",
@@ -1131,6 +1179,10 @@
       "subtitle": "Optimiza el rendimiento con información de seguimiento k6 y sintética",
       "title": "Pruebas y síntesis"
     },
+    "trash": {
+      "subtitle": "",
+      "title": ""
+    },
     "upgrading": {
       "title": "Estadísticas y licencia"
     },
@@ -1163,6 +1215,10 @@
     "title": "Últimas entradas del blog"
   },
   "notifications": {
+    "empty-state": {
+      "description": "",
+      "title": ""
+    },
     "starred-dashboard": "Panel de control destacado",
     "unstarred-dashboard": "Panel de control no destacado"
   },
@@ -1226,9 +1282,8 @@
       "confirm-text": "Eliminar"
     },
     "empty": {
-      "button": "Crear lista de reproducción",
-      "pro-tip": "Puede usar las listas de reproducción para crear ciclos de tableros en televisiones sin control de usuario",
-      "pro-tip-link-title": "Más información",
+      "button": "",
+      "pro-tip": "",
       "title": "Aún no se ha creado ninguna lista de reproducción"
     }
   },
@@ -1342,6 +1397,10 @@
       "orphaned-title": "<0>Tablero público huérfano</0>",
       "orphaned-tooltip": "El tablero vinculado ya se ha eliminado"
     },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "toggle": {
       "pause-sharing-toggle-text": "Pausar el uso compartido"
     }
@@ -1446,7 +1505,10 @@
   },
   "service-accounts": {
     "empty-state": {
-      "message": ""
+      "button-title": "",
+      "message": "",
+      "more-info": "",
+      "title": ""
     }
   },
   "share-modal": {
@@ -1566,7 +1628,17 @@
     },
     "title": "Preferencias"
   },
+  "silences": {
+    "empty-state": {
+      "button-title": "",
+      "title": ""
+    }
+  },
   "snapshot": {
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "external-badge": "Externo",
     "name-column-header": "Nombre",
     "url-column-header": "URL de la instantánea",
@@ -1579,7 +1651,10 @@
   },
   "teams": {
     "empty-state": {
-      "message": ""
+      "button-title": "",
+      "message": "",
+      "pro-tip": "",
+      "title": ""
     }
   },
   "time-picker": {
@@ -1700,6 +1775,14 @@
     },
     "textbox": {
       "placeholder": "Introducir el valor de la variable"
+    }
+  },
+  "variables": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
     }
   }
 }

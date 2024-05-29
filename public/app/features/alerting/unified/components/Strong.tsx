@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
-import { useTheme2 } from '@grafana/ui';
+import { Text } from '@grafana/ui';
 
-interface Props {}
+interface Props {
+  children: NonNullable<ReactNode>;
+}
 
-const Strong = ({ children }: React.PropsWithChildren<Props>) => {
-  const theme = useTheme2();
-  return <strong style={{ color: theme.colors.text.primary }}>{children}</strong>;
+const Strong = ({ children }: Props) => {
+  return <Text weight="bold">{children}</Text>;
 };
 
 export { Strong };

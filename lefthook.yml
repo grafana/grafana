@@ -23,11 +23,6 @@ pre-commit:
         yarn prettier --write {staged_files}
       stage_fixed: true
 
-    internationalization:
-      glob: 'public/locales/en-US/grafana.json'
-      run: yarn i18n:pseudo
-      stage_fixed: true
-
     other-format:
       glob: '*.{json,scss,md,mdx}'
       run: yarn prettier --write {staged_files}

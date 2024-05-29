@@ -19,7 +19,6 @@ import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
-import { DeleteDashboardButton } from 'app/features/dashboard/components/DeleteDashboard/DeleteDashboardButton';
 import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
 
@@ -29,6 +28,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { DeleteDashboardButton } from './DeleteDashboardButton';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export interface GeneralSettingsEditViewState extends DashboardEditViewState {}
@@ -161,9 +161,12 @@ export class GeneralSettingsEditView
     this.getCursorSync()?.setState({ sync: value });
   };
 
+  public onDeleteDashboard = () => {};
+
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
-    const { navModel, pageNav } = useDashboardEditPageNav(model.getDashboard(), model.getUrlKey());
-    const { title, description, tags, meta, editable } = model.getDashboard().useState();
+    const dashboard = model.getDashboard();
+    const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
+    const { title, description, tags, meta, editable } = dashboard.useState();
     const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
     const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
     const { intervals } = model.getRefreshPicker().useState();
@@ -172,7 +175,7 @@ export class GeneralSettingsEditView
 
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
-        <NavToolbarActions dashboard={model.getDashboard()} />
+        <NavToolbarActions dashboard={dashboard} />
         <div style={{ maxWidth: '600px' }}>
           <Box marginBottom={5}>
             <Field
@@ -270,7 +273,7 @@ export class GeneralSettingsEditView
             </Field>
           </CollapsableSection>
 
-          <Box marginTop={3}>{meta.canDelete && <DeleteDashboardButton />}</Box>
+          <Box marginTop={3}>{meta.canDelete && <DeleteDashboardButton dashboard={dashboard} />}</Box>
         </div>
       </Page>
     );

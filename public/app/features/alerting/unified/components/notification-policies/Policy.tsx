@@ -861,7 +861,10 @@ const routePropertyToLabel = (key: keyof InheritableProperties | string): string
   }
 };
 
-const routePropertyToValue = (key: keyof InheritableProperties | string, value: string | string[]): React.ReactNode => {
+const routePropertyToValue = (
+  key: keyof InheritableProperties | string,
+  value: string | string[]
+): NonNullable<ReactNode> => {
   const isNotGrouping = key === 'group_by' && Array.isArray(value) && value[0] === '...';
   const isSingleGroup = key === 'group_by' && Array.isArray(value) && value.length === 0;
 

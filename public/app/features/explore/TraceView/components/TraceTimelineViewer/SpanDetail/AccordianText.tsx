@@ -58,17 +58,17 @@ function DefaultTextComponent({ data }: { data: string[] }) {
   return <TextList data={data} />;
 }
 
-export default function AccordianText(props: AccordianTextProps) {
-  const {
-    className,
-    data,
-    headerClassName,
-    interactive,
-    isOpen,
-    label,
-    onToggle,
-    TextComponent = DefaultTextComponent,
-  } = props;
+export default function AccordianText({
+  className = null,
+  data,
+  headerClassName,
+  highContrast = false,
+  interactive = true,
+  isOpen,
+  label,
+  onToggle = null,
+  TextComponent = DefaultTextComponent,
+}: AccordianTextProps) {
   const isEmpty = !Array.isArray(data) || !data.length;
   const accordianKeyValuesStyles = useStyles2(getAccordianKeyValuesStyles);
   const iconCls = cx(alignIcon, { [accordianKeyValuesStyles.emptyIcon]: isEmpty });
@@ -97,10 +97,3 @@ export default function AccordianText(props: AccordianTextProps) {
     </div>
   );
 }
-
-AccordianText.defaultProps = {
-  className: null,
-  highContrast: false,
-  interactive: true,
-  onToggle: null,
-};

@@ -1,11 +1,5 @@
-import {
-  PanelMenuItem,
-  PluginExtensionPoints,
-  getTimeZone,
-  urlUtil,
-  type PluginExtensionPanelContext,
-} from '@grafana/data';
-import { AngularComponent, getPluginLinkExtensions, locationService } from '@grafana/runtime';
+import { PanelMenuItem, urlUtil, PluginExtensionLink } from '@grafana/data';
+import { AngularComponent, locationService } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -31,7 +25,6 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
-import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { dispatch, store } from 'app/store/store';
 
@@ -42,6 +35,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
+  extensions: PluginExtensionLink[],
   angularComponent?: AngularComponent | null
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent) => {
@@ -167,10 +161,6 @@ export function getPanelMenu(
       onClick: onNavigateToExplore,
       shortcut: 'p x',
     });
-  }
-
-  if (config.featureToggles.exploreMetrics) {
-    addDataTrailPanelAction(dashboard, panel, menu);
   }
 
   const inspectMenu: PanelMenuItem[] = [];
@@ -332,12 +322,6 @@ export function getPanelMenu(
     });
   }
 
-  const { extensions } = getPluginLinkExtensions({
-    extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
-    context: createExtensionContext(panel, dashboard),
-    limitPerPlugin: 3,
-  });
-
   if (extensions.length > 0 && !panel.isEditing) {
     menu.push({
       text: 'Extensions',
@@ -369,24 +353,4 @@ export function getPanelMenu(
   }
 
   return menu;
-}
-
-function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): PluginExtensionPanelContext {
-  return {
-    id: panel.id,
-    pluginId: panel.type,
-    title: panel.title,
-    timeRange: dashboard.time,
-    timeZone: getTimeZone({
-      timeZone: dashboard.timezone,
-    }),
-    dashboard: {
-      uid: dashboard.uid,
-      title: dashboard.title,
-      tags: Array.from<string>(dashboard.tags),
-    },
-    targets: panel.targets,
-    scopedVars: panel.scopedVars,
-    data: panel.getQueryRunner().getLastResult(),
-  };
 }

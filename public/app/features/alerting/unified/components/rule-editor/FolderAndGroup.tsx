@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm, useFormContext, Controller } from 'react-hook-form';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { AsyncSelect, Box, Button, Field, Input, Label, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -180,6 +181,7 @@ export function FolderAndGroup({
                     fill="outline"
                     variant="secondary"
                     disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+                    data-testid={selectors.components.AlertRules.newFolderButton}
                   >
                     New folder
                   </Button>
@@ -258,6 +260,7 @@ export function FolderAndGroup({
             fill="outline"
             variant="secondary"
             disabled={!folder}
+            data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
           >
             New evaluation group
           </Button>
@@ -309,6 +312,7 @@ function FolderCreationModal({
           invalid={error}
         >
           <Input
+            data-testid={selectors.components.AlertRules.newFolderNameField}
             autoFocus={true}
             id="folderName"
             placeholder="Enter a name"
@@ -322,7 +326,11 @@ function FolderCreationModal({
           <Button variant="secondary" type="button" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={!title || error}>
+          <Button
+            type="submit"
+            disabled={!title || error}
+            data-testid={selectors.components.AlertRules.newFolderNameCreateButton}
+          >
             Create
           </Button>
         </Modal.ButtonRow>
@@ -388,6 +396,7 @@ function EvaluationGroupCreationModal({
             invalid={Boolean(formState.errors.group)}
           >
             <Input
+              data-testid={selectors.components.AlertRules.newEvaluationGroupName}
               className={styles.formInput}
               autoFocus={true}
               id={'group'}
@@ -407,6 +416,7 @@ function EvaluationGroupCreationModal({
           >
             <Stack direction="column">
               <Input
+                data-testid={selectors.components.AlertRules.newEvaluationGroupInterval}
                 className={styles.formInput}
                 id={evaluateEveryId}
                 placeholder={DEFAULT_GROUP_EVALUATION_INTERVAL}
@@ -421,7 +431,11 @@ function EvaluationGroupCreationModal({
             <Button variant="secondary" type="button" onClick={onCancel}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!formState.isValid}>
+            <Button
+              type="submit"
+              disabled={!formState.isValid}
+              data-testid={selectors.components.AlertRules.newEvaluationGroupCreate}
+            >
               Create
             </Button>
           </Modal.ButtonRow>
@@ -432,21 +446,21 @@ function EvaluationGroupCreationModal({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    display: flex;
-    flex-direction: column;
-    align-items: baseline;
-    max-width: ${theme.breakpoints.values.lg}px;
-    justify-content: space-between;
-  `,
-  formInput: css`
-    flex-grow: 1;
-  `,
-  modal: css`
-    width: ${theme.breakpoints.values.sm}px;
-  `,
-  modalTitle: css`
-    color: ${theme.colors.text.secondary};
-    margin-bottom: ${theme.spacing(2)};
-  `,
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'baseline',
+    maxWidth: `${theme.breakpoints.values.lg}px`,
+    justifyContent: 'space-between',
+  }),
+  formInput: css({
+    flexGrow: 1,
+  }),
+  modal: css({
+    width: `${theme.breakpoints.values.sm}px`,
+  }),
+  modalTitle: css({
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing(2),
+  }),
 });

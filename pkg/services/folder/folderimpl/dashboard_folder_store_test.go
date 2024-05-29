@@ -28,7 +28,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBwithCfg(t)
+		sqlStore, cfg = db.InitTestDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		var err error
 		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore), quotaService)
@@ -40,7 +40,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 		title := "Very Unique Name"
 		var sqlStore db.DB
 		var folder1, folder2 *dashboards.Dashboard
-		sqlStore = db.InitTestDB(t)
+		sqlStore, cfg = db.InitTestDBWithCfg(t)
 		folderStore := ProvideDashboardFolderStore(sqlStore)
 		folder2 = insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
 		_ = insertTestDashboard(t, dashboardStore, title, orgId, folder2.ID, folder2.UID, "prod")

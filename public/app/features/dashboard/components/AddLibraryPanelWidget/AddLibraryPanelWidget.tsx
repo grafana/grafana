@@ -90,7 +90,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       paddingLeft: `${theme.spacing(1)}`,
-      transition: 'background-color 0.1s ease-in-out',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'background-color 0.1s ease-in-out',
+      },
       cursor: 'move',
 
       '&:hover': {
@@ -102,7 +104,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       outline: '2px dotted transparent',
       outlineOffset: '2px',
       boxShadow: '0 0 0 2px black, 0 0 0px 4px #1f60c4',
-      animation: `${pulsate} 2s ease infinite`,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${pulsate} 2s ease infinite`,
+      },
     }),
   };
 };

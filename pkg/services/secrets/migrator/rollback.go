@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 )
 
 func (s simpleSecret) Rollback(
@@ -290,6 +292,74 @@ func (s alertingSecret) Rollback(
 		logger.Warn("Alerting configuration secrets have been rolled back with errors")
 	} else {
 		logger.Info("Alerting configuration secrets have been rolled back successfully")
+	}
+
+	return anyFailure
+}
+
+func (s ssoSettingsSecret) Rollback(
+	ctx context.Context,
+	secretsSrv *manager.SecretsService,
+	encryptionSrv encryption.Internal,
+	sqlStore db.DB,
+	secretKey string,
+) (anyFailure bool) {
+	results := make([]*models.SSOSettings, 0)
+
+	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Find(&results)
+	})
+
+	if err != nil {
+		logger.Warn("Failed to fetch SSO settings to roll back")
+		return true
+	}
+
+	for _, result := range results {
+		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+			for field, value := range result.Settings {
+				if ssosettingsimpl.IsSecretField(field) {
+					decrypted, err := s.decryptValue(ctx, value, secretsSrv)
+					if err != nil {
+						logger.Warn("Could not decrypt SSO settings secret", "id", result.ID, "field", field, "error", err)
+						return err
+					}
+
+					if decrypted == nil {
+						continue
+					}
+
+					reencrypted, err := encryptionSrv.Encrypt(ctx, decrypted, secretKey)
+					if err != nil {
+						logger.Warn("Could not re-encrypt SSO settings secret", "id", result.ID, "field", field, "error", err)
+						return err
+					}
+
+					result.Settings[field] = base64.RawStdEncoding.EncodeToString(reencrypted)
+				}
+			}
+
+			err = sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+				_, err := sess.Where("id = ?", result.ID).Update(result)
+				return err
+			})
+			if err != nil {
+				logger.Warn("Could not update SSO settings secrets while re-encrypting it", "id", result.ID, "error", err)
+				return err
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			anyFailure = true
+		}
+	}
+
+	if anyFailure {
+		logger.Warn("SSO settings secrets have been rolled back with errors")
+	} else {
+		logger.Info("SSO settings secrets have been rolled back successfully")
 	}
 
 	return anyFailure

@@ -122,7 +122,7 @@ export function getQueryFilter(datasource?: DataSourceApi) {
       }
       // Due to legacy URLs, `datasource` in queries may be a string. This logic should probably be in the migration
       if (typeof q.datasource === 'string') {
-        return q.datasource === datasource?.uid;
+        return q.datasource === datasource?.uid || q.datasource === datasource?.name;
       }
 
       return q.datasource.uid === datasource?.uid;

@@ -130,6 +130,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
           // Workspace was removed in Grafana 8, but remains for backwards compat
           workspace,
           dashboardTime: item.dashboardTime,
+          basicLogsQuery: item.basicLogsQuery,
           timeColumn: this.templateSrv.replace(item.timeColumn, scopedVars),
         },
       };
@@ -251,5 +252,18 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
   async getAzureLogAnalyticsCheatsheetQueries() {
     return await this.getResource(`${this.resourcePath}/v1/metadata`);
+  }
+
+  async getBasicLogsQueryUsage(query: AzureMonitorQuery, table: string): Promise<number> {
+    const templateSrv = getTemplateSrv();
+
+    const data = {
+      table: table,
+      resource: templateSrv.replace(query.azureLogAnalytics?.resources?.[0]),
+      queryType: query.queryType,
+      from: templateSrv.replace('$__from'),
+      to: templateSrv.replace('$__to'),
+    };
+    return await this.postResource(`${this.resourcePath}/usage/basiclogs`, data);
   }
 }

@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -112,18 +110,17 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 		return nil
 	}
 
-	namespace, id := identity.GetNamespacedID()
-	if !authidentity.IsNamespace(namespace, authn.NamespaceUser, authn.NamespaceServiceAccount) {
+	if !identity.ID.IsNamespace(authn.NamespaceUser, authn.NamespaceServiceAccount) {
 		return nil
 	}
 
-	userID, err := strconv.ParseInt(id, 10, 64)
+	userID, err := identity.ID.ParseInt()
 	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", identity.ID, "err", err)
 		return nil
 	}
 
-	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+	usr, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
 		UserID: userID,
 		OrgID:  r.OrgID,
 	})
@@ -151,14 +148,13 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 		return nil
 	}
 
-	namespace, id := identity.GetNamespacedID()
-	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
+	if !identity.ID.IsNamespace(authn.NamespaceUser, authn.NamespaceServiceAccount) {
 		return nil
 	}
 
-	userID, err := authidentity.IntIdentifier(namespace, id)
+	userID, err := identity.ID.ParseInt()
 	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", identity.ID, "err", err)
 		return nil
 	}
 
@@ -184,14 +180,13 @@ func (s *UserSync) EnableUserHook(ctx context.Context, identity *authn.Identity,
 		return nil
 	}
 
-	namespace, id := identity.GetNamespacedID()
-	if namespace != authn.NamespaceUser {
+	if !identity.ID.IsNamespace(authn.NamespaceUser) {
 		return nil
 	}
 
-	userID, err := authidentity.IntIdentifier(namespace, id)
+	userID, err := identity.ID.ParseInt()
 	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", identity.ID, "err", err)
 		return nil
 	}
 
@@ -369,7 +364,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 	var err error
 
 	// If not found, try to find the user by email address
-	if usr == nil && params.Email != nil && *params.Email != "" {
+	if params.Email != nil && *params.Email != "" {
 		usr, err = s.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: *params.Email})
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
@@ -394,7 +389,8 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
 func syncUserToIdentity(usr *user.User, id *authn.Identity) {
-	id.ID = authn.NamespacedID(authn.NamespaceUser, usr.ID)
+	id.ID = authn.NewNamespaceID(authn.NamespaceUser, usr.ID)
+	id.UID = authn.NewNamespaceIDString(authn.NamespaceUser, usr.UID)
 	id.Login = usr.Login
 	id.Email = usr.Email
 	id.Name = usr.Name
@@ -404,6 +400,14 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 
 // syncSignedInUserToIdentity syncs a user to an identity.
 func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity) {
+	var ns authn.Namespace
+	if identity.ID.IsNamespace(authn.NamespaceServiceAccount) {
+		ns = authn.NamespaceServiceAccount
+	} else {
+		ns = authn.NamespaceUser
+	}
+	identity.UID = authn.NewNamespaceIDString(ns, usr.UserUID)
+
 	identity.Name = usr.Name
 	identity.Login = usr.Login
 	identity.Email = usr.Email

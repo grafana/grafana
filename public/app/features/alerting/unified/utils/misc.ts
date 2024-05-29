@@ -1,11 +1,12 @@
 import { sortBy } from 'lodash';
 
-import { UrlQueryMap, Labels } from '@grafana/data';
+import { Labels, UrlQueryMap } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { config, isFetchError } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
+import { contextSrv } from 'app/core/services/context_srv';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
-import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
+import { alertInstanceKey, isGrafanaRulerRule } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
 import {
@@ -20,13 +21,13 @@ import { getMatcherQueryParams } from './matchers';
 import * as ruleId from './rule-id';
 import { createAbsoluteUrl, createUrl } from './url';
 
-export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo: string): string {
+export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo?: string): string {
   const sourceName = getRulesSourceName(ruleSource);
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
   const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
   const paramSource = encodeURIComponent(sourceName);
 
-  return createUrl(`/alerting/${paramSource}/${paramId}/view`, { returnTo });
+  return createUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
 }
 
 export function createExploreLink(datasource: DataSourceRef, query: string) {
@@ -54,14 +55,16 @@ export function createMuteTimingLink(muteTimingName: string, alertManagerSourceN
   });
 }
 
-export function createShareLink(ruleSource: RulesSource, rule: CombinedRule): string {
+export function createShareLink(ruleSource: RulesSource, rule: CombinedRule): string | undefined {
   if (isCloudRulesSource(ruleSource)) {
     return createAbsoluteUrl(
       `/alerting/${encodeURIComponent(ruleSource.name)}/${encodeURIComponent(escapePathSeparators(rule.name))}/find`
     );
+  } else if (isGrafanaRulerRule(rule.rulerRule)) {
+    return createAbsoluteUrl(`/alerting/grafana/${rule.rulerRule.grafana_alert.uid}/view`);
   }
 
-  return window.location.href.split('?')[0];
+  return;
 }
 
 export function arrayToRecord(items: Array<{ key: string; value: string }>): Record<string, string> {
@@ -113,16 +116,6 @@ export const escapeQuotes = (input: string) => input.replace(/\"/g, '\\"');
 export function wrapWithQuotes(input: string) {
   const alreadyWrapped = input.startsWith('"') && input.endsWith('"');
   return alreadyWrapped ? escapeQuotes(input) : `"${escapeQuotes(input)}"`;
-}
-
-export function makeRuleBasedSilenceLink(alertManagerSourceName: string, rule: CombinedRule) {
-  // we wrap the name of the alert with quotes since it might contain starting and trailing spaces
-  const labels: Labels = {
-    alertname: rule.name,
-    ...rule.labels,
-  };
-
-  return makeLabelBasedSilenceLink(alertManagerSourceName, labels);
 }
 
 export function makeLabelBasedSilenceLink(alertManagerSourceName: string, labels: Labels) {
@@ -220,6 +213,10 @@ export function isOpenSourceEdition() {
   return buildInfo.edition === GrafanaEdition.OpenSource;
 }
 
+export function isAdmin() {
+  return contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+}
+
 export function isLocalDevEnv() {
   const buildInfo = config.buildInfo;
   return buildInfo.env === 'development';
@@ -232,7 +229,17 @@ export function isErrorLike(error: unknown): error is Error {
 export function stringifyErrorLike(error: unknown): string {
   const fetchError = isFetchError(error);
   if (fetchError) {
-    return error.data.message;
+    if (error.message) {
+      return error.message;
+    }
+    if ('message' in error.data && typeof error.data.message === 'string') {
+      return error.data.message;
+    }
+    if (error.statusText) {
+      return error.statusText;
+    }
+
+    return String(error.status) || 'Unknown error';
   }
 
   return isErrorLike(error) ? error.message : String(error);

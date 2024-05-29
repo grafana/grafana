@@ -152,7 +152,11 @@ export function VariableEditorForm({
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
               onClick={onRunQuery}
             >
-              {runQueryState.loading ? <LoadingPlaceholder text="Running query..." /> : `Run query`}
+              {runQueryState.loading ? (
+                <LoadingPlaceholder className={styles.loadingPlaceHolder} text="Running query..." />
+              ) : (
+                `Run query`
+              )}
             </Button>
           )}
         </Stack>
@@ -164,5 +168,8 @@ export function VariableEditorForm({
 const getStyles = (theme: GrafanaTheme2) => ({
   buttonContainer: css({
     marginTop: theme.spacing(2),
+  }),
+  loadingPlaceHolder: css({
+    marginBottom: 0,
   }),
 });

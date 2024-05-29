@@ -1,5 +1,6 @@
 import { Preview } from '@storybook/react';
 import 'jquery';
+import { getTimeZone, getTimeZones } from '@grafana/data';
 
 import '../../../public/vendor/flot/jquery.flot.js';
 import '../../../public/vendor/flot/jquery.flot.selection';
@@ -12,13 +13,14 @@ import '../../../public/vendor/flot/jquery.flot.dashes';
 import '../../../public/vendor/flot/jquery.flot.gauge';
 
 import { withTheme } from '../src/utils/storybook/withTheme';
+import { withTimeZone } from '../src/utils/storybook/withTimeZone';
 import { ThemedDocsContainer } from '../src/utils/storybook/ThemedDocsContainer';
 
 // @ts-ignore
 import lightTheme from './grafana.light.scss';
 // @ts-ignore
 import darkTheme from './grafana.dark.scss';
-import { GrafanaLight, GrafanaDark } from './storybookTheme';
+import { GrafanaDark, GrafanaLight } from './storybookTheme';
 
 const handleThemeChange = (theme: any) => {
   if (theme !== 'light') {
@@ -31,7 +33,7 @@ const handleThemeChange = (theme: any) => {
 };
 
 const preview: Preview = {
-  decorators: [withTheme(handleThemeChange)],
+  decorators: [withTheme(handleThemeChange), withTimeZone()],
   parameters: {
     actions: { argTypesRegex: '^on[A-Z].*' },
     darkMode: {
@@ -63,6 +65,21 @@ const preview: Preview = {
           return 1;
         }
         return a.id === b.id ? 0 : a.id.localeCompare(b.id, undefined, { numeric: true });
+      },
+    },
+  },
+  globalTypes: {
+    timeZone: {
+      description: 'Set the timezone for the storybook preview',
+      defaultValue: getTimeZone(),
+      toolbar: {
+        icon: 'globe',
+        items: getTimeZones(true)
+          .filter((timezone) => !!timezone)
+          .map((timezone) => ({
+            title: timezone,
+            value: timezone,
+          })),
       },
     },
   },

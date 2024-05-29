@@ -275,8 +275,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		})
 
 		// access control permissions store
-		asService := resourcepermissions.NewActionSetService()
-		permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures(), &asService)
+		permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(),
 			accesscontrol.GlobalOrgID,
 			accesscontrol.User{ID: testUserId},

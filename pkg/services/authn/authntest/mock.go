@@ -50,7 +50,7 @@ func (*MockService) Logout(_ context.Context, _ identity.Requester, _ *usertoken
 	panic("unimplemented")
 }
 
-func (m *MockService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*authn.Identity, error) {
+func (m *MockService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
 	panic("unimplemented")
 }
 

@@ -138,9 +138,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1),
       width: '100%',
       overflow: 'hidden',
-      transition: theme.transitions.create(['background'], {
-        duration: theme.transitions.duration.short,
-      }),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
 
       '&:hover': {
         background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
