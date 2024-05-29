@@ -8,18 +8,20 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type instrumentationService struct {
 	*services.BasicService
+	cfg      *setting.Cfg
 	httpServ *http.Server
 	log      log.Logger
 	errChan  chan error
 }
 
-func NewInstrumentationService(log log.Logger) (*instrumentationService, error) {
-	s := &instrumentationService{log: log}
+func NewInstrumentationService(log log.Logger, cfg *setting.Cfg) (*instrumentationService, error) {
+	s := &instrumentationService{log: log, cfg: cfg}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
 }
@@ -59,7 +61,7 @@ func (s *instrumentationService) newInstrumentationServer(ctx context.Context) *
 	srv := &http.Server{
 		// 5s timeout for header reads to avoid Slowloris attacks (https://thetooth.io/blog/slowloris-attack/)
 		ReadHeaderTimeout: 5 * time.Second,
-		Addr:              ":3000", // TODO - make configurable?
+		Addr:              ":" + s.cfg.HTTPPort,
 		Handler:           router,
 		BaseContext:       func(_ net.Listener) context.Context { return ctx },
 	}
