@@ -45,7 +45,10 @@ The example below instructs Grafana to write alert state history to a local Loki
 ```toml
 [unified_alerting.state_history]
 enabled = true
+
+; set Loki as the primary source for Alert State History
 backend = "loki"
+primary = "loki"
 loki_remote_url = "http://localhost:3100"
 
 [feature_toggles]
