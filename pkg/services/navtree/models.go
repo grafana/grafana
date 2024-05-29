@@ -19,6 +19,7 @@ const (
 	WeightAlertsAndIncidents
 	WeightTestingAndSynthetics
 	WeightMonitoring
+	WeightCloudServiceProviders
 	WeightInfrastructure
 	WeightApplication
 	WeightFrontend
