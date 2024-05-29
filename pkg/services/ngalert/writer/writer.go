@@ -8,5 +8,5 @@ import (
 )
 
 type Writer interface {
-	Write(ctx context.Context, name string, t time.Time, frames data.Frames) error
+	Write(ctx context.Context, name string, t time.Time, frames data.Frames, extraLabels map[string]string) error
 }

@@ -202,7 +202,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	}
 
 	writeStart := r.clock.Now()
-	err = r.writer.Write(ctx, ev.rule.Record.Metric, writeStart, frames)
+	err = r.writer.Write(ctx, ev.rule.Record.Metric, writeStart, frames, ev.rule.Labels)
 	writeDur := r.clock.Now().Sub(writeStart)
 
 	if err != nil {
@@ -248,7 +248,7 @@ func (r *recordingRule) frameRef(refID string, resp *backend.QueryDataResponse) 
 
 	for ref, resp := range resp.Responses {
 		if ref == refID {
-			return resp.DeepCopy().Frames, nil
+			return resp.Frames, nil
 		}
 	}
 
