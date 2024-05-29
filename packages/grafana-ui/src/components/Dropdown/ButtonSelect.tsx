@@ -100,6 +100,8 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
                   active={item.value === value?.value}
                   ariaChecked={item.value === value?.value}
                   ariaLabel={item.ariaLabel || item.label}
+                  disabled={item.isDisabled}
+                  component={item.component}
                   role="menuitemradio"
                 />
               ))}

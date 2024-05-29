@@ -2,12 +2,16 @@
 
 Notes on upgrading various backend dependencies.
 
-# Protobuf
+## Protobuf
 
 When upgrading the [protobuf](http://github.com/golang/protobuf) library in Grafana and the plugin SDK,
-you typically also want to upgrade your protobuf compiler toolchain and re-compile protobuf files:
+you typically also want to upgrade your protobuf compiler toolchain and re-compile protobuf files.
 
-```
+**Note:** You need Buf CLI installed and availabile in your path, see https://buf.build/docs/installation for instructions.
+
+Re-compile protobuf files in grafana and the plugin SDK:
+
+```shell
 cd $GRAFANA
 make protobuf
 cd $GRAFANA_PLUGIN_SDK_GO

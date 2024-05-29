@@ -80,6 +80,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
       height: options?.placement?.height ?? 100,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
     config: {
       type: ServerType.Single,
@@ -172,7 +173,9 @@ export const getServerStyles = (data: ServerData | undefined) => (theme: Grafana
     fill: data?.statusColor ?? 'transparent',
   }),
   circle: css({
-    animation: `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      animation: `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`,
+    },
     fill: data?.bulbColor,
     stroke: 'none',
   }),

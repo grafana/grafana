@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep } from 'lodash';
 import React from 'react';
@@ -124,7 +124,7 @@ describe('DashboardScenePage', () => {
     locationService.push('/');
     getDashboardScenePageStateManager().clearDashboardCache();
     loadDashboardMock.mockClear();
-    loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: {} });
+    loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: { slug: '123' } });
     // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
@@ -241,7 +241,7 @@ describe('DashboardScenePage', () => {
   });
 
   it('is in edit mode when coming from explore to an existing dashboard', async () => {
-    store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: simpleDashboard });
+    store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: simpleDashboard, meta: { slug: '123' } });
 
     setup();
 
@@ -252,6 +252,18 @@ describe('DashboardScenePage', () => {
     await userEvent.click(panelAMenu);
     const editMenuItem = await screen.findAllByText('Edit');
     expect(editMenuItem).toHaveLength(1);
+  });
+
+  describe('home page', () => {
+    it('should not show controls', async () => {
+      getDashboardScenePageStateManager().clearDashboardCache();
+      loadDashboardMock.mockClear();
+      loadDashboardMock.mockResolvedValue({ dashboard: { panels: [] }, meta: {} });
+
+      setup();
+
+      await waitFor(() => expect(screen.queryByText('Refresh')).not.toBeInTheDocument());
+    });
   });
 });
 

@@ -29,7 +29,7 @@ export function RuleDetailsExpression(props: Props): JSX.Element | null {
 }
 
 const getStyles = () => ({
-  exprRow: css`
-    margin-bottom: 46px;
-  `,
+  exprRow: css({
+    marginBottom: '46px',
+  }),
 });

@@ -111,10 +111,6 @@ const (
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
-	// FlagReturnToPrevious
-	// Enables the return to previous context functionality
-	FlagReturnToPrevious = "returnToPrevious"
-
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -122,6 +118,14 @@ const (
 	// FlagUnifiedStorage
 	// SQL-based k8s storage
 	FlagUnifiedStorage = "unifiedStorage"
+
+	// FlagDualWritePlaylistsMode2
+	// Enables dual writing of playlists to both legacy and k8s storage in mode 2
+	FlagDualWritePlaylistsMode2 = "dualWritePlaylistsMode2"
+
+	// FlagDualWritePlaylistsMode3
+	// Enables dual writing of playlists to both legacy and k8s storage in mode 3
+	FlagDualWritePlaylistsMode3 = "dualWritePlaylistsMode3"
 
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
@@ -259,10 +263,6 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
-	// FlagDashboardEmbed
-	// Allow embedding dashboard for external use in Code editors
-	FlagDashboardEmbed = "dashboardEmbed"
-
 	// FlagFrontendSandboxMonitorOnly
 	// Enables monitor only in the plugin frontend sandbox (if enabled)
 	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
@@ -278,10 +278,6 @@ const (
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
-
-	// FlagPluginsDynamicAngularDetectionPatterns
-	// Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones
-	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
 
 	// FlagVizAndWidgetSplit
 	// Split panels between visualizations and widgets
@@ -324,7 +320,7 @@ const (
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
 
 	// FlagFeatureToggleAdminPage
-	// Enable admin page for managing feature toggles from the Grafana front-end
+	// Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
 
 	// FlagAwsAsyncQueryCaching
@@ -342,10 +338,6 @@ const (
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
-
-	// FlagInfluxdbSqlSupport
-	// Enable InfluxDB SQL query language support with new querying UI
-	FlagInfluxdbSqlSupport = "influxdbSqlSupport"
 
 	// FlagAlertingNoDataErrorExecution
 	// Changes how Alerting state manager handles execution of NoData/Error
@@ -427,9 +419,21 @@ const (
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
-	// FlagKubernetesQueryServiceRewrite
+	// FlagDatasourceQueryTypes
+	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
+	FlagDatasourceQueryTypes = "datasourceQueryTypes"
+
+	// FlagQueryService
+	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
+	FlagQueryService = "queryService"
+
+	// FlagQueryServiceRewrite
 	// Rewrite requests targeting /ds/query to the query service
-	FlagKubernetesQueryServiceRewrite = "kubernetesQueryServiceRewrite"
+	FlagQueryServiceRewrite = "queryServiceRewrite"
+
+	// FlagQueryServiceFromUI
+	// Routes requests to the new query service
+	FlagQueryServiceFromUI = "queryServiceFromUI"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -563,10 +567,6 @@ const (
 	// Use the kubernetes API for feature toggle management in the frontend
 	FlagKubernetesFeatureToggles = "kubernetesFeatureToggles"
 
-	// FlagEnablePluginsTracingByDefault
-	// Enable plugin tracing for all external plugins
-	FlagEnablePluginsTracingByDefault = "enablePluginsTracingByDefault"
-
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
 	FlagCloudRBACRoles = "cloudRBACRoles"
@@ -611,6 +611,10 @@ const (
 	// New implementation for the dashboard-to-PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
 
+	// FlagTlsMemcached
+	// Use TLS-enabled memcached in the enterprise caching feature
+	FlagTlsMemcached = "tlsMemcached"
+
 	// FlagKubernetesAggregator
 	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
@@ -639,10 +643,6 @@ const (
 	// Use the new SSO Settings API to configure the SAML connector
 	FlagSsoSettingsSAML = "ssoSettingsSAML"
 
-	// FlagUsePrometheusFrontendPackage
-	// Use the @grafana/prometheus frontend package in core Prometheus.
-	FlagUsePrometheusFrontendPackage = "usePrometheusFrontendPackage"
-
 	// FlagOauthRequireSubClaim
 	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
@@ -654,4 +654,60 @@ const (
 	// FlagCloudWatchNewLabelParsing
 	// Updates CloudWatch label parsing to be more accurate
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
+
+	// FlagAccessActionSets
+	// Introduces action sets for resource permissions
+	FlagAccessActionSets = "accessActionSets"
+
+	// FlagDisableNumericMetricsSortingInExpressions
+	// In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
+	FlagDisableNumericMetricsSortingInExpressions = "disableNumericMetricsSortingInExpressions"
+
+	// FlagGrafanaManagedRecordingRules
+	// Enables Grafana-managed recording rules.
+	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
+
+	// FlagQueryLibrary
+	// Enables Query Library feature in Explore
+	FlagQueryLibrary = "queryLibrary"
+
+	// FlagAutofixDSUID
+	// Automatically migrates invalid datasource UIDs
+	FlagAutofixDSUID = "autofixDSUID"
+
+	// FlagLogsExploreTableDefaultVisualization
+	// Sets the logs table as default visualisation in logs explore
+	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
+
+	// FlagNewDashboardSharingComponent
+	// Enables the new sharing drawer design
+	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
+
+	// FlagAlertingListViewV2
+	// Enables the new alert list view design
+	FlagAlertingListViewV2 = "alertingListViewV2"
+
+	// FlagNotificationBanner
+	// Enables the notification banner UI and API
+	FlagNotificationBanner = "notificationBanner"
+
+	// FlagDashboardRestore
+	// Enables deleted dashboard restore feature
+	FlagDashboardRestore = "dashboardRestore"
+
+	// FlagDatasourceProxyDisableRBAC
+	// Disables applying a plugin route&#39;s ReqAction field to authorization
+	FlagDatasourceProxyDisableRBAC = "datasourceProxyDisableRBAC"
+
+	// FlagAlertingDisableSendAlertsExternal
+	// Disables the ability to send alerts to an external Alertmanager datasource.
+	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
+
+	// FlagPreserveDashboardStateWhenNavigating
+	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
+	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"
+
+	// FlagAlertingCentralAlertHistory
+	// Enables the new central alert history.
+	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
 )

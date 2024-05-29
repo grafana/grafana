@@ -22,6 +22,13 @@ jest.mock('react-router-dom', () => ({
   }),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginImportUtils: () => ({
+    getPanelPluginFromCache: jest.fn(),
+  }),
+}));
+
 // Needed when the panel is not part of an DashboardScene
 jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(new DashboardScene({}));
 

@@ -6,6 +6,8 @@ import React, { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, getTagColorsFromName, useStyles2 } from '@grafana/ui';
 
+import { isPrivateLabel } from '../utils/labels';
+
 import { Label, LabelSize } from './Label';
 
 interface Props {
@@ -20,7 +22,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
 
   const labelsToShow = chain(labels)
     .toPairs()
-    .reject(isPrivateKey)
+    .reject(isPrivateLabel)
     .reject(([key]) => (showCommonLabels ? false : key in commonLabels))
     .value();
 
@@ -63,14 +65,12 @@ function getLabelColor(input: string): string {
   return getTagColorsFromName(input).color;
 }
 
-const isPrivateKey = ([key, _]: [string, string]) => key.startsWith('__') && key.endsWith('__');
-
 const getStyles = (theme: GrafanaTheme2, size?: LabelSize) => ({
-  wrapper: css`
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+  wrapper: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
 
-    gap: ${size === 'md' ? theme.spacing() : theme.spacing(0.5)};
-  `,
+    gap: size === 'md' ? theme.spacing() : theme.spacing(0.5),
+  }),
 });

@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';

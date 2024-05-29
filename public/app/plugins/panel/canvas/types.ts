@@ -42,6 +42,8 @@ export interface ConnectionState {
   target: ElementState;
   info: CanvasConnection;
   vertices?: ConnectionCoordinates[];
+  sourceOriginal?: ConnectionCoordinates;
+  targetOriginal?: ConnectionCoordinates;
 }
 
 export enum LineStyle {

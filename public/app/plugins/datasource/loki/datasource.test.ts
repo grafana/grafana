@@ -205,7 +205,7 @@ describe('LokiDatasource', () => {
     it('should report query interaction', async () => {
       await runTest(80, '40', 80, CoreApp.Explore);
       expect(reportInteraction).toHaveBeenCalledWith(
-        'grafana_loki_query_executed',
+        'grafana_explore_loki_query_executed',
         expect.objectContaining({
           query_type: 'logs',
           line_limit: 80,
@@ -219,16 +219,9 @@ describe('LokiDatasource', () => {
       expect(reportInteraction).not.toBeCalled();
     });
 
-    it('should not report query interaction for panel edit query', async () => {
-      await runTest(80, '40', 80, CoreApp.PanelEditor);
-      expect(reportInteraction).toHaveBeenCalledWith(
-        'grafana_loki_query_executed',
-        expect.objectContaining({
-          query_type: 'logs',
-          line_limit: 80,
-          obfuscated_query: '{Identifier=String}',
-        })
-      );
+    it('should not report query interaction for unknown app query', async () => {
+      await runTest(80, '40', 80, CoreApp.Unknown);
+      expect(reportInteraction).not.toBeCalled();
     });
   });
 
@@ -497,9 +490,9 @@ describe('LokiDatasource', () => {
       return { ds };
     };
 
-    it('should return empty array if /series returns empty', async () => {
+    it('should return empty array if label values returns empty', async () => {
       const ds = createLokiDatasource(templateSrvStub);
-      const spy = jest.spyOn(ds.languageProvider, 'fetchSeriesLabels').mockResolvedValue({});
+      const spy = jest.spyOn(ds.languageProvider, 'fetchLabelValues').mockResolvedValue([]);
 
       const result = await ds.metricFindQuery({
         refId: 'test',
@@ -1183,6 +1176,22 @@ describe('LokiDatasource', () => {
           assertAdHocFilters(
             'rate({bar="baz"} | logfmt [5m])',
             'rate({bar="baz"} | logfmt | job=`grafana` [5m])',
+            ds,
+            defaultAdHocFilters
+          );
+        });
+        it('should add the filter after other label filters', () => {
+          assertAdHocFilters(
+            '{bar="baz"} | logfmt | test="value" | line_format "test"',
+            '{bar="baz"} | logfmt | test="value" | job=`grafana` | line_format "test"',
+            ds,
+            defaultAdHocFilters
+          );
+        });
+        it('should add the filter after label_format', () => {
+          assertAdHocFilters(
+            '{bar="baz"} | logfmt | test="value" | label_format process="{{.process}}"',
+            '{bar="baz"} | logfmt | test="value" | label_format process="{{.process}}" | job=`grafana`',
             ds,
             defaultAdHocFilters
           );

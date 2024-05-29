@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { Field, GrafanaTheme2 } from '@grafana/data/';
+import { InstantQueryRefIdIndex } from '@grafana/prometheus';
 import { useStyles2 } from '@grafana/ui/';
-
-import { InstantQueryRefIdIndex } from '../../../plugins/datasource/prometheus/datasource';
 
 import { rawListItemColumnWidth } from './RawListItem';
 

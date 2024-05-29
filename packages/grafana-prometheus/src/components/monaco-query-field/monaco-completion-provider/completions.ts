@@ -1,3 +1,4 @@
+// Core grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/monaco-completion-provider/completions.ts
 import UFuzzy from '@leeoniya/ufuzzy';
 
 import { config } from '@grafana/runtime';

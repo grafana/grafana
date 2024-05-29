@@ -22,6 +22,7 @@ import {
   Box,
 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
+import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { AlertManagerCortexConfig, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
@@ -146,6 +147,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
         oldConfig: config,
         successMessage: 'Template saved.',
         redirectPath: '/alerting/notifications',
+        redirectSearch: `tab=${ContactPointsActiveTabs.NotificationTemplates}`,
       })
     );
   };
@@ -176,7 +178,9 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
       </Button>
       <LinkButton
         disabled={loading}
-        href={makeAMLink('alerting/notifications', alertManagerSourceName)}
+        href={makeAMLink('alerting/notifications', alertManagerSourceName, {
+          tab: ContactPointsActiveTabs.NotificationTemplates,
+        })}
         variant="secondary"
         size="sm"
       >
@@ -425,14 +429,14 @@ export const getStyles = (theme: GrafanaTheme2) => {
         display: 'none',
       },
     }),
-    snippets: css`
-      margin-top: ${theme.spacing(2)};
-      font-size: ${theme.typography.bodySmall.fontSize};
-    `,
-    code: css`
-      color: ${theme.colors.text.secondary};
-      font-weight: ${theme.typography.fontWeightBold};
-    `,
+    snippets: css({
+      marginTop: theme.spacing(2),
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    code: css({
+      color: theme.colors.text.secondary,
+      fontWeight: theme.typography.fontWeightBold,
+    }),
   };
 };
 
@@ -467,4 +471,4 @@ const defaultPayload: TestTemplateAlert[] = [
   },
 ];
 
-const defaultPayloadString = JSON.stringify(defaultPayload, null, 2);
+export const defaultPayloadString = JSON.stringify(defaultPayload, null, 2);

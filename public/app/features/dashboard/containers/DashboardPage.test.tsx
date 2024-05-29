@@ -68,6 +68,7 @@ jest.mock('app/core/core', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
+  usePluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
 }));
 
 function getTestDashboard(overrides?: Partial<Dashboard>, metaOverrides?: Partial<DashboardMeta>): DashboardModel {

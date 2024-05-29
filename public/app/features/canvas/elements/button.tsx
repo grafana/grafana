@@ -126,6 +126,7 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       height: options?.placement?.height ?? 78,
       top: options?.placement?.top ?? 100,
       left: options?.placement?.left ?? 100,
+      rotation: options?.placement?.rotation ?? 0,
     },
   }),
 

@@ -2,74 +2,60 @@ package rest
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
-	"github.com/zeebo/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-const kind = "dummy"
+func TestSetDualWritingMode(t *testing.T) {
+	type testCase struct {
+		name         string
+		features     []any
+		stackID      string
+		expectedMode DualWriterMode
+	}
+	tests :=
+		// #TODO add test cases for kv store failures. Requires adding support in kvstore test_utils.go
+		[]testCase{
+			{
+				name:         "should return a mode 1 dual writer when no desired mode is set",
+				features:     []any{},
+				stackID:      "stack-1",
+				expectedMode: Mode1,
+			},
+			{
+				name:         "should return a mode 2 dual writer when mode 2 is set as the desired mode",
+				features:     []any{featuremgmt.FlagDualWritePlaylistsMode2},
+				stackID:      "stack-1",
+				expectedMode: Mode2,
+			},
+		}
 
-func Test_Mode1(t *testing.T) {
-	var ls = (LegacyStorage)(nil)
-	var s = (Storage)(nil)
-	lsSpy := NewLegacyStorageSpyClient(ls)
-	sSpy := NewStorageSpyClient(s)
+	for _, tt := range tests {
+		l := (LegacyStorage)(nil)
+		s := (Storage)(nil)
+		m := &mock.Mock{}
 
-	dw := NewDualWriterMode1(lsSpy, sSpy)
+		ls := legacyStoreMock{m, l}
+		us := storageMock{m, s}
 
-	_, err := dw.Get(context.Background(), kind, &metav1.GetOptions{})
-	assert.NoError(t, err)
+		f := featuremgmt.WithFeatures(tt.features...)
+		kvStore := kvstore.WithNamespace(kvstore.NewFakeKVStore(), 0, "storage.dualwriting."+tt.stackID)
 
-	// it should use the Legacy Get implementation
-	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Get"))
-	assert.Equal(t, 0, sSpy.Counts("Storage.Get"))
-}
+		key := "playlist"
 
-func Test_Mode2(t *testing.T) {
-	var ls = (LegacyStorage)(nil)
-	var s = (Storage)(nil)
-	lsSpy := NewLegacyStorageSpyClient(ls)
-	sSpy := NewStorageSpyClient(s)
+		dw, err := SetDualWritingMode(context.Background(), kvStore, f, key, ls, us)
+		assert.NoError(t, err)
+		assert.Equal(t, tt.expectedMode, dw.Mode())
 
-	dw := NewDualWriterMode2(lsSpy, sSpy)
-
-	_, err := dw.Get(context.Background(), kind, &metav1.GetOptions{})
-	assert.NoError(t, err)
-
-	// it should use the Legacy Get implementation
-	assert.Equal(t, 1, lsSpy.Counts("LegacyStorage.Get"))
-	assert.Equal(t, 0, sSpy.Counts("Storage.Get"))
-}
-
-func Mode3_Test(t *testing.T) {
-	var ls = (LegacyStorage)(nil)
-	var s = (Storage)(nil)
-	lsSpy := NewLegacyStorageSpyClient(ls)
-	sSpy := NewStorageSpyClient(s)
-
-	dw := NewDualWriterMode3(lsSpy, sSpy)
-
-	_, err := dw.Get(context.Background(), kind, &metav1.GetOptions{})
-	assert.NoError(t, err)
-
-	// it should use the Unified Storage Get implementation
-	assert.Equal(t, 0, lsSpy.Counts("LegacyStorage.Get"))
-	assert.Equal(t, 1, sSpy.Counts("Storage.Get"))
-}
-
-func Test_Mode4(t *testing.T) {
-	var ls = (LegacyStorage)(nil)
-	var s = (Storage)(nil)
-	lsSpy := NewLegacyStorageSpyClient(ls)
-	sSpy := NewStorageSpyClient(s)
-
-	dw := NewDualWriterMode3(lsSpy, sSpy)
-
-	_, err := dw.Get(context.Background(), kind, &metav1.GetOptions{})
-	assert.NoError(t, err)
-
-	// it should use the Unified Storage Get implementation
-	assert.Equal(t, 0, lsSpy.Counts("LegacyStorage.Get"))
-	assert.Equal(t, 1, sSpy.Counts("Storage.Get"))
+		// check kv store
+		val, ok, err := kvStore.Get(context.Background(), key)
+		assert.True(t, ok)
+		assert.NoError(t, err)
+		assert.Equal(t, val, fmt.Sprint(tt.expectedMode))
+	}
 }

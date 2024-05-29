@@ -234,7 +234,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     handleSubmit,
     register,
     watch,
-    formState: { isDirty, errors },
+    formState: { isDirty, errors, isValid },
     setValue,
     getValues,
   } = formAPI;
@@ -326,7 +326,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 />
                 <EvaluationGroupQuickPick
                   currentInterval={getValues('groupInterval')}
-                  onSelect={(value) => setValue('groupInterval', value, { shouldValidate: true })}
+                  onSelect={(value) => setValue('groupInterval', value, { shouldValidate: true, shouldDirty: true })}
                 />
               </Stack>
             </Field>
@@ -359,7 +359,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 </Button>
                 <Button
                   type="button"
-                  disabled={!isDirty || loading}
+                  disabled={!isDirty || !isValid || loading}
                   onClick={handleSubmit((values) => onSubmit(values), onInvalid)}
                 >
                   {loading ? 'Saving...' : 'Save'}
@@ -374,22 +374,22 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  modal: css`
-    max-width: 560px;
-  `,
-  modalButtons: css`
-    top: -24px;
-    position: relative;
-  `,
-  formInput: css`
-    flex: 1;
-  `,
-  tableWrapper: css`
-    margin-top: ${theme.spacing(2)};
-    margin-bottom: ${theme.spacing(2)};
-    height: 100%;
-  `,
-  evalRequiredLabel: css`
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `,
+  modal: css({
+    maxWidth: '560px',
+  }),
+  modalButtons: css({
+    top: '-24px',
+    position: 'relative',
+  }),
+  formInput: css({
+    flex: 1,
+  }),
+  tableWrapper: css({
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+    height: '100%',
+  }),
+  evalRequiredLabel: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
 });

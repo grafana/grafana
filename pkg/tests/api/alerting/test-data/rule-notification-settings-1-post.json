@@ -29,8 +29,8 @@
           "notification_settings": {
             "receiver": "rule-receiver",
             "group_by": [
-              "alertname",
               "grafana_folder",
+              "alertname",
               "label1"
             ],
             "group_wait": "100ms",

@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/add_label_to_query.ts
 import { parser, VectorSelector } from '@prometheus-io/lezer-promql';
 
 import { PromQueryModeller } from './querybuilder/PromQueryModeller';

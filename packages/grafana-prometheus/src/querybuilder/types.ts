@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/types.ts
 import { VisualQueryBinary } from './shared/LokiAndPromQueryModellerBase';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 
@@ -63,6 +64,12 @@ export enum PromOperationId {
   Floor = 'floor',
   Group = 'group',
   HistogramQuantile = 'histogram_quantile',
+  HistogramAvg = 'histogram_avg',
+  HistogramCount = 'histogram_count',
+  HistogramSum = 'histogram_sum',
+  HistogramFraction = 'histogram_fraction',
+  HistogramStddev = 'histogram_stddev',
+  HistogramStdvar = 'histogram_stdvar',
   HoltWinters = 'holt_winters',
   Hour = 'hour',
   Idelta = 'idelta',

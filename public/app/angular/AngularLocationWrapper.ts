@@ -107,7 +107,7 @@ export class AngularLocationWrapper {
         newQuery = locationSearchToObject(search);
       }
 
-      for (const key of Object.keys(newQuery)) {
+      for (const key in newQuery) {
         // removing params with null | undefined
         if (newQuery[key] === null || newQuery[key] === undefined) {
           delete newQuery[key];

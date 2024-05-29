@@ -40,7 +40,7 @@ type pluginRegistry struct {
 var _ data.QueryDataClient = (*pluginClient)(nil)
 var _ query.DataSourceApiServerRegistry = (*pluginRegistry)(nil)
 
-// NewDummyTestRunner creates a runner that only works with testdata
+// NewQueryClientForPluginClient creates a client that delegates to the internal plugins.Client stack
 func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider) data.QueryDataClient {
 	return &pluginClient{
 		pluginClient: p,

@@ -218,7 +218,7 @@ describe('filterByName transformer', () => {
               text: 'Test',
             },
           };
-          for (const key of Object.keys(variables)) {
+          for (const key in variables) {
             return target.replace(`$${key}`, variables[key]!.value);
           }
           return target;
@@ -256,7 +256,7 @@ describe('filterByName transformer', () => {
               text: 'Test',
             },
           };
-          for (const key of Object.keys(variables)) {
+          for (const key in variables) {
             return target.replace(`$${key}`, variables[key]!.value);
           }
           return target;
@@ -293,7 +293,7 @@ describe('filterByName transformer', () => {
               text: 'Test',
             },
           };
-          for (const key of Object.keys(variables)) {
+          for (const key in variables) {
             return target.replace(`$${key}`, variables[key]!.value);
           }
           return target;

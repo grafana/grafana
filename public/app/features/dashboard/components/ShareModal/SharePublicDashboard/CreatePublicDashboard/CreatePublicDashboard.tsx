@@ -110,27 +110,27 @@ export function CreatePublicDashboard({ hasError }: { hasError?: boolean }) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(4)};
-  `,
-  title: css`
-    font-size: ${theme.typography.h4.fontSize};
-    margin: ${theme.spacing(0, 0, 2)};
-  `,
-  description: css`
-    color: ${theme.colors.text.secondary};
-    margin-bottom: ${theme.spacing(0)};
-  `,
-  checkboxes: css`
-    margin: ${theme.spacing(0, 0, 4)};
-  `,
-  buttonContainer: css`
-    display: flex;
-    justify-content: end;
-  `,
-  loadingSpinner: css`
-    margin-left: ${theme.spacing(1)};
-  `,
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(4),
+  }),
+  title: css({
+    fontSize: theme.typography.h4.fontSize,
+    margin: theme.spacing(0, 0, 2),
+  }),
+  description: css({
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing(0),
+  }),
+  checkboxes: css({
+    margin: theme.spacing(0, 0, 4),
+  }),
+  buttonContainer: css({
+    display: 'flex',
+    justifyContent: 'end',
+  }),
+  loadingSpinner: css({
+    marginLeft: theme.spacing(1),
+  }),
 });

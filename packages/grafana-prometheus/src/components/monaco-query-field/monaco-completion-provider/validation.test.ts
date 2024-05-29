@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/monaco-completion-provider/validation.test.ts
 import { parser } from '@prometheus-io/lezer-promql';
 
 import { validateQuery } from './validation';

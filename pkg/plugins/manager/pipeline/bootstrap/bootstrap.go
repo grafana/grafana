@@ -12,11 +12,11 @@ import (
 
 // Bootstrapper is responsible for the Bootstrap stage of the plugin loader pipeline.
 type Bootstrapper interface {
-	Bootstrap(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error)
+	Bootstrap(ctx context.Context, src plugins.PluginSource, bundle *plugins.FoundBundle) ([]*plugins.Plugin, error)
 }
 
 // ConstructFunc is the function used for the Construct step of the Bootstrap stage.
-type ConstructFunc func(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error)
+type ConstructFunc func(ctx context.Context, src plugins.PluginSource, bundle *plugins.FoundBundle) ([]*plugins.Plugin, error)
 
 // DecorateFunc is the function used for the Decorate step of the Bootstrap stage.
 type DecorateFunc func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error)
@@ -59,7 +59,7 @@ func New(cfg *config.PluginManagementCfg, opts Opts) *Bootstrap {
 }
 
 // Bootstrap will execute the Construct and Decorate steps of the Bootstrap stage.
-func (b *Bootstrap) Bootstrap(ctx context.Context, src plugins.PluginSource, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
+func (b *Bootstrap) Bootstrap(ctx context.Context, src plugins.PluginSource, found *plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	ps, err := b.constructStep(ctx, src, found)
 	if err != nil {
 		return nil, err
@@ -72,18 +72,14 @@ func (b *Bootstrap) Bootstrap(ctx context.Context, src plugins.PluginSource, fou
 	bootstrappedPlugins := make([]*plugins.Plugin, 0, len(ps))
 	for _, p := range ps {
 		var ip *plugins.Plugin
-		stepFailed := false
 		for _, decorate := range b.decorateSteps {
 			ip, err = decorate(ctx, p)
 			if err != nil {
-				stepFailed = true
 				b.log.Error("Could not decorate plugin", "pluginId", p.ID, "error", err)
-				break
+				return nil, err
 			}
 		}
-		if !stepFailed {
-			bootstrappedPlugins = append(bootstrappedPlugins, ip)
-		}
+		bootstrappedPlugins = append(bootstrappedPlugins, ip)
 	}
 
 	return bootstrappedPlugins, nil

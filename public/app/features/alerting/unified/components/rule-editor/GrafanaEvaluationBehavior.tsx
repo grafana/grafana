@@ -105,11 +105,6 @@ function FolderGroupAndEvaluationInterval({
     setIsEditingGroup(false);
   };
 
-  // when the group evaluation interval changes, update the pending period to match
-  useEffect(() => {
-    setValue('evaluateFor', evaluateEvery);
-  }, [evaluateEvery, setValue]);
-
   const onOpenEditGroupModal = () => setIsEditingGroup(true);
 
   const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderUid || !groupName;
@@ -209,11 +204,30 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   );
 }
 
+function NeedHelpInfoForConfigureNoDataError() {
+  const docsLink =
+    'https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling';
+
+  return (
+    <Stack direction="row" gap={0.5} alignItems="center">
+      <Text variant="bodySmall" color="secondary">
+        Define the alert behavior when the evaluation fails or the query returns no data.
+      </Text>
+      <NeedHelpInfo
+        contentText="These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts."
+        externalLink={docsLink}
+        linkText={`Read more about this option`}
+        title="Configure no data and error handling"
+      />
+    </Stack>
+  );
+}
+
 function getDescription() {
   const docsLink = 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/';
 
   return (
-    <Stack direction="row" gap={0.5} alignItems="baseline">
+    <Stack direction="row" gap={0.5} alignItems="center">
       <Text variant="bodySmall" color="secondary">
         Define how the alert rule is evaluated.
       </Text>
@@ -288,6 +302,7 @@ export function GrafanaEvaluationBehavior({
       />
       {showErrorHandling && (
         <>
+          <NeedHelpInfoForConfigureNoDataError />
           <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
             <Controller
               render={({ field: { onChange, ref, ...field } }) => (
@@ -325,44 +340,44 @@ export function GrafanaEvaluationBehavior({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  inlineField: css`
-    margin-bottom: 0;
-  `,
-  evaluateLabel: css`
-    margin-right: ${theme.spacing(1)};
-  `,
-  evaluationContainer: css`
-    color: ${theme.colors.text.secondary};
-    max-width: ${theme.breakpoints.values.sm}px;
-    font-size: ${theme.typography.size.sm};
-  `,
-  intervalChangedLabel: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  warningIcon: css`
-    justify-self: center;
-    margin-right: ${theme.spacing(1)};
-    color: ${theme.colors.warning.text};
-  `,
-  infoIcon: css`
-    margin-left: 10px;
-  `,
-  warningMessage: css`
-    color: ${theme.colors.warning.text};
-  `,
-  bold: css`
-    font-weight: bold;
-  `,
-  alignInterval: css`
-    margin-top: ${theme.spacing(1)};
-    margin-left: -${theme.spacing(1)};
-  `,
-  marginTop: css`
-    margin-top: ${theme.spacing(1)};
-  `,
-  switchLabel: css(`
-    color: ${theme.colors.text.primary},
+  inlineField: css({
+    marginBottom: 0,
+  }),
+  evaluateLabel: css({
+    marginRight: theme.spacing(1),
+  }),
+  evaluationContainer: css({
+    color: theme.colors.text.secondary,
+    maxWidth: `${theme.breakpoints.values.sm}px`,
+    fontSize: theme.typography.size.sm,
+  }),
+  intervalChangedLabel: css({
+    marginBottom: theme.spacing(1),
+  }),
+  warningIcon: css({
+    justifySelf: 'center',
+    marginRight: theme.spacing(1),
+    color: theme.colors.warning.text,
+  }),
+  infoIcon: css({
+    marginLeft: '10px',
+  }),
+  warningMessage: css({
+    color: theme.colors.warning.text,
+  }),
+  bold: css({
+    fontWeight: 'bold',
+  }),
+  alignInterval: css({
+    marginTop: theme.spacing(1),
+    marginLeft: `-${theme.spacing(1)}`,
+  }),
+  marginTop: css({
+    marginTop: theme.spacing(1),
+  }),
+  switchLabel: css({
+    color: theme.colors.text.primary,
     cursor: 'pointer',
-    fontSize: ${theme.typography.bodySmall.fontSize},
-  `),
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
 });

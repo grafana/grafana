@@ -15,7 +15,7 @@ interface Props {
   rule?: CombinedRule;
   instances: Alert[];
   pagination?: PaginationProps;
-  footerRow?: JSX.Element;
+  footerRow?: React.ReactNode;
 }
 
 interface AlertWithCommonLabels extends Alert {

@@ -11,10 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -36,10 +38,10 @@ type Rule interface {
 	Update(lastVersion RuleVersionAndPauseStatus) bool
 }
 
-type ruleFactoryFunc func(context.Context) Rule
+type ruleFactoryFunc func(context.Context, *ngmodels.AlertRule) Rule
 
-func (f ruleFactoryFunc) new(ctx context.Context) Rule {
-	return f(ctx)
+func (f ruleFactoryFunc) new(ctx context.Context, rule *ngmodels.AlertRule) Rule {
+	return f(ctx, rule)
 }
 
 func newRuleFactory(
@@ -51,13 +53,28 @@ func newRuleFactory(
 	evalFactory eval.EvaluatorFactory,
 	ruleProvider ruleProvider,
 	clock clock.Clock,
+	featureToggles featuremgmt.FeatureToggles,
 	met *metrics.Scheduler,
 	logger log.Logger,
 	tracer tracing.Tracer,
+	recordingWriter writer.Writer,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
 ) ruleFactoryFunc {
-	return func(ctx context.Context) Rule {
+	return func(ctx context.Context, rule *ngmodels.AlertRule) Rule {
+		if rule.IsRecordingRule() {
+			return newRecordingRule(
+				ctx,
+				maxAttempts,
+				clock,
+				evalFactory,
+				featureToggles,
+				logger,
+				met,
+				tracer,
+				recordingWriter,
+			)
+		}
 		return newAlertRule(
 			ctx,
 			appURL,
@@ -227,15 +244,21 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 			}
 
 			func() {
+				orgID := fmt.Sprint(key.OrgID)
+				evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
+				evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
+
 				evalRunning = true
+				evalStart := a.clock.Now()
 				defer func() {
 					evalRunning = false
 					a.evalApplied(key, ctx.scheduledAt)
+					evalDuration.Observe(a.clock.Now().Sub(evalStart).Seconds())
 				}()
 
 				for attempt := int64(1); attempt <= a.maxAttempts; attempt++ {
 					isPaused := ctx.rule.IsPaused
-					f := ruleWithFolder{ctx.rule, ctx.folderTitle}.Fingerprint()
+					f := ctx.Fingerprint()
 					// Do not clean up state if the eval loop has just started.
 					var needReset bool
 					if currentFingerprint != 0 && currentFingerprint != f {
@@ -253,6 +276,11 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 					if isPaused {
 						logger.Debug("Skip rule evaluation because it is paused")
 						return
+					}
+
+					// Only increment evaluation counter once, not per-retry.
+					if attempt == 1 {
+						evalTotal.Inc()
 					}
 
 					fpStr := currentFingerprint.String()
@@ -312,8 +340,8 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 
 func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f fingerprint, attempt int64, e *Evaluation, span trace.Span, retry bool) error {
 	orgID := fmt.Sprint(key.OrgID)
-	evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
-	evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
+	evalAttemptTotal := a.metrics.EvalAttemptTotal.WithLabelValues(orgID)
+	evalAttemptFailures := a.metrics.EvalAttemptFailures.WithLabelValues(orgID)
 	evalTotalFailures := a.metrics.EvalFailures.WithLabelValues(orgID)
 	processDuration := a.metrics.ProcessDuration.WithLabelValues(orgID)
 	sendDuration := a.metrics.SendDuration.WithLabelValues(orgID)
@@ -336,8 +364,7 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 		}
 	}
 
-	evalTotal.Inc()
-	evalDuration.Observe(dur.Seconds())
+	evalAttemptTotal.Inc()
 
 	if ctx.Err() != nil { // check if the context is not cancelled. The evaluation can be a long-running task.
 		span.SetStatus(codes.Error, "rule evaluation cancelled")
@@ -346,7 +373,7 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 	}
 
 	if err != nil || results.HasErrors() {
-		evalTotalFailures.Inc()
+		evalAttemptFailures.Inc()
 
 		// Only retry (return errors) if this isn't the last attempt, otherwise skip these return operations.
 		if retry {
@@ -364,6 +391,9 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 				span.RecordError(err)
 				return fmt.Errorf("the result-set has errors that can be retried: %w", results.Error())
 			}
+		} else {
+			// Only count the final attempt as a failure.
+			evalTotalFailures.Inc()
 		}
 
 		// If results is nil, we assume that the error must be from the SSE pipeline (ruleEval.Evaluate) which is the only code that can actually return an `err`.

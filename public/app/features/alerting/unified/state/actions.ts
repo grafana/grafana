@@ -4,15 +4,10 @@ import { isEmpty } from 'lodash';
 import { locationService } from '@grafana/runtime';
 import { logMeasurement } from '@grafana/runtime/src/utils/logging';
 import {
-  AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
-  ExternalAlertmanagerConfig,
-  ExternalAlertmanagersResponse,
   Matcher,
   Receiver,
-  Silence,
-  SilenceCreatePayload,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types';
@@ -35,6 +30,7 @@ import {
 
 import { backendSrv } from '../../../../core/services/backend_srv';
 import {
+  logError,
   logInfo,
   LogMessages,
   trackSwitchToPoliciesRouting,
@@ -44,15 +40,8 @@ import {
   withRulerRulesMetadataLogging,
 } from '../Analytics';
 import {
-  addAlertManagers,
-  createOrUpdateSilence,
   deleteAlertManagerConfig,
-  expireSilence,
   fetchAlertGroups,
-  fetchAlerts,
-  fetchExternalAlertmanagerConfig,
-  fetchExternalAlertmanagers,
-  fetchSilences,
   testReceivers,
   updateAlertManagerConfig,
 } from '../api/alertmanager';
@@ -136,20 +125,6 @@ export const fetchPromRulesAction = createAsyncThunk(
   }
 );
 
-export const fetchExternalAlertmanagersAction = createAsyncThunk(
-  'unifiedAlerting/fetchExternalAlertmanagers',
-  (): Promise<ExternalAlertmanagersResponse> => {
-    return withSerializedError(fetchExternalAlertmanagers());
-  }
-);
-
-export const fetchExternalAlertmanagersConfigAction = createAsyncThunk(
-  'unifiedAlerting/fetchExternAlertmanagersConfig',
-  (): Promise<ExternalAlertmanagerConfig> => {
-    return withSerializedError(fetchExternalAlertmanagerConfig());
-  }
-);
-
 export const fetchRulerRulesAction = createAsyncThunk(
   'unifiedalerting/fetchRulerRules',
   async (
@@ -203,17 +178,6 @@ export function fetchPromAndRulerRulesAction({
     }
   };
 }
-
-export const fetchSilencesAction = createAsyncThunk(
-  'unifiedalerting/fetchSilences',
-  (alertManagerSourceName: string): Promise<Silence[]> => {
-    const fetchSilencesWithLogging = withPerformanceLogging('unifiedalerting/fetchSilences', fetchSilences, {
-      dataSourceName: alertManagerSourceName,
-    });
-
-    return withSerializedError(fetchSilencesWithLogging(alertManagerSourceName));
-  }
-);
 
 // this will only trigger ruler rules fetch if rules are not loaded yet and request is not in flight
 export function fetchRulerRulesIfNotFetchedYet(rulesSourceName: string): ThunkResult<void> {
@@ -561,47 +525,6 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
     )
 );
 
-export const fetchAmAlertsAction = createAsyncThunk(
-  'unifiedalerting/fetchAmAlerts',
-  (alertManagerSourceName: string): Promise<AlertmanagerAlert[]> =>
-    withSerializedError(fetchAlerts(alertManagerSourceName, [], true, true, true))
-);
-
-export const expireSilenceAction = (alertManagerSourceName: string, silenceId: string): ThunkResult<void> => {
-  return async (dispatch) => {
-    await withAppEvents(expireSilence(alertManagerSourceName, silenceId), {
-      successMessage: 'Silence expired.',
-    });
-    dispatch(fetchSilencesAction(alertManagerSourceName));
-    dispatch(fetchAmAlertsAction(alertManagerSourceName));
-  };
-};
-
-type UpdateSilenceActionOptions = {
-  alertManagerSourceName: string;
-  payload: SilenceCreatePayload;
-  exitOnSave: boolean;
-  successMessage?: string;
-};
-
-export const createOrUpdateSilenceAction = createAsyncThunk<void, UpdateSilenceActionOptions, {}>(
-  'unifiedalerting/updateSilence',
-  ({ alertManagerSourceName, payload, exitOnSave, successMessage }): Promise<void> =>
-    withAppEvents(
-      withSerializedError(
-        (async () => {
-          await createOrUpdateSilence(alertManagerSourceName, payload);
-          if (exitOnSave) {
-            locationService.push(makeAMLink('/alerting/silences', alertManagerSourceName));
-          }
-        })()
-      ),
-      {
-        successMessage,
-      }
-    )
-);
-
 export const deleteReceiverAction = (receiverName: string, alertManagerSourceName: string): ThunkResult<void> => {
   return async (dispatch) => {
     const config = await dispatch(
@@ -930,6 +853,16 @@ export const updateRulesOrder = createAsyncThunk(
             throw new Error(`Group "${groupName}" not found.`);
           }
 
+          // We're unlikely to have this happen, as any user of this action should have already ensured
+          // that the entire group was fetched before sending a new order.
+          // But as a final safeguard we should fail if we somehow ended up here with a mismatched rules count
+          // This would indicate an accidental deletion of rules following a frontend bug
+          if (existingGroup.rules.length !== newRules.length) {
+            const err = new Error('Rules count mismatch. Please refresh the page and try again.');
+            logError(err, { namespaceName, groupName });
+            throw err;
+          }
+
           const payload: PostableRulerRuleGroupDTO = {
             name: existingGroup.name,
             interval: existingGroup.interval,
@@ -944,24 +877,6 @@ export const updateRulesOrder = createAsyncThunk(
       {
         errorMessage: 'Failed to update namespace / group',
         successMessage: 'Update successful',
-      }
-    );
-  }
-);
-
-export const addExternalAlertmanagersAction = createAsyncThunk(
-  'unifiedAlerting/addExternalAlertmanagers',
-  async (alertmanagerConfig: ExternalAlertmanagerConfig, thunkAPI): Promise<void> => {
-    return withAppEvents(
-      withSerializedError(
-        (async () => {
-          await addAlertManagers(alertmanagerConfig);
-          thunkAPI.dispatch(fetchExternalAlertmanagersConfigAction());
-        })()
-      ),
-      {
-        errorMessage: 'Failed adding alertmanagers',
-        successMessage: 'Alertmanagers updated',
       }
     );
   }

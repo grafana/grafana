@@ -1118,7 +1118,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": ">=10.4.0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -1668,7 +1668,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": "v0alpha1"
   },
   {
     "name": "Text",

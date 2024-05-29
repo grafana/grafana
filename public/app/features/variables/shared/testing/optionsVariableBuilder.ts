@@ -1,4 +1,4 @@
-import { VariableOption, VariableWithOptions } from 'app/features/variables/types';
+import { VariableOption, VariableWithOptions } from '@grafana/data';
 
 import { VariableBuilder } from './variableBuilder';
 

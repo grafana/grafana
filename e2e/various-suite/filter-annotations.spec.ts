@@ -18,19 +18,21 @@ describe('Annotations filtering', () => {
       .should('be.visible')
       .within(() => {
         // All panels
-        e2e.components.Annotations.annotationsTypeInput().click({ force: true }).type('All panels{enter}');
+        e2e.components.Annotations.annotationsTypeInput().find('input').type('All panels{enter}', { force: true });
         e2e.components.Annotations.annotationsChoosePanelInput().should('not.exist');
 
         // All panels except
-        e2e.components.Annotations.annotationsTypeInput().click({ force: true }).type('All panels except{enter}');
+        e2e.components.Annotations.annotationsTypeInput()
+          .find('input')
+          .type('All panels except{enter}', { force: true });
         e2e.components.Annotations.annotationsChoosePanelInput().should('be.visible');
 
         // Selected panels
-        e2e.components.Annotations.annotationsTypeInput().click({ force: true }).type('Selected panels{enter}');
+        e2e.components.Annotations.annotationsTypeInput().find('input').type('Selected panels{enter}', { force: true });
         e2e.components.Annotations.annotationsChoosePanelInput()
           .should('be.visible')
-          .click({ force: true })
-          .type('Panel two{enter}');
+          .find('input')
+          .type('Panel two{enter}', { force: true });
       });
 
     e2e.pages.Dashboard.Settings.Annotations.NewAnnotation.previewInDashboard().click({ force: true });
