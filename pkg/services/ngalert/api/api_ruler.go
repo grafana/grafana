@@ -663,7 +663,7 @@ func (srv RulerSrv) getAuthorizedRuleGroup(ctx context.Context, c *contextmodel.
 	q := ngmodels.ListAlertRulesQuery{
 		OrgID:         ruleGroupKey.OrgID,
 		NamespaceUIDs: []string{ruleGroupKey.NamespaceUID},
-		RuleGroup:     ruleGroupKey.RuleGroup,
+		RuleGroups:    []string{ruleGroupKey.RuleGroup},
 	}
 	rules, err := srv.store.ListAlertRules(ctx, &q)
 	if err != nil {

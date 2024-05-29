@@ -141,7 +141,7 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 	q := models.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: []string{folderUID},
-		RuleGroup:     ruleGroup,
+		RuleGroups:    []string{ruleGroup},
 	}
 	ruleList, err := dbstore.ListAlertRules(ctx, &q)
 	require.NoError(t, err)
