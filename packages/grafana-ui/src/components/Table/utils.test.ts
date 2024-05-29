@@ -15,7 +15,6 @@ import {
   valuesToOptions,
   guessLongestField,
 } from './utils';
-import { wrap } from 'module';
 
 function getData() {
   const data = new MutableDataFrame({
