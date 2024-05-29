@@ -14,8 +14,8 @@ import (
 type DualWriterMode3 struct {
 	Legacy  LegacyStorage
 	Storage Storage
-	Log     klog.Logger
 	*dualWriterMetrics
+	Log klog.Logger
 }
 
 // NewDualWriterMode3 returns a new DualWriter in mode 3.
@@ -24,6 +24,11 @@ func NewDualWriterMode3(legacy LegacyStorage, storage Storage) *DualWriterMode3 
 	metrics := &dualWriterMetrics{}
 	metrics.init()
 	return &DualWriterMode3{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode3"), dualWriterMetrics: metrics}
+}
+
+// Mode returns the mode of the dual writer.
+func (d *DualWriterMode3) Mode() DualWriterMode {
+	return Mode3
 }
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.

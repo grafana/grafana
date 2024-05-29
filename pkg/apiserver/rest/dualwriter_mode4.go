@@ -13,8 +13,8 @@ import (
 type DualWriterMode4 struct {
 	Legacy  LegacyStorage
 	Storage Storage
-	Log     klog.Logger
 	*dualWriterMetrics
+	Log klog.Logger
 }
 
 // NewDualWriterMode4 returns a new DualWriter in mode 4.
@@ -23,6 +23,11 @@ func NewDualWriterMode4(legacy LegacyStorage, storage Storage) *DualWriterMode4 
 	metrics := &dualWriterMetrics{}
 	metrics.init()
 	return &DualWriterMode4{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode4"), dualWriterMetrics: metrics}
+}
+
+// Mode returns the mode of the dual writer.
+func (d *DualWriterMode4) Mode() DualWriterMode {
+	return Mode4
 }
 
 // #TODO remove all DualWriterMode4 methods once we remove the generic DualWriter implementation
