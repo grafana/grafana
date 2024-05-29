@@ -304,13 +304,19 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		}
 	}
 
-	ruleGroup := opts.Query.Get("rule_group")
+	var ruleGroups []string
+	rgParam := opts.Query.Get("rule_group")
+	if rgParam != "" {
+		rgParamSplit := strings.Split(rgParam, ",")
+		ruleGroups = rgParamSplit
+	}
+
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID:         opts.OrgID,
 		NamespaceUIDs: namespaceUIDs,
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
-		RuleGroup:     ruleGroup,
+		RuleGroups:    ruleGroups,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
@@ -320,15 +326,25 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		return ruleResponse
 	}
 
-	ruleName := opts.Query.Get("rule_name")
+	var ruleNames []string
+	rnParam := opts.Query.Get("rule_name")
+	if rnParam != "" {
+		ruleNames = strings.Split(rnParam, ",")
+	}
+	ruleNamesSet := make(map[string]struct{}, len(ruleNames))
+	for _, rn := range ruleNames {
+		ruleNamesSet[rn] = struct{}{}
+	}
 
 	// Group rules together by Namespace and Rule Group. Rules are also grouped by Org ID,
 	// but in this API all rules belong to the same organization. Also filter by rule name if
 	// it was provided as a query param.
 	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
 	for _, rule := range ruleList {
-		if ruleName != "" && rule.Title != ruleName {
-			continue
+		if len(ruleNamesSet) > 0 {
+			if _, exists := ruleNamesSet[rule.Title]; !exists {
+				continue
+			}
 		}
 
 		groupKey := rule.GetGroupKey()

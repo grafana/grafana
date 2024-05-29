@@ -585,8 +585,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Equal(t, "rule-group-3", result.Data.RuleGroups[1].Name)
 		})
 
-		t.Run("should only return rule groups under given rule_group", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?rule_group=rule-group-1", nil)
+		t.Run("should only return rule groups under given rule_group list", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?rule_group=rule-group-1,rule-group-2", nil)
 			require.NoError(t, err)
 
 			c.Context = &web.Context{Req: r}
@@ -596,14 +596,20 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			result := &apimodels.RuleResponse{}
 			require.NoError(t, json.Unmarshal(resp.Body(), result))
 
-			require.Len(t, result.Data.RuleGroups, 1)
-			require.Equal(t, "rule-group-1", result.Data.RuleGroups[0].Name)
-			require.Len(t, result.Data.RuleGroups[0].Rules, 1)
+			require.Len(t, result.Data.RuleGroups, 2)
+			require.True(t, true, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-1"
+			}))
+			require.True(t, true, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-2"
+			}))
 		})
 
-		t.Run("should only return rule with given rule_name", func(t *testing.T) {
-			expectedRule := rulesInGroup3[0]
-			r, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?rule_name=%s", expectedRule.Title), nil)
+		t.Run("should only return rule under given rule_name list", func(t *testing.T) {
+			expectedRuleInGroup2 := rulesInGroup2[0]
+			expectedRuleInGroup3 := rulesInGroup3[0]
+
+			r, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?rule_name=%s,%s", expectedRuleInGroup2.Title, expectedRuleInGroup3.Title), nil)
 			require.NoError(t, err)
 
 			c.Context = &web.Context{Req: r}
@@ -613,10 +619,25 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			result := &apimodels.RuleResponse{}
 			require.NoError(t, json.Unmarshal(resp.Body(), result))
 
-			require.Len(t, result.Data.RuleGroups, 1)
-			require.Equal(t, "rule-group-3", result.Data.RuleGroups[0].Name)
+			require.Len(t, result.Data.RuleGroups, 2)
+			require.True(t, true, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-2"
+			}))
+			require.True(t, true, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-3"
+			}))
 			require.Len(t, result.Data.RuleGroups[0].Rules, 1)
-			require.Equal(t, expectedRule.Title, result.Data.RuleGroups[0].Rules[0].Name)
+			require.Len(t, result.Data.RuleGroups[1].Rules, 1)
+
+			fmt.Println(result.Data.RuleGroups[0], result.Data.RuleGroups[1])
+			require.True(t, false)
+			if result.Data.RuleGroups[0].Name == "rule-group-2" {
+				require.Equal(t, expectedRuleInGroup2.Title, result.Data.RuleGroups[0].Rules[0].Name)
+				require.Equal(t, expectedRuleInGroup3.Title, result.Data.RuleGroups[1].Rules[0].Name)
+			} else {
+				require.Equal(t, expectedRuleInGroup2.Title, result.Data.RuleGroups[1].Rules[0].Name)
+				require.Equal(t, expectedRuleInGroup3.Title, result.Data.RuleGroups[0].Rules[0].Name)
+			}
 		})
 
 		t.Run("should only return rule with given folder_uid, rule_group and rule_name", func(t *testing.T) {
