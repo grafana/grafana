@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import Mousetrap from 'mousetrap';
 
 import 'mousetrap-global-bind';
@@ -213,13 +214,15 @@ export class KeybindingSrv {
       appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
     });
 
-    this.bind('t left', () => {
-      appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Left, updateUrl }));
-    });
+    // this.bind('t+left', () => {
+    //   console.log('doing a t+left');
+    //   appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Left, updateUrl }));
+    // });
 
-    this.bind('t right', () => {
-      appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Right, updateUrl }));
-    });
+    // this.bind('t+right', () => {
+    //   console.log('doing a t+right');
+    //   appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Right, updateUrl }));
+    // });
 
     this.bind('t c', () => {
       appEvents.publish(new CopyTimeEvent());
@@ -377,3 +380,85 @@ export class KeybindingSrv {
     });
   }
 }
+
+class Shortcut {
+  bindings = new Map<string[], Function>();
+
+  activeKeys: string[] = [];
+
+  private handleKeyDown = (event: KeyboardEvent) => {
+    if (event.repeat) {
+      return;
+    }
+
+    const pressed = event.key.toLowerCase();
+
+    console.group('handleKeyDown: ', pressed, event);
+
+    this.activeKeys.push(pressed);
+
+    console.log('all binding', ...Array.from(this.bindings.entries()).map(([combo]) => combo));
+    console.log('activeKeys', this.activeKeys);
+
+    // Return all bindings that match the currently active keys
+    const matches = Array.from(this.bindings.entries()).filter(([combo]) =>
+      combo.every((key, index) => this.activeKeys[index] === key)
+    );
+
+    for (const [combo, callback] of matches) {
+      console.log('%cShortcut matched!', 'background: #2ecc71; color: black', combo, callback);
+      callback();
+    }
+
+    console.groupEnd();
+  };
+
+  private handleKeyUp = (event: KeyboardEvent) => {
+    if (event.repeat) {
+      return;
+    }
+
+    const pressed = event.key.toLowerCase();
+    console.group('handleKeyUp', pressed);
+    console.log('event', event);
+
+    const index = this.activeKeys.indexOf(pressed);
+    if (index > -1) {
+      this.activeKeys.splice(index, 1);
+      console.log('removed from active keys');
+    }
+
+    console.log('activeKeys', this.activeKeys);
+    console.groupEnd();
+  };
+
+  private setupEventListeners() {
+    document.addEventListener('keydown', this.handleKeyDown);
+    document.addEventListener('keyup', this.handleKeyUp);
+  }
+
+  private resetEventListeners() {
+    document.removeEventListener('keydown', this.handleKeyDown);
+    document.removeEventListener('keyup', this.handleKeyUp);
+  }
+
+  bind(combo: string[], callback: Function) {
+    this.bindings.set(combo, callback); // allows dupes, because arrays
+
+    if (this.bindings.size > 0) {
+      this.resetEventListeners();
+      this.setupEventListeners();
+    }
+  }
+}
+
+const sht = new Shortcut();
+sht.bind(['t', 'arrowleft'], () => {
+  console.log('%cDoing shift time LEFT', 'background: #3498db; color: black; font-weight: bold;');
+  appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Left, updateUrl: false }));
+});
+
+sht.bind(['t', 'arrowright'], () => {
+  console.log('%cDoing shift time RIGHT', 'background: #3498db; color: black; font-weight: bold;');
+  appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Right, updateUrl: false }));
+});
