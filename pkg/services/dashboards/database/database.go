@@ -774,12 +774,12 @@ type evalResult struct {
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	res := make(chan evalResult, 2)
 	if d.zService.Cfg.SingleRead {
-		return d.findDashboardsZanzana(ctx, query)
+		return d.findDashboardsZanzanaCheck(ctx, query)
 	}
 
 	go func() {
 		start := time.Now()
-		dashRes, err := d.findDashboardsZanzana(ctx, query)
+		dashRes, err := d.findDashboardsZanzanaList(ctx, query)
 		res <- evalResult{"zanzana", dashRes, err, time.Since(start)}
 	}()
 
@@ -815,7 +815,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	return first.searchRes, first.err
 }
 
-func (d *dashboardStore) findDashboardsZanzana(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (d *dashboardStore) buildZanzanaSearchQuery(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) *searchstore.Builder {
 	filters := []any{}
 	filters = append(filters, query.Filters...)
 
@@ -861,6 +861,11 @@ func (d *dashboardStore) findDashboardsZanzana(ctx context.Context, query *dashb
 	}
 
 	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters, Features: d.features}
+	return sb
+}
+
+func (d *dashboardStore) findDashboardsZanzanaCheck(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	sb := d.buildZanzanaSearchQuery(ctx, query)
 
 	limit := int(query.Limit)
 	if limit < 1 {
@@ -939,6 +944,89 @@ func (d *dashboardStore) findDashboardsZanzana(ctx context.Context, query *dashb
 	}
 
 	return res, nil
+}
+
+func (d *dashboardStore) findDashboardsZanzanaList(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	sb := d.buildZanzanaSearchQuery(ctx, query)
+
+	limit := query.Limit
+	if limit < 1 {
+		limit = 1000
+	}
+
+	page := query.Page
+	if page < 1 {
+		page = 1
+	}
+
+	// List dashboards and folders
+	foldersRes, err := d.zClient.ListObjects(ctx, &openfgav1.ListObjectsRequest{
+		StoreId:              d.zClient.MustStoreID(ctx),
+		AuthorizationModelId: d.zClient.AuthorizationModelID,
+		User:                 query.SignedInUser.GetID(),
+		Relation:             "read",
+		Type:                 "folder",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	dashRes, err := d.zClient.ListObjects(ctx, &openfgav1.ListObjectsRequest{
+		StoreId:              d.zClient.MustStoreID(ctx),
+		AuthorizationModelId: d.zClient.AuthorizationModelID,
+		User:                 query.SignedInUser.GetID(),
+		Relation:             "read",
+		Type:                 "dashboard",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	resourceIndex := make(map[string]bool)
+	for _, f := range foldersRes.GetObjects() {
+		resourceIndex[f] = true
+	}
+	for _, d := range dashRes.GetObjects() {
+		resourceIndex[d] = true
+	}
+
+	var resFiltered []dashboards.DashboardSearchProjection
+
+	batchSize := 1000
+	batchPage := 1
+
+	for len(resFiltered) <= int(limit) {
+		var res []dashboards.DashboardSearchProjection
+		sql, params := sb.ToSQL(int64(batchSize), int64(batchPage))
+		err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(sql, params...).Find(&res)
+		})
+		if err != nil {
+			return nil, err
+		}
+		if len(res) == 0 {
+			break
+		}
+
+		for _, item := range res {
+			resourceUID := item.UID
+			if item.IsFolder {
+				resourceUID = "folder:" + resourceUID
+			} else {
+				resourceUID = "dashboard:" + resourceUID
+			}
+			if resourceIndex[resourceUID] {
+				resFiltered = append(resFiltered, item)
+			}
+			if len(resFiltered) == int(limit) {
+				return resFiltered, nil
+			}
+		}
+
+		batchPage++
+	}
+
+	return resFiltered, nil
 }
 
 func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
