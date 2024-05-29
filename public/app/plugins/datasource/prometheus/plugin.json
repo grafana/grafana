@@ -44,7 +44,7 @@
       "method": "POST",
       "path": "/rules",
       "reqRole": "Editor",
-      "reqAction": "datasources:write"
+      "reqAction": "datasources:query"
     },
     {
       "method": "DELETE",
