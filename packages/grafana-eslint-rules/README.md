@@ -126,6 +126,7 @@ Check if strings are marked for translation.
 <InlineToast placement="top" referenceElement={buttonRef.current}>
   <Trans i18nKey="clipboard-button.inline-toast.success">Copied</Trans>
 </InlineToast>
+
 ```
 
 #### Passing variables to translations
@@ -139,11 +140,16 @@ const SearchTitle = ({ term }) => (
 );
 
 //Good ✅
-const serviceName = service.name;
-<Trans i18nKey="login.services.sing-in-with-prefix">Sign in with {{ serviceName }}</Trans>;
+const SearchTitle = ({ term }) => (
+  <Trans i18nKey="search-page.results-title">
+    Results for <em>{{ term }}</em>
+  </Trans>
+);
 ```
 
 #### How to translate props or attributes
+
+Right now, we only check if a string is wrapped up by the `Trans` tag. We currently do not apply this rule to props, attributes or similar, but we also ask for them to be translated with the `t()` function.
 
 ```tsx
 // Bad ❌
@@ -153,7 +159,5 @@ const serviceName = service.name;
 const placeholder = t('form.username-placeholder', 'Username');
 return <input type="value" placeholder={placeholder} />;
 ```
-
-Right now, we only check if a string is wrapped up by the `Trans` tag. We currently do not apply this rule to props, attributes or similar, but we also ask for them to be translated with the `t()` function.
 
 Check more info about how translations work in Grafana in [Internationalization.md](https://github.com/grafana/grafana/blob/main/contribute/internationalization.md)
