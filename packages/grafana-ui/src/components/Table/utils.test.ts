@@ -51,7 +51,7 @@ function getWrappableData(numRecords: number) {
     fields: [
       { name: 'Time', type: FieldType.time, values: [] },
       {
-        name: 'Lorem 9',
+        name: 'Lorem 5',
         type: FieldType.string,
         values: [],
         config: {
@@ -61,7 +61,7 @@ function getWrappableData(numRecords: number) {
         },
       },
       {
-        name: 'Lorem 11',
+        name: 'Lorem 10',
         type: FieldType.string,
         values: [],
         config: {
@@ -548,7 +548,6 @@ describe('Table utils', () => {
 
   describe('guessLongestField', () => {
 
-
     it('should guess the longest field correct if there are few records', () => {
       const data = getWrappableData(10);
       const config = {
@@ -562,7 +561,7 @@ describe('Table utils', () => {
       };
 
       const longestField = guessLongestField(config, data);
-      expect(longestField.name).toBe('Lorem 11');
+      expect(longestField.name).toBe('Lorem 10');
     });
 
     it('should guess the longest field correctly if there are many records', () => {
@@ -578,7 +577,7 @@ describe('Table utils', () => {
       };
 
       const longestField = guessLongestField(config, data);
-      expect(longestField.name).toBe('Lorem 11');
+      expect(longestField.name).toBe('Lorem 10');
     });
 
     it('should return undefined if there is no data', () => {
