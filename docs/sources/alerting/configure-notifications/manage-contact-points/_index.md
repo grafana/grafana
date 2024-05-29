@@ -97,11 +97,15 @@ Complete the following steps to add templates to your contact point.
 
 1. Click **Edit**.
    A dialog box opens where you can select templates.
-1. Click **Select existing template** to select a template and preview it using the default payload.
+1. [Optional] Click **Select existing template** to select a template and preview it using the default payload.
+
+   Click **Save** to use just a single template in the field.
 
    You can also copy the selected template and use it in the custom tab.
 
-1. Click **Enter custom message** to customize and edit the field directly. Note that the title changes depending on the field you are editing.
+1. [Optional] Click **Enter custom message** to customize and edit the field directly. Note that the title changes depending on the field you are editing.
+
+   Click **Save** to use just a single template in the field.
 
 1. You can switch between the two tabs to access the list of available templates and copy them across to the customized version.
 
