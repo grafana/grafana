@@ -467,7 +467,7 @@ type AlertRuleGroupKey struct {
 	RuleGroup    string
 }
 
-type AlertRuleGroupWithFolderTitleKey struct {
+type AlertRuleGroupKeyWithFolderTitle struct {
 	AlertRuleGroupKey
 	FolderTitle string
 }

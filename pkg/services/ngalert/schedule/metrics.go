@@ -35,24 +35,24 @@ func sortedUIDs(alertRules []*models.AlertRule) []string {
 // updateRulesMetrics updates metrics for alert rules.
 // Keeps a state in the schedule between calls to delete metrics for rules that are no longer present.
 func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
-	rulesPerOrgFolderGroup := make(map[models.AlertRuleGroupWithFolderTitleKey]int64)       // AlertRuleGroupWithFolderTitle -> count
-	rulesPerOrgFolderGroupPaused := make(map[models.AlertRuleGroupWithFolderTitleKey]int64) // AlertRuleGroupWithFolderTitle -> count
+	rulesPerOrgFolderGroup := make(map[models.AlertRuleGroupKeyWithFolderTitle]int64)       // AlertRuleGroupWithFolderTitle -> count
+	rulesPerOrgFolderGroupPaused := make(map[models.AlertRuleGroupKeyWithFolderTitle]int64) // AlertRuleGroupWithFolderTitle -> count
 	orgsNfSettings := make(map[int64]int64)                                                 // orgID -> count
 	groupsPerOrg := make(map[int64]map[string]struct{})                                     // orgID -> set of groups
 
 	// Remember what orgs and alert groups we process in the current update metrics call,
 	// so we can delete metrics for orgs and groups that are no longer present in the new state.
-	updateMetricsForOrgsAndGroups := map[int64]map[models.AlertRuleGroupWithFolderTitleKey]struct{}{} // orgID -> set of AlertRuleGroupWithFolderTitle
+	updateMetricsForOrgsAndGroups := map[int64]map[models.AlertRuleGroupKeyWithFolderTitle]struct{}{} // orgID -> set of AlertRuleGroupWithFolderTitle
 
 	for _, rule := range alertRules {
-		key := models.AlertRuleGroupWithFolderTitleKey{
+		key := models.AlertRuleGroupKeyWithFolderTitle{
 			AlertRuleGroupKey: rule.GetGroupKey(),
 			FolderTitle:       sch.schedulableAlertRules.folderTitles[rule.GetFolderKey()],
 		}
 		rulesPerOrgFolderGroup[key]++
 
 		if _, ok := updateMetricsForOrgsAndGroups[rule.OrgID]; !ok {
-			updateMetricsForOrgsAndGroups[rule.OrgID] = make(map[models.AlertRuleGroupWithFolderTitleKey]struct{})
+			updateMetricsForOrgsAndGroups[rule.OrgID] = make(map[models.AlertRuleGroupKeyWithFolderTitle]struct{})
 		}
 		updateMetricsForOrgsAndGroups[rule.OrgID][key] = struct{}{}
 
@@ -110,12 +110,12 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 }
 
 // makeRuleGroupLabelValue returns a string that can be used as a label (rule_group) value for alert rule group metrics.
-func makeRuleGroupLabelValue(key models.AlertRuleGroupWithFolderTitleKey) string {
+func makeRuleGroupLabelValue(key models.AlertRuleGroupKeyWithFolderTitle) string {
 	return fmt.Sprintf("%s;%s", key.FolderTitle, key.AlertRuleGroupKey.RuleGroup)
 }
 
 // orgOrGroupDeleted returns true if the org or group is no longer present in the new update metrics state.
-func orgOrGroupDeleted(updateMetrics map[int64]map[models.AlertRuleGroupWithFolderTitleKey]struct{}, orgID int64, alertRuleGroupKey *models.AlertRuleGroupWithFolderTitleKey) bool {
+func orgOrGroupDeleted(updateMetrics map[int64]map[models.AlertRuleGroupKeyWithFolderTitle]struct{}, orgID int64, alertRuleGroupKey *models.AlertRuleGroupKeyWithFolderTitle) bool {
 	if _, ok := updateMetrics[orgID]; !ok {
 		return true
 	}
