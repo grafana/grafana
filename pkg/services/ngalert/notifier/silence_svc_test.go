@@ -92,7 +92,7 @@ func TestWithRuleMetadata(t *testing.T) {
 			assert.Equal(t, silence.Metadata, models.SilenceMetadata{RuleMetadata: metadata})
 		}
 	})
-	t.Run("Don't attach rule metadata if no access or global", func(t *testing.T) {
+	t.Run("Don't attach full rule metadata if no access or global", func(t *testing.T) {
 		ruleAuthz := fakes.FakeRuleService{}
 		ruleAuthz.HasAccessInFolderFunc = func(ctx context.Context, user identity.Requester, silence accesscontrol.Namespaced) (bool, error) {
 			return silence.GetNamespaceUID() == "folder1", nil
@@ -118,17 +118,18 @@ func TestWithRuleMetadata(t *testing.T) {
 		}
 
 		require.NoError(t, svc.WithRuleMetadata(context.Background(), user, silencesWithMetadata...))
-		for i, silence := range silencesWithMetadata {
-			var metadata *models.SilenceRuleMetadata
-			if silence.GetRuleUID() != nil && *silence.GetRuleUID() == "rule1" {
-				metadata = &models.SilenceRuleMetadata{
-					RuleUID:   rules[i].UID,
-					RuleTitle: rules[i].Title,
-					FolderUID: rules[i].NamespaceUID,
-				}
-			}
-			assert.Equal(t, silence.Metadata, models.SilenceMetadata{RuleMetadata: metadata})
-		}
+		assert.Equal(t, silencesWithMetadata[0].Metadata, models.SilenceMetadata{RuleMetadata: &models.SilenceRuleMetadata{ // Attach all metadata.
+			RuleUID:   rules[0].UID,
+			RuleTitle: rules[0].Title,
+			FolderUID: rules[0].NamespaceUID,
+		}})
+		assert.Equal(t, silencesWithMetadata[1].Metadata, models.SilenceMetadata{RuleMetadata: &models.SilenceRuleMetadata{ // Attach metadata with rule UID regardless of access.
+			RuleUID: rules[1].UID,
+		}})
+		assert.Equal(t, silencesWithMetadata[2].Metadata, models.SilenceMetadata{RuleMetadata: &models.SilenceRuleMetadata{ // Attach metadata with rule UID regardless of access.
+			RuleUID: rules[2].UID,
+		}})
+		assert.Equal(t, silencesWithMetadata[3].Metadata, models.SilenceMetadata{}) // Global silence, no rule metadata.
 	})
 	t.Run("Don't check same namespace access more than once", func(t *testing.T) {
 		ruleAuthz := fakes.FakeRuleService{}

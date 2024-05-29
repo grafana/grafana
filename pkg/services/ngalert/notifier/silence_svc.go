@@ -175,6 +175,9 @@ func (s *SilenceService) WithRuleMetadata(ctx context.Context, user identity.Req
 		ruleUID := silence.GetRuleUID()
 		if ruleUID != nil {
 			byRuleUID[*ruleUID] = append(byRuleUID[*ruleUID], silence)
+			silence.Metadata.RuleMetadata = &models.SilenceRuleMetadata{ // Attach metadata with rule UID regardless of access.
+				RuleUID: *ruleUID,
+			}
 		}
 	}
 
@@ -212,11 +215,11 @@ func (s *SilenceService) WithRuleMetadata(ctx context.Context, user identity.Req
 
 		if ruleSilences, ok := byRuleUID[rule.UID]; ok {
 			for _, sil := range ruleSilences {
-				sil.Metadata.RuleMetadata = &models.SilenceRuleMetadata{
-					RuleUID:   rule.UID,
-					RuleTitle: rule.Title,
-					FolderUID: rule.NamespaceUID,
+				if sil.Metadata.RuleMetadata == nil {
+					sil.Metadata.RuleMetadata = &models.SilenceRuleMetadata{}
 				}
+				sil.Metadata.RuleMetadata.RuleTitle = rule.Title
+				sil.Metadata.RuleMetadata.FolderUID = rule.NamespaceUID
 			}
 		}
 	}
