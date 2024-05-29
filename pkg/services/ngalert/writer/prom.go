@@ -2,7 +2,7 @@ package writer
 
 import (
 	"context"
-	"math"
+	"fmt"
 	"time"
 
 	"github.com/grafana/dataplane/sdata/numeric"
@@ -62,12 +62,15 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 
 	points := make([]Point, 0, len(col.Refs))
 	for _, ref := range col.Refs {
-		f := math.NaN()
-		if fp, empty, err := ref.NullableFloat64Value(); err != nil {
-			return nil, err
-		} else if !empty && fp != nil {
+		var f float64
+		if fp, empty, err := ref.NullableFloat64Value(); !empty && fp != nil {
 			f = *fp
+		} else if err != nil {
+			return nil, fmt.Errorf("unable to get float64 value: %w", err)
+		} else {
+			return nil, fmt.Errorf("unable to get metric value")
 		}
+
 		metric := Metric{
 			T: t.Unix(),
 			V: f,
