@@ -28,7 +28,7 @@ export function ScopesFiltersAdvancedSelectorSceneRenderer({
   return (
     <Drawer title="Select scopes" size="sm" onClose={model.close}>
       <ScopesTreeLevel
-        showQuery={false}
+        showQuery={true}
         nodes={basicNode.nodes}
         isExpanded={true}
         query={basicNode.query}
