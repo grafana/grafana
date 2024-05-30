@@ -2,7 +2,6 @@ import { lastValueFrom } from 'rxjs';
 
 import { DataQuery } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { PreferencesService } from '../services/PreferencesService';
@@ -10,7 +9,6 @@ import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../uti
 
 import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
 import { fromDTO } from './remoteStorageConverter';
-import { createRetentionPeriodBoundary } from './richHistoryLocalStorageUtils';
 
 export type RichHistoryRemoteStorageDTO = {
   uid: string;
@@ -135,10 +133,8 @@ function buildQueryParams(filters: RichHistorySearchFilters): string {
   }
   if (!filters.starred) {
     // TODO: Unify: remote storage from/to params are swapped comparing to frontend and local storage filters
-    const from = createRetentionPeriodBoundary(filters.to ?? 14, { isLastTs: true, tz: contextSrv.user?.timezone });
-    const to = createRetentionPeriodBoundary(filters.from ?? 0, { isLastTs: false, tz: contextSrv.user?.timezone });
-    params = params + `&to=${to}`;
-    params = params + `&from=${from}`;
+    params = params + `&to=${filters.to}`;
+    params = params + `&from=${filters.from}`;
   }
   params = params + `&limit=100`;
   params = params + `&page=${filters.page || 1}`;

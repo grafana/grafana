@@ -1,7 +1,6 @@
 import { find, isEqual, omit } from 'lodash';
 
 import { DataQuery, SelectableValue } from '@grafana/data';
-import { contextSrv } from 'app/core/core';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 
 import { RichHistoryQuery } from '../../types';
@@ -46,8 +45,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
       filters.sortOrder,
       filters.datasourceFilters,
       filters.search,
-      timeFilter,
-      contextSrv.user?.timezone
+      timeFilter
     );
     return { richHistory, total: richHistory.length };
   }
@@ -175,6 +173,7 @@ function updateRichHistory(
  */
 function cleanUp(richHistory: RichHistoryLocalStorageDTO[]): RichHistoryLocalStorageDTO[] {
   const retentionPeriod: number = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
+  // We don't care about timezones that much here.
   const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, { isLastTs: false });
 
   /* Keep only queries, that are within the selected retention period or that are starred.

@@ -1,6 +1,6 @@
 import { omit } from 'lodash';
 
-import { dateTime, dateTimeForTimeZone } from '@grafana/data';
+import { DateTime, dateTime, dateTimeForTimeZone } from '@grafana/data';
 
 import { RichHistoryQuery } from '../../types';
 import { SortOrder } from '../utils/richHistoryTypes';
@@ -16,21 +16,26 @@ export function filterAndSortQueries(
   sortOrder: SortOrder,
   listOfDatasourceFilters: string[],
   searchFilter: string,
-  // Number of days since now. So now - timeFilter[1] to now - timeFilter[0].
   timeFilter?: [number, number],
   timezone?: string
 ) {
   const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
   const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
   const filteredQueriesToBeSorted = timeFilter
-    ? filterQueriesByTime(filteredQueriesByDsAndSearchFilter, timeFilter, timezone)
+    ? filterQueriesByTime(filteredQueriesByDsAndSearchFilter, timeFilter)
     : filteredQueriesByDsAndSearchFilter;
 
   return sortQueries(filteredQueriesToBeSorted, sortOrder);
 }
 
-export const createRetentionPeriodBoundary = (days: number, options: { isLastTs: boolean; tz?: string }): number => {
-  const now = options.tz ? dateTimeForTimeZone(options.tz) : dateTime();
+export const createRetentionPeriodBoundary = (
+  days: number,
+  options: { isLastTs: boolean; tz?: string; now?: DateTime }
+): number => {
+  let now = options.now;
+  if (!now) {
+    now = options.tz ? dateTimeForTimeZone(options.tz) : dateTime();
+  }
   now.add(-days, 'd');
 
   /*
@@ -42,10 +47,8 @@ export const createRetentionPeriodBoundary = (days: number, options: { isLastTs:
   return boundary.valueOf();
 };
 
-function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number], tz?: string) {
-  const filter1 = createRetentionPeriodBoundary(timeFilter[0], { isLastTs: true, tz });
-  const filter2 = createRetentionPeriodBoundary(timeFilter[1], { isLastTs: false, tz });
-  return queries.filter((q) => q.createdAt < filter1 && q.createdAt > filter2);
+function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
+  return queries.filter((q) => q.createdAt > timeFilter[0] && q.createdAt < timeFilter[1]);
 }
 
 function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[]) {

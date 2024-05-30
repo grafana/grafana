@@ -24,12 +24,17 @@ export type RichHistorySearchFilters = {
   sortOrder: SortOrder;
   /** Names of data sources (not uids) - used by local and remote storage **/
   datasourceFilters: string[];
-
-  // From to correspond to days in the past from now. So from < to but the timeRange this represents is
-  // from `now - to` to `now - from`
+  // from and to represent number of days from now to filter by as the front end filtering is designed that way.
+  // so the resulting timerange from this will be [now - from, now - to].
   from?: number;
   to?: number;
-
   starred: boolean;
   page?: number;
+};
+
+export type RichHistorySearchBackendFilters = Omit<RichHistorySearchFilters, 'from' | 'to'> & {
+  // This seems pointless but it serves as a documentation because we convert the filters from meaning days from now to
+  // mean absolute timestamps for the history backends.
+  from?: number;
+  to?: number;
 };
