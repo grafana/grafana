@@ -30,7 +30,7 @@ jest.mock('@grafana/runtime', () => ({
       getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
     };
   },
-  getAppEvents: jest.fn().mockReturnValue({
+  getAppEvents: () => ({
     publish: jest.fn(),
   }),
 }));
