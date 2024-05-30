@@ -127,8 +127,14 @@ function countEslintErrors() {
           },
         },
         {
-          files: ['public/*', 'packages/grafana-ui/**/*.{ts,tsx}'],
-          excludedFiles: ['*.{test,spec}.{ts,tsx}', '**/__mocks__/**', '**/public/test/**', 'public/app/plugins/**'],
+          files: ['public/**', 'packages/grafana-ui/**/*.{ts,tsx}'],
+          excludedFiles: [
+            'public/app/plugins/**',
+            '*.story.tsx',
+            '*.{test,spec}.{ts,tsx}',
+            '**/__mocks__/**',
+            '**/public/test/**',
+          ],
           rules: {
             '@grafana/no-untranslated-strings': 'error',
           },
