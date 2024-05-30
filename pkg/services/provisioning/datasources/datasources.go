@@ -232,8 +232,12 @@ func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDele
 		getDsQuery := &datasources.GetDataSourceQuery{Name: ds.Name, OrgID: ds.OrgID}
 		existingDs, err := dc.dsService.GetDataSource(ctx, getDsQuery)
 
-		if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
-			return err
+		if err != nil {
+			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				continue
+			} else {
+				return err
+			}
 		}
 
 		// Skip publishing the event as the data source is not really deleted, it will be re-created during provisioning
