@@ -3,7 +3,7 @@ import { initialState, SearchStateManager } from '../search/state/SearchStateMan
 let trashStateManager: SearchStateManager;
 function getTrashStateManager() {
   if (!trashStateManager) {
-    trashStateManager = new SearchStateManager({ ...initialState, includePanels: false }); // TODO: removed deleted: true
+    trashStateManager = new SearchStateManager({ ...initialState, includePanels: false, deleted: true });
   }
 
   return trashStateManager;
