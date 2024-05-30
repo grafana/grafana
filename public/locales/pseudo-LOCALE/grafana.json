@@ -479,6 +479,7 @@
     "rich-history-card": {
       "add-comment-form": "Åđđ čőmmęŉŧ ƒőřm",
       "add-comment-tooltip": "Åđđ čőmmęŉŧ",
+      "add-to-library": "Åđđ ŧő ľįþřäřy",
       "cancel": "Cäŉčęľ",
       "confirm-delete": "Đęľęŧę",
       "copy-query-tooltip": "Cőpy qūęřy ŧő čľįpþőäřđ",
@@ -491,15 +492,12 @@
       "delete-query-tooltip": "Đęľęŧę qūęřy",
       "delete-starred-query-confirmation-text": "Åřę yőū şūřę yőū ŵäŉŧ ŧő pęřmäŉęŉŧľy đęľęŧę yőūř şŧäřřęđ qūęřy?",
       "edit-comment-tooltip": "Ēđįŧ čőmmęŉŧ",
-      "left-pane": "Ŀęƒŧ päŉę",
       "optional-description": "Åŉ őpŧįőŉäľ đęşčřįpŧįőŉ őƒ ŵĥäŧ ŧĥę qūęřy đőęş.",
       "query-comment-label": "Qūęřy čőmmęŉŧ",
+      "query-template-added": "Qūęřy ŧęmpľäŧę şūččęşşƒūľľy äđđęđ ŧő ŧĥę ľįþřäřy",
       "query-text-label": "Qūęřy ŧęχŧ",
-      "right-pane": "Ŗįģĥŧ päŉę",
-      "run-query-button": "Ŗūŉ qūęřy",
       "save-comment": "Ŝävę čőmmęŉŧ",
       "star-query-tooltip": "Ŝŧäř qūęřy",
-      "switch-datasource-button": "Ŝŵįŧčĥ đäŧä şőūřčę äŉđ řūŉ qūęřy",
       "unstar-query-tooltip": "Ůŉşŧäř qūęřy",
       "update-comment-form": "Ůpđäŧę čőmmęŉŧ ƒőřm"
     },
@@ -568,6 +566,12 @@
       "saving-failed": "Ŝävįŉģ řįčĥ ĥįşŧőřy ƒäįľęđ",
       "update-failed": "Ŗįčĥ Ħįşŧőřy ūpđäŧę ƒäįľęđ"
     },
+    "run-query": {
+      "left-pane": "Ŀęƒŧ päŉę",
+      "right-pane": "Ŗįģĥŧ päŉę",
+      "run-query-button": "Ŗūŉ qūęřy",
+      "switch-datasource-button": "Ŝŵįŧčĥ đäŧä şőūřčę äŉđ řūŉ qūęřy"
+    },
     "secondary-actions": {
       "query-add-button": "Åđđ qūęřy",
       "query-add-button-aria-label": "Åđđ qūęřy",
@@ -618,6 +622,9 @@
     "select": {
       "no-options-label": "Ńő őpŧįőŉş ƒőūŉđ",
       "placeholder": "Cĥőőşę"
+    },
+    "spinner": {
+      "aria-label": "Ŀőäđįŉģ"
     }
   },
   "graph": {
@@ -1171,6 +1178,10 @@
     "testing-and-synthetics": {
       "subtitle": "Øpŧįmįžę pęřƒőřmäŉčę ŵįŧĥ ĸ6 äŉđ Ŝyŉŧĥęŧįč Mőŉįŧőřįŉģ įŉşįģĥŧş",
       "title": "Ŧęşŧįŉģ & şyŉŧĥęŧįčş"
+    },
+    "trash": {
+      "subtitle": "Åŉy įŧęmş řęmäįŉįŉģ įŉ ŧĥę Ŧřäşĥ ƒőř mőřę ŧĥäŉ 30 đäyş ŵįľľ þę äūŧőmäŧįčäľľy đęľęŧęđ",
+      "title": "Ŧřäşĥ"
     },
     "upgrading": {
       "title": "Ŝŧäŧş äŉđ ľįčęŉşę"

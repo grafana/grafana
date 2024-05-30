@@ -474,6 +474,7 @@
     "rich-history-card": {
       "add-comment-form": "添加备注表单",
       "add-comment-tooltip": "添加备注",
+      "add-to-library": "",
       "cancel": "取消",
       "confirm-delete": "删除",
       "copy-query-tooltip": "将查询复制到剪贴板",
@@ -486,15 +487,12 @@
       "delete-query-tooltip": "删除查询",
       "delete-starred-query-confirmation-text": "您是否确定要永久删除您的星标查询？",
       "edit-comment-tooltip": "编辑备注",
-      "left-pane": "",
       "optional-description": "查询所完成操作的可选描述。",
       "query-comment-label": "查询备注",
+      "query-template-added": "",
       "query-text-label": "查询文本",
-      "right-pane": "",
-      "run-query-button": "运行查询",
       "save-comment": "保存备注",
       "star-query-tooltip": "星标查询",
-      "switch-datasource-button": "切换数据源并运行查询",
       "unstar-query-tooltip": "取消星标查询",
       "update-comment-form": "更新备注表单"
     },
@@ -563,6 +561,12 @@
       "saving-failed": "保存 Rich History 失败",
       "update-failed": "Rich History 更新失败"
     },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
+    },
     "secondary-actions": {
       "query-add-button": "添加查询",
       "query-add-button-aria-label": "添加查询",
@@ -613,6 +617,9 @@
     "select": {
       "no-options-label": "未找到选项",
       "placeholder": "选择"
+    },
+    "spinner": {
+      "aria-label": ""
     }
   },
   "graph": {
@@ -1165,6 +1172,10 @@
     "testing-and-synthetics": {
       "subtitle": "使用 k6 和 Synthetic Monitoring 洞察优化性能。",
       "title": "测试与合成"
+    },
+    "trash": {
+      "subtitle": "",
+      "title": ""
     },
     "upgrading": {
       "title": "统计信息和许可证"

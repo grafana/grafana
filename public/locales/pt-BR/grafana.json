@@ -479,6 +479,7 @@
     "rich-history-card": {
       "add-comment-form": "Adicionar formulário de comentários",
       "add-comment-tooltip": "Adicionar comentário",
+      "add-to-library": "",
       "cancel": "Cancelar",
       "confirm-delete": "Excluir",
       "copy-query-tooltip": "Copiar consulta para a área de transferência",
@@ -491,15 +492,12 @@
       "delete-query-tooltip": "Excluir consulta",
       "delete-starred-query-confirmation-text": "Tem certeza de que deseja excluir permanentemente sua consulta favorita?",
       "edit-comment-tooltip": "Editar comentário",
-      "left-pane": "",
       "optional-description": "Uma descrição opcional do que a consulta faz.",
       "query-comment-label": "Comentário de consulta",
+      "query-template-added": "",
       "query-text-label": "Texto da consulta",
-      "right-pane": "",
-      "run-query-button": "Executar consulta",
       "save-comment": "Salvar comentário",
       "star-query-tooltip": "Favoritar consulta",
-      "switch-datasource-button": "Alternar fonte de dados e executar consulta",
       "unstar-query-tooltip": "Remover consulta dos favoritos",
       "update-comment-form": "Atualizar formulário de comentários"
     },
@@ -568,6 +566,12 @@
       "saving-failed": "Falha ao salvar histórico rico",
       "update-failed": "A atualização do histórico rico falhou"
     },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
+    },
     "secondary-actions": {
       "query-add-button": "Adicionar consulta",
       "query-add-button-aria-label": "Adicionar consulta",
@@ -618,6 +622,9 @@
     "select": {
       "no-options-label": "Nenhuma opção encontrada",
       "placeholder": "Escolher"
+    },
+    "spinner": {
+      "aria-label": ""
     }
   },
   "graph": {
@@ -1171,6 +1178,10 @@
     "testing-and-synthetics": {
       "subtitle": "Otimize o desempenho com visões k6 e monitorização sintética",
       "title": "Teste e sintética"
+    },
+    "trash": {
+      "subtitle": "",
+      "title": ""
     },
     "upgrading": {
       "title": "Estatísticas e licença"
