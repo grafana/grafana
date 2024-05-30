@@ -43,7 +43,7 @@ jobs:
           metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
           skip_pr: true
           skip_community_post: true
-      - name: Update version in package.json
+    # - name: Update version in package.json
       - name: Create PR without backports
         if: "${{ github.event.inputs.backport == '' }}"
         run: gh pr create --dry-run=${{ inputs.dry_run }} -H "release/${{ inputs.version }}" -B "${{ inputs.target }}
