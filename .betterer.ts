@@ -126,6 +126,19 @@ function countEslintErrors() {
             'no-barrel-files/no-barrel-files': 'error',
           },
         },
+        {
+          files: ['public/**/*.tsx', 'packages/grafana-ui/**/*.tsx'],
+          excludedFiles: [
+            'public/app/plugins/**',
+            '*.story.tsx',
+            '*.{test,spec}.{ts,tsx}',
+            '**/__mocks__/**',
+            'public/test/**',
+          ],
+          rules: {
+            '@grafana/no-untranslated-strings': 'error',
+          },
+        },
       ],
     };
 
