@@ -12,6 +12,14 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+type DataSourceService interface {
+	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
+	GetPrunableProvisionedDataSources(ctx context.Context) ([]*datasources.DataSource, error)
+	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
+	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
+	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
+}
+
 type CorrelationsStore interface {
 	DeleteCorrelationsByTargetUID(ctx context.Context, cmd correlations.DeleteCorrelationsByTargetUIDCommand) error
 	DeleteCorrelationsBySourceUID(ctx context.Context, cmd correlations.DeleteCorrelationsBySourceUIDCommand) error
@@ -27,7 +35,7 @@ var (
 
 // Provision scans a directory for provisioning config files
 // and provisions the datasource in those files.
-func Provision(ctx context.Context, configDirectory string, dsService datasources.DataSourceService, correlationsStore CorrelationsStore, orgService org.Service) error {
+func Provision(ctx context.Context, configDirectory string, dsService DataSourceService, correlationsStore CorrelationsStore, orgService org.Service) error {
 	dc := newDatasourceProvisioner(log.New("provisioning.datasources"), dsService, correlationsStore, orgService)
 	return dc.applyChanges(ctx, configDirectory)
 }
@@ -37,11 +45,11 @@ func Provision(ctx context.Context, configDirectory string, dsService datasource
 type DatasourceProvisioner struct {
 	log               log.Logger
 	cfgProvider       *configReader
-	dsService         datasources.DataSourceService
+	dsService         DataSourceService
 	correlationsStore CorrelationsStore
 }
 
-func newDatasourceProvisioner(log log.Logger, dsService datasources.DataSourceService, correlationsStore CorrelationsStore, orgService org.Service) DatasourceProvisioner {
+func newDatasourceProvisioner(log log.Logger, dsService DataSourceService, correlationsStore CorrelationsStore, orgService org.Service) DatasourceProvisioner {
 	return DatasourceProvisioner{
 		log:               log,
 		cfgProvider:       &configReader{log: log, orgService: orgService},
