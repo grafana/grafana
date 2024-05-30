@@ -132,7 +132,6 @@ function buildQueryParams(filters: RichHistorySearchFilters): string {
     params = params + `&sort=${filters.sortOrder === SortOrder.Ascending ? 'time-asc' : 'time-desc'}`;
   }
   if (!filters.starred) {
-    // TODO: Unify: remote storage from/to params are swapped comparing to frontend and local storage filters
     params = params + `&to=${filters.to}`;
     params = params + `&from=${filters.from}`;
   }

@@ -16,8 +16,7 @@ export function filterAndSortQueries(
   sortOrder: SortOrder,
   listOfDatasourceFilters: string[],
   searchFilter: string,
-  timeFilter?: [number, number],
-  timezone?: string
+  timeFilter?: [number, number]
 ) {
   const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
   const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
