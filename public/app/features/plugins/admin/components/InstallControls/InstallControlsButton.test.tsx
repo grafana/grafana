@@ -252,7 +252,7 @@ describe('InstallControlsButton', () => {
           <InstallControlsButton plugin={{ ...plugin, isManaged: true }} pluginStatus={PluginStatus.UPDATE} />
         </TestProvider>
       );
-      expect(screen.getByText('Update')).not.toBeVisible();
+      expect(screen.queryByText('Update')).not.toBeInTheDocument()
     });
   });
 });

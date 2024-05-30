@@ -281,6 +281,7 @@ describe('Plugins/Helpers', () => {
         isInstalled: true,
         isPublished: false,
         isDeprecated: false,
+        isManaged: false,
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
         popularity: 0,

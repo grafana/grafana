@@ -184,7 +184,6 @@ export type LocalPlugin = WithAccessControlMetadata & {
   type: PluginType;
   dependencies: PluginDependencies;
   angularDetected: boolean;
-  isManaged: boolean;
   iam?: IdentityAccessManagement;
 };
 

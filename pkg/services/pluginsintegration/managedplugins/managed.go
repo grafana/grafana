@@ -1,7 +1,9 @@
 package managedplugins
 
+import "context"
+
 type Manager interface {
-	Managed(pluginID string) bool
+	ManagedPlugins(ctx context.Context) []string
 }
 
 var _ Manager = (*Noop)(nil)
@@ -12,6 +14,6 @@ func NewNoop() *Noop {
 	return &Noop{}
 }
 
-func (s *Noop) Managed(_ string) bool {
-	return false
+func (s *Noop) ManagedPlugins(_ context.Context) []string {
+	return nil
 }

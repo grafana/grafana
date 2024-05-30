@@ -51,7 +51,6 @@ type PluginListItem struct {
 	AngularDetected bool                    `json:"angularDetected"`
 	IAM             *pfs.IAM                `json:"iam,omitempty"`
 	APIVersion      string                  `json:"apiVersion"`
-	Managed         bool                    `json:"isManaged,omitempty"`
 }
 
 type PluginList []PluginListItem

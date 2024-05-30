@@ -263,6 +263,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		PluginAdminEnabled:               hs.Cfg.PluginAdminEnabled,
 		PluginAdminExternalManageEnabled: hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
 		PluginCatalogHiddenPlugins:       hs.Cfg.PluginCatalogHiddenPlugins,
+		ManagedPlugins:                   hs.managedPluginsService.ManagedPlugins(c.Req.Context()),
 		ExpressionsEnabled:               hs.Cfg.ExpressionsEnabled,
 		AwsAllowedAuthProviders:          hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:             hs.Cfg.AWSAssumeRoleEnabled,
