@@ -45,6 +45,7 @@ import { constraintViewable, dimensionViewable, settingsViewable } from './ables
 import { ElementState } from './element';
 import { FrameState } from './frame';
 import { RootElement } from './root';
+import { findElementByTarget } from './sceneElementManagement';
 
 export interface SelectionParams {
   targets: Array<HTMLElement | SVGElement>;
@@ -232,26 +233,6 @@ export class Scene {
     }
   };
 
-  findElementByTarget = (target: Element): ElementState | undefined => {
-    // We will probably want to add memoization to this as we are calling on drag / resize
-
-    const stack = [...this.root.elements];
-    while (stack.length > 0) {
-      const currentElement = stack.shift();
-
-      if (currentElement && currentElement.div && currentElement.div === target) {
-        return currentElement;
-      }
-
-      const nestedElements = currentElement instanceof FrameState ? currentElement.elements : [];
-      for (const nestedElement of nestedElements) {
-        stack.unshift(nestedElement);
-      }
-    }
-
-    return undefined;
-  };
-
   setNonTargetPointerEvents = (target: Element, disablePointerEvents: boolean) => {
     const stack = [...this.root.elements];
     while (stack.length > 0) {
@@ -295,7 +276,7 @@ export class Scene {
     if (selection.frame) {
       this.selection.next([selection.frame]);
     } else {
-      const s = selection.targets.map((t) => this.findElementByTarget(t)!);
+      const s = selection.targets.map((t) => findElementByTarget(t, this.root.elements)!);
       this.selection.next(s);
     }
   };
@@ -382,7 +363,7 @@ export class Scene {
         this.disableCustomables();
       })
       .on('rotate', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
+        const targetedElement = findElementByTarget(event.target, this.root.elements);
 
         if (targetedElement) {
           targetedElement.applyRotate(event);
@@ -390,7 +371,7 @@ export class Scene {
       })
       .on('rotateGroup', (e) => {
         for (let event of e.events) {
-          const targetedElement = this.findElementByTarget(event.target);
+          const targetedElement = findElementByTarget(event.target, this.root.elements);
           if (targetedElement) {
             targetedElement.applyRotate(event);
           }
@@ -402,7 +383,7 @@ export class Scene {
         this.moved.next(Date.now());
       })
       .on('click', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
+        const targetedElement = findElementByTarget(event.target, this.root.elements);
         let elementSupportsEditing = false;
         if (targetedElement) {
           elementSupportsEditing = targetedElement.item.hasEditMode ?? false;
@@ -441,7 +422,7 @@ export class Scene {
         }
       })
       .on('drag', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
+        const targetedElement = findElementByTarget(event.target, this.root.elements);
         if (targetedElement) {
           targetedElement.applyDrag(event);
 
@@ -453,7 +434,7 @@ export class Scene {
       .on('dragGroup', (e) => {
         let needsUpdate = false;
         for (let event of e.events) {
-          const targetedElement = this.findElementByTarget(event.target);
+          const targetedElement = findElementByTarget(event.target, this.root.elements);
           if (targetedElement) {
             targetedElement.applyDrag(event);
             if (!needsUpdate) {
@@ -468,7 +449,7 @@ export class Scene {
       })
       .on('dragGroupEnd', (e) => {
         e.events.forEach((event) => {
-          const targetedElement = this.findElementByTarget(event.target);
+          const targetedElement = findElementByTarget(event.target, this.root.elements);
           if (targetedElement) {
             if (targetedElement) {
               targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
@@ -485,7 +466,7 @@ export class Scene {
         this.ignoreDataUpdate = false;
       })
       .on('dragEnd', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
+        const targetedElement = findElementByTarget(event.target, this.root.elements);
         if (targetedElement) {
           targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
         }
@@ -500,7 +481,7 @@ export class Scene {
         }
       })
       .on('resizeStart', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
+        const targetedElement = findElementByTarget(event.target, this.root.elements);
 
         if (targetedElement) {
           // Remove the selected element from the snappable guidelines
@@ -531,7 +512,7 @@ export class Scene {
         }
       })
       .on('resize', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
+        const targetedElement = findElementByTarget(event.target, this.root.elements);
         if (targetedElement) {
           targetedElement.applyResize(event, this.scale);
 
@@ -544,7 +525,7 @@ export class Scene {
       .on('resizeGroup', (e) => {
         let needsUpdate = false;
         for (let event of e.events) {
-          const targetedElement = this.findElementByTarget(event.target);
+          const targetedElement = findElementByTarget(event.target, this.root.elements);
           if (targetedElement) {
             targetedElement.applyResize(event);
 
@@ -561,7 +542,7 @@ export class Scene {
         this.moved.next(Date.now()); // TODO only on end
       })
       .on('resizeEnd', (event) => {
-        const targetedElement = this.findElementByTarget(event.target);
+        const targetedElement = findElementByTarget(event.target, this.root.elements);
 
         if (targetedElement) {
           if (targetedElement.tempConstraint) {

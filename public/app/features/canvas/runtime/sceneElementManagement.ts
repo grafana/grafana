@@ -8,6 +8,26 @@ import { ElementState } from './element';
 import { FrameState } from './frame';
 import { Scene } from './scene';
 
+export const findElementByTarget = (target: Element, sceneElements: ElementState[]): ElementState | undefined => {
+  // We will probably want to add memoization to this as we are calling on drag / resize
+
+  const stack = [...sceneElements];
+  while (stack.length > 0) {
+    const currentElement = stack.shift();
+
+    if (currentElement && currentElement.div && currentElement.div === target) {
+      return currentElement;
+    }
+
+    const nestedElements = currentElement instanceof FrameState ? currentElement.elements : [];
+    for (const nestedElement of nestedElements) {
+      stack.unshift(nestedElement);
+    }
+  }
+
+  return undefined;
+};
+
 // Nest selected elements into a frame object
 export const frameSelection = (scene: Scene) => {
   scene.selection.pipe(first()).subscribe((currentSelectedElements) => {
