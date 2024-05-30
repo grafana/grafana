@@ -55,6 +55,8 @@ composableKinds: PanelCfg: {
 
 					pointStrokeWidth?: int32 & >=0
 
+					fillOpacity?: uint32 & <=100 | *50
+
 					lineWidth?: int32 & >=0
 					lineStyle?: common.LineStyle
 				} @cuetsy(kind="interface",TSVeneer="type")

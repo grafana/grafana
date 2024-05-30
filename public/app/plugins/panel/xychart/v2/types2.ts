@@ -51,6 +51,7 @@ export interface XYSeries {
   showPoints: common.VisibilityMode;
   pointShape: PointShape;
   pointStrokeWidth: number;
+  fillOpacity: number;
 
   showLine: boolean;
   lineWidth: number;

@@ -2,6 +2,7 @@ import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
 import {
+  FALLBACK_COLOR,
   Field,
   FieldType,
   formattedValueToString,
@@ -32,7 +33,6 @@ interface DrawBubblesOpts {
     };
     color: {
       values: (u: uPlot, seriesIdx: number) => string[];
-      alpha: number;
     };
   };
 }
@@ -84,7 +84,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
           u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
           u.ctx.clip();
 
-          let pointAlpha = opts.disp.color.alpha;
+          let pointAlpha = scatterInfo.fillOpacity / 100;
 
           u.ctx.fillStyle = alpha((series.fill as any)(), pointAlpha);
           u.ctx.strokeStyle = alpha((series.stroke as any)(), 1);
@@ -96,10 +96,10 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
           let yKey = scaleY.key!;
 
           //const colorMode = getFieldColorModeForField(field); // isByValue
-          const pointHints = { max: undefined, fixed: 5 };
+          const pointSize = scatterInfo.y.field.config.custom.pointSize;
           const colorByValue = scatterInfo.color.field != null; // && colorMode.isByValue;
 
-          let maxSize = (pointHints.max ?? pointHints.fixed) * pxRatio;
+          let maxSize = (pointSize.max ?? pointSize.fixed) * pxRatio;
 
           // todo: this depends on direction & orientation
           // todo: calc once per redraw, not per path
@@ -112,11 +112,11 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
           // let pointColors = opts.disp.color.values(u, seriesIdx);
           let pointColors = dispColors[seriesIdx - 1].values; // idxs
           let pointPalette = dispColors[seriesIdx - 1].index as Array<CanvasRenderingContext2D['fillStyle']>;
+          let paletteHasAlpha = dispColors[seriesIdx - 1].hasAlpha;
 
           let isSquare = scatterInfo.pointShape === PointShape.Square;
 
           let linePath: Path2D | null = showLine ? new Path2D() : null;
-          // let pointsPath: Path2D | null = showPoints ? new Path2D() : null;
 
           let curColorIdx = -1;
 
@@ -137,8 +137,8 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
                 if (colorByValue) {
                   if (pointColors[i] !== curColorIdx) {
                     curColorIdx = pointColors[i];
-                    let c = pointPalette[curColorIdx];
-                    u.ctx.fillStyle = c;
+                    let c = curColorIdx === -1 ? FALLBACK_COLOR : pointPalette[curColorIdx];
+                    u.ctx.fillStyle = paletteHasAlpha ? c : alpha(c as string, pointAlpha);
                     u.ctx.strokeStyle = alpha(c as string, 1);
                   }
                 }
@@ -147,7 +147,9 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
                   let x = Math.round(cx - size / 2);
                   let y = Math.round(cy - size / 2);
 
-                  u.ctx.fillRect(x, y, size, size);
+                  if (colorByValue || pointAlpha > 0) {
+                    u.ctx.fillRect(x, y, size, size);
+                  }
 
                   if (strokeWidth > 0) {
                     u.ctx.strokeRect(x, y, size, size);
@@ -156,7 +158,9 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
                   u.ctx.beginPath();
                   u.ctx.arc(cx, cy, size / 2, 0, deg360);
 
-                  u.ctx.fill();
+                  if (colorByValue || pointAlpha > 0) {
+                    u.ctx.fill();
+                  }
 
                   if (strokeWidth > 0) {
                     u.ctx.stroke();
@@ -216,7 +220,6 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
         values: (u, seriesIdx) => {
           return u.data[seriesIdx][3] as any;
         },
-        alpha: 0.5,
       },
     },
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
@@ -431,12 +434,14 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
       getOne: () => -1,
       // cache for renderer, refreshed in prepData()
       values: [],
+      hasAlpha: false,
     };
 
     const f = s.color.field;
 
     if (f != null) {
       Object.assign(cfg, fieldValueColors(f, theme));
+      cfg.hasAlpha = cfg.index.some((v) => !(v as string).endsWith('ff'));
     }
 
     return cfg;
@@ -552,6 +557,7 @@ interface FieldColorValues {
 }
 interface FieldColorValuesWithCache extends FieldColorValues {
   values: number[];
+  hasAlpha: boolean;
 }
 type GetAllValues = (values: unknown[], min?: number, max?: number) => number[];
 type GetOneValue = (value: unknown, min?: number, max?: number) => number;
@@ -651,7 +657,7 @@ function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
 
     for (let i = 0; i < index.length; i++) {
       let pct = i / (index.length - 1);
-      index[i] = calc(pct, pct);
+      index[i] = getHex8Color(calc(pct, pct), theme);
     }
 
     getAll = (vals, min, max) => valuesToFills(vals as number[], index as string[], min!, max!);

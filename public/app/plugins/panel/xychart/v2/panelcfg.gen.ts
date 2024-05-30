@@ -47,6 +47,7 @@ export const defaultMatcherConfig: Partial<MatcherConfig> = {
 };
 
 export interface FieldConfig extends common.HideableFieldConfig, common.AxisConfig {
+  fillOpacity?: number;
   lineStyle?: common.LineStyle;
   lineWidth?: number;
   pointShape?: PointShape;
@@ -60,6 +61,7 @@ export interface FieldConfig extends common.HideableFieldConfig, common.AxisConf
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
+  fillOpacity: 50,
   show: XYShowMode.Points,
 };
 

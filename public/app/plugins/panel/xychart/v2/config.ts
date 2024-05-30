@@ -126,17 +126,17 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
           },
           showIf: (c) => c.show !== XYShowMode.Lines,
         })
-        // .addSliderInput({
-        //   path: 'fillOpacity',
-        //   name: 'Fill opacity',
-        //   defaultValue: 0.4, // defaultFieldConfig.fillOpacity,
-        //   settings: {
-        //     min: 0, // hidden?  or just outlines?
-        //     max: 1,
-        //     step: 0.05,
-        //   },
-        //   showIf: (c) => c.show !== ScatterShow.Lines,
-        // })
+        .addSliderInput({
+          path: 'fillOpacity',
+          name: 'Fill opacity',
+          defaultValue: 50,
+          settings: {
+            min: 0,
+            max: 100,
+            step: 1,
+          },
+          showIf: (c) => c.show !== XYShowMode.Lines,
+        })
         .addCustomEditor<void, LineStyle>({
           id: 'lineStyle',
           path: 'lineStyle',
