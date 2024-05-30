@@ -4,13 +4,13 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, Input, useStyles2 } from '@grafana/ui';
+import { IconButton } from '@grafana/ui/';
 
-import { NodesMap } from './types';
+import { Node } from './types';
 
 export interface ScopesTreeLevelProps {
   showQuery: boolean;
-  nodes: NodesMap;
-  isExpanded: boolean;
+  nodes: Node[];
   query: string;
   path: string[];
   loadingNodeId: string | undefined;
@@ -22,7 +22,6 @@ export interface ScopesTreeLevelProps {
 export function ScopesTreeLevel({
   showQuery,
   nodes,
-  isExpanded = true,
   query,
   path,
   loadingNodeId,
@@ -32,13 +31,8 @@ export function ScopesTreeLevel({
 }: ScopesTreeLevelProps) {
   const styles = useStyles2(getStyles);
 
-  if (!isExpanded) {
-    return null;
-  }
-
-  const isLoading = !!loadingNodeId;
-
-  const anyChildExpanded = Object.values(nodes).some((node) => node.isExpanded);
+  const anyChildExpanded = nodes.some(({ isExpanded }) => isExpanded);
+  const anyChildSelected = nodes.some(({ item: { linkId } }) => linkId && scopeNames.includes(linkId!));
 
   return (
     <>
@@ -46,7 +40,7 @@ export function ScopesTreeLevel({
         <Input
           prefix={<Icon name="filter" />}
           className={styles.searchInput}
-          disabled={isLoading}
+          disabled={!!loadingNodeId}
           placeholder="Filter"
           defaultValue={query}
           onChange={debounce((evt) => {
@@ -56,16 +50,7 @@ export function ScopesTreeLevel({
       )}
 
       <div role="tree">
-        {Object.values(nodes).map((node) => {
-          const {
-            item: { nodeId, linkId },
-            isExpandable,
-            isSelectable,
-            nodes,
-            isExpanded,
-            query,
-          } = node;
-
+        {nodes.map(({ item: { nodeId, linkId, title }, isExpandable, isSelectable, nodes, isExpanded, query }) => {
           const isSelected = isSelectable && scopeNames.includes(linkId!);
 
           if (anyChildExpanded && !isExpanded && !isSelected) {
@@ -76,92 +61,44 @@ export function ScopesTreeLevel({
 
           return (
             <div key={nodeId} role="treeitem" aria-selected={isExpanded}>
-              <div role="button" tabIndex={0} className={styles.itemTitle}>
-                {isSelectable ? (
+              <div className={styles.itemTitle}>
+                {isSelectable && !isExpanded ? (
                   <Checkbox
                     checked={isSelected}
-                    disabled={isLoading}
-                    onChange={(evt) => {
-                      evt.stopPropagation();
-
-                      if (isLoading) {
-                        return;
-                      }
-
-                      if (linkId) {
-                        onNodeSelectToggle(nodePath);
-                      }
+                    disabled={!!loadingNodeId}
+                    onChange={() => {
+                      onNodeSelectToggle(nodePath);
                     }}
                   />
                 ) : null}
 
                 {isExpandable && (
-                  <Icon
-                    className={styles.itemIcon}
-                    name={!isExpanded ? 'folder' : loadingNodeId === nodeId ? 'spinner' : 'folder-open'}
-                    onClick={(evt) => {
-                      evt.stopPropagation();
-
-                      if (isLoading) {
-                        return;
-                      }
-
-                      if (isExpandable) {
-                        onNodeUpdate(nodePath, !isExpanded, query);
-                      } else if (linkId) {
-                        onNodeSelectToggle(nodePath);
-                      }
+                  <IconButton
+                    aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                    disabled={anyChildSelected || !!loadingNodeId}
+                    name={!isExpanded ? 'angle-right' : loadingNodeId === nodeId ? 'spinner' : 'angle-down'}
+                    onClick={() => {
+                      onNodeUpdate(nodePath, !isExpanded, query);
                     }}
                   />
                 )}
 
-                <span
-                  role="button"
-                  tabIndex={0}
-                  className={styles.itemText}
-                  onClick={(evt) => {
-                    evt.stopPropagation();
-
-                    if (isLoading) {
-                      return;
-                    }
-
-                    if (isExpandable) {
-                      onNodeUpdate(nodePath, !isExpanded, query);
-                    } else if (linkId) {
-                      onNodeSelectToggle(nodePath);
-                    }
-                  }}
-                  onKeyDown={(evt) => {
-                    evt.stopPropagation();
-
-                    if (isLoading) {
-                      return;
-                    }
-
-                    if (linkId && evt.key === 'Space') {
-                      onNodeSelectToggle(nodePath);
-                    } else if (isExpandable && evt.key === 'Enter') {
-                      onNodeUpdate(nodePath, !isExpanded, query);
-                    }
-                  }}
-                >
-                  {node.item.title}
-                </span>
+                <span>{title}</span>
               </div>
 
               <div className={styles.itemChildren}>
-                <ScopesTreeLevel
-                  showQuery={showQuery}
-                  nodes={nodes}
-                  isExpanded={isExpanded}
-                  query={query}
-                  path={nodePath}
-                  loadingNodeId={loadingNodeId}
-                  scopeNames={scopeNames}
-                  onNodeUpdate={onNodeUpdate}
-                  onNodeSelectToggle={onNodeSelectToggle}
-                />
+                {isExpanded && (
+                  <ScopesTreeLevel
+                    showQuery={showQuery}
+                    nodes={Object.values(nodes)}
+                    query={query}
+                    path={nodePath}
+                    loadingNodeId={loadingNodeId}
+                    scopeNames={scopeNames}
+                    onNodeUpdate={onNodeUpdate}
+                    onNodeSelectToggle={onNodeSelectToggle}
+                  />
+                )}
               </div>
             </div>
           );
@@ -178,18 +115,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     itemTitle: css({
       alignItems: 'center',
-      cursor: 'pointer',
       display: 'flex',
       gap: theme.spacing(1),
       fontSize: theme.typography.pxToRem(14),
       lineHeight: theme.typography.pxToRem(22),
       padding: theme.spacing(0.5, 0),
-    }),
-    itemIcon: css({
-      cursor: 'pointer',
-    }),
-    itemText: css({
-      cursor: 'pointer',
     }),
     itemChildren: css({
       paddingLeft: theme.spacing(4),

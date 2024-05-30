@@ -43,8 +43,7 @@ export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<Scopes
             ) : (
               <ScopesTreeLevel
                 showQuery={false}
-                nodes={nodes}
-                isExpanded={true}
+                nodes={Object.values(nodes)}
                 query={query}
                 path={['']}
                 loadingNodeId={loadingNodeId}
