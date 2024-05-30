@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 import { AppEvents } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import configCore from 'app/core/config';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -130,11 +130,11 @@ export function InstallControlsButton({
           onConfirm={onUninstall}
           onDismiss={hideConfirmModal}
         />
-        <HorizontalGroup align="flex-start" width="auto" height="auto">
+        <Stack alignItems="flex-start" width="auto" height="auto">
           <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal}>
             {uninstallBtnText}
           </Button>
-        </HorizontalGroup>
+        </Stack>
       </>
     );
   }
@@ -151,14 +151,14 @@ export function InstallControlsButton({
         : isInstalling;
 
     return (
-      <HorizontalGroup align="flex-start" width="auto" height="auto">
+      <Stack alignItems="flex-start" width="auto" height="auto">
         <Button disabled={disableUpdate} onClick={onUpdate}>
           {isInstalling ? 'Updating' : 'Update'}
         </Button>
         <Button variant="destructive" disabled={isUninstalling} onClick={onUninstall}>
           {uninstallBtnText}
         </Button>
-      </HorizontalGroup>
+      </Stack>
     );
   }
   const shouldDisable = isInstalling || errorInstalling || (!config.angularSupportEnabled && plugin.angularDetected);
