@@ -163,6 +163,7 @@ export const availableIconsIndex = {
   k6: true,
   'key-skeleton-alt': true,
   keyboard: true,
+  kubernetes: true,
   'layer-group': true,
   'layers-alt': true,
   'library-panel': true,

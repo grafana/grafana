@@ -94,6 +94,7 @@ var (
 			Description:    "Correlations page",
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaExploreSquad,
+			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 		},
 		{
@@ -204,14 +205,6 @@ var (
 			Stage:       FeatureStageDeprecated,
 			Expression:  "true", // enabled by default
 			Owner:       grafanaFrontendPlatformSquad,
-		},
-		{
-			Name:         "returnToPrevious",
-			Description:  "Enables the return to previous context functionality",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:              "grpcServer",
@@ -1286,7 +1279,6 @@ var (
 			Description:       "Enables deleted dashboard restore feature",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaFrontendPlatformSquad,
-			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
 		{
@@ -1304,6 +1296,21 @@ var (
 			AllowSelfServe:    false,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:              "preserveDashboardStateWhenNavigating",
+			Description:       "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:         "alertingCentralAlertHistory",
+			Description:  "Enables the new central alert history.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
 		},
 	}
 )

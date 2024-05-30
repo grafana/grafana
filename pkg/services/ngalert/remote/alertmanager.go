@@ -22,6 +22,8 @@ import (
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	alertingNotify "github.com/grafana/alerting/notify"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -29,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
-	"gopkg.in/yaml.v3"
 )
 
 type stateStore interface {
@@ -124,7 +125,10 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		return c.Do(req.WithContext(ctx))
 	}
 	senderLogger := log.New("ngalert.sender.external-alertmanager")
-	s := sender.NewExternalAlertmanagerSender(senderLogger, prometheus.NewRegistry(), sender.WithDoFunc(doFunc))
+	s, err := sender.NewExternalAlertmanagerSender(senderLogger, prometheus.NewRegistry(), sender.WithDoFunc(doFunc))
+	if err != nil {
+		return nil, err
+	}
 	s.Run()
 	err = s.ApplyConfig(cfg.OrgID, 0, []sender.ExternalAMcfg{{URL: cfg.URL + "/alertmanager"}})
 	if err != nil {
