@@ -594,24 +594,31 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		return dashboards.ErrDashboardNotFound
 	}
 
-	deletes := []string{
-		"DELETE FROM dashboard_tag WHERE dashboard_id = ? ",
-		"DELETE FROM star WHERE dashboard_id = ? ",
-		"DELETE FROM dashboard WHERE id = ?",
-		"DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?",
-		"DELETE FROM dashboard_version WHERE dashboard_id = ?",
-		"DELETE FROM dashboard_provisioning WHERE dashboard_id = ?",
-		"DELETE FROM dashboard_acl WHERE dashboard_id = ?",
+	type statement struct {
+		SQL  string
+		args []any
+	}
+
+	sqlStatements := []statement{
+		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_id = ? ", args: []any{dashboard.ID}},
+		{SQL: "DELETE FROM star WHERE dashboard_id = ? ", args: []any{dashboard.ID}},
+		{SQL: "DELETE FROM dashboard WHERE id = ?", args: []any{dashboard.ID}},
+		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{dashboard.ID}},
+		{SQL: "DELETE FROM dashboard_version WHERE dashboard_id = ?", args: []any{dashboard.ID}},
+		{SQL: "DELETE FROM dashboard_provisioning WHERE dashboard_id = ?", args: []any{dashboard.ID}},
+		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{dashboard.ID}},
 	}
 
 	if dashboard.IsFolder {
-		// if this is a soft delete, we need to skip children deletion.
-		if !d.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) && !cmd.SkipSoftDeletedDashboards {
-			deletes = append(deletes, "DELETE FROM dashboard WHERE folder_id = ? AND deleted IS NULL")
+		if !d.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+			sqlStatements = append(sqlStatements, statement{SQL: "DELETE FROM dashboard WHERE org_id = ? AND folder_uid = ? AND is_folder = ? AND deleted IS NULL", args: []any{dashboard.OrgID, dashboard.UID, d.store.GetDialect().BooleanStr(false)}})
 
 			if err := d.deleteChildrenDashboardAssociations(sess, &dashboard); err != nil {
 				return err
 			}
+		} else {
+			// soft delete all dashboards in the folder
+			sqlStatements = append(sqlStatements, statement{SQL: "UPDATE dashboard SET deleted = ? WHERE org_id = ? AND folder_uid = ? AND is_folder = ? ", args: []any{time.Now(), dashboard.OrgID, dashboard.UID, d.store.GetDialect().BooleanStr(false)}})
 		}
 
 		// remove all access control permission with folder scope
@@ -630,8 +637,8 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		return err
 	}
 
-	for _, sql := range deletes {
-		_, err := sess.Exec(sql, dashboard.ID)
+	for _, stmnt := range sqlStatements {
+		_, err := sess.Exec(append([]any{stmnt.SQL}, stmnt.args...)...)
 		if err != nil {
 			return err
 		}
