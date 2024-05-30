@@ -75,10 +75,11 @@ To create a new notification policy, you need to follow its tree structure. New 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
 1. Expand the specific policy you want to update.
-2. Click **Add new policy** -> **Insert above** or **Insert below**.
+1. Click **Add new policy** -> **Insert above** or **Insert below**.
 
    Notification policies are evaluated from top to bottom, so it is key to be able to choose which notification policy receives alerts first. Adding nested notification policies instead of always inserting a child policy as well as being able tp choose where to insert is key to managing where your alerts go.
-2. Click **Save policy** to save your changes.
+
+1. Click **Save policy** to save your changes.
 
 ## Search for policies
 
