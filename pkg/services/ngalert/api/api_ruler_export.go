@@ -58,7 +58,7 @@ func (srv RulerSrv) ExportRules(c *contextmodel.ReqContext) response.Response {
 		if group != "" || len(folderUIDs) > 0 {
 			return ErrResp(http.StatusBadRequest, errors.New("group and folder should not be specified when a single rule is requested"), "")
 		}
-		rulesGroup, err := srv.getRuleWithFolderTitleByRuleUid(c, uid)
+		rulesGroup, err := srv.getRuleWithFolderFullpathByRuleUid(c, uid)
 		if err != nil {
 			return errorToResponse(err)
 		}
@@ -70,7 +70,7 @@ func (srv RulerSrv) ExportRules(c *contextmodel.ReqContext) response.Response {
 				"",
 			)
 		}
-		rulesGroup, err := srv.getRuleGroupWithFolderTitle(c, ngmodels.AlertRuleGroupKey{
+		rulesGroup, err := srv.getRuleGroupWithFolderFullPath(c, ngmodels.AlertRuleGroupKey{
 			OrgID:        c.SignedInUser.GetOrgID(),
 			NamespaceUID: folderUIDs[0],
 			RuleGroup:    group,
@@ -81,7 +81,7 @@ func (srv RulerSrv) ExportRules(c *contextmodel.ReqContext) response.Response {
 		groups = []ngmodels.AlertRuleGroupWithFolderFullpath{rulesGroup}
 	} else {
 		var err error
-		groups, err = srv.getRulesWithFolderTitleInFolders(c, folderUIDs)
+		groups, err = srv.getRulesWithFolderFullPathInFolders(c, folderUIDs)
 		if err != nil {
 			return errorToResponse(err)
 		}
@@ -101,8 +101,8 @@ func (srv RulerSrv) ExportRules(c *contextmodel.ReqContext) response.Response {
 	return exportResponse(c, e)
 }
 
-// getRuleWithFolderTitleByRuleUid calls getAuthorizedRuleByUid and combines its result with folder (aka namespace) title.
-func (srv RulerSrv) getRuleWithFolderTitleByRuleUid(c *contextmodel.ReqContext, ruleUID string) (ngmodels.AlertRuleGroupWithFolderFullpath, error) {
+// getRuleWithFolderFullpathByRuleUid calls getAuthorizedRuleByUid and combines its result with folder (aka namespace) title.
+func (srv RulerSrv) getRuleWithFolderFullpathByRuleUid(c *contextmodel.ReqContext, ruleUID string) (ngmodels.AlertRuleGroupWithFolderFullpath, error) {
 	rule, err := srv.getAuthorizedRuleByUid(c.Req.Context(), c, ruleUID)
 	if err != nil {
 		return ngmodels.AlertRuleGroupWithFolderFullpath{}, err
@@ -114,8 +114,8 @@ func (srv RulerSrv) getRuleWithFolderTitleByRuleUid(c *contextmodel.ReqContext, 
 	return ngmodels.NewAlertRuleGroupWithFolderFullpath(rule.GetGroupKey(), []ngmodels.AlertRule{rule}, namespace.Fullpath), nil
 }
 
-// getRuleGroupWithFolderTitle calls getAuthorizedRuleGroup and combines its result with folder (aka namespace) title.
-func (srv RulerSrv) getRuleGroupWithFolderTitle(c *contextmodel.ReqContext, ruleGroupKey ngmodels.AlertRuleGroupKey) (ngmodels.AlertRuleGroupWithFolderFullpath, error) {
+// getRuleGroupWithFolderFullPath calls getAuthorizedRuleGroup and combines its result with folder (aka namespace) title.
+func (srv RulerSrv) getRuleGroupWithFolderFullPath(c *contextmodel.ReqContext, ruleGroupKey ngmodels.AlertRuleGroupKey) (ngmodels.AlertRuleGroupWithFolderFullpath, error) {
 	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), ruleGroupKey.NamespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return ngmodels.AlertRuleGroupWithFolderFullpath{}, errors.Join(errFolderAccess, err)
@@ -130,9 +130,9 @@ func (srv RulerSrv) getRuleGroupWithFolderTitle(c *contextmodel.ReqContext, rule
 	return ngmodels.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(ruleGroupKey, rules, namespace.Fullpath), nil
 }
 
-// getRulesWithFolderTitleInFolders gets list of folders to which user has access, and then calls searchAuthorizedAlertRules.
+// getRulesWithFolderFullPathInFolders gets list of folders to which user has access, and then calls searchAuthorizedAlertRules.
 // If argument folderUIDs is not empty it intersects it with the list of folders available for user and then retrieves rules that are in those folders.
-func (srv RulerSrv) getRulesWithFolderTitleInFolders(c *contextmodel.ReqContext, folderUIDs []string) ([]ngmodels.AlertRuleGroupWithFolderFullpath, error) {
+func (srv RulerSrv) getRulesWithFolderFullPathInFolders(c *contextmodel.ReqContext, folderUIDs []string) ([]ngmodels.AlertRuleGroupWithFolderFullpath, error) {
 	folders, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return nil, err
