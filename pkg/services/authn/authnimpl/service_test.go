@@ -561,6 +561,7 @@ func setupTests(t *testing.T, opts ...func(svc *Service)) *Service {
 		metrics:                newMetrics(nil),
 		postAuthHooks:          newQueue[authn.PostAuthHookFn](),
 		postLoginHooks:         newQueue[authn.PostLoginHookFn](),
+		preLogoutHooks:         newQueue[authn.PreLogoutHookFn](),
 	}
 
 	for _, o := range opts {

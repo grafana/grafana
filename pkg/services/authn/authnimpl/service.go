@@ -57,6 +57,7 @@ func ProvideService(
 		tracer:                 tracer,
 		metrics:                newMetrics(registerer),
 		sessionService:         sessionService,
+		preLogoutHooks:         newQueue[authn.PreLogoutHookFn](),
 		postAuthHooks:          newQueue[authn.PostAuthHookFn](),
 		postLoginHooks:         newQueue[authn.PostLoginHookFn](),
 	}
@@ -83,6 +84,8 @@ type Service struct {
 	postAuthHooks *queue[authn.PostAuthHookFn]
 	// postLoginHooks are called after a login request is performed, both for failing and successful requests.
 	postLoginHooks *queue[authn.PostLoginHookFn]
+	// preLogoutHooks are called before a logout request is performed.
+	preLogoutHooks *queue[authn.PreLogoutHookFn]
 }
 
 func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -259,6 +262,10 @@ func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Reque
 	return redirectClient.RedirectURL(ctx, r)
 }
 
+func (s *Service) RegisterPreLogoutHook(hook authn.PreLogoutHookFn, priority uint) {
+	s.preLogoutHooks.insert(hook, priority)
+}
+
 func (s *Service) Logout(ctx context.Context, user authn.Requester, sessionToken *auth.UserToken) (*authn.Redirect, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.Logout")
 	defer span.End()
@@ -276,6 +283,12 @@ func (s *Service) Logout(ctx context.Context, user authn.Requester, sessionToken
 	if err != nil {
 		s.log.FromContext(ctx).Debug("Invalid user id", "id", id, "err", err)
 		return redirect, nil
+	}
+
+	for _, hook := range s.preLogoutHooks.items {
+		if err := hook.v(ctx, user, sessionToken); err != nil {
+			s.log.Error("Failed to run pre logout hook. Skipping...", "error", err)
+		}
 	}
 
 	if authModule := user.GetAuthenticatedBy(); authModule != "" {
