@@ -133,7 +133,7 @@ function countEslintErrors() {
             '*.story.tsx',
             '*.{test,spec}.{ts,tsx}',
             '**/__mocks__/**',
-            '**/public/test/**',
+            'public/test/**',
           ],
           rules: {
             '@grafana/no-untranslated-strings': 'error',
