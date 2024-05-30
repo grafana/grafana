@@ -1,20 +1,46 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // Silence-specific compat functions to convert between API and model types.
 
-func SilenceToGettableSilence(s models.Silence) definitions.GettableSilence {
-	return definitions.GettableSilence(s)
+func SilenceToGettableGrafanaSilence(s *models.SilenceWithMetadata) definitions.GettableGrafanaSilence {
+	gettable := definitions.GettableGrafanaSilence{
+		GettableSilence: (*definitions.GettableSilence)(s.Silence),
+	}
+
+	if s.Metadata.Permissions != nil {
+		gettable.Permissions = make(map[definitions.SilencePermission]bool, len(*s.Metadata.Permissions))
+		for _, permission := range models.SilencePermissions() {
+			p, err := SilencePermissionToAPI(permission)
+			if err != nil {
+				// Skip unknown permissions in response.
+				continue
+			}
+			gettable.Permissions[p] = s.Metadata.Permissions.Has(permission)
+		}
+	}
+
+	if s.Metadata.RuleMetadata != nil {
+		gettable.Metadata = &definitions.SilenceMetadata{
+			RuleUID:   s.Metadata.RuleMetadata.RuleUID,
+			RuleTitle: s.Metadata.RuleMetadata.RuleTitle,
+			FolderUID: s.Metadata.RuleMetadata.FolderUID,
+		}
+	}
+
+	return gettable
 }
 
-func SilencesToGettableSilences(silences []*models.Silence) definitions.GettableSilences {
-	res := make(definitions.GettableSilences, 0, len(silences))
+func SilencesToGettableGrafanaSilences(silences []*models.SilenceWithMetadata) definitions.GettableGrafanaSilences {
+	res := make(definitions.GettableGrafanaSilences, 0, len(silences))
 	for _, sil := range silences {
-		apiSil := SilenceToGettableSilence(*sil)
+		apiSil := SilenceToGettableGrafanaSilence(sil)
 		res = append(res, &apiSil)
 	}
 	return res
@@ -26,5 +52,18 @@ func PostableSilenceToSilence(s definitions.PostableSilence) models.Silence {
 		Status:    nil,
 		UpdatedAt: nil,
 		Silence:   s.Silence,
+	}
+}
+
+func SilencePermissionToAPI(p models.SilencePermission) (definitions.SilencePermission, error) {
+	switch p {
+	case models.SilencePermissionRead:
+		return definitions.SilencePermissionRead, nil
+	case models.SilencePermissionCreate:
+		return definitions.SilencePermissionCreate, nil
+	case models.SilencePermissionWrite:
+		return definitions.SilencePermissionWrite, nil
+	default:
+		return "", fmt.Errorf("unknown permission: %s", p)
 	}
 }

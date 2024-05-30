@@ -95,11 +95,18 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
 		&AlertmanagerSrv{
-			crypto:     api.MultiOrgAlertmanager.Crypto,
-			log:        logger,
-			ac:         api.AccessControl,
-			mam:        api.MultiOrgAlertmanager,
-			silenceSvc: notifier.NewSilenceService(accesscontrol.NewSilenceService(api.AccessControl, api.RuleStore), api.TransactionManager, logger, api.MultiOrgAlertmanager),
+			crypto: api.MultiOrgAlertmanager.Crypto,
+			log:    logger,
+			ac:     api.AccessControl,
+			mam:    api.MultiOrgAlertmanager,
+			silenceSvc: notifier.NewSilenceService(
+				accesscontrol.NewSilenceService(api.AccessControl, api.RuleStore),
+				api.TransactionManager,
+				logger,
+				api.MultiOrgAlertmanager,
+				api.RuleStore,
+				ruleAuthzService,
+			),
 		},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
