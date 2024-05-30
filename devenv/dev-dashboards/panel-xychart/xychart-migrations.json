@@ -479,7 +479,7 @@
         "content": "---\n### XYChart\n\n- Multi-dimensional, non-timeseries data (scientific, financial, engineering)\n- Scatter plots, bubble charts, function graphs, and etch-a-sketch!\n",
         "mode": "markdown"
       },
-      "pluginVersion": "11.1.0-pre",
+      "pluginVersion": "10.3.0-pre",
       "type": "text"
     },
     {
@@ -2159,6 +2159,6 @@
   "timezone": "",
   "title": "Panel Tests - XY Chart migrations",
   "uid": "YObbMr44k",
-  "version": 22,
+  "version": 1,
   "weekStart": ""
 }
