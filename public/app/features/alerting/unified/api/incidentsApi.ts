@@ -7,8 +7,7 @@ interface IncidentsPluginConfigDto {
   isIncidentCreated: boolean;
 }
 
-const getProxyApiUrl = (path: string) =>
-  `/api/plugins/grafana-incident-app/resources/${SupportedPlugin.Incident}${path}`;
+const getProxyApiUrl = (path: string) => `/api/plugins/${SupportedPlugin.Incident}/resources${path}`;
 
 export const incidentsApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
