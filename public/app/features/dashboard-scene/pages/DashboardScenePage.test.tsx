@@ -7,7 +7,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { config, getPluginLinkExtensions, locationService, setPluginImportUtils } from '@grafana/runtime';
+import { config, getAppEvents, getPluginLinkExtensions, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
@@ -30,6 +30,9 @@ jest.mock('@grafana/runtime', () => ({
       getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
     };
   },
+  getAppEvents: jest.fn().mockReturnValue({
+    publish: jest.fn(),
+  }),
 }));
 
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
