@@ -167,7 +167,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public enterViewMode() {
-    this.setState({ isBasicOpened: false, isAdvancedOpened: true });
+    this.setState({ isBasicOpened: false, isAdvancedOpened: false });
   }
 
   private getScopeNames(): string[] {
