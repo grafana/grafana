@@ -55,14 +55,14 @@ For more information on notification policies, refer to [fundamentals of Notific
    - **Repeat interval** Minimum time interval for re-sending a notification if no new alerts were added to the group. Default is 4 hours.
 1. Click **Save** to save your changes.
 
-## Add new nested policy
+## Add a child policy
 
-To create a new notification policy, you need to follow its tree structure. New policies created on the trunk of the tree (default policy), are the tree branches. And, subsequently, each branch can bear their own child policies. This is why you always add a new **nested** policy under either the default policy, or under a already nested policy.
+To create a new notification policy, you need to follow its tree structure. New policies created on the trunk of the tree (default policy), are the tree branches. And, subsequently, each branch can bear their own child policies. This is why you always add a new new policy under either the default policy, or under a already nested policy.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 2. Click **Notification policies**.
 3. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the **Grafana Alertmanager** is selected.
-4. To add a top level specific policy, go to the Specific routing section (either to the default policy, or to another existing policy in which you would like to add a new nested policy) and click **+New nested policy**.
+4. To add a top level specific policy, go to the specific routing section (either to the default policy, or to another existing policy in which you would like to add a new nested policy) and click **+New child policy**.
 5. In the Matching labels section, add one or more rules for matching alert labels.
 6. In the **Contact point** dropdown, select the contact point to send notification to if alert matches only this specific policy and not any of the nested policies.
 7. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching sibling policies even after the alert matched the current policy. When this option is enabled, you can get more than one notification for one alert.
@@ -70,23 +70,15 @@ To create a new notification policy, you need to follow its tree structure. New 
 9. Optionally, enable **Override general timings** to override the timing options configured in the group notification policy.
 10. Click **Save policy** to save your changes.
 
-## Add nested policy
+## Add a nested policy
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
 1. Expand the specific policy you want to update.
-1. Click **+ Add nested policy**, then add the details using information in [Add new specific policy](#add-new-nested-policy).
+1. Click **Add new policy**, then add the details using information in [Add new specific policy](#add-new-nested-policy).
 1. Click **Save policy** to save your changes.
 
-## Edit notification policies
-
-1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
-1. Click **Notification policies**.
-1. Find the policy you want to edit, then click **...** -> **Edit**.
-1. Make any changes using instructions in [Add new specific policy](#add-new-nested-policy).
-1. Save your changes.
-
-## Searching for policies
+## Search for policies
 
 Grafana allows you to search within the tree of policies by the following:
 
