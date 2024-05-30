@@ -127,7 +127,7 @@ function countEslintErrors() {
           },
         },
         {
-          files: ['public/**', 'packages/grafana-ui/**/*.{ts,tsx}'],
+          files: ['public/**/*.tsx', 'packages/grafana-ui/**/*.tsx'],
           excludedFiles: [
             'public/app/plugins/**',
             '*.story.tsx',
