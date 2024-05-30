@@ -30,9 +30,9 @@ export function getAuthType(options: AzureDataSourceSettings | AzureDataSourceIn
   return options.jsonData.azureAuthType;
 }
 
-function resolveLegacyCloudName(cloudName: string | undefined): string | undefined {
+function resolveLegacyCloudName(cloudName: string | undefined): string {
   if (!cloudName) {
-    return undefined;
+    return AzureCloud.Public;
   }
   switch (cloudName) {
     case 'azuremonitor':
@@ -52,7 +52,6 @@ function getDefaultAzureCloud(): string {
   switch (cloudName) {
     case AzureCloud.Public:
     case AzureCloud.None:
-    case undefined:
       return AzureCloud.Public;
     case AzureCloud.China:
       return AzureCloud.China;
