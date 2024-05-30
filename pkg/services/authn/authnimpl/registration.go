@@ -23,8 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const cloudHomePluginId = "cloud-home-app"
-
 type Registration struct{}
 
 func ProvideRegistration(

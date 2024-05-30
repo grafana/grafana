@@ -54,6 +54,7 @@ func (s *GComSSOService) LogoutHook(ctx context.Context, user identity.Requester
 		s.logger.Error("failed to send request", "error", err)
 		return err
 	}
+	// nolint: errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
