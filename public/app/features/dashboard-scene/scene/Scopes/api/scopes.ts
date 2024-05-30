@@ -13,7 +13,7 @@ const client = new ScopedResourceClient<ScopeSpec, 'Scope'>({
   resource: 'scopes',
 });
 
-const cache: Record<string, Scope> = {};
+const cache = new Map<string, Promise<Scope>>();
 
 async function fetchScopeTreeItems(parent: string, query: string): Promise<ScopeTreeItemSpec[]> {
   try {
@@ -38,40 +38,46 @@ export async function fetchNodes(parent: string, query: string): Promise<NodesMa
 }
 
 export async function fetchScope(name: string): Promise<Scope> {
-  if (cache[name]) {
-    return cache[name];
+  if (cache.has(name)) {
+    return cache.get(name)!;
   }
 
-  const basicScope: Scope = {
-    metadata: { name },
-    spec: {
-      filters: [],
-      title: name,
-      type: '',
-      category: '',
-      description: '',
-    },
-  };
-
-  try {
-    const serverScope = await client.get(name);
-
-    const scope = {
-      ...basicScope,
-      metadata: {
-        ...basicScope,
-        ...serverScope.metadata,
-      },
+  const response = new Promise<Scope>(async (resolve) => {
+    const basicScope: Scope = {
+      metadata: { name },
       spec: {
-        ...basicScope,
-        ...serverScope.spec,
+        filters: [],
+        title: name,
+        type: '',
+        category: '',
+        description: '',
       },
     };
 
-    cache[name] = scope;
+    try {
+      const serverScope = await client.get(name);
 
-    return scope;
-  } catch (err) {
-    return basicScope;
-  }
+      const scope = {
+        ...basicScope,
+        metadata: {
+          ...basicScope,
+          ...serverScope.metadata,
+        },
+        spec: {
+          ...basicScope,
+          ...serverScope.spec,
+        },
+      };
+
+      resolve(scope);
+    } catch (err) {
+      cache.delete(name);
+
+      resolve(basicScope);
+    }
+  });
+
+  cache.set(name, response);
+
+  return response;
 }

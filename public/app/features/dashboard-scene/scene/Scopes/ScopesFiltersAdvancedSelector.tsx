@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
@@ -13,16 +13,10 @@ export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<Sco
   const {
     nodes: { '': basicNode },
     loadingNodeId,
-    scopes,
+    dirtyScopeNames,
     isLoadingScopes,
     isAdvancedOpened,
   } = model.useState();
-
-  const [scopeNames, setScopeNames] = useState(model.getScopesNames(scopes));
-
-  useEffect(() => {
-    setScopeNames(model.getScopesNames(scopes));
-  }, [model, scopes]);
 
   const { nodes, query } = basicNode;
 
@@ -31,7 +25,14 @@ export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<Sco
   }
 
   return (
-    <Drawer title="Select scopes" size="sm" onClose={() => model.closeAdvancedSelector()}>
+    <Drawer
+      title="Select scopes"
+      size="sm"
+      onClose={() => {
+        model.closeAdvancedSelector();
+        model.resetDirtyScopeNames();
+      }}
+    >
       {isLoadingScopes ? (
         <Spinner />
       ) : (
@@ -41,9 +42,9 @@ export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<Sco
           query={query}
           path={['']}
           loadingNodeId={loadingNodeId}
-          scopeNames={scopeNames}
+          scopeNames={dirtyScopeNames}
           onNodeUpdate={(path, isExpanded, query) => model.updateNode(path, isExpanded, query)}
-          onNodeSelectToggle={(path) => setScopeNames(model.getNewScopeNames(path, scopeNames))}
+          onNodeSelectToggle={(path) => model.toggleNodeSelect(path)}
         />
       )}
       <div className={styles.buttonGroup}>
@@ -51,12 +52,18 @@ export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<Sco
           variant="primary"
           onClick={() => {
             model.closeAdvancedSelector();
-            model.updateScopes(scopeNames);
+            model.updateScopes();
           }}
         >
           Apply
         </Button>
-        <Button variant="secondary" onClick={() => model.closeAdvancedSelector()}>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            model.closeAdvancedSelector();
+            model.resetDirtyScopeNames();
+          }}
+        >
           Cancel
         </Button>
       </div>

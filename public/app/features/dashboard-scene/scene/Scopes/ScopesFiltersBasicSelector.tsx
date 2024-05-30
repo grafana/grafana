@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Icon, Input, Spinner, Toggletip, useStyles2 } from '@grafana/ui';
+import { IconButton } from '@grafana/ui/';
 
 import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { ScopesTreeLevel } from './ScopesTreeLevel';
@@ -14,18 +15,13 @@ export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<Scopes
     nodes: { '': basicNode },
     loadingNodeId,
     scopes,
+    dirtyScopeNames,
     isLoadingScopes,
     isBasicOpened,
   } = model.useState();
 
-  const [scopeNames, setScopeNames] = useState(model.getScopesNames(scopes));
-
-  useEffect(() => {
-    setScopeNames(model.getScopesNames(scopes));
-  }, [model, scopes]);
-
   const { nodes, query } = basicNode;
-  const scopesTitles = useMemo(() => scopes.map(({ spec: { title } }) => title).join(', '), [scopes]);
+  const scopesTitles = scopes.map(({ spec: { title } }) => title).join(', ');
 
   return (
     <div className={styles.container}>
@@ -33,7 +29,7 @@ export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<Scopes
         show={isBasicOpened}
         onClose={() => {
           model.closeBasicSelector();
-          model.updateScopes(scopeNames);
+          model.updateScopes();
         }}
         onOpen={() => model.openBasicSelector()}
         content={
@@ -47,9 +43,9 @@ export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<Scopes
                 query={query}
                 path={['']}
                 loadingNodeId={loadingNodeId}
-                scopeNames={scopeNames}
+                scopeNames={dirtyScopeNames}
                 onNodeUpdate={(path, isExpanded, query) => model.updateNode(path, isExpanded, query)}
-                onNodeSelectToggle={(path) => setScopeNames(model.getNewScopeNames(path, scopeNames))}
+                onNodeSelectToggle={(path) => model.toggleNodeSelect(path)}
               />
             )}
           </div>
@@ -61,7 +57,17 @@ export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<Scopes
         }
         closeButton={false}
       >
-        <Input readOnly placeholder="Select scopes..." loading={isLoadingScopes} value={scopesTitles} />
+        <Input
+          readOnly
+          placeholder="Select scopes..."
+          loading={isLoadingScopes}
+          suffix={
+            scopes.length > 0 ? (
+              <IconButton aria-label="Remove all scopes" name="times" onClick={() => model.removeAllScopes()} />
+            ) : undefined
+          }
+          value={scopesTitles}
+        />
       </Toggletip>
     </div>
   );

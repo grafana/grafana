@@ -1,4 +1,4 @@
-import { uniq, uniqBy } from 'lodash';
+import { uniq } from 'lodash';
 
 import { Scope, ScopeDashboardBindingSpec } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -15,73 +15,76 @@ const client = new ScopedResourceClient<ScopeDashboardBindingSpec, 'ScopeDashboa
   resource: 'scopedashboardbindings',
 });
 
-const dashboardsCache: Record<string, ScopeDashboard> = {};
+const dashboardsCache = new Map<string, Promise<ScopeDashboard>>();
 
-const scopesToDashboardsCache: Record<string, string[]> = {};
+const scopesToDashboardsCache = new Map<string, Promise<string[]>>();
 
 async function fetchUids(scope: Scope): Promise<string[]> {
   const scopeName = scope.metadata.name;
 
-  if (scopesToDashboardsCache[scopeName]) {
-    return scopesToDashboardsCache[scopeName];
+  if (scopesToDashboardsCache.has(scopeName)) {
+    return scopesToDashboardsCache.get(scopeName)!;
   }
 
-  try {
-    const response = await client.list({
-      fieldSelector: [
-        {
-          key: 'spec.scope',
-          operator: '=',
-          value: scopeName,
-        },
-      ],
-    });
+  const response = new Promise<string[]>(async (resolve) => {
+    try {
+      const response = await client.list({
+        fieldSelector: [
+          {
+            key: 'spec.scope',
+            operator: '=',
+            value: scopeName,
+          },
+        ],
+      });
 
-    scopesToDashboardsCache[scopeName] =
-      response.items.map((item) => item.spec.dashboard).filter((dashboardUid) => !!dashboardUid) ?? [];
+      resolve(response.items.map((item) => item.spec.dashboard).filter((dashboardUid) => !!dashboardUid) ?? []);
+    } catch (err) {
+      scopesToDashboardsCache.delete(scopeName);
 
-    return scopesToDashboardsCache[scopeName];
-  } catch (err) {
-    return [];
-  }
+      resolve([]);
+    }
+  });
+
+  scopesToDashboardsCache.set(scopeName, response);
+
+  return response;
 }
 
-async function fetchDashboardDetails(dashboardUid: string): Promise<ScopeDashboard | undefined> {
-  if (dashboardsCache[dashboardUid]) {
-    return dashboardsCache[dashboardUid];
+async function fetchDashboardDetails(dashboardUid: string): Promise<ScopeDashboard> {
+  if (dashboardsCache.has(dashboardUid)) {
+    return dashboardsCache.get(dashboardUid)!;
   }
 
-  try {
-    const dashboard = await getBackendSrv().get(`${dashboardDetailsEndpoint}/${dashboardUid}`);
+  const response = new Promise<ScopeDashboard>(async (resolve) => {
+    try {
+      const dashboard = await getBackendSrv().get(`${dashboardDetailsEndpoint}/${dashboardUid}`);
 
-    dashboardsCache[dashboardUid] = {
-      uid: dashboard.dashboard.uid,
-      title: dashboard.dashboard.title,
-      url: dashboard.meta.url,
-    };
+      resolve({
+        uid: dashboard.dashboard.uid,
+        title: dashboard.dashboard.title,
+        url: dashboard.meta.url,
+      });
+    } catch (err) {
+      dashboardsCache.delete(dashboardUid);
 
-    return dashboardsCache[dashboardUid];
-  } catch (err) {
-    return undefined;
-  }
-}
+      resolve({
+        uid: dashboardUid,
+        url: '',
+        title: '',
+      });
+    }
+  });
 
-async function fetchDashboardsDetails(dashboardUids: string[]): Promise<ScopeDashboard[]> {
-  try {
-    const dashboards = await Promise.all(
-      uniq(dashboardUids).map((dashboardUid) => fetchDashboardDetails(dashboardUid))
-    );
+  dashboardsCache.set(dashboardUid, response);
 
-    return dashboards.filter((dashboard): dashboard is ScopeDashboard => !!dashboard);
-  } catch (err) {
-    return [];
-  }
+  return response;
 }
 
 export async function fetchDashboards(scopes: Scope[]): Promise<ScopeDashboard[]> {
-  const dashboardUids = await Promise.all(
-    uniqBy(scopes, 'metadata.name').map((scope) => fetchUids(scope).catch(() => []))
-  );
+  const dashboardUidsForScopes = await Promise.all(scopes.map(fetchUids));
+  const dashboardUids = uniq(dashboardUidsForScopes.flat());
+  const dashboards = await Promise.all(dashboardUids.map((dashboardUid) => fetchDashboardDetails(dashboardUid)));
 
-  return await fetchDashboardsDetails(dashboardUids.flat());
+  return dashboards.filter((dashboard) => dashboard.url !== '');
 }

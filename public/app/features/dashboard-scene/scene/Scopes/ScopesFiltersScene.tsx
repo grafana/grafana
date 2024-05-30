@@ -20,6 +20,7 @@ export interface ScopesFiltersSceneState extends SceneObjectState {
   nodes: Record<string, Node>;
   loadingNodeId: string | undefined;
   scopes: Scope[];
+  dirtyScopeNames: string[];
   isLoadingScopes: boolean;
   isBasicOpened: boolean;
   isAdvancedOpened: boolean;
@@ -44,6 +45,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       },
       loadingNodeId: undefined,
       scopes: [],
+      dirtyScopeNames: [],
       isLoadingScopes: false,
       isBasicOpened: false,
       isAdvancedOpened: false,
@@ -55,14 +57,14 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public getUrlState() {
-    return { scopes: this.state.scopes.map((scope) => scope.metadata.name) };
+    return { scopes: this.getScopeNames() };
   }
 
   public updateFromUrl(values: SceneObjectUrlValues) {
-    let scopesNames = values.scopes ?? [];
-    scopesNames = Array.isArray(scopesNames) ? scopesNames : [scopesNames];
+    let dirtyScopeNames = values.scopes ?? [];
+    dirtyScopeNames = Array.isArray(dirtyScopeNames) ? dirtyScopeNames : [dirtyScopeNames];
 
-    this.updateScopes(scopesNames);
+    this.updateScopes(dirtyScopeNames);
   }
 
   public fetchBaseNodes() {
@@ -92,6 +94,37 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     this.setState({ nodes, loadingNodeId: undefined });
   }
 
+  public toggleNodeSelect(path: string[]) {
+    let dirtyScopeNames = [...this.state.dirtyScopeNames];
+
+    let siblings = this.state.nodes;
+
+    for (let idx = 0; idx < path.length - 1; idx++) {
+      siblings = siblings[path[idx]].nodes;
+    }
+
+    const nodeId = path[path.length - 1];
+    const {
+      item: { linkId },
+    } = siblings[nodeId];
+
+    const selectedIdx = dirtyScopeNames.findIndex((scopeName) => scopeName === linkId);
+
+    if (selectedIdx === -1) {
+      fetchScope(linkId!);
+
+      const selectedFromSameNode =
+        dirtyScopeNames.length === 0 ||
+        Object.values(siblings).some(({ item: { linkId } }) => linkId === dirtyScopeNames[0]);
+
+      this.setState({ dirtyScopeNames: !selectedFromSameNode ? [linkId!] : [...dirtyScopeNames, linkId!] });
+    } else {
+      dirtyScopeNames.splice(selectedIdx, 1);
+
+      this.setState({ dirtyScopeNames });
+    }
+  }
+
   public openBasicSelector() {
     this.setState({ isBasicOpened: true, isAdvancedOpened: false });
   }
@@ -112,59 +145,33 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     return this.state.scopes;
   }
 
-  public async updateScopes(scopeNames: string[]) {
-    if (
-      isEqual(
-        scopeNames,
-        this.state.scopes.map(({ metadata: { name } }) => name)
-      )
-    ) {
+  public async updateScopes(dirtyScopeNames = this.state.dirtyScopeNames) {
+    if (isEqual(dirtyScopeNames, this.getScopeNames())) {
       return;
     }
 
-    this.setState({ isLoadingScopes: true });
+    this.setState({ dirtyScopeNames, isLoadingScopes: true });
 
-    const scopes = await Promise.all(scopeNames.map(fetchScope));
+    this.setState({
+      scopes: await Promise.all(dirtyScopeNames.map(fetchScope)),
+      isLoadingScopes: false,
+    });
+  }
 
-    this.setState({ scopes, isLoadingScopes: false });
+  public resetDirtyScopeNames() {
+    this.setState({ dirtyScopeNames: this.getScopeNames() });
+  }
+
+  public removeAllScopes() {
+    this.setState({ scopes: [], dirtyScopeNames: [], isLoadingScopes: false });
   }
 
   public enterViewMode() {
     this.setState({ isBasicOpened: false, isAdvancedOpened: true });
   }
 
-  public getScopesNames(scopes: Scope[]): string[] {
-    return scopes.map(({ metadata: { name } }) => name);
-  }
-
-  public getNewScopeNames(path: string[], scopeNames: string[]): string[] {
-    scopeNames = [...scopeNames];
-
-    let siblings = this.state.nodes;
-
-    for (let idx = 0; idx < path.length - 1; idx++) {
-      siblings = siblings[path[idx]].nodes;
-    }
-
-    const nodeId = path[path.length - 1];
-    const {
-      item: { linkId },
-    } = siblings[nodeId];
-
-    const selectedIdx = scopeNames.findIndex((scopeName) => scopeName === linkId);
-
-    if (selectedIdx === -1) {
-      fetchScope(linkId!);
-
-      const selectedFromSameNode =
-        scopeNames.length === 0 || Object.values(siblings).some((node) => node.item.linkId === scopeNames[0]);
-
-      return !selectedFromSameNode ? [linkId!] : [...scopeNames, linkId!];
-    } else {
-      scopeNames.splice(selectedIdx, 1);
-
-      return scopeNames;
-    }
+  private getScopeNames(): string[] {
+    return this.state.scopes.map(({ metadata: { name } }) => name);
   }
 }
 
