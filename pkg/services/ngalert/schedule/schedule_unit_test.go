@@ -71,15 +71,16 @@ func TestProcessTicks(t *testing.T) {
 	evaluator := eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheServ, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), &pluginstore.FakePluginStore{})
 
 	schedCfg := SchedulerCfg{
-		BaseInterval:     cfg.BaseInterval,
-		C:                mockedClock,
-		AppURL:           appUrl,
-		EvaluatorFactory: evaluator,
-		RuleStore:        ruleStore,
-		Metrics:          testMetrics.GetSchedulerMetrics(),
-		AlertSender:      notifier,
-		Tracer:           testTracer,
-		Log:              log.New("ngalert.scheduler"),
+		BaseInterval:         cfg.BaseInterval,
+		C:                    mockedClock,
+		AppURL:               appUrl,
+		EvaluatorFactory:     evaluator,
+		RuleStore:            ruleStore,
+		Metrics:              testMetrics.GetSchedulerMetrics(),
+		AlertSender:          notifier,
+		Tracer:               testTracer,
+		Log:                  log.New("ngalert.scheduler"),
+		ScheduledEvalEnabled: true, // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add scheduled evaluation enabled config
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:       testMetrics.GetStateMetrics(),
@@ -887,16 +888,17 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	}
 
 	schedCfg := SchedulerCfg{
-		BaseInterval:     cfg.BaseInterval,
-		MaxAttempts:      cfg.MaxAttempts,
-		C:                mockedClock,
-		AppURL:           appUrl,
-		EvaluatorFactory: evaluator,
-		RuleStore:        rs,
-		Metrics:          m.GetSchedulerMetrics(),
-		AlertSender:      senderMock,
-		Tracer:           testTracer,
-		Log:              log.New("ngalert.scheduler"),
+		BaseInterval:         cfg.BaseInterval,
+		MaxAttempts:          cfg.MaxAttempts,
+		C:                    mockedClock,
+		AppURL:               appUrl,
+		EvaluatorFactory:     evaluator,
+		RuleStore:            rs,
+		Metrics:              m.GetSchedulerMetrics(),
+		AlertSender:          senderMock,
+		Tracer:               testTracer,
+		Log:                  log.New("ngalert.scheduler"),
+		ScheduledEvalEnabled: true, // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add scheduled evaluation enabled config
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:                 m.GetStateMetrics(),

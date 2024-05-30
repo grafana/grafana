@@ -363,22 +363,24 @@ func (sch *schedule) RunRuleEvaluation(ctx context.Context, evalReq ngmodels.Ext
 		UID:   evalReq.AlertRule.UID,
 	}
 	ev := evaluation{
-		scheduledAt:       evalReq.EvalTime,
-		rule:              &evalReq.AlertRule,
-		folderTitle:       evalReq.FolderTitle,
-		logzioEvalContext: evalReq.LogzioEvalContext,
+		scheduledAt: evalReq.EvalTime,
+		rule:        &evalReq.AlertRule,
+		folderTitle: evalReq.FolderTitle,
+		logzHeaders: evalReq.LogzHeaders,
 	}
 
-	// TODO: decide if we want to create the new routine if needed, or return error and rely on scheduler creating it + retrying on the sending side ??
-	ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, alertKey)
-	if !newRoutine {
-		logger.Debug("RunRuleEvaluation: sending ruleInfo.eval")
-		sent, dropped := ruleInfo.eval(&ev)
-		if !sent {
-			return fmt.Errorf("evaluation was not sent")
-		}
-		if dropped != nil {
-			logger.Warn("RunRuleEvaluation: got dropped eval", "dropped", dropped)
+	if sch.registry.exists(alertKey) {
+		// since we only get if exists then it shouldn't create and routine should exist
+		ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, alertKey)
+		if !newRoutine {
+			logger.Debug("RunRuleEvaluation: sending ruleInfo.eval")
+			sent, dropped := ruleInfo.eval(&ev)
+			if !sent {
+				return fmt.Errorf("evaluation was not sent")
+			}
+			if dropped != nil {
+				logger.Warn("RunRuleEvaluation: got dropped eval", "dropped", dropped)
+			}
 		}
 	} else {
 		return fmt.Errorf("no rule routine for alert key %s", alertKey)
@@ -423,7 +425,10 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
 		start := sch.clock.Now()
 
-		evalCtx := eval.NewContextWithPreviousResults(ctx, SchedulerUserFor(e.rule.OrgID), sch.newLoadedMetricsReader(e.rule), &e.logzioEvalContext) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add logzio datasources support
+		// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+		ctxWithLogzHeaders := context.WithValue(ctx, "logzioHeaders", e.logzHeaders)
+		evalCtx := eval.NewContextWithPreviousResults(ctxWithLogzHeaders, SchedulerUserFor(e.rule.OrgID), sch.newLoadedMetricsReader(e.rule))
+		// LOGZ.IO GRAFANA CHANGE :: End
 		if sch.evaluatorFactory == nil {
 			panic("evalfactory nil")
 		}

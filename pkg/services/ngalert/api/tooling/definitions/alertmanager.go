@@ -562,10 +562,9 @@ type AlertSendNotificationsRequest struct {
 
 // LOGZ.IO GRAFANA CHANGE :: DEV-43744: add api models for alert evaluation requests/responses
 type AlertEvaluationRequest struct {
-	AlertRule   models.AlertRule                      `json:"alertRule"`
-	EvalTime    time.Time                             `json:"evalTime"`
-	FolderTitle string                                `json:"folderTitle"`
-	DsOverrides []models.EvaluationDatasourceOverride `json:"dsOverrides"`
+	AlertRule   models.AlertRule `json:"alertRule"`
+	EvalTime    time.Time        `json:"evalTime"`
+	FolderTitle string           `json:"folderTitle"`
 }
 
 type AlertEvalRunResult struct {

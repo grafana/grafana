@@ -709,7 +709,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 				pluginsStore: store,
 			})
 			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold), nil, tracing.InitializeTracerForTest()), store)
-			evalCtx := NewContextWithPreviousResults(context.Background(), u, testCase.reader, nil) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add logzio datasources support
+			evalCtx := NewContextWithPreviousResults(context.Background(), u, testCase.reader)
 
 			eval, err := evaluator.Create(evalCtx, condition)
 			if testCase.error {

@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	m "github.com/grafana/grafana/pkg/models"
+	"net/http"
 	"runtime/debug"
 	"sort"
 	"strconv"
@@ -18,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models" // LOGZ.IO GRAFANA CHANGE :: DEV-43744 - change to EvaluationContext
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -313,17 +314,23 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string { // LOGZ.I
 	}
 
 	// LOGZ.IO GRAFANA CHANGE :: DEV-43744 - Pass headers and custom datasource to evaluate alerts
-	logzioEvalContext := ctx.LogzioEvalContext
-	logzioHeaders := m.LogzIoHeaders{RequestHeaders: logzioEvalContext.LogzioHeaders}
-	requestHeaders := make(map[string][]string, len(headers))
+	logzIoHeaders := &m.LogzIoHeaders{}
+	logzHeaders := ctx.Ctx.Value("logzioHeaders")
+	if logzHeaders != nil {
+		logzIoHeaders.RequestHeaders = http.Header{}
+		for k, v := range logzHeaders.(http.Header) {
+			logzIoHeaders.RequestHeaders[k] = v
+		}
+		newHeaders := http.Header{}
+		for k, v := range headers {
+			newHeaders[k] = []string{v}
+		}
 
-	for k, v := range headers {
-		requestHeaders[k] = []string{v}
+		for k, v := range logzIoHeaders.GetDatasourceQueryHeaders(newHeaders) {
+			headers[k] = v[0]
+		}
 	}
 
-	for k, v := range logzioHeaders.GetDatasourceQueryHeaders(requestHeaders) {
-		headers[k] = v[0]
-	}
 	logger.Debug("Added following headers to request", "headers", headers)
 	// LOGZ.IO GRAFANA CHANGE :: End
 
@@ -346,14 +353,6 @@ func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheSe
 			switch nodeType := expr.NodeTypeFromDatasourceUID(q.DatasourceUID); nodeType {
 			case expr.TypeDatasourceNode:
 				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, false /*skipCache*/)
-				// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add logzio datasource url override
-				if ds != nil {
-					if dsOverride, found := ctx.LogzioEvalContext.DsOverrideByDsUid[q.DatasourceUID]; found {
-						logger.Debug("Adding dsOverride", "datasource_uid", q.DatasourceUID, "dsOverride", dsOverride.UrlOverride)
-						ds.URL = dsOverride.UrlOverride
-					}
-				}
-				// // LOGZ.IO GRAFANA CHANGE :: End
 			default:
 				ds, err = expr.DataSourceModelFromNodeType(nodeType)
 			}

@@ -78,7 +78,10 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	resp, err := hs.queryDataService.QueryData(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+	ctxWithLogzHeaders := context.WithValue(c.Req.Context(), "logzioHeaders", c.Req.Header)
+	resp, err := hs.queryDataService.QueryData(ctxWithLogzHeaders, c.SignedInUser, c.SkipDSCache, reqDTO)
+	// LOGZ.IO GRAFANA CHANGE :: End
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}

@@ -83,7 +83,10 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		}
 	}
 
-	evaluator, err := srv.evaluator.Create(eval.NewContext(c.Req.Context(), c.SignedInUser), rule.GetEvalCondition())
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+	ctxWithLogzHeaders := context.WithValue(c.Req.Context(), "logzioHeaders", c.Req.Header)
+	evaluator, err := srv.evaluator.Create(eval.NewContext(ctxWithLogzHeaders, c.SignedInUser), rule.GetEvalCondition())
+	// LOGZ.IO GRAFANA CHANGE :: End
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to build evaluator for queries and expressions")
 	}
@@ -183,7 +186,10 @@ func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimod
 		}
 	}
 
-	evaluator, err := srv.evaluator.Create(eval.NewContext(c.Req.Context(), c.SignedInUser), cond)
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+	ctxWithLogzHeaders := context.WithValue(c.Req.Context(), "logzioHeaders", c.Req.Header)
+	evaluator, err := srv.evaluator.Create(eval.NewContext(ctxWithLogzHeaders, c.SignedInUser), cond)
+	// LOGZ.IO GRAFANA CHANGE :: End
 
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to build evaluator for queries and expressions")

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http" // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	"strings"
 	"time"
 
@@ -347,7 +348,15 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
 	}()
 
-	resp, err := s.dataService.QueryData(ctx, req)
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+	logzHeaders := http.Header{}
+	for k, v := range req.Headers {
+		logzHeaders[k] = []string{v}
+	}
+	ctxWithLogzio := context.WithValue(ctx, "logzioHeaders", logzHeaders)
+
+	resp, err := s.dataService.QueryData(ctxWithLogzio, req)
+	// LOGZ.IO GRAFANA CHANGE :: End
 	if err != nil {
 		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 	}

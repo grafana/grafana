@@ -3,6 +3,8 @@ package client
 import (
 	"bytes"
 	"context"
+	"github.com/grafana/grafana/pkg/infra/log" // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+	m "github.com/grafana/grafana/pkg/models"  // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	"io"
 	"net/http"
 	"net/url"
@@ -47,8 +49,6 @@ func (c *Client) QueryRange(ctx context.Context, q *models.Query, headers map[st
 		return nil, err
 	}
 
-	c.addHeaders(headers, req) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
-
 	return c.doer.Do(req)
 }
 
@@ -65,8 +65,6 @@ func (c *Client) QueryInstant(ctx context.Context, q *models.Query, headers map[
 		return nil, err
 	}
 
-	c.addHeaders(headers, req) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
-
 	return c.doer.Do(req)
 }
 
@@ -82,8 +80,6 @@ func (c *Client) QueryExemplars(ctx context.Context, q *models.Query, headers ma
 	if err != nil {
 		return nil, err
 	}
-
-	c.addHeaders(headers, req) // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 
 	return c.doer.Do(req)
 }
@@ -170,18 +166,29 @@ func createRequest(ctx context.Context, method string, u *url.URL, bodyReader io
 		// It's set to nil so it is not actually sent over the wire, just used in Go http lib to retry requests.
 		request.Header["Idempotency-Key"] = nil
 	}
+
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+	logger := log.New(ctx)
+	logzHeaders := ctx.Value("logzioHeaders")
+	if logzHeaders != nil {
+		logzIoHeaders := &m.LogzIoHeaders{}
+		logzIoHeaders.RequestHeaders = http.Header{}
+		for k, v := range logzHeaders.(http.Header) {
+			logzIoHeaders.RequestHeaders[k] = v
+		}
+
+		request.Header = logzIoHeaders.GetDatasourceQueryHeaders(request.Header)
+	}
+	if request.Header.Get("Query-Source") == "" {
+		request.Header.Set("Query-Source", "GRAFANA")
+	}
+
+	logger.Debug("created request", "headers", request.Header, "url", request.URL)
+	// LOGZ.IO GRAFANA CHANGE :: End
+
 	return request, nil
 }
 
 func formatTime(t time.Time) string {
 	return strconv.FormatFloat(float64(t.Unix())+float64(t.Nanosecond())/1e9, 'f', -1, 64)
 }
-
-// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
-func (c *Client) addHeaders(headers map[string]string, req *http.Request) {
-	for k, v := range headers {
-		req.Header[k] = []string{v}
-	}
-}
-
-// LOGZ.IO GRAFANA CHANGE :: End

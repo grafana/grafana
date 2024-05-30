@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http" // LOGZ.IO GRAFANA CHANGE :: DEV-43883 Override datasource URL and pass custom headers to alert rule evaluator
+	"net/http"
+
+	//"net/http" // LOGZ.IO GRAFANA CHANGE :: DEV-43883 Override datasource URL and pass custom headers to alert rule evaluator
 	"sort"
 	"strconv"
 	"strings"
@@ -661,22 +663,12 @@ func (c Condition) IsValid() bool {
 	return len(c.Data) != 0
 }
 
-// LOGZ.IO GRAFANA CHANGE :: DEV-43883 Override datasource URL and pass custom headers to alert rule evaluator
+// LOGZ.IO GRAFANA CHANGE :: DEV-43883 Support external alert evaluation
 type ExternalAlertEvaluationRequest struct {
-	AlertRule         AlertRule                  `json:"alertRule"`
-	EvalTime          time.Time                  `json:"evalTime"`
-	FolderTitle       string                     `json:"folderTitle"`
-	LogzioEvalContext LogzioAlertRuleEvalContext `json:"logzioEvalContext"`
-}
-
-type LogzioAlertRuleEvalContext struct {
-	LogzioHeaders     http.Header                             `json:"headers"`
-	DsOverrideByDsUid map[string]EvaluationDatasourceOverride `json:"dsOverride"`
-}
-
-type EvaluationDatasourceOverride struct {
-	DsUid       string `json:"dsUid"`
-	UrlOverride string `json:"urlOverride"`
+	AlertRule   AlertRule
+	EvalTime    time.Time
+	FolderTitle string
+	LogzHeaders http.Header
 }
 
 // LOGZ.IO GRAFANA CHANGE :: end

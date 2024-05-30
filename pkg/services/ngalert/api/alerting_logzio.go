@@ -47,21 +47,11 @@ func (srv *LogzioAlertingService) RouteEvaluateAlert(c *contextmodel.ReqContext,
 	for _, evalRequest := range evalRequests {
 		c.Logger.Info("Evaluate Alert API", "evalTime", evalRequest.EvalTime, "ruleTitle", evalRequest.AlertRule.Title, "ruleUID", evalRequest.AlertRule.UID)
 
-		var dsOverrideByDsUid = map[string]ngmodels.EvaluationDatasourceOverride{}
-		if evalRequest.DsOverrides != nil {
-			for _, dsOverride := range evalRequest.DsOverrides {
-				dsOverrideByDsUid[dsOverride.DsUid] = dsOverride
-			}
-		}
-
 		evalReq := ngmodels.ExternalAlertEvaluationRequest{
 			AlertRule:   evalRequest.AlertRule,
 			EvalTime:    evalRequest.EvalTime,
 			FolderTitle: evalRequest.FolderTitle,
-			LogzioEvalContext: ngmodels.LogzioAlertRuleEvalContext{
-				LogzioHeaders:     c.Req.Header,
-				DsOverrideByDsUid: dsOverrideByDsUid,
-			},
+			LogzHeaders: c.Req.Header,
 		}
 		err := srv.Schedule.RunRuleEvaluation(c.Req.Context(), evalReq)
 

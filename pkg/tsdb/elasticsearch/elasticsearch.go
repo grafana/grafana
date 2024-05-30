@@ -71,7 +71,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *es.Da
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(context.WithValue(ctx, "logzioHeaders", req.Headers), dsInfo, req.Queries[0].TimeRange, logger, tracer) // LOGZ.IO GRAFANA CHANGE :: DEV-43883 - add LogzIoHeaders
+	client, err := es.NewClient(ctx, dsInfo, req.Queries[0].TimeRange, logger, tracer)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}

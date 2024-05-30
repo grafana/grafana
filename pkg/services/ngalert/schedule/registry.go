@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math"
+	"net/http"
 	"sort"
 	"sync"
 	"time"
@@ -127,10 +128,10 @@ func (a *alertRuleInfo) update(lastVersion ruleVersionAndPauseStatus) bool {
 }
 
 type evaluation struct {
-	scheduledAt       time.Time
-	rule              *models.AlertRule
-	folderTitle       string
-	logzioEvalContext models.LogzioAlertRuleEvalContext // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add logzio datasources support
+	scheduledAt time.Time
+	rule        *models.AlertRule
+	folderTitle string
+	logzHeaders http.Header // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 }
 
 type alertRulesRegistry struct {

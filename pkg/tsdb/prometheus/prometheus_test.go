@@ -104,6 +104,7 @@ func TestService(t *testing.T) {
 					http.Header{
 						"Content-Type":    {"application/x-www-form-urlencoded"},
 						"Idempotency-Key": []string(nil),
+						"Query-Source":    {"GRAFANA"}, // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 					},
 					f.Roundtripper.Req.Header)
 				require.Equal(t, http.MethodPost, f.Roundtripper.Req.Method)
