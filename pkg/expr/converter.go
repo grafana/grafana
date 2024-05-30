@@ -127,7 +127,7 @@ func getResponseFrame(resp *backend.QueryDataResponse, refID string) (data.Frame
 		for refID := range resp.Responses {
 			keys = append(keys, refID)
 		}
-		logger.Warn("Can't find response by refID. Return nodata", "responseRefIds", keys)
+		logger.Info("Can't find response by refID. Return nodata", "responseRefIds", keys)
 		return nil, nil
 	}
 
