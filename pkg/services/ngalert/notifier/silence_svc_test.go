@@ -161,3 +161,49 @@ func TestWithRuleMetadata(t *testing.T) {
 		assert.Equal(t, "folder1", ruleAuthz.Calls[0].Arguments[2].(accesscontrol.Namespaced).GetNamespaceUID())
 	})
 }
+
+func TestUpdateSilence(t *testing.T) {
+	user := ac.BackgroundUser("test", 1, org.RoleNone, nil)
+	t.Run("Updates with access allow", func(t *testing.T) {
+		authz := fakes.FakeSilenceService{}
+		authz.AuthorizeUpdateSilenceFunc = func(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+			return nil
+		}
+		silence := models.SilenceGen()()
+		silenceStore := ngfakes.FakeSilenceStore{
+			Silences: map[string]*models.Silence{
+				*silence.ID: &silence,
+			},
+		}
+		svc := SilenceService{
+			authz: &authz,
+			store: &silenceStore,
+		}
+
+		modified := models.CopySilenceWith(silence, models.SilenceMuts.WithMatcher("newlabel", "somevalue", labels.MatchEqual))
+		_, err := svc.UpdateSilence(context.Background(), user, modified)
+		require.NoError(t, err)
+	})
+	t.Run("Updates that change rule_uid matcher error", func(t *testing.T) {
+		authz := fakes.FakeSilenceService{}
+		authz.AuthorizeUpdateSilenceFunc = func(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+			return nil
+		}
+		silence := models.SilenceGen(models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule1", labels.MatchEqual))()
+		silenceStore := ngfakes.FakeSilenceStore{
+			Silences: map[string]*models.Silence{
+				*silence.ID: &silence,
+			},
+		}
+		svc := SilenceService{
+			authz: &authz,
+			store: &silenceStore,
+		}
+
+		// Change the rule uid matcher.
+		modified := models.CopySilenceWith(silence, models.SilenceMuts.WithMatcher(alertingmodels.RuleUIDLabel, "rule2", labels.MatchEqual))
+		_, err := svc.UpdateSilence(context.Background(), user, modified)
+		assert.Error(t, err)
+		assert.ErrorContains(t, err, alertingmodels.RuleUIDLabel) // Mention matcher in error message.
+	})
+}

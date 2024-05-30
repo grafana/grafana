@@ -5,6 +5,7 @@ import (
 
 	"golang.org/x/exp/maps"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
@@ -113,6 +114,17 @@ func (s *SilenceService) CreateSilence(ctx context.Context, user identity.Reques
 func (s *SilenceService) UpdateSilence(ctx context.Context, user identity.Requester, ps models.Silence) (string, error) {
 	if err := s.authz.AuthorizeUpdateSilence(ctx, user, &ps); err != nil {
 		return "", err
+	}
+
+	existing, err := s.store.GetSilence(ctx, user.GetOrgID(), *ps.ID)
+	if err != nil {
+		return "", err
+	}
+
+	// Prevent changing the rule UID matcher. Alternatively, we could check WRITE permission on the old silence
+	// followed by CREATE permission on the new silence if the rule folder is different.
+	if existing.GetRuleUID() != ps.GetRuleUID() {
+		return "", WithPublicError(ErrSilencesBadRequest.Errorf("Silence rule matcher '%s' cannot be updated, please create a new silence", alertingModels.RuleUIDLabel))
 	}
 
 	silenceId, err := s.store.UpdateSilence(ctx, user.GetOrgID(), ps)
