@@ -17,7 +17,6 @@
 @import 'base/grid';
 @import 'base/fonts';
 @import 'base/code';
-@import 'base/icons';
 
 // UTILS
 @import 'utils/utils';
@@ -27,21 +26,13 @@
 // COMPONENTS
 @import 'components/scrollbar';
 @import 'components/buttons';
-@import 'components/navs';
 @import 'components/alerts';
 @import 'components/switch';
-@import 'components/tooltip';
 @import 'components/tags';
 @import 'components/submenu';
-@import 'components/panel_pluginlist';
-@import 'components/panel_singlestat';
-@import 'components/panel_table';
-@import 'components/panel_heatmap';
 @import 'components/tagsinput';
 @import 'components/gf-form';
-@import 'components/filter-list';
 @import 'components/filter-table';
-@import 'components/old_stuff';
 @import 'components/slate_editor';
 @import 'components/typeahead';
 @import 'components/modals';
@@ -58,9 +49,6 @@
 @import 'components/page_header';
 @import 'components/add_data_source';
 @import 'components/panel_header';
-
-// LOAD @grafana/ui components
-@import '@grafana/ui/src/index';
 
 // PAGES
 @import 'pages/dashboard';
