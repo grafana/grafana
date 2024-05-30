@@ -16,7 +16,7 @@ import type { ReactMonacoEditorProps } from './types';
  * @internal
  * Experimental export
  **/
-const MonacoEditorLazy = (props: ReactMonacoEditorProps) => {
+export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
   const styles = useStyles2(getStyles);
   const { loading, error, dependency } = useAsyncDependency(
     import(/* webpackChunkName: "react-monaco-editor" */ './ReactMonacoEditor')
@@ -31,13 +31,21 @@ const MonacoEditorLazy = (props: ReactMonacoEditorProps) => {
       <ErrorWithStack
         title="React Monaco Editor failed to load"
         error={error}
-        errorInfo={{ componentStack: error?.stack || '' }}
+        errorInfo={{ componentStack: error?.stack ?? '' }}
       />
     );
   }
 
   const ReactMonacoEditor = dependency.ReactMonacoEditor;
-  return <ReactMonacoEditor {...props} loading={props.loading ?? null} />;
+  return (
+    <ReactMonacoEditor
+      {...props}
+      loading={props.loading ?? null}
+      wrapperProps={{
+        'data-testid': selectors.components.ReactMonacoEditor.editorLazy,
+      }}
+    />
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -48,18 +56,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-const withContainer = <P extends object>(Component: React.ComponentType<P>): React.ComponentType<P> => {
-  const WithContainer = (props: P) => (
-    // allow tests to easily determine if the code editor has rendered in any of its three states (loading, error, or ready)
-    <div data-testid={selectors.components.ReactMonacoEditor.container}>
-      <Component {...props} />
-    </div>
-  );
-
-  WithContainer.displayName = Component.displayName;
-
-  return WithContainer;
-};
-
-export const ReactMonacoEditorLazy = withContainer(MonacoEditorLazy);
