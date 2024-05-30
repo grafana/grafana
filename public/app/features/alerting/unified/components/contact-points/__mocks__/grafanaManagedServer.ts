@@ -22,7 +22,13 @@ export default (server: SetupServer) => {
       HttpResponse.json<ReceiversStateDTO[]>(receiversMock)
     ),
     // this endpoint will respond if the OnCall plugin is installed
-    http.get('/api/plugins/grafana-oncall-app/settings', () => HttpResponse.json({}, { status: 404 }))
+    http.get('/api/plugins/grafana-oncall-app/settings', () => HttpResponse.json({}, { status: 404 })),
+
+    // this endpoint looks up alerts when copying notification template
+    http.get('/api/alertmanager/grafana/api/v2/alerts', () => HttpResponse.json([])),
+
+    // this endpoint returns preview of a template we're editing
+    http.post('/api/alertmanager/grafana/config/api/v1/templates/test', () => HttpResponse.json({}, { status: 200 }))
   );
 
   // this endpoint is for rendering the "additional AMs to configure" warning

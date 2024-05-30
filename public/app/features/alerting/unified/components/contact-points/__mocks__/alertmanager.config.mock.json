@@ -1,5 +1,7 @@
 {
-  "template_files": {},
+  "template_files": {
+    "some template": "{{ define 'some template' }}  something {{ end }}"
+  },
   "alertmanager_config": {
     "route": {
       "receiver": "grafana-default-email",
