@@ -133,6 +133,8 @@ export function prepSeries(
               },
 
               showPoints: y.config.custom.show === XYShowMode.Lines ? VisibilityMode.Never : VisibilityMode.Always,
+              pointShape: y.config.custom.pointShape,
+              pointStrokeWidth: y.config.custom.pointStrokeWidth,
 
               showLine: y.config.custom.show !== XYShowMode.Points,
               lineWidth: y.config.custom.lineWidth ?? 2,

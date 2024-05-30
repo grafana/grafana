@@ -1,6 +1,8 @@
 import { Field } from '@grafana/data';
 import * as common from '@grafana/schema';
 
+import { PointShape } from './panelcfg.gen';
+
 // import { SeriesMapping, XYSeriesConfig } from './panelcfg.gen';
 
 // // panel save model
@@ -47,6 +49,8 @@ import * as common from '@grafana/schema';
 // materialized series (internal)
 export interface XYSeries {
   showPoints: common.VisibilityMode;
+  pointShape: PointShape;
+  pointStrokeWidth: number;
 
   showLine: boolean;
   lineWidth: number;

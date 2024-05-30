@@ -10,7 +10,7 @@ import { commonOptionsBuilder } from '@grafana/ui';
 
 import { LineStyleEditor } from '../../timeseries/LineStyleEditor';
 
-import { FieldConfig, XYShowMode } from './panelcfg.gen';
+import { FieldConfig, XYShowMode, PointShape } from './panelcfg.gen';
 
 export const DEFAULT_POINT_SIZE = 5;
 
@@ -102,6 +102,28 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
         .addNumberInput({
           path: 'pointSize.max',
           name: 'Max point size',
+          showIf: (c) => c.show !== XYShowMode.Lines,
+        })
+        .addRadio({
+          path: 'pointShape',
+          name: 'Point shape',
+          defaultValue: PointShape.Circle,
+          settings: {
+            options: [
+              { value: PointShape.Circle, label: 'Circle' },
+              { value: PointShape.Square, label: 'Square' },
+            ],
+          },
+          showIf: (c) => c.show !== XYShowMode.Lines,
+        })
+        .addSliderInput({
+          path: 'pointStrokeWidth',
+          name: 'Point stroke width',
+          defaultValue: 1,
+          settings: {
+            min: 0,
+            max: 10,
+          },
           showIf: (c) => c.show !== XYShowMode.Lines,
         })
         // .addSliderInput({
