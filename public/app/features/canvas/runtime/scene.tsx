@@ -209,13 +209,6 @@ export class Scene {
     this.selecto?.clickTarget(event, this.div);
   }
 
-  // TODO: get rid of this for now if not being used?
-  updateCurrentLayer(newLayer: FrameState) {
-    this.currentLayer = newLayer;
-    this.clearCurrentSelection();
-    this.save();
-  }
-
   save = (updateMoveable = false) => {
     this.onSave(this.root.getSaveModel());
 
