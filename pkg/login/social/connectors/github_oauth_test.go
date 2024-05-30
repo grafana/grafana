@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
@@ -142,13 +144,16 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 		settingAllowGrafanaAdmin bool
 		settingSkipOrgRoleSync   bool
 		roleAttributePath        string
+		roleAttributeStrict      bool
+		orgAttributePath         string
+		orgMapping               []string
 		autoAssignOrgRole        string
 		want                     *social.BasicUserInfo
 		wantErr                  bool
 		oAuthExtraInfo           map[string]string
 	}{
 		{
-			name:              "Basic User info",
+			name:              "should return default role if no role attribute path is set and auto assign org role is not set",
 			userRawJSON:       testGHUserJSON,
 			userTeamsRawJSON:  testGHUserTeamsJSON,
 			autoAssignOrgRole: "",
@@ -161,6 +166,15 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				Role:   "Viewer",
 				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
+		},
+		{
+			name:                "should fail when role attribute path is empty and role attribute strict is enabled",
+			userRawJSON:         testGHUserJSON,
+			userTeamsRawJSON:    testGHUserTeamsJSON,
+			autoAssignOrgRole:   "",
+			roleAttributePath:   "",
+			roleAttributeStrict: true,
+			wantErr:             true,
 		},
 		{
 			name:              "Admin mapping takes precedence over auto assign org role",
@@ -178,7 +192,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			},
 		},
 		{
-			name:              "Editor mapping via groups",
+			name:              "should map role when role attribute path is set",
 			roleAttributePath: "contains(groups[*], '@github/justice-league') && 'Editor' || 'Viewer'",
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
@@ -193,7 +207,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			},
 		},
 		{
-			name:                   "Should be empty role if setting skipOrgRoleSync is set to true",
+			name:                   "should return empty role when skip org role sync is true",
 			roleAttributePath:      "contains(groups[*], '@github/justice-league') && 'Editor' || 'Viewer'",
 			settingSkipOrgRoleSync: true,
 			userRawJSON:            testGHUserJSON,
@@ -225,7 +239,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			},
 		},
 		{
-			name:              "fallback to default org role",
+			name:              "should fallback to default org role when role attribute path is empty and auto assign org role is set",
 			roleAttributePath: "",
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
@@ -258,6 +272,23 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
+		// {
+		// 	name:              "Org Mapping",
+		// 	roleAttributePath: "'None'",
+		// 	orgAttributePath:  "groups",
+		// 	orgMapping:        []string{"@github/justice-league:Org4:Editor", "*:Org5:Viewer"},
+		// 	userRawJSON:       testGHUserJSON,
+		// 	userTeamsRawJSON:  testGHUserTeamsJSON,
+		// 	want: &social.BasicUserInfo{
+		// 		Id:       "1",
+		// 		Name:     "monalisa octocat",
+		// 		Email:    "octocat@github.com",
+		// 		Login:    "octocat",
+		// 		Role:     "None",
+		// 		OrgRoles: map[int64]roletype.RoleType{4: "Editor", 5: "Viewer"},
+		// 		Groups:   []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+		// 	},
+		// },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -278,15 +309,23 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			}))
 			defer server.Close()
 
+			cfg := &setting.Cfg{
+				AutoAssignOrgRole: tt.autoAssignOrgRole,
+			}
+
 			s := NewGitHubProvider(
 				&social.OAuthInfo{
-					ApiUrl:            server.URL + "/user",
-					RoleAttributePath: tt.roleAttributePath,
-					SkipOrgRoleSync:   tt.settingSkipOrgRoleSync,
-					Extra:             tt.oAuthExtraInfo,
-				}, &setting.Cfg{
-					AutoAssignOrgRole: tt.autoAssignOrgRole,
-				}, nil, &ssosettingstests.MockService{},
+					ApiUrl:              server.URL + "/user",
+					RoleAttributePath:   tt.roleAttributePath,
+					RoleAttributeStrict: tt.roleAttributeStrict,
+					OrgAttributePath:    tt.orgAttributePath,
+					OrgMapping:          tt.orgMapping,
+					SkipOrgRoleSync:     tt.settingSkipOrgRoleSync,
+					Extra:               tt.oAuthExtraInfo,
+				}, cfg,
+				ProvideOrgRoleMapper(cfg,
+					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
+				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
 			token := &oauth2.Token{
