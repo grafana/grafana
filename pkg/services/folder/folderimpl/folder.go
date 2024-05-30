@@ -882,7 +882,6 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	}
 	if !hasAccess {
 		return nil, dashboards.ErrFolderAccessDenied
-
 	}
 
 	// here we get the folder, we need to get the height of current folder
