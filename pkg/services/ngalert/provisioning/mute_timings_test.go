@@ -412,6 +412,10 @@ func TestUpdateMuteTimings(t *testing.T) {
 
 	t.Run("rejects mute timings if provenance is not right", func(t *testing.T) {
 		sut, _, prov := createMuteTimingSvcSut()
+		expectedErr := errors.New("test")
+		sut.validator = func(from, to models.Provenance) error {
+			return expectedErr
+		}
 		timing := definitions.MuteTimeInterval{
 			MuteTimeInterval: expected,
 			Provenance:       definitions.Provenance(models.ProvenanceFile),
@@ -421,7 +425,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 
 		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
 
-		require.ErrorContains(t, err, "cannot change provenance")
+		require.ErrorIs(t, err, expectedErr)
 	})
 
 	t.Run("returns ErrMuteTimingsNotFound if mute timing does not exist", func(t *testing.T) {
@@ -590,6 +594,10 @@ func TestDeleteMuteTimings(t *testing.T) {
 
 	t.Run("fails if it was created with different provenance", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
+		expectedErr := errors.New("test")
+		sut.validator = func(from, to models.Provenance) error {
+			return expectedErr
+		}
 		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
 			return &cfgRevision{cfg: initialConfig()}, nil
 		}
@@ -597,10 +605,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		err := sut.DeleteMuteTiming(context.Background(), "no-timing", orgID, definitions.Provenance(models.ProvenanceNone))
-		require.ErrorContains(t, err, "cannot delete with provided provenance")
-
-		err = sut.DeleteMuteTiming(context.Background(), "no-timing", orgID, definitions.Provenance(models.ProvenanceFile))
-		require.ErrorContains(t, err, "cannot delete with provided provenance")
+		require.ErrorIs(t, err, expectedErr)
 
 		require.Len(t, store.Calls, 0)
 	})
@@ -721,5 +726,8 @@ func createMuteTimingSvcSut() (*MuteTimingService, *alertmanagerConfigStoreFake,
 		provenanceStore: prov,
 		xact:            newNopTransactionManager(),
 		log:             log.NewNopLogger(),
+		validator: func(from, to models.Provenance) error {
+			return nil
+		},
 	}, store, prov
 }

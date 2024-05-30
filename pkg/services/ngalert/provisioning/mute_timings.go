@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/prometheus/alertmanager/config"
 
@@ -16,6 +15,7 @@ type MuteTimingService struct {
 	provenanceStore ProvisioningStore
 	xact            TransactionManager
 	log             log.Logger
+	validator       ProvenanceStatusTransitionValidator
 }
 
 func NewMuteTimingService(config AMConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *MuteTimingService {
@@ -24,6 +24,7 @@ func NewMuteTimingService(config AMConfigStore, prov ProvisioningStore, xact Tra
 		provenanceStore: prov,
 		xact:            xact,
 		log:             log,
+		validator:       ValidateProvenanceRelaxed,
 	}
 }
 
@@ -122,8 +123,8 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
-	if storedProvenance != models.Provenance(mt.Provenance) && storedProvenance != models.ProvenanceNone {
-		return definitions.MuteTimeInterval{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, mt.Provenance)
+	if err := svc.validator(storedProvenance, models.Provenance(mt.Provenance)); err != nil {
+		return definitions.MuteTimeInterval{}, err
 	}
 
 	revision, err := svc.configStore.Get(ctx, orgID)
@@ -139,7 +140,6 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
-
 	revision.cfg.AlertmanagerConfig.MuteTimeIntervals[idx] = mt.MuteTimeInterval
 
 	// TODO add diff and noop detection
@@ -163,8 +163,8 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 	if err != nil {
 		return err
 	}
-	if storedProvenance != models.Provenance(provenance) && storedProvenance != models.ProvenanceNone {
-		return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+	if err := svc.validator(storedProvenance, models.Provenance(provenance)); err != nil {
+		return err
 	}
 
 	revision, err := svc.configStore.Get(ctx, orgID)
