@@ -3,7 +3,6 @@ import { merge, Observable, of } from 'rxjs';
 
 import {
   CoreApp,
-  DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -105,7 +104,7 @@ export class CloudWatchDatasource
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length) {
-      dataQueryResponses.push(this.logsQueryRunner.HandleLogQueries(logQueries, options, super.query.bind(this)));
+      dataQueryResponses.push(this.logsQueryRunner.handleLogQueries(logQueries, options, super.query.bind(this)));
     }
 
     if (metricsQueries.length) {
@@ -146,11 +145,16 @@ export class CloudWatchDatasource
     }));
   }
 
+
+  /**
+   * Get log row context for a given log row. This is called when the user clicks on a log row in the logs visualization and the "show context button"
+   * it shows the surrounding logs.
+   */
   getLogRowContext(
     row: LogRowModel,
     context?: LogRowContextOptions,
     query?: CloudWatchLogsQuery
-  ): Promise<{ data: DataFrame[] }> {
+  ) {
     return this.logsQueryRunner.getLogRowContext(row, context, super.query.bind(this), query);
   }
 
