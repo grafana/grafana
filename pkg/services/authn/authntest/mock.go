@@ -46,6 +46,10 @@ func (m *MockService) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority
 	panic("unimplemented")
 }
 
+func (m *MockService) RegisterPreLogoutHook(hook authn.PreLogoutHookFn, priority uint) {
+	panic("unimplemented")
+}
+
 func (*MockService) Logout(_ context.Context, _ identity.Requester, _ *usertoken.UserToken) (*authn.Redirect, error) {
 	panic("unimplemented")
 }
