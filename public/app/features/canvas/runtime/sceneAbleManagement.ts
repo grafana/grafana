@@ -11,11 +11,53 @@ import { getParent } from 'app/plugins/panel/canvas/utils';
 import { VerticalConstraint, HorizontalConstraint } from '../types';
 
 import { dimensionViewable, constraintViewable, settingsViewable } from './ables';
+import { ElementState } from './element';
+import { FrameState } from './frame';
 import { Scene } from './scene';
 import { findElementByTarget } from './sceneElementManagement';
 
+// Helper function that disables custom able functionality
+const disableCustomables = (moveable: Moveable) => {
+  moveable!.props = {
+    dimensionViewable: false,
+    constraintViewable: false,
+    settingsViewable: false,
+  };
+};
+
+// Helper function that enables custom able functionality
+const enableCustomables = (moveable: Moveable) => {
+  moveable!.props = {
+    dimensionViewable: true,
+    constraintViewable: true,
+    settingsViewable: true,
+  };
+};
+
+// Generate target HTML element divs to configure selecto / moveable
+const generateTargetElements = (rootElements: ElementState[]): HTMLDivElement[] => {
+  let targetElements: HTMLDivElement[] = [];
+
+  const stack = [...rootElements];
+  while (stack.length > 0) {
+    const currentElement = stack.shift();
+
+    if (currentElement && currentElement.div) {
+      targetElements.push(currentElement.div);
+    }
+
+    const nestedElements = currentElement instanceof FrameState ? currentElement.elements : [];
+    for (const nestedElement of nestedElements) {
+      stack.unshift(nestedElement);
+    }
+  }
+
+  return targetElements;
+};
+
+// Main entry point for initializing / updating moveable and selecto configuration
 export const initMoveable = (destroySelecto = false, allowChanges = true, scene: Scene) => {
-  const targetElements = scene.generateTargetElements(scene.root.elements);
+  const targetElements = generateTargetElements(scene.root.elements);
 
   if (destroySelecto && scene.selecto) {
     scene.selecto.destroy();
@@ -57,7 +99,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     origin: false,
   })
     .on('rotateStart', () => {
-      scene.disableCustomables();
+      disableCustomables(scene.moveable!);
     })
     .on('rotate', (event) => {
       const targetedElement = findElementByTarget(event.target, scene.root.elements);
@@ -75,7 +117,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       }
     })
     .on('rotateEnd', () => {
-      scene.enableCustomables();
+      enableCustomables(scene.moveable!);
       // Update the editor with the new rotation
       scene.moved.next(Date.now());
     })

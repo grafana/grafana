@@ -209,6 +209,7 @@ export class Scene {
     this.selecto?.clickTarget(event, this.div);
   }
 
+  // TODO: get rid of this for now if not being used?
   updateCurrentLayer(newLayer: FrameState) {
     this.currentLayer = newLayer;
     this.clearCurrentSelection();
@@ -273,42 +274,6 @@ export class Scene {
       const s = selection.targets.map((t) => findElementByTarget(t, this.root.elements)!);
       this.selection.next(s);
     }
-  };
-
-  generateTargetElements = (rootElements: ElementState[]): HTMLDivElement[] => {
-    let targetElements: HTMLDivElement[] = [];
-
-    const stack = [...rootElements];
-    while (stack.length > 0) {
-      const currentElement = stack.shift();
-
-      if (currentElement && currentElement.div) {
-        targetElements.push(currentElement.div);
-      }
-
-      const nestedElements = currentElement instanceof FrameState ? currentElement.elements : [];
-      for (const nestedElement of nestedElements) {
-        stack.unshift(nestedElement);
-      }
-    }
-
-    return targetElements;
-  };
-
-  disableCustomables = () => {
-    this.moveable!.props = {
-      dimensionViewable: false,
-      constraintViewable: false,
-      settingsViewable: false,
-    };
-  };
-
-  enableCustomables = () => {
-    this.moveable!.props = {
-      dimensionViewable: true,
-      constraintViewable: true,
-      settingsViewable: true,
-    };
   };
 
   addToSelection = () => {
