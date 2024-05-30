@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Stack, Label } from '@grafana/ui';
+import { Label, Stack, useStyles2 } from '@grafana/ui';
 
 export function EditorColumnHeader({ label, actions }: { label: string; actions?: React.ReactNode }) {
   const styles = useStyles2(editorColumnStyles);

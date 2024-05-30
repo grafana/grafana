@@ -40,8 +40,8 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Manage variables
-title: Add and manage variables
+menuTitle: Add variables
+title: Add variables
 description: Learn about the types of variables you can add to dashboards and how
 weight: 100
 refs:
@@ -82,7 +82,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
 ---
 
-# Add and manage variables
+# Add variables
 
 The following table lists the types of variables shipped with Grafana.
 
@@ -552,16 +552,6 @@ You can change the orders of variables in the dashboard variable list by clickin
 The more layers of dependency you have in variables, the longer it will take to update dashboards after you change variables.
 
 For example, if you have a series of four linked variables (country, region, server, metric) and you change a root variable value (country), then Grafana must run queries for all the dependent variables before it updates the visualizations in the dashboard.
-
-## Manage variables
-
-The variables page lets you [add](ref:add) variables and manage existing variables. It also allows you to [inspect](ref:inspect) variables and identify whether a variable is being referenced (or used) in other variables or dashboard.
-
-**Move:** You can move a variable up or down the list using drag and drop.
-
-**Clone:** To clone a variable, click the clone icon from the set of icons on the right. This creates a copy of the variable with the name of the original variable prefixed with `copy_of_`.
-
-**Delete:** To delete a variable, click the trash icon from the set of icons on the right.
 
 ## Filter variables with regex
 

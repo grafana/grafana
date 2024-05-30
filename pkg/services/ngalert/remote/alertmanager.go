@@ -17,9 +17,12 @@ import (
 	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
 	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
+	"github.com/prometheus/client_golang/prometheus"
 
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	alertingNotify "github.com/grafana/alerting/notify"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -28,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
-	"gopkg.in/yaml.v3"
 )
 
 type stateStore interface {
@@ -122,7 +124,11 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	doFunc := func(ctx context.Context, _ *http.Client, req *http.Request) (*http.Response, error) {
 		return c.Do(req.WithContext(ctx))
 	}
-	s := sender.NewExternalAlertmanagerSender(sender.WithDoFunc(doFunc))
+	senderLogger := log.New("ngalert.sender.external-alertmanager")
+	s, err := sender.NewExternalAlertmanagerSender(senderLogger, prometheus.NewRegistry(), sender.WithDoFunc(doFunc))
+	if err != nil {
+		return nil, err
+	}
 	s.Run()
 	err = s.ApplyConfig(cfg.OrgID, 0, []sender.ExternalAMcfg{{URL: cfg.URL + "/alertmanager"}})
 	if err != nil {
