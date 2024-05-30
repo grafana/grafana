@@ -17,7 +17,7 @@ type FakeSilenceService struct {
 	Calls []Call
 }
 
-func (s FakeSilenceService) FilterByAccess(ctx context.Context, user identity.Requester, silences ...*models.Silence) ([]*models.Silence, error) {
+func (s *FakeSilenceService) FilterByAccess(ctx context.Context, user identity.Requester, silences ...*models.Silence) ([]*models.Silence, error) {
 	s.Calls = append(s.Calls, Call{"FilterByAccess", []interface{}{ctx, user, silences}})
 	if s.FilterByAccessFunc != nil {
 		return s.FilterByAccessFunc(ctx, user, silences...)
@@ -25,7 +25,7 @@ func (s FakeSilenceService) FilterByAccess(ctx context.Context, user identity.Re
 	return nil, nil
 }
 
-func (s FakeSilenceService) AuthorizeReadSilence(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+func (s *FakeSilenceService) AuthorizeReadSilence(ctx context.Context, user identity.Requester, silence *models.Silence) error {
 	s.Calls = append(s.Calls, Call{"AuthorizeReadSilence", []interface{}{ctx, user, silence}})
 	if s.AuthorizeReadSilenceFunc != nil {
 		return s.AuthorizeReadSilenceFunc(ctx, user, silence)
@@ -33,7 +33,7 @@ func (s FakeSilenceService) AuthorizeReadSilence(ctx context.Context, user ident
 	return nil
 }
 
-func (s FakeSilenceService) AuthorizeCreateSilence(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+func (s *FakeSilenceService) AuthorizeCreateSilence(ctx context.Context, user identity.Requester, silence *models.Silence) error {
 	s.Calls = append(s.Calls, Call{"AuthorizeCreateSilence", []interface{}{ctx, user, silence}})
 	if s.AuthorizeCreateSilenceFunc != nil {
 		return s.AuthorizeCreateSilenceFunc(ctx, user, silence)
@@ -41,7 +41,7 @@ func (s FakeSilenceService) AuthorizeCreateSilence(ctx context.Context, user ide
 	return nil
 }
 
-func (s FakeSilenceService) AuthorizeUpdateSilence(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+func (s *FakeSilenceService) AuthorizeUpdateSilence(ctx context.Context, user identity.Requester, silence *models.Silence) error {
 	s.Calls = append(s.Calls, Call{"AuthorizeUpdateSilence", []interface{}{ctx, user, silence}})
 	if s.AuthorizeUpdateSilenceFunc != nil {
 		return s.AuthorizeUpdateSilenceFunc(ctx, user, silence)
@@ -49,7 +49,7 @@ func (s FakeSilenceService) AuthorizeUpdateSilence(ctx context.Context, user ide
 	return nil
 }
 
-func (s FakeSilenceService) SilenceAccess(ctx context.Context, user identity.Requester, silences []*models.Silence) (map[*models.Silence]models.SilencePermissionSet, error) {
+func (s *FakeSilenceService) SilenceAccess(ctx context.Context, user identity.Requester, silences []*models.Silence) (map[*models.Silence]models.SilencePermissionSet, error) {
 	s.Calls = append(s.Calls, Call{"SilenceAccess", []interface{}{ctx, user, silences}})
 	if s.SilenceAccessFunc != nil {
 		return s.SilenceAccessFunc(ctx, user, silences)
