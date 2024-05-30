@@ -1,5 +1,5 @@
-import { config } from '@grafana/runtime';
 import { getAzureClouds } from '@grafana/azure-sdk';
+import { config } from '@grafana/runtime';
 
 import {
   AadCurrentUserCredentials,
@@ -47,7 +47,7 @@ function resolveLegacyCloudName(cloudName: string | undefined): string | undefin
 }
 
 function getDefaultAzureCloud(): string {
- const cloudName = resolveLegacyCloudName(config.azure.cloud);
+  const cloudName = resolveLegacyCloudName(config.azure.cloud);
 
   switch (cloudName) {
     case AzureCloud.Public:
