@@ -1,5 +1,7 @@
 import { omit } from 'lodash';
 
+import { dateTime, dateTimeForTimeZone } from '@grafana/data';
+
 import { RichHistoryQuery } from '../../types';
 import { SortOrder } from '../utils/richHistoryTypes';
 
@@ -14,32 +16,35 @@ export function filterAndSortQueries(
   sortOrder: SortOrder,
   listOfDatasourceFilters: string[],
   searchFilter: string,
-  timeFilter?: [number, number]
+  // Number of days since now. So now - timeFilter[1] to now - timeFilter[0].
+  timeFilter?: [number, number],
+  timezone?: string
 ) {
   const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
   const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
   const filteredQueriesToBeSorted = timeFilter
-    ? filterQueriesByTime(filteredQueriesByDsAndSearchFilter, timeFilter)
+    ? filterQueriesByTime(filteredQueriesByDsAndSearchFilter, timeFilter, timezone)
     : filteredQueriesByDsAndSearchFilter;
 
   return sortQueries(filteredQueriesToBeSorted, sortOrder);
 }
 
-export const createRetentionPeriodBoundary = (days: number, isLastTs: boolean) => {
-  const today = new Date();
-  const date = new Date(today.setDate(today.getDate() - days));
+export const createRetentionPeriodBoundary = (days: number, options: { isLastTs: boolean; tz?: string }): number => {
+  const now = options.tz ? dateTimeForTimeZone(options.tz) : dateTime();
+  now.add(-days, 'd');
+
   /*
    * As a retention period boundaries, we consider:
    * - The last timestamp equals to the 24:00 of the last day of retention
    * - The first timestamp that equals to the 00:00 of the first day of retention
    */
-  const boundary = isLastTs ? date.setHours(24, 0, 0, 0) : date.setHours(0, 0, 0, 0);
-  return boundary;
+  const boundary = options.isLastTs ? now.endOf('d') : now.startOf('d');
+  return boundary.valueOf();
 };
 
-function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
-  const filter1 = createRetentionPeriodBoundary(timeFilter[0], true); // probably the vars should have a different name
-  const filter2 = createRetentionPeriodBoundary(timeFilter[1], false);
+function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number], tz?: string) {
+  const filter1 = createRetentionPeriodBoundary(timeFilter[0], { isLastTs: true, tz });
+  const filter2 = createRetentionPeriodBoundary(timeFilter[1], { isLastTs: false, tz });
   return queries.filter((q) => q.createdAt < filter1 && q.createdAt > filter2);
 }
 

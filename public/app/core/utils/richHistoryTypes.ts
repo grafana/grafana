@@ -12,6 +12,7 @@ export enum SortOrder {
 }
 
 export interface RichHistorySettings {
+  // Number of days
   retentionPeriod: number;
   starredTabAsFirstTab: boolean;
   activeDatasourcesOnly: boolean;
@@ -23,8 +24,12 @@ export type RichHistorySearchFilters = {
   sortOrder: SortOrder;
   /** Names of data sources (not uids) - used by local and remote storage **/
   datasourceFilters: string[];
+
+  // From to correspond to days in the past from now. So from < to but the timeRange this represents is
+  // from `now - to` to `now - from`
   from?: number;
   to?: number;
+
   starred: boolean;
   page?: number;
 };

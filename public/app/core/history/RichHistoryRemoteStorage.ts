@@ -2,6 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { DataQuery } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { PreferencesService } from '../services/PreferencesService';
@@ -9,6 +10,7 @@ import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../uti
 
 import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
 import { fromDTO } from './remoteStorageConverter';
+import { createRetentionPeriodBoundary } from './richHistoryLocalStorageUtils';
 
 export type RichHistoryRemoteStorageDTO = {
   uid: string;
@@ -132,11 +134,11 @@ function buildQueryParams(filters: RichHistorySearchFilters): string {
     params = params + `&sort=${filters.sortOrder === SortOrder.Ascending ? 'time-asc' : 'time-desc'}`;
   }
   if (!filters.starred) {
-    const relativeFrom = filters.from === 0 ? 'now' : `now-${filters.from}d`;
-    const relativeTo = filters.to === 0 ? 'now' : `now-${filters.to}d`;
     // TODO: Unify: remote storage from/to params are swapped comparing to frontend and local storage filters
-    params = params + `&to=${relativeFrom}`;
-    params = params + `&from=${relativeTo}`;
+    const from = createRetentionPeriodBoundary(filters.to ?? 14, { isLastTs: true, tz: contextSrv.user?.timezone });
+    const to = createRetentionPeriodBoundary(filters.from ?? 0, { isLastTs: false, tz: contextSrv.user?.timezone });
+    params = params + `&to=${to}`;
+    params = params + `&from=${from}`;
   }
   params = params + `&limit=100`;
   params = params + `&page=${filters.page || 1}`;
