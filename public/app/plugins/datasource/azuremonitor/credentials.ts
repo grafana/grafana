@@ -1,3 +1,4 @@
+import { getAzureClouds } from '@grafana/azure-sdk';
 import { config } from '@grafana/runtime';
 
 import {
@@ -29,31 +30,43 @@ export function getAuthType(options: AzureDataSourceSettings | AzureDataSourceIn
   return options.jsonData.azureAuthType;
 }
 
-function getDefaultAzureCloud(): string {
-  switch (config.azure.cloud) {
-    case AzureCloud.Public:
-    case AzureCloud.None:
-    case undefined:
-      return 'azuremonitor';
-    case AzureCloud.China:
-      return 'chinaazuremonitor';
-    case AzureCloud.USGovernment:
-      return 'govazuremonitor';
+function resolveLegacyCloudName(cloudName: string | undefined): string | undefined {
+  if (!cloudName) {
+    // if undefined, allow the code to fallback to calling getDefaultAzureCloud() since that has the complete logic for handling an empty cloud name
+    return undefined;
+  }
+  switch (cloudName) {
+    case 'azuremonitor':
+      return AzureCloud.Public;
+    case 'chinaazuremonitor':
+      return AzureCloud.China;
+    case 'govazuremonitor':
+      return AzureCloud.USGovernment;
     default:
-      throw new Error(`The cloud '${config.azure.cloud}' not supported.`);
+      return cloudName;
   }
 }
 
-export function getAzurePortalUrl(azureCloud: string): string {
-  switch (azureCloud) {
-    case 'azuremonitor':
-      return 'https://portal.azure.com';
-    case 'chinaazuremonitor':
-      return 'https://portal.azure.cn';
-    case 'govazuremonitor':
-      return 'https://portal.azure.us';
+function getDefaultAzureCloud(): string {
+  const cloudName = resolveLegacyCloudName(config.azure.cloud);
+
+  switch (cloudName) {
+    case AzureCloud.Public:
+    case AzureCloud.None:
+      return AzureCloud.Public;
+    case AzureCloud.China:
+      return AzureCloud.China;
+    case AzureCloud.USGovernment:
+      return AzureCloud.USGovernment;
     default:
-      throw new Error('The cloud not supported.');
+      const cloudInfo = getAzureClouds();
+
+      for (const cloud of cloudInfo) {
+        if (cloud.name === config.azure.cloud) {
+          return cloud.name;
+        }
+      }
+      throw new Error(`The cloud '${config.azure.cloud}' is unsupported.`);
   }
 }
 
@@ -66,7 +79,7 @@ export function getAzureCloud(options: AzureDataSourceSettings | AzureDataSource
       return getDefaultAzureCloud();
     case 'clientsecret':
     case 'currentuser':
-      return options.jsonData.cloudName || getDefaultAzureCloud();
+      return resolveLegacyCloudName(options.jsonData.cloudName) || getDefaultAzureCloud();
   }
 }
 
@@ -131,7 +144,7 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
     case 'clientsecret':
       return {
         authType,
-        azureCloud: options.jsonData.cloudName || getDefaultAzureCloud(),
+        azureCloud: resolveLegacyCloudName(options.jsonData.cloudName) || getDefaultAzureCloud(),
         tenantId: options.jsonData.tenantId,
         clientId: options.jsonData.clientId,
         clientSecret: getSecret(options),
@@ -177,7 +190,9 @@ export function updateCredentials(
         jsonData: {
           ...options.jsonData,
           azureAuthType: credentials.authType,
-          azureCredentials: undefined,
+          azureCredentials: {
+            authType: credentials.authType,
+          },
         },
       };
 
@@ -189,10 +204,15 @@ export function updateCredentials(
         jsonData: {
           ...options.jsonData,
           azureAuthType: credentials.authType,
-          cloudName: credentials.azureCloud || getDefaultAzureCloud(),
+          cloudName: resolveLegacyCloudName(credentials.azureCloud) || getDefaultAzureCloud(),
           tenantId: credentials.tenantId,
           clientId: credentials.clientId,
-          azureCredentials: undefined,
+          azureCredentials: {
+            authType: credentials.authType,
+            azureCloud: resolveLegacyCloudName(credentials.azureCloud) || getDefaultAzureCloud(),
+            tenantId: credentials.tenantId,
+            clientId: credentials.clientId,
+          },
         },
         secureJsonData: {
           ...options.secureJsonData,
