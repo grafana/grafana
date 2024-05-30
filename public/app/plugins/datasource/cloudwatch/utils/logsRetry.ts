@@ -29,7 +29,7 @@ export function runWithRetry(
   let retries = 0;
   let timerID: ReturnType<typeof setTimeout>;
   let subscription: Subscription;
-  let collected: { data: DataFrame[], errors: DataQueryError[] } = { data: [], errors: [] };
+  let collected: { data: DataFrame[]; errors: DataQueryError[] } = { data: [], errors: [] };
   // This function is used to calculate the time to wait before retrying the query.
   const retryWaitFunction = (retry: number) => {
     return Math.pow(2, retry) * 1000 + Math.random() * 100;
@@ -45,14 +45,8 @@ export function runWithRetry(
             if (refIdsForRequestsToRetry.length > 0) {
               if (!timeoutFunc(retries, startTime.valueOf())) {
                 // store the responses we are not retrying
-                collected.data = [
-                  ...collected.data,
-                  ...response.data,
-                ]
-                collected.errors = [
-                  ...collected.errors,
-                  ...errorsNotToRetry,
-                ]
+                collected.data = [...collected.data, ...response.data];
+                collected.errors = [...collected.errors, ...errorsNotToRetry];
 
                 // We retry only the failed queries
                 timerID = setTimeout(
@@ -71,14 +65,11 @@ export function runWithRetry(
           }
 
           // if the timeout is done or it was never called we take what we have from past retries and the current round
-          collected.data = [
-            ...collected.data,
-            ...response.data,
-          ]
+          collected.data = [...collected.data, ...response.data];
           collected.errors = [
             ...collected.errors,
-            ...(response.errors && response.errors.length > 0 ? response.errors : [])
-          ]
+            ...(response.errors && response.errors.length > 0 ? response.errors : []),
+          ];
           observer.next(collected);
           observer.complete();
         },
@@ -100,7 +91,7 @@ export function runWithRetry(
 }
 
 function splitErrorsData(errors: DataQueryError[]) {
-  const refIdsForRequestsToRetry: (string)[] = [];
+  const refIdsForRequestsToRetry: string[] = [];
   const errorsNotToRetry: DataQueryError[] = [];
   errors.map((err) => {
     if (err?.message?.includes('LimitExceededException') && err.refId) {

@@ -75,7 +75,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   };
 
   /**
-   * Where all frontend log queries start. Log Queries are started and then we poll for the results. 
+   * Where all frontend log queries start. Log Queries are started and then we poll for the results.
    * There is a timeout set in the ds configuration that will stop the query if it takes too long.
    * We automatically retry logs queries that hit rate limits from aws.
    * @param logQueries the raw log queries as created by the user
@@ -128,7 +128,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     ).pipe(
       // once we've started the query, we need to poll for the results
       mergeMap((startQueryResponse) => {
-        return this.getQueryResults({ logQueries, timeoutFunc, queryFn, startQueryResponse })
+        return this.getQueryResults({ logQueries, timeoutFunc, queryFn, startQueryResponse });
       }),
       // once we get the results, we add data links to the logs
       mergeMap((dataQueryResponse) => {
@@ -149,7 +149,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       })
     );
   };
-
 
   /**
    * Called by datasource.ts, invoked when user clicks on a log row in the logs visualization and the "show context button"
@@ -202,7 +201,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     logQueries,
     timeoutFunc,
     queryFn,
-    startQueryResponse
+    startQueryResponse,
   }: {
     logQueries: CloudWatchLogsQuery[];
     timeoutFunc: () => boolean;
@@ -238,7 +237,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     );
   };
 
-
   /**
    * Checks progress and polls data of a started logs query with some retry logic.
    * @param queryParams
@@ -268,7 +266,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const dataFrames: Observable<DataFrame[]> = responses.pipe(
       map((response) => {
         // TODO: it's not entirely clear to me why but this map gets called twice, but the responses are the same
-        // I think it has something to do with lingering subscriptions being opened, it feels like a bug here. 
+        // I think it has something to do with lingering subscriptions being opened, it feels like a bug here.
         // In an ideal world we'd push the errors to an array, not reset it
         if (response.errors) {
           errorsFromGetQuery = response.errors;
@@ -316,7 +314,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       }),
       map(([dataFrames, failedAttempts]) => {
         // if we've timed out, we set a status of cancel which will stop the query from being retried again in getQueryResults
-        const errors = [...errorsFromStartQuery, ...errorsFromGetQuery]
+        const errors = [...errorsFromStartQuery, ...errorsFromGetQuery];
         if (timeoutFunc()) {
           for (const frame of dataFrames) {
             set(frame, 'meta.custom.Status', CloudWatchLogsQueryStatus.Cancelled);
