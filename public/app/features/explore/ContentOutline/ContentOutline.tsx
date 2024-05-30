@@ -264,10 +264,10 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
       marginRight: expanded ? theme.spacing(0.5) : undefined,
     }),
     indentRoot: css({
-      paddingLeft: theme.spacing(4),
+      paddingLeft: theme.spacing(3),
     }),
     indentChild: css({
-      paddingLeft: expanded ? theme.spacing(7) : theme.spacing(4),
+      paddingLeft: expanded ? theme.spacing(5) : theme.spacing(3.375),
     }),
     itemWrapper: css({
       display: 'flex',
@@ -282,7 +282,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
         borderRight: `1px solid ${theme.colors.border.medium}`,
         content: '""',
         height: '100%',
-        left: 48,
+        left: theme.spacing(4.75),
         position: 'absolute',
         transform: 'translateX(50%)',
       },
