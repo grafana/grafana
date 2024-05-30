@@ -240,9 +240,12 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 			return err
 		}
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-		// nolint:staticcheck
-		if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
-			return err
+
+		if !l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
+			// nolint:staticcheck
+			if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
+				return err
+			}
 		}
 
 		// Delete any hanging/invalid connections
@@ -538,17 +541,20 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 		toFolderID = fromFolderID
 	}
 
-	// FolderID was provided in the PATCH request
-	if toFolderID != -1 && toFolderID != fromFolderID {
-		if err := l.requireEditPermissionsOnFolder(ctx, user, toFolderID); err != nil {
+	if !l.features.IsEnabled(ctx, featuremgmt.FlagLibraryPanelRBAC) {
+		// FolderID was provided in the PATCH request
+		if toFolderID != -1 && toFolderID != fromFolderID {
+			if err := l.requireEditPermissionsOnFolder(ctx, user, toFolderID); err != nil {
+				return err
+			}
+		}
+
+		// Always check permissions for the folder where library element resides
+		if err := l.requireEditPermissionsOnFolder(ctx, user, fromFolderID); err != nil {
 			return err
 		}
 	}
 
-	// Always check permissions for the folder where library element resides
-	if err := l.requireEditPermissionsOnFolder(ctx, user, fromFolderID); err != nil {
-		return err
-	}
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 	// nolint:staticcheck
 	elementToPatch.FolderID = toFolderID
