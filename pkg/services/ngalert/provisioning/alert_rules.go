@@ -749,7 +749,7 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderFullpath(ctx context
 	return res, nil
 }
 
-// GetAlertGroupsWithFolderFullpath returns all groups with folder title in the folders identified by folderUID that have at least one alert. If argument folderUIDs is nil or empty - returns groups in all folders.
+// GetAlertGroupsWithFolderFullpath returns all groups with folder's full path in the folders identified by folderUID that have at least one alert. If argument folderUIDs is nil or empty - returns groups in all folders.
 func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Context, user identity.Requester, folderUIDs []string) ([]models.AlertRuleGroupWithFolderFullpath, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID: user.GetOrgID(),
@@ -815,7 +815,7 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Co
 	for groupKey, rules := range groups {
 		fullpath, ok := folderUidToFullpath[groupKey.NamespaceUID]
 		if !ok {
-			return nil, fmt.Errorf("cannot find fullpath for folder with uid '%s'", groupKey.NamespaceUID)
+			return nil, fmt.Errorf("cannot find full path for folder with uid '%s'", groupKey.NamespaceUID)
 		}
 		result = append(result, models.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(groupKey, rules, fullpath))
 	}
