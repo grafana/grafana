@@ -230,12 +230,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       id: PromOperationId.Pi,
       renderer: (model) => `${model.id}()`,
     }),
-    createFunction({
-      id: PromOperationId.Quantile,
-      params: [{ name: 'Value', type: 'number' }],
-      defaultParams: [1],
-      renderer: functionRendererLeft,
-    }),
     createFunction({ id: PromOperationId.Rad }),
     createRangeFunction(PromOperationId.Resets),
     createFunction({
