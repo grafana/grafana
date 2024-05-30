@@ -1,8 +1,8 @@
-import { union, without, debounce } from 'lodash';
+import { debounce, union, without } from 'lodash';
 import React, { PropsWithChildren, useEffect, useRef } from 'react';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
+import { config, getAppEvents } from '@grafana/runtime';
 import { AlertmanagerChoice, GrafanaAlertingConfiguration } from 'app/plugins/datasource/alertmanager/types';
 import { dispatch } from 'app/store/store';
 
@@ -34,6 +34,9 @@ interface Context {
   // for updating or resetting the configuration for an Alertmanager
   updateAlertmanagerSettings: (name: string, oldConfig: string, newConfig: string) => void;
   resetAlertmanagerSettings: (name: string) => void;
+
+  // this feature toggle is for disabling the "send to external Alertmanagers" feature
+  forwardingDisabled: boolean;
 }
 
 const SettingsContext = React.createContext<Context | undefined>(undefined);
@@ -43,6 +46,8 @@ export const SettingsProvider = (props: PropsWithChildren) => {
   // this list will keep track of Alertmanager UIDs (including internal) that are interested in receiving alert instances
   // this will be used to infer the correct "delivery mode" and update the correct list of datasources with "wantsAlertsReceived"
   let interestedAlertmanagers: string[] = [];
+
+  const forwardingDisabled = config.featureToggles.alertingDisableSendAlertsExternal === true;
 
   const { currentData: configuration, isLoading: isLoadingConfiguration } =
     alertmanagerApi.endpoints.getGrafanaAlertingConfiguration.useQuery();
@@ -115,9 +120,12 @@ export const SettingsProvider = (props: PropsWithChildren) => {
 
   const value: Context = {
     configuration,
+    forwardingDisabled,
     externalAlertmanagerDataSourcesWithStatus: externalAlertmanagersWithStatus,
+
     enableAlertmanager,
     disableAlertmanager,
+
     isLoading: isLoadingConfiguration,
     isUpdating: updateConfigurationState.isLoading || enableOrDisableHandlingGrafanaManagedAlertsState.isLoading,
 

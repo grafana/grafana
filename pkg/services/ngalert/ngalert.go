@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -298,10 +299,13 @@ func (ng *AlertNG) init() error {
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
+		FeatureToggles:       ng.FeatureToggles,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
 		Log:                  log.New("ngalert.scheduler"),
+		//TODO: replace with real writer impl
+		RecordingWriter: writer.FakeWriter{},
 	}
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.

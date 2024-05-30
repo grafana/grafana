@@ -17145,7 +17145,7 @@
     },
     "/datasources/uid/{uid}/lbac/teams": {
       "get": {
-        "operationId": "getTeamLBACRulesApiResponse",
+        "operationId": "getTeamLBACRulesApi",
         "parameters": [
           {
             "in": "path",
@@ -17176,7 +17176,47 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Retrieves LBAC rules for a team."
+        "summary": "Retrieves LBAC rules for a team.",
+        "tags": [
+          "enterprise"
+        ]
+      },
+      "put": {
+        "operationId": "updateTeamLBACRulesApi",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Updates LBAC rules for a team.",
+        "tags": [
+          "enterprise"
+        ]
       }
     },
     "/datasources/uid/{uid}/resources/{datasource_proxy_route}": {

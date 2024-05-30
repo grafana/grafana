@@ -3,6 +3,7 @@ import { isString } from 'lodash';
 import React, { PropsWithChildren, RefCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, getTimeZoneInfo } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
@@ -38,7 +39,7 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
   const timeZoneInfo = getTimeZoneInfo(data.value, timestamp);
 
   return (
-    <div className={containerStyles} {...innerProps} ref={innerRef} aria-label="Select option">
+    <div className={containerStyles} {...innerProps} ref={innerRef} data-testid={selectors.components.Select.option}>
       <div className={cx(styles.leftColumn, styles.row)}>
         <div className={cx(styles.leftColumn, styles.wideRow)}>
           <TimeZoneTitle title={children} />
@@ -77,7 +78,7 @@ export const CompactTimeZoneOption = (props: React.PropsWithChildren<Props>) => 
   const timeZoneInfo = getTimeZoneInfo(data.value, timestamp);
 
   return (
-    <div className={containerStyles} {...innerProps} ref={innerRef} aria-label="Select option">
+    <div className={containerStyles} {...innerProps} ref={innerRef} data-testid={selectors.components.Select.option}>
       <div className={styles.body}>
         <div className={styles.row}>
           <div className={styles.leftColumn}>
