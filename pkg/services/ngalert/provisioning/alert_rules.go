@@ -21,6 +21,7 @@ import (
 type ruleAccessControlService interface {
 	AuthorizeRuleGroupRead(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
+	AuthorizeRuleRead(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 	// CanReadAllRules returns true if the user has full access to read rules via provisioning API and bypass regular checks
 	CanReadAllRules(ctx context.Context, user identity.Requester) (bool, error)
 	// CanWriteAllRules returns true if the user has full access to write rules via provisioning API and bypass regular checks
@@ -119,49 +120,19 @@ func (service *AlertRuleService) GetAlertRules(ctx context.Context, user identit
 }
 
 func (service *AlertRuleService) getAlertRuleAuthorized(ctx context.Context, user identity.Requester, ruleUID string) (models.AlertRule, error) {
-	// check if the user can read all rules. If it cannot, pull the entire group and verify access to the entire group.
-	can, err := service.authz.CanReadAllRules(ctx, user)
-	if err != nil {
-		return models.AlertRule{}, err
-	}
-	// if user has blanket access to all rules, just read a single rule from database
-	if can {
-		query := &models.GetAlertRuleByUIDQuery{
-			OrgID: user.GetOrgID(),
-			UID:   ruleUID,
-		}
-		rule, err := service.ruleStore.GetAlertRuleByUID(ctx, query)
-		if err != nil {
-			return models.AlertRule{}, err
-		}
-		if rule == nil {
-			return models.AlertRule{}, models.ErrAlertRuleNotFound
-		}
-		return *rule, nil
-	}
-
-	// if user does not have privilege to access all rules, check that the user can read this rule by fetching entire group and
-	// checking that user has access to it.
-	q := &models.GetAlertRulesGroupByRuleUIDQuery{
+	q := models.GetAlertRuleByUIDQuery{
 		UID:   ruleUID,
 		OrgID: user.GetOrgID(),
 	}
-	group, err := service.ruleStore.GetAlertRulesGroupByRuleUID(ctx, q)
+	var err error
+	rule, err := service.ruleStore.GetAlertRuleByUID(ctx, &q)
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	if len(group) == 0 {
-		return models.AlertRule{}, models.ErrAlertRuleNotFound
-	}
-	if err := service.authz.AuthorizeRuleGroupRead(ctx, user, group); err != nil {
+	if err := service.authz.AuthorizeRuleRead(ctx, user, rule); err != nil {
 		return models.AlertRule{}, err
 	}
-	for _, rule := range group {
-		if rule.UID == ruleUID {
-			return *rule, nil
-		}
-	}
-	return models.AlertRule{}, models.ErrAlertRuleNotFound
+	return *rule, nil
 }
 
 func (service *AlertRuleService) GetAlertRule(ctx context.Context, user identity.Requester, ruleUID string) (models.AlertRule, models.Provenance, error) {
@@ -295,7 +266,7 @@ func (service *AlertRuleService) GetRuleGroup(ctx context.Context, user identity
 	q := models.ListAlertRulesQuery{
 		OrgID:         user.GetOrgID(),
 		NamespaceUIDs: []string{namespaceUID},
-		RuleGroup:     group,
+		RuleGroups:    []string{group},
 	}
 	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
 	if err != nil {
@@ -337,7 +308,7 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 		query := &models.ListAlertRulesQuery{
 			OrgID:         user.GetOrgID(),
 			NamespaceUIDs: []string{namespaceUID},
-			RuleGroup:     ruleGroup,
+			RuleGroups:    []string{ruleGroup},
 		}
 		ruleList, err := service.ruleStore.ListAlertRules(ctx, query)
 		if err != nil {
@@ -465,7 +436,7 @@ func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Re
 		listRulesQuery := models.ListAlertRulesQuery{
 			OrgID:         user.GetOrgID(),
 			NamespaceUIDs: []string{group.FolderUID},
-			RuleGroup:     group.Title,
+			RuleGroups:    []string{group.Title},
 		}
 		ruleList, err := service.ruleStore.ListAlertRules(ctx, &listRulesQuery)
 		if err != nil {

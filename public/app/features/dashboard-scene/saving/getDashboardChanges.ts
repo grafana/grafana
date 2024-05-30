@@ -71,6 +71,25 @@ export function getHasTimeChanged(saveModel: Dashboard, originalSaveModel: Dashb
   return saveModel.time?.from !== originalSaveModel.time?.from || saveModel.time?.to !== originalSaveModel.time?.to;
 }
 
+export function adHocVariableFiltersEqual(a: AdHocVariableModel, b: AdHocVariableModel) {
+  if (a.filters === undefined || b.filters === undefined) {
+    throw new Error('AdHoc variable missing filter property');
+  }
+
+  if (a.filters.length !== b.filters.length) {
+    return false;
+  }
+
+  for (let i = 0; i < a.filters.length; i++) {
+    const aFilter = a.filters[i];
+    const bFilter = b.filters[i];
+    if (aFilter.key !== bFilter.key || aFilter.operator !== bFilter.operator || aFilter.value !== bFilter.value) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Dashboard, saveVariables?: boolean) {
   const originalVariables = originalSaveModel.templating?.list ?? [];
   const variablesToSave = saveModel.templating?.list ?? [];
@@ -90,13 +109,18 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
 
     if (!isEqual(variable.current, original.current)) {
       hasVariableValueChanges = true;
+    } else if (
+      variable.type === 'adhoc' &&
+      !adHocVariableFiltersEqual(variable as AdHocVariableModel, original as AdHocVariableModel)
+    ) {
+      hasVariableValueChanges = true;
     }
 
     if (!saveVariables) {
       const typed = variable as TypedVariableModel;
       if (typed.type === 'adhoc') {
         typed.filters = (original as AdHocVariableModel).filters;
-      } else if (typed.type !== 'groupby') {
+      } else {
         variable.current = original.current;
         variable.options = original.options;
       }

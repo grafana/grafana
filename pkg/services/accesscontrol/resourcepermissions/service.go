@@ -84,7 +84,7 @@ func New(cfg *setting.Cfg,
 
 	s := &Service{
 		ac:          ac,
-		store:       NewStore(sqlStore, features),
+		store:       NewStore(cfg, sqlStore, features),
 		options:     options,
 		license:     license,
 		permissions: permissions,
