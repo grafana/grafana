@@ -100,6 +100,7 @@ export class PostgresDatasource extends SqlDatasource {
         Promise.resolve({ isError: false, isValid: true, query, error: '', rawSql: query.rawSql }),
       dsID: () => this.id,
       toRawSql,
+      functions: () => ['$__timeGroupAlias', '$__timeGroup'],
       lookup: async () => {
         const tables = await this.fetchTables();
         return tables.map((t) => ({ name: t, completion: t }));

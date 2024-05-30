@@ -590,6 +590,7 @@ export const Components = {
     selectColumn: 'data-testid select-column',
     selectAggregation: 'data-testid select-aggregation',
     selectAlias: 'data-testid select-alias',
+    selectInputParameter: 'data-testid select-input-parameter',
     filterConjunction: 'data-testid filter-conjunction',
     filterField: 'data-testid filter-field',
     filterOperator: 'data-testid filter-operator',
