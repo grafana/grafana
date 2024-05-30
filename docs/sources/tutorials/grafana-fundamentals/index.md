@@ -111,6 +111,7 @@ To add a link:
 To vote for a link, click the triangle icon next to the name of the link.
 
 ## Open Grafana
+
 Grafana is an open-source platform for monitoring and observability that lets you visualize and explore the state of your systems.
 
 1. Open a new tab.
