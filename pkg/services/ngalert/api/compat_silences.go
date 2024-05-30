@@ -13,11 +13,7 @@ func SilenceToGettableGrafanaSilence(s *models.SilenceWithMetadata) definitions.
 	gettable := definitions.GettableGrafanaSilence{
 		GettableSilence: (*definitions.GettableSilence)(s.Silence),
 	}
-	if s.Metadata.Permissions == nil && s.Metadata.RuleMetadata == nil {
-		return gettable
-	}
 
-	gettable.Metadata = &definitions.SilenceMetadata{}
 	if s.Metadata.Permissions != nil {
 		gettable.Permissions = make(map[definitions.SilencePermission]bool, len(*s.Metadata.Permissions))
 		for _, permission := range models.SilencePermissions() {
@@ -31,9 +27,11 @@ func SilenceToGettableGrafanaSilence(s *models.SilenceWithMetadata) definitions.
 	}
 
 	if s.Metadata.RuleMetadata != nil {
-		gettable.Metadata.RuleUID = s.Metadata.RuleMetadata.RuleUID
-		gettable.Metadata.RuleTitle = s.Metadata.RuleMetadata.RuleTitle
-		gettable.Metadata.FolderUID = s.Metadata.RuleMetadata.FolderUID
+		gettable.Metadata = &definitions.SilenceMetadata{
+			RuleUID:   s.Metadata.RuleMetadata.RuleUID,
+			RuleTitle: s.Metadata.RuleMetadata.RuleTitle,
+			FolderUID: s.Metadata.RuleMetadata.FolderUID,
+		}
 	}
 
 	return gettable
