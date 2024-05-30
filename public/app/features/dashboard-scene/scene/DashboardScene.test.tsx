@@ -888,6 +888,76 @@ describe('DashboardScene', () => {
         expect(body.state.children.length).toBe(1);
         expect(gridItem.state.body).toBeInstanceOf(VizPanel);
       });
+
+      it('Should create a library panel', () => {
+        const gridItem = new DashboardGridItem({
+          key: 'griditem-1',
+          body: new VizPanel({
+            title: 'Panel A',
+            key: 'panel-1',
+            pluginId: 'table',
+          }),
+        });
+
+        const scene = buildTestScene({
+          body: new SceneGridLayout({
+            children: [gridItem],
+          }),
+        });
+
+        const libPanel = {
+          uid: 'uid',
+          name: 'name',
+        };
+
+        scene.createLibraryPanel(gridItem, libPanel as any);
+
+        const layout = scene.state.body as SceneGridLayout;
+        const newGridItem = layout.state.children[0] as DashboardGridItem;
+
+        expect(layout.state.children.length).toBe(1);
+        expect(newGridItem.state.body).toBeInstanceOf(LibraryVizPanel);
+        expect((newGridItem.state.body as LibraryVizPanel).state.uid).toBe('uid');
+        expect((newGridItem.state.body as LibraryVizPanel).state.name).toBe('name');
+      });
+
+      it('Should create a library panel under a row', () => {
+        const gridItem = new DashboardGridItem({
+          key: 'griditem-1',
+          body: new VizPanel({
+            title: 'Panel A',
+            key: 'panel-1',
+            pluginId: 'table',
+          }),
+        });
+
+        const scene = buildTestScene({
+          body: new SceneGridLayout({
+            children: [
+              new SceneGridRow({
+                key: 'row-1',
+                children: [gridItem],
+              }),
+            ],
+          }),
+        });
+
+        const libPanel = {
+          uid: 'uid',
+          name: 'name',
+        };
+
+        scene.createLibraryPanel(gridItem, libPanel as any);
+
+        const layout = scene.state.body as SceneGridLayout;
+        const newGridItem = (layout.state.children[0] as SceneGridRow).state.children[0] as DashboardGridItem;
+
+        expect(layout.state.children.length).toBe(1);
+        expect((layout.state.children[0] as SceneGridRow).state.children.length).toBe(1);
+        expect(newGridItem.state.body).toBeInstanceOf(LibraryVizPanel);
+        expect((newGridItem.state.body as LibraryVizPanel).state.uid).toBe('uid');
+        expect((newGridItem.state.body as LibraryVizPanel).state.name).toBe('name');
+      });
     });
   });
 

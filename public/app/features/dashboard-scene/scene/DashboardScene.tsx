@@ -23,6 +23,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { LibraryElementDTO } from 'app/features/library-panels/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -508,6 +509,53 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     sceneGridLayout.setState({
       children: [newGridItem, ...sceneGridLayout.state.children],
     });
+  }
+
+  public createLibraryPanel(gridItemToReplace: DashboardGridItem, libPanel: LibraryElementDTO) {
+    const layout = this.state.body;
+
+    if (!(layout instanceof SceneGridLayout)) {
+      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
+    }
+
+    const panelKey = gridItemToReplace?.state.body.state.key;
+
+    const body = new LibraryVizPanel({
+      title: libPanel.model?.title ?? 'Panel',
+      uid: libPanel.uid,
+      name: libPanel.name,
+      panelKey: panelKey ?? getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(this)),
+    });
+
+    const newGridItem = gridItemToReplace.clone({ body });
+
+    if (!(newGridItem instanceof DashboardGridItem)) {
+      throw new Error('Could not build library viz panel griditem');
+    }
+
+    const key = gridItemToReplace?.state.key;
+
+    if (gridItemToReplace.parent instanceof SceneGridRow) {
+      const children = gridItemToReplace.parent.state.children.map((rowChild) => {
+        if (rowChild.state.key === key) {
+          return newGridItem;
+        }
+        return rowChild;
+      });
+
+      gridItemToReplace.parent.setState({ children });
+      layout.forceRender();
+    } else {
+      // Find the grid item in the layout and replace it
+      const children = layout.state.children.map((child) => {
+        if (child.state.key === key) {
+          return newGridItem;
+        }
+        return child;
+      });
+
+      layout.setState({ children });
+    }
   }
 
   public duplicatePanel(vizPanel: VizPanel) {

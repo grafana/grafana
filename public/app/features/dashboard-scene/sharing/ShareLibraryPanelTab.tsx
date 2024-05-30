@@ -45,10 +45,12 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
       <ShareLibraryPanel
         initialFolderUid={dashboardScene.state.meta.folderUid}
         dashboard={dashboardModel}
+        gridItem={vizPanel.parent}
         panel={panelModel}
         onDismiss={() => {
           modalRef?.resolve().onDismiss();
         }}
+        dashboardScene={dashboardScene}
       />
     );
   }

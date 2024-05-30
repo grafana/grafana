@@ -5,6 +5,8 @@ import { FetchError, isFetchError } from '@grafana/runtime';
 import { Button, Field, Input, Modal } from '@grafana/ui';
 import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { t, Trans } from 'app/core/internationalization';
+import { DashboardGridItem } from 'app/features/dashboard-scene/scene/DashboardGridItem';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { PanelModel } from '../../../dashboard/state';
 import { getLibraryPanelByName } from '../../state/api';
@@ -15,9 +17,17 @@ interface AddLibraryPanelContentsProps {
   onDismiss?: () => void;
   panel: PanelModel;
   initialFolderUid?: string;
+  dashboardScene?: DashboardScene;
+  gridItem?: DashboardGridItem;
 }
 
-export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: AddLibraryPanelContentsProps) => {
+export const AddLibraryPanelContents = ({
+  panel,
+  initialFolderUid,
+  dashboardScene,
+  gridItem,
+  onDismiss,
+}: AddLibraryPanelContentsProps) => {
   const [folderUid, setFolderUid] = useState(initialFolderUid);
   const [panelName, setPanelName] = useState(panel.title);
   const [debouncedPanelName, setDebouncedPanelName] = useState(panel.title);
@@ -33,11 +43,14 @@ export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: 
     saveLibraryPanel(panel, folderUid!).then((res: LibraryElementDTO | FetchError) => {
       if (!isFetchError(res)) {
         onDismiss?.();
+        if (dashboardScene && gridItem) {
+          dashboardScene.createLibraryPanel(gridItem, res);
+        }
       } else {
         panel.libraryPanel = undefined;
       }
     });
-  }, [panel, panelName, folderUid, onDismiss, saveLibraryPanel]);
+  }, [panel, panelName, saveLibraryPanel, folderUid, onDismiss, dashboardScene, gridItem]);
 
   const isValidName = useAsync(async () => {
     try {
