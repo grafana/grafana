@@ -9,6 +9,7 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { ShareDrawer } from '../ShareDrawer';
 
 import { ShareExternally } from './share-externally/ShareExternally';
+import { ShareSnapshot } from './share-snapshot/ShareSnapshot';
 import { buildShareUrl } from './utils';
 
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
@@ -22,6 +23,15 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
     const drawer = new ShareDrawer({
       title: 'Share externally',
       body: new ShareExternally({ dashboardRef: dashboard.getRef() }),
+    });
+
+    dashboard.showModal(drawer);
+  };
+
+  const onShareSnapshotClick = () => {
+    const drawer = new ShareDrawer({
+      title: 'Share snapshot',
+      body: new ShareSnapshot({ dashboardRef: dashboard.getRef() }),
     });
 
     dashboard.showModal(drawer);
@@ -41,6 +51,12 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
         label="Share externally"
         icon="share-alt"
         onClick={onShareExternallyClick}
+      />
+      <Menu.Item
+        testId={newShareButtonSelector.shareSnapshot}
+        label="Share snapshot"
+        icon="camera"
+        onClick={onShareSnapshotClick}
       />
     </Menu>
   );
