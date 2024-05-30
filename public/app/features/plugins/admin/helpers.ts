@@ -378,7 +378,7 @@ function isNotHiddenByConfig(id: string) {
 export function isManagedPlugin(id: string) {
   const { pluginCatalogManagedPlugins }: { pluginCatalogManagedPlugins: string[] } = config;
 
-  return pluginCatalogManagedPlugins.includes(id);
+  return pluginCatalogManagedPlugins?.includes(id);
 }
 
 function isDisabledSecretsPlugin(type?: PluginType): boolean {

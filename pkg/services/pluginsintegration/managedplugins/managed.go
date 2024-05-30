@@ -15,5 +15,5 @@ func NewNoop() *Noop {
 }
 
 func (s *Noop) ManagedPlugins(_ context.Context) []string {
-	return nil
+	return []string{}
 }
