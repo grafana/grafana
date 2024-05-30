@@ -107,6 +107,7 @@ func (p *DummyAPIFactory) MakeAPIServer(_ context.Context, tracer tracing.Tracer
 			},
 			&pluginDatasourceImpl{}, // stub
 			&actest.FakeAccessControl{ExpectedEvaluate: true},
+			true, // show query types
 		)
 	}
 

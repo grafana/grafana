@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Select, InlineField } from '@grafana/ui';
 
 import { useCreatableSelectPersistedBehaviour } from './useCreatableSelectPersistedBehaviour';
@@ -32,7 +33,7 @@ describe('useCreatableSelectPersistedBehaviour', () => {
 
     // we type in the input 'Option 2', which should prompt an option creation
     await userEvent.type(input, 'Option 2');
-    const creatableOption = screen.getByLabelText('Select option');
+    const creatableOption = screen.getByTestId(selectors.components.Select.option);
     expect(creatableOption).toHaveTextContent('Option 2');
 
     // we click on the creatable option to trigger its creation
@@ -83,7 +84,7 @@ describe('useCreatableSelectPersistedBehaviour', () => {
 
     // we type in the input 'Option 2', which should prompt an option creation
     await userEvent.type(input, 'Option 2');
-    await userEvent.click(screen.getByLabelText('Select option'));
+    await userEvent.click(screen.getByTestId(selectors.components.Select.option));
 
     expect(onChange).toHaveBeenLastCalledWith({ value: 'Option 2' });
   });

@@ -60,7 +60,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
 
     do {
       scrollValue += el?.offsetTop || 0;
-      el = el?.offsetParent as HTMLElement;
+      el = el?.offsetParent instanceof HTMLElement ? el.offsetParent : undefined;
     } while (el && el !== scroller);
 
     scroller?.scroll({
