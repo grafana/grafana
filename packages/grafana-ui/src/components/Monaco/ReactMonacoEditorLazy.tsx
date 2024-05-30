@@ -47,7 +47,9 @@ export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
     <ReactMonacoEditor
       {...props}
       loading={props.loading ?? null}
-      data-testid={selectors.components.ReactMonacoEditor.editorLazy}
+      wrapperProps={{
+        'data-testid': selectors.components.ReactMonacoEditor.editorLazy,
+      }}
     />
   );
 };
