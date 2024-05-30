@@ -275,7 +275,6 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
   // clip hover points/bubbles to plotting area
   builder.addHook('init', (u, r) => {
-    // TODO: re-enable once we global portal again
     u.over.style.overflow = 'hidden';
   });
 
@@ -443,13 +442,6 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     return cfg;
   });
 
-  const getSizes = xySeries.map((s) => {});
-
-  // color-by-value field
-  // threshold compiler
-  // mappings compiler
-  // gradient by-value compiler (uses heatmap)
-
   function prepData(xySeries: XYSeries[]): FacetedData {
     // if (info.error || !data.length) {
     //   return [null];
@@ -457,23 +449,9 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
     const { size: sizeRange, color: colorRange } = getGlobalRanges(xySeries);
 
-    // console.time('compiled');
     xySeries.forEach((s, i) => {
       dispColors[i].values = dispColors[i].getAll(s.color.field?.values ?? [], colorRange.min, colorRange.max);
     });
-    // console.timeEnd('compiled');
-
-    // console.log(colors, getColors);
-
-    // console.time('display()');
-    // xySeries.forEach((s, i) => {
-    //   if (s.color.field != null) {
-    //     s.color.field.values.map(v => s.color.field!.display!(v).color)
-    //   }
-    // });
-    // console.timeEnd('display()');
-
-    // console.log(colors2);
 
     return [
       null,
@@ -518,28 +496,6 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
       }),
     ];
   }
-
-  /*
-  builder.setPrepData((frames) => {
-    let seriesData = lookup.fieldMaps.flatMap((f, i) => {
-      let { fields } = frames[i];
-
-      return f.y.map((yIndex, frameSeriesIndex) => {
-        let xValues = fields[f.x[frameSeriesIndex]].values;
-        let yValues = fields[f.y[frameSeriesIndex]].values;
-        let sizeValues = f.size![frameSeriesIndex](frames[i]);
-
-        if (!Array.isArray(sizeValues)) {
-          sizeValues = Array(xValues.length).fill(sizeValues);
-        }
-
-        return [xValues, yValues, sizeValues];
-      });
-    });
-
-    return [null, ...seriesData];
-  });
-  */
 
   return { builder, prepData };
 };
@@ -600,6 +556,7 @@ interface FieldColorValuesWithCache extends FieldColorValues {
 type GetAllValues = (values: unknown[], min?: number, max?: number) => number[];
 type GetOneValue = (value: unknown, min?: number, max?: number) => number;
 
+/** compiler for values to palette color idxs (from thresholds, mappings, by-value gradients) */
 function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
   let index: unknown[] = [];
   let getAll: GetAllValues = () => [];
@@ -696,19 +653,6 @@ function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
       let pct = i / (index.length - 1);
       index[i] = calc(pct, pct);
     }
-
-    // index = quantizeScheme(
-    //   {
-    //     mode: HeatmapColorMode.Scheme,
-    //     scheme: name,
-    //     steps: 32,
-    //     exponent: 1,
-
-    //     fill: FALLBACK_COLOR,
-    //     reverse: false,
-    //   },
-    //   theme
-    // );
 
     getAll = (vals, min, max) => valuesToFills(vals as number[], index as string[], min!, max!);
   }
