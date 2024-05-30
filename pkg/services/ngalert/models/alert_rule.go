@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	alertingModels "github.com/grafana/alerting/models"
@@ -609,9 +610,10 @@ type GetAlertRulesGroupByRuleUIDQuery struct {
 // ListAlertRulesQuery is the query for listing alert rules
 type ListAlertRulesQuery struct {
 	OrgID         int64
+	RuleUIDs      []string
 	NamespaceUIDs []string
 	ExcludeOrgs   []int64
-	RuleGroup     string
+	RuleGroups    []string
 
 	// DashboardUID and PanelID are optional and allow filtering rules
 	// to return just those for a dashboard and panel.
