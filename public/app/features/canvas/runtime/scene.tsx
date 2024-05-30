@@ -27,24 +27,18 @@ import {
 } from 'app/features/dimensions/utils';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasContextMenu';
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
-import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
-import {
-  Connections,
-  CONNECTION_VERTEX_ADD_ID,
-  CONNECTION_VERTEX_ID,
-} from 'app/plugins/panel/canvas/components/connections/Connections';
+import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
 import { AnchorPoint, CanvasTooltipPayload } from 'app/plugins/panel/canvas/types';
-import { getParent, getTransformInstance } from 'app/plugins/panel/canvas/utils';
+import { getTransformInstance } from 'app/plugins/panel/canvas/utils';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
-import { HorizontalConstraint, VerticalConstraint } from '../types';
 
 import { SceneTransformWrapper } from './SceneTransformWrapper';
-import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
 import { ElementState } from './element';
 import { FrameState } from './frame';
 import { RootElement } from './root';
+import { initMoveable } from './sceneAbleManagement';
 import { findElementByTarget } from './sceneElementManagement';
 
 export interface SelectionParams {
@@ -175,7 +169,7 @@ export class Scene {
       if (this.div) {
         // If editing is enabled, clear selecto instance
         const destroySelecto = enableEditing;
-        this.initMoveable(destroySelecto, enableEditing);
+        initMoveable(destroySelecto, enableEditing, this);
         this.currentLayer = this.root;
         this.selection.next([]);
         this.connections.select(undefined);
@@ -227,7 +221,7 @@ export class Scene {
     if (updateMoveable) {
       setTimeout(() => {
         if (this.div) {
-          this.initMoveable(true, this.isEditingEnabled);
+          initMoveable(true, this.isEditingEnabled, this);
         }
       });
     }
@@ -266,7 +260,7 @@ export class Scene {
     }
   };
 
-  private updateSelection = (selection: SelectionParams) => {
+  updateSelection = (selection: SelectionParams) => {
     this.moveable!.target = selection.targets;
     if (this.skipNextSelectionBroadcast) {
       this.skipNextSelectionBroadcast = false;
@@ -281,7 +275,7 @@ export class Scene {
     }
   };
 
-  private generateTargetElements = (rootElements: ElementState[]): HTMLDivElement[] => {
+  generateTargetElements = (rootElements: ElementState[]): HTMLDivElement[] => {
     let targetElements: HTMLDivElement[] = [];
 
     const stack = [...rootElements];
@@ -317,330 +311,330 @@ export class Scene {
     };
   };
 
-  initMoveable = (destroySelecto = false, allowChanges = true) => {
-    const targetElements = this.generateTargetElements(this.root.elements);
+  // initMoveable = (destroySelecto = false, allowChanges = true) => {
+  //   const targetElements = this.generateTargetElements(this.root.elements);
 
-    if (destroySelecto && this.selecto) {
-      this.selecto.destroy();
-    }
+  //   if (destroySelecto && this.selecto) {
+  //     this.selecto.destroy();
+  //   }
 
-    this.selecto = new Selecto({
-      container: this.div,
-      rootContainer: getParent(this),
-      selectableTargets: targetElements,
-      toggleContinueSelect: 'shift',
-      selectFromInside: false,
-      hitRate: 0,
-    });
+  //   this.selecto = new Selecto({
+  //     container: this.div,
+  //     rootContainer: getParent(this),
+  //     selectableTargets: targetElements,
+  //     toggleContinueSelect: 'shift',
+  //     selectFromInside: false,
+  //     hitRate: 0,
+  //   });
 
-    const snapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
-    const elementSnapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
+  //   const snapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
+  //   const elementSnapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
 
-    this.moveable = new Moveable(this.div!, {
-      draggable: allowChanges && !this.editModeEnabled.getValue(),
-      resizable: allowChanges,
+  //   this.moveable = new Moveable(this.div!, {
+  //     draggable: allowChanges && !this.editModeEnabled.getValue(),
+  //     resizable: allowChanges,
 
-      // Setup rotatable
-      rotatable: allowChanges,
-      throttleRotate: 5,
-      rotationPosition: ['top', 'right'],
+  //     // Setup rotatable
+  //     rotatable: allowChanges,
+  //     throttleRotate: 5,
+  //     rotationPosition: ['top', 'right'],
 
-      // Setup snappable
-      snappable: allowChanges,
-      snapDirections: snapDirections,
-      elementSnapDirections: elementSnapDirections,
-      elementGuidelines: targetElements,
+  //     // Setup snappable
+  //     snappable: allowChanges,
+  //     snapDirections: snapDirections,
+  //     elementSnapDirections: elementSnapDirections,
+  //     elementGuidelines: targetElements,
 
-      ables: [dimensionViewable, constraintViewable(this), settingsViewable(this)],
-      props: {
-        dimensionViewable: allowChanges,
-        constraintViewable: allowChanges,
-        settingsViewable: allowChanges,
-      },
-      origin: false,
-    })
-      .on('rotateStart', () => {
-        this.disableCustomables();
-      })
-      .on('rotate', (event) => {
-        const targetedElement = findElementByTarget(event.target, this.root.elements);
+  //     ables: [dimensionViewable, constraintViewable(this), settingsViewable(this)],
+  //     props: {
+  //       dimensionViewable: allowChanges,
+  //       constraintViewable: allowChanges,
+  //       settingsViewable: allowChanges,
+  //     },
+  //     origin: false,
+  //   })
+  //     .on('rotateStart', () => {
+  //       this.disableCustomables();
+  //     })
+  //     .on('rotate', (event) => {
+  //       const targetedElement = findElementByTarget(event.target, this.root.elements);
 
-        if (targetedElement) {
-          targetedElement.applyRotate(event);
-        }
-      })
-      .on('rotateGroup', (e) => {
-        for (let event of e.events) {
-          const targetedElement = findElementByTarget(event.target, this.root.elements);
-          if (targetedElement) {
-            targetedElement.applyRotate(event);
-          }
-        }
-      })
-      .on('rotateEnd', () => {
-        this.enableCustomables();
-        // Update the editor with the new rotation
-        this.moved.next(Date.now());
-      })
-      .on('click', (event) => {
-        const targetedElement = findElementByTarget(event.target, this.root.elements);
-        let elementSupportsEditing = false;
-        if (targetedElement) {
-          elementSupportsEditing = targetedElement.item.hasEditMode ?? false;
-        }
+  //       if (targetedElement) {
+  //         targetedElement.applyRotate(event);
+  //       }
+  //     })
+  //     .on('rotateGroup', (e) => {
+  //       for (let event of e.events) {
+  //         const targetedElement = findElementByTarget(event.target, this.root.elements);
+  //         if (targetedElement) {
+  //           targetedElement.applyRotate(event);
+  //         }
+  //       }
+  //     })
+  //     .on('rotateEnd', () => {
+  //       this.enableCustomables();
+  //       // Update the editor with the new rotation
+  //       this.moved.next(Date.now());
+  //     })
+  //     .on('click', (event) => {
+  //       const targetedElement = findElementByTarget(event.target, this.root.elements);
+  //       let elementSupportsEditing = false;
+  //       if (targetedElement) {
+  //         elementSupportsEditing = targetedElement.item.hasEditMode ?? false;
+  //       }
 
-        if (event.isDouble && allowChanges && !this.editModeEnabled.getValue() && elementSupportsEditing) {
-          this.editModeEnabled.next(true);
-        }
-      })
-      .on('clickGroup', (event) => {
-        this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
-      })
-      .on('dragStart', (event) => {
-        this.ignoreDataUpdate = true;
-        this.setNonTargetPointerEvents(event.target, true);
+  //       if (event.isDouble && allowChanges && !this.editModeEnabled.getValue() && elementSupportsEditing) {
+  //         this.editModeEnabled.next(true);
+  //       }
+  //     })
+  //     .on('clickGroup', (event) => {
+  //       this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
+  //     })
+  //     .on('dragStart', (event) => {
+  //       this.ignoreDataUpdate = true;
+  //       this.setNonTargetPointerEvents(event.target, true);
 
-        // Remove the selected element from the snappable guidelines
-        if (this.moveable && this.moveable.elementGuidelines) {
-          const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
-          if (targetIndex > -1) {
-            this.moveable.elementGuidelines.splice(targetIndex, 1);
-          }
-        }
-      })
-      .on('dragGroupStart', (e) => {
-        this.ignoreDataUpdate = true;
+  //       // Remove the selected element from the snappable guidelines
+  //       if (this.moveable && this.moveable.elementGuidelines) {
+  //         const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
+  //         if (targetIndex > -1) {
+  //           this.moveable.elementGuidelines.splice(targetIndex, 1);
+  //         }
+  //       }
+  //     })
+  //     .on('dragGroupStart', (e) => {
+  //       this.ignoreDataUpdate = true;
 
-        // Remove the selected elements from the snappable guidelines
-        if (this.moveable && this.moveable.elementGuidelines) {
-          for (let event of e.events) {
-            const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
-            if (targetIndex > -1) {
-              this.moveable.elementGuidelines.splice(targetIndex, 1);
-            }
-          }
-        }
-      })
-      .on('drag', (event) => {
-        const targetedElement = findElementByTarget(event.target, this.root.elements);
-        if (targetedElement) {
-          targetedElement.applyDrag(event);
+  //       // Remove the selected elements from the snappable guidelines
+  //       if (this.moveable && this.moveable.elementGuidelines) {
+  //         for (let event of e.events) {
+  //           const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
+  //           if (targetIndex > -1) {
+  //             this.moveable.elementGuidelines.splice(targetIndex, 1);
+  //           }
+  //         }
+  //       }
+  //     })
+  //     .on('drag', (event) => {
+  //       const targetedElement = findElementByTarget(event.target, this.root.elements);
+  //       if (targetedElement) {
+  //         targetedElement.applyDrag(event);
 
-          if (this.connections.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
-            this.moveableActionCallback(true);
-          }
-        }
-      })
-      .on('dragGroup', (e) => {
-        let needsUpdate = false;
-        for (let event of e.events) {
-          const targetedElement = findElementByTarget(event.target, this.root.elements);
-          if (targetedElement) {
-            targetedElement.applyDrag(event);
-            if (!needsUpdate) {
-              needsUpdate = this.connections.connectionsNeedUpdate(targetedElement);
-            }
-          }
-        }
+  //         if (this.connections.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
+  //           this.moveableActionCallback(true);
+  //         }
+  //       }
+  //     })
+  //     .on('dragGroup', (e) => {
+  //       let needsUpdate = false;
+  //       for (let event of e.events) {
+  //         const targetedElement = findElementByTarget(event.target, this.root.elements);
+  //         if (targetedElement) {
+  //           targetedElement.applyDrag(event);
+  //           if (!needsUpdate) {
+  //             needsUpdate = this.connections.connectionsNeedUpdate(targetedElement);
+  //           }
+  //         }
+  //       }
 
-        if (needsUpdate && this.moveableActionCallback) {
-          this.moveableActionCallback(true);
-        }
-      })
-      .on('dragGroupEnd', (e) => {
-        e.events.forEach((event) => {
-          const targetedElement = findElementByTarget(event.target, this.root.elements);
-          if (targetedElement) {
-            if (targetedElement) {
-              targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
-            }
+  //       if (needsUpdate && this.moveableActionCallback) {
+  //         this.moveableActionCallback(true);
+  //       }
+  //     })
+  //     .on('dragGroupEnd', (e) => {
+  //       e.events.forEach((event) => {
+  //         const targetedElement = findElementByTarget(event.target, this.root.elements);
+  //         if (targetedElement) {
+  //           if (targetedElement) {
+  //             targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+  //           }
 
-            // re-add the selected elements to the snappable guidelines
-            if (this.moveable && this.moveable.elementGuidelines) {
-              this.moveable.elementGuidelines.push(event.target);
-            }
-          }
-        });
+  //           // re-add the selected elements to the snappable guidelines
+  //           if (this.moveable && this.moveable.elementGuidelines) {
+  //             this.moveable.elementGuidelines.push(event.target);
+  //           }
+  //         }
+  //       });
 
-        this.moved.next(Date.now());
-        this.ignoreDataUpdate = false;
-      })
-      .on('dragEnd', (event) => {
-        const targetedElement = findElementByTarget(event.target, this.root.elements);
-        if (targetedElement) {
-          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
-        }
+  //       this.moved.next(Date.now());
+  //       this.ignoreDataUpdate = false;
+  //     })
+  //     .on('dragEnd', (event) => {
+  //       const targetedElement = findElementByTarget(event.target, this.root.elements);
+  //       if (targetedElement) {
+  //         targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+  //       }
 
-        this.moved.next(Date.now());
-        this.ignoreDataUpdate = false;
-        this.setNonTargetPointerEvents(event.target, false);
+  //       this.moved.next(Date.now());
+  //       this.ignoreDataUpdate = false;
+  //       this.setNonTargetPointerEvents(event.target, false);
 
-        // re-add the selected element to the snappable guidelines
-        if (this.moveable && this.moveable.elementGuidelines) {
-          this.moveable.elementGuidelines.push(event.target);
-        }
-      })
-      .on('resizeStart', (event) => {
-        const targetedElement = findElementByTarget(event.target, this.root.elements);
+  //       // re-add the selected element to the snappable guidelines
+  //       if (this.moveable && this.moveable.elementGuidelines) {
+  //         this.moveable.elementGuidelines.push(event.target);
+  //       }
+  //     })
+  //     .on('resizeStart', (event) => {
+  //       const targetedElement = findElementByTarget(event.target, this.root.elements);
 
-        if (targetedElement) {
-          // Remove the selected element from the snappable guidelines
-          if (this.moveable && this.moveable.elementGuidelines) {
-            const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
-            if (targetIndex > -1) {
-              this.moveable.elementGuidelines.splice(targetIndex, 1);
-            }
-          }
+  //       if (targetedElement) {
+  //         // Remove the selected element from the snappable guidelines
+  //         if (this.moveable && this.moveable.elementGuidelines) {
+  //           const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
+  //           if (targetIndex > -1) {
+  //             this.moveable.elementGuidelines.splice(targetIndex, 1);
+  //           }
+  //         }
 
-          targetedElement.tempConstraint = { ...targetedElement.options.constraint };
-          targetedElement.options.constraint = {
-            vertical: VerticalConstraint.Top,
-            horizontal: HorizontalConstraint.Left,
-          };
-          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
-        }
-      })
-      .on('resizeGroupStart', (e) => {
-        // Remove the selected elements from the snappable guidelines
-        if (this.moveable && this.moveable.elementGuidelines) {
-          for (let event of e.events) {
-            const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
-            if (targetIndex > -1) {
-              this.moveable.elementGuidelines.splice(targetIndex, 1);
-            }
-          }
-        }
-      })
-      .on('resize', (event) => {
-        const targetedElement = findElementByTarget(event.target, this.root.elements);
-        if (targetedElement) {
-          targetedElement.applyResize(event, this.scale);
+  //         targetedElement.tempConstraint = { ...targetedElement.options.constraint };
+  //         targetedElement.options.constraint = {
+  //           vertical: VerticalConstraint.Top,
+  //           horizontal: HorizontalConstraint.Left,
+  //         };
+  //         targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+  //       }
+  //     })
+  //     .on('resizeGroupStart', (e) => {
+  //       // Remove the selected elements from the snappable guidelines
+  //       if (this.moveable && this.moveable.elementGuidelines) {
+  //         for (let event of e.events) {
+  //           const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
+  //           if (targetIndex > -1) {
+  //             this.moveable.elementGuidelines.splice(targetIndex, 1);
+  //           }
+  //         }
+  //       }
+  //     })
+  //     .on('resize', (event) => {
+  //       const targetedElement = findElementByTarget(event.target, this.root.elements);
+  //       if (targetedElement) {
+  //         targetedElement.applyResize(event, this.scale);
 
-          if (this.connections.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
-            this.moveableActionCallback(true);
-          }
-        }
-        this.moved.next(Date.now()); // TODO only on end
-      })
-      .on('resizeGroup', (e) => {
-        let needsUpdate = false;
-        for (let event of e.events) {
-          const targetedElement = findElementByTarget(event.target, this.root.elements);
-          if (targetedElement) {
-            targetedElement.applyResize(event);
+  //         if (this.connections.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
+  //           this.moveableActionCallback(true);
+  //         }
+  //       }
+  //       this.moved.next(Date.now()); // TODO only on end
+  //     })
+  //     .on('resizeGroup', (e) => {
+  //       let needsUpdate = false;
+  //       for (let event of e.events) {
+  //         const targetedElement = findElementByTarget(event.target, this.root.elements);
+  //         if (targetedElement) {
+  //           targetedElement.applyResize(event);
 
-            if (!needsUpdate) {
-              needsUpdate = this.connections.connectionsNeedUpdate(targetedElement);
-            }
-          }
-        }
+  //           if (!needsUpdate) {
+  //             needsUpdate = this.connections.connectionsNeedUpdate(targetedElement);
+  //           }
+  //         }
+  //       }
 
-        if (needsUpdate && this.moveableActionCallback) {
-          this.moveableActionCallback(true);
-        }
+  //       if (needsUpdate && this.moveableActionCallback) {
+  //         this.moveableActionCallback(true);
+  //       }
 
-        this.moved.next(Date.now()); // TODO only on end
-      })
-      .on('resizeEnd', (event) => {
-        const targetedElement = findElementByTarget(event.target, this.root.elements);
+  //       this.moved.next(Date.now()); // TODO only on end
+  //     })
+  //     .on('resizeEnd', (event) => {
+  //       const targetedElement = findElementByTarget(event.target, this.root.elements);
 
-        if (targetedElement) {
-          if (targetedElement.tempConstraint) {
-            targetedElement.options.constraint = targetedElement.tempConstraint;
-            targetedElement.tempConstraint = undefined;
-          }
+  //       if (targetedElement) {
+  //         if (targetedElement.tempConstraint) {
+  //           targetedElement.options.constraint = targetedElement.tempConstraint;
+  //           targetedElement.tempConstraint = undefined;
+  //         }
 
-          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+  //         targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
 
-          // re-add the selected element to the snappable guidelines
-          if (this.moveable && this.moveable.elementGuidelines) {
-            this.moveable.elementGuidelines.push(event.target);
-          }
-        }
-      })
-      .on('resizeGroupEnd', (e) => {
-        // re-add the selected elements to the snappable guidelines
-        if (this.moveable && this.moveable.elementGuidelines) {
-          for (let event of e.events) {
-            this.moveable.elementGuidelines.push(event.target);
-          }
-        }
-      });
+  //         // re-add the selected element to the snappable guidelines
+  //         if (this.moveable && this.moveable.elementGuidelines) {
+  //           this.moveable.elementGuidelines.push(event.target);
+  //         }
+  //       }
+  //     })
+  //     .on('resizeGroupEnd', (e) => {
+  //       // re-add the selected elements to the snappable guidelines
+  //       if (this.moveable && this.moveable.elementGuidelines) {
+  //         for (let event of e.events) {
+  //           this.moveable.elementGuidelines.push(event.target);
+  //         }
+  //       }
+  //     });
 
-    let targets: Array<HTMLElement | SVGElement> = [];
-    this.selecto!.on('dragStart', (event) => {
-      const selectedTarget = event.inputEvent.target;
+  //   let targets: Array<HTMLElement | SVGElement> = [];
+  //   this.selecto!.on('dragStart', (event) => {
+  //     const selectedTarget = event.inputEvent.target;
 
-      // If selected target is a connection control, eject to handle connection event
-      if (selectedTarget.id === CONNECTION_ANCHOR_DIV_ID) {
-        this.connections.handleConnectionDragStart(selectedTarget, event.inputEvent.clientX, event.inputEvent.clientY);
-        event.stop();
-        return;
-      }
+  //     // If selected target is a connection control, eject to handle connection event
+  //     if (selectedTarget.id === CONNECTION_ANCHOR_DIV_ID) {
+  //       this.connections.handleConnectionDragStart(selectedTarget, event.inputEvent.clientX, event.inputEvent.clientY);
+  //       event.stop();
+  //       return;
+  //     }
 
-      // If selected target is a vertex, eject to handle vertex event
-      if (selectedTarget.id === CONNECTION_VERTEX_ID) {
-        this.connections.handleVertexDragStart(selectedTarget);
-        event.stop();
-        return;
-      }
+  //     // If selected target is a vertex, eject to handle vertex event
+  //     if (selectedTarget.id === CONNECTION_VERTEX_ID) {
+  //       this.connections.handleVertexDragStart(selectedTarget);
+  //       event.stop();
+  //       return;
+  //     }
 
-      // If selected target is an add vertex point, eject to handle add vertex event
-      if (selectedTarget.id === CONNECTION_VERTEX_ADD_ID) {
-        this.connections.handleVertexAddDragStart(selectedTarget);
-        event.stop();
-        return;
-      }
+  //     // If selected target is an add vertex point, eject to handle add vertex event
+  //     if (selectedTarget.id === CONNECTION_VERTEX_ADD_ID) {
+  //       this.connections.handleVertexAddDragStart(selectedTarget);
+  //       event.stop();
+  //       return;
+  //     }
 
-      const isTargetMoveableElement =
-        this.moveable!.isMoveableElement(selectedTarget) ||
-        targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
+  //     const isTargetMoveableElement =
+  //       this.moveable!.isMoveableElement(selectedTarget) ||
+  //       targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
 
-      const isTargetAlreadySelected = this.selecto
-        ?.getSelectedTargets()
-        .includes(selectedTarget.parentElement.parentElement);
+  //     const isTargetAlreadySelected = this.selecto
+  //       ?.getSelectedTargets()
+  //       .includes(selectedTarget.parentElement.parentElement);
 
-      // Apply grabbing cursor while dragging, applyLayoutStylesToDiv() resets it to grab when done
-      if (
-        this.isEditingEnabled &&
-        !this.editModeEnabled.getValue() &&
-        isTargetMoveableElement &&
-        this.selecto?.getSelectedTargets().length
-      ) {
-        this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
-      }
+  //     // Apply grabbing cursor while dragging, applyLayoutStylesToDiv() resets it to grab when done
+  //     if (
+  //       this.isEditingEnabled &&
+  //       !this.editModeEnabled.getValue() &&
+  //       isTargetMoveableElement &&
+  //       this.selecto?.getSelectedTargets().length
+  //     ) {
+  //       this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
+  //     }
 
-      if (isTargetMoveableElement || isTargetAlreadySelected || !this.isEditingEnabled) {
-        // Prevent drawing selection box when selected target is a moveable element or already selected
-        event.stop();
-      }
-    })
-      .on('select', () => {
-        this.editModeEnabled.next(false);
+  //     if (isTargetMoveableElement || isTargetAlreadySelected || !this.isEditingEnabled) {
+  //       // Prevent drawing selection box when selected target is a moveable element or already selected
+  //       event.stop();
+  //     }
+  //   })
+  //     .on('select', () => {
+  //       this.editModeEnabled.next(false);
 
-        // Hide connection anchors on select
-        if (this.connections.connectionAnchorDiv) {
-          this.connections.connectionAnchorDiv.style.display = 'none';
-        }
-      })
-      .on('selectEnd', (event) => {
-        targets = event.selected;
-        this.updateSelection({ targets });
+  //       // Hide connection anchors on select
+  //       if (this.connections.connectionAnchorDiv) {
+  //         this.connections.connectionAnchorDiv.style.display = 'none';
+  //       }
+  //     })
+  //     .on('selectEnd', (event) => {
+  //       targets = event.selected;
+  //       this.updateSelection({ targets });
 
-        if (event.isDragStart) {
-          if (this.isEditingEnabled && !this.editModeEnabled.getValue() && this.selecto?.getSelectedTargets().length) {
-            this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
-          }
-          event.inputEvent.preventDefault();
-          event.data.timer = setTimeout(() => {
-            this.moveable!.dragStart(event.inputEvent);
-          });
-        }
-      })
-      .on('dragEnd', (event) => {
-        clearTimeout(event.data.timer);
-      });
-  };
+  //       if (event.isDragStart) {
+  //         if (this.isEditingEnabled && !this.editModeEnabled.getValue() && this.selecto?.getSelectedTargets().length) {
+  //           this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
+  //         }
+  //         event.inputEvent.preventDefault();
+  //         event.data.timer = setTimeout(() => {
+  //           this.moveable!.dragStart(event.inputEvent);
+  //         });
+  //       }
+  //     })
+  //     .on('dragEnd', (event) => {
+  //       clearTimeout(event.data.timer);
+  //     });
+  // };
 
   addToSelection = () => {
     try {
