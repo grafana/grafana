@@ -121,12 +121,10 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderFullpath(
 func (prov *defaultAlertRuleProvisioner) getOrCreateFolderByTitle(
 	ctx context.Context, folderName string, orgID int64, parentUID *string) (string, error) {
 	cmd := &folder.GetFolderQuery{
-		Title:     &folderName,
-		ParentUID: parentUID,
-		OrgID:     orgID,
-		SignedInUser: accesscontrol.BackgroundUser("alerting_provisioning", orgID, org.RoleAdmin, []accesscontrol.Permission{
-			{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-		}),
+		Title:        &folderName,
+		ParentUID:    parentUID,
+		OrgID:        orgID,
+		SignedInUser: provisionerUser(orgID),
 	}
 
 	cmdResult, err := prov.folderService.Get(ctx, cmd)
