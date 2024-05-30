@@ -1,7 +1,6 @@
 import { cloneDeep } from 'lodash';
 import React from 'react';
 
-// import { canvasElementRegistry, CanvasFrameOptions } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
