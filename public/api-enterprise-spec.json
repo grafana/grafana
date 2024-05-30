@@ -760,6 +760,78 @@
         }
       }
     },
+    "/datasources/uid/{uid}/lbac/teams": {
+      "get": {
+        "tags": [
+          "enterprise"
+        ],
+        "summary": "Retrieves LBAC rules for a team.",
+        "operationId": "getTeamLBACRulesApi",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "enterprise"
+        ],
+        "summary": "Updates LBAC rules for a team.",
+        "operationId": "updateTeamLBACRulesApi",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/{dataSourceUID}/cache": {
       "get": {
         "description": "get cache config for a single data source",
@@ -3055,14 +3127,6 @@
         }
       }
     },
-    "CloudMigrationRequest": {
-      "type": "object",
-      "properties": {
-        "authToken": {
-          "type": "string"
-        }
-      }
-    },
     "CloudMigrationResponse": {
       "type": "object",
       "properties": {
@@ -3070,11 +3134,10 @@
           "type": "string",
           "format": "date-time"
         },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "stack": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         },
         "updated": {
@@ -3089,7 +3152,7 @@
         "runs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/MigrateDataResponseDTO"
+            "$ref": "#/definitions/MigrateDataResponseListDTO"
           }
         }
       }
@@ -3761,9 +3824,6 @@
         },
         "publicDashboardEnabled": {
           "type": "boolean"
-        },
-        "publicDashboardUid": {
-          "type": "string"
         },
         "slug": {
           "type": "string"
@@ -4607,7 +4667,6 @@
       "type": "object",
       "properties": {
         "folderId": {
-          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -4626,6 +4685,9 @@
         },
         "isStarred": {
           "type": "boolean"
+        },
+        "remainingTrashAtAge": {
+          "type": "string"
         },
         "slug": {
           "type": "string"
@@ -5166,15 +5228,14 @@
     "MigrateDataResponseDTO": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "items": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/MigrateDataResponseItemDTO"
           }
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -5206,6 +5267,14 @@
             "DATASOURCE",
             "FOLDER"
           ]
+        }
+      }
+    },
+    "MigrateDataResponseListDTO": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -6389,6 +6458,14 @@
         }
       }
     },
+    "RestoreDeletedDashboardCommand": {
+      "type": "object",
+      "properties": {
+        "folderUid": {
+          "type": "string"
+        }
+      }
+    },
     "RevokeAuthTokenCmd": {
       "type": "object",
       "properties": {
@@ -6860,6 +6937,23 @@
           "items": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      }
+    },
+    "SetTeamMembershipsCommand": {
+      "type": "object",
+      "properties": {
+        "admins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }
@@ -8403,17 +8497,11 @@
       "schema": {
         "type": "object",
         "required": [
-          "id",
+          "uid",
           "title",
           "message"
         ],
         "properties": {
-          "id": {
-            "description": "ID Identifier of the deleted dashboard.",
-            "type": "integer",
-            "format": "int64",
-            "example": 65
-          },
           "message": {
             "description": "Message Message of the deleted dashboard.",
             "type": "string",
@@ -8423,6 +8511,11 @@
             "description": "Title Title of the deleted dashboard.",
             "type": "string",
             "example": "My Dashboard"
+          },
+          "uid": {
+            "description": "UID Identifier of the deleted dashboard.",
+            "type": "string",
+            "example": "65"
           }
         }
       }

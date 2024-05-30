@@ -10,6 +10,8 @@ import {
   DataSourceJsonData,
   DataSourcePluginMeta,
   DataSourceRef,
+  PluginExtensionLink,
+  PluginExtensionTypes,
   PluginMeta,
   PluginType,
   ScopedVars,
@@ -115,6 +117,7 @@ export const mockRulerGrafanaRule = (
       uid: '123',
       title: 'myalert',
       namespace_uid: '123',
+      rule_group: 'my-group',
       condition: 'A',
       no_data_state: GrafanaAlertStateDecision.Alerting,
       exec_err_state: GrafanaAlertStateDecision.Alerting,
@@ -212,6 +215,7 @@ export const mockGrafanaRulerRule = (partial: Partial<GrafanaRuleDefinition> = {
       uid: '',
       title: 'my rule',
       namespace_uid: 'NAMESPACE_UID',
+      rule_group: 'my-group',
       condition: '',
       no_data_state: GrafanaAlertStateDecision.NoData,
       exec_err_state: GrafanaAlertStateDecision.Error,
@@ -559,7 +563,10 @@ export const somePromRules = (dataSourceName = 'Prometheus'): RuleNamespace[] =>
 
 export const someRulerRules: RulerRulesConfigDTO = {
   namespace1: [
-    mockRulerRuleGroup({ name: 'group1', rules: [mockRulerAlertingRule({ alert: 'alert1' })] }),
+    mockRulerRuleGroup({
+      name: 'group1',
+      rules: [mockRulerAlertingRule({ alert: 'alert1' }), mockRulerAlertingRule({ alert: 'alert1a' })],
+    }),
     mockRulerRuleGroup({ name: 'group2', rules: [mockRulerAlertingRule({ alert: 'alert2' })] }),
   ],
   namespace2: [mockRulerRuleGroup({ name: 'group3', rules: [mockRulerAlertingRule({ alert: 'alert3' })] })],
@@ -628,6 +635,10 @@ export const grantUserPermissions = (permissions: AccessControlAction[]) => {
   jest
     .spyOn(contextSrv, 'hasPermission')
     .mockImplementation((action) => permissions.includes(action as AccessControlAction));
+};
+
+export const grantUserRole = (role: string) => {
+  jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
 };
 
 export function mockUnifiedAlertingStore(unifiedAlerting?: Partial<StoreState['unifiedAlerting']>) {
@@ -707,6 +718,18 @@ export function getCloudRule(override?: Partial<CombinedRule>) {
   });
 }
 
+export function mockPluginLinkExtension(extension: Partial<PluginExtensionLink>): PluginExtensionLink {
+  return {
+    type: PluginExtensionTypes.link,
+    id: 'plugin-id',
+    pluginId: 'grafana-test-app',
+    title: 'Test plugin link',
+    description: 'Test plugin link',
+    path: '/test',
+    ...extension,
+  };
+}
+
 export function mockAlertWithState(state: GrafanaAlertState, labels?: {}): Alert {
   return { activeAt: '', annotations: {}, labels: labels || {}, state: state, value: '' };
 }
@@ -741,42 +764,27 @@ export function mockDashboardDto(
   };
 }
 
-export const onCallPluginMetaMock: PluginMeta = {
-  name: 'Grafana OnCall',
-  id: 'grafana-oncall-app',
-  type: PluginType.app,
-  module: 'plugins/grafana-oncall-app/module',
-  baseUrl: 'public/plugins/grafana-oncall-app',
-  info: {
-    author: { name: 'Grafana Labs' },
-    description: 'Grafana OnCall',
-    updated: '',
-    version: '',
-    links: [],
-    logos: {
-      small: '',
-      large: '',
+export const getMockPluginMeta: (id: string, name: string) => PluginMeta = (id, name) => {
+  return {
+    name,
+    id,
+    type: PluginType.app,
+    module: `plugins/${id}/module`,
+    baseUrl: `public/plugins/${id}`,
+    info: {
+      author: { name: 'Grafana Labs' },
+      description: name,
+      updated: '',
+      version: '',
+      links: [],
+      logos: {
+        small: '',
+        large: '',
+      },
+      screenshots: [],
     },
-    screenshots: [],
-  },
+  };
 };
 
-export const labelsPluginMetaMock: PluginMeta = {
-  name: 'Grafana IRM Labels',
-  id: 'grafana-labels-app',
-  type: PluginType.app,
-  module: 'plugins/grafana-labels-app/module',
-  baseUrl: 'public/plugins/grafana-labels-app',
-  info: {
-    author: { name: 'Grafana Labs' },
-    description: '',
-    updated: '',
-    version: '',
-    links: [],
-    logos: {
-      small: '',
-      large: '',
-    },
-    screenshots: [],
-  },
-};
+export const labelsPluginMetaMock = getMockPluginMeta('grafana-labels-app', 'Grafana IRM Labels');
+export const onCallPluginMetaMock = getMockPluginMeta('grafana-oncall-app', 'Grafana OnCall');

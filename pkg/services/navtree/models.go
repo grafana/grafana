@@ -19,6 +19,7 @@ const (
 	WeightAlertsAndIncidents
 	WeightTestingAndSynthetics
 	WeightMonitoring
+	WeightCloudServiceProviders
 	WeightInfrastructure
 	WeightApplication
 	WeightFrontend
@@ -150,6 +151,7 @@ func (root *NavTreeRoot) ApplyAdminIA() {
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("feature-toggles"))
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("storage"))
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("migrate-to-cloud"))
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("banner-settings"))
 
 		generalNode := &NavLink{
 			Text:     "General",
@@ -221,6 +223,12 @@ func (root *NavTreeRoot) ApplyAdminIA() {
 
 		if costManagementMetricsNode != nil && adaptiveMetricsNode != nil {
 			costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, adaptiveMetricsNode)
+		}
+
+		attributionsNode := root.FindById("plugin-page-grafana-attributions-app")
+
+		if costManagementMetricsNode != nil && attributionsNode != nil {
+			costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, attributionsNode)
 		}
 
 		costManagementLogsNode := root.FindByURL("/a/grafana-costmanagementui-app/logs")

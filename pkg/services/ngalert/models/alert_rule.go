@@ -5,13 +5,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	alertingModels "github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -239,7 +244,8 @@ type AlertRule struct {
 	DashboardUID    *string `xorm:"dashboard_uid"`
 	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
-	RuleGroupIndex  int `xorm:"rule_group_idx"`
+	RuleGroupIndex  int     `xorm:"rule_group_idx"`
+	Record          *Record `xorm:"json"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -293,6 +299,10 @@ func (s AlertRulesSorter) Len() int           { return len(s.rules) }
 func (s AlertRulesSorter) Swap(i, j int)      { s.rules[i], s.rules[j] = s.rules[j], s.rules[i] }
 func (s AlertRulesSorter) Less(i, j int) bool { return s.by(s.rules[i], s.rules[j]) }
 
+func (alertRule *AlertRule) GetNamespaceUID() string {
+	return alertRule.NamespaceUID
+}
+
 // GetDashboardUID returns the DashboardUID or "".
 func (alertRule *AlertRule) GetDashboardUID() string {
 	if alertRule.DashboardUID != nil {
@@ -333,6 +343,12 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 }
 
 func (alertRule *AlertRule) GetEvalCondition() Condition {
+	if alertRule.IsRecordingRule() {
+		return Condition{
+			Condition: alertRule.Record.From,
+			Data:      alertRule.Data,
+		}
+	}
 	return Condition{
 		Condition: alertRule.Condition,
 		Data:      alertRule.Data,
@@ -494,12 +510,14 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ErrAlertRuleFailedValidation)
 	}
 
-	if _, err := ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
-		return err
-	}
+	if !alertRule.IsRecordingRule() {
+		if _, err := ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
+			return err
+		}
 
-	if _, err := NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
-		return err
+		if _, err := NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
+			return err
+		}
 	}
 
 	if alertRule.For < 0 {
@@ -544,6 +562,10 @@ func (alertRule *AlertRule) GetFolderKey() FolderKey {
 	}
 }
 
+func (alertRule *AlertRule) IsRecordingRule() bool {
+	return alertRule.Record != nil
+}
+
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
 type AlertRuleVersion struct {
 	ID               int64  `xorm:"pk autoincr 'id'"`
@@ -561,6 +583,7 @@ type AlertRuleVersion struct {
 	Condition       string
 	Data            []AlertQuery
 	IntervalSeconds int64
+	Record          *Record `xorm:"json"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -587,9 +610,10 @@ type GetAlertRulesGroupByRuleUIDQuery struct {
 // ListAlertRulesQuery is the query for listing alert rules
 type ListAlertRulesQuery struct {
 	OrgID         int64
+	RuleUIDs      []string
 	NamespaceUIDs []string
 	ExcludeOrgs   []int64
-	RuleGroup     string
+	RuleGroups    []string
 
 	// DashboardUID and PanelID are optional and allow filtering rules
 	// to return just those for a dashboard and panel.
@@ -756,4 +780,27 @@ func GroupByAlertRuleGroupKey(rules []*AlertRule) map[AlertRuleGroupKey]RulesGro
 		group.SortByGroupIndex()
 	}
 	return result
+}
+
+// Record contains mapping information for Recording Rules.
+type Record struct {
+	// Metric indicates a metric name to send results to.
+	Metric string
+	// From contains a query RefID, indicating which expression node is the output of the recording rule.
+	From string
+}
+
+func (r *Record) Fingerprint() data.Fingerprint {
+	h := fnv.New64()
+
+	writeString := func(s string) {
+		// save on extra slice allocation when string is converted to bytes.
+		_, _ = h.Write(unsafe.Slice(unsafe.StringData(s), len(s))) //nolint:gosec
+		// ignore errors returned by Write method because fnv never returns them.
+		_, _ = h.Write([]byte{255}) // use an invalid utf-8 sequence as separator
+	}
+
+	writeString(r.Metric)
+	writeString(r.From)
+	return data.Fingerprint(h.Sum64())
 }

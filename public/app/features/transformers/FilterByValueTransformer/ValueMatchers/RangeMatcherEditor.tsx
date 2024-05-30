@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 
 import { ValueMatcherID, RangeValueMatcherOptions, VariableOrigin } from '@grafana/data';
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
-import { Input } from '@grafana/ui';
+import { InlineLabel, Input } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../../utils';
@@ -84,7 +84,7 @@ export function rangeMatcherEditor<T = any>(
             onChange={(val) => onChangeOptionsSuggestions(val, 'from')}
             suggestions={variables}
           />
-          <div className="gf-form-label">and</div>
+          <InlineLabel>and</InlineLabel>
           <SuggestionsInput
             invalid={isInvalid.to}
             error={'Value needs to be an integer or a variable'}
@@ -99,16 +99,14 @@ export function rangeMatcherEditor<T = any>(
     return (
       <>
         <Input
-          className="flex-grow-1 gf-form-spacing"
           invalid={isInvalid['from']}
           defaultValue={String(options.from)}
           placeholder="From"
           onChange={(event) => onChangeValue(event, 'from')}
           onBlur={(event) => onChangeOptions(event, 'from')}
         />
-        <div className="gf-form-label">and</div>
+        <InlineLabel>and</InlineLabel>
         <Input
-          className="flex-grow-1"
           invalid={isInvalid['to']}
           defaultValue={String(options.to)}
           placeholder="To"

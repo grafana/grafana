@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { debounce } from 'lodash';
+import React, { useEffect } from 'react';
 
 import {
   DataSourceApi,
@@ -20,7 +21,9 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  SceneObjectStateChangedEvent,
   SceneQueryRunner,
+  SceneVariables,
   VizPanel,
   sceneUtils,
 } from '@grafana/scenes';
@@ -34,10 +37,12 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
+import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
+import { getPanelChanges } from '../saving/getDashboardChanges';
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
-import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
+import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 export interface VizPanelManagerState extends SceneObjectState {
@@ -49,6 +54,7 @@ export interface VizPanelManagerState extends SceneObjectState {
   repeat?: string;
   repeatDirection?: RepeatDirection;
   maxPerRow?: number;
+  isDirty?: boolean;
 }
 
 export enum DisplayMode {
@@ -86,7 +92,14 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     const { variableName: repeat, repeatDirection, maxPerRow } = gridItem.state;
     repeatOptions = { repeat, repeatDirection, maxPerRow };
 
+    let variables: SceneVariables | undefined;
+
+    if (gridItem.parent?.state.$variables) {
+      variables = gridItem.parent.state.$variables.clone();
+    }
+
     return new VizPanelManager({
+      $variables: variables,
       panel: sourcePanel.clone(),
       sourcePanel: sourcePanel.getRef(),
       ...repeatOptions,
@@ -95,7 +108,26 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   private _onActivate() {
     this.loadDataSource();
+    const changesSub = this.subscribeToEvent(SceneObjectStateChangedEvent, this._handleStateChange);
+
+    return () => {
+      changesSub.unsubscribe();
+    };
   }
+
+  private _detectPanelModelChanges = debounce(() => {
+    const { hasChanges } = getPanelChanges(
+      vizPanelToPanel(this.state.sourcePanel.resolve()),
+      vizPanelToPanel(this.state.panel)
+    );
+    this.setState({ isDirty: hasChanges });
+  }, 250);
+
+  private _handleStateChange = (event: SceneObjectStateChangedEvent) => {
+    if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
+      this._detectPanelModelChanges();
+    }
+  };
 
   private async loadDataSource() {
     const dataObj = this.state.panel.state.$data;
@@ -467,10 +499,19 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
     const { panel, tableView } = model.useState();
     const styles = useStyles2(getStyles);
-
     const panelToShow = tableView ?? panel;
+    const dataProvider = panelToShow.state.$data;
 
-    return <div className={styles.wrapper}>{<panelToShow.Component model={panelToShow} />}</div>;
+    // This is to preserve SceneQueryRunner stays alive when switching between visualizations and table view
+    useEffect(() => {
+      return dataProvider?.activate();
+    }, [dataProvider]);
+
+    return (
+      <>
+        <div className={styles.wrapper}>{<panelToShow.Component model={panelToShow} />}</div>
+      </>
+    );
   };
 }
 

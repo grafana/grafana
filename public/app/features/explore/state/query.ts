@@ -665,6 +665,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
               visualisationType:
                 exploreState?.panelsState?.logs?.visualisationType ?? store.get(visualisationTypeKey) ?? 'N/A',
               length: data.logsResult.rows.length,
+              defaultVisualisationType: config.featureToggles.logsExploreTableDefaultVisualization ? 'table' : 'logs',
             });
           }
           dispatch(queryStreamUpdatedAction({ exploreId, response: data }));

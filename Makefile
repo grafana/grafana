@@ -9,11 +9,13 @@ include .bingo/Variables.mk
 
 
 GO = go
-GO_VERSION = 1.22.2
+GO_VERSION = 1.22.3
 GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
+GO_RACE  := $(shell [ -n "$(GO_BUILD_DEV)$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
+GO_BUILD_FLAGS += $(if $(GO_RACE),-race)
 
 targets := $(shell echo '$(sources)' | tr "," " ")
 
@@ -118,7 +120,7 @@ ifeq ("$(wildcard $(ENTERPRISE_FE_EXT_FILE))","") ## if enterprise is not enable
 i18n-extract-enterprise:
 	@echo "Skipping i18n extract for Enterprise: not enabled"
 else
-i18n-extract-enterprise: $(SWAGGER) ## Generate API Swagger specification
+i18n-extract-enterprise:
 	@echo "Extracting i18n strings for Enterprise"
 	yarn run i18next --config public/locales/i18next-parser-enterprise.config.cjs
 	node ./public/locales/pseudo.mjs --mode enterprise
@@ -208,6 +210,11 @@ build: build-go build-js ## Build backend and frontend.
 .PHONY: run
 run: $(BRA) ## Build and run web server on filesystem changes.
 	$(BRA) run
+
+.PHONY: run-go
+run-go: ## Build and run web server immediately.
+	$(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
+		./pkg/cmd/grafana -- server -packaging=dev cfg:app_mode=development
 
 .PHONY: run-frontend
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
@@ -366,9 +373,11 @@ devenv-mysql:
 .PHONY: protobuf
 protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
-	bash pkg/plugins/backendplugin/pluginextensionv2/generate.sh
-	bash pkg/plugins/backendplugin/secretsmanagerplugin/generate.sh
-	bash pkg/services/store/entity/generate.sh
+	go install google.golang.org/protobuf/cmd/protoc-gen-go
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
+	buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
+	buf generate pkg/services/store/entity --template pkg/services/store/entity/buf.gen.yaml
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.
@@ -401,6 +410,18 @@ scripts/drone/TAGS: $(shell find scripts/drone -name '*.star')
 .PHONY: format-drone
 format-drone:
 	buildifier --lint=fix -r scripts/drone
+
+.PHONY: go-race-is-enabled
+go-race-is-enabled:
+	@if [ -n "$(GO_RACE)" ]; then \
+		echo "The Go race detector is enabled locally, yey!"; \
+	else \
+		echo "The Go race detector is NOT enabled locally, boo!"; \
+	fi;
+
+.PHONY: enable-go-race
+enable-go-race:
+	@touch .go-race-enabled-locally
 
 .PHONY: help
 help: ## Display this help.

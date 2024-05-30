@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -630,11 +631,15 @@ func createSut(t *testing.T) AlertmanagerSrv {
 	}
 	mam := createMultiOrgAlertmanager(t, configs)
 	log := log.NewNopLogger()
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	ruleStore := ngfakes.NewRuleStore(t)
+	ruleAuthzService := accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
 	return AlertmanagerSrv{
-		mam:    mam,
-		crypto: mam.Crypto,
-		ac:     acimpl.ProvideAccessControl(setting.NewCfg()),
-		log:    log,
+		mam:        mam,
+		crypto:     mam.Crypto,
+		ac:         ac,
+		log:        log,
+		silenceSvc: notifier.NewSilenceService(accesscontrol.NewSilenceService(ac, ruleStore), ruleStore, log, mam, ruleStore, ruleAuthzService),
 	}
 }
 

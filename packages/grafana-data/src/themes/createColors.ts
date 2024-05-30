@@ -180,7 +180,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   text = {
     primary: `rgba(${this.blackBase}, 1)`,
     secondary: `rgba(${this.blackBase}, 0.75)`,
-    disabled: `rgba(${this.blackBase}, 0.50)`,
+    disabled: `rgba(${this.blackBase}, 0.64)`,
     link: this.primary.text,
     maxContrast: palette.black,
   };

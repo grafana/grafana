@@ -14,6 +14,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { ShareLinkTab } from './ShareLinkTab';
 
 jest.mock('app/core/utils/shortLinks', () => ({
+  ...jest.requireActual('app/core/utils/shortLinks'),
   createShortLink: jest.fn().mockResolvedValue(`http://localhost:3000/goto/shortend-uid`),
 }));
 

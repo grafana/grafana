@@ -1,3 +1,4 @@
+import { action } from '@storybook/addon-actions';
 import { StoryFn } from '@storybook/react';
 import React from 'react';
 
@@ -25,6 +26,9 @@ export default {
     },
     tooltip: {
       control: 'text',
+    },
+    disabled: {
+      control: 'boolean',
     },
     className: {
       table: {
@@ -96,7 +100,9 @@ export const Examples: StoryFn<typeof Button> = () => {
   );
 };
 
-export const Basic: StoryFn<typeof Button> = (args: ButtonProps) => <Button {...args} />;
+export const Basic: StoryFn<typeof Button> = (args: ButtonProps) => (
+  <Button onClick={action('clicked button')} {...args} />
+);
 
 Basic.args = {
   children: 'Example button',

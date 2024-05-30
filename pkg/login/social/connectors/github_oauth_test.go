@@ -34,7 +34,6 @@ const testGHUserTeamsJSON = `[
     "permission": "admin",
     "members_url": "https://api.github.com/teams/1/members{/member}",
     "repositories_url": "https://api.github.com/teams/1/repos",
-    "parent": null,
     "members_count": 3,
     "repos_count": 10,
     "created_at": "2017-07-14T16:53:42Z",
@@ -68,7 +67,21 @@ const testGHUserTeamsJSON = `[
       "created_at": "2008-01-14T04:33:35Z",
       "updated_at": "2017-08-17T12:37:15Z",
       "type": "Organization"
-    }
+    },
+	"parent": {
+		"name": "DC",
+		"id": 99,
+		"node_id": "bm9kZTIyCg==",
+		"slug": "dc",
+		"description": "",
+		"privacy": "closed",
+		"notification_setting": "notifications_enabled",
+		"url": "https://api.github.com/organizations/github/team/2",
+		"html_url": "https://github.com/orgs/github/teams/dc",
+		"members_url": "https://api.github.com/orgs/github/members{/member}",
+		"repositories_url": "https://api.github.com/teams/2/repos",
+		"permission": "pull"
+	  }
   }
 ]`
 
@@ -132,6 +145,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 		autoAssignOrgRole        string
 		want                     *social.BasicUserInfo
 		wantErr                  bool
+		oAuthExtraInfo           map[string]string
 	}{
 		{
 			name:              "Basic User info",
@@ -225,6 +239,25 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
+		{
+			// see: https://github.com/grafana/grafana/issues/85916
+			name:              "should check parent team id for team membership",
+			roleAttributePath: "",
+			userRawJSON:       testGHUserJSON,
+			autoAssignOrgRole: "Editor",
+			userTeamsRawJSON:  testGHUserTeamsJSON,
+			oAuthExtraInfo: map[string]string{
+				"team_ids": "99",
+			},
+			want: &social.BasicUserInfo{
+				Id:     "1",
+				Name:   "monalisa octocat",
+				Email:  "octocat@github.com",
+				Login:  "octocat",
+				Role:   "Editor",
+				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -250,13 +283,10 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 					ApiUrl:            server.URL + "/user",
 					RoleAttributePath: tt.roleAttributePath,
 					SkipOrgRoleSync:   tt.settingSkipOrgRoleSync,
-					Extra: map[string]string{
-						"allowed_organizations": "",
-						"team_ids":              "",
-					},
+					Extra:             tt.oAuthExtraInfo,
 				}, &setting.Cfg{
 					AutoAssignOrgRole: tt.autoAssignOrgRole,
-				}, &ssosettingstests.MockService{},
+				}, nil, &ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
 			token := &oauth2.Token{
@@ -338,7 +368,7 @@ func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitHubProvider(tc.settings, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitHubProvider(tc.settings, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			require.Equal(t, tc.want.teamIds, s.teamIds)
 			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
@@ -465,7 +495,7 @@ func TestSocialGitHub_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitHubProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitHubProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -546,7 +576,7 @@ func TestSocialGitHub_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitHubProvider(tc.info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitHubProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -605,7 +635,7 @@ func TestGitHub_Reload_ExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitHubProvider(tc.info, setting.NewCfg(), &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitHubProvider(tc.info, setting.NewCfg(), nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)

@@ -17,7 +17,6 @@ type Service interface {
 	GetByEmail(context.Context, *GetUserByEmailQuery) (*User, error)
 	Update(context.Context, *UpdateUserCommand) error
 	UpdateLastSeenAt(context.Context, *UpdateUserLastSeenAtCommand) error
-	GetSignedInUserWithCacheCtx(context.Context, *GetSignedInUserQuery) (*SignedInUser, error)
 	GetSignedInUser(context.Context, *GetSignedInUserQuery) (*SignedInUser, error)
 	Search(context.Context, *SearchUsersQuery) (*SearchUserQueryResult, error)
 	BatchDisableUsers(context.Context, *BatchDisableUsersCommand) error

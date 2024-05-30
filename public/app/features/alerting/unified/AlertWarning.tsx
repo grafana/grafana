@@ -18,7 +18,7 @@ export function AlertWarning({ title, children }: AlertWarningProps) {
 }
 
 const warningStyles = (theme: GrafanaTheme2) => ({
-  warning: css`
-    margin: ${theme.spacing(4)};
-  `,
+  warning: css({
+    margin: theme.spacing(4),
+  }),
 });
