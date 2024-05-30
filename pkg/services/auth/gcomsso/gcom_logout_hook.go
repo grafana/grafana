@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type GComLogoutRequest struct {
+type gcomLogoutRequest struct {
 	Token     string `json:"idToken"`
 	SessionID string `json:"sessionId"`
 }
@@ -32,7 +32,7 @@ func ProvideGComSSOService(cfg *setting.Cfg) *GComSSOService {
 
 func (s *GComSSOService) LogoutHook(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) error {
 	s.logger.Debug("Logging out from Grafana.com", "user", user.GetID(), "session", sessionToken.Id)
-	data, err := json.Marshal(&GComLogoutRequest{
+	data, err := json.Marshal(&gcomLogoutRequest{
 		Token:     user.GetIDToken(),
 		SessionID: fmt.Sprint(sessionToken.Id),
 	})
