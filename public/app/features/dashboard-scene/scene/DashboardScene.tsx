@@ -16,14 +16,13 @@ import {
   SceneVariableDependencyConfigLike,
   VizPanel,
 } from '@grafana/scenes';
-import { Dashboard, DashboardLink } from '@grafana/schema';
+import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { LibraryElementDTO } from 'app/features/library-panels/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -511,7 +510,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     });
   }
 
-  public createLibraryPanel(gridItemToReplace: DashboardGridItem, libPanel: LibraryElementDTO) {
+  public createLibraryPanel(gridItemToReplace: DashboardGridItem, libPanel: LibraryPanel) {
     const layout = this.state.body;
 
     if (!(layout instanceof SceneGridLayout)) {

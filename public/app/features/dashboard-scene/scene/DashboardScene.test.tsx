@@ -12,7 +12,7 @@ import {
   behaviors,
   SceneDataTransformer,
 } from '@grafana/scenes';
-import { Dashboard, DashboardCursorSync } from '@grafana/schema';
+import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -910,7 +910,7 @@ describe('DashboardScene', () => {
           name: 'name',
         };
 
-        scene.createLibraryPanel(gridItem, libPanel as any);
+        scene.createLibraryPanel(gridItem, libPanel as LibraryPanel);
 
         const layout = scene.state.body as SceneGridLayout;
         const newGridItem = layout.state.children[0] as DashboardGridItem;
@@ -947,7 +947,7 @@ describe('DashboardScene', () => {
           name: 'name',
         };
 
-        scene.createLibraryPanel(gridItem, libPanel as any);
+        scene.createLibraryPanel(gridItem, libPanel as LibraryPanel);
 
         const layout = scene.state.body as SceneGridLayout;
         const newGridItem = (layout.state.children[0] as SceneGridRow).state.children[0] as DashboardGridItem;
