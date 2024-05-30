@@ -235,6 +235,9 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
 
+// TODO: Refactor this function to reduce the cylomatic complexity
+//
+//nolint:gocyclo
 func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
