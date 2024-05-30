@@ -17,7 +17,6 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   let vizPanelKey: string | null = null;
 
   const panelAttentionSubscription = appEvents.subscribe(SetPanelAttentionEvent, (event) => {
-    console.log('panelattention');
     if (typeof event.payload.panelId === 'string') {
       vizPanelKey = event.payload.panelId;
     }
