@@ -186,6 +186,18 @@ curl --request GET --url http://localhost:3000/api/folders --header 'Authorizati
 The terraform resource `api_key` has been removed in v3.0.0 from the Grafana Terraform Provider. During your migration path, we suggest that you pin your terraform version to <v2.19.0. See [release notes](https://github.com/grafana/terraform-provider-grafana/releases/tag/v3.0.0) for more information.
 {{% /admonition %}}
 
+If you need to pin the version of terraform to v2.19.0
+```tf
+terraform {
+  required_providers {
+    grafana = {
+      source  = "grafana/grafana"
+      version = "2.19.0"
+    }
+  }
+}
+```
+
 This section shows you how to migrate your Terraform configuration for API keys to Grafana service accounts. For resources, see [Grafana Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/service_account_token).
 
 For migration your cloud stack api keys, use the `grafana_cloud_stack_service_account` and `gafana_cloud_stack_service_account_token` resources see [Grafana Cloud Stack Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_stack_service_account).
