@@ -30,6 +30,9 @@ jest.mock('@grafana/runtime', () => ({
       getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
     };
   },
+  getAppEvents: () => ({
+    publish: jest.fn(),
+  }),
 }));
 
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
