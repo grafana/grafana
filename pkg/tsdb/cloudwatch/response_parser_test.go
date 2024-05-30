@@ -136,7 +136,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		})
 	})
 
-	t.Run("when recieving a permissions error should pass it to the user", func(t *testing.T) {
+	t.Run("when receiving a permissions error should pass it to the user", func(t *testing.T) {
 		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./testdata/permissions-error-output.json")
 		require.NoError(t, err)
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
