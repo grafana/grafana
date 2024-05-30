@@ -223,7 +223,7 @@ func TestUpdateLastSeenAt(t *testing.T) {
 	userService.cfg = setting.NewCfg()
 
 	t.Run("update last seen at", func(t *testing.T) {
-		userStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 1, OrgID: 1, Email: "email", Login: "login", Name: "name", LastSeenAt: time.Now().Add(-10 * time.Minute)}
+		userStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 1, OrgID: 1, Email: "email", Login: "login", Name: "name", LastSeenAt: time.Now().Add(-20 * time.Minute)}
 		err := userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: 1, OrgID: 1})
 		require.NoError(t, err)
 	})
