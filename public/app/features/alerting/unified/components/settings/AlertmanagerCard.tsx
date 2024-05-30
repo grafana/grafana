@@ -46,7 +46,14 @@ export function AlertmanagerCard({
       <Card.Heading>
         <Stack alignItems="center" gap={1}>
           {href ? (
-            <WithReturnButton title="Alerting settings" component={<TextLink href={href}>{name}</TextLink>} />
+            <WithReturnButton
+              title="Alerting settings"
+              component={
+                <TextLink href={href} inline={false}>
+                  {name}
+                </TextLink>
+              }
+            />
           ) : (
             name
           )}

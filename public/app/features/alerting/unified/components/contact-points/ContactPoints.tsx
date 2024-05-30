@@ -4,7 +4,6 @@ import { SerializedError } from '@reduxjs/toolkit';
 import { groupBy, size, uniq, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
 import React, { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useToggle } from 'react-use';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
@@ -22,6 +21,7 @@ import {
   TabContent,
   TabsBar,
   Text,
+  TextLink,
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
@@ -42,7 +42,6 @@ import { MetaText } from '../MetaText';
 import MoreButton from '../MoreButton';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
-import { Strong } from '../Strong';
 import { GrafanaReceiverExporter } from '../export/GrafanaReceiverExporter';
 import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
 import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
@@ -444,11 +443,17 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
           </Text>
         </Stack>
         {isReferencedByAnyPolicy && (
-          <MetaText>
-            <Link to={createUrl('/alerting/routes', { contactPoint: name })}>
-              is used by <Strong>{numberOfPolicies}</Strong> {pluralize('notification policy', numberOfPolicies)}
-            </Link>
-          </MetaText>
+          <Text variant="bodySmall" color="secondary">
+            is used by{' '}
+            <TextLink
+              href={createUrl('/alerting/routes', { contactPoint: name })}
+              variant="bodySmall"
+              color="primary"
+              inline={false}
+            >
+              {`${numberOfPolicies} ${pluralize('notification policy', numberOfPolicies)}`}
+            </TextLink>
+          </Text>
         )}
         {provisioned && <ProvisioningBadge />}
         {!isReferencedByAnyPolicy && <UnusedContactPointBadge />}
@@ -612,12 +617,12 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
                   Last delivery attempt{' '}
                   <Tooltip content={lastDeliveryAttempt.toLocaleString()}>
                     <span>
-                      <Strong>{lastDeliveryAttempt.locale('en').fromNow()}</Strong>
+                      <Text color="primary">{lastDeliveryAttempt.locale('en').fromNow()}</Text>
                     </span>
                   </Tooltip>
                 </MetaText>
                 <MetaText icon="stopwatch">
-                  took <Strong>{lastDeliveryAttemptDuration}</Strong>
+                  took <Text color="primary">{lastDeliveryAttemptDuration}</Text>
                 </MetaText>
               </>
             )}
@@ -626,7 +631,7 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
             {/* this is only shown for contact points that only want "firing" updates */}
             {!sendingResolved && (
               <MetaText icon="info-circle">
-                Delivering <Strong>only firing</Strong> notifications
+                Delivering <Text color="primary">only firing</Text> notifications
               </MetaText>
             )}
           </>
