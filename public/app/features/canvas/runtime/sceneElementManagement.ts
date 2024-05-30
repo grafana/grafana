@@ -9,6 +9,8 @@ import { FrameState } from './frame';
 import { RootElement } from './root';
 import { Scene } from './scene';
 
+// TODO: Consider whether or not reorderElements + updateElements should be moved to TreeNavigationEditor
+// Reorder elements in the DOM when rearranging them in the tree navigation editor
 export const reorderElements = (src: ElementState, dest: ElementState, dragToGap: boolean, destPosition: number) => {
   switch (dragToGap) {
     case true:
@@ -54,6 +56,7 @@ export const reorderElements = (src: ElementState, dest: ElementState, dragToGap
   }
 };
 
+// Reorders canvas elements
 const updateElements = (src: ElementState, dest: FrameState | RootElement, idx: number | null = null) => {
   src.parent?.doAction(LayerActionID.Delete, src);
   src.parent = dest;
