@@ -133,9 +133,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE, VAR_METRIC_SEARCH_TERMS],
     onReferencedVariableValueChanged: async (variable: SceneVariable) => {
-      // For all of these variable changes, resync the URL
-      // this.syncTrailToUrl();
-
       const { name } = variable.state;
       if (name === VAR_DATASOURCE) {
         this.datasourceHelper.reset();
