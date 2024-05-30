@@ -121,10 +121,8 @@ func (s *SilenceService) UpdateSilence(ctx context.Context, user identity.Reques
 		return "", err
 	}
 
-	// Prevent changing the rule UID matcher. Alternatively, we could check WRITE permission on the old silence
-	// followed by CREATE permission on the new silence if the rule folder is different.
-	if existing.GetRuleUID() != ps.GetRuleUID() {
-		return "", WithPublicError(ErrSilencesBadRequest.Errorf("Silence rule matcher '%s' cannot be updated, please create a new silence", alertingModels.RuleUIDLabel))
+	if err := validateSilenceUpdate(existing, ps); err != nil {
+		return "", err
 	}
 
 	silenceId, err := s.store.UpdateSilence(ctx, user.GetOrgID(), ps)
@@ -234,6 +232,24 @@ func (s *SilenceService) WithRuleMetadata(ctx context.Context, user identity.Req
 				sil.Metadata.RuleMetadata.FolderUID = rule.NamespaceUID
 			}
 		}
+	}
+
+	return nil
+}
+
+// validateSilenceUpdate validates the diff between an existing silence and a new silence. Currently, this is use to
+// prevent changing the rule UID matcher.
+// Alternatively, we could check WRITE permission on the old silence followed by CREATE permission on the new silence
+// if the rule folder is different.
+func validateSilenceUpdate(existing *models.Silence, new models.Silence) error {
+	existingRuleUID := existing.GetRuleUID()
+	newRuleUID := new.GetRuleUID()
+	if existingRuleUID == nil || newRuleUID == nil {
+		if existingRuleUID != newRuleUID {
+			return WithPublicError(ErrSilencesBadRequest.Errorf("Silence rule matcher '%s' cannot be updated, please create a new silence", alertingModels.RuleUIDLabel))
+		}
+	} else if *existingRuleUID != *newRuleUID {
+		return WithPublicError(ErrSilencesBadRequest.Errorf("Silence rule matcher '%s' cannot be updated, please create a new silence", alertingModels.RuleUIDLabel))
 	}
 
 	return nil
