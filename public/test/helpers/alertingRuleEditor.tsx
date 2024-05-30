@@ -10,6 +10,7 @@ import RuleEditor from 'app/features/alerting/unified/RuleEditor';
 import { TestProvider } from './TestProvider';
 
 export const ui = {
+  loadingIndicator: byText('Loading rule...'),
   inputs: {
     name: byRole('textbox', { name: 'name' }),
     alertType: byTestId('alert-type-picker'),

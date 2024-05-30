@@ -221,6 +221,7 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
   uid: string;
   namespace_uid: string;
+  rule_group: string;
   provenance?: string;
 }
 

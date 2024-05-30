@@ -21,6 +21,7 @@ const allHandlers = [
   ...folderHandlers,
   ...pluginsHandlers,
   ...silenceHandlers,
+  ...alertRuleHandlers,
 ];
 
 export default allHandlers;

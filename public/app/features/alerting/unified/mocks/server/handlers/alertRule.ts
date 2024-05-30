@@ -1,7 +1,5 @@
 import { http, HttpResponse } from 'msw';
 
-export const MOCK_GRAFANA_ALERT_RULE_TITLE = 'Test alert';
-
 import {
   RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
@@ -55,7 +53,7 @@ export const rulerRuleGroupHandler = () => {
   );
 };
 
-export const rulerRuleHandler = () => {
+export const getAlertRuleHandler = () => {
   const grafanaRules = new Map<string, RulerGrafanaRuleDTO>(
     [grafanaRulerRule].map((rule) => [rule.grafana_alert.uid, rule])
   );
@@ -69,5 +67,9 @@ export const rulerRuleHandler = () => {
   });
 };
 
-const handlers = [rulerRulesHandler(), rulerRuleNamespaceHandler(), rulerRuleGroupHandler(), rulerRuleHandler()];
-export default handlers;
+export const alertRuleHandlers = [
+  rulerRulesHandler(),
+  rulerRuleNamespaceHandler(),
+  rulerRuleGroupHandler(),
+  getAlertRuleHandler(),
+];

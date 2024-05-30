@@ -1,24 +1,24 @@
+import { within } from '@testing-library/react';
 import React from 'react';
 import { render, waitFor, screen, userEvent } from 'test/test-utils';
 import { byText, byRole } from 'testing-library-selector';
 
-import { setBackendSrv, setDataSourceSrv, setPluginExtensionsHook } from '@grafana/runtime';
+import { setBackendSrv, setPluginExtensionsHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
-import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/alertRules';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
 import {
-  MockDataSourceSrv,
   getCloudRule,
   getGrafanaRule,
   grantUserPermissions,
   mockDataSource,
   mockPluginLinkExtension,
 } from '../../mocks';
+import { grafanaRulerRule } from '../../mocks/alertRuleApi';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -104,7 +104,7 @@ describe('RuleViewer', () => {
           totals: { alerting: 1 },
         },
       },
-      { uid: 'test1' }
+      { uid: grafanaRulerRule.grafana_alert.uid }
     );
     const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
 
@@ -114,6 +114,7 @@ describe('RuleViewer', () => {
         AccessControlAction.AlertingRuleRead,
         AccessControlAction.AlertingRuleUpdate,
         AccessControlAction.AlertingRuleDelete,
+        AccessControlAction.AlertingInstanceRead,
         AccessControlAction.AlertingInstanceCreate,
       ]);
       setBackendSrv(backendSrv);
@@ -181,7 +182,6 @@ describe('RuleViewer', () => {
         }),
       };
       setupDataSources(dataSources.grafana, dataSources.am);
-      setDataSourceSrv(new MockDataSourceSrv(dataSources));
 
       await renderRuleViewer(mockRule, mockRuleIdentifier);
 
@@ -189,7 +189,10 @@ describe('RuleViewer', () => {
       await user.click(ELEMENTS.actions.more.button.get());
       await user.click(ELEMENTS.actions.more.actions.silence.get());
 
-      expect(await screen.findByLabelText(/^alert rule/i)).toHaveValue(MOCK_GRAFANA_ALERT_RULE_TITLE);
+      const silenceDrawer = await screen.findByRole('dialog', { name: 'Drawer title Silence alert rule' });
+      expect(await within(silenceDrawer).findByLabelText(/^alert rule/i)).toHaveValue(
+        grafanaRulerRule.grafana_alert.title
+      );
     });
   });
 
