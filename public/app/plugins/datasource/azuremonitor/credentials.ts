@@ -30,9 +30,10 @@ export function getAuthType(options: AzureDataSourceSettings | AzureDataSourceIn
   return options.jsonData.azureAuthType;
 }
 
-function resolveLegacyCloudName(cloudName: string | undefined): string {
+function resolveLegacyCloudName(cloudName: string | undefined): string | undefined {
   if (!cloudName) {
-    return AzureCloud.Public;
+    // if undefined, allow the code to fallback to calling getDefaultAzureCloud() since that has the complete logic for handling an empty cloud name
+    return undefined;
   }
   switch (cloudName) {
     case 'azuremonitor':
