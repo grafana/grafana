@@ -586,7 +586,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("should only return rule groups under given rule_group list", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?rule_group=rule-group-1,rule-group-2", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?rule_group=rule-group-1&rule_group=rule-group-2", nil)
 			require.NoError(t, err)
 
 			c.Context = &web.Context{Req: r}
@@ -609,7 +609,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			expectedRuleInGroup2 := rulesInGroup2[0]
 			expectedRuleInGroup3 := rulesInGroup3[0]
 
-			r, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?rule_name=%s,%s", expectedRuleInGroup2.Title, expectedRuleInGroup3.Title), nil)
+			r, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?rule_name=%s&rule_name=%s", expectedRuleInGroup2.Title, expectedRuleInGroup3.Title), nil)
 			require.NoError(t, err)
 
 			c.Context = &web.Context{Req: r}

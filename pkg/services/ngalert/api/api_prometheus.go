@@ -304,12 +304,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		}
 	}
 
-	var ruleGroups []string
-	rgParam := opts.Query.Get("rule_group")
-	if rgParam != "" {
-		rgParamSplit := strings.Split(rgParam, ",")
-		ruleGroups = rgParamSplit
-	}
+	ruleGroups := opts.Query["rule_group"]
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID:         opts.OrgID,
@@ -326,11 +321,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		return ruleResponse
 	}
 
-	var ruleNames []string
-	rnParam := opts.Query.Get("rule_name")
-	if rnParam != "" {
-		ruleNames = strings.Split(rnParam, ",")
-	}
+	ruleNames := opts.Query["rule_name"]
 	ruleNamesSet := make(map[string]struct{}, len(ruleNames))
 	for _, rn := range ruleNames {
 		ruleNamesSet[rn] = struct{}{}
