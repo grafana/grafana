@@ -807,8 +807,8 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Co
 		return nil, err
 	}
 	folderUidToFullpath := make(map[string]string)
-	for _, dash := range folders {
-		folderUidToFullpath[dash.UID] = dash.Fullpath
+	for _, folder := range folders {
+		folderUidToFullpath[folder.UID] = folder.Fullpath
 	}
 
 	result := make([]models.AlertRuleGroupWithFolderFullpath, 0)
