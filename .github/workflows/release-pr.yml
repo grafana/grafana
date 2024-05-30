@@ -1,0 +1,56 @@
+name: Create a pull request to mark the end of a release of a single Grafana version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: The version of Grafana that is being released
+      target:
+        required: true
+        type: string
+        description: The base branch that these changes are being merged into
+      backport:
+        required: false
+        type: string
+        description: Branch to backport these changes to
+      dry_run:
+        required: false
+        type: bool
+
+jobs:
+  create-prs:
+    name: Create Release PR
+    runs-on: ubuntu-latest
+    if: github.repository == 'grafana/grafana'
+    steps:
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+      - name: Checkout Grafana
+        uses: actions/checkout@v4
+      - name: Create branch
+        run: git checkout -b "release/${{ inputs.version }}"
+      - name: Generate changelog
+        uses: grafana/grafana-github-actions-go/update-changelog@main
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          version: ${{ inputs.version }}
+          metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+          skip_pr: true
+          skip_community_post: true
+      - name: Update version in package.json
+      - name: Create PR without backports
+        if: "${{ github.event.inputs.backport == '' }}"
+        run: gh pr create --dry-run=${{ inputs.dry_run }} -H "release/${{ inputs.version }}" -B "${{ inputs.target }}
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+      - name: Create PR with backports
+        if: "${{ github.event.inputs.backport != '' }}"
+        run: gh pr create -l "backport-${{ inputs.backport }}" --dry-run=${{ inputs.dry_run }} -H "release/${{ inputs.version }}" -B "${{ inputs.target }}
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
