@@ -1,9 +1,14 @@
+import { first } from 'rxjs/operators';
+
+import { LayerActionID } from 'app/plugins/panel/canvas/types';
+
 import { Placement } from '..';
 
 import { ElementState } from './element';
 import { FrameState } from './frame';
 import { Scene } from './scene';
 
+// Nest selected elements into a frame object
 export const frameSelection = (scene: Scene) => {
   scene.selection.pipe(first()).subscribe((currentSelectedElements) => {
     const currentLayer = currentSelectedElements[0].parent!;
@@ -42,6 +47,7 @@ export const frameSelection = (scene: Scene) => {
   });
 };
 
+// Helper function to generate the a frame object based on the selected elements' dimensions
 const generateFrameContainer = (elements: ElementState[]): Placement => {
   let minTop = Infinity;
   let minLeft = Infinity;

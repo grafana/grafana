@@ -3,7 +3,6 @@ import Moveable from 'moveable';
 import React, { createRef, CSSProperties, RefObject } from 'react';
 import { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
-import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
 
 import { AppEvents, PanelData } from '@grafana/data';
@@ -39,7 +38,7 @@ import { getParent, getTransformInstance } from 'app/plugins/panel/canvas/utils'
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
-import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+import { HorizontalConstraint, VerticalConstraint } from '../types';
 
 import { SceneTransformWrapper } from './SceneTransformWrapper';
 import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
@@ -208,82 +207,6 @@ export class Scene {
       this.clearCurrentSelection();
     }
   }
-
-  frameSelection() {
-    this.selection.pipe(first()).subscribe((currentSelectedElements) => {
-      const currentLayer = currentSelectedElements[0].parent!;
-
-      const newLayer = new FrameState(
-        {
-          type: 'frame',
-          name: this.getNextElementName(true),
-          elements: [],
-        },
-        this,
-        currentSelectedElements[0].parent
-      );
-
-      const framePlacement = this.generateFrameContainer(currentSelectedElements);
-
-      newLayer.options.placement = framePlacement;
-
-      currentSelectedElements.forEach((element: ElementState) => {
-        const elementContainer = element.div?.getBoundingClientRect();
-
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        element.setPlacementFromConstraint(elementContainer, framePlacement as DOMRect);
-        currentLayer.doAction(LayerActionID.Delete, element);
-        newLayer.doAction(LayerActionID.Duplicate, element, false, false);
-      });
-
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      newLayer.setPlacementFromConstraint(framePlacement as DOMRect, currentLayer.div?.getBoundingClientRect());
-
-      currentLayer.elements.push(newLayer);
-
-      this.byName.set(newLayer.getName(), newLayer);
-
-      this.save();
-    });
-  }
-
-  private generateFrameContainer = (elements: ElementState[]): Placement => {
-    let minTop = Infinity;
-    let minLeft = Infinity;
-    let maxRight = 0;
-    let maxBottom = 0;
-
-    elements.forEach((element: ElementState) => {
-      const elementContainer = element.div?.getBoundingClientRect();
-
-      if (!elementContainer) {
-        return;
-      }
-
-      if (minTop > elementContainer.top) {
-        minTop = elementContainer.top;
-      }
-
-      if (minLeft > elementContainer.left) {
-        minLeft = elementContainer.left;
-      }
-
-      if (maxRight < elementContainer.right) {
-        maxRight = elementContainer.right;
-      }
-
-      if (maxBottom < elementContainer.bottom) {
-        maxBottom = elementContainer.bottom;
-      }
-    });
-
-    return {
-      top: minTop,
-      left: minLeft,
-      width: maxRight - minLeft,
-      height: maxBottom - minTop,
-    };
-  };
 
   clearCurrentSelection(skipNextSelectionBroadcast = false) {
     this.skipNextSelectionBroadcast = skipNextSelectionBroadcast;
