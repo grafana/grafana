@@ -23,13 +23,7 @@ export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
   );
 
   if (loading) {
-    return (
-      <LoadingPlaceholder
-        text={'Loading editor'}
-        className={styles.container}
-        data-testid={selectors.components.ReactMonacoEditor.editorLazy}
-      />
-    );
+    return <LoadingPlaceholder text={'Loading editor'} className={styles.container} />;
   }
 
   if (error) {
@@ -37,7 +31,7 @@ export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
       <ErrorWithStack
         title="React Monaco Editor failed to load"
         error={error}
-        errorInfo={{ componentStack: error?.stack || '' }}
+        errorInfo={{ componentStack: error?.stack ?? '' }}
       />
     );
   }
