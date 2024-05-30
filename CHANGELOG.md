@@ -3209,5 +3209,38 @@ Users who use LDAP role sync to only sync Viewer, Editor and Admin roles, but gr
 - **Auth:** Fixed CVE-2023-3128. [#70576](https://github.com/grafana/grafana/issues/70576), [@zerok](https://github.com/zerok)
 
 <!-- 8.5.27 END -->
+<!-- 8.0.0 START -->
+
+# 8.0.0 (2021-06-08)
+
+### Features and enhancements
+
+- **AzureMonitor:** Require default subscription for workspaces() template variable query . [#35181](https://github.com/grafana/grafana/issues/35181), [@joshhunt](https://github.com/joshhunt)
+- **InfluxDB:** Deprecate direct browser access in data source. [#35105](https://github.com/grafana/grafana/issues/35105), [@gabor](https://github.com/gabor)
+- **Dashboard:** Remove support for loading and deleting dashboard by slug. [#35104](https://github.com/grafana/grafana/issues/35104), [@dsotirakis](https://github.com/dsotirakis)
+- **VizLegend:** Add a read-only property. [#35096](https://github.com/grafana/grafana/issues/35096), [@dprokop](https://github.com/dprokop)
+- **AzureMonitor:** Use resource type display names in the UI. [#35060](https://github.com/grafana/grafana/issues/35060), [@joshhunt](https://github.com/joshhunt)
+
+### Bug fixes
+
+- **Login:** Fixes Unauthorized message showing when on login page or snapshot page. [#35311](https://github.com/grafana/grafana/issues/35311), [@torkelo](https://github.com/torkelo)
+- **AzureMonitor:** Fix Azure Resource Graph queries in Azure China. [#35235](https://github.com/grafana/grafana/issues/35235), [@kostrse](https://github.com/kostrse)
+- **NodeGraph:** Fix sorting markers in grid view. [#35200](https://github.com/grafana/grafana/issues/35200), [@aocenas](https://github.com/aocenas)
+- **Checkbox:** Fix vertical layout issue with checkboxes due to fixed height. [#35022](https://github.com/grafana/grafana/issues/35022), [@torkelo](https://github.com/torkelo)
+- **Dashboard:** Fix Table view when editing causes the panel data to not update. [#34998](https://github.com/grafana/grafana/issues/34998), [@axelavargas](https://github.com/axelavargas)
+- **Dashboard:** Fix issues where unsaved-changes warning is not displayed. [#34989](https://github.com/grafana/grafana/issues/34989), [@torkelo](https://github.com/torkelo)
+- **Variables:** Support raw values of boolean type. [#34727](https://github.com/grafana/grafana/issues/34727), [@simPod](https://github.com/simPod)
+- **Short URL:** Include orgId in generated short URLs. [#34696](https://github.com/grafana/grafana/issues/34696), [@farodin91](https://github.com/farodin91)
+
+### Breaking changes
+
+The following endpoints were deprecated for Grafana v5.0 and support for them has now been removed:
+
+* GET `/dashboards/db/:slug`
+* GET `/dashboard-solo/db/:slug`
+* GET `/api/dashboard/db/:slug`
+* DELETE `/api/dashboards/db/:slug` Issue [#35104](https://github.com/grafana/grafana/issues/35104)
+
+<!-- 8.0.0 END -->
 
 <!-- previous CHANGELOG entries can be found in /.changelog-archive >
