@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,14 +16,16 @@ import (
 
 const LogPrefix = "gcom.service"
 
+var ErrTokenNotFound = errors.New("gcom: token not found")
+
 type Service interface {
 	GetInstanceByID(ctx context.Context, requestID string, instanceID string) (Instance, error)
 	CreateAccessPolicy(ctx context.Context, params CreateAccessPolicyParams, payload CreateAccessPolicyPayload) (AccessPolicy, error)
 	ListAccessPolicies(ctx context.Context, params ListAccessPoliciesParams) ([]AccessPolicy, error)
 	DeleteAccessPolicy(ctx context.Context, params DeleteAccessPolicyParams) (bool, error)
 	CreateToken(ctx context.Context, params CreateTokenParams, payload CreateTokenPayload) (Token, error)
-	// Deletes an auth token. Returns true if the token existed and was deleted.
-	DeleteToken(ctx context.Context, params DeleteTokenParams) (bool, error)
+	// Deletes an auth token.
+	DeleteToken(ctx context.Context, params DeleteTokenParams) error
 }
 
 type Instance struct {
@@ -337,15 +340,15 @@ func (client *GcomClient) CreateToken(ctx context.Context, params CreateTokenPar
 	return token, nil
 }
 
-func (client *GcomClient) DeleteToken(ctx context.Context, params DeleteTokenParams) (bool, error) {
+func (client *GcomClient) DeleteToken(ctx context.Context, params DeleteTokenParams) error {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/tokens", params.TokenID)
 	if err != nil {
-		return false, fmt.Errorf("building gcom tokens url: %w", err)
+		return fmt.Errorf("building gcom tokens url: %w", err)
 	}
 
 	request, err := http.NewRequestWithContext(ctx, http.MethodDelete, endpoint, nil)
 	if err != nil {
-		return false, fmt.Errorf("creating http request: %w", err)
+		return fmt.Errorf("creating http request: %w", err)
 	}
 
 	query := url.Values{}
@@ -357,7 +360,7 @@ func (client *GcomClient) DeleteToken(ctx context.Context, params DeleteTokenPar
 
 	response, err := client.httpClient.Do(request)
 	if err != nil {
-		return false, fmt.Errorf("sending http request to delete access token: %w", err)
+		return fmt.Errorf("sending http request to delete access token: %w", err)
 	}
 	defer func() {
 		if err := response.Body.Close(); err != nil {
@@ -366,13 +369,13 @@ func (client *GcomClient) DeleteToken(ctx context.Context, params DeleteTokenPar
 	}()
 
 	if response.StatusCode == http.StatusNotFound {
-		return false, nil
+		return fmt.Errorf("token id: %s %w", params.TokenID, ErrTokenNotFound)
 	}
 
 	if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusNoContent {
 		body, _ := io.ReadAll(response.Body)
-		return false, fmt.Errorf("unexpected response when deleting access token: code=%d body=%s", response.StatusCode, body)
+		return fmt.Errorf("unexpected response when deleting access token: code=%d body=%s", response.StatusCode, body)
 	}
 
-	return true, nil
+	return nil
 }

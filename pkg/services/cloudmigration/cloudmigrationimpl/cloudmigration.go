@@ -261,11 +261,11 @@ func (s *Service) DeleteToken(ctx context.Context, tokenID string) error {
 
 	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.DeleteTokenTimeout)
 	defer cancel()
-	if _, err := s.gcomService.DeleteToken(timeoutCtx, gcom.DeleteTokenParams{
+	if err := s.gcomService.DeleteToken(timeoutCtx, gcom.DeleteTokenParams{
 		RequestID: tracing.TraceIDFromContext(ctx, false),
 		Region:    instance.RegionSlug,
 		TokenID:   tokenID,
-	}); err != nil {
+	}); err != nil && !errors.Is(err, gcom.ErrTokenNotFound) {
 		return fmt.Errorf("deleting cloud migration token: tokenID=%s %w", tokenID, err)
 	}
 	logger.Info("deleted cloud migration token", "tokenID", tokenID)
