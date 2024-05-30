@@ -212,4 +212,21 @@ describe('getQueryHints()', () => {
     expect(JSON.stringify(hints)).toContain('ADD_HISTOGRAM_FRACTION');
     expect(JSON.stringify(hints)).toContain('ADD_HISTOGRAM_AVG');
   });
+
+  it('returns no hints for native histogram when there are native histogram functions in the query', () => {
+    const queryWithNativeHistogramFunction = 'histogram_avg(foo)';
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
+    const mock: unknown = { languageProvider: { metricsMetadata: { foo: { type: 'histogram' } } } };
+    const datasource = mock as PrometheusDatasource;
+
+    let hints = getQueryHints(queryWithNativeHistogramFunction, series, datasource);
+    expect(hints!.length).toBe(0);
+  });
 });

@@ -17,6 +17,7 @@ export function getQueryHints(query: string, series?: unknown[], datasource?: Pr
   const metricsMetadata = datasource?.languageProvider?.metricsMetadata;
 
   // ..._bucket metric needs a histogram_quantile()
+  // this regex also prevents hints from being shown when a query already has a function
   const oldHistogramMetric = query.trim().match(/^\w+_bucket$|^\w+_bucket{.*}$/);
   if (oldHistogramMetric) {
     const label = 'Selected metric has buckets.';
@@ -31,7 +32,7 @@ export function getQueryHints(query: string, series?: unknown[], datasource?: Pr
         },
       },
     });
-  } else if (metricsMetadata) {
+  } else if (metricsMetadata && checkNativeHistogramFunctions(query)) {
     // having migrated to native histograms
     // there will be no more old histograms (no buckets)
     // and we can identify a native histogram by the following
@@ -261,4 +262,20 @@ function checkMetricType(
     }) ?? '';
 
   return { nameMetric, certain };
+}
+
+/**
+ * This regex check prevents hints from being shown when a query already has a function
+ * */
+function checkNativeHistogramFunctions(query: string): boolean {
+  const noNativeHistogramFunctions =
+    query.indexOf('histogram_quantile(') === -1 &&
+    query.indexOf('histogram_avg(') === -1 &&
+    query.indexOf('histogram_count(') === -1 &&
+    query.indexOf('histogram_sum(') === -1 &&
+    query.indexOf('histogram_fraction(') === -1 &&
+    query.indexOf('histogram_stddev(') === -1 &&
+    query.indexOf('histogram_stdvar(') === -1;
+
+  return noNativeHistogramFunctions;
 }
