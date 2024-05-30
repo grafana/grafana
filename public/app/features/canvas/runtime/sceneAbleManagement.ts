@@ -34,7 +34,7 @@ const enableCustomables = (moveable: Moveable) => {
   };
 };
 
-// Generate target HTML element divs to configure selecto / moveable
+// Generate HTML element divs for every canvas element to configure selecto / moveable
 const generateTargetElements = (rootElements: ElementState[]): HTMLDivElement[] => {
   let targetElements: HTMLDivElement[] = [];
 
