@@ -854,7 +854,6 @@ func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folde
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, folderUIDs []string) error {
 	// TODO use bulk delete
 	for _, folderUID := range folderUIDs {
-		// only hard delete the folder representation in the dashboard store
 		// nolint:staticcheck
 		deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, UID: folderUID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 		if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
@@ -883,6 +882,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	}
 	if !hasAccess {
 		return nil, dashboards.ErrFolderAccessDenied
+
 	}
 
 	// here we get the folder, we need to get the height of current folder

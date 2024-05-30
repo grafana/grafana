@@ -610,7 +610,6 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 	}
 
 	if dashboard.IsFolder {
-		// if this is a soft delete, we need to skip children deletion.
 		if !d.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 			sqlStatements = append(sqlStatements, statement{SQL: "DELETE FROM dashboard WHERE org_id = ? AND folder_uid = ? AND is_folder = ? AND deleted IS NULL", args: []any{dashboard.OrgID, dashboard.UID, d.store.GetDialect().BooleanStr(false)}})
 
