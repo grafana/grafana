@@ -81,10 +81,17 @@ type DualWriter interface {
 type DualWriterMode int
 
 const (
+	// Mode0 represents writing to and reading from solely LegacyStorage. This mode is enabled when the
+	// `unifiedStorage` feature flag is not set. All reads and writes are made to LegacyStorage. None are made to Storage.
 	Mode0 DualWriterMode = iota
+	// Mode1 represents writing to and reading from LegacyStorage for all primary functionality while additionally
+	// reading and writing to Storage on a best effort basis for the sake of collecting metrics.
 	Mode1
+	// Mode2 is the dual writing mode that represents writing to LegacyStorage and Storage and reading from LegacyStorage.
 	Mode2
+	// Mode3 represents writing to LegacyStorage and Storage and reading from Storage.
 	Mode3
+	// Mode4 represents writing and reading from Storage.
 	Mode4
 )
 
