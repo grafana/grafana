@@ -50,7 +50,6 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
         onDismiss={() => {
           modalRef?.resolve().onDismiss();
         }}
-        dashboardScene={dashboardScene}
       />
     );
   }
