@@ -1,4 +1,3 @@
-/*global define:false */
 /**
  * Originally from https://github.com/ccampbell/mousetrap
  *
@@ -22,7 +21,7 @@
  * @version 1.6.5
  * @url craig.is/killing/mice
  */
-// Check if mousetrap is used inside browser, if not, return
+
 /**
  * mapping of special keycodes to their corresponding keys
  *
@@ -144,7 +143,7 @@ let _REVERSE_MAP;
  * loop through the f keys, f1 to f19 and add them to the map
  * programatically
  */
-for (var i = 1; i < 20; ++i) {
+for (let i = 1; i < 20; ++i) {
   _MAP[111 + i] = 'f' + i;
 }
 
@@ -185,7 +184,7 @@ function _addEvent(object, type, callback) {
  */
 function _characterFromEvent(e) {
   // for keypress events we should return the character as is
-  if (e.type == 'keypress') {
+  if (e.type === 'keypress') {
     let character = String.fromCharCode(e.which);
 
     // if the shift key is not pressed then it is safe to assume
@@ -297,7 +296,7 @@ function _stopPropagation(e) {
  * @returns {boolean}
  */
 function _isModifier(key) {
-  return key == 'shift' || key == 'ctrl' || key == 'alt' || key == 'meta';
+  return key === 'shift' || key === 'ctrl' || key === 'alt' || key === 'meta';
 }
 
 /**
@@ -340,7 +339,7 @@ function _pickBestAction(key, modifiers, action) {
 
   // modifier keys don't work as expected with keypress,
   // switch to keydown
-  if (action == 'keypress' && modifiers.length) {
+  if (action === 'keypress' && modifiers.length) {
     action = 'keydown';
   }
 
@@ -390,7 +389,7 @@ function _getKeyInfo(combination, action) {
     // if this is not a keypress event then we should
     // be smart about using shift keys
     // this will only work for US keyboards however
-    if (action && action != 'keypress' && _SHIFT_MAP[key]) {
+    if (action && action !== 'keypress' && _SHIFT_MAP[key]) {
       key = _SHIFT_MAP[key];
       modifiers.push('shift');
     }
@@ -540,7 +539,7 @@ function Mousetrap(targetElement) {
     }
 
     // if a modifier key is coming up on its own we should allow it
-    if (action == 'keyup' && _isModifier(character)) {
+    if (action === 'keyup' && _isModifier(character)) {
       modifiers = [character];
     }
 
@@ -551,13 +550,13 @@ function Mousetrap(targetElement) {
 
       // if a sequence name is not specified, but this is a sequence at
       // the wrong level then move onto the next match
-      if (!sequenceName && callback.seq && _sequenceLevels[callback.seq] != callback.level) {
+      if (!sequenceName && callback.seq && _sequenceLevels[callback.seq] !== callback.level) {
         continue;
       }
 
       // if the action we are looking for doesn't match the action we got
       // then we should keep going
-      if (action != callback.action) {
+      if (action !== callback.action) {
         continue;
       }
 
@@ -568,14 +567,14 @@ function Mousetrap(targetElement) {
       // chrome will not fire a keypress if meta or control is down
       // safari will fire a keypress if meta or meta+shift is down
       // firefox will fire a keypress if meta or control is down
-      if ((action == 'keypress' && !e.metaKey && !e.ctrlKey) || _modifiersMatch(modifiers, callback.modifiers)) {
+      if ((action === 'keypress' && !e.metaKey && !e.ctrlKey) || _modifiersMatch(modifiers, callback.modifiers)) {
         // when you bind a combination or sequence a second time it
         // should overwrite the first one.  if a sequenceName or
         // combination is specified in this call it does just that
         //
         // @todo make deleting its own method?
-        let deleteCombo = !sequenceName && callback.combo == combination;
-        let deleteSequence = sequenceName && callback.seq == sequenceName && callback.level == level;
+        let deleteCombo = !sequenceName && callback.combo === combination;
+        let deleteSequence = sequenceName && callback.seq === sequenceName && callback.level === level;
         if (deleteCombo || deleteSequence) {
           self._callbacks[character].splice(i, 1);
         }
@@ -647,7 +646,7 @@ function Mousetrap(targetElement) {
         //
         // any sequences that do not match here will be discarded
         // below by the _resetSequences call
-        if (callbacks[i].level != maxLevel) {
+        if (callbacks[i].level !== maxLevel) {
           continue;
         }
 
@@ -687,12 +686,12 @@ function Mousetrap(targetElement) {
     //
     // we ignore keypresses in a sequence that directly follow a keydown
     // for the same character
-    let ignoreThisKeypress = e.type == 'keypress' && _ignoreNextKeypress;
-    if (e.type == _nextExpectedAction && !_isModifier(character) && !ignoreThisKeypress) {
+    let ignoreThisKeypress = e.type === 'keypress' && _ignoreNextKeypress;
+    if (e.type === _nextExpectedAction && !_isModifier(character) && !ignoreThisKeypress) {
       _resetSequences(doNotReset);
     }
 
-    _ignoreNextKeypress = processedSequenceCallback && e.type == 'keydown';
+    _ignoreNextKeypress = processedSequenceCallback && e.type === 'keydown';
   };
 
   /**
@@ -716,7 +715,7 @@ function Mousetrap(targetElement) {
     }
 
     // need to use === for the character check because the character can be 0
-    if (e.type == 'keyup' && _ignoreNextKeyup === character) {
+    if (e.type === 'keyup' && _ignoreNextKeyup === character) {
       _ignoreNextKeyup = false;
       return;
     }
@@ -983,9 +982,9 @@ Mousetrap.prototype.stopCallback = function (e, element) {
 
   // stop for input, select, and textarea
   return (
-    element.tagName == 'INPUT' ||
-    element.tagName == 'SELECT' ||
-    element.tagName == 'TEXTAREA' ||
+    element.tagName === 'INPUT' ||
+    element.tagName === 'SELECT' ||
+    element.tagName === 'TEXTAREA' ||
     element.isContentEditable
   );
 };
