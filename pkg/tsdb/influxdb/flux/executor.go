@@ -61,6 +61,9 @@ func executeQuery(ctx context.Context, logger log.Logger, query queryModel, runn
 		firstFrame.SetMeta(&data.FrameMeta{})
 	}
 	firstFrame.Meta.ExecutedQueryString = flux
+	if firstFrame.Fields != nil && len(firstFrame.Fields) > 0 {
+		firstFrame.Fields[0].Config = &data.FieldConfig{Interval: float64(query.Interval.Milliseconds())}
+	}
 	return dr
 }
 
