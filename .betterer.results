@@ -2704,27 +2704,12 @@ exports[`better eslint`] = {
     "public/app/features/canvas/elements/notFound.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
-    "public/app/features/canvas/index.ts:5381": [
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],
-      [0, 0, 0, "Do not re-export imported variable (\`./frame\`)", "2"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "3"]
-    ],
     "public/app/features/canvas/runtime/ables.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/canvas/runtime/frame.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
-    "public/app/features/canvas/types.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`Placement\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`Constraint\`)", "1"],
-      [0, 0, 0, "Do not re-export imported variable (\`HorizontalConstraint\`)", "2"],
-      [0, 0, 0, "Do not re-export imported variable (\`VerticalConstraint\`)", "3"],
-      [0, 0, 0, "Do not re-export imported variable (\`BackgroundImageSize\`)", "4"],
-      [0, 0, 0, "Do not re-export imported variable (\`LineConfig\`)", "5"],
-      [0, 0, 0, "Do not re-export imported variable (\`BackgroundConfig\`)", "6"]
     ],
     "public/app/features/commandPalette/ResultItem.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
