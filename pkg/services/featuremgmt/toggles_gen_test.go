@@ -341,7 +341,7 @@ For more information about feature release stages, refer to [Release life cycle 
 
 ## General availability feature toggles
 
-[Generally available](https://grafana.com/docs/release-life-cycle/#general-availability) features are enabled by default. You can disable these feature by setting the feature flag to "false" in the configuration.
+Most [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) features are enabled by default. You can disable these feature by setting the feature flag to "false" in the configuration.
 
 ` + writeToggleDocsTable(func(flag FeatureFlag) bool {
 		return flag.Stage == FeatureStageGeneralAvailability
