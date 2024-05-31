@@ -32,7 +32,7 @@ export function getQueryHints(query: string, series?: unknown[], datasource?: Pr
         },
       },
     });
-  } else if (metricsMetadata && checkNativeHistogramFunctions(query)) {
+  } else if (metricsMetadata && simpleQueryCheck(query)) {
     // having migrated to native histograms
     // there will be no more old histograms (no buckets)
     // and we can identify a native histogram by the following
@@ -127,7 +127,6 @@ export function getQueryHints(query: string, series?: unknown[], datasource?: Pr
     // Use metric metadata for exact types
     const nameMatch = query.match(/\b((?<!:)\w+_(total|sum|count)(?!:))\b/);
     let counterNameMetric = nameMatch ? nameMatch[1] : '';
-
     let certain = false;
 
     if (metricsMetadata) {
@@ -142,7 +141,7 @@ export function getQueryHints(query: string, series?: unknown[], datasource?: Pr
 
     if (counterNameMetric) {
       // FixableQuery consists of metric name and optionally label-value pairs. We are not offering fix for complex queries yet.
-      const fixableQuery = query.trim().match(/^\w+$|^\w+{.*}$/);
+      const fixableQuery = simpleQueryCheck(query);
       const verb = certain ? 'is' : 'looks like';
       let label = `Selected metric ${verb} a counter.`;
       let fix: QueryFix | undefined;
@@ -265,17 +264,9 @@ function checkMetricType(
 }
 
 /**
- * This regex check prevents hints from being shown when a query already has a function
+ * This regex check looks for only metric name and label filters.
+ * This prevents hints from being shown when a query already has a functions or is complex.
  * */
-function checkNativeHistogramFunctions(query: string): boolean {
-  const noNativeHistogramFunctions =
-    query.indexOf('histogram_quantile(') === -1 &&
-    query.indexOf('histogram_avg(') === -1 &&
-    query.indexOf('histogram_count(') === -1 &&
-    query.indexOf('histogram_sum(') === -1 &&
-    query.indexOf('histogram_fraction(') === -1 &&
-    query.indexOf('histogram_stddev(') === -1 &&
-    query.indexOf('histogram_stdvar(') === -1;
-
-  return noNativeHistogramFunctions;
+function simpleQueryCheck(query: string) {
+  return query.trim().match(/^\w+$|^\w+{.*}$/);
 }
