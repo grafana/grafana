@@ -16,7 +16,7 @@ type OrgID int64
 type AlertingFile struct {
 	configVersion
 	Filename            string
-	Groups              []models.AlertRuleGroupWithFolderTitle
+	Groups              []models.AlertRuleGroupWithFolderFullpath
 	DeleteRules         []RuleDelete
 	ContactPoints       []ContactPoint
 	DeleteContactPoints []DeleteContactPoint

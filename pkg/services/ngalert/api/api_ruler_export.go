@@ -35,9 +35,9 @@ func (srv RulerSrv) ExportFromPayload(c *contextmodel.ReqContext, ruleGroupConfi
 		rules = append(rules, optional.AlertRule)
 	}
 
-	groupsWithTitle := ngmodels.NewAlertRuleGroupWithFolderTitle(rules[0].GetGroupKey(), rules, namespace.Title)
+	groupsWithFullpath := ngmodels.NewAlertRuleGroupWithFolderFullpath(rules[0].GetGroupKey(), rules, namespace.Fullpath)
 
-	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]ngmodels.AlertRuleGroupWithFolderTitle{groupsWithTitle})
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath([]ngmodels.AlertRuleGroupWithFolderFullpath{groupsWithFullpath})
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
@@ -54,16 +54,16 @@ func (srv RulerSrv) ExportRules(c *contextmodel.ReqContext) response.Response {
 	group := c.Query("group")
 	uid := c.Query("ruleUid")
 
-	var groups []ngmodels.AlertRuleGroupWithFolderTitle
+	var groups []ngmodels.AlertRuleGroupWithFolderFullpath
 	if uid != "" {
 		if group != "" || len(folderUIDs) > 0 {
 			return ErrResp(http.StatusBadRequest, errors.New("group and folder should not be specified when a single rule is requested"), "")
 		}
-		rulesGroup, err := srv.getRuleWithFolderTitleByRuleUid(c, uid)
+		rulesGroup, err := srv.getRuleWithFolderFullpathByRuleUid(c, uid)
 		if err != nil {
 			return errorToResponse(err)
 		}
-		groups = []ngmodels.AlertRuleGroupWithFolderTitle{rulesGroup}
+		groups = []ngmodels.AlertRuleGroupWithFolderFullpath{rulesGroup}
 	} else if group != "" {
 		if len(folderUIDs) != 1 || folderUIDs[0] == "" {
 			return ErrResp(http.StatusBadRequest,
@@ -71,7 +71,7 @@ func (srv RulerSrv) ExportRules(c *contextmodel.ReqContext) response.Response {
 				"",
 			)
 		}
-		rulesGroup, err := srv.getRuleGroupWithFolderTitle(c, ngmodels.AlertRuleGroupKey{
+		rulesGroup, err := srv.getRuleGroupWithFolderFullPath(c, ngmodels.AlertRuleGroupKey{
 			OrgID:        c.SignedInUser.GetOrgID(),
 			NamespaceUID: folderUIDs[0],
 			RuleGroup:    group,
@@ -79,10 +79,10 @@ func (srv RulerSrv) ExportRules(c *contextmodel.ReqContext) response.Response {
 		if err != nil {
 			return errorToResponse(err)
 		}
-		groups = []ngmodels.AlertRuleGroupWithFolderTitle{rulesGroup}
+		groups = []ngmodels.AlertRuleGroupWithFolderFullpath{rulesGroup}
 	} else {
 		var err error
-		groups, err = srv.getRulesWithFolderTitleInFolders(c, folderUIDs)
+		groups, err = srv.getRulesWithFolderFullPathInFolders(c, folderUIDs)
 		if err != nil {
 			return errorToResponse(err)
 		}
@@ -95,45 +95,45 @@ func (srv RulerSrv) ExportRules(c *contextmodel.ReqContext) response.Response {
 	// sort result so the response is always stable
 	ngmodels.SortAlertRuleGroupWithFolderTitle(groups)
 
-	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle(groups)
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath(groups)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
 	return exportResponse(c, e)
 }
 
-// getRuleWithFolderTitleByRuleUid calls getAuthorizedRuleByUid and combines its result with folder (aka namespace) title.
-func (srv RulerSrv) getRuleWithFolderTitleByRuleUid(c *contextmodel.ReqContext, ruleUID string) (ngmodels.AlertRuleGroupWithFolderTitle, error) {
+// getRuleWithFolderFullpathByRuleUid calls getAuthorizedRuleByUid and combines its result with folder (aka namespace) title.
+func (srv RulerSrv) getRuleWithFolderFullpathByRuleUid(c *contextmodel.ReqContext, ruleUID string) (ngmodels.AlertRuleGroupWithFolderFullpath, error) {
 	rule, err := srv.getAuthorizedRuleByUid(c.Req.Context(), c, ruleUID)
 	if err != nil {
-		return ngmodels.AlertRuleGroupWithFolderTitle{}, err
+		return ngmodels.AlertRuleGroupWithFolderFullpath{}, err
 	}
 	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), rule.NamespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
-		return ngmodels.AlertRuleGroupWithFolderTitle{}, errors.Join(errFolderAccess, err)
+		return ngmodels.AlertRuleGroupWithFolderFullpath{}, errors.Join(errFolderAccess, err)
 	}
-	return ngmodels.NewAlertRuleGroupWithFolderTitle(rule.GetGroupKey(), []ngmodels.AlertRule{rule}, namespace.Title), nil
+	return ngmodels.NewAlertRuleGroupWithFolderFullpath(rule.GetGroupKey(), []ngmodels.AlertRule{rule}, namespace.Fullpath), nil
 }
 
-// getRuleGroupWithFolderTitle calls getAuthorizedRuleGroup and combines its result with folder (aka namespace) title.
-func (srv RulerSrv) getRuleGroupWithFolderTitle(c *contextmodel.ReqContext, ruleGroupKey ngmodels.AlertRuleGroupKey) (ngmodels.AlertRuleGroupWithFolderTitle, error) {
+// getRuleGroupWithFolderFullPath calls getAuthorizedRuleGroup and combines its result with folder (aka namespace) title.
+func (srv RulerSrv) getRuleGroupWithFolderFullPath(c *contextmodel.ReqContext, ruleGroupKey ngmodels.AlertRuleGroupKey) (ngmodels.AlertRuleGroupWithFolderFullpath, error) {
 	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), ruleGroupKey.NamespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
-		return ngmodels.AlertRuleGroupWithFolderTitle{}, errors.Join(errFolderAccess, err)
+		return ngmodels.AlertRuleGroupWithFolderFullpath{}, errors.Join(errFolderAccess, err)
 	}
 	rules, err := srv.getAuthorizedRuleGroup(c.Req.Context(), c, ruleGroupKey)
 	if err != nil {
-		return ngmodels.AlertRuleGroupWithFolderTitle{}, err
+		return ngmodels.AlertRuleGroupWithFolderFullpath{}, err
 	}
 	if len(rules) == 0 {
-		return ngmodels.AlertRuleGroupWithFolderTitle{}, ngmodels.ErrAlertRuleNotFound
+		return ngmodels.AlertRuleGroupWithFolderFullpath{}, ngmodels.ErrAlertRuleNotFound
 	}
-	return ngmodels.NewAlertRuleGroupWithFolderTitleFromRulesGroup(ruleGroupKey, rules, namespace.Title), nil
+	return ngmodels.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(ruleGroupKey, rules, namespace.Fullpath), nil
 }
 
-// getRulesWithFolderTitleInFolders gets list of folders to which user has access, and then calls searchAuthorizedAlertRules.
+// getRulesWithFolderFullPathInFolders gets list of folders to which user has access, and then calls searchAuthorizedAlertRules.
 // If argument folderUIDs is not empty it intersects it with the list of folders available for user and then retrieves rules that are in those folders.
-func (srv RulerSrv) getRulesWithFolderTitleInFolders(c *contextmodel.ReqContext, folderUIDs []string) ([]ngmodels.AlertRuleGroupWithFolderTitle, error) {
+func (srv RulerSrv) getRulesWithFolderFullPathInFolders(c *contextmodel.ReqContext, folderUIDs []string) ([]ngmodels.AlertRuleGroupWithFolderFullpath, error) {
 	folders, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return nil, err
@@ -165,13 +165,13 @@ func (srv RulerSrv) getRulesWithFolderTitleInFolders(c *contextmodel.ReqContext,
 		return nil, err
 	}
 
-	result := make([]ngmodels.AlertRuleGroupWithFolderTitle, 0, len(rulesByGroup))
+	result := make([]ngmodels.AlertRuleGroupWithFolderFullpath, 0, len(rulesByGroup))
 	for groupKey, rulesGroup := range rulesByGroup {
 		namespace, ok := folders[groupKey.NamespaceUID]
 		if !ok {
 			continue // user does not have access
 		}
-		result = append(result, ngmodels.NewAlertRuleGroupWithFolderTitleFromRulesGroup(groupKey, rulesGroup, namespace.Title))
+		result = append(result, ngmodels.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(groupKey, rulesGroup, namespace.Fullpath))
 	}
 	return result, nil
 }

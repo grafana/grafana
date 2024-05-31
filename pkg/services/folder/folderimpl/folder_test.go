@@ -2216,3 +2216,54 @@ func createRule(t *testing.T, store *ngstore.DBstore, folderUID, title string) *
 
 	return &rule
 }
+
+func TestSplitFullpath(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected []string
+	}{
+		{
+			name:     "empty string",
+			input:    "",
+			expected: []string{},
+		},
+		{
+			name:     "root folder",
+			input:    "/",
+			expected: []string{},
+		},
+		{
+			name:     "single folder",
+			input:    "folder",
+			expected: []string{"folder"},
+		},
+		{
+			name:     "single folder with leading slash",
+			input:    "/folder",
+			expected: []string{"folder"},
+		},
+		{
+			name:     "nested folder",
+			input:    "folder/subfolder/subsubfolder",
+			expected: []string{"folder", "subfolder", "subsubfolder"},
+		},
+		{
+			name:     "escaped slashes",
+			input:    "folder\\/with\\/slashes",
+			expected: []string{"folder/with/slashes"},
+		},
+		{
+			name:     "nested folder with escaped slashes",
+			input:    "folder\\/with\\/slashes/subfolder\\/with\\/slashes",
+			expected: []string{"folder/with/slashes", "subfolder/with/slashes"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := SplitFullpath(tt.input)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}

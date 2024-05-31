@@ -32,11 +32,11 @@ type AlertRuleGroupV1 struct {
 	Rules    []AlertRuleV1      `json:"rules" yaml:"rules"`
 }
 
-func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (models.AlertRuleGroupWithFolderTitle, error) {
-	ruleGroup := models.AlertRuleGroupWithFolderTitle{AlertRuleGroup: &models.AlertRuleGroup{}}
+func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (models.AlertRuleGroupWithFolderFullpath, error) {
+	ruleGroup := models.AlertRuleGroupWithFolderFullpath{AlertRuleGroup: &models.AlertRuleGroup{}}
 	ruleGroup.Title = ruleGroupV1.Name.Value()
 	if strings.TrimSpace(ruleGroup.Title) == "" {
-		return models.AlertRuleGroupWithFolderTitle{}, errors.New("rule group has no name set")
+		return models.AlertRuleGroupWithFolderFullpath{}, errors.New("rule group has no name set")
 	}
 	ruleGroup.OrgID = ruleGroupV1.OrgID.Value()
 	if ruleGroup.OrgID < 1 {
@@ -44,17 +44,17 @@ func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (models.AlertRuleGroupWithFold
 	}
 	interval, err := model.ParseDuration(ruleGroupV1.Interval.Value())
 	if err != nil {
-		return models.AlertRuleGroupWithFolderTitle{}, err
+		return models.AlertRuleGroupWithFolderFullpath{}, err
 	}
 	ruleGroup.Interval = int64(time.Duration(interval).Seconds())
-	ruleGroup.FolderTitle = ruleGroupV1.Folder.Value()
-	if strings.TrimSpace(ruleGroup.FolderTitle) == "" {
-		return models.AlertRuleGroupWithFolderTitle{}, errors.New("rule group has no folder set")
+	ruleGroup.FolderFullpath = ruleGroupV1.Folder.Value()
+	if strings.TrimSpace(ruleGroup.FolderFullpath) == "" {
+		return models.AlertRuleGroupWithFolderFullpath{}, errors.New("rule group has no folder set")
 	}
 	for _, ruleV1 := range ruleGroupV1.Rules {
 		rule, err := ruleV1.mapToModel(ruleGroup.OrgID)
 		if err != nil {
-			return models.AlertRuleGroupWithFolderTitle{}, err
+			return models.AlertRuleGroupWithFolderFullpath{}, err
 		}
 		ruleGroup.Rules = append(ruleGroup.Rules, rule)
 	}
