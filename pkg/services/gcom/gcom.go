@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,7 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-var LogPrefix = "gcom.service"
+const LogPrefix = "gcom.service"
+
+var ErrTokenNotFound = errors.New("gcom: token not found")
 
 type Service interface {
 	GetInstanceByID(ctx context.Context, requestID string, instanceID string) (Instance, error)
@@ -22,6 +25,7 @@ type Service interface {
 	DeleteAccessPolicy(ctx context.Context, params DeleteAccessPolicyParams) (bool, error)
 	ListTokens(ctx context.Context, params ListTokenParams) ([]TokenView, error)
 	CreateToken(ctx context.Context, params CreateTokenParams, payload CreateTokenPayload) (Token, error)
+	DeleteToken(ctx context.Context, params DeleteTokenParams) error
 }
 
 type Instance struct {
@@ -99,6 +103,12 @@ type Token struct {
 	AccessPolicyID string `json:"accessPolicyId"`
 	Name           string `json:"name"`
 	Token          string `json:"token"`
+}
+
+type DeleteTokenParams struct {
+	RequestID string
+	Region    string
+	TokenID   string
 }
 
 // The token returned by gcom api for a GET token request.
@@ -396,4 +406,44 @@ func (client *GcomClient) CreateToken(ctx context.Context, params CreateTokenPar
 	}
 
 	return token, nil
+}
+
+func (client *GcomClient) DeleteToken(ctx context.Context, params DeleteTokenParams) error {
+	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/tokens", params.TokenID)
+	if err != nil {
+		return fmt.Errorf("building gcom tokens url: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, http.MethodDelete, endpoint, nil)
+	if err != nil {
+		return fmt.Errorf("creating http request: %w", err)
+	}
+
+	query := url.Values{}
+	query.Set("region", params.Region)
+
+	request.URL.RawQuery = query.Encode()
+	request.Header.Set("x-request-id", params.RequestID)
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.cfg.Token))
+
+	response, err := client.httpClient.Do(request)
+	if err != nil {
+		return fmt.Errorf("sending http request to delete access token: %w", err)
+	}
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			client.log.Error("closing http response body", "err", err.Error())
+		}
+	}()
+
+	if response.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("token id: %s %w", params.TokenID, ErrTokenNotFound)
+	}
+
+	if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusNoContent {
+		body, _ := io.ReadAll(response.Body)
+		return fmt.Errorf("unexpected response when deleting access token: code=%d body=%s", response.StatusCode, body)
+	}
+
+	return nil
 }
