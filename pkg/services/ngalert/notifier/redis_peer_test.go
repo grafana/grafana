@@ -39,7 +39,7 @@ func TestNewRedisPeerWithTLS(t *testing.T) {
 		tls: dstls.ClientConfig{
 			CAPath:     certPaths.ca,
 			ServerName: "localhost",
-		}}, log.NewNopLogger(), prometheus.DefaultRegisterer, time.Second*60)
+		}}, log.NewNopLogger(), prometheus.NewRegistry(), time.Second*60)
 	require.NoError(t, err)
 
 	ping := redisPeer.redis.Ping(context.Background())
@@ -75,7 +75,7 @@ func TestNewRedisPeerWithMutualTLS(t *testing.T) {
 			KeyPath:    certPaths.clientKey,
 			CAPath:     certPaths.ca,
 			ServerName: "localhost",
-		}}, log.NewNopLogger(), prometheus.DefaultRegisterer, time.Second*60)
+		}}, log.NewNopLogger(), prometheus.NewRegistry(), time.Second*60)
 	require.NoError(t, err)
 
 	ping := redisPeer.redis.Ping(context.Background())
