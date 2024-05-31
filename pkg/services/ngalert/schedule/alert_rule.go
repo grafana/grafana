@@ -11,10 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -51,15 +53,27 @@ func newRuleFactory(
 	evalFactory eval.EvaluatorFactory,
 	ruleProvider ruleProvider,
 	clock clock.Clock,
+	featureToggles featuremgmt.FeatureToggles,
 	met *metrics.Scheduler,
 	logger log.Logger,
 	tracer tracing.Tracer,
+	recordingWriter writer.Writer,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
 ) ruleFactoryFunc {
 	return func(ctx context.Context, rule *ngmodels.AlertRule) Rule {
 		if rule.IsRecordingRule() {
-			return newRecordingRule(ctx, logger)
+			return newRecordingRule(
+				ctx,
+				maxAttempts,
+				clock,
+				evalFactory,
+				featureToggles,
+				logger,
+				met,
+				tracer,
+				recordingWriter,
+			)
 		}
 		return newAlertRule(
 			ctx,
@@ -244,7 +258,7 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 
 				for attempt := int64(1); attempt <= a.maxAttempts; attempt++ {
 					isPaused := ctx.rule.IsPaused
-					f := ruleWithFolder{ctx.rule, ctx.folderTitle}.Fingerprint()
+					f := ctx.Fingerprint()
 					// Do not clean up state if the eval loop has just started.
 					var needReset bool
 					if currentFingerprint != 0 && currentFingerprint != f {
