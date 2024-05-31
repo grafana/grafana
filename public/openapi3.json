@@ -183,6 +183,16 @@
         },
         "description": "(empty)"
       },
+      "cloudMigrationGetTokenResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetAccessTokenResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "cloudMigrationListResponse": {
         "content": {
           "application/json": {
@@ -3656,6 +3666,14 @@
         },
         "type": "object"
       },
+      "CloudMigrationRequest": {
+        "properties": {
+          "authToken": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CloudMigrationResponse": {
         "properties": {
           "created": {
@@ -5520,6 +5538,29 @@
         "properties": {
           "body": {
             "$ref": "#/components/schemas/PublicError"
+          }
+        },
+        "type": "object"
+      },
+      "GetAccessTokenResponseDTO": {
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "firstUsedAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -14995,6 +15036,17 @@
       },
       "post": {
         "operationId": "createMigration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudMigrationRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "Body"
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/cloudMigrationResponse"
@@ -15181,6 +15233,30 @@
       }
     },
     "/cloudmigration/token": {
+      "get": {
+        "operationId": "getCloudMigrationToken",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationGetTokenResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Fetch the cloud migration token if it exists.",
+        "tags": [
+          "migrations"
+        ]
+      },
       "post": {
         "operationId": "createCloudMigrationToken",
         "responses": {

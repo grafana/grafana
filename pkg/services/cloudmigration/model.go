@@ -14,6 +14,7 @@ var (
 	ErrMigrationNotFound           = errutil.NotFound("cloudmigrations.migrationNotFound").Errorf("Migration not found")
 	ErrMigrationRunNotFound        = errutil.NotFound("cloudmigrations.migrationRunNotFound").Errorf("Migration run not found")
 	ErrMigrationNotDeleted         = errutil.Internal("cloudmigrations.migrationNotDeleted").Errorf("Migration not deleted")
+	ErrTokenNotFound               = errutil.NotFound("cloudmigrations.tokenNotFound").Errorf("Token not found")
 )
 
 // CloudMigration api dtos
