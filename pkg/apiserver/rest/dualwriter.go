@@ -98,6 +98,8 @@ const (
 // NewDualWriter returns a new DualWriter.
 func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage) DualWriter {
 	switch mode {
+	// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
+	// writing to legacy storage without `unifiedStorage` enabled.
 	case Mode1:
 		// read and write only from legacy storage
 		return newDualWriterMode1(legacy, storage)
@@ -142,6 +144,8 @@ func SetDualWritingMode(
 	desiredMode DualWriterMode,
 ) (DualWriter, error) {
 	toMode := map[string]DualWriterMode{
+		// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
+		// writing to legacy storage without `unifiedStorage` enabled.
 		"1": Mode1,
 		"2": Mode2,
 		"3": Mode3,

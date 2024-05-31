@@ -386,11 +386,13 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 
-		if o.DualWriterDesiredModes != nil && o.DualWriterDesiredModes["playlist"] != grafanarest.Mode0 {
+		if o.DualWriterDesiredModes != nil {
 			unifiedStorageMode, err := getOrCreateSection("unified_storage_mode")
 			require.NoError(t, err)
-			_, err = unifiedStorageMode.NewKey("playlist", fmt.Sprint(o.DualWriterDesiredModes["playlist"]))
-			require.NoError(t, err)
+			for k, v := range o.DualWriterDesiredModes {
+				_, err = unifiedStorageMode.NewKey(k, fmt.Sprint(v))
+				require.NoError(t, err)
+			}
 		}
 	}
 	logSection, err := getOrCreateSection("database")

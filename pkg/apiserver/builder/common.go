@@ -45,7 +45,7 @@ type APIGroupBuilder interface {
 	// Get the desired dual writing mode. These are modes 1, 2, 3 and 4 if
 	// the feature flag `unifiedStorage` is enabled and mode 0 if it is not enabled.
 	// #TODO add type for map[string]grafanarest.DualWriterMode?
-	GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode
+	GetDesiredDualWriterMode(dualWrite bool, toMode map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode
 }
 
 // Builders that implement OpenAPIPostProcessor are given a chance to modify the schema directly
