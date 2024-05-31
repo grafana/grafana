@@ -404,6 +404,7 @@ export const TooltipPlugin2 = ({
     config.addHook('setData', (u) => {
       yZoomed = false;
       yDrag = false;
+      dismiss();
     });
 
     // fires on series focus/proximity changes
