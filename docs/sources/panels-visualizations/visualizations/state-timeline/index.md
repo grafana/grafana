@@ -15,6 +15,17 @@ labels:
     - oss
 title: State timeline
 weight: 100
+refs:
+  color-scheme:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#color-scheme
+  value-mappings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-value-mappings/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-value-mappings/
 ---
 
 # State timeline
@@ -23,7 +34,7 @@ A state timeline visualization displays data in a way that shows state changes o
 
 For example, if you're monitoring the CPU usage of a server, you can use a state timeline to visualize the different states, such as “LOW,” “NORMAL,” “HIGH,” or “CRITICAL,” over time. Each state is represented by a different color and the lengths represent the duration of time that the server remained in that state:
 
-{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-panel.png" max-width="1025px" alt="A state timeline panel showing CPU usage" >}}
+{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-panel.png" max-width="1025px" alt="A state timeline visualization showing CPU usage" >}}
 
 The state timeline visualization is useful when you need to monitor and analyze changes in states or statuses of various entities over time. You can use one when you need to:
 
@@ -35,9 +46,11 @@ The state timeline visualization is useful when you need to monitor and analyze 
 
 {{< youtube id="a9wZHM0mdxo" >}}
 
+{{< docs/play title="Grafana State Timeline & Status History" url="https://play.grafana.org/d/qD-rVv6Mz/6-state-timeline-and-status-history?orgId=1s" >}}
+
 ## Supported data formats
 
-The state timeline panel works best if you have data capturing the various states of entities over time, formatted as a table. The data must include:
+The state timeline visualization works best if you have data capturing the various states of entities over time, formatted as a table. The data must include:
 
 - **Timestamps** - Indicate when each state change occurred. This could also be the start time for the state change. You can also add an optional timestamp to indicate the end time for the state change.
 - **Entity name/identifier** - Represents the name of the entity you're trying to monitor.
@@ -65,7 +78,7 @@ The following tables are examples of the type of data you need for a state timel
 
 The data is converted as follows, with the [null and empty values visualized as gaps](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/state-timeline/#connect-null-values) in the state timeline:
 
-{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-null-values.png" max-width="1025px" alt="A state timeline panel with null values showing the status of two servers" >}}
+{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-null-values.png" max-width="1025px" alt="A state timeline visualization with null values showing the status of two servers" >}}
 
 #### Two time columns without null values
 
@@ -80,9 +93,13 @@ The data is converted as follows, with the [null and empty values visualized as 
 
 The data is converted as follows:
 
-{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-two-timestamps.png" max-width="1025px" alt="A state timeline panel with two time columns showing the status of two servers" >}}
+{{< figure src="/static/img/docs/state-timeline-panel/state-timeline-with-two-timestamps.png" max-width="1025px" alt="A state timeline visualization with two time columns showing the status of two servers" >}}
 
 If your query results aren't in a table format like the preceding examples, especially for time-series data, you can apply specific [transformations](https://stackoverflow.com/questions/68887416/grafana-state-timeline-panel-with-values-states-supplied-by-label) to achieve this.
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## State timeline options
 
@@ -112,15 +129,9 @@ Controls line width of state regions.
 
 Controls the opacity of state regions.
 
-{{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-{{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA VERSION>" >}}
-
-## Value mappings
-
-To assign colors to boolean or string values, you can use [Value mappings][].
-
-{{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
+{{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Time series data with thresholds
 
@@ -128,16 +139,32 @@ The visualization can be used with time series data as well. In this case, the t
 
 {{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="1025px" caption="state timeline with time series" >}}
 
+## Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Legend options
 
-When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the `Color scheme` as referenced in [Color scheme][] is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
+{{< docs/shared lookup="visualizations/legend-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+## Tooltip options
 
-{{% docs/reference %}}
-[Color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
-[Color scheme]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
+{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-[Value mappings]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-value-mappings"
-[Value mappings]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-value-mappings"
-{{% /docs/reference %}}
+## Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+{{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
+
+## Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

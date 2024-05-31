@@ -6,6 +6,43 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 8.0.0 (2024-05-28)
+#
+# ### Changed
+#
+# - Add environment variable `OUTPUT_FORMAT` to control the output of commands.
+#
+#   The default value is `human` and means the output format is human readable.
+#   The value `json` is also supported and outputs JSON.
+#
+#   Note that the `json` format isn't supported by `make docs`, only `make doc-validator` and `make vale`.
+#
+# ## 7.0.0 (2024-05-03)
+#
+# ### Changed
+#
+# - Pull images for all recipes that use containers by default.
+#
+#   Use the `PULL=false` variable to disable this behavior.
+#
+# ### Removed
+#
+# - The `docs-no-pull` target as it's redundant with the new `PULL=false` variable.
+#
+# ## 6.1.0 (2024-04-22)
+#
+# ### Changed
+#
+# - Mount volumes with SELinux labels.
+#
+#   https://docs.docker.com/storage/bind-mounts/#configure-the-selinux-label
+#
+# ### Added
+#
+# - Pseudo project for including only website resources and no website content.
+#
+#   Facilitates testing shortcodes and layout changes with a small documentation set instead of Grafana Cloud or the entire website.
+#
 # ## 6.0.1 (2024-02-28)
 #
 # ### Added
@@ -229,6 +266,8 @@ readonly HUGO_REFLINKSERRORLEVEL="${HUGO_REFLINKSERRORLEVEL:-WARNING}"
 readonly VALE_MINALERTLEVEL="${VALE_MINALERTLEVEL:-error}"
 readonly WEBSITE_EXEC="${WEBSITE_EXEC:-make server-docs}"
 
+readonly OUTPUT_FORMAT="${OUTPUT_FORMAT:-human}"
+
 PODMAN="$(if command -v podman >/dev/null 2>&1; then echo podman; else echo docker; fi)"
 
 if ! command -v curl >/dev/null 2>&1; then
@@ -300,6 +339,7 @@ SOURCES_helm_charts_tempo_distributed='tempo'
 SOURCES_opentelemetry='opentelemetry-docs'
 SOURCES_plugins_grafana_datadog_datasource='datadog-datasource'
 SOURCES_plugins_grafana_oracle_datasource='oracle-datasource'
+SOURCES_resources='website'
 
 VERSIONS_as_code='UNVERSIONED'
 VERSIONS_grafana_cloud='UNVERSIONED'
@@ -311,6 +351,7 @@ VERSIONS_grafana_cloud_frontend_observability_faro_web_sdk='UNVERSIONED'
 VERSIONS_opentelemetry='UNVERSIONED'
 VERSIONS_plugins_grafana_datadog_datasource='latest'
 VERSIONS_plugins_grafana_oracle_datasource='latest'
+VERSIONS_resources='UNVERSIONED'
 VERSIONS_technical_documentation='UNVERSIONED'
 VERSIONS_website='UNVERSIONED'
 VERSIONS_writers_toolkit='UNVERSIONED'
@@ -321,6 +362,7 @@ PATHS_helm_charts_tempo_distributed='docs/sources/helm-charts/tempo-distributed'
 PATHS_mimir='docs/sources/mimir'
 PATHS_plugins_grafana_datadog_datasource='docs/sources'
 PATHS_plugins_grafana_oracle_datasource='docs/sources'
+PATHS_resources='content'
 PATHS_tempo='docs/sources/tempo'
 PATHS_website='content'
 
@@ -584,6 +626,11 @@ POSIX_HERESTRING
         proj_to_url_src_dst_ver "$(new_proj helm-charts/mimir-distributed "${_version}")"
         proj_to_url_src_dst_ver "$(new_proj enterprise-metrics "${_version}")"
         ;;
+      resources)
+        _repo="$(repo_path website)"
+        echo "arbitrary^${_repo}/config^/hugo/config" "arbitrary^${_repo}/layouts^/hugo/layouts" "arbitrary^${_repo}/scripts^/hugo/scripts"
+        unset _repo
+        ;;
       traces)
         proj_to_url_src_dst_ver "$(new_proj tempo "${_version}")"
         proj_to_url_src_dst_ver "$(new_proj enterprise-traces "${_version}")"
@@ -617,7 +664,7 @@ $x
 POSIX_HERESTRING
 
         if [ -n "${url}" ]; then
-          if [ "${_url}" != "arbitrary" ]; then
+          if [ "${url}" != arbitrary ]; then
             printf '\r  %s\r\n' "${url}"
           fi
         fi
@@ -670,9 +717,9 @@ POSIX_HERESTRING
     fi
 
     _repo="$(repo_path website)"
-    volumes="--volume=${_repo}/config:/hugo/config"
-    volumes="${volumes} --volume=${_repo}/layouts:/hugo/layouts"
-    volumes="${volumes} --volume=${_repo}/scripts:/hugo/scripts"
+    volumes="--volume=${_repo}/config:/hugo/config:z"
+    volumes="${volumes} --volume=${_repo}/layouts:/hugo/layouts:z"
+    volumes="${volumes} --volume=${_repo}/scripts:/hugo/scripts:z"
   fi
   unset _project _repo
 done
@@ -682,7 +729,7 @@ for x in ${url_src_dst_vers}; do
 $x
 POSIX_HERESTRING
 
-  if [ "${_url}" != "arbitrary" ]; then
+  if [ "${_url}" != arbitrary ]; then
     if [ ! -f "${_src}/_index.md" ]; then
       errr "Index file '${_src}/_index.md' does not exist."
       note "Is '${_src}' the correct source directory?"
@@ -693,9 +740,9 @@ POSIX_HERESTRING
   debg "Mounting '${_src}' at container path '${_dst}'"
 
   if [ -z "${volumes}" ]; then
-    volumes="--volume=${_src}:${_dst}"
+    volumes="--volume=${_src}:${_dst}:z"
   else
-    volumes="${volumes} --volume=${_src}:${_dst}"
+    volumes="${volumes} --volume=${_src}:${_dst}:z"
   fi
 
   if [ -n "${_ver}" ] && [ "${_ver}" != 'UNVERSIONED' ]; then
@@ -714,45 +761,74 @@ POSIX_HERESTRING
 
 case "${image}" in
   'grafana/doc-validator')
-    if ! command -v jq >/dev/null 2>&1; then
-      errr '`jq` must be installed for the `doc-validator` target to work.'
-      note 'To install `jq`, refer to https://jqlang.github.io/jq/download/,'
-
-      exit 1
-    fi
-
     proj="$(new_proj "$1")"
     printf '\r\n'
-    "${PODMAN}" run \
+
+    IFS='' read -r cmd <<EOF
+    ${PODMAN} run \
                 --init \
                 --interactive \
                 --platform linux/amd64 \
                 --rm \
                 --tty \
                 ${volumes} \
-                "${DOCS_IMAGE}" \
-                "--include=${DOC_VALIDATOR_INCLUDE}" \
-                "--skip-checks=${DOC_VALIDATOR_SKIP_CHECKS}" \
-                "/hugo/content$(proj_canonical "${proj}")" \
-                "$(proj_canonical "${proj}")" \
-                | sed "s#$(proj_dst "${proj}")#sources#" \
-                | jq -r '"ERROR: \(.location.path):\(.location.range.start.line // 1):\(.location.range.start.column // 1): \(.message)" + if .suggestions[0].text then "\nSuggestion: \(.suggestions[0].text)" else "" end'
+                ${DOCS_IMAGE} \
+                --include=${DOC_VALIDATOR_INCLUDE} \
+                --skip-checks=${DOC_VALIDATOR_SKIP_CHECKS} \
+                /hugo/content$(proj_canonical "${proj}") \
+                "$(proj_canonical "${proj}") \
+                | sed "s#$(proj_dst "${proj}")#sources#"
+EOF
+
+    case "${OUTPUT_FORMAT}" in
+      human)
+        if ! command -v jq >/dev/null 2>&1; then
+          errr '`jq` must be installed for the `doc-validator` target to work.'
+          note 'To install `jq`, refer to https://jqlang.github.io/jq/download/,'
+
+          exit 1
+        fi
+
+        ${cmd} \
+        | jq -r '"ERROR: \(.location.path):\(.location.range.start.line // 1):\(.location.range.start.column // 1): \(.message)" + if .suggestions[0].text then "\nSuggestion: \(.suggestions[0].text)" else "" end'
+      ;;
+      json)
+        ${cmd}
+      ;;
+      *)  # default
+        errr "Invalid output format '${OUTPUT_FORMAT}'"
+    esac
     ;;
   'grafana/vale')
     proj="$(new_proj "$1")"
     printf '\r\n'
-    "${PODMAN}" run \
+    IFS='' read -r cmd <<EOF
+    ${PODMAN} run \
                 --init \
                 --interactive \
                 --rm \
                 --workdir /etc/vale \
                 --tty \
                 ${volumes} \
-                "${DOCS_IMAGE}" \
-                "--minAlertLevel=${VALE_MINALERTLEVEL}" \
-                '--glob=*.md' \
-                --output=/etc/vale/rdjsonl.tmpl \
-                /hugo/content/docs | sed "s#$(proj_dst "${proj}")#sources#"
+                ${DOCS_IMAGE} \
+                --minAlertLevel=${VALE_MINALERTLEVEL} \
+                --glob=*.md \
+                /hugo/content/docs
+EOF
+
+    case "${OUTPUT_FORMAT}" in
+      human)
+        ${cmd} --output=line \
+        | sed "s#$(proj_dst "${proj}")#sources#"
+      ;;
+      json)
+        ${cmd} --output=/etc/vale/rdjsonl.tmpl \
+        | sed "s#$(proj_dst "${proj}")#sources#"
+      ;;
+      *)
+        errr "Invalid output format '${OUTPUT_FORMAT}'"
+    esac
+
     ;;
   *)
     tempfile="$(mktemp -t make-docs.XXX)"
@@ -789,7 +865,7 @@ fi
 ${WEBSITE_EXEC}
 EOF
     chmod +x "${tempfile}"
-    volumes="${volumes} --volume=${tempfile}:/entrypoint"
+    volumes="${volumes} --volume=${tempfile}:/entrypoint:z"
     readonly volumes
 
     IFS='' read -r cmd <<EOF

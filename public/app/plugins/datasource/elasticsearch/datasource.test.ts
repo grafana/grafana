@@ -75,7 +75,7 @@ function createFetchResponse<T>(data: T): FetchResponse<T> {
     type: 'basic',
     statusText: 'Ok',
     redirected: false,
-    headers: {} as unknown as Headers,
+    headers: new Headers(),
     ok: true,
   };
 }
@@ -475,7 +475,7 @@ describe('ElasticDatasource', () => {
         type: 'basic',
         statusText: 'Bad Request',
         redirected: false,
-        headers: {} as unknown as Headers,
+        headers: new Headers(),
         ok: false,
       };
 

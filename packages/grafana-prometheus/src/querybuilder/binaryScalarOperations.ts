@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/binaryScalarOperations.ts
 import { defaultAddOperationHandler } from './operationUtils';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
 import { PromOperationId, PromVisualQueryOperationCategory } from './types';
@@ -85,14 +86,14 @@ export const binaryScalarOperatorToOperatorName = binaryScalarDefs.reduce<
 // both the operator and the operand in a single input
 export const binaryScalarOperations: QueryBuilderOperationDef[] = binaryScalarDefs.map((opDef) => {
   const params: QueryBuilderOperationParamDef[] = [{ name: 'Value', type: 'number' }];
-  const defaultParams: any[] = [2];
+  let defaultParams: [number] | [number, boolean] = [2];
   if (opDef.comparison) {
     params.push({
       name: 'Bool',
       type: 'boolean',
       description: 'If checked comparison will return 0 or 1 for the value rather than filtering.',
     });
-    defaultParams.push(false);
+    defaultParams = [2, false];
   }
 
   return {

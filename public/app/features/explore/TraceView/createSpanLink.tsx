@@ -20,11 +20,11 @@ import {
   TraceToLogsOptionsV2,
   TraceToLogsTag,
 } from '@grafana/o11y-ds-frontend';
+import { PromQuery } from '@grafana/prometheus';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
 import { ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';

@@ -3,7 +3,7 @@ import React from 'react';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { ButtonGroup } from '../Button';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { ToolbarButton, ToolbarButtonVariant } from './ToolbarButton';
 import mdx from './ToolbarButton.mdx';
@@ -94,7 +94,7 @@ export const Examples: StoryFn<typeof ToolbarButton> = (args) => {
 
   return (
     <DashboardStoryCanvas>
-      <VerticalGroup>
+      <Stack direction="column" gap={1.5}>
         Button states
         <ToolbarButtonRow>
           <ToolbarButton variant="canvas">Just text</ToolbarButton>
@@ -140,7 +140,7 @@ export const Examples: StoryFn<typeof ToolbarButton> = (args) => {
         </ButtonGroup>
         <br />
         Inside button group
-        <HorizontalGroup>
+        <Stack>
           <ButtonGroup>
             <ToolbarButton variant="primary" icon="sync">
               Run query
@@ -153,8 +153,8 @@ export const Examples: StoryFn<typeof ToolbarButton> = (args) => {
             </ToolbarButton>
             <ToolbarButton isOpen={false} narrow variant="destructive" />
           </ButtonGroup>
-        </HorizontalGroup>
-      </VerticalGroup>
+        </Stack>
+      </Stack>
     </DashboardStoryCanvas>
   );
 };

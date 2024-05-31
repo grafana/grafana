@@ -3,7 +3,6 @@ import {
   DashboardCursorSync,
   DataFrame,
   DefaultTimeZone,
-  // EventBusSrv,
   FieldColorModeId,
   FieldConfig,
   FieldMatcherID,

@@ -38,7 +38,7 @@ func NewServiceAccountsAPI(
 	accesscontrolService accesscontrol.Service,
 	routerRegister routing.RouteRegister,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
 		cfg:                  cfg,

@@ -44,3 +44,6 @@ export const defaultAnnotations = [
   { key: Annotation.description, value: '' },
   { key: Annotation.runbookURL, value: '' },
 ];
+
+/** Special matcher name used to identify alert rules by UID */
+export const MATCHER_ALERT_RULE_UID = '__alert_rule_uid__';

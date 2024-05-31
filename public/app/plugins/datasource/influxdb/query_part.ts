@@ -13,7 +13,7 @@ const categories: any = {
   Fields: [],
 };
 
-function createPart(part: any): any {
+function createPart(part: any) {
   const def = index[part.type];
   if (!def) {
     throw { message: 'Could not find query part ' + part.type };

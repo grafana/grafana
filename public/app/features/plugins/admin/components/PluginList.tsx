@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 import { config } from '@grafana/runtime';
 import { EmptyState, Grid } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { CatalogPlugin, PluginListDisplayMode } from '../types';
 
@@ -20,7 +21,7 @@ export const PluginList = ({ plugins, displayMode, isLoading }: Props) => {
   const pathName = config.appSubUrl + (pathname.endsWith('/') ? pathname.slice(0, -1) : pathname);
 
   if (!isLoading && plugins.length === 0) {
-    return <EmptyState variant="not-found" />;
+    return <EmptyState variant="not-found" message={t('plugins.empty-state.message', 'No plugins found')} />;
   }
 
   return (

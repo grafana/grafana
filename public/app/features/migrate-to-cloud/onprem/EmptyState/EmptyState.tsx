@@ -15,6 +15,7 @@ export const EmptyState = () => {
     <div className={styles.container}>
       <Stack direction="column">
         <CallToAction />
+
         <Grid
           alignItems="flex-start"
           gap={1}

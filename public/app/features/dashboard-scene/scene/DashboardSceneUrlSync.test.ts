@@ -25,6 +25,31 @@ describe('DashboardSceneUrlSync', () => {
       scene.urlSync?.updateFromUrl({ viewPanel: '2' });
       expect(scene.state.viewPanelScene!.getUrlKey()).toBe('panel-2');
     });
+
+    it('Should set UNSAFE_fitPanels when url has autofitpanels', () => {
+      const scene = buildTestScene();
+      scene.urlSync?.updateFromUrl({ autofitpanels: '' });
+      expect((scene.state.body as SceneGridLayout).state.UNSAFE_fitPanels).toBe(true);
+    });
+
+    it('Should get the autofitpanels from the scene state', () => {
+      const scene = buildTestScene();
+
+      expect(scene.urlSync?.getUrlState().autofitpanels).toBeUndefined();
+      (scene.state.body as SceneGridLayout).setState({ UNSAFE_fitPanels: true });
+      expect(scene.urlSync?.getUrlState().autofitpanels).toBe('true');
+    });
+  });
+
+  describe('entering edit mode', () => {
+    it('it should be possible to go from the view panel view to the edit view when the dashboard is not in edit mdoe', () => {
+      const scene = buildTestScene();
+      scene.setState({ isEditing: false });
+      scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' });
+      expect(scene.state.viewPanelScene).toBeDefined();
+      scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+      expect(scene.state.editPanel).toBeDefined();
+    });
   });
 
   describe('Given a viewPanelKey with clone that is not found', () => {

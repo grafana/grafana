@@ -14,12 +14,17 @@ import {
 import { useStyles2, Tooltip, Stack } from '@grafana/ui';
 
 import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
+import { reportExploreMetrics } from './interactions';
 import { VAR_FILTERS } from './shared';
 import { getTrailFor, isSceneTimeRangeState } from './utils';
 
 export interface DataTrailsHistoryState extends SceneObjectState {
   currentStep: number;
   steps: DataTrailHistoryStep[];
+}
+
+export function isDataTrailsHistoryState(state: SceneObjectState): state is DataTrailsHistoryState {
+  return 'currentStep' in state && 'steps' in state;
 }
 
 export interface DataTrailHistoryStep {
@@ -30,7 +35,6 @@ export interface DataTrailHistoryStep {
 }
 
 export type TrailStepType = 'filters' | 'time' | 'metric' | 'start';
-
 export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   public constructor(state: Partial<DataTrailsHistoryState>) {
     super({ steps: state.steps ?? [], currentStep: state.currentStep ?? 0 });
@@ -120,10 +124,21 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
   }
 
   public goBackToStep(stepIndex: number) {
-    this.stepTransitionInProgress = true;
+    if (stepIndex === this.state.currentStep) {
+      return;
+    }
 
+    const step = this.state.steps[stepIndex];
+    const type = step.type === 'metric' && step.trailState.metric === undefined ? 'metric-clear' : step.type;
+
+    reportExploreMetrics('history_step_clicked', { type, step: stepIndex, numberOfSteps: this.state.steps.length });
+
+    this.stepTransitionInProgress = true;
     this.setState({ currentStep: stepIndex });
 
+    getTrailFor(this).restoreFromHistoryStep(step.trailState);
+
+    // The URL will update
     this.stepTransitionInProgress = false;
   }
 
@@ -142,10 +157,15 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
     const { ancestry, alternatePredecessorStyle } = useMemo(() => {
       const ancestry = new Set<number>();
+
       let cursor = currentStep;
       while (cursor >= 0) {
+        const step = steps[cursor];
+        if (!step) {
+          break;
+        }
         ancestry.add(cursor);
-        cursor = steps[cursor].parentIndex;
+        cursor = step.parentIndex;
       }
 
       const alternatePredecessorStyle = new Map<number, string>();
@@ -180,7 +200,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
                   // Specifics per step type
                   styles.stepTypes[stepType],
                   // To highlight selected step
-                  model.state.currentStep === index ? styles.stepSelected : '',
+                  currentStep === index ? styles.stepSelected : '',
                   // To alter the look of steps with distant non-directly preceding parent
                   alternatePredecessorStyle.get(index) ?? '',
                   // To remove direct link for steps that don't have a direct parent

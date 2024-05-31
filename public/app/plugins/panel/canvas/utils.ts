@@ -119,7 +119,9 @@ const addDataLinkForField = (
 ): void => {
   if (field?.getLinks) {
     const disp = field.display ? field.display(data) : { text: `${data}`, numeric: +data! };
-    field.getLinks({ calculatedValue: disp }).forEach((link) => {
+    // TODO add more control over which row index each element uses
+    const valueRowIndex = field.values.length - 1;
+    field.getLinks({ calculatedValue: disp, valueRowIndex }).forEach((link) => {
       const key = `${link.title}/${link.href}`;
       if (!linkLookup.has(key)) {
         links.push(link);
@@ -298,6 +300,8 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
             target,
             info: c,
             vertices: c.vertices ?? undefined,
+            sourceOriginal: c.sourceOriginal ?? undefined,
+            targetOriginal: c.targetOriginal ?? undefined,
           });
         }
       });
@@ -318,6 +322,9 @@ export function updateConnectionsForSource(element: ElementState, scene: Scene) 
     const connections = sourceConnections.filter((con) => con.targetName !== element.getName());
     connection.source.onChange({ ...connection.source.options, connections });
   });
+
+  // Update scene connection state to clear out old connections
+  scene.connections.updateState();
 }
 
 export const calculateCoordinates = (
@@ -352,6 +359,14 @@ export const calculateCoordinates = (
   }
   x2 /= transformScale;
   y2 /= transformScale;
+
+  // TODO look into a better way to avoid division by zero
+  if (x2 - x1 === 0) {
+    x2 += 1;
+  }
+  if (y2 - y1 === 0) {
+    y2 += 1;
+  }
   return { x1, y1, x2, y2 };
 };
 
@@ -365,9 +380,11 @@ export const calculateAbsoluteCoords = (
   x2: number,
   y2: number,
   valueX: number,
-  valueY: number
+  valueY: number,
+  deltaX: number,
+  deltaY: number
 ) => {
-  return { x: valueX * (x2 - x1) + x1, y: valueY * (y2 - y1) + y1 };
+  return { x: valueX * deltaX + x1, y: valueY * deltaY + y1 };
 };
 
 // Calculate angle between two points and return angle in radians
@@ -403,8 +420,21 @@ export const getConnectionStyles = (
   const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
   const strokeRadius = info.radius ? scene.context.getScale(info.radius).get(lastRowIndex) : 0;
   const arrowDirection = info.direction ? info.direction : defaultArrowDirection;
-  const lineStyle = info.lineStyle === LineStyle.Dashed ? StrokeDasharray.Dashed : StrokeDasharray.Solid;
-  return { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle };
+  const lineStyle = getLineStyle(info.lineStyle?.style);
+  const shouldAnimate = info.lineStyle?.animate;
+
+  return { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle, shouldAnimate };
+};
+
+const getLineStyle = (lineStyle?: LineStyle) => {
+  switch (lineStyle) {
+    case LineStyle.Dashed:
+      return StrokeDasharray.Dashed;
+    case LineStyle.Dotted:
+      return StrokeDasharray.Dotted;
+    default:
+      return StrokeDasharray.Solid;
+  }
 };
 
 export const getParentBoundingClientRect = (scene: Scene) => {

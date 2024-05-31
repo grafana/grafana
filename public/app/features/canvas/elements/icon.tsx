@@ -34,7 +34,7 @@ const svgStrokePathClass = css({
   },
 });
 
-export function IconDisplay(props: CanvasElementProps) {
+export function IconDisplay(props: CanvasElementProps<IconConfig, IconData>) {
   const { data } = props;
   if (!data?.path) {
     return null;
@@ -79,6 +79,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
       height: options?.placement?.height ?? 100,
       top: options?.placement?.top ?? 100,
       left: options?.placement?.left ?? 100,
+      rotation: options?.placement?.rotation ?? 0,
     },
   }),
 

@@ -97,7 +97,8 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       display: 'flex',
     }),
     valueContainerMultiNoWrap: css({
-      flexWrap: 'nowrap',
+      display: 'grid',
+      gridAutoFlow: 'column',
     }),
     loadingMessage: css({
       label: 'grafana-select-loading-message',
@@ -136,6 +137,11 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       '&:hover': {
         color: theme.colors.text.primary,
       },
+    }),
+    groupHeader: css({
+      padding: theme.spacing(1, 1, 1, 0.75),
+      borderLeft: '2px solid transparent',
+      borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
   };
 });

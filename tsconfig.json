@@ -18,7 +18,7 @@
   "include": [
     "public/app/**/*.ts*",
     "public/e2e-test/**/*.ts",
-    "public/test/**/*.ts",
+    "public/test/**/*.ts*",
     "public/vendor/**/*.ts",
     "packages/grafana-data/typings",
     "packages/grafana-ui/src/types"

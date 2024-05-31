@@ -76,8 +76,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     if (!item.queryType) {
       return false;
     }
+
+    const query = migrateQuery(item);
     const ds = this.pseudoDatasource[item.queryType];
-    return ds?.filterQuery?.(item) ?? true;
+    return ds?.filterQuery?.(query) ?? true;
   }
 
   query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
@@ -162,7 +164,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   getMetricNamespaces(subscriptionId: string, resourceGroup?: string) {
     let url = `/subscriptions/${subscriptionId}`;
     if (resourceGroup) {
-      url += `/resourceGroups/${resourceGroup};`;
+      url += `/resourceGroups/${resourceGroup}`;
     }
     return this.azureMonitorDatasource.getMetricNamespaces({ resourceUri: url }, true);
   }

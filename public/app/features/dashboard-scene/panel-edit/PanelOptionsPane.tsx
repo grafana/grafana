@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 import { FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
+import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
 import { PanelEditor } from './PanelEditor';
@@ -43,7 +44,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const { isVizPickerOpen, searchQuery, listMode } = model.useState();
     const vizManager = sceneGraph.getAncestor(model, PanelEditor).state.vizManager;
     const { pluginId } = vizManager.state.panel.useState();
-    const { data } = sceneGraph.getData(vizManager).useState();
+    const { data } = sceneGraph.getData(vizManager.state.panel).useState();
     const styles = useStyles2(getStyles);
 
     return (
@@ -108,7 +109,15 @@ interface VisualizationButtonProps {
 
 export function VisualizationButton({ pluginId, onOpen }: VisualizationButtonProps) {
   const styles = useStyles2(getVizButtonStyles);
-  const pluginMeta = useMemo(() => getAllPanelPluginMeta().filter((p) => p.id === pluginId)[0], [pluginId]);
+  let pluginMeta: PanelPluginMeta | undefined = useMemo(
+    () => getAllPanelPluginMeta().filter((p) => p.id === pluginId)[0],
+    [pluginId]
+  );
+
+  if (!pluginMeta) {
+    const notFound = getPanelPluginNotFound(`Panel plugin not found (${pluginId})`, true);
+    pluginMeta = notFound.meta;
+  }
 
   return (
     <Stack gap={1}>

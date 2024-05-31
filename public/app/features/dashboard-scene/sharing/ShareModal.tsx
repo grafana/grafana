@@ -7,6 +7,7 @@ import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
+import { getTrackingSource } from '../../dashboard/components/ShareModal/utils';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
@@ -51,16 +52,17 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
 
   private buildTabs() {
     const { dashboardRef, panelRef } = this.state;
+    const modalRef = this.getRef();
 
-    const tabs: SceneShareTab[] = [new ShareLinkTab({ dashboardRef, panelRef, modalRef: this.getRef() })];
+    const tabs: SceneShareTab[] = [new ShareLinkTab({ dashboardRef, panelRef, modalRef })];
     const dashboard = getDashboardSceneFor(this);
 
     if (!panelRef) {
-      tabs.push(new ShareExportTab({ dashboardRef, modalRef: this.getRef() }));
+      tabs.push(new ShareExportTab({ dashboardRef, modalRef }));
     }
 
     if (contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard()) {
-      tabs.push(new ShareSnapshotTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
+      tabs.push(new ShareSnapshotTab({ panelRef, dashboardRef, modalRef }));
     }
 
     if (panelRef) {
@@ -69,17 +71,17 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
       const isLibraryPanel = panel.parent instanceof LibraryVizPanel;
       if (panel instanceof VizPanel) {
         if (!isLibraryPanel) {
-          tabs.push(new ShareLibraryPanelTab({ panelRef, dashboardRef, modalRef: this.getRef() }));
+          tabs.push(new ShareLibraryPanelTab({ panelRef, dashboardRef, modalRef }));
         }
       }
     }
 
     if (!panelRef) {
-      tabs.push(...customDashboardTabs.map((Tab) => new Tab({ dashboardRef })));
-    }
+      tabs.push(...customDashboardTabs.map((Tab) => new Tab({ dashboardRef, modalRef })));
 
-    if (isPublicDashboardsEnabled()) {
-      tabs.push(new SharePublicDashboardTab({ dashboardRef, modalRef: this.getRef() }));
+      if (isPublicDashboardsEnabled()) {
+        tabs.push(new SharePublicDashboardTab({ dashboardRef, modalRef }));
+      }
     }
 
     this.setState({ tabs });
@@ -91,7 +93,7 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
   };
 
   onChangeTab: ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (tab) => {
-    DashboardInteractions.sharingTabChanged({ item: tab.value });
+    DashboardInteractions.sharingTabChanged({ item: tab.value, shareResource: getTrackingSource(this.state.panelRef) });
     this.setState({ activeTab: tab.value });
   };
 }

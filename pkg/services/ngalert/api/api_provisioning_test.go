@@ -722,12 +722,12 @@ func TestProvisioningApi(t *testing.T) {
     is_paused      = false
 
     notification_settings {
-      receiver            = "Test-Receiver"
-      group_by            = ["alertname", "grafana_folder", "test"]
-      group_wait          = "1s"
-      group_interval      = "5s"
-      repeat_interval     = "5m"
-      mute_time_intervals = ["test-mute"]
+      contact_point   = "Test-Receiver"
+      group_by        = ["alertname", "grafana_folder", "test"]
+      group_wait      = "1s"
+      group_interval  = "5s"
+      repeat_interval = "5m"
+      mute_timings    = ["test-mute"]
     }
   }
 }
@@ -2046,7 +2046,6 @@ var testConfig = `
 				"uid": "email-uid",
 				"name": "email receiver",
 				"type": "email",
-				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
 				}

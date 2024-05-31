@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/login/social/socialimpl"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
@@ -37,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
@@ -132,6 +135,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
@@ -336,6 +340,7 @@ var wireBasicSet = wire.NewSet(
 	dbimpl.ProvideEntityDB,
 	wire.Bind(new(entityDB.EntityDBInterface), new(*dbimpl.EntityDB)),
 	sqlstash.ProvideSQLEntityServer,
+	wire.Bind(new(entityStore.EntityStoreServer), new(sqlstash.SqlEntityServer)),
 	resolver.ProvideEntityReferenceResolver,
 	teamimpl.ProvideService,
 	teamapi.ProvideTeamAPI,
@@ -347,6 +352,8 @@ var wireBasicSet = wire.NewSet(
 	secretsMigrations.ProvideMigrateFromPluginService,
 	secretsMigrations.ProvideSecretMigrationProvider,
 	wire.Bind(new(secretsMigrations.SecretMigrationProvider), new(*secretsMigrations.SecretMigrationProviderImpl)),
+	resourcepermissions.NewActionSetService,
+	wire.Bind(new(accesscontrol.ActionResolver), new(resourcepermissions.ActionSetService)),
 	acimpl.ProvideAccessControl,
 	navtreeimpl.ProvideService,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
@@ -356,6 +363,7 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideService,
 	authnimpl.ProvideIdentitySynchronizer,
 	authnimpl.ProvideAuthnService,
+	authnimpl.ProvideRegistration,
 	supportbundlesimpl.ProvideService,
 	extsvcaccounts.ProvideExtSvcAccountsService,
 	wire.Bind(new(serviceaccounts.ExtSvcAccountsService), new(*extsvcaccounts.ExtSvcAccountsService)),
@@ -364,6 +372,7 @@ var wireBasicSet = wire.NewSet(
 	anonstore.ProvideAnonDBStore,
 	wire.Bind(new(anonstore.AnonStore), new(*anonstore.AnonDBStore)),
 	loggermw.Provide,
+	slogadapter.Provide,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
 	ssoSettingsImpl.ProvideService,
@@ -372,6 +381,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
 	cloudmigrationimpl.ProvideService,
 	userimpl.ProvideVerifier,
+	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
@@ -431,7 +441,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 
 func InitializeForTest(t sqlutil.ITestDB, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
-	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}}, nil
+	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
 }
 
 func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {

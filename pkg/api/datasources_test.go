@@ -115,7 +115,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 			expectedDatasource: &datasources.DataSource{},
 		},
 		Cfg:                  setting.NewCfg(),
-		AccessControl:        acimpl.ProvideAccessControl(setting.NewCfg()),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 	}
 
@@ -332,7 +332,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 			expectedDatasource: &datasources.DataSource{},
 		},
 		Cfg:                  setting.NewCfg(),
-		AccessControl:        acimpl.ProvideAccessControl(setting.NewCfg()),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 	}
 
@@ -365,7 +365,7 @@ func TestUpdateDataSourceByID_DataSourceNameExists(t *testing.T) {
 			},
 		},
 		Cfg:                  setting.NewCfg(),
-		AccessControl:        acimpl.ProvideAccessControl(setting.NewCfg()),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 		Live:                 newTestLive(t, nil),
 	}
@@ -541,10 +541,6 @@ func (m *dataSourcesServiceMock) GetDataSources(ctx context.Context, query *data
 
 func (m *dataSourcesServiceMock) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
 	return m.expectedDatasources, m.expectedError
-}
-
-func (m *dataSourcesServiceMock) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error) {
-	return nil, m.expectedError
 }
 
 func (m *dataSourcesServiceMock) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {

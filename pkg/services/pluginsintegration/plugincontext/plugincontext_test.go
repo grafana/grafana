@@ -26,15 +26,17 @@ import (
 
 func TestGet(t *testing.T) {
 	const (
-		pluginID = "plugin-id"
-		alias    = "alias"
+		pluginID   = "plugin-id"
+		alias      = "alias"
+		apiVersion = "v0alpha1"
 	)
 
 	preg := registry.NewInMemory()
 	require.NoError(t, preg.Add(context.Background(), &plugins.Plugin{
 		JSONData: plugins.JSONData{
-			ID:       pluginID,
-			AliasIDs: []string{alias},
+			ID:         pluginID,
+			AliasIDs:   []string{alias},
+			APIVersion: apiVersion,
 		},
 	}))
 
@@ -59,6 +61,7 @@ func TestGet(t *testing.T) {
 				pCtx, err := pcp.Get(context.Background(), tc.input, identity, identity.OrgID)
 				require.NoError(t, err)
 				require.Equal(t, pluginID, pCtx.PluginID)
+				require.Equal(t, apiVersion, pCtx.APIVersion)
 				require.NotNil(t, pCtx.GrafanaConfig)
 			})
 
@@ -72,6 +75,7 @@ func TestGet(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.Equal(t, pluginID, pCtx.PluginID)
+				require.Equal(t, apiVersion, pCtx.APIVersion)
 				require.NotNil(t, pCtx.GrafanaConfig)
 			})
 		})

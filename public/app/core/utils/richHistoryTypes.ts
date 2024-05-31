@@ -14,7 +14,7 @@ export enum SortOrder {
 export interface RichHistorySettings {
   retentionPeriod: number;
   starredTabAsFirstTab: boolean;
-  activeDatasourceOnly: boolean;
+  activeDatasourcesOnly: boolean;
   lastUsedDatasourceFilters?: string[];
 }
 

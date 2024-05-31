@@ -609,6 +609,7 @@ export function getCellColors(
   // Setup color variables
   let textColor: string | undefined = undefined;
   let bgColor: string | undefined = undefined;
+  let bgHoverColor: string | undefined = undefined;
 
   if (cellOptions.type === TableCellDisplayMode.ColorText) {
     textColor = displayValue.color;
@@ -617,15 +618,18 @@ export function getCellColors(
 
     if (mode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
-      bgColor = tinycolor(displayValue.color).setAlpha(0.9).toRgbString();
+      bgColor = tinycolor(displayValue.color).toRgbString();
+      bgHoverColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
     } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
+      const hoverColor = tinycolor(displayValue.color).setAlpha(1).toRgbString();
       const bgColor2 = tinycolor(displayValue.color)
         .darken(10 * darkeningFactor)
         .spin(5);
       textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
       bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
+      bgHoverColor = `linear-gradient(120deg, ${bgColor2.setAlpha(1).toRgbString()}, ${hoverColor})`;
     }
   }
 
-  return { textColor, bgColor };
+  return { textColor, bgColor, bgHoverColor };
 }

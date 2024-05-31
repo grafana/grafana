@@ -14,6 +14,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
   const buildCellContainerStyle = (
     color?: string,
     background?: string,
+    backgroundHover?: string,
     overflowOnHover?: boolean,
     asCellText?: boolean,
     textShouldWrap?: boolean,
@@ -56,7 +57,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         wordBreak: textShouldWrap ? 'break-word' : undefined,
         whiteSpace: textShouldWrap && overflowOnHover ? 'normal' : 'nowrap',
         boxShadow: overflowOnHover ? `0 0 2px ${theme.colors.primary.main}` : undefined,
-        background: rowStyled ? 'inherit' : background ?? theme.colors.background.primary,
+        background: rowStyled ? 'inherit' : backgroundHover ?? theme.colors.background.primary,
         zIndex: 1,
         '.cellActions': {
           color: '#FFF',
@@ -165,11 +166,11 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         color: theme.colors.text.link,
       },
     }),
-    cellContainerText: buildCellContainerStyle(undefined, undefined, true, true),
-    cellContainerTextNoOverflow: buildCellContainerStyle(undefined, undefined, false, true),
+    cellContainerText: buildCellContainerStyle(undefined, undefined, undefined, true, true),
+    cellContainerTextNoOverflow: buildCellContainerStyle(undefined, undefined, undefined, false, true),
 
-    cellContainer: buildCellContainerStyle(undefined, undefined, true, false),
-    cellContainerNoOverflow: buildCellContainerStyle(undefined, undefined, false, false),
+    cellContainer: buildCellContainerStyle(undefined, undefined, undefined, true, false),
+    cellContainerNoOverflow: buildCellContainerStyle(undefined, undefined, undefined, false, false),
     cellText: css({
       overflow: 'hidden',
       textOverflow: 'ellipsis',
@@ -262,7 +263,9 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       display: 'inline-block',
       background: resizerColor,
       opacity: 0,
-      transition: 'opacity 0.2s ease-in-out',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.2s ease-in-out',
+      },
       width: '8px',
       height: '100%',
       position: 'absolute',

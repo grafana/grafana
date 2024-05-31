@@ -68,22 +68,20 @@ export const AnnotationPicker = ({ annotation, events, onEnabledChanged }: Annot
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    annotation: css`
-      display: inline-block;
-      margin-right: ${theme.spacing(1)};
-
-      .fa-caret-down {
-        font-size: 75%;
-        padding-left: ${theme.spacing(1)};
-      }
-
-      .gf-form-inline .gf-form {
-        margin-bottom: 0;
-      }
-    `,
-    indicator: css`
-      align-self: center;
-      padding: 0 ${theme.spacing(0.5)};
-    `,
+    annotation: css({
+      display: 'inline-block',
+      marginRight: theme.spacing(1),
+      '.fa-caret-down': {
+        fontSize: '75%',
+        paddingLeft: theme.spacing(1),
+      },
+      '.gf-form-inline .gf-form': {
+        marginBottom: 0,
+      },
+    }),
+    indicator: css({
+      alignSelf: 'center',
+      padding: `0 ${theme.spacing(0.5)}`,
+    }),
   };
 }

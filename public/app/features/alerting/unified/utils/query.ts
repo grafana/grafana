@@ -1,15 +1,15 @@
 import { produce } from 'immer';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { PromQuery } from '@grafana/prometheus';
 import { DataQuery } from '@grafana/schema';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { isCloudRulesSource } from './datasource';
 import { isGrafanaRulerRule } from './rules';
-import { safeParseDurationstr } from './time';
+import { safeParsePrometheusDuration } from './time';
 
 export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null): AlertQuery[] {
   if (!combinedRule) {
@@ -45,7 +45,7 @@ export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null
 export function widenRelativeTimeRanges(queries: AlertQuery[], pendingPeriod: string, groupInterval?: string) {
   // if pending period is zero that means inherit from group interval, if that is empty then assume 1m
   const pendingPeriodDurationMillis =
-    safeParseDurationstr(pendingPeriod) ?? safeParseDurationstr(groupInterval ?? '1m');
+    safeParsePrometheusDuration(pendingPeriod) ?? safeParsePrometheusDuration(groupInterval ?? '1m');
   const pendingPeriodDuration = Math.floor(pendingPeriodDurationMillis / 1000);
 
   return queries.map((query) =>

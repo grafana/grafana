@@ -96,7 +96,6 @@ import (
 	spm "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/shorturls"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -231,7 +230,7 @@ type ServerOptions struct {
 
 func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
 	renderService rendering.Service, licensing licensing.Licensing, hooksService *hooks.HooksService,
-	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
+	cacheService *localcache.CacheService, sqlStore db.DB,
 	pluginRequestValidator validations.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,

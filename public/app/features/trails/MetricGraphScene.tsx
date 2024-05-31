@@ -72,8 +72,6 @@ function getStyles(theme: GrafanaTheme2) {
 }
 
 function buildGraphTopView() {
-  const bodyAutoVizPanel = new AutoVizPanel({});
-
   return new SceneFlexLayout({
     direction: 'column',
     $behaviors: [new behaviors.CursorSync({ key: 'metricCrosshairSync', sync: DashboardCursorSync.Crosshair })],
@@ -81,7 +79,7 @@ function buildGraphTopView() {
       new SceneFlexItem({
         minHeight: MAIN_PANEL_MIN_HEIGHT,
         maxHeight: MAIN_PANEL_MAX_HEIGHT,
-        body: bodyAutoVizPanel,
+        body: new AutoVizPanel({}),
       }),
       new SceneFlexItem({
         ySizing: 'content',

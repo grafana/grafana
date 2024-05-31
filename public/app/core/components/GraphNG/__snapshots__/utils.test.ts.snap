@@ -79,13 +79,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       "stroke": [Function],
       "width": [Function],
     },
-    "sync": {
-      "key": "__global_",
-      "scales": [
-        "x",
-        null,
-      ],
-    },
   },
   "focus": {
     "alpha": 1,

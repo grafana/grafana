@@ -1,8 +1,10 @@
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridLayout } from '@grafana/scenes';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
+
+import { DashboardGridItem, DashboardGridItemState } from './DashboardGridItem';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -61,6 +63,18 @@ describe('PanelRepeaterGridItem', () => {
     expect(repeater.state.height).toBe(50);
   });
 
+  it('Should skip repeat when variable values are the same ', async () => {
+    const { scene, repeater, variable } = buildPanelRepeaterScene({ variableQueryTime: 0, itemHeight: 10 });
+    const stateUpdates: DashboardGridItemState[] = [];
+    repeater.subscribeToState((state) => stateUpdates.push(state));
+
+    activateFullSceneTree(scene);
+
+    expect(stateUpdates.length).toBe(1);
+    repeater.variableDependency?.variableUpdateCompleted(variable, true);
+    expect(stateUpdates.length).toBe(1);
+  });
+
   it('Should adjust itemHeight when container is resized, direction horizontal', async () => {
     const { scene, repeater } = buildPanelRepeaterScene({
       variableQueryTime: 0,
@@ -115,5 +129,19 @@ describe('PanelRepeaterGridItem', () => {
     expect(repeater.state.repeatedPanels?.[0].state.$variables?.state.variables[0].state.name).toBe(
       '_____default_sys_repeat_var_____'
     );
+  });
+
+  it('Should return className when repeat variable is set', () => {
+    const { repeater } = buildPanelRepeaterScene({ variableQueryTime: 0 });
+
+    expect(repeater.getClassName()).toBe('panel-repeater-grid-item');
+  });
+
+  it('Should not className variable is not set', () => {
+    const gridItem = new DashboardGridItem({
+      body: new VizPanel({ pluginId: 'text' }),
+    });
+
+    expect(gridItem.getClassName()).toBe('');
   });
 });

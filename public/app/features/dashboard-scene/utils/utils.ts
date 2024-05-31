@@ -13,6 +13,7 @@ import {
 } from '@grafana/scenes';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
+import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
@@ -63,7 +64,20 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
     return null;
   }
 
-  const panel = sceneGraph.findObject(scene, (obj) => obj.state.key === key);
+  const panel = sceneGraph.findObject(scene, (obj) => {
+    const objKey = obj.state.key!;
+
+    if (objKey === key) {
+      return true;
+    }
+
+    if (!(obj instanceof VizPanel)) {
+      return false;
+    }
+
+    return false;
+  });
+
   if (panel) {
     if (panel instanceof VizPanel) {
       return panel;
@@ -215,6 +229,7 @@ export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
     key: getVizPanelKeyForPanelId(panelId),
     pluginId: 'timeseries',
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+    hoverHeaderOffset: 0,
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
@@ -222,6 +237,7 @@ export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
       $data: new SceneQueryRunner({
         queries: [{ refId: 'A' }],
         datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
+        $behaviors: [new DashboardDatasourceBehaviour({})],
       }),
       transformations: [],
     }),

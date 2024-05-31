@@ -160,7 +160,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				return nil
 			}
 
-			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}), &featuremgmt.FeatureManager{}, ruleStore)
+			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}), featuremgmt.WithFeatures(), ruleStore)
 
 			rule := validRule()
 
@@ -174,8 +174,9 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 		})
 
 		t.Run("should return Forbidden if user cannot query a data source", func(t *testing.T) {
-			data1 := models.GenerateAlertQuery()
-			data2 := models.GenerateAlertQuery()
+			gen := models.RuleGen
+			data1 := gen.GenerateQuery()
+			data2 := gen.GenerateQuery()
 
 			ac := acMock.New().WithPermissions([]ac.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
@@ -184,7 +185,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			f := randFolder()
 			ruleStore := fakes2.NewRuleStore(t)
 			ruleStore.Folders[rc.OrgID] = []*folder.Folder{f}
-			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}), &featuremgmt.FeatureManager{}, ruleStore)
+			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}), featuremgmt.WithFeatures(), ruleStore)
 
 			rule := validRule()
 			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2})
@@ -195,12 +196,14 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				NamespaceTitle: f.Title,
 			})
 
+			t.Log(string(response.Body()))
 			require.Equal(t, http.StatusForbidden, response.Status())
 		})
 
 		t.Run("should return 200 if user can query all data sources", func(t *testing.T) {
-			data1 := models.GenerateAlertQuery()
-			data2 := models.GenerateAlertQuery()
+			gen := models.RuleGen
+			data1 := gen.GenerateQuery()
+			data2 := gen.GenerateQuery()
 
 			ac := acMock.New().WithPermissions([]ac.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
@@ -222,7 +225,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			ruleStore := fakes2.NewRuleStore(t)
 			ruleStore.Folders[rc.OrgID] = []*folder.Folder{f}
 
-			srv := createTestingApiSrv(t, ds, ac, evalFactory, &featuremgmt.FeatureManager{}, ruleStore)
+			srv := createTestingApiSrv(t, ds, ac, evalFactory, featuremgmt.WithFeatures(), ruleStore)
 
 			rule := validRule()
 			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2})
@@ -252,8 +255,9 @@ func TestRouteEvalQueries(t *testing.T) {
 		}
 
 		t.Run("should return Forbidden if user cannot query a data source", func(t *testing.T) {
-			data1 := models.GenerateAlertQuery()
-			data2 := models.GenerateAlertQuery()
+			g := models.RuleGen
+			data1 := g.GenerateQuery()
+			data2 := g.GenerateQuery()
 
 			srv := &TestingApiSrv{
 				authz: accesscontrol.NewRuleService(acMock.New().WithPermissions([]ac.Permission{
@@ -299,7 +303,7 @@ func TestRouteEvalQueries(t *testing.T) {
 
 			ruleStore := fakes2.NewRuleStore(t)
 
-			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator), &featuremgmt.FeatureManager{}, ruleStore)
+			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator), featuremgmt.WithFeatures(), ruleStore)
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
 				Data: ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2}),
@@ -387,7 +391,7 @@ func TestRouteEvalQueries(t *testing.T) {
 	})
 }
 
-func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator eval.EvaluatorFactory, featureManager *featuremgmt.FeatureManager, ruleStore RuleStore) *TestingApiSrv {
+func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator eval.EvaluatorFactory, featureManager featuremgmt.FeatureToggles, ruleStore RuleStore) *TestingApiSrv {
 	if ac == nil {
 		ac = acMock.New()
 	}

@@ -20,7 +20,7 @@ import { Scene } from './scene';
 
 let counter = 0;
 
-const SVGElements = new Set<string>(['parallelogram', 'triangle', 'cloud', 'ellipse']);
+export const SVGElements = new Set<string>(['parallelogram', 'triangle', 'cloud', 'ellipse']);
 
 export class ElementState implements LayerElement {
   // UID necessary for moveable to work (for now)
@@ -36,6 +36,7 @@ export class ElementState implements LayerElement {
   div?: HTMLDivElement;
 
   // Calculated
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any; // depends on the type
 
   constructor(
@@ -189,17 +190,30 @@ export class ElementState implements LayerElement {
     style.transform = `translate(${translate[0]}, ${translate[1]})`;
     this.options.placement = placement;
     this.sizeStyle = style;
+
     if (this.div) {
       for (const key in this.sizeStyle) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
         this.div.style[key as any] = (this.sizeStyle as any)[key];
       }
 
-      const elementType = this.options.type;
-      // SVG elements have their own styles
       // TODO: This is a hack, we should have a better way to handle this
+      const elementType = this.options.type;
       if (!SVGElements.has(elementType)) {
+        // apply styles to div if it's not an SVG element
         for (const key in this.dataStyle) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
           this.div.style[key as any] = (this.dataStyle as any)[key];
+        }
+      } else {
+        // ELEMENT IS SVG
+        // clean data styles from div if it's an SVG element; SVG elements have their own data styles;
+        // this is necessary for changing type of element cases;
+        // wrapper div element (this.div) doesn't re-render (has static `key` property),
+        // so we have to clean styles manually;
+        for (const key in this.dataStyle) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+          this.div.style[key as any] = '';
         }
       }
     }
@@ -479,11 +493,14 @@ export class ElementState implements LayerElement {
   };
 
   applyRotate = (event: OnRotate) => {
-    const absoluteRotationDegree = event.absoluteRotation;
-
+    const rotationDelta = event.delta;
     const placement = this.options.placement!;
+    const placementRotation = placement.rotation ?? 0;
+
+    const calculatedRotation = placementRotation + rotationDelta;
+
     // Ensure rotation is between 0 and 360
-    placement.rotation = absoluteRotationDegree - Math.floor(absoluteRotationDegree / 360) * 360;
+    placement.rotation = calculatedRotation - Math.floor(calculatedRotation / 360) * 360;
     event.target.style.transform = event.transform;
   };
 

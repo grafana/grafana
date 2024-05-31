@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
 var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log", "mu"), fsComparer}
@@ -408,10 +409,11 @@ func TestLoader_Load(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			terminationStage, err := termination.New(tt.cfg, termination.Opts{})
 			require.NoError(t, err)
+			et := pluginerrs.ProvideErrorTracker()
 
 			l := New(discovery.New(tt.cfg, discovery.Opts{}), bootstrap.New(tt.cfg, bootstrap.Opts{}),
 				validation.New(tt.cfg, validation.Opts{}), initialization.New(tt.cfg, initialization.Opts{}),
-				terminationStage)
+				terminationStage, et)
 
 			got, err := l.Load(context.Background(), sources.NewLocalSource(tt.class, tt.pluginPaths))
 			require.NoError(t, err)
@@ -433,6 +435,7 @@ func TestLoader_Load(t *testing.T) {
 				return plugins.Signature{}, false
 			},
 		}
+		et := pluginerrs.ProvideErrorTracker()
 		pluginJSON := plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource, Info: plugins.Info{Version: "1.0.0"}}
 		plugin := &plugins.Plugin{
 			JSONData:      pluginJSON,
@@ -450,38 +453,158 @@ func TestLoader_Load(t *testing.T) {
 					return []*plugins.FoundBundle{{Primary: plugins.FoundPlugin{JSONData: pluginJSON}}}, nil
 				},
 			}, &fakes.FakeBootstrapper{
-				BootstrapFunc: func(ctx context.Context, s plugins.PluginSource, b []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
-					require.True(t, len(b) == 1)
-					require.Equal(t, b[0].Primary.JSONData, pluginJSON)
+				BootstrapFunc: func(ctx context.Context, s plugins.PluginSource, b *plugins.FoundBundle) ([]*plugins.Plugin, error) {
+					require.Equal(t, b.Primary.JSONData, pluginJSON)
 					require.Equal(t, src, s)
 
 					steps = append(steps, "bootstrap")
 					return []*plugins.Plugin{plugin}, nil
 				},
-			}, &fakes.FakeValidator{ValidateFunc: func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
-				require.Equal(t, []*plugins.Plugin{plugin}, ps)
+			}, &fakes.FakeValidator{ValidateFunc: func(ctx context.Context, ps *plugins.Plugin) error {
+				require.Equal(t, plugin, ps)
 
 				steps = append(steps, "validate")
-				return ps, nil
+				return nil
 			}},
 			&fakes.FakeInitializer{
-				IntializeFunc: func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
-					require.True(t, len(ps) == 1)
-					require.Equal(t, ps[0].JSONData, pluginJSON)
+				IntializeFunc: func(ctx context.Context, ps *plugins.Plugin) (*plugins.Plugin, error) {
+					require.Equal(t, ps.JSONData, pluginJSON)
 					steps = append(steps, "initialize")
 					return ps, nil
 				},
-			}, &fakes.FakeTerminator{})
+			}, &fakes.FakeTerminator{}, et)
 
 		got, err := l.Load(context.Background(), src)
 		require.NoError(t, err)
 		require.Equal(t, []*plugins.Plugin{plugin}, got)
 		require.Equal(t, []string{"discover", "bootstrap", "validate", "initialize"}, steps)
 	})
+
+	t.Run("With error", func(t *testing.T) {
+		src := &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.ClassExternal
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{"http://example.com"}
+			},
+			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
+				return plugins.Signature{}, false
+			},
+		}
+		et := pluginerrs.ProvideErrorTracker()
+		pluginJSON := plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource, Info: plugins.Info{Version: "1.0.0"}}
+		plugin := &plugins.Plugin{
+			JSONData:      pluginJSON,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeCommunity,
+			FS:            plugins.NewFakeFS(),
+		}
+
+		var steps []string
+		l := New(
+			&fakes.FakeDiscoverer{
+				DiscoverFunc: func(ctx context.Context, s plugins.PluginSource) ([]*plugins.FoundBundle, error) {
+					require.Equal(t, src, s)
+					steps = append(steps, "discover")
+					return []*plugins.FoundBundle{{Primary: plugins.FoundPlugin{JSONData: pluginJSON}}}, nil
+				},
+			}, &fakes.FakeBootstrapper{
+				BootstrapFunc: func(ctx context.Context, s plugins.PluginSource, b *plugins.FoundBundle) ([]*plugins.Plugin, error) {
+					require.Equal(t, b.Primary.JSONData, pluginJSON)
+					require.Equal(t, src, s)
+
+					steps = append(steps, "bootstrap")
+					return []*plugins.Plugin{plugin}, nil
+				},
+			}, &fakes.FakeValidator{ValidateFunc: func(ctx context.Context, ps *plugins.Plugin) error {
+				require.Equal(t, plugin, ps)
+
+				steps = append(steps, "validate")
+				return errors.New("validation error")
+			}},
+			&fakes.FakeInitializer{
+				IntializeFunc: func(ctx context.Context, ps *plugins.Plugin) (*plugins.Plugin, error) {
+					require.Equal(t, ps.JSONData, pluginJSON)
+					steps = append(steps, "initialize")
+					return ps, nil
+				},
+			}, &fakes.FakeTerminator{}, et)
+
+		got, err := l.Load(context.Background(), src)
+		require.NoError(t, err)
+		require.Equal(t, []*plugins.Plugin{}, got)
+		// Initialize should not be executed if validation fails
+		require.Equal(t, []string{"discover", "bootstrap", "validate"}, steps)
+		errs := et.Errors(context.Background())
+		require.Len(t, errs, 1)
+		require.ErrorContains(t, errs[0], "validation error")
+	})
+
+	t.Run("Cleans up a previous error", func(t *testing.T) {
+		src := &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.ClassExternal
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{"http://example.com"}
+			},
+			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
+				return plugins.Signature{}, false
+			},
+		}
+		et := pluginerrs.ProvideErrorTracker()
+		pluginJSON := plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource, Info: plugins.Info{Version: "1.0.0"}}
+		plugin := &plugins.Plugin{
+			JSONData:      pluginJSON,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeCommunity,
+			FS:            plugins.NewFakeFS(),
+		}
+		et.Record(context.Background(), &plugins.Error{PluginID: "test-datasource", ErrorCode: plugins.ErrorCode("previous error")})
+
+		var steps []string
+		l := New(
+			&fakes.FakeDiscoverer{
+				DiscoverFunc: func(ctx context.Context, s plugins.PluginSource) ([]*plugins.FoundBundle, error) {
+					require.Equal(t, src, s)
+					steps = append(steps, "discover")
+					return []*plugins.FoundBundle{{Primary: plugins.FoundPlugin{JSONData: pluginJSON}}}, nil
+				},
+			}, &fakes.FakeBootstrapper{
+				BootstrapFunc: func(ctx context.Context, s plugins.PluginSource, b *plugins.FoundBundle) ([]*plugins.Plugin, error) {
+					require.Equal(t, b.Primary.JSONData, pluginJSON)
+					require.Equal(t, src, s)
+
+					steps = append(steps, "bootstrap")
+					return []*plugins.Plugin{plugin}, nil
+				},
+			}, &fakes.FakeValidator{ValidateFunc: func(ctx context.Context, ps *plugins.Plugin) error {
+				require.Equal(t, plugin, ps)
+
+				steps = append(steps, "validate")
+				return nil
+			}},
+			&fakes.FakeInitializer{
+				IntializeFunc: func(ctx context.Context, ps *plugins.Plugin) (*plugins.Plugin, error) {
+					require.Equal(t, ps.JSONData, pluginJSON)
+					steps = append(steps, "initialize")
+					return ps, nil
+				},
+			}, &fakes.FakeTerminator{}, et)
+
+		got, err := l.Load(context.Background(), src)
+		require.NoError(t, err)
+		require.Equal(t, []*plugins.Plugin{plugin}, got)
+		require.Equal(t, []string{"discover", "bootstrap", "validate", "initialize"}, steps)
+		errs := et.Errors(context.Background())
+		require.Len(t, errs, 0)
+	})
 }
 
 func TestLoader_Unload(t *testing.T) {
 	t.Run("Termination stage error is returned from Unload", func(t *testing.T) {
+		et := pluginerrs.ProvideErrorTracker()
 		plugin := &plugins.Plugin{
 			JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource, Info: plugins.Info{Version: "1.0.0"}},
 		}
@@ -506,7 +629,7 @@ func TestLoader_Unload(t *testing.T) {
 						require.Equal(t, plugin, p)
 						return p, tc.expectedErr
 					},
-				})
+				}, et)
 
 			_, err := l.Unload(context.Background(), plugin)
 			require.ErrorIs(t, err, tc.expectedErr)

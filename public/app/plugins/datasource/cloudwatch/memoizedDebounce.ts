@@ -1,6 +1,6 @@
 import { debounce, memoize } from 'lodash';
 
-export default (func: (...args: any[]) => void, wait = 7000) => {
+export default <T>(func: (...args: T[]) => void, wait = 7000) => {
   const mem = memoize(
     (...args) =>
       debounce(func, wait, {
@@ -9,5 +9,5 @@ export default (func: (...args: any[]) => void, wait = 7000) => {
     (...args) => JSON.stringify(args)
   );
 
-  return (...args: any[]) => mem(...args)(...args);
+  return (...args: T[]) => mem(...args)(...args);
 };
