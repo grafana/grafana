@@ -11709,10 +11709,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cheminfo-types@npm:^1.7.2":
-  version: 1.7.2
-  resolution: "cheminfo-types@npm:1.7.2"
-  checksum: 10/26c4db9600c786aff28276c8dbc48779f6c20705c3673558344282340d3b9d14554f306994e627396678475b50728a96134d99a794271b86301f6945fab355de
+"cheminfo-types@npm:^1.7.2, cheminfo-types@npm:^1.7.3":
+  version: 1.7.3
+  resolution: "cheminfo-types@npm:1.7.3"
+  checksum: 10/238918de274b8cb7e92eed50e11396c71dd48d3f3196335e4b4b53f1ab12bb0b217a22a5b8d12ce35f7b256147f2953b9506e4f6e48a0dc9eda1df0625fd3e5c
   languageName: node
   linkType: hard
 
@@ -21673,13 +21673,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ml-matrix@npm:^6.10.5":
-  version: 6.10.8
-  resolution: "ml-matrix@npm:6.10.8"
+"ml-matrix@npm:^6.11.0":
+  version: 6.11.0
+  resolution: "ml-matrix@npm:6.11.0"
   dependencies:
     is-any-array: "npm:^2.0.1"
     ml-array-rescale: "npm:^1.3.7"
-  checksum: 10/a13909330f119dffb5538b08036a635895f87e12b25e3a23b0662e7333cfbb50425cea8fca55b03cd3eb8eeaa2509a2c84e0c26a0ca89c718f97f4234e2008b4
+  checksum: 10/0fe34b43ae23a012ee616435766fafad2c35c69f1f5195b798975b89b279c940a87171d05906af2226c40d908310289dda7d6135a0d12a1a3d719a5d6e482e67
   languageName: node
   linkType: hard
 
@@ -21693,14 +21693,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ml-regression-polynomial@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "ml-regression-polynomial@npm:3.0.0"
+"ml-regression-base@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "ml-regression-base@npm:4.0.0"
   dependencies:
-    cheminfo-types: "npm:^1.7.2"
-    ml-matrix: "npm:^6.10.5"
-    ml-regression-base: "npm:^3.0.0"
-  checksum: 10/e5d3ee187d6f35e4e3b2191f52d7dc63a61f0b975cf2012ed20403420d6a65ae2ad7d51f80896daf778b39bdbd56d7fa9d4c17aac96a1669acea3fbd2a0a31d7
+    cheminfo-types: "npm:^1.7.3"
+    is-any-array: "npm:^2.0.1"
+  checksum: 10/2a3824796a2b8f6120d1cdbcc95f2b50614df7a215bb9ced37538b0949e43d72490610cb7344b6e419100b8d29023b1be0be44f36b6cacbac4b677089a7b449d
+  languageName: node
+  linkType: hard
+
+"ml-regression-polynomial@npm:^3.0.0":
+  version: 3.0.1
+  resolution: "ml-regression-polynomial@npm:3.0.1"
+  dependencies:
+    cheminfo-types: "npm:^1.7.3"
+    ml-matrix: "npm:^6.11.0"
+    ml-regression-base: "npm:^4.0.0"
+  checksum: 10/ae0dd3a05458af2a75ea24bcd9e0c1201650eca8a2bee699d9a432a6ba89074b0961496b7b6ccc32c57e8913524620fda6383dfe4f0c9735844cf2d98bd21d90
   languageName: node
   linkType: hard
 
