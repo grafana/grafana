@@ -24,7 +24,6 @@ type Service interface {
 	ListAccessPolicies(ctx context.Context, params ListAccessPoliciesParams) ([]AccessPolicy, error)
 	DeleteAccessPolicy(ctx context.Context, params DeleteAccessPolicyParams) (bool, error)
 	CreateToken(ctx context.Context, params CreateTokenParams, payload CreateTokenPayload) (Token, error)
-	// Deletes an auth token.
 	DeleteToken(ctx context.Context, params DeleteTokenParams) error
 }
 
