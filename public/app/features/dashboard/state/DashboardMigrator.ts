@@ -76,6 +76,10 @@ type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
  * To add a dashboard migration increment this number
  * and then add your migration at the bottom of 'updateSchema'
  * hint: search "Add migration here"
+ *
+ * This number also needs to be updated on the CUE schema:
+ * kinds/dashboard/dashboard_kind.cue
+ * Example PR: #87712
  */
 export const DASHBOARD_SCHEMA_VERSION = 39;
 export class DashboardMigrator {
