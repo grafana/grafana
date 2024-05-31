@@ -22,6 +22,13 @@ title: Add an external Alertmanager
 weight: 200
 ---
 
+http://localhost:3003/docs/grafana/latest/datasources/alertmanager/
+
+Grafana includes built-in support for Alertmanager implementations in Prometheus and Mimir. Once you add it as a data source, you can use the Grafana Alerting UI to manage silences, contact points, and notification policies. To switch between Grafana and any configured Alertmanager data sources, you can select your preference from a drop-down option in those databases’ data source settings pages.
+
+Alertmanager implementations
+The data source supports Prometheus and Grafana Mimir (default) implementations of Alertmanager. You can specify the implementation in the data source’s Settings page. When using Prometheus, contact points and notification policies are read-only in the Grafana Alerting UI, because it doesn’t support updates to the configuration using HTTP API.
+
 Grafana sends firing and resolved alerts to Alertmanagers. The Alertmanager receives alerts, handles silencing, inhibition, grouping, and routing by sending notifications out via your channel of choice, for example, email or Slack.
 
 Grafana has its own Alertmanager, referred to as "Grafana" in the user interface, but also supports sending alerts to other Alertmanagers, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/). You can use both internal and external Alertmanagers.
