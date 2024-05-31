@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/buffered"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/querydata"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
@@ -190,6 +192,15 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 	} else {
 		resp = buffered.ResponseParse(res.Body, res.StatusCode, query)
 	}
+
+	if resp.Frames != nil && len(resp.Frames) > 0 {
+		// The ExecutedQueryString can be viewed in QueryInspector in UI
+		resp.Frames[0].Meta = &data.FrameMeta{ExecutedQueryString: query.RawQuery, PreferredVisualization: util.GetVisType(query.ResultFormat)}
+		if resp.Frames[0].Fields != nil && len(resp.Frames[0].Fields) > 0 {
+			resp.Frames[0].Fields[0].Config = &data.FieldConfig{Interval: float64(query.Interval.Milliseconds())}
+		}
+	}
+
 	return *resp, nil
 }
 

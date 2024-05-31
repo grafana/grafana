@@ -5,11 +5,9 @@ import (
 	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/converter"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
@@ -25,13 +23,6 @@ func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *back
 
 	if statusCode/100 != 2 {
 		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", r.Error)}
-	}
-
-	// The ExecutedQueryString can be viewed in QueryInspector in UI
-	for i, frame := range r.Frames {
-		if i == 0 {
-			frame.Meta = &data.FrameMeta{ExecutedQueryString: query.RawQuery, PreferredVisualization: util.GetVisType(query.ResultFormat)}
-		}
 	}
 
 	return r

@@ -66,10 +66,6 @@ func transformRowsForTable(rows []models.Row, query models.Query) data.Frames {
 	frames := make([]*data.Frame, 0, 1)
 
 	newFrame := data.NewFrame(rows[0].Name)
-	newFrame.Meta = &data.FrameMeta{
-		ExecutedQueryString:    query.RawQuery,
-		PreferredVisualization: util.GetVisType(query.ResultFormat),
-	}
 
 	conLen := len(rows[0].Columns)
 	if rows[0].Columns[0] == "time" {
@@ -241,12 +237,6 @@ func transformRowsForTimeSeries(rows []models.Row, query models.Query) data.Fram
 
 		if !hasTimeCol {
 			newFrame := newFrameWithoutTimeField(row, query)
-			if len(frames) == 0 {
-				newFrame.Meta = &data.FrameMeta{
-					ExecutedQueryString:    query.RawQuery,
-					PreferredVisualization: util.GetVisType(query.ResultFormat),
-				}
-			}
 			frames = append(frames, newFrame)
 		} else {
 			for colIndex, column := range row.Columns {
@@ -254,12 +244,6 @@ func transformRowsForTimeSeries(rows []models.Row, query models.Query) data.Fram
 					continue
 				}
 				newFrame := newFrameWithTimeField(row, column, colIndex, query, frameName)
-				if len(frames) == 0 {
-					newFrame.Meta = &data.FrameMeta{
-						ExecutedQueryString:    query.RawQuery,
-						PreferredVisualization: util.GetVisType(query.ResultFormat),
-					}
-				}
 				frames = append(frames, newFrame)
 			}
 		}
