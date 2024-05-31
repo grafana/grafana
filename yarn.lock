@@ -14112,16 +14112,16 @@ __metadata:
   linkType: hard
 
 "dompurify@npm:^2.2.0":
-  version: 2.5.4
-  resolution: "dompurify@npm:2.5.4"
-  checksum: 10/977a01ba3fbd58e2ac7c63a7d82a13d8e1c4555e99efc8f10e1d4fe0d22fa3e3d536f7243c9bfc07382cd21522f2cf2a8440e6a558f41cc509feb168e9cd2fb4
+  version: 2.5.5
+  resolution: "dompurify@npm:2.5.5"
+  checksum: 10/4429b9b22a0e67391c27b497b77d6417dd434b63e4d96de6470b6bc37faf2db8669a81aa05b012fbccb6c4ac694e7d8008204cf560b321cd23b97d79611cdc16
   languageName: node
   linkType: hard
 
 "dompurify@npm:^3.0.0":
-  version: 3.1.4
-  resolution: "dompurify@npm:3.1.4"
-  checksum: 10/be036d5c10bda3ca9cc8069f26f3e586ac0379fc2a2499df7c362eeee53de49594ead3cc7e82e012eadcb071cf7327001fca33751682882e42da87618b10a4e6
+  version: 3.1.5
+  resolution: "dompurify@npm:3.1.5"
+  checksum: 10/4ea935df48b49a0a76c66b6eee8522ca12783f2643119482b8329867f1e8adb34ff1d2dd56973927be9de5f01079948556907f22e882b06fa7b0c0ba281bf14a
   languageName: node
   linkType: hard
 
