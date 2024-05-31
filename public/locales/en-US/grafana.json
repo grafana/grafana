@@ -465,6 +465,16 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "add-to-library-modal": {
+      "auto-star": "Auto-star this query to add it to your starred list in the Query Library.",
+      "data-source-name": "Data source name",
+      "data-source-type": "Data source type",
+      "description": "Description",
+      "info": "You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
+      "query": "Query",
+      "title": "Add query to Query Library",
+      "visibility": "Visibility"
+    },
     "rich-history": {
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
