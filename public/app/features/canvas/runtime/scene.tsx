@@ -17,7 +17,6 @@ import {
 } from '@grafana/schema';
 import { Portal } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import { DimensionContext } from 'app/features/dimensions';
 import {
   getColorDimensionFromData,
@@ -34,12 +33,14 @@ import {
   CONNECTION_VERTEX_ADD_ID,
   CONNECTION_VERTEX_ID,
 } from 'app/plugins/panel/canvas/components/connections/Connections';
+import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
 import { getParent, getTransformInstance } from 'app/plugins/panel/canvas/utils';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
-import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+import { CanvasFrameOptions } from '../frame';
+import { DEFAULT_CANVAS_ELEMENT_CONFIG } from '../registry';
 
 import { SceneTransformWrapper } from './SceneTransformWrapper';
 import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
