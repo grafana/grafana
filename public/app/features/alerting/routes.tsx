@@ -176,7 +176,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingInstancesExternalRead,
       ]),
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "CentralAlertHistory" */ 'app/features/alerting/unified/CentralAlertHistory')
+        () =>
+          import(
+            /* webpackChunkName: "HistoryPage" */ 'app/features/alerting/unified/components/rules/central-state-history/EventsBarChart'
+          )
       ),
     },
     {

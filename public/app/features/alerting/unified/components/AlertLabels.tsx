@@ -14,11 +14,13 @@ interface Props {
   labels: Record<string, string>;
   commonLabels?: Record<string, string>;
   size?: LabelSize;
+  limit?: number;
 }
 
-export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
+export const AlertLabels = ({ labels, commonLabels = {}, size, limit }: Props) => {
   const styles = useStyles2(getStyles, size);
   const [showCommonLabels, setShowCommonLabels] = useState(false);
+  const [showAllLabels, setShowAllLabels] = useState(false);
 
   const labelsToShow = chain(labels)
     .toPairs()
@@ -28,10 +30,11 @@ export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
 
   const commonLabelsCount = Object.keys(commonLabels).length;
   const hasCommonLabels = commonLabelsCount > 0;
+  const labelsToShowLimited = showAllLabels ? labelsToShow : labelsToShow.slice(0, limit);
 
   return (
     <div className={styles.wrapper} role="list" aria-label="Labels">
-      {labelsToShow.map(([label, value]) => (
+      {labelsToShowLimited.map(([label, value]) => (
         <Label key={label + value} size={size} label={label} value={value} color={getLabelColor(label)} />
       ))}
       {!showCommonLabels && hasCommonLabels && (
@@ -55,6 +58,22 @@ export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
           size="sm"
         >
           Hide common labels
+        </Button>
+      )}
+      {showAllLabels && Boolean(limit) && (
+        <Button
+          variant="secondary"
+          fill="text"
+          onClick={() => setShowAllLabels(false)}
+          tooltipPlacement="top"
+          size="sm"
+        >
+          Show less labels
+        </Button>
+      )}
+      {!showAllLabels && limit && labelsToShow.length > limit && (
+        <Button variant="secondary" fill="text" onClick={() => setShowAllLabels(true)} tooltipPlacement="top" size="sm">
+          +{labelsToShow.length - limit} more
         </Button>
       )}
     </div>
