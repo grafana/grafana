@@ -13,6 +13,7 @@ type CloudMigrationSettings struct {
 	DeleteAccessPolicyTimeout time.Duration
 	ListTokensTimeout         time.Duration
 	CreateTokenTimeout        time.Duration
+	DeleteTokenTimeout        time.Duration
 	TokenExpiresAfter         time.Duration
 
 	IsDeveloperMode bool
@@ -28,6 +29,7 @@ func (cfg *Cfg) readCloudMigrationSettings() {
 	cfg.CloudMigration.DeleteAccessPolicyTimeout = cloudMigration.Key("delete_access_policy_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.ListTokensTimeout = cloudMigration.Key("list_tokens_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.CreateTokenTimeout = cloudMigration.Key("create_token_timeout").MustDuration(5 * time.Second)
+	cfg.CloudMigration.DeleteTokenTimeout = cloudMigration.Key("delete_token_timeout").MustDuration(5 * time.Second)
 	cfg.CloudMigration.TokenExpiresAfter = cloudMigration.Key("token_expires_after").MustDuration(7 * 24 * time.Hour)
 	cfg.CloudMigration.IsDeveloperMode = cloudMigration.Key("developer_mode").MustBool(false)
 }

@@ -2550,6 +2550,38 @@
         }
       }
     },
+    "/cloudmigration/token/{uid}": {
+      "delete": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Deletes a cloud migration token.",
+        "operationId": "deleteCloudMigrationToken",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID of a cloud migration token",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/cloudMigrationDeleteTokenResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/dashboard/snapshots": {
       "get": {
         "tags": [
@@ -22226,6 +22258,9 @@
       "schema": {
         "$ref": "#/definitions/CreateAccessTokenResponseDTO"
       }
+    },
+    "cloudMigrationDeleteTokenResponse": {
+      "description": "(empty)"
     },
     "cloudMigrationGetTokenResponse": {
       "description": "(empty)",

@@ -13,6 +13,7 @@ type Service interface {
 	CreateToken(context.Context) (CreateAccessTokenResponse, error)
 	// Sends a request to CMS to test the token.
 	ValidateToken(context.Context, CloudMigration) error
+	DeleteToken(ctx context.Context, uid string) error
 
 	CreateMigration(context.Context, CloudMigrationRequest) (*CloudMigrationResponse, error)
 	GetMigration(ctx context.Context, uid string) (*CloudMigration, error)

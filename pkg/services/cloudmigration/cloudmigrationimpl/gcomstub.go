@@ -74,3 +74,8 @@ func (client *gcomStub) CreateToken(ctx context.Context, params gcom.CreateToken
 	}
 	return token, nil
 }
+
+func (client *gcomStub) DeleteToken(ctx context.Context, params gcom.DeleteTokenParams) error {
+	client.token = nil
+	return nil
+}

@@ -142,7 +142,6 @@ export type DashboardMeta = {
   provisioned?: boolean;
   provisionedExternalId?: string;
   publicDashboardEnabled?: boolean;
-  publicDashboardUid?: string;
   slug?: string;
   type?: string;
   updated?: string;
