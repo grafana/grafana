@@ -1,8 +1,3 @@
-/* eslint-disable no-console */
-import Mousetrap from 'mousetrap';
-
-import 'mousetrap-global-bind';
-import 'mousetrap/plugins/global-bind/mousetrap-global-bind';
 import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent, locationUtil } from '@grafana/data';
 import { LocationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -27,7 +22,12 @@ import { HelpModal } from '../components/help/HelpModal';
 import { contextSrv } from '../core';
 import { RouteDescriptor } from '../navigation/types';
 
+import Mousetrap from './Mousetrap';
+import { ShortcutHandler } from './ShortcutHandler';
 import { toggleTheme } from './theme';
+
+import 'mousetrap-global-bind'; // must be after Mousetrap import
+import 'mousetrap/plugins/global-bind/mousetrap-global-bind'; // must be after Mousetrap import
 
 export class KeybindingSrv {
   constructor(
@@ -39,8 +39,11 @@ export class KeybindingSrv {
       this.panelId = event.payload.panelId;
     });
   }
+
   /** string for VizPanel key and number for panelId */
   private panelId: string | number | null = null;
+
+  private shortcutHandler = new ShortcutHandler();
 
   clearAndInitGlobalBindings(route: RouteDescriptor) {
     Mousetrap.reset();
@@ -202,35 +205,45 @@ export class KeybindingSrv {
   }
 
   setupTimeRangeBindings(updateUrl = true) {
-    this.bind('t a', () => {
-      appEvents.publish(new AbsoluteTimeEvent({ updateUrl }));
-    });
-
-    this.bind('t z', () => {
-      appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
-    });
-
-    this.bind('ctrl+z', () => {
-      appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
-    });
-
-    // this.bind('t+left', () => {
-    //   console.log('doing a t+left');
-    //   appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Left, updateUrl }));
+    // this.bind('t a', () => {
+    //   appEvents.publish(new AbsoluteTimeEvent({ updateUrl }));
     // });
 
-    // this.bind('t+right', () => {
-    //   console.log('doing a t+right');
-    //   appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Right, updateUrl }));
+    // this.bind('t z', () => {
+    //   appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
     // });
 
-    this.bind('t c', () => {
-      appEvents.publish(new CopyTimeEvent());
+    // this.bind('ctrl+z', () => {
+    //   appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
+    // });
+
+    let count = 0;
+
+    this.bind('t left', () => {
+      count += 1;
+      console.groupEnd();
+      console.groupEnd();
+      console.groupEnd();
+      console.log('%cdoing a t+left ' + count, 'background: #2ecc71; color: black; font-weight: bold');
+      appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Left, updateUrl }));
     });
 
-    this.bind('t v', () => {
-      appEvents.publish(new PasteTimeEvent({ updateUrl }));
+    this.bind('t right', () => {
+      count += 1;
+      console.groupEnd();
+      console.groupEnd();
+      console.groupEnd();
+      console.log('%cdoing a t+right ' + count, 'background: #3498db; color: black; font-weight: bold');
+      appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Right, updateUrl }));
     });
+
+    // this.bind('t c', () => {
+    //   appEvents.publish(new CopyTimeEvent());
+    // });
+
+    // this.bind('t v', () => {
+    //   appEvents.publish(new PasteTimeEvent({ updateUrl }));
+    // });
   }
 
   setupDashboardBindings(dashboard: DashboardModel) {
@@ -380,85 +393,3 @@ export class KeybindingSrv {
     });
   }
 }
-
-class Shortcut {
-  bindings = new Map<string[], Function>();
-
-  activeKeys: string[] = [];
-
-  private handleKeyDown = (event: KeyboardEvent) => {
-    if (event.repeat) {
-      return;
-    }
-
-    const pressed = event.key.toLowerCase();
-
-    console.group('handleKeyDown: ', pressed, event);
-
-    this.activeKeys.push(pressed);
-
-    console.log('all binding', ...Array.from(this.bindings.entries()).map(([combo]) => combo));
-    console.log('activeKeys', this.activeKeys);
-
-    // Return all bindings that match the currently active keys
-    const matches = Array.from(this.bindings.entries()).filter(([combo]) =>
-      combo.every((key, index) => this.activeKeys[index] === key)
-    );
-
-    for (const [combo, callback] of matches) {
-      console.log('%cShortcut matched!', 'background: #2ecc71; color: black', combo, callback);
-      callback();
-    }
-
-    console.groupEnd();
-  };
-
-  private handleKeyUp = (event: KeyboardEvent) => {
-    if (event.repeat) {
-      return;
-    }
-
-    const pressed = event.key.toLowerCase();
-    console.group('handleKeyUp', pressed);
-    console.log('event', event);
-
-    const index = this.activeKeys.indexOf(pressed);
-    if (index > -1) {
-      this.activeKeys.splice(index, 1);
-      console.log('removed from active keys');
-    }
-
-    console.log('activeKeys', this.activeKeys);
-    console.groupEnd();
-  };
-
-  private setupEventListeners() {
-    document.addEventListener('keydown', this.handleKeyDown);
-    document.addEventListener('keyup', this.handleKeyUp);
-  }
-
-  private resetEventListeners() {
-    document.removeEventListener('keydown', this.handleKeyDown);
-    document.removeEventListener('keyup', this.handleKeyUp);
-  }
-
-  bind(combo: string[], callback: Function) {
-    this.bindings.set(combo, callback); // allows dupes, because arrays
-
-    if (this.bindings.size > 0) {
-      this.resetEventListeners();
-      this.setupEventListeners();
-    }
-  }
-}
-
-const sht = new Shortcut();
-sht.bind(['t', 'arrowleft'], () => {
-  console.log('%cDoing shift time LEFT', 'background: #3498db; color: black; font-weight: bold;');
-  appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Left, updateUrl: false }));
-});
-
-sht.bind(['t', 'arrowright'], () => {
-  console.log('%cDoing shift time RIGHT', 'background: #3498db; color: black; font-weight: bold;');
-  appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Right, updateUrl: false }));
-});
