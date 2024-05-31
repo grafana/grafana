@@ -125,7 +125,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
       "Resource": "*"
     },
     {
-      "Sid": "AmazonRDSPerformanceInsightsGetResourceMetrics",
+      "Sid": "AllowReadingResourceMetricsFromPerformanceInsights",
       "Effect": "Allow",
       "Action": "pi:GetResourceMetrics",
       "Resource": "*"
@@ -189,7 +189,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
       "Resource": "*"
     },
     {
-      "Sid": "AmazonRDSPerformanceInsightsGetResourceMetrics",
+      "Sid": "AllowReadingResourceMetricsFromPerformanceInsights",
       "Effect": "Allow",
       "Action": "pi:GetResourceMetrics",
       "Resource": "*"
