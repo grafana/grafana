@@ -10,6 +10,9 @@ import { t, Trans } from 'app/core/internationalization';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { getDashboardSnapshotSrv, SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
 
+import { createSuccessNotification } from '../../../core/copy/appNotification';
+import { notifyApp } from '../../../core/reducers/appNotification';
+import { dispatch } from '../../../store/store';
 import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serialization/transformSceneToSaveModel';
 import { DashboardInteractions } from '../utils/interactions';
 
@@ -54,7 +57,7 @@ export interface ShareSnapshotTabState extends SceneShareTabState {
 
 export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
   public tabId = shareDashboardType.snapshot;
-  static Component = ShareSnapshoTabRenderer;
+  static Component = ShareSnapshotTabRenderer;
 
   public constructor(state: ShareSnapshotTabState) {
     super({
@@ -124,7 +127,9 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
     };
 
     try {
-      return await getDashboardSnapshotSrv().create(cmdData);
+      const response = await getDashboardSnapshotSrv().create(cmdData);
+      dispatch(notifyApp(createSuccessNotification('Your snapshot has been created')));
+      return response;
     } finally {
       if (external) {
         DashboardInteractions.publishSnapshotClicked({
@@ -139,9 +144,15 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
       }
     }
   };
+
+  public onSnapshotDelete = async (url: string) => {
+    const response = await getBackendSrv().get(url);
+    dispatch(notifyApp(createSuccessNotification('Your snapshot has been deleted')));
+    return response;
+  };
 }
 
-function ShareSnapshoTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab>) {
+function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab>) {
   const { snapshotName, selectedExpireOption, modalRef, snapshotSharingOptions } = model.useState();
 
   const [snapshotResult, createSnapshot] = useAsyncFn(async (external = false) => {

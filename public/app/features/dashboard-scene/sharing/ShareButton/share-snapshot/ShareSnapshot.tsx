@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert } from '@grafana/ui';
 
@@ -18,17 +17,23 @@ export class ShareSnapshot extends ShareSnapshotTab {
 }
 
 function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
+  const [step, setStep] = useState(1);
+
   const [snapshotResult, createSnapshot] = useAsyncFn(async (external = false) => {
-    return model.onSnapshotCreate(external);
+    const response = await model.onSnapshotCreate(external);
+    setStep(2);
+    return response;
   });
 
   const [deleteSnapshotResult, deleteSnapshot] = useAsyncFn(async (url: string) => {
-    return await getBackendSrv().get(url);
+    const response = await model.onSnapshotDelete(url);
+    setStep(1);
+    return response;
   });
 
   return (
     <div data-testid={selectors.container}>
-      {!snapshotResult.value || deleteSnapshotResult.value ? (
+      {step === 1 && (
         <>
           {deleteSnapshotResult.value && (
             <Alert severity="info" title={''}>
@@ -38,11 +43,13 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
           )}
           <CreateSnapshot onCreateClick={createSnapshot} isLoading={snapshotResult.loading} model={model} />
         </>
-      ) : (
+      )}
+      {step === 2 && (
         <SnapshotActions
-          url={snapshotResult.value.url}
-          onDeleteClick={() => deleteSnapshot(snapshotResult.value?.deleteUrl!)}
+          url={snapshotResult.value!.url}
           isLoading={deleteSnapshotResult.loading}
+          onDeleteClick={() => deleteSnapshot(snapshotResult.value?.deleteUrl!)}
+          onNewSnapshotClick={() => setStep(1)}
         />
       )}
     </div>

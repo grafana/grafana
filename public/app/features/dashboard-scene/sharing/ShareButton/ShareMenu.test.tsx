@@ -23,6 +23,7 @@ describe('ShareMenu', () => {
 
     expect(await screen.findByTestId(selector.shareInternally)).toBeInTheDocument();
     expect(await screen.findByTestId(selector.shareExternally)).toBeInTheDocument();
+    expect(await screen.findByTestId(selector.shareSnapshot)).toBeInTheDocument();
   });
   it('should call createAndCopyDashboardShortLink when share internally clicked', async () => {
     setup();

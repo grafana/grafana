@@ -1,10 +1,10 @@
 import React from 'react';
 
 import { SceneComponentProps } from '@grafana/scenes';
-import { Alert, Button, Divider, Field, Input, RadioButtonGroup, Spinner, Stack, TextLink } from '@grafana/ui';
+import { Alert, Divider, Field, Input, RadioButtonGroup, Spinner, Stack, TextLink, Text, Button } from '@grafana/ui';
 import { t } from '@grafana/ui/src/utils/i18n';
+import { Trans } from 'app/core/internationalization';
 
-import { Trans } from '../../../../../core/internationalization';
 import { getExpireOptions } from '../../ShareSnapshotTab';
 
 import { ShareSnapshot } from './ShareSnapshot';
@@ -22,11 +22,10 @@ export function CreateSnapshot({ model, onCreateClick, isLoading }: Props) {
     <div>
       <Alert severity="info" title={''}>
         <Stack justifyContent="space-between" gap={2} alignItems="center">
-          <Trans i18nKey="share-modal.snapshot.info-text-1">
-            A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip sensitive
-            data like queries (metric, template, and annotation) and panel links, leaving only the visible metric data
-            and series names embedded in your dashboard.
-          </Trans>
+          <Text>
+            A Grafana dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and
+            panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.
+          </Text>
           <Button variant="secondary" onClick={() => window.open(SNAPSHOT_URL, '_blank')} type="button">
             Learn more
           </Button>
