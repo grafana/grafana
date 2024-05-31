@@ -633,12 +633,13 @@ func createSut(t *testing.T) AlertmanagerSrv {
 	log := log.NewNopLogger()
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	ruleStore := ngfakes.NewRuleStore(t)
+	ruleAuthzService := accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
 	return AlertmanagerSrv{
 		mam:        mam,
 		crypto:     mam.Crypto,
 		ac:         ac,
 		log:        log,
-		silenceSvc: notifier.NewSilenceService(accesscontrol.NewSilenceService(ac, ruleStore), ruleStore, log, mam),
+		silenceSvc: notifier.NewSilenceService(accesscontrol.NewSilenceService(ac, ruleStore), ruleStore, log, mam, ruleStore, ruleAuthzService),
 	}
 }
 
