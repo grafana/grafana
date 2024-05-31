@@ -2,10 +2,16 @@ package cloudmigration
 
 import (
 	"context"
+
+	"github.com/grafana/grafana/pkg/services/gcom"
 )
 
 type Service interface {
+	// Returns the cloud migration token if it exists.
+	GetToken(context.Context) (gcom.TokenView, error)
+	// Creates a cloud migration token.
 	CreateToken(context.Context) (CreateAccessTokenResponse, error)
+	// Sends a request to CMS to test the token.
 	ValidateToken(context.Context, CloudMigration) error
 
 	CreateMigration(context.Context, CloudMigrationRequest) (*CloudMigrationResponse, error)
