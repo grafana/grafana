@@ -63,6 +63,9 @@ export const alertmanagerConfigurationReducer = createReducer<AlertManagerCortex
     // delete a receiver from the alertmanager configuration
     .addCase(deleteReceiverAction, (draft, { payload: name }) => {
       remove(draft.alertmanager_config.receivers ?? [], (receiver) => receiver.name === name);
+    })
+    .addDefaultCase((_state, action) => {
+      throw new Error(`Unknown action for receiver reducer: ${action.type}`);
     });
 });
 
