@@ -1,8 +1,11 @@
 import server from 'app/features/alerting/unified/mockApi';
 import { mockFolder } from 'app/features/alerting/unified/mocks';
-import { grafanaAlertingConfigurationStatusHandler } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
+import {
+  getGrafanaAlertmanagerConfigHandler,
+  grafanaAlertingConfigurationStatusHandler,
+} from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
-import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 
 /**
@@ -22,4 +25,11 @@ export const setAlertmanagerChoices = (alertmanagersChoice: AlertmanagerChoice, 
  */
 export const setFolderAccessControl = (accessControl: FolderDTO['accessControl']) => {
   server.use(getFolderHandler(mockFolder({ hasAcl: true, accessControl })));
+};
+
+/**
+ * Makes the mock server respond with different Grafana Alertmanager config
+ */
+export const setGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => {
+  server.use(getGrafanaAlertmanagerConfigHandler(config));
 };

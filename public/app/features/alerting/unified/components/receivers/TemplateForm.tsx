@@ -220,6 +220,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                 placeholder="Give your template a name"
                 width={42}
                 autoFocus={true}
+                id="new-template-name"
               />
             </InlineField>
 
