@@ -2,7 +2,9 @@ package grpc
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -29,10 +31,20 @@ func ProvideAuthenticator(cfg *setting.Cfg) *Authenticator {
 		SigningKeysURL: section.Key("signing_keys_url").MustString("https://localhost:3000/api/signing-keys/keys"),
 	}
 
+	// Allow insecure skip verify in dev mode
+	retrieverClient := http.DefaultClient
+	if cfg.Env == setting.Dev {
+		retrieverClient = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+		}
+	}
+	retriever := authnlib.NewKeyRetriever(keyConfig, authnlib.WithHTTPClientKeyRetrieverOpt(retrieverClient))
+
 	// TODO specify the allowed audience?
-	// TODO allow trusting self signed https certificates in the verifier
 	return &Authenticator{
-		verifier: authnlib.NewIDTokenVerifier(authnlib.VerifierConfig{}, authnlib.NewKeyRetriever(keyConfig)),
+		verifier: authnlib.NewIDTokenVerifier(authnlib.VerifierConfig{}, retriever),
 	}
 }
 
