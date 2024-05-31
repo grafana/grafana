@@ -1,6 +1,6 @@
 # Guide to upgrading dependencies
 
-Upgrading Go or Node.js requires making changes in many different files. See below for a list and explanation for each.
+Upgrading Go or Node.js requires making changes in many different files. Refer to the following list for more information.
 
 ## Go
 
@@ -19,7 +19,7 @@ Upgrading Go or Node.js requires making changes in many different files. See bel
 
 ## Go dependencies
 
-The Grafana project uses [Go modules](https://golang.org/cmd/go/#hdr-Modules__module_versions__and_more) to manage dependencies on external packages. This requires a working Go environment with version 1.11 or greater installed.
+The Grafana project uses [Go modules](https://golang.org/cmd/go/#hdr-Modules__module_versions__and_more) to manage dependencies on external packages. This requires a working Go environment with version 1.11 or later installed.
 
 To add or update a new dependency, use the `go get` command:
 
@@ -36,17 +36,19 @@ Tidy up the `go.mod` and `go.sum` files:
 go mod tidy
 ```
 
-You have to commit the changes to `go.mod` and `go.sum` before submitting the pull request.
+You have to commit the changes to `go.mod` and `go.sum` before you submit the pull request.
 
-To understand what the actual dependencies of `grafana-server` are, one could run it with `-vv` flag. This might produce an output, different from `go.mod` contents and `-vv` option is the source of truth here. It lists the modules _compiled_ into the executable, while `go.mod` lists also test and weak transitive dependencies (modules, used in some package, which is not in use by itself). If you are interested in reporting a vulnerability in a dependency module - please consult `-vv` output, maybe the "dependency" is not a dependency as such.
+To understand what the actual dependencies of `grafana-server` are, you can run it with the `-vv` flag. Note that this command might produce an output different from `go.mod` contents, and `-vv` option is the source of truth here. The output lists the modules _compiled_ into the executable, whereas `go.mod` lists also test and weak transitive dependencies (that is, modules, used in some packages, which aren't in use by itself). If you're interested in reporting a vulnerability in a dependency module, consult the `-vv` output, maybe the "dependency" isn't actually a dependency as such.
 
 ### Upgrading dependencies
 
-If you need to upgrade a direct or indirect dependency, you can do it like so, $MODULE being the dependency in question: `go get -u $MODULE`. The corresponding entry in go.mod should then have the version you specified; if it's an indirect dependency, the entry should have the `// indirect` comment. Follow this by executing `go mod tidy`, to ensure that go.mod and go.sum are up to date. If the indirect dependency turns out to not be used (transitively) by any of our packages, `go mod tidy` will actually strip it from go.mod. In that case, you can just ignore it since it isn't used in the end.
+If you need to upgrade a direct or indirect dependency, you can do it like so, where _`MODULE`_ is the dependency in question: `go get -u <MODULE>`. The corresponding entry in `go.mod` should then have the version you specified. If it's an indirect dependency, the entry should have the `// indirect` comment.
+
+To do so, execute `go mod tidy` to ensure that `go.mod` and `go.sum` are updated. If the indirect dependency turns out to not be used (transitively) by any of our packages, `go mod tidy` actually strips it from `go.mod`. In that case, you can just ignore it because ultimately it isn't used.
 
 ## Node.js dependencies
 
-Updated using `yarn`.
+Updated using `yarn`:
 
 - `package.json`
 
@@ -62,26 +64,26 @@ Our CI builds run on Drone.
 
 #### Dependencies
 
-- nodejs
-- golang
-- grafana/build-container (our custom docker build container)
+- Node.js
+- Go
+- `grafana/build-container` (our custom Docker build container)
 
 ### grafana/build-container
 
 The main build steps (in Drone) happen using a custom Docker image that comes pre-baked with some of the necessary dependencies.
 
-Link: [grafana/build-container](https://github.com/grafana/grafana/tree/main/scripts/build/ci-build)
+Link: [`grafana/build-container`](https://github.com/grafana/grafana/tree/main/scripts/build/ci-build)
 
 #### Dependencies
 
 - fpm
-- nodejs
-- golang
-- crosscompiling (several compilers)
+- Node.js
+- Go
+- cross-compiling (several compilers)
 
 ### Appveyor
 
-Main and release builds trigger test runs on Appveyors build environment so that tests will run on Windows.
+Main and release builds trigger test runs on the Appveyors build environment so that tests will run on Windows.
 
 #### Files:
 
@@ -107,4 +109,4 @@ There is a Docker build for Grafana in the root of the project that allows anyon
 
 ### Local developer environments
 
-Please send out a notice in the grafana-dev slack channel when updating Go or Node.js to make it easier for everyone to update their local developer environments.
+It is a good practice to send out a notice in the grafana-dev Slack channel when updating Go or Node.js to make it easier for everyone to update their local developer environments.
