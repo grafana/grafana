@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
+import { IconName } from '@grafana/data';
+
 import { useStyles2 } from '../../themes';
-import { IconName } from '../../types/icon';
 import { ButtonVariant } from '../Button';
 import { Modal } from '../Modal/Modal';
 
