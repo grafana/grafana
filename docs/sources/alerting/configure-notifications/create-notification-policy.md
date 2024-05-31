@@ -31,11 +31,11 @@ refs:
 
 Notification policies determine how alerts are routed to contact points.
 
-Policies have a tree structure, where each policy can have one or more nested policies. Each policy, except for the default policy, can also match specific alert labels.
+Policies have a tree structure and each policy can have one or more nested policies. Each policy, except for the default policy, can also match specific alert labels.
 
 Each alert is evaluated by the default policy and subsequently by each nested policy.
 
-If the **Continue matching subsequent sibling nodes** option is enabled for a nested policy, then evaluation continues even after one or more matches. A parent policy’s configuration settings and contact point information govern the behavior of an alert that does not match any of the nested policies. A default policy governs any alert that does not match a nested policy.
+If the **Continue matching subsequent sibling nodes** option is enabled for a nested policy, evaluation continues even after one or more matches. A parent policy’s configuration settings and contact point information govern the behavior of an alert that does not match any of the nested policies. A default policy governs any alert that does not match a nested policy.
 
 You can configure Grafana-managed notification policies as well as notification policies for an external Alertmanager data source.
 
