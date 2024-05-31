@@ -399,7 +399,7 @@ Role sync allows you to map user roles from an identity provider to Grafana. To 
 1. Set the [`role_values_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_admin" >}}) option to the values mapped to the organization `Admin` role.
 1. Set the [`role_values_grafana_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_grafana_admin" >}}) option to the values mapped to the `Grafana Admin` role.
 
-If a user role doesn't match any of configured values, then the `Viewer` role will be assigned.
+If a user role doesn't match any of configured values, then the role specified by the `auto_assign_org_role` config option will be assigned. If the `auto_assign_org_role` field is not set then the user role will default to `Viewer`.
 
 For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
 
