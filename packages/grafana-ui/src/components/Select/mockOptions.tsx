@@ -34,12 +34,23 @@ export const generateOptions = (desc = false) => {
   }));
 };
 
-export const generateThousandsOfOptions = () => {
-  const options: Array<SelectableValue<string>> = new Array(10000).fill(null).map((_, index) => ({
-    value: String(index),
-    label: 'Option ' + index,
-    description: 'This is option number ' + index,
+export function generateThousandsOfOptions(count = 10000): Array<SelectableValue<string>> {
+  return new Array(count).fill(null).map((_, index) => ({
+    value: makeString(50),
+    label: makeString(50),
   }));
+}
 
-  return options;
-};
+function makeString(length: number) {
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+  let counter = 0;
+
+  while (counter < length) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    counter += 1;
+  }
+
+  return result;
+}

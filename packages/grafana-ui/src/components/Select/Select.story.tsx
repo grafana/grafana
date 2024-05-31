@@ -5,7 +5,7 @@ import Chance from 'chance';
 import React, { useState } from 'react';
 
 import { SelectableValue, toIconName } from '@grafana/data';
-import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
+import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect, Stack } from '@grafana/ui';
 
 import { getAvailableIcons } from '../../types';
 
@@ -143,6 +143,26 @@ export const BasicVirtualizedList: StoryFn<StoryProps> = (args) => {
         {...args}
       />
     </>
+  );
+};
+
+export const BasicVirtualizedListManyOptions: StoryFn<StoryProps> = (args) => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+
+  return (
+    <Stack direction="column">
+      100K random options
+      <Select
+        options={generateThousandsOfOptions(100000)}
+        virtualized
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          action('onChange')(v);
+        }}
+        {...args}
+      />
+    </Stack>
   );
 };
 
