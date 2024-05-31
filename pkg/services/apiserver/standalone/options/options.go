@@ -16,6 +16,7 @@ type Options struct {
 	TracingOptions     *TracingOptions
 	MetricsOptions     *MetricsOptions
 	ServerRunOptions   *genericoptions.ServerRunOptions
+	StorageOptions     *options.StorageOptions
 }
 
 func New(logger log.Logger, codec runtime.Codec) *Options {
@@ -26,6 +27,7 @@ func New(logger log.Logger, codec runtime.Codec) *Options {
 		TracingOptions:     NewTracingOptions(logger),
 		MetricsOptions:     NewMetrcicsOptions(logger),
 		ServerRunOptions:   genericoptions.NewServerRunOptions(),
+		StorageOptions:     options.NewStorageOptions(),
 	}
 }
 
