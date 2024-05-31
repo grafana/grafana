@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -25,6 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Service Define the cloudmigration.Service Implementation.
@@ -106,8 +109,13 @@ func ProvideService(
 		s.cfg.StackID = "12345"
 	}
 
-	if err := s.registerMetrics(prom, s.metrics); err != nil {
-		s.log.Warn("error registering prom metrics", "error", err.Error())
+	if err := prom.Register(s.metrics); err != nil {
+		var alreadyRegisterErr prometheus.AlreadyRegisteredError
+		if errors.As(err, &alreadyRegisterErr) {
+			s.log.Warn("cloud migration metrics already registered")
+		} else {
+			return s, fmt.Errorf("registering cloud migration metrics: %w", err)
+		}
 	}
 
 	return s, nil
@@ -274,6 +282,35 @@ func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigr
 	if err := s.cmsClient.ValidateKey(ctx, cm); err != nil {
 		return fmt.Errorf("validating key: %w", err)
 	}
+
+	return nil
+}
+
+func (s *Service) DeleteToken(ctx context.Context, tokenID string) error {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.DeleteToken", trace.WithAttributes(attribute.String("tokenID", tokenID)))
+	defer span.End()
+	logger := s.log.FromContext(ctx)
+	requestID := tracing.TraceIDFromContext(ctx, false)
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, s.cfg.CloudMigration.FetchInstanceTimeout)
+	defer cancel()
+	instance, err := s.gcomService.GetInstanceByID(timeoutCtx, requestID, s.cfg.StackID)
+	if err != nil {
+		return fmt.Errorf("fetching instance by id: id=%s %w", s.cfg.StackID, err)
+	}
+	logger.Info("found instance", "instanceID", instance.ID)
+
+	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.DeleteTokenTimeout)
+	defer cancel()
+	if err := s.gcomService.DeleteToken(timeoutCtx, gcom.DeleteTokenParams{
+		RequestID: tracing.TraceIDFromContext(ctx, false),
+		Region:    instance.RegionSlug,
+		TokenID:   tokenID,
+	}); err != nil && !errors.Is(err, gcom.ErrTokenNotFound) {
+		return fmt.Errorf("deleting cloud migration token: tokenID=%s %w", tokenID, err)
+	}
+	logger.Info("deleted cloud migration token", "tokenID", tokenID)
+	s.metrics.accessTokenDeleted.With(prometheus.Labels{"slug": s.cfg.Slug}).Inc()
 
 	return nil
 }

@@ -50,6 +50,7 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 		cloudMigrationRoute.Get("/migration/run/:runUID", routing.Wrap(cma.GetMigrationRun))
 		cloudMigrationRoute.Get("/token", routing.Wrap(cma.GetToken))
 		cloudMigrationRoute.Post("/token", routing.Wrap(cma.CreateToken))
+		cloudMigrationRoute.Delete("/token/:uid", routing.Wrap(cma.DeleteToken))
 	}, middleware.ReqOrgAdmin)
 }
 
@@ -110,6 +111,34 @@ func (cma *CloudMigrationAPI) CreateToken(c *contextmodel.ReqContext) response.R
 	}
 
 	return response.JSON(http.StatusOK, CreateAccessTokenResponseDTO(resp))
+}
+
+// swagger:route DELETE /cloudmigration/token/{uid} migrations deleteCloudMigrationToken
+//
+// Deletes a cloud migration token.
+//
+// Responses:
+// 204: cloudMigrationDeleteTokenResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (cma *CloudMigrationAPI) DeleteToken(c *contextmodel.ReqContext) response.Response {
+	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.DeleteToken")
+	defer span.End()
+
+	logger := cma.log.FromContext(ctx)
+
+	uid := web.Params(c.Req)[":uid"]
+	if err := util.ValidateUID(uid); err != nil {
+		return response.Error(http.StatusBadRequest, "invalid migration uid", err)
+	}
+
+	if err := cma.cloudMigrationService.DeleteToken(ctx, uid); err != nil {
+		logger.Error("deleting cloud migration token", "err", err.Error())
+		return response.ErrOrFallback(http.StatusInternalServerError, "deleting cloud migration token", err)
+	}
+
+	return response.Empty(http.StatusNoContent)
 }
 
 // swagger:route GET /cloudmigration/migration migrations getMigrationList
@@ -393,4 +422,16 @@ type CloudMigrationCreateTokenResponse struct {
 
 type CreateAccessTokenResponseDTO struct {
 	Token string `json:"token"`
+}
+
+// swagger:parameters deleteCloudMigrationToken
+type DeleteCloudMigrationToken struct {
+	// UID of a cloud migration token
+	//
+	// in: path
+	UID string `json:"uid"`
+}
+
+// swagger:response cloudMigrationDeleteTokenResponse
+type CloudMigrationDeleteTokenResponse struct {
 }

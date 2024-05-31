@@ -19,6 +19,11 @@ func (s *NoopServiceImpl) GetToken(ctx context.Context) (gcom.TokenView, error) 
 func (s *NoopServiceImpl) CreateToken(ctx context.Context) (cloudmigration.CreateAccessTokenResponse, error) {
 	return cloudmigration.CreateAccessTokenResponse{}, cloudmigration.ErrFeatureDisabledError
 }
+
+func (s *NoopServiceImpl) DeleteToken(ctx context.Context, uid string) error {
+	return cloudmigration.ErrFeatureDisabledError
+}
+
 func (s *NoopServiceImpl) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigration) error {
 	return cloudmigration.ErrFeatureDisabledError
 }
