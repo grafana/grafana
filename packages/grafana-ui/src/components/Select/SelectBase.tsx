@@ -24,6 +24,7 @@ import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { SelectContainer } from './SelectContainer';
 import { SelectMenu, SelectMenuOptions, VirtualizedSelectMenu } from './SelectMenu';
 import { SelectOptionGroup } from './SelectOptionGroup';
+import { SelectOptionGroupHeader } from './SelectOptionGroupHeader';
 import { Props, SingleValue } from './SingleValue';
 import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
@@ -331,6 +332,7 @@ export function SelectBase<T, Rest = {}>({
         components={{
           MenuList: SelectMenuComponent,
           Group: SelectOptionGroup,
+          GroupHeading: SelectOptionGroupHeader,
           ValueContainer,
           IndicatorsContainer: CustomIndicatorsContainer,
           IndicatorSeparator: IndicatorSeparator,
