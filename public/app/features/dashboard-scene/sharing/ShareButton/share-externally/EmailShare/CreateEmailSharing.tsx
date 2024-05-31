@@ -44,15 +44,14 @@ export const CreateEmailSharing = ({
   return (
     <>
       {hasWritePermissions && (
-        <Alert
-          title=""
-          severity="info"
-          buttonContent={<span>Learn more</span>}
-          onRemove={() => window.open(EMAIL_SHARING_URL, '_blank')}
-          bottomSpacing={0}
-        >
-          Effective immediately, sharing public dashboards by email incurs a cost per active user. Going forward, you’ll
-          be prompted for payment whenever you add new users to your dashboard.
+        <Alert title="" severity="info" bottomSpacing={0}>
+          <Stack justifyContent="space-between" gap={2} alignItems="center">
+            Effective immediately, sharing public dashboards by email incurs a cost per active user. Going forward,
+            you’ll be prompted for payment whenever you add new users to your dashboard.
+            <Button variant="secondary" onClick={() => window.open(EMAIL_SHARING_URL, '_blank')} type="button">
+              Learn more
+            </Button>
+          </Stack>
         </Alert>
       )}
       <form onSubmit={handleSubmit(onCreate)}>

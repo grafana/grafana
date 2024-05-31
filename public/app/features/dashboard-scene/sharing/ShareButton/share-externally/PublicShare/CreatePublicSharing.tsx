@@ -42,15 +42,14 @@ export default function CreatePublicSharing({
   return (
     <>
       {hasWritePermissions && (
-        <Alert
-          title=""
-          severity="warning"
-          buttonContent={<span>Learn more</span>}
-          onRemove={() => window.open(PUBLIC_DASHBOARD_URL, '_blank')}
-          bottomSpacing={0}
-        >
-          Sharing this dashboard externally makes it entirely accessible to anyone with the link. Currently, this
-          feature is limited to some data sources.
+        <Alert title="" severity="warning" bottomSpacing={0}>
+          <Stack justifyContent="space-between" gap={2} alignItems="center">
+            Sharing this dashboard externally makes it entirely accessible to anyone with the link. Currently, this
+            feature is limited to some data sources.
+            <Button variant="secondary" onClick={() => window.open(PUBLIC_DASHBOARD_URL, '_blank')} type="button">
+              Learn more
+            </Button>
+          </Stack>
         </Alert>
       )}
       <form onSubmit={handleSubmit(onCreate)}>
