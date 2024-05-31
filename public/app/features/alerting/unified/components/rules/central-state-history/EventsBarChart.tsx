@@ -11,7 +11,6 @@ import {
   SceneReactObject,
   SceneRefreshPicker,
   SceneTimePicker,
-  SceneTimeRange,
 } from '@grafana/scenes';
 import {
   GraphDrawStyle,
@@ -31,7 +30,6 @@ import { SectionSubheader } from '../../../insights/SectionSubheader';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
 
 import { HistoryObjectRenderer } from './CentralAlertHistory';
-const TIME_RANGE = new SceneTimeRange({ from: 'now-30m', to: 'now' });
 
 const HistoryPage = () => {
   return (
@@ -74,14 +72,10 @@ export const EventsBarChart = () => {
 
 function getEventsSceneObject(ashDs: DataSourceInformation) {
   return new EmbeddedScene({
-    $timeRange: TIME_RANGE,
     controls: [
       new SceneReactObject({
         component: SectionSubheader,
       }),
-      // new SceneControlsSpacer(),
-      // new SceneTimePicker({}),
-      // new SceneRefreshPicker({}),
     ],
     body: new SceneFlexLayout({
       direction: 'column',
