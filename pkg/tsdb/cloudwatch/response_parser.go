@@ -35,6 +35,10 @@ func (e *cloudWatchExecutor) parseResponse(ctx context.Context, startTime time.T
 			dataRes.Error = fmt.Errorf("ArithmeticError in query %q: %s", queryRow.RefId, response.ArithmeticErrorMessage)
 		}
 
+		if response.HasPermissionError {
+			dataRes.Error = fmt.Errorf("PermissionError in query %q: %s", queryRow.RefId, response.PermissionErrorMessage)
+		}
+
 		var err error
 		dataRes.Frames, err = buildDataFrames(ctx, startTime, endTime, response, queryRow)
 		if err != nil {
@@ -78,6 +82,9 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 			for _, message := range r.Messages {
 				if *message.Code == "ArithmeticError" {
 					response.AddArithmeticError(message.Value)
+				}
+				if *message.Code == "Forbidden" {
+					response.AddPermissionError(message.Value)
 				}
 			}
 
