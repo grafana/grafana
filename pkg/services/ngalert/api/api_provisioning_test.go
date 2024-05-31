@@ -19,23 +19,33 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -317,6 +327,14 @@ func TestProvisioningApi(t *testing.T) {
 				rc.OrgID = 3
 				rule := createTestAlertRule("rule", 1)
 
+				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+					UID:          "folder-uid",
+					Title:        "Folder Title",
+					OrgID:        rc.OrgID,
+					SignedInUser: &user.SignedInUser{OrgID: rc.OrgID},
+				})
+				require.NoError(t, err)
+
 				response := sut.RoutePostAlertRule(&rc, rule)
 
 				require.Equal(t, 201, response.Status())
@@ -330,7 +348,17 @@ func TestProvisioningApi(t *testing.T) {
 				uid := util.GenerateShortUID()
 				rule := createTestAlertRule("rule", 1)
 				rule.UID = uid
-				insertRuleInOrg(t, sut, rule, 3)
+
+				orgID := int64(3)
+				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+					UID:          "folder-uid",
+					Title:        "Folder Title",
+					OrgID:        orgID,
+					SignedInUser: &user.SignedInUser{OrgID: orgID},
+				})
+				require.NoError(t, err)
+
+				insertRuleInOrg(t, sut, rule, orgID)
 				rc := createTestRequestCtx()
 				rc.Req.Header = map[string][]string{"X-Disable-Provenance": {"hello"}}
 				rc.OrgID = 3
@@ -1614,6 +1642,7 @@ type testEnvironment struct {
 	quotas           provisioning.QuotaChecker
 	prov             provisioning.ProvisioningStore
 	ac               *recordingAccessControlFake
+	user             *user.SignedInUser
 	rulesAuthz       *fakes.FakeRuleService
 }
 
@@ -1639,20 +1668,8 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		GetsConfig(models.AlertConfiguration{
 			AlertmanagerConfiguration: string(raw),
 		})
-	sqlStore := db.InitTestDB(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 
-	// init folder service with default folder
-	folderService := foldertest.NewFakeService()
-	folderService.ExpectedFolder = &folder.Folder{}
-
-	store := store.DBstore{
-		Logger:   log,
-		SQLStore: sqlStore,
-		Cfg: setting.UnifiedAlertingSettings{
-			BaseInterval: time.Second * 10,
-		},
-		FolderService: folderService,
-	}
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
 	xact := &provisioning.NopTransactionManager{}
@@ -1675,6 +1692,49 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		}}, nil).Maybe()
 
 	ac := &recordingAccessControlFake{}
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	require.NoError(t, err)
+
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderService := folderimpl.ProvideService(actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil)
+	store := store.DBstore{
+		Logger:   log,
+		SQLStore: sqlStore,
+		Cfg: setting.UnifiedAlertingSettings{
+			BaseInterval: time.Second * 10,
+		},
+		FolderService: folderService,
+	}
+	user := &user.SignedInUser{
+		OrgID: 1,
+		/*
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+			},
+		*/
+	}
+	origNewGuardian := guardian.New
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+	t.Cleanup(func() {
+		guardian.New = origNewGuardian
+	})
+
+	parent, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        1,
+		UID:          "folder-uid",
+		Title:        "Folder Title",
+		SignedInUser: user,
+	})
+	require.NoError(t, err)
+
+	_, err = folderService.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        1,
+		UID:          "folder-uid2",
+		Title:        "Folder Title2",
+		ParentUID:    parent.UID,
+		SignedInUser: user,
+	})
+	require.NoError(t, err)
 
 	ruleAuthz := &fakes.FakeRuleService{}
 
@@ -1689,6 +1749,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		prov:             prov,
 		quotas:           quotas,
 		ac:               ac,
+		user:             user,
 		rulesAuthz:       ruleAuthz,
 	}
 }
@@ -1710,7 +1771,8 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store),
 		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
-		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.dashboardService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),
+		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),
+		folderSvc:           env.folderService,
 	}
 }
 
@@ -1725,6 +1787,9 @@ func createTestRequestCtx() contextmodel.ReqContext {
 		},
 		SignedInUser: &user.SignedInUser{
 			OrgID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+			},
 		},
 		Logger: &logtest.Fake{},
 	}

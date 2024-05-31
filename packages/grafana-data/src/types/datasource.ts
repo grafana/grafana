@@ -601,6 +601,7 @@ export interface QueryHint {
 export interface MetricFindValue {
   text: string;
   value?: string | number;
+  group?: string;
   expandable?: boolean;
 }
 

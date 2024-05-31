@@ -23,6 +23,7 @@ type Service interface {
 	CreateAccessPolicy(ctx context.Context, params CreateAccessPolicyParams, payload CreateAccessPolicyPayload) (AccessPolicy, error)
 	ListAccessPolicies(ctx context.Context, params ListAccessPoliciesParams) ([]AccessPolicy, error)
 	DeleteAccessPolicy(ctx context.Context, params DeleteAccessPolicyParams) (bool, error)
+	ListTokens(ctx context.Context, params ListTokenParams) ([]TokenView, error)
 	CreateToken(ctx context.Context, params CreateTokenParams, payload CreateTokenPayload) (Token, error)
 	DeleteToken(ctx context.Context, params DeleteTokenParams) error
 }
@@ -77,6 +78,13 @@ type DeleteAccessPolicyParams struct {
 	Region         string
 }
 
+type ListTokenParams struct {
+	RequestID        string
+	Region           string
+	AccessPolicyName string
+	TokenName        string
+}
+
 type CreateTokenParams struct {
 	RequestID string
 	Region    string
@@ -89,6 +97,7 @@ type CreateTokenPayload struct {
 	ExpiresAt      time.Time `json:"expiresAt"`
 }
 
+// The token returned by gcom api when a token gets created.
 type Token struct {
 	ID             string `json:"id"`
 	AccessPolicyID string `json:"accessPolicyId"`
@@ -100,6 +109,22 @@ type DeleteTokenParams struct {
 	RequestID string
 	Region    string
 	TokenID   string
+}
+
+// The token returned by gcom api for a GET token request.
+type TokenView struct {
+	ID             string `json:"id"`
+	AccessPolicyID string `json:"accessPolicyId"`
+	Name           string `json:"name"`
+	DisplayName    string `json:"displayName"`
+	ExpiresAt      string `json:"expiresAt"`
+	FirstUsedAt    string `json:"firstUsedAt"`
+	LastUsedAt     string `json:"lastUsedAt"`
+	CreatedAt      string `json:"createdAt"`
+}
+
+type listTokensResponse struct {
+	Items []TokenView `json:"items"`
 }
 
 type GcomClient struct {
@@ -291,6 +316,50 @@ func (client *GcomClient) ListAccessPolicies(ctx context.Context, params ListAcc
 	return responseBody.Items, nil
 }
 
+func (client *GcomClient) ListTokens(ctx context.Context, params ListTokenParams) ([]TokenView, error) {
+	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/tokens")
+	if err != nil {
+		return nil, fmt.Errorf("building gcom tokens url: %w", err)
+	}
+
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating http request: %w", err)
+	}
+
+	query := url.Values{}
+	query.Set("region", params.Region)
+	query.Set("accessPolicyName", params.AccessPolicyName)
+	query.Set("name", params.TokenName)
+
+	request.URL.RawQuery = query.Encode()
+	request.Header.Set("x-request-id", params.RequestID)
+	request.Header.Set("Content-Type", "application/json")
+
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.cfg.Token))
+
+	response, err := client.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("sending http request to list access tokens: %w", err)
+	}
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			client.log.Error("closing http response body", "err", err.Error())
+		}
+	}()
+
+	if response.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(response.Body)
+		return nil, fmt.Errorf("unexpected response when fetching access tokens: code=%d body=%s", response.StatusCode, body)
+	}
+
+	var body listTokensResponse
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		return nil, fmt.Errorf("unmarshaling response body: %w", err)
+	}
+
+	return body.Items, nil
+}
 func (client *GcomClient) CreateToken(ctx context.Context, params CreateTokenParams, payload CreateTokenPayload) (Token, error) {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/tokens")
 	if err != nil {

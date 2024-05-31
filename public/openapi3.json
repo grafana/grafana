@@ -183,7 +183,14 @@
         },
         "description": "(empty)"
       },
-      "cloudMigrationDeleteTokenResponse": {
+      "cloudMigrationGetTokenResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetAccessTokenResponseDTO"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "cloudMigrationListResponse": {
@@ -5531,6 +5538,29 @@
         "properties": {
           "body": {
             "$ref": "#/components/schemas/PublicError"
+          }
+        },
+        "type": "object"
+      },
+      "GetAccessTokenResponseDTO": {
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "firstUsedAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -15014,6 +15044,7 @@
               }
             }
           },
+          "required": true,
           "x-originalParamName": "Body"
         },
         "responses": {
@@ -15202,6 +15233,30 @@
       }
     },
     "/cloudmigration/token": {
+      "get": {
+        "operationId": "getCloudMigrationToken",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationGetTokenResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Fetch the cloud migration token if it exists.",
+        "tags": [
+          "migrations"
+        ]
+      },
       "post": {
         "operationId": "createCloudMigrationToken",
         "responses": {

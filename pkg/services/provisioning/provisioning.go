@@ -259,8 +259,8 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	ruleService := provisioning.NewAlertRuleService(
 		st,
 		st,
-		nil,
-		ps.dashboardService,
+		ps.folderService,
+		//ps.dashboardService,
 		ps.quotaService,
 		ps.SQLStore,
 		int64(ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
@@ -280,7 +280,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	cfg := prov_alerting.ProvisionerConfig{
 		Path:                       alertingPath,
 		RuleService:                *ruleService,
-		DashboardService:           ps.dashboardService,
+		FolderService:              ps.folderService,
 		DashboardProvService:       ps.dashboardProvisioningService,
 		ContactPointService:        *contactPointService,
 		NotificiationPolicyService: *notificationPolicyService,
