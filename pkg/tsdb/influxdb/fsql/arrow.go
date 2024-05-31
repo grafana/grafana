@@ -75,6 +75,10 @@ func newQueryDataResponse(reader recordReader, query sqlutil.Query, headers meta
 	}
 
 	resp.Frames = data.Frames{frame}
+
+	if frame != nil && frame.Fields != nil && len(frame.Fields) > 0 {
+		frame.Fields[0].Config = &data.FieldConfig{Interval: float64(query.Interval.Milliseconds())}
+	}
 	return resp
 }
 
