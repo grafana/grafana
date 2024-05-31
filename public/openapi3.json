@@ -183,6 +183,9 @@
         },
         "description": "(empty)"
       },
+      "cloudMigrationDeleteTokenResponse": {
+        "description": "(empty)"
+      },
       "cloudMigrationGetTokenResponse": {
         "content": {
           "application/json": {

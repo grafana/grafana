@@ -22259,6 +22259,9 @@
         "$ref": "#/definitions/CreateAccessTokenResponseDTO"
       }
     },
+    "cloudMigrationDeleteTokenResponse": {
+      "description": "(empty)"
+    },
     "cloudMigrationGetTokenResponse": {
       "description": "(empty)",
       "schema": {
