@@ -143,7 +143,7 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    If you are creating a new evaluation group, specify the interval for the group.
 
-   All rules within the same group are evaluated over the same time interval.
+   All rules within the same group are evaluated concurrently over the same time interval.
 
 1. Enter a pending period.
 
