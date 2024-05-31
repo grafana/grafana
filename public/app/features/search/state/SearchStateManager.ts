@@ -71,7 +71,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       prevSort,
       folderUid: folderUid,
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
-      deleted: locationService.getLocation().pathname === '/dashboards/trash', // TODO: mentioned in the POC that this may need to be changed
+      deleted: this.state.deleted,
     });
 
     if (doInitialSearch && this.hasSearchFilters()) {
