@@ -307,21 +307,12 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		return nil, fmt.Errorf("error getting user teams: %s", err)
 	}
 
-	teams := convertToGroupList(teamMemberships)
-
-	var role roletype.RoleType
-	var isGrafanaAdmin *bool = nil
-
-	if !s.info.SkipOrgRoleSync {
-		var grafanaAdmin bool
-		role, grafanaAdmin, err = s.extractRoleAndAdmin(response.Body, teams)
-		if err != nil {
-			return nil, err
-		}
-
-		if s.info.AllowAssignGrafanaAdmin {
-			isGrafanaAdmin = &grafanaAdmin
-		}
+	userInfo := &social.BasicUserInfo{
+		Name:   data.Login,
+		Login:  data.Login,
+		Id:     fmt.Sprintf("%d", data.Id),
+		Email:  data.Email,
+		Groups: convertToGroupList(teamMemberships),
 	}
 
 	// we skip allowing assignment of GrafanaAdmin if skipOrgRoleSync is present
@@ -329,44 +320,28 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
-	// if !s.info.SkipOrgRoleSync {
-	// 	orgRoles := s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, teams, role)
-	// 	if s.info.RoleAttributeStrict && len(orgRoles) == 0 {
-	// 		return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
-	// 	}
-	// }
+	var directlyMappedRole roletype.RoleType
 
-	userInfo := &social.BasicUserInfo{
-		Name:           data.Login,
-		Login:          data.Login,
-		Id:             fmt.Sprintf("%d", data.Id),
-		Email:          data.Email,
-		Role:           role,
-		Groups:         teams,
-		IsGrafanaAdmin: isGrafanaAdmin,
+	if !s.info.SkipOrgRoleSync {
+		var grafanaAdmin bool
+		directlyMappedRole, grafanaAdmin, err = s.extractRoleAndAdminOptional(response.Body, userInfo.Groups)
+		if err != nil {
+			s.log.Warn("Failed to extract role", "err", err)
+		}
+
+		if s.info.AllowAssignGrafanaAdmin {
+			userInfo.IsGrafanaAdmin = &grafanaAdmin
+		}
+
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
+			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
+		}
 	}
+
 	if data.Name != "" {
 		userInfo.Name = data.Name
 	}
-
-	// if !s.info.SkipOrgRoleSync {
-	// 	externalOrgs, err := s.extractOrgs(response.Body)
-	// 	if err != nil {
-	// 		s.log.Warn("Failed to extract orgs", "err", err)
-	// 		return nil, err
-	// 	}
-
-	// 	// TODO: Consider supporting teams only (org_attribute_path probably doesn't make sense for this provider)
-	// 	if len(externalOrgs) == 0 {
-	// 		externalOrgs = teams
-	// 	}
-
-	// 	orgRoles, err := s.extractOrgRoles(ctx, externalOrgs, userInfo.Role)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	userInfo.OrgRoles = orgRoles
-	// }
 
 	organizationsUrl := fmt.Sprintf(s.info.ApiUrl + "/orgs?per_page=100")
 

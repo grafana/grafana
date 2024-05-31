@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -153,18 +152,18 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 		oAuthExtraInfo           map[string]string
 	}{
 		{
-			name:              "should return default role if no role attribute path is set and auto assign org role is not set",
+			name:              "should return default role if no role attribute path is set",
 			userRawJSON:       testGHUserJSON,
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			autoAssignOrgRole: "",
+			autoAssignOrgRole: "Viewer",
 			roleAttributePath: "",
 			want: &social.BasicUserInfo{
-				Id:     "1",
-				Name:   "monalisa octocat",
-				Email:  "octocat@github.com",
-				Login:  "octocat",
-				Role:   "Viewer",
-				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+				Id:       "1",
+				Name:     "monalisa octocat",
+				Email:    "octocat@github.com",
+				Login:    "octocat",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+				Groups:   []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
 		{
@@ -183,12 +182,12 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
 			want: &social.BasicUserInfo{
-				Id:     "1",
-				Name:   "monalisa octocat",
-				Email:  "octocat@github.com",
-				Login:  "octocat",
-				Role:   "Admin",
-				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+				Id:       "1",
+				Name:     "monalisa octocat",
+				Email:    "octocat@github.com",
+				Login:    "octocat",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+				Groups:   []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
 		{
@@ -198,12 +197,12 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
 			want: &social.BasicUserInfo{
-				Id:     "1",
-				Name:   "monalisa octocat",
-				Email:  "octocat@github.com",
-				Login:  "octocat",
-				Role:   "Editor",
-				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+				Id:       "1",
+				Name:     "monalisa octocat",
+				Email:    "octocat@github.com",
+				Login:    "octocat",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
+				Groups:   []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
 		{
@@ -213,12 +212,12 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userRawJSON:            testGHUserJSON,
 			userTeamsRawJSON:       testGHUserTeamsJSON,
 			want: &social.BasicUserInfo{
-				Id:     "1",
-				Name:   "monalisa octocat",
-				Email:  "octocat@github.com",
-				Login:  "octocat",
-				Role:   "",
-				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+				Id:       "1",
+				Name:     "monalisa octocat",
+				Email:    "octocat@github.com",
+				Login:    "octocat",
+				OrgRoles: nil,
+				Groups:   []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
 		{
@@ -233,7 +232,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				Name:           "monalisa octocat",
 				Email:          "octocat@github.com",
 				Login:          "octocat",
-				Role:           "",
+				OrgRoles:       nil,
 				Groups:         []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 				IsGrafanaAdmin: boolPointer,
 			},
@@ -245,12 +244,12 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
 			want: &social.BasicUserInfo{
-				Id:     "1",
-				Name:   "monalisa octocat",
-				Email:  "octocat@github.com",
-				Login:  "octocat",
-				Role:   "Editor",
-				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+				Id:       "1",
+				Name:     "monalisa octocat",
+				Email:    "octocat@github.com",
+				Login:    "octocat",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
+				Groups:   []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
 		{
@@ -264,31 +263,58 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				"team_ids": "99",
 			},
 			want: &social.BasicUserInfo{
-				Id:     "1",
-				Name:   "monalisa octocat",
-				Email:  "octocat@github.com",
-				Login:  "octocat",
-				Role:   "Editor",
-				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+				Id:       "1",
+				Name:     "monalisa octocat",
+				Email:    "octocat@github.com",
+				Login:    "octocat",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
+				Groups:   []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
-		// {
-		// 	name:              "Org Mapping",
-		// 	roleAttributePath: "'None'",
-		// 	orgAttributePath:  "groups",
-		// 	orgMapping:        []string{"@github/justice-league:Org4:Editor", "*:Org5:Viewer"},
-		// 	userRawJSON:       testGHUserJSON,
-		// 	userTeamsRawJSON:  testGHUserTeamsJSON,
-		// 	want: &social.BasicUserInfo{
-		// 		Id:       "1",
-		// 		Name:     "monalisa octocat",
-		// 		Email:    "octocat@github.com",
-		// 		Login:    "octocat",
-		// 		Role:     "None",
-		// 		OrgRoles: map[int64]roletype.RoleType{4: "Editor", 5: "Viewer"},
-		// 		Groups:   []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
-		// 	},
-		// },
+		{
+			name:             "should map role when only org mapping is set",
+			orgMapping:       []string{"@github/justice-league:Org4:Editor", "*:Org5:Viewer"},
+			userRawJSON:      testGHUserJSON,
+			userTeamsRawJSON: testGHUserTeamsJSON,
+			want: &social.BasicUserInfo{
+				Id:       "1",
+				Name:     "monalisa octocat",
+				Email:    "octocat@github.com",
+				Login:    "octocat",
+				OrgRoles: map[int64]org.RoleType{4: "Editor", 5: "Viewer"},
+				Groups:   []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+			},
+		},
+		{
+			name:                "should map role when only org mapping is set and role attribute strict is enabled",
+			orgMapping:          []string{"@github/justice-league:Org4:Editor", "*:Org5:Viewer"},
+			roleAttributeStrict: true,
+			userRawJSON:         testGHUserJSON,
+			userTeamsRawJSON:    testGHUserTeamsJSON,
+			want: &social.BasicUserInfo{
+				Id:       "1",
+				Name:     "monalisa octocat",
+				Email:    "octocat@github.com",
+				Login:    "octocat",
+				OrgRoles: map[int64]org.RoleType{4: "Editor", 5: "Viewer"},
+				Groups:   []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+			},
+		},
+		{
+			name:                "should return error when neither role attribute path nor org mapping evaluates to a role and role attribute strict is enabled",
+			orgMapping:          []string{"@github/avengers:Org4:Editor"},
+			roleAttributeStrict: true,
+			userRawJSON:         testGHUserJSON,
+			userTeamsRawJSON:    testGHUserTeamsJSON,
+			wantErr:             true,
+		},
+		{
+			name:                "should return error when neither role attribute path nor org mapping is set and role attribute strict is enabled",
+			roleAttributeStrict: true,
+			userRawJSON:         testGHUserJSON,
+			userTeamsRawJSON:    testGHUserTeamsJSON,
+			wantErr:             true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -333,13 +359,12 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			}
 
 			got, err := s.UserInfo(context.Background(), server.Client(), token)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("UserInfo() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.wantErr {
+				require.Error(t, err)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UserInfo() got = %v, want %v", got, tt.want)
-			}
+
+			require.EqualValues(t, tt.want, got)
 		})
 	}
 }
