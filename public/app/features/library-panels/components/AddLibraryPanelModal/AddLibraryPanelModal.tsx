@@ -2,28 +2,26 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
 import { FetchError, isFetchError } from '@grafana/runtime';
+import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { Button, Field, Input, Modal } from '@grafana/ui';
 import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { t, Trans } from 'app/core/internationalization';
-import { DashboardGridItem } from 'app/features/dashboard-scene/scene/DashboardGridItem';
-import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
 import { PanelModel } from '../../../dashboard/state';
 import { getLibraryPanelByName } from '../../state/api';
-import { LibraryElementDTO } from '../../types';
 import { usePanelSave } from '../../utils/usePanelSave';
 
 interface AddLibraryPanelContentsProps {
   onDismiss?: () => void;
   panel: PanelModel;
   initialFolderUid?: string;
-  gridItem?: DashboardGridItem;
+  onCreateLibraryPanel?: (libPanel: LibraryPanel) => void;
 }
 
 export const AddLibraryPanelContents = ({
   panel,
   initialFolderUid,
-  gridItem,
+  onCreateLibraryPanel,
   onDismiss,
 }: AddLibraryPanelContentsProps) => {
   const [folderUid, setFolderUid] = useState(initialFolderUid);
@@ -38,18 +36,15 @@ export const AddLibraryPanelContents = ({
 
   const onCreate = useCallback(() => {
     panel.libraryPanel = { uid: '', name: panelName };
-    saveLibraryPanel(panel, folderUid!).then((res: LibraryElementDTO | FetchError) => {
+    saveLibraryPanel(panel, folderUid!).then((res: LibraryPanel | FetchError) => {
       if (!isFetchError(res)) {
         onDismiss?.();
-        if (gridItem) {
-          const dashboard = getDashboardSceneFor(gridItem);
-          dashboard.createLibraryPanel(gridItem, res);
-        }
+        onCreateLibraryPanel?.(res);
       } else {
         panel.libraryPanel = undefined;
       }
     });
-  }, [panel, panelName, saveLibraryPanel, folderUid, onDismiss, gridItem]);
+  }, [panel, panelName, saveLibraryPanel, folderUid, onDismiss, onCreateLibraryPanel]);
 
   const isValidName = useAsync(async () => {
     try {

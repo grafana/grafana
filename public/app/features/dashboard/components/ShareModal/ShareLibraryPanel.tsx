@@ -11,7 +11,7 @@ interface Props extends ShareModalTabProps {
   initialFolderUid?: string;
 }
 
-export const ShareLibraryPanel = ({ panel, initialFolderUid, gridItem, onDismiss }: Props) => {
+export const ShareLibraryPanel = ({ panel, initialFolderUid, onCreateLibraryPanel, onDismiss }: Props) => {
   useEffect(() => {
     reportInteraction('grafana_dashboards_library_panel_share_viewed', { shareResource: getTrackingSource(panel) });
   }, [panel]);
@@ -28,7 +28,7 @@ export const ShareLibraryPanel = ({ panel, initialFolderUid, gridItem, onDismiss
       <AddLibraryPanelContents
         panel={panel}
         initialFolderUid={initialFolderUid}
-        gridItem={gridItem}
+        onCreateLibraryPanel={onCreateLibraryPanel}
         onDismiss={onDismiss}
       />
     </>
