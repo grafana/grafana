@@ -409,6 +409,63 @@ func genTokenWithRetries(ctxLogger log.Logger, extSvcSlug string) (satokengen.Ke
 	return satokengen.KeyGenResult{}, ErrCredentialsGenFailed.Errorf("Failed to generate a token for %s", extSvcSlug)
 }
 
+// RotateExtSvcAccountToken
+func (esa *ExtSvcAccountsService) RotateExtSvcAccountToken(ctx context.Context, orgID, saID int64, extSvcSlug string) (string, error) {
+	ctx, span := esa.tracer.Start(ctx, "ExtSvcAccountsService.RotateExtSvcAccountToken")
+	defer span.End()
+
+	ctxLogger := esa.logger.FromContext(ctx)
+	ptr := func(i int64) *int64 {
+		return &i
+	}
+
+	ctxLogger.Debug("List service account tokens", "service", extSvcSlug, "orgID", orgID)
+	tokens, err := esa.saSvc.ListTokens(ctx, &sa.GetSATokensQuery{OrgID: ptr(orgID), ServiceAccountID: ptr(saID)})
+	if err != nil {
+		return "", err
+	}
+	tknID := int64(0)
+	for _, token := range tokens {
+		if token.Name == tokenNamePrefix+"-"+extSvcSlug {
+			ctxLogger.Debug("Found token", "service", extSvcSlug, "orgID", orgID)
+			tknID = token.ID
+			break
+		}
+	}
+	if tknID > 0 {
+		if err := esa.saSvc.DeleteServiceAccountToken(ctx, orgID, saID, tknID); err != nil {
+			ctxLogger.Debug("Remove token", "service", extSvcSlug, "orgID", orgID)
+			return "", err
+		}
+	}
+
+	// Generate token
+	ctxLogger.Info("Generate new service account token", "service", extSvcSlug, "orgID", orgID)
+	newKeyInfo, err := genTokenWithRetries(ctxLogger, extSvcSlug)
+	if err != nil {
+		return "", err
+	}
+
+	ctxLogger.Debug("Add service account token", "service", extSvcSlug, "orgID", orgID)
+	if _, err := esa.saSvc.AddServiceAccountToken(ctx, saID, &sa.AddServiceAccountTokenCommand{
+		Name:  tokenNamePrefix + "-" + extSvcSlug,
+		OrgId: orgID,
+		Key:   newKeyInfo.HashedKey,
+	}); err != nil {
+		return "", err
+	}
+
+	if err := esa.SaveExtSvcCredentials(ctx, &SaveCredentialsCmd{
+		ExtSvcSlug: extSvcSlug,
+		OrgID:      orgID,
+		Secret:     newKeyInfo.ClientSecret,
+	}); err != nil {
+		return "", err
+	}
+
+	return newKeyInfo.ClientSecret, nil
+}
+
 // logTokenNULParts logs a warning if the external service token contains a nil byte
 // Tokens normally have 3 parts "gl+serviceID_secret_checksum"
 // Log the part of the generated token that contains a nil byte
