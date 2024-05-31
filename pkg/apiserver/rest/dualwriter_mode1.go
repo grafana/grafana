@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -53,13 +54,13 @@ func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, c
 		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage create timeout"))
 		defer cancel()
 
-		createdLegacy, err := enrichLegacyObject(original, created, true)
-		if err != nil {
+		objStorage, errEnrichObj := enrichLegacyObject(original, created, true)
+		if errEnrichObj != nil {
 			cancel()
 		}
 
 		startStorage := time.Now()
-		_, errObjectSt := d.Storage.Create(ctx, createdLegacy, createValidation, options)
+		_, errObjectSt := d.Storage.Create(ctx, objStorage, createValidation, options)
 		d.recordStorageDuration(errObjectSt != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
@@ -136,7 +137,7 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 		d.recordStorageDuration(err != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
-	return res, async, nil
+	return res, async, err
 }
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes only from LegacyStorage.
@@ -162,7 +163,7 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 		d.recordStorageDuration(err != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
-	return res, nil
+	return res, err
 }
 
 func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -181,15 +182,21 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 
 	go func() {
 		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage update timeout"))
-		updated, err := objInfo.UpdatedObject(ctx, res)
-		if err != nil {
-			log.WithValues("object", updated).Error(err, "could not update or create object")
-		}
 
 		// get the object to be updated
 		foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
-			log.WithValues("object", foundObj).Error(err, "could not get object to update")
+			if !apierrors.IsNotFound(err) {
+				log.WithValues("object", foundObj).Error(err, "could not get object to update")
+				cancel()
+			}
+			log.Info("object not found for update, creating one")
+		}
+
+		updated, err := objInfo.UpdatedObject(ctx, res)
+		if err != nil {
+			log.WithValues("object", updated).Error(err, "could not update or create object")
+			cancel()
 		}
 
 		// if the object is found, create a new updateWrapper with the object found
@@ -210,7 +217,7 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 		d.recordStorageDuration(errObjectSt != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
-	return res, async, nil
+	return res, async, err
 }
 
 func (d *DualWriterMode1) Destroy() {

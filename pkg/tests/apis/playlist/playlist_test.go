@@ -121,9 +121,10 @@ func TestIntegrationPlaylist(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
-			APIServerStorageType: "file", // write the files to disk
+			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+				// featuremgmt.FlagDualWritePlaylistsMode2,
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
 				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
