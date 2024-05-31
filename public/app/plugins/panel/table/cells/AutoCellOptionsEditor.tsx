@@ -15,10 +15,12 @@ export const AutoCellOptionsEditor = ({
     onChange(cellOptions);
   };
 
-  const label =
+  const label = (
     <Label description="If selected text will be wrapped to the width of text in the configured column">
-      {'Wrap text '}<Badge text="Alpha" color="blue" style={{ fontSize: '11px', marginLeft: '5px', lineHeight: '1.2' }} />
-    </Label>;
+      {'Wrap text '}
+      <Badge text="Alpha" color="blue" style={{ fontSize: '11px', marginLeft: '5px', lineHeight: '1.2' }} />
+    </Label>
+  );
 
   return (
     <>
