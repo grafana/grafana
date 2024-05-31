@@ -11709,7 +11709,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cheminfo-types@npm:^1.7.2, cheminfo-types@npm:^1.7.3":
+"cheminfo-types@npm:^1.7.3":
   version: 1.7.3
   resolution: "cheminfo-types@npm:1.7.3"
   checksum: 10/238918de274b8cb7e92eed50e11396c71dd48d3f3196335e4b4b53f1ab12bb0b217a22a5b8d12ce35f7b256147f2953b9506e4f6e48a0dc9eda1df0625fd3e5c
@@ -21683,16 +21683,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ml-regression-base@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "ml-regression-base@npm:3.0.0"
-  dependencies:
-    cheminfo-types: "npm:^1.7.2"
-    is-any-array: "npm:^2.0.1"
-  checksum: 10/b737d4f70d6058efee607ab36a56cc92199111f6ea021e6290158792ee3f410c12b77d5dabfe6ccd55d02f5b6b072b83066a6e5cba909d4c91b85050ac15b491
-  languageName: node
-  linkType: hard
-
 "ml-regression-base@npm:^4.0.0":
   version: 4.0.0
   resolution: "ml-regression-base@npm:4.0.0"
@@ -21715,12 +21705,12 @@ __metadata:
   linkType: hard
 
 "ml-regression-simple-linear@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "ml-regression-simple-linear@npm:3.0.0"
+  version: 3.0.1
+  resolution: "ml-regression-simple-linear@npm:3.0.1"
   dependencies:
-    cheminfo-types: "npm:^1.7.2"
-    ml-regression-base: "npm:^3.0.0"
-  checksum: 10/2e4650026bb793455788f31de79bd25f5325e97580f20af848c4c8af4d1f1e1d3b04fbdb0f1677071727da3ffe4a34c5d0e4a0533ad81050441b5e0d745bdc57
+    cheminfo-types: "npm:^1.7.3"
+    ml-regression-base: "npm:^4.0.0"
+  checksum: 10/351e023195f4ca7453d7d5b08eb3a28fb07ff4fdc764f9950289a539ecd5f721d0c4a109b9f62ace46b5f8d0dec3ee5799abedcbe36e691f7b03bb70a8b69d8c
   languageName: node
   linkType: hard
 
