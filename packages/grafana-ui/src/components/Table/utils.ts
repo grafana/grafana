@@ -688,7 +688,7 @@ export function guessTextBoundingBox(
  * To do this we either select a single record if there aren't many records
  * or we select records at random and sample their size.
  */
-// eslint-ignore-next-line
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function guessLongestField(fieldConfig: any, data: DataFrame) {
   let longestField = undefined;
   const SAMPLE_SIZE = 3;
