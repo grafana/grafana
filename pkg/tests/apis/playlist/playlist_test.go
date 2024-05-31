@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	playlistv0alpha1 "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
@@ -95,7 +96,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				"playlist": grafanarest.Mode0,
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode0,
 			},
 		}))
 	})
@@ -111,7 +112,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 	// 			featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 	// 		},
 	// 		DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-	// 			"playlist": grafanarest.Mode1,
+	// 			playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
 	// 		},
 	// 	}))
 	// })
@@ -125,7 +126,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				"playlist": grafanarest.Mode2,
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode2,
 			},
 		}))
 	})
@@ -140,7 +141,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				"playlist": grafanarest.Mode0,
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode0,
 			},
 		}))
 	})
@@ -157,7 +158,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 	// 			featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 	// 		},
 	// 		DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-	// 			"playlist": grafanarest.Mode1,
+	// 			playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
 	// 		},
 	// 	}))
 	// })
@@ -172,7 +173,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				"playlist": grafanarest.Mode2,
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode2,
 			},
 		}))
 	})
@@ -189,7 +190,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				"playlist": grafanarest.Mode0,
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode0,
 			},
 		})
 
@@ -216,7 +217,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				"playlist": grafanarest.Mode1,
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
 			},
 		})
 
@@ -243,7 +244,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
-				"playlist": grafanarest.Mode2,
+				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode2,
 			},
 		})
 

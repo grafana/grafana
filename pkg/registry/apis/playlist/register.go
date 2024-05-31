@@ -55,7 +55,7 @@ func (b *PlaylistAPIBuilder) GetGroupVersion() schema.GroupVersion {
 }
 
 func (b *PlaylistAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	m, ok := modeMap["playlist"]
+	m, ok := modeMap[playlist.GROUPRESOURCE]
 	if !dualWrite || !ok {
 		return grafanarest.Mode0
 	}
@@ -133,7 +133,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 			return nil, err
 		}
 
-		dualWriter, err := grafanarest.SetDualWritingMode(context.Background(), b.kvStore, legacyStore, store, "playlist", desiredMode)
+		dualWriter, err := grafanarest.SetDualWritingMode(context.Background(), b.kvStore, legacyStore, store, playlist.GROUPRESOURCE, desiredMode)
 		if err != nil {
 			return nil, err
 		}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -44,14 +45,12 @@ func TestSetDualWritingMode(t *testing.T) {
 
 		kvStore := kvstore.WithNamespace(kvstore.NewFakeKVStore(), 0, "storage.dualwriting."+tt.stackID)
 
-		key := "playlist"
-
-		dw, err := SetDualWritingMode(context.Background(), kvStore, ls, us, key, tt.desiredMode)
+		dw, err := SetDualWritingMode(context.Background(), kvStore, ls, us, playlist.GROUPRESOURCE, tt.desiredMode)
 		assert.NoError(t, err)
 		assert.Equal(t, tt.expectedMode, dw.Mode())
 
 		// check kv store
-		val, ok, err := kvStore.Get(context.Background(), key)
+		val, ok, err := kvStore.Get(context.Background(), playlist.GROUPRESOURCE)
 		assert.True(t, ok)
 		assert.NoError(t, err)
 		assert.Equal(t, val, fmt.Sprint(tt.expectedMode))
