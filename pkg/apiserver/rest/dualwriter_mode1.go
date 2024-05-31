@@ -51,18 +51,19 @@ func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, c
 
 	go func() {
 		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage create timeout"))
+		defer cancel()
+
 		createdLegacy, err := enrichLegacyObject(original, created, true)
 		if err != nil {
 			cancel()
 		}
 
 		startStorage := time.Now()
-		defer cancel()
 		_, errObjectSt := d.Storage.Create(ctx, createdLegacy, createValidation, options)
 		d.recordStorageDuration(errObjectSt != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
-	return created, nil
+	return created, err
 }
 
 // Get overrides the behavior of the generic DualWriter and reads only from LegacyStorage.
