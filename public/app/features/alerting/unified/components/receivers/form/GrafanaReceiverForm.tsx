@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useHistory } from 'react-router';
 
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import {
@@ -10,14 +11,14 @@ import {
 import { useDispatch } from 'app/types';
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
-import { testReceiversAction, updateAlertManagerConfigAction } from '../../../state/actions';
+import { useProduceNewAlertmanagerConfiguration } from '../../../hooks/useProduceNewAlertmanagerConfig';
+import { addReceiverAction, updateReceiverAction } from '../../../reducers/alertmanagerConfiguration/receivers';
+import { testReceiversAction } from '../../../state/actions';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
   grafanaReceiverToFormValues,
-  updateConfigWithReceiver,
 } from '../../../utils/receiver-form';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { ReceiverTypes } from '../grafanaAppReceivers/onCall/onCall';
@@ -46,6 +47,7 @@ const defaultChannelValues: GrafanaChannelValues = Object.freeze({
 
 export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config, readOnly = false }: Props) => {
   const dispatch = useDispatch();
+  const history = useHistory();
 
   const {
     onCallNotifierMeta,
@@ -59,6 +61,7 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config, 
 
   const { useGrafanaNotifiersQuery } = alertmanagerApi;
   const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useGrafanaNotifiersQuery();
+  const [produceNewAlertmanagerConfiguration, _updateState] = useProduceNewAlertmanagerConfiguration();
 
   const [testChannelValues, setTestChannelValues] = useState<GrafanaChannelValues>();
 
@@ -78,18 +81,12 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config, 
     const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues, grafanaNotifiers);
     const receiverWithOnCall = await createOnCallIntegrations(newReceiver);
 
-    const newConfig = updateConfigWithReceiver(config, receiverWithOnCall, existing?.name);
-    await dispatch(
-      updateAlertManagerConfigAction({
-        newConfig: newConfig,
-        oldConfig: config,
-        alertManagerSourceName: GRAFANA_RULES_SOURCE_NAME,
-        successMessage: existing ? 'Contact point updated.' : 'Contact point created',
-        redirectPath: '/alerting/notifications',
-      })
-    ).then(() => {
-      dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
-    });
+    const action = existing
+      ? updateReceiverAction({ name: existing.name, receiver: receiverWithOnCall })
+      : addReceiverAction(receiverWithOnCall);
+
+    await produceNewAlertmanagerConfiguration(action);
+    history.push('/alerting/notifications');
   };
 
   const onTestChannel = (values: GrafanaChannelValues) => {

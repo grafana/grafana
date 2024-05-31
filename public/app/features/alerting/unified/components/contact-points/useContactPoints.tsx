@@ -2,17 +2,21 @@
  * This hook will combine data from both the Alertmanager config
  * and (if available) it will also fetch the status from the Grafana Managed status endpoint
  */
-
-import { remove } from 'lodash';
+import { useCallback } from 'react';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { onCallApi, OnCallIntegrationDTO } from '../../api/onCallApi';
 import { usePluginBridge } from '../../hooks/usePluginBridge';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
+import {
+  addReceiverAction,
+  deleteReceiverAction,
+  updateReceiverAction,
+} from '../../reducers/alertmanagerConfiguration/receivers';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { CloudChannelValues, ReceiverFormValues } from '../../types/receiver-form';
-import { formValuesToCloudReceiver, renameReceiverInRoute } from '../../utils/receiver-form';
+import { formValuesToCloudReceiver } from '../../utils/receiver-form';
 import { defaultChannelValues } from '../receivers/form/CloudReceiverForm';
 
 import { enhanceContactPointsWithMetadata } from './utils';
@@ -146,56 +150,28 @@ export function useContactPointsWithStatus({
 export function useDeleteContactPoint() {
   const [produceNewConfig, updateState] = useProduceNewAlertmanagerConfiguration();
 
-  const deleteFn = async (contactPointName: string) => {
-    await produceNewConfig((draft) => {
-      remove(draft.alertmanager_config.receivers ?? [], (receiver) => receiver.name === contactPointName);
-      return draft;
-    });
-  };
+  const deleteFn = useCallback(
+    async (contactPointName: string) => {
+      const action = deleteReceiverAction(contactPointName);
+      await produceNewConfig(action);
+    },
+    [produceNewConfig]
+  );
 
   return [deleteFn, updateState] as const;
 }
 
 export function useUpsertCloudContactPoint() {
-  const [produceNewConfig, updateState] = useProduceNewAlertmanagerConfiguration();
+  const [produceNewAlertmanagerConfiguration, updateState] = useProduceNewAlertmanagerConfiguration();
 
   const upsertFn = async (formValues: ReceiverFormValues<CloudChannelValues>, existingReceiverName?: string) => {
     const newReceiver = formValuesToCloudReceiver(formValues, defaultChannelValues);
 
-    await produceNewConfig((draft) => {
-      let currentReceivers = draft.alertmanager_config.receivers ?? [];
-      let currentRoute = draft.alertmanager_config.route;
+    const action = existingReceiverName
+      ? updateReceiverAction({ name: existingReceiverName, receiver: newReceiver })
+      : addReceiverAction(newReceiver);
 
-      const creating = !existingReceiverName;
-      const updating = Boolean(existingReceiverName);
-      const renaming = updating && newReceiver.name !== existingReceiverName;
-
-      const oldTargetIndex = currentReceivers.findIndex((receiver) => receiver.name === existingReceiverName);
-      const oldTargetExists = oldTargetIndex > -1;
-
-      const newTargetIndex = currentReceivers.findIndex((receiver) => receiver.name === newReceiver.name);
-      const newTargetExists = newTargetIndex > -1;
-
-      // sanity checks for updating / creating / renaming receivers
-      if ((creating || renaming) && newTargetExists) {
-        throw new Error(`Duplicate receiver name ${newReceiver.name}`);
-      } else if (updating && !renaming && !oldTargetExists) {
-        throw new Error(`Expected receiver ${existingReceiverName} to exist, but did not find it in the config`);
-      }
-
-      // we are either updating (or renaming) an existing receiver or adding a new one
-      if (updating) {
-        currentReceivers[oldTargetIndex] = newReceiver;
-      } else if (creating) {
-        currentReceivers.push(newReceiver);
-      }
-
-      // if receiver was renamed, rename it in routes as well
-      // technically we don't have to check for "existingReceiverName" but TypeScript is not able to infer that it can't be undefined
-      if (currentRoute && renaming && existingReceiverName) {
-        draft.alertmanager_config.route = renameReceiverInRoute(currentRoute, existingReceiverName, newReceiver.name);
-      }
-    });
+    await produceNewAlertmanagerConfiguration(action);
   };
 
   return [upsertFn, updateState] as const;

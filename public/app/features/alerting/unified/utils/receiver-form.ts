@@ -1,12 +1,10 @@
 import { isArray, omit, pick, isNil, omitBy } from 'lodash';
 
 import {
-  AlertManagerCortexConfig,
   AlertmanagerReceiver,
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
   Receiver,
-  Route,
 } from 'app/plugins/datasource/alertmanager/types';
 import { CloudNotifierType, NotifierDTO, NotifierType } from 'app/types';
 
@@ -119,62 +117,6 @@ export function formValuesToCloudReceiver(
     }
   });
   return recv;
-}
-
-// will add new receiver, or replace exisitng one
-export function updateConfigWithReceiver(
-  config: AlertManagerCortexConfig,
-  receiver: Receiver,
-  replaceReceiverName?: string
-): AlertManagerCortexConfig {
-  const oldReceivers = config.alertmanager_config.receivers ?? [];
-
-  // sanity check that name is not duplicated
-  if (receiver.name !== replaceReceiverName && !!oldReceivers.find(({ name }) => name === receiver.name)) {
-    throw new Error(`Duplicate receiver name ${receiver.name}`);
-  }
-
-  // sanity check that existing receiver exists
-  if (replaceReceiverName && !oldReceivers.find(({ name }) => name === replaceReceiverName)) {
-    throw new Error(`Expected receiver ${replaceReceiverName} to exist, but did not find it in the config`);
-  }
-
-  const updated: AlertManagerCortexConfig = {
-    ...config,
-    alertmanager_config: {
-      // @todo rename receiver on routes as necessary
-      ...config.alertmanager_config,
-      receivers: replaceReceiverName
-        ? oldReceivers.map((existingReceiver) =>
-            existingReceiver.name === replaceReceiverName ? receiver : existingReceiver
-          )
-        : [...oldReceivers, receiver],
-    },
-  };
-
-  // if receiver was renamed, rename it in routes as well
-  if (updated.alertmanager_config.route && replaceReceiverName && receiver.name !== replaceReceiverName) {
-    updated.alertmanager_config.route = renameReceiverInRoute(
-      updated.alertmanager_config.route,
-      replaceReceiverName,
-      receiver.name
-    );
-  }
-
-  return updated;
-}
-
-export function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
-  const updated: Route = {
-    ...route,
-  };
-  if (updated.receiver === oldName) {
-    updated.receiver = newName;
-  }
-  if (updated.routes) {
-    updated.routes = updated.routes.map((route) => renameReceiverInRoute(route, oldName, newName));
-  }
-  return updated;
 }
 
 function cloudChannelConfigToFormChannelValues(

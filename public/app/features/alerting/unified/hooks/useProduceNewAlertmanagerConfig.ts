@@ -1,14 +1,15 @@
-import { WritableDraft, produce } from 'immer';
-
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { Action } from '@reduxjs/toolkit';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
+import { alertmanagerConfigurationReducer } from '../reducers/alertmanagerConfiguration/receivers';
 import { useAlertmanager } from '../state/AlertmanagerContext';
-
-type IRecipe = (draft: WritableDraft<AlertManagerCortexConfig>) => void;
 
 const ERR_NO_ACTIVE_AM = new Error('no active Alertmanager');
 
+/**
+ * This hook will make sure we are always applying actions that mutate the Alertmanager configuration
+ * on top of the latest Alertmanager configuration object.
+ */
 export function useProduceNewAlertmanagerConfiguration() {
   const { selectedAlertmanager } = useAlertmanager();
   const [fetchAlertmanagerConfig, _fetchAlertmanagerState] =
@@ -21,9 +22,9 @@ export function useProduceNewAlertmanagerConfiguration() {
     throw ERR_NO_ACTIVE_AM;
   }
 
-  const produceNewAlertmanagerConfiguration = async (recipe: IRecipe) => {
+  const produceNewAlertmanagerConfiguration = async (action: Action) => {
     const currentAlertmanagerConfiguration = await fetchAlertmanagerConfig(selectedAlertmanager).unwrap();
-    const newConfig = produce(currentAlertmanagerConfiguration, recipe);
+    const newConfig = alertmanagerConfigurationReducer(currentAlertmanagerConfiguration, action);
 
     return updateAlertManager({
       selectedAlertmanager,
