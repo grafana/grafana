@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -303,6 +304,8 @@ func (ng *AlertNG) init() error {
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
 		Log:                  log.New("ngalert.scheduler"),
+		//TODO: replace with real writer impl
+		RecordingWriter: writer.FakeWriter{},
 	}
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
@@ -351,7 +354,7 @@ func (ng *AlertNG) init() error {
 	contactPointService := provisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, receiverService, ng.Log, ng.store)
 	templateService := provisioning.NewTemplateService(ng.store, ng.store, ng.store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log)
-	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.dashboardService, ng.QuotaService, ng.store,
+	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
 		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
