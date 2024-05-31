@@ -200,7 +200,7 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requ
 	}
 	settings.Settings = settingsWithSecrets
 
-	err = reloadable.Validate(ctx, *settings, requester)
+	err = reloadable.Validate(ctx, *settings, *storedSettings, requester)
 	if err != nil {
 		return err
 	}

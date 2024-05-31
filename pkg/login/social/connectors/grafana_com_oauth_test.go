@@ -205,7 +205,7 @@ func TestSocialGrafanaCom_Validate(t *testing.T) {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
 			}
 
-			err := s.Validate(context.Background(), tc.settings, tc.requester)
+			err := s.Validate(context.Background(), tc.settings, ssoModels.SSOSettings{}, tc.requester)
 			if tc.expectError {
 				require.Error(t, err)
 			} else {

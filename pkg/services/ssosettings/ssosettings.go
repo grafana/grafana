@@ -41,7 +41,7 @@ type Service interface {
 //go:generate mockery --name Reloadable --structname MockReloadable --outpkg ssosettingstests --filename reloadable_mock.go --output ./ssosettingstests/
 type Reloadable interface {
 	Reload(ctx context.Context, settings models.SSOSettings) error
-	Validate(ctx context.Context, settings models.SSOSettings, requester identity.Requester) error
+	Validate(ctx context.Context, settings models.SSOSettings, oldSettings models.SSOSettings, requester identity.Requester) error
 }
 
 // FallbackStrategy is an interface that can be implemented to allow a provider to load settings from a different source
