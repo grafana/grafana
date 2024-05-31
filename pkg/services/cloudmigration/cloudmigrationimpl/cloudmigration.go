@@ -102,7 +102,7 @@ func ProvideService(
 		s.gcomService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken})
 	} else {
 		s.cmsClient = cmsclient.NewInMemoryClient()
-		s.gcomService = &gcomStub{map[string]gcom.AccessPolicy{}}
+		s.gcomService = &gcomStub{policies: map[string]gcom.AccessPolicy{}, token: nil}
 		s.cfg.StackID = "12345"
 	}
 
@@ -111,6 +111,47 @@ func ProvideService(
 	}
 
 	return s, nil
+}
+
+func (s *Service) GetToken(ctx context.Context) (gcom.TokenView, error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetToken")
+	defer span.End()
+	logger := s.log.FromContext(ctx)
+	requestID := tracing.TraceIDFromContext(ctx, false)
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, s.cfg.CloudMigration.FetchInstanceTimeout)
+	defer cancel()
+	instance, err := s.gcomService.GetInstanceByID(timeoutCtx, requestID, s.cfg.StackID)
+	if err != nil {
+		return gcom.TokenView{}, fmt.Errorf("fetching instance by id: id=%s %w", s.cfg.StackID, err)
+	}
+
+	logger.Info("instance found", "slug", instance.Slug)
+
+	accessPolicyName := fmt.Sprintf("%s-%s", cloudMigrationAccessPolicyNamePrefix, s.cfg.StackID)
+	accessTokenName := fmt.Sprintf("%s-%s", cloudMigrationTokenNamePrefix, s.cfg.StackID)
+
+	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.ListTokensTimeout)
+	defer cancel()
+	tokens, err := s.gcomService.ListTokens(timeoutCtx, gcom.ListTokenParams{
+		RequestID:        requestID,
+		Region:           instance.RegionSlug,
+		AccessPolicyName: accessPolicyName,
+		TokenName:        accessTokenName})
+	if err != nil {
+		return gcom.TokenView{}, fmt.Errorf("listing tokens: %w", err)
+	}
+	logger.Info("found access tokens", "num_tokens", len(tokens))
+
+	for _, token := range tokens {
+		if token.Name == accessTokenName {
+			logger.Info("found existing cloud migration token", "tokenID", token.ID, "accessPolicyID", token.AccessPolicyID)
+			return token, nil
+		}
+	}
+
+	logger.Info("cloud migration token not found")
+	return gcom.TokenView{}, cloudmigration.ErrTokenNotFound
 }
 
 func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessTokenResponse, error) {

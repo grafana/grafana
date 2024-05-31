@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -47,8 +48,44 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 		cloudMigrationRoute.Post("/migration/:uid/run", routing.Wrap(cma.RunMigration))
 		cloudMigrationRoute.Get("/migration/:uid/run", routing.Wrap(cma.GetMigrationRunList))
 		cloudMigrationRoute.Get("/migration/run/:runUID", routing.Wrap(cma.GetMigrationRun))
+		cloudMigrationRoute.Get("/token", routing.Wrap(cma.GetToken))
 		cloudMigrationRoute.Post("/token", routing.Wrap(cma.CreateToken))
 	}, middleware.ReqOrgAdmin)
+}
+
+// swagger:route GET /cloudmigration/token migrations getCloudMigrationToken
+//
+// Fetch the cloud migration token if it exists.
+//
+// Responses:
+// 200: cloudMigrationGetTokenResponse
+// 401: unauthorisedError
+// 404: notFoundError
+// 403: forbiddenError
+// 500: internalServerError
+func (cma *CloudMigrationAPI) GetToken(c *contextmodel.ReqContext) response.Response {
+	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetToken")
+	defer span.End()
+
+	logger := cma.log.FromContext(ctx)
+
+	token, err := cma.cloudMigrationService.GetToken(ctx)
+	if err != nil {
+		if !errors.Is(err, cloudmigration.ErrTokenNotFound) {
+			logger.Error("fetching cloud migration access token", "err", err.Error())
+		}
+
+		return response.ErrOrFallback(http.StatusInternalServerError, "fetching cloud migration access token", err)
+	}
+
+	return response.JSON(http.StatusOK, GetAccessTokenResponseDTO{
+		ID:          token.ID,
+		DisplayName: token.DisplayName,
+		ExpiresAt:   token.ExpiresAt,
+		FirstUsedAt: token.FirstUsedAt,
+		LastUsedAt:  token.LastUsedAt,
+		CreatedAt:   token.CreatedAt,
+	})
 }
 
 // swagger:route POST /cloudmigration/token migrations createCloudMigrationToken
@@ -310,6 +347,13 @@ type CloudMigrationListResponse struct {
 	Body cloudmigration.CloudMigrationListResponse
 }
 
+// swagger:parameters createMigration
+type CreateMigration struct {
+	// in:body
+	// required:true
+	Body cloudmigration.CloudMigrationRequest
+}
+
 // swagger:response cloudMigrationResponse
 type CloudMigrationResponse struct {
 	// in: body
@@ -320,6 +364,25 @@ type CloudMigrationResponse struct {
 type CloudMigrationRunListResponse struct {
 	// in: body
 	Body cloudmigration.CloudMigrationRunList
+}
+
+// swagger:parameters getCloudMigrationToken
+type GetCloudMigrationToken struct {
+}
+
+// swagger:response cloudMigrationGetTokenResponse
+type CloudMigrationGetTokenResponse struct {
+	// in: body
+	Body GetAccessTokenResponseDTO
+}
+
+type GetAccessTokenResponseDTO struct {
+	ID          string `json:"id"`
+	DisplayName string `json:"displayName"`
+	ExpiresAt   string `json:"expiresAt"`
+	FirstUsedAt string `json:"firstUsedAt"`
+	LastUsedAt  string `json:"lastUsedAt"`
+	CreatedAt   string `json:"createdAt"`
 }
 
 // swagger:response cloudMigrationCreateTokenResponse
