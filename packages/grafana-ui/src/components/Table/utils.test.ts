@@ -558,7 +558,7 @@ describe('Table utils', () => {
       };
 
       const longestField = guessLongestField(config, data);
-      expect(longestField.name).toBe('Lorem 10');
+      expect(longestField?.name).toBe('Lorem 10');
     });
 
     it('should guess the longest field correctly if there are many records', () => {
@@ -574,7 +574,7 @@ describe('Table utils', () => {
       };
 
       const longestField = guessLongestField(config, data);
-      expect(longestField.name).toBe('Lorem 10');
+      expect(longestField?.name).toBe('Lorem 10');
     });
 
     it('should return undefined if there is no data', () => {
