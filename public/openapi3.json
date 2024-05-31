@@ -183,6 +183,19 @@
         },
         "description": "(empty)"
       },
+      "cloudMigrationDeleteTokenResponse": {
+        "description": "(empty)"
+      },
+      "cloudMigrationGetTokenResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetAccessTokenResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "cloudMigrationListResponse": {
         "content": {
           "application/json": {
@@ -2528,7 +2541,7 @@
           "condition": {
             "type": "string"
           },
-          "dasboardUid": {
+          "dashboardUid": {
             "type": "string"
           },
           "data": {
@@ -3656,6 +3669,14 @@
         },
         "type": "object"
       },
+      "CloudMigrationRequest": {
+        "properties": {
+          "authToken": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CloudMigrationResponse": {
         "properties": {
           "created": {
@@ -4420,9 +4441,6 @@
           },
           "publicDashboardEnabled": {
             "type": "boolean"
-          },
-          "publicDashboardUid": {
-            "type": "string"
           },
           "slug": {
             "type": "string"
@@ -5527,6 +5545,29 @@
         },
         "type": "object"
       },
+      "GetAccessTokenResponseDTO": {
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "firstUsedAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "GetAnnotationTagsResponse": {
         "properties": {
           "result": {
@@ -5838,6 +5879,9 @@
           },
           "provenance": {
             "$ref": "#/components/schemas/Provenance"
+          },
+          "record": {
+            "$ref": "#/components/schemas/Record"
           },
           "rule_group": {
             "type": "string"
@@ -7427,7 +7471,6 @@
         "type": "object"
       },
       "PagerdutyImage": {
-        "description": "PagerdutyImage is an image",
         "properties": {
           "alt": {
             "type": "string"
@@ -7439,10 +7482,10 @@
             "type": "string"
           }
         },
+        "title": "PagerdutyImage is an image.",
         "type": "object"
       },
       "PagerdutyLink": {
-        "description": "PagerdutyLink is a link",
         "properties": {
           "href": {
             "type": "string"
@@ -7451,6 +7494,7 @@
             "type": "string"
           }
         },
+        "title": "PagerdutyLink is a link.",
         "type": "object"
       },
       "Password": {
@@ -8048,6 +8092,9 @@
           },
           "notification_settings": {
             "$ref": "#/components/schemas/AlertRuleNotificationSettings"
+          },
+          "record": {
+            "$ref": "#/components/schemas/Record"
           },
           "title": {
             "type": "string"
@@ -8856,6 +8903,18 @@
           }
         },
         "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
+        "type": "object"
+      },
+      "Record": {
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          }
+        },
+        "title": "Record defines how data produced by a recording rule is written.",
         "type": "object"
       },
       "RecordingRuleJSON": {
@@ -12020,13 +12079,13 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
       "gettableSilence": {
-        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12082,7 +12141,6 @@
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12291,6 +12349,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -14980,6 +15039,17 @@
       },
       "post": {
         "operationId": "createMigration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudMigrationRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "Body"
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/cloudMigrationResponse"
@@ -15166,6 +15236,30 @@
       }
     },
     "/cloudmigration/token": {
+      "get": {
+        "operationId": "getCloudMigrationToken",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationGetTokenResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Fetch the cloud migration token if it exists.",
+        "tags": [
+          "migrations"
+        ]
+      },
       "post": {
         "operationId": "createCloudMigrationToken",
         "responses": {
@@ -15183,6 +15277,40 @@
           }
         },
         "summary": "Create gcom access token.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/token/{uid}": {
+      "delete": {
+        "operationId": "deleteCloudMigrationToken",
+        "parameters": [
+          {
+            "description": "UID of a cloud migration token",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/cloudMigrationDeleteTokenResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Deletes a cloud migration token.",
         "tags": [
           "migrations"
         ]
@@ -17125,6 +17253,82 @@
         "summary": "Sends a health check request to the plugin datasource identified by the UID.",
         "tags": [
           "datasources"
+        ]
+      }
+    },
+    "/datasources/uid/{uid}/lbac/teams": {
+      "get": {
+        "operationId": "getTeamLBACRulesApi",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Retrieves LBAC rules for a team.",
+        "tags": [
+          "enterprise"
+        ]
+      },
+      "put": {
+        "operationId": "updateTeamLBACRulesApi",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Updates LBAC rules for a team.",
+        "tags": [
+          "enterprise"
         ]
       }
     },

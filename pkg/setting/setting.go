@@ -323,6 +323,9 @@ type Cfg struct {
 	// GrafanaJavascriptAgent config
 	GrafanaJavascriptAgent GrafanaJavascriptAgent
 
+	// accessactionsets
+	OnlyStoreAccessActionSets bool
+
 	// Data sources
 	DataSourceLimit int
 	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
@@ -432,6 +435,9 @@ type Cfg struct {
 	// in case API is not publicly accessible.
 	// Defaults to GrafanaComURL setting + "/api" if unset.
 	GrafanaComAPIURL string
+
+	// Grafana.com SSO API token used for Unified SSO between instances and Grafana.com.
+	GrafanaComSSOAPIToken string
 
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]any
@@ -1243,7 +1249,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.GrafanaComURL = grafanaComUrl
 
 	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComUrl+"/api")
-
+	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 
@@ -1635,6 +1641,7 @@ func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
 	cfg.RBACSingleOrganization = rbac.Key("single_organization").MustBool(false)
+	cfg.OnlyStoreAccessActionSets = rbac.Key("only_store_access_action_sets").MustBool(false)
 }
 
 func readOAuth2ServerSettings(cfg *Cfg) {

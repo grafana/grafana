@@ -61,12 +61,12 @@ var (
 			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
 )
 
-func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGithub {
+func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGithub {
 	teamIdsSplitted := util.SplitString(info.Extra[teamIdsKey])
 	teamIds := mustInts(teamIdsSplitted)
 
 	provider := &SocialGithub{
-		SocialBase:           newSocialBase(social.GitHubProviderName, info, features, cfg),
+		SocialBase:           newSocialBase(social.GitHubProviderName, orgRoleMapper, info, features, cfg),
 		teamIds:              teamIds,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 	}
@@ -82,7 +82,7 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	return provider
 }
 
-func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
+func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSettings, _ ssoModels.SSOSettings, requester identity.Requester) error {
 	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
@@ -127,7 +127,7 @@ func (s *SocialGithub) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(social.GitHubProviderName, newInfo)
+	s.updateInfo(ctx, social.GitHubProviderName, newInfo)
 
 	s.teamIds = teamIds
 	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
