@@ -1668,7 +1668,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		GetsConfig(models.AlertConfiguration{
 			AlertmanagerConfiguration: string(raw),
 		})
-	sqlStore := db.InitTestDB(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
@@ -1692,11 +1692,11 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		}}, nil).Maybe()
 
 	ac := &recordingAccessControlFake{}
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderService := folderimpl.ProvideService(actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil)
+	folderService := folderimpl.ProvideService(actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil)
 	store := store.DBstore{
 		Logger:   log,
 		SQLStore: sqlStore,
