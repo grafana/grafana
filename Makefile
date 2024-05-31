@@ -15,7 +15,7 @@ SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_BUILD_DEV)$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
-GO_BUILD_FLAGS += $(if $(GO_RACE),-race)
+GO_BUILD_FLAGS += $(if $(GO_RACE),)
 
 targets := $(shell echo '$(sources)' | tr "," " ")
 
@@ -213,7 +213,7 @@ run: $(BRA) ## Build and run web server on filesystem changes.
 
 .PHONY: run-go
 run-go: ## Build and run web server immediately.
-	$(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
+	$(GO) run $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
 		./pkg/cmd/grafana -- server -packaging=dev cfg:app_mode=development
 
 .PHONY: run-frontend
