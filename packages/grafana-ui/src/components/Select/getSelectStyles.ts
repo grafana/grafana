@@ -141,7 +141,15 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     groupHeader: css({
       padding: theme.spacing(1, 1, 1, 0.75),
       borderLeft: '2px solid transparent',
-      borderTop: `1px solid ${theme.colors.border.weak}`,
+    }),
+    group: css({
+      '&:not(:first-child)': {
+        borderTop: `1px solid ${theme.colors.border.weak}`,
+      },
+      // ensure there's a bottom border if there are options following the group
+      ':has(+ [role="option"])': {
+        borderBottom: `1px solid ${theme.colors.border.weak}`,
+      },
     }),
   };
 });
