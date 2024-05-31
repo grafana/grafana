@@ -144,7 +144,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 		settingSkipOrgRoleSync   bool
 		roleAttributePath        string
 		roleAttributeStrict      bool
-		orgAttributePath         string
 		orgMapping               []string
 		autoAssignOrgRole        string
 		want                     *social.BasicUserInfo
@@ -344,7 +343,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 					ApiUrl:              server.URL + "/user",
 					RoleAttributePath:   tt.roleAttributePath,
 					RoleAttributeStrict: tt.roleAttributeStrict,
-					OrgAttributePath:    tt.orgAttributePath,
 					OrgMapping:          tt.orgMapping,
 					SkipOrgRoleSync:     tt.settingSkipOrgRoleSync,
 					Extra:               tt.oAuthExtraInfo,

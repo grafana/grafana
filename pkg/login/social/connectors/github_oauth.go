@@ -13,9 +13,9 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
@@ -315,12 +315,11 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		Groups: convertToGroupList(teamMemberships),
 	}
 
-	// we skip allowing assignment of GrafanaAdmin if skipOrgRoleSync is present
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
-	var directlyMappedRole roletype.RoleType
+	var directlyMappedRole org.RoleType
 
 	if !s.info.SkipOrgRoleSync {
 		var grafanaAdmin bool
