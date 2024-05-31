@@ -1954,7 +1954,8 @@
       "metadata": {
         "name": "dualWritePlaylistsMode2",
         "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "creationTimestamp": "2024-05-23T07:17:45Z",
+        "deletionTimestamp": "2024-05-31T16:59:31Z"
       },
       "spec": {
         "description": "Enables dual writing of playlists to both legacy and k8s storage in mode 2",
@@ -2196,7 +2197,8 @@
       "metadata": {
         "name": "dualWritePlaylistsMode3",
         "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "creationTimestamp": "2024-05-23T07:17:45Z",
+        "deletionTimestamp": "2024-05-31T16:59:31Z"
       },
       "spec": {
         "description": "Enables dual writing of playlists to both legacy and k8s storage in mode 3",
