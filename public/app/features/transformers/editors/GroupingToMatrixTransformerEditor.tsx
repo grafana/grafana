@@ -13,6 +13,7 @@ import {
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import { getTemplateSrv } from '@grafana/runtime';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const GroupingToMatrixTransformerEditor = ({
@@ -21,6 +22,11 @@ export const GroupingToMatrixTransformerEditor = ({
   onChange,
 }: TransformerUIProps<GroupingToMatrixTransformerOptions>) => {
   const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
+  const variables = getTemplateSrv()
+    .getVariables()
+    .map((v) => {
+      return { value: '$' + v.name, label: '$' + v.name };
+    });
 
   const onSelectColumn = useCallback(
     (value: SelectableValue<string>) => {
@@ -73,13 +79,13 @@ export const GroupingToMatrixTransformerEditor = ({
     <>
       <InlineFieldRow>
         <InlineField label="Column" labelWidth={8}>
-          <Select options={fieldNames} value={options.columnField} onChange={onSelectColumn} isClearable />
+          <Select options={[...fieldNames, ...variables]} value={options.columnField} onChange={onSelectColumn} isClearable />
         </InlineField>
         <InlineField label="Row" labelWidth={8}>
-          <Select options={fieldNames} value={options.rowField} onChange={onSelectRow} isClearable />
+          <Select options={[...fieldNames, ...variables]} value={options.rowField} onChange={onSelectRow} isClearable />
         </InlineField>
         <InlineField label="Cell Value" labelWidth={10}>
-          <Select options={fieldNames} value={options.valueField} onChange={onSelectValue} isClearable />
+          <Select options={[...fieldNames, ...variables]} value={options.valueField} onChange={onSelectValue} isClearable />
         </InlineField>
         <InlineField label="Empty Value">
           <Select options={specialValueOptions} value={options.emptyValue} onChange={onSelectEmptyValue} isClearable />

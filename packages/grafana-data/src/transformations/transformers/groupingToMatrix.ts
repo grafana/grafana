@@ -2,7 +2,7 @@ import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
-import { SpecialValue, DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
+import { SpecialValue, DataTransformerInfo, TransformationApplicabilityLevels, DataTransformContext} from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -57,12 +57,12 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
 
     return `Grouping to matrix requiers at least 3 fields to work. Currently there are ${numFields} fields.`;
   },
-  operator: (options) => (source) =>
+  operator: (options: GroupingToMatrixTransformerOptions, ctx: DataTransformContext) => (source) =>
     source.pipe(
       map((data) => {
-        const columnFieldMatch = options.columnField || DEFAULT_COLUMN_FIELD;
-        const rowFieldMatch = options.rowField || DEFAULT_ROW_FIELD;
-        const valueFieldMatch = options.valueField || DEFAULT_VALUE_FIELD;
+        const columnFieldMatch = ctx.interpolate(options.columnField || DEFAULT_COLUMN_FIELD);
+        const rowFieldMatch = ctx.interpolate(options.rowField || DEFAULT_ROW_FIELD);
+        const valueFieldMatch = ctx.interpolate(options.valueField || DEFAULT_VALUE_FIELD);
         const emptyValue = options.emptyValue || DEFAULT_EMPTY_VALUE;
 
         // Accept only single queries
