@@ -187,6 +187,7 @@ The terraform resource `api_key` has been removed in v3.0.0 from the Grafana Ter
 {{% /admonition %}}
 
 If you need to pin the version of terraform to v2.19.0
+
 ```tf
 terraform {
   required_providers {
