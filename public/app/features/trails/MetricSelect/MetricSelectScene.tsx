@@ -369,7 +369,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           </Alert>
         )}
         <StatusWrapper {...{ isLoading, blockingMessage }}>
-          <model.state.body.Component model={model.state.body} />
+          <body.Component model={body} />
         </StatusWrapper>
       </div>
     );
