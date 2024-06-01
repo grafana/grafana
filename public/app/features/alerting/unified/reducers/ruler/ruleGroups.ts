@@ -1,7 +1,7 @@
 import { createAction, createReducer } from '@reduxjs/toolkit';
 
 import { RuleIdentifier } from 'app/types/unified-alerting';
-import { PostableRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { PostableRuleDTO, PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 export const addRuleAction = createAction<{ rule: PostableRuleDTO }>('rules/add');
 export const updateRuleAction = createAction<{ identifier: RuleIdentifier; rule: PostableRuleDTO }>('rules/update');
@@ -9,7 +9,7 @@ export const deleteRuleAction = createAction<{ identifier: RuleIdentifier }>('ru
 // @TODO
 // const reorderRulesActions = createAction('rules/reorder');
 
-const initialState: RulerRuleGroupDTO = {
+const initialState: PostableRulerRuleGroupDTO = {
   name: 'initial',
   rules: [],
 };

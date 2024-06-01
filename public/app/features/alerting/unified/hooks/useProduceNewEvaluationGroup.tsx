@@ -8,12 +8,14 @@ import { alertingApi } from '../api/alertingApi';
 import { addRuleAction, deleteRuleAction, ruleGroupReducer, updateRuleAction } from '../reducers/ruler/ruleGroups';
 
 export function useProduceNewRuleGroup() {
-  const [fetchRuleGroup, _fetchRuleGroupState] = rulerAPI.endpoints.getNamespaceAndGroup.useLazyQuery();
-  const [updateRuleGroup, updateRuleGroupState] = rulerAPI.endpoints.updateRuleGroup.useMutation();
+  const [fetchRuleGroup, _fetchRuleGroupState] = rulerAPI.endpoints.getRuleGroupForNamespace.useLazyQuery();
+  const [updateRuleGroup, updateRuleGroupState] = rulerAPI.endpoints.updateRuleGroupForNamespace.useMutation();
 
   const produceNewRuleGroup = async (namespace: string, group: string, action: Action) => {
     const currentRuleGroup = await fetchRuleGroup({ namespace, group }).unwrap();
 
+    // @TODO convert rule group to postable rule group – TypeScript is not complaining here because
+    // the interfaces are compatible but it _should_ complain
     const newRuleGroup = ruleGroupReducer(currentRuleGroup, action);
 
     return updateRuleGroup({
