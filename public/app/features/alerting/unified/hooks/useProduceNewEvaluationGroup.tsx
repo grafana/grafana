@@ -1,27 +1,11 @@
-import { Draft, Immutable, WritableDraft, castImmutable, produce } from 'immer';
-import { omit } from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { Action } from '@reduxjs/toolkit';
+import { useCallback } from 'react';
 
+import { RuleIdentifier } from 'app/types/unified-alerting';
 import { PostableRuleDTO, PostableRulerRuleGroupDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertingApi } from '../api/alertingApi';
-
-// available actions for rule groups
-type AddAction = { type: 'add'; payload: PostableRuleDTO };
-type RemoveAction = { type: 'remove'; index: number };
-
-type Action = AddAction | RemoveAction;
-
-const ruleGroupReducer = produce<RulerRuleGroupDTO, [Action]>((draft, action) => {
-  switch (action.type) {
-    case 'add':
-      return draft;
-    case 'remove':
-      return draft;
-    default:
-      return draft;
-  }
-});
+import { addRuleAction, deleteRuleAction, ruleGroupReducer, updateRuleAction } from '../reducers/ruler/ruleGroups';
 
 export function useProduceNewRuleGroup() {
   const [fetchRuleGroup, _fetchRuleGroupState] = rulerAPI.endpoints.getNamespaceAndGroup.useLazyQuery();
@@ -32,7 +16,6 @@ export function useProduceNewRuleGroup() {
 
     const newRuleGroup = ruleGroupReducer(currentRuleGroup, action);
 
-    // @TODO move this to an RTKQ endpoint
     return updateRuleGroup({
       namespace,
       group,
@@ -44,32 +27,58 @@ export function useProduceNewRuleGroup() {
   return [produceNewRuleGroup, updateRuleGroupState] as const;
 }
 
-// this function omits a few props from RulerRuleGroupDTO so we can use it to send POST requests without having them be rejected
-function toPostableDTO(ruleGroup: WritableDraft<RulerRuleGroupDTO>): PostableRulerRuleGroupDTO {
-  return ruleGroup;
+export function useUpdateRuleInGroup() {
+  const [produceNewRuleGroup, updateState] = useProduceNewRuleGroup();
+
+  const updateFn = useCallback(
+    async (namespace: string, group: string, identifier: RuleIdentifier, rule: PostableRuleDTO) => {
+      const action = updateRuleAction({ identifier, rule });
+      await produceNewRuleGroup(namespace, group, action);
+    },
+    [produceNewRuleGroup]
+  );
+
+  return [updateFn, updateState] as const;
 }
 
-export function useAddRuleToRuleGroup() {
-  const [produceNewRuleGroup, updateRuleGroupState] = useProduceNewRuleGroup();
+export function useAddRuleInGroup() {
+  const [produceNewRuleGroup, updateState] = useProduceNewRuleGroup();
 
-  const updateFn = (namespace: string, group: string, rule: PostableRuleDTO) =>
-    produceNewRuleGroup(namespace, group, { type: 'add', payload: rule });
+  const updateFn = useCallback(
+    async (namespace: string, group: string, rule: PostableRuleDTO) => {
+      const action = addRuleAction({ rule });
+      await produceNewRuleGroup(namespace, group, action);
+    },
+    [produceNewRuleGroup]
+  );
 
-  return [updateFn, updateRuleGroupState];
+  return [updateFn, updateState] as const;
 }
 
-// here's how to consume this hook
-//
-// const [addRuleToRuleGroup, { isLoading, error }] = useAddRuleToRuleGroup();
-// addRuleToRuleGroup(namespace, group, myNewRule);
+export function useDeleteRuleFromGroup() {
+  const [produceNewRuleGroup, updateState] = useProduceNewRuleGroup();
+
+  const deleteFn = useCallback(
+    async (namespace: string, group: string, identifier: RuleIdentifier) => {
+      const action = deleteRuleAction({ identifier });
+      await produceNewRuleGroup(namespace, group, action);
+    },
+    [produceNewRuleGroup]
+  );
+
+  return [deleteFn, updateState] as const;
+}
 
 // do NOT use these directly, use the higher-level hooks
 const rulerAPI = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    getNamespaceAndGroup: build.query<RulerRuleGroupDTO, { namespace: string; group: string }>({
+    getRuleGroupForNamespace: build.query<RulerRuleGroupDTO, { namespace: string; group: string }>({
       queryFn: ({ namespace, group }) => {},
     }),
-    updateRuleGroup: build.mutation<void, { namespace: string; group: string; data: PostableRulerRuleGroupDTO }>({
+    updateRuleGroupForNamespace: build.mutation<
+      void,
+      { namespace: string; group: string; data: PostableRulerRuleGroupDTO }
+    >({
       queryFn: ({ namespace, group, data }) => {},
     }),
   }),
