@@ -1,7 +1,7 @@
 import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
-import { BackendSrvRequest, FetchError, getBackendSrv, isFetchError } from '@grafana/runtime/src';
+import { BackendSrvRequest, config, FetchError, getBackendSrv, isFetchError } from '@grafana/runtime/src';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import {
@@ -118,7 +118,13 @@ export const publicDashboardApi = createApi({
       },
       async onQueryStarted({ dashboard }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
-        dispatch(notifyApp(createSuccessNotification('Public dashboard updated!')));
+        dispatch(
+          notifyApp(
+            createSuccessNotification(
+              config.featureToggles.newDashboardSharingComponent ? 'Configuration updated' : 'Public dashboard updated!'
+            )
+          )
+        );
 
         if (dashboard instanceof DashboardScene) {
           dashboard.setState({
@@ -185,7 +191,15 @@ export const publicDashboardApi = createApi({
       }),
       async onQueryStarted({ dashboard }, { dispatch, queryFulfilled }) {
         await queryFulfilled;
-        dispatch(notifyApp(createSuccessNotification('Public dashboard deleted!')));
+        dispatch(
+          notifyApp(
+            createSuccessNotification(
+              config.featureToggles.newDashboardSharingComponent
+                ? 'Your dashboard is not public anymore'
+                : 'Public dashboard deleted!'
+            )
+          )
+        );
         dispatch(publicDashboardApi.util?.resetApiState());
 
         if (dashboard instanceof DashboardScene) {

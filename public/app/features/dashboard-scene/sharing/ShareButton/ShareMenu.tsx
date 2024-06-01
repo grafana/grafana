@@ -5,6 +5,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { VizPanel } from '@grafana/scenes';
 import { Menu } from '@grafana/ui';
 
+import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { ShareDrawer } from '../ShareDrawer';
 
@@ -36,12 +37,14 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
         icon="building"
         onClick={buildUrl}
       />
-      <Menu.Item
-        testId={newShareButtonSelector.shareExternally}
-        label="Share externally"
-        icon="share-alt"
-        onClick={onShareExternallyClick}
-      />
+      {isPublicDashboardsEnabled() && (
+        <Menu.Item
+          testId={newShareButtonSelector.shareExternally}
+          label="Share externally"
+          icon="share-alt"
+          onClick={onShareExternallyClick}
+        />
+      )}
     </Menu>
   );
 }
