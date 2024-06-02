@@ -200,6 +200,7 @@ terraform {
   }
 }
 ```
+
 This section shows you how to migrate your Terraform configuration for API keys to Grafana service accounts. For resources, see [Grafana Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/service_account_token).
 
 For migration your cloud stack api keys, use the `grafana_cloud_stack_service_account` and `gafana_cloud_stack_service_account_token` resources see [Grafana Cloud Stack Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_stack_service_account).
