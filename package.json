@@ -81,7 +81,7 @@
     "@grafana/tsconfig": "^1.3.0-rc1",
     "@manypkg/get-packages": "^2.2.0",
     "@playwright/test": "1.44.1",
-    "@pmmmwh/react-refresh-webpack-plugin": "0.5.13",
+    "@pmmmwh/react-refresh-webpack-plugin": "0.5.15",
     "@react-types/button": "3.9.4",
     "@react-types/menu": "3.9.9",
     "@react-types/overlays": "3.8.7",
