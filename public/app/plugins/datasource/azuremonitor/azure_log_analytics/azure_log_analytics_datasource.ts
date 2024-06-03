@@ -4,7 +4,7 @@ import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import ResponseParser from '../azure_monitor/response_parser';
-import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
+import { getAuthType } from '../credentials';
 import {
   AzureAPIResponse,
   AzureDataSourceJsonData,
@@ -24,7 +24,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureDataSourceJsonData
 > {
   resourcePath: string;
-  azurePortalUrl: string;
   declare applicationId: string;
 
   defaultSubscriptionId?: string;
@@ -40,8 +39,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     this.resourcePath = `${routeNames.logAnalytics}`;
     this.azureMonitorPath = `${routeNames.azureMonitor}/subscriptions`;
-    const cloud = getAzureCloud(instanceSettings);
-    this.azurePortalUrl = getAzurePortalUrl(cloud);
 
     this.defaultSubscriptionId = this.instanceSettings.jsonData.subscriptionId || '';
   }
