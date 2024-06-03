@@ -8,9 +8,11 @@ import (
 )
 
 const (
-	GROUP      = "dashboard.grafana.app"
-	VERSION    = "v0alpha1"
-	APIVERSION = GROUP + "/" + VERSION
+	GROUP         = "dashboard.grafana.app"
+	VERSION       = "v0alpha1"
+	APIVERSION    = GROUP + "/" + VERSION
+	RESOURCE      = "dashboards"
+	GROUPRESOURCE = GROUP + "/" + RESOURCE
 )
 
 var DashboardResourceInfo = common.NewResourceInfo(GROUP, VERSION,

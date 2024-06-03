@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -57,7 +59,9 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	o.StorageOptions.DataPath = apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
 	o.StorageOptions.Address = apiserverCfg.Key("address").MustString(o.StorageOptions.Address)
 	o.StorageOptions.DualWriterDesiredModes = map[string]grafanarest.DualWriterMode{
-		playlist.GROUPRESOURCE: grafanarest.DualWriterMode(unifiedStorageModeCfg.Key(playlist.GROUPRESOURCE).MustInt(0)),
+		playlist.GROUPRESOURCE:  grafanarest.DualWriterMode(unifiedStorageModeCfg.Key(playlist.GROUPRESOURCE).MustInt(0)),
+		dashboard.GROUPRESOURCE: grafanarest.DualWriterMode(unifiedStorageModeCfg.Key(dashboard.GROUPRESOURCE).MustInt(0)),
+		folder.GROUPRESOURCE:    grafanarest.DualWriterMode(unifiedStorageModeCfg.Key(folder.GROUPRESOURCE).MustInt(0)),
 	}
 	o.ExtraOptions.DevMode = features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess)
 	o.ExtraOptions.ExternalAddress = host
