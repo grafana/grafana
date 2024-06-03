@@ -1,5 +1,10 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { useStyles2 } from '../../themes';
 import { useAsyncDependency } from '../../utils/useAsyncDependency';
 import { ErrorWithStack } from '../ErrorBoundary/ErrorWithStack';
 import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
@@ -12,12 +17,13 @@ import type { ReactMonacoEditorProps } from './types';
  * Experimental export
  **/
 export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
+  const styles = useStyles2(getStyles);
   const { loading, error, dependency } = useAsyncDependency(
     import(/* webpackChunkName: "react-monaco-editor" */ './ReactMonacoEditor')
   );
 
   if (loading) {
-    return <LoadingPlaceholder text={''} />;
+    return <LoadingPlaceholder text={'Loading editor'} className={styles.container} />;
   }
 
   if (error) {
@@ -25,11 +31,28 @@ export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
       <ErrorWithStack
         title="React Monaco Editor failed to load"
         error={error}
-        errorInfo={{ componentStack: error?.stack || '' }}
+        errorInfo={{ componentStack: error?.stack ?? '' }}
       />
     );
   }
 
   const ReactMonacoEditor = dependency.ReactMonacoEditor;
-  return <ReactMonacoEditor {...props} />;
+  return (
+    <ReactMonacoEditor
+      {...props}
+      loading={props.loading ?? null}
+      wrapperProps={{
+        'data-testid': selectors.components.ReactMonacoEditor.editorLazy,
+      }}
+    />
+  );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    container: css({
+      marginBottom: 'unset',
+      marginLeft: theme.spacing(1),
+    }),
+  };
 };
