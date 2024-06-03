@@ -12,7 +12,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-type DataSourceService interface {
+type BaseDataSourceService interface {
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
 	GetPrunableProvisionedDataSources(ctx context.Context) ([]*datasources.DataSource, error)
 	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
@@ -35,7 +35,7 @@ var (
 
 // Provision scans a directory for provisioning config files
 // and provisions the datasource in those files.
-func Provision(ctx context.Context, configDirectory string, dsService DataSourceService, correlationsStore CorrelationsStore, orgService org.Service) error {
+func Provision(ctx context.Context, configDirectory string, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) error {
 	dc := newDatasourceProvisioner(log.New("provisioning.datasources"), dsService, correlationsStore, orgService)
 	return dc.applyChanges(ctx, configDirectory)
 }
@@ -45,11 +45,11 @@ func Provision(ctx context.Context, configDirectory string, dsService DataSource
 type DatasourceProvisioner struct {
 	log               log.Logger
 	cfgProvider       *configReader
-	dsService         DataSourceService
+	dsService         BaseDataSourceService
 	correlationsStore CorrelationsStore
 }
 
-func newDatasourceProvisioner(log log.Logger, dsService DataSourceService, correlationsStore CorrelationsStore, orgService org.Service) DatasourceProvisioner {
+func newDatasourceProvisioner(log log.Logger, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) DatasourceProvisioner {
 	return DatasourceProvisioner{
 		log:               log,
 		cfgProvider:       &configReader{log: log, orgService: orgService},
