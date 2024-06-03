@@ -1,0 +1,89 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`test pausing rules should pause a single rule in a group 1`] = `
+{
+  "interval": "5m",
+  "name": "group-1",
+  "rules": [
+    {
+      "annotations": {
+        "message": "alert with severity "{{.warning}}}"",
+      },
+      "for": "1m",
+      "grafana_alert": {
+        "condition": "A",
+        "data": [
+          {
+            "datasourceUid": "123",
+            "model": {},
+            "queryType": "huh",
+            "refId": "A",
+          },
+        ],
+        "exec_err_state": "Alerting",
+        "namespace_uid": "123",
+        "no_data_state": "Alerting",
+        "rule_group": "my-group",
+        "title": "myalert",
+        "uid": "1",
+      },
+      "labels": {
+        "severity": "warning",
+      },
+    },
+    {
+      "annotations": {
+        "message": "alert with severity "{{.warning}}}"",
+      },
+      "for": "1m",
+      "grafana_alert": {
+        "condition": "A",
+        "data": [
+          {
+            "datasourceUid": "123",
+            "model": {},
+            "queryType": "huh",
+            "refId": "A",
+          },
+        ],
+        "exec_err_state": "Alerting",
+        "is_paused": true,
+        "namespace_uid": "123",
+        "no_data_state": "Alerting",
+        "rule_group": "my-group",
+        "title": "myalert",
+        "uid": "2",
+      },
+      "labels": {
+        "severity": "warning",
+      },
+    },
+    {
+      "annotations": {
+        "message": "alert with severity "{{.warning}}}"",
+      },
+      "for": "1m",
+      "grafana_alert": {
+        "condition": "A",
+        "data": [
+          {
+            "datasourceUid": "123",
+            "model": {},
+            "queryType": "huh",
+            "refId": "A",
+          },
+        ],
+        "exec_err_state": "Alerting",
+        "namespace_uid": "123",
+        "no_data_state": "Alerting",
+        "rule_group": "my-group",
+        "title": "myalert",
+        "uid": "3",
+      },
+      "labels": {
+        "severity": "warning",
+      },
+    },
+  ],
+}
+`;
