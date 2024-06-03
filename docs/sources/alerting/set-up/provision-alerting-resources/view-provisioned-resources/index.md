@@ -22,7 +22,7 @@ weight: 300
 
 Verify that your alerting resources were created in Grafana, as well as edit or export your provisioned alerting resources.
 
-## View provisioned alerting resoureces
+## View provisioned alerting resources
 
 To view your provisioned resources in Grafana, complete the following steps.
 
