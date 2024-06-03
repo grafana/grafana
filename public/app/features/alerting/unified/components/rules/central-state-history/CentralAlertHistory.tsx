@@ -323,13 +323,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     labelsFilter: css({
       width: '100%',
     }),
-    timeRange: css({
-      maxWidth: theme.breakpoints.values.sm,
-    }),
-    timeRangeModal: css({
-      width: '700px',
-      height: '600px',
-    }),
   };
 };
 interface HistoryObjectState extends SceneObjectState {}

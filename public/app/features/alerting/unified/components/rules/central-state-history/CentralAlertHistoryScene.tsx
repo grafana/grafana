@@ -98,7 +98,7 @@ export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle('Events')
-      .setDescription('Events during the last week')
+      .setDescription('Alert events during the period of time.')
       .setData(query)
       .setColor({ mode: 'continuous-BlPu' })
       .setCustomFieldConfig('fillOpacity', 100)
