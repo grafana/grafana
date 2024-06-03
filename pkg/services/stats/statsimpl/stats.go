@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
@@ -17,12 +18,12 @@ import (
 const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
 
-func ProvideService(cfg *setting.Cfg, db db.DB) stats.Service {
+func ProvideService(cfg *setting.Cfg, db *sqlstore.ReplStore) stats.Service {
 	return &sqlStatsService{cfg: cfg, db: db}
 }
 
 type sqlStatsService struct {
-	db  db.DB
+	db  *sqlstore.ReplStore
 	cfg *setting.Cfg
 }
 

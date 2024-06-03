@@ -65,26 +65,6 @@ func NewDatabaseConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*
 	return dbCfg, nil
 }
 
-// NewRODatabaseConfig creates a new read-only database configuration.
-// None of this is what I'd do for an actual implementation; the goal is to
-// modify as little existing code as possible for now.
-func NewRODatabaseConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*DatabaseConfig, error) {
-	if cfg == nil {
-		return nil, errors.New("cfg cannot be nil")
-	}
-
-	dbCfg := &DatabaseConfig{}
-	if err := dbCfg.readConfigSection(cfg, "database_replica"); err != nil {
-		return nil, err
-	}
-
-	if err := dbCfg.buildConnectionString(cfg, features); err != nil {
-		return nil, err
-	}
-
-	return dbCfg, nil
-}
-
 // readConfigSection reads the database configuration from the given block of
 // the configuration file. This method allows us to add a "database_replica"
 // section to the configuration file while using the same cfg struct.
