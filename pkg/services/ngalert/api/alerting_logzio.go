@@ -51,7 +51,7 @@ func (srv *LogzioAlertingService) RouteEvaluateAlert(c *contextmodel.ReqContext,
 			AlertRule:   evalRequest.AlertRule,
 			EvalTime:    evalRequest.EvalTime,
 			FolderTitle: evalRequest.FolderTitle,
-			LogzHeaders: c.Req.Header,
+			LogzHeaders: srv.addQuerySourceHeader(c),
 		}
 		err := srv.Schedule.RunRuleEvaluation(c.Req.Context(), evalReq)
 
@@ -64,6 +64,12 @@ func (srv *LogzioAlertingService) RouteEvaluateAlert(c *contextmodel.ReqContext,
 
 	c.Logger.Info("Evaluate Alert API - Done", "evalErrors", evaluationsErrors)
 	return response.JSON(http.StatusOK, apimodels.EvalRunsResponse{RunResults: evaluationsErrors})
+}
+
+func (srv *LogzioAlertingService) addQuerySourceHeader(c *contextmodel.ReqContext) http.Header {
+	requestHeaders := c.Req.Header
+	requestHeaders.Set("Query-Source", "METRICS_ALERTS")
+	return requestHeaders
 }
 
 func (srv *LogzioAlertingService) RouteSendAlertNotifications(c *contextmodel.ReqContext, sendNotificationsRequest apimodels.AlertSendNotificationsRequest) response.Response {

@@ -294,7 +294,13 @@ func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 	if headers != nil {
 		querySourceFromLogzHeaders = headers["Query-Source"]
 		if len(querySourceFromLogzHeaders) > 0 {
-			qs = append(qs, fmt.Sprintf("querySource=%s", querySourceFromLogzHeaders[0]))
+			var qsToAdd string
+			if querySourceFromLogzHeaders[0] == "METRICS_ALERTS" {
+				qsToAdd = "INTERNAL_METRICS_ALERTS"
+			} else {
+				qsToAdd = querySourceFromLogzHeaders[0]
+			}
+			qs = append(qs, fmt.Sprintf("querySource=%s", qsToAdd))
 		}
 	}
 
