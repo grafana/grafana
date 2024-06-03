@@ -145,7 +145,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 		roleAttributePath        string
 		roleAttributeStrict      bool
 		orgMapping               []string
-		autoAssignOrgRole        string
 		want                     *social.BasicUserInfo
 		wantErr                  bool
 		oAuthExtraInfo           map[string]string
@@ -154,7 +153,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			name:              "should return default role if no role attribute path is set",
 			userRawJSON:       testGHUserJSON,
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			autoAssignOrgRole: "Viewer",
 			roleAttributePath: "",
 			want: &social.BasicUserInfo{
 				Id:       "1",
@@ -169,17 +167,16 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			name:                "should fail when role attribute path is empty and role attribute strict is enabled",
 			userRawJSON:         testGHUserJSON,
 			userTeamsRawJSON:    testGHUserTeamsJSON,
-			autoAssignOrgRole:   "",
 			roleAttributePath:   "",
 			roleAttributeStrict: true,
 			wantErr:             true,
 		},
 		{
-			name:              "Admin mapping takes precedence over auto assign org role",
-			roleAttributePath: "[login==octocat] && 'Admin' || 'Viewer'",
-			userRawJSON:       testGHUserJSON,
-			autoAssignOrgRole: "Editor",
-			userTeamsRawJSON:  testGHUserTeamsJSON,
+			name:                     "admin mapping takes precedence over auto assign org role",
+			roleAttributePath:        "[login==octocat] && 'Admin' || 'Viewer'",
+			userRawJSON:              testGHUserJSON,
+			settingAutoAssignOrgRole: "Editor",
+			userTeamsRawJSON:         testGHUserTeamsJSON,
 			want: &social.BasicUserInfo{
 				Id:       "1",
 				Name:     "monalisa octocat",
@@ -193,7 +190,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			name:              "should map role when role attribute path is set",
 			roleAttributePath: "contains(groups[*], '@github/justice-league') && 'Editor' || 'Viewer'",
 			userRawJSON:       testGHUserJSON,
-			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
 			want: &social.BasicUserInfo{
 				Id:       "1",
@@ -237,11 +233,11 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			},
 		},
 		{
-			name:              "should fallback to default org role when role attribute path is empty and auto assign org role is set",
-			roleAttributePath: "",
-			userRawJSON:       testGHUserJSON,
-			autoAssignOrgRole: "Editor",
-			userTeamsRawJSON:  testGHUserTeamsJSON,
+			name:                     "should fallback to default org role when role attribute path is empty and auto assign org role is set",
+			roleAttributePath:        "",
+			userRawJSON:              testGHUserJSON,
+			settingAutoAssignOrgRole: "Editor",
+			userTeamsRawJSON:         testGHUserTeamsJSON,
 			want: &social.BasicUserInfo{
 				Id:       "1",
 				Name:     "monalisa octocat",
@@ -253,11 +249,11 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 		},
 		{
 			// see: https://github.com/grafana/grafana/issues/85916
-			name:              "should check parent team id for team membership",
-			roleAttributePath: "",
-			userRawJSON:       testGHUserJSON,
-			autoAssignOrgRole: "Editor",
-			userTeamsRawJSON:  testGHUserTeamsJSON,
+			name:                     "should check parent team id for team membership",
+			roleAttributePath:        "",
+			userRawJSON:              testGHUserJSON,
+			settingAutoAssignOrgRole: "Editor",
+			userTeamsRawJSON:         testGHUserTeamsJSON,
 			oAuthExtraInfo: map[string]string{
 				"team_ids": "99",
 			},
@@ -335,7 +331,11 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			defer server.Close()
 
 			cfg := &setting.Cfg{
-				AutoAssignOrgRole: tt.autoAssignOrgRole,
+				AutoAssignOrgRole: "Viewer", // default role
+			}
+
+			if tt.settingAutoAssignOrgRole != "" {
+				cfg.AutoAssignOrgRole = tt.settingAutoAssignOrgRole
 			}
 
 			s := NewGitHubProvider(
