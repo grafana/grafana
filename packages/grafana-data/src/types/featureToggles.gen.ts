@@ -46,8 +46,6 @@ export interface FeatureToggles {
   topnav?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
-  dualWritePlaylistsMode2?: boolean;
-  dualWritePlaylistsMode3?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
@@ -193,4 +191,5 @@ export interface FeatureToggles {
   datasourceProxyDisableRBAC?: boolean;
   alertingDisableSendAlertsExternal?: boolean;
   preserveDashboardStateWhenNavigating?: boolean;
+  alertingCentralAlertHistory?: boolean;
 }

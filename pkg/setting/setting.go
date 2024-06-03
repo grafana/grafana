@@ -435,6 +435,9 @@ type Cfg struct {
 	// Defaults to GrafanaComURL setting + "/api" if unset.
 	GrafanaComAPIURL string
 
+	// Grafana.com SSO API token used for Unified SSO between instances and Grafana.com.
+	GrafanaComSSOAPIToken string
+
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]any
 	GeomapEnableCustomBaseLayers bool
@@ -1245,7 +1248,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.GrafanaComURL = grafanaComUrl
 
 	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComUrl+"/api")
-
+	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 
