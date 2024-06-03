@@ -113,11 +113,8 @@ export class VariableQueryRunner {
       const runnerArgs = { variable, datasource, searchFilter, timeSrv, runRequest };
       //if query runner is not available for the datasource, we should return early
       if (!queryRunners.isQueryRunnerAvailableForDatasource(datasource)) {
-        this.updateOptionsResults.next({
-          identifier,
-          state: LoadingState.Error,
-          error: 'Query Runner is not available for datasource',
-        });
+        const error = new Error('Query Runner is not available for datasource.');
+        this.updateOptionsResults.next({ identifier, state: LoadingState.Error, error });
         return;
       }
 
