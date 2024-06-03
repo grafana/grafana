@@ -22,24 +22,14 @@ import {
   TooltipDisplayMode,
   VisibilityMode,
 } from '@grafana/schema/dist/esm/index';
-import { withErrorBoundary } from '@grafana/ui';
 
 import { DataSourceInformation, PANEL_STYLES } from '../../../home/Insights';
 import { InsightsRatingModal } from '../../../insights/RatingModal';
 import { SectionSubheader } from '../../../insights/SectionSubheader';
-import { AlertingPageWrapper } from '../../AlertingPageWrapper';
 
-import { HistoryObjectRenderer } from './CentralAlertHistory';
+import { HistoryEventsListObjectRenderer } from './CentralAlertHistory';
 
-const HistoryPage = () => {
-  return (
-    <AlertingPageWrapper navId="alerts-history" isLoading={false}>
-      <EventsBarChart />
-    </AlertingPageWrapper>
-  );
-};
-export default withErrorBoundary(HistoryPage, { style: 'page' });
-export const EventsBarChart = () => {
+export const CentralAlertHistoryScene = () => {
   const dataSourceSrv = getDataSourceSrv();
   const ashDs: DataSourceInformation = {
     type: 'loki',
@@ -60,7 +50,7 @@ export const EventsBarChart = () => {
         }),
         new SceneFlexItem({
           body: new SceneReactObject({
-            component: HistoryObjectRenderer,
+            component: HistoryEventsListObjectRenderer,
           }),
         }),
       ],

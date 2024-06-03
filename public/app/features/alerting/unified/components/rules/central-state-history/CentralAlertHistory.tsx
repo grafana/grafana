@@ -35,16 +35,13 @@ import { useRuleHistoryRecords } from '../state-history/useRuleHistoryRecords';
 const LIMIT_LABELS = 2;
 const LIMIT_EVENTS = 250;
 
-const CentralAlertHistory = ({ timeRange }: { timeRange?: TimeRange }) => {
+const HistoryEventsList = ({ timeRange }: { timeRange?: TimeRange }) => {
   const styles = useStyles2(getStyles);
   const { useGetRuleHistoryQuery } = stateHistoryApi;
   // Filter state
   const [eventsFilter, setEventsFilter] = useState('');
   // form for filter fields
   const { setValue, register, handleSubmit } = useForm({ defaultValues: { query: '' } }); //  form for search field
-  // const [from, setFrom] = useState(DEFAULT_TIME_RANGE.from);
-  // const [to, setTo] = useState(DEFAULT_TIME_RANGE.to);
-  console.log('timeRange', timeRange);
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
   const onFilterCleared = useCallback(() => {
@@ -89,9 +86,7 @@ const CentralAlertHistory = ({ timeRange }: { timeRange?: TimeRange }) => {
             <input type="submit" hidden />
           </form>
         </div>
-        {/* <TimePeriodPicker setFrom={setFrom} setTo={setTo} /> */}
       </Stack>
-      {/* <EventsBarChart /> */}
       <LoadingIndicator visible={isLoading} />
       <HistoryLogEvents logRecords={historyRecords} />
     </Stack>
@@ -273,7 +268,7 @@ const Timestamp = ({ time }: TimestampProps) => {
   );
 };
 
-export default withErrorBoundary(CentralAlertHistory, { style: 'page' });
+export default withErrorBoundary(HistoryEventsList, { style: 'page' });
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -339,16 +334,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
 };
 interface HistoryObjectState extends SceneObjectState {}
 
-class CustomObject extends SceneObjectBase<HistoryObjectState> {
-  static Component = CentralAlertHistory;
+class HistoryEventsListObject extends SceneObjectBase<HistoryObjectState> {
+  static Component = HistoryEventsList;
   public constructor(state: HistoryObjectState) {
     super(state);
   }
 }
 
-export function HistoryObjectRenderer({ model }: SceneComponentProps<CustomObject>) {
-  const { value: timeRange } = sceneGraph.getTimeRange(model).useState();
-  console.log('timeRange2', timeRange);
+export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
+  const { value: timeRange } = sceneGraph.getTimeRange(model).useState(); // get time range from scene graph
 
-  return <CentralAlertHistory timeRange={timeRange} />;
+  return <HistoryEventsList timeRange={timeRange} />;
 }
