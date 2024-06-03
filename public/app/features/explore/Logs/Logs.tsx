@@ -191,14 +191,14 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [visualisationType, setVisualisationType] = useState<LogsVisualisationType | undefined>(
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
-  const [logsContainer, setLogsContainer] = useState<HTMLDivElement | undefined>(undefined);
+  const logsContainerRef = useRef<HTMLDivElement | undefined>(undefined);
   const dispatch = useDispatch();
   const previousLoading = usePrevious(loading);
 
   const logsVolumeEventBus = eventBus.newScopedBus('logsvolume', { onlyLocal: false });
   const { register, unregisterAllChildren } = useContentOutlineContext() ?? {};
-  let flipOrderTimer: number | undefined = undefined;
-  let cancelFlippingTimer: number | undefined = undefined;
+  const flipOrderTimer = useRef<number | undefined>(undefined);
+  const cancelFlippingTimer = useRef<number | undefined>(undefined);
   const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(
     (name: string, mode: SeriesVisibilityChangeMode) => {}
   );
@@ -291,10 +291,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   useUnmount(() => {
     if (flipOrderTimer) {
-      window.clearTimeout(flipOrderTimer);
+      window.clearTimeout(flipOrderTimer.current);
     }
     if (cancelFlippingTimer) {
-      window.clearTimeout(cancelFlippingTimer);
+      window.clearTimeout(cancelFlippingTimer.current);
     }
   });
 
@@ -350,19 +350,19 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
 
   const onLogsContainerRef = useCallback((node: HTMLDivElement) => {
-    setLogsContainer(node);
+    logsContainerRef.current = node;
   }, []);
 
   const onChangeLogsSortOrder = () => {
     setIsFlipping(true);
     // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
-    flipOrderTimer = window.setTimeout(() => {
+    flipOrderTimer.current = window.setTimeout(() => {
       const newSortOrder =
         logsSortOrder === LogsSortOrder.Descending ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
       store.set(SETTINGS_KEYS.logsSortOrder, newSortOrder);
       setLogsSortOrder(newSortOrder);
     }, 0);
-    cancelFlippingTimer = window.setTimeout(() => setIsFlipping(false), 1000);
+    cancelFlippingTimer.current = window.setTimeout(() => setIsFlipping(false), 1000);
   };
 
   const onEscapeNewlines = useCallback(() => {
@@ -503,7 +503,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     setDisplayedFields([]);
   }, []);
 
-  const [onCloseCallback, setOnCloseCallback] = useState<() => void>(() => {});
+  const onCloseCallbackRef = useRef<() => void>(() => {});
 
   let onCloseContext = useCallback(() => {
     setContextOpen(false);
@@ -512,8 +512,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       datasourceType: contextRow?.datasourceType,
       logRowUid: contextRow?.uid,
     });
-    onCloseCallback?.();
-  }, [contextRow?.datasourceType, contextRow?.uid, onCloseCallback]);
+    onCloseCallbackRef?.current();
+  }, [contextRow?.datasourceType, contextRow?.uid, onCloseCallbackRef]);
 
   const onOpenContext = (row: LogRowModel, onClose: () => void) => {
     // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
@@ -523,7 +523,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       datasourceType: row.datasourceType,
       logRowUid: row.uid,
     });
-    setOnCloseCallback(onClose);
+    onCloseCallbackRef.current = onClose;
   };
 
   const getPreviousLog = useCallback((row: LogRowModel, allLogs: LogRowModel[]) => {
@@ -602,11 +602,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const scrollIntoView = useCallback(
     (element: HTMLElement) => {
       if (config.featureToggles.logsInfiniteScrolling) {
-        if (logsContainer) {
+        if (logsContainerRef.current) {
           topLogsRef.current?.scrollIntoView();
-          logsContainer.scroll({
+          logsContainerRef.current.scroll({
             behavior: 'smooth',
-            top: logsContainer.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+            top: logsContainerRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
           });
         }
 
@@ -621,20 +621,20 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         });
       }
     },
-    [logsContainer, props]
+    [logsContainerRef, props]
   );
 
   const scrollToTopLogs = useCallback(() => {
     if (config.featureToggles.logsInfiniteScrolling) {
-      if (logsContainer) {
-        logsContainer.scroll({
+      if (logsContainerRef.current) {
+        logsContainerRef.current.scroll({
           behavior: 'auto',
           top: 0,
         });
       }
     }
     topLogsRef.current?.scrollIntoView();
-  }, [logsContainer, topLogsRef]);
+  }, [logsContainerRef, topLogsRef]);
 
   const hasUnescapedContent = checkUnescapedContent(logRows);
   const filteredLogs = filterRows(logRows, hiddenLogLevels);
@@ -843,7 +843,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 range={props.range}
                 timeZone={timeZone}
                 rows={logRows}
-                scrollElement={logsContainer}
+                scrollElement={logsContainerRef.current}
                 sortOrder={logsSortOrder}
               >
                 <LogRows
@@ -873,7 +873,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   permalinkedRowId={panelState?.logs?.id}
                   scrollIntoView={scrollIntoView}
                   isFilterLabelActive={props.isFilterLabelActive}
-                  containerRendered={!!logsContainer}
+                  containerRendered={!!logsContainerRef}
                   onClickFilterValue={props.onClickFilterValue}
                   onClickFilterOutValue={props.onClickFilterOutValue}
                 />
