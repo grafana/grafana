@@ -803,7 +803,7 @@ func TestSocialGoogle_Validate(t *testing.T) {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
 			}
 
-			err := s.Validate(context.Background(), tc.settings, tc.requester)
+			err := s.Validate(context.Background(), tc.settings, ssoModels.SSOSettings{}, tc.requester)
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
 				return
