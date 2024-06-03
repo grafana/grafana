@@ -25,7 +25,7 @@ export class ScopedResourceClient<T = object, K = string> implements ResourceCli
 
     this.url = `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
   }
-
+  
   public async create(obj: ResourceForCreate<T, K>): Promise<void> {
     if (!obj.metadata.name && !obj.metadata.generateName) {
       obj.metadata.generateName = 'g'; // Triggers the server to create a unique value
@@ -35,6 +35,10 @@ export class ScopedResourceClient<T = object, K = string> implements ResourceCli
 
   public async get(name: string): Promise<Resource<T, K>> {
     return getBackendSrv().get<Resource<T, K>>(`${this.url}/${name}`);
+  }
+
+  public async subresource<S>(name: string, path: string): Promise<S> {
+    return getBackendSrv().get<S>(`${this.url}/${name}/${path}`);
   }
 
   public async list(opts?: ListOptions | undefined): Promise<ResourceList<T, K>> {

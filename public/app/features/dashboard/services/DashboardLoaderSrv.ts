@@ -5,6 +5,7 @@ import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import { AppEvents, dateMath, UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { getDashboardAPI } from 'app/core/services/dashboard_api';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
@@ -81,8 +82,8 @@ export class DashboardLoaderSrv {
         return Promise.resolve(cachedDashboard);
       }
 
-      promise = backendSrv
-        .getDashboardByUid(uid)
+      promise = getDashboardAPI()
+        .getDashboardDTO(uid)
         .then((result) => {
           if (result.meta.isFolder) {
             appEvents.emit(AppEvents.alertError, ['Dashboard not found']);

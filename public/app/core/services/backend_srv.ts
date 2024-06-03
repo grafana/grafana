@@ -39,6 +39,7 @@ import { FetchQueue } from './FetchQueue';
 import { FetchQueueWorker } from './FetchQueueWorker';
 import { ResponseQueue } from './ResponseQueue';
 import { ContextSrv, contextSrv } from './context_srv';
+import { getDashboardAPI } from './dashboard_api';
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
@@ -512,8 +513,9 @@ export class BackendSrv implements BackendService {
     return this.get('/api/search', query);
   }
 
+  /** @deprecated */
   getDashboardByUid(uid: string): Promise<DashboardDTO> {
-    return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
+    return getDashboardAPI().getDashboardDTO(uid);
   }
 
   validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {
