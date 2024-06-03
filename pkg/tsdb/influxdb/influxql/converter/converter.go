@@ -385,10 +385,6 @@ func handleTableFormatFirstFrame(rsp *backend.DataResponse, measurement string, 
 	// Add the first and only frame for table format
 	if len(rsp.Frames) == 0 {
 		newFrame := data.NewFrame(measurement)
-		newFrame.Meta = &data.FrameMeta{
-			ExecutedQueryString:    query.RawQuery,
-			PreferredVisualization: util.GetVisType(query.ResultFormat),
-		}
 		rsp.Frames = append(rsp.Frames, newFrame)
 	}
 }

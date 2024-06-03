@@ -1,13 +1,6 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "table",
-//      "executedQueryString": "Test raw query"
-//  }
+//  Frame[0] 
 //  Name: 
 //  Dimensions: 5 Fields by 5 Rows
 //  +-----------------+-----------------+--------------------------+------------------+---------------+
@@ -29,14 +22,6 @@
   "frames": [
     {
       "schema": {
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "table",
-          "executedQueryString": "Test raw query"
-        },
         "fields": [
           {
             "name": "name",

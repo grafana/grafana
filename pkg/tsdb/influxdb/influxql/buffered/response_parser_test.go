@@ -139,7 +139,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 		testFrameWithoutMeta := data.NewFrame("series alias",
 			data.NewField("Time", nil,
 				[]time.Time{
@@ -371,7 +370,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}),
 			newField,
 		)
-		testFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 
 		result := ResponseParse(readJsonFile("invalid_timestamp_format"), 200, generateQuery("Test raw query", "time_series", ""))
 

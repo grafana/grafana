@@ -1,13 +1,6 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "table",
-//      "executedQueryString": "Test raw query"
-//  }
+//  Frame[0] 
 //  Name: cpu
 //  Dimensions: 2 Fields by 11 Rows
 //  +-----------------+-----------------+
@@ -35,14 +28,6 @@
     {
       "schema": {
         "name": "cpu",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "table",
-          "executedQueryString": "Test raw query"
-        },
         "fields": [
           {
             "name": "key",

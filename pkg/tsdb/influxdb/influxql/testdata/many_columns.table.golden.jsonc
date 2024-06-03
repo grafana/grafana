@@ -1,13 +1,6 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "table",
-//      "executedQueryString": "Test raw query"
-//  }
+//  Frame[0] 
 //  Name: series_name
 //  Dimensions: 18 Fields by 9 Rows
 //  +-----------------------------------+--------------------+------------------+--------------------+-----------------+--------------------+------------------+------------------+------------------+------------------+------------------+------------------+------------------+------------------+------------------+-----------------+------------------+------------------+
@@ -34,14 +27,6 @@
     {
       "schema": {
         "name": "series_name",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "table",
-          "executedQueryString": "Test raw query"
-        },
         "fields": [
           {
             "name": "Time",

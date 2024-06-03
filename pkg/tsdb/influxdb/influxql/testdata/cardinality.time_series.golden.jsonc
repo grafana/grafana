@@ -1,13 +1,6 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "SHOW TAG VALUES CARDINALITY with key = \"host\""
-//  }
+//  Frame[0] 
 //  Name: cpu
 //  Dimensions: 1 Fields by 1 Rows
 //  +-----------------+
@@ -130,14 +123,6 @@
     {
       "schema": {
         "name": "cpu",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "SHOW TAG VALUES CARDINALITY with key = \"host\""
-        },
         "fields": [
           {
             "name": "Value",

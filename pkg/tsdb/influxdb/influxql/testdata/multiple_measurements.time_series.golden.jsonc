@@ -1,13 +1,6 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "graph",
-//      "executedQueryString": "Test raw query"
-//  }
+//  Frame[0] 
 //  Name: cpu.upc.mean { datacenter: America }
 //  Dimensions: 2 Fields by 1 Rows
 //  +-----------------------------------+----------------------------+
@@ -39,14 +32,6 @@
     {
       "schema": {
         "name": "cpu.upc.mean { datacenter: America }",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "graph",
-          "executedQueryString": "Test raw query"
-        },
         "fields": [
           {
             "name": "Time",

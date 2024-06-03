@@ -1,13 +1,6 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] {
-//      "typeVersion": [
-//          0,
-//          0
-//      ],
-//      "preferredVisualisationType": "table",
-//      "executedQueryString": "Test raw query"
-//  }
+//  Frame[0] 
 //  Name: Annotation
 //  Dimensions: 5 Fields by 2 Rows
 //  +-----------------------------------+-----------------+-----------------+------------------+-----------------------------------------------------------+
@@ -27,14 +20,6 @@
     {
       "schema": {
         "name": "Annotation",
-        "meta": {
-          "typeVersion": [
-            0,
-            0
-          ],
-          "preferredVisualisationType": "table",
-          "executedQueryString": "Test raw query"
-        },
         "fields": [
           {
             "name": "Time",
