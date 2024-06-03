@@ -158,7 +158,7 @@ func TestIntegration_GetAdminStats(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	db, cfg := db.InitTestDBWithCfg(t)
-	statsService := ProvideService(cfg, db)
+	statsService := ProvideService(cfg, db, nil)
 
 	query := stats.GetAdminStatsQuery{}
 	_, err := statsService.GetAdminStats(context.Background(), &query)
