@@ -20,16 +20,11 @@ labels:
 title: Configure mute timings
 weight: 450
 refs:
-  datasources/alertmanager:
+  external-alertmanager:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/alertmanager/
-  intro-alertmanager:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/alertmanager/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/alertmanager/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
 ---
 
 # Configure mute timings
@@ -38,7 +33,7 @@ A mute timing is a recurring interval of time when no new notifications for a po
 
 Similar to silences, mute timings do not prevent alert rules from being evaluated, nor do they stop alert instances from being shown in the user interface. They only prevent notifications from being created.
 
-You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager data source](ref:datasources/alertmanager). For more information, refer to [Alertmanager documentation](ref:intro-alertmanager).
+You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager](ref:external-alertmanager).
 
 ## Mute timings vs silences
 
