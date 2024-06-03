@@ -34,11 +34,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/images-in-notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/images-in-notifications/
-  alert-manager:
+  notifications:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/alertmanager/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/alertmanager/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
   create-recording-rules:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
@@ -76,10 +76,8 @@ Additionally, you can also add [expressions to transform your data](ref:expressi
 {{< figure src="/media/docs/alerting/grafana-managed-alerting-architecture.png" max-width="750px" caption="How Grafana-managed alerting works by default" >}}
 
 1. Alert rules are created within Grafana based on one or more data sources.
-
 1. Alert rules are evaluated by the Alert Rule Evaluation Engine from within Grafana.
-
-1. Firing and resolved alert instances are delivered to the internal Grafana [Alertmanager](ref:alert-manager) which handles notifications.
+1. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
 
 ### Supported data sources
 
@@ -98,7 +96,7 @@ They are only supported for Prometheus-based or Loki data sources with the Ruler
 1. Alert rules are created and stored within the data source itself.
 1. Alert rules can only query Prometheus-based data. It can use either queries or [recording rules](#recording-rules).
 1. Alert rules are evaluated by the Alert Rule Evaluation Engine.
-1. Firing and resolved alert instances are delivered to the configured [Alertmanager](ref:alert-manager) which handles notifications.
+1. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
 
 ### Recording rules
 
