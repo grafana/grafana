@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Clear previous bulk folders
+echo "Deleting previous bulk folders"
+find ./bulk-folders -type d -name "Bulk Folder*" -exec rm -rf "{}" \;
+
 numberOfFolders=${1:-200}
 numberOfDashboardsPerFolder=${2:-3}
 
