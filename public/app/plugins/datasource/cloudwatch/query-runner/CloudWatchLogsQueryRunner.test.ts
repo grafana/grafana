@@ -1,8 +1,7 @@
-import { Observable, lastValueFrom, of } from 'rxjs';
+import { lastValueFrom, of } from 'rxjs';
 
 import {
   DataQueryRequest,
-  DataQueryResponse,
   FieldType,
   LogLevel,
   LogRowContextQueryDirection,
@@ -13,7 +12,7 @@ import {
 import { setupMockedLogsQueryRunner } from '../__mocks__/LogsQueryRunner';
 import { LogsRequestMock } from '../__mocks__/Request';
 import { validLogsQuery } from '../__mocks__/queries';
-import { CloudWatchLogsQuery, CloudWatchQuery } from '../types'; // Add this import statement
+import { CloudWatchLogsQuery } from '../types'; // Add this import statement
 
 import { LOGSTREAM_IDENTIFIER_INTERNAL, LOG_IDENTIFIER_INTERNAL } from './CloudWatchLogsQueryRunner';
 
@@ -76,11 +75,7 @@ describe('CloudWatchLogsQueryRunner', () => {
         .mockReturnValueOnce(of(startQuerySuccessResponseStub))
         .mockReturnValueOnce(of(getQuerySuccessResponseStub));
 
-      const response = runner.handleLogQueries(
-        rawLogQueriesStub,
-        options,
-        queryFn as (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
-      );
+      const response = runner.handleLogQueries(rawLogQueriesStub, options, queryFn);
       const results = await lastValueFrom(response);
       expect(queryFn).toHaveBeenCalledTimes(2);
       expect(queryFn).toHaveBeenNthCalledWith(
@@ -119,11 +114,7 @@ describe('CloudWatchLogsQueryRunner', () => {
         .mockReturnValueOnce(of(getQueryLoadingResponseStub))
         .mockReturnValueOnce(of(getQuerySuccessResponseStub));
 
-      const response = runner.handleLogQueries(
-        rawLogQueriesStub,
-        options,
-        queryFn as (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
-      );
+      const response = runner.handleLogQueries(rawLogQueriesStub, options, queryFn);
       const results = await lastValueFrom(response);
       expect(queryFn).toHaveBeenCalledTimes(5);
 
@@ -184,11 +175,7 @@ describe('CloudWatchLogsQueryRunner', () => {
         .mockReturnValueOnce(of(startQuerySuccessResponseStub))
         .mockReturnValueOnce(of(getQuerySuccessResponseStub));
 
-      const response = runner.handleLogQueries(
-        rawLogQueriesStub,
-        options,
-        queryFn as (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
-      );
+      const response = runner.handleLogQueries(rawLogQueriesStub, options, queryFn);
       const results = await lastValueFrom(response);
       expect(queryFn).toHaveBeenCalledTimes(3);
 
@@ -238,11 +225,7 @@ describe('CloudWatchLogsQueryRunner', () => {
       // running query fn will always return the rate limit
       const queryFn = jest.fn().mockReturnValue(of(startQueryErrorWhenRateLimitedResponseStub));
 
-      const response = runner.handleLogQueries(
-        rawLogQueriesStub,
-        options,
-        queryFn as (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
-      );
+      const response = runner.handleLogQueries(rawLogQueriesStub, options, queryFn);
       const results = await lastValueFrom(response);
 
       expect(queryFn).toHaveBeenCalledTimes(2);
@@ -280,11 +263,7 @@ describe('CloudWatchLogsQueryRunner', () => {
 
       const queryFn = jest.fn().mockReturnValueOnce(of(startQueryErrorWhenBadSyntaxResponseStub));
 
-      const response = runner.handleLogQueries(
-        rawLogQueriesStub,
-        options,
-        queryFn as (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
-      );
+      const response = runner.handleLogQueries(rawLogQueriesStub, options, queryFn);
       const results = await lastValueFrom(response);
 
       // only one query is made, it gets the error and returns the error
@@ -317,11 +296,7 @@ describe('CloudWatchLogsQueryRunner', () => {
         .mockReturnValueOnce(of(getQueryErrorResponseStub))
         .mockReturnValueOnce(of(stopQueryResponseStub));
 
-      const response = runner.handleLogQueries(
-        rawLogQueriesStub,
-        options,
-        queryFn as (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
-      );
+      const response = runner.handleLogQueries(rawLogQueriesStub, options, queryFn);
       const results = await lastValueFrom(response);
 
       expect(queryFn).toHaveBeenCalledTimes(4);
@@ -380,11 +355,7 @@ describe('CloudWatchLogsQueryRunner', () => {
         ...LogsRequestMock,
         targets: rawLogQueriesStub,
       };
-      const response = runner.handleLogQueries(
-        rawLogQueriesStub,
-        options,
-        queryFn as (request: DataQueryRequest<CloudWatchQuery>) => Observable<DataQueryResponse>
-      );
+      const response = runner.handleLogQueries(rawLogQueriesStub, options, queryFn);
       const results = await lastValueFrom(response);
       expect(queryFn).toHaveBeenCalledTimes(6);
       expect(queryFn).toHaveBeenNthCalledWith(
