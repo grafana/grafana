@@ -29,6 +29,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/klog/v2"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
 
@@ -44,6 +45,7 @@ type Storage struct {
 	newFunc      func() runtime.Object
 	newListFunc  func() runtime.Object
 	getAttrsFunc storage.AttrFunc
+	mutator      utils.ResourceMetaMutator
 	// trigger      storage.IndexerFuncs
 	// indexers     *cache.Indexers
 }
@@ -67,6 +69,7 @@ func NewStorage(
 		newFunc:      newFunc,
 		newListFunc:  newListFunc,
 		getAttrsFunc: getAttrsFunc,
+		mutator:      utils.NewResourceMetaMutator(true), // everything can support folders for now
 	}, nil, nil
 }
 
@@ -80,6 +83,10 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 
 	if err := s.Versioner().PrepareObjectForStorage(obj); err != nil {
+		return err
+	}
+
+	if err := s.mutator.PrepareObjectForCreate(ctx, obj); err != nil {
 		return err
 	}
 
@@ -566,6 +573,10 @@ func (s *Storage) GuaranteedUpdate(
 		}
 
 		return apierrors.NewInternalError(fmt.Errorf("could not successfully update object. key=%s, err=%s", k.String(), err.Error()))
+	}
+
+	if err := s.mutator.PrepareObjectForUpdate(ctx, updatedObj); err != nil {
+		return err
 	}
 
 	e, err := resourceToEntity(updatedObj, requestInfo, s.codec)

@@ -27,6 +27,8 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 const MaxUpdateAttempts = 30
@@ -65,6 +67,7 @@ type Storage struct {
 
 	watchSet  *WatchSet
 	versioner storage.Versioner
+	mutator   utils.ResourceMetaMutator
 }
 
 // ErrFileNotExists means the file doesn't actually exist.
@@ -110,6 +113,7 @@ func NewStorage(
 		watchSet:         NewWatchSet(),
 
 		versioner: &storage.APIObjectVersioner{},
+		mutator:   utils.NewResourceMetaMutator(true), // ?? folder support configs?
 	}
 
 	// Initialize the RV stored in storage
@@ -163,6 +167,10 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 
 	if err := s.versioner.UpdateObject(obj, generatedRV); err != nil {
+		return err
+	}
+
+	if err := s.mutator.PrepareObjectForCreate(ctx, obj); err != nil {
 		return err
 	}
 
@@ -610,6 +618,10 @@ func (s *Storage) GuaranteedUpdate(
 	s.rvMutex.Unlock()
 
 	if err := s.versioner.UpdateObject(updatedObj, generatedRV); err != nil {
+		return err
+	}
+
+	if err := s.mutator.PrepareObjectForUpdate(ctx, updatedObj); err != nil {
 		return err
 	}
 
