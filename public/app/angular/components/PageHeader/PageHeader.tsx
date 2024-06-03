@@ -3,11 +3,12 @@ import React from 'react';
 
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { Tab, TabsBar, Icon, useStyles2, toIconName } from '@grafana/ui';
-import { PanelHeaderMenuItem } from 'app/core/components/PageHeader/PanelHeaderMenuItem';
 
-import { PageInfoItem } from '../Page/types';
-import { PageInfo } from '../PageInfo/PageInfo';
-import { ProBadge } from '../Upgrade/ProBadge';
+import { PageInfoItem } from '../../../core/components/Page/types';
+import { PageInfo } from '../../../core/components/PageInfo/PageInfo';
+import { ProBadge } from '../../../core/components/Upgrade/ProBadge';
+
+import { PanelHeaderMenuItem } from './PanelHeaderMenuItem';
 
 export interface Props {
   navItem: NavModelItem;
