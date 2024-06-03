@@ -1731,6 +1731,11 @@
       "add-transformation-header": "Start transforming data"
     }
   },
+  "trashSection": {
+    "filter": {
+      "placeholder": "Search for dashboards"
+    }
+  },
   "user-orgs": {
     "current-org-button": "Current",
     "name-column": "Name",

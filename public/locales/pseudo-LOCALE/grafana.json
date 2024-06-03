@@ -1731,6 +1731,11 @@
       "add-transformation-header": "Ŝŧäřŧ ŧřäŉşƒőřmįŉģ đäŧä"
     }
   },
+  "trashSection": {
+    "filter": {
+      "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş"
+    }
+  },
   "user-orgs": {
     "current-org-button": "Cūřřęŉŧ",
     "name-column": "Ńämę",
