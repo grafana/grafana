@@ -83,7 +83,7 @@ Additionally, you can also add [expressions to transform your data](ref:expressi
 
 ### Supported data sources
 
-Grafana-managed alert rules can query backend data sources if Grafana Alerting is enabled by specifying `{"backend": true, "alerting": true}` in the [plugin.json](/developers/plugin-tools/reference-plugin-json).
+Grafana-managed alert rules can query backend data sources if Grafana Alerting is enabled by specifying `{"backend": true, "alerting": true}` in the [plugin.json](https://grafana.com/developers/plugin-tools/reference/plugin-json).
 
 Find the public data sources supporting Alerting in the [Grafana Plugins directory](/grafana/plugins/data-source-plugins/?features=alerting).
 
