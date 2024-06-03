@@ -76,8 +76,12 @@ func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 }
 
 func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
-	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
-	return grafanarest.Mode0
+	m, ok := modeMap[v0alpha1.GROUPRESOURCE]
+	if !dualWrite || !ok {
+		return grafanarest.Mode0
+	}
+
+	return m
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
