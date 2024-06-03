@@ -125,7 +125,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("Remove one datasource should have removed old datasource", func(t *testing.T) {
-		store := &spyStore{}
+		store := &spyStore{items: []*datasources.DataSource{{Name: "old-data-source", OrgID: 1, UID: "old-data-source"}}}
 		orgFake := &orgtest.FakeOrgService{}
 		correlationsStore := &mockCorrelationsStore{}
 		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
@@ -142,7 +142,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("Two configured datasource and purge others", func(t *testing.T) {
-		store := &spyStore{items: []*datasources.DataSource{{Name: "old-graphite", OrgID: 1, ID: 1}, {Name: "old-graphite2", OrgID: 1, ID: 2}}}
+		store := &spyStore{items: []*datasources.DataSource{{Name: "old-graphite", OrgID: 1, ID: 1}, {Name: "old-graphite3", OrgID: 1, ID: 2}}}
 		orgFake := &orgtest.FakeOrgService{}
 		correlationsStore := &mockCorrelationsStore{}
 		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
