@@ -62,7 +62,6 @@ export class KeybindingSrv {
   }
 
   globalEsc() {
-    console.log('globalEsc called');
     const anyDoc = document;
     const activeElement = anyDoc.activeElement;
 
