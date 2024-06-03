@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 
 type Props = {
-  children: React.ReactNode;
+  children: React.ReactElement;
   visible: boolean;
   duration?: number;
 };
@@ -26,7 +26,7 @@ export function FadeTransition(props: Props) {
       classNames={styles}
       nodeRef={transitionRef}
     >
-      <div ref={transitionRef}>{children}</div>
+      {React.cloneElement(children, { ref: transitionRef })}
     </CSSTransition>
   );
 }
