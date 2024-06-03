@@ -33,7 +33,7 @@ import { STATE_HISTORY_POLLING_INTERVAL } from '../state-history/LokiStateHistor
 import { LogRecord } from '../state-history/common';
 import { useRuleHistoryRecords } from '../state-history/useRuleHistoryRecords';
 
-const LIMIT_LABELS = 2;
+const LIMIT_LABELS = 5;
 const LIMIT_EVENTS = 250;
 
 const HistoryEventsList = ({ timeRange }: { timeRange?: TimeRange }) => {
