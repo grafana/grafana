@@ -181,7 +181,7 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         label={
           <Label
             htmlFor="evaluateFor"
-            description="Period in which an alert rule can be in breach of the condition until the alert rule fires."
+            description='Period the threshold condition must be met to trigger the alert. Selecting "None" triggers the alert immediately once the condition is met.'
           >
             Pending period
           </Label>
@@ -204,6 +204,25 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   );
 }
 
+function NeedHelpInfoForConfigureNoDataError() {
+  const docsLink =
+    'https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling';
+
+  return (
+    <Stack direction="row" gap={0.5} alignItems="center">
+      <Text variant="bodySmall" color="secondary">
+        Define the alert behavior when the evaluation fails or the query returns no data.
+      </Text>
+      <NeedHelpInfo
+        contentText="These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts."
+        externalLink={docsLink}
+        linkText={`Read more about this option`}
+        title="Configure no data and error handling"
+      />
+    </Stack>
+  );
+}
+
 function getDescription() {
   const docsLink = 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/';
 
@@ -213,10 +232,22 @@ function getDescription() {
         Define how the alert rule is evaluated.
       </Text>
       <NeedHelpInfo
-        contentText="Evaluation groups are containers for evaluating alert and recording rules. An evaluation group defines an evaluation interval - how often a rule is checked. Alert rules within the same evaluation group are evaluated sequentially"
+        contentText={
+          <>
+            <p>Evaluation groups are containers for evaluating alert and recording rules.</p>
+            <p>
+              An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the
+              same evaluation group are evaluated over the same evaluation interval.
+            </p>
+            <p>
+              Pending period specifies how long the threshold condition must be met before the alert starts firing. This
+              option helps prevent alerts from being triggered by temporary issues.
+            </p>
+          </>
+        }
         externalLink={docsLink}
-        linkText={`Read about evaluation`}
-        title="Evaluation"
+        linkText={`Read about evaluation and alert states`}
+        title="Alert rule evaluation"
       />
     </Stack>
   );
@@ -283,6 +314,7 @@ export function GrafanaEvaluationBehavior({
       />
       {showErrorHandling && (
         <>
+          <NeedHelpInfoForConfigureNoDataError />
           <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
             <Controller
               render={({ field: { onChange, ref, ...field } }) => (

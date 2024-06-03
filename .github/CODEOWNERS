@@ -435,6 +435,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/transformers/timeSeriesTable/ @grafana/dataviz-squad @grafana/app-o11y-visualizations
 /public/app/features/users/ @grafana/identity-access-team
 /public/app/features/variables/ @grafana/dashboards-squad
+/public/app/features/trash-section/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/alertlist/ @grafana/alerting-frontend
 /public/app/plugins/panel/annolist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/barchart/ @grafana/dataviz-squad
@@ -473,6 +474,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/store/ @grafana/grafana-frontend-platform
 /public/app/types/ @grafana/grafana-frontend-platform
 /public/app/types/alerting.ts @grafana/alerting-frontend
+/public/app/types/unified-alerting-dto.ts @grafana/alerting-frontend
 /public/dashboards/ @grafana/dashboards-squad
 /public/gazetteer/ @ryantxu
 /public/img/ @grafana/grafana-frontend-platform
@@ -581,6 +583,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/manage-dashboards/components/PublicDashboardListTable/ @grafana/sharing-squad
 /public/app/features/dashboard/containers/PublicDashboardPage.tsx @grafana/sharing-squad
 /public/app/features/manage-dashboards/components/SnapshotListTable.tsx @grafana/sharing-squad
+/pkg/api/render.go @grafana/sharing-squad
 /pkg/services/dashboardsnapshots/ @grafana/sharing-squad
 /pkg/services/publicdashboards/ @grafana/sharing-squad
 /pkg/services/rendering/ @grafana/sharing-squad

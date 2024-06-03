@@ -111,10 +111,6 @@ const (
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
-	// FlagReturnToPrevious
-	// Enables the return to previous context functionality
-	FlagReturnToPrevious = "returnToPrevious"
-
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -122,14 +118,6 @@ const (
 	// FlagUnifiedStorage
 	// SQL-based k8s storage
 	FlagUnifiedStorage = "unifiedStorage"
-
-	// FlagDualWritePlaylistsMode2
-	// Enables dual writing of playlists to both legacy and k8s storage in mode 2
-	FlagDualWritePlaylistsMode2 = "dualWritePlaylistsMode2"
-
-	// FlagDualWritePlaylistsMode3
-	// Enables dual writing of playlists to both legacy and k8s storage in mode 3
-	FlagDualWritePlaylistsMode3 = "dualWritePlaylistsMode3"
 
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
@@ -687,6 +675,10 @@ const (
 	// Enables the new sharing drawer design
 	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
 
+	// FlagAlertingListViewV2
+	// Enables the new alert list view design
+	FlagAlertingListViewV2 = "alertingListViewV2"
+
 	// FlagNotificationBanner
 	// Enables the notification banner UI and API
 	FlagNotificationBanner = "notificationBanner"
@@ -702,4 +694,12 @@ const (
 	// FlagAlertingDisableSendAlertsExternal
 	// Disables the ability to send alerts to an external Alertmanager datasource.
 	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
+
+	// FlagPreserveDashboardStateWhenNavigating
+	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
+	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"
+
+	// FlagAlertingCentralAlertHistory
+	// Enables the new central alert history.
+	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
 )

@@ -465,6 +465,16 @@
   },
   "explore": {
     "add-to-dashboard": "Zum Dashboard hinzufügen",
+    "add-to-library-modal": {
+      "auto-star": "",
+      "data-source-name": "",
+      "data-source-type": "",
+      "description": "",
+      "info": "",
+      "query": "",
+      "title": "",
+      "visibility": ""
+    },
     "rich-history": {
       "close-tooltip": "Abfrageverlauf schließen",
       "datasource-a-z": "Datenquelle A-Z",
@@ -479,6 +489,7 @@
     "rich-history-card": {
       "add-comment-form": "Kommentarformular hinzufügen",
       "add-comment-tooltip": "Kommentar hinzufügen",
+      "add-to-library": "",
       "cancel": "Abbrechen",
       "confirm-delete": "Löschen",
       "copy-query-tooltip": "Abfrage in Zwischenablage kopieren",
@@ -493,6 +504,7 @@
       "edit-comment-tooltip": "Kommentar bearbeiten",
       "optional-description": "Eine optionale Beschreibung dessen, was die Abfrage tut.",
       "query-comment-label": "Abfrage-Kommentar",
+      "query-template-added": "",
       "query-text-label": "Abfragetext",
       "save-comment": "Kommentar speichern",
       "star-query-tooltip": "Abfrage anwählen",
@@ -1176,6 +1188,10 @@
     "testing-and-synthetics": {
       "subtitle": "Optimieren Sie die Leistung mit Erkenntnissen aus k6 und Synthetic Monitoring",
       "title": "Testen & Synthetics"
+    },
+    "trash": {
+      "subtitle": "",
+      "title": ""
     },
     "upgrading": {
       "title": "Statistiken und Lizenz"
