@@ -154,7 +154,7 @@ Running the backend tests on Windows currently needs some tweaking, so use the `
 go run build.go test
 ```
 
-### Run SQLLite, PostgreSQL and MySQL integration tests
+### Run SQLite, PostgreSQL and MySQL integration tests
 
 By default, grafana runs SQLite. To run test with SQLite:
 
