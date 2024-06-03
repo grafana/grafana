@@ -211,7 +211,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'dashboards/recentlyDeleted':
       return t(
         'nav.recentlyDeleted.subtitle',
-        'Any items remaining in here for more than 30 days will be automatically deleted'
+        'Any items listed here for more than 30 days will be automatically deleted.'
       );
     case 'alerting':
       return t('nav.alerting.subtitle', 'Learn about problems in your systems moments after they occur');

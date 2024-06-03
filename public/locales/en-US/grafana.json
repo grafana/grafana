@@ -1129,7 +1129,7 @@
       "title": "Public dashboards"
     },
     "recentlyDeleted": {
-      "subtitle": "Any items remaining in here for more than 30 days will be automatically deleted",
+      "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
       "title": "Recently Deleted"
     },
     "recorded-queries": {
