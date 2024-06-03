@@ -3,7 +3,8 @@ import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime'
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
 import {
@@ -15,7 +16,7 @@ import {
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
-import { DashboardJson } from '../types';
+import { DashboardJson, DeleteDashboardResponse } from '../types';
 
 import {
   clearDashboard,
@@ -310,6 +311,17 @@ export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: 
   return executeInOrder(tasks);
 }
 
+export function saveDashboard(options: SaveDashboardCommand) {
+  dashboardWatcher.ignoreNextSave();
+
+  return getBackendSrv().post('/api/dashboards/db/', {
+    dashboard: options.dashboard,
+    message: options.message ?? '',
+    overwrite: options.overwrite ?? false,
+    folderUid: options.folderUid,
+  });
+}
+
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
   return getBackendSrv().delete(`/api/folders/${uid}?forceDeleteRules=false`, undefined, { showSuccessAlert });
 }
@@ -348,7 +360,7 @@ export function getFolderById(id: number): Promise<{ id: number; title: string }
 }
 
 export function deleteDashboard(uid: string, showSuccessAlert: boolean) {
-  return getDashboardAPI().deleteDashboard(uid, showSuccessAlert);
+  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
 }
 
 function executeInOrder(tasks: any[]): Promise<unknown> {

@@ -21,7 +21,6 @@ import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
-import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
@@ -513,9 +512,8 @@ export class BackendSrv implements BackendService {
     return this.get('/api/search', query);
   }
 
-  /** @deprecated */
   getDashboardByUid(uid: string): Promise<DashboardDTO> {
-    return getDashboardAPI().getDashboardDTO(uid);
+    return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 
   validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {
