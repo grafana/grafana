@@ -10,7 +10,7 @@ import { commonOptionsBuilder } from '@grafana/ui';
 
 import { LineStyleEditor } from '../../timeseries/LineStyleEditor';
 
-import { FieldConfig, XYShowMode } from './panelcfg.gen';
+import { FieldConfig, XYShowMode, PointShape } from './panelcfg.gen';
 
 export const DEFAULT_POINT_SIZE = 5;
 
@@ -33,13 +33,6 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
         hideFromDefaults: true,
       },
       [FieldConfigProperty.DisplayName]: {
-        hideFromDefaults: true,
-      },
-
-      [FieldConfigProperty.Thresholds]: {
-        hideFromDefaults: true,
-      },
-      [FieldConfigProperty.Mappings]: {
         hideFromDefaults: true,
       },
 
@@ -111,17 +104,39 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
           name: 'Max point size',
           showIf: (c) => c.show !== XYShowMode.Lines,
         })
-        // .addSliderInput({
-        //   path: 'fillOpacity',
-        //   name: 'Fill opacity',
-        //   defaultValue: 0.4, // defaultFieldConfig.fillOpacity,
-        //   settings: {
-        //     min: 0, // hidden?  or just outlines?
-        //     max: 1,
-        //     step: 0.05,
-        //   },
-        //   showIf: (c) => c.show !== ScatterShow.Lines,
-        // })
+        .addRadio({
+          path: 'pointShape',
+          name: 'Point shape',
+          defaultValue: PointShape.Circle,
+          settings: {
+            options: [
+              { value: PointShape.Circle, label: 'Circle' },
+              { value: PointShape.Square, label: 'Square' },
+            ],
+          },
+          showIf: (c) => c.show !== XYShowMode.Lines,
+        })
+        .addSliderInput({
+          path: 'pointStrokeWidth',
+          name: 'Point stroke width',
+          defaultValue: 1,
+          settings: {
+            min: 0,
+            max: 10,
+          },
+          showIf: (c) => c.show !== XYShowMode.Lines,
+        })
+        .addSliderInput({
+          path: 'fillOpacity',
+          name: 'Fill opacity',
+          defaultValue: 50,
+          settings: {
+            min: 0,
+            max: 100,
+            step: 1,
+          },
+          showIf: (c) => c.show !== XYShowMode.Lines,
+        })
         .addCustomEditor<void, LineStyle>({
           id: 'lineStyle',
           path: 'lineStyle',
