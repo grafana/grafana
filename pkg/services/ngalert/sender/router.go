@@ -165,7 +165,10 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 		// No sender and have Alertmanager(s) to send to - start a new one.
 		d.logger.Info("Creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", redactedAMs)
 		senderLogger := log.New("ngalert.sender.external-alertmanager")
-		s := NewExternalAlertmanagerSender(senderLogger, prometheus.NewRegistry())
+		s, err := NewExternalAlertmanagerSender(senderLogger, prometheus.NewRegistry())
+		if err != nil {
+			return err
+		}
 		d.externalAlertmanagers[cfg.OrgID] = s
 		s.Run()
 

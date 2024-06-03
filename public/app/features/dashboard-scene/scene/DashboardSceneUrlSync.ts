@@ -124,6 +124,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // Handle edit panel state
     if (typeof values.editPanel === 'string') {
       const panel = findVizPanelByKey(this._scene, values.editPanel);
+
       if (!panel) {
         console.warn(`Panel ${values.editPanel} not found`);
         return;
@@ -144,6 +145,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         });
         return;
       }
+
       update.editPanel = buildPanelEditScene(panel);
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;

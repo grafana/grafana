@@ -465,6 +465,16 @@
   },
   "explore": {
     "add-to-dashboard": "Añadir al tablero",
+    "add-to-library-modal": {
+      "auto-star": "",
+      "data-source-name": "",
+      "data-source-type": "",
+      "description": "",
+      "info": "",
+      "query": "",
+      "title": "",
+      "visibility": ""
+    },
     "rich-history": {
       "close-tooltip": "Cerrar el historial de consultas",
       "datasource-a-z": "Fuente de datos A-Z",
@@ -1178,6 +1188,10 @@
     "testing-and-synthetics": {
       "subtitle": "Optimiza el rendimiento con información de seguimiento k6 y sintética",
       "title": "Pruebas y síntesis"
+    },
+    "trash": {
+      "subtitle": "",
+      "title": ""
     },
     "upgrading": {
       "title": "Estadísticas y licencia"
