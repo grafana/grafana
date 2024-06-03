@@ -301,7 +301,7 @@ func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt de
 }
 
 func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *contextmodel.ReqContext, name string) response.Response {
-	err := srv.muteTimings.DeleteMuteTiming(c.Req.Context(), name, c.SignedInUser.GetOrgID(), definitions.Provenance(alerting_models.ProvenanceAPI))
+	err := srv.muteTimings.DeleteMuteTiming(c.Req.Context(), name, c.SignedInUser.GetOrgID(), determineProvenance(c))
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to delete mute timing", err)
 	}
