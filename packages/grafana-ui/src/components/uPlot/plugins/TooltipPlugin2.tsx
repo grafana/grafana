@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
-import { OnSelectCallback } from '../../PanelChrome';
+import { OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
@@ -38,7 +38,7 @@ interface TooltipPlugin2Props {
   // y-only, via shiftKey
   clientZoom?: boolean;
 
-  onSelect?: OnSelectCallback;
+  onSelectRange?: OnSelectRangeCallback;
   // Whether to clear or keep the selected area rendered after the user has finished dragging
   keepSelectedArea?: boolean;
 
@@ -112,7 +112,7 @@ export const TooltipPlugin2 = ({
   render,
   clientZoom = false,
   queryZoom,
-  onSelect,
+  onSelectRange,
   maxWidth,
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
@@ -327,7 +327,7 @@ export const TooltipPlugin2 = ({
       const isXAxisHorizontal = u.scales.x.ori === 0;
       if (!viaSync && (clientZoom || queryZoom != null)) {
         if (maybeZoomAction(u.cursor!.event)) {
-          if (onSelect) {
+          if (onSelectRange) {
             const selections = Object.entries(u.scales!).map(([key, scale]) => {
               const isXAxis = key === 'x';
               let min = 0;
@@ -348,7 +348,7 @@ export const TooltipPlugin2 = ({
               return { key, from: min, to: max };
             });
 
-            onSelect(selections);
+            onSelectRange(selections);
           } else if (clientZoom && yDrag) {
             if (u.select.height >= MIN_ZOOM_DIST) {
               for (let key in u.scales!) {
