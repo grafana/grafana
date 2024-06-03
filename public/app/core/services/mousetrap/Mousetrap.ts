@@ -445,6 +445,8 @@ class Mousetrap {
    */
   _nextExpectedAction: boolean | string = false;
 
+  _globalCallbacks: Record<string, boolean> = {};
+
   constructor(el: HTMLElement | Document) {
     this.target = el;
 
@@ -572,7 +574,7 @@ class Mousetrap {
   private _fireCallback = (callback: Function, e: KeyboardEvent, combo: string, sequence?: string) => {
     // if this event should not happen stop here
     const target = e.target || e.srcElement;
-    if (target && target instanceof HTMLElement && this.stopCallback(e, target, combo)) {
+    if (target && target instanceof HTMLElement && this.stopCallback(e, target, combo, sequence)) {
       return;
     }
 
@@ -857,6 +859,36 @@ class Mousetrap {
     return this.bind(keys, function () {}, action);
   };
 
+  // From bind-global plugin
+  // https://github.com/Elvynia/mousetrap-global-bind/blob/master/mousetrap-global-bind.js#L28
+  bindGlobal = (keys: string | string[], callback: MousetrapCallback, action?: string) => {
+    this.bind(keys, callback, action);
+
+    if (keys instanceof Array) {
+      for (let i = 0; i < keys.length; i++) {
+        this._globalCallbacks[keys[i]] = true;
+      }
+      return;
+    }
+
+    this._globalCallbacks[keys] = true;
+  };
+
+  // From bind-global plugin
+  // https://github.com/Elvynia/mousetrap-global-bind/blob/master/mousetrap-global-bind.js#L42
+  unbindGlobal = (keys: string | string[], action?: string) => {
+    this.unbind(keys, action);
+
+    if (keys instanceof Array) {
+      for (let i = 0; i < keys.length; i++) {
+        this._globalCallbacks[keys[i]] = false;
+      }
+      return;
+    }
+
+    this._globalCallbacks[keys] = false;
+  };
+
   /**
    * triggers an event that has already been bound
    */
@@ -882,15 +914,18 @@ class Mousetrap {
   /**
    * should we stop this event before firing off callbacks
    */
-  stopCallback = (e: Event, element: HTMLElement, combo: string | undefined): boolean => {
-    let self = this;
+  stopCallback = (e: Event, element: HTMLElement, combo: string, sequence?: string): boolean => {
+    // From global bind plugin https://github.com/Elvynia/mousetrap-global-bind/blob/master/mousetrap-global-bind.js
+    if (this._globalCallbacks[combo] || (sequence && this._globalCallbacks[sequence])) {
+      return false;
+    }
 
     // if the element has the class "mousetrap" then no need to stop
     if ((' ' + element.className + ' ').indexOf(' mousetrap ') > -1) {
       return false;
     }
 
-    if (belongsTo(element, self.target)) {
+    if (belongsTo(element, this.target)) {
       return false;
     }
 
@@ -938,9 +973,5 @@ class Mousetrap {
 }
 
 const mousetrapInstance = new Mousetrap(document);
-
-// expose mousetrap to the global object
-/// @ts-expect-error - mousetrap-global-bind defines bindGlobal. This should be vendored as well
-window.Mousetrap = mousetrapInstance;
 
 export default mousetrapInstance;
