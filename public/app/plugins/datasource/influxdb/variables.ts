@@ -31,7 +31,16 @@ export class InfluxVariableSupport extends CustomVariableSupport<InfluxDatasourc
     }
 
     const interpolated = this.templateSrv.replace(query, request.scopedVars, this.datasource.interpolateQueryExpr);
-    const metricFindStream = from(this.datasource.metricFindQuery(interpolated, request.range));
+    const metricFindStream = from(
+      this.datasource.metricFindQuery(
+        {
+          refId: request.targets[0].refId,
+          query: interpolated,
+          maxDataPoints: request.targets[0].maxDataPoints ?? 1000,
+        },
+        request.range
+      )
+    );
     return metricFindStream.pipe(map((results) => ({ data: results })));
   }
 }

@@ -48,7 +48,14 @@ import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
 import { buildRawQuery, removeRegexWrapper } from './queryUtils';
 import ResponseParser from './response_parser';
-import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxQueryTag, InfluxVersion } from './types';
+import {
+  DEFAULT_POLICY,
+  InfluxOptions,
+  InfluxQuery,
+  InfluxQueryTag,
+  InfluxVariableQuery,
+  InfluxVersion,
+} from './types';
 import { InfluxVariableSupport } from './variables';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
@@ -373,7 +380,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     ).then(this.toMetricFindValue);
   }
 
-  async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
+  async metricFindQuery(query: InfluxVariableQuery, options?: any): Promise<MetricFindValue[]> {
     if (
       this.version === InfluxVersion.Flux ||
       this.version === InfluxVersion.SQL ||
@@ -381,26 +388,28 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     ) {
       const target: InfluxQuery & SQLQuery = {
         refId: 'metricFindQuery',
-        query,
+        query: query.query,
         rawQuery: true,
-        ...(this.version === InfluxVersion.SQL ? { rawSql: query, format: QueryFormat.Table } : {}),
+        ...(this.version === InfluxVersion.SQL ? { rawSql: query.query, format: QueryFormat.Table } : {}),
       };
       return lastValueFrom(
         super.query({
           ...(options ?? {}), // includes 'range'
+          maxDataPoints: query.maxDataPoints,
           targets: [target],
         })
       ).then(this.toMetricFindValue);
     }
 
     const interpolated = this.templateSrv.replace(
-      query,
+      query.query,
       options?.scopedVars,
-      (value: string | string[] = [], variable: QueryVariableModel) => this.interpolateQueryExpr(value, variable, query)
+      (value: string | string[] = [], variable: QueryVariableModel) =>
+        this.interpolateQueryExpr(value, variable, query.query)
     );
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
-      return this.responseParser.parse(query, resp);
+      return this.responseParser.parse(query.query, resp);
     });
   }
 
@@ -421,7 +430,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       database: this.database,
     });
 
-    return this.metricFindQuery(query);
+    return this.metricFindQuery({ refId: 'get-tag-keys', query });
   }
 
   getTagValues(options: DataSourceGetTagValuesOptions<InfluxQuery>) {
@@ -432,7 +441,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       withKey: options.key,
     });
 
-    return this.metricFindQuery(query);
+    return this.metricFindQuery({ refId: 'get-tag-values', query });
   }
 
   /**
