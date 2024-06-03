@@ -87,10 +87,10 @@ type schedule struct {
 	featureToggles       featuremgmt.FeatureToggles
 
 	metrics *metrics.Scheduler
-	// metricsUpdateCalledWithGroups contains AlertRuleGroupKeyWithFolderTitles that
+	// lastUpdatedMetricsForOrgsAndGroups contains AlertRuleGroupKeyWithFolderFullpaths that
 	// were passed to updateRulesMetrics in the current tick. This is used to
 	// delete metrics for the rules/groups that are not longer present.
-	lastUpdatedMetricsForOrgsAndGroups map[int64]map[ngmodels.AlertRuleGroupKeyWithFolderTitle]struct{} // orgID -> set of AlertRuleGroupKeyWithFolderTitle
+	lastUpdatedMetricsForOrgsAndGroups map[int64]map[ngmodels.AlertRuleGroupKeyWithFolderFullpath]struct{} // orgID -> set of AlertRuleGroupKeyWithFolderFullpath
 
 	alertsSender    AlertsSender
 	minRuleInterval time.Duration
@@ -142,7 +142,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		evaluatorFactory:                   cfg.EvaluatorFactory,
 		ruleStore:                          cfg.RuleStore,
 		metrics:                            cfg.Metrics,
-		lastUpdatedMetricsForOrgsAndGroups: make(map[int64]map[ngmodels.AlertRuleGroupKeyWithFolderTitle]struct{}),
+		lastUpdatedMetricsForOrgsAndGroups: make(map[int64]map[ngmodels.AlertRuleGroupKeyWithFolderFullpath]struct{}),
 		appURL:                             cfg.AppURL,
 		disableGrafanaFolder:               cfg.DisableGrafanaFolder,
 		jitterEvaluations:                  cfg.JitterEvaluations,

@@ -467,9 +467,9 @@ type AlertRuleGroupKey struct {
 	RuleGroup    string
 }
 
-type AlertRuleGroupKeyWithFolderTitle struct {
+type AlertRuleGroupKeyWithFolderFullpath struct {
 	AlertRuleGroupKey
-	FolderTitle string
+	FolderFullpath string
 }
 
 func (k AlertRuleGroupKey) String() string {
