@@ -151,8 +151,8 @@ func (ss *sqlStatsService) roleCounterSQL(ctx context.Context) string {
 
 func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAdminStatsQuery) (result *stats.AdminStats, err error) {
 	if ss.repl != nil {
-		err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
-			dialect := ss.db.GetDialect()
+		err = ss.repl.WithDbSession(ctx, func(dbSession *db.Session) error {
+			dialect := ss.repl.GetDialect()
 			now := time.Now()
 			activeEndDate := now.Add(-activeUserTimeLimit)
 			dailyActiveEndDate := now.Add(-dailyActiveUserTimeLimit)
