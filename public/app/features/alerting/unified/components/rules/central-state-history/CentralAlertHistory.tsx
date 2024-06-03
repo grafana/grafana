@@ -322,6 +322,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     labelsFilter: css({
       width: '100%',
+      paddingTop: theme.spacing(4),
     }),
   };
 };
