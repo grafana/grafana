@@ -465,6 +465,16 @@
   },
   "explore": {
     "add-to-dashboard": "Adicionar ao painel de controle",
+    "add-to-library-modal": {
+      "auto-star": "",
+      "data-source-name": "",
+      "data-source-type": "",
+      "description": "",
+      "info": "",
+      "query": "",
+      "title": "",
+      "visibility": ""
+    },
     "rich-history": {
       "close-tooltip": "Fechar histórico de consultas",
       "datasource-a-z": "Fonte de dados A-Z",
