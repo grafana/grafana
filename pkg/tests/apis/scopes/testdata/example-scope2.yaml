@@ -3,7 +3,7 @@ kind: Scope
 metadata:
   name: example2
 spec:
-    title: Example scope 2
+    title: foo-scope
     description: Longer description for a scope
     filters: 
       - key: aaa
