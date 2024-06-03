@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"path/filepath"
-	"strings"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -85,71 +84,24 @@ const selector = `SELECT
   LEFT OUTER JOIN user AS UpdatedUSER ON dashboard.created_by = UpdatedUSER.id
   WHERE is_folder = false`
 
-func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery, onlySummary bool) (*rowsWrapper, int, error) {
-	if !query.Labels.Empty() {
-		return nil, 0, fmt.Errorf("label selection not yet supported")
-	}
-	if len(query.Requirements.SortBy) > 0 {
-		return nil, 0, fmt.Errorf("sorting not yet supported")
-	}
-	if query.Requirements.ListHistory != "" {
-		return nil, 0, fmt.Errorf("ListHistory not yet supported")
-	}
-	if query.Requirements.ListDeleted {
-		return nil, 0, fmt.Errorf("ListDeleted not yet supported")
-	}
-	if len(query.Requirements.ListOriginKeys) > 0 {
-		return nil, 0, fmt.Errorf("ListOriginKeys not yet supported")
-	}
-
+// GetDashboards implements DashboardAccess.
+func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, query *DashboardQuery) (*dashboardsV0.DashboardList, error) {
 	token, err := readContinueToken(query)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	limit := query.Limit
 	if limit < 1 {
 		limit = 15 //
 	}
-	args := []any{query.OrgID}
 
-	sqlcmd := selector
-
-	// We can not do this yet because title + tags are in the body
-	if onlySummary && false {
-		sqlcmd = strings.Replace(sqlcmd, "dashboard.data", `"{}"`, 1)
-	}
-
-	sqlcmd = fmt.Sprintf("%s AND dashboard.org_id=$%d", sqlcmd, len(args))
-	if query.UID != "" {
-		args = append(args, query.UID)
-		sqlcmd = fmt.Sprintf("%s AND dashboard.uid=$%d", sqlcmd, len(args))
-	} else {
-		args = append(args, token.id)
-		sqlcmd = fmt.Sprintf("%s AND dashboard.id>=$%d", sqlcmd, len(args))
-	}
-
-	if query.Requirements.Folder != nil {
-		args = append(args, *query.Requirements.Folder)
-		sqlcmd = fmt.Sprintf("%s AND dashboard.folder_uid=$%d", sqlcmd, len(args))
-	}
-
-	args = append(args, (limit + 2)) // add more so we can include a next token
-	sqlcmd = fmt.Sprintf("%s ORDER BY dashboard.id asc LIMIT $%d", sqlcmd, len(args))
-
-	rows, err := a.doQuery(ctx, sqlcmd, args...)
-	if err != nil {
-		if rows != nil {
-			_ = rows.Close()
-		}
-		rows = nil
-	}
-	return rows, limit, err
-}
-
-// GetDashboards implements DashboardAccess.
-func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, query *DashboardQuery) (*dashboardsV0.DashboardList, error) {
-	rows, limit, err := a.getRows(ctx, query, false)
+	rows, err := a.doQuery(ctx, selector+`
+		AND dashboard.org_id=$1
+		AND dashboard.id>=$2
+		ORDER BY dashboard.id asc
+		LIMIT $3
+	`, query.OrgID, token.id, (limit + 2))
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +109,9 @@ func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, query *Dashboard
 
 	totalSize := 0
 	list := &dashboardsV0.DashboardList{}
+	if err != nil {
+		return nil, err
+	}
 	for {
 		row, err := rows.Next()
 		if err != nil || row == nil {
@@ -165,9 +120,7 @@ func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, query *Dashboard
 
 		totalSize += row.Bytes
 		if len(list.Items) > 0 && (totalSize > query.MaxBytes || len(list.Items) >= limit) {
-			if query.Requirements.Folder != nil {
-				row.token.folder = *query.Requirements.Folder
-			}
+			row.token.folder = query.FolderUID
 			list.Continue = row.token.String() // will skip this one but start here next time
 			return list, err
 		}
@@ -191,7 +144,20 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 
 // GetDashboards implements DashboardAccess.
 func (a *dashboardSqlAccess) GetDashboardSummaries(ctx context.Context, query *DashboardQuery) (*dashboardsV0.DashboardSummaryList, error) {
-	rows, limit, err := a.getRows(ctx, query, true)
+	token, err := readContinueToken(query)
+	if err != nil {
+		return nil, err
+	}
+	limit := query.Limit
+	if limit < 1 {
+		limit = 15 //
+	}
+	rows, err := a.doQuery(ctx, selector+`
+		AND dashboard.org_id=$1
+		AND dashboard.id>=$2
+		ORDER BY dashboard.id asc
+		LIMIT $3
+	`, query.OrgID, token.id, (limit + 2))
 	if err != nil {
 		return nil, err
 	}
@@ -199,6 +165,9 @@ func (a *dashboardSqlAccess) GetDashboardSummaries(ctx context.Context, query *D
 
 	totalSize := 0
 	list := &dashboardsV0.DashboardSummaryList{}
+	if err != nil {
+		return nil, err
+	}
 	for {
 		row, err := rows.Next()
 		if err != nil || row == nil {
@@ -207,9 +176,7 @@ func (a *dashboardSqlAccess) GetDashboardSummaries(ctx context.Context, query *D
 
 		totalSize += row.Bytes
 		if len(list.Items) > 0 && (totalSize > query.MaxBytes || len(list.Items) >= limit) {
-			if query.Requirements.Folder != nil {
-				row.token.folder = *query.Requirements.Folder
-			}
+			row.token.folder = query.FolderUID
 			list.Continue = row.token.String() // will skip this one but start here next time
 			return list, err
 		}

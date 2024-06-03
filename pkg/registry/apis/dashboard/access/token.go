@@ -50,11 +50,7 @@ func readContinueToken(q *DashboardQuery) (continueToken, error) {
 	token.folder = sub[1]
 
 	// Check if the folder filter is the same from the previous query
-	if q.Requirements.Folder == nil {
-		if token.folder != "" {
-			return token, fmt.Errorf("invalid token, the folder must match previous query")
-		}
-	} else if token.folder != *q.Requirements.Folder {
+	if token.folder != q.FolderUID {
 		return token, fmt.Errorf("invalid token, the folder must match previous query")
 	}
 
