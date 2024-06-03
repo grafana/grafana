@@ -224,11 +224,6 @@ cloud.google.com/go/spanner v1.55.0 h1:YF/A/k73EMYCjp8wcJTpkE+TcrWutHRlsCtlRSfWS
 cloud.google.com/go/spanner v1.57.0 h1:fJq+ZfQUDHE+cy1li0bJA8+sy2oiSGhuGqN5nqVaZdU=
 cloud.google.com/go/speech v1.21.0 h1:qkxNao58oF8ghAHE1Eghen7XepawYEN5zuZXYWaUTA4=
 cloud.google.com/go/speech v1.21.1 h1:nuFc+Kj5B8de75nN4FdPyUbI2SiBoHZG6BLurXL56Q0=
-<<<<<<< HEAD
-cloud.google.com/go/speech v1.21.1/go.mod h1:E5GHZXYQlkqWQwY5xRSLHw2ci5NMQNG52FfMU1aZrIA=
-=======
->>>>>>> a738cb42d8 (Prometheus: Update dependency to v0.52.0 (#87809))
-cloud.google.com/go/storagetransfer v1.10.3 h1:YM1dnj5gLjfL6aDldO2s4GeU8JoAvH1xyIwXre63KmI=
 cloud.google.com/go/storagetransfer v1.10.4 h1:dy4fL3wO0VABvzM05ycMUPFHxTPbJz9Em8ikAJVqSbI=
 cloud.google.com/go/talent v1.6.5 h1:LnRJhhYkODDBoTwf6BeYkiJHFw9k+1mAFNyArwZUZAs=
 cloud.google.com/go/talent v1.6.6 h1:JssV0CE3FNujuSWn7SkosOzg7qrMxVnt6txOfGcMSa4=

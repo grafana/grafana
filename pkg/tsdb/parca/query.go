@@ -76,7 +76,14 @@ func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext,
 			span.SetStatus(codes.Error, response.Error.Error())
 			return response
 		}
-		frame := responseToDataFrames(resp)
+		frame, err := responseToDataFrames(resp)
+		if err != nil {
+			response.Error = err
+			ctxLogger.Error("Failed to convert data to flamegraph", "error", err, "queryType", query.QueryType, "function", logEntrypoint())
+			span.RecordError(response.Error)
+			span.SetStatus(codes.Error, response.Error.Error())
+			return response
+		}
 		response.Frames = append(response.Frames, frame)
 	}
 
@@ -126,23 +133,17 @@ type CustomMeta struct {
 // responseToDataFrames turns Parca response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(resp *connect.Response[v1alpha1.QueryResponse]) *data.Frame {
-	if flameResponse, ok := resp.Msg.Report.(*v1alpha1.QueryResponse_Flamegraph); ok {
-		// TODO: Remove this old response type and all of its functions
-		frame := treeToNestedSetDataFrame(flameResponse.Flamegraph)
+func responseToDataFrames(resp *connect.Response[v1alpha1.QueryResponse]) (*data.Frame, error) {
+	if flameResponse, ok := resp.Msg.Report.(*v1alpha1.QueryResponse_FlamegraphArrow); ok {
+		frame, err := arrowToNestedSetDataFrame(flameResponse.FlamegraphArrow)
 		frame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
-		return frame
-	} else if flameResponse, ok := resp.Msg.Report.(*v1alpha1.QueryResponse_FlamegraphArrow); ok {
-		frame := arrowToNestedSetDataFrame(flameResponse.FlamegraphArrow)
-		frame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
-		return frame
+		return frame, err
 	} else {
-		// TODO: Can we be nicer about signaling users to update to have the latest APIs?
-		panic("unknown report type returned from query. update parca?")
+		return nil, fmt.Errorf("unknown report type returned from query. update parca?")
 	}
 }
 
-func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) *data.Frame {
+func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) (*data.Frame, error) {
 	frame := data.NewFrame("response")
 
 	levelField := data.NewField("level", nil, []int64{})
@@ -156,7 +157,7 @@ func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) *data.Frame
 	arrowReader, err := ipc.NewReader(bytes.NewBuffer(flamegraph.GetRecord()))
 	if err != nil {
 		// TODO: Handle properly?
-		return nil
+		return nil, err
 	}
 	defer arrowReader.Release()
 
@@ -177,7 +178,7 @@ func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) *data.Frame
 		selfField.Append(self)
 	})
 
-	return frame
+	return frame, nil
 }
 
 const (
@@ -224,11 +225,7 @@ func iterateArrowFlamegraph(tr *array.TableReader, fn func(name string, level, v
 	columnChildren := rec.Column(schema.FieldIndices(FlamegraphFieldChildren)[0]).(*array.List)
 	columnChildrenValues := columnChildren.ListValues().(*array.Uint32)
 	columnCumulative := uintValue(rec.Column(schema.FieldIndices(FlamegraphFieldCumulative)[0]))
-
-	// TODO: In the next Parca version there's going to be a flat value column.
-	// If this column is in the schema we should use its values over computing the self value by using cumulative-childrenValue
-	// This check can already be added.
-	// columnFlat := uintValue(rec.Column(schema.FieldIndices(FlamegraphFieldFlat)[0]))
+	columnFlat := uintValue(rec.Column(schema.FieldIndices(FlamegraphFieldFlat)[0]))
 
 	type rowNode struct {
 		row   int
@@ -240,11 +237,24 @@ func iterateArrowFlamegraph(tr *array.TableReader, fn func(name string, level, v
 
 	for i := int(childrenStart); i < int(childrenEnd); i++ {
 		child := int(columnChildrenValues.Value(i))
-		childrenValue += columnCumulative(child)
+
+		flatChildVal := columnFlat(child)
+		if flatChildVal > 0 {
+			childrenValue += flatChildVal
+		} else {
+			childrenValue += columnCumulative(child)
+		}
 		stack = append(stack, rowNode{row: child, level: 1})
 	}
 
-	cumulative := columnCumulative(0)
+	// If this column is in the schema we should use its values over computing the self value by using cumulative-childrenValue
+	var cumulative int64
+	flatChildTotal := columnFlat(0)
+	if flatChildTotal > 0 {
+		cumulative = flatChildTotal
+	} else {
+		cumulative = columnCumulative(0)
+	}
 	fn("total", 0, cumulative, cumulative-childrenValue)
 
 	// Pre-allocate to reuse during iterations
@@ -267,27 +277,38 @@ func iterateArrowFlamegraph(tr *array.TableReader, fn func(name string, level, v
 			child := columnChildrenValues.Value(int(i))
 			if columnChildrenValues.IsValid(int(child)) {
 				childrenValue += columnCumulative(int(child))
+				flatChildVal := columnFlat(int(child))
+				if flatChildVal > 0 {
+					childrenValue += flatChildVal
+				} else {
+					childrenValue += columnCumulative(int(child))
+				}
 				children = append(children, rowNode{row: int(child), level: node.level + 1})
 			}
 		}
 		// prepend the new children to the top of the stack
 		stack = append(children, stack...)
 
-		cumulative := columnCumulative(node.row)
-		name := nodeNameArrow(rec, node.row)
+		var cumulative int64
+		flatChildTotal := columnFlat(node.row)
+		if flatChildTotal > 0 {
+			cumulative = flatChildTotal
+		} else {
+			cumulative = columnCumulative(node.row)
+		}
+		schema := rec.Schema()
+		columnMappingFile := rec.Column(schema.FieldIndices(FlamegraphFieldMappingFile)[0]).(*array.Dictionary)
+		columnMappingFileDict := columnMappingFile.Dictionary().(*array.Binary)
+		columnFunctionName := rec.Column(schema.FieldIndices(FlamegraphFieldFunctionName)[0]).(*array.Dictionary)
+		columnFunctionNameDict := columnFunctionName.Dictionary().(*array.Binary)
+		columnLocationAddress := rec.Column(schema.FieldIndices(FlamegraphFieldLocationAddress)[0]).(*array.Uint64)
+
+		name := nodeNameArrow(node.row, columnMappingFile, columnFunctionName, columnMappingFileDict, columnFunctionNameDict, columnLocationAddress)
 		fn(name, node.level, cumulative, cumulative-childrenValue)
 	}
 }
 
-func nodeNameArrow(rec arrow.Record, row int) string {
-	// TODO: Move the next 6 lines outside of nodeNameArrow into iterateFlamegraphArrow to improve performance.
-	schema := rec.Schema()
-	columnMappingFile := rec.Column(schema.FieldIndices(FlamegraphFieldMappingFile)[0]).(*array.Dictionary)
-	columnMappingFileDict := columnMappingFile.Dictionary().(*array.Binary)
-	columnFunctionName := rec.Column(schema.FieldIndices(FlamegraphFieldFunctionName)[0]).(*array.Dictionary)
-	columnFunctionNameDict := columnFunctionName.Dictionary().(*array.Binary)
-	columnLocationAddress := rec.Column(schema.FieldIndices(FlamegraphFieldLocationAddress)[0]).(*array.Uint64)
-
+func nodeNameArrow(row int, columnMappingFile, columnFunctionName *array.Dictionary, columnMappingFileDict, columnFunctionNameDict *array.Binary, columnLocationAddress *array.Uint64) string {
 	mapping := ""
 
 	if columnMappingFile.IsValid(row) {
@@ -304,95 +325,6 @@ func nodeNameArrow(rec arrow.Record, row int) string {
 	if columnLocationAddress.IsValid(row) {
 		a := columnLocationAddress.Value(row)
 		address = fmt.Sprintf("0x%x", a)
-	}
-
-	if mapping == "" && address == "" {
-		return "<unknown>"
-	} else {
-		return mapping + address
-	}
-}
-
-// treeToNestedSetDataFrame walks the tree depth first and adds items into the dataframe. This is a nested set format
-// where by ordering the items in depth first order and knowing the level/depth of each item we can recreate the
-// parent - child relationship without explicitly needing parent/child column and we can later just iterate over the
-// dataFrame to again basically walking depth first over the tree/profile.
-func treeToNestedSetDataFrame(tree *v1alpha1.Flamegraph) *data.Frame {
-	frame := data.NewFrame("response")
-
-	levelField := data.NewField("level", nil, []int64{})
-	valueField := data.NewField("value", nil, []int64{})
-	valueField.Config = &data.FieldConfig{Unit: normalizeUnit(tree.Unit)}
-	selfField := data.NewField("self", nil, []int64{})
-	selfField.Config = &data.FieldConfig{Unit: normalizeUnit(tree.Unit)}
-	labelField := data.NewField("label", nil, []string{})
-	frame.Fields = data.Fields{levelField, valueField, selfField, labelField}
-
-	walkTree(tree.Root, func(level, value int64, name string, self int64) {
-		levelField.Append(level)
-		valueField.Append(value)
-		labelField.Append(name)
-		selfField.Append(self)
-	})
-	return frame
-}
-
-type Node struct {
-	Node  *v1alpha1.FlamegraphNode
-	Level int64
-}
-
-func walkTree(tree *v1alpha1.FlamegraphRootNode, fn func(level, value int64, name string, self int64)) {
-	stack := make([]*Node, 0, len(tree.Children))
-	var childrenValue int64 = 0
-
-	for _, child := range tree.Children {
-		childrenValue += child.Cumulative
-		stack = append(stack, &Node{Node: child, Level: 1})
-	}
-
-	fn(0, tree.Cumulative, "total", tree.Cumulative-childrenValue)
-
-	for {
-		if len(stack) == 0 {
-			break
-		}
-
-		// shift stack
-		node := stack[0]
-		stack = stack[1:]
-		childrenValue = 0
-
-		if node.Node.Children != nil {
-			var children []*Node
-			for _, child := range node.Node.Children {
-				childrenValue += child.Cumulative
-				children = append(children, &Node{Node: child, Level: node.Level + 1})
-			}
-			// Put the children first so we do depth first traversal
-			stack = append(children, stack...)
-		}
-		fn(node.Level, node.Node.Cumulative, nodeName(node.Node), node.Node.Cumulative-childrenValue)
-	}
-}
-
-func nodeName(node *v1alpha1.FlamegraphNode) string {
-	if node.Meta == nil {
-		return "<unknown>"
-	}
-
-	mapping := ""
-	if node.Meta.Mapping != nil && node.Meta.Mapping.File != "" {
-		mapping = "[" + getLastItem(node.Meta.Mapping.File) + "] "
-	}
-
-	if node.Meta.Function != nil && node.Meta.Function.Name != "" {
-		return mapping + node.Meta.Function.Name
-	}
-
-	address := ""
-	if node.Meta.Location != nil {
-		address = fmt.Sprintf("0x%x", node.Meta.Location.Address)
 	}
 
 	if mapping == "" && address == "" {
