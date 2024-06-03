@@ -29,7 +29,6 @@ func executeQuery(ctx context.Context, logger log.Logger, query queryModel, runn
 		logger.Warn("Flux query failed", "err", err, "query", flux)
 		dr.Error = err
 	} else {
-
 		maxPointsEnforced := int(query.MaxDataPoints)
 		// The default value of MaxDataPoints is 100 when it is not set
 		// See https://github.com/grafana/grafana/blob/d69b19e431bfe31ff904a48826593e6fa79b7a5b/pkg/services/query/query.go#L322
