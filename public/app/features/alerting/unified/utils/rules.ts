@@ -21,6 +21,7 @@ import {
   GrafanaAlertState,
   GrafanaAlertStateWithReason,
   mapStateWithReasonToBaseState,
+  PostableRuleDTO,
   PromAlertingRuleState,
   PromRuleType,
   RulerAlertingRuleDTO,
@@ -55,7 +56,7 @@ export function isRecordingRulerRule(rule?: RulerRuleDTO): rule is RulerRecordin
   return typeof rule === 'object' && 'record' in rule;
 }
 
-export function isGrafanaRulerRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
+export function isGrafanaRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerGrafanaRuleDTO {
   return typeof rule === 'object' && 'grafana_alert' in rule;
 }
 

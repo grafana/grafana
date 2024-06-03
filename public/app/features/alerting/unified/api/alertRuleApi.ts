@@ -6,11 +6,9 @@ import {
   Annotations,
   GrafanaAlertStateDecision,
   Labels,
-  PostableRuleGrafanaRuleDTO,
+  PostableRulerRuleGroupDTO,
   PromRulesResponse,
-  RulerAlertingRuleDTO,
   RulerGrafanaRuleDTO,
-  RulerRecordingRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
@@ -73,13 +71,6 @@ interface ExportRulesParams {
   folderUid?: string;
   group?: string;
   ruleUid?: string;
-}
-
-export interface ModifyExportPayload {
-  rules: Array<RulerAlertingRuleDTO | RulerRecordingRuleDTO | PostableRuleGrafanaRuleDTO>;
-  name: string;
-  interval?: string | undefined;
-  source_tenants?: string[] | undefined;
 }
 
 export interface AlertRuleUpdated {
@@ -211,7 +202,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     }),
 
     // TODO This should be probably a separate ruler API file
-    rulerRuleGroup: build.query<
+    getRuleGroupForNamespace: build.query<
       RulerRuleGroupDTO,
       { rulerConfig: RulerDataSourceConfig; namespace: string; group: string }
     >({
@@ -263,7 +254,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     }),
     exportModifiedRuleGroup: build.mutation<
       string,
-      { payload: ModifyExportPayload; format: ExportFormats; nameSpaceUID: string }
+      { payload: PostableRulerRuleGroupDTO; format: ExportFormats; nameSpaceUID: string }
     >({
       query: ({ payload, format, nameSpaceUID }) => ({
         url: `/api/ruler/grafana/api/v1/rules/${nameSpaceUID}/export/`,
@@ -289,8 +280,10 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       }),
       keepUnusedDataFor: 0,
     }),
-
-    updateRule: build.mutation<AlertRuleUpdated, { nameSpaceUID: string; payload: ModifyExportPayload }>({
+    updateRuleGroupForNamespace: build.mutation<
+      AlertRuleUpdated,
+      { nameSpaceUID: string; payload: PostableRulerRuleGroupDTO }
+    >({
       query: ({ payload, nameSpaceUID }) => ({
         url: `/api/ruler/grafana/api/v1/rules/${nameSpaceUID}/`,
         data: payload,

@@ -1,27 +1,37 @@
 import { Action } from '@reduxjs/toolkit';
 import { useCallback } from 'react';
 
-import { RuleIdentifier } from 'app/types/unified-alerting';
-import { PostableRuleDTO, PostableRulerRuleGroupDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { RuleIdentifier, RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { PostableRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { alertingApi } from '../api/alertingApi';
-import { addRuleAction, deleteRuleAction, ruleGroupReducer, updateRuleAction } from '../reducers/ruler/ruleGroups';
+import { alertRuleApi } from '../api/alertRuleApi';
+import {
+  addRuleAction,
+  deleteRuleAction,
+  pauseRuleAction,
+  ruleGroupReducer,
+  updateRuleAction,
+} from '../reducers/ruler/ruleGroups';
 
 export function useProduceNewRuleGroup() {
-  const [fetchRuleGroup, _fetchRuleGroupState] = rulerAPI.endpoints.getRuleGroupForNamespace.useLazyQuery();
-  const [updateRuleGroup, updateRuleGroupState] = rulerAPI.endpoints.updateRuleGroupForNamespace.useMutation();
+  const [fetchRuleGroup, _fetchRuleGroupState] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
+  const [updateRuleGroup, updateRuleGroupState] = alertRuleApi.endpoints.updateRuleGroupForNamespace.useMutation();
 
-  const produceNewRuleGroup = async (namespace: string, group: string, action: Action) => {
-    const currentRuleGroup = await fetchRuleGroup({ namespace, group }).unwrap();
+  const produceNewRuleGroup = async (
+    rulerConfig: RulerDataSourceConfig,
+    namespace: string,
+    group: string,
+    action: Action
+  ) => {
+    const currentRuleGroup = await fetchRuleGroup({ rulerConfig, namespace, group }).unwrap();
 
     // @TODO convert rule group to postable rule group – TypeScript is not complaining here because
     // the interfaces are compatible but it _should_ complain
     const newRuleGroup = ruleGroupReducer(currentRuleGroup, action);
 
     return updateRuleGroup({
-      namespace,
-      group,
-      data: newRuleGroup,
+      nameSpaceUID: namespace,
+      payload: newRuleGroup,
     }).unwrap();
   };
 
@@ -33,9 +43,29 @@ export function useUpdateRuleInGroup() {
   const [produceNewRuleGroup, updateState] = useProduceNewRuleGroup();
 
   const updateFn = useCallback(
-    async (namespace: string, group: string, identifier: RuleIdentifier, rule: PostableRuleDTO) => {
+    async (
+      rulerConfig: RulerDataSourceConfig,
+      namespace: string,
+      group: string,
+      identifier: RuleIdentifier,
+      rule: PostableRuleDTO
+    ) => {
       const action = updateRuleAction({ identifier, rule });
-      await produceNewRuleGroup(namespace, group, action);
+      await produceNewRuleGroup(rulerConfig, namespace, group, action);
+    },
+    [produceNewRuleGroup]
+  );
+
+  return [updateFn, updateState] as const;
+}
+
+export function usePauseRuleInGroup() {
+  const [produceNewRuleGroup, updateState] = useProduceNewRuleGroup();
+
+  const updateFn = useCallback(
+    async (rulerConfig: RulerDataSourceConfig, namespace: string, group: string, uid: string, pause: boolean) => {
+      const action = pauseRuleAction({ uid, pause });
+      await produceNewRuleGroup(rulerConfig, namespace, group, action);
     },
     [produceNewRuleGroup]
   );
@@ -47,9 +77,9 @@ export function useAddRuleInGroup() {
   const [produceNewRuleGroup, updateState] = useProduceNewRuleGroup();
 
   const updateFn = useCallback(
-    async (namespace: string, group: string, rule: PostableRuleDTO) => {
+    async (rulerConfig: RulerDataSourceConfig, namespace: string, group: string, rule: PostableRuleDTO) => {
       const action = addRuleAction({ rule });
-      await produceNewRuleGroup(namespace, group, action);
+      await produceNewRuleGroup(rulerConfig, namespace, group, action);
     },
     [produceNewRuleGroup]
   );
@@ -61,27 +91,12 @@ export function useDeleteRuleFromGroup() {
   const [produceNewRuleGroup, updateState] = useProduceNewRuleGroup();
 
   const deleteFn = useCallback(
-    async (namespace: string, group: string, identifier: RuleIdentifier) => {
+    async (rulerConfig: RulerDataSourceConfig, namespace: string, group: string, identifier: RuleIdentifier) => {
       const action = deleteRuleAction({ identifier });
-      await produceNewRuleGroup(namespace, group, action);
+      await produceNewRuleGroup(rulerConfig, namespace, group, action);
     },
     [produceNewRuleGroup]
   );
 
   return [deleteFn, updateState] as const;
 }
-
-// do NOT use these directly, use the higher-level hooks
-const rulerAPI = alertingApi.injectEndpoints({
-  endpoints: (build) => ({
-    getRuleGroupForNamespace: build.query<RulerRuleGroupDTO, { namespace: string; group: string }>({
-      queryFn: ({ namespace, group }) => {},
-    }),
-    updateRuleGroupForNamespace: build.mutation<
-      void,
-      { namespace: string; group: string; data: PostableRulerRuleGroupDTO }
-    >({
-      queryFn: ({ namespace, group, data }) => {},
-    }),
-  }),
-});

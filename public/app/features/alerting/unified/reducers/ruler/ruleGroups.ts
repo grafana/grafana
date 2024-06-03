@@ -3,9 +3,12 @@ import { createAction, createReducer } from '@reduxjs/toolkit';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 import { PostableRuleDTO, PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-export const addRuleAction = createAction<{ rule: PostableRuleDTO }>('rules/add');
-export const updateRuleAction = createAction<{ identifier: RuleIdentifier; rule: PostableRuleDTO }>('rules/update');
-export const deleteRuleAction = createAction<{ identifier: RuleIdentifier }>('rules/delete');
+import { isGrafanaRulerRule } from '../../utils/rules';
+
+export const addRuleAction = createAction<{ rule: PostableRuleDTO }>('ruleGroup/add');
+export const updateRuleAction = createAction<{ identifier: RuleIdentifier; rule: PostableRuleDTO }>('ruleGroup/update');
+export const pauseRuleAction = createAction<{ uid: string; pause: boolean }>('ruleGroup/pause');
+export const deleteRuleAction = createAction<{ identifier: RuleIdentifier }>('ruleGroup/delete');
 // @TODO
 // const reorderRulesActions = createAction('rules/reorder');
 
@@ -24,6 +27,15 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
     })
     .addCase(deleteRuleAction, (draft, { payload }) => {
       const { identifier } = payload;
+    })
+    .addCase(pauseRuleAction, (draft, { payload }) => {
+      const { uid, pause } = payload;
+
+      draft.rules.forEach((rule) => {
+        if (isGrafanaRulerRule(rule) && rule.grafana_alert.uid === uid) {
+          rule.grafana_alert.is_paused = pause;
+        }
+      });
     })
     .addDefaultCase((_draft, action) => {
       throw new Error(`Unknown action for rule group reducer: ${action.type}`);
