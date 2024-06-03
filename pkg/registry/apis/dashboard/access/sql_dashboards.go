@@ -86,6 +86,22 @@ const selector = `SELECT
   WHERE is_folder = false`
 
 func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery, onlySummary bool) (*rowsWrapper, int, error) {
+	if !query.Labels.Empty() {
+		return nil, 0, fmt.Errorf("label selection not yet supported")
+	}
+	if len(query.Requirements.SortBy) > 0 {
+		return nil, 0, fmt.Errorf("sorting not yet supported")
+	}
+	if query.Requirements.ListHistory != "" {
+		return nil, 0, fmt.Errorf("ListHistory not yet supported")
+	}
+	if query.Requirements.ListDeleted {
+		return nil, 0, fmt.Errorf("ListDeleted not yet supported")
+	}
+	if len(query.Requirements.ListOriginKeys) > 0 {
+		return nil, 0, fmt.Errorf("ListOriginKeys not yet supported")
+	}
+
 	token, err := readContinueToken(query)
 	if err != nil {
 		return nil, 0, err
@@ -98,7 +114,9 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery,
 	args := []any{query.OrgID}
 
 	sqlcmd := selector
-	if onlySummary {
+
+	// We can not do this yet because title + tags are in the body
+	if onlySummary && false {
 		sqlcmd = strings.Replace(sqlcmd, "dashboard.data", `"{}"`, 1)
 	}
 
@@ -111,8 +129,8 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery,
 		sqlcmd = fmt.Sprintf("%s AND dashboard.id>=$%d", sqlcmd, len(args))
 	}
 
-	if query.FolderUID != "" {
-		args = append(args, query.FolderUID)
+	if query.Requirements.Folder != nil {
+		args = append(args, *query.Requirements.Folder)
 		sqlcmd = fmt.Sprintf("%s AND dashboard.folder_uid=$%d", sqlcmd, len(args))
 	}
 
@@ -147,7 +165,9 @@ func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, query *Dashboard
 
 		totalSize += row.Bytes
 		if len(list.Items) > 0 && (totalSize > query.MaxBytes || len(list.Items) >= limit) {
-			row.token.folder = query.FolderUID
+			if query.Requirements.Folder != nil {
+				row.token.folder = *query.Requirements.Folder
+			}
 			list.Continue = row.token.String() // will skip this one but start here next time
 			return list, err
 		}
@@ -187,7 +207,9 @@ func (a *dashboardSqlAccess) GetDashboardSummaries(ctx context.Context, query *D
 
 		totalSize += row.Bytes
 		if len(list.Items) > 0 && (totalSize > query.MaxBytes || len(list.Items) >= limit) {
-			row.token.folder = query.FolderUID
+			if query.Requirements.Folder != nil {
+				row.token.folder = *query.Requirements.Folder
+			}
 			list.Continue = row.token.String() // will skip this one but start here next time
 			return list, err
 		}
