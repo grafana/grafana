@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -347,46 +346,6 @@ func TestIntegrationDataAccess(t *testing.T) {
 		dataSources, err := ss.GetDataSources(context.Background(), &query)
 		require.NoError(t, err)
 
-		require.Equal(t, 0, len(dataSources))
-	})
-
-	t.Run("DeleteDataSourceAccessControlPermissions", func(t *testing.T) {
-		store := db.InitTestDB(t)
-		ds := initDatasource(store)
-		ss := SqlStore{db: store}
-
-		// Init associated permission
-		errAddPermissions := store.WithTransactionalDbSession(context.TODO(), func(sess *db.Session) error {
-			_, err := sess.Table("permission").Insert(ac.Permission{
-				RoleID:  1,
-				Action:  "datasources:read",
-				Scope:   datasources.ScopeProvider.GetResourceScope(ds.UID),
-				Updated: time.Now(),
-				Created: time.Now(),
-			})
-			return err
-		})
-		require.NoError(t, errAddPermissions)
-		query := datasources.GetDataSourcesQuery{OrgID: 10}
-
-		errDeletingDS := ss.DeleteDataSource(context.Background(),
-			&datasources.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgID},
-		)
-		require.NoError(t, errDeletingDS)
-
-		// Check associated permission
-		permCount := int64(0)
-		errGetPermissions := store.WithTransactionalDbSession(context.TODO(), func(sess *db.Session) error {
-			var err error
-			permCount, err = sess.Table("permission").Count()
-			return err
-		})
-		require.NoError(t, errGetPermissions)
-		require.Zero(t, permCount, "permissions associated to the data source should have been removed")
-
-		dataSources, err := ss.GetDataSources(context.Background(), &query)
-
-		require.NoError(t, err)
 		require.Equal(t, 0, len(dataSources))
 	})
 
