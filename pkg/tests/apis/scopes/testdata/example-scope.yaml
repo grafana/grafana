@@ -5,8 +5,6 @@ metadata:
 spec:
     title: Example scope
     description: Longer description for a scope
-    category: should this be an enum or an external reference?
-    type: should this be an enum or an external reference?
     filters: 
       - key: aaa
         operator: equals
