@@ -588,8 +588,11 @@ export const Components = {
   },
   SQLQueryEditor: {
     selectColumn: 'data-testid select-column',
+    selectColumnInput: 'data-testid select-column-input',
     selectAggregation: 'data-testid select-aggregation',
+    selectAggregationInput: 'data-testid select-aggregation-input',
     selectAlias: 'data-testid select-alias',
+    selectAliasInput: 'data-testid select-alias-input',
     selectInputParameter: 'data-testid select-input-parameter',
     filterConjunction: 'data-testid filter-conjunction',
     filterField: 'data-testid filter-field',

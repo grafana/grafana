@@ -162,6 +162,7 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
           <Input
             onChange={(e) => onParameterChange(columnIndex, index)(e.currentTarget.value)}
             value={param.name}
+            aria-label={`Parameter ${index} for column ${columnIndex}`}
             data-testid={selectors.components.SQLQueryEditor.selectInputParameter}
             addonAfter={
               <Button
