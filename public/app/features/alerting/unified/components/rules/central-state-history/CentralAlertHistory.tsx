@@ -5,7 +5,7 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import {
   Alert,
   Button,
@@ -151,7 +151,7 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
               </Button>
             )
           }
-          placeholder="Filter events"
+          placeholder="Filter events in the list by labels"
           ref={ref}
           {...rest}
         />
@@ -325,13 +325,13 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-interface HistoryObjectState extends SceneObjectState {}
 
-class HistoryEventsListObject extends SceneObjectBase<HistoryObjectState> {
-  static Component = HistoryEventsList;
-  public constructor(state: HistoryObjectState) {
-    super(state);
-  }
+class HistoryEventsListObject extends SceneObjectBase {
+  public static Component = ({ model }: SceneComponentProps<HistoryEventsListObject>) => {
+    const { value: timeRange } = sceneGraph.getTimeRange(model).useState();
+
+    return <HistoryEventsList timeRange={timeRange} />;
+  };
 }
 
 export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
