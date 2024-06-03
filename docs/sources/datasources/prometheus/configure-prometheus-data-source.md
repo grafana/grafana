@@ -48,8 +48,8 @@ To add the Prometheus data source, complete the following steps:
 1. Click **Connections** in the left-side menu.
 1. Under **Connections**, click **Add new connection**.
 1. Enter `Prometheus` in the search bar.
-1. Select **Prometheus data source**.
-1. Click **Create a Prometheus data source** in the upper right.
+1. Select **Prometheus**.
+1. Click **Add new data source** in the upper right.
 
 You will be taken to the **Settings** tab where you will set up your Prometheus configuration.
 
