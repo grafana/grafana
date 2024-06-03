@@ -1,0 +1,26 @@
+version: 'v1'
+managed:
+  enabled: true
+  go_package_prefix:
+    default: github.com/grafana/grafana/pkg/services/accesscontrol/embedservice/proto/v1
+    except:
+      - buf.build/googleapis/googleapis
+      - buf.build/envoyproxy/protoc-gen-validate
+      - buf.build/grpc-ecosystem/grpc-gateway
+plugins:
+  - plugin: buf.build/protocolbuffers/go:v1.28.1
+    out: pkg/services/accesscontrol/embedservice
+    opt:
+      - paths=source_relative
+  - plugin: buf.build/grpc/go:v1.3.0
+    out: pkg/services/accesscontrol/embedservice
+    opt:
+      - paths=source_relative
+  - plugin: buf.build/grpc-ecosystem/gateway:v2.15.0
+    out: pkg/services/accesscontrol/embedservice
+    opt:
+      - paths=source_relative
+  - plugin: buf.build/grpc-ecosystem/openapiv2:v2.15.0
+    out: pkg/services/accesscontrol/embedservice/server
+    opt:
+      - allow_merge=true
