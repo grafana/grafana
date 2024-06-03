@@ -1,5 +1,4 @@
 import { RichHistorySearchBackendFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
-import {} from '@grafana/runtime';
 
 import { RichHistoryQuery } from '../../types';
 
