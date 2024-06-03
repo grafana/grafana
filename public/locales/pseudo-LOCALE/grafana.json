@@ -25,6 +25,16 @@
       "user": "Ůşęř"
     }
   },
+  "alert-labels": {
+    "button": {
+      "hide": " Ħįđę čőmmőŉ ľäþęľş",
+      "more": "mőřę",
+      "show": {
+        "tooltip": "Ŝĥőŵ čőmmőŉ ľäþęľş"
+      },
+      "show-all": " Ŝĥőŵ ľęşş ľäþęľş"
+    }
+  },
   "annotations": {
     "empty-state": {
       "button-title": "Åđđ äŉŉőŧäŧįőŉ qūęřy",
@@ -114,6 +124,16 @@
     "no-results": {
       "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
       "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy"
+    }
+  },
+  "central-alert-history": {
+    "error": "Ŝőmęŧĥįŉģ ŵęŉŧ ŵřőŉģ ľőäđįŉģ ŧĥę äľęřŧ şŧäŧę ĥįşŧőřy",
+    "filter": {
+      "button": {
+        "clear": " Cľęäř"
+      },
+      "label": "Fįľŧęř ęvęŉŧş",
+      "placeholder": "Fįľŧęř ęvęŉŧş įŉ ŧĥę ľįşŧ þy ľäþęľş"
     }
   },
   "clipboard-button": {

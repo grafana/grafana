@@ -25,6 +25,16 @@
       "user": "User"
     }
   },
+  "alert-labels": {
+    "button": {
+      "hide": " Hide common labels",
+      "more": "more",
+      "show": {
+        "tooltip": "Show common labels"
+      },
+      "show-all": " Show less labels"
+    }
+  },
   "annotations": {
     "empty-state": {
       "button-title": "Add annotation query",
@@ -114,6 +124,16 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
+    }
+  },
+  "central-alert-history": {
+    "error": "Something went wrong loading the alert state history",
+    "filter": {
+      "button": {
+        "clear": " Clear"
+      },
+      "label": "Filter events",
+      "placeholder": "Filter events in the list by labels"
     }
   },
   "clipboard-button": {

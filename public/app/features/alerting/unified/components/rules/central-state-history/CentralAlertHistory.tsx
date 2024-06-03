@@ -21,6 +21,7 @@ import {
   withErrorBoundary,
 } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
+import { Trans, t } from 'app/core/internationalization';
 import { GrafanaAlertStateWithReason, isGrafanaAlertState } from 'app/types/unified-alerting-dto';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
@@ -121,8 +122,9 @@ function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
   if (isFetchError(error) && error.status === 404) {
     return <EntityNotFound entity="History" />;
   }
+  const title = t('central-alert-history.error', 'Something went wrong loading the alert state history');
 
-  return <Alert title={'Something went wrong loading the alert state history'}>{stringifyErrorLike(error)}</Alert>;
+  return <Alert title={title}>{stringifyErrorLike(error)}</Alert>;
 }
 
 interface SearchFieldInputProps {
@@ -131,12 +133,15 @@ interface SearchFieldInputProps {
 }
 const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProps>(
   ({ showClearFilterSuffix, onClearFilterClick, ...rest }: SearchFieldInputProps, ref) => {
+    const placeholder = t('central-alert-history.filter.placeholder', 'Filter events in the list by labels');
     return (
       <Field
         label={
           <Label htmlFor="eventsSearchInput">
             <Stack gap={0.5}>
-              <span>Filter events</span>
+              <span>
+                <Trans i18nKey="central-alert-history.filter.label">Filter events</Trans>
+              </span>
             </Stack>
           </Label>
         }
@@ -147,11 +152,11 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
           suffix={
             showClearFilterSuffix && (
               <Button fill="text" icon="times" size="sm" onClick={onClearFilterClick}>
-                Clear
+                <Trans i18nKey="central-alert-history.filter.button.clear"> Clear</Trans>
               </Button>
             )
           }
-          placeholder="Filter events in the list by labels"
+          placeholder={placeholder}
           ref={ref}
           {...rest}
         />

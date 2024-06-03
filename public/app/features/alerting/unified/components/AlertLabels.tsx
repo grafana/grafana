@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, getTagColorsFromName, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { isPrivateLabel } from '../utils/labels';
 
@@ -31,6 +32,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, limit }: Props) =
   const commonLabelsCount = Object.keys(commonLabels).length;
   const hasCommonLabels = commonLabelsCount > 0;
   const labelsToShowLimited = showAllLabels ? labelsToShow : labelsToShow.slice(0, limit);
+  const tooltip = t('alert-labels.button.show.tooltip', 'Show common labels');
 
   return (
     <div className={styles.wrapper} role="list" aria-label="Labels">
@@ -42,7 +44,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, limit }: Props) =
           variant="secondary"
           fill="text"
           onClick={() => setShowCommonLabels(true)}
-          tooltip="Show common labels"
+          tooltip={tooltip}
           tooltipPlacement="top"
           size="sm"
         >
@@ -57,7 +59,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, limit }: Props) =
           tooltipPlacement="top"
           size="sm"
         >
-          Hide common labels
+          <Trans i18nKey="alert-labels.button.hide"> Hide common labels</Trans>
         </Button>
       )}
       {showAllLabels && Boolean(limit) && (
@@ -68,12 +70,12 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, limit }: Props) =
           tooltipPlacement="top"
           size="sm"
         >
-          Show less labels
+          <Trans i18nKey="alert-labels.button.show-all"> Show less labels</Trans>
         </Button>
       )}
       {!showAllLabels && limit && labelsToShow.length > limit && (
         <Button variant="secondary" fill="text" onClick={() => setShowAllLabels(true)} tooltipPlacement="top" size="sm">
-          +{labelsToShow.length - limit} more
+          +{labelsToShow.length - limit} <Trans i18nKey="alert-labels.button.more">more</Trans>
         </Button>
       )}
     </div>
