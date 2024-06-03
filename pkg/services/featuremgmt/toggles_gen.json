@@ -226,7 +226,8 @@
       "metadata": {
         "name": "dualWriteDashboardsMode2",
         "resourceVersion": "1716888253619",
-        "creationTimestamp": "2024-05-28T09:24:13Z"
+        "creationTimestamp": "2024-05-28T09:24:13Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Enables dual writing of dashboards to both legacy and k8s storage in mode 2",
@@ -702,14 +703,98 @@
     {
       "metadata": {
         "name": "queryOverLive",
-        "resourceVersion": "1716888253619",
-        "creationTimestamp": "2024-05-28T09:24:13Z"
+        "resourceVersion": "1717406541285",
+        "creationTimestamp": "2024-05-28T09:24:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-06-03 09:22:21.285413055 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use Grafana Live WebSocket to execute backend queries",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "newFolderPicker",
+        "resourceVersion": "1716448665531",
+        "creationTimestamp": "2024-05-23T07:17:45Z"
+      },
+      "spec": {
+        "description": "Enables the nested folder picker without having nested folders enabled",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "dualWritePlaylistsMode2",
+        "resourceVersion": "1716448665531",
+        "creationTimestamp": "2024-05-23T07:17:45Z",
+        "deletionTimestamp": "2024-05-31T16:59:31Z"
+      },
+      "spec": {
+        "description": "Enables dual writing of playlists to both legacy and k8s storage in mode 2",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "accessControlOnCall",
+        "resourceVersion": "1716448665531",
+        "creationTimestamp": "2024-05-23T07:17:45Z"
+      },
+      "spec": {
+        "description": "Access control primitives for OnCall",
+        "stage": "preview",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "lokiQuerySplittingConfig",
+        "resourceVersion": "1716448665531",
+        "creationTimestamp": "2024-05-23T07:17:45Z"
+      },
+      "spec": {
+        "description": "Give users the option to configure split durations for Loki queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "awsDatasourcesTempCredentials",
+        "resourceVersion": "1716448665531",
+        "creationTimestamp": "2024-05-23T07:17:45Z"
+      },
+      "spec": {
+        "description": "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
+        "stage": "experimental",
+        "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafanaAPIServerEnsureKubectlAccess",
+        "resourceVersion": "1717406541285",
+        "creationTimestamp": "2024-05-23T07:17:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-06-03 09:22:21.285413055 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Start an additional https handler and write kubectl options",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresDevMode": true,
+        "requiresRestart": true
       }
     },
     {
@@ -735,6 +820,87 @@
         "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "permissionsFilterRemoveSubquery",
+        "resourceVersion": "1716448665531",
+        "creationTimestamp": "2024-05-23T07:17:45Z"
+      },
+      "spec": {
+        "description": "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-group"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertmanagerRemoteSecondary",
+        "resourceVersion": "1716448665531",
+        "creationTimestamp": "2024-05-23T07:17:45Z"
+      },
+      "spec": {
+        "description": "Enable Grafana to sync configuration and state with a remote Alertmanager.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "betterPageScrolling",
+        "resourceVersion": "1716448665531",
+        "creationTimestamp": "2024-05-23T07:17:45Z"
+      },
+      "spec": {
+        "description": "Removes CustomScrollbar from the UI, relying on native browser scrollbars",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "dualWritePlaylistsMode3",
+        "resourceVersion": "1716448665531",
+        "creationTimestamp": "2024-05-23T07:17:45Z",
+        "deletionTimestamp": "2024-05-31T16:59:31Z"
+      },
+      "spec": {
+        "description": "Enables dual writing of playlists to both legacy and k8s storage in mode 3",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardRestore",
+        "resourceVersion": "1717406541285",
+        "creationTimestamp": "2024-02-20T18:50:41Z",
+        "deletionTimestamp": "2024-05-24T15:24:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-06-03 09:22:21.285413055 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables deleted dashboard restore feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourceQueryTypes",
+        "resourceVersion": "1716473268430",
+        "creationTimestamp": "2024-05-23T14:07:48Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
+      },
+      "spec": {
+        "description": "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
       }
     },
     {
@@ -806,7 +972,8 @@
       "metadata": {
         "name": "awsDatasourcesTempCredentials",
         "resourceVersion": "1716888253619",
-        "creationTimestamp": "2024-05-28T09:24:13Z"
+        "creationTimestamp": "2024-05-28T09:24:13Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
@@ -1224,7 +1391,8 @@
       "metadata": {
         "name": "alertmanagerRemoteSecondary",
         "resourceVersion": "1716888253619",
-        "creationTimestamp": "2024-05-28T09:24:13Z"
+        "creationTimestamp": "2024-05-28T09:24:13Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Enable Grafana to sync configuration and state with a remote Alertmanager.",
@@ -1304,7 +1472,8 @@
       "metadata": {
         "name": "accessControlOnCall",
         "resourceVersion": "1716888253619",
-        "creationTimestamp": "2024-05-28T09:24:13Z"
+        "creationTimestamp": "2024-05-28T09:24:13Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Access control primitives for OnCall",
@@ -1382,7 +1551,8 @@
       "metadata": {
         "name": "lokiQuerySplittingConfig",
         "resourceVersion": "1716888253619",
-        "creationTimestamp": "2024-05-28T09:24:13Z"
+        "creationTimestamp": "2024-05-28T09:24:13Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Give users the option to configure split durations for Loki queries",
@@ -1459,7 +1629,8 @@
       "metadata": {
         "name": "dualWritePlaylistsMode2",
         "resourceVersion": "1716888253619",
-        "creationTimestamp": "2024-05-28T09:24:13Z"
+        "creationTimestamp": "2024-05-28T09:24:13Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Enables dual writing of playlists to both legacy and k8s storage in mode 2",
@@ -1716,7 +1887,8 @@
       "metadata": {
         "name": "newFolderPicker",
         "resourceVersion": "1716888253619",
-        "creationTimestamp": "2024-05-28T09:24:13Z"
+        "creationTimestamp": "2024-05-28T09:24:13Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Enables the nested folder picker without having nested folders enabled",
@@ -1741,7 +1913,8 @@
       "metadata": {
         "name": "betterPageScrolling",
         "resourceVersion": "1716888253619",
-        "creationTimestamp": "2024-05-28T09:24:13Z"
+        "creationTimestamp": "2024-05-28T09:24:13Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Removes CustomScrollbar from the UI, relying on native browser scrollbars",
@@ -2051,7 +2224,8 @@
       "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1716888253619",
-        "creationTimestamp": "2024-05-28T09:24:13Z"
+        "creationTimestamp": "2024-05-28T09:24:13Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Start an additional https handler and write kubectl options",
@@ -2065,7 +2239,8 @@
       "metadata": {
         "name": "permissionsFilterRemoveSubquery",
         "resourceVersion": "1716888253619",
-        "creationTimestamp": "2024-05-28T09:24:13Z"
+        "creationTimestamp": "2024-05-28T09:24:13Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
@@ -2115,7 +2290,8 @@
       "metadata": {
         "name": "dashboardRestore",
         "resourceVersion": "1716888253619",
-        "creationTimestamp": "2024-05-28T09:24:13Z"
+        "creationTimestamp": "2024-05-28T09:24:13Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Enables deleted dashboard restore feature",
@@ -2181,7 +2357,8 @@
       "metadata": {
         "name": "dualWritePlaylistsMode3",
         "resourceVersion": "1716888253619",
-        "creationTimestamp": "2024-05-28T09:24:13Z"
+        "creationTimestamp": "2024-05-28T09:24:13Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Enables dual writing of playlists to both legacy and k8s storage in mode 3",
@@ -2270,7 +2447,8 @@
       "metadata": {
         "name": "dualWriteFoldersMode2",
         "resourceVersion": "1716975422042",
-        "creationTimestamp": "2024-05-29T09:37:02Z"
+        "creationTimestamp": "2024-05-29T09:37:02Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Enables dual writing of folders to both legacy and k8s storage in mode 2",
@@ -2282,7 +2460,8 @@
       "metadata": {
         "name": "dualWriteFoldersMode3",
         "resourceVersion": "1716975422042",
-        "creationTimestamp": "2024-05-29T09:37:02Z"
+        "creationTimestamp": "2024-05-29T09:37:02Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Enables dual writing of folders to both legacy and k8s storage in mode 3",
@@ -2294,7 +2473,8 @@
       "metadata": {
         "name": "dualWriteDashboardsMode3",
         "resourceVersion": "1716975422042",
-        "creationTimestamp": "2024-05-29T09:37:02Z"
+        "creationTimestamp": "2024-05-29T09:37:02Z",
+        "deletionTimestamp": "2024-06-03T09:22:21Z"
       },
       "spec": {
         "description": "Enables dual writing of dashboards to both legacy and k8s storage in mode 3",

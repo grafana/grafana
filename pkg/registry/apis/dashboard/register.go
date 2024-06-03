@@ -75,6 +75,11 @@ func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return v0alpha1.DashboardResourceInfo.GroupVersion()
 }
 
+func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
+	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
+	return grafanarest.Mode0
+}
+
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&v0alpha1.Dashboard{},
@@ -111,7 +116,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
-	dualWrite bool,
+	desiredMode grafanarest.DualWriterMode,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
@@ -136,21 +141,13 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		builder: b,
 	}
 
-	mode := grafanarest.Mode1
-	if b.features.IsEnabledGlobally(featuremgmt.FlagDualWriteDashboardsMode2) {
-		mode = grafanarest.Mode2
-	}
-	if b.features.IsEnabledGlobally(featuremgmt.FlagDualWriteDashboardsMode3) {
-		mode = grafanarest.Mode3
-	}
-
 	// Dual writes if a RESTOptionsGetter is provided
-	if dualWrite && optsGetter != nil {
+	if desiredMode != grafanarest.Mode0 && optsGetter != nil {
 		options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
 		if err := store.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(mode, legacyStore, store)
+		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(desiredMode, legacyStore, store)
 	}
 
 	// Summary

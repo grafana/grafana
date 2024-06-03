@@ -509,7 +509,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 
 			require.Equal(t, "folder1", allExport.Groups[0].Folder)
 			require.Equal(t, "folder2", allExport.Groups[1].Folder)
-			require.Equal(t, "subfolder", allExport.Groups[2].Folder)
+			require.Equal(t, "folder1/subfolder", allExport.Groups[2].Folder)
 		})
 
 		t.Run("Export from one folder", func(t *testing.T) {
@@ -632,7 +632,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 			require.Equal(t, http.StatusOK, status)
 			require.Len(t, export.Groups, 2)
 			require.Equal(t, "folder1", export.Groups[0].Folder)
-			require.Equal(t, "subfolder", export.Groups[1].Folder)
+			require.Equal(t, "folder1/subfolder", export.Groups[1].Folder)
 		})
 
 		t.Run("Export from one folder", func(t *testing.T) {

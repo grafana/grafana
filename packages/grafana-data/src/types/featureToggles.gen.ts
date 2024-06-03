@@ -46,12 +46,6 @@ export interface FeatureToggles {
   topnav?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
-  dualWritePlaylistsMode2?: boolean;
-  dualWritePlaylistsMode3?: boolean;
-  dualWriteDashboardsMode2?: boolean;
-  dualWriteDashboardsMode3?: boolean;
-  dualWriteFoldersMode2?: boolean;
-  dualWriteFoldersMode3?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
