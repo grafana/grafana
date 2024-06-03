@@ -18,7 +18,7 @@ type ResourceMetaMutator interface {
 
 	// Update the grafana.app annotations for update
 	// The user will be read from the context
-	PrepareObjectForUpdate(ctx context.Context, obj runtime.Object) error
+	PrepareObjectForUpdate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error
 }
 
 func NewResourceMetaMutator(supportFolders bool) ResourceMetaMutator {
@@ -82,7 +82,12 @@ func (s *storageMetaHelper) PrepareObjectForCreate(ctx context.Context, obj runt
 	return s.verify(ctx, user, meta)
 }
 
-func (s *storageMetaHelper) PrepareObjectForUpdate(ctx context.Context, obj runtime.Object) error {
+func (s *storageMetaHelper) PrepareObjectForUpdate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error {
+	// If the old object does not exist, this is really a create function
+	if oldObj == nil {
+		return s.PrepareObjectForCreate(ctx, obj)
+	}
+
 	user, err := appcontext.User(ctx)
 	if err != nil {
 		return err
@@ -92,9 +97,16 @@ func (s *storageMetaHelper) PrepareObjectForUpdate(ctx context.Context, obj runt
 	if err != nil {
 		return err
 	}
-
 	meta.SetUpdatedBy(user.GetID().String())
 	meta.SetUpdatedTimestamp(toPtr(time.Now()))
+
+	// The creation user can not be changed
+	oldmeta, err := MetaAccessor(oldObj)
+	if err != nil {
+		return err
+	}
+	meta.SetCreatedBy(oldmeta.GetCreatedBy())
+
 	return s.verify(ctx, user, meta)
 }
 

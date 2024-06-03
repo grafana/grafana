@@ -621,7 +621,7 @@ func (s *Storage) GuaranteedUpdate(
 		return err
 	}
 
-	if err := s.mutator.PrepareObjectForUpdate(ctx, updatedObj); err != nil {
+	if err := s.mutator.PrepareObjectForUpdate(ctx, updatedObj, objFromDisk); err != nil {
 		return err
 	}
 

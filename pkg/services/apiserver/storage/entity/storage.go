@@ -575,7 +575,7 @@ func (s *Storage) GuaranteedUpdate(
 		return apierrors.NewInternalError(fmt.Errorf("could not successfully update object. key=%s, err=%s", k.String(), err.Error()))
 	}
 
-	if err := s.mutator.PrepareObjectForUpdate(ctx, updatedObj); err != nil {
+	if err := s.mutator.PrepareObjectForUpdate(ctx, updatedObj, destination); err != nil {
 		return err
 	}
 
