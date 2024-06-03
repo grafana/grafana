@@ -117,13 +117,13 @@ func TestUserService(t *testing.T) {
 		query1 := &user.GetSignedInUserQuery{OrgID: 1, UserID: 1}
 		userStore.ExpectedSignedInUser = usr
 		orgService.ExpectedUserOrgDTO = []*org.UserOrgDTO{{OrgID: 0}, {OrgID: 1}}
-		result, err := userService.GetSignedInUserWithCacheCtx(context.Background(), query1)
+		result, err := userService.GetSignedInUser(context.Background(), query1)
 		require.Nil(t, err)
 		require.NotNil(t, result)
 		assert.Equal(t, query1.OrgID, result.OrgID)
 		userStore.ExpectedSignedInUser = usr2
 		query2 := &user.GetSignedInUserQuery{OrgID: 0, UserID: 1}
-		result2, err := userService.GetSignedInUserWithCacheCtx(context.Background(), query2)
+		result2, err := userService.GetSignedInUser(context.Background(), query2)
 		require.Nil(t, err)
 		require.NotNil(t, result2)
 		assert.Equal(t, query2.OrgID, result2.OrgID)
@@ -223,7 +223,7 @@ func TestUpdateLastSeenAt(t *testing.T) {
 	userService.cfg = setting.NewCfg()
 
 	t.Run("update last seen at", func(t *testing.T) {
-		userStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 1, OrgID: 1, Email: "email", Login: "login", Name: "name", LastSeenAt: time.Now().Add(-10 * time.Minute)}
+		userStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 1, OrgID: 1, Email: "email", Login: "login", Name: "name", LastSeenAt: time.Now().Add(-20 * time.Minute)}
 		err := userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: 1, OrgID: 1})
 		require.NoError(t, err)
 	})

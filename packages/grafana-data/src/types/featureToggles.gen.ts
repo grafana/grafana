@@ -44,11 +44,8 @@ export interface FeatureToggles {
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   topnav?: boolean;
-  returnToPrevious?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
-  dualWritePlaylistsMode2?: boolean;
-  dualWritePlaylistsMode3?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
@@ -122,6 +119,7 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
+  datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
   queryServiceFromUI?: boolean;
@@ -187,6 +185,11 @@ export interface FeatureToggles {
   autofixDSUID?: boolean;
   logsExploreTableDefaultVisualization?: boolean;
   newDashboardSharingComponent?: boolean;
+  alertingListViewV2?: boolean;
   notificationBanner?: boolean;
   dashboardRestore?: boolean;
+  datasourceProxyDisableRBAC?: boolean;
+  alertingDisableSendAlertsExternal?: boolean;
+  preserveDashboardStateWhenNavigating?: boolean;
+  alertingCentralAlertHistory?: boolean;
 }

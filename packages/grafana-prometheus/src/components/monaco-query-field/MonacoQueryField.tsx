@@ -83,6 +83,11 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
     container: css({
       borderRadius: theme.shape.radius.default,
       border: `1px solid ${theme.components.input.borderColor}`,
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'start',
+      alignItems: 'center',
+      height: '100%',
     }),
     placeholder: css({
       '::after': {

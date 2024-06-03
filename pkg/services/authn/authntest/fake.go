@@ -46,6 +46,8 @@ func (f *FakeService) IsClientEnabled(name string) bool {
 
 func (f *FakeService) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint) {}
 
+func (f *FakeService) RegisterPreLogoutHook(hook authn.PreLogoutHookFn, priority uint) {}
+
 func (f *FakeService) Login(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error) {
 	if f.ExpectedIdentities != nil {
 		if f.CurrentIndex >= len(f.ExpectedIdentities) {
