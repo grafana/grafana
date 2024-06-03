@@ -221,10 +221,7 @@ export function getNavSubTitle(navId: string | undefined) {
         'Upgrade your existing legacy alerts and notification channels to the new Grafana Alerting'
       );
     case 'alerting-admin':
-      return t(
-        'nav.alerting-admin.subtitle',
-        'Manage Alertmanager configurations and configure where alert instances generated from Grafana managed alert rules are sent'
-      );
+      return t('nav.alerting-admin.subtitle', 'Manage Alertmanager configurations');
     case 'alert-list':
       return t('nav.alerting-list.subtitle', 'Rules that determine whether an alert will fire');
     case 'receivers':

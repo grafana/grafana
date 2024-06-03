@@ -1,14 +1,15 @@
 import { cloneDeep } from 'lodash';
 import React from 'react';
 
-import { canvasElementRegistry, CanvasFrameOptions } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
+import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { updateConnectionsForSource } from '../../../plugins/panel/canvas/utils';
 import { CanvasElementItem } from '../element';
-import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+import { CanvasFrameOptions } from '../frame';
+import { canvasElementRegistry } from '../registry';
 
 import { ElementState } from './element';
 import { RootElement } from './root';
@@ -26,7 +27,6 @@ export const frameItemDummy: CanvasElementItem = {
     config: {},
   }),
 
-  // eslint-disable-next-line react/display-name
   display: () => {
     return <div>FRAME!</div>;
   },

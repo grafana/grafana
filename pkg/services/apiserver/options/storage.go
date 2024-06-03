@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/spf13/pflag"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
@@ -20,9 +21,10 @@ const (
 )
 
 type StorageOptions struct {
-	StorageType StorageType
-	DataPath    string
-	Address     string
+	StorageType            StorageType
+	DataPath               string
+	Address                string
+	DualWriterDesiredModes map[string]grafanarest.DualWriterMode
 }
 
 func NewStorageOptions() *StorageOptions {
