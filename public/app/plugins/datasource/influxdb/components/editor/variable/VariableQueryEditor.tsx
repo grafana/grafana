@@ -13,20 +13,20 @@ type Props = QueryEditorProps<InfluxDatasource, InfluxQuery, InfluxOptions, Infl
 const refId = 'InfluxVariableQueryEditor-VariableQuery';
 
 export const InfluxVariableEditor = ({ onChange, datasource, query }: Props) => {
-    const getVariableQuery = (q: InfluxVariableQuery | string) => {
-      // in legacy variable support query can be only a string
-      // in new variable support query can be an object and hold more information
-      // to be able to support old version we check the query here
-      if (typeof q !== 'string') {
-        return q;
-      }
+  const getVariableQuery = (q: InfluxVariableQuery | string) => {
+    // in legacy variable support query can be only a string
+    // in new variable support query can be an object and hold more information
+    // to be able to support old version we check the query here
+    if (typeof q !== 'string') {
+      return q;
+    }
 
-      return {
-        refId,
-        query: q,
-        ...(datasource.version === InfluxVersion.Flux ? { maxDataPoints: 1000 } : {}),
-      };
+    return {
+      refId,
+      query: q,
+      ...(datasource.version === InfluxVersion.Flux ? { maxDataPoints: 1000 } : {}),
     };
+  };
 
   switch (datasource.version) {
     case InfluxVersion.Flux:
