@@ -206,11 +206,12 @@ describe('getQueryHints()', () => {
 
     let hints = getQueryHints('foo', series, datasource);
     expect(hints!.length).toBe(6);
-    expect(JSON.stringify(hints)).toContain('ADD_HISTOGRAM_AVG');
-    expect(JSON.stringify(hints)).toContain('ADD_HISTOGRAM_COUNT');
-    expect(JSON.stringify(hints)).toContain('ADD_HISTOGRAM_SUM');
-    expect(JSON.stringify(hints)).toContain('ADD_HISTOGRAM_FRACTION');
-    expect(JSON.stringify(hints)).toContain('ADD_HISTOGRAM_AVG');
+    const hintsString = JSON.stringify(hints);
+    expect(hintsString).toContain('ADD_HISTOGRAM_AVG');
+    expect(hintsString).toContain('ADD_HISTOGRAM_COUNT');
+    expect(hintsString).toContain('ADD_HISTOGRAM_SUM');
+    expect(hintsString).toContain('ADD_HISTOGRAM_FRACTION');
+    expect(hintsString).toContain('ADD_HISTOGRAM_AVG');
   });
 
   it('returns no hints for native histogram when there are native histogram functions in the query', () => {
