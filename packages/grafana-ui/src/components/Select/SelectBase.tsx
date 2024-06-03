@@ -285,23 +285,26 @@ export function SelectBase<T, Rest = {}>({
 
     // code needed to allow editing a custom value once entered
     // we only want to do this for single selects, not multi
-    if (!isMulti) {
+    // and only if the inputValue is uncontrolled
+    if (!isMulti && inputValue === undefined) {
       creatableProps.inputValue = internalInputValue;
       creatableProps.onMenuOpen = () => {
         // make sure we call the base onMenuOpen if it exists
         commonSelectProps.onMenuOpen?.();
 
-        // restore the input state to the selected value
-        setInternalInputValue(selectedValue?.[0]?.label ?? '');
+        // restore the input state to the selected value if it's custom
+        if (!options.find((o) => o.value === selectedValue?.[0]?.value)) {
+          setInternalInputValue(selectedValue?.[0]?.label ?? '');
+        }
       };
       creatableProps.onInputChange = (val, actionMeta) => {
-        // make sure we call the base onInputChange
-        commonSelectProps.onInputChange(val, actionMeta);
-
         // update the input value state on change since we're explicitly controlling it
         if (actionMeta.action === 'input-change') {
           setInternalInputValue(val);
         }
+
+        // make sure we call and return the base onInputChange
+        return commonSelectProps.onInputChange(val, actionMeta);
       };
       creatableProps.onMenuClose = () => {
         // make sure we call the base onMenuClose if it exists
