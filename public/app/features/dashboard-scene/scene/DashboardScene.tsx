@@ -16,7 +16,7 @@ import {
   SceneVariableDependencyConfigLike,
   VizPanel,
 } from '@grafana/scenes';
-import { Dashboard, DashboardLink } from '@grafana/schema';
+import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -508,6 +508,53 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     sceneGridLayout.setState({
       children: [newGridItem, ...sceneGridLayout.state.children],
     });
+  }
+
+  public createLibraryPanel(gridItemToReplace: DashboardGridItem, libPanel: LibraryPanel) {
+    const layout = this.state.body;
+
+    if (!(layout instanceof SceneGridLayout)) {
+      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
+    }
+
+    const panelKey = gridItemToReplace?.state.body.state.key;
+
+    const body = new LibraryVizPanel({
+      title: libPanel.model?.title ?? 'Panel',
+      uid: libPanel.uid,
+      name: libPanel.name,
+      panelKey: panelKey ?? getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(this)),
+    });
+
+    const newGridItem = gridItemToReplace.clone({ body });
+
+    if (!(newGridItem instanceof DashboardGridItem)) {
+      throw new Error('Could not build library viz panel griditem');
+    }
+
+    const key = gridItemToReplace?.state.key;
+
+    if (gridItemToReplace.parent instanceof SceneGridRow) {
+      const children = gridItemToReplace.parent.state.children.map((rowChild) => {
+        if (rowChild.state.key === key) {
+          return newGridItem;
+        }
+        return rowChild;
+      });
+
+      gridItemToReplace.parent.setState({ children });
+      layout.forceRender();
+    } else {
+      // Find the grid item in the layout and replace it
+      const children = layout.state.children.map((child) => {
+        if (child.state.key === key) {
+          return newGridItem;
+        }
+        return child;
+      });
+
+      layout.setState({ children });
+    }
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
