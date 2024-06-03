@@ -161,3 +161,74 @@ func TestWithRuleMetadata(t *testing.T) {
 		assert.Equal(t, "folder1", ruleAuthz.Calls[0].Arguments[2].(accesscontrol.Namespaced).GetNamespaceUID())
 	})
 }
+
+func TestUpdateSilence(t *testing.T) {
+	user := ac.BackgroundUser("test", 1, org.RoleNone, nil)
+	testCases := []struct {
+		name        string
+		existing    func() models.Silence
+		mutators    []models.Mutator[models.Silence]
+		errContains string
+	}{
+		{
+			name:     "Updates to general silences allowed",
+			existing: models.SilenceGen(),
+			mutators: []models.Mutator[models.Silence]{
+				models.SilenceMuts.Expired(),
+			},
+			errContains: "", // No Error.
+		},
+		{
+			name:     "Updates to general silences that add rule_uid matcher error",
+			existing: models.SilenceGen(),
+			mutators: []models.Mutator[models.Silence]{
+				models.SilenceMuts.WithRuleUID("rule1"),
+			},
+			errContains: alertingmodels.RuleUIDLabel, // Mention matcher in error message.
+		},
+		{
+			name:     "Updates that change rule_uid matcher error",
+			existing: models.SilenceGen(models.SilenceMuts.WithRuleUID("rule1")),
+			mutators: []models.Mutator[models.Silence]{
+				models.SilenceMuts.WithRuleUID("rule2"),
+			},
+			errContains: alertingmodels.RuleUIDLabel, // Mention matcher in error message.
+		},
+		{
+			name:     "Updates that don't change rule_uid matcher are allowed",
+			existing: models.SilenceGen(models.SilenceMuts.WithRuleUID("rule1")),
+			mutators: []models.Mutator[models.Silence]{
+				models.SilenceMuts.Expired(),
+			},
+			errContains: "", // No Error.
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			authz := fakes.FakeSilenceService{}
+			authz.AuthorizeUpdateSilenceFunc = func(ctx context.Context, user identity.Requester, silence *models.Silence) error {
+				return nil
+			}
+			silence := tc.existing()
+			silenceStore := ngfakes.FakeSilenceStore{
+				Silences: map[string]*models.Silence{
+					*silence.ID: &silence,
+				},
+			}
+			svc := SilenceService{
+				authz: &authz,
+				store: &silenceStore,
+			}
+
+			modified := models.CopySilenceWith(silence, tc.mutators...)
+			_, err := svc.UpdateSilence(context.Background(), user, modified)
+			if tc.errContains != "" {
+				assert.Error(t, err)
+				assert.ErrorContains(t, err, tc.errContains)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
