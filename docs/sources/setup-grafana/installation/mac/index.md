@@ -15,7 +15,7 @@ weight: 600
 
 This page explains how to install Grafana on macOS.
 
-The following video guides you through the steps, common commands and the ways in which you can install Grafana in macOS as described in this document:
+The following video demonstrates how to install Grafana on macOS as outlined in this document:
 
 {{< youtube id="1zdm8SxOLYQ" >}}
 

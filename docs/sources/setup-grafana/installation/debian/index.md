@@ -22,7 +22,7 @@ There are multiple ways to install Grafana: using the Grafana Labs APT repositor
 If you install via the `.deb` package or `.tar.gz` file, then you must manually update Grafana for each new version.
 {{% /admonition %}}
 
-The following video guides you through the steps, common commands and the ways in which you can install Grafana in Debian and Ubuntu as described in this document:
+The following video demonstrates how to install Grafana on Debian and Ubuntu as outlined in this document:
 
 {{< youtube id="_Zk_XQSjF_Q" >}}
 
