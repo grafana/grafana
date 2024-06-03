@@ -11,6 +11,7 @@ import (
 
 	model "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
@@ -53,7 +54,7 @@ func NewStorage(legacySvc TimeIntervalService, namespacer request.NamespaceMappe
 		if err := s.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		return s, nil
+		return grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, s), nil
 	}
 	return legacyStore, nil
 }
