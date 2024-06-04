@@ -33,8 +33,7 @@ class LegacyDashboardAPI implements DashboardAPI {
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
-    return getBackendSrv().delete<DeleteDashboardResponse>(
-      `/api/dashboards/uid/${uid}`, { showSuccessAlert });
+    return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
   }
 
   getDashboardDTO(uid: string): Promise<DashboardDTO> {
@@ -91,8 +90,7 @@ let instance: DashboardAPI | undefined = undefined;
 export function getDashboardAPI() {
   if (!instance) {
     const legacy = new LegacyDashboardAPI();
-    instance = config.featureToggles.grafanaAPIServerWithExperimentalAPIs 
-      ? new K8sDashboardAPI(legacy) : legacy;
+    instance = config.featureToggles.kubernetesDashboards ? new K8sDashboardAPI(legacy) : legacy;
   }
   return instance;
 }

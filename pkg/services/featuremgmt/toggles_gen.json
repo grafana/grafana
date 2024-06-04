@@ -2302,6 +2302,19 @@
         "stage": "privatePreview",
         "codeowner": "@grafana/observability-metrics"
       }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesDashboards",
+        "resourceVersion": "1717500615536",
+        "creationTimestamp": "2024-06-04T11:30:15Z"
+      },
+      "spec": {
+        "description": "Use the kubernetes API in the frontend for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true
+      }
     }
   ]
 }
