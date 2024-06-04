@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	authzv1 "github.com/grafana/grafana/pkg/services/accesscontrol/embedservice/server"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -63,6 +64,7 @@ func ProvideBackgroundServiceRegistry(
 	anon *anonimpl.AnonDeviceService,
 	ssoSettings *ssosettingsimpl.Service,
 	pluginExternal *pluginexternal.Service,
+	authzServer *authzv1.Server,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -105,6 +107,7 @@ func ProvideBackgroundServiceRegistry(
 		anon,
 		ssoSettings,
 		pluginExternal,
+		authzServer,
 	)
 }
 

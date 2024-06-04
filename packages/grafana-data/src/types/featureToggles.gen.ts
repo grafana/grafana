@@ -191,5 +191,6 @@ export interface FeatureToggles {
   datasourceProxyDisableRBAC?: boolean;
   alertingDisableSendAlertsExternal?: boolean;
   preserveDashboardStateWhenNavigating?: boolean;
+  authZGRPCServer?: boolean;
   alertingCentralAlertHistory?: boolean;
 }

@@ -2494,6 +2494,20 @@
         "codeowner": "@grafana/alerting-squad",
         "frontend": true
       }
+    },
+    {
+      "metadata": {
+        "name": "authZGRPCServer",
+        "resourceVersion": "1717486675425",
+        "creationTimestamp": "2024-06-04T07:37:55Z"
+      },
+      "spec": {
+        "description": "Enables the gRPC server for authorization",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
     }
   ]
 }

@@ -1294,6 +1294,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "authZGRPCServer",
+			Description:       "Enables the gRPC server for authorization",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+		},
+		{
 			Name:         "alertingCentralAlertHistory",
 			Description:  "Enables the new central alert history.",
 			Stage:        FeatureStageExperimental,
