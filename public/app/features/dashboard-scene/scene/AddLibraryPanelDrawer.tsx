@@ -3,7 +3,6 @@ import React from 'react';
 import {
   SceneComponentProps,
   SceneGridLayout,
-  SceneGridRow,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
@@ -23,7 +22,7 @@ import { DashboardGridItem } from './DashboardGridItem';
 import { LibraryVizPanel } from './LibraryVizPanel';
 
 export interface AddLibraryPanelDrawerState extends SceneObjectState {
-  gridItemToReplaceRef?: SceneObjectRef<DashboardGridItem>;
+  panelToReplaceRef?: SceneObjectRef<LibraryVizPanel>;
 }
 
 export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawerState> {
@@ -48,32 +47,16 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
       panelKey: getVizPanelKeyForPanelId(panelId),
     });
 
-    const gridItemToReplace = this.state.gridItemToReplaceRef?.resolve();
+    const panelToReplace = this.state.panelToReplaceRef?.resolve();
 
-    if (gridItemToReplace) {
-      const newGridItem = gridItemToReplace.clone({ body });
-      const key = gridItemToReplace?.state.key;
+    if (panelToReplace) {
+      const gridItemToReplace = panelToReplace.parent;
 
-      if (gridItemToReplace.parent instanceof SceneGridRow) {
-        const rowChildren = gridItemToReplace.parent.state.children.map((rowChild) => {
-          if (rowChild.state.key === key) {
-            return newGridItem;
-          }
-          return rowChild;
-        });
-        gridItemToReplace.parent.setState({ children: rowChildren });
-        layout.forceRender();
-      } else {
-        // Find the grid item in the layout and replace it
-        const children = layout.state.children.map((child) => {
-          if (child.state.key === key) {
-            return newGridItem;
-          }
-          return child;
-        });
-
-        layout.setState({ children });
+      if (!(gridItemToReplace instanceof DashboardGridItem)) {
+        throw new Error('Trying to replace a panel that does not have a DashboardGridItem');
       }
+
+      gridItemToReplace.setState({ body });
     } else {
       const newGridItem = new DashboardGridItem({
         height: NEW_PANEL_HEIGHT,

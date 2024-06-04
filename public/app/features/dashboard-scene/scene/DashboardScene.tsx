@@ -764,9 +764,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.partial({ editview: 'settings' });
   };
 
-  public onShowAddLibraryPanelDrawer(gridItemToReplaceRef?: SceneObjectRef<DashboardGridItem>) {
+  public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<LibraryVizPanel>) {
     this.setState({
-      overlay: new AddLibraryPanelDrawer({ gridItemToReplaceRef }),
+      overlay: new AddLibraryPanelDrawer({ panelToReplaceRef }),
     });
   }
 

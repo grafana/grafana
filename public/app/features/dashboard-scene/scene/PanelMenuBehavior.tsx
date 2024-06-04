@@ -25,7 +25,6 @@ import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
@@ -124,16 +123,13 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
           },
         });
 
-        const gridItem = parent.parent;
-        if (gridItem instanceof DashboardGridItem) {
-          moreSubMenu.push({
-            text: t('panel.header-menu.replace-library-panel', `Replace library panel`),
-            onClick: () => {
-              DashboardInteractions.panelMenuItemClicked('replaceLibraryPanel');
-              dashboard.onShowAddLibraryPanelDrawer(gridItem.getRef());
-            },
-          });
-        }
+        moreSubMenu.push({
+          text: t('panel.header-menu.replace-library-panel', `Replace library panel`),
+          onClick: () => {
+            DashboardInteractions.panelMenuItemClicked('replaceLibraryPanel');
+            dashboard.onShowAddLibraryPanelDrawer(parent.getRef());
+          },
+        });
       } else {
         moreSubMenu.push({
           text: t('panel.header-menu.create-library-panel', `Create library panel`),

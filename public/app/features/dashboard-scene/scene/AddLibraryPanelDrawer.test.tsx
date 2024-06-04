@@ -48,16 +48,18 @@ describe('AddLibraryPanelWidget', () => {
   });
 
   it('should replace grid item when grid item state is passed', async () => {
+    const libPanel = new LibraryVizPanel({
+      title: 'Panel Title',
+      uid: 'uid',
+      name: 'name',
+      panelKey: 'panel-1',
+    });
+
     let gridItem = new DashboardGridItem({
-      body: new LibraryVizPanel({
-        title: 'Panel Title',
-        uid: 'uid',
-        name: 'name',
-        panelKey: 'panel-1',
-      }),
+      body: libPanel,
       key: 'grid-item-1',
     });
-    addLibPanelDrawer = new AddLibraryPanelDrawer({ gridItemToReplaceRef: gridItem.getRef() });
+    addLibPanelDrawer = new AddLibraryPanelDrawer({ panelToReplaceRef: libPanel.getRef() });
     dashboard = new DashboardScene({
       $timeRange: new SceneTimeRange({}),
       title: 'hello',
@@ -95,16 +97,18 @@ describe('AddLibraryPanelWidget', () => {
   });
 
   it('should replace grid item in row when grid item state is passed', async () => {
+    const libPanel = new LibraryVizPanel({
+      title: 'Panel Title',
+      uid: 'uid',
+      name: 'name',
+      panelKey: 'panel-1',
+    });
+
     let gridItem = new DashboardGridItem({
-      body: new LibraryVizPanel({
-        title: 'Panel Title',
-        uid: 'uid',
-        name: 'name',
-        panelKey: 'panel-1',
-      }),
+      body: libPanel,
       key: 'grid-item-1',
     });
-    addLibPanelDrawer = new AddLibraryPanelDrawer({ gridItemToReplaceRef: gridItem.getRef() });
+    addLibPanelDrawer = new AddLibraryPanelDrawer({ panelToReplaceRef: libPanel.getRef() });
     dashboard = new DashboardScene({
       $timeRange: new SceneTimeRange({}),
       title: 'hello',
