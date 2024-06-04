@@ -35,7 +35,6 @@ const defaultAlertmanagerConfigJSON = `
 			"receiver": "grafana-default-email",
 			"group_by": ["grafana_folder", "alertname"]
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{

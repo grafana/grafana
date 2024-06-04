@@ -2125,7 +2125,6 @@ var expAlertmanagerConfigFromAPI = `
 		}
       ]
     },
-    "templates": null,
     "receivers": [
       {
         "name": "email_recv",
