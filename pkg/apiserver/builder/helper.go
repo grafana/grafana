@@ -30,9 +30,15 @@ import (
 // TODO: this is a temporary hack to make rest.Connecter work with resource level routes
 var pathRewriters = []filters.PathRewriter{
 	{
-		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/v0alpha1/namespaces/.*/find$)`),
+		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/v0alpha1/namespaces/.*/)find/(dashboard_bindings)$`),
 		ReplaceFunc: func(matches []string) string {
-			return matches[1] + "/name" // connector requires a name
+			return matches[1] + "find_scope_dashboard/name" // connector requires a name
+		},
+	},
+	{
+		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/v0alpha1/namespaces/.*/)find/(node_tree)$`),
+		ReplaceFunc: func(matches []string) string {
+			return matches[1] + "find/name" // connector requires a name
 		},
 	},
 	{
