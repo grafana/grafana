@@ -75,7 +75,7 @@ type ScopeDashboardBindingList struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type FindScopedDashboardsResults struct {
+type FindScopeDashboardBindingsResults struct {
 	metav1.TypeMeta `json:",inline"`
 
 	Found   []ScopeDashboardBinding `json:"found"`
@@ -132,14 +132,14 @@ type ScopeNodeList struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type TreeResults struct {
+type FindScopeNodeChildrenResults struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []TreeItem `json:"items,omitempty"`
+	Items []ScopeNodeChild `json:"items,omitempty"`
 }
 
-type TreeItem struct {
+type ScopeNodeChild struct {
 	NodeID   string   `json:"nodeId,omitempty"`
 	NodeType NodeType `json:"nodeType"` // container | leaf
 

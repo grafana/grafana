@@ -48,22 +48,22 @@ func TestIntegrationScopes(t *testing.T) {
 			"groupVersion": "scope.grafana.app/v0alpha1",
 			"resources": [
 			  {
-				"name": "find",
-				"singularName": "TreeResult",
+				"name": "scope_dashboard_bindings",
+				"singularName": "FindScopeDashboardsResult",
 				"namespaced": true,
-				"kind": "TreeResults",
+				"kind": "FindScopeDashboardBindingsResults",
 				"verbs": [
 				  "get"
 				]
 			  },
 			  {
-				"name": "find_scope_dashboard",
-				"kind": "FindScopedDashboardsResults",
-				"singularName": "FindScopedDashboardsResult",
+				"name": "scope_node_children",
+				"singularName": "FindScopeNodeChildrenResults",
 				"namespaced": true,
+				"kind": "FindScopeNodeChildrenResults",
 				"verbs": [
-					"get"
-			    ]
+				  "get"
+				]
 			  },
 			  {
 				"name": "scopedashboardbindings",

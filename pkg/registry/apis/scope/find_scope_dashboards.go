@@ -14,49 +14,49 @@ import (
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 )
 
-type findScopedDashboardsREST struct {
+type findScopeDashboardsREST struct {
 	scopeDashboardStorage *storage
 }
 
 var (
-	_ rest.Storage              = (*findScopedDashboardsREST)(nil)
-	_ rest.SingularNameProvider = (*findScopedDashboardsREST)(nil)
-	_ rest.Connecter            = (*findScopedDashboardsREST)(nil)
-	_ rest.Scoper               = (*findScopedDashboardsREST)(nil)
-	_ rest.StorageMetadata      = (*findScopedDashboardsREST)(nil)
+	_ rest.Storage              = (*findScopeDashboardsREST)(nil)
+	_ rest.SingularNameProvider = (*findScopeDashboardsREST)(nil)
+	_ rest.Connecter            = (*findScopeDashboardsREST)(nil)
+	_ rest.Scoper               = (*findScopeDashboardsREST)(nil)
+	_ rest.StorageMetadata      = (*findScopeDashboardsREST)(nil)
 )
 
-func (f *findScopedDashboardsREST) New() runtime.Object {
-	return &scope.FindScopedDashboardsResults{}
+func (f *findScopeDashboardsREST) New() runtime.Object {
+	return &scope.FindScopeDashboardBindingsResults{}
 }
 
-func (f *findScopedDashboardsREST) Destroy() {}
+func (f *findScopeDashboardsREST) Destroy() {}
 
-func (f *findScopedDashboardsREST) NamespaceScoped() bool {
+func (f *findScopeDashboardsREST) NamespaceScoped() bool {
 	return true
 }
 
-func (f *findScopedDashboardsREST) GetSingularName() string {
-	return "FindScopedDashboardsResult" // not sure if this is actually used, but it is required to exist
+func (f *findScopeDashboardsREST) GetSingularName() string {
+	return "FindScopeDashboardsResult" // not sure if this is actually used, but it is required to exist
 }
 
-func (f *findScopedDashboardsREST) ProducesMIMETypes(verb string) []string {
+func (f *findScopeDashboardsREST) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"} // and parquet!
 }
 
-func (f *findScopedDashboardsREST) ProducesObject(verb string) interface{} {
-	return &scope.FindScopedDashboardsResults{}
+func (f *findScopeDashboardsREST) ProducesObject(verb string) interface{} {
+	return &scope.FindScopeDashboardBindingsResults{}
 }
 
-func (f *findScopedDashboardsREST) ConnectMethods() []string {
+func (f *findScopeDashboardsREST) ConnectMethods() []string {
 	return []string{"GET"}
 }
 
-func (f *findScopedDashboardsREST) NewConnectOptions() (runtime.Object, bool, string) {
+func (f *findScopeDashboardsREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
-func (f *findScopedDashboardsREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (f *findScopeDashboardsREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	// See: /pkg/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {
@@ -76,7 +76,7 @@ func (f *findScopedDashboardsREST) Connect(ctx context.Context, name string, opt
 		}
 
 		scopes := req.URL.Query()["scope"]
-		results := &scope.FindScopedDashboardsResults{
+		results := &scope.FindScopeDashboardBindingsResults{
 			Message: fmt.Sprintf("Find: %s", scopes),
 			Found:   make([]scope.ScopeDashboardBinding, 0),
 		}
