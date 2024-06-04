@@ -38,6 +38,7 @@ var (
 	assertion_attribute_org = orgs
 	allowed_organizations = org1 org2
 	org_mapping = org1:1:editor, *:2:viewer
+	role_values_viewer = viewer
 	role_values_editor = editor
 	role_values_admin = admin
 	role_values_grafana_admin = serveradmin
@@ -71,6 +72,7 @@ var (
 		"assertion_attribute_org":    "orgs",
 		"allowed_organizations":      "org1 org2",
 		"org_mapping":                "org1:1:editor, *:2:viewer",
+		"role_values_viewer":         "viewer",
 		"role_values_editor":         "editor",
 		"role_values_admin":          "admin",
 		"role_values_grafana_admin":  "serveradmin",
