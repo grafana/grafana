@@ -1,7 +1,7 @@
 const noAriaLabelSelectors = require('./rules/no-aria-label-e2e-selectors.cjs');
 const noBorderRadiusLiteral = require('./rules/no-border-radius-literal.cjs');
 const noUnreducedMotion = require('./rules/no-unreduced-motion.cjs');
-const noUntranslatedStrings = require('./rules/no-utranslated-strings.cjs');
+const noUntranslatedStrings = require('./rules/no-untranslated-strings.cjs');
 const themeTokenUsage = require('./rules/theme-token-usage.cjs');
 
 module.exports = {
