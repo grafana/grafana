@@ -11,3 +11,18 @@ func canUpdateProvenanceInRuleGroup(storedProvenance, provenance models.Provenan
 		storedProvenance == models.ProvenanceNone ||
 		(storedProvenance == models.ProvenanceAPI && provenance == models.ProvenanceNone)
 }
+
+type ProvenanceStatusTransitionValidator = func(from, to models.Provenance) error
+
+// ValidateProvenanceRelaxed checks if the transition of provenance status from `from` to `to` is allowed.
+// Applies relaxed checks that prevents only transition from any status to `none`.
+// Returns ErrProvenanceChangeNotAllowed if transition is not allowed
+func ValidateProvenanceRelaxed(from, to models.Provenance) error {
+	if from == models.ProvenanceNone { // allow any transition from none
+		return nil
+	}
+	if to == models.ProvenanceNone { // allow any transition to none unless it's from "none" either
+		return MakeErrProvenanceChangeNotAllowed(from, to)
+	}
+	return nil
+}
