@@ -31,7 +31,7 @@ describe('Variables - Set options from ui', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().parent().should('have.length', 9);
+    cy.get("[aria-label='Select option']").parent().should('have.length', 9);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA').should('be.visible');
@@ -47,7 +47,7 @@ describe('Variables - Set options from ui', () => {
       });
 
     // length is 11 because of virtualized select options
-    e2e.components.Select.option().parent().should('have.length', 11);
+    cy.get("[aria-label='Select option']").parent().should('have.length', 11);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BAA').should('be.visible');
@@ -86,7 +86,7 @@ describe('Variables - Set options from ui', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().should('have.length', 11);
+    cy.get("[aria-label='Select option']").should('have.length', 11);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AA').should('be.visible');
@@ -102,7 +102,7 @@ describe('Variables - Set options from ui', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().should('have.length', 9);
+    cy.get("[aria-label='Select option']").should('have.length', 9);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AAA').should('be.visible');
@@ -142,7 +142,7 @@ describe('Variables - Set options from ui', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().should('have.length', 9);
+    cy.get("[aria-label='Select option']").should('have.length', 9);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA').should('be.visible');
@@ -156,7 +156,7 @@ describe('Variables - Set options from ui', () => {
       .within(() => {
         cy.get('input').click();
       });
-    e2e.components.Select.option().should('have.length', 9);
+    cy.get("[aria-label='Select option']").should('have.length', 9);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBA').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBB').should('be.visible');

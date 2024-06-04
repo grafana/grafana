@@ -57,7 +57,7 @@ describe('Dashboard time zone support', () => {
         e2e.components.Select.input().should('be.visible').click();
       });
 
-    e2e.components.Select.option().should('be.visible').contains(toTimeZone).click();
+    cy.get("[aria-label='Select option']").should('be.visible').contains(toTimeZone).click();
 
     // click to go back to the dashboard.
     e2e.pages.Dashboard.Settings.Actions.close().click();
