@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"xorm.io/xorm"
@@ -774,7 +775,7 @@ type evalResult struct {
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	res := make(chan evalResult, 2)
 	if d.zService.Cfg.SingleRead {
-		return d.findDashboardsZanzanaCheck(ctx, query)
+		return d.findDashboardsZanzana(ctx, query)
 	}
 
 	go func() {
@@ -894,39 +895,62 @@ func (d *dashboardStore) findDashboardsZanzanaCheck(ctx context.Context, query *
 				return err
 			}
 
+			batchRows := make([]dashboards.DashboardSearchProjection, 0)
+
 			for rows.Next() {
 				var row dashboards.DashboardSearchProjection
 				if err := rows.Scan(&row); err != nil {
 					return err
 				}
+				batchRows = append(batchRows, row)
 
-				object := "dashboard:" + row.UID
-				if row.IsFolder {
-					object = "folder:" + row.UID
-				}
-
-				key := &openfgav1.CheckRequestTupleKey{
-					User:     query.SignedInUser.GetID(),
-					Relation: "read",
-					Object:   object,
-				}
-
-				checkRes, err := d.zClient.Check(ctx, &openfgav1.CheckRequest{
-					StoreId:              d.zClient.MustStoreID(ctx),
-					AuthorizationModelId: d.zClient.AuthorizationModelID,
-					TupleKey:             key,
-				})
-				if err != nil {
-					return err
-				}
-
-				if checkRes.Allowed {
-					res = append(res, row)
-					if len(res) == int(limit) {
-						break
-					}
-				}
 				rowsFetchedInThisBatch++
+			}
+
+			concurrentRequests := 100
+			rowsToCheck := make(chan dashboards.DashboardSearchProjection, concurrentRequests)
+			allowedResults := make(chan dashboards.DashboardSearchProjection, len(batchRows))
+			errChan := make(chan error)
+			var wg sync.WaitGroup
+			for i := 0; i < concurrentRequests; i++ {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					for row := range rowsToCheck {
+						object := "dashboard:" + row.UID
+						if row.IsFolder {
+							object = "folder:" + row.UID
+						}
+						key := &openfgav1.CheckRequestTupleKey{
+							User:     query.SignedInUser.GetID(),
+							Relation: "read",
+							Object:   object,
+						}
+
+						checkRes, err := d.zClient.Check(ctx, &openfgav1.CheckRequest{
+							StoreId:              d.zClient.MustStoreID(ctx),
+							AuthorizationModelId: d.zClient.AuthorizationModelID,
+							TupleKey:             key,
+						})
+						if err != nil {
+							errChan <- err
+						}
+						if checkRes.Allowed {
+							allowedResults <- row
+						}
+					}
+				}()
+			}
+
+			for _, r := range batchRows {
+				rowsToCheck <- r
+			}
+			close(rowsToCheck)
+			wg.Wait()
+
+			close(allowedResults)
+			for r := range allowedResults {
+				res = append(res, r)
 			}
 
 			return nil
