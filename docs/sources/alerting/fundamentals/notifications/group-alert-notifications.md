@@ -44,7 +44,7 @@ In the notification policy, you can configure how to group multiple alerts into 
 - The `Group by` option specifies the criteria for grouping incoming alerts within the policy. The default is by alert rule.
 - [Timing options](#timing-options) determine when to sent the notification.
 
-{{< figure src="/media/docs/alerting/alerting-notification-policy-diagram-with-labels-v3.png" max-width="750px" alt="A diagram of the notification policy component" >}}
+{{< figure src="/media/docs/alerting/alerting-notification-policy-diagram-with-labels-v3.png" max-width="750px" alt="A diagram about the components of a notification policy, including labels and groups" >}}
 
 ### Group by alert rule or labels
 
