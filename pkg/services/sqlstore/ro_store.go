@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/dlmiddlecote/sqlstats"
@@ -19,33 +18,31 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/retryer"
 )
 
 type ReplStore struct {
-	cfg         *setting.Cfg
-	features    featuremgmt.FeatureToggles
-	sqlxsession *session.SessionDB
+	cfg      *setting.Cfg
+	features featuremgmt.FeatureToggles
+	//qlxsession *session.SessionDB
 
-	bus                          bus.Bus
-	dbCfg                        *DatabaseConfig
-	engine                       *xorm.Engine
-	log                          log.Logger
-	dialect                      migrator.Dialect
-	tracer                       tracing.Tracer
-	recursiveQueriesAreSupported *bool
-	recursiveQueriesMu           sync.Mutex
+	bus     bus.Bus
+	dbCfg   *DatabaseConfig
+	engine  *xorm.Engine
+	log     log.Logger
+	dialect migrator.Dialect
+	tracer  tracing.Tracer
+	//recursiveQueriesAreSupported *bool
+	//recursiveQueriesMu           sync.Mutex
 }
 
 func ProvideReadOnlyService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	bus bus.Bus, tracer tracing.Tracer) (*ReplStore, error) {
-
 	// POC laziness: check for the existence of the database_replica section in
 	// the configuration file and return a nil ROService if it doesn't exist.
-	// The useage stats service is the only service using this in the POC and
+	// The usage stats service is the only service using this in the POC and
 	// already checks for a nil read replica.
 	dbCfg, _ := NewRODatabaseConfig(cfg, features)
 	if dbCfg == nil {
