@@ -32,7 +32,8 @@ export class CompletionDataProvider {
 
   getHistory() {
     return chain(this.historyRef.current)
-      .map((history: HistoryItem<LokiQuery>) => history.query.expr)
+      .orderBy('ts', 'desc')
+      .map((history: HistoryItem<LokiQuery>) => history.query.expr.trim())
       .filter()
       .uniq()
       .value();
