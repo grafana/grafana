@@ -1037,10 +1037,13 @@ describe('dataFrameToLogsModel', () => {
     });
 
     it('deduplicates repeated log frames when called with deduplicate', () => {
-      const logsModel = dataFrameToLogsModel([frameA, frameB], 1, { from: 1556270591353, to: 1556289770991 }, [
-        { refId: `A` },
-        { refId: `B` },
-      ], true);
+      const logsModel = dataFrameToLogsModel(
+        [frameA, frameB],
+        1,
+        { from: 1556270591353, to: 1556289770991 },
+        [{ refId: `A` }, { refId: `B` }],
+        true
+      );
 
       expect(logsModel.rows).toHaveLength(2);
       expect(logsModel.rows[0].entry).toBe(frameA.fields[1].values[0]);

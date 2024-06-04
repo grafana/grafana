@@ -273,7 +273,13 @@ export const decorateWithLogsResult =
     }
 
     const intervalMs = data.request?.intervalMs;
-    const newResults = dataFrameToLogsModel(data.logsFrames, intervalMs, options.absoluteRange, options.queries, options.deduplicate);
+    const newResults = dataFrameToLogsModel(
+      data.logsFrames,
+      intervalMs,
+      options.absoluteRange,
+      options.queries,
+      options.deduplicate
+    );
     const sortOrder = refreshIntervalToSortOrder(options.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
     const rows = sortedNewResults.rows;
@@ -287,12 +293,11 @@ export const decorateWithLogsResult =
 export function decorateData(
   data: PanelData,
   queryResponse: PanelData,
-  logsResultDecorator: (data: ExplorePanelData) =>  ExplorePanelData,
+  logsResultDecorator: (data: ExplorePanelData) => ExplorePanelData,
   queries: DataQuery[] | undefined,
   correlations: CorrelationData[] | undefined,
   showCorrelationEditorLinks: boolean,
-  defaultCorrelationTargetDatasource?: DataSourceApi,
-
+  defaultCorrelationTargetDatasource?: DataSourceApi
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
