@@ -946,67 +946,6 @@ func (d *dashboardStore) findDashboardsZanzanaCheck(ctx context.Context, query *
 	return res, nil
 }
 
-func (d *dashboardStore) findDashboardsZanzanaListFilter(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	limit := query.Limit
-	if limit < 1 {
-		limit = 1000
-	}
-
-	page := query.Page
-	if page < 1 {
-		page = 1
-	}
-
-	dashFolderUIDs, err := d.listUserDashboardsFolders(ctx, query.SignedInUser.GetID())
-	if err != nil {
-		return nil, err
-	}
-
-	// Search for folders and dashboards
-	query.DashboardUIDs = dashFolderUIDs
-	sb := d.buildZanzanaSearchQuery(ctx, query)
-
-	var res []dashboards.DashboardSearchProjection
-	var fetchedRows int64 = 0
-	for int64(len(res)) < limit {
-		// Fetch a batch of rows
-		batchSize := limit - int64(len(res))
-		if batchSize > 1000 {
-			batchSize = 1000
-		}
-		sql, params := sb.ToSQL(batchSize, fetchedRows/batchSize+1)
-
-		var rowsFetchedInThisBatch int64
-		var batchRes []dashboards.DashboardSearchProjection
-		err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-			err := sess.SQL(sql, params...).Find(&batchRes)
-			if err != nil {
-				return err
-			}
-			rowsFetchedInThisBatch += int64(len(batchRes))
-
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		res = append(res, batchRes...)
-		// stop if limit reached or result contains all resources available for user
-		if len(res) >= int(limit) || len(res) == len(dashFolderUIDs) {
-			break
-		}
-
-		fetchedRows += batchSize
-		// If the number of rows fetched in this batch is less than the batch size, break the loop
-		if rowsFetchedInThisBatch < batchSize {
-			break
-		}
-	}
-
-	return res[:limit], nil
-}
-
 func (d *dashboardStore) findDashboardsZanzanaList(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	sb := d.buildZanzanaSearchQuery(ctx, query)
 
@@ -1098,6 +1037,41 @@ func (d *dashboardStore) listUserDashboardsFolders(ctx context.Context, userID s
 	}
 
 	return append(folderUIDs, dashboardUIDs...), nil
+}
+
+func (d *dashboardStore) findDashboardsZanzanaListFilter(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	limit := query.Limit
+	if limit < 1 {
+		limit = 1000
+	}
+
+	page := query.Page
+	if page < 1 {
+		page = 1
+	}
+
+	dashFolderUIDs, err := d.listUserDashboardsFolders(ctx, query.SignedInUser.GetID())
+	if err != nil {
+		return nil, err
+	}
+
+	var res []dashboards.DashboardSearchProjection
+
+	// Search for folders and dashboards
+	query.DashboardUIDs = dashFolderUIDs
+	sb := d.buildZanzanaSearchQuery(ctx, query)
+	sql, params := sb.ToSQL(limit, page)
+	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(sql, params...).Find(&res)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(res) > int(limit) {
+		return res[:limit], nil
+	}
+
+	return res, nil
 }
 
 func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
