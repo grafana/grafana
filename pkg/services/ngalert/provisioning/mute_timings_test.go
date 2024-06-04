@@ -61,10 +61,13 @@ func TestGetMuteTimings(t *testing.T) {
 		require.Len(t, result, len(revision.cfg.AlertmanagerConfig.MuteTimeIntervals))
 		require.Equal(t, "Test1", result[0].Name)
 		require.EqualValues(t, provenances["Test1"], result[0].Provenance)
+		require.NotEmpty(t, result[0].Version)
 		require.Equal(t, "Test2", result[1].Name)
 		require.EqualValues(t, provenances["Test2"], result[1].Provenance)
+		require.NotEmpty(t, result[1].Version)
 		require.Equal(t, "Test3", result[2].Name)
 		require.EqualValues(t, "", result[2].Provenance)
+		require.NotEmpty(t, result[2].Version)
 
 		require.Len(t, store.Calls, 1)
 		require.Equal(t, "Get", store.Calls[0].Method)
@@ -143,6 +146,7 @@ func TestGetMuteTiming(t *testing.T) {
 
 		require.Equal(t, "Test1", result.Name)
 		require.EqualValues(t, models.ProvenanceAPI, result.Provenance)
+		require.NotEmpty(t, result.Version)
 
 		require.Len(t, store.Calls, 1)
 		require.Equal(t, "Get", store.Calls[0].Method)
@@ -289,6 +293,7 @@ func TestCreateMuteTimings(t *testing.T) {
 
 		require.EqualValues(t, expected, result.MuteTimeInterval)
 		require.EqualValues(t, expectedProvenance, result.Provenance)
+		require.NotEmpty(t, result.Version)
 
 		require.Len(t, store.Calls, 2)
 		require.Equal(t, "Get", store.Calls[0].Method)
