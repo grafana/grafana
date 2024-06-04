@@ -292,7 +292,8 @@
       "metadata": {
         "name": "enableElasticsearchBackendQuerying",
         "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "creationTimestamp": "2024-05-23T07:17:45Z",
+        "deletionTimestamp": "2024-06-04T09:18:56Z"
       },
       "spec": {
         "description": "Enable the processing of queries and responses in the Elasticsearch data source through backend",
