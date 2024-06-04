@@ -103,7 +103,7 @@ By default, a child policy inherits the following notification properties from i
 - [Timing options](ref:notification-timings)
 - [Mute timings](ref:mute-timings)
 
-Then, each policy can ovewrite these properties if needed.
+Then, each policy can overwrite these properties if needed.
 
 The inheritance of notification properties, together with the routing process, is an effective method for grouping related notifications and handling specific cases through child policies.
 
