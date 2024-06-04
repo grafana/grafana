@@ -79,6 +79,9 @@ import {
   Interval,
   ElasticsearchAnnotationQuery,
   RangeMap,
+  isElasticsearchResponseWithAggregations,
+  isElasticsearchResponseWithHits,
+  ElasticsearchHits,
 } from './types';
 import { getScriptValue, isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from './utils';
 
@@ -244,9 +247,11 @@ export class ElasticDatasource
     const annotationObservable = from(this.postResourceRequest('_msearch', payload));
     return lastValueFrom(
       annotationObservable.pipe(
-        // TODO: Type this properly
-        map((res: any) => {
-          const hits = res.responses[0].hits.hits;
+        map((res: unknown) => {
+          if (!isElasticsearchResponseWithHits(res)) {
+            return [];
+          }
+          const hits = res?.responses[0].hits?.hits ?? [];
           return this.processHitsToAnnotationEvents(options.annotation, hits);
         })
       )
@@ -346,10 +351,7 @@ export class ElasticDatasource
     return payload;
   }
 
-  private processHitsToAnnotationEvents(
-    annotation: ElasticsearchAnnotationQuery,
-    hits: Array<Record<string, string | number | Record<string | number, string | number>>>
-  ) {
+  private processHitsToAnnotationEvents(annotation: ElasticsearchAnnotationQuery, hits: ElasticsearchHits) {
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
     const textField = annotation.textField || 'tags';
@@ -780,8 +782,10 @@ export class ElasticDatasource
     const url = this.getMultiSearchUrl();
 
     return from(this.postResourceRequest(url, esQuery)).pipe(
-      // TODO: Type this properly
-      map((res: any) => {
+      map((res: unknown) => {
+        if (!isElasticsearchResponseWithAggregations(res)) {
+          return [];
+        }
         if (!res || !res.responses[0].aggregations) {
           return [];
         }
