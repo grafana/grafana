@@ -1559,7 +1559,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:7.24.6, @babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.13.10, @babel/runtime@npm:^7.14.0, @babel/runtime@npm:^7.15.4, @babel/runtime@npm:^7.17.8, @babel/runtime@npm:^7.18.0, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.20.7, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.23.9, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.7.2, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.8.7, @babel/runtime@npm:^7.9.2":
+"@babel/runtime@npm:7.24.6, @babel/runtime@npm:^7.0.0, @babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.1, @babel/runtime@npm:^7.11.1, @babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.13.10, @babel/runtime@npm:^7.14.0, @babel/runtime@npm:^7.15.4, @babel/runtime@npm:^7.17.8, @babel/runtime@npm:^7.18.0, @babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.20.7, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.23.9, @babel/runtime@npm:^7.24.5, @babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.7.2, @babel/runtime@npm:^7.7.6, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.8.7, @babel/runtime@npm:^7.9.2":
   version: 7.24.6
   resolution: "@babel/runtime@npm:7.24.6"
   dependencies:
@@ -3558,7 +3558,7 @@ __metadata:
     "@grafana/runtime": "npm:11.0.0"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@grafana/ui": "npm:11.0.0"
-    "@react-awesome-query-builder/ui": "npm:6.4.2"
+    "@react-awesome-query-builder/ui": "npm:6.5.2"
     "@testing-library/dom": "npm:10.0.0"
     "@testing-library/jest-dom": "npm:^6.1.2"
     "@testing-library/react": "npm:15.0.2"
@@ -5763,35 +5763,37 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/core@npm:^6.4.2":
-  version: 6.4.2
-  resolution: "@react-awesome-query-builder/core@npm:6.4.2"
+"@react-awesome-query-builder/core@npm:^6.5.2":
+  version: 6.5.2
+  resolution: "@react-awesome-query-builder/core@npm:6.5.2"
   dependencies:
+    "@babel/runtime": "npm:^7.24.5"
     clone: "npm:^2.1.2"
-    immutable: "npm:^3.8.2"
+    i18next: "npm:^23.11.5"
+    immutable: "npm:^4.3.6"
     json-logic-js: "npm:^2.0.2"
     lodash: "npm:^4.17.21"
-    moment: "npm:^2.29.4"
+    moment: "npm:^2.30.1"
     spel2js: "npm:^0.2.8"
     sqlstring: "npm:^2.3.3"
-  checksum: 10/0bffa978d7f2608ee288ce2e6f054176cb17944a4b2ac76ef386b143cf90e8234fba4295e15e4bd1eb380ce127b50a8e06372dd6d7a3e58c18acd7c5a64c3557
+  checksum: 10/a9cdea1aa7c60c5f4f515223cdb5e7531fe91b2f1a1a936d21cee425b3a5125b0eb1a627d3ba209ee243e43696abd0287c98957d53056ab2614768a5429826ea
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/ui@npm:6.4.2":
-  version: 6.4.2
-  resolution: "@react-awesome-query-builder/ui@npm:6.4.2"
+"@react-awesome-query-builder/ui@npm:6.5.2":
+  version: 6.5.2
+  resolution: "@react-awesome-query-builder/ui@npm:6.5.2"
   dependencies:
-    "@react-awesome-query-builder/core": "npm:^6.4.2"
-    classnames: "npm:^2.3.1"
+    "@react-awesome-query-builder/core": "npm:^6.5.2"
+    classnames: "npm:^2.5.1"
     lodash: "npm:^4.17.21"
-    prop-types: "npm:^15.7.2"
-    react-redux: "npm:^7.2.2"
-    redux: "npm:^4.2.0"
+    prop-types: "npm:^15.8.1"
+    react-redux: "npm:^8.1.3"
+    redux: "npm:^4.2.1"
   peerDependencies:
     react: ^16.8.4 || ^17.0.1 || ^18.0.0
     react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0
-  checksum: 10/36dfc21caeb3d6db4c044fdb8913d8c5ff38738baa0d81f9123048d7ddcc9f6e5e130d1550257faf0373a118e8deb0dfb2f5b17e46da6f3a28483454b19890f0
+  checksum: 10/4b5514db75d7198a520190309604aca9956ef40e167764b2c792b0ad71ef6304068276703713d1d5420cd7fee872cd19f7537c89bccb7f68e30e8357972be276
   languageName: node
   linkType: hard
 
@@ -8361,7 +8363,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/hoist-non-react-statics@npm:3.3.5, @types/hoist-non-react-statics@npm:^3.3.0":
+"@types/hoist-non-react-statics@npm:3.3.5, @types/hoist-non-react-statics@npm:^3.3.0, @types/hoist-non-react-statics@npm:^3.3.1":
   version: 3.3.5
   resolution: "@types/hoist-non-react-statics@npm:3.3.5"
   dependencies:
@@ -11739,7 +11741,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"classnames@npm:2.5.1, classnames@npm:2.x, classnames@npm:^2.2.1, classnames@npm:^2.2.5, classnames@npm:^2.2.6, classnames@npm:^2.3.1, classnames@npm:^2.3.2":
+"classnames@npm:2.5.1, classnames@npm:2.x, classnames@npm:^2.2.1, classnames@npm:^2.2.5, classnames@npm:^2.2.6, classnames@npm:^2.3.1, classnames@npm:^2.3.2, classnames@npm:^2.5.1":
   version: 2.5.1
   resolution: "classnames@npm:2.5.1"
   checksum: 10/58eb394e8817021b153bb6e7d782cfb667e4ab390cb2e9dac2fc7c6b979d1cc2b2a733093955fc5c94aa79ef5c8c89f11ab77780894509be6afbb91dddd79d15
@@ -16713,7 +16715,7 @@ __metadata:
     "@react-aria/focus": "npm:3.17.1"
     "@react-aria/overlays": "npm:3.22.1"
     "@react-aria/utils": "npm:3.24.1"
-    "@react-awesome-query-builder/ui": "npm:6.4.2"
+    "@react-awesome-query-builder/ui": "npm:6.5.2"
     "@react-types/button": "npm:3.9.4"
     "@react-types/menu": "npm:3.9.9"
     "@react-types/overlays": "npm:3.8.7"
@@ -17713,7 +17715,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next@npm:^23.0.0, i18next@npm:^23.5.1":
+"i18next@npm:^23.0.0, i18next@npm:^23.11.5, i18next@npm:^23.5.1":
   version: 23.11.5
   resolution: "i18next@npm:23.11.5"
   dependencies:
@@ -17802,7 +17804,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immutable@npm:4.3.6, immutable@npm:^4.0.0":
+"immutable@npm:4.3.6, immutable@npm:^4.0.0, immutable@npm:^4.3.6":
   version: 4.3.6
   resolution: "immutable@npm:4.3.6"
   checksum: 10/59fedb67f26e265035616b27e33ef90b53b434cf76fb09212ec2d6ae32ee8d2fe2641e6dc32dbc78498c521fbf5f72c6740d39affba63a0a36a3884272371857
@@ -21679,7 +21681,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment@npm:2.30.1, moment@npm:2.x, moment@npm:^2.20.1, moment@npm:^2.29.4":
+"moment@npm:2.30.1, moment@npm:2.x, moment@npm:^2.20.1, moment@npm:^2.29.4, moment@npm:^2.30.1":
   version: 2.30.1
   resolution: "moment@npm:2.30.1"
   checksum: 10/ae42d876d4ec831ef66110bdc302c0657c664991e45cf2afffc4b0f6cd6d251dde11375c982a5c0564ccc0fa593fc564576ddceb8c8845e87c15f58aa6baca69
@@ -25072,7 +25074,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-redux@npm:^7.2.0, react-redux@npm:^7.2.2":
+"react-redux@npm:^7.2.0":
   version: 7.2.8
   resolution: "react-redux@npm:7.2.8"
   dependencies:
@@ -25090,6 +25092,38 @@ __metadata:
     react-native:
       optional: true
   checksum: 10/65b8529154d6f72c0a2c0348058c2884d9866253430b9667747c2e5f406a97d1f51f5f2d50e619884d54699dc10d311098e2eec2d82c104151ff59b26089c83a
+  languageName: node
+  linkType: hard
+
+"react-redux@npm:^8.1.3":
+  version: 8.1.3
+  resolution: "react-redux@npm:8.1.3"
+  dependencies:
+    "@babel/runtime": "npm:^7.12.1"
+    "@types/hoist-non-react-statics": "npm:^3.3.1"
+    "@types/use-sync-external-store": "npm:^0.0.3"
+    hoist-non-react-statics: "npm:^3.3.2"
+    react-is: "npm:^18.0.0"
+    use-sync-external-store: "npm:^1.0.0"
+  peerDependencies:
+    "@types/react": ^16.8 || ^17.0 || ^18.0
+    "@types/react-dom": ^16.8 || ^17.0 || ^18.0
+    react: ^16.8 || ^17.0 || ^18.0
+    react-dom: ^16.8 || ^17.0 || ^18.0
+    react-native: ">=0.59"
+    redux: ^4 || ^5.0.0-beta.0
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+    react-dom:
+      optional: true
+    react-native:
+      optional: true
+    redux:
+      optional: true
+  checksum: 10/c4c7586cff3abeb784e73598d330f5301116a4e9942fd36895f2bccd8990001709c6c3ea1817edb75ee477470d6c67c9113e05a7f86b2b68a3950c9c29fe20cb
   languageName: node
   linkType: hard
 
