@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"testing"
 	"time"
 
@@ -524,6 +525,138 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					require.Fail(t, fmt.Sprintf("rules are not sorted by group index. Expected: %v. Actual: %v", expectedNames, actualNames))
 				}
 			}
+		})
+	})
+
+	t.Run("test folder, group and rule name query params", func(t *testing.T) {
+		ruleStore := fakes.NewRuleStore(t)
+		fakeAIM := NewFakeAlertInstanceManager(t)
+
+		rulesInGroup1 := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+			RuleGroup:    "rule-group-1",
+			NamespaceUID: "folder-1",
+			OrgID:        orgID,
+		})).GenerateManyRef(1)
+
+		rulesInGroup2 := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+			RuleGroup:    "rule-group-2",
+			NamespaceUID: "folder-2",
+			OrgID:        orgID,
+		})).GenerateManyRef(2)
+
+		rulesInGroup3 := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+			RuleGroup:    "rule-group-3",
+			NamespaceUID: "folder-1",
+			OrgID:        orgID,
+		})).GenerateManyRef(3)
+
+		ruleStore.PutRule(context.Background(), rulesInGroup1...)
+		ruleStore.PutRule(context.Background(), rulesInGroup2...)
+		ruleStore.PutRule(context.Background(), rulesInGroup3...)
+
+		api := PrometheusSrv{
+			log:     log.NewNopLogger(),
+			manager: fakeAIM,
+			store:   ruleStore,
+			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
+		}
+
+		permissions := createPermissionsForRules(slices.Concat(rulesInGroup1, rulesInGroup2, rulesInGroup3), orgID)
+		user := &user.SignedInUser{
+			OrgID:       orgID,
+			Permissions: permissions,
+		}
+		c := &contextmodel.ReqContext{
+			SignedInUser: user,
+		}
+		t.Run("should only return rule groups under given folder_uid", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?folder_uid=folder-1", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 2)
+			require.Equal(t, "rule-group-1", result.Data.RuleGroups[0].Name)
+			require.Equal(t, "rule-group-3", result.Data.RuleGroups[1].Name)
+		})
+
+		t.Run("should only return rule groups under given rule_group list", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?rule_group=rule-group-1&rule_group=rule-group-2", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 2)
+			require.True(t, true, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-1"
+			}))
+			require.True(t, true, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-2"
+			}))
+		})
+
+		t.Run("should only return rule under given rule_name list", func(t *testing.T) {
+			expectedRuleInGroup2 := rulesInGroup2[0]
+			expectedRuleInGroup3 := rulesInGroup3[0]
+
+			r, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?rule_name=%s&rule_name=%s", expectedRuleInGroup2.Title, expectedRuleInGroup3.Title), nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 2)
+			require.True(t, true, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-2"
+			}))
+			require.True(t, true, slices.ContainsFunc(result.Data.RuleGroups, func(rg apimodels.RuleGroup) bool {
+				return rg.Name == "rule-group-3"
+			}))
+			require.Len(t, result.Data.RuleGroups[0].Rules, 1)
+			require.Len(t, result.Data.RuleGroups[1].Rules, 1)
+
+			if result.Data.RuleGroups[0].Name == "rule-group-2" {
+				require.Equal(t, expectedRuleInGroup2.Title, result.Data.RuleGroups[0].Rules[0].Name)
+				require.Equal(t, expectedRuleInGroup3.Title, result.Data.RuleGroups[1].Rules[0].Name)
+			} else {
+				require.Equal(t, expectedRuleInGroup2.Title, result.Data.RuleGroups[1].Rules[0].Name)
+				require.Equal(t, expectedRuleInGroup3.Title, result.Data.RuleGroups[0].Rules[0].Name)
+			}
+		})
+
+		t.Run("should only return rule with given folder_uid, rule_group and rule_name", func(t *testing.T) {
+			expectedRule := rulesInGroup3[2]
+			r, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?folder_uid=folder-1&rule_group=rule-group-3&rule_name=%s", expectedRule.Title), nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 1)
+			folder, err := api.store.GetNamespaceByUID(context.Background(), "folder-1", orgID, user)
+			require.NoError(t, err)
+			require.Equal(t, folder.Fullpath, result.Data.RuleGroups[0].File)
+			require.Equal(t, "rule-group-3", result.Data.RuleGroups[0].Name)
+			require.Len(t, result.Data.RuleGroups[0].Rules, 1)
+			require.Equal(t, expectedRule.Title, result.Data.RuleGroups[0].Rules[0].Name)
 		})
 	})
 
