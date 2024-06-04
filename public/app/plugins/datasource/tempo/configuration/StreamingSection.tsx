@@ -1,3 +1,5 @@
+import React from 'react';
+
 import {
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
@@ -5,7 +7,6 @@ import {
 } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { InlineFieldRow, InlineField, InlineSwitch } from '@grafana/ui';
-import React from 'react';
 
 interface StreamingOptions extends DataSourceJsonData {
   streaming?: {

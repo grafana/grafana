@@ -24,8 +24,8 @@ import { SecureSocksProxySettings, useStyles2, Divider, Stack } from '@grafana/u
 
 import { QuerySettings } from './QuerySettings';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
-import { TraceQLSearchSettings } from './TraceQLSearchSettings';
 import { StreamingSection } from './StreamingSection';
+import { TraceQLSearchSettings } from './TraceQLSearchSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
