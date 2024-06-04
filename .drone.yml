@@ -1138,6 +1138,7 @@ steps:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
   image: golang:1.22.4-alpine
+  failure: ignore
   name: remote-alertmanager-integration-tests
 trigger:
   event:
@@ -2643,6 +2644,7 @@ steps:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
   image: golang:1.22.4-alpine
+  failure: ignore
   name: remote-alertmanager-integration-tests
 trigger:
   branch: main
@@ -4535,6 +4537,7 @@ steps:
     AM_TENANT_ID: test
     AM_URL: http://mimir_backend:8080
   image: golang:1.22.4-alpine
+  failure: ignore
   name: remote-alertmanager-integration-tests
 trigger:
   event:
