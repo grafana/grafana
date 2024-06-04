@@ -94,6 +94,10 @@ func (c *K8sTestHelper) loadAPIGroups() {
 	}
 }
 
+func (c *K8sTestHelper) GetEnv() server.TestEnv {
+	return c.env
+}
+
 func (c *K8sTestHelper) Shutdown() {
 	err := c.env.Server.Shutdown(context.Background(), "done")
 	require.NoError(c.t, err)

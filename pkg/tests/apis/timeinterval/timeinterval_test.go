@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,7 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -264,4 +270,61 @@ func TestIntegrationTimeInterval(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+
+	org := helper.Org1
+
+	admin := org.Admin
+	adminK8sClient, err := versioned.NewForConfig(admin.NewRestConfig())
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().TimeIntervals("default")
+
+	env := helper.GetEnv()
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	require.NoError(t, err)
+
+	created, err := adminClient.Create(ctx, &v0alpha1.TimeInterval{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+			Name:      "time-interval-1",
+		},
+		Spec: v0alpha1.TimeIntervalSpec{
+			TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
+		},
+	}, v1.CreateOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "", created.Annotations["grafana.com/provenance"])
+
+	t.Run("should provide provenance status", func(t *testing.T) {
+		require.NoError(t, db.SetProvenance(ctx, &definitions.MuteTimeInterval{
+			MuteTimeInterval: config.MuteTimeInterval{
+				Name: created.Name,
+			},
+		}, admin.Identity.GetOrgID(), "API"))
+
+		got, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "API", got.Annotations["grafana.com/provenance"])
+	})
+	t.Run("should not let update if provisioned", func(t *testing.T) {
+		updated := created.DeepCopy()
+		updated.Spec.TimeIntervals = v0alpha1.IntervalGenerator{}.GenerateMany(2)
+
+		_, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
+		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+	})
+
+	t.Run("should not let delete if provisioned", func(t *testing.T) {
+		err := adminClient.Delete(ctx, created.Name, v1.DeleteOptions{})
+		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+	})
 }
