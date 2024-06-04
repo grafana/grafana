@@ -181,7 +181,7 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         label={
           <Label
             htmlFor="evaluateFor"
-            description="Period in which an alert rule can be in breach of the condition until the alert rule fires."
+            description='Period the threshold condition must be met to trigger the alert. Selecting "None" triggers the alert immediately once the condition is met.'
           >
             Pending period
           </Label>
@@ -232,10 +232,22 @@ function getDescription() {
         Define how the alert rule is evaluated.
       </Text>
       <NeedHelpInfo
-        contentText="Evaluation groups are containers for evaluating alert and recording rules. An evaluation group defines an evaluation interval - how often a rule is checked. Alert rules within the same evaluation group are evaluated sequentially"
+        contentText={
+          <>
+            <p>Evaluation groups are containers for evaluating alert and recording rules.</p>
+            <p>
+              An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the
+              same evaluation group are evaluated over the same evaluation interval.
+            </p>
+            <p>
+              Pending period specifies how long the threshold condition must be met before the alert starts firing. This
+              option helps prevent alerts from being triggered by temporary issues.
+            </p>
+          </>
+        }
         externalLink={docsLink}
-        linkText={`Read about evaluation`}
-        title="Evaluation"
+        linkText={`Read about evaluation and alert states`}
+        title="Alert rule evaluation"
       />
     </Stack>
   );

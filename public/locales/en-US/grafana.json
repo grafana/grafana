@@ -1128,6 +1128,10 @@
     "public": {
       "title": "Public dashboards"
     },
+    "recentlyDeleted": {
+      "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
+      "title": "Recently Deleted"
+    },
     "recorded-queries": {
       "title": "Recorded queries"
     },
@@ -1188,10 +1192,6 @@
     "testing-and-synthetics": {
       "subtitle": "Optimize performance with k6 and Synthetic Monitoring insights",
       "title": "Testing & synthetics"
-    },
-    "trash": {
-      "subtitle": "Any items remaining in the Trash for more than 30 days will be automatically deleted",
-      "title": "Trash"
     },
     "upgrading": {
       "title": "Stats and license"
