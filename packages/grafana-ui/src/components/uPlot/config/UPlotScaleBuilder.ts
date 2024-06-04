@@ -156,11 +156,6 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
 
       let minMax: uPlot.Range.MinMax = [dataMin, dataMax];
 
-      // don't pad numeric x scales
-      if (scaleKey === 'x' && !isTime && distr === ScaleDistribution.Linear) {
-        return minMax;
-      }
-
       // happens when all series on a scale are `show: false`, re-returning nulls will auto-disable axis
       if (!hasFixedRange && dataMin == null && dataMax == null) {
         return minMax;
