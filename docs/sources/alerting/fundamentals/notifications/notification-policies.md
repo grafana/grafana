@@ -64,7 +64,7 @@ To prevent any alerts from being missed, the default notification policy always 
 
 ## Routing
 
-To determine which notification policy handles which alert instances, the system start evaluating from the top of the tree, the default notification policy.
+To determine which notification policy handles which alert instances, the system starts evaluating from the top of the tree; the default notification policy.
 
 If a notification policy has label matchers that match the labels of the alert instance, it descends in to its child policies in the order they are displayed. If there are a matching policy, continues to look for any child policies that might have label matchers that further narrow down the set of labels, and so forth until no more child policies are found.
 
