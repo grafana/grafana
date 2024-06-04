@@ -79,7 +79,7 @@ To create a new notification policy, you need to follow its tree structure. New 
 
    Notification policies are evaluated from top to bottom, so it is key to be able to choose which notification policy receives alerts first. Adding sibling notification policies instead of always inserting a child policy as well as being able tp choose where to insert is key to managing where your alerts go.
 
-5. Click **Save policy** to save your changes.
+1. Click **Save policy** to save your changes.
 
 ## Search for policies
 
