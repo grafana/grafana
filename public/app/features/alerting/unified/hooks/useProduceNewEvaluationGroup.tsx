@@ -80,7 +80,6 @@ export function useAddRuleInGroup() {
 export function useDeleteRuleFromGroup() {
   const [produceNewRuleGroup, updateState] = useProduceNewRuleGroup();
 
-  // @TODO make sure we remove the entire group if the rule we want to delete is the last one in the list
   const deleteFn = useCallback(
     async (ruleGroup: RuleGroupIdentifier, rule: RulerRuleDTO) => {
       const action = deleteRuleAction(rule);
