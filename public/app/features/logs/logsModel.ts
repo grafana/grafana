@@ -215,29 +215,12 @@ export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
   intervalMs?: number,
   absoluteRange?: AbsoluteTimeRange,
-  queries?: DataQuery[]
+  queries?: DataQuery[],
+  deduplicateResults?: boolean
 ): LogsModel {
-  // Until nanosecond precision for requests is supported, we need to account for possible duplicate rows.
-  let infiniteScrollingResults = false;
-  queries = queries?.map((query) => {
-    if (query.refId.includes(infiniteScrollRefId)) {
-      infiniteScrollingResults = true;
-      return {
-        ...query,
-        refId: query.refId.replace(infiniteScrollRefId, ''),
-      };
-    }
-    return query;
-  });
-  if (infiniteScrollingResults) {
-    dataFrame = dataFrame.map((frame) => ({
-      ...frame,
-      refId: frame.refId?.replace(infiniteScrollRefId, ''),
-    }));
-  }
-
   const { logSeries } = separateLogsAndMetrics(dataFrame);
-  const logsModel = logSeriesToLogsModel(logSeries, queries, infiniteScrollingResults);
+  // Until nanosecond precision for requests is supported, we need to account for possible duplicate rows.
+  const logsModel = logSeriesToLogsModel(logSeries, queries, Boolean(deduplicateResults));
 
   if (logsModel) {
     // Create histogram metrics from logs using the interval as bucket size for the line count
