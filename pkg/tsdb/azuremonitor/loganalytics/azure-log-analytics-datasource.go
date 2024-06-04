@@ -226,7 +226,7 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 
 func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries []backend.DataQuery, dsInfo types.DatasourceInfo, fromAlert bool) ([]*AzureLogAnalyticsQuery, error) {
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
-	appInsightsRegExp, err := regexp.Compile("providers/Microsoft.Insights/components")
+	appInsightsRegExp, err := regexp.Compile("(?i)providers/microsoft.insights/components")
 	if err != nil {
 		return nil, fmt.Errorf("failed to compile Application Insights regex")
 	}
