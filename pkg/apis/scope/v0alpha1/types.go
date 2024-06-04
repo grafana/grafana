@@ -19,9 +19,7 @@ type Scope struct {
 
 type ScopeSpec struct {
 	Title       string `json:"title"`
-	Type        string `json:"type"`
 	Description string `json:"description"`
-	Category    string `json:"category"`
 
 	// +listType=atomic
 	Filters []ScopeFilter `json:"filters"`
@@ -62,8 +60,10 @@ type ScopeDashboardBinding struct {
 }
 
 type ScopeDashboardBindingSpec struct {
-	Dashboard string `json:"dashboard"`
-	Scope     string `json:"scope"`
+	Dashboard      string `json:"dashboard"`
+	DashboardTitle string `json:"dashboardTitle"`
+
+	Scope string `json:"scope"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
