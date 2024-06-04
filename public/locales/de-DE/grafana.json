@@ -1478,6 +1478,11 @@
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
   },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",

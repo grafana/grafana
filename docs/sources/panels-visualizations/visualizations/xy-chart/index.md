@@ -253,11 +253,11 @@ Set the y-axis to be centered on zero.
 
 ### Soft min and soft max
 
-Set a **Soft min** or **soft max** option for better control of y-axis limits. By default, Grafana sets the range for the y-axis automatically based on the dataset.
+Set a **Soft min** or **soft max** option for better control of all axes limits. By default, Grafana sets the range automatically based on the dataset.
 
 **Soft min** and **soft max** settings can prevent small variations in the data from being magnified when it's mostly flat. In contrast, hard min and max values help prevent obscuring useful detail in the data by clipping intermittent spikes past a specific point.
 
-To define hard limits of the y-axis, set standard min/max options. For more information, refer to [Configure standard options](ref:configure-standard-options).
+To define hard limits of the axes, set standard min/max options. For more information, refer to [Configure standard options](ref:configure-standard-options).
 
 ![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
 
