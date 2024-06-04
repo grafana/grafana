@@ -42,6 +42,16 @@ type ReplStore struct {
 func ProvideReadOnlyService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	bus bus.Bus, tracer tracing.Tracer) (*ReplStore, error) {
+
+	// POC laziness: check for the existence of the database_replica section in
+	// the configuration file and return a nil ROService if it doesn't exist.
+	// The useage stats service is the only service using this in the POC and
+	// already checks for a nil read replica.
+	dbCfg, _ := NewRODatabaseConfig(cfg, features)
+	if dbCfg == nil {
+		return nil, nil
+	}
+
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
@@ -83,7 +93,10 @@ func newReadOnlySQLStore(cfg *setting.Cfg, features featuremgmt.FeatureToggles, 
 	s.features = features
 	s.tracer = tracer
 
-	s.initReadOnlyEngine(s.engine)
+	err := s.initReadOnlyEngine(s.engine)
+	if err != nil {
+		return nil, err
+	}
 	s.dialect = migrator.NewDialect(s.engine.DriverName())
 	return s, nil
 }
