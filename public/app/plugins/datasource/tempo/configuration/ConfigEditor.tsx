@@ -25,6 +25,7 @@ import { SecureSocksProxySettings, useStyles2, Divider, Stack } from '@grafana/u
 import { QuerySettings } from './QuerySettings';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
 import { TraceQLSearchSettings } from './TraceQLSearchSettings';
+import { StreamingSection } from './StreamingSection';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
@@ -58,6 +59,9 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
       <Divider spacing={4} />
 
       <TraceToProfilesSection options={options} onOptionsChange={onOptionsChange} />
+      <Divider spacing={4} />
+
+      <StreamingSection options={options} onOptionsChange={onOptionsChange} />
       <Divider spacing={4} />
 
       <ConfigSection
