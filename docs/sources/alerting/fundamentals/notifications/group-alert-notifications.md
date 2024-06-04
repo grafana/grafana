@@ -35,7 +35,7 @@ refs:
 
 Grouping is an important feature of Grafana Alerting as it allows you to batch relevant alerts together into a smaller number of notifications. This is particularly important if notifications are delivered to first-responders, such as engineers on-call, where receiving lots of notifications in a short period of time can be overwhelming and in some cases can negatively impact a first-responders ability to respond to an incident. For example, consider a large outage where many of your systems are down. In this case, grouping can be the difference between receiving 1 phone call and 100 phone calls.
 
-## Grouping notifications
+## Group notifications
 
 Grouping combines similar alert instances within a specific period into a single notification, reducing alert noise.
 
