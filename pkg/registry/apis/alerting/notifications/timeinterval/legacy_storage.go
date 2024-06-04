@@ -14,6 +14,7 @@ import (
 	grafanaRest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 var (
@@ -27,7 +28,7 @@ type TimeIntervalService interface {
 	GetMuteTiming(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error)
 	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
 	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
-	DeleteMuteTiming(ctx context.Context, name string, orgID int64) error
+	DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance) error
 }
 
 type legacyStorage struct {
@@ -174,8 +175,8 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 			return nil, false, err
 		}
 	}
-	err = s.service.DeleteMuteTiming(ctx, name, info.OrgID) // TODO add support for dry-run option
-	return old, false, err                                  // false - will be deleted async
+	err = s.service.DeleteMuteTiming(ctx, name, info.OrgID, definitions.Provenance(models.ProvenanceNone)) // TODO add support for dry-run option
+	return old, false, err                                                                                 // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {

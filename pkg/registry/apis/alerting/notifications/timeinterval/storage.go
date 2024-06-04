@@ -16,7 +16,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
-func NewStorage(legacySvc TimeIntervalService, namespacer request.NamespaceMapper, scheme *runtime.Scheme, dualWrite bool, optsGetter generic.RESTOptionsGetter) (rest.Storage, error) {
+var _ grafanarest.Storage = (*storage)(nil)
+
+type storage struct {
+	*genericregistry.Store
+}
+
+func (s storage) Compare(storageObj, legacyObj runtime.Object) bool {
+	// TODO implement when supported dual write mode is not Mode0
+	return false
+}
+
+func NewStorage(legacySvc TimeIntervalService, namespacer request.NamespaceMapper, scheme *runtime.Scheme, desiredMode grafanarest.DualWriterMode, optsGetter generic.RESTOptionsGetter) (rest.Storage, error) {
 	legacyStore := &legacyStorage{
 		service:    legacySvc,
 		namespacer: namespacer,
@@ -37,7 +48,7 @@ func NewStorage(legacySvc TimeIntervalService, namespacer request.NamespaceMappe
 				return nil, fmt.Errorf("expected resource or info")
 			}),
 	}
-	if dualWrite && optsGetter != nil {
+	if optsGetter != nil && desiredMode != grafanarest.Mode0 {
 		strategy := grafanaregistry.NewStrategy(scheme)
 		s := &genericregistry.Store{
 			NewFunc:                   resourceInfo.NewFunc,
@@ -54,7 +65,7 @@ func NewStorage(legacySvc TimeIntervalService, namespacer request.NamespaceMappe
 		if err := s.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		return grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, s), nil
+		return grafanarest.NewDualWriter(desiredMode, legacyStore, storage{Store: s}), nil
 	}
 	return legacyStore, nil
 }
