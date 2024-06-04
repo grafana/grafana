@@ -130,6 +130,7 @@ alertmanager_config: |
 			// Override the map[string]any field for test simplicity.
 			// It's tested in Test_GettableUserConfigRoundtrip.
 			out.amSimple = nil
+			require.Equal(t, tc.output, out)
 		})
 	}
 }
