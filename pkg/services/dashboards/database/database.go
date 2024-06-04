@@ -779,7 +779,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	go func() {
 		start := time.Now()
-		dashRes, err := d.findDashboardsZanzanaListFilter(ctx, query)
+		dashRes, err := d.findDashboardsZanzana(ctx, query)
 		res <- evalResult{"zanzana", dashRes, err, time.Since(start)}
 	}()
 
@@ -944,6 +944,37 @@ func (d *dashboardStore) findDashboardsZanzanaCheck(ctx context.Context, query *
 	}
 
 	return res, nil
+}
+
+// findDashboardsZanzana checks query conditions and pick one of the available search implementations
+func (d *dashboardStore) findDashboardsZanzana(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	limit := int(query.Limit)
+	if limit < 1 {
+		limit = 1000
+	}
+	page := query.Page
+	if page < 1 {
+		page = 1
+	}
+
+	sb := d.buildZanzanaSearchQuery(ctx, query)
+	var res []dashboards.DashboardSearchProjection
+
+	sql, params := sb.ToSQL(int64(limit), page)
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(sql, params...).Find(&res)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(res) < limit {
+		d.log.Info("searching using search then check strategy")
+		return d.findDashboardsZanzanaCheck(ctx, query)
+	}
+
+	d.log.Info("searching using list then search strategy")
+	return d.findDashboardsZanzanaListFilter(ctx, query)
 }
 
 func (d *dashboardStore) findDashboardsZanzanaList(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
