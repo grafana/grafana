@@ -7,7 +7,7 @@ import { XYSeriesConfig, Options } from './panelcfg.gen';
 export const xyChartMigrationHandler = (panel: PanelModel): Options => {
   const pluginVersion = panel?.pluginVersion ?? '';
 
-  if (pluginVersion === '') {
+  if (pluginVersion === '' || parseFloat(pluginVersion) < 11.1) {
     return migrateOptions(panel);
   }
 

@@ -123,6 +123,12 @@ You can attach these permissions to the IAM role or IAM user you configured in [
       "Effect": "Allow",
       "Action": "tag:GetResources",
       "Resource": "*"
+    },
+    {
+      "Sid": "AllowReadingResourceMetricsFromPerformanceInsights",
+      "Effect": "Allow",
+      "Action": "pi:GetResourceMetrics",
+      "Resource": "*"
     }
   ]
 }
@@ -180,6 +186,12 @@ You can attach these permissions to the IAM role or IAM user you configured in [
         "cloudwatch:GetMetricData",
         "cloudwatch:GetInsightRuleReport"
       ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowReadingResourceMetricsFromPerformanceInsights",
+      "Effect": "Allow",
+      "Action": "pi:GetResourceMetrics",
       "Resource": "*"
     },
     {

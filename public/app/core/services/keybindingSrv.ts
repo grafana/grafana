@@ -1,7 +1,3 @@
-import Mousetrap from 'mousetrap';
-
-import 'mousetrap-global-bind';
-import 'mousetrap/plugins/global-bind/mousetrap-global-bind';
 import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent, locationUtil } from '@grafana/data';
 import { LocationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -26,6 +22,7 @@ import { HelpModal } from '../components/help/HelpModal';
 import { contextSrv } from '../core';
 import { RouteDescriptor } from '../navigation/types';
 
+import { mousetrap } from './mousetrap';
 import { toggleTheme } from './theme';
 
 export class KeybindingSrv {
@@ -42,7 +39,7 @@ export class KeybindingSrv {
   private panelId: string | number | null = null;
 
   clearAndInitGlobalBindings(route: RouteDescriptor) {
-    Mousetrap.reset();
+    mousetrap.reset();
 
     // Chromeless pages like login and signup page don't get any global bindings
     if (!route.chromeless) {
@@ -158,7 +155,7 @@ export class KeybindingSrv {
   }
 
   bind(keyArg: string | string[], fn: () => void) {
-    Mousetrap.bind(
+    mousetrap.bind(
       keyArg,
       (evt) => {
         evt.preventDefault();
@@ -171,7 +168,7 @@ export class KeybindingSrv {
   }
 
   bindGlobal(keyArg: string, fn: () => void) {
-    Mousetrap.bindGlobal(
+    mousetrap.bindGlobal(
       keyArg,
       (evt) => {
         evt.preventDefault();
@@ -184,7 +181,7 @@ export class KeybindingSrv {
   }
 
   unbind(keyArg: string, keyType?: string) {
-    Mousetrap.unbind(keyArg, keyType);
+    mousetrap.unbind(keyArg, keyType);
   }
 
   bindWithPanelId(keyArg: string, fn: (panelId: number) => void) {
