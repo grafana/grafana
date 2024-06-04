@@ -31,11 +31,11 @@ refs:
 
 Notification policies determine how alerts are routed to contact points.
 
-Policies have a tree structure and each policy can have one or more nested policies. Each policy, except for the default policy, can also match specific alert labels.
+Policies have a tree structure and each policy can have one or more child policies. Each policy, except for the default policy, can also match specific alert labels.
 
-Each alert is evaluated by the default policy and subsequently by each nested policy.
+Each alert is evaluated by the default policy and subsequently by each child policy.
 
-If the **Continue matching subsequent sibling nodes** option is enabled for a nested policy, evaluation continues even after one or more matches. A parent policy’s configuration settings and contact point information govern the behavior of an alert that does not match any of the nested policies. A default policy governs any alert that does not match a nested policy.
+If the **Continue matching subsequent sibling nodes** option is enabled for a child policy, evaluation continues even after one or more matches. A parent policy’s configuration settings and contact point information govern the behavior of an alert that does not match any of the nested policies. A default policy governs any alert that does not match a nested policy.
 
 You can configure Grafana-managed notification policies as well as notification policies for an external Alertmanager data source.
 
@@ -60,17 +60,17 @@ For more information on notification policies, refer to [fundamentals of Notific
 To create a new notification policy, you need to follow its tree structure. New policies created on the trunk of the tree (default policy), are the tree branches. And, subsequently, each branch can bear their own child policies. This is why you always add a new new policy under either the default policy, or under a already nested policy.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
-2. Click **Notification policies**.
-3. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the **Grafana Alertmanager** is selected.
-4. To add a top level specific policy, go to the specific routing section (either to the default policy, or to another existing policy in which you would like to add a new nested policy) and click **+New child policy**.
-5. In the Matching labels section, add one or more rules for matching alert labels.
-6. In the **Contact point** dropdown, select the contact point to send notification to if alert matches only this specific policy and not any of the nested policies.
-7. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching sibling policies even after the alert matched the current policy. When this option is enabled, you can get more than one notification for one alert.
-8. Optionally, enable **Override grouping** to specify the same grouping as the default policy. If this option is not enabled, the default policy grouping is used.
-9. Optionally, enable **Override general timings** to override the timing options configured in the group notification policy.
-10. Click **Save policy** to save your changes.
+1. Click **Notification policies**.
+1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the **Grafana Alertmanager** is selected.
+1. To add a top level specific policy, go to the specific routing section (either to the default policy, or to another existing policy in which you would like to add a new nested policy) and click **+New child policy**.
+1. In the Matching labels section, add one or more rules for matching alert labels.
+1. In the **Contact point** dropdown, select the contact point to send notification to if alert matches only this specific policy and not any of the nested policies.
+1. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching sibling policies even after the alert matched the current policy. When this option is enabled, you can get more than one notification for one alert.
+1. Optionally, enable **Override grouping** to specify the same grouping as the default policy. If this option is not enabled, the default policy grouping is used.
+1. Optionally, enable **Override general timings** to override the timing options configured in the group notification policy.
+1. Click **Save policy** to save your changes.
 
-## Add a nested policy
+You can also create a child policy in the following way.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
@@ -79,7 +79,7 @@ To create a new notification policy, you need to follow its tree structure. New 
 
    Notification policies are evaluated from top to bottom, so it is key to be able to choose which notification policy receives alerts first. Adding nested notification policies instead of always inserting a child policy as well as being able tp choose where to insert is key to managing where your alerts go.
 
-1. Click **Save policy** to save your changes.
+5. Click **Save policy** to save your changes.
 
 ## Search for policies
 
