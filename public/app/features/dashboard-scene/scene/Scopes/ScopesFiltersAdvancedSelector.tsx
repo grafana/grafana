@@ -21,13 +21,14 @@ export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<Sco
     <Drawer
       title={t('scopes.advancedSelector.title', 'Select scopes')}
       size="sm"
+      data-testid="scopes-advanced-container"
       onClose={() => {
         model.closeAdvancedSelector();
         model.resetDirtyScopeNames();
       }}
     >
       {isLoadingScopes ? (
-        <Spinner />
+        <Spinner data-testid="scopes-advanced-loading" />
       ) : (
         <ScopesTreeLevel
           showQuery={true}
@@ -42,6 +43,7 @@ export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<Sco
       <div className={styles.buttonGroup}>
         <Button
           variant="primary"
+          data-testid="scopes-advanced-apply"
           onClick={() => {
             model.closeAdvancedSelector();
             model.updateScopes();
@@ -51,6 +53,7 @@ export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<Sco
         </Button>
         <Button
           variant="secondary"
+          data-testid="scopes-advanced-cancel"
           onClick={() => {
             model.closeAdvancedSelector();
             model.resetDirtyScopeNames();

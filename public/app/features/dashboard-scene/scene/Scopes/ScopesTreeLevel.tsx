@@ -47,6 +47,7 @@ export function ScopesTreeLevel({
           disabled={!!loadingNodeId}
           placeholder={t('scopes.tree.search', 'Filter')}
           defaultValue={node.query}
+          data-testid={`scopes-tree-${nodeId}-search`}
           onChange={debounce((evt) => {
             onNodeUpdate(nodePath, true, evt.target.value);
           }, 500)}
@@ -70,6 +71,7 @@ export function ScopesTreeLevel({
                   <Checkbox
                     checked={isSelected}
                     disabled={!!loadingNodeId}
+                    data-testid={`scopes-tree-${childNode.item.nodeId}-checkbox`}
                     onChange={() => {
                       onNodeSelectToggle(childNodePath);
                     }}
@@ -78,9 +80,6 @@ export function ScopesTreeLevel({
 
                 {childNode.isExpandable && (
                   <IconButton
-                    aria-label={
-                      childNode.isExpanded ? t('scopes.tree.collapse', 'Collapse') : t('scopes.tree.expand', 'Expand')
-                    }
                     disabled={(anyChildSelected && !childNode.isExpanded) || !!loadingNodeId}
                     name={
                       !childNode.isExpanded
@@ -89,13 +88,17 @@ export function ScopesTreeLevel({
                           ? 'spinner'
                           : 'angle-down'
                     }
+                    aria-label={
+                      childNode.isExpanded ? t('scopes.tree.collapse', 'Collapse') : t('scopes.tree.expand', 'Expand')
+                    }
+                    data-testid={`scopes-tree-${childNode.item.nodeId}-expand`}
                     onClick={() => {
                       onNodeUpdate(childNodePath, !childNode.isExpanded, childNode.query);
                     }}
                   />
                 )}
 
-                <span>{childNode.item.title}</span>
+                <span data-testid={`scopes-tree-${childNode.item.nodeId}-title`}>{childNode.item.title}</span>
               </div>
 
               <div className={styles.itemChildren}>

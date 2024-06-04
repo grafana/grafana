@@ -89,6 +89,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
           prefix={<Icon name="search" />}
           placeholder={t('scopes.suggestedDashboards.search', 'Filter')}
           disabled={isLoading}
+          data-testid="scopes-dashboards-search"
           onChange={(evt) => model.changeSearchQuery(evt.currentTarget.value)}
         />
       </div>
@@ -97,13 +98,19 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
         <LoadingPlaceholder
           className={styles.loadingIndicator}
           text={t('scopes.suggestedDashboards.loading', 'Loading dashboards')}
+          data-testid="scopes-dashboards-loading"
         />
       ) : (
         <CustomScrollbar>
-          {filteredDashboards.map(({ spec: { dashboard, dashboardTitle } }, idx) => (
-            <div key={idx} className={styles.dashboardItem}>
-              <Link to={urlUtil.renderUrl(`/d/${dashboard}`, queryParams)}>{dashboardTitle}</Link>
-            </div>
+          {filteredDashboards.map(({ spec: { dashboard, dashboardTitle } }) => (
+            <Link
+              key={dashboard}
+              to={urlUtil.renderUrl(`/d/${dashboard}/`, queryParams)}
+              className={styles.dashboardItem}
+              data-testid={`scopes-dashboards-${dashboard}`}
+            >
+              {dashboardTitle}
+            </Link>
           ))}
         </CustomScrollbar>
       )}
@@ -123,7 +130,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1, 0),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
 
-      ':first-child': {
+      '& :is(:first-child)': {
         paddingTop: 0,
       },
     }),

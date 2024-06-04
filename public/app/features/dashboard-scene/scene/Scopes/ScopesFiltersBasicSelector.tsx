@@ -16,18 +16,14 @@ export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<Scopes
   const scopesTitles = scopes.map(({ spec: { title } }) => title).join(', ');
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-testid="scopes-basic-container">
       <Toggletip
         show={isBasicOpened}
-        onClose={() => {
-          model.closeBasicSelector();
-          model.updateScopes();
-        }}
-        onOpen={() => model.openBasicSelector()}
+        closeButton={false}
         content={
           <div className={styles.innerContainer}>
             {isLoadingScopes ? (
-              <Spinner />
+              <Spinner data-testid="scopes-basic-loading" />
             ) : (
               <ScopesTreeLevel
                 showQuery={false}
@@ -42,19 +38,29 @@ export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<Scopes
           </div>
         }
         footer={
-          <button className={styles.openAdvancedButton} onClick={() => model.openAdvancedSelector()}>
+          <button
+            className={styles.openAdvancedButton}
+            data-testid="scopes-basic-open-advanced"
+            onClick={() => model.openAdvancedSelector()}
+          >
             <Trans i18nKey="scopes.basicSelector.openAdvanced">
               Open advanced scope selector <Icon name="arrow-right" />
             </Trans>
           </button>
         }
-        closeButton={false}
+        onOpen={() => model.openBasicSelector()}
+        onClose={() => {
+          model.closeBasicSelector();
+          model.updateScopes();
+        }}
       >
         <Input
           readOnly
-          placeholder=""
-          aria-label={t('scopes.basicSelector.placeholder', 'Select scopes...')}
+          placeholder={t('scopes.basicSelector.placeholder', 'Select scopes...')}
           loading={isLoadingScopes}
+          value={scopesTitles}
+          aria-label={t('scopes.basicSelector.placeholder', 'Select scopes...')}
+          data-testid="scopes-basic-input"
           suffix={
             scopes.length > 0 ? (
               <IconButton
@@ -64,7 +70,6 @@ export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<Scopes
               />
             ) : undefined
           }
-          value={scopesTitles}
         />
       </Toggletip>
     </div>

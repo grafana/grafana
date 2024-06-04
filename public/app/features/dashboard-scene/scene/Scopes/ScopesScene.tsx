@@ -28,32 +28,31 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
     });
 
     this.addActivationHandler(() => {
-      const filtersStateSubscription = this.state.filters.subscribeToState((newState, prevState) => {
-        if (newState.scopes !== prevState.scopes) {
-          if (this.state.isExpanded) {
-            this.state.dashboards.fetchDashboards(newState.scopes);
+      this._subs.add(
+        this.state.filters.subscribeToState((newState, prevState) => {
+          if (newState.scopes !== prevState.scopes) {
+            if (this.state.isExpanded) {
+              this.state.dashboards.fetchDashboards(newState.scopes);
+            }
+
+            sceneGraph.getTimeRange(this.parent!).onRefresh();
           }
+        })
+      );
 
-          sceneGraph.getTimeRange(this.parent!).onRefresh();
-        }
-      });
+      this._subs.add(
+        this.parent?.subscribeToState((newState) => {
+          const isEditing = 'isEditing' in newState ? !!newState.isEditing : false;
 
-      const dashboardEditModeSubscription = this.parent?.subscribeToState((newState) => {
-        const isEditing = 'isEditing' in newState ? !!newState.isEditing : false;
-
-        if (isEditing !== this.state.isViewing) {
-          if (isEditing) {
-            this.enterViewMode();
-          } else {
-            this.exitViewMode();
+          if (isEditing !== this.state.isViewing) {
+            if (isEditing) {
+              this.enterViewMode();
+            } else {
+              this.exitViewMode();
+            }
           }
-        }
-      });
-
-      return () => {
-        filtersStateSubscription.unsubscribe();
-        dashboardEditModeSubscription?.unsubscribe();
-      };
+        })
+      );
     });
   }
 
@@ -92,13 +91,13 @@ export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>)
         {!isViewing && (
           <IconButton
             name="arrow-to-right"
+            className={cx(!isExpanded && styles.iconNotExpanded)}
             aria-label={
               isExpanded
                 ? t('scopes.root.collapse', 'Collapse scope filters')
                 : t('scopes.root.expand', 'Expand scope filters')
             }
-            className={cx(!isExpanded && styles.iconNotExpanded)}
-            data-testid="scopes-scene-toggle-expand-button"
+            data-testid="scopes-root-expand"
             onClick={() => model.toggleIsExpanded()}
           />
         )}
@@ -106,7 +105,7 @@ export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>)
       </div>
 
       {isExpanded && (
-        <div className={styles.dashboardsContainer} data-testid="scopes-scene-dashboards-container">
+        <div className={styles.dashboardsContainer} data-testid="scopes-dashboards-container">
           <dashboards.Component model={dashboards} />
         </div>
       )}
