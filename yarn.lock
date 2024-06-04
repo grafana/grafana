@@ -8574,13 +8574,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/mousetrap@npm:1.6.15":
-  version: 1.6.15
-  resolution: "@types/mousetrap@npm:1.6.15"
-  checksum: 10/58ec552218108f8e5f0d40ee81579aafbdb00c3af0ef4b6d3fb193a8a11a2d37aa84c6e20524120b7f218c2a87dac24f426ee3b23e1269d42f8145a1a37c9eca
-  languageName: node
-  linkType: hard
-
 "@types/ms@npm:*":
   version: 0.7.34
   resolution: "@types/ms@npm:0.7.34"
@@ -16760,7 +16753,6 @@ __metadata:
     "@types/lodash": "npm:4.17.4"
     "@types/logfmt": "npm:^1.2.3"
     "@types/lucene": "npm:^2"
-    "@types/mousetrap": "npm:1.6.15"
     "@types/node": "npm:20.12.13"
     "@types/node-forge": "npm:^1"
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4"
@@ -16892,8 +16884,6 @@ __metadata:
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.45"
     monaco-editor: "npm:0.34.1"
-    mousetrap: "npm:1.6.5"
-    mousetrap-global-bind: "npm:1.1.0"
     moveable: "npm:0.53.0"
     msw: "npm:2.3.1"
     mutationobserver-shim: "npm:0.3.7"
@@ -21716,22 +21706,6 @@ __metadata:
   dependencies:
     color-name: "npm:^1.1.4"
   checksum: 10/6dced73bfb3048d2a60e4c7e2a5c414c4e7877dac54283168715a891525819109141b40bd9a7fd28f878802b4e166bd0452be926bfb6c0ab95bf9ee2b84e1b3d
-  languageName: node
-  linkType: hard
-
-"mousetrap-global-bind@npm:1.1.0":
-  version: 1.1.0
-  resolution: "mousetrap-global-bind@npm:1.1.0"
-  peerDependencies:
-    mousetrap: ^1.6.0
-  checksum: 10/e7ca7cdfe8f5b4dab357ec7f28361b7e686bd43b97e69ab302e65ad53c4864f3e4c7856651f64539fd352a36d63b5863d715d756c3eea68c9c70e2433221f6b3
-  languageName: node
-  linkType: hard
-
-"mousetrap@npm:1.6.5":
-  version: 1.6.5
-  resolution: "mousetrap@npm:1.6.5"
-  checksum: 10/2f55e715c8e106fa96135f8f3bc7fe71a3c497e803a451f357ae70598c3994a88c2907780f7abf51df4268c26cfb23f94db8687cd37154d65a0cc74cb530d438
   languageName: node
   linkType: hard
 
