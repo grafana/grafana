@@ -368,7 +368,7 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 
 	ctxLogger.Debug("Add service account token", "service", extSvcSlug, "orgID", orgID)
 	if _, err := esa.saSvc.AddServiceAccountToken(ctx, saID, &sa.AddServiceAccountTokenCommand{
-		Name:  tokenNamePrefix + "-" + extSvcSlug,
+		Name:  tokenName(extSvcSlug),
 		OrgId: orgID,
 		Key:   newKeyInfo.HashedKey,
 	}); err != nil {
@@ -399,15 +399,14 @@ func (esa *ExtSvcAccountsService) removeExtSvcAccountToken(ctx context.Context, 
 	notFound := int64(-1)
 	tknID := notFound
 	for _, token := range tokens {
-		if token.Name == tokenNamePrefix+"-"+extSvcSlug {
+		if token.Name == tokenName(extSvcSlug) {
 			ctxLogger.Debug("Found token", "service", extSvcSlug, "orgID", orgID)
 			tknID = token.ID
 			break
 		}
 	}
 	if tknID != notFound {
-		err := esa.saSvc.DeleteServiceAccountToken(ctx, orgID, saID, tknID)
-		if err != nil && !errors.Is(err, sa.ErrServiceAccountTokenNotFound) {
+		if err := esa.saSvc.DeleteServiceAccountToken(ctx, orgID, saID, tknID); err != nil {
 			ctxLogger.Debug("Remove token", "service", extSvcSlug, "orgID", orgID)
 			return err
 		}
@@ -510,4 +509,8 @@ func (esa *ExtSvcAccountsService) handlePluginStateChanged(ctx context.Context, 
 		return nil
 	}
 	return errEnable
+}
+
+func tokenName(extSvcSlug string) string {
+	return tokenNamePrefix + "-" + extSvcSlug
 }
