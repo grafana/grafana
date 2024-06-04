@@ -1,4 +1,4 @@
-import { initialState, SearchStateManager } from '../search/state/SearchStateManager';
+import { initialState, SearchStateManager } from '../../search/state/SearchStateManager';
 
 let trashStateManager: SearchStateManager;
 function getTrashStateManager() {
