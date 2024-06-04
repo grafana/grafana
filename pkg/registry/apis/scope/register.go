@@ -151,12 +151,12 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	// Adds a rest.Connector
 	// NOTE! the server has a hardcoded rewrite filter that fills in a name
 	// so the standard k8s plumbing continues to work
-	storage["find"] = &findREST{scopeNodeStorage: scopeNodeStorage}
+	storage["node_tree"] = &findREST{scopeNodeStorage: scopeNodeStorage}
 
 	// Adds a rest.Connector
 	// NOTE! the server has a hardcoded rewrite filter that fills in a name
 	// so the standard k8s plumbing continues to work
-	storage["find_scope_dashboard"] = &findScopedDashboardsREST{scopeDashboardStorage: scopeDashboardStorage}
+	storage["dashboard_bindings"] = &findScopedDashboardsREST{scopeDashboardStorage: scopeDashboardStorage}
 
 	apiGroupInfo.VersionedResourcesStorageMap[scope.VERSION] = storage
 	return &apiGroupInfo, nil
@@ -179,7 +179,7 @@ func (b *ScopeAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 
 	// Add query parameters to the rest.Connector
-	sub := oas.Paths.Paths[root+"namespaces/{namespace}/find/{name}"]
+	sub := oas.Paths.Paths[root+"namespaces/{namespace}/node_tree/{name}"]
 	if sub != nil && sub.Get != nil {
 		sub.Parameters = []*spec3.Parameter{
 			{
@@ -203,11 +203,11 @@ func (b *ScopeAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 				},
 			},
 		}
-		delete(oas.Paths.Paths, root+"namespaces/{namespace}/find/{name}")
-		oas.Paths.Paths[root+"namespaces/{namespace}/find"] = sub
+		delete(oas.Paths.Paths, root+"namespaces/{namespace}/node_tree/{name}")
+		oas.Paths.Paths[root+"namespaces/{namespace}/find/node_tree"] = sub
 	}
 
-	findDashboardPath := oas.Paths.Paths[root+"namespaces/{namespace}/findscopeddashboard/{name}"]
+	findDashboardPath := oas.Paths.Paths[root+"namespaces/{namespace}/dashboard_bindings/{name}"]
 	if findDashboardPath != nil && sub.Get != nil {
 		sub.Parameters = []*spec3.Parameter{
 			{
@@ -230,8 +230,8 @@ func (b *ScopeAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 				},
 			},
 		}
-		delete(oas.Paths.Paths, root+"namespaces/{namespace}/findscopeddashboard/{name}")
-		oas.Paths.Paths[root+"namespaces/{namespace}/findscopeddashboard"] = findDashboardPath
+		delete(oas.Paths.Paths, root+"namespaces/{namespace}/dashboard_bindings/{name}")
+		oas.Paths.Paths[root+"namespaces/{namespace}/find/dashboard_bindings"] = findDashboardPath
 	}
 
 	// The root API discovery list
