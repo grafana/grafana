@@ -1128,6 +1128,10 @@
     "public": {
       "title": "Tableaux de bord publics"
     },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
+    },
     "recorded-queries": {
       "title": "Requêtes enregistrées"
     },
@@ -1188,10 +1192,6 @@
     "testing-and-synthetics": {
       "subtitle": "Optimisez les performances grâce aux analyses de la surveillance synthétique et k6",
       "title": "Tests et synthèses"
-    },
-    "trash": {
-      "subtitle": "",
-      "title": ""
     },
     "upgrading": {
       "title": "Statistiques et licence"

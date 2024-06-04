@@ -1122,6 +1122,10 @@
     "public": {
       "title": "公共仪表板"
     },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
+    },
     "recorded-queries": {
       "title": "已记录查询"
     },
@@ -1182,10 +1186,6 @@
     "testing-and-synthetics": {
       "subtitle": "使用 k6 和 Synthetic Monitoring 洞察优化性能。",
       "title": "测试与合成"
-    },
-    "trash": {
-      "subtitle": "",
-      "title": ""
     },
     "upgrading": {
       "title": "统计信息和许可证"

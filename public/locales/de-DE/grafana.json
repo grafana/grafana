@@ -1128,6 +1128,10 @@
     "public": {
       "title": "Öffentliche Dashboards"
     },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
+    },
     "recorded-queries": {
       "title": "Aufgezeichnete Abfragen"
     },
@@ -1188,10 +1192,6 @@
     "testing-and-synthetics": {
       "subtitle": "Optimieren Sie die Leistung mit Erkenntnissen aus k6 und Synthetic Monitoring",
       "title": "Testen & Synthetics"
-    },
-    "trash": {
-      "subtitle": "",
-      "title": ""
     },
     "upgrading": {
       "title": "Statistiken und Lizenz"
