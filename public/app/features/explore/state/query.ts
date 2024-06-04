@@ -39,7 +39,6 @@ import {
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
-import { infiniteScrollRefId } from 'app/features/logs/logsModel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
@@ -59,7 +58,7 @@ import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { visualisationTypeKey } from '../Logs/utils/logs';
-import { decorateData } from '../utils/decorators';
+import { decorateData, decorateWithLogsResult } from '../utils/decorators';
 import {
   getSupplementaryQueryProvider,
   storeSupplementaryQueryEnabled,
@@ -601,8 +600,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
           decorateData(
             data,
             queryResponse,
-            absoluteRange,
-            refreshInterval,
+            decorateWithLogsResult({ absoluteRange, refreshInterval, queries }),
             queries,
             correlations,
             showCorrelationEditorLinks,
@@ -664,8 +662,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
           decorateData(
             data,
             queryResponse,
-            absoluteRange,
-            refreshInterval,
+            decorateWithLogsResult({ absoluteRange, refreshInterval, queries }),
             queries,
             correlations,
             showCorrelationEditorLinks,
@@ -772,7 +769,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
       .map((query: DataQuery) => ({
         ...query,
         datasource: query.datasource || datasourceInstance?.getRef(),
-        refId: `${infiniteScrollRefId}${query.refId}`,
+        refId: query.refId,
         supportingQueryType: SupportingQueryType.InfiniteScroll,
       }));
 
@@ -809,8 +806,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
           // This shouldn't be needed after https://github.com/grafana/grafana/issues/57327 is fixed
           combinePanelData(queryResponse, data),
           queryResponse,
-          absoluteRange,
-          undefined,
+          decorateWithLogsResult({ absoluteRange, queries, deduplicate: true }),
           logQueries,
           correlations,
           showCorrelationEditorLinks,
