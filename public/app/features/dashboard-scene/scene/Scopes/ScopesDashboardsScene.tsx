@@ -47,6 +47,8 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     this.setState({ isLoading: true });
 
     this.fetchSub = from(fetchDashboards(scopes)).subscribe((dashboards) => {
+      this.fetchSub?.unsubscribe();
+
       this.setState({
         dashboards,
         filteredDashboards: this.filterDashboards(dashboards, this.state.searchQuery),
