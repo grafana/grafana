@@ -25,6 +25,28 @@
       "user": "Usuário"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -1128,6 +1150,10 @@
     "public": {
       "title": "Painéis de controle públicos"
     },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
+    },
     "recorded-queries": {
       "title": "Consultas gravadas"
     },
@@ -1188,10 +1214,6 @@
     "testing-and-synthetics": {
       "subtitle": "Otimize o desempenho com visões k6 e monitorização sintética",
       "title": "Teste e sintética"
-    },
-    "trash": {
-      "subtitle": "",
-      "title": ""
     },
     "upgrading": {
       "title": "Estatísticas e licença"
