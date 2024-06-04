@@ -14,6 +14,12 @@ labels:
     - oss
 title: Alert rule evaluation
 weight: 108
+refs:
+  alerts-state-health:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/
 ---
 
 # Alert rule evaluation
@@ -23,7 +29,7 @@ The criteria determining when an alert rule fires are based on two settings:
 - [Evaluation group](#evaluation-group): how frequently the alert rule is evaluated.
 - [Pending period](#pending-period): how long the condition must be met to start firing.
 
-{{< figure src="/media/docs/alerting/alert-rule-evaluation.png" max-width="750px" caption="Set alert rule evaluation" >}}
+{{< figure src="/media/docs/alerting/alert-rule-evaluation.png" max-width="750px" alt="Set the evaluation behavior of the alert rule in Grafana." caption="Set alert rule evaluation" >}}
 
 ## Evaluation group
 
@@ -31,9 +37,13 @@ Every alert rule is assigned to an evaluation group. You can assign the alert ru
 
 Each evaluation group contains an **evaluation interval** that determines how frequently the alert rule is checked. For instance, the evaluation may occur every `10s`, `30s`, `1m`, `10m`, etc.
 
+**Evaluation strategies**
+
 Alert rules in different groups can be evaluated simultaneously.
 
-**Grafana-managed** alert rules within the same group are evaluated simultaneously. However, **data-source managed** alert rules within the same group are evaluated one after the other—this is necessary to ensure that recording rules are evaluated before alert rules.
+- **Grafana-managed** alert rules within the same group are evaluated concurrently—they are evaluated at different times over the same evaluation interval but display the same evaluation timestamp.
+
+- **Data-source managed** alert rules within the same group are evaluated sequentially, one after the other—this is necessary to ensure that recording rules are evaluated before alert rules.
 
 ## Pending period
 
@@ -51,7 +61,7 @@ Keep in mind:
 - Alert instances from the same alert rule may be in different states. For instance, only one observed machine might start firing.
 - Only **Alerting** and **Resolved** alert instances are routed to manage their notifications.
 
-{{< figure src="/media/docs/alerting/alert-rule-evaluation-overview-statediagram-v2.png" max-width="750px" >}}
+{{< figure src="/media/docs/alerting/alert-rule-evaluation-overview-statediagram-v2.png" alt="A diagram of the alert instance states and when to route their notifications."  max-width="750px" >}}
 
 <!--
 Remove ///
@@ -87,11 +97,4 @@ An alert instance is resolved when it transitions from the `Firing` to the `Norm
 | 03:00 (sixth evaluation)   | Not met   | Normal <sup>Resolved \*</sup> | 120s            |
 | 03:30 (seventh evaluation) | Not met   | Normal                        | 150s            |
 
-To learn more about the state changes of alert rules and alert instances, refer to [State and health of alert rules][alerts-state-health].
-
-{{% docs/reference %}}
-
-[alerts-state-health]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health"
-[alerts-state-health]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health"
-
-{{% /docs/reference %}}
+To learn more about the state changes of alert rules and alert instances, refer to [State and health of alert rules](ref:alerts-state-health).

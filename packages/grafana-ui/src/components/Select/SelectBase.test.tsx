@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { select } from 'react-select-event';
 
 import { SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { SelectBase } from './SelectBase';
 
@@ -62,6 +63,39 @@ describe('SelectBase', () => {
     expect(screen.queryByText('Test label')).toBeInTheDocument();
     await userEvent.click(screen.getByText('clear value'));
     expect(screen.queryByText('Test label')).not.toBeInTheDocument();
+  });
+
+  describe('with custom values', () => {
+    it('allows editing a custom SelectableValue', async () => {
+      render(
+        <SelectBase
+          onChange={onChangeHandler}
+          allowCustomValue
+          value={{
+            label: 'my custom value',
+            value: 'my custom value',
+          }}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('combobox'));
+      await userEvent.type(screen.getByRole('combobox'), '{backspace}{backspace}{enter}');
+      expect(onChangeHandler).toHaveBeenCalled();
+      expect(onChangeHandler.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ label: 'my custom val', value: 'my custom val' })
+      );
+    });
+
+    it('allows editing a custom basic value', async () => {
+      render(<SelectBase onChange={onChangeHandler} allowCustomValue value="my custom value" />);
+
+      await userEvent.click(screen.getByRole('combobox'));
+      await userEvent.type(screen.getByRole('combobox'), '{backspace}{backspace}{enter}');
+      expect(onChangeHandler).toHaveBeenCalled();
+      expect(onChangeHandler.mock.calls[0][0]).toEqual(
+        expect.objectContaining({ label: 'my custom val', value: 'my custom val' })
+      );
+    });
   });
 
   describe('when openMenuOnFocus prop', () => {
@@ -191,7 +225,7 @@ describe('SelectBase', () => {
     it('renders menu with provided options', async () => {
       render(<SelectBase options={options} onChange={onChangeHandler} />);
       await userEvent.click(screen.getByText(/choose/i));
-      const menuOptions = screen.getAllByLabelText('Select option');
+      const menuOptions = screen.getAllByTestId(selectors.components.Select.option);
       expect(menuOptions).toHaveLength(2);
     });
 
@@ -217,7 +251,7 @@ describe('SelectBase', () => {
 
       await selectOptionInTest(selectEl, 'Option 2');
       await userEvent.click(screen.getByText(/option 2/i));
-      const menuOptions = screen.getAllByLabelText('Select option');
+      const menuOptions = screen.getAllByTestId(selectors.components.Select.option);
       expect(menuOptions).toHaveLength(2);
     });
   });

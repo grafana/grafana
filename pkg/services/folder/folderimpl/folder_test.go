@@ -280,7 +280,56 @@ func TestIntegrationFolderService(t *testing.T) {
 				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
 			})
 
+			t.Run("When deleting folder by uid, expectedForceDeleteRules as false, and dashboard Restore turned on should not return access denied error", func(t *testing.T) {
+				f := folder.NewFolder(util.GenerateShortUID(), "")
+				f.UID = util.GenerateShortUID()
+				folderStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
+
+				var actualCmd *dashboards.DeleteDashboardCommand
+				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+					actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
+				}).Return(nil).Once()
+				service.features = featuremgmt.WithFeatures(featuremgmt.FlagDashboardRestore)
+
+				expectedForceDeleteRules := false
+				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
+					UID:              f.UID,
+					OrgID:            orgID,
+					ForceDeleteRules: expectedForceDeleteRules,
+					SignedInUser:     usr,
+				})
+				require.NoError(t, err)
+				require.NotNil(t, actualCmd)
+				require.Equal(t, orgID, actualCmd.OrgID)
+				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
+			})
+
+			t.Run("When deleting folder by uid, expectedForceDeleteRules as true, and dashboard Restore turned on should not return access denied error", func(t *testing.T) {
+				f := folder.NewFolder(util.GenerateShortUID(), "")
+				f.UID = util.GenerateShortUID()
+				folderStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
+
+				var actualCmd *dashboards.DeleteDashboardCommand
+				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+					actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
+				}).Return(nil).Once()
+				service.features = featuremgmt.WithFeatures(featuremgmt.FlagDashboardRestore)
+
+				expectedForceDeleteRules := true
+				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
+					UID:              f.UID,
+					OrgID:            orgID,
+					ForceDeleteRules: expectedForceDeleteRules,
+					SignedInUser:     usr,
+				})
+				require.NoError(t, err)
+				require.NotNil(t, actualCmd)
+				require.Equal(t, orgID, actualCmd.OrgID)
+				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
+			})
+
 			t.Cleanup(func() {
+				service.features = featuremgmt.WithFeatures()
 				guardian.New = origNewGuardian
 			})
 		})
@@ -2166,4 +2215,55 @@ func createRule(t *testing.T, store *ngstore.DBstore, folderUID, title string) *
 	require.NoError(t, err)
 
 	return &rule
+}
+
+func TestSplitFullpath(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected []string
+	}{
+		{
+			name:     "empty string",
+			input:    "",
+			expected: []string{},
+		},
+		{
+			name:     "root folder",
+			input:    "/",
+			expected: []string{},
+		},
+		{
+			name:     "single folder",
+			input:    "folder",
+			expected: []string{"folder"},
+		},
+		{
+			name:     "single folder with leading slash",
+			input:    "/folder",
+			expected: []string{"folder"},
+		},
+		{
+			name:     "nested folder",
+			input:    "folder/subfolder/subsubfolder",
+			expected: []string{"folder", "subfolder", "subsubfolder"},
+		},
+		{
+			name:     "escaped slashes",
+			input:    "folder\\/with\\/slashes",
+			expected: []string{"folder/with/slashes"},
+		},
+		{
+			name:     "nested folder with escaped slashes",
+			input:    "folder\\/with\\/slashes/subfolder\\/with\\/slashes",
+			expected: []string{"folder/with/slashes", "subfolder/with/slashes"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := SplitFullpath(tt.input)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/gcomsso"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -34,7 +34,7 @@ func ProvideRegistration(
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
-	socialService social.Service, cache *remotecache.RemoteCache, signingKeysService signingkeys.Service,
+	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProviderService setting.Provider,
 ) Registration {
 	logger := log.New("authn.registration")
@@ -86,7 +86,7 @@ func ProvideRegistration(
 	}
 
 	if cfg.ExtJWTAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagAuthAPIAccessTokenAuth) {
-		authnSvc.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService))
+		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg))
 	}
 
 	for name := range socialService.GetOAuthProviders() {
@@ -107,6 +107,7 @@ func ProvideRegistration(
 	rbacSync := sync.ProvideRBACSync(accessControlService)
 	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
 		authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
+		authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)
 	}
 
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)

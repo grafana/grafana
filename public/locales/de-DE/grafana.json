@@ -25,6 +25,28 @@
       "user": "Nutzer"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -465,6 +487,16 @@
   },
   "explore": {
     "add-to-dashboard": "Zum Dashboard hinzufügen",
+    "add-to-library-modal": {
+      "auto-star": "",
+      "data-source-name": "",
+      "data-source-type": "",
+      "description": "",
+      "info": "",
+      "query": "",
+      "title": "",
+      "visibility": ""
+    },
     "rich-history": {
       "close-tooltip": "Abfrageverlauf schließen",
       "datasource-a-z": "Datenquelle A-Z",
@@ -479,6 +511,7 @@
     "rich-history-card": {
       "add-comment-form": "Kommentarformular hinzufügen",
       "add-comment-tooltip": "Kommentar hinzufügen",
+      "add-to-library": "",
       "cancel": "Abbrechen",
       "confirm-delete": "Löschen",
       "copy-query-tooltip": "Abfrage in Zwischenablage kopieren",
@@ -491,15 +524,12 @@
       "delete-query-tooltip": "Abfrage löschen",
       "delete-starred-query-confirmation-text": "Sind Sie sicher, dass Sie die markierte Abfrage dauerhaft löschen möchten?",
       "edit-comment-tooltip": "Kommentar bearbeiten",
-      "left-pane": "",
       "optional-description": "Eine optionale Beschreibung dessen, was die Abfrage tut.",
       "query-comment-label": "Abfrage-Kommentar",
+      "query-template-added": "",
       "query-text-label": "Abfragetext",
-      "right-pane": "",
-      "run-query-button": "Abfrage ausführen",
       "save-comment": "Kommentar speichern",
       "star-query-tooltip": "Abfrage anwählen",
-      "switch-datasource-button": "Datenquelle wechseln und Abfrage ausführen",
       "unstar-query-tooltip": "Abfrage abwählen",
       "update-comment-form": "Kommentarformular aktualisieren"
     },
@@ -567,6 +597,12 @@
     "rich-history-utils-notification": {
       "saving-failed": "Speichern des umfangreichen Verlaufs fehlgeschlagen",
       "update-failed": "Aktualisierung des umfangreichen Verlaufs fehlgeschlagen"
+    },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
     },
     "secondary-actions": {
       "query-add-button": "Abfrage hinzufügen",
@@ -1114,6 +1150,10 @@
     "public": {
       "title": "Öffentliche Dashboards"
     },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
+    },
     "recorded-queries": {
       "title": "Aufgezeichnete Abfragen"
     },
@@ -1437,6 +1477,11 @@
       "toggle-edit-mode": "Textbearbeitungsmodus umschalten"
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
+  },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
+    }
   },
   "refresh-picker": {
     "aria-label": {

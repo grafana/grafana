@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { AppEvents, GrafanaTheme2, Scope, ScopeSpec, ScopeTreeItemSpec } from '@grafana/data';
-import { getAppEvents, getBackendSrv } from '@grafana/runtime';
+import { config, getAppEvents, getBackendSrv } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -11,7 +11,7 @@ import {
   SceneObjectUrlValues,
 } from '@grafana/scenes';
 import { Checkbox, Icon, Input, Toggletip, useStyles2 } from '@grafana/ui';
-import { ScopedResourceServer } from 'app/features/apiserver/server';
+import { ScopedResourceClient } from 'app/features/apiserver/client';
 
 export interface Node {
   item: ScopeTreeItemSpec;
@@ -32,9 +32,9 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   private serverGroup = 'scope.grafana.app';
   private serverVersion = 'v0alpha1';
-  private serverNamespace = 'default';
+  private serverNamespace = config.namespace;
 
-  private server = new ScopedResourceServer<ScopeSpec, 'Scope'>({
+  private server = new ScopedResourceClient<ScopeSpec, 'Scope'>({
     group: this.serverGroup,
     version: this.serverVersion,
     resource: 'scopes',
@@ -53,13 +53,17 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
-    let scopes = values.scopes ?? [];
-    scopes = Array.isArray(scopes) ? scopes : [scopes];
+    let scopesNames = values.scopes ?? [];
+    scopesNames = Array.isArray(scopesNames) ? scopesNames : [scopesNames];
 
-    const scopesPromises = scopes.map((scopeName) => this.server.get(scopeName));
+    const scopesPromises = scopesNames.map((scopeName) => this.server.get(scopeName));
 
     Promise.all(scopesPromises).then((scopes) => {
-      this.setState({ scopes });
+      this.setState({
+        scopes: scopesNames.map((scopeName, scopeNameIdx) =>
+          this.mergeScopeNameWithScopes(scopeName, scopes[scopeNameIdx] ?? {})
+        ),
+      });
     });
   }
 
@@ -134,20 +138,36 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public async toggleScope(linkId: string) {
-    let scopes = this.state.scopes;
+    let scopes = [...this.state.scopes];
     const selectedIdx = scopes.findIndex((scope) => scope.metadata.name === linkId);
 
     if (selectedIdx === -1) {
-      const scope = await this.server.get(linkId);
+      const receivedScope = await this.server.get(linkId);
 
-      if (scope) {
-        scopes = [...scopes, scope];
-      }
+      scopes.push(this.mergeScopeNameWithScopes(linkId, receivedScope ?? {}));
     } else {
       scopes.splice(selectedIdx, 1);
     }
 
     this.setState({ scopes });
+  }
+
+  private mergeScopeNameWithScopes(scopeName: string, scope: Partial<Scope>): Scope {
+    return {
+      ...scope,
+      metadata: {
+        name: scopeName,
+        ...scope.metadata,
+      },
+      spec: {
+        filters: [],
+        title: scopeName,
+        type: '',
+        category: '',
+        description: '',
+        ...scope.spec,
+      },
+    };
   }
 }
 

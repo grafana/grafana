@@ -56,13 +56,17 @@
               "type"
             ],
             "properties": {
+              "apiVersion": {
+                "description": "The apiserver version",
+                "type": "string"
+              },
               "type": {
                 "description": "The datasource plugin type",
                 "type": "string",
                 "pattern": "^prometheus$"
               },
               "uid": {
-                "description": "Datasource UID",
+                "description": "Datasource UID (NOTE: name in k8s)",
                 "type": "string"
               }
             },
@@ -94,6 +98,13 @@
               "heatmap"
             ],
             "x-enum-description": {}
+          },
+          "groupByKeys": {
+            "description": "Group By parameters to apply to aggregate expressions in the query",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "hide": {
             "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)",
@@ -176,9 +187,10 @@
             "description": "A set of filters applied to apply to the query",
             "type": "array",
             "items": {
-              "description": "ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go to avoid import (temp fix)",
+              "description": "ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go to avoid import (temp fix).",
               "type": "object",
               "required": [
+                "name",
                 "title",
                 "type",
                 "description",
@@ -215,6 +227,10 @@
                     },
                     "additionalProperties": false
                   }
+                },
+                "name": {
+                  "description": "This is the identifier from metadata.name of the scope model.",
+                  "type": "string"
                 },
                 "title": {
                   "type": "string"
