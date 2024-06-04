@@ -25,6 +25,28 @@
       "user": "Usuário"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -465,6 +487,16 @@
   },
   "explore": {
     "add-to-dashboard": "Adicionar ao painel de controle",
+    "add-to-library-modal": {
+      "auto-star": "",
+      "data-source-name": "",
+      "data-source-type": "",
+      "description": "",
+      "info": "",
+      "query": "",
+      "title": "",
+      "visibility": ""
+    },
     "rich-history": {
       "close-tooltip": "Fechar histórico de consultas",
       "datasource-a-z": "Fonte de dados A-Z",
@@ -479,6 +511,7 @@
     "rich-history-card": {
       "add-comment-form": "Adicionar formulário de comentários",
       "add-comment-tooltip": "Adicionar comentário",
+      "add-to-library": "",
       "cancel": "Cancelar",
       "confirm-delete": "Excluir",
       "copy-query-tooltip": "Copiar consulta para a área de transferência",
@@ -493,6 +526,7 @@
       "edit-comment-tooltip": "Editar comentário",
       "optional-description": "Uma descrição opcional do que a consulta faz.",
       "query-comment-label": "Comentário de consulta",
+      "query-template-added": "",
       "query-text-label": "Texto da consulta",
       "save-comment": "Salvar comentário",
       "star-query-tooltip": "Favoritar consulta",
@@ -1115,6 +1149,10 @@
     },
     "public": {
       "title": "Painéis de controle públicos"
+    },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
     },
     "recorded-queries": {
       "title": "Consultas gravadas"

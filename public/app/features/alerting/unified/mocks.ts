@@ -117,6 +117,7 @@ export const mockRulerGrafanaRule = (
       uid: '123',
       title: 'myalert',
       namespace_uid: '123',
+      rule_group: 'my-group',
       condition: 'A',
       no_data_state: GrafanaAlertStateDecision.Alerting,
       exec_err_state: GrafanaAlertStateDecision.Alerting,
@@ -214,6 +215,7 @@ export const mockGrafanaRulerRule = (partial: Partial<GrafanaRuleDefinition> = {
       uid: '',
       title: 'my rule',
       namespace_uid: 'NAMESPACE_UID',
+      rule_group: 'my-group',
       condition: '',
       no_data_state: GrafanaAlertStateDecision.NoData,
       exec_err_state: GrafanaAlertStateDecision.Error,
@@ -561,7 +563,10 @@ export const somePromRules = (dataSourceName = 'Prometheus'): RuleNamespace[] =>
 
 export const someRulerRules: RulerRulesConfigDTO = {
   namespace1: [
-    mockRulerRuleGroup({ name: 'group1', rules: [mockRulerAlertingRule({ alert: 'alert1' })] }),
+    mockRulerRuleGroup({
+      name: 'group1',
+      rules: [mockRulerAlertingRule({ alert: 'alert1' }), mockRulerAlertingRule({ alert: 'alert1a' })],
+    }),
     mockRulerRuleGroup({ name: 'group2', rules: [mockRulerAlertingRule({ alert: 'alert2' })] }),
   ],
   namespace2: [mockRulerRuleGroup({ name: 'group3', rules: [mockRulerAlertingRule({ alert: 'alert3' })] })],

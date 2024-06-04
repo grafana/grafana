@@ -47,8 +47,6 @@ A query specifies the desired data to retrieve from a data source and applies re
 
 In Alerting, an alert rule defines of one or more queries and expressions that select the data you want to measure and a [condition](#alert-condition) that needs to be met before an alert rule fires.
 
-{{< figure src="/media/docs/alerting/alerting-define-query-and-alert-condition.png" max-width="750px" >}}
-
 ## Data source queries
 
 Alerting queries are the same type of queries available in Grafana panels. Queries in Grafana can be applied in various ways, depending on the data source and query language being used. However, not all [data sources support Alerting](ref:data-source-alerting).
@@ -68,7 +66,7 @@ Some common types of query components include:
 **Grouping**: Group the data by specific dimensions or tags to create aggregated views or breakdowns.
 
 {{% admonition type="note" %}}
-Grafana doesn't support alert queries with template variables. More details [here.](https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514)
+Grafana doesn't support alert queries with template variables. More details [here](https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514).
 {{% /admonition %}}
 
 ## Expression queries
@@ -81,7 +79,7 @@ In Alerting, you can only use expressions for Grafana-managed alert rules. For e
 
 **Reduce**
 
-Aggregates time series values in the selected time range into a single value. It's not necessary for [rules using numeric data.](#alert-on-numeric-data)
+Aggregates time series values in the selected time range into a single value. It's not necessary for [rules using numeric data](#alert-on-numeric-data).
 
 **Math**
 
