@@ -6,6 +6,7 @@ import (
 	"slices"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -55,19 +56,9 @@ const (
 	membersValidFor = time.Minute
 )
 
-type redisClient interface {
-	Publish(ctx context.Context, channel string, message interface{}) *redis.IntCmd
-	Subscribe(ctx context.Context, channels ...string) *redis.PubSub
-	MGet(ctx context.Context, keys ...string) *redis.SliceCmd
-	Scan(ctx context.Context, cursor uint64, match string, count int64) *redis.ScanCmd
-	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
-	Del(ctx context.Context, keys ...string) *redis.IntCmd
-	Ping(ctx context.Context) *redis.StatusCmd
-}
-
 type redisPeer struct {
 	name      string
-	redis     redisClient
+	redis     redis.UniversalClient
 	prefix    string
 	logger    log.Logger
 	states    map[string]alertingCluster.State
@@ -107,6 +98,8 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		poolSize = cfg.maxConns
 	}
 
+	addrs := strings.Split(cfg.addr, ",")
+
 	var tlsClientConfig *tls.Config
 	var err error
 	if cfg.tlsEnabled {
@@ -117,25 +110,22 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		}
 	}
 
-	var rdb redisClient
-	if cfg.clusterMode {
-		rdb = redis.NewClusterClient(&redis.ClusterOptions{
-			Addrs:     []string{cfg.addr},
-			Username:  cfg.username,
-			Password:  cfg.password,
-			PoolSize:  poolSize,
-			TLSConfig: tlsClientConfig,
-		})
-	} else {
-		rdb = redis.NewClient(&redis.Options{
-			Addr:      cfg.addr,
-			Username:  cfg.username,
-			Password:  cfg.password,
-			DB:        cfg.db,
-			PoolSize:  poolSize,
-			TLSConfig: tlsClientConfig,
-		})
+	opts := &redis.UniversalOptions{
+		Addrs:     addrs,
+		Username:  cfg.username,
+		Password:  cfg.password,
+		DB:        cfg.db,
+		PoolSize:  poolSize,
+		TLSConfig: tlsClientConfig,
 	}
+
+	var rdb redis.UniversalClient
+	if cfg.clusterMode {
+		rdb = redis.NewClusterClient(opts.Cluster())
+	} else {
+		rdb = redis.NewClient(opts.Simple())
+	}
+
 	cmd := rdb.Ping(context.Background())
 	if cmd.Err() != nil {
 		logger.Error("Failed to ping redis - redis-based alertmanager clustering may not be available", "err", cmd.Err())
