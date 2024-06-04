@@ -613,6 +613,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 	orgID := int64(1)
 
 	timingToDelete := config.MuteTimeInterval{Name: "unused-timing"}
+	correctVersion := calculateMuteTimeIntervalFingerprint(timingToDelete)
 	usedTiming := "used-timing"
 	initialConfig := func() *definitions.PostableUserConfig {
 		return &definitions.PostableUserConfig{
@@ -642,7 +643,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		err := sut.DeleteMuteTiming(context.Background(), "no-timing", orgID, definitions.Provenance(models.ProvenanceAPI))
+		err := sut.DeleteMuteTiming(context.Background(), "no-timing", orgID, definitions.Provenance(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		require.Len(t, store.Calls, 2)
@@ -670,7 +671,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 		prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		err := sut.DeleteMuteTiming(context.Background(), "no-timing", orgID, definitions.Provenance(models.ProvenanceNone))
+		err := sut.DeleteMuteTiming(context.Background(), "no-timing", orgID, definitions.Provenance(models.ProvenanceNone), correctVersion)
 		require.ErrorIs(t, err, expectedErr)
 
 		require.Len(t, store.Calls, 0)
@@ -683,7 +684,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
-		err := sut.DeleteMuteTiming(context.Background(), usedTiming, orgID, definitions.Provenance(models.ProvenanceAPI))
+		err := sut.DeleteMuteTiming(context.Background(), usedTiming, orgID, definitions.Provenance(models.ProvenanceAPI), correctVersion)
 
 		require.Len(t, store.Calls, 1)
 		require.Equal(t, "Get", store.Calls[0].Method)
@@ -691,7 +692,22 @@ func TestDeleteMuteTimings(t *testing.T) {
 		require.Truef(t, ErrTimeIntervalInUse.Is(err), "expected ErrTimeIntervalInUse but got %s", err)
 	})
 
-	t.Run("deletes mute timing and provenance in transaction", func(t *testing.T) {
+	t.Run("returns ErrVersionConflict if provided version does not match", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return &cfgRevision{cfg: initialConfig()}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
+
+		err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, definitions.Provenance(models.ProvenanceAPI), "test-version")
+
+		require.Len(t, store.Calls, 1)
+		require.Equal(t, "Get", store.Calls[0].Method)
+		require.Equal(t, orgID, store.Calls[0].Args[1])
+		require.ErrorIs(t, err, ErrVersionConflict)
+	})
+
+	t.Run("deletes mute timing and provenance in transaction if passes optimistic concurrency check", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
 			return &cfgRevision{cfg: initialConfig()}, nil
@@ -707,7 +723,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 				return nil
 			})
 
-		err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, "")
+		err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, "", correctVersion)
 		require.NoError(t, err)
 
 		require.Len(t, store.Calls, 2)
@@ -724,6 +740,23 @@ func TestDeleteMuteTimings(t *testing.T) {
 		require.EqualValues(t, expectedMuteTimings, revision.cfg.AlertmanagerConfig.MuteTimeIntervals)
 
 		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, &definitions.MuteTimeInterval{MuteTimeInterval: timingToDelete}, orgID)
+
+		t.Run("should bypass optimistic concurrency check if version is empty", func(t *testing.T) {
+			store.Calls = nil
+			err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, "", "")
+			require.NoError(t, err)
+
+			require.Equal(t, "Save", store.Calls[1].Method)
+			require.Equal(t, orgID, store.Calls[1].Args[2])
+			revision := store.Calls[1].Args[1].(*cfgRevision)
+
+			expectedMuteTimings := slices.DeleteFunc(initialConfig().AlertmanagerConfig.MuteTimeIntervals, func(interval config.MuteTimeInterval) bool {
+				return interval.Name == timingToDelete.Name
+			})
+			require.EqualValues(t, expectedMuteTimings, revision.cfg.AlertmanagerConfig.MuteTimeIntervals)
+
+			prov.AssertCalled(t, "DeleteProvenance", mock.Anything, &definitions.MuteTimeInterval{MuteTimeInterval: timingToDelete}, orgID)
+		})
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
@@ -734,7 +767,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 			store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
 				return nil, expectedErr
 			}
-			err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, "")
+			err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, "", "")
 			require.ErrorIs(t, err, expectedErr)
 		})
 
@@ -749,7 +782,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 				DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).
 				Return(expectedErr)
 
-			err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, "")
+			err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, "", "")
 
 			require.ErrorIs(t, err, expectedErr)
 
@@ -771,7 +804,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 				return expectedErr
 			}
 
-			err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, "")
+			err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, "", "")
 
 			require.ErrorIs(t, err, expectedErr)
 

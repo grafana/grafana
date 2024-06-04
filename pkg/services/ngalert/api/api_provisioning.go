@@ -56,7 +56,7 @@ type MuteTimingService interface {
 	GetMuteTiming(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error)
 	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
 	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
-	DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance) error
+	DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance, version string) error
 }
 
 type AlertRuleService interface {
@@ -303,7 +303,8 @@ func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt de
 }
 
 func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *contextmodel.ReqContext, name string) response.Response {
-	err := srv.muteTimings.DeleteMuteTiming(c.Req.Context(), name, c.SignedInUser.GetOrgID(), determineProvenance(c))
+	version := c.Query("version")
+	err := srv.muteTimings.DeleteMuteTiming(c.Req.Context(), name, c.SignedInUser.GetOrgID(), determineProvenance(c), version)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to delete mute timing", err)
 	}

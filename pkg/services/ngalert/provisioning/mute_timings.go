@@ -181,7 +181,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 }
 
 // DeleteMuteTiming deletes the mute timing with the given name in the given org. If the mute timing does not exist, no error is returned.
-func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance) error {
+func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance, version string) error {
 	target := definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval{Name: name}, Provenance: provenance}
 	// check that provenance is not changed in an invalid way
 	storedProvenance, err := svc.provenanceStore.GetProvenance(ctx, &target, orgID)
@@ -205,6 +205,14 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 	}
 	for i, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
 		if name == existing.Name {
+			if version != "" {
+				currentVersion := calculateMuteTimeIntervalFingerprint(existing)
+				if currentVersion != version {
+					return ErrVersionConflict.Errorf("provided version %s of time interval %s does not match current version %s", version, name, currentVersion)
+				}
+			} else if provenance != definitions.Provenance(models.ProvenanceFile) {
+				svc.log.Debug("ignoring optimistic concurrency check because version was not provided", "timeInterval", name, "operation", "delete")
+			}
 			intervals := revision.cfg.AlertmanagerConfig.MuteTimeIntervals
 			revision.cfg.AlertmanagerConfig.MuteTimeIntervals = append(intervals[:i], intervals[i+1:]...)
 		}
