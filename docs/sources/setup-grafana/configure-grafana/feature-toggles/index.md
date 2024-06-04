@@ -61,6 +61,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `alertingQueryOptimization`          | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
 | `betterPageScrolling`                | Removes CustomScrollbar from the UI, relying on native browser scrollbars                                                                                                                                                    | Yes                |
 | `cloudWatchNewLabelParsing`          | Updates CloudWatch label parsing to be more accurate                                                                                                                                                                         | Yes                |
+| `pluginProxyPreserveTrailingSlash`   | Preserve plugin proxy trailing slash.                                                                                                                                                                                        | Yes                |
 
 ## Preview feature toggles
 
@@ -177,7 +178,6 @@ Experimental features might be changed or removed without prior notice.
 | `accessActionSets`                          | Introduces action sets for resource permissions                                                                                                                                                                                                                                   |
 | `disableNumericMetricsSortingInExpressions` | In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.                                                                                                                                                                           |
 | `queryLibrary`                              | Enables Query Library feature in Explore                                                                                                                                                                                                                                          |
-| `pluginProxyPreserveTrailingSlash`          | Preserve plugin proxy trailing slash.                                                                                                                                                                                                                                             |
 
 ## Development feature toggles
 

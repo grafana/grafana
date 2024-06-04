@@ -2107,12 +2107,16 @@
     {
       "metadata": {
         "name": "pluginProxyPreserveTrailingSlash",
-        "resourceVersion": "1713963606280",
-        "creationTimestamp": "2024-04-24T13:00:06Z"
+        "resourceVersion": "1717523143312",
+        "creationTimestamp": "2024-04-24T13:00:06Z",
+        "deletionTimestamp": "2024-06-04T17:41:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-06-04 17:45:43.312297 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Preserve plugin proxy trailing slash.",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend"
       }
     }
