@@ -37,9 +37,13 @@ Every alert rule is assigned to an evaluation group. You can assign the alert ru
 
 Each evaluation group contains an **evaluation interval** that determines how frequently the alert rule is checked. For instance, the evaluation may occur every `10s`, `30s`, `1m`, `10m`, etc.
 
+**Evaluation strategies**
+
 Alert rules in different groups can be evaluated simultaneously.
 
-**Grafana-managed** alert rules within the same group are evaluated simultaneously. However, **data-source managed** alert rules within the same group are evaluated one after the other—this is necessary to ensure that recording rules are evaluated before alert rules.
+- **Grafana-managed** alert rules within the same group are evaluated concurrently—they are evaluated at different times over the same evaluation interval but display the same evaluation timestamp.
+
+- **Data-source managed** alert rules within the same group are evaluated sequentially, one after the other—this is necessary to ensure that recording rules are evaluated before alert rules.
 
 ## Pending period
 
