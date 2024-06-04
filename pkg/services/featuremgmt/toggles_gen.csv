@@ -32,7 +32,6 @@ showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,fal
 mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
 accessControlOnCall,preview,@grafana/identity-access-team,false,false,false
 nestedFolders,GA,@grafana/search-and-storage,false,false,false
-nestedFolderPicker,GA,@grafana/grafana-frontend-platform,false,false,true
 alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
 editPanelCSVDragAndDrop,experimental,@grafana/dataviz-squad,false,false,true
 alertingNoNormalState,preview,@grafana/alerting-squad,false,false,false
