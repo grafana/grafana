@@ -18,6 +18,6 @@ export function usePageTitle(navModel?: NavModel, pageNav?: NavModelItem) {
     // Override `Home` with the custom brand title
     parts[parts.length - 1] = Branding.AppTitle;
 
-    document.title = parts.join(' - ');
+    document.title = parts.filter((p) => !!p).join(' - ');
   }, [homeNav, navModel, pageNav]);
 }
