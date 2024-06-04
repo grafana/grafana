@@ -46,14 +46,11 @@ export interface FeatureToggles {
   topnav?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
-  dualWritePlaylistsMode2?: boolean;
-  dualWritePlaylistsMode3?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
-  nestedFolderPicker?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;

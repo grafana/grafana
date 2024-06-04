@@ -24,6 +24,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 
 // TODO: this is a temporary hack to make rest.Connecter work with resource level routes
@@ -126,10 +127,16 @@ func InstallAPIs(
 	server *genericapiserver.GenericAPIServer,
 	optsGetter generic.RESTOptionsGetter,
 	builders []APIGroupBuilder,
-	dualWrite bool,
+	storageOpts *options.StorageOptions,
 ) error {
+	// dual writing is only enabled when the storage type is not legacy.
+	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
+	// support the legacy storage type.
+	dualWriteEnabled := storageOpts.StorageType != options.StorageTypeLegacy
+
 	for _, b := range builders {
-		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, dualWrite)
+		mode := b.GetDesiredDualWriterMode(dualWriteEnabled, storageOpts.DualWriterDesiredModes)
+		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, mode)
 		if err != nil {
 			return err
 		}

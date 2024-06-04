@@ -135,6 +135,15 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("when receiving a permissions error should pass it to the user", func(t *testing.T) {
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./testdata/permissions-error-output.json")
+		require.NoError(t, err)
+		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
+
+		assert.True(t, aggregatedResponse["a"].HasPermissionError)
+		assert.Equal(t, "Access denied when getting data - please check that you have the pi:GetResourceMetrics permission", aggregatedResponse["a"].PermissionErrorMessage)
+	})
 }
 
 func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
