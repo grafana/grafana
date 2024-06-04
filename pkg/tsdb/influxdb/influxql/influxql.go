@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"regexp"
 	"strings"
 	"sync"
 
@@ -26,13 +25,12 @@ import (
 
 const (
 	defaultRetentionPolicy = "default"
-	metadataPrefix         = "X-Grafana-Meta-Add-"
+	metadataPrefix         = "x-grafana-meta-add-"
 )
 
 var (
 	ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
 	glog               = log.New("tsdb.influx_influxql")
-	metadataRegex      = regexp.MustCompile(metadataPrefix + ".+")
 )
 
 func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, req *backend.QueryDataRequest, features featuremgmt.FeatureToggles) (*backend.QueryDataResponse, error) {
@@ -203,11 +201,13 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 	return *resp, nil
 }
 
-func readCustomMetadata(res *http.Response) map[string]interface{} {
-	result := make(map[string]interface{})
+func readCustomMetadata(res *http.Response) map[string]any {
+	var result map[string]any
 	for k := range res.Header {
-		if metadataRegex.MatchString(k) {
-			key := strings.ToLower(strings.TrimPrefix(k, metadataPrefix))
+		if key, found := strings.CutPrefix(strings.ToLower(k), metadataPrefix); found {
+			if result == nil {
+				result = make(map[string]any)
+			}
 			result[key] = res.Header.Get(k)
 		}
 	}

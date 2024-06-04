@@ -83,7 +83,7 @@ func TestReadCustomMetadata(t *testing.T) {
 			Header: header,
 		}
 		result := readCustomMetadata(res)
-		expected := map[string]interface{}{
+		expected := map[string]any{
 			"testthing": "test1234",
 		}
 		require.NotNil(t, result)
@@ -101,7 +101,7 @@ func TestReadCustomMetadata(t *testing.T) {
 			Header: header,
 		}
 		result := readCustomMetadata(res)
-		expected := map[string]interface{}{
+		expected := map[string]any{
 			"testthing":  "test111",
 			"testthing2": "test222",
 			"test-other": "other",
