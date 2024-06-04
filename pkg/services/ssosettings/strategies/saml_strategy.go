@@ -56,12 +56,13 @@ func (s *SAMLStrategy) loadSAMLSettings() map[string]any {
 		"assertion_attribute_org":    section.KeyValue("assertion_attribute_org").MustString(""),
 		"allowed_organizations":      section.KeyValue("allowed_organizations").MustString(""),
 		"org_mapping":                section.KeyValue("org_mapping").MustString(""),
+		"role_values_none":           section.KeyValue("role_values_none").MustString(""),
+		"role_values_viewer":         section.KeyValue("role_values_viewer").MustString(""),
 		"role_values_editor":         section.KeyValue("role_values_editor").MustString(""),
 		"role_values_admin":          section.KeyValue("role_values_admin").MustString(""),
 		"role_values_grafana_admin":  section.KeyValue("role_values_grafana_admin").MustString(""),
 		"name_id_format":             section.KeyValue("name_id_format").MustString(""),
 		"skip_org_role_sync":         section.KeyValue("skip_org_role_sync").MustBool(false),
-		"role_values_none":           section.KeyValue("role_values_none").MustString(""),
 	}
 	return result
 }

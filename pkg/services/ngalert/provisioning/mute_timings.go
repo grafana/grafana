@@ -15,6 +15,7 @@ type MuteTimingService struct {
 	provenanceStore ProvisioningStore
 	xact            TransactionManager
 	log             log.Logger
+	validator       ProvenanceStatusTransitionValidator
 }
 
 func NewMuteTimingService(config AMConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *MuteTimingService {
@@ -23,6 +24,7 @@ func NewMuteTimingService(config AMConfigStore, prov ProvisioningStore, xact Tra
 		provenanceStore: prov,
 		xact:            xact,
 		log:             log,
+		validator:       ValidateProvenanceRelaxed,
 	}
 }
 
@@ -116,6 +118,15 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
 
+	// check that provenance is not changed in an invalid way
+	storedProvenance, err := svc.provenanceStore.GetProvenance(ctx, &mt, orgID)
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+	if err := svc.validator(storedProvenance, models.Provenance(mt.Provenance)); err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
@@ -132,7 +143,6 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 	revision.cfg.AlertmanagerConfig.MuteTimeIntervals[idx] = mt.MuteTimeInterval
 
 	// TODO add diff and noop detection
-	// TODO add fail if different provenance
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
@@ -146,7 +156,17 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 }
 
 // DeleteMuteTiming deletes the mute timing with the given name in the given org. If the mute timing does not exist, no error is returned.
-func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string, orgID int64) error {
+func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance) error {
+	target := definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval{Name: name}, Provenance: provenance}
+	// check that provenance is not changed in an invalid way
+	storedProvenance, err := svc.provenanceStore.GetProvenance(ctx, &target, orgID)
+	if err != nil {
+		return err
+	}
+	if err := svc.validator(storedProvenance, models.Provenance(provenance)); err != nil {
+		return err
+	}
+
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -169,7 +189,6 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		target := definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval{Name: name}}
 		return svc.provenanceStore.DeleteProvenance(ctx, &target, orgID)
 	})
 }
