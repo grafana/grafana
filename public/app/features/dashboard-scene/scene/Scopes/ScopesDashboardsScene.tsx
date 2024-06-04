@@ -7,6 +7,7 @@ import { GrafanaTheme2, Scope, ScopeDashboardBinding, urlUtil } from '@grafana/d
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { t } from 'app/core/internationalization';
 
 import { fetchDashboards } from './api/dashboards';
 
@@ -86,13 +87,17 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
       <div className={styles.searchInputContainer}>
         <Input
           prefix={<Icon name="search" />}
+          placeholder={t('scopes.suggestedDashboards.search', 'Filter')}
           disabled={isLoading}
           onChange={(evt) => model.changeSearchQuery(evt.currentTarget.value)}
         />
       </div>
 
       {isLoading ? (
-        <LoadingPlaceholder className={styles.loadingIndicator} text="Loading dashboards" />
+        <LoadingPlaceholder
+          className={styles.loadingIndicator}
+          text={t('scopes.suggestedDashboards.loading', 'Loading dashboards')}
+        />
       ) : (
         <CustomScrollbar>
           {filteredDashboards.map(({ spec: { dashboard, dashboardTitle } }, idx) => (

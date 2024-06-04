@@ -5,14 +5,14 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, Input, useStyles2 } from '@grafana/ui';
 import { IconButton } from '@grafana/ui/';
+import { t } from 'app/core/internationalization';
 
-import { Node } from './types';
+import { NodesMap } from './types';
 
 export interface ScopesTreeLevelProps {
   showQuery: boolean;
-  nodes: Node[];
-  query: string;
-  path: string[];
+  nodes: NodesMap;
+  nodePath: string[];
   loadingNodeId: string | undefined;
   scopeNames: string[];
   onNodeUpdate: (path: string[], isExpanded: boolean, query: string) => void;
@@ -22,8 +22,7 @@ export interface ScopesTreeLevelProps {
 export function ScopesTreeLevel({
   showQuery,
   nodes,
-  query,
-  path,
+  nodePath,
   loadingNodeId,
   scopeNames,
   onNodeUpdate,
@@ -31,8 +30,13 @@ export function ScopesTreeLevel({
 }: ScopesTreeLevelProps) {
   const styles = useStyles2(getStyles);
 
-  const anyChildExpanded = nodes.some(({ isExpanded }) => isExpanded);
-  const anyChildSelected = nodes.some(({ item: { linkId } }) => linkId && scopeNames.includes(linkId!));
+  const nodeId = nodePath[nodePath.length - 1];
+  const node = nodes[nodeId];
+  const childNodes = node.nodes;
+  const childNodesArr = Object.values(childNodes);
+
+  const anyChildExpanded = childNodesArr.some(({ isExpanded }) => isExpanded);
+  const anyChildSelected = childNodesArr.some(({ item: { linkId } }) => linkId && scopeNames.includes(linkId!));
 
   return (
     <>
@@ -41,58 +45,65 @@ export function ScopesTreeLevel({
           prefix={<Icon name="filter" />}
           className={styles.searchInput}
           disabled={!!loadingNodeId}
-          placeholder="Filter"
-          defaultValue={query}
+          placeholder={t('scopes.tree.search', 'Filter')}
+          defaultValue={node.query}
           onChange={debounce((evt) => {
-            onNodeUpdate(path, true, evt.target.value);
+            onNodeUpdate(nodePath, true, evt.target.value);
           }, 500)}
         />
       )}
 
       <div role="tree">
-        {nodes.map(({ item: { nodeId, linkId, title }, isExpandable, isSelectable, nodes, isExpanded, query }) => {
-          const isSelected = isSelectable && scopeNames.includes(linkId!);
+        {childNodesArr.map((childNode) => {
+          const isSelected = childNode.isSelectable && scopeNames.includes(childNode.item.linkId!);
 
-          if (anyChildExpanded && !isExpanded && !isSelected) {
+          if (anyChildExpanded && !childNode.isExpanded && !isSelected) {
             return null;
           }
 
-          const nodePath = [...path, nodeId];
+          const childNodePath = [...nodePath, childNode.item.nodeId];
 
           return (
-            <div key={nodeId} role="treeitem" aria-selected={isExpanded}>
+            <div key={childNode.item.nodeId} role="treeitem" aria-selected={childNode.isExpanded}>
               <div className={styles.itemTitle}>
-                {isSelectable && !isExpanded ? (
+                {childNode.isSelectable && !childNode.isExpanded ? (
                   <Checkbox
                     checked={isSelected}
                     disabled={!!loadingNodeId}
                     onChange={() => {
-                      onNodeSelectToggle(nodePath);
+                      onNodeSelectToggle(childNodePath);
                     }}
                   />
                 ) : null}
 
-                {isExpandable && (
+                {childNode.isExpandable && (
                   <IconButton
-                    aria-label={isExpanded ? 'Collapse' : 'Expand'}
-                    disabled={anyChildSelected || !!loadingNodeId}
-                    name={!isExpanded ? 'angle-right' : loadingNodeId === nodeId ? 'spinner' : 'angle-down'}
+                    aria-label={
+                      childNode.isExpanded ? t('scopes.tree.collapse', 'Collapse') : t('scopes.tree.expand', 'Expand')
+                    }
+                    disabled={(anyChildSelected && !childNode.isExpanded) || !!loadingNodeId}
+                    name={
+                      !childNode.isExpanded
+                        ? 'angle-right'
+                        : loadingNodeId === childNode.item.nodeId
+                          ? 'spinner'
+                          : 'angle-down'
+                    }
                     onClick={() => {
-                      onNodeUpdate(nodePath, !isExpanded, query);
+                      onNodeUpdate(childNodePath, !childNode.isExpanded, childNode.query);
                     }}
                   />
                 )}
 
-                <span>{title}</span>
+                <span>{childNode.item.title}</span>
               </div>
 
               <div className={styles.itemChildren}>
-                {isExpanded && (
+                {childNode.isExpanded && (
                   <ScopesTreeLevel
                     showQuery={showQuery}
-                    nodes={Object.values(nodes)}
-                    query={query}
-                    path={nodePath}
+                    nodes={node.nodes}
+                    nodePath={childNodePath}
                     loadingNodeId={loadingNodeId}
                     scopeNames={scopeNames}
                     onNodeUpdate={onNodeUpdate}

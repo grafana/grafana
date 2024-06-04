@@ -4,21 +4,14 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, Drawer, Spinner, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { ScopesTreeLevel } from './ScopesTreeLevel';
 
 export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<ScopesFiltersScene>) {
   const styles = useStyles2(getStyles);
-  const {
-    nodes: { '': basicNode },
-    loadingNodeId,
-    dirtyScopeNames,
-    isLoadingScopes,
-    isAdvancedOpened,
-  } = model.useState();
-
-  const { nodes, query } = basicNode;
+  const { nodes, loadingNodeId, dirtyScopeNames, isLoadingScopes, isAdvancedOpened } = model.useState();
 
   if (!isAdvancedOpened) {
     return null;
@@ -26,7 +19,7 @@ export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<Sco
 
   return (
     <Drawer
-      title="Select scopes"
+      title={t('scopes.advancedSelector.title', 'Select scopes')}
       size="sm"
       onClose={() => {
         model.closeAdvancedSelector();
@@ -38,9 +31,8 @@ export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<Sco
       ) : (
         <ScopesTreeLevel
           showQuery={true}
-          nodes={Object.values(nodes)}
-          query={query}
-          path={['']}
+          nodes={nodes}
+          nodePath={['']}
           loadingNodeId={loadingNodeId}
           scopeNames={dirtyScopeNames}
           onNodeUpdate={(path, isExpanded, query) => model.updateNode(path, isExpanded, query)}
@@ -55,7 +47,7 @@ export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<Sco
             model.updateScopes();
           }}
         >
-          Apply
+          <Trans i18nKey="scopes.advancedSelector.apply">Apply</Trans>
         </Button>
         <Button
           variant="secondary"
@@ -64,7 +56,7 @@ export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<Sco
             model.resetDirtyScopeNames();
           }}
         >
-          Cancel
+          <Trans i18nKey="scopes.advancedSelector.cancel">Cancel</Trans>
         </Button>
       </div>
     </Drawer>

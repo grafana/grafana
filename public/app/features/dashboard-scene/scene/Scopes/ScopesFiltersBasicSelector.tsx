@@ -3,24 +3,16 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Icon, Input, Spinner, Toggletip, useStyles2 } from '@grafana/ui';
-import { IconButton } from '@grafana/ui/';
+import { Icon, IconButton, Input, Spinner, Toggletip, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { ScopesTreeLevel } from './ScopesTreeLevel';
 
 export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<ScopesFiltersScene>) {
   const styles = useStyles2(getStyles);
-  const {
-    nodes: { '': basicNode },
-    loadingNodeId,
-    scopes,
-    dirtyScopeNames,
-    isLoadingScopes,
-    isBasicOpened,
-  } = model.useState();
+  const { nodes, loadingNodeId, scopes, dirtyScopeNames, isLoadingScopes, isBasicOpened } = model.useState();
 
-  const { nodes, query } = basicNode;
   const scopesTitles = scopes.map(({ spec: { title } }) => title).join(', ');
 
   return (
@@ -39,9 +31,8 @@ export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<Scopes
             ) : (
               <ScopesTreeLevel
                 showQuery={false}
-                nodes={Object.values(nodes)}
-                query={query}
-                path={['']}
+                nodes={nodes}
+                nodePath={['']}
                 loadingNodeId={loadingNodeId}
                 scopeNames={dirtyScopeNames}
                 onNodeUpdate={(path, isExpanded, query) => model.updateNode(path, isExpanded, query)}
@@ -52,18 +43,25 @@ export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<Scopes
         }
         footer={
           <button className={styles.openAdvancedButton} onClick={() => model.openAdvancedSelector()}>
-            Open advanced scope selector <Icon name="arrow-right" />
+            <Trans i18nKey="scopes.basicSelector.openAdvanced">
+              Open advanced scope selector <Icon name="arrow-right" />
+            </Trans>
           </button>
         }
         closeButton={false}
       >
         <Input
           readOnly
-          placeholder="Select scopes..."
+          placeholder=""
+          aria-label={t('scopes.basicSelector.placeholder', 'Select scopes...')}
           loading={isLoadingScopes}
           suffix={
             scopes.length > 0 ? (
-              <IconButton aria-label="Remove all scopes" name="times" onClick={() => model.removeAllScopes()} />
+              <IconButton
+                aria-label={t('scopes.basicSelector.removeAll', 'Remove all scopes')}
+                name="times"
+                onClick={() => model.removeAllScopes()}
+              />
             ) : undefined
           }
           value={scopesTitles}

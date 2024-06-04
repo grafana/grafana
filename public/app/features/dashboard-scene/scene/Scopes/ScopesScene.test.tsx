@@ -224,6 +224,18 @@ const fetchScopeSpy = jest.spyOn(scopesApi, 'fetchScope');
 const fetchScopesSpy = jest.spyOn(scopesApi, 'fetchScopes');
 const fetchDashboardsSpy = jest.spyOn(dashboardsApi, 'fetchDashboards');
 
+const scopesNamesPaths = [
+  ['', 'applications'],
+  ['', 'applications'],
+  ['', 'applications', 'applications.clusters'],
+  ['', 'applications', 'applications.clusters'],
+];
+const scopesNames = ['slothPictureFactory', 'slothVoteTracker', 'slothClusterNorth', 'slothClusterSouth'];
+const scopes = scopesNames.map((scopeName) => mocksScopes.find((scope) => scope.metadata.name === scopeName)!);
+const scopeDashboardBindings = scopesNames.map(
+  (scopeName) => mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) => bindingScope === scopeName)!
+);
+
 describe('ScopesScene', () => {
   describe('Feature flag off', () => {
     beforeAll(() => {
@@ -240,10 +252,6 @@ describe('ScopesScene', () => {
   });
 
   describe('Feature flag on', () => {
-    let scopesNamesPaths: string[][];
-    let scopesNames: string[];
-    let scopes: Scope[];
-    let scopeDashboardBindings: ScopeDashboardBinding[][];
     let dashboardScene: DashboardScene;
     let scopesScene: ScopesScene;
     let filtersScene: ScopesFiltersScene;
@@ -254,26 +262,16 @@ describe('ScopesScene', () => {
     });
 
     beforeEach(() => {
-      scopesNamesPaths = [
-        ['', 'applications'],
-        ['', 'applications'],
-        ['', 'applications', 'applications.clusters'],
-        ['', 'applications', 'applications.clusters'],
-      ];
-      scopesNames = ['slothPictureFactory', 'slothVoteTracker', 'slothClusterNorth', 'slothClusterSouth'];
-      scopes = scopesNames.map((scopeName) => mocksScopes.find((scope) => scope.metadata.name === scopeName)!);
-      scopeDashboardBindings = scopesNames.map(
-        (scopeName) =>
-          mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) => bindingScope === scopeName)!
-      );
       dashboardScene = buildTestScene();
       scopesScene = dashboardScene.state.scopes!;
       filtersScene = scopesScene.state.filters;
       dashboardsScene = scopesScene.state.dashboards;
+
       fetchNodesSpy.mockClear();
       fetchScopeSpy.mockClear();
       fetchScopesSpy.mockClear();
       fetchDashboardsSpy.mockClear();
+
       dashboardScene.activate();
       filtersScene.activate();
       scopesScene.activate();

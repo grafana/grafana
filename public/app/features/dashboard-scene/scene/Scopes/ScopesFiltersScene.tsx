@@ -15,10 +15,10 @@ import {
 import { ScopesFiltersAdvancedSelector } from './ScopesFiltersAdvancedSelector';
 import { ScopesFiltersBasicSelector } from './ScopesFiltersBasicSelector';
 import { fetchNodes, fetchScope, fetchScopes } from './api/scopes';
-import { Node, NodesMap } from './types';
+import { NodesMap } from './types';
 
 export interface ScopesFiltersSceneState extends SceneObjectState {
-  nodes: Record<string, Node>;
+  nodes: NodesMap;
   loadingNodeId: string | undefined;
   scopes: Scope[];
   dirtyScopeNames: string[];
