@@ -1,17 +1,19 @@
+import { noop } from 'lodash';
 import React, { useState, useCallback, useMemo } from 'react';
+import { useHistory } from 'react-router-dom';
 
 import { ConfirmModal } from '@grafana/ui';
-import { dispatch } from 'app/store/store';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { deleteRuleAction } from '../../state/actions';
-import { getRulesSourceName } from '../../utils/datasource';
-import { fromRulerRule } from '../../utils/rule-id';
+import { useDeleteRuleFromGroup } from '../../hooks/useProduceNewEvaluationGroup';
+import { getRuleGroupLocation } from '../../utils/rules';
 
 type DeleteModalHook = [JSX.Element, (rule: CombinedRule) => void, () => void];
 
 export const useDeleteModal = (): DeleteModalHook => {
+  const history = useHistory();
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule | undefined>();
+  const [deleteRuleFromGroup, _deleteState] = useDeleteRuleFromGroup();
 
   const dismissModal = useCallback(() => {
     setRuleToDelete(undefined);
@@ -22,20 +24,21 @@ export const useDeleteModal = (): DeleteModalHook => {
   }, []);
 
   const deleteRule = useCallback(
-    (ruleToDelete?: CombinedRule) => {
-      if (ruleToDelete && ruleToDelete.rulerRule) {
-        const identifier = fromRulerRule(
-          getRulesSourceName(ruleToDelete.namespace.rulesSource),
-          ruleToDelete.namespace.name,
-          ruleToDelete.group.name,
-          ruleToDelete.rulerRule
-        );
+    async (rule: CombinedRule, redirect = true) => {
+      if (!rule.rulerRule) {
+        return;
+      }
 
-        dispatch(deleteRuleAction(identifier, { navigateTo: '/alerting/list' }));
-        dismissModal();
+      const location = getRuleGroupLocation(rule);
+      await deleteRuleFromGroup(location, rule.rulerRule);
+
+      dismissModal();
+
+      if (redirect) {
+        history.push('/alerting/list');
       }
     },
-    [dismissModal]
+    [deleteRuleFromGroup, dismissModal, history]
   );
 
   const modal = useMemo(
@@ -46,7 +49,7 @@ export const useDeleteModal = (): DeleteModalHook => {
         body="Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?"
         confirmText="Yes, delete"
         icon="exclamation-triangle"
-        onConfirm={() => deleteRule(ruleToDelete)}
+        onConfirm={ruleToDelete ? () => deleteRule(ruleToDelete) : noop}
         onDismiss={dismissModal}
       />
     ),

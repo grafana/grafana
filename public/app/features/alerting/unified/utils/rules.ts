@@ -15,6 +15,7 @@ import {
   RecordingRule,
   Rule,
   RuleIdentifier,
+  RuleGroupLocation,
   RuleNamespace,
 } from 'app/types/unified-alerting';
 import {
@@ -25,6 +26,7 @@ import {
   PromAlertingRuleState,
   PromRuleType,
   RulerAlertingRuleDTO,
+  RulerCloudRuleDTO,
   RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleDTO,
@@ -35,7 +37,7 @@ import { State } from '../components/StateTag';
 import { RuleHealth } from '../search/rulesSearchParser';
 
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
-import { getRulesSourceName } from './datasource';
+import { getRulesSourceName, isGrafanaRulesSource } from './datasource';
 import { GRAFANA_ORIGIN_LABEL } from './labels';
 import { AsyncRequestState } from './redux';
 import { safeParsePrometheusDuration } from './time';
@@ -58,6 +60,10 @@ export function isRecordingRulerRule(rule?: RulerRuleDTO): rule is RulerRecordin
 
 export function isGrafanaRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerGrafanaRuleDTO {
   return typeof rule === 'object' && 'grafana_alert' in rule;
+}
+
+export function isCloudRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerCloudRuleDTO {
+  return typeof rule === 'object' && !isGrafanaRulerRule(rule);
 }
 
 export function isGrafanaRulerRulePaused(rule: RulerGrafanaRuleDTO) {
@@ -287,3 +293,16 @@ export const getNumberEvaluationsToStartAlerting = (forDuration: string, current
     return evaluationsBeforeCeil < 1 ? 0 : Math.ceil(forNumber / evalNumberMs) + 1;
   }
 };
+
+// extract the rule group location from a combined rule type
+export function getRuleGroupLocation(rule: CombinedRule): RuleGroupLocation {
+  const ruleSourceName = isGrafanaRulesSource(rule.namespace.rulesSource)
+    ? rule.namespace.rulesSource
+    : rule.namespace.rulesSource.name;
+
+  return {
+    ruleSourceName,
+    namespace: rule.namespace.uid ?? rule.namespace.name,
+    group: rule.group.name,
+  };
+}

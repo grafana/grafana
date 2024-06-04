@@ -213,6 +213,17 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       providesTags: ['CombinedAlertRule'],
     }),
 
+    deleteRuleGroupFromNamespace: build.query<
+      RulerRuleGroupDTO,
+      { rulerConfig: RulerDataSourceConfig; namespace: string; group: string }
+    >({
+      query: ({ rulerConfig, namespace, group }) => {
+        const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
+        return { url: path, params, method: 'DELETE' };
+      },
+      providesTags: ['CombinedAlertRule'],
+    }),
+
     getAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string }>({
       // TODO: In future, if supported in other rulers, parametrize ruler source name
       // For now, to make the consumption of this hook clearer, only support Grafana ruler
@@ -282,13 +293,18 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     }),
     updateRuleGroupForNamespace: build.mutation<
       AlertRuleUpdated,
-      { nameSpaceUID: string; payload: PostableRulerRuleGroupDTO }
+      { rulerConfig: RulerDataSourceConfig; namespace: string; payload: PostableRulerRuleGroupDTO }
     >({
-      query: ({ payload, nameSpaceUID }) => ({
-        url: `/api/ruler/grafana/api/v1/rules/${nameSpaceUID}/`,
-        data: payload,
-        method: 'POST',
-      }),
+      query: ({ payload, namespace, rulerConfig }) => {
+        const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
+
+        return {
+          url: path,
+          params,
+          data: payload,
+          method: 'POST',
+        };
+      },
       invalidatesTags: ['CombinedAlertRule'],
     }),
   }),

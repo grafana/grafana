@@ -84,7 +84,7 @@ function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
   return dsConfig;
 }
 
-function getDataSourceRulerConfig(getState: () => unknown, rulesSourceName: string) {
+export function getDataSourceRulerConfig(getState: () => unknown, rulesSourceName: string) {
   const dsConfig = getDataSourceConfig(getState, rulesSourceName);
   if (!dsConfig.rulerConfig) {
     throw new Error(`Ruler API is not available for ${rulesSourceName}`);

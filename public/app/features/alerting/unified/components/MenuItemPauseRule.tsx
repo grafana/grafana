@@ -1,12 +1,14 @@
-import { produce } from 'immer';
 import React from 'react';
 
 import { Menu } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from 'app/features/alerting/unified/utils/rules';
+import {
+  isGrafanaRulerRule,
+  isGrafanaRulerRulePaused,
+  getRuleGroupLocation,
+} from 'app/features/alerting/unified/utils/rules';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { grafanaRulerConfig } from '../hooks/useCombinedRule';
 import { usePauseRuleInGroup } from '../hooks/useProduceNewEvaluationGroup';
 import { stringifyErrorLike } from '../utils/misc';
 
@@ -38,13 +40,9 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
       return;
     }
 
-    const rulerConfig = grafanaRulerConfig;
-    const namespace = rule.namespace.uid || rule.rulerRule.grafana_alert.namespace_uid;
-    const group = rule.group.name;
-    const ruleUid = rule.rulerRule.grafana_alert.uid;
-
     try {
-      await pauseRule(rulerConfig, namespace, group, ruleUid, newIsPaused);
+      const location = getRuleGroupLocation(rule);
+      await pauseRule(location, rule.rulerRule, newIsPaused);
     } catch (error) {
       notifyApp.error(`Failed to ${newIsPaused ? 'pause' : 'resume'} the rule: ${stringifyErrorLike(error)}`);
       return;
