@@ -39,7 +39,7 @@ const getStyles = memoizeOne(() => {
 });
 
 type Props = {
-  children: React.ReactNode;
+  children: React.ReactElement;
   visible: boolean;
 };
 
@@ -65,7 +65,7 @@ export function LogsCrossFadeTransition(props: Props) {
       }}
       nodeRef={transitionRef}
     >
-      <div ref={transitionRef}>{children}</div>
+      {React.cloneElement(children, { ref: transitionRef })}
     </CSSTransition>
   );
 }
