@@ -147,7 +147,7 @@
     "@types/react-beautiful-dnd": "13.1.8",
     "@types/react-color": "3.0.12",
     "@types/react-dom": "18.2.25",
-    "@types/react-highlight-words": "0.16.7",
+    "@types/react-highlight-words": "0.20.0",
     "@types/react-router-dom": "5.3.3",
     "@types/react-table": "7.7.20",
     "@types/react-test-renderer": "18.3.0",
