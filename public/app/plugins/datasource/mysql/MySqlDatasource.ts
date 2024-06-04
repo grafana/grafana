@@ -97,7 +97,16 @@ export class MySqlDatasource extends SqlDatasource {
         Promise.resolve({ query, error: '', isError: false, isValid: true }),
       dsID: () => this.id,
       toRawSql,
-      functions: () => ['VARIANCE', 'STDDEV'],
+      functions: () => [
+        'VARIANCE',
+        'STDDEV',
+        '$__time',
+        '$__timeEpoch',
+        '$__unixEpochNanoFrom',
+        '$__unixEpochNanoTo',
+        '$__unixEpochGroup',
+        '$__unixEpochGroupAlias',
+      ],
       getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(),
     };
   }

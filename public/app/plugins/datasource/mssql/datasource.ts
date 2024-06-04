@@ -83,6 +83,14 @@ export class MssqlDatasource extends SqlDatasource {
       dsID: () => this.id,
       dispose: (_dsID?: string) => {},
       toRawSql,
+      functions: () => [
+        '$__time',
+        '$__timeEpoch',
+        '$__unixEpochNanoFrom',
+        '$__unixEpochNanoTo',
+        '$__unixEpochGroup',
+        '$__unixEpochGroupAlias',
+      ],
       lookup: async (path?: string) => {
         if (!path) {
           const datasets = await this.fetchDatasets();

@@ -1,4 +1,14 @@
-export const COMMON_AGGREGATE_FNS = ['AVG', 'COUNT', 'MAX', 'MIN', 'SUM'];
+export const COMMON_FNS = [
+  'AVG',
+  'COUNT',
+  'MAX',
+  'MIN',
+  'SUM',
+  '$__timeTo',
+  '$__timeFrom',
+  '$__timeGroup',
+  '$__timeGroupAlias',
+];
 
 export const MACRO_NAMES = [
   '$__time',
