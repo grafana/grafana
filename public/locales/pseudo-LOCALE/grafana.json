@@ -35,6 +35,28 @@
       "show-all": " Ŝĥőŵ ľęşş ľäþęľş"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": "Đęƒįŉę ĥőŵ ŧĥę äľęřŧ řūľę įş ęväľūäŧęđ."
+      },
+      "info-help": {
+        "text": "Đęƒįŉę ŧĥę äľęřŧ þęĥävįőř ŵĥęŉ ŧĥę ęväľūäŧįőŉ ƒäįľş őř ŧĥę qūęřy řęŧūřŉş ŉő đäŧä."
+      },
+      "pending-period": "Pęŉđįŉģ pęřįőđ"
+    },
+    "evaluation-behaviour-description1": "Ēväľūäŧįőŉ ģřőūpş äřę čőŉŧäįŉęřş ƒőř ęväľūäŧįŉģ äľęřŧ äŉđ řęčőřđįŉģ řūľęş.",
+    "evaluation-behaviour-description2": "Åŉ ęväľūäŧįőŉ ģřőūp đęƒįŉęş äŉ ęväľūäŧįőŉ įŉŧęřväľ - ĥőŵ őƒŧęŉ ä řūľę įş ęväľūäŧęđ. Åľęřŧ řūľęş ŵįŧĥįŉ ŧĥę şämę ęväľūäŧįőŉ ģřőūp äřę ęväľūäŧęđ ővęř ŧĥę şämę ęväľūäŧįőŉ įŉŧęřväľ.",
+    "evaluation-behaviour-description3": "Pęŉđįŉģ pęřįőđ şpęčįƒįęş ĥőŵ ľőŉģ ŧĥę ŧĥřęşĥőľđ čőŉđįŧįőŉ mūşŧ þę męŧ þęƒőřę ŧĥę äľęřŧ şŧäřŧş ƒįřįŉģ. Ŧĥįş őpŧįőŉ ĥęľpş přęvęŉŧ äľęřŧş ƒřőm þęįŉģ ŧřįģģęřęđ þy ŧęmpőřäřy įşşūęş.",
+    "evaluation-behaviour-for": {
+      "error-parsing": "Fäįľęđ ŧő päřşę đūřäŧįőŉ",
+      "validation": "Pęŉđįŉģ pęřįőđ mūşŧ þę ģřęäŧęř ŧĥäŉ őř ęqūäľ ŧő ŧĥę ęväľūäŧįőŉ įŉŧęřväľ."
+    },
+    "evaluation-behaviour-group": {
+      "text": "Åľľ řūľęş įŉ ŧĥę şęľęčŧęđ ģřőūp äřę ęväľūäŧęđ ęvęřy {{evaluateEvery}}."
+    },
+    "pause": "Päūşę ęväľūäŧįőŉ"
+  },
   "annotations": {
     "empty-state": {
       "button-title": "Åđđ äŉŉőŧäŧįőŉ qūęřy",
@@ -72,15 +94,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} äľęřŧ řūľę",
-      "alertRule_other": "{{count}} äľęřŧ řūľęş",
+      "alertRule_other": "{{count}} äľęřŧ řūľę",
       "dashboard_one": "{{count}} đäşĥþőäřđ",
-      "dashboard_other": "{{count}} đäşĥþőäřđş",
+      "dashboard_other": "{{count}} đäşĥþőäřđ",
       "folder_one": "{{count}} ƒőľđęř",
-      "folder_other": "{{count}} ƒőľđęřş",
+      "folder_other": "{{count}} ƒőľđęř",
       "libraryPanel_one": "{{count}} ľįþřäřy päŉęľ",
-      "libraryPanel_other": "{{count}} ľįþřäřy päŉęľş",
+      "libraryPanel_other": "{{count}} ľįþřäřy päŉęľ",
       "total_one": "{{count}} įŧęm",
-      "total_other": "{{count}} įŧęmş"
+      "total_other": "{{count}} įŧęm"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Cőľľäpşę ƒőľđęř {{title}}",
@@ -740,7 +762,7 @@
     },
     "modal": {
       "body_one": "Ŧĥįş päŉęľ įş þęįŉģ ūşęđ įŉ {{count}} đäşĥþőäřđ. Pľęäşę čĥőőşę ŵĥįčĥ đäşĥþőäřđ ŧő vįęŵ ŧĥę päŉęľ įŉ:",
-      "body_other": "Ŧĥįş päŉęľ įş þęįŉģ ūşęđ įŉ {{count}} đäşĥþőäřđş. Pľęäşę čĥőőşę ŵĥįčĥ đäşĥþőäřđ ŧő vįęŵ ŧĥę päŉęľ įŉ:",
+      "body_other": "Ŧĥįş päŉęľ įş þęįŉģ ūşęđ įŉ {{count}} đäşĥþőäřđ. Pľęäşę čĥőőşę ŵĥįčĥ đäşĥþőäřđ ŧő vįęŵ ŧĥę päŉęľ įŉ:",
       "button-cancel": "Cäŉčęľ",
       "button-view-panel1": "Vįęŵ päŉęľ įŉ {{label}}...",
       "button-view-panel2": "Vįęŵ päŉęľ įŉ đäşĥþőäřđ...",
@@ -1148,6 +1170,10 @@
     "public": {
       "title": "Pūþľįč đäşĥþőäřđş"
     },
+    "recentlyDeleted": {
+      "subtitle": "Åŉy įŧęmş ľįşŧęđ ĥęřę ƒőř mőřę ŧĥäŉ 30 đäyş ŵįľľ þę äūŧőmäŧįčäľľy đęľęŧęđ.",
+      "title": "Ŗęčęŉŧľy Đęľęŧęđ"
+    },
     "recorded-queries": {
       "title": "Ŗęčőřđęđ qūęřįęş"
     },
@@ -1208,10 +1234,6 @@
     "testing-and-synthetics": {
       "subtitle": "Øpŧįmįžę pęřƒőřmäŉčę ŵįŧĥ ĸ6 äŉđ Ŝyŉŧĥęŧįč Mőŉįŧőřįŉģ įŉşįģĥŧş",
       "title": "Ŧęşŧįŉģ & şyŉŧĥęŧįčş"
-    },
-    "trash": {
-      "subtitle": "Åŉy įŧęmş řęmäįŉįŉģ įŉ ŧĥę Ŧřäşĥ ƒőř mőřę ŧĥäŉ 30 đäyş ŵįľľ þę äūŧőmäŧįčäľľy đęľęŧęđ",
-      "title": "Ŧřäşĥ"
     },
     "upgrading": {
       "title": "Ŝŧäŧş äŉđ ľįčęŉşę"

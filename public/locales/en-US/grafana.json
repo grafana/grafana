@@ -35,6 +35,28 @@
       "show-all": " Show less labels"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": "Define how the alert rule is evaluated."
+      },
+      "info-help": {
+        "text": "Define the alert behavior when the evaluation fails or the query returns no data."
+      },
+      "pending-period": "Pending period"
+    },
+    "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
+    "evaluation-behaviour-description2": "An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the same evaluation group are evaluated over the same evaluation interval.",
+    "evaluation-behaviour-description3": "Pending period specifies how long the threshold condition must be met before the alert starts firing. This option helps prevent alerts from being triggered by temporary issues.",
+    "evaluation-behaviour-for": {
+      "error-parsing": "Failed to parse duration",
+      "validation": "Pending period must be greater than or equal to the evaluation interval."
+    },
+    "evaluation-behaviour-group": {
+      "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
+    },
+    "pause": "Pause evaluation"
+  },
   "annotations": {
     "empty-state": {
       "button-title": "Add annotation query",
@@ -72,15 +94,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
+      "alertRule_other": "{{count}} alert rule",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
+      "dashboard_other": "{{count}} dashboard",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
+      "folder_other": "{{count}} folder",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
+      "libraryPanel_other": "{{count}} library panel",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
+      "total_other": "{{count}} item"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -740,7 +762,7 @@
     },
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "button-cancel": "Cancel",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
@@ -1148,6 +1170,10 @@
     "public": {
       "title": "Public dashboards"
     },
+    "recentlyDeleted": {
+      "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
+      "title": "Recently Deleted"
+    },
     "recorded-queries": {
       "title": "Recorded queries"
     },
@@ -1208,10 +1234,6 @@
     "testing-and-synthetics": {
       "subtitle": "Optimize performance with k6 and Synthetic Monitoring insights",
       "title": "Testing & synthetics"
-    },
-    "trash": {
-      "subtitle": "Any items remaining in the Trash for more than 30 days will be automatically deleted",
-      "title": "Trash"
     },
     "upgrading": {
       "title": "Stats and license"
