@@ -48,7 +48,11 @@ Using label matchers, alert instances are [routed to notification policies](#rou
 
 {{< figure src="/media/docs/alerting/how-alerting-works.png" max-width="750px" alt="How Alerting works" >}}
 
-Notification policies are _not_ a list, but rather are structured according to a [tree structure](https://en.wikipedia.org/wiki/Tree_structure). This means that each policy can have child policies, and so on. The root of the notification policy tree is called the **Default notification policy**.
+Notification policies are _not_ a list, but rather are structured according to a [tree structure](https://en.wikipedia.org/wiki/Tree_structure):
+
+- The root of the notification policy tree is the **Default notification policy**.
+- Each policy can have child policies.
+- Each policy can have sibling policies, sharing the same parent and hierarchical level.
 
 Each policy consists of a set of label matchers (0 or more) that specify which labels they are or aren't interested in handling.
 
