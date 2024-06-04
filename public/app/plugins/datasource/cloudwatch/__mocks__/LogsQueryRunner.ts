@@ -13,12 +13,10 @@ export function setupMockedLogsQueryRunner({
     results: {},
   },
   variables,
-  mockGetVariableName = true,
   settings = CloudWatchSettings,
 }: {
   data?: BackendDataSourceResponse;
   variables?: CustomVariableModel[];
-  mockGetVariableName?: boolean;
   settings?: DataSourceInstanceSettings<CloudWatchJsonData>;
 } = {}) {
   let templateService = setupMockedTemplateService(variables);
