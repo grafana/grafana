@@ -106,6 +106,7 @@ type MuteTimingHeaders struct {
 // swagger:model
 type MuteTimeInterval struct {
 	config.MuteTimeInterval `json:",inline" yaml:",inline"`
+	Version                 string     `json:"version,omitempty"`
 	Provenance              Provenance `json:"provenance,omitempty"`
 }
 
