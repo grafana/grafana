@@ -19,11 +19,12 @@ type ServiceCfg struct {
 	// SingleRead is a flag to enable single read
 	// Overrides all other flags
 	SingleRead bool
-
 	// DashboardReadResult is a flag to enable dashboard read result from Zanzana
 	DashboardReadResult bool
 	// EvaluationResult is a flag to enable evaluation result from Zanzana
 	EvaluationResult bool
+	// OpenFGA log level (debug, info, warn, error, dpanic, panic, fatal)
+	LogLevel string
 }
 
 type Service struct {
@@ -44,11 +45,13 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 			SingleRead:          section.Key("single_read").MustBool(false),
 			DashboardReadResult: section.Key("dashboard_read_result").MustBool(false),
 			EvaluationResult:    section.Key("evaluation_result").MustBool(false),
+			LogLevel:            section.Key("log_level").MustString("info"),
 		},
 	}
 
 	// FIXME: Replace with zap compatible logger
-	zapLogger := logger.MustNewLogger("text", "debug", "ISO8601")
+	// logLevel := cfg.Raw.Section("log").Key("level").MustString("info")
+	zapLogger := logger.MustNewLogger("text", s.Cfg.LogLevel, "ISO8601")
 
 	ctx := context.Background()
 	// Read the database configuration
