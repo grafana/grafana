@@ -9,6 +9,7 @@ import {
   PostableRuleGrafanaRuleDTO,
   PromRulesResponse,
   RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
@@ -162,14 +163,22 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
     prometheusRuleNamespaces: build.query<
       RuleNamespace[],
-      { ruleSourceName: string; namespace?: string; groupName?: string; ruleName?: string; dashboardUid?: string }
+      {
+        ruleSourceName: string;
+        namespace?: string;
+        groupName?: string;
+        ruleName?: string;
+        dashboardUid?: string;
+        panelId?: number;
+      }
     >({
-      query: ({ ruleSourceName, namespace, groupName, ruleName, dashboardUid }) => {
+      query: ({ ruleSourceName, namespace, groupName, ruleName, dashboardUid, panelId }) => {
         const queryParams: Record<string, string | undefined> = {
           file: namespace,
           rule_group: groupName,
           rule_name: ruleName,
           dashboard_uid: dashboardUid, // Supported only by Grafana managed rules
+          panel_id: panelId?.toString(), // Supported only by Grafana managed rules
         };
 
         return {
@@ -194,6 +203,13 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       providesTags: ['CombinedAlertRule'],
     }),
 
+    rulerNamespace: build.query<RulerRulesConfigDTO, { rulerConfig: RulerDataSourceConfig; namespace: string }>({
+      query: ({ rulerConfig, namespace }) => {
+        const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
+        return { url: path, params };
+      },
+    }),
+
     // TODO This should be probably a separate ruler API file
     rulerRuleGroup: build.query<
       RulerRuleGroupDTO,
@@ -204,6 +220,13 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         return { url: path, params };
       },
       providesTags: ['CombinedAlertRule'],
+    }),
+
+    getAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string }>({
+      // TODO: In future, if supported in other rulers, parametrize ruler source name
+      // For now, to make the consumption of this hook clearer, only support Grafana ruler
+      query: ({ uid }) => ({ url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rule/${uid}` }),
+      providesTags: (_result, _error, { uid }) => [{ type: 'GrafanaRulerRule', id: uid }],
     }),
 
     exportRules: build.query<string, ExportRulesParams>({

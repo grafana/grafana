@@ -103,8 +103,7 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 
 	namespace, identifier := c.SignedInUser.GetNamespacedID()
 	var userID int64
-	switch namespace {
-	case identity.NamespaceUser, identity.NamespaceServiceAccount:
+	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
 		var err error
 		userID, err = strconv.ParseInt(identifier, 10, 64)
 		if err != nil {

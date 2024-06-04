@@ -50,7 +50,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       opacity: '0%',
       alignItems: 'center',
       justifyContent: 'center',
-      animation: `${invisibleToVisible} 0s step-end ${slowStartThreshold} 1 normal forwards`,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${invisibleToVisible} 0s step-end ${slowStartThreshold} 1 normal forwards`,
+      },
     }),
     dashboardLoadingText: css({
       fontSize: theme.typography.h4.fontSize,

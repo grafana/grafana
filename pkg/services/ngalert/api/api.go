@@ -44,6 +44,8 @@ type RuleAccessControlService interface {
 	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
 	AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
+	AuthorizeDatasourceAccessForRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
+	AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error
 }
 
 // API handlers.
@@ -92,7 +94,20 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		&AlertmanagerSrv{crypto: api.MultiOrgAlertmanager.Crypto, log: logger, ac: api.AccessControl, mam: api.MultiOrgAlertmanager},
+		&AlertmanagerSrv{
+			crypto: api.MultiOrgAlertmanager.Crypto,
+			log:    logger,
+			ac:     api.AccessControl,
+			mam:    api.MultiOrgAlertmanager,
+			silenceSvc: notifier.NewSilenceService(
+				accesscontrol.NewSilenceService(api.AccessControl, api.RuleStore),
+				api.TransactionManager,
+				logger,
+				api.MultiOrgAlertmanager,
+				api.RuleStore,
+				ruleAuthzService,
+			),
+		},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
@@ -138,6 +153,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			store:                api.AdminConfigStore,
 			log:                  logger,
 			alertmanagerProvider: api.AlertsRouter,
+			featureManager:       api.FeatureManager,
 		},
 	), m)
 

@@ -674,9 +674,8 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
-	asService := resourcepermissions.NewActionSetService()
 	// access control permissions store
-	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures(), &asService)
+	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "folder1", "folder1")

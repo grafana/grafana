@@ -60,9 +60,9 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
         data-testid={promExploreExtraFieldTestIds.queryTypeField}
         className={cx(
           'gf-form explore-input-margin',
-          css`
-            flex-wrap: nowrap;
-          `
+          css({
+            flexWrap: 'nowrap',
+          })
         )}
         aria-label="Query type field"
       >
@@ -79,9 +79,9 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
         data-testid={promExploreExtraFieldTestIds.stepField}
         className={cx(
           'gf-form',
-          css`
-            flex-wrap: nowrap;
-          `
+          css({
+            flexWrap: 'nowrap',
+          })
         )}
         aria-label="Step field"
       >

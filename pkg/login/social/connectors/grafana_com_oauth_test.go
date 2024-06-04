@@ -32,7 +32,7 @@ const (
 )
 
 func TestSocialGrafanaCom_UserInfo(t *testing.T) {
-	provider := NewGrafanaComProvider(social.NewOAuthInfo(), &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+	provider := NewGrafanaComProvider(social.NewOAuthInfo(), &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 	type conf struct {
 		skipOrgRoleSync bool
@@ -130,7 +130,7 @@ func TestSocialGrafanaCom_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGrafanaComProvider(tc.settings, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGrafanaComProvider(tc.settings, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
 		})
@@ -199,13 +199,13 @@ func TestSocialGrafanaCom_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGrafanaComProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGrafanaComProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
 			}
 
-			err := s.Validate(context.Background(), tc.settings, tc.requester)
+			err := s.Validate(context.Background(), tc.settings, ssoModels.SSOSettings{}, tc.requester)
 			if tc.expectError {
 				require.Error(t, err)
 			} else {
@@ -299,7 +299,7 @@ func TestSocialGrafanaCom_Reload(t *testing.T) {
 			cfg := &setting.Cfg{
 				GrafanaComURL: GrafanaComURL,
 			}
-			s := NewGrafanaComProvider(tc.info, cfg, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGrafanaComProvider(tc.info, cfg, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -360,7 +360,7 @@ func TestSocialGrafanaCom_Reload_ExtraFields(t *testing.T) {
 			cfg := &setting.Cfg{
 				GrafanaComURL: GrafanaComURL,
 			}
-			s := NewGrafanaComProvider(tc.info, cfg, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGrafanaComProvider(tc.info, cfg, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)

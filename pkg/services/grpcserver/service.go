@@ -85,12 +85,20 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		opts = append(opts, grpc.Creds(credentials.NewTLS(cfg.GRPCServerTLSConfig)))
 	}
 
+	if s.cfg.GRPCServerMaxRecvMsgSize > 0 {
+		opts = append(opts, grpc.MaxRecvMsgSize(s.cfg.GRPCServerMaxRecvMsgSize))
+	}
+
+	if s.cfg.GRPCServerMaxSendMsgSize > 0 {
+		opts = append(opts, grpc.MaxSendMsgSize(s.cfg.GRPCServerMaxSendMsgSize))
+	}
+
 	s.server = grpc.NewServer(opts...)
 	return s, nil
 }
 
 func (s *gPRCServerService) Run(ctx context.Context) error {
-	s.logger.Info("Running GRPC server", "address", s.cfg.GRPCServerAddress, "network", s.cfg.GRPCServerNetwork, "tls", s.cfg.GRPCServerTLSConfig != nil)
+	s.logger.Info("Running GRPC server", "address", s.cfg.GRPCServerAddress, "network", s.cfg.GRPCServerNetwork, "tls", s.cfg.GRPCServerTLSConfig != nil, "max_recv_msg_size", s.cfg.GRPCServerMaxRecvMsgSize, "max_send_msg_size", s.cfg.GRPCServerMaxSendMsgSize)
 
 	listener, err := net.Listen(s.cfg.GRPCServerNetwork, s.cfg.GRPCServerAddress)
 	if err != nil {

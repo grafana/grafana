@@ -6,7 +6,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { mockFolderApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
-  defaultAlertmanagerChoiceResponse,
+  defaultGrafanaAlertingConfigurationStatusResponse,
   mockAlertmanagerChoiceResponse,
 } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
@@ -154,7 +154,7 @@ describe('AlertRule abilities', () => {
         accessControl: { [AccessControlAction.AlertingRuleUpdate]: false },
       })
     );
-    mockAlertmanagerChoiceResponse(server, defaultAlertmanagerChoiceResponse);
+    mockAlertmanagerChoiceResponse(server, defaultGrafanaAlertingConfigurationStatusResponse);
 
     const abilities = renderHook(() => useAllAlertRuleAbilities(rule), { wrapper: TestProvider });
 

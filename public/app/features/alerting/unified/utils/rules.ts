@@ -1,10 +1,12 @@
 import { capitalize } from 'lodash';
 
 import { AlertState } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   AlertingRule,
   CloudRuleIdentifier,
+  CombinedRule,
   CombinedRuleGroup,
   CombinedRuleWithLocation,
   GrafanaRuleIdentifier,
@@ -33,6 +35,7 @@ import { RuleHealth } from '../search/rulesSearchParser';
 
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
 import { getRulesSourceName } from './datasource';
+import { GRAFANA_ORIGIN_LABEL } from './labels';
 import { AsyncRequestState } from './redux';
 import { safeParsePrometheusDuration } from './time';
 
@@ -98,6 +101,41 @@ export function getRuleHealth(health: string): RuleHealth | undefined {
     default:
       return undefined;
   }
+}
+
+export interface RulePluginOrigin {
+  pluginId: string;
+}
+
+export function getRulePluginOrigin(rule: CombinedRule): RulePluginOrigin | undefined {
+  // com.grafana.origin=plugin/<plugin-identifier>
+  // Prom and Mimir do not support dots in label names 😔
+  const origin = rule.labels[GRAFANA_ORIGIN_LABEL];
+  if (!origin) {
+    return undefined;
+  }
+
+  const match = origin.match(/^plugin\/(?<pluginId>.+)$/);
+  if (!match?.groups) {
+    return undefined;
+  }
+
+  const pluginId = match.groups['pluginId'];
+  const pluginInstalled = isPluginInstalled(pluginId);
+
+  if (!pluginInstalled) {
+    return undefined;
+  }
+
+  return { pluginId };
+}
+
+function isPluginInstalled(pluginId: string) {
+  return Boolean(config.apps[pluginId]);
+}
+
+export function isPluginProvidedRule(rule: CombinedRule): boolean {
+  return Boolean(getRulePluginOrigin(rule));
 }
 
 export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): string {

@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	"github.com/prometheus/prometheus/model/labels"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -67,15 +66,19 @@ type PrometheusQueryProperties struct {
 	LegendFormat string `json:"legendFormat,omitempty"`
 
 	// A set of filters applied to apply to the query
-	Scope *ScopeSpec `json:"scope,omitempty"`
+	Scopes []ScopeSpec `json:"scopes,omitempty"`
 
 	// Additional Ad-hoc filters that take precedence over Scope on conflict.
 	AdhocFilters []ScopeFilter `json:"adhocFilters,omitempty"`
+
+	// Group By parameters to apply to aggregate expressions in the query
+	GroupByKeys []string `json:"groupByKeys,omitempty"`
 }
 
 // ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go
-// to avoid import (temp fix)
+// to avoid import (temp fix). This also has metadata.name inlined.
 type ScopeSpec struct {
+	Name        string        `json:"name"` // This is the identifier from metadata.name of the scope model.
 	Title       string        `json:"title"`
 	Type        string        `json:"type"`
 	Description string        `json:"description"`
@@ -137,6 +140,8 @@ const (
 var safeResolution = 11000
 
 // QueryModel includes both the common and specific values
+// NOTE: this struct may have issues when decoding JSON that requires the special handling
+// registered in https://github.com/grafana/grafana-plugin-sdk-go/blob/v0.228.0/experimental/apis/data/v0alpha1/query.go#L298
 type QueryModel struct {
 	PrometheusQueryProperties    `json:",inline"`
 	sdkapi.CommonQueryProperties `json:",inline"`
@@ -165,15 +170,26 @@ type Query struct {
 	RangeQuery    bool
 	ExemplarQuery bool
 	UtcOffsetSec  int64
-	Scope         *ScopeSpec
+
+	Scopes []ScopeSpec
 }
 
-type Scope struct {
-	Matchers []*labels.Matcher
+// This internal query struct is just like QueryModel, except it does not include:
+// sdkapi.CommonQueryProperties -- this avoids errors where the unused "datasource" property
+// may be either a string or DataSourceRef
+type internalQueryModel struct {
+	PrometheusQueryProperties `json:",inline"`
+	//sdkapi.CommonQueryProperties `json:",inline"`
+	IntervalMS float64 `json:"intervalMs,omitempty"`
+
+	// The following properties may be part of the request payload, however they are not saved in panel JSON
+	// Timezone offset to align start & end time on backend
+	UtcOffsetSec int64  `json:"utcOffsetSec,omitempty"`
+	Interval     string `json:"interval,omitempty"`
 }
 
 func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool, enableScope bool) (*Query, error) {
-	model := &QueryModel{}
+	model := &internalQueryModel{}
 	if err := json.Unmarshal(query.JSON, model); err != nil {
 		return nil, err
 	}
@@ -198,8 +214,8 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 
 	if enableScope {
 		var scopeFilters []ScopeFilter
-		if model.Scope != nil {
-			scopeFilters = model.Scope.Filters
+		for _, scope := range model.Scopes {
+			scopeFilters = append(scopeFilters, scope.Filters...)
 		}
 
 		if len(scopeFilters) > 0 {
@@ -222,7 +238,7 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 			}()))
 		}
 
-		expr, err = ApplyQueryFilters(expr, scopeFilters, model.AdhocFilters)
+		expr, err = ApplyFiltersAndGroupBy(expr, scopeFilters, model.AdhocFilters, model.GroupByKeys)
 		if err != nil {
 			return nil, err
 		}
@@ -419,6 +435,6 @@ func AlignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
 var f embed.FS
 
 // QueryTypeDefinitionsJSON returns the query type definitions
-func QueryTypeDefinitionsJSON() (json.RawMessage, error) {
+func QueryTypeDefinitionListJSON() (json.RawMessage, error) {
 	return f.ReadFile("query.types.json")
 }

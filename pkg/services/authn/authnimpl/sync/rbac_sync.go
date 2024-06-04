@@ -71,7 +71,9 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 				s.log.FromContext(ctx).Error("Failed to fetch role from db", "error", err, "role", role)
 				return nil, errSyncPermissionsForbidden
 			}
-			permissions = append(permissions, roleDTO.Permissions...)
+			if roleDTO != nil {
+				permissions = append(permissions, roleDTO.Permissions...)
+			}
 		}
 
 		return permissions, nil

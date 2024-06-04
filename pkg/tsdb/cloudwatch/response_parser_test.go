@@ -135,6 +135,15 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("when receiving a permissions error should pass it to the user", func(t *testing.T) {
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./testdata/permissions-error-output.json")
+		require.NoError(t, err)
+		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
+
+		assert.True(t, aggregatedResponse["a"].HasPermissionError)
+		assert.Equal(t, "Access denied when getting data - please check that you have the pi:GetResourceMetrics permission", aggregatedResponse["a"].PermissionErrorMessage)
+	})
 }
 
 func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
@@ -363,7 +372,7 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 		assert.Equal(t, "res", frames[1].Fields[1].Labels["Resource"])
 	})
 
-	t.Run("when not using multi-value dimension filters", func(t *testing.T) {
+	t.Run("when not using multi-value dimension filters on a `MetricSearch` query", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
@@ -391,7 +400,7 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 			},
 			Statistic:        "Average",
 			Period:           60,
-			MetricQueryType:  models.MetricQueryTypeQuery,
+			MetricQueryType:  models.MetricQueryTypeSearch,
 			MetricEditorMode: models.MetricEditorModeRaw,
 		}
 		frames, err := buildDataFrames(contextWithFeaturesEnabled(features.FlagCloudWatchNewLabelParsing), startTime, endTime, *response, query)
@@ -403,7 +412,7 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 		assert.Equal(t, "res", frames[0].Fields[1].Labels["Resource"])
 	})
 
-	t.Run("when non-static label set on query", func(t *testing.T) {
+	t.Run("when non-static label set on a `MetricSearch` query", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
@@ -431,7 +440,7 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 			},
 			Statistic:        "Average",
 			Period:           60,
-			MetricQueryType:  models.MetricQueryTypeQuery,
+			MetricQueryType:  models.MetricQueryTypeSearch,
 			MetricEditorMode: models.MetricEditorModeBuilder,
 			Label:            "set ${AVG} label",
 		}
@@ -444,7 +453,7 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 		assert.Equal(t, "res", frames[0].Fields[1].Labels["Resource"])
 	})
 
-	t.Run("when static label set on query", func(t *testing.T) {
+	t.Run("when static label set on a `MetricSearch` query", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{
 			Metrics: []*cloudwatch.MetricDataResult{
@@ -472,7 +481,7 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 			},
 			Statistic:        "Average",
 			Period:           60,
-			MetricQueryType:  models.MetricQueryTypeQuery,
+			MetricQueryType:  models.MetricQueryTypeSearch,
 			MetricEditorMode: models.MetricEditorModeBuilder,
 			Label:            "actual",
 		}
@@ -483,6 +492,84 @@ func Test_buildDataFrames_parse_label_to_name_and_labels(t *testing.T) {
 		assert.Equal(t, "lb1", frames[0].Fields[1].Labels["LoadBalancer"])
 		assert.Equal(t, "micro", frames[0].Fields[1].Labels["InstanceType"])
 		assert.Equal(t, "res", frames[0].Fields[1].Labels["Resource"])
+	})
+
+	t.Run("when `MetricQuery` query has no label set and `GROUP BY` clause has multiple fields", func(t *testing.T) {
+		timestamp := time.Unix(0, 0)
+		response := &models.QueryRowResponse{
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
+					Id:    aws.String("query1"),
+					Label: aws.String("EC2 vCPU"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+					},
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
+				},
+				{
+					Id:    aws.String("query2"),
+					Label: aws.String("Elastic Loading Balancing ApplicationLoadBalancersPerRegion"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+					},
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
+				},
+			},
+		}
+
+		query := &models.CloudWatchQuery{
+			RefId:            "refId1",
+			Region:           "us-east-1",
+			Statistic:        "Average",
+			Period:           60,
+			MetricQueryType:  models.MetricQueryTypeQuery,
+			MetricEditorMode: models.MetricEditorModeBuilder,
+			Dimensions:       map[string][]string{"Service": {"EC2", "Elastic Loading Balancing"}, "Resource": {"vCPU", "ApplicationLoadBalancersPerRegion"}},
+			SqlExpression:    "SELECT AVG(ResourceCount) FROM SCHEMA(\"AWS/Usage\", Class, Resource, Service, Type) GROUP BY Service, Resource",
+		}
+		frames, err := buildDataFrames(contextWithFeaturesEnabled(features.FlagCloudWatchNewLabelParsing), startTime, endTime, *response, query)
+		require.NoError(t, err)
+
+		assert.Equal(t, "EC2 vCPU", frames[0].Name)
+		assert.Equal(t, "EC2", frames[0].Fields[1].Labels["Service"])
+		assert.Equal(t, "vCPU", frames[0].Fields[1].Labels["Resource"])
+		assert.Equal(t, "Elastic Loading Balancing ApplicationLoadBalancersPerRegion", frames[1].Name)
+		assert.Equal(t, "Elastic Loading Balancing", frames[1].Fields[1].Labels["Service"])
+		assert.Equal(t, "ApplicationLoadBalancersPerRegion", frames[1].Fields[1].Labels["Resource"])
+	})
+
+	t.Run("when `MetricQuery` query has no `GROUP BY` clause", func(t *testing.T) {
+		timestamp := time.Unix(0, 0)
+		response := &models.QueryRowResponse{
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
+					Id:    aws.String("query1"),
+					Label: aws.String("cloudwatch-default-label"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+					},
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
+				},
+			},
+		}
+
+		query := &models.CloudWatchQuery{
+			RefId:            "refId1",
+			Region:           "us-east-1",
+			Statistic:        "Average",
+			Period:           60,
+			MetricQueryType:  models.MetricQueryTypeQuery,
+			MetricEditorMode: models.MetricEditorModeBuilder,
+			SqlExpression:    "SELECT AVG(ResourceCount) FROM SCHEMA(\"AWS/Usage\", Class, Resource, Service, Type)",
+		}
+		frames, err := buildDataFrames(contextWithFeaturesEnabled(features.FlagCloudWatchNewLabelParsing), startTime, endTime, *response, query)
+		require.NoError(t, err)
+
+		assert.Equal(t, "cloudwatch-default-label", frames[0].Name)
+		assert.Equal(t, "cloudwatch-default-label", frames[0].Fields[1].Labels["Series"])
 	})
 
 	t.Run("Parse cloudwatch response", func(t *testing.T) {

@@ -42,7 +42,7 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 
 	if renderUsr.UserID <= 0 {
 		return &authn.Identity{
-			ID:              authn.NewNamespaceIDUnchecked(authn.NamespaceRenderService, 0),
+			ID:              authn.NewNamespaceID(authn.NamespaceRenderService, 0),
 			OrgID:           renderUsr.OrgID,
 			OrgRoles:        map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
 			ClientParams:    authn.ClientParams{SyncPermissions: true},
@@ -52,7 +52,7 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	}
 
 	return &authn.Identity{
-		ID:              authn.NewNamespaceIDUnchecked(authn.NamespaceUser, renderUsr.UserID),
+		ID:              authn.NewNamespaceID(authn.NamespaceUser, renderUsr.UserID),
 		LastSeenAt:      time.Now(),
 		AuthenticatedBy: login.RenderModule,
 		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},

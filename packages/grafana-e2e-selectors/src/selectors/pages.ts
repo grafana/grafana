@@ -57,12 +57,23 @@ export const Pages = {
       navV2: 'data-testid Dashboard navigation',
       publicDashboardTag: 'data-testid public dashboard tag',
       shareButton: 'data-testid share-button',
+      scrollContainer: 'data-testid Dashboard canvas scroll container',
+      newShareButton: {
+        container: 'data-testid new share button',
+        shareLink: 'data-testid new share link-button',
+        arrowMenu: 'data-testid new share button arrow menu',
+        menu: {
+          container: 'data-testid new share button menu',
+          shareInternally: 'data-testid new share button share internally',
+        },
+      },
       playlistControls: {
         prev: 'data-testid playlist previous dashboard button',
         stop: 'data-testid playlist stop dashboard button',
         next: 'data-testid playlist next dashboard button',
       },
     },
+    Controls: 'data-testid dashboard controls',
     SubMenu: {
       submenu: 'Dashboard submenu',
       submenuItem: 'data-testid template variable',
@@ -257,6 +268,16 @@ export const Pages = {
         DeleteEmail: 'data-testid public dashboard delete email button',
         ReshareLink: 'data-testid public dashboard reshare link button',
       },
+    },
+    PublicDashboardScene: {
+      Tab: 'Tab Public Dashboard',
+    },
+    SnapshotScene: {
+      url: (key: string) => `/dashboard/snapshot/${key}`,
+      Tab: 'Tab Snapshot',
+      PublishSnapshot: 'data-testid publish snapshot button',
+      CopyUrlButton: 'data-testid snapshot copy url button',
+      CopyUrlInput: 'data-testid snapshot copy url input',
     },
   },
   PublicDashboard: {
