@@ -147,9 +147,9 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   action = {
     hover: `rgba(${this.whiteBase}, 0.16)`,
-    selected: `rgba(${this.whiteBase}, 0.12)`,
+    selected: `rgba(${this.whiteBase}, 0.45)`,
     selectedBorder: palette.orangeDarkMain,
-    focus: `rgba(${this.whiteBase}, 0.16)`,
+    focus: `rgba(${this.whiteBase}, 0.45)`,
     hoverOpacity: 0.08,
     disabledText: this.text.disabled,
     disabledBackground: `rgba(${this.whiteBase}, 0.04)`,
@@ -229,10 +229,10 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   action = {
     hover: `rgba(${this.blackBase}, 0.12)`,
-    selected: `rgba(${this.blackBase}, 0.08)`,
+    selected: `rgba(${this.blackBase}, 0.5)`,
     selectedBorder: palette.orangeLightMain,
     hoverOpacity: 0.08,
-    focus: `rgba(${this.blackBase}, 0.12)`,
+    focus: `rgba(${this.blackBase}, 0.5)`,
     disabledBackground: `rgba(${this.blackBase}, 0.04)`,
     disabledText: this.text.disabled,
     disabledOpacity: 0.38,
