@@ -1,13 +1,9 @@
-import { uniq } from 'lodash';
+import { uniqBy } from 'lodash';
 
-import { Scope, ScopeDashboardBindingSpec } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { Scope, ScopeDashboardBinding, ScopeDashboardBindingSpec } from '@grafana/data';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { ScopeDashboard } from 'app/features/dashboard-scene/scene/Scopes/types';
 
 import { group, version } from './common';
-
-const dashboardDetailsEndpoint = '/api/dashboards/uid';
 
 const client = new ScopedResourceClient<ScopeDashboardBindingSpec, 'ScopeDashboardBinding'>({
   group,
@@ -15,18 +11,16 @@ const client = new ScopedResourceClient<ScopeDashboardBindingSpec, 'ScopeDashboa
   resource: 'scopedashboardbindings',
 });
 
-const dashboardsCache = new Map<string, Promise<ScopeDashboard>>();
+const cache = new Map<string, Promise<ScopeDashboardBinding[]>>();
 
-const scopesToDashboardsCache = new Map<string, Promise<string[]>>();
-
-async function fetchUids(scope: Scope): Promise<string[]> {
+async function fetchDashboardsForScope(scope: Scope): Promise<ScopeDashboardBinding[]> {
   const scopeName = scope.metadata.name;
 
-  if (scopesToDashboardsCache.has(scopeName)) {
-    return scopesToDashboardsCache.get(scopeName)!;
+  if (cache.has(scopeName)) {
+    return cache.get(scopeName)!;
   }
 
-  const response = new Promise<string[]>(async (resolve) => {
+  const response = new Promise<ScopeDashboardBinding[]>(async (resolve) => {
     try {
       const response = await client.list({
         fieldSelector: [
@@ -38,53 +32,23 @@ async function fetchUids(scope: Scope): Promise<string[]> {
         ],
       });
 
-      resolve(response.items.map((item) => item.spec.dashboard).filter((dashboardUid) => !!dashboardUid) ?? []);
+      resolve(response.items);
     } catch (err) {
-      scopesToDashboardsCache.delete(scopeName);
+      cache.delete(scopeName);
 
       resolve([]);
     }
   });
 
-  scopesToDashboardsCache.set(scopeName, response);
+  cache.set(scopeName, response);
 
   return response;
 }
 
-async function fetchDashboardDetails(dashboardUid: string): Promise<ScopeDashboard> {
-  if (dashboardsCache.has(dashboardUid)) {
-    return dashboardsCache.get(dashboardUid)!;
-  }
+export async function fetchDashboards(scopes: Scope[]): Promise<ScopeDashboardBinding[]> {
+  const dashboardsPairs = await Promise.all(scopes.map(fetchDashboardsForScope));
+  let dashboards = dashboardsPairs.flat();
+  dashboards = uniqBy(dashboards, (scopeDashboardBinding) => scopeDashboardBinding.spec.dashboard);
 
-  const response = new Promise<ScopeDashboard>(async (resolve) => {
-    try {
-      const dashboard = await getBackendSrv().get(`${dashboardDetailsEndpoint}/${dashboardUid}`);
-
-      resolve({
-        uid: dashboard.dashboard.uid,
-        title: dashboard.dashboard.title,
-        url: dashboard.meta.url,
-      });
-    } catch (err) {
-      dashboardsCache.delete(dashboardUid);
-
-      resolve({
-        uid: dashboardUid,
-        url: '',
-        title: '',
-      });
-    }
-  });
-
-  dashboardsCache.set(dashboardUid, response);
-
-  return response;
-}
-
-export async function fetchDashboards(scopes: Scope[]): Promise<ScopeDashboard[]> {
-  const dashboardUidsForScopes = await Promise.all(scopes.map(fetchUids));
-  const dashboardUids = uniq(dashboardUidsForScopes.flat());
-  const dashboards = await Promise.all(dashboardUids.map((dashboardUid) => fetchDashboardDetails(dashboardUid)));
-
-  return dashboards.filter((dashboard) => dashboard.url !== '');
+  return dashboards;
 }

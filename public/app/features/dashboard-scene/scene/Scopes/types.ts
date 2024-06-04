@@ -9,10 +9,4 @@ export interface Node {
   nodes: NodesMap;
 }
 
-export interface ScopeDashboard {
-  uid: string;
-  title: string;
-  url: string;
-}
-
 export type NodesMap = Record<string, Node>;

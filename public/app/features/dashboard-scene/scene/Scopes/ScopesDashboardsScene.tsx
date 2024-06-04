@@ -2,17 +2,16 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { GrafanaTheme2, Scope, urlUtil } from '@grafana/data';
+import { GrafanaTheme2, Scope, ScopeDashboardBinding, urlUtil } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { fetchDashboards } from './api/dashboards';
-import { ScopeDashboard } from './types';
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
-  dashboards: ScopeDashboard[];
-  filteredDashboards: ScopeDashboard[];
+  dashboards: ScopeDashboardBinding[];
+  filteredDashboards: ScopeDashboardBinding[];
   isLoading: boolean;
   searchQuery: string;
 }
@@ -54,10 +53,12 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
   }
 
-  private filterDashboards(dashboards: ScopeDashboard[], searchQuery: string) {
+  private filterDashboards(dashboards: ScopeDashboardBinding[], searchQuery: string) {
     const lowerCasedSearchQuery = searchQuery.toLowerCase();
 
-    return dashboards.filter((dashboard) => dashboard.title.toLowerCase().includes(lowerCasedSearchQuery));
+    return dashboards.filter(({ spec: { dashboardTitle } }) =>
+      dashboardTitle.toLowerCase().includes(lowerCasedSearchQuery)
+    );
   }
 }
 
@@ -78,9 +79,9 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
       </div>
 
       <CustomScrollbar>
-        {filteredDashboards.map((dashboard, idx) => (
+        {filteredDashboards.map(({ spec: { dashboard, dashboardTitle } }, idx) => (
           <div key={idx} className={styles.dashboardItem}>
-            <Link to={urlUtil.renderUrl(dashboard.url, queryParams)}>{dashboard.title}</Link>
+            <Link to={urlUtil.renderUrl(`/d/${dashboard}`, queryParams)}>{dashboardTitle}</Link>
           </div>
         ))}
       </CustomScrollbar>

@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react';
 
-import { Scope, ScopeDashboardBindingSpec, ScopeTreeItemSpec } from '@grafana/data';
+import { Scope, ScopeDashboardBinding, ScopeTreeItemSpec } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   behaviors,
@@ -18,7 +18,6 @@ import { ScopesDashboardsScene } from './ScopesDashboardsScene';
 import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { ScopesScene } from './ScopesScene';
 import * as scopesApi from './api/scopes';
-import { ScopeDashboard } from './types';
 
 const mocksScopes: Scope[] = [
   {
@@ -73,11 +72,23 @@ const mocksScopes: Scope[] = [
   },
 ] as const;
 
-const mocksScopeDashboardBindings: ScopeDashboardBindingSpec[] = [
-  { dashboard: '1', scope: 'slothPictureFactory' },
-  { dashboard: '2', scope: 'slothPictureFactory' },
-  { dashboard: '3', scope: 'slothVoteTracker' },
-  { dashboard: '4', scope: 'slothVoteTracker' },
+const mocksScopeDashboardBindings: ScopeDashboardBinding[] = [
+  {
+    metadata: { name: 'binding1' },
+    spec: { dashboard: '1', dashboardTitle: 'My Dashboard 1', scope: 'slothPictureFactory' },
+  },
+  {
+    metadata: { name: 'binding2' },
+    spec: { dashboard: '2', dashboardTitle: 'My Dashboard 2', scope: 'slothPictureFactory' },
+  },
+  {
+    metadata: { name: 'binding3' },
+    spec: { dashboard: '3', dashboardTitle: 'My Dashboard 3', scope: 'slothVoteTracker' },
+  },
+  {
+    metadata: { name: 'binding4' },
+    spec: { dashboard: '4', dashboardTitle: 'My Dashboard 4', scope: 'slothVoteTracker' },
+  },
 ] as const;
 
 const mocksNodes: ScopeTreeItemSpec[] = [
@@ -175,21 +186,6 @@ const mocksNodes: ScopeTreeItemSpec[] = [
   },
 ] as const;
 
-const getDashboardDetailsForUid = (uid: string) => ({
-  dashboard: {
-    title: `Dashboard ${uid}`,
-    uid,
-  },
-  meta: {
-    url: `/d/dashboard${uid}`,
-  },
-});
-const getDashboardScopeForUid = (uid: string) => ({
-  title: `Dashboard ${uid}`,
-  uid,
-  url: `/d/dashboard${uid}`,
-});
-
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
@@ -215,14 +211,8 @@ jest.mock('@grafana/runtime', () => ({
         const scope = search.get('fieldSelector')?.replace('spec.scope=', '') ?? '';
 
         return {
-          items: mocksScopeDashboardBindings.filter((binding) => binding.scope === scope),
+          items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) => bindingScope === scope),
         };
-      }
-
-      if (url.startsWith('/api/dashboards/uid/')) {
-        const uid = url.split('/').pop();
-
-        return uid ? getDashboardDetailsForUid(uid) : {};
       }
 
       return {};
@@ -249,8 +239,7 @@ describe('ScopesScene', () => {
     let scopesNamesPaths: string[][];
     let scopesNames: string[];
     let scopes: Scope[];
-    let scopeDashboardBindings: ScopeDashboardBindingSpec[][];
-    let dashboards: ScopeDashboard[][];
+    let scopeDashboardBindings: ScopeDashboardBinding[][];
     let dashboardScene: DashboardScene;
     let scopesScene: ScopesScene;
     let filtersScene: ScopesFiltersScene;
@@ -273,10 +262,8 @@ describe('ScopesScene', () => {
       scopesNames = ['slothPictureFactory', 'slothVoteTracker', 'slothClusterNorth', 'slothClusterSouth'];
       scopes = scopesNames.map((scopeName) => mocksScopes.find((scope) => scope.metadata.name === scopeName)!);
       scopeDashboardBindings = scopesNames.map(
-        (scopeName) => mocksScopeDashboardBindings.filter((binding) => binding.scope === scopeName)!
-      );
-      dashboards = scopeDashboardBindings.map((bindings) =>
-        bindings.map((binding) => getDashboardScopeForUid(binding.dashboard))
+        (scopeName) =>
+          mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) => bindingScope === scopeName)!
       );
       dashboardScene = buildTestScene();
       scopesScene = dashboardScene.state.scopes!;
@@ -305,19 +292,19 @@ describe('ScopesScene', () => {
       filtersScene.updateScopes([scopesNames[0]]);
       waitFor(() => {
         expect(fetchDashboardsSpy).toHaveBeenCalled();
-        expect(dashboardsScene.state.dashboards).toEqual(dashboards[0]);
+        expect(dashboardsScene.state.dashboards).toEqual(scopeDashboardBindings[0]);
       });
 
       filtersScene.updateScopes([scopesNames[1]]);
       waitFor(() => {
         expect(fetchDashboardsSpy).toHaveBeenCalled();
-        expect(dashboardsScene.state.dashboards).toEqual(dashboards.flat());
+        expect(dashboardsScene.state.dashboards).toEqual(scopeDashboardBindings.flat());
       });
 
       filtersScene.updateScopes([scopesNames[0]]);
       waitFor(() => {
         expect(fetchDashboardsSpy).toHaveBeenCalled();
-        expect(dashboardsScene.state.dashboards).toEqual(dashboards[1]);
+        expect(dashboardsScene.state.dashboards).toEqual(scopeDashboardBindings[1]);
       });
     });
 

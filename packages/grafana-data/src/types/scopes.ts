@@ -1,6 +1,15 @@
 export interface ScopeDashboardBindingSpec {
   dashboard: string;
+  dashboardTitle: string;
   scope: string;
+}
+
+// TODO: Use Resource from apiserver when we export the types
+export interface ScopeDashboardBinding {
+  metadata: {
+    name: string;
+  };
+  spec: ScopeDashboardBindingSpec;
 }
 
 export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match';
