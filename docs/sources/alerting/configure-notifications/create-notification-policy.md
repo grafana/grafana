@@ -70,14 +70,14 @@ To create a new notification policy, you need to follow its tree structure. New 
 1. Optionally, enable **Override general timings** to override the timing options configured in the group notification policy.
 1. Click **Save policy** to save your changes.
 
-You can also create a child policy in the following way.
+## Add a sibling policy
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
 1. Expand the specific policy you want to update.
 1. Click **Add new policy** -> **Insert above** or **Insert below**.
 
-   Notification policies are evaluated from top to bottom, so it is key to be able to choose which notification policy receives alerts first. Adding nested notification policies instead of always inserting a child policy as well as being able tp choose where to insert is key to managing where your alerts go.
+   Notification policies are evaluated from top to bottom, so it is key to be able to choose which notification policy receives alerts first. Adding sibling notification policies instead of always inserting a child policy as well as being able tp choose where to insert is key to managing where your alerts go.
 
 5. Click **Save policy** to save your changes.
 
