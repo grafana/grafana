@@ -84,6 +84,33 @@ After `yarn start` has built the assets, it will continue to do so whenever any 
 
 > **Troubleshooting:** if your first build works, after pulling updates you may see unexpected errors in the "Type-checking in progress..." stage. These errors can be caused by the [tsbuildinfo cache supporting incremental builds](https://www.typescriptlang.org/tsconfig#incremental). In this case, you can enter `rm tsconfig.tsbuildinfo` and re-try.
 
+#### Plugins
+
+If you want to contribute to any of the plugins listed below (that are found within the `public/app/plugins` directory) they require running additional commands to watch and rebuild them.
+
+- azuremonitor
+- cloud-monitoring
+- grafana-postgresql-datasource
+- grafana-pyroscope-datasource
+- grafana-testdata-datasource
+- jaegar
+- mysql
+- parca
+- tempo
+- zipkin
+
+To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
+
+```
+yarn plugin:build:dev
+```
+
+If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/tempo`.
+
+```
+yarn workspace <name_of_plugin> dev
+```
+
 Next, we'll explain how to build and run the web server that serves these frontend assets.
 
 ### Backend
