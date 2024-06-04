@@ -4,6 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { IconButton, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { ScopesDashboardsScene } from './ScopesDashboardsScene';
 import { ScopesFiltersScene } from './ScopesFiltersScene';
@@ -91,7 +92,11 @@ export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>)
         {!isViewing && (
           <IconButton
             name="arrow-to-right"
-            aria-label={isExpanded ? 'Collapse scope filters' : 'Expand scope filters'}
+            aria-label={
+              isExpanded
+                ? t('scopes.root.collapse', 'Collapse scope filters')
+                : t('scopes.root.expand', 'Expand scope filters')
+            }
             className={cx(!isExpanded && styles.iconNotExpanded)}
             data-testid="scopes-scene-toggle-expand-button"
             onClick={() => model.toggleIsExpanded()}
