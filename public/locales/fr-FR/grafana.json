@@ -25,6 +25,28 @@
       "user": "Utilisateur"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -1128,6 +1150,10 @@
     "public": {
       "title": "Tableaux de bord publics"
     },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
+    },
     "recorded-queries": {
       "title": "Requêtes enregistrées"
     },
@@ -1188,10 +1214,6 @@
     "testing-and-synthetics": {
       "subtitle": "Optimisez les performances grâce aux analyses de la surveillance synthétique et k6",
       "title": "Tests et synthèses"
-    },
-    "trash": {
-      "subtitle": "",
-      "title": ""
     },
     "upgrading": {
       "title": "Statistiques et licence"

@@ -25,6 +25,28 @@
       "user": "Nutzer"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -1128,6 +1150,10 @@
     "public": {
       "title": "Öffentliche Dashboards"
     },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
+    },
     "recorded-queries": {
       "title": "Aufgezeichnete Abfragen"
     },
@@ -1188,10 +1214,6 @@
     "testing-and-synthetics": {
       "subtitle": "Optimieren Sie die Leistung mit Erkenntnissen aus k6 und Synthetic Monitoring",
       "title": "Testen & Synthetics"
-    },
-    "trash": {
-      "subtitle": "",
-      "title": ""
     },
     "upgrading": {
       "title": "Statistiken und Lizenz"
