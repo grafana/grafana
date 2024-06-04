@@ -139,10 +139,6 @@ const (
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
 
-	// FlagNestedFolderPicker
-	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
-	FlagNestedFolderPicker = "nestedFolderPicker"
-
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"

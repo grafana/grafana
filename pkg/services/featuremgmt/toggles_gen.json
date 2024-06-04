@@ -264,7 +264,8 @@
       "metadata": {
         "name": "nestedFolderPicker",
         "resourceVersion": "1687945229020",
-        "creationTimestamp": "2023-06-28T09:40:29Z"
+        "creationTimestamp": "2023-06-28T09:40:29Z",
+        "deletionTimestamp": "2024-06-04T08:42:53Z"
       },
       "spec": {
         "description": "Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle",
