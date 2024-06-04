@@ -1,6 +1,6 @@
 import { startCase, uniq } from 'lodash';
 
-import { SelectableValue } from '@grafana/data';
+import { AdHocVariableFilter, SelectableValue } from '@grafana/data';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { intrinsics } from '../traceql/traceql';
@@ -22,6 +22,7 @@ const valueHelper = (f: TraceqlFilter) => {
   }
   return f.value;
 };
+
 const scopeHelper = (f: TraceqlFilter) => {
   // Intrinsic fields don't have a scope
   if (intrinsics.find((t) => t === f.tag)) {
@@ -31,6 +32,7 @@ const scopeHelper = (f: TraceqlFilter) => {
     (f.scope === TraceqlSearchScope.Resource || f.scope === TraceqlSearchScope.Span ? f.scope?.toLowerCase() : '') + '.'
   );
 };
+
 const tagHelper = (f: TraceqlFilter, filters: TraceqlFilter[]) => {
   if (f.tag === 'duration') {
     const durationType = filters.find((f) => f.id === 'duration-type');
@@ -40,6 +42,20 @@ const tagHelper = (f: TraceqlFilter, filters: TraceqlFilter[]) => {
     return f.tag;
   }
   return f.tag;
+};
+
+export const generateQueryFromAdHocFilters = (filters: AdHocVariableFilter[]) => {
+  return `{${filters
+    .filter((f) => f.key && f.operator && f.value)
+    .map((f) => `${f.key}${f.operator}${adHocValueHelper(f)}`)
+    .join(' && ')}}`;
+};
+
+const adHocValueHelper = (f: AdHocVariableFilter) => {
+  if (intrinsics.find((t) => t === f.key)) {
+    return f.value;
+  }
+  return `"${f.value}"`;
 };
 
 export const filterScopedTag = (f: TraceqlFilter) => {
