@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -23,11 +24,15 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-const defaultRetentionPolicy = "default"
+const (
+	defaultRetentionPolicy = "default"
+	metadataPrefix         = "X-Grafana-Meta-Add-"
+)
 
 var (
 	ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
 	glog               = log.New("tsdb.influx_influxql")
+	metadataRegex      = regexp.MustCompile(metadataPrefix + ".+")
 )
 
 func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, req *backend.QueryDataRequest, features featuremgmt.FeatureToggles) (*backend.QueryDataResponse, error) {
@@ -190,7 +195,23 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 	} else {
 		resp = buffered.ResponseParse(res.Body, res.StatusCode, query)
 	}
+
+	if resp.Frames != nil && len(resp.Frames) > 0 {
+		resp.Frames[0].Meta.Custom = readCustomMetadata(res)
+	}
+
 	return *resp, nil
+}
+
+func readCustomMetadata(res *http.Response) map[string]interface{} {
+	result := make(map[string]interface{})
+	for k := range res.Header {
+		if metadataRegex.MatchString(k) {
+			key := strings.ToLower(strings.TrimPrefix(k, metadataPrefix))
+			result[key] = res.Header.Get(k)
+		}
+	}
+	return result
 }
 
 // startTrace setups a trace but does not panic if tracer is nil which helps with testing
