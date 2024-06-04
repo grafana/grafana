@@ -147,10 +147,20 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, nil
 	}
 
-	_, idx, err := getMuteTiming(revision, mt.Name)
+	old, idx, err := getMuteTiming(revision, mt.Name)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
+
+	if mt.Version != "" {
+		curVersion := calculateMuteTimeIntervalFingerprint(old)
+		if curVersion != mt.Version {
+			return definitions.MuteTimeInterval{}, ErrVersionConflict.Errorf("provided version %s of time interval %s does not match current version %s", mt.Version, mt.Name, curVersion)
+		}
+	} else if mt.Provenance != definitions.Provenance(models.ProvenanceFile) {
+		svc.log.Debug("ignoring optimistic concurrency check because version was not provided", "timeInterval", mt.Name, "operation", "update")
+	}
+
 	revision.cfg.AlertmanagerConfig.MuteTimeIntervals[idx] = mt.MuteTimeInterval
 
 	// TODO add diff and noop detection

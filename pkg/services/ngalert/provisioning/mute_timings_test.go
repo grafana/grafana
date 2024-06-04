@@ -367,6 +367,10 @@ func TestCreateMuteTimings(t *testing.T) {
 func TestUpdateMuteTimings(t *testing.T) {
 	orgID := int64(1)
 
+	original := config.MuteTimeInterval{
+		Name: "Test",
+	}
+	originalVersion := calculateMuteTimeIntervalFingerprint(original)
 	initialConfig := func() *definitions.PostableUserConfig {
 		return &definitions.PostableUserConfig{
 			TemplateFiles: nil,
@@ -396,8 +400,10 @@ func TestUpdateMuteTimings(t *testing.T) {
 		},
 	}
 	expectedProvenance := models.ProvenanceAPI
+	expectedVersion := calculateMuteTimeIntervalFingerprint(expected)
 	timing := definitions.MuteTimeInterval{
 		MuteTimeInterval: expected,
+		Version:          originalVersion,
 		Provenance:       definitions.Provenance(expectedProvenance),
 	}
 
@@ -433,6 +439,25 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.ErrorIs(t, err, expectedErr)
 	})
 
+	t.Run("returns ErrVersionConflict if storage version does not match", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
+			return &cfgRevision{cfg: initialConfig()}, nil
+		}
+
+		timing := definitions.MuteTimeInterval{
+			MuteTimeInterval: expected,
+			Version:          "some_random_version",
+			Provenance:       definitions.Provenance(expectedProvenance),
+		}
+
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedProvenance, nil)
+
+		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
+
+		require.ErrorIs(t, err, ErrVersionConflict)
+	})
+
 	t.Run("returns ErrMuteTimingsNotFound if mute timing does not exist", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
@@ -451,7 +476,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.Truef(t, ErrTimeIntervalNotFound.Is(err), "expected ErrTimeIntervalNotFound but got %s", err)
 	})
 
-	t.Run("saves mute timing and provenance in a transaction", func(t *testing.T) {
+	t.Run("saves mute timing and provenance in a transaction if optimistic concurrency passes", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*cfgRevision, error) {
 			return &cfgRevision{cfg: initialConfig()}, nil
@@ -472,6 +497,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 
 		require.EqualValues(t, expected, result.MuteTimeInterval)
 		require.EqualValues(t, expectedProvenance, result.Provenance)
+		require.EqualValues(t, expectedVersion, result.Version)
 
 		require.Len(t, store.Calls, 2)
 		require.Equal(t, "Get", store.Calls[0].Method)
@@ -484,6 +510,41 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.EqualValues(t, []config.MuteTimeInterval{expected}, revision.cfg.AlertmanagerConfig.MuteTimeIntervals)
 
 		prov.AssertCalled(t, "SetProvenance", mock.Anything, &timing, orgID, expectedProvenance)
+
+		t.Run("bypass optimistic concurrency check if version is empty", func(t *testing.T) {
+			store.Calls = nil
+			timing := definitions.MuteTimeInterval{
+				MuteTimeInterval: config.MuteTimeInterval{
+					Name: expected.Name,
+					TimeIntervals: []timeinterval.TimeInterval{
+						{Months: []timeinterval.MonthRange{
+							{
+								InclusiveRange: timeinterval.InclusiveRange{
+									Begin: 1,
+									End:   10,
+								},
+							},
+						}},
+					},
+				},
+				Version:    "",
+				Provenance: definitions.Provenance(expectedProvenance),
+			}
+			expectedVersion := calculateMuteTimeIntervalFingerprint(timing.MuteTimeInterval)
+
+			result, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
+			require.NoError(t, err)
+
+			require.EqualValues(t, timing.MuteTimeInterval, result.MuteTimeInterval)
+			require.Equal(t, expectedVersion, result.Version)
+			require.EqualValues(t, expectedProvenance, result.Provenance)
+
+			require.Equal(t, "Save", store.Calls[1].Method)
+			require.Equal(t, orgID, store.Calls[1].Args[2])
+			revision := store.Calls[1].Args[1].(*cfgRevision)
+
+			require.EqualValues(t, []config.MuteTimeInterval{timing.MuteTimeInterval}, revision.cfg.AlertmanagerConfig.MuteTimeIntervals)
+		})
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
