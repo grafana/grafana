@@ -143,11 +143,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       trail.subscribeToState(({ metricSearch }, oldState) => {
         const oldSearchTerms = deriveSearchTermsFromInput(oldState.metricSearch);
         const newSearchTerms = deriveSearchTermsFromInput(metricSearch);
-
-        console.log('HEY LOOK WE ARE', metricSearch);
-
         if (!isEqual(oldSearchTerms, newSearchTerms)) {
-          console.log({ newSearchTerms, oldSearchTerms });
           this._debounceRefreshMetricNames();
         }
       })

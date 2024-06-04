@@ -179,6 +179,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       sceneUtils.cloneSceneObjectState(state, {
         history: this.state.history,
         metric: !state.metric ? undefined : state.metric,
+        metricSearch: !state.metricSearch ? undefined : state.metricSearch,
       })
     );
 
@@ -212,7 +213,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   getUrlState() {
-    return { metric: this.state.metric };
+    const { metric, metricSearch } = this.state;
+    return { metric, metricSearch };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
@@ -226,6 +228,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       stateUpdate.metric = undefined;
       stateUpdate.topScene = new MetricSelectScene({});
     }
+
+    stateUpdate.metricSearch = values.metricSearch?.toString() || undefined;
 
     this.setState(stateUpdate);
   }
