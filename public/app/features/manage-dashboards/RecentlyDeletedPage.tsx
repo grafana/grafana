@@ -14,13 +14,13 @@ import { SearchView } from '../browse-dashboards/components/SearchView';
 import { getFolderPermissions } from '../browse-dashboards/permissions';
 import { setAllSelection } from '../browse-dashboards/state';
 
-import { useTrashStateManager } from './utils/useTrashStateManager';
+import { useRecentlyDeletedStateManager } from './utils/useRecentlyDeletedStateManager';
 
-const TrashPage = memo(({ match }: DashboardRouteComponentsProps) => {
+const RecentlyDeletedPage = memo(({ match }: DashboardRouteComponentsProps) => {
   const { uid: folderUID } = match.params;
   const dispatch = useDispatch();
 
-  const [searchState, stateManager] = useTrashStateManager();
+  const [searchState, stateManager] = useRecentlyDeletedStateManager();
   const isSearching = stateManager.hasSearchFilters();
 
   const { canEditFolders, canEditDashboards } = getFolderPermissions();
@@ -39,10 +39,10 @@ const TrashPage = memo(({ match }: DashboardRouteComponentsProps) => {
   }, [dispatch, stateManager]);
 
   return (
-    <Page navId="dashboards/trash">
+    <Page navId="dashboards/recentlyDeleted">
       <Page.Contents>
         <FilterInput
-          placeholder={t('trashSection.filter.placeholder', 'Search for dashboards')}
+          placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}
           value={searchState.query}
           escapeRegex={false}
           onChange={(e) => stateManager.onQueryChange(e)}
@@ -81,5 +81,5 @@ const TrashPage = memo(({ match }: DashboardRouteComponentsProps) => {
   );
 });
 
-TrashPage.displayName = 'TrashPage';
-export default TrashPage;
+RecentlyDeletedPage.displayName = 'RecentlyDeletedPage';
+export default RecentlyDeletedPage;
