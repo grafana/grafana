@@ -9,4 +9,4 @@ export enum SeriesVisibilityChangeMode {
   AppendToSelection = 'append',
 }
 
-export type OnSelectRangeCallback = (selections: Array<{ key: string; from: number; to: number }>) => void;
+export type OnSelectRangeCallback = (selections: Array<{ unit: string; from: number; to: number }>) => void;

@@ -69,9 +69,10 @@ export function prepConfig(opts: PrepConfigOpts) {
   } = opts;
 
   const xScaleKey = 'x';
+  const xField = dataRef.current?.heatmap?.fields[0]!;
   let isTime = true;
 
-  if (dataRef.current?.heatmap?.fields[0].type !== FieldType.time) {
+  if (xField.type !== FieldType.time) {
     isTime = false;
   }
 
@@ -132,6 +133,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   builder.addScale({
     scaleKey: xScaleKey,
+    unit: xField.config.unit || xField.type,
     isTime,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
@@ -190,6 +192,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   builder.addScale({
     scaleKey: yScaleKey,
+    unit: yField.config?.unit || yField.type,
     isTime: false,
     // distribution: ScaleDistribution.Ordinal, // does not work with facets/scatter yet
     orientation: ScaleOrientation.Vertical,

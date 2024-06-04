@@ -1,13 +1,14 @@
-import uPlot, { Scale, Range } from 'uplot';
+import uPlot, { Range, Scale } from 'uplot';
 
 import { DecimalCount, incrRoundDn, incrRoundUp, isBooleanUnit } from '@grafana/data';
-import { ScaleOrientation, ScaleDirection, ScaleDistribution } from '@grafana/schema';
+import { ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 
 import { PlotConfigBuilder } from '../types';
 
 export interface ScaleProps {
   scaleKey: string;
   isTime?: boolean;
+  unit?: string;
   min?: number | null;
   max?: number | null;
   softMin?: number | null;
@@ -31,6 +32,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
   getConfig(): Scale {
     let {
       isTime,
+      unit,
       scaleKey,
       min: hardMin,
       max: hardMax,
@@ -262,6 +264,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         range: range ?? rangeFn,
         dir: direction,
         ori: orientation,
+        unit,
         ...distribution,
       },
     };

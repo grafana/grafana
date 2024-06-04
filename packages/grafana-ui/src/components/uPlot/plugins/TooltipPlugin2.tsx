@@ -39,8 +39,6 @@ interface TooltipPlugin2Props {
   clientZoom?: boolean;
 
   onSelectRange?: OnSelectRangeCallback;
-  // Whether to clear or keep the selected area rendered after the user has finished dragging
-  keepSelectedArea?: boolean;
 
   render: (
     u: uPlot,
@@ -345,7 +343,8 @@ export const TooltipPlugin2 = ({
                   ? u.posToVal(u.select.top + u.select.height, key)
                   : u.posToVal(u.select.left + u.select.width, key);
               }
-              return { key, from: min, to: max };
+              // @ts-ignore
+              return { unit: scale.unit, from: min, to: max };
             });
 
             onSelectRange(selections);
