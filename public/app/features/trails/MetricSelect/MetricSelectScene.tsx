@@ -446,7 +446,7 @@ function getMetricSearchTerms(scene: SceneObject) {
   return terms;
 }
 
-function getSearchTermsVariable(scene: SceneObject) {
+export function getSearchTermsVariable(scene: SceneObject) {
   // Use newer utils here.
   const searchTermsVariable = sceneGraph.lookupVariable(VAR_METRIC_SEARCH_TERMS, scene);
 

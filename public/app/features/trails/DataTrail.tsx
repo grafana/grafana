@@ -31,7 +31,7 @@ import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSearchTermsVariable } from './MetricSelect/MetricSearchTermsVariable';
-import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
+import { MetricSelectScene, getSearchTermsVariable } from './MetricSelect/MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
@@ -184,10 +184,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     );
 
     // Signal that the search terms variable has changed
-    const searchTermsVariable = sceneGraph.lookupVariable(VAR_METRIC_SEARCH_TERMS, this);
-    if (searchTermsVariable instanceof MetricSearchTermsVariable) {
-      searchTermsVariable.publishEvent(new SceneVariableValueChangedEvent(searchTermsVariable), true);
-    }
+    const searchTermsVariable = getSearchTermsVariable(this);
+    searchTermsVariable.publishEvent(new SceneVariableValueChangedEvent(searchTermsVariable), true);
 
     const urlState = getUrlSyncManager().getUrlState(this);
     const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
