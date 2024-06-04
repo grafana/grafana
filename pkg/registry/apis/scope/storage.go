@@ -162,8 +162,7 @@ func Matcher(label labels.Selector, field fields.Selector) apistore.SelectionPre
 
 func SelectableScopeFields(obj *scope.Scope) fields.Set {
 	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
-		"spec.type":     obj.Spec.Type,
-		"spec.category": obj.Spec.Category,
+		"spec.title": obj.Spec.Title,
 	})
 }
 

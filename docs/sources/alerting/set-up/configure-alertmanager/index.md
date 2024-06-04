@@ -18,7 +18,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Add an external Alertmanager
+title: Configure Alertmanagers
 weight: 200
 refs:
   notifications:
@@ -28,7 +28,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
 ---
 
-## Configure Alertmanagers
+# Configure Alertmanagers
 
 Grafana Alerting is based on the architecture of the Prometheus alerting system. Grafana sends firing and resolved alerts to an Alertmanager, which is responsible for [handling notifications](ref:notifications).
 

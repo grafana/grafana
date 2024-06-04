@@ -256,15 +256,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:           "nestedFolderPicker",
-			Description:    "Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaFrontendPlatformSquad,
-			FrontendOnly:   true,
-			Expression:     "true", // enabled by default
-			AllowSelfServe: true,
-		},
-		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,
@@ -953,7 +944,8 @@ var (
 		{
 			Name:         "logsInfiniteScrolling",
 			Description:  "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true",
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
