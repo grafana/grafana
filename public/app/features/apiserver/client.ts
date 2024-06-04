@@ -25,7 +25,7 @@ export class ScopedResourceClient<T = object, K = string> implements ResourceCli
 
     this.url = `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
   }
-  
+
   public async create(obj: ResourceForCreate<T, K>): Promise<void> {
     if (!obj.metadata.name && !obj.metadata.generateName) {
       obj.metadata.generateName = 'g'; // Triggers the server to create a unique value
