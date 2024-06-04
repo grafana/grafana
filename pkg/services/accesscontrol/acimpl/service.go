@@ -422,7 +422,6 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 	return nil
 }
 
-// TODO potential changes needed here?
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
@@ -437,7 +436,6 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 
 		// Reroute to the user specific implementation of search permissions
 		// because it leverages the user permission cache.
-		// TODO
 		userPerms, err := s.SearchUserPermissions(ctx, usr.GetOrgID(), options)
 		if err != nil {
 			return nil, err
@@ -461,6 +459,10 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, usr.GetOrgID())
 	if err != nil {
 		return nil, err
+	}
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		options.ActionSets = s.actionResolver.ResolveActionPrefix(options.Action)
 	}
 
 	// Get managed permissions (DB)
@@ -522,6 +524,16 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		}
 	}
 
+	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && len(options.ActionSets) > 0 {
+		filter := options.Action
+		if filter == "" {
+			filter = options.ActionPrefix
+		}
+		for id, perms := range res {
+			res[id] = s.actionResolver.ExpandActionSetsWithFilter(perms, filter)
+		}
+	}
+
 	return res, nil
 }
 
@@ -566,12 +578,24 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 		}
 	}
 
+	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		searchOptions.ActionSets = s.actionResolver.ResolveActionPrefix(searchOptions.Action)
+	}
+
 	// Get permissions from the DB
 	dbPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, searchOptions)
 	if err != nil {
 		return nil, err
 	}
 	permissions = append(permissions, dbPermissions[userID]...)
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && len(searchOptions.ActionSets) != 0 {
+		filter := searchOptions.Action
+		if filter == "" {
+			filter = searchOptions.ActionPrefix
+		}
+		permissions = s.actionResolver.ExpandActionSetsWithFilter(permissions, filter)
+	}
 
 	key := accesscontrol.GetSearchPermissionCacheKey(&user.SignedInUser{UserID: userID, OrgID: orgID}, searchOptions)
 	s.cache.Set(key, permissions, cacheTTL)

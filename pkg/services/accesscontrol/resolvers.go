@@ -16,7 +16,15 @@ type ScopeAttributeResolver interface {
 }
 
 type ActionResolver interface {
+	// ExpandActionSets takes a set of permissions that might include some action set permissions, and returns a set of permissions with action sets expanded into underlying permissions
 	ExpandActionSets(permissions []Permission) []Permission
+	// ExpandActionSetsWithFilter works like ExpandActionSets, but it also takes an actionFilter parameter. When action sets are expanded into the underlying permissions,
+	// only those permissions whose action matches the actionFilter or has actionFilter as a prefix are included.
+	ExpandActionSetsWithFilter(permissions []Permission, actionFilter string) []Permission
+	// ResolveAction returns all action sets that include the given action
+	ResolveAction(action string) []string
+	// ResolveActionPrefix returns all action sets that include at least one action with the specified prefix
+	ResolveActionPrefix(prefix string) []string
 }
 
 // ScopeAttributeResolverFunc is an adapter to allow functions to implement ScopeAttributeResolver interface
