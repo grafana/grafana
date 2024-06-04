@@ -465,6 +465,16 @@
   },
   "explore": {
     "add-to-dashboard": "Zum Dashboard hinzufügen",
+    "add-to-library-modal": {
+      "auto-star": "",
+      "data-source-name": "",
+      "data-source-type": "",
+      "description": "",
+      "info": "",
+      "query": "",
+      "title": "",
+      "visibility": ""
+    },
     "rich-history": {
       "close-tooltip": "Abfrageverlauf schließen",
       "datasource-a-z": "Datenquelle A-Z",
@@ -1118,6 +1128,10 @@
     "public": {
       "title": "Öffentliche Dashboards"
     },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
+    },
     "recorded-queries": {
       "title": "Aufgezeichnete Abfragen"
     },
@@ -1178,10 +1192,6 @@
     "testing-and-synthetics": {
       "subtitle": "Optimieren Sie die Leistung mit Erkenntnissen aus k6 und Synthetic Monitoring",
       "title": "Testen & Synthetics"
-    },
-    "trash": {
-      "subtitle": "",
-      "title": ""
     },
     "upgrading": {
       "title": "Statistiken und Lizenz"
