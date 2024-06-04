@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { from, Subscription } from 'rxjs';
 
 import { GrafanaTheme2, Scope, ScopeDashboardBinding, urlUtil } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, Icon, Input, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { fetchDashboards } from './api/dashboards';
@@ -19,6 +20,8 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
 export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsSceneState> {
   static Component = ScopesDashboardsSceneRenderer;
 
+  private fetchSub: Subscription | undefined;
+
   constructor() {
     super({
       dashboards: [],
@@ -26,21 +29,29 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
       isLoading: false,
       searchQuery: '',
     });
+
+    this.addActivationHandler(() => {
+      return () => {
+        this.fetchSub?.unsubscribe();
+      };
+    });
   }
 
   public async fetchDashboards(scopes: Scope[]) {
+    this.fetchSub?.unsubscribe();
+
     if (scopes.length === 0) {
       return this.setState({ dashboards: [], filteredDashboards: [], isLoading: false });
     }
 
     this.setState({ isLoading: true });
 
-    const dashboards = await fetchDashboards(scopes);
-
-    this.setState({
-      dashboards,
-      filteredDashboards: this.filterDashboards(dashboards, this.state.searchQuery),
-      isLoading: false,
+    this.fetchSub = from(fetchDashboards(scopes)).subscribe((dashboards) => {
+      this.setState({
+        dashboards,
+        filteredDashboards: this.filterDashboards(dashboards, this.state.searchQuery),
+        isLoading: false,
+      });
     });
   }
 
@@ -78,13 +89,17 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
         />
       </div>
 
-      <CustomScrollbar>
-        {filteredDashboards.map(({ spec: { dashboard, dashboardTitle } }, idx) => (
-          <div key={idx} className={styles.dashboardItem}>
-            <Link to={urlUtil.renderUrl(`/d/${dashboard}`, queryParams)}>{dashboardTitle}</Link>
-          </div>
-        ))}
-      </CustomScrollbar>
+      {isLoading ? (
+        <LoadingPlaceholder className={styles.loadingIndicator} text="Loading dashboards" />
+      ) : (
+        <CustomScrollbar>
+          {filteredDashboards.map(({ spec: { dashboard, dashboardTitle } }, idx) => (
+            <div key={idx} className={styles.dashboardItem}>
+              <Link to={urlUtil.renderUrl(`/d/${dashboard}`, queryParams)}>{dashboardTitle}</Link>
+            </div>
+          ))}
+        </CustomScrollbar>
+      )}
     </>
   );
 }
@@ -93,6 +108,9 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     searchInputContainer: css({
       flex: '0 1 auto',
+    }),
+    loadingIndicator: css({
+      alignSelf: 'center',
     }),
     dashboardItem: css({
       padding: theme.spacing(1, 0),

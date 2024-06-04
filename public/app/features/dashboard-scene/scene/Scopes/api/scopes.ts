@@ -81,3 +81,7 @@ export async function fetchScope(name: string): Promise<Scope> {
 
   return response;
 }
+
+export async function fetchScopes(names: string[]): Promise<Scope[]> {
+  return await Promise.all(names.map(fetchScope));
+}

@@ -1,5 +1,6 @@
 import { isEqual } from 'lodash';
 import React from 'react';
+import { from, Subscription } from 'rxjs';
 
 import { Scope } from '@grafana/data';
 import {
@@ -13,7 +14,7 @@ import {
 
 import { ScopesFiltersAdvancedSelector } from './ScopesFiltersAdvancedSelector';
 import { ScopesFiltersBasicSelector } from './ScopesFiltersBasicSelector';
-import { fetchNodes, fetchScope } from './api/scopes';
+import { fetchNodes, fetchScope, fetchScopes } from './api/scopes';
 import { Node, NodesMap } from './types';
 
 export interface ScopesFiltersSceneState extends SceneObjectState {
@@ -30,6 +31,9 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   static Component = ScopesFiltersSceneRenderer;
 
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scopes'] });
+
+  private fetchNodesSub: Subscription | undefined;
+  private fetchScopesSub: Subscription | undefined;
 
   constructor() {
     super({
@@ -53,6 +57,11 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
     this.addActivationHandler(() => {
       this.fetchBaseNodes();
+
+      return () => {
+        this.fetchNodesSub?.unsubscribe();
+        this.fetchScopesSub?.unsubscribe();
+      };
     });
   }
 
@@ -83,9 +92,24 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     const currentNode = currentLevel[nodeId];
 
     if (isExpanded || currentNode.query !== query) {
+      this.fetchNodesSub?.unsubscribe();
+
       this.setState({ loadingNodeId: nodeId });
 
-      currentNode.nodes = await fetchNodes(nodeId, query);
+      this.fetchNodesSub = from(fetchNodes(nodeId, query)).subscribe((childNodes) => {
+        currentNode.nodes = childNodes;
+        currentNode.isExpanded = isExpanded;
+        currentNode.query = query;
+
+        this.fetchNodesSub?.unsubscribe();
+
+        this.setState({
+          nodes,
+          loadingNodeId: undefined,
+        });
+      });
+
+      return;
     }
 
     currentNode.isExpanded = isExpanded;
@@ -150,11 +174,14 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       return;
     }
 
+    this.fetchScopesSub?.unsubscribe();
+
     this.setState({ dirtyScopeNames, isLoadingScopes: true });
 
-    this.setState({
-      scopes: await Promise.all(dirtyScopeNames.map(fetchScope)),
-      isLoadingScopes: false,
+    this.fetchScopesSub = from(fetchScopes(dirtyScopeNames)).subscribe((scopes) => {
+      this.fetchScopesSub?.unsubscribe();
+
+      this.setState({ scopes, isLoadingScopes: false });
     });
   }
 
