@@ -2569,7 +2569,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.4"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.3.2"
     "@types/react-dom": "npm:18.2.25"
@@ -2611,7 +2611,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.4"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/react": "npm:18.3.2"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     lodash: "npm:4.17.21"
@@ -2642,7 +2642,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.4"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.3.2"
     "@types/react-dom": "npm:18.2.25"
@@ -2685,7 +2685,7 @@ __metadata:
     "@types/d3-random": "npm:^3.0.2"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.4"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/react": "npm:18.3.2"
     "@types/react-dom": "npm:18.2.25"
     "@types/testing-library__jest-dom": "npm:5.14.9"
@@ -2727,7 +2727,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.4"
     "@types/logfmt": "npm:^1.2.3"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/react": "npm:18.3.2"
     "@types/react-dom": "npm:18.2.25"
     "@types/react-window": "npm:1.8.8"
@@ -2766,7 +2766,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.4"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/react": "npm:18.3.2"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     lodash: "npm:4.17.21"
@@ -2795,7 +2795,7 @@ __metadata:
     "@testing-library/react": "npm:15.0.2"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/lodash": "npm:4.17.4"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/react": "npm:18.3.2"
     "@types/react-dom": "npm:18.2.25"
     lodash: "npm:4.17.21"
@@ -2832,7 +2832,7 @@ __metadata:
     "@types/debounce-promise": "npm:3.1.9"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.4"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.3.2"
     "@types/react-dom": "npm:18.2.25"
@@ -2888,7 +2888,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.4"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.3.2"
     "@types/react-dom": "npm:18.2.25"
@@ -2937,7 +2937,7 @@ __metadata:
     "@testing-library/react": "npm:15.0.2"
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.4"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/react": "npm:18.3.2"
     "@types/react-dom": "npm:18.2.25"
     lodash: "npm:4.17.21"
@@ -2995,7 +2995,7 @@ __metadata:
     "@types/dompurify": "npm:^3.0.0"
     "@types/history": "npm:4.7.11"
     "@types/lodash": "npm:4.17.4"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/papaparse": "npm:5.3.14"
     "@types/react": "npm:18.3.2"
     "@types/react-dom": "npm:18.2.25"
@@ -3042,7 +3042,7 @@ __metadata:
   dependencies:
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@rollup/plugin-node-resolve": "npm:15.2.3"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     esbuild: "npm:0.20.2"
     rimraf: "npm:5.0.7"
     rollup: "npm:2.79.1"
@@ -3184,7 +3184,7 @@ __metadata:
     "@types/d3": "npm:^7"
     "@types/jest": "npm:^29.5.4"
     "@types/lodash": "npm:4.17.4"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/react": "npm:18.3.2"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
     "@types/tinycolor2": "npm:1.4.6"
@@ -3268,7 +3268,7 @@ __metadata:
     "@testing-library/react": "npm:15.0.2"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:^29.5.4"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/react": "npm:18.3.2"
     "@types/systemjs": "npm:6.13.5"
     "@types/testing-library__jest-dom": "npm:5.14.9"
@@ -3307,16 +3307,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:1.3.0":
-  version: 1.3.0
-  resolution: "@grafana/plugin-e2e@npm:1.3.0"
+"@grafana/plugin-e2e@npm:1.3.1":
+  version: 1.3.1
+  resolution: "@grafana/plugin-e2e@npm:1.3.1"
   dependencies:
     semver: "npm:^7.5.4"
     uuid: "npm:^9.0.1"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.41.2
-  checksum: 10/486b724e563590a1530ba6c4b51c14a942f28cf419e7f251ce0cbd1098a0a2fa35fb3336ec2e4947bff4a742f17563cb6a7a49567802efc042161c0ea560aed6
+  checksum: 10/7370a822309fb688ce8dfb77386d98bb21ece963d73f2dd63c3153d19966d4a7797ef8b296d6f4c282973dc62e5651dbd8eed36e095e78b3308683d9f24235a8
   languageName: node
   linkType: hard
 
@@ -3355,7 +3355,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/jquery": "npm:3.5.30"
     "@types/lodash": "npm:4.17.4"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.3.2"
@@ -3489,7 +3489,7 @@ __metadata:
     "@svgr/plugin-prettier": "npm:^8.1.0"
     "@svgr/plugin-svgo": "npm:^8.1.0"
     "@types/babel__core": "npm:^7"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/react": "npm:18.3.2"
     "@types/react-dom": "npm:18.2.25"
     esbuild: "npm:0.20.2"
@@ -3510,10 +3510,11 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:^4.24.4":
-  version: 4.25.0
-  resolution: "@grafana/scenes@npm:4.25.0"
+  version: 4.26.0
+  resolution: "@grafana/scenes@npm:4.26.0"
   dependencies:
     "@grafana/e2e-selectors": "npm:^10.4.1"
+    "@leeoniya/ufuzzy": "npm:^1.0.14"
     react-grid-layout: "npm:1.3.4"
     react-use: "npm:17.4.0"
     react-virtualized-auto-sizer: "npm:1.0.7"
@@ -3525,7 +3526,7 @@ __metadata:
     "@grafana/ui": ^10.4.1
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/a26ddebedc755d762f673a1deab07f3178a62d0dca620661a39a40cd3cd962337178366e6302f21e558203a78834423692b50aa69703989f6cebe4fe14529904
+  checksum: 10/8aabfaf219fa63ff00023e0b6c6f1c3165329f707bca1ab70a086d60e57f233b34baed8ca3a0334bafbc46484e68223c7e7e3c9f5c75835811f32b5b050bb872
   languageName: node
   linkType: hard
 
@@ -3566,7 +3567,7 @@ __metadata:
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:^29.5.4"
     "@types/lodash": "npm:4.17.4"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/react": "npm:18.3.2"
     "@types/react-dom": "npm:18.2.25"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
@@ -3657,7 +3658,7 @@ __metadata:
     "@types/jquery": "npm:3.5.30"
     "@types/lodash": "npm:4.17.4"
     "@types/mock-raf": "npm:1.0.6"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.3.2"
     "@types/react-beautiful-dnd": "npm:13.1.8"
@@ -4260,7 +4261,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@leeoniya/ufuzzy@npm:1.0.14":
+"@leeoniya/ufuzzy@npm:1.0.14, @leeoniya/ufuzzy@npm:^1.0.14":
   version: 1.0.14
   resolution: "@leeoniya/ufuzzy@npm:1.0.14"
   checksum: 10/852b580a8eaaf92e2d448f5b720e3c53e4bea22187bf5e8459256677c47183321b47b8384982e15751f42da7e77a216fd86c80e6185677d8270adeab4a4fb771
@@ -4860,15 +4861,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nrwl/tao@npm:19.1.1":
-  version: 19.1.1
-  resolution: "@nrwl/tao@npm:19.1.1"
+"@nrwl/tao@npm:19.1.2":
+  version: 19.1.2
+  resolution: "@nrwl/tao@npm:19.1.2"
   dependencies:
-    nx: "npm:19.1.1"
+    nx: "npm:19.1.2"
     tslib: "npm:^2.3.0"
   bin:
     tao: index.js
-  checksum: 10/c65c761dd88e9f03af937c3c6f7500a484aa5cf0f456ad0b422b12fcee7e9a7e0bad05b0d6026c13564f3e00a0b98af5bb8493b1a457120c42976f0e488e51ee
+  checksum: 10/b04b97c15d0ea23fa9541110846c29f02e42d078568d3954d366fb7572ca70edcc96aec15ca11b48fe99efcae8dc0d7ed95f71de3852380e5211ebcbe25b7263
   languageName: node
   linkType: hard
 
@@ -4891,72 +4892,72 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nx/nx-darwin-arm64@npm:19.1.1":
-  version: 19.1.1
-  resolution: "@nx/nx-darwin-arm64@npm:19.1.1"
+"@nx/nx-darwin-arm64@npm:19.1.2":
+  version: 19.1.2
+  resolution: "@nx/nx-darwin-arm64@npm:19.1.2"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@nx/nx-darwin-x64@npm:19.1.1":
-  version: 19.1.1
-  resolution: "@nx/nx-darwin-x64@npm:19.1.1"
+"@nx/nx-darwin-x64@npm:19.1.2":
+  version: 19.1.2
+  resolution: "@nx/nx-darwin-x64@npm:19.1.2"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@nx/nx-freebsd-x64@npm:19.1.1":
-  version: 19.1.1
-  resolution: "@nx/nx-freebsd-x64@npm:19.1.1"
+"@nx/nx-freebsd-x64@npm:19.1.2":
+  version: 19.1.2
+  resolution: "@nx/nx-freebsd-x64@npm:19.1.2"
   conditions: os=freebsd & cpu=x64
   languageName: node
   linkType: hard
 
-"@nx/nx-linux-arm-gnueabihf@npm:19.1.1":
-  version: 19.1.1
-  resolution: "@nx/nx-linux-arm-gnueabihf@npm:19.1.1"
+"@nx/nx-linux-arm-gnueabihf@npm:19.1.2":
+  version: 19.1.2
+  resolution: "@nx/nx-linux-arm-gnueabihf@npm:19.1.2"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"@nx/nx-linux-arm64-gnu@npm:19.1.1":
-  version: 19.1.1
-  resolution: "@nx/nx-linux-arm64-gnu@npm:19.1.1"
+"@nx/nx-linux-arm64-gnu@npm:19.1.2":
+  version: 19.1.2
+  resolution: "@nx/nx-linux-arm64-gnu@npm:19.1.2"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@nx/nx-linux-arm64-musl@npm:19.1.1":
-  version: 19.1.1
-  resolution: "@nx/nx-linux-arm64-musl@npm:19.1.1"
+"@nx/nx-linux-arm64-musl@npm:19.1.2":
+  version: 19.1.2
+  resolution: "@nx/nx-linux-arm64-musl@npm:19.1.2"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@nx/nx-linux-x64-gnu@npm:19.1.1":
-  version: 19.1.1
-  resolution: "@nx/nx-linux-x64-gnu@npm:19.1.1"
+"@nx/nx-linux-x64-gnu@npm:19.1.2":
+  version: 19.1.2
+  resolution: "@nx/nx-linux-x64-gnu@npm:19.1.2"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@nx/nx-linux-x64-musl@npm:19.1.1":
-  version: 19.1.1
-  resolution: "@nx/nx-linux-x64-musl@npm:19.1.1"
+"@nx/nx-linux-x64-musl@npm:19.1.2":
+  version: 19.1.2
+  resolution: "@nx/nx-linux-x64-musl@npm:19.1.2"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@nx/nx-win32-arm64-msvc@npm:19.1.1":
-  version: 19.1.1
-  resolution: "@nx/nx-win32-arm64-msvc@npm:19.1.1"
+"@nx/nx-win32-arm64-msvc@npm:19.1.2":
+  version: 19.1.2
+  resolution: "@nx/nx-win32-arm64-msvc@npm:19.1.2"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@nx/nx-win32-x64-msvc@npm:19.1.1":
-  version: 19.1.1
-  resolution: "@nx/nx-win32-x64-msvc@npm:19.1.1"
+"@nx/nx-win32-x64-msvc@npm:19.1.2":
+  version: 19.1.2
+  resolution: "@nx/nx-win32-x64-msvc@npm:19.1.2"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -8621,12 +8622,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:20.12.13, @types/node@npm:>=13.7.0, @types/node@npm:^20.11.16":
-  version: 20.12.13
-  resolution: "@types/node@npm:20.12.13"
+"@types/node@npm:*, @types/node@npm:20.14.1, @types/node@npm:>=13.7.0, @types/node@npm:^20.11.16":
+  version: 20.14.1
+  resolution: "@types/node@npm:20.14.1"
   dependencies:
     undici-types: "npm:~5.26.4"
-  checksum: 10/c9f02cfe342bce4aa9221f389115c1f9e3bd9abc87d45e3b2c3a5b92d99523c02b72dd67f50cbbc5edddbaf7dd458cf61dd3289d7a8c14fde80c998df10fee82
+  checksum: 10/1417d9768dccca9491fb5fc41ef0ee9044cef4c86eef413608dd983c30af19d5f0930b356791dde3aec238a6a47bbea42c47b69929b5fe822cf09cd543f6c52f
   languageName: node
   linkType: hard
 
@@ -16753,7 +16754,7 @@ __metadata:
     "@grafana/lezer-logql": "npm:0.2.3"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:1.3.0"
+    "@grafana/plugin-e2e": "npm:1.3.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
@@ -16824,7 +16825,7 @@ __metadata:
     "@types/lodash": "npm:4.17.4"
     "@types/logfmt": "npm:^1.2.3"
     "@types/lucene": "npm:^2"
-    "@types/node": "npm:20.12.13"
+    "@types/node": "npm:20.14.1"
     "@types/node-forge": "npm:^1"
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4"
     "@types/pluralize": "npm:^0.0.33"
@@ -16963,7 +16964,7 @@ __metadata:
     ngtemplate-loader: "npm:2.1.0"
     node-forge: "npm:^1.3.1"
     node-notifier: "npm:10.0.1"
-    nx: "npm:19.1.1"
+    nx: "npm:19.1.2"
     ol: "npm:7.4.0"
     ol-ext: "npm:4.0.18"
     pluralize: "npm:^8.0.0"
@@ -22580,21 +22581,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nx@npm:19.1.1, nx@npm:>=17.1.2 < 20":
-  version: 19.1.1
-  resolution: "nx@npm:19.1.1"
+"nx@npm:19.1.2, nx@npm:>=17.1.2 < 20":
+  version: 19.1.2
+  resolution: "nx@npm:19.1.2"
   dependencies:
-    "@nrwl/tao": "npm:19.1.1"
-    "@nx/nx-darwin-arm64": "npm:19.1.1"
-    "@nx/nx-darwin-x64": "npm:19.1.1"
-    "@nx/nx-freebsd-x64": "npm:19.1.1"
-    "@nx/nx-linux-arm-gnueabihf": "npm:19.1.1"
-    "@nx/nx-linux-arm64-gnu": "npm:19.1.1"
-    "@nx/nx-linux-arm64-musl": "npm:19.1.1"
-    "@nx/nx-linux-x64-gnu": "npm:19.1.1"
-    "@nx/nx-linux-x64-musl": "npm:19.1.1"
-    "@nx/nx-win32-arm64-msvc": "npm:19.1.1"
-    "@nx/nx-win32-x64-msvc": "npm:19.1.1"
+    "@nrwl/tao": "npm:19.1.2"
+    "@nx/nx-darwin-arm64": "npm:19.1.2"
+    "@nx/nx-darwin-x64": "npm:19.1.2"
+    "@nx/nx-freebsd-x64": "npm:19.1.2"
+    "@nx/nx-linux-arm-gnueabihf": "npm:19.1.2"
+    "@nx/nx-linux-arm64-gnu": "npm:19.1.2"
+    "@nx/nx-linux-arm64-musl": "npm:19.1.2"
+    "@nx/nx-linux-x64-gnu": "npm:19.1.2"
+    "@nx/nx-linux-x64-musl": "npm:19.1.2"
+    "@nx/nx-win32-arm64-msvc": "npm:19.1.2"
+    "@nx/nx-win32-x64-msvc": "npm:19.1.2"
     "@yarnpkg/lockfile": "npm:^1.1.0"
     "@yarnpkg/parsers": "npm:3.0.0-rc.46"
     "@zkochan/js-yaml": "npm:0.0.7"
@@ -22659,7 +22660,7 @@ __metadata:
   bin:
     nx: bin/nx.js
     nx-cloud: bin/nx-cloud.js
-  checksum: 10/8171490dee392468a18c4a67bf413b5064ed2202acfb0e7db3a9d6c303ee255fa20dfd523cf08b9d541abb6eeae1e553ab7d86de4c3ceba6c392d6ed98581edc
+  checksum: 10/ee1b508cf555f69c55e54f4cc3144afc639c2b2458a99a162c4262690a294614f141c83409e5e3793b2e3a3fccb8323876b32f3d1f7f609d20318d819f52ce67
   languageName: node
   linkType: hard
 
