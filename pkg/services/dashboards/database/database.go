@@ -907,7 +907,7 @@ func (d *dashboardStore) findDashboardsZanzanaCheck(ctx context.Context, query *
 				rowsFetchedInThisBatch++
 			}
 
-			concurrentRequests := 100
+			concurrentRequests := len(batchRows)
 			rowsToCheck := make(chan dashboards.DashboardSearchProjection, concurrentRequests)
 			allowedResults := make(chan dashboards.DashboardSearchProjection, len(batchRows))
 			errChan := make(chan error)
