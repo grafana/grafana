@@ -83,7 +83,12 @@ export class UPlotChart extends Component<PlotProps, UPlotChartState> {
   componentDidUpdate(prevProps: PlotProps) {
     let { plot } = this.state;
 
-    if (!sameDims(prevProps, this.props) || !sameConfig(prevProps, this.props)) {
+    if (!sameDims(prevProps, this.props)) {
+      plot?.setSize({
+        width: Math.floor(this.props.width),
+        height: Math.floor(this.props.height),
+      });
+    } else if (!sameConfig(prevProps, this.props)) {
       this.reinitPlot();
     } else if (!sameData(prevProps, this.props)) {
       plot?.setData(this.props.data as AlignedData);
