@@ -24,7 +24,8 @@ type ServiceCfg struct {
 	// EvaluationResult is a flag to enable evaluation result from Zanzana
 	EvaluationResult bool
 	// OpenFGA log level (debug, info, warn, error, dpanic, panic, fatal)
-	LogLevel string
+	LogLevel   string
+	ListenHTTP bool
 }
 
 type Service struct {
@@ -46,6 +47,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 			DashboardReadResult: section.Key("dashboard_read_result").MustBool(false),
 			EvaluationResult:    section.Key("evaluation_result").MustBool(false),
 			LogLevel:            section.Key("log_level").MustString("info"),
+			ListenHTTP:          section.Key("listen_http").MustBool(true),
 		},
 	}
 
@@ -74,6 +76,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 		ConnMaxIdleTime:       time.Duration(dbConfig.ConnMaxIdleTime * int(time.Second)),
 		ListObjectsMaxResults: 1000,
 		ListObjectsDeadline:   3 * time.Second,
+		ListenHTTP:            s.Cfg.ListenHTTP,
 	})
 	if err != nil {
 		return nil, err
