@@ -201,8 +201,6 @@ function isLogsData(series: DataFrame) {
   return series.fields.some((f) => f.type === FieldType.time) && series.fields.some((f) => f.type === FieldType.string);
 }
 
-export const infiniteScrollRefId = 'infinite-scroll-';
-
 /**
  * Convert dataFrame into LogsModel which consists of creating separate array of log rows and metrics series. Metrics
  * series can be either already included in the dataFrame or will be computed from the log rows.
