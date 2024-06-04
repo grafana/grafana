@@ -465,6 +465,16 @@
   },
   "explore": {
     "add-to-dashboard": "Ajouter au tableau de bord",
+    "add-to-library-modal": {
+      "auto-star": "",
+      "data-source-name": "",
+      "data-source-type": "",
+      "description": "",
+      "info": "",
+      "query": "",
+      "title": "",
+      "visibility": ""
+    },
     "rich-history": {
       "close-tooltip": "Fermer l'historique des requêtes",
       "datasource-a-z": "Source de données A-Z",
@@ -479,6 +489,7 @@
     "rich-history-card": {
       "add-comment-form": "Ajouter un formulaire de commentaire",
       "add-comment-tooltip": "Ajouter un commentaire",
+      "add-to-library": "",
       "cancel": "Annuler",
       "confirm-delete": "Supprimer",
       "copy-query-tooltip": "Copier la requête dans le presse-papiers",
@@ -493,6 +504,7 @@
       "edit-comment-tooltip": "Modifier le commentaire",
       "optional-description": "Une description facultative de l'action de la requête.",
       "query-comment-label": "Commentaire sur la requête",
+      "query-template-added": "",
       "query-text-label": "Texte de la requête",
       "save-comment": "Enregistrer le commentaire",
       "star-query-tooltip": "Mettre la requête en favori",
@@ -1115,6 +1127,10 @@
     },
     "public": {
       "title": "Tableaux de bord publics"
+    },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
     },
     "recorded-queries": {
       "title": "Requêtes enregistrées"

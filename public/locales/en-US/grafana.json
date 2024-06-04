@@ -25,6 +25,28 @@
       "user": "User"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": "Define how the alert rule is evaluated."
+      },
+      "info-help": {
+        "text": "Define the alert behavior when the evaluation fails or the query returns no data."
+      },
+      "pending-period": "Pending period"
+    },
+    "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
+    "evaluation-behaviour-description2": "An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the same evaluation group are evaluated over the same evaluation interval.",
+    "evaluation-behaviour-description3": "Pending period specifies how long the threshold condition must be met before the alert starts firing. This option helps prevent alerts from being triggered by temporary issues.",
+    "evaluation-behaviour-for": {
+      "error-parsing": "Failed to parse duration",
+      "validation": "Pending period must be greater than or equal to the evaluation interval."
+    },
+    "evaluation-behaviour-group": {
+      "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
+    },
+    "pause": "Pause evaluation"
+  },
   "annotations": {
     "empty-state": {
       "button-title": "Add annotation query",
@@ -465,6 +487,16 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "add-to-library-modal": {
+      "auto-star": "Auto-star this query to add it to your starred list in the Query Library.",
+      "data-source-name": "Data source name",
+      "data-source-type": "Data source type",
+      "description": "Description",
+      "info": "You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
+      "query": "Query",
+      "title": "Add query to Query Library",
+      "visibility": "Visibility"
+    },
     "rich-history": {
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
@@ -479,6 +511,7 @@
     "rich-history-card": {
       "add-comment-form": "Add comment form",
       "add-comment-tooltip": "Add comment",
+      "add-to-library": "Add to library",
       "cancel": "Cancel",
       "confirm-delete": "Delete",
       "copy-query-tooltip": "Copy query to clipboard",
@@ -493,6 +526,7 @@
       "edit-comment-tooltip": "Edit comment",
       "optional-description": "An optional description of what the query does.",
       "query-comment-label": "Query comment",
+      "query-template-added": "Query template successfully added to the library",
       "query-text-label": "Query text",
       "save-comment": "Save comment",
       "star-query-tooltip": "Star query",
@@ -892,7 +926,7 @@
       "title": "Alerting"
     },
     "alerting-admin": {
-      "subtitle": "Manage Alertmanager configurations and configure where alert instances generated from Grafana managed alert rules are sent",
+      "subtitle": "Manage Alertmanager configurations",
       "title": "Settings"
     },
     "alerting-am-routes": {
@@ -1115,6 +1149,10 @@
     },
     "public": {
       "title": "Public dashboards"
+    },
+    "recentlyDeleted": {
+      "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
+      "title": "Recently Deleted"
     },
     "recorded-queries": {
       "title": "Recorded queries"
