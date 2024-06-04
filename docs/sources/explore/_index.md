@@ -16,9 +16,9 @@ weight: 90
 
 # Explore
 
-Grafana's dashboard UI is all about building dashboards for visualizations. Explore strips away the dashboard and panel options so that you can focus on the query. It helps you iterate until you have a working query and then think about building a dashboard.
+Grafana's dashboard UI is all about building dashboards for visualizations. Explore strips away the dashboard and panel options so that you can focus on the query. It helps you iterate until you have a working query with which to start building a dashboard.
 
-If you just want to explore your data and do not want to create a dashboard, Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time. See also:
+If you just want to explore your data and don't want to create a dashboard, Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time. See also:
 
 - [Query management in Explore]({{< relref "query-management/" >}})
 - [Logs integration in Explore]({{< relref "logs-integration/" >}})
@@ -27,18 +27,50 @@ If you just want to explore your data and do not want to create a dashboard, Exp
 - [Correlations Editor in Explore]({{< relref "correlations-editor-in-explore/" >}})
 - [Inspector in Explore]({{< relref "explore-inspector/" >}})
 
+Explore consists of a toolbar, a query editor, the ability to add multiple queries, a query history and a query inspector that provides detailed statistics about your query.
+
+
+Insert screenshot 
+
+
+**Toolbar** - Provides quick access to frequently used tools and settings.
+
+**Query editor** - Where you construct the query for a specific data source. Query editor elements differ based on data source.
+
+**Options** - 
+
+The query editor toolbar contains the following elements:
+
+**Kick start your query** - Click to see a list of operation patterns that help you quickly get started adding multiple operations to your query. These include:
+
+  - Rate query starters
+  - Histogram query starters
+  - Binary query starters
+
+Click the arrow next to each to see available options to add to your query.
+
+**Explain** - Toggle to display a step-by-step explanation of all query components and operations.
+
+{{< figure src="/static/img/docs/prometheus/explain-results.png" max-width="500px" class="docs-image--no-shadow" caption="Explain results" >}}
+
+- **Builder/Code** - Click the corresponding **Builder** or **Code** tab on the toolbar to select a editor mode.
+
+
+
+
+
 ## Start exploring
 
 {{< youtube id="1q3YzX2DDM4" >}}
 
-In order to access Explore, you must have an `editor` or an `administrator` role, unless the [viewers_can_edit option]({{< relref "../setup-grafana/configure-grafana/#viewers_can_edit" >}}) is enabled. Refer to [About users and permissions]({{< relref "../administration/roles-and-permissions/" >}}) for more information on what each role has access to.
-
-{{% admonition type="note" %}}
-Refer to [Role-based access Control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise to understand how you can manage Explore with role-based permissions.
-{{% /admonition %}}
+In order to access Explore, you must have either the `editor` or `administrator` role, unless the [`viewers_can_edit` option]({{< relref "../setup-grafana/configure-grafana/#viewers_can_edit" >}}) is enabled. Refer to [About users and permissions]({{< relref "../administration/roles-and-permissions/" >}}) for more information on what each role has access to.
 
 {{% admonition type="note" %}}
 If you are using Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to enable the `viewers_can_edit` option.
+{{% /admonition %}}
+
+{{% admonition type="note" %}}
+Refer to [Role-based access Control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise to understand how you can manage Explore with role-based permissions.
 {{% /admonition %}}
 
 To access Explore:
