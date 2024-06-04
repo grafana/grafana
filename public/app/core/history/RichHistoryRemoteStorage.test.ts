@@ -131,7 +131,7 @@ describe('RichHistoryRemoteStorage', () => {
 
     expect(fetchMock).toHaveBeenCalledWith({
       method: 'GET',
-      url: `/api/query-history?datasourceUid=ds1&datasourceUid=ds2&searchString=${search}&sort=time-desc&to=now-${from}d&from=now-${to}d&limit=${expectedLimit}&page=${expectedPage}`,
+      url: `/api/query-history?datasourceUid=ds1&datasourceUid=ds2&searchString=${search}&sort=time-desc&to=${to}&from=${from}&limit=${expectedLimit}&page=${expectedPage}`,
       requestId: 'query-history-get-all',
     });
     expect(richHistory).toMatchObject([richHistoryQuery]);
