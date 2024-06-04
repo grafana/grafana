@@ -203,7 +203,7 @@ export const VizTooltipRow = ({
 const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) => ({
   contentWrapper: css({
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'start',
     justifyContent: justify,
     marginRight: marginRight,
   }),
