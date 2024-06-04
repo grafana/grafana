@@ -6,8 +6,8 @@
     {
       "metadata": {
         "name": "disableNumericMetricsSortingInExpressions",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1713279167000",
+        "creationTimestamp": "2024-04-16T14:52:47Z"
       },
       "spec": {
         "description": "In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.",
@@ -19,8 +19,8 @@
     {
       "metadata": {
         "name": "lokiMetricDataplane",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1681391228001",
+        "creationTimestamp": "2023-04-13T13:07:08Z"
       },
       "spec": {
         "description": "Changes metric responses from Loki to be compliant with the dataplane specification.",
@@ -32,8 +32,8 @@
     {
       "metadata": {
         "name": "dataplaneFrontendFallback",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1680901999002",
+        "creationTimestamp": "2023-04-07T21:13:19Z"
       },
       "spec": {
         "description": "Support dataplane contract field name change for transformations and field name matchers where the name is different",
@@ -46,8 +46,8 @@
     {
       "metadata": {
         "name": "traceQLStreaming",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1690378396003",
+        "creationTimestamp": "2023-07-26T13:33:16Z"
       },
       "spec": {
         "description": "Enables response streaming of TraceQL queries of the Tempo data source",
@@ -59,9 +59,9 @@
     {
       "metadata": {
         "name": "returnToPrevious",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z",
-        "deletionTimestamp": "2024-05-27T09:59:33Z"
+        "resourceVersion": "1705597934004",
+        "creationTimestamp": "2024-01-18T17:12:14Z",
+        "deletionTimestamp": "2024-05-27T15:47:57Z"
       },
       "spec": {
         "description": "Enables the return to previous context functionality",
@@ -73,8 +73,8 @@
     {
       "metadata": {
         "name": "lokiQuerySplitting",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1675963622005",
+        "creationTimestamp": "2023-02-09T17:27:02Z"
       },
       "spec": {
         "description": "Split large interval queries into subqueries with smaller time intervals",
@@ -87,8 +87,8 @@
     {
       "metadata": {
         "name": "exploreMetrics",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1712686518006",
+        "creationTimestamp": "2024-04-09T18:15:18Z"
       },
       "spec": {
         "description": "Enables the new Explore Metrics core app",
@@ -100,8 +100,8 @@
     {
       "metadata": {
         "name": "prometheusConfigOverhaulAuth",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1690387793007",
+        "creationTimestamp": "2023-07-26T16:09:53Z"
       },
       "spec": {
         "description": "Update the Prometheus configuration page with the new auth component",
@@ -112,8 +112,8 @@
     {
       "metadata": {
         "name": "annotationPermissionUpdate",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1698759013008",
+        "creationTimestamp": "2023-10-31T13:30:13Z"
       },
       "spec": {
         "description": "Change the way annotation permissions work by scoping them to folders and dashboards.",
@@ -124,8 +124,8 @@
     {
       "metadata": {
         "name": "newPDFRendering",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1707394174009",
+        "creationTimestamp": "2024-02-08T12:09:34Z"
       },
       "spec": {
         "description": "New implementation for the dashboard-to-PDF rendering",
@@ -136,8 +136,8 @@
     {
       "metadata": {
         "name": "publicDashboards",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1649356219010",
+        "creationTimestamp": "2022-04-07T18:30:19Z"
       },
       "spec": {
         "description": "[Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.",
@@ -149,8 +149,8 @@
     {
       "metadata": {
         "name": "nestedFolders",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1666793714011",
+        "creationTimestamp": "2022-10-26T14:15:14Z"
       },
       "spec": {
         "description": "Enable folder nesting",
@@ -161,8 +161,8 @@
     {
       "metadata": {
         "name": "lokiPredefinedOperations",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1685703156012",
+        "creationTimestamp": "2023-06-02T10:52:36Z"
       },
       "spec": {
         "description": "Adds predefined query operations to Loki query editor",
@@ -174,8 +174,8 @@
     {
       "metadata": {
         "name": "pluginsSkipHostEnvVars",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1700068154013",
+        "creationTimestamp": "2023-11-15T17:09:14Z"
       },
       "spec": {
         "description": "Disables passing host environment variable to plugin processes",
@@ -186,8 +186,8 @@
     {
       "metadata": {
         "name": "disableAngular",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1679586225014",
+        "creationTimestamp": "2023-03-23T15:43:45Z"
       },
       "spec": {
         "description": "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
@@ -200,8 +200,8 @@
     {
       "metadata": {
         "name": "wargamesTesting",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1694629921015",
+        "creationTimestamp": "2023-09-13T18:32:01Z"
       },
       "spec": {
         "description": "Placeholder feature flag for internal testing",
@@ -212,8 +212,8 @@
     {
       "metadata": {
         "name": "queryServiceFromUI",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1713518781016",
+        "creationTimestamp": "2024-04-19T09:26:21Z"
       },
       "spec": {
         "description": "Routes requests to the new query service",
@@ -225,8 +225,8 @@
     {
       "metadata": {
         "name": "prometheusDataplane",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1680103592017",
+        "creationTimestamp": "2023-03-29T15:26:32Z"
       },
       "spec": {
         "description": "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from 'Value' to the value of the `__name__` label.",
@@ -238,8 +238,8 @@
     {
       "metadata": {
         "name": "cachingOptimizeSerializationMemoryUsage",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1697129809018",
+        "creationTimestamp": "2023-10-12T16:56:49Z"
       },
       "spec": {
         "description": "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
@@ -250,8 +250,8 @@
     {
       "metadata": {
         "name": "unifiedStorage",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1701894081019",
+        "creationTimestamp": "2023-12-06T20:21:21Z"
       },
       "spec": {
         "description": "SQL-based k8s storage",
@@ -263,8 +263,8 @@
     {
       "metadata": {
         "name": "nestedFolderPicker",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1687945229020",
+        "creationTimestamp": "2023-06-28T09:40:29Z"
       },
       "spec": {
         "description": "Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle",
@@ -277,8 +277,8 @@
     {
       "metadata": {
         "name": "prometheusMetricEncyclopedia",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1678214465021",
+        "creationTimestamp": "2023-03-07T18:41:05Z"
       },
       "spec": {
         "description": "Adds the metrics explorer component to the Prometheus query builder as an option in metric select",
@@ -291,8 +291,8 @@
     {
       "metadata": {
         "name": "enableElasticsearchBackendQuerying",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1681464275022",
+        "creationTimestamp": "2023-04-14T09:24:35Z"
       },
       "spec": {
         "description": "Enable the processing of queries and responses in the Elasticsearch data source through backend",
@@ -304,8 +304,8 @@
     {
       "metadata": {
         "name": "cloudWatchBatchQueries",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1697828981023",
+        "creationTimestamp": "2023-10-20T19:09:41Z"
       },
       "spec": {
         "description": "Runs CloudWatch metrics queries as separate batches",
@@ -316,8 +316,8 @@
     {
       "metadata": {
         "name": "onPremToCloudMigrations",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1705939748024",
+        "creationTimestamp": "2024-01-22T16:09:08Z"
       },
       "spec": {
         "description": "In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.",
@@ -328,8 +328,8 @@
     {
       "metadata": {
         "name": "featureHighlights",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1643889203025",
+        "creationTimestamp": "2022-02-03T11:53:23Z"
       },
       "spec": {
         "description": "Highlight Grafana Enterprise features",
@@ -341,8 +341,8 @@
     {
       "metadata": {
         "name": "autoMigrateXYChartPanel",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1711122277026",
+        "creationTimestamp": "2024-03-22T15:44:37Z"
       },
       "spec": {
         "description": "Migrate old XYChart panel to new XYChart2 model",
@@ -354,8 +354,8 @@
     {
       "metadata": {
         "name": "refactorVariablesTimeRange",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1686057129027",
+        "creationTimestamp": "2023-06-06T13:12:09Z"
       },
       "spec": {
         "description": "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
@@ -367,8 +367,8 @@
     {
       "metadata": {
         "name": "configurableSchedulerTick",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1690389852028",
+        "creationTimestamp": "2023-07-26T16:44:12Z"
       },
       "spec": {
         "description": "Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval",
@@ -381,8 +381,8 @@
     {
       "metadata": {
         "name": "awsDatasourcesNewFormStyling",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1697101150029",
+        "creationTimestamp": "2023-10-12T08:59:10Z"
       },
       "spec": {
         "description": "Applies new form styling for configuration and query editors in AWS plugins",
@@ -394,8 +394,8 @@
     {
       "metadata": {
         "name": "alertmanagerRemotePrimary",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1698683228030",
+        "creationTimestamp": "2023-10-30T16:27:08Z"
       },
       "spec": {
         "description": "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
@@ -406,8 +406,8 @@
     {
       "metadata": {
         "name": "kubernetesFeatureToggles",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1705555964031",
+        "creationTimestamp": "2024-01-18T05:32:44Z"
       },
       "spec": {
         "description": "Use the kubernetes API for feature toggle management in the frontend",
@@ -420,8 +420,8 @@
     {
       "metadata": {
         "name": "queryOverLive",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1643219060032",
+        "creationTimestamp": "2022-01-26T17:44:20Z"
       },
       "spec": {
         "description": "Use Grafana Live WebSocket to execute backend queries",
@@ -433,8 +433,8 @@
     {
       "metadata": {
         "name": "cloudWatchCrossAccountQuerying",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1669635552033",
+        "creationTimestamp": "2022-11-28T11:39:12Z"
       },
       "spec": {
         "description": "Enables cross-account querying in CloudWatch datasources",
@@ -446,8 +446,8 @@
     {
       "metadata": {
         "name": "pluginsFrontendSandbox",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1685955096034",
+        "creationTimestamp": "2023-06-05T08:51:36Z"
       },
       "spec": {
         "description": "Enables the plugins frontend sandbox",
@@ -459,8 +459,8 @@
     {
       "metadata": {
         "name": "awsAsyncQueryCaching",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1689953647035",
+        "creationTimestamp": "2023-07-21T15:34:07Z"
       },
       "spec": {
         "description": "Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled",
@@ -471,8 +471,8 @@
     {
       "metadata": {
         "name": "panelMonitoring",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1696828748036",
+        "creationTimestamp": "2023-10-09T05:19:08Z"
       },
       "spec": {
         "description": "Enables panel monitoring through logs and measurements",
@@ -484,8 +484,8 @@
     {
       "metadata": {
         "name": "canvasPanelPanZoom",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1704225141037",
+        "creationTimestamp": "2024-01-02T19:52:21Z"
       },
       "spec": {
         "description": "Allow pan and zoom in canvas panel",
@@ -497,8 +497,8 @@
     {
       "metadata": {
         "name": "live-service-web-worker",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1643219060038",
+        "creationTimestamp": "2022-01-26T17:44:20Z"
       },
       "spec": {
         "description": "This will use a webworker thread to processes events rather than the main thread",
@@ -510,8 +510,8 @@
     {
       "metadata": {
         "name": "autoMigrateTablePanel",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1707926785039",
+        "creationTimestamp": "2024-02-14T16:06:25Z"
       },
       "spec": {
         "description": "Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking",
@@ -523,8 +523,8 @@
     {
       "metadata": {
         "name": "scenes",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1657176782040",
+        "creationTimestamp": "2022-07-07T06:53:02Z"
       },
       "spec": {
         "description": "Experimental framework to build interactive dashboards",
@@ -536,8 +536,8 @@
     {
       "metadata": {
         "name": "featureToggleAdminPage",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1689713012041",
+        "creationTimestamp": "2023-07-18T20:43:32Z"
       },
       "spec": {
         "description": "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
@@ -550,8 +550,8 @@
     {
       "metadata": {
         "name": "transformationsVariableSupport",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1696429726042",
+        "creationTimestamp": "2023-10-04T14:28:46Z"
       },
       "spec": {
         "description": "Allows using variables in transformations",
@@ -563,8 +563,8 @@
     {
       "metadata": {
         "name": "queryService",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1713518781043",
+        "creationTimestamp": "2024-04-19T09:26:21Z"
       },
       "spec": {
         "description": "Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query",
@@ -576,8 +576,8 @@
     {
       "metadata": {
         "name": "alertingQueryOptimization",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1704919978044",
+        "creationTimestamp": "2024-01-10T20:52:58Z"
       },
       "spec": {
         "description": "Optimizes eligible queries in order to reduce load on datasources",
@@ -588,8 +588,8 @@
     {
       "metadata": {
         "name": "dashboardRestore",
-        "resourceVersion": "1716564259132",
-        "creationTimestamp": "2024-05-23T07:17:45Z",
+        "resourceVersion": "1715880986045",
+        "creationTimestamp": "2024-05-16T17:36:26Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-05-24 15:24:19.132272 +0000 UTC"
         }
@@ -604,8 +604,8 @@
     {
       "metadata": {
         "name": "canvasPanelNesting",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1654023814046",
+        "creationTimestamp": "2022-05-31T19:03:34Z"
       },
       "spec": {
         "description": "Allow elements nesting",
@@ -618,8 +618,8 @@
     {
       "metadata": {
         "name": "showDashboardValidationWarnings",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1665755465047",
+        "creationTimestamp": "2022-10-14T13:51:05Z"
       },
       "spec": {
         "description": "Show warnings when dashboards do not validate against the schema",
@@ -630,8 +630,8 @@
     {
       "metadata": {
         "name": "lokiLogsDataplane",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1689235080048",
+        "creationTimestamp": "2023-07-13T07:58:00Z"
       },
       "spec": {
         "description": "Changes logs responses from Loki to be compliant with the dataplane specification.",
@@ -642,8 +642,8 @@
     {
       "metadata": {
         "name": "recoveryThreshold",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1696949510049",
+        "creationTimestamp": "2023-10-10T14:51:50Z"
       },
       "spec": {
         "description": "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
@@ -655,8 +655,8 @@
     {
       "metadata": {
         "name": "panelTitleSearchInV1",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1697198664050",
+        "creationTimestamp": "2023-10-13T12:04:24Z"
       },
       "spec": {
         "description": "Enable searching for dashboards using panel title in search v1",
@@ -668,8 +668,8 @@
     {
       "metadata": {
         "name": "logsContextDatasourceUi",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1674828721051",
+        "creationTimestamp": "2023-01-27T14:12:01Z"
       },
       "spec": {
         "description": "Allow datasource to provide custom UI for context view",
@@ -682,8 +682,8 @@
     {
       "metadata": {
         "name": "recordedQueriesMulti",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1686746062052",
+        "creationTimestamp": "2023-06-14T12:34:22Z"
       },
       "spec": {
         "description": "Enables writing multiple items from a single query within Recorded Queries",
@@ -694,8 +694,8 @@
     {
       "metadata": {
         "name": "angularDeprecationUI",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1693317947053",
+        "creationTimestamp": "2023-08-29T14:05:47Z"
       },
       "spec": {
         "description": "Display Angular warnings in dashboards and panels",
@@ -707,8 +707,8 @@
     {
       "metadata": {
         "name": "metricsSummary",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1693231332054",
+        "creationTimestamp": "2023-08-28T14:02:12Z"
       },
       "spec": {
         "description": "Enables metrics summary queries in the Tempo data source",
@@ -720,8 +720,8 @@
     {
       "metadata": {
         "name": "alertingSimplifiedRouting",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1699622079055",
+        "creationTimestamp": "2023-11-10T13:14:39Z"
       },
       "spec": {
         "description": "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
@@ -732,8 +732,8 @@
     {
       "metadata": {
         "name": "kubernetesAggregator",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1707771575056",
+        "creationTimestamp": "2024-02-12T20:59:35Z"
       },
       "spec": {
         "description": "Enable grafana aggregator",
@@ -745,8 +745,8 @@
     {
       "metadata": {
         "name": "expressionParser",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1708131551057",
+        "creationTimestamp": "2024-02-17T00:59:11Z"
       },
       "spec": {
         "description": "Enable new expression parser",
@@ -758,8 +758,8 @@
     {
       "metadata": {
         "name": "authAPIAccessTokenAuth",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1712072715058",
+        "creationTimestamp": "2024-04-02T15:45:15Z"
       },
       "spec": {
         "description": "Enables the use of Auth API access tokens for authentication",
@@ -772,8 +772,8 @@
     {
       "metadata": {
         "name": "datasourceQueryMultiStatus",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1651593740059",
+        "creationTimestamp": "2022-05-03T16:02:20Z"
       },
       "spec": {
         "description": "Introduce HTTP 207 Multi Status for api/ds/query",
@@ -784,8 +784,8 @@
     {
       "metadata": {
         "name": "alertStateHistoryLokiOnly",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1680202401060",
+        "creationTimestamp": "2023-03-30T18:53:21Z"
       },
       "spec": {
         "description": "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
@@ -796,8 +796,8 @@
     {
       "metadata": {
         "name": "mlExpressions",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1689269870061",
+        "creationTimestamp": "2023-07-13T17:37:50Z"
       },
       "spec": {
         "description": "Enable support for Machine Learning in server-side expressions",
@@ -808,8 +808,8 @@
     {
       "metadata": {
         "name": "alertingDisableSendAlertsExternal",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1716467359062",
+        "creationTimestamp": "2024-05-23T12:29:19Z"
       },
       "spec": {
         "description": "Disables the ability to send alerts to an external Alertmanager datasource.",
@@ -822,8 +822,8 @@
     {
       "metadata": {
         "name": "editPanelCSVDragAndDrop",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1674553424063",
+        "creationTimestamp": "2023-01-24T09:43:44Z"
       },
       "spec": {
         "description": "Enables drag and drop for CSV and Excel files",
@@ -835,8 +835,8 @@
     {
       "metadata": {
         "name": "teamHttpHeaders",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1697538234064",
+        "creationTimestamp": "2023-10-17T10:23:54Z"
       },
       "spec": {
         "description": "Enables Team LBAC for datasources to apply team headers to the client requests",
@@ -847,8 +847,8 @@
     {
       "metadata": {
         "name": "tableSharedCrosshair",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1702459994065",
+        "creationTimestamp": "2023-12-13T09:33:14Z"
       },
       "spec": {
         "description": "Enables shared crosshair in table panel",
@@ -860,8 +860,8 @@
     {
       "metadata": {
         "name": "renderAuthJWT",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1680540818066",
+        "creationTimestamp": "2023-04-03T16:53:38Z"
       },
       "spec": {
         "description": "Uses JWT-based auth for rendering instead of relying on remote cache",
@@ -873,8 +873,8 @@
     {
       "metadata": {
         "name": "frontendSandboxMonitorOnly",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1688557705067",
+        "creationTimestamp": "2023-07-05T11:48:25Z"
       },
       "spec": {
         "description": "Enables monitor only in the plugin frontend sandbox (if enabled)",
@@ -886,8 +886,8 @@
     {
       "metadata": {
         "name": "logsExploreTableVisualisation",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1689169962068",
+        "creationTimestamp": "2023-07-12T13:52:42Z"
       },
       "spec": {
         "description": "A table visualisation for logs in Explore",
@@ -899,8 +899,8 @@
     {
       "metadata": {
         "name": "addFieldFromCalculationStatFunctions",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1699022398069",
+        "creationTimestamp": "2023-11-03T14:39:58Z"
       },
       "spec": {
         "description": "Add cumulative and window functions to the add field from calculation transformation",
@@ -912,8 +912,8 @@
     {
       "metadata": {
         "name": "tlsMemcached",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1715281928070",
+        "creationTimestamp": "2024-05-09T19:12:08Z"
       },
       "spec": {
         "description": "Use TLS-enabled memcached in the enterprise caching feature",
@@ -925,8 +925,8 @@
     {
       "metadata": {
         "name": "disableEnvelopeEncryption",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1653381287071",
+        "creationTimestamp": "2022-05-24T08:34:47Z"
       },
       "spec": {
         "description": "Disable envelope encryption (emergency only)",
@@ -938,8 +938,8 @@
     {
       "metadata": {
         "name": "storage",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1647537563072",
+        "creationTimestamp": "2022-03-17T17:19:23Z"
       },
       "spec": {
         "description": "Configurable storage for dashboards, datasources, and resources",
@@ -950,8 +950,8 @@
     {
       "metadata": {
         "name": "autoMigrateGraphPanel",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1707429648073",
+        "creationTimestamp": "2024-02-08T22:00:48Z"
       },
       "spec": {
         "description": "Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking",
@@ -963,8 +963,8 @@
     {
       "metadata": {
         "name": "oauthRequireSubClaim",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1711372944074",
+        "creationTimestamp": "2024-03-25T13:22:24Z"
       },
       "spec": {
         "description": "Require that sub claims is present in oauth tokens.",
@@ -977,8 +977,8 @@
     {
       "metadata": {
         "name": "cloudWatchNewLabelParsing",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1712332676075",
+        "creationTimestamp": "2024-04-05T15:57:56Z"
       },
       "spec": {
         "description": "Updates CloudWatch label parsing to be more accurate",
@@ -989,8 +989,8 @@
     {
       "metadata": {
         "name": "panelFilterVariable",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1699013754076",
+        "creationTimestamp": "2023-11-03T12:15:54Z"
       },
       "spec": {
         "description": "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
@@ -1003,8 +1003,9 @@
     {
       "metadata": {
         "name": "queryLibrary",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1665167505077",
+        "creationTimestamp": "2022-10-07T18:31:45Z",
+        "deletionTimestamp": "2023-03-20T16:00:14Z"
       },
       "spec": {
         "description": "Enables Query Library feature in Explore",
@@ -1015,8 +1016,8 @@
     {
       "metadata": {
         "name": "lokiFormatQuery",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1689941036078",
+        "creationTimestamp": "2023-07-21T12:03:56Z"
       },
       "spec": {
         "description": "Enables the ability to format Loki queries",
@@ -1028,8 +1029,8 @@
     {
       "metadata": {
         "name": "externalCorePlugins",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1695372613079",
+        "creationTimestamp": "2023-09-22T08:50:13Z"
       },
       "spec": {
         "description": "Allow core plugins to be loaded as external",
@@ -1040,8 +1041,8 @@
     {
       "metadata": {
         "name": "enableNativeHTTPHistogram",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1696357435080",
+        "creationTimestamp": "2023-10-03T18:23:55Z"
       },
       "spec": {
         "description": "Enables native HTTP Histograms",
@@ -1052,8 +1053,8 @@
     {
       "metadata": {
         "name": "disableSecretsCompatibility",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1657657657081",
+        "creationTimestamp": "2022-07-12T20:27:37Z"
       },
       "spec": {
         "description": "Disable duplicated secret storage in legacy tables",
@@ -1065,8 +1066,8 @@
     {
       "metadata": {
         "name": "idForwarding",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1695655288082",
+        "creationTimestamp": "2023-09-25T15:21:28Z"
       },
       "spec": {
         "description": "Generate signed id token for identity that can be forwarded to plugins and external services",
@@ -1077,8 +1078,8 @@
     {
       "metadata": {
         "name": "logsInfiniteScrolling",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1699527243083",
+        "creationTimestamp": "2023-11-09T10:54:03Z"
       },
       "spec": {
         "description": "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
@@ -1090,8 +1091,8 @@
     {
       "metadata": {
         "name": "autoMigrateWorldmapPanel",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1707926785084",
+        "creationTimestamp": "2024-02-14T16:06:25Z"
       },
       "spec": {
         "description": "Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking",
@@ -1103,8 +1104,8 @@
     {
       "metadata": {
         "name": "aiGeneratedDashboardChanges",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1709640091085",
+        "creationTimestamp": "2024-03-05T12:01:31Z"
       },
       "spec": {
         "description": "Enable AI powered features for dashboards to auto-summary changes when saving",
@@ -1116,8 +1117,8 @@
     {
       "metadata": {
         "name": "managedPluginsInstall",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1697635023086",
+        "creationTimestamp": "2023-10-18T13:17:03Z"
       },
       "spec": {
         "description": "Install managed plugins directly from plugins catalog",
@@ -1128,8 +1129,8 @@
     {
       "metadata": {
         "name": "newDashboardWithFiltersAndGroupBy",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1712229921087",
+        "creationTimestamp": "2024-04-04T11:25:21Z"
       },
       "spec": {
         "description": "Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.",
@@ -1142,8 +1143,8 @@
     {
       "metadata": {
         "name": "publicDashboardsScene",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1711118901088",
+        "creationTimestamp": "2024-03-22T14:48:21Z"
       },
       "spec": {
         "description": "Enables public dashboard rendering using scenes",
@@ -1155,8 +1156,8 @@
     {
       "metadata": {
         "name": "grafanaAPIServerWithExperimentalAPIs",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1696618522089",
+        "creationTimestamp": "2023-10-06T18:55:22Z"
       },
       "spec": {
         "description": "Register experimental APIs with the k8s API server",
@@ -1169,8 +1170,8 @@
     {
       "metadata": {
         "name": "scopeFilters",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1709653279090",
+        "creationTimestamp": "2024-03-05T15:41:19Z"
       },
       "spec": {
         "description": "Enables the use of scope filters in Grafana",
@@ -1183,8 +1184,8 @@
     {
       "metadata": {
         "name": "pdfTables",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1699277962091",
+        "creationTimestamp": "2023-11-06T13:39:22Z"
       },
       "spec": {
         "description": "Enables generating table data as PDF in reporting",
@@ -1195,8 +1196,8 @@
     {
       "metadata": {
         "name": "promQLScope",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1706559737092",
+        "creationTimestamp": "2024-01-29T20:22:17Z"
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into prometheus queries.",
@@ -1207,8 +1208,8 @@
     {
       "metadata": {
         "name": "ssoSettingsSAML",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1710414285093",
+        "creationTimestamp": "2024-03-14T11:04:45Z"
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure the SAML connector",
@@ -1220,8 +1221,9 @@
     {
       "metadata": {
         "name": "influxdbBackendMigration",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1644431176094",
+        "creationTimestamp": "2022-02-09T18:26:16Z",
+        "deletionTimestamp": "2023-01-17T14:11:26Z"
       },
       "spec": {
         "description": "Query InfluxDB InfluxQL without the proxy",
@@ -1233,8 +1235,8 @@
     {
       "metadata": {
         "name": "unifiedRequestLog",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1680269889095",
+        "creationTimestamp": "2023-03-31T13:38:09Z"
       },
       "spec": {
         "description": "Writes error logs to the request logger",
@@ -1245,8 +1247,8 @@
     {
       "metadata": {
         "name": "extraThemes",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1683725824096",
+        "creationTimestamp": "2023-05-10T13:37:04Z"
       },
       "spec": {
         "description": "Enables extra themes",
@@ -1258,8 +1260,8 @@
     {
       "metadata": {
         "name": "queryServiceRewrite",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1713518781097",
+        "creationTimestamp": "2024-04-19T09:26:21Z"
       },
       "spec": {
         "description": "Rewrite requests targeting /ds/query to the query service",
@@ -1271,8 +1273,8 @@
     {
       "metadata": {
         "name": "prometheusPromQAIL",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1697730332098",
+        "creationTimestamp": "2023-10-19T15:45:32Z"
       },
       "spec": {
         "description": "Prometheus and AI/ML to assist users in creating a query",
@@ -1284,8 +1286,8 @@
     {
       "metadata": {
         "name": "prometheusCodeModeMetricNamesSearch",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1712263103099",
+        "creationTimestamp": "2024-04-04T20:38:23Z"
       },
       "spec": {
         "description": "Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names",
@@ -1297,8 +1299,8 @@
     {
       "metadata": {
         "name": "dashboardSceneSolo",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1707638927100",
+        "creationTimestamp": "2024-02-11T08:08:47Z"
       },
       "spec": {
         "description": "Enables rendering dashboards using scenes for solo panels",
@@ -1310,8 +1312,8 @@
     {
       "metadata": {
         "name": "autofixDSUID",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1714735927101",
+        "creationTimestamp": "2024-05-03T11:32:07Z"
       },
       "spec": {
         "description": "Automatically migrates invalid datasource UIDs",
@@ -1322,8 +1324,8 @@
     {
       "metadata": {
         "name": "autoMigratePiechartPanel",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1707926785102",
+        "creationTimestamp": "2024-02-14T16:06:25Z"
       },
       "spec": {
         "description": "Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking",
@@ -1335,8 +1337,8 @@
     {
       "metadata": {
         "name": "alertStateHistoryLokiPrimary",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1680202401103",
+        "creationTimestamp": "2023-03-30T18:53:21Z"
       },
       "spec": {
         "description": "Enable a remote Loki instance as the primary source for state history reads.",
@@ -1347,8 +1349,8 @@
     {
       "metadata": {
         "name": "libraryPanelRBAC",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1697067050104",
+        "creationTimestamp": "2023-10-11T23:30:50Z"
       },
       "spec": {
         "description": "Enables RBAC support for library panels",
@@ -1360,8 +1362,8 @@
     {
       "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1686068932105",
+        "creationTimestamp": "2023-06-06T16:28:52Z"
       },
       "spec": {
         "description": "Enables previous SQL data source dataset dropdown behavior",
@@ -1374,8 +1376,8 @@
     {
       "metadata": {
         "name": "dashboardScene",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1699865481106",
+        "creationTimestamp": "2023-11-13T08:51:21Z"
       },
       "spec": {
         "description": "Enables dashboard rendering using scenes for all roles",
@@ -1387,8 +1389,8 @@
     {
       "metadata": {
         "name": "regressionTransformation",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1700837356107",
+        "creationTimestamp": "2023-11-24T14:49:16Z"
       },
       "spec": {
         "description": "Enables regression analysis transformation",
@@ -1400,8 +1402,8 @@
     {
       "metadata": {
         "name": "autoMigrateStatPanel",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1707926785108",
+        "creationTimestamp": "2024-02-14T16:06:25Z"
       },
       "spec": {
         "description": "Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking",
@@ -1413,8 +1415,8 @@
     {
       "metadata": {
         "name": "logRequestsInstrumentedAsUnknown",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1654851415109",
+        "creationTimestamp": "2022-06-10T08:56:55Z"
       },
       "spec": {
         "description": "Logs the path for requests that are instrumented as unknown",
@@ -1425,8 +1427,8 @@
     {
       "metadata": {
         "name": "topnav",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1655735143110",
+        "creationTimestamp": "2022-06-20T14:25:43Z"
       },
       "spec": {
         "description": "Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.",
@@ -1437,8 +1439,8 @@
     {
       "metadata": {
         "name": "kubernetesSnapshots",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1701815509111",
+        "creationTimestamp": "2023-12-05T22:31:49Z"
       },
       "spec": {
         "description": "Routes snapshot requests from /api to the /apis endpoint",
@@ -1450,8 +1452,8 @@
     {
       "metadata": {
         "name": "alertmanagerRemoteOnly",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1698683228112",
+        "creationTimestamp": "2023-10-30T16:27:08Z"
       },
       "spec": {
         "description": "Disable the internal Alertmanager and only use the external one defined.",
@@ -1462,8 +1464,8 @@
     {
       "metadata": {
         "name": "publicDashboardsEmailSharing",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1672775115113",
+        "creationTimestamp": "2023-01-03T19:45:15Z"
       },
       "spec": {
         "description": "Enables public dashboard sharing to be restricted to only allowed emails",
@@ -1476,8 +1478,8 @@
     {
       "metadata": {
         "name": "faroDatasourceSelector",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1683246910114",
+        "creationTimestamp": "2023-05-05T00:35:10Z"
       },
       "spec": {
         "description": "Enable the data source selector within the Frontend Apps section of the Frontend Observability",
@@ -1489,8 +1491,8 @@
     {
       "metadata": {
         "name": "alertingNoDataErrorExecution",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1692109635115",
+        "creationTimestamp": "2023-08-15T14:27:15Z"
       },
       "spec": {
         "description": "Changes how Alerting state manager handles execution of NoData/Error",
@@ -1502,8 +1504,8 @@
     {
       "metadata": {
         "name": "lokiRunQueriesInParallel",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1695116041116",
+        "creationTimestamp": "2023-09-19T09:34:01Z"
       },
       "spec": {
         "description": "Enables running Loki queries in parallel",
@@ -1514,8 +1516,8 @@
     {
       "metadata": {
         "name": "alertingInsights",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1694696284117",
+        "creationTimestamp": "2023-09-14T12:58:04Z"
       },
       "spec": {
         "description": "Show the new alerting insights landing page",
@@ -1528,8 +1530,8 @@
     {
       "metadata": {
         "name": "externalServiceAccounts",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1695885997118",
+        "creationTimestamp": "2023-09-28T07:26:37Z"
       },
       "spec": {
         "description": "Automatic service account and token setup for plugins",
@@ -1541,8 +1543,8 @@
     {
       "metadata": {
         "name": "lokiQueryHints",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1702932196119",
+        "creationTimestamp": "2023-12-18T20:43:16Z"
       },
       "spec": {
         "description": "Enables query hints for Loki",
@@ -1554,8 +1556,8 @@
     {
       "metadata": {
         "name": "jitterAlertRulesWithinGroups",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1705603691120",
+        "creationTimestamp": "2024-01-18T18:48:11Z"
       },
       "spec": {
         "description": "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group",
@@ -1568,8 +1570,8 @@
     {
       "metadata": {
         "name": "influxqlStreamingParser",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1701278975121",
+        "creationTimestamp": "2023-11-29T17:29:35Z"
       },
       "spec": {
         "description": "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
@@ -1580,8 +1582,8 @@
     {
       "metadata": {
         "name": "alertStateHistoryLokiSecondary",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1680202401122",
+        "creationTimestamp": "2023-03-30T18:53:21Z"
       },
       "spec": {
         "description": "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",
@@ -1592,8 +1594,8 @@
     {
       "metadata": {
         "name": "prometheusIncrementalQueryInstrumentation",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1688585989123",
+        "creationTimestamp": "2023-07-05T19:39:49Z"
       },
       "spec": {
         "description": "Adds RudderStack events to incremental queries",
@@ -1605,8 +1607,8 @@
     {
       "metadata": {
         "name": "groupToNestedTableTransformation",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1707316106124",
+        "creationTimestamp": "2024-02-07T14:28:26Z"
       },
       "spec": {
         "description": "Enables the group to nested table transformation",
@@ -1618,8 +1620,8 @@
     {
       "metadata": {
         "name": "accessActionSets",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1712938765125",
+        "creationTimestamp": "2024-04-12T16:19:25Z"
       },
       "spec": {
         "description": "Introduces action sets for resource permissions",
@@ -1630,8 +1632,8 @@
     {
       "metadata": {
         "name": "newDashboardSharingComponent",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1714748538126",
+        "creationTimestamp": "2024-05-03T15:02:18Z"
       },
       "spec": {
         "description": "Enables the new sharing drawer design",
@@ -1643,8 +1645,8 @@
     {
       "metadata": {
         "name": "transformationsRedesign",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1689179749127",
+        "creationTimestamp": "2023-07-12T16:35:49Z"
       },
       "spec": {
         "description": "Enables the transformations redesign",
@@ -1657,8 +1659,8 @@
     {
       "metadata": {
         "name": "formatString",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1697221032128",
+        "creationTimestamp": "2023-10-13T18:17:12Z"
       },
       "spec": {
         "description": "Enable format string transformer",
@@ -1670,8 +1672,8 @@
     {
       "metadata": {
         "name": "logRowsPopoverMenu",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1700128090129",
+        "creationTimestamp": "2023-11-16T09:48:10Z"
       },
       "spec": {
         "description": "Enable filtering menu displayed when text of a log line is selected",
@@ -1683,8 +1685,8 @@
     {
       "metadata": {
         "name": "notificationBanner",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1715592754130",
+        "creationTimestamp": "2024-05-13T09:32:34Z"
       },
       "spec": {
         "description": "Enables the notification banner UI and API",
@@ -1695,8 +1697,8 @@
     {
       "metadata": {
         "name": "enableDatagridEditing",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1682347591131",
+        "creationTimestamp": "2023-04-24T14:46:31Z"
       },
       "spec": {
         "description": "Enables the edit functionality in the datagrid panel",
@@ -1708,8 +1710,8 @@
     {
       "metadata": {
         "name": "reportingRetries",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1693468067132",
+        "creationTimestamp": "2023-08-31T07:47:47Z"
       },
       "spec": {
         "description": "Enables rendering retries for the reporting feature",
@@ -1721,8 +1723,8 @@
     {
       "metadata": {
         "name": "kubernetesPlaylists",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1696532436133",
+        "creationTimestamp": "2023-10-05T19:00:36Z"
       },
       "spec": {
         "description": "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
@@ -1734,8 +1736,8 @@
     {
       "metadata": {
         "name": "ssoSettingsApi",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1699437001134",
+        "creationTimestamp": "2023-11-08T09:50:01Z"
       },
       "spec": {
         "description": "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
@@ -1747,8 +1749,8 @@
     {
       "metadata": {
         "name": "cloudRBACRoles",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1704892741135",
+        "creationTimestamp": "2024-01-10T13:19:01Z"
       },
       "spec": {
         "description": "Enabled grafana cloud specific RBAC roles",
@@ -1761,8 +1763,8 @@
     {
       "metadata": {
         "name": "grpcServer",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1664223934136",
+        "creationTimestamp": "2022-09-26T20:25:34Z"
       },
       "spec": {
         "description": "Run the GRPC server",
@@ -1774,8 +1776,8 @@
     {
       "metadata": {
         "name": "alertingNoNormalState",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1673652569137",
+        "creationTimestamp": "2023-01-13T23:29:29Z"
       },
       "spec": {
         "description": "Stop maintaining state of alerts that are not firing",
@@ -1787,8 +1789,8 @@
     {
       "metadata": {
         "name": "vizAndWidgetSplit",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1687861333138",
+        "creationTimestamp": "2023-06-27T10:22:13Z"
       },
       "spec": {
         "description": "Split panels between visualizations and widgets",
@@ -1800,8 +1802,8 @@
     {
       "metadata": {
         "name": "nodeGraphDotLayout",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1706718372139",
+        "creationTimestamp": "2024-01-31T16:26:12Z"
       },
       "spec": {
         "description": "Changed the layout algorithm for the node graph",
@@ -1813,8 +1815,8 @@
     {
       "metadata": {
         "name": "groupByVariable",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1707931084140",
+        "creationTimestamp": "2024-02-14T17:18:04Z"
       },
       "spec": {
         "description": "Enable groupBy variable support in scenes dashboards",
@@ -1827,8 +1829,8 @@
     {
       "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1709068560141",
+        "creationTimestamp": "2024-02-27T21:16:00Z"
       },
       "spec": {
         "description": "Enables using SQL and DuckDB functions as Expressions.",
@@ -1839,8 +1841,8 @@
     {
       "metadata": {
         "name": "logsExploreTableDefaultVisualization",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1714663695142",
+        "creationTimestamp": "2024-05-02T15:28:15Z"
       },
       "spec": {
         "description": "Sets the logs table as default visualisation in logs explore",
@@ -1852,8 +1854,8 @@
     {
       "metadata": {
         "name": "lokiExperimentalStreaming",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1687169031143",
+        "creationTimestamp": "2023-06-19T10:03:51Z"
       },
       "spec": {
         "description": "Support new streaming approach for loki (prototype, needs special loki build)",
@@ -1864,8 +1866,8 @@
     {
       "metadata": {
         "name": "dashgpt",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1693426925144",
+        "creationTimestamp": "2023-08-30T20:22:05Z"
       },
       "spec": {
         "description": "Enable AI powered features in dashboards",
@@ -1877,8 +1879,8 @@
     {
       "metadata": {
         "name": "sseGroupByDatasource",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1694116927145",
+        "creationTimestamp": "2023-09-07T20:02:07Z"
       },
       "spec": {
         "description": "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
@@ -1889,8 +1891,8 @@
     {
       "metadata": {
         "name": "lokiStructuredMetadata",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1700150774146",
+        "creationTimestamp": "2023-11-16T16:06:14Z"
       },
       "spec": {
         "description": "Enables the loki data source to request structured metadata from the Loki server",
@@ -1901,8 +1903,8 @@
     {
       "metadata": {
         "name": "extractFieldsNameDeduplication",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1698940062147",
+        "creationTimestamp": "2023-11-02T15:47:42Z"
       },
       "spec": {
         "description": "Make sure extracted field names are unique in the dataframe",
@@ -1914,8 +1916,8 @@
     {
       "metadata": {
         "name": "dashboardSceneForViewers",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1698951745148",
+        "creationTimestamp": "2023-11-02T19:02:25Z"
       },
       "spec": {
         "description": "Enables dashboard rendering using Scenes for viewer roles",
@@ -1927,8 +1929,8 @@
     {
       "metadata": {
         "name": "flameGraphItemCollapsing",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1699540267149",
+        "creationTimestamp": "2023-11-09T14:31:07Z"
       },
       "spec": {
         "description": "Allow collapsing of flame graph items",
@@ -1940,8 +1942,8 @@
     {
       "metadata": {
         "name": "newFolderPicker",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1705318999150",
+        "creationTimestamp": "2024-01-15T11:43:19Z"
       },
       "spec": {
         "description": "Enables the nested folder picker without having nested folders enabled",
@@ -1953,9 +1955,9 @@
     {
       "metadata": {
         "name": "dualWritePlaylistsMode2",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z",
-        "deletionTimestamp": "2024-05-31T16:59:31Z"
+        "resourceVersion": "1715688716151",
+        "creationTimestamp": "2024-05-14T12:11:56Z",
+        "deletionTimestamp": "2024-05-31T18:18:09Z"
       },
       "spec": {
         "description": "Enables dual writing of playlists to both legacy and k8s storage in mode 2",
@@ -1966,8 +1968,8 @@
     {
       "metadata": {
         "name": "accessControlOnCall",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1666195809152",
+        "creationTimestamp": "2022-10-19T16:10:09Z"
       },
       "spec": {
         "description": "Access control primitives for OnCall",
@@ -1979,8 +1981,8 @@
     {
       "metadata": {
         "name": "lokiQuerySplittingConfig",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1679327496153",
+        "creationTimestamp": "2023-03-20T15:51:36Z"
       },
       "spec": {
         "description": "Give users the option to configure split durations for Loki queries",
@@ -1992,8 +1994,8 @@
     {
       "metadata": {
         "name": "awsDatasourcesTempCredentials",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1688655971154",
+        "creationTimestamp": "2023-07-06T15:06:11Z"
       },
       "spec": {
         "description": "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
@@ -2004,8 +2006,8 @@
     {
       "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1701894081155",
+        "creationTimestamp": "2023-12-06T20:21:21Z"
       },
       "spec": {
         "description": "Start an additional https handler and write kubectl options",
@@ -2018,8 +2020,8 @@
     {
       "metadata": {
         "name": "pluginsAPIMetrics",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1695296192156",
+        "creationTimestamp": "2023-09-21T11:36:32Z"
       },
       "spec": {
         "description": "Sends metrics of public grafana packages usage by plugins",
@@ -2031,8 +2033,8 @@
     {
       "metadata": {
         "name": "exploreContentOutline",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1697216233157",
+        "creationTimestamp": "2023-10-13T16:57:13Z"
       },
       "spec": {
         "description": "Content outline sidebar",
@@ -2045,8 +2047,8 @@
     {
       "metadata": {
         "name": "mysqlAnsiQuotes",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1665575015158",
+        "creationTimestamp": "2022-10-12T11:43:35Z"
       },
       "spec": {
         "description": "Use double quotes to escape keyword in a MySQL query",
@@ -2057,8 +2059,8 @@
     {
       "metadata": {
         "name": "individualCookiePreferences",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1676974747159",
+        "creationTimestamp": "2023-02-21T10:19:07Z"
       },
       "spec": {
         "description": "Support overriding cookie preferences per user",
@@ -2069,8 +2071,8 @@
     {
       "metadata": {
         "name": "alertingBacktesting",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1671029054160",
+        "creationTimestamp": "2022-12-14T14:44:14Z"
       },
       "spec": {
         "description": "Rule backtesting API for alerting",
@@ -2081,8 +2083,8 @@
     {
       "metadata": {
         "name": "alertingSaveStatePeriodic",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1706025810161",
+        "creationTimestamp": "2024-01-23T16:03:30Z"
       },
       "spec": {
         "description": "Writes the state periodically to the database, asynchronous to rule evaluation",
@@ -2093,8 +2095,8 @@
     {
       "metadata": {
         "name": "grafanaManagedRecordingRules",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1713808396162",
+        "creationTimestamp": "2024-04-22T17:53:16Z"
       },
       "spec": {
         "description": "Enables Grafana-managed recording rules.",
@@ -2107,8 +2109,8 @@
     {
       "metadata": {
         "name": "datasourceProxyDisableRBAC",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1716296716163",
+        "creationTimestamp": "2024-05-21T13:05:16Z"
       },
       "spec": {
         "description": "Disables applying a plugin route's ReqAction field to authorization",
@@ -2120,8 +2122,8 @@
     {
       "metadata": {
         "name": "panelTitleSearch",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1644949563164",
+        "creationTimestamp": "2022-02-15T18:26:03Z"
       },
       "spec": {
         "description": "Search for dashboards using panel title",
@@ -2133,8 +2135,8 @@
     {
       "metadata": {
         "name": "correlations",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1663334067165",
+        "creationTimestamp": "2022-09-16T13:14:27Z"
       },
       "spec": {
         "description": "Correlations page",
@@ -2146,8 +2148,8 @@
     {
       "metadata": {
         "name": "autoMigrateOldPanels",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1679544156166",
+        "creationTimestamp": "2023-03-23T04:02:36Z"
       },
       "spec": {
         "description": "Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)",
@@ -2159,8 +2161,8 @@
     {
       "metadata": {
         "name": "permissionsFilterRemoveSubquery",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1690961965167",
+        "creationTimestamp": "2023-08-02T07:39:25Z"
       },
       "spec": {
         "description": "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
@@ -2171,8 +2173,8 @@
     {
       "metadata": {
         "name": "alertmanagerRemoteSecondary",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1698683228168",
+        "creationTimestamp": "2023-10-30T16:27:08Z"
       },
       "spec": {
         "description": "Enable Grafana to sync configuration and state with a remote Alertmanager.",
@@ -2183,8 +2185,8 @@
     {
       "metadata": {
         "name": "betterPageScrolling",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1709737607169",
+        "creationTimestamp": "2024-03-06T15:06:47Z"
       },
       "spec": {
         "description": "Removes CustomScrollbar from the UI, relying on native browser scrollbars",
@@ -2196,9 +2198,9 @@
     {
       "metadata": {
         "name": "dualWritePlaylistsMode3",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z",
-        "deletionTimestamp": "2024-05-31T16:59:31Z"
+        "resourceVersion": "1715688716170",
+        "creationTimestamp": "2024-05-14T12:11:56Z",
+        "deletionTimestamp": "2024-05-31T18:18:09Z"
       },
       "spec": {
         "description": "Enables dual writing of playlists to both legacy and k8s storage in mode 3",
@@ -2209,8 +2211,8 @@
     {
       "metadata": {
         "name": "dashboardRestore",
-        "resourceVersion": "1716563559003",
-        "creationTimestamp": "2024-02-20T18:50:41Z",
+        "resourceVersion": "1715880986171",
+        "creationTimestamp": "2024-05-16T17:36:26Z",
         "deletionTimestamp": "2024-05-24T15:24:19Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-05-24 15:12:39.003245 +0000 UTC"
@@ -2226,8 +2228,8 @@
     {
       "metadata": {
         "name": "datasourceQueryTypes",
-        "resourceVersion": "1716473268430",
-        "creationTimestamp": "2024-05-23T14:07:48Z"
+        "resourceVersion": "1716482788172",
+        "creationTimestamp": "2024-05-23T16:46:28Z"
       },
       "spec": {
         "description": "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
@@ -2239,8 +2241,8 @@
     {
       "metadata": {
         "name": "alertingListViewV2",
-        "resourceVersion": "1716558084235",
-        "creationTimestamp": "2024-05-24T13:41:24Z"
+        "resourceVersion": "1716561649173",
+        "creationTimestamp": "2024-05-24T14:40:49Z"
       },
       "spec": {
         "description": "Enables the new alert list view design",
@@ -2252,8 +2254,8 @@
     {
       "metadata": {
         "name": "preserveDashboardStateWhenNavigating",
-        "resourceVersion": "1716555778767",
-        "creationTimestamp": "2024-05-24T13:02:58Z"
+        "resourceVersion": "1716812886174",
+        "creationTimestamp": "2024-05-27T12:28:06Z"
       },
       "spec": {
         "description": "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
@@ -2266,8 +2268,8 @@
     {
       "metadata": {
         "name": "alertingCentralAlertHistory",
-        "resourceVersion": "1716819619889",
-        "creationTimestamp": "2024-05-27T14:20:19Z"
+        "resourceVersion": "1716994898175",
+        "creationTimestamp": "2024-05-29T15:01:38Z"
       },
       "spec": {
         "description": "Enables the new central alert history.",
@@ -2279,8 +2281,8 @@
     {
       "metadata": {
         "name": "disableSSEDataplane",
-        "resourceVersion": "1716816471156",
-        "creationTimestamp": "2024-05-27T13:27:51Z"
+        "resourceVersion": "1681316674176",
+        "creationTimestamp": "2023-04-12T16:24:34Z"
       },
       "spec": {
         "description": "Disables dataplane specific processing in server side expressions.",
@@ -2291,8 +2293,8 @@
     {
       "metadata": {
         "name": "influxdbRunQueriesInParallel",
-        "resourceVersion": "1716816471156",
-        "creationTimestamp": "2024-05-27T13:27:51Z"
+        "resourceVersion": "1706785104177",
+        "creationTimestamp": "2024-02-01T10:58:24Z"
       },
       "spec": {
         "description": "Enables running InfluxDB Influxql queries in parallel",
