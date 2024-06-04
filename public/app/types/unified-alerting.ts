@@ -146,7 +146,7 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
 
 // @TODO so many duplicate types here sigh
 // this one only has the ruleSourceName (data source name, but should be UID actually...)
-export interface RuleGroupLocation {
+export interface RuleGroupIdentifier {
   ruleSourceName: string;
   namespace: string; // ⚠️ use the Grafana folder UID for Grafana-managed rules
   group: string;

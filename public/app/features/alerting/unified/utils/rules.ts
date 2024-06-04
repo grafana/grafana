@@ -15,7 +15,7 @@ import {
   RecordingRule,
   Rule,
   RuleIdentifier,
-  RuleGroupLocation,
+  RuleGroupIdentifier,
   RuleNamespace,
 } from 'app/types/unified-alerting';
 import {
@@ -295,7 +295,7 @@ export const getNumberEvaluationsToStartAlerting = (forDuration: string, current
 };
 
 // extract the rule group location from a combined rule type
-export function getRuleGroupLocation(rule: CombinedRule): RuleGroupLocation {
+export function getRuleGroupLocation(rule: CombinedRule): RuleGroupIdentifier {
   const ruleSourceName = isGrafanaRulesSource(rule.namespace.rulesSource)
     ? rule.namespace.rulesSource
     : rule.namespace.rulesSource.name;
