@@ -415,6 +415,7 @@ func (esa *ExtSvcAccountsService) removeExtSvcAccountToken(ctx context.Context, 
 	return esa.DeleteExtSvcCredentials(ctx, orgID, extSvcSlug)
 }
 
+// FIXME: If the warning log never appears, we can remove this function
 func genTokenWithRetries(ctxLogger log.Logger, extSvcSlug string) (satokengen.KeyGenResult, error) {
 	var newKeyInfo satokengen.KeyGenResult
 	var err error
