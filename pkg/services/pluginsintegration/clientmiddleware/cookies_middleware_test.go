@@ -151,4 +151,67 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.EqualValues(t, "cookie2=", cdt.CheckHealthReq.Headers[cookieHeaderName])
 		})
 	})
+
+	t.Run("When app", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/some/thing", nil)
+		require.NoError(t, err)
+		req.AddCookie(&http.Cookie{
+			Name: "cookie1",
+		})
+		req.AddCookie(&http.Cookie{
+			Name: "cookie2",
+		})
+		req.AddCookie(&http.Cookie{
+			Name: "cookie3",
+		})
+		req.Header.Set(otherHeader, "test")
+
+		cdt := clienttest.NewClientDecoratorTest(t,
+			clienttest.WithReqContext(req, &user.SignedInUser{}),
+			clienttest.WithMiddlewares(NewCookiesMiddleware([]string{"grafana_session"})),
+		)
+
+		pluginCtx := backend.PluginContext{
+			AppInstanceSettings: &backend.AppInstanceSettings{},
+		}
+
+		t.Run("Should not forward cookies when calling QueryData", func(t *testing.T) {
+			pReq := &backend.QueryDataRequest{
+				PluginContext: pluginCtx,
+				Headers:       map[string]string{otherHeader: "test"},
+			}
+			pReq.Headers[backend.CookiesHeaderName] = req.Header.Get(backend.CookiesHeaderName)
+			_, err = cdt.Decorator.QueryData(req.Context(), pReq)
+			require.NoError(t, err)
+			require.NotNil(t, cdt.QueryDataReq)
+			require.Len(t, cdt.QueryDataReq.Headers, 1)
+			require.Equal(t, "test", cdt.QueryDataReq.Headers[otherHeader])
+		})
+
+		t.Run("Should not forward cookies when calling CallResource", func(t *testing.T) {
+			pReq := &backend.CallResourceRequest{
+				PluginContext: pluginCtx,
+				Headers:       map[string][]string{otherHeader: {"test"}},
+			}
+			pReq.Headers[backend.CookiesHeaderName] = []string{req.Header.Get(backend.CookiesHeaderName)}
+			err = cdt.Decorator.CallResource(req.Context(), pReq, nopCallResourceSender)
+			require.NoError(t, err)
+			require.NotNil(t, cdt.CallResourceReq)
+			require.Len(t, cdt.CallResourceReq.Headers, 1)
+			require.Equal(t, "test", cdt.CallResourceReq.Headers[otherHeader][0])
+		})
+
+		t.Run("Should not forward cookies when calling CheckHealth", func(t *testing.T) {
+			pReq := &backend.CheckHealthRequest{
+				PluginContext: pluginCtx,
+				Headers:       map[string]string{otherHeader: "test"},
+			}
+			pReq.Headers[backend.CookiesHeaderName] = req.Header.Get(backend.CookiesHeaderName)
+			_, err = cdt.Decorator.CheckHealth(req.Context(), pReq)
+			require.NoError(t, err)
+			require.NotNil(t, cdt.CheckHealthReq)
+			require.Len(t, cdt.CheckHealthReq.Headers, 1)
+			require.Equal(t, "test", cdt.CheckHealthReq.Headers[otherHeader])
+		})
+	})
 }
