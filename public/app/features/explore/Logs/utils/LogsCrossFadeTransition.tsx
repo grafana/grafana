@@ -65,7 +65,7 @@ export function LogsCrossFadeTransition(props: Props) {
       }}
       nodeRef={transitionRef}
     >
-      {React.cloneElement(children, { ref: transitionRef })}
+      <div ref={transitionRef}>{children}</div>
     </CSSTransition>
   );
 }
