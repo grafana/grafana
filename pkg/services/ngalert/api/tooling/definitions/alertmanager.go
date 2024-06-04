@@ -877,6 +877,26 @@ func (c *GettableApiAlertingConfig) UnmarshalJSON(b []byte) error {
 	return c.validate()
 }
 
+func (c *GettableApiAlertingConfig) UnmarshalYAML(value *yaml.Node) error {
+	type plain GettableApiAlertingConfig
+	if err := value.Decode((*plain)(c)); err != nil {
+		return err
+	}
+
+	// Since Config implements yaml.Unmarshaler, we must handle _all_ other fields independently.
+	// Otherwise, the yaml decoder will detect this and only use the embedded type.
+	// Additionally, we'll use pointers to slices in order to reference the intended target.
+	type overrides struct {
+		Receivers *[]*GettableApiReceiver `yaml:"receivers,omitempty"`
+	}
+
+	if err := value.Decode(&overrides{Receivers: &c.Receivers}); err != nil {
+		return err
+	}
+
+	return c.validate()
+}
+
 // validate ensures that the two routing trees use the correct receiver types.
 func (c *GettableApiAlertingConfig) validate() error {
 	receivers := make(map[string]struct{}, len(c.Receivers))

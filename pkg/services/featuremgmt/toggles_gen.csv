@@ -32,7 +32,6 @@ showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,fal
 mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
 accessControlOnCall,preview,@grafana/identity-access-team,false,false,false
 nestedFolders,GA,@grafana/search-and-storage,false,false,false
-nestedFolderPicker,GA,@grafana/grafana-frontend-platform,false,false,true
 alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
 editPanelCSVDragAndDrop,experimental,@grafana/dataviz-squad,false,false,true
 alertingNoNormalState,preview,@grafana/alerting-squad,false,false,false
@@ -127,7 +126,7 @@ panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,true
 pdfTables,preview,@grafana/sharing-squad,false,false,false
 ssoSettingsApi,GA,@grafana/identity-access-team,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
-logsInfiniteScrolling,experimental,@grafana/observability-logs,false,false,true
+logsInfiniteScrolling,GA,@grafana/observability-logs,false,false,true
 flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,false,false,true
 exploreMetrics,GA,@grafana/dashboards-squad,false,false,true
 alertingSimplifiedRouting,GA,@grafana/alerting-squad,false,false,false
