@@ -109,12 +109,20 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                       <GlobalStyles />
                       <div className="grafana-app">
                         <AppChrome>
-                          {pageBanners.map((Banner, index) => (
-                            <Banner key={index.toString()} />
-                          ))}
                           <AngularRoot />
                           <AppNotificationList />
-                          {ready && this.renderRoutes()}
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              flexGrow: 1,
+                            }}
+                          >
+                            {pageBanners.map((Banner, index) => (
+                              <Banner key={index.toString()} />
+                            ))}
+                            {ready && this.renderRoutes()}
+                          </div>
                           {bodyRenderHooks.map((Hook, index) => (
                             <Hook key={index.toString()} />
                           ))}
