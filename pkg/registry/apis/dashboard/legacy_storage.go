@@ -136,7 +136,6 @@ func (s *dashboardStorage) List(ctx context.Context, options *internalversion.Li
 	}
 
 	// fmt.Printf("LIST: %s\n", options.Continue)
-	// fdbu45mzt2rcwe
 
 	// translate grafana.app/* label selectors into field requirements
 	requirements, newSelector, err := entity.ReadLabelSelectors(options.LabelSelector)
