@@ -60,11 +60,11 @@ export async function fetchScope(name: string): Promise<Scope> {
       const scope = {
         ...basicScope,
         metadata: {
-          ...basicScope,
+          ...basicScope.metadata,
           ...serverScope.metadata,
         },
         spec: {
-          ...basicScope,
+          ...basicScope.spec,
           ...serverScope.spec,
         },
       };

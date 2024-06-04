@@ -37,7 +37,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
   }
 
-  public async fetchDashboards(scopes: Scope[]) {
+  public fetchDashboards(scopes: Scope[]) {
     this.fetchSub?.unsubscribe();
 
     if (scopes.length === 0) {

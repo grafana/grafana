@@ -80,7 +80,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     return this.updateNode([''], true, '');
   }
 
-  public async updateNode(path: string[], isExpanded: boolean, query: string) {
+  public updateNode(path: string[], isExpanded: boolean, query: string) {
     let nodes = { ...this.state.nodes };
     let currentLevel: NodesMap = nodes;
 
@@ -169,7 +169,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     return this.state.scopes;
   }
 
-  public async updateScopes(dirtyScopeNames = this.state.dirtyScopeNames) {
+  public updateScopes(dirtyScopeNames = this.state.dirtyScopeNames) {
     if (isEqual(dirtyScopeNames, this.getScopeNames())) {
       return;
     }

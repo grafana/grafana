@@ -17,6 +17,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { ScopesDashboardsScene } from './ScopesDashboardsScene';
 import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { ScopesScene } from './ScopesScene';
+import * as dashboardsApi from './api/dashboards';
 import * as scopesApi from './api/scopes';
 
 const mocksScopes: Scope[] = [
@@ -190,14 +191,12 @@ jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
-    get: jest.fn().mockImplementation((url: string) => {
-      const search = new URLSearchParams(url.split('?').pop() || '');
-
+    get: jest.fn().mockImplementation((url: string, params: { fieldSelector: string; parent: string }) => {
       if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find')) {
-        const parent = search.get('parent')?.replace('parent=', '');
-
         return {
-          items: mocksNodes.filter((node) => (parent ? node.nodeId.startsWith(parent) : !node.nodeId.includes('.'))),
+          items: mocksNodes.filter((node) =>
+            parent ? node.nodeId.startsWith(params.parent) : !node.nodeId.includes('.')
+          ),
         };
       }
 
@@ -208,7 +207,7 @@ jest.mock('@grafana/runtime', () => ({
       }
 
       if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopedashboardbindings')) {
-        const scope = search.get('fieldSelector')?.replace('spec.scope=', '') ?? '';
+        const scope = params.fieldSelector.replace('spec.scope=', '') ?? '';
 
         return {
           items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) => bindingScope === scope),
@@ -219,6 +218,11 @@ jest.mock('@grafana/runtime', () => ({
     }),
   }),
 }));
+
+const fetchNodesSpy = jest.spyOn(scopesApi, 'fetchNodes');
+const fetchScopeSpy = jest.spyOn(scopesApi, 'fetchScope');
+const fetchScopesSpy = jest.spyOn(scopesApi, 'fetchScopes');
+const fetchDashboardsSpy = jest.spyOn(dashboardsApi, 'fetchDashboards');
 
 describe('ScopesScene', () => {
   describe('Feature flag off', () => {
@@ -244,9 +248,6 @@ describe('ScopesScene', () => {
     let scopesScene: ScopesScene;
     let filtersScene: ScopesFiltersScene;
     let dashboardsScene: ScopesDashboardsScene;
-    let fetchNodesSpy: jest.SpyInstance;
-    let fetchScopesSpy: jest.SpyInstance;
-    let fetchDashboardsSpy: jest.SpyInstance;
 
     beforeAll(() => {
       config.featureToggles.scopeFilters = true;
@@ -269,12 +270,13 @@ describe('ScopesScene', () => {
       scopesScene = dashboardScene.state.scopes!;
       filtersScene = scopesScene.state.filters;
       dashboardsScene = scopesScene.state.dashboards;
-      fetchNodesSpy = jest.spyOn(scopesApi, 'fetchNodes');
-      fetchScopesSpy = jest.spyOn(scopesApi, 'fetchScope');
-      fetchDashboardsSpy = jest.spyOn(dashboardsScene!, 'fetchDashboards');
+      fetchNodesSpy.mockClear();
+      fetchScopeSpy.mockClear();
+      fetchScopesSpy.mockClear();
+      fetchDashboardsSpy.mockClear();
       dashboardScene.activate();
-      scopesScene.activate();
       filtersScene.activate();
+      scopesScene.activate();
       dashboardsScene.activate();
     });
 
@@ -288,43 +290,23 @@ describe('ScopesScene', () => {
       expect(fetchNodesSpy).toHaveBeenCalled();
     });
 
-    it('Fetches dashboards list', () => {
+    it('Enriches data requests', async () => {
       filtersScene.updateScopes([scopesNames[0]]);
-      waitFor(() => {
-        expect(fetchDashboardsSpy).toHaveBeenCalled();
-        expect(dashboardsScene.state.dashboards).toEqual(scopeDashboardBindings[0]);
-      });
-
-      filtersScene.updateScopes([scopesNames[1]]);
-      waitFor(() => {
-        expect(fetchDashboardsSpy).toHaveBeenCalled();
-        expect(dashboardsScene.state.dashboards).toEqual(scopeDashboardBindings.flat());
-      });
-
-      filtersScene.updateScopes([scopesNames[0]]);
-      waitFor(() => {
-        expect(fetchDashboardsSpy).toHaveBeenCalled();
-        expect(dashboardsScene.state.dashboards).toEqual(scopeDashboardBindings[1]);
-      });
-    });
-
-    it('Enriches data requests', () => {
-      filtersScene.updateScopes([scopesNames[0]]);
-      waitFor(() => {
+      await waitFor(() => {
         const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
         expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(
           scopes.filter((scope) => scope.metadata.name === scopesNames[0])
         );
       });
 
-      filtersScene.updateScopes([scopesNames[1]]);
-      waitFor(() => {
+      filtersScene.updateScopes(scopesNames);
+      await waitFor(() => {
         const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
         expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(scopes);
       });
 
-      filtersScene.updateScopes([scopesNames[0]]);
-      waitFor(() => {
+      filtersScene.updateScopes([scopesNames[1]]);
+      await waitFor(() => {
         const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
         expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(
           scopes.filter((scope) => scope.metadata.name === scopesNames[1])
@@ -340,26 +322,26 @@ describe('ScopesScene', () => {
     it('Fetches scope details on select', () => {
       filtersScene.updateNode(scopesNamesPaths[0], true, '');
       filtersScene.toggleNodeSelect(scopesNamesPaths[0]);
-      expect(fetchScopesSpy).toHaveBeenCalled();
+      expect(fetchScopeSpy).toHaveBeenCalled();
     });
 
-    it('Fetches scope details on save', () => {
+    it('Fetches scope details on save', async () => {
       filtersScene.updateScopes([scopesNames[0]]);
-      waitFor(() => {
+      await waitFor(() => {
         expect(fetchScopesSpy).toHaveBeenCalled();
         expect(filtersScene.getSelectedScopes()).toEqual(
           scopes.filter((scope) => scope.metadata.name === scopesNames[0])
         );
       });
 
-      filtersScene.updateScopes([scopesNames[1]]);
-      waitFor(() => {
+      filtersScene.updateScopes(scopesNames);
+      await waitFor(() => {
         expect(fetchScopesSpy).toHaveBeenCalled();
         expect(filtersScene.getSelectedScopes()).toEqual(scopes);
       });
 
-      filtersScene.updateScopes([scopesNames[0]]);
-      waitFor(() => {
+      filtersScene.updateScopes([scopesNames[1]]);
+      await waitFor(() => {
         expect(fetchScopesSpy).toHaveBeenCalled();
         expect(filtersScene.getSelectedScopes()).toEqual(
           scopes.filter((scope) => scope.metadata.name === scopesNames[1])
@@ -367,9 +349,59 @@ describe('ScopesScene', () => {
       });
     });
 
-    it('Toggles expanded state', () => {
-      scopesScene.toggleIsExpanded();
-      expect(scopesScene.state.isExpanded).toEqual(true);
+    describe('Dashboards list', () => {
+      it('Toggles expanded state', () => {
+        scopesScene.toggleIsExpanded();
+        expect(scopesScene.state.isExpanded).toEqual(true);
+      });
+
+      it('Does not fetch dashboards list when the list is not expanded', async () => {
+        filtersScene.updateScopes([scopesNames[0]]);
+        await waitFor(() => {
+          expect(fetchScopesSpy).toHaveBeenCalled();
+          expect(fetchDashboardsSpy).not.toHaveBeenCalled();
+          expect(dashboardsScene.state.dashboards).toEqual([]);
+        });
+      });
+
+      it('Fetches dashboards list when the list is expanded', async () => {
+        scopesScene.toggleIsExpanded();
+        filtersScene.updateScopes([scopesNames[0]]);
+        await waitFor(() => {
+          expect(fetchScopesSpy).toHaveBeenCalled();
+          expect(fetchDashboardsSpy).toHaveBeenCalled();
+          expect(dashboardsScene.state.dashboards).toEqual(scopeDashboardBindings[0]);
+        });
+
+        filtersScene.updateScopes([scopesNames[0], scopesNames[1]]);
+        await waitFor(() => {
+          expect(fetchScopesSpy).toHaveBeenCalled();
+          expect(fetchDashboardsSpy).toHaveBeenCalled();
+          expect(dashboardsScene.state.dashboards).toEqual(scopeDashboardBindings.flat());
+        });
+
+        filtersScene.updateScopes([scopesNames[0]]);
+        await waitFor(() => {
+          expect(fetchScopesSpy).toHaveBeenCalled();
+          expect(fetchDashboardsSpy).toHaveBeenCalled();
+          expect(dashboardsScene.state.dashboards).toEqual(scopeDashboardBindings[0]);
+        });
+      });
+
+      it('Fetches dashboards list when the list is expanded after scope selection', async () => {
+        filtersScene.updateScopes([scopesNames[0]]);
+        await waitFor(() => {
+          expect(fetchScopesSpy).toHaveBeenCalled();
+          expect(fetchDashboardsSpy).not.toHaveBeenCalled();
+          expect(dashboardsScene.state.dashboards).toEqual([]);
+        });
+
+        scopesScene.toggleIsExpanded();
+        await waitFor(() => {
+          expect(fetchDashboardsSpy).toHaveBeenCalled();
+          expect(dashboardsScene.state.dashboards).toEqual(scopeDashboardBindings[0]);
+        });
+      });
     });
 
     describe('View mode', () => {
