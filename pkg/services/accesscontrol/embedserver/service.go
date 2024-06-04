@@ -66,12 +66,14 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 
 	// Create the Zanzana service
 	srv, err := zanzanaService.NewService(ctx, zapLogger, nil, &zanzanaService.Config{
-		DBURI:           dbConfig.ConnectionString,
-		DBType:          dbConfig.Type,
-		MaxOpenConns:    dbConfig.MaxOpenConn,
-		MaxIdleConns:    dbConfig.MaxIdleConn,
-		ConnMaxLifetime: time.Duration(dbConfig.ConnMaxLifetime * int(time.Second)),
-		ConnMaxIdleTime: time.Duration(dbConfig.ConnMaxIdleTime * int(time.Second)),
+		DBURI:                 dbConfig.ConnectionString,
+		DBType:                dbConfig.Type,
+		MaxOpenConns:          dbConfig.MaxOpenConn,
+		MaxIdleConns:          dbConfig.MaxIdleConn,
+		ConnMaxLifetime:       time.Duration(dbConfig.ConnMaxLifetime * int(time.Second)),
+		ConnMaxIdleTime:       time.Duration(dbConfig.ConnMaxIdleTime * int(time.Second)),
+		ListObjectsMaxResults: 1000,
+		ListObjectsDeadline:   3 * time.Second,
 	})
 	if err != nil {
 		return nil, err
