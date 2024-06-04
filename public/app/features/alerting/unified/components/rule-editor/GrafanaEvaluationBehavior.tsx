@@ -146,10 +146,8 @@ function FolderGroupAndEvaluationInterval({
                 {getValues('group') && getValues('evaluateEvery') && (
                   <span>
                     <Trans i18nKey="alert-rule-form.evaluation-behaviour-group.text">
-                      All rules in the selected group are evaluated every
+                      {`All rules in the selected group are evaluated every ${evaluateEvery}.`}
                     </Trans>
-                    {evaluateEvery}
-                    <Trans i18nKey="alert-rule-form.evaluation-behaviour-group.point">.</Trans>{' '}
                     {!isNewGroup && (
                       <IconButton
                         name="pen"
