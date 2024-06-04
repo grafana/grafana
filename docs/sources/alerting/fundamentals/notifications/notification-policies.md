@@ -76,7 +76,7 @@ If you haven't configured any label matchers for your notification policy, your 
 
 {{< collapse title="Routing example" >}}
 
-Here's the breakdown of the previous example:
+Here's a breakdown of the previous example:
 
 **Pod stuck in CrashLoop** does not have a `severity` label, so none of its child policies are matched. It does have a `team=operations` label, so the first policy is matched.
 
