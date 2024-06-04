@@ -8,20 +8,16 @@ import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service';
 
 import { useDispatch } from '../../types';
-import { Props as DashboardRouteComponentsProps } from '../browse-dashboards/BrowseDashboardsPage';
-import { BrowseView } from '../browse-dashboards/components/BrowseView';
 import { SearchView } from '../browse-dashboards/components/SearchView';
 import { getFolderPermissions } from '../browse-dashboards/permissions';
 import { setAllSelection } from '../browse-dashboards/state';
 
 import { useRecentlyDeletedStateManager } from './utils/useRecentlyDeletedStateManager';
 
-const RecentlyDeletedPage = memo(({ match }: DashboardRouteComponentsProps) => {
-  const { uid: folderUID } = match.params;
+const RecentlyDeletedPage = memo(() => {
   const dispatch = useDispatch();
 
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
-  const isSearching = stateManager.hasSearchFilters();
 
   const { canEditFolders, canEditDashboards } = getFolderPermissions();
   const canSelect = canEditFolders || canEditDashboards;
@@ -62,19 +58,15 @@ const RecentlyDeletedPage = memo(({ match }: DashboardRouteComponentsProps) => {
           onSetIncludePanels={stateManager.onSetIncludePanels}
         />
         <AutoSizer>
-          {({ width, height }) =>
-            isSearching ? (
-              <SearchView
-                canSelect={canSelect}
-                width={width}
-                height={height}
-                searchStateManager={stateManager}
-                searchState={searchState}
-              />
-            ) : (
-              <BrowseView canSelect={canSelect} width={width} height={height} folderUID={folderUID} />
-            )
-          }
+          {({ width, height }) => (
+            <SearchView
+              canSelect={canSelect}
+              width={width}
+              height={height}
+              searchStateManager={stateManager}
+              searchState={searchState}
+            />
+          )}
         </AutoSizer>
       </Page.Contents>
     </Page>
