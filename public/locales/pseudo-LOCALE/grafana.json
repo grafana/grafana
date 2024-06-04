@@ -475,6 +475,9 @@
       "title": "Åđđ qūęřy ŧő Qūęřy Ŀįþřäřy",
       "visibility": "Vįşįþįľįŧy"
     },
+    "logs": {
+      "maximum-pinned-logs": "Mäχįmūm őƒ {{PINNED_LOGS_LIMIT}} pįŉŉęđ ľőģş řęäčĥęđ. Ůŉpįŉ ä ľőģ ŧő äđđ äŉőŧĥęř."
+    },
     "rich-history": {
       "close-tooltip": "Cľőşę qūęřy ĥįşŧőřy",
       "datasource-a-z": "Đäŧä şőūřčę Å-Ż",

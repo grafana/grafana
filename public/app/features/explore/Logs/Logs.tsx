@@ -46,6 +46,7 @@ import {
   withTheme2,
 } from '@grafana/ui';
 import { mapMouseEventToMode } from '@grafana/ui/src/components/VizLegend/utils';
+import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
@@ -662,8 +663,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
       this.setState({
         pinLineButtonTooltipTitle: (
           <span style={{ display: 'flex', textAlign: 'center' }}>
-            ❗️Maximum of {PINNED_LOGS_LIMIT} pinned logs reached. <br />
-            Unpin a log to add another.
+            ❗️
+            <Trans i18nKey="explore.logs.maximum-pinned-logs">
+              Maximum of {{ PINNED_LOGS_LIMIT }} pinned logs reached. Unpin a log to add another.
+            </Trans>
           </span>
         ),
       });
@@ -997,9 +1000,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
             {!loading && !hasData && !scanning && (
               <div className={styles.logRows}>
                 <div className={styles.noData}>
-                  No logs found.
+                  <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
                   <Button size="sm" variant="secondary" onClick={this.onClickScan}>
-                    Scan for older logs
+                    <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
                   </Button>
                 </div>
               </div>
@@ -1009,7 +1012,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 <div className={styles.noData}>
                   <span>{scanText}</span>
                   <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
-                    Stop scan
+                    <Trans i18nKey="explore.logs.stop-scan">Stop scan</Trans>
                   </Button>
                 </div>
               </div>

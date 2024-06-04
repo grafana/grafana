@@ -475,6 +475,9 @@
       "title": "Add query to Query Library",
       "visibility": "Visibility"
     },
+    "logs": {
+      "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another."
+    },
     "rich-history": {
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
