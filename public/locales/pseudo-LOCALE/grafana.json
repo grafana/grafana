@@ -1671,6 +1671,12 @@
       "title": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy şįľęŉčęş yęŧ"
     }
   },
+  "silences-table": {
+    "header": {
+      "alert-name": "Åľęřŧ ŉämę",
+      "state": "Ŝŧäŧę"
+    }
+  },
   "snapshot": {
     "empty-state": {
       "message": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy şŉäpşĥőŧş yęŧ",

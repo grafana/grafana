@@ -1671,6 +1671,12 @@
       "title": "You haven't created any silences yet"
     }
   },
+  "silences-table": {
+    "header": {
+      "alert-name": "Alert name",
+      "state": "State"
+    }
+  },
   "snapshot": {
     "empty-state": {
       "message": "You haven't created any snapshots yet",
