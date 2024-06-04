@@ -1,10 +1,3 @@
-import { sceneGraph } from '@grafana/scenes';
-
-import { DataTrail } from '../DataTrail';
-import { VAR_METRIC_SEARCH_TERMS } from '../shared';
-
-import { MetricSearchTermsVariable } from './MetricSearchTermsVariable';
-
 // Consider any sequence of characters not permitted for metric names as a sepratator
 const splitSeparator = /[^a-z0-9_:]+/;
 
@@ -55,12 +48,4 @@ export function createPromRegExp(searchTerms?: string[]) {
 function getUniqueTerms(terms: string[] = []) {
   const set = new Set(terms.map((term) => term.toLowerCase().trim()));
   return Array.from(set);
-}
-
-export function getMetricSearchTerms(trail: DataTrail) {
-  const searchTermVariable = sceneGraph.lookupVariable(VAR_METRIC_SEARCH_TERMS, trail);
-  if (searchTermVariable instanceof MetricSearchTermsVariable) {
-    return searchTermVariable.state.terms;
-  }
-  return [];
 }

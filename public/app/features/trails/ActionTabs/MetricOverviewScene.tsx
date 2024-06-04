@@ -121,6 +121,6 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
   };
 }
 
-export function buildMetricOverviewScene(_: MetricScene) {
+export function buildMetricOverviewScene() {
   return new MetricOverviewScene({});
 }

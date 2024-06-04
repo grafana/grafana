@@ -2,14 +2,12 @@ import { BusEventWithPayload } from '@grafana/data';
 import { ConstantVariable, SceneObject } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 
-import { MetricScene } from './MetricScene';
-
 export type ActionViewType = 'overview' | 'breakdown' | 'logs' | 'related';
 export interface ActionViewDefinition {
   displayName: string;
   value: ActionViewType;
   description?: string;
-  getScene: (scene: MetricScene) => SceneObject;
+  getScene: () => SceneObject;
 }
 
 export const TRAILS_ROUTE = '/explore/metrics/trail';

@@ -37,7 +37,6 @@ import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
 import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS, VAR_METRIC_SEARCH_TERMS } from './shared';
-import { getSearchQuery } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -79,7 +78,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
   public _onActivate() {
     if (!this.state.topScene) {
-      this.setState({ topScene: getTopSceneFor(this.state.metric, getSearchQuery(this)) });
+      this.setState({ topScene: getTopSceneFor(this.state.metric) });
     }
 
     // Some scene elements publish this
@@ -211,7 +210,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   private getSceneUpdatesForNewMetricValue(metric: string | undefined) {
     const stateUpdate: Partial<DataTrailState> = {};
     stateUpdate.metric = metric;
-    stateUpdate.topScene = getTopSceneFor(metric, getSearchQuery(this));
+    stateUpdate.topScene = getTopSceneFor(metric);
     return stateUpdate;
   }
 
@@ -228,7 +227,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       }
     } else if (values.metric == null) {
       stateUpdate.metric = undefined;
-      stateUpdate.topScene = new MetricSelectScene({ searchQuery: getSearchQuery(this) });
+      stateUpdate.topScene = new MetricSelectScene({});
     }
 
     this.setState(stateUpdate);
@@ -257,11 +256,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   };
 }
 
-export function getTopSceneFor(metric?: string, searchQuery?: string) {
+export function getTopSceneFor(metric?: string) {
   if (metric) {
     return new MetricScene({ metric: metric });
   } else {
-    return new MetricSelectScene({ searchQuery });
+    return new MetricSelectScene({});
   }
 }
 
@@ -284,7 +283,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
       }),
-      new MetricSearchTermsVariable(),
+      new MetricSearchTermsVariable({}),
     ],
   });
 }

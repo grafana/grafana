@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { debounce, isEqual } from 'lodash';
+import { debounce } from 'lodash';
 import React, { useReducer } from 'react';
 
 import { GrafanaTheme2, RawTimeRange } from '@grafana/data';
@@ -11,6 +11,7 @@ import {
   SceneCSSGridLayout,
   SceneFlexItem,
   sceneGraph,
+  SceneObject,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
@@ -18,11 +19,11 @@ import {
   SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
+  SceneVariableValueChangedEvent,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Input, InlineSwitch, Field, Alert, Icon, useStyles2, Tooltip } from '@grafana/ui';
+import { InlineSwitch, Field, Alert, Icon, useStyles2, Tooltip, Input } from '@grafana/ui';
 
-import { DataTrailHistory } from '../DataTrailsHistory';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
@@ -42,7 +43,7 @@ import { SelectMetricAction } from './SelectMetricAction';
 import { getMetricNames } from './api';
 import { getPreviewPanelFor } from './previewPanel';
 import { sortRelatedMetrics } from './relatedMetrics';
-import { createJSRegExpFromSearchTerms, deriveSearchTermsFromInput, getMetricSearchTerms } from './util';
+import { createJSRegExpFromSearchTerms, deriveSearchTermsFromInput } from './util';
 
 interface MetricPanel {
   name: string;
@@ -55,7 +56,6 @@ interface MetricPanel {
 
 export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneCSSGridLayout;
-  searchQuery?: string;
   showPreviews?: boolean;
   metricNames?: string[];
   metricNamesLoading?: boolean;
@@ -66,7 +66,7 @@ export interface MetricSelectSceneState extends SceneObjectState {
 const ROW_PREVIEW_HEIGHT = '175px';
 const ROW_CARD_HEIGHT = '64px';
 
-const MAX_METRIC_NAMES = 20;
+const MAX_METRIC_NAMES = 10000;
 
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   private previewCache: Record<string, MetricPanel> = {};
@@ -94,7 +94,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     variableNames: [VAR_DATASOURCE, VAR_METRIC_SEARCH_TERMS, VAR_FILTERS],
     onReferencedVariableValueChanged: (variable: SceneVariable) => {
       // In all cases, we want to reload the metric names
-      this._refreshMetricNames();
+      this._debounceRefreshMetricNames();
     },
   });
 
@@ -105,8 +105,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       // Temp hack when going back to select metric scene and variable updates
       this.ignoreNextUpdate = true;
     }
-
-    this._updateSearchQueryFromSearchTerms();
 
     const trail = getTrailFor(this);
 
@@ -138,9 +136,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               return;
             }
           }
-        } else if (evt.payload.changedObject instanceof DataTrailHistory) {
-          // If the history changes, our search terms might need an update
-          this._updateSearchQueryFromSearchTerms();
         }
       })
     );
@@ -151,12 +146,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       }
     });
 
-    this._refreshMetricNames();
+    this._debounceRefreshMetricNames();
   }
 
-  private _updateSearchQueryFromSearchTerms() {
-    this.setState({ searchQuery: getMetricSearchTerms(getTrailFor(this)).join(' ') });
-  }
+  private _debounceRefreshMetricNames = debounce(() => this._refreshMetricNames(), 1000);
 
   private async _refreshMetricNames() {
     const trail = getTrailFor(this);
@@ -172,7 +165,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     try {
       const response = await getMetricNames(datasourceUid, timeRange, match, MAX_METRIC_NAMES);
-      const searchRegex = createJSRegExpFromSearchTerms(getMetricSearchTerms(trail));
+      const searchRegex = createJSRegExpFromSearchTerms(getMetricSearchTerms(this));
       const metricNames = searchRegex
         ? response.data.filter((metric) => !searchRegex || searchRegex.test(metric))
         : response.data;
@@ -325,21 +318,12 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   };
 
   public onSearchQueryChange = (evt: React.SyntheticEvent<HTMLInputElement>) => {
-    this.setState({ searchQuery: evt.currentTarget.value });
-    this.searchQueryChangedDebounced();
-  };
-
-  private searchQueryChangedDebounced = debounce(() => {
+    const metricSearchQuery = evt.currentTarget.value;
+    const searchTermsVariable = getSearchTermsVariable(this);
     // Update the variable
-    const searchTermsVariable = sceneGraph.lookupVariable(VAR_METRIC_SEARCH_TERMS, this);
-    if (searchTermsVariable instanceof MetricSearchTermsVariable) {
-      const terms = deriveSearchTermsFromInput(this.state.searchQuery || '');
-
-      if (!isEqual(searchTermsVariable.state.terms, terms)) {
-        searchTermsVariable.updateTerms(terms);
-      }
-    }
-  }, 1000);
+    searchTermsVariable.setValue(metricSearchQuery);
+    searchTermsVariable.publishEvent(new SceneVariableValueChangedEvent(searchTermsVariable), true);
+  };
 
   public onTogglePreviews = () => {
     this.setState({ showPreviews: !this.state.showPreviews });
@@ -347,14 +331,17 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const { searchQuery, showPreviews, body, metricNames, metricNamesError, metricNamesLoading, metricNamesWarning } =
+    const { showPreviews, body, metricNames, metricNamesError, metricNamesLoading, metricNamesWarning } =
       model.useState();
     const { children } = body.useState();
     const styles = useStyles2(getStyles);
 
     const [warningDismissed, dismissWarning] = useReducer(() => true, false);
 
-    const tooStrict = children.length === 0 && searchQuery;
+    const metricSearchVariable = getSearchTermsVariable(model);
+    const metricSearchQuery = metricSearchVariable.useState().value;
+
+    const tooStrict = children.length === 0 && metricSearchQuery;
     const noMetrics = !metricNamesLoading && metricNames && metricNames.length === 0;
 
     const isLoading = metricNamesLoading && children.length === 0;
@@ -385,7 +372,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
             <Input
               placeholder="Search metrics"
               prefix={<Icon name={'search'} />}
-              value={searchQuery || ''}
+              value={metricSearchQuery}
               onChange={model.onSearchQueryChange}
               suffix={metricNamesWarningIcon}
             />
@@ -450,4 +437,24 @@ function getStyles(theme: GrafanaTheme2) {
       color: theme.colors.warning.main,
     }),
   };
+}
+
+function getMetricSearchTerms(scene: SceneObject) {
+  const variable = getSearchTermsVariable(scene);
+  const { value } = variable.state;
+  const terms = deriveSearchTermsFromInput(value);
+  return terms;
+}
+
+function getSearchTermsVariable(scene: SceneObject) {
+  // Use newer utils here.
+  const searchTermsVariable = sceneGraph.lookupVariable(VAR_METRIC_SEARCH_TERMS, scene);
+
+  if (!searchTermsVariable) {
+    throw new Error("Can't find " + VAR_METRIC_SEARCH_TERMS);
+  }
+  if (!(searchTermsVariable instanceof MetricSearchTermsVariable)) {
+    throw new Error('Wrong type for ' + VAR_METRIC_SEARCH_TERMS);
+  }
+  return searchTermsVariable;
 }
