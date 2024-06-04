@@ -1478,6 +1478,11 @@
     },
     "query-editor-not-exported": "Đäŧä şőūřčę pľūģįŉ đőęş ŉőŧ ęχpőřŧ äŉy Qūęřy Ēđįŧőř čőmpőŉęŉŧ"
   },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Åūŧő řęƒřęşĥ ŧūřŉęđ őƒƒ. Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ",
