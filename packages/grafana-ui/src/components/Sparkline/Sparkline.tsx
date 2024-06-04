@@ -86,9 +86,12 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     let rebuildConfig = false;
 
     if (prevProps.sparkline !== this.props.sparkline) {
-      const isStructureChanged = !compareDataFrameStructures(this.state.alignedDataFrame, prevState.alignedDataFrame);
-      const isDataChanged = !isEqual(this.state.data, prevState.data);
-      rebuildConfig = isStructureChanged || isDataChanged;
+      const isStructureChanged = !compareDataFrameStructures(alignedDataFrame, prevState.alignedDataFrame);
+      const isMinMaxChanged = !isEqual(
+        prevState.alignedDataFrame.fields[1],
+        this.getYRange(alignedDataFrame.fields[1])
+      );
+      rebuildConfig = isStructureChanged || isMinMaxChanged;
     } else {
       rebuildConfig = !isEqual(prevProps.config, this.props.config);
     }
