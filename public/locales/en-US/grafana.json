@@ -25,6 +25,28 @@
       "user": "User"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": "Define how the alert rule is evaluated."
+      },
+      "info-help": {
+        "text": "Define the alert behavior when the evaluation fails or the query returns no data."
+      },
+      "pending-period": "Pending period"
+    },
+    "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
+    "evaluation-behaviour-description2": "An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the same evaluation group are evaluated over the same evaluation interval.",
+    "evaluation-behaviour-description3": "Pending period specifies how long the threshold condition must be met before the alert starts firing. This option helps prevent alerts from being triggered by temporary issues.",
+    "evaluation-behaviour-for": {
+      "error-parsing": "Failed to parse duration",
+      "validation": "Pending period must be greater than or equal to the evaluation interval."
+    },
+    "evaluation-behaviour-group": {
+      "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
+    },
+    "pause": "Pause evaluation"
+  },
   "annotations": {
     "empty-state": {
       "button-title": "Add annotation query",
@@ -465,6 +487,16 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "add-to-library-modal": {
+      "auto-star": "Auto-star this query to add it to your starred list in the Query Library.",
+      "data-source-name": "Data source name",
+      "data-source-type": "Data source type",
+      "description": "Description",
+      "info": "You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
+      "query": "Query",
+      "title": "Add query to Query Library",
+      "visibility": "Visibility"
+    },
     "rich-history": {
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
@@ -479,6 +511,7 @@
     "rich-history-card": {
       "add-comment-form": "Add comment form",
       "add-comment-tooltip": "Add comment",
+      "add-to-library": "Add to library",
       "cancel": "Cancel",
       "confirm-delete": "Delete",
       "copy-query-tooltip": "Copy query to clipboard",
@@ -491,15 +524,12 @@
       "delete-query-tooltip": "Delete query",
       "delete-starred-query-confirmation-text": "Are you sure you want to permanently delete your starred query?",
       "edit-comment-tooltip": "Edit comment",
-      "left-pane": "Left pane",
       "optional-description": "An optional description of what the query does.",
       "query-comment-label": "Query comment",
+      "query-template-added": "Query template successfully added to the library",
       "query-text-label": "Query text",
-      "right-pane": "Right pane",
-      "run-query-button": "Run query",
       "save-comment": "Save comment",
       "star-query-tooltip": "Star query",
-      "switch-datasource-button": "Switch data source and run query",
       "unstar-query-tooltip": "Unstar query",
       "update-comment-form": "Update comment form"
     },
@@ -568,6 +598,12 @@
       "saving-failed": "Saving rich history failed",
       "update-failed": "Rich History update failed"
     },
+    "run-query": {
+      "left-pane": "Left pane",
+      "right-pane": "Right pane",
+      "run-query-button": "Run query",
+      "switch-datasource-button": "Switch data source and run query"
+    },
     "secondary-actions": {
       "query-add-button": "Add query",
       "query-add-button-aria-label": "Add query",
@@ -584,11 +620,11 @@
     "toolbar": {
       "aria-label": "Explore toolbar",
       "copy-link": "Copy URL",
-      "copy-link-abs-time": "Copy Absolute Shortened URL",
+      "copy-link-abs-time": "Copy absolute URL",
       "copy-links-absolute-category": "Time-sync URL links (share with time range intact)",
       "copy-links-normal-category": "Normal URL links",
       "copy-shortened-link": "Copy shortened URL",
-      "copy-shortened-link-abs-time": "Copy Absolute Shortened URL",
+      "copy-shortened-link-abs-time": "Copy absolute shortened URL",
       "copy-shortened-link-menu": "Open copy link options",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
@@ -618,6 +654,9 @@
     "select": {
       "no-options-label": "No options found",
       "placeholder": "Choose"
+    },
+    "spinner": {
+      "aria-label": "Loading"
     }
   },
   "graph": {
@@ -727,10 +766,12 @@
     "forgot-password": "Forgot your password?",
     "form": {
       "password-label": "Password",
+      "password-placeholder": "password",
       "password-required": "Password is required",
       "submit-label": "Log in",
       "submit-loading-label": "Logging in...",
       "username-label": "Email or username",
+      "username-placeholder": "email or username",
       "username-required": "Email or username is required"
     },
     "services": {
@@ -885,7 +926,8 @@
       "title": "Alerting"
     },
     "alerting-admin": {
-      "title": "Admin"
+      "subtitle": "Manage Alertmanager configurations",
+      "title": "Settings"
     },
     "alerting-am-routes": {
       "subtitle": "Determine how alerts are routed to contact points",
@@ -1107,6 +1149,10 @@
     },
     "public": {
       "title": "Public dashboards"
+    },
+    "recentlyDeleted": {
+      "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
+      "title": "Recently Deleted"
     },
     "recorded-queries": {
       "title": "Recorded queries"
@@ -1431,6 +1477,11 @@
       "toggle-edit-mode": "Toggle text edit mode"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
+  },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": "Search for dashboards"
+    }
   },
   "refresh-picker": {
     "aria-label": {

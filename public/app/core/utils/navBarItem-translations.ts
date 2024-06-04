@@ -40,6 +40,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.reporting.title', 'Reporting');
     case 'dashboards/public':
       return t('nav.public.title', 'Public dashboards');
+    case 'dashboards/recentlyDeleted':
+      return t('nav.recentlyDeleted.title', 'Recently Deleted');
     case 'dashboards/new':
       return t('nav.new-dashboard.title', 'New dashboard');
     case 'dashboards/folder/new':
@@ -75,7 +77,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'groups':
       return t('nav.alerting-groups.title', 'Groups');
     case 'alerting-admin':
-      return t('nav.alerting-admin.title', 'Admin');
+      return t('nav.alerting-admin.title', 'Settings');
     case 'cfg':
       return t('nav.config.title', 'Administration');
     case 'cfg/general':
@@ -206,6 +208,11 @@ export function getNavSubTitle(navId: string | undefined) {
       );
     case 'dashboards/library-panels':
       return t('nav.library-panels.subtitle', 'Reusable panels that can be added to multiple dashboards');
+    case 'dashboards/recentlyDeleted':
+      return t(
+        'nav.recentlyDeleted.subtitle',
+        'Any items listed here for more than 30 days will be automatically deleted.'
+      );
     case 'alerting':
       return t('nav.alerting.subtitle', 'Learn about problems in your systems moments after they occur');
     case 'alerting-upgrade':
@@ -213,6 +220,8 @@ export function getNavSubTitle(navId: string | undefined) {
         'nav.alerting-upgrade.subtitle',
         'Upgrade your existing legacy alerts and notification channels to the new Grafana Alerting'
       );
+    case 'alerting-admin':
+      return t('nav.alerting-admin.subtitle', 'Manage Alertmanager configurations');
     case 'alert-list':
       return t('nav.alerting-list.subtitle', 'Rules that determine whether an alert will fire');
     case 'receivers':

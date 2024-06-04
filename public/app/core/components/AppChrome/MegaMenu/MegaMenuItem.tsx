@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
-import { useStyles2, Text, IconButton, Icon } from '@grafana/ui';
+import { useStyles2, Text, IconButton, Icon, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Indent } from '../../Indent/Indent';
@@ -59,11 +59,23 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
     return null;
   }
 
+  let iconElement: React.JSX.Element | null = null;
+
+  if (link.icon) {
+    iconElement = <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" />;
+  } else if (link.img) {
+    iconElement = (
+      <Stack width={3} justifyContent="center">
+        <img className={styles.img} src={link.img} alt="" />
+      </Stack>
+    );
+  }
+
   return (
     <li ref={item} className={styles.listItem}>
       <div
         className={cx(styles.menuItem, {
-          [styles.menuItemWithIcon]: Boolean(level === 0 && link.icon),
+          [styles.menuItemWithIcon]: Boolean(level === 0 && iconElement),
         })}
       >
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
@@ -93,14 +105,10 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
             <div
               className={cx(styles.labelWrapper, {
                 [styles.hasActiveChild]: hasActiveChild,
-                [styles.labelWrapperWithIcon]: Boolean(level === 0 && link.icon),
+                [styles.labelWrapperWithIcon]: Boolean(level === 0 && iconElement),
               })}
             >
-              {level === 0 && link.icon && (
-                <FeatureHighlightWrapper>
-                  <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" />
-                </FeatureHighlightWrapper>
-              )}
+              {level === 0 && iconElement && <FeatureHighlightWrapper>{iconElement}</FeatureHighlightWrapper>}
               <Text truncate>{link.text}</Text>
             </div>
           </MegaMenuItemText>
@@ -134,6 +142,10 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
 const getStyles = (theme: GrafanaTheme2) => ({
   icon: css({
     width: theme.spacing(3),
+  }),
+  img: css({
+    height: theme.spacing(2),
+    width: theme.spacing(2),
   }),
   listItem: css({
     flex: 1,

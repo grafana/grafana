@@ -14,12 +14,7 @@ import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRul
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { mockApi, mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
 import { grantUserPermissions, labelsPluginMetaMock, mockDataSource } from './mocks';
-import {
-  defaultAlertmanagerChoiceResponse,
-  emptyExternalAlertmanagersResponse,
-  mockAlertmanagerChoiceResponse,
-  mockAlertmanagersResponse,
-} from './mocks/alertmanagerApi';
+import { emptyExternalAlertmanagersResponse, mockAlertmanagersResponse } from './mocks/alertmanagerApi';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import { setupDataSources } from './testSetup/datasources';
 import { buildInfoResponse } from './testSetup/featureDiscovery';
@@ -55,9 +50,7 @@ setupDataSources(dataSources.default);
 const server = setupMswServer();
 
 mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.default, buildInfoResponse.mimir);
-mockAlertmanagerChoiceResponse(server, defaultAlertmanagerChoiceResponse);
 mockAlertmanagersResponse(server, emptyExternalAlertmanagersResponse);
-mockApi(server).eval({ results: {} });
 mockApi(server).plugins.getPluginSettings({ ...labelsPluginMetaMock, enabled: false });
 
 // these tests are rather slow because we have to wait for various API calls and mocks to be called

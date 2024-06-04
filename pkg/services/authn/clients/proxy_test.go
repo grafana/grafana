@@ -203,7 +203,7 @@ func TestProxy_Hook(t *testing.T) {
 	}
 	cache := &fakeCache{data: make(map[string][]byte)}
 	userId := int64(1)
-	userID := authn.MustNewNamespaceID(authn.NamespaceUser, userId)
+	userID := authn.NewNamespaceID(authn.NamespaceUser, userId)
 
 	// withRole creates a test case for a user with a specific role.
 	withRole := func(role string) func(t *testing.T) {

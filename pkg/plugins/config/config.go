@@ -18,7 +18,7 @@ type PluginManagementCfg struct {
 
 	PluginsCDNURLTemplate string
 
-	GrafanaComURL string
+	GrafanaComAPIURL string
 
 	GrafanaAppURL string
 
@@ -37,7 +37,7 @@ type Features struct {
 // NewPluginManagementCfg returns a new PluginManagementCfg.
 func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
 	pluginsCDNURLTemplate string, appURL string, features Features, angularSupportEnabled bool,
-	grafanaComURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string,
+	grafanaComAPIURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string,
 ) *PluginManagementCfg {
 	return &PluginManagementCfg{
 		PluginsPath:            pluginsPath,
@@ -46,7 +46,7 @@ func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings set
 		PluginsAllowUnsigned:   pluginsAllowUnsigned,
 		DisablePlugins:         disablePlugins,
 		PluginsCDNURLTemplate:  pluginsCDNURLTemplate,
-		GrafanaComURL:          grafanaComURL,
+		GrafanaComAPIURL:       grafanaComAPIURL,
 		GrafanaAppURL:          appURL,
 		Features:               features,
 		AngularSupportEnabled:  angularSupportEnabled,

@@ -44,10 +44,10 @@ describe('loadAndInitDatasource', () => {
     const { instance } = await loadAndInitDatasource(1, { uid: 'Unknown' });
 
     expect(dataSourceMock.get).toBeCalledTimes(2);
-    expect(dataSourceMock.get).toBeCalledWith({ uid: 'Unknown' });
-    expect(dataSourceMock.get).toBeCalledWith();
+    expect(dataSourceMock.get).toHaveBeenCalledWith({ uid: 'Unknown' });
+    expect(dataSourceMock.get).toHaveBeenCalledWith();
     expect(instance).toMatchObject(DEFAULT_DATASOURCE);
-    expect(setLastUsedDatasourceUIDSpy).toBeCalledWith(1, DEFAULT_DATASOURCE.uid);
+    expect(setLastUsedDatasourceUIDSpy).toHaveBeenCalledWith(1, DEFAULT_DATASOURCE.uid);
   });
 
   it('saves last loaded data source uid', async () => {
@@ -65,7 +65,7 @@ describe('loadAndInitDatasource', () => {
     expect(getLocalRichHistoryStorage).toHaveBeenCalledTimes(1);
 
     expect(instance).toMatchObject(TEST_DATASOURCE);
-    expect(setLastUsedDatasourceUIDSpy).toBeCalledWith(1, TEST_DATASOURCE.uid);
+    expect(setLastUsedDatasourceUIDSpy).toHaveBeenCalledWith(1, TEST_DATASOURCE.uid);
   });
 
   it('pulls history data and returns the history by query', async () => {

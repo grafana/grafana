@@ -25,6 +25,28 @@
       "user": "用户"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -380,7 +402,7 @@
     "annotations": {
       "title": "注释"
     },
-    "dashboard-delete-button": "删除仪表板",
+    "dashboard-delete-button": "",
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "自动刷新",
@@ -460,6 +482,16 @@
   },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
+    "add-to-library-modal": {
+      "auto-star": "",
+      "data-source-name": "",
+      "data-source-type": "",
+      "description": "",
+      "info": "",
+      "query": "",
+      "title": "",
+      "visibility": ""
+    },
     "rich-history": {
       "close-tooltip": "关闭查询历史记录",
       "datasource-a-z": "数据源 A-Z",
@@ -467,12 +499,14 @@
       "newest-first": "最新在前",
       "oldest-first": "最早在前",
       "query-history": "查询历史记录",
+      "query-library": "",
       "settings": "设置",
       "starred": "已加星标"
     },
     "rich-history-card": {
       "add-comment-form": "添加备注表单",
       "add-comment-tooltip": "添加备注",
+      "add-to-library": "",
       "cancel": "取消",
       "confirm-delete": "删除",
       "copy-query-tooltip": "将查询复制到剪贴板",
@@ -485,15 +519,12 @@
       "delete-query-tooltip": "删除查询",
       "delete-starred-query-confirmation-text": "您是否确定要永久删除您的星标查询？",
       "edit-comment-tooltip": "编辑备注",
-      "left-pane": "",
       "optional-description": "查询所完成操作的可选描述。",
       "query-comment-label": "查询备注",
+      "query-template-added": "",
       "query-text-label": "查询文本",
-      "right-pane": "",
-      "run-query-button": "运行查询",
       "save-comment": "保存备注",
       "star-query-tooltip": "星标查询",
-      "switch-datasource-button": "切换数据源并运行查询",
       "unstar-query-tooltip": "取消星标查询",
       "update-comment-form": "更新备注表单"
     },
@@ -562,6 +593,12 @@
       "saving-failed": "保存 Rich History 失败",
       "update-failed": "Rich History 更新失败"
     },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
+    },
     "secondary-actions": {
       "query-add-button": "添加查询",
       "query-add-button-aria-label": "添加查询",
@@ -612,6 +649,9 @@
     "select": {
       "no-options-label": "未找到选项",
       "placeholder": "选择"
+    },
+    "spinner": {
+      "aria-label": ""
     }
   },
   "graph": {
@@ -720,10 +760,12 @@
     "forgot-password": "忘记密码？",
     "form": {
       "password-label": "密码",
+      "password-placeholder": "",
       "password-required": "必须输入密码",
       "submit-label": "登录",
       "submit-loading-label": "正在登录...",
       "username-label": "电子邮箱或用户名",
+      "username-placeholder": "",
       "username-required": "电子邮箱或用户名是必填项"
     },
     "services": {
@@ -878,7 +920,8 @@
       "title": "警报"
     },
     "alerting-admin": {
-      "title": "管理员"
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "确定警报如何路由到联络点",
@@ -1100,6 +1143,10 @@
     },
     "public": {
       "title": "公共仪表板"
+    },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
     },
     "recorded-queries": {
       "title": "已记录查询"
@@ -1424,6 +1471,11 @@
       "toggle-edit-mode": "切换文本编辑模式"
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
+  },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
+    }
   },
   "refresh-picker": {
     "aria-label": {

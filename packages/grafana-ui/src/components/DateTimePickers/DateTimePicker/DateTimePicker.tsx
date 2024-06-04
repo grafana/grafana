@@ -7,7 +7,15 @@ import React, { FormEvent, ReactNode, useCallback, useEffect, useRef, useState }
 import Calendar from 'react-calendar';
 import { useMedia } from 'react-use';
 
-import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
+import {
+  dateTimeFormat,
+  DateTime,
+  dateTime,
+  GrafanaTheme2,
+  isDateTime,
+  dateTimeForTimeZone,
+  getTimeZone,
+} from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../../themes';
@@ -21,12 +29,13 @@ import { Portal } from '../../Portal/Portal';
 import { TimeOfDayPicker, POPUP_CLASS_NAME } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 import { isValid } from '../utils';
+import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
 
 export interface Props {
   /** Input date for the component */
   date?: DateTime;
   /** Callback for returning the selected date */
-  onChange: (date: DateTime) => void;
+  onChange: (date?: DateTime) => void;
   /** label for the input field */
   label?: ReactNode;
   /** Set the latest selectable date */
@@ -41,6 +50,8 @@ export interface Props {
   disabledMinutes?: () => number[];
   /** Set the seconds that can't be selected */
   disabledSeconds?: () => number[];
+  /** Can input be cleared/have empty values */
+  clearable?: boolean;
 }
 
 export const DateTimePicker = ({
@@ -53,6 +64,7 @@ export const DateTimePicker = ({
   disabledMinutes,
   disabledSeconds,
   showSeconds = true,
+  clearable = false,
 }: Props) => {
   const [isOpen, setOpen] = useState(false);
 
@@ -122,6 +134,7 @@ export const DateTimePicker = ({
         label={label}
         ref={refs.setReference}
         showSeconds={showSeconds}
+        clearable={clearable}
       />
       {isOpen ? (
         isFullscreen ? (
@@ -187,14 +200,10 @@ interface DateTimeCalendarProps {
   disabledSeconds?: () => number[];
 }
 
-interface InputProps {
-  label?: ReactNode;
-  date?: DateTime;
+type InputProps = Pick<Props, 'onChange' | 'label' | 'date' | 'showSeconds' | 'clearable'> & {
   isFullscreen: boolean;
-  onChange: (date: DateTime) => void;
   onOpen: (event: FormEvent<HTMLElement>) => void;
-  showSeconds?: boolean;
-}
+};
 
 type InputState = {
   value: string;
@@ -202,10 +211,11 @@ type InputState = {
 };
 
 const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ date, label, onChange, onOpen, showSeconds = true }, ref) => {
+  ({ date, label, onChange, onOpen, showSeconds = true, clearable = false }, ref) => {
+    const styles = useStyles2(getStyles);
     const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
     const [internalDate, setInternalDate] = useState<InputState>(() => {
-      return { value: date ? dateTimeFormat(date) : dateTimeFormat(dateTime()), invalid: false };
+      return { value: date ? dateTimeFormat(date) : !clearable ? dateTimeFormat(dateTime()) : '', invalid: false };
     });
 
     useEffect(() => {
@@ -226,21 +236,20 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
     }, []);
 
     const onBlur = useCallback(() => {
-      if (!internalDate.invalid) {
-        const date = dateTime(internalDate.value);
+      if (!internalDate.invalid && internalDate.value) {
+        const date = dateTimeForTimeZone(getTimeZone(), internalDate.value);
         onChange(date);
       }
     }, [internalDate, onChange]);
 
+    const clearInternalDate = useCallback(() => {
+      setInternalDate({ value: '', invalid: false });
+      onChange();
+    }, [onChange]);
+
     const icon = <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />;
     return (
-      <InlineField
-        label={label}
-        invalid={!!(internalDate.value && internalDate.invalid)}
-        className={css({
-          marginBottom: 0,
-        })}
-      >
+      <InlineField label={label} invalid={!!(internalDate.value && internalDate.invalid)} className={styles.field}>
         <Input
           onChange={onChangeDate}
           addonAfter={icon}
@@ -249,6 +258,10 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
           data-testid={Components.DateTimePicker.input}
           placeholder="Select date/time"
           ref={ref}
+          suffix={
+            clearable &&
+            internalDate.value && <Icon name="times" className={styles.clearIcon} onClick={clearInternalDate} />
+          }
         />
       </InlineField>
     );
@@ -276,9 +289,18 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
   ) => {
     const calendarStyles = useStyles2(getBodyStyles);
     const styles = useStyles2(getStyles);
-    const [internalDate, setInternalDate] = useState<Date>(() => {
+
+    // need to keep these 2 separate in state since react-calendar doesn't support different timezones
+    const [timeOfDayDateTime, setTimeOfDayDateTime] = useState(() => {
       if (date && date.isValid()) {
-        return date.toDate();
+        return dateTimeForTimeZone(getTimeZone(), date);
+      }
+
+      return dateTimeForTimeZone(getTimeZone(), new Date());
+    });
+    const [reactCalendarDate, setReactCalendarDate] = useState<Date>(() => {
+      if (date && date.isValid()) {
+        return adjustDateForReactCalendar(date.toDate(), getTimeZone());
       }
 
       return new Date();
@@ -286,28 +308,33 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
 
     const onChangeDate = useCallback<NonNullable<React.ComponentProps<typeof Calendar>['onChange']>>((date) => {
       if (date && !Array.isArray(date)) {
-        setInternalDate((prevState) => {
-          // If we don't use time from prevState
-          // the time will be reset to 00:00:00
-          date.setHours(prevState.getHours());
-          date.setMinutes(prevState.getMinutes());
-          date.setSeconds(prevState.getSeconds());
-
-          return date;
-        });
+        setReactCalendarDate(date);
       }
     }, []);
 
     const onChangeTime = useCallback((date: DateTime) => {
-      setInternalDate(date.toDate());
+      setTimeOfDayDateTime(date);
     }, []);
+
+    // here we need to stitch the 2 date objects back together
+    const handleApply = () => {
+      // we take the date that's set by TimeOfDayPicker
+      const newDate = dateTime(timeOfDayDateTime);
+
+      // and apply the date/month/year set by react-calendar
+      newDate.set('date', reactCalendarDate.getDate());
+      newDate.set('month', reactCalendarDate.getMonth());
+      newDate.set('year', reactCalendarDate.getFullYear());
+
+      onChange(newDate);
+    };
 
     return (
       <div className={cx(styles.container, { [styles.fullScreen]: isFullscreen })} style={style} ref={ref}>
         <Calendar
           next2Label={null}
           prev2Label={null}
-          value={internalDate}
+          value={reactCalendarDate}
           nextLabel={<Icon name="angle-right" />}
           nextAriaLabel="Next month"
           prevLabel={<Icon name="angle-left" />}
@@ -323,14 +350,14 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
           <TimeOfDayPicker
             showSeconds={showSeconds}
             onChange={onChangeTime}
-            value={dateTime(internalDate)}
+            value={timeOfDayDateTime}
             disabledHours={disabledHours}
             disabledMinutes={disabledMinutes}
             disabledSeconds={disabledSeconds}
           />
         </div>
         <Stack>
-          <Button type="button" onClick={() => onChange(dateTime(internalDate))}>
+          <Button type="button" onClick={handleApply}>
             Apply
           </Button>
           <Button variant="secondary" type="button" onClick={onClose}>
@@ -365,5 +392,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     transform: 'translate(-50%, -50%)',
     zIndex: theme.zIndex.modal,
     maxWidth: '280px',
+  }),
+  clearIcon: css({
+    cursor: 'pointer',
+  }),
+  field: css({
+    marginBottom: 0,
+    width: '100%',
   }),
 });

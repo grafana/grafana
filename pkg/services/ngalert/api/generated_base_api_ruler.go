@@ -28,6 +28,7 @@ type RulerApi interface {
 	RouteGetGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetNamespaceGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetNamespaceRulesConfig(*contextmodel.ReqContext) response.Response
+	RouteGetRuleByUID(*contextmodel.ReqContext) response.Response
 	RouteGetRulegGroupConfig(*contextmodel.ReqContext) response.Response
 	RouteGetRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetRulesForExport(*contextmodel.ReqContext) response.Response
@@ -79,6 +80,11 @@ func (f *RulerApiHandler) RouteGetNamespaceRulesConfig(ctx *contextmodel.ReqCont
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	return f.handleRouteGetNamespaceRulesConfig(ctx, datasourceUIDParam, namespaceParam)
+}
+func (f *RulerApiHandler) RouteGetRuleByUID(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	ruleUIDParam := web.Params(ctx.Req)[":RuleUID"]
+	return f.handleRouteGetRuleByUID(ctx, ruleUIDParam)
 }
 func (f *RulerApiHandler) RouteGetRulegGroupConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -222,6 +228,18 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 				http.MethodGet,
 				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}",
 				api.Hooks.Wrap(srv.RouteGetNamespaceRulesConfig),
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/ruler/grafana/api/v1/rule/{RuleUID}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rule/{RuleUID}"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/ruler/grafana/api/v1/rule/{RuleUID}",
+				api.Hooks.Wrap(srv.RouteGetRuleByUID),
 				m,
 			),
 		)

@@ -27,11 +27,11 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
     });
 
     this.addActivationHandler(() => {
-      this.state.filters.fetchScopes();
+      this.state.filters.fetchBaseNodes();
 
       const filtersValueSubscription = this.state.filters.subscribeToState((newState, prevState) => {
-        if (newState.value !== prevState.value) {
-          this.state.dashboards.fetchDashboards(newState.value);
+        if (newState.scopes !== prevState.scopes) {
+          this.state.dashboards.fetchDashboards(newState.scopes);
           sceneGraph.getTimeRange(this.parent!).onRefresh();
         }
       });
@@ -53,6 +53,10 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
         dashboardEditModeSubscription?.unsubscribe();
       };
     });
+  }
+
+  public getSelectedScopes() {
+    return this.state.filters.state.scopes;
   }
 
   public toggleIsExpanded() {

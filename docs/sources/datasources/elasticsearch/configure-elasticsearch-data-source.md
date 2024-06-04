@@ -16,6 +16,22 @@ labels:
 menuTitle: Configure Elasticsearch
 title: Configure the Elasticsearch data source
 weight: 200
+refs:
+  administration-documentation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+  supported-expressions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#log-level
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#log-level
+  query-and-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
 ---
 
 # Configure the Elasticsearch data source
@@ -23,10 +39,18 @@ weight: 200
 Grafana ships with built-in support for Elasticsearch.
 You can create a variety of queries to visualize logs or metrics stored in Elasticsearch, and annotate graphs with log events stored in Elasticsearch.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation][].
+For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:administration-documentation).
 
 Only users with the organization `administrator` role can add data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+
+## Configuring permissions
+
+When Elasticsearch security features are enabled, it is essential to configure the necessary cluster privileges to ensure seamless operation. Below is a list of the required privileges along with their purposes:
+
+- **monitor** - Necessary to retrieve the version information of the connected Elasticsearch instance.
+- **view_index_metadata** - Required for accessing mapping definitions of indices.
+- **read** - Grants the ability to perform search and retrieval operations on indices. This is essential for querying and extracting data from the cluster.
 
 ## Add the data source
 
@@ -150,7 +174,7 @@ In this section you can configure which fields the data source uses for log mess
 
 - **Message field name:** - Grabs the actual log message from the default source.
 
-- **Level field name:** - Name of the field with log level/severity information. When a level label is specified, the value of this label is used to determine the log level and update the color of each log line accordingly. If the log doesn’t have a specified level label, we try to determine if its content matches any of the [supported expressions][]. The first match always determines the log level. If Grafana cannot infer a log-level field, it will be visualized with an unknown log level.
+- **Level field name:** - Name of the field with log level/severity information. When a level label is specified, the value of this label is used to determine the log level and update the color of each log line accordingly. If the log doesn’t have a specified level label, we try to determine if its content matches any of the [supported expressions](ref:supported-expressions). The first match always determines the log level. If Grafana cannot infer a log-level field, it will be visualized with an unknown log level.
 
 ### Data links
 
@@ -173,14 +197,3 @@ Use private data source connect (PDC) to connect to and query data within a secu
 - **Private data source connect** - Click in the box to set the default PDC connection from the dropdown menu or create a new connection.
 
 Once you have configured your Elasticsearch data source options, click **Save & test** at the bottom to test out your data source connection. You can also remove a connection by clicking **Delete**.
-
-{{% docs/reference %}}
-[administration documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-[administration documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-
-[Query and transform data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-[Query and transform data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data"
-
-[supported expressions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore/logs-integration#log-level"
-[supported expressions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore/logs-integration#log-level"
-{{% /docs/reference %}}
