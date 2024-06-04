@@ -10,7 +10,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Grouping alert notifications
+title: Group alert notifications
 menuTitle: Grouping
 weight: 114
 refs:
