@@ -1,4 +1,3 @@
-import { noop } from 'lodash';
 import React, { useState, useCallback, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
 
@@ -24,8 +23,8 @@ export const useDeleteModal = (): DeleteModalHook => {
   }, []);
 
   const deleteRule = useCallback(
-    async (rule: CombinedRule, redirect = true) => {
-      if (!rule.rulerRule) {
+    async (rule?: CombinedRule, redirect = true) => {
+      if (!rule?.rulerRule) {
         return;
       }
 
@@ -34,6 +33,7 @@ export const useDeleteModal = (): DeleteModalHook => {
 
       dismissModal();
 
+      // @TODO implement redirect yes / no
       if (redirect) {
         history.push('/alerting/list');
       }
@@ -49,7 +49,7 @@ export const useDeleteModal = (): DeleteModalHook => {
         body="Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?"
         confirmText="Yes, delete"
         icon="exclamation-triangle"
-        onConfirm={ruleToDelete ? () => deleteRule(ruleToDelete) : noop}
+        onConfirm={() => deleteRule(ruleToDelete)}
         onDismiss={dismissModal}
       />
     ),
