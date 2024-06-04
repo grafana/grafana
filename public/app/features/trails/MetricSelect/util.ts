@@ -10,8 +10,8 @@ export function deriveSearchTermsFromInput(whiteSpaceSeparatedTerms?: string) {
   );
 }
 
-export function createJSRegExpFromSearchTerms(searchTerms: string[]) {
-  const searchParts = searchTerms.map((part) => `(?=(.*${part.toLowerCase()}.*))`);
+export function createJSRegExpFromSearchTerms(searchQuery?: string) {
+  const searchParts = deriveSearchTermsFromInput(searchQuery).map((part) => `(?=(.*${part.toLowerCase()}.*))`);
 
   if (searchParts.length === 0) {
     return null;
@@ -23,8 +23,8 @@ export function createJSRegExpFromSearchTerms(searchTerms: string[]) {
   return new RegExp(regex, 'igy');
 }
 
-export function createPromRegExp(searchTerms?: string[]) {
-  const searchParts = getUniqueTerms(searchTerms)
+export function createPromRegExp(searchQuery?: string) {
+  const searchParts = getUniqueTerms(deriveSearchTermsFromInput(searchQuery))
     .filter((term) => term.length > 0)
     .map((term) => `(.*${term.toLowerCase()}.*)`);
 
@@ -32,7 +32,7 @@ export function createPromRegExp(searchTerms?: string[]) {
 
   if (searchParts.length === 0) {
     // avoid match[] must contain at least one non-empty matcher
-    return '..*';
+    return null; //'..*';
   }
 
   const regex = `(?i:${searchParts.join('|')}){${count}}`;

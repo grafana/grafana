@@ -197,7 +197,7 @@ function getUrlStateForComparison(trail: DataTrail) {
   // as they can change in the URL without creating new steps
   delete urlState.actionView;
   delete urlState.layout;
-  delete urlState['var-metricSearch'];
+  delete urlState.metricSearch;
 
   // Populate defaults
   if (urlState['var-groupby'] === '') {

@@ -23,20 +23,18 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSelectors,
-  SceneVariableValueChangedEvent,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
-import { MetricSearchTermsVariable } from './MetricSelect/MetricSearchTermsVariable';
-import { MetricSelectScene, getSearchTermsVariable } from './MetricSelect/MetricSelectScene';
+import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
-import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS, VAR_METRIC_SEARCH_TERMS } from './shared';
+import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -52,10 +50,11 @@ export interface DataTrailState extends SceneObjectState {
 
   // Synced with url
   metric?: string;
+  metricSearch?: string;
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch'] });
 
   public constructor(state: Partial<DataTrailState>) {
     super({
@@ -130,7 +129,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
-    variableNames: [VAR_DATASOURCE, VAR_METRIC_SEARCH_TERMS],
+    variableNames: [VAR_DATASOURCE],
     onReferencedVariableValueChanged: async (variable: SceneVariable) => {
       const { name } = variable.state;
       if (name === VAR_DATASOURCE) {
@@ -184,8 +183,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     );
 
     // Signal that the search terms variable has changed
-    const searchTermsVariable = getSearchTermsVariable(this);
-    searchTermsVariable.publishEvent(new SceneVariableValueChangedEvent(searchTermsVariable), true);
+    // const searchTermsVariable = getSearchTermsVariable(this);
+    // searchTermsVariable.publishEvent(new SceneVariableValueChangedEvent(searchTermsVariable), true);
 
     const urlState = getUrlSyncManager().getUrlState(this);
     const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
@@ -281,7 +280,6 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
       }),
-      new MetricSearchTermsVariable({}),
     ],
   });
 }
