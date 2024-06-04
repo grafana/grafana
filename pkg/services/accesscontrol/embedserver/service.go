@@ -24,8 +24,10 @@ type ServiceCfg struct {
 	// EvaluationResult is a flag to enable evaluation result from Zanzana
 	EvaluationResult bool
 	// OpenFGA log level (debug, info, warn, error, dpanic, panic, fatal)
-	LogLevel   string
-	ListenHTTP bool
+	LogLevel string
+
+	ListenHTTP                 bool
+	MaxConcurrentReadsForCheck uint32
 }
 
 type Service struct {
@@ -43,11 +45,12 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 		features: features,
 		log:      log.New("accesscontrol.zanzana"),
 		Cfg: &ServiceCfg{
-			SingleRead:          section.Key("single_read").MustBool(false),
-			DashboardReadResult: section.Key("dashboard_read_result").MustBool(false),
-			EvaluationResult:    section.Key("evaluation_result").MustBool(false),
-			LogLevel:            section.Key("log_level").MustString("info"),
-			ListenHTTP:          section.Key("listen_http").MustBool(true),
+			SingleRead:                 section.Key("single_read").MustBool(false),
+			DashboardReadResult:        section.Key("dashboard_read_result").MustBool(false),
+			EvaluationResult:           section.Key("evaluation_result").MustBool(false),
+			LogLevel:                   section.Key("log_level").MustString("info"),
+			ListenHTTP:                 section.Key("listen_http").MustBool(true),
+			MaxConcurrentReadsForCheck: uint32(section.Key("max_concurrent_reads_for_check").MustUint(0)),
 		},
 	}
 
@@ -68,15 +71,16 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 
 	// Create the Zanzana service
 	srv, err := zanzanaService.NewService(ctx, zapLogger, nil, &zanzanaService.Config{
-		DBURI:                 dbConfig.ConnectionString,
-		DBType:                dbConfig.Type,
-		MaxOpenConns:          dbConfig.MaxOpenConn,
-		MaxIdleConns:          dbConfig.MaxIdleConn,
-		ConnMaxLifetime:       time.Duration(dbConfig.ConnMaxLifetime * int(time.Second)),
-		ConnMaxIdleTime:       time.Duration(dbConfig.ConnMaxIdleTime * int(time.Second)),
-		ListObjectsMaxResults: 1000,
-		ListObjectsDeadline:   3 * time.Second,
-		ListenHTTP:            s.Cfg.ListenHTTP,
+		DBURI:                      dbConfig.ConnectionString,
+		DBType:                     dbConfig.Type,
+		MaxOpenConns:               dbConfig.MaxOpenConn,
+		MaxIdleConns:               dbConfig.MaxIdleConn,
+		ConnMaxLifetime:            time.Duration(dbConfig.ConnMaxLifetime * int(time.Second)),
+		ConnMaxIdleTime:            time.Duration(dbConfig.ConnMaxIdleTime * int(time.Second)),
+		ListObjectsMaxResults:      1000,
+		ListObjectsDeadline:        3 * time.Second,
+		ListenHTTP:                 s.Cfg.ListenHTTP,
+		MaxConcurrentReadsForCheck: s.Cfg.MaxConcurrentReadsForCheck,
 	})
 	if err != nil {
 		return nil, err
