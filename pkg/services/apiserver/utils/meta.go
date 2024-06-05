@@ -16,7 +16,6 @@ const AnnoKeyUpdatedTimestamp = "grafana.app/updatedTimestamp"
 const AnnoKeyUpdatedBy = "grafana.app/updatedBy"
 const AnnoKeyFolder = "grafana.app/folder"
 const AnnoKeySlug = "grafana.app/slug"
-const AnnoKeyAction = "grafana.app/action"
 
 // Identify where values came from
 
@@ -58,8 +57,6 @@ type GrafanaResourceMetaAccessor interface {
 	SetFolder(uid string)
 	GetSlug() string
 	SetSlug(v string)
-	GetAction() string
-	SetAction(v string)
 
 	GetOriginInfo() (*ResourceOriginInfo, error)
 	SetOriginInfo(info *ResourceOriginInfo)
@@ -174,14 +171,6 @@ func (m *grafanaResourceMetaAccessor) GetSlug() string {
 
 func (m *grafanaResourceMetaAccessor) SetSlug(v string) {
 	m.set(AnnoKeySlug, v)
-}
-
-func (m *grafanaResourceMetaAccessor) GetAction() string {
-	return m.get(AnnoKeyAction)
-}
-
-func (m *grafanaResourceMetaAccessor) SetAction(v string) {
-	m.set(AnnoKeyAction, v)
 }
 
 func (m *grafanaResourceMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
