@@ -1,9 +1,16 @@
 package sqltemplate
 
 import (
+	"errors"
 	"regexp"
 	"strings"
 	"text/template"
+)
+
+// Package-level errors.
+var (
+	ErrValidationNotImplemented = errors.New("validation not implemented")
+	ErrSQLTemplateNoSerialize   = errors.New("SQLTemplate should not be serialized")
 )
 
 // SQLTemplate provides comprehensive support for SQL templating, handling
@@ -16,13 +23,36 @@ type SQLTemplate struct {
 
 // New returns a nee *SQLTemplate that will use the given dialect.
 func New(d Dialect) *SQLTemplate {
-	return &SQLTemplate{
-		Args: Args{
-			d: d,
-		},
-		Dialect: d,
-	}
+	ret := new(SQLTemplate)
+	ret.SetDialect(d)
+
+	return ret
 }
+
+func (t *SQLTemplate) Reset() {
+	t.Args.Reset()
+	t.ScanDest.Reset()
+}
+
+func (t *SQLTemplate) SetDialect(d Dialect) {
+	t.Reset()
+	t.Dialect = d
+	t.Args.d = d
+}
+
+func (t *SQLTemplate) Validate() error {
+	return ErrValidationNotImplemented
+}
+
+func (t *SQLTemplate) MarshalJSON() ([]byte, error) {
+	return nil, ErrSQLTemplateNoSerialize
+}
+
+func (t *SQLTemplate) UnmarshalJSON([]byte) error {
+	return ErrSQLTemplateNoSerialize
+}
+
+//go:generate mockery --with-expecter --name SQLTemplateIface
 
 // SQLTemplateIface can be used as argument in general purpose utilities
 // expecting a struct embedding *SQLTemplate.
@@ -30,7 +60,17 @@ type SQLTemplateIface interface {
 	Dialect
 	ArgsIface
 	ScanDestIface
+	// Reset calls the Reset method of ArgsIface and ScanDestIface.
+	Reset()
+	// SetDialect allows reusing the template components. It should first call
+	// Reset.
+	SetDialect(Dialect)
+	// Validate should be implemented to validate a request before executing the
+	// template.
+	Validate() error
 }
+
+//go:generate mockery --with-expecter --name WithResults
 
 // WithResults has an additional method suited for structs embedding
 // *SQLTemplate and returning a set of rows.
@@ -55,11 +95,10 @@ func Execute(t *template.Template, data any) (string, error) {
 	return b.String(), nil
 }
 
-// FormatSQL is an opinionated formatter for SQL template output that returns
-// the code as a oneliner. It can be used to reduce the final code length, for
-// debugging, and testing. It is not a propoer and full-fledged SQL parser, so
-// it makes the following assumptions, which are also good practices for writing
-// your SQL templates:
+// FormatSQL is an opinionated formatter for SQL template output. It can be used
+// to reduce the final code length, for debugging, and testing. It is not a
+// propoer and full-fledged SQL parser, so it makes the following assumptions,
+// which are also good practices for writing your SQL templates:
 //  1. There are no SQL comments. Consider adding your comments as template
 //     comments instead (i.e. "{{/* this is a template comment */}}").
 //  2. There are no multiline strings, and strings do not contain consecutive
@@ -72,6 +111,7 @@ func FormatSQL(q string) string {
 	for _, f := range formatREs {
 		q = f.re.ReplaceAllString(q, f.replacement)
 	}
+	q = strings.TrimSpace(q)
 
 	return q
 }
@@ -88,4 +128,14 @@ var formatREs = []reFormatting{
 	{re: regexp.MustCompile(` ([)\]}])`), replacement: "$1"},
 	{re: regexp.MustCompile(` ?, ?`), replacement: ", "},
 	{re: regexp.MustCompile(` ?([;.:]) ?`), replacement: "$1"},
+
+	// Add newlines and a bit of visual aid
+	{
+		re:          regexp.MustCompile(`((UNION|INTERSECT|EXCEPT)( (ALL|DISTINCT))? )?SELECT `),
+		replacement: "\n${1}SELECT ",
+	},
+	{
+		re:          regexp.MustCompile(` (FROM|WHERE|GROUP BY|HAVING|WINDOW|ORDER BY|LIMIT|OFFSET) `),
+		replacement: "\n    $1 ",
+	},
 }

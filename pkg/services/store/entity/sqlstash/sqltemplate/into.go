@@ -6,7 +6,8 @@ import (
 )
 
 type ScanDest struct {
-	values []any
+	values   []any
+	colNames []string
 }
 
 func (i *ScanDest) Into(v reflect.Value, colName string) (string, error) {
@@ -15,15 +16,26 @@ func (i *ScanDest) Into(v reflect.Value, colName string) (string, error) {
 	}
 
 	i.values = append(i.values, v.Addr().Interface())
+	i.colNames = append(i.colNames, colName)
 
 	return colName, nil
+}
+
+func (i *ScanDest) Reset() {
+	i.values = nil
 }
 
 func (i *ScanDest) GetScanDest() []any {
 	return i.values
 }
 
+func (i *ScanDest) GetColNames() []string {
+	return i.colNames
+}
+
 type ScanDestIface interface {
 	Into(v reflect.Value, colName string) (string, error)
 	GetScanDest() []any
+	GetColNames() []string
+	Reset()
 }

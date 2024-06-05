@@ -100,8 +100,8 @@ func (s *sqlEntityServer) updateFolderTree(ctx context.Context, x db.ContextExec
 		itemList = append(itemList, &fi)
 	}
 
-	if err := rows.Close(); err != nil {
-		return fmt.Errorf("close rows after listing folder items in namespace %q: %w", namespace, err)
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("rows error after listing folder items in namespace %q: %w", namespace, err)
 	}
 
 	root, lost, err := buildFolderTree(itemList)
