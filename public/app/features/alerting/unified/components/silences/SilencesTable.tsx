@@ -1,19 +1,20 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import { dateMath, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, dateMath } from '@grafana/data';
 import {
+  Alert,
   CollapsableSection,
+  Divider,
   Icon,
   Link,
   LinkButton,
-  useStyles2,
-  Stack,
-  Alert,
   LoadingPlaceholder,
-  Divider,
+  Stack,
+  useStyles2,
 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Trans } from 'app/core/internationalization';
 import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { featureDiscoveryApi } from 'app/features/alerting/unified/api/featureDiscoveryApi';
@@ -110,8 +111,10 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
   if (mimirLazyInitError) {
     return (
       <Alert title="The selected Alertmanager has no configuration" severity="warning">
-        Create a new contact point to create a configuration using the default values or contact your administrator to
-        set up the Alertmanager.
+        <Trans i18nKey="silences.table.noConfig">
+          Create a new contact point to create a configuration using the default values or contact your administrator to
+          set up the Alertmanager.
+        </Trans>
       </Alert>
     );
   }
@@ -133,7 +136,7 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
           <Authorize actions={[AlertmanagerAction.CreateSilence]}>
             <Stack justifyContent="end">
               <LinkButton href={makeAMLink('/alerting/silence/new', alertManagerSourceName)} icon="plus">
-                Add Silence
+                <Trans i18nKey="silences.table.add-silence-button">Add Silence</Trans>
               </LinkButton>
             </Stack>
           </Authorize>
@@ -146,7 +149,11 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
             <CollapsableSection label={`Expired silences (${itemsExpired.length})`} isOpen={showExpiredFromUrl}>
               <div className={styles.callout}>
                 <Icon className={styles.calloutIcon} name="info-circle" />
-                <span>Expired silences are automatically deleted after 5 days.</span>
+                <span>
+                  <Trans i18nKey="silences.table.expired-silences">
+                    Expired silences are automatically deleted after 5 days.
+                  </Trans>
+                </span>
               </div>
               <SilenceList
                 items={itemsExpired}
@@ -191,7 +198,7 @@ function SilenceList({
       />
     );
   } else {
-    return <>No matching silences found</>;
+    return <Trans i18nKey="silences.table.no-matching-silences">No matching silences found;</Trans>;
   }
 }
 
@@ -336,7 +343,7 @@ function useColumns(alertManagerSourceName: string) {
                   icon="sync"
                   href={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}
                 >
-                  Recreate
+                  <Trans i18nKey="silences.table.recreate-button">Recreate</Trans>
                 </LinkButton>
               )}
               {canEdit && (
@@ -348,7 +355,7 @@ function useColumns(alertManagerSourceName: string) {
                     icon="bell"
                     onClick={() => handleExpireSilenceClick(silence.id)}
                   >
-                    Unsilence
+                    <Trans i18nKey="silences.table.unsilence-button">Unsilence</Trans>
                   </LinkButton>
                   <LinkButton
                     title="Edit"
@@ -357,7 +364,7 @@ function useColumns(alertManagerSourceName: string) {
                     icon="pen"
                     href={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}
                   >
-                    Edit
+                    <Trans i18nKey="silences.table.edit-button">Edit</Trans>
                   </LinkButton>
                 </>
               )}
