@@ -348,7 +348,7 @@ func TestService_Logout(t *testing.T) {
 		},
 		{
 			desc:                 "should use signout redirect url if configured",
-			identity:             &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
+			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
 			expectedRedirect:     &authn.Redirect{URL: "some-url"},
 			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
 			signoutRedirectURL:   "some-url",
