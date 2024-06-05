@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -25,13 +26,14 @@ import (
 )
 
 type ExtSvcAccountsService struct {
-	acSvc    ac.Service
-	features featuremgmt.FeatureToggles
-	logger   log.Logger
-	metrics  *metrics
-	saSvc    sa.Service
-	skvStore kvstore.SecretsKVStore
-	tracer   tracing.Tracer
+	acSvc         ac.Service
+	features      featuremgmt.FeatureToggles
+	logger        log.Logger
+	metrics       *metrics
+	saSvc         sa.Service
+	skvStore      kvstore.SecretsKVStore
+	tracer        tracing.Tracer
+	actionSetsSvc *resourcepermissions.ActionSetService
 }
 
 func ProvideExtSvcAccountsService(acSvc ac.Service, bus bus.Bus, db db.DB, features featuremgmt.FeatureToggles, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService, secretsSvc secrets.Service, tracer tracing.Tracer) *ExtSvcAccountsService {
@@ -51,6 +53,13 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, bus bus.Bus, db db.DB, featu
 
 		// Register a listener to enable/disable service accounts
 		bus.AddEventListener(esa.handlePluginStateChanged)
+	}
+
+	if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+		// need to create a new instance to allocate a pointer for the service
+		svc := resourcepermissions.NewActionSetService()
+		// Register actionset service for the external service accounts
+		esa.actionSetsSvc = &svc
 	}
 
 	return esa

@@ -15,6 +15,7 @@ import (
 
 type Service struct {
 	featureEnabled bool
+	features       featuremgmt.FeatureToggles
 	log            log.Logger
 	reg            extsvcauth.ExternalServiceRegistry
 	settingsSvc    pluginsettings.Service
@@ -23,6 +24,7 @@ type Service struct {
 func ProvideService(features featuremgmt.FeatureToggles, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
 	s := &Service{
 		featureEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
+		features:       features,
 		log:            log.New("plugins.external.registration"),
 		reg:            reg,
 		settingsSvc:    settingsSvc,
@@ -63,6 +65,10 @@ func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, 
 	self.Enabled = enabled
 	if len(svc.Permissions) > 0 {
 		self.Permissions = toAccessControlPermissions(svc.Permissions)
+	}
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		self.ActionSets = svc.ActionSets
 	}
 
 	registration := &extsvcauth.ExternalServiceRegistration{
