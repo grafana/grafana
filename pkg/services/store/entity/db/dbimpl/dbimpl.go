@@ -44,14 +44,17 @@ type EntityDB struct {
 }
 
 func (db *EntityDB) Init() error {
-	_, err := db.GetEngine()
-	return err
-}
-
-func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 	db.once.Do(func() {
 		db.onceErr = db.init()
 	})
+
+	return db.onceErr
+}
+
+func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
+	if err := db.Init(); err != nil {
+		return nil, err
+	}
 
 	return db.engine, db.onceErr
 }

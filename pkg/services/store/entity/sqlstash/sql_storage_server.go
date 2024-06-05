@@ -535,19 +535,6 @@ type SortBy struct {
 	Direction Direction
 }
 
-func parseAllSortBy(s []string) ([]SortBy, error) {
-	ret := make([]SortBy, len(s))
-	for i, v := range s {
-		ss, err := ParseSortBy(v)
-		if err != nil {
-			return nil, fmt.Errorf("parse #%d-eth sort item: %w", i, err)
-		}
-		ret[i] = ss
-	}
-
-	return ret, nil
-}
-
 func ParseSortBy(sort string) (SortBy, error) {
 	sortBy := SortBy{
 		Field:     "guid",

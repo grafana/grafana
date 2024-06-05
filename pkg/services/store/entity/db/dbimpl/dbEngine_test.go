@@ -1,49 +1,92 @@
 package dbimpl
 
 import (
-	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestGetEnginePostgresFromConfig(t *testing.T) {
-	cfg := setting.NewCfg()
-	s, err := cfg.Raw.NewSection("entity_api")
-	require.NoError(t, err)
-	s.Key("db_type").SetValue("mysql")
-	s.Key("db_host").SetValue("localhost")
-	s.Key("db_name").SetValue("grafana")
-	s.Key("db_user").SetValue("user")
-	s.Key("db_password").SetValue("password")
+func TestGetEngineMySQLFromConfig(t *testing.T) {
+	t.Parallel()
 
-	getter := &sectionGetter{
-		DynamicSection: cfg.SectionWithEnvOverrides("entity_api"),
-	}
-	engine, err := getEnginePostgres(getter, nil)
+	t.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 
-	assert.NotNil(t, engine)
-	assert.NoError(t, err)
-	assert.True(t, strings.Contains(engine.DataSourceName(), "dbname=grafana"))
+		getter := newTestSectionGetter(map[string]string{
+			"db_type":     "mysql",
+			"db_host":     "/var/run/mysql.socket",
+			"db_name":     "grafana",
+			"db_user":     "user",
+			"db_password": "password",
+		})
+		engine, err := getEngineMySQL(getter, nil)
+		assert.NotNil(t, engine)
+		assert.NoError(t, err)
+	})
+
+	t.Run("invalid string", func(t *testing.T) {
+		t.Parallel()
+
+		getter := newTestSectionGetter(map[string]string{
+			"db_type":     "mysql",
+			"db_host":     "/var/run/mysql.socket",
+			"db_name":     string(invalidUTF8ByteSequence),
+			"db_user":     "user",
+			"db_password": "password",
+		})
+		engine, err := getEngineMySQL(getter, nil)
+		assert.Nil(t, engine)
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrInvalidUTF8Sequence)
+	})
 }
 
-func TestGetEngineMySQLFromConfig(t *testing.T) {
-	cfg := setting.NewCfg()
-	s, err := cfg.Raw.NewSection("entity_api")
-	require.NoError(t, err)
-	s.Key("db_type").SetValue("mysql")
-	s.Key("db_host").SetValue("localhost")
-	s.Key("db_name").SetValue("grafana")
-	s.Key("db_user").SetValue("user")
-	s.Key("db_password").SetValue("password")
+func TestGetEnginePostgresFromConfig(t *testing.T) {
+	t.Parallel()
 
-	getter := &sectionGetter{
-		DynamicSection: cfg.SectionWithEnvOverrides("entity_api"),
-	}
-	engine, err := getEngineMySQL(getter, nil)
+	t.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		getter := newTestSectionGetter(map[string]string{
+			"db_type":     "mysql",
+			"db_host":     "localhost",
+			"db_name":     "grafana",
+			"db_user":     "user",
+			"db_password": "password",
+		})
+		engine, err := getEnginePostgres(getter, nil)
 
-	assert.NotNil(t, engine)
-	assert.NoError(t, err)
+		assert.NotNil(t, engine)
+		assert.NoError(t, err)
+	})
+
+	t.Run("invalid string", func(t *testing.T) {
+		t.Parallel()
+		getter := newTestSectionGetter(map[string]string{
+			"db_type":     "mysql",
+			"db_host":     string(invalidUTF8ByteSequence),
+			"db_name":     "grafana",
+			"db_user":     "user",
+			"db_password": "password",
+		})
+		engine, err := getEnginePostgres(getter, nil)
+
+		assert.Nil(t, engine)
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, ErrInvalidUTF8Sequence)
+	})
+
+	t.Run("invalid hostport", func(t *testing.T) {
+		t.Parallel()
+		getter := newTestSectionGetter(map[string]string{
+			"db_type":     "mysql",
+			"db_host":     "1:1:1",
+			"db_name":     "grafana",
+			"db_user":     "user",
+			"db_password": "password",
+		})
+		engine, err := getEnginePostgres(getter, nil)
+
+		assert.Nil(t, engine)
+		assert.Error(t, err)
+	})
 }
