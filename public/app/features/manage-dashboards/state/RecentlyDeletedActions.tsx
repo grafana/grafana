@@ -28,7 +28,12 @@ export function RecentlyDeletedAction() {
   };
 
   const onRestore = async () => {
-    await restoreDashboard({ selectedItems });
+    const promises = Object.entries(selectedItems.dashboard)
+      .filter(([_, selected]) => selected)
+      .map(async ([uid]) => {
+        return await restoreDashboard({ dashboardUID: uid });
+      });
+    await Promise.all(promises);
     onActionComplete();
   };
 

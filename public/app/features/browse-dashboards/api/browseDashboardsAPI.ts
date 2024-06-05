@@ -52,6 +52,10 @@ interface ImportOptions {
   folderUid: string;
 }
 
+interface RestoreDashboardArgs {
+  dashboardUID: string;
+}
+
 function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
     try {
@@ -371,23 +375,14 @@ export const browseDashboardsAPI = createApi({
     }),
 
     // restore a dashboard that got soft deleted
-    restoreDashboard: builder.mutation<void, DeleteItemsArgs>({
-      queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
-        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-        // Restore dashboards sequentially
-        // TODO error handling here
-        for (const dashboardUID of selectedDashboards) {
-          await baseQuery({
-            url: `/dashboards/uid/${dashboardUID}/trash`,
-            method: 'PATCH',
-          });
-        }
-        return { data: undefined };
-      },
-      onQueryStarted: ({ selectedItems }, { queryFulfilled, dispatch }) => {
-        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+    restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
+      query: ({ dashboardUID }) => ({
+        url: `/dashboards/uid/${dashboardUID}/trash`,
+        method: 'PATCH',
+      }),
+      onQueryStarted: ({ dashboardUID }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
-          dispatch(refreshParents(selectedDashboards));
+          dispatch(refreshParents([dashboardUID]));
         });
       },
     }),
