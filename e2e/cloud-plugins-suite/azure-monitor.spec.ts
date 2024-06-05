@@ -68,6 +68,7 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
   });
 }
 
+// Helper function to add template variables
 const addAzureMonitorVariable = (
   name: string,
   type: AzureQueryType,
