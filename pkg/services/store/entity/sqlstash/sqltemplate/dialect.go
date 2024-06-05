@@ -2,6 +2,7 @@ package sqltemplate
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 )
 
@@ -20,6 +21,12 @@ type Dialect interface {
 	// used as an identifier. Database names, schema names, table names, column
 	// names are all examples of identifiers.
 	Ident(string) (string, error)
+
+	// ArgPlaceholder returns a safe argument suitable to be used in a SQL
+	// prepared statement for the argNum-eth argument passed in execution. The
+	// SQL92 Standard specifies the question mark ('?') should be used in all
+	// cases, but some implementations differ.
+	ArgPlaceholder(argNum int) string
 
 	// SelectFor parses and returns the given row-locking clause for a SELECT
 	// statement. If the clause is invalid it returns an error. Implementations
@@ -97,3 +104,18 @@ func (standardIdent) Ident(s string) (string, error) {
 	}
 	return `"` + strings.ReplaceAll(s, `"`, `""`) + `"`, nil
 }
+
+type argPlaceholderFunc func(int) string
+
+func (f argPlaceholderFunc) ArgPlaceholder(argNum int) string {
+	return f(argNum)
+}
+
+var (
+	argFmtSQL92 = argPlaceholderFunc(func(int) string {
+		return "?"
+	})
+	argFmtPositional = argPlaceholderFunc(func(argNum int) string {
+		return "$" + strconv.Itoa(argNum)
+	})
+)
