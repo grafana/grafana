@@ -183,10 +183,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       })
     );
 
-    // Signal that the search terms variable has changed
-    // const searchTermsVariable = getSearchTermsVariable(this);
-    // searchTermsVariable.publishEvent(new SceneVariableValueChangedEvent(searchTermsVariable), true);
-
     const urlState = getUrlSyncManager().getUrlState(this);
     const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
     locationService.replace(fullUrl);
