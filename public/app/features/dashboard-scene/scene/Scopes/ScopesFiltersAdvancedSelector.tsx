@@ -21,7 +21,6 @@ export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<Sco
     <Drawer
       title={t('scopes.advancedSelector.title', 'Select scopes')}
       size="sm"
-      data-testid="scopes-advanced-container"
       onClose={() => {
         model.closeAdvancedSelector();
         model.resetDirtyScopeNames();

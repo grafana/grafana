@@ -21,7 +21,7 @@ export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<Scopes
         show={isBasicOpened}
         closeButton={false}
         content={
-          <div className={styles.innerContainer}>
+          <div className={styles.innerContainer} data-testid="scopes-basic-inner-container">
             {isLoadingScopes ? (
               <Spinner data-testid="scopes-basic-loading" />
             ) : (
