@@ -270,6 +270,3 @@ Labels: {
 
 // Compare two values
 ComparisonOperation: "eq" | "neq" | "lt" | "lte" | "gt" | "gte" @cuetsy(kind="enum",memberNames="EQ|NEQ|LT|LTE|GT|GTE")
-
-// Controls the the default behavior of a selection area on a graph
-SelectionMode: "zoom" | "select" @cuetsy(kind="enum")

@@ -25,7 +25,7 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { HeatmapTooltip } from './HeatmapTooltip';
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
-import { Options } from './types';
+import { HeatmapSelectionMode, Options } from './types';
 import { prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<Options> {}
@@ -45,6 +45,7 @@ export const HeatmapPanel = ({
 }: HeatmapPanelProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+
   const { sync, eventsScope, canAddAnnotations, onSelectRange } = usePanelContext();
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
@@ -113,7 +114,7 @@ export const HeatmapPanel = ({
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
-      selectionAxis: options.selectionAxis,
+      selectionMode: HeatmapSelectionMode.Xy, //options.selectionMode,
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -222,7 +223,7 @@ export const HeatmapPanel = ({
               timeZone={timeZone}
               newRange={newAnnotationRange}
               setNewRange={setNewAnnotationRange}
-              canvasRegionRendering={true}
+              canvasRegionRendering={false}
             />
             <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
           </UPlotChart>

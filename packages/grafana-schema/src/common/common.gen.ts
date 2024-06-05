@@ -683,18 +683,6 @@ export interface VizTooltipOptions {
 export interface Labels {}
 
 /**
- * Compare two values
- */
-export enum ComparisonOperation {
-  EQ = 'eq',
-  GT = 'gt',
-  GTE = 'gte',
-  LT = 'lt',
-  LTE = 'lte',
-  NEQ = 'neq',
-}
-
-/**
  * Internally, this is the "type" of cell that's being displayed
  * in the table such as colored text, JSON, gauge, etc.
  * The color-background-solid, gradient-gauge, and lcd-gauge
@@ -920,11 +908,15 @@ export enum LogsDedupStrategy {
 }
 
 /**
- * Controls the the default behavior of a selection area on a graph
+ * Compare two values
  */
-export enum SelectionMode {
-  Select = 'select',
-  Zoom = 'zoom',
+export enum ComparisonOperation {
+  EQ = 'eq',
+  GT = 'gt',
+  GTE = 'gte',
+  LT = 'lt',
+  LTE = 'lte',
+  NEQ = 'neq',
 }
 
 /**

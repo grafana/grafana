@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
-import { OnSelectRangeCallback } from '../../PanelChrome';
+import { CartesianSelection2D, OnSelectRangeCallback, RangeSelection1D } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
@@ -323,29 +323,66 @@ export const TooltipPlugin2 = ({
 
     config.addHook('setSelect', (u) => {
       const isXAxisHorizontal = u.scales.x.ori === 0;
+
       if (!viaSync && (clientZoom || queryZoom != null)) {
         if (maybeZoomAction(u.cursor!.event)) {
-          if (onSelectRange) {
-            const selections = Object.entries(u.scales!).map(([key, scale]) => {
-              const isXAxis = key === 'x';
-              let min = 0;
-              let max = 0;
-              if (isXAxis) {
-                min = isXAxisHorizontal
+          if (onSelectRange != null) {
+            let selections: CartesianSelection2D[] = [];
+
+            const yDrag = Boolean(u.cursor!.drag!.y);
+            const xDrag = Boolean(u.cursor!.drag!.x);
+
+            let xSel = null;
+            let ySels: RangeSelection1D[] = [];
+
+            // get x selection
+            if (xDrag) {
+              xSel = {
+                // type: 'time', // TODO: remove hardcode
+                // unit: config.scales.find((scale) => scale.props.scaleKey === 'x')!.props.unit ?? '',
+                from: isXAxisHorizontal
                   ? u.posToVal(u.select.left!, 'x')
-                  : u.posToVal(u.select.top + u.select.height, 'x');
-                max = isXAxisHorizontal
+                  : u.posToVal(u.select.top + u.select.height, 'x'),
+                to: isXAxisHorizontal
                   ? u.posToVal(u.select.left! + u.select.width, 'x')
-                  : u.posToVal(u.select.top, 'x');
+                  : u.posToVal(u.select.top, 'x'),
+              };
+            }
+
+            // get y selections
+            if (yDrag) {
+              config.scales.forEach((scale) => {
+                const key = scale.props.scaleKey;
+
+                if (key !== 'x') {
+                  let ySel = {
+                    // type: 'number', // TODO: remove hardcode
+                    // unit: scale.props.unit ?? '',
+                    from: isXAxisHorizontal
+                      ? u.posToVal(u.select.top + u.select.height, key)
+                      : u.posToVal(u.select.left + u.select.width, key),
+                    to: isXAxisHorizontal ? u.posToVal(u.select.top, key) : u.posToVal(u.select.left, key),
+                  };
+
+                  ySels.push(ySel);
+                }
+              });
+            }
+
+            if (xDrag) {
+              if (yDrag) {
+                // x + y
+                selections = ySels.map((ySel) => ({ x: xSel!, y: ySel }));
               } else {
-                min = isXAxisHorizontal ? u.posToVal(u.select.top, key) : u.posToVal(u.select.left, key);
-                max = isXAxisHorizontal
-                  ? u.posToVal(u.select.top + u.select.height, key)
-                  : u.posToVal(u.select.left + u.select.width, key);
+                // x only
+                selections = [{ x: xSel! }];
               }
-              // @ts-ignore
-              return { unit: scale.unit, from: min, to: max };
-            });
+            } else {
+              if (yDrag) {
+                // y only
+                selections = ySels.map((ySel) => ({ y: ySel }));
+              }
+            }
 
             onSelectRange(selections);
           } else if (clientZoom && yDrag) {

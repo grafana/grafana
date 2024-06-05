@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useReducer } from 'react';
 import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
-import uPlot from 'uplot';
+import uPlot, { pxRatio } from 'uplot';
 
-import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic } from '@grafana/data';
+import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, FieldType } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR, getPortalContainer, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
 
@@ -34,17 +34,6 @@ const renderLine = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x: nu
   ctx.stroke();
 };
 
-const renderRegion = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x0: number, x1: number, color: string) => {
-  ctx.beginPath();
-  ctx.moveTo(x0, y0);
-  ctx.lineTo(x0, y1);
-  ctx.lineTo(x1, y1);
-  ctx.lineTo(x1, y0);
-  ctx.lineTo(x0, y0);
-  ctx.strokeStyle = color;
-  ctx.stroke();
-};
-
 // const renderUpTriangle = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string) => {
 //   ctx.beginPath();
 //   ctx.moveTo(x - w/2, y + h/2);
@@ -65,6 +54,69 @@ function getVals(frame: DataFrame) {
 
   return vals;
 }
+
+// remove before merging!
+const xyMarkFrame = {
+  name: 'xymark',
+  meta: {
+    dataTopic: DataTopic.Annotations,
+  },
+  length: 1,
+  fields: [
+    {
+      name: 'xMin',
+      config: {},
+      type: FieldType.number,
+      values: [1717538017984.1462],
+      // values: [range.x?.from ?? 0],
+    },
+    {
+      name: 'xMax',
+      config: {},
+      type: FieldType.number,
+      values: [1717545426520.7317],
+      // values: [range.x?.to ?? 0],
+    },
+    {
+      name: 'yMin',
+      config: {},
+      type: FieldType.number,
+      values: [0.5715623232513972],
+      // values: [range.y?.from ?? 0],
+    },
+    {
+      name: 'yMax',
+      config: {},
+      type: FieldType.number,
+      values: [2098.4203479996304],
+      // values: [range.y?.to ?? 0],
+    },
+    {
+      name: 'color',
+      config: {},
+      type: FieldType.string,
+      values: ['#0f0'],
+    },
+    {
+      name: 'fillOpacity',
+      config: {},
+      type: FieldType.number,
+      values: [0.05],
+    },
+    {
+      name: 'lineWidth',
+      config: {},
+      type: FieldType.number,
+      values: [1],
+    },
+    {
+      name: 'lineStyle',
+      config: {},
+      type: FieldType.string,
+      values: ['dash'],
+    },
+  ],
+};
 
 export const AnnotationsPlugin2 = ({
   annotations,
@@ -142,40 +194,64 @@ export const AnnotationsPlugin2 = ({
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]);
-
-      annos.forEach((frame) => {
+      annos.concat(xyMarkFrame).forEach((frame) => {
         let vals = getVals(frame);
-        let y0 = u.bbox.top;
-        let y1 = y0 + u.bbox.height;
 
-        for (let i = 0; i < vals.time.length; i++) {
-          let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
+        if (frame.name === 'xymark') {
+          // xMin, xMax, yMin, yMax, color, lineWidth, lineStyle, fillOpacity, text
 
-          let x0 = u.valToPos(vals.time[i], 'x', true);
-          const yScaleKey = Object.values(u.scales!).find((s) => s.key?.startsWith('y') && s.max)?.key;
-          const shouldRenderRegion = yScaleKey && vals.fromY[i];
-          if (shouldRenderRegion) {
-            y0 = u.valToPos(vals.fromY[i] || 0, yScaleKey, true);
-            y1 = u.valToPos(vals.toY[i] || 0, yScaleKey, true);
-          }
+          let xKey = config.scales[0].props.scaleKey;
+          let yKey = config.scales[1].props.scaleKey;
 
-          if (!vals.isRegion?.[i]) {
-            renderLine(ctx, y0, y1, x0, color);
-            // renderUpTriangle(ctx, x0, y1, 8 * uPlot.pxRatio, 5 * uPlot.pxRatio, color);
-          } else if (canvasRegionRendering) {
-            let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
+          for (let i = 0; i < frame.length; i++) {
+            let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
-            if (shouldRenderRegion) {
-              renderRegion(ctx, y0, y1, x0, x1, color);
+            let x0 = u.valToPos(vals.xMin[i], xKey, true);
+            let x1 = u.valToPos(vals.xMax[i], xKey, true);
+            let y0 = u.valToPos(vals.yMax[i], yKey, true);
+            let y1 = u.valToPos(vals.yMin[i], yKey, true);
+
+            ctx.fillStyle = colorManipulator.alpha(color, vals.fillOpacity[i]);
+            ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+
+            ctx.lineWidth = Math.round(vals.lineWidth[i] * pxRatio);
+
+            if (vals.lineStyle[i] === 'dash') {
+              // maybe extract this to vals.lineDash[i] in future?
+              ctx.setLineDash([5, 5]);
             } else {
-              renderLine(ctx, y0, y1, x0, color);
-              renderLine(ctx, y0, y1, x1, color);
+              // solid
+              ctx.setLineDash([]);
             }
 
-            ctx.fillStyle = colorManipulator.alpha(color, 0.1);
-            ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+            ctx.strokeStyle = color;
+            ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+          }
+        } else {
+          let y0 = u.bbox.top;
+          let y1 = y0 + u.bbox.height;
+
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 5]);
+
+          for (let i = 0; i < vals.time.length; i++) {
+            let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
+
+            let x0 = u.valToPos(vals.time[i], 'x', true);
+
+            if (!vals.isRegion?.[i]) {
+              renderLine(ctx, y0, y1, x0, color);
+              // renderUpTriangle(ctx, x0, y1, 8 * uPlot.pxRatio, 5 * uPlot.pxRatio, color);
+            } else if (canvasRegionRendering) {
+              renderLine(ctx, y0, y1, x0, color);
+
+              let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
+
+              renderLine(ctx, y0, y1, x1, color);
+
+              ctx.fillStyle = colorManipulator.alpha(color, 0.1);
+              ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
+            }
           }
         }
       });

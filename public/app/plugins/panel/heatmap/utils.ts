@@ -18,7 +18,7 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { HeatmapData } from './fields';
-import { FieldConfig, HeatmapSelectionAxis, YAxisConfig } from './types';
+import { FieldConfig, HeatmapSelectionMode, YAxisConfig } from './types';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -51,7 +51,7 @@ interface PrepConfigOpts {
   hideGE?: number;
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
-  selectionAxis?: HeatmapSelectionAxis;
+  selectionMode?: HeatmapSelectionMode;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -65,7 +65,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     hideGE,
     yAxisConfig,
     ySizeDivisor,
-    selectionAxis = 'x',
+    selectionMode = HeatmapSelectionMode.X,
   } = opts;
 
   const xScaleKey = 'x';
@@ -133,7 +133,6 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   builder.addScale({
     scaleKey: xScaleKey,
-    unit: xField.config.unit || xField.type,
     isTime,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
@@ -192,7 +191,6 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   builder.addScale({
     scaleKey: yScaleKey,
-    unit: yField.config?.unit || yField.type,
     isTime: false,
     // distribution: ScaleDistribution.Ordinal, // does not work with facets/scatter yet
     orientation: ScaleOrientation.Vertical,
@@ -464,8 +462,8 @@ export function prepConfig(opts: PrepConfigOpts) {
     scaleKey: '', // facets' scales used (above)
   });
 
-  const dragX = selectionAxis === 'x' || selectionAxis === 'xy';
-  const dragY = selectionAxis === 'y' || selectionAxis === 'xy';
+  const dragX = selectionMode === HeatmapSelectionMode.X || selectionMode === HeatmapSelectionMode.Xy;
+  const dragY = selectionMode === HeatmapSelectionMode.Y || selectionMode === HeatmapSelectionMode.Xy;
 
   const cursor: Cursor = {
     drag: {
