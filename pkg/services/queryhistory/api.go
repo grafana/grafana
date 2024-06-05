@@ -3,11 +3,11 @@ package queryhistory
 import (
 	"net/http"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -61,7 +61,7 @@ func (s *QueryHistoryService) createHandler(c *contextmodel.ReqContext) response
 // 401: unauthorisedError
 // 500: internalServerError
 func (s *QueryHistoryService) searchHandler(c *contextmodel.ReqContext) response.Response {
-	timeRange := legacydata.NewDataTimeRange(c.Query("from"), c.Query("to"))
+	timeRange := gtime.NewTimeRange(c.Query("from"), c.Query("to"))
 
 	query := SearchInQueryHistoryQuery{
 		DatasourceUIDs: c.QueryStrings("datasourceUid"),

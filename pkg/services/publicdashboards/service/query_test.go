@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -23,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/stretchr/testify/assert"
@@ -1616,8 +1616,8 @@ func TestBuildTimeSettings(t *testing.T) {
 	fakeNow := time.Date(2018, 12, 9, 20, 30, 0, 0, fakeTimezone)
 
 	// stub time range construction to have a fixed time.Now and be able to tests relative time ranges
-	NewDataTimeRange = func(from, to string) legacydata.DataTimeRange {
-		return legacydata.DataTimeRange{
+	NewTimeRange = func(from, to string) gtime.TimeRange {
+		return gtime.TimeRange{
 			From: from,
 			To:   to,
 			Now:  fakeNow,
