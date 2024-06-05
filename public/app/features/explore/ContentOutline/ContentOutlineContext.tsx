@@ -180,7 +180,6 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
   }, []);
 
   const updateItem = useCallback((id: string, properties: Partial<Omit<ContentOutlineItemContextProps, 'id'>>) => {
-    console.log('updateItem', id, properties);
     setOutlineItems((prevItems) =>
       prevItems.map((item) => {
         if (item.id === id) {

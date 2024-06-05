@@ -141,8 +141,6 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     }
   };
 
-  console.log(outlineItems);
-
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
       <CustomScrollbar>
