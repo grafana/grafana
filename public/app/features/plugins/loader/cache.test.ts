@@ -37,7 +37,7 @@ describe('Cache Functions', () => {
   });
 
   describe('resolveWithCache', () => {
-    it('should resolve URL with timestamp cache bust parameter', () => {
+    it('should resolve URL with timestamp cache bust parameter if plugin is not available in the cache', () => {
       const url = 'http://localhost:3000/public/plugins/plugin4/module.js';
       expect(resolveWithCache(url)).toContain('_cache=123456');
     });
