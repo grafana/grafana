@@ -259,10 +259,6 @@ const (
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 
-	// FlagLokiFormatQuery
-	// Enables the ability to format Loki queries
-	FlagLokiFormatQuery = "lokiFormatQuery"
-
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
@@ -406,6 +402,10 @@ const (
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
+
+	// FlagKubernetesDashboards
+	// Use the kubernetes API in the frontend for dashboards
+	FlagKubernetesDashboards = "kubernetesDashboards"
 
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
@@ -698,4 +698,8 @@ const (
 	// FlagAlertingCentralAlertHistory
 	// Enables the new central alert history.
 	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
+
+	// FlagPluginProxyPreserveTrailingSlash
+	// Preserve plugin proxy trailing slash.
+	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 )
