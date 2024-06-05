@@ -11,7 +11,7 @@ import {
   incrRoundUp,
   TimeRange,
 } from '@grafana/data';
-import { AxisPlacement, HeatmapCellLayout, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
+import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, HeatmapCellLayout } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
