@@ -1,7 +1,7 @@
 import { produce } from 'immer';
 import React from 'react';
 import { render, screen, userEvent } from 'test/test-utils';
-import { byLabelText } from 'testing-library-selector';
+import { byLabelText, byRole } from 'testing-library-selector';
 
 import { config, setPluginExtensionsHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -25,6 +25,7 @@ const mockContextSrv = jest.mocked(contextSrv);
 
 const ui = {
   moreButton: byLabelText(/More/),
+  pauseButton: byRole('menuitem', { name: /Pause evaluation/ }),
 };
 
 const grantAllPermissions = () => {
@@ -74,6 +75,17 @@ describe('RuleActionsButtons', () => {
     await user.click(await ui.moreButton.find());
 
     expect(await getMenuContents()).toMatchSnapshot();
+  });
+
+  it('should be able to pause a Grafana rule', async () => {
+    const user = userEvent.setup();
+    grantAllPermissions();
+    const mockRule = getGrafanaRule();
+
+    render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" />);
+
+    await user.click(await ui.moreButton.find());
+    await user.click(await ui.pauseButton.find());
   });
 
   it('renders correct options for Cloud rule', async () => {

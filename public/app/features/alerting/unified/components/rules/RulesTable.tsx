@@ -46,7 +46,6 @@ export const RulesTable = ({
   showNextEvaluationColumn = false,
 }: Props) => {
   const styles = useStyles2(getStyles);
-
   const wrapperClass = cx(styles.wrapper, className, { [styles.wrapperMargin]: showGuidelines });
 
   const items = useMemo((): RuleTableItemProps[] => {
