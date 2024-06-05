@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { Tooltip, ButtonGroup, ToolbarButton } from '@grafana/ui';
@@ -15,6 +15,7 @@ type LiveTailButtonProps = {
 };
 
 export function LiveTailButton(props: LiveTailButtonProps) {
+  const transitionRef = useRef(null);
   const { start, pause, resume, isLive, isPaused, stop, splitted } = props;
   const buttonVariant = isLive && !isPaused ? 'active' : 'canvas';
   const onClickMain = isLive ? (isPaused ? resume : pause) : start;
@@ -46,9 +47,10 @@ export function LiveTailButton(props: LiveTailButtonProps) {
           exit: styles.stopButtonExit,
           exitActive: styles.stopButtonExitActive,
         }}
+        nodeRef={transitionRef}
       >
         <Tooltip content={<>Stop and exit the live stream</>} placement="bottom">
-          <ToolbarButton variant={buttonVariant} onClick={stop} icon="square-shape" />
+          <ToolbarButton ref={transitionRef} variant={buttonVariant} onClick={stop} icon="square-shape" />
         </Tooltip>
       </CSSTransition>
     </ButtonGroup>
