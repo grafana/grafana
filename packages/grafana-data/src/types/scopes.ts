@@ -52,6 +52,7 @@ export interface ScopeTreeItemSpec {
   title: string;
 
   description?: string;
+  disableMultiSelect?: boolean;
   linkId?: string;
   linkType?: ScopeTreeItemLinkType;
 }

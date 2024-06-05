@@ -3,8 +3,7 @@ import { debounce } from 'lodash';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Checkbox, Icon, Input, useStyles2 } from '@grafana/ui';
-import { IconButton } from '@grafana/ui/';
+import { Checkbox, Icon, IconButton, Input, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { NodesMap } from './types';
@@ -70,7 +69,7 @@ export function ScopesTreeLevel({
                 {childNode.isSelectable && !childNode.isExpanded ? (
                   <Checkbox
                     checked={isSelected}
-                    disabled={!!loadingNodeId}
+                    disabled={!!loadingNodeId || (anyChildSelected && !isSelected && node.item.disableMultiSelect)}
                     data-testid={`scopes-tree-${childNode.item.nodeId}-checkbox`}
                     onChange={() => {
                       onNodeSelectToggle(childNodePath);

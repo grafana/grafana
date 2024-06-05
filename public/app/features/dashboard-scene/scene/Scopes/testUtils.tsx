@@ -96,6 +96,7 @@ export const mocksNodes: Array<ScopeTreeItemSpec & { parent: string }> = [
     nodeType: 'container',
     title: 'Clusters',
     description: 'Cluster Scopes',
+    disableMultiSelect: true,
     linkType: 'scope',
     linkId: 'indexHelperCluster',
   },
@@ -254,6 +255,11 @@ export const queryApplicationsClustersSlothClusterNorthTitle = () =>
   screen.queryByTestId(selectors.tree.title('applications.clusters-slothClusterNorth'));
 
 export const getClustersSelect = () => screen.getByTestId(selectors.tree.select('clusters'));
+export const getClustersExpand = () => screen.getByTestId(selectors.tree.expand('clusters'));
+export const getClustersSlothClusterNorthSelect = () =>
+  screen.getByTestId(selectors.tree.select('clusters-slothClusterNorth'));
+export const getClustersSlothClusterSouthSelect = () =>
+  screen.getByTestId(selectors.tree.select('clusters-slothClusterSouth'));
 
 export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
   return new DashboardScene({

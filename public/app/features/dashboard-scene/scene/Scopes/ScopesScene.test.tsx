@@ -24,7 +24,10 @@ import {
   getBasicInnerContainer,
   getBasicInput,
   getBasicOpenAdvanced,
+  getClustersExpand,
   getClustersSelect,
+  getClustersSlothClusterNorthSelect,
+  getClustersSlothClusterSouthSelect,
   getDashboard,
   getDashboardsContainer,
   getDashboardsSearch,
@@ -157,6 +160,13 @@ describe('ScopesScene', () => {
         await userEvents.click(getClustersSelect());
         await userEvents.click(getBasicInput());
         expect(getBasicInput().value).toBe('Cluster Index Helper');
+      });
+
+      it('Respects only one select per container', async () => {
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getClustersExpand());
+        await userEvents.click(getClustersSlothClusterNorthSelect());
+        expect(getClustersSlothClusterSouthSelect()).toBeDisabled();
       });
     });
 
