@@ -100,12 +100,16 @@ func tupleLablesToLabels(tuples tupleLabels) (InstanceLabels, error) {
 	if tuples == nil {
 		return InstanceLabels{}, nil
 	}
-	labels := make(map[string]string)
+
+	labels := make(map[string]string, len(tuples))
 	for _, tuple := range tuples {
-		if key, ok := labels[tuple[0]]; ok {
-			return nil, fmt.Errorf("duplicate key '%v' in lables: %v", key, tuples)
+		key, value := tuple[0], tuple[1]
+		if _, ok := labels[key]; ok {
+			return nil, fmt.Errorf("duplicate key '%s' in labels: %v", key, tuples)
 		}
-		labels[tuple[0]] = tuple[1]
+
+		labels[key] = value
 	}
+
 	return labels, nil
 }

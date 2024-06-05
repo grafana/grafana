@@ -2179,7 +2179,8 @@
       "metadata": {
         "name": "enableElasticsearchBackendQuerying",
         "resourceVersion": "1717578796182",
-        "creationTimestamp": "2024-06-05T09:13:16Z"
+        "creationTimestamp": "2024-06-05T09:13:16Z",
+        "deletionTimestamp": "2024-06-05T14:07:54Z"
       },
       "spec": {
         "description": "Enable the processing of queries and responses in the Elasticsearch data source through backend",
@@ -2211,6 +2212,31 @@
         "description": "Enables the loki data source to request structured metadata from the Loki server",
         "stage": "GA",
         "codeowner": "@grafana/observability-logs"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginProxyPreserveTrailingSlash",
+        "resourceVersion": "1717581171624",
+        "creationTimestamp": "2024-06-05T09:52:51Z"
+      },
+      "spec": {
+        "description": "Preserve plugin proxy trailing slash.",
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesDashboards",
+        "resourceVersion": "1717593661635",
+        "creationTimestamp": "2024-06-05T13:21:01Z"
+      },
+      "spec": {
+        "description": "Use the kubernetes API in the frontend for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true
       }
     }
   ]
