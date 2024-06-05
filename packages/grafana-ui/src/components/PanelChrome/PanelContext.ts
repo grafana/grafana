@@ -1,14 +1,14 @@
 import React from 'react';
 
 import {
-  AnnotationEventUIModel,
-  CoreApp,
+  EventBusSrv,
+  EventBus,
   DashboardCursorSync,
+  AnnotationEventUIModel,
+  ThresholdsConfig,
+  CoreApp,
   DataFrame,
   DataLinkPostProcessor,
-  EventBus,
-  EventBusSrv,
-  ThresholdsConfig,
 } from '@grafana/data';
 
 import { AdHocFilterItem } from '../Table/types';
