@@ -1285,6 +1285,13 @@ var (
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:        "pluginProxyPreserveTrailingSlash",
+			Description: "Preserve plugin proxy trailing slash.",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
+		},
 	}
 )
 

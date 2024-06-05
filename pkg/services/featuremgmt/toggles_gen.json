@@ -2212,6 +2212,18 @@
         "stage": "GA",
         "codeowner": "@grafana/observability-logs"
       }
+    },
+    {
+      "metadata": {
+        "name": "pluginProxyPreserveTrailingSlash",
+        "resourceVersion": "1717581171624",
+        "creationTimestamp": "2024-06-05T09:52:51Z"
+      },
+      "spec": {
+        "description": "Preserve plugin proxy trailing slash.",
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
     }
   ]
 }
