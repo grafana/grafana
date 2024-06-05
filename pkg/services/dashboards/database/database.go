@@ -800,8 +800,8 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	if len(first.searchRes) != len(second.searchRes) {
 		d.log.Error(
 			"search_eval result diff",
-			"grafana_res", first.searchRes,
-			"zanana_res", second.searchRes,
+			"grafana_res", len(first.searchRes),
+			"zanana_res", len(second.searchRes),
 			"grafana_ms", first.duration,
 			"zanzana_ms", second.duration,
 		)
@@ -907,10 +907,13 @@ func (d *dashboardStore) findDashboardsZanzanaCheck(ctx context.Context, query *
 				rowsFetchedInThisBatch++
 			}
 
-			concurrentRequests := len(batchRows)
+			concurrentRequests := int(d.zService.Cfg.MaxConcurrentReadsForCheck)
+			if concurrentRequests == 0 {
+				concurrentRequests = 10
+			}
 			rowsToCheck := make(chan dashboards.DashboardSearchProjection, concurrentRequests)
 			allowedResults := make(chan dashboards.DashboardSearchProjection, len(batchRows))
-			errChan := make(chan error)
+			errChan := make(chan error, len(batchRows))
 			var wg sync.WaitGroup
 			for i := 0; i < concurrentRequests; i++ {
 				wg.Add(1)
@@ -934,8 +937,8 @@ func (d *dashboardStore) findDashboardsZanzanaCheck(ctx context.Context, query *
 						})
 						if err != nil {
 							errChan <- err
-						}
-						if checkRes.Allowed {
+							d.log.Warn("error checking access", "error", err)
+						} else if checkRes.Allowed {
 							allowedResults <- row
 						}
 					}
@@ -946,8 +949,8 @@ func (d *dashboardStore) findDashboardsZanzanaCheck(ctx context.Context, query *
 				rowsToCheck <- r
 			}
 			close(rowsToCheck)
-			wg.Wait()
 
+			wg.Wait()
 			close(allowedResults)
 			for r := range allowedResults {
 				res = append(res, r)
