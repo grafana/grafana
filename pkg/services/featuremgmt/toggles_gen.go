@@ -227,10 +227,6 @@ const (
 	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
 	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
 
-	// FlagEnableElasticsearchBackendQuerying
-	// Enable the processing of queries and responses in the Elasticsearch data source through backend
-	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
-
 	// FlagFaroDatasourceSelector
 	// Enable the data source selector within the Frontend Apps section of the Frontend Observability
 	FlagFaroDatasourceSelector = "faroDatasourceSelector"
