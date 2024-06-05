@@ -50,7 +50,6 @@ import {
 
 import { IndexPattern, intervalMap } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
-import { LegacyQueryRunner } from './LegacyQueryRunner';
 import { ElasticQueryBuilder } from './QueryBuilder';
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
@@ -129,7 +128,6 @@ export class ElasticDatasource
   includeFrozen: boolean;
   isProxyAccess: boolean;
   databaseVersion: SemVer | null;
-  legacyQueryRunner: LegacyQueryRunner;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -169,7 +167,6 @@ export class ElasticDatasource
       this.logLevelField = undefined;
     }
     this.languageProvider = new LanguageProvider(this);
-    this.legacyQueryRunner = new LegacyQueryRunner(this, this.templateSrv);
   }
 
   getResourceRequest(path: string, params?: BackendSrvRequest['params'], options?: Partial<BackendSrvRequest>) {

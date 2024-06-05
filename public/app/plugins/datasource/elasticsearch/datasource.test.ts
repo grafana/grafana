@@ -10,12 +10,10 @@ import {
   LoadingState,
   SupplementaryQueryType,
   TimeRange,
-  toDataFrame,
   toUtc,
 } from '@grafana/data';
 import { FetchResponse, reportInteraction, getBackendSrv, setBackendSrv, BackendSrv } from '@grafana/runtime';
 
-import { enhanceDataFrame } from './LegacyQueryRunner';
 import { ElasticDatasource } from './datasource';
 import { createElasticDatasource, createElasticQuery, mockResponseFrames } from './mocks';
 import { Filters, ElasticsearchQuery } from './types';
@@ -490,90 +488,6 @@ describe('ElasticDatasource', () => {
     it('Should NOT add ignore_throttled if "includeFrozen" is disabled', () => {
       const ds = createElasticDatasource({ jsonData: { includeFrozen: false } });
       expect(ds.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
-    });
-  });
-
-  describe('enhanceDataFrame', () => {
-    it('adds links to data frame', () => {
-      const df = toDataFrame({
-        fields: [
-          {
-            name: 'urlField',
-            values: [],
-          },
-          {
-            name: 'traceField',
-            values: [],
-          },
-        ],
-      });
-
-      enhanceDataFrame(df, [
-        {
-          field: 'urlField',
-          url: 'someUrl',
-        },
-        {
-          field: 'urlField',
-          url: 'someOtherUrl',
-        },
-        {
-          field: 'traceField',
-          url: 'query',
-          datasourceUid: 'ds1',
-        },
-        {
-          field: 'traceField',
-          url: 'otherQuery',
-          datasourceUid: 'ds2',
-        },
-      ]);
-
-      expect(df.fields[0].config.links).toHaveLength(2);
-      expect(df.fields[0].config.links).toContainEqual({
-        title: '',
-        url: 'someUrl',
-      });
-      expect(df.fields[0].config.links).toContainEqual({
-        title: '',
-        url: 'someOtherUrl',
-      });
-
-      expect(df.fields[1].config.links).toHaveLength(2);
-      expect(df.fields[1].config.links).toContainEqual(
-        expect.objectContaining({
-          title: '',
-          url: '',
-          internal: expect.objectContaining({
-            query: { query: 'query' },
-            datasourceUid: 'ds1',
-          }),
-        })
-      );
-      expect(df.fields[1].config.links).toContainEqual(
-        expect.objectContaining({
-          title: '',
-          url: '',
-          internal: expect.objectContaining({
-            query: { query: 'otherQuery' },
-            datasourceUid: 'ds2',
-          }),
-        })
-      );
-    });
-
-    it('adds limit to data frame', () => {
-      const df = toDataFrame({
-        fields: [
-          {
-            name: 'someField',
-            values: [],
-          },
-        ],
-      });
-      enhanceDataFrame(df, [], 10);
-
-      expect(df.meta?.limit).toBe(10);
     });
   });
 
