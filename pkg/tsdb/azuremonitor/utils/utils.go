@@ -10,13 +10,14 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
+const SubscriptionsApiVersion = "2020-01-01"
+
 func GetFirstSubscriptionOrDefault(ctx context.Context, dsInfo types.DatasourceInfo, logger log.Logger) (string, error) {
 	if dsInfo.Settings.SubscriptionId != "" {
 		return dsInfo.Settings.SubscriptionId, nil
 	}
 
-	subscriptionsApiVersion := "2020-01-01"
-	url := fmt.Sprintf("%v/subscriptions?api-version=%v", dsInfo.Routes["Azure Monitor"].URL, subscriptionsApiVersion)
+	url := fmt.Sprintf("%v/subscriptions?api-version=%v", dsInfo.Routes["Azure Monitor"].URL, SubscriptionsApiVersion)
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return "", err
