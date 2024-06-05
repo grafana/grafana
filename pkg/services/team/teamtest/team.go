@@ -3,7 +3,6 @@ package teamtest
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/team"
 )
 
@@ -21,7 +20,7 @@ func NewFakeService() *FakeService {
 	return &FakeService{}
 }
 
-func (s *FakeService) CreateTeam(name, email string, orgID int64) (team.Team, error) {
+func (s *FakeService) CreateTeam(ctx context.Context, name, email string, orgID int64) (team.Team, error) {
 	return s.ExpectedTeam, s.ExpectedError
 }
 
@@ -45,20 +44,8 @@ func (s *FakeService) GetTeamsByUser(ctx context.Context, query *team.GetTeamsBy
 	return s.ExpectedTeamsByUser, s.ExpectedError
 }
 
-func (s *FakeService) AddTeamMember(ctx context.Context, userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
-	return s.ExpectedError
-}
-
-func (s *FakeService) UpdateTeamMember(ctx context.Context, cmd *team.UpdateTeamMemberCommand) error {
-	return s.ExpectedError
-}
-
-func (s *FakeService) IsTeamMember(orgId int64, teamId int64, userId int64) (bool, error) {
+func (s *FakeService) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
 	return s.ExpectedIsMember, s.ExpectedError
-}
-
-func (s *FakeService) RemoveTeamMember(ctx context.Context, cmd *team.RemoveTeamMemberCommand) error {
-	return s.ExpectedError
 }
 
 func (s *FakeService) RemoveUsersMemberships(ctx context.Context, userID int64) error {

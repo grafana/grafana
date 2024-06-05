@@ -36,7 +36,7 @@ func Test_provideLiveService_RedisUnavailable(t *testing.T) {
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		nil,
-		featuremgmt.WithFeatures(), acimpl.ProvideAccessControl(cfg), &dashboards.FakeDashboardService{}, annotationstest.NewFakeAnnotationsRepo(), nil)
+		featuremgmt.WithFeatures(), acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), &dashboards.FakeDashboardService{}, annotationstest.NewFakeAnnotationsRepo(), nil)
 
 	// Proceeds without live HA if redis is unavaialble
 	require.NoError(t, err)

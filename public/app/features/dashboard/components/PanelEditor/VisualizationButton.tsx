@@ -65,11 +65,11 @@ export const VisualizationButton = ({ panel }: Props) => {
 VisualizationButton.displayName = 'VisualizationTab';
 
 const styles = {
-  wrapper: css`
-    display: flex;
-    flex-direction: column;
-  `,
-  vizButton: css`
-    text-align: left;
-  `,
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  vizButton: css({
+    textAlign: 'left',
+  }),
 };

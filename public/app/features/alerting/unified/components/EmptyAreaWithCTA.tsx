@@ -58,17 +58,17 @@ export const EmptyAreaWithCTA = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      background-color: ${theme.colors.background.secondary};
-      color: ${theme.colors.text.secondary};
-      padding: ${theme.spacing(4)};
-      text-align: center;
-    `,
-    text: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    button: css`
-      margin: ${theme.spacing(2, 0, 1)};
-    `,
+    container: css({
+      backgroundColor: theme.colors.background.secondary,
+      color: theme.colors.text.secondary,
+      padding: theme.spacing(4),
+      textAlign: 'center',
+    }),
+    text: css({
+      marginBottom: theme.spacing(2),
+    }),
+    button: css({
+      margin: theme.spacing(2, 0, 1),
+    }),
   };
 };

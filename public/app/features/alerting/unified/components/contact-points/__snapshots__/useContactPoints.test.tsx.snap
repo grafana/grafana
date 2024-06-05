@@ -30,7 +30,14 @@ exports[`useContactPoints should return contact points with status 1`] = `
         },
       ],
       "name": "grafana-default-email",
-      "numberOfPolicies": 1,
+      "policies": [
+        {
+          "receiver": "grafana-default-email",
+          "route": {
+            "type": "normal",
+          },
+        },
+      ],
     },
     {
       "grafana_managed_receiver_configs": [
@@ -58,7 +65,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
         },
       ],
       "name": "lotsa-emails",
-      "numberOfPolicies": 0,
+      "policies": [],
     },
     {
       "grafana_managed_receiver_configs": [
@@ -84,7 +91,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
         },
       ],
       "name": "OnCall Conctact point",
-      "numberOfPolicies": 0,
+      "policies": [],
     },
     {
       "grafana_managed_receiver_configs": [
@@ -113,7 +120,14 @@ exports[`useContactPoints should return contact points with status 1`] = `
         },
       ],
       "name": "provisioned-contact-point",
-      "numberOfPolicies": 1,
+      "policies": [
+        {
+          "receiver": "provisioned-contact-point",
+          "route": {
+            "type": "normal",
+          },
+        },
+      ],
     },
     {
       "grafana_managed_receiver_configs": [
@@ -165,7 +179,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
         },
       ],
       "name": "Slack with multiple channels",
-      "numberOfPolicies": 0,
+      "policies": [],
     },
   ],
   "error": undefined,
@@ -204,7 +218,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
         },
       ],
       "name": "grafana-default-email",
-      "numberOfPolicies": undefined,
+      "policies": undefined,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -232,7 +246,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
         },
       ],
       "name": "lotsa-emails",
-      "numberOfPolicies": undefined,
+      "policies": undefined,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -255,7 +269,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
         },
       ],
       "name": "OnCall Conctact point",
-      "numberOfPolicies": undefined,
+      "policies": undefined,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -284,7 +298,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
         },
       ],
       "name": "provisioned-contact-point",
-      "numberOfPolicies": undefined,
+      "policies": undefined,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -336,7 +350,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
         },
       ],
       "name": "Slack with multiple channels",
-      "numberOfPolicies": undefined,
+      "policies": undefined,
     },
   ],
   "error": undefined,

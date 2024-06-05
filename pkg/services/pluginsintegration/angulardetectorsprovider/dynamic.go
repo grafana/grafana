@@ -62,7 +62,7 @@ func ProvideDynamic(cfg *setting.Cfg, store angularpatternsstore.Service) (*Dyna
 		log:                   log.New("plugin.angulardetectorsprovider.dynamic"),
 		store:                 store,
 		httpClient:            makeHttpClient(),
-		baseURL:               cfg.GrafanaComURL,
+		baseURL:               cfg.GrafanaComAPIURL,
 		backgroundJobInterval: backgroundJobInterval,
 	}
 	d.log.Debug("Providing dynamic angular detection patterns", "baseURL", d.baseURL, "interval", d.backgroundJobInterval)

@@ -14,12 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/embedserver"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var _ accesscontrol.AccessControl = new(AccessControl)
 
-func ProvideAccessControl(cfg *setting.Cfg, embed *embedserver.Service) *AccessControl {
+func ProvideAccessControl(features featuremgmt.FeatureToggles, embed *embedserver.Service) *AccessControl {
 	logger := log.New("accesscontrol")
 	c, err := embed.GetClient(context.Background(), "1")
 	if err != nil {
@@ -27,12 +27,12 @@ func ProvideAccessControl(cfg *setting.Cfg, embed *embedserver.Service) *AccessC
 	}
 
 	return &AccessControl{
-		cfg, logger, accesscontrol.NewResolvers(logger), c, embed,
+		features, logger, accesscontrol.NewResolvers(logger), c, embed,
 	}
 }
 
 type AccessControl struct {
-	cfg       *setting.Cfg
+	features  featuremgmt.FeatureToggles
 	log       log.Logger
 	resolvers accesscontrol.Resolvers
 	zclient   *zclient.GRPCClient
@@ -53,10 +53,6 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 
 	if user == nil || user.IsNil() {
 		a.log.Warn("No entity set for access control evaluation")
-		return false, nil
-	}
-
-	if user.GetID() == "" {
 		return false, nil
 	}
 
@@ -142,7 +138,7 @@ func (a *AccessControl) evalZanzana(ctx context.Context, user identity.Requester
 		eval = evaluator
 	}
 
-	return eval.EvaluateZanzana(ctx, user.GetID(), strconv.FormatInt(user.GetOrgID(), 10), a.zclient)
+	return eval.EvaluateZanzana(ctx, user.GetID().String(), strconv.FormatInt(user.GetOrgID(), 10), a.zclient)
 }
 
 func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {

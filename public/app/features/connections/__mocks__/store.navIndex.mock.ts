@@ -151,7 +151,7 @@ export const navIndex: NavIndex = {
       },
       {
         id: 'alerting-admin',
-        text: 'Admin',
+        text: 'Settings',
         icon: 'cog',
         url: '/alerting/admin',
       },
@@ -209,7 +209,7 @@ export const navIndex: NavIndex = {
   },
   'alerting-admin': {
     id: 'alerting-admin',
-    text: 'Admin',
+    text: 'Settings',
     icon: 'cog',
     url: '/alerting/admin',
   },

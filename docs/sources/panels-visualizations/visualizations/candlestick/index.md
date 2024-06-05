@@ -17,13 +17,19 @@ labels:
     - oss
 title: Candlestick
 weight: 100
+refs:
+  time-series-visualization:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
 ---
 
 # Candlestick
 
 The candlestick visualization allows you to visualize data that includes a number of consistent dimensions focused on price movements, such as stock prices. The candlestick visualization includes an [Open-High-Low-Close (OHLC) mode](#open-high-low-close), as well as support for additional dimensions based on time series data.
 
-Candlestick visualizations build upon the foundation of the [time series visualization][] and include many common configuration settings.
+Candlestick visualizations build upon the foundation of the [time series visualization](ref:time-series-visualization) and include many common configuration settings.
 
 You can use a candlestick if you want to visualize, at a glance, how a price moved over time, whether it went up, down, or stayed the same, and how much it fluctuated:
 
@@ -70,6 +76,10 @@ The data is converted as follows:
 
 {{< figure src="/static/img/docs/candlestick-panel/candlestick.png" max-width="1065px" alt="A candlestick visualization showing the price movements of specific asset." >}}
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Mode
 
 The mode options allow you to toggle which dimensions are used for the visualization.
@@ -110,11 +120,34 @@ If your data can't be mapped to these dimensions for some reason (for example, b
 
 ![Open, High, Low, and Close fields in the panel editor](/media/docs/grafana/panels-visualizations/screenshot-olhc-options-10.3.png)
 
-## Additional fields
+### Additional fields
 
-The candlestick visualization is based on the time series visualization. It can visualize additional data dimensions beyond open, high, low, close, and volume The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series][time series visualization] visualization.
+The candlestick visualization is based on the time series visualization. It can visualize additional data dimensions beyond open, high, low, close, and volume The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series](ref:time-series-visualization) visualization.
 
-{{% docs/reference %}}
-[time series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
-[time series visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
-{{% /docs/reference %}}
+## Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Legend options
+
+{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Tooltip options
+
+{{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

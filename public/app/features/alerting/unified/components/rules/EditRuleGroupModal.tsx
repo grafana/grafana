@@ -293,7 +293,14 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               </Stack>
             )}
             <Field
-              label={<Label htmlFor="groupName">Evaluation group name</Label>}
+              label={
+                <Label
+                  htmlFor="groupName"
+                  description="A group evaluates all its rules over the same evaluation interval."
+                >
+                  Evaluation group
+                </Label>
+              }
               invalid={!!errors.groupName}
               error={errors.groupName?.message}
             >
@@ -374,22 +381,22 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  modal: css`
-    max-width: 560px;
-  `,
-  modalButtons: css`
-    top: -24px;
-    position: relative;
-  `,
-  formInput: css`
-    flex: 1;
-  `,
-  tableWrapper: css`
-    margin-top: ${theme.spacing(2)};
-    margin-bottom: ${theme.spacing(2)};
-    height: 100%;
-  `,
-  evalRequiredLabel: css`
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `,
+  modal: css({
+    maxWidth: '560px',
+  }),
+  modalButtons: css({
+    top: '-24px',
+    position: 'relative',
+  }),
+  formInput: css({
+    flex: 1,
+  }),
+  tableWrapper: css({
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+    height: '100%',
+  }),
+  evalRequiredLabel: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
 });
