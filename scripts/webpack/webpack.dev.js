@@ -18,6 +18,7 @@ const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTarg
 const esbuildOptions = {
   target: esbuildTargets,
   format: undefined,
+  jsx: 'automatic',
 };
 
 // To speed up webpack and prevent unnecessary rebuilds we ignore decoupled packages

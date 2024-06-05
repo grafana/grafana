@@ -18,6 +18,7 @@ const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTarg
 const esbuildOptions = {
   target: esbuildTargets,
   format: undefined,
+  jsx: 'automatic',
 };
 
 module.exports = (env = {}) =>
