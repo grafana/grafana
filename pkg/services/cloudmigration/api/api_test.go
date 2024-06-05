@@ -1,22 +1,16 @@
 package api
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/cloudmigrationimpl"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web/webtest"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
-	"time"
-
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/cloudmigration"
-	"github.com/grafana/grafana/pkg/services/gcom"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/web/webtest"
 
 	"github.com/stretchr/testify/require"
 )
@@ -32,8 +26,6 @@ type TestCase struct {
 	expectedHttpResult int
 	expectedBody       string
 }
-
-var fixedDate = time.Date(2024, 6, 5, 17, 30, 40, 0, time.UTC)
 
 func TestCloudMigrationAPI_GetToken(t *testing.T) {
 	tests := []TestCase{
@@ -432,7 +424,7 @@ func TestCloudMigrationAPI_DeleteMigration(t *testing.T) {
 func runSimpleApiTest(tt TestCase) func(t *testing.T) {
 	return func(t *testing.T) {
 		// setup server
-		api := RegisterApi(routing.NewRouteRegister(), mockServiceImpl{returnError: tt.serviceReturnError}, tracing.InitializeTracerForTest())
+		api := RegisterApi(routing.NewRouteRegister(), cloudmigrationimpl.FakeServiceImpl{ReturnError: tt.serviceReturnError}, tracing.InitializeTracerForTest())
 		server := webtest.NewServer(t, api.routeRegister)
 
 		var body io.Reader = nil
@@ -459,132 +451,4 @@ func runSimpleApiTest(tt TestCase) func(t *testing.T) {
 			require.Equal(t, tt.expectedBody, string(b))
 		}
 	}
-}
-
-// -- Mock Service
-
-// mockServiceImpl Define the Service Implementation.
-type mockServiceImpl struct {
-	returnError bool
-}
-
-var _ cloudmigration.Service = (*mockServiceImpl)(nil)
-
-func (m mockServiceImpl) GetToken(_ context.Context) (gcom.TokenView, error) {
-	if m.returnError {
-		return gcom.TokenView{}, fmt.Errorf("mock error")
-	}
-	return gcom.TokenView{ID: "mock_id", DisplayName: "mock_name"}, nil
-}
-
-func (m mockServiceImpl) CreateToken(_ context.Context) (cloudmigration.CreateAccessTokenResponse, error) {
-	if m.returnError {
-		return cloudmigration.CreateAccessTokenResponse{}, fmt.Errorf("mock error")
-	}
-	return cloudmigration.CreateAccessTokenResponse{Token: "mock_token"}, nil
-}
-
-func (m mockServiceImpl) ValidateToken(ctx context.Context, migration cloudmigration.CloudMigration) error {
-	panic("implement me")
-}
-
-func (m mockServiceImpl) DeleteToken(_ context.Context, _ string) error {
-	if m.returnError {
-		return fmt.Errorf("mock error")
-	}
-	return nil
-}
-
-func (m mockServiceImpl) CreateMigration(_ context.Context, _ cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
-	if m.returnError {
-		return nil, fmt.Errorf("mock error")
-	}
-	return &cloudmigration.CloudMigrationResponse{
-		UID:     "fake_uid",
-		Stack:   "fake_stack",
-		Created: fixedDate,
-		Updated: fixedDate,
-	}, nil
-}
-
-func (m mockServiceImpl) GetMigration(_ context.Context, _ string) (*cloudmigration.CloudMigration, error) {
-	if m.returnError {
-		return nil, fmt.Errorf("mock error")
-	}
-	return &cloudmigration.CloudMigration{UID: "fake"}, nil
-}
-
-func (m mockServiceImpl) DeleteMigration(_ context.Context, _ string) (*cloudmigration.CloudMigration, error) {
-	if m.returnError {
-		return nil, fmt.Errorf("mock error")
-	}
-	return &cloudmigration.CloudMigration{UID: "fake"}, nil
-}
-
-func (m mockServiceImpl) UpdateMigration(ctx context.Context, uid string, request cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
-	panic("implement me")
-}
-
-func (m mockServiceImpl) GetMigrationList(_ context.Context) (*cloudmigration.CloudMigrationListResponse, error) {
-	if m.returnError {
-		return nil, fmt.Errorf("mock error")
-	}
-	return &cloudmigration.CloudMigrationListResponse{
-		Migrations: []cloudmigration.CloudMigrationResponse{
-			{UID: "mock_uid_1", Stack: "mock_stack_1", Created: time.Unix(5, 0), Updated: fixedDate},
-			{UID: "mock_uid_2", Stack: "mock_stack_2", Created: time.Unix(5, 0), Updated: fixedDate},
-		},
-	}, nil
-}
-
-func (m mockServiceImpl) RunMigration(_ context.Context, _ string) (*cloudmigration.MigrateDataResponseDTO, error) {
-	if m.returnError {
-		return nil, fmt.Errorf("mock error")
-	}
-	r := fakeMigrateDataResponseDTO()
-	return &r, nil
-}
-
-func fakeMigrateDataResponseDTO() cloudmigration.MigrateDataResponseDTO {
-	return cloudmigration.MigrateDataResponseDTO{
-		RunUID: "fake_uid",
-		Items: []cloudmigration.MigrateDataResponseItemDTO{
-			{Type: "type", RefID: "make_refid", Status: "ok", Error: "none"},
-		},
-	}
-}
-
-func (m mockServiceImpl) CreateMigrationRun(ctx context.Context, run cloudmigration.CloudMigrationRun) (string, error) {
-	panic("implement me")
-}
-
-func (m mockServiceImpl) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.CloudMigrationRun, error) {
-	if m.returnError {
-		return nil, fmt.Errorf("mock error")
-	}
-	result, err := json.Marshal(fakeMigrateDataResponseDTO())
-	if err != nil {
-		return nil, err
-	}
-	return &cloudmigration.CloudMigrationRun{
-		ID:                0,
-		UID:               "fake_uid",
-		CloudMigrationUID: "fake_mig_uid",
-		Result:            result,
-		Created:           fixedDate,
-		Updated:           fixedDate,
-		Finished:          fixedDate,
-	}, nil
-}
-
-func (m mockServiceImpl) GetMigrationRunList(_ context.Context, _ string) (*cloudmigration.CloudMigrationRunList, error) {
-	if m.returnError {
-		return nil, fmt.Errorf("mock error")
-	}
-	return &cloudmigration.CloudMigrationRunList{
-		Runs: []cloudmigration.MigrateDataResponseListDTO{
-			{RunUID: "fake_run_uid_1"},
-			{RunUID: "fake_run_uid_2"},
-		},
-	}, nil
 }
