@@ -81,7 +81,6 @@ export interface FeatureToggles {
   pluginsFrontendSandbox?: boolean;
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
-  lokiFormatQuery?: boolean;
   recordedQueriesMulti?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
