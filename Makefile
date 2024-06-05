@@ -9,7 +9,7 @@ include .bingo/Variables.mk
 
 
 GO = go
-GO_VERSION = 1.22.3
+GO_VERSION = 1.22.4
 GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
