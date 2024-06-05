@@ -406,8 +406,8 @@ func (esa *ExtSvcAccountsService) removeExtSvcAccountToken(ctx context.Context, 
 		}
 	}
 	if tknID != notFound {
+		ctxLogger.Debug("Remove token", "service", extSvcSlug, "orgID", orgID)
 		if err := esa.saSvc.DeleteServiceAccountToken(ctx, orgID, saID, tknID); err != nil {
-			ctxLogger.Debug("Remove token", "service", extSvcSlug, "orgID", orgID)
 			return err
 		}
 	}
