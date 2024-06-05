@@ -16,19 +16,17 @@ describe('pausing rules', () => {
       ],
     };
 
-    // pause rule 2
+    // we will pause rule with UID "2"
     const action = pauseRuleAction({ uid: '2', pause: true });
-
-    // assert output
     const output = ruleGroupReducer(initialGroup, action);
 
     expect(output).toHaveProperty('rules');
     expect(output.rules).toHaveLength(initialGroup.rules.length);
 
-    // only UID 2 should be paused
     expect(output).toHaveProperty('rules.1.grafana_alert.is_paused', true);
+    expect(output.rules[0]).toStrictEqual(initialGroup.rules[0]);
+    expect(output.rules[2]).toStrictEqual(initialGroup.rules[2]);
 
-    // use this to assert no regressions and rule group order / data structure
     expect(output).toMatchSnapshot();
   });
 });
