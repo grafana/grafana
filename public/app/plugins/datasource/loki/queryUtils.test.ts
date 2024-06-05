@@ -1,6 +1,5 @@
 import { String } from '@grafana/lezer-logql';
 
-import { createLokiDatasource } from './__mocks__/datasource';
 import {
   getHighlighterExpressionsFromQuery,
   getLokiQueryType,
@@ -17,7 +16,6 @@ import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
   getNodePositionsFromQuery,
-  formatLogqlQuery,
   getLogQueryFromMetricsQueryAtPosition,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
