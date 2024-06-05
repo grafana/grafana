@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useReducer } from 'react';
 import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
-import uPlot, { pxRatio } from 'uplot';
+import uPlot from 'uplot';
 
 import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, FieldType } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
@@ -214,7 +214,7 @@ export const AnnotationsPlugin2 = ({
             ctx.fillStyle = colorManipulator.alpha(color, vals.fillOpacity[i]);
             ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
 
-            ctx.lineWidth = Math.round(vals.lineWidth[i] * pxRatio);
+            ctx.lineWidth = Math.round(vals.lineWidth[i] * uPlot.pxRatio);
 
             if (vals.lineStyle[i] === 'dash') {
               // maybe extract this to vals.lineDash[i] in future?
