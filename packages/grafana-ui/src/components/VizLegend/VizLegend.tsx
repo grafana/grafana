@@ -125,4 +125,7 @@ export function VizLegend<T>({
 }
 
 // JEV: QUESTION: What does this do?
+// IHOR: This is a displayName for React DevTools. It's used to give a component a name in the React DevTools.
+// It's useful for debugging purposes. In that case, it's the same as the component name.
+// So, I don't see any reason to keep it.
 VizLegend.displayName = 'VizLegend';
