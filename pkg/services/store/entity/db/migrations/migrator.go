@@ -1,23 +1,20 @@
 package migrations
 
 import (
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func MigrateEntityStore(db db.EntityDBInterface, features featuremgmt.FeatureToggles) error {
+func MigrateEntityStore(engine *xorm.Engine, cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
 	// Skip if feature flag is not enabled
 	if !features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
 		return nil
 	}
 
-	engine, err := db.GetEngine()
-	if err != nil {
-		return err
-	}
-
-	mg := migrator.NewScopedMigrator(engine, db.GetCfg(), "entity")
+	mg := migrator.NewScopedMigrator(engine, cfg, "entity")
 	mg.AddCreateMigration()
 
 	initEntityTables(mg)

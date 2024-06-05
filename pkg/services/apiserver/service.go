@@ -99,6 +99,7 @@ type service struct {
 	cfg      *setting.Cfg
 	features featuremgmt.FeatureToggles
 
+	startedCh chan struct{}
 	stopCh    chan struct{}
 	stoppedCh chan error
 
@@ -124,6 +125,7 @@ func ProvideService(
 		cfg:        cfg,
 		features:   features,
 		rr:         rr,
+		startedCh:  make(chan struct{}),
 		stopCh:     make(chan struct{}),
 		builders:   []builder.APIGroupBuilder{},
 		authorizer: authorizer.NewGrafanaAuthorizer(cfg, orgService),
@@ -139,6 +141,7 @@ func ProvideService(
 	// the routes are registered before the Grafana HTTP server starts.
 	proxyHandler := func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
+			<-s.startedCh
 			if s.handler == nil {
 				c.Resp.WriteHeader(404)
 				_, _ = c.Resp.Write([]byte("Not found"))
@@ -188,6 +191,8 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 }
 
 func (s *service) start(ctx context.Context) error {
+	defer close(s.startedCh)
+
 	// Get the list of groups the server will support
 	builders := s.builders
 
@@ -405,6 +410,7 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 	return &clientrest.Config{
 		Transport: &roundTripperFunc{
 			fn: func(req *http.Request) (*http.Response, error) {
+				<-s.startedCh
 				ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
 				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
 				return wrapped(req.WithContext(ctx))
@@ -414,6 +420,7 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 }
 
 func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
+	<-s.startedCh
 	s.handler.ServeHTTP(w, r)
 }
 

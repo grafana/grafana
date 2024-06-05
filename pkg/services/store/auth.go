@@ -8,6 +8,9 @@ import (
 
 // Really just spitballing here :) this should hook into a system that can give better display info
 func GetUserIDString(user *user.SignedInUser) string {
+	// TODO: should we check IsDisabled?
+	// TODO: could we use the NamespacedID.ID() as prefix instead of manually
+	// setting "anon", "key", etc.?
 	if user == nil {
 		return ""
 	}

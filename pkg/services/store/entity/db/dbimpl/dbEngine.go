@@ -1,75 +1,105 @@
 package dbimpl
 
 import (
+	"cmp"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/go-sql-driver/mysql"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/store/entity/db"
 )
 
-func getEngineMySQL(cfgSection *setting.DynamicSection, tracer tracing.Tracer) (*xorm.Engine, error) {
-	dbHost := cfgSection.Key("db_host").MustString("")
-	dbName := cfgSection.Key("db_name").MustString("")
-	dbUser := cfgSection.Key("db_user").MustString("")
-	dbPass := cfgSection.Key("db_pass").MustString("")
+func getEngineMySQL(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, error) {
+	config := mysql.NewConfig()
+	config.User = getter.String("db_user")
+	config.Passwd = getter.String("db_pass")
+	config.Net = "tcp"
+	config.Addr = getter.String("db_host")
+	config.DBName = getter.String("db_name")
+	config.Params = map[string]string{
+		// See: https://dev.mysql.com/doc/refman/en/sql-mode.html
+		"@@SESSION.sql_mode": "ANSI",
+	}
+	config.Collation = "utf8mb4_unicode_ci"
+	config.Loc = time.UTC
+	config.AllowNativePasswords = true
+	config.ClientFoundRows = true
 
-	// TODO: support all mysql connection options
-	protocol := "tcp"
-	if strings.HasPrefix(dbHost, "/") {
-		protocol = "unix"
+	// TODO: do we want to support these?
+	//	config.ServerPubKey = getter.String("db_server_pub_key")
+	//	config.TLSConfig = getter.String("db_tls_config_name")
+
+	if err := getter.Err(); err != nil {
+		return nil, fmt.Errorf("config error: %w", err)
 	}
 
-	connectionString := connectionStringMySQL(dbUser, dbPass, protocol, dbHost, dbName)
+	if strings.HasPrefix(config.Addr, "/") {
+		config.Net = "unix"
+	}
 
-	driverName := sqlstore.WrapDatabaseDriverWithHooks("mysql", tracer)
-	engine, err := xorm.NewEngine(driverName, connectionString)
+	// FIXME: get rid of xorm
+	engine, err := xorm.NewEngine(db.DriverMySQL, config.FormatDSN())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("open database: %w", err)
 	}
 
 	engine.SetMaxOpenConns(0)
 	engine.SetMaxIdleConns(2)
-	engine.SetConnMaxLifetime(time.Second * time.Duration(14400))
+	engine.SetConnMaxLifetime(4 * time.Hour)
 
 	return engine, nil
 }
 
-func getEnginePostgres(cfgSection *setting.DynamicSection, tracer tracing.Tracer) (*xorm.Engine, error) {
-	dbHost := cfgSection.Key("db_host").MustString("")
-	dbName := cfgSection.Key("db_name").MustString("")
-	dbUser := cfgSection.Key("db_user").MustString("")
-	dbPass := cfgSection.Key("db_pass").MustString("")
-
-	// TODO: support all postgres connection options
-	dbSslMode := cfgSection.Key("db_sslmode").MustString("disable")
-
-	addr, err := util.SplitHostPortDefault(dbHost, "127.0.0.1", "5432")
-	if err != nil {
-		return nil, fmt.Errorf("invalid host specifier '%s': %w", dbHost, err)
+func getEnginePostgres(getter *sectionGetter, _ tracing.Tracer) (*xorm.Engine, error) {
+	dsnKV := map[string]string{
+		"user":     getter.String("db_user"),
+		"password": getter.String("db_pass"),
+		"dbname":   getter.String("db_name"),
+		"sslmode":  cmp.Or(getter.String("db_sslmode"), "disable"),
 	}
 
-	connectionString := connectionStringPostgres(dbUser, dbPass, addr.Host, addr.Port, dbName, dbSslMode)
+	// TODO: probably interesting:
+	//	"passfile", "statement_timeout", "lock_timeout", "connect_timeout"
 
-	driverName := sqlstore.WrapDatabaseDriverWithHooks("postgres", tracer)
-	engine, err := xorm.NewEngine(driverName, connectionString)
-	if err != nil {
-		return nil, err
+	// TODO: for CockroachDB, we probably need to use the following:
+	//	dsnKV["options"] = "-c enable_experimental_alter_column_type_general=true"
+	// Or otherwise specify it as:
+	//	dsnKV["enable_experimental_alter_column_type_general"] = "true"
+
+	// TODO: do we want to support these options in the DSN as well?
+	//	"sslkey", "sslcert", "sslrootcert", "sslpassword", "sslsni", "krbspn",
+	//	"krbsrvname", "target_session_attrs", "service", "servicefile"
+
+	// More on Postgres connection string parameters:
+	//	https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
+
+	hostport := getter.String("db_host")
+
+	if err := getter.Err(); err != nil {
+		return nil, fmt.Errorf("config error: %w", err)
 	}
+
+	host, port, err := splitHostPortDefault(hostport, "127.0.0.1", "5432")
+	if err != nil {
+		return nil, fmt.Errorf("invalid db_host: %w", err)
+	}
+	dsnKV["host"] = host
+	dsnKV["port"] = port
+
+	dsn, err := MakeDSN(dsnKV)
+	if err != nil {
+		return nil, fmt.Errorf("error building DSN: %w", err)
+	}
+
+	// FIXME: get rid of xorm
+	engine, err := xorm.NewEngine(db.DriverPostgres, dsn)
+	if err != nil {
+		return nil, fmt.Errorf("open database: %w", err)
+	}
+
 	return engine, nil
-}
-
-func connectionStringMySQL(user, password, protocol, host, dbName string) string {
-	return fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true", user, password, protocol, host, dbName)
-}
-
-func connectionStringPostgres(user, password, host, port, dbName, sslMode string) string {
-	return fmt.Sprintf(
-		"user=%s password=%s host=%s port=%s dbname=%s sslmode=%s", // sslcert='%s' sslkey='%s' sslrootcert='%s'",
-		user, password, host, port, dbName, sslMode, // ss.dbCfg.ClientCertPath, ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath
-	)
 }

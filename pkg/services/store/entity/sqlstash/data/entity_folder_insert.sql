@@ -12,24 +12,18 @@ INSERT INTO {{ .Ident "entity_folder" }}
     )
 
     VALUES
-        {{ $this := . }}
-        {{ $addComma := false }}
+        {{ $comma := listSep ", " }}
         {{ range .Items }}
-            {{ if $addComma }}
-                ,
-            {{ end }}
-            {{ $addComma = true }}
-
-            (
-                {{ $this.Arg .GUID }},
-                {{ $this.Arg .Namespace }},
-                {{ $this.Arg .UID }},
-                {{ $this.Arg .SlugPath }},
-                {{ $this.Arg .JS }},
-                {{ $this.Arg .Depth }},
-                {{ $this.Arg .Left }},
-                {{ $this.Arg .Right }},
-                {{ $this.Arg .Detached }}
+            {{- call $comma -}} (
+                {{ $.Arg .GUID }},
+                {{ $.Arg .Namespace }},
+                {{ $.Arg .UID }},
+                {{ $.Arg .SlugPath }},
+                {{ $.Arg .JS }},
+                {{ $.Arg .Depth }},
+                {{ $.Arg .Left }},
+                {{ $.Arg .Right }},
+                {{ $.Arg .Detached }}
             )
         {{ end }}
 ;

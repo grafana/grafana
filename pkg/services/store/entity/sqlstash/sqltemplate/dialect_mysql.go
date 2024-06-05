@@ -7,6 +7,7 @@ package sqltemplate
 //	https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html#sqlmode_ansi_quotes
 var MySQL = mysql{
 	rowLockingClauseAll: true,
+	argPlaceholderFunc:  argFmtSQL92,
 }
 
 var _ Dialect = MySQL
@@ -14,4 +15,5 @@ var _ Dialect = MySQL
 type mysql struct {
 	standardIdent
 	rowLockingClauseAll
+	argPlaceholderFunc
 }

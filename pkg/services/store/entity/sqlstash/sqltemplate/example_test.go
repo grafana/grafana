@@ -103,15 +103,15 @@ func Example() {
 
 	// Assuming that we have a *sql.DB object named "db", we could now make our
 	// query with:
-	//	row := db.QueryRowContext(ctx, query, queryData.Args...)
+	//	row := db.QueryRowContext(ctx, query, queryData.GetArgs()...)
 	//	// and check row.Err() here
 
 	// As we're not actually running a database in this example, let's verify
 	// that we find our arguments populated as expected instead:
-	if len(queryData.Args) != 1 {
+	if len(queryData.GetArgs()) != 1 {
 		panic(fmt.Sprintf("unexpected number of args: %#v", queryData.Args))
 	}
-	id, ok := queryData.Args[0].(int)
+	id, ok := queryData.GetArgs()[0].(int)
 	if !ok || id != queryData.Request.ID {
 		panic(fmt.Sprintf("unexpected args: %#v", queryData.Args))
 	}
@@ -119,25 +119,25 @@ func Example() {
 	// In your code you would now have "row" populated with the row data,
 	// assuming that the operation succeeded, so you would now scan the row data
 	// abd populate the values of our response:
-	//	err := row.Scan(queryData.ScanDest...)
+	//	err := row.Scan(queryData.GetScanDest()...)
 	//	// and check err here
 
 	// Again, as we're not actually running a database in this example, we will
 	// instead run the code to assert that queryData.ScanDest was populated with
 	// the expected data, which should be pointers to each of the fields of
 	// Response so that the Scan method can write to them:
-	if len(queryData.ScanDest) != 3 {
+	if len(queryData.GetScanDest()) != 3 {
 		panic(fmt.Sprintf("unexpected number of scan dest: %#v", queryData.ScanDest))
 	}
-	idPtr, ok := queryData.ScanDest[0].(*int)
+	idPtr, ok := queryData.GetScanDest()[0].(*int)
 	if !ok || idPtr != &queryData.Response.ID {
 		panic(fmt.Sprintf("unexpected response 'id' pointer: %#v", queryData.ScanDest))
 	}
-	typePtr, ok := queryData.ScanDest[1].(*string)
+	typePtr, ok := queryData.GetScanDest()[1].(*string)
 	if !ok || typePtr != &queryData.Response.Type {
 		panic(fmt.Sprintf("unexpected response 'type' pointer: %#v", queryData.ScanDest))
 	}
-	namePtr, ok := queryData.ScanDest[2].(*string)
+	namePtr, ok := queryData.GetScanDest()[2].(*string)
 	if !ok || namePtr != &queryData.Response.Name {
 		panic(fmt.Sprintf("unexpected response 'name' pointer: %#v", queryData.ScanDest))
 	}

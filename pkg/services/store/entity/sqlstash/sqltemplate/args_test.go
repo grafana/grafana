@@ -12,7 +12,7 @@ func TestArgs_Arg(t *testing.T) {
 		}
 	}
 
-	a := new(Args)
+	a := NewArgs(MySQL)
 
 	shouldBeQuestionMark(t, a.Arg(0))
 	shouldBeQuestionMark(t, a.Arg(1))
