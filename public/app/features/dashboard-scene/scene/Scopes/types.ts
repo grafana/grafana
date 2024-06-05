@@ -1,7 +1,7 @@
-import { ScopeTreeItemSpec } from '@grafana/data';
+import { ScopeNodeSpec } from '@grafana/data';
 
-export interface Node {
-  item: ScopeTreeItemSpec;
+export interface Node extends ScopeNodeSpec {
+  name: string;
   isExpandable: boolean;
   isSelectable: boolean;
   isExpanded: boolean;

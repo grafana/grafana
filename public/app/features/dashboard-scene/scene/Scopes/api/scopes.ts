@@ -1,11 +1,11 @@
-import { Scope, ScopeSpec, ScopeTreeItemSpec } from '@grafana/data';
+import { Scope, ScopeSpec, ScopeNode } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import { NodesMap } from 'app/features/dashboard-scene/scene/Scopes/types';
 
 import { group, namespace, version } from './common';
 
-const nodesEndpoint = `/apis/${group}/${version}/namespaces/${namespace}/find`;
+const nodesEndpoint = `/apis/${group}/${version}/namespaces/${namespace}/find/scope_node_children`;
 
 const client = new ScopedResourceClient<ScopeSpec, 'Scope'>({
   group,
@@ -15,20 +15,21 @@ const client = new ScopedResourceClient<ScopeSpec, 'Scope'>({
 
 const cache = new Map<string, Promise<Scope>>();
 
-async function fetchScopeTreeItems(parent: string, query: string): Promise<ScopeTreeItemSpec[]> {
+async function fetchScopeTreeItems(parent: string, query: string): Promise<ScopeNode[]> {
   try {
-    return (await getBackendSrv().get<{ items: ScopeTreeItemSpec[] }>(nodesEndpoint, { parent, query }))?.items ?? [];
+    return (await getBackendSrv().get<{ items: ScopeNode[] }>(nodesEndpoint, { parent, query }))?.items ?? [];
   } catch (err) {
     return [];
   }
 }
 
 export async function fetchNodes(parent: string, query: string): Promise<NodesMap> {
-  return (await fetchScopeTreeItems(parent, query)).reduce<NodesMap>((acc, item) => {
-    acc[item.nodeId] = {
-      item,
-      isExpandable: item.nodeType === 'container',
-      isSelectable: item.linkType === 'scope',
+  return (await fetchScopeTreeItems(parent, query)).reduce<NodesMap>((acc, { metadata: { name }, spec }) => {
+    acc[name] = {
+      name,
+      ...spec,
+      isExpandable: spec.nodeType === 'container',
+      isSelectable: spec.linkType === 'scope',
       isExpanded: false,
       query: '',
       nodes: {},

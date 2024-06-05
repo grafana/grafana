@@ -46,29 +46,31 @@ jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
-    get: jest.fn().mockImplementation((url: string, params: { fieldSelector: string; parent: string }) => {
-      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find')) {
-        return {
-          items: mocksNodes.filter((node) => node.parent === params.parent),
-        };
-      }
+    get: jest
+      .fn()
+      .mockImplementation((url: string, params: { fieldSelector: string; parent: string; scope: string[] }) => {
+        if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_node_children')) {
+          return {
+            items: mocksNodes.filter((node) => node.parent === params.parent),
+          };
+        }
 
-      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/')) {
-        const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/', '');
+        if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/')) {
+          const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/', '');
 
-        return mocksScopes.find((scope) => scope.metadata.name === name) ?? {};
-      }
+          return mocksScopes.find((scope) => scope.metadata.name === name) ?? {};
+        }
 
-      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopedashboardbindings')) {
-        const scope = params.fieldSelector.replace('spec.scope=', '') ?? '';
+        if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_dashboard_bindings')) {
+          return {
+            items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) =>
+              params.scope.includes(bindingScope)
+            ),
+          };
+        }
 
-        return {
-          items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) => bindingScope === scope),
-        };
-      }
-
-      return {};
-    }),
+        return {};
+      }),
   }),
 }));
 
@@ -92,6 +94,7 @@ describe('ScopesScene', () => {
 
     beforeAll(() => {
       config.featureToggles.scopeFilters = true;
+      jest.spyOn(console, 'error').mockImplementation();
     });
 
     beforeEach(() => {

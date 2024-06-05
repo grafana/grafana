@@ -19,7 +19,7 @@ import { NodesMap } from './types';
 
 export interface ScopesFiltersSceneState extends SceneObjectState {
   nodes: NodesMap;
-  loadingNodeId: string | undefined;
+  loadingNodeName: string | undefined;
   scopes: Scope[];
   dirtyScopeNames: string[];
   isLoadingScopes: boolean;
@@ -39,7 +39,9 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     super({
       nodes: {
         '': {
-          item: { nodeId: '', nodeType: 'container', title: '' },
+          name: '',
+          nodeType: 'container',
+          title: '',
           isExpandable: true,
           isSelectable: false,
           isExpanded: true,
@@ -47,7 +49,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
           nodes: {},
         },
       },
-      loadingNodeId: undefined,
+      loadingNodeName: undefined,
       scopes: [],
       dirtyScopeNames: [],
       isLoadingScopes: false,
@@ -88,15 +90,15 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       currentLevel = currentLevel[path[idx]].nodes;
     }
 
-    const nodeId = path[path.length - 1];
-    const currentNode = currentLevel[nodeId];
+    const name = path[path.length - 1];
+    const currentNode = currentLevel[name];
 
     if (isExpanded || currentNode.query !== query) {
       this.fetchNodesSub?.unsubscribe();
 
-      this.setState({ loadingNodeId: nodeId });
+      this.setState({ loadingNodeName: name });
 
-      this.fetchNodesSub = from(fetchNodes(nodeId, query)).subscribe((childNodes) => {
+      this.fetchNodesSub = from(fetchNodes(name, query)).subscribe((childNodes) => {
         currentNode.nodes = childNodes;
         currentNode.isExpanded = isExpanded;
         currentNode.query = query;
@@ -105,7 +107,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
         this.setState({
           nodes,
-          loadingNodeId: undefined,
+          loadingNodeName: undefined,
         });
       });
 
@@ -115,7 +117,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     currentNode.isExpanded = isExpanded;
     currentNode.query = query;
 
-    this.setState({ nodes, loadingNodeId: undefined });
+    this.setState({ nodes, loadingNodeName: undefined });
   }
 
   public toggleNodeSelect(path: string[]) {
@@ -127,10 +129,8 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       siblings = siblings[path[idx]].nodes;
     }
 
-    const nodeId = path[path.length - 1];
-    const {
-      item: { linkId },
-    } = siblings[nodeId];
+    const name = path[path.length - 1];
+    const { linkId } = siblings[name];
 
     const selectedIdx = dirtyScopeNames.findIndex((scopeName) => scopeName === linkId);
 
@@ -138,8 +138,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       fetchScope(linkId!);
 
       const selectedFromSameNode =
-        dirtyScopeNames.length === 0 ||
-        Object.values(siblings).some(({ item: { linkId } }) => linkId === dirtyScopeNames[0]);
+        dirtyScopeNames.length === 0 || Object.values(siblings).some(({ linkId }) => linkId === dirtyScopeNames[0]);
 
       this.setState({ dirtyScopeNames: !selectedFromSameNode ? [linkId!] : [...dirtyScopeNames, linkId!] });
     } else {

@@ -35,7 +35,7 @@ export function ScopesTreeLevel({
   const childNodesArr = Object.values(childNodes);
 
   const anyChildExpanded = childNodesArr.some(({ isExpanded }) => isExpanded);
-  const anyChildSelected = childNodesArr.some(({ item: { linkId } }) => linkId && scopeNames.includes(linkId!));
+  const anyChildSelected = childNodesArr.some(({ linkId }) => linkId && scopeNames.includes(linkId!));
 
   return (
     <>
@@ -55,22 +55,22 @@ export function ScopesTreeLevel({
 
       <div role="tree">
         {childNodesArr.map((childNode) => {
-          const isSelected = childNode.isSelectable && scopeNames.includes(childNode.item.linkId!);
+          const isSelected = childNode.isSelectable && scopeNames.includes(childNode.linkId!);
 
           if (anyChildExpanded && !childNode.isExpanded && !isSelected) {
             return null;
           }
 
-          const childNodePath = [...nodePath, childNode.item.nodeId];
+          const childNodePath = [...nodePath, childNode.name];
 
           return (
-            <div key={childNode.item.nodeId} role="treeitem" aria-selected={childNode.isExpanded}>
+            <div key={childNode.name} role="treeitem" aria-selected={childNode.isExpanded}>
               <div className={styles.itemTitle}>
                 {childNode.isSelectable && !childNode.isExpanded ? (
                   <Checkbox
                     checked={isSelected}
-                    disabled={!!loadingNodeId || (anyChildSelected && !isSelected && node.item.disableMultiSelect)}
-                    data-testid={`scopes-tree-${childNode.item.nodeId}-checkbox`}
+                    disabled={!!loadingNodeId || (anyChildSelected && !isSelected && node.disableMultiSelect)}
+                    data-testid={`scopes-tree-${childNode.name}-checkbox`}
                     onChange={() => {
                       onNodeSelectToggle(childNodePath);
                     }}
@@ -83,21 +83,21 @@ export function ScopesTreeLevel({
                     name={
                       !childNode.isExpanded
                         ? 'angle-right'
-                        : loadingNodeId === childNode.item.nodeId
+                        : loadingNodeId === childNode.name
                           ? 'spinner'
                           : 'angle-down'
                     }
                     aria-label={
                       childNode.isExpanded ? t('scopes.tree.collapse', 'Collapse') : t('scopes.tree.expand', 'Expand')
                     }
-                    data-testid={`scopes-tree-${childNode.item.nodeId}-expand`}
+                    data-testid={`scopes-tree-${childNode.name}-expand`}
                     onClick={() => {
                       onNodeUpdate(childNodePath, !childNode.isExpanded, childNode.query);
                     }}
                   />
                 )}
 
-                <span data-testid={`scopes-tree-${childNode.item.nodeId}-title`}>{childNode.item.title}</span>
+                <span data-testid={`scopes-tree-${childNode.name}-title`}>{childNode.title}</span>
               </div>
 
               <div className={styles.itemChildren}>

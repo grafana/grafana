@@ -43,16 +43,23 @@ export interface Scope {
   spec: ScopeSpec;
 }
 
-export type ScopeTreeItemNodeType = 'container' | 'leaf';
-export type ScopeTreeItemLinkType = 'scope';
+export type ScopeNodeNodeType = 'container' | 'leaf';
+export type ScopeNodeLinkType = 'scope';
 
-export interface ScopeTreeItemSpec {
-  nodeId: string;
-  nodeType: ScopeTreeItemNodeType;
+export interface ScopeNodeSpec {
+  nodeType: ScopeNodeNodeType;
   title: string;
 
   description?: string;
   disableMultiSelect?: boolean;
   linkId?: string;
-  linkType?: ScopeTreeItemLinkType;
+  linkType?: ScopeNodeLinkType;
+}
+
+// TODO: Use Resource from apiserver when we export the types
+export interface ScopeNode {
+  metadata: {
+    name: string;
+  };
+  spec: ScopeNodeSpec;
 }
