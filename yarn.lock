@@ -3711,7 +3711,7 @@ __metadata:
     prismjs: "npm:1.29.0"
     process: "npm:^0.11.10"
     rc-cascader: "npm:3.26.0"
-    rc-drawer: "npm:7.1.0"
+    rc-drawer: "npm:7.2.0"
     rc-slider: "npm:10.6.2"
     rc-time-picker: "npm:^3.7.3"
     rc-tooltip: "npm:6.2.0"
@@ -24407,9 +24407,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-drawer@npm:7.1.0":
-  version: 7.1.0
-  resolution: "rc-drawer@npm:7.1.0"
+"rc-drawer@npm:7.2.0":
+  version: 7.2.0
+  resolution: "rc-drawer@npm:7.2.0"
   dependencies:
     "@babel/runtime": "npm:^7.23.9"
     "@rc-component/portal": "npm:^1.1.1"
@@ -24419,7 +24419,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10/6d37b35e3a9abd0e105f91f388c818dcd7d6e9a5805a9bb0909b01e96e47437af2010e29c05648d15ece37e0768ff752e15f498ced69a476c20b9ea06c5e636f
+  checksum: 10/1c9c7e5a00bd341a996684e5e288e273fee5083c8daf37e61a5ef5db5204df8aeaf48bcb67d89d01cab4d3c484bcf4d73af257a2d8de2dd71a757fa9cabaed3c
   languageName: node
   linkType: hard
 
