@@ -263,7 +263,7 @@ describe('Silence create/edit', () => {
     'creates a new silence',
     async () => {
       const user = userEvent.setup();
-      renderSilences(`${baseUrlPath}?alertmanager=Alertmanager`);
+      renderSilences(`${baseUrlPath}?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`);
       expect(await ui.editor.durationField.find()).toBeInTheDocument();
 
       const postRequest = waitForServerRequest(silenceCreateHandler());
