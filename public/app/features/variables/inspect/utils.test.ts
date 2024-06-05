@@ -1,3 +1,4 @@
+import { TestVariable } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { variableAdapters } from '../adapters';
@@ -7,6 +8,8 @@ import { createQueryVariableAdapter } from '../query/adapter';
 import { createGraph } from '../state/actions';
 
 import {
+  createDependencyEdges,
+  createDependencyNodes,
   flattenPanels,
   getAllAffectedPanelIdsForVariableChange,
   getPanelVars,
@@ -320,6 +323,33 @@ describe('getVariableName', () => {
 
   it('should return the variable name if it exists and does not match inherited object prop names', () => {
     expect(getVariableName('${myVariable}')).toBe('myVariable');
+  });
+});
+
+describe('createDependencyNodes', () => {
+  it('should create node for each variable', () => {
+    const variables = [
+      new TestVariable({ name: 'A', query: 'A.*', value: '', text: '', options: [] }),
+      new TestVariable({ name: 'B', query: 'B.*', value: '', text: '', options: [] }),
+      new TestVariable({ name: 'C', query: 'C.*', value: '', text: '', options: [] }),
+    ];
+    const graphNodes = createDependencyNodes(variables);
+    expect(graphNodes[0].id).toBe('A');
+    expect(graphNodes[1].id).toBe('B');
+    expect(graphNodes[2].id).toBe('C');
+  });
+});
+
+describe('createDependencyEdges', () => {
+  it('should create edges for variable dependencies', () => {
+    const variables = [
+      new TestVariable({ name: 'A', query: 'A.*', value: '', text: '', options: [] }),
+      new TestVariable({ name: 'B', query: '${A}.*', value: '', text: '', options: [] }),
+      new TestVariable({ name: 'C', query: '${B}.*', value: '', text: '', options: [] }),
+    ];
+    const graphEdges = createDependencyEdges(variables);
+    expect(graphEdges).toContainEqual({ from: 'B', to: 'A' });
+    expect(graphEdges).toContainEqual({ from: 'C', to: 'B' });
   });
 });
 
