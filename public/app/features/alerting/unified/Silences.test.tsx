@@ -1,16 +1,16 @@
 import React from 'react';
-import { render, waitFor, userEvent, screen, within } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
 import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/alertRules';
 import {
-  MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
   MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER,
+  MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
 } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/server/handlers/silences';
 import { MatcherOperator, SilenceState } from 'app/plugins/datasource/alertmanager/types';
@@ -18,13 +18,14 @@ import { AccessControlAction } from 'app/types';
 
 import Silences from './Silences';
 import {
-  grantUserPermissions,
   MOCK_SILENCE_ID_EXISTING,
   MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID,
   MOCK_SILENCE_ID_LACKING_PERMISSIONS,
+  grantUserPermissions,
   mockDataSource,
   mockSilences,
 } from './mocks';
+import { grafanaRulerRule } from './mocks/alertRuleApi';
 import { setupDataSources } from './testSetup/datasources';
 import { DataSourceType } from './utils/datasource';
 
@@ -76,6 +77,7 @@ const ui = {
     addMatcherButton: byRole('button', { name: 'Add matcher' }),
     submit: byText(/save silence/i),
     createdBy: byText(/created by \*/i),
+    loadingIndicator: byTestId('Spinner'),
   },
 };
 
@@ -109,7 +111,7 @@ const addAdditionalMatcher = async () => {
   await user.click(ui.editor.addMatcherButton.get());
 };
 
-setupMswServer();
+const server = setupMswServer();
 
 beforeEach(() => {
   setupDataSources(dataSources.am, dataSources[MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER]);
@@ -213,6 +215,7 @@ describe('Silence create/edit', () => {
   afterEach(resetMocks);
 
   beforeEach(() => {
+    mockAlertRuleApi(server).getAlertRule(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, grafanaRulerRule);
     setUserLogged(true);
   });
 
@@ -332,9 +335,9 @@ describe('Silence create/edit', () => {
   });
 
   it('populates form with existing silence information that has __alert_rule_uid__', async () => {
+    mockAlertRuleApi(server).getAlertRule(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, grafanaRulerRule);
     renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}/edit`);
-
-    expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(MOCK_GRAFANA_ALERT_RULE_TITLE);
+    expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(grafanaRulerRule.grafana_alert.title);
   });
 
   it(

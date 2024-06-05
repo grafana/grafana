@@ -56,7 +56,7 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
   useDebouncedDeepCompare(
     () => {
       if (hasValidMatchers) {
-        getAlertmanagerAlerts({ amSourceName, filter: { matchers } }, { showErrorAlert: false });
+        getAlertmanagerAlerts({ amSourceName, filter: { matchers } });
       }
     },
     500,
