@@ -19,7 +19,10 @@ func TestGetEnginePostgresFromConfig(t *testing.T) {
 	s.Key("db_user").SetValue("user")
 	s.Key("db_password").SetValue("password")
 
-	engine, err := getEnginePostgres(cfg.SectionWithEnvOverrides("entity_api"), nil)
+	getter := &sectionGetter{
+		DynamicSection: cfg.SectionWithEnvOverrides("entity_api"),
+	}
+	engine, err := getEnginePostgres(getter, nil)
 
 	assert.NotNil(t, engine)
 	assert.NoError(t, err)
@@ -36,19 +39,11 @@ func TestGetEngineMySQLFromConfig(t *testing.T) {
 	s.Key("db_user").SetValue("user")
 	s.Key("db_password").SetValue("password")
 
-	engine, err := getEngineMySQL(cfg.SectionWithEnvOverrides("entity_api"), nil)
+	getter := &sectionGetter{
+		DynamicSection: cfg.SectionWithEnvOverrides("entity_api"),
+	}
+	engine, err := getEngineMySQL(getter, nil)
 
 	assert.NotNil(t, engine)
 	assert.NoError(t, err)
-}
-
-func TestGetConnectionStrings(t *testing.T) {
-	t.Run("generate mysql connection string", func(t *testing.T) {
-		expected := "user:password@tcp(localhost)/grafana?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true"
-		assert.Equal(t, expected, connectionStringMySQL("user", "password", "tcp", "localhost", "grafana"))
-	})
-	t.Run("generate postgres connection string", func(t *testing.T) {
-		expected := "user=user password=password host=localhost port=5432 dbname=grafana sslmode=disable"
-		assert.Equal(t, expected, connectionStringPostgres("user", "password", "localhost", "5432", "grafana", "disable"))
-	})
 }
