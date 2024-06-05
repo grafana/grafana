@@ -472,13 +472,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:         "lokiFormatQuery",
-			Description:  "Enables the ability to format Loki queries",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:           "recordedQueriesMulti",
 			Description:    "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:          FeatureStageGeneralAvailability,
@@ -748,6 +741,13 @@ var (
 			RequiresRestart: true, // changes the API routing
 		},
 		{
+			Name:         "kubernetesDashboards",
+			Description:  "Use the kubernetes API in the frontend for dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAppPlatformSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:            "datasourceQueryTypes",
 			Description:     "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
 			Stage:           FeatureStageExperimental,
@@ -944,7 +944,8 @@ var (
 		{
 			Name:         "logsInfiniteScrolling",
 			Description:  "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true",
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
@@ -1290,6 +1291,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:        "pluginProxyPreserveTrailingSlash",
+			Description: "Preserve plugin proxy trailing slash.",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 	}
 )

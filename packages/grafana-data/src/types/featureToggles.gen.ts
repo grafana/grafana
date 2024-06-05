@@ -81,7 +81,6 @@ export interface FeatureToggles {
   pluginsFrontendSandbox?: boolean;
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
-  lokiFormatQuery?: boolean;
   recordedQueriesMulti?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
@@ -118,6 +117,7 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
+  kubernetesDashboards?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -191,4 +191,5 @@ export interface FeatureToggles {
   alertingDisableSendAlertsExternal?: boolean;
   preserveDashboardStateWhenNavigating?: boolean;
   alertingCentralAlertHistory?: boolean;
+  pluginProxyPreserveTrailingSlash?: boolean;
 }
