@@ -48,28 +48,18 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		enabled: features.IsEnabledGlobally(featuremgmt.FlagGrpcServer),
 	}
 
-	histogramOptions := prometheus.HistogramOpts{
-		Namespace: "grafana",
-		Name:      "grpc_request_duration_seconds",
-		Help:      "Time (in seconds) spent serving HTTP requests.",
-		Buckets:   instrument.DefBuckets,
-	}
-
-	if features.IsEnabledGlobally(featuremgmt.FlagEnableNativeHTTPHistogram) {
-		// the recommended default value from the prom_client
-		// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
-		// Giving this variable an value means the client will expose the histograms as an
-		// native histogram instead of normal a normal histogram.
-		histogramOptions.NativeHistogramBucketFactor = 1.1
-		// The default value in OTel. It probably good enough for us as well.
-		histogramOptions.NativeHistogramMaxBucketNumber = 160
-		histogramOptions.NativeHistogramMinResetDuration = time.Hour
-	}
-
 	// Register the metric here instead of an init() function so that we do
 	// nothing unless the feature is actually enabled.
 	if grpcRequestDuration == nil {
-		grpcRequestDuration = prometheus.NewHistogramVec(histogramOptions, []string{"method", "route", "status_code", "ws"})
+		grpcRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace:                       "grafana",
+			Name:                            "grpc_request_duration_seconds",
+			Help:                            "Time (in seconds) spent serving gRPC calls.",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1, // enable native histograms
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"method", "route", "status_code", "ws"})
 
 		if err := registerer.Register(grpcRequestDuration); err != nil {
 			return nil, err
