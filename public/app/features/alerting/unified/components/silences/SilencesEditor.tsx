@@ -27,7 +27,7 @@ import {
 } from '@grafana/ui';
 import { alertSilencesApi, SilenceCreatedResponse } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
-import { getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
+import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { MatcherOperator, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 
 import { SilenceFormFields } from '../../types/silence-form';
@@ -62,6 +62,7 @@ const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Props) => 
   });
 
   const ruleUid = silence?.matchers?.find((m) => m.name === MATCHER_ALERT_RULE_UID)?.value;
+  const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   const defaultValues = useMemo(() => {
     if (!silence) {
@@ -82,7 +83,7 @@ const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Props) => 
     return <Alert title={`Existing silence "${silenceId}" not found`} severity="warning" />;
   }
 
-  const canEditSilence = silence?.accessControl?.write;
+  const canEditSilence = isGrafanaAlertManager ? silence?.accessControl?.write : true;
 
   if (!canEditSilence) {
     return <Alert title={`You do not have permission to edit/recreate this silence`} severity="error" />;
