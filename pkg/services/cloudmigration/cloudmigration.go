@@ -7,11 +7,11 @@ import (
 )
 
 type Service interface {
-	// Returns the cloud migration token if it exists.
+	// GetToken Returns the cloud migration token if it exists.
 	GetToken(context.Context) (gcom.TokenView, error)
-	// Creates a cloud migration token.
+	// CreateToken Creates a cloud migration token.
 	CreateToken(context.Context) (CreateAccessTokenResponse, error)
-	// Sends a request to CMS to test the token.
+	// ValidateToken Sends a request to CMS to test the token.
 	ValidateToken(context.Context, CloudMigration) error
 	DeleteToken(ctx context.Context, uid string) error
 
