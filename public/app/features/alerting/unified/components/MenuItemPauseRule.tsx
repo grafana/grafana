@@ -5,11 +5,11 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import {
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
-  getRuleGroupLocation,
+  getRuleGroupLocationFromCombinedRule,
 } from 'app/features/alerting/unified/utils/rules';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { usePauseRuleInGroup } from '../hooks/useProduceNewEvaluationGroup';
+import { usePauseRuleInGroup } from '../hooks/useProduceNewRuleGroup';
 import { stringifyErrorLike } from '../utils/misc';
 
 interface Props {
@@ -41,7 +41,7 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
     }
 
     try {
-      const location = getRuleGroupLocation(rule);
+      const location = getRuleGroupLocationFromCombinedRule(rule);
       await pauseRule(location, rule.rulerRule, newIsPaused);
     } catch (error) {
       notifyApp.error(`Failed to ${newIsPaused ? 'pause' : 'resume'} the rule: ${stringifyErrorLike(error)}`);

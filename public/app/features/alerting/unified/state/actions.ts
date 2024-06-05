@@ -335,41 +335,6 @@ export function deleteRulesGroupAction(
   };
 }
 
-export function deleteRuleAction(
-  ruleIdentifier: RuleIdentifier,
-  options: { navigateTo?: string } = {}
-): ThunkResult<void> {
-  /*
-   * fetch the rules group from backend, delete group if it is found and+
-   * reload ruler rules
-   */
-  return async (dispatch, getState) => {
-    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: ruleIdentifier.ruleSourceName }));
-
-    withAppEvents(
-      (async () => {
-        const rulerConfig = getDataSourceRulerConfig(getState, ruleIdentifier.ruleSourceName);
-        const rulerClient = getRulerClient(rulerConfig);
-        const ruleWithLocation = await rulerClient.findEditableRule(ruleIdentifier);
-
-        if (!ruleWithLocation) {
-          throw new Error('Rule not found.');
-        }
-        await rulerClient.deleteRule(ruleWithLocation);
-        // refetch rules for this rules source
-        await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: ruleWithLocation.ruleSourceName }));
-
-        if (options.navigateTo) {
-          locationService.replace(options.navigateTo);
-        }
-      })(),
-      {
-        successMessage: 'Rule deleted.',
-      }
-    );
-  };
-}
-
 export const saveRuleFormAction = createAsyncThunk(
   'unifiedalerting/saveRuleForm',
   (

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useHistory, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -12,7 +12,11 @@ import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
-import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from 'app/features/alerting/unified/utils/rules';
+import {
+  getRuleGroupLocationFromRuleWithLocation,
+  isGrafanaRulerRule,
+  isGrafanaRulerRulePaused,
+} from 'app/features/alerting/unified/utils/rules';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
@@ -23,8 +27,9 @@ import {
   trackAlertRuleFormCancelled,
   trackAlertRuleFormSaved,
 } from '../../../Analytics';
+import { useDeleteRuleFromGroup } from '../../../hooks/useProduceNewRuleGroup';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
-import { deleteRuleAction, saveRuleFormAction } from '../../../state/actions';
+import { saveRuleFormAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { initialAsyncRequestState } from '../../../utils/redux';
 import {
@@ -36,7 +41,6 @@ import {
   ignoreHiddenQueries,
   normalizeDefaultAnnotations,
 } from '../../../utils/rule-form';
-import * as ruleId from '../../../utils/rule-id';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameInput } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
@@ -56,10 +60,12 @@ type Props = {
 export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
+  const history = useHistory();
   const notifyApp = useAppNotification();
   const [queryParams] = useQueryParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
   const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
+  const [deleteRuleFromGroup, _deleteRuleState] = useDeleteRuleFromGroup();
 
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
@@ -151,16 +157,12 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     );
   };
 
-  const deleteRule = () => {
+  const deleteRule = async () => {
     if (existing) {
-      const identifier = ruleId.fromRulerRule(
-        existing.ruleSourceName,
-        existing.namespace,
-        existing.group.name,
-        existing.rule
-      );
+      const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(existing);
 
-      dispatch(deleteRuleAction(identifier, { navigateTo: '/alerting/list' }));
+      await deleteRuleFromGroup(ruleGroupIdentifier, existing.rule);
+      history.replace(returnTo);
     }
   };
 

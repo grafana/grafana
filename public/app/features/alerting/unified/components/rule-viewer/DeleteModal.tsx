@@ -4,8 +4,8 @@ import { useHistory } from 'react-router-dom';
 import { ConfirmModal } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { useDeleteRuleFromGroup } from '../../hooks/useProduceNewEvaluationGroup';
-import { getRuleGroupLocation } from '../../utils/rules';
+import { useDeleteRuleFromGroup } from '../../hooks/useProduceNewRuleGroup';
+import { getRuleGroupLocationFromCombinedRule } from '../../utils/rules';
 
 type DeleteModalHook = [JSX.Element, (rule: CombinedRule) => void, () => void];
 
@@ -23,20 +23,18 @@ export const useDeleteModal = (): DeleteModalHook => {
   }, []);
 
   const deleteRule = useCallback(
-    async (rule?: CombinedRule, redirect = true) => {
+    async (rule?: CombinedRule) => {
       if (!rule?.rulerRule) {
         return;
       }
 
-      const location = getRuleGroupLocation(rule);
+      const location = getRuleGroupLocationFromCombinedRule(rule);
       await deleteRuleFromGroup(location, rule.rulerRule);
 
       dismissModal();
 
       // @TODO implement redirect yes / no
-      if (redirect) {
-        history.push('/alerting/list');
-      }
+      history.replace('/alerting/list');
     },
     [deleteRuleFromGroup, dismissModal, history]
   );

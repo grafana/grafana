@@ -1,13 +1,17 @@
 import { Action } from '@reduxjs/toolkit';
 import { useCallback } from 'react';
 
-import { getState } from 'app/store/store';
+import { dispatch, getState } from 'app/store/store';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { PostableRuleDTO, RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { addRuleAction, deleteRuleAction, pauseRuleAction, ruleGroupReducer } from '../reducers/ruler/ruleGroups';
-import { getDataSourceRulerConfig } from '../state/actions';
+import {
+  fetchPromAndRulerRulesAction,
+  fetchRulesSourceBuildInfoAction,
+  getDataSourceRulerConfig,
+} from '../state/actions';
 
 export function useProduceNewRuleGroup() {
   const [fetchRuleGroup, _fetchRuleGroupState] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
@@ -18,7 +22,9 @@ export function useProduceNewRuleGroup() {
     const { ruleSourceName, group, namespace } = ruleGroup;
 
     // @TODO we should really not work with the redux state (getState) here
+    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: ruleSourceName }));
     const rulerConfig = getDataSourceRulerConfig(getState, ruleSourceName);
+
     const currentRuleGroup = await fetchRuleGroup({ rulerConfig, namespace, group }).unwrap();
 
     // @TODO convert rule group to postable rule group – TypeScript is not complaining here because
@@ -84,6 +90,10 @@ export function useDeleteRuleFromGroup() {
     async (ruleGroup: RuleGroupIdentifier, rule: RulerRuleDTO) => {
       const action = deleteRuleAction(rule);
       await produceNewRuleGroup(ruleGroup, action);
+
+      // refetch rules for this rules source
+      // @TODO remove this when we moved everything to RTKQ – then the endpoint will simply invalidate the tags
+      dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: ruleGroup.ruleSourceName }));
     },
     [produceNewRuleGroup]
   );

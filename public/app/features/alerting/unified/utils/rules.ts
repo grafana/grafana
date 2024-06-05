@@ -17,6 +17,7 @@ import {
   RuleIdentifier,
   RuleGroupIdentifier,
   RuleNamespace,
+  RuleWithLocation,
 } from 'app/types/unified-alerting';
 import {
   GrafanaAlertState,
@@ -295,7 +296,7 @@ export const getNumberEvaluationsToStartAlerting = (forDuration: string, current
 };
 
 // extract the rule group location from a combined rule type
-export function getRuleGroupLocation(rule: CombinedRule): RuleGroupIdentifier {
+export function getRuleGroupLocationFromCombinedRule(rule: CombinedRule): RuleGroupIdentifier {
   const ruleSourceName = isGrafanaRulesSource(rule.namespace.rulesSource)
     ? rule.namespace.rulesSource
     : rule.namespace.rulesSource.name;
@@ -304,5 +305,17 @@ export function getRuleGroupLocation(rule: CombinedRule): RuleGroupIdentifier {
     ruleSourceName,
     namespace: rule.namespace.uid ?? rule.namespace.name,
     group: rule.group.name,
+  };
+}
+
+export function getRuleGroupLocationFromRuleWithLocation(rule: RuleWithLocation): RuleGroupIdentifier {
+  const ruleSourceName = rule.ruleSourceName;
+  const namespace = rule.namespace_uid ?? rule.namespace;
+  const group = rule.group.name;
+
+  return {
+    ruleSourceName,
+    namespace,
+    group,
   };
 }
