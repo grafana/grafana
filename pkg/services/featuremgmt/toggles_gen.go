@@ -255,10 +255,6 @@ const (
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 
-	// FlagLokiFormatQuery
-	// Enables the ability to format Loki queries
-	FlagLokiFormatQuery = "lokiFormatQuery"
-
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
@@ -694,4 +690,8 @@ const (
 	// FlagAlertingCentralAlertHistory
 	// Enables the new central alert history.
 	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
+
+	// FlagPluginProxyPreserveTrailingSlash
+	// Preserve plugin proxy trailing slash.
+	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 )
