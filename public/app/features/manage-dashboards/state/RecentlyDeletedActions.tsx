@@ -11,10 +11,10 @@ import { setAllSelection, useActionSelectionState } from '../../browse-dashboard
 import { RestoreModal } from '../components/RestoreModal';
 import { useRecentlyDeletedStateManager } from '../utils/useRecentlyDeletedStateManager';
 
-export function RecentlyDeletedAction() {
+export function RecentlyDeletedActions() {
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
-  const [, stateManager] = useRecentlyDeletedStateManager();
+  const [_, stateManager] = useRecentlyDeletedStateManager();
   const isSearching = stateManager.hasSearchFilters();
 
   const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();

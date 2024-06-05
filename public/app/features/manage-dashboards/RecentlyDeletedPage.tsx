@@ -12,7 +12,7 @@ import { SearchView } from '../browse-dashboards/components/SearchView';
 import { getFolderPermissions } from '../browse-dashboards/permissions';
 import { setAllSelection } from '../browse-dashboards/state';
 
-import { RecentlyDeletedAction } from './state/RecentlyDeletedActions';
+import { RecentlyDeletedActions } from './state/RecentlyDeletedActions';
 import { useRecentlyDeletedStateManager } from './utils/useRecentlyDeletedStateManager';
 
 const RecentlyDeletedPage = memo(() => {
@@ -58,7 +58,7 @@ const RecentlyDeletedPage = memo(() => {
           onPanelTypeChange={stateManager.onPanelTypeChange}
           onSetIncludePanels={stateManager.onSetIncludePanels}
         />
-        <RecentlyDeletedAction />
+        <RecentlyDeletedActions />
         <AutoSizer>
           {({ width, height }) => (
             <SearchView

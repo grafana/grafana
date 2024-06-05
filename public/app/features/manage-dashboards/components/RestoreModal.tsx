@@ -1,7 +1,8 @@
 import React from 'react';
 
-import { ConfirmModal, Text, Space } from '@grafana/ui';
+import { ConfirmModal, Text } from '@grafana/ui';
 
+import { Trans, t } from '../../../core/internationalization';
 import { DescendantCount } from '../../browse-dashboards/components/BrowseActions/DescendantCount';
 import { DashboardTreeSelection } from '../../browse-dashboards/types';
 
@@ -22,16 +23,22 @@ export const RestoreModal = ({ onConfirm, onDismiss, selectedItems, isLoading, .
     <ConfirmModal
       body={
         <>
-          <Text element="p">This action will restore the following content:</Text> {/*TODO: add Trans tag*/}
-          <DescendantCount selectedItems={selectedItems} />
-          <Space v={2} /> {/*TODO: does this space look good?*/}
+          <Text element="p">
+            <Trans i18nKey="recentlyDeleted.restoreModal.text">This action will restore the following content:</Trans>
+          </Text>
+          <DescendantCount selectedItems={selectedItems} />{' '}
+          {/*TODO: clarify whether "3 items: 3 dashboards" makes sense */}
         </>
       }
-      confirmText={isLoading ? 'Restoring...' : 'Restore'} // TODO: add t for translation
+      confirmText={
+        isLoading
+          ? t('recentlyDeleted.restoreModal.confirmText.ongoing', 'Restoring...')
+          : t('recentlyDeleted.restoreModal.confirmText.success', 'Restore')
+      }
       confirmButtonVariant="primary"
       onDismiss={onDismiss}
       onConfirm={onRestore}
-      title="Restore"
+      title={t('recentlyDeleted.restoreModal.title', 'Restore')}
       {...props}
     />
   );
