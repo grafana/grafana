@@ -22,7 +22,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
   const onShareExternallyClick = () => {
     const drawer = new ShareDrawer({
       title: 'Share externally',
-      body: new ShareExternally({ dashboardRef: dashboard.getRef() }),
+      body: <ShareExternally dashboard={dashboard.getRef().resolve()} />,
     });
 
     dashboard.showModal(drawer);

@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { config, featureEnabled } from '@grafana/runtime/src';
 import {
   Button,
   ClipboardButton,
@@ -40,6 +39,7 @@ import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTem
 import {
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
+  isEmailSharingEnabled,
   PublicDashboard,
 } from '../SharePublicDashboardUtils';
 
@@ -81,8 +81,6 @@ export function ConfigPublicDashboardBase({
   const [update, { isLoading }] = useUpdatePublicDashboardMutation();
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
   const disableInputs = !hasWritePermissions || isLoading;
-  const hasEmailSharingEnabled =
-    !!config.featureToggles.publicDashboardsEmailSharing && featureEnabled('publicDashboardsEmailSharing');
 
   const { handleSubmit, setValue, register } = useForm<ConfigPublicDashboardForm>({
     defaultValues: {
@@ -124,7 +122,7 @@ export function ConfigPublicDashboardBase({
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDatasources.join(', ')} />
       )}
 
-      {hasEmailSharingEnabled && <EmailSharingConfiguration dashboard={dashboard} />}
+      {isEmailSharingEnabled && <EmailSharingConfiguration dashboard={dashboard} />}
 
       <Field
         label={t('public-dashboard.config.dashboard-url-field-label', 'Dashboard URL')}

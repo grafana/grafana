@@ -1,5 +1,5 @@
 import { TypedVariableModel } from '@grafana/data';
-import { config, DataSourceWithBackend } from '@grafana/runtime';
+import { config, DataSourceWithBackend, featureEnabled } from '@grafana/runtime';
 import { getConfig } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -97,3 +97,8 @@ export const validEmailRegex = /^[A-Z\d._%+-]+@[A-Z\d.-]+\.[A-Z]{2,}$/i;
 export const isPublicDashboardsEnabled = () => {
   return Boolean(config.featureToggles.publicDashboards) && config.publicDashboardsEnabled;
 };
+
+export const isEmailSharingEnabled =
+  isPublicDashboardsEnabled() &&
+  !!config.featureToggles.publicDashboardsEmailSharing &&
+  featureEnabled('publicDashboardsEmailSharing');
