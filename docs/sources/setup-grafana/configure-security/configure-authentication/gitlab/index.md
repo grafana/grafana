@@ -159,7 +159,7 @@ This section includes examples of JMESPath expressions used for role mapping.
 
 ##### Org roles mapping example
 
-The Gitlab integration uses the external users' groups in the `org_mapping` configuration to map organizations and roles based on their Gitlab group membership.
+The GitLab integration uses the external users' groups in the `org_mapping` configuration to map organizations and roles based on their GitLab group membership.
 
 In this example, the user has been granted the role of a `Viewer` in the `org_foo` organization, and the role of an `Editor` in the `org_bar` and `org_baz` orgs.
 
