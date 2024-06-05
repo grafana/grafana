@@ -119,7 +119,7 @@
     "@types/lodash": "4.17.4",
     "@types/logfmt": "^1.2.3",
     "@types/lucene": "^2",
-    "@types/node": "20.14.1",
+    "@types/node": "20.14.2",
     "@types/node-forge": "^1",
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4",
     "@types/pluralize": "^0.0.33",
@@ -207,7 +207,7 @@
     "postcss-loader": "8.1.1",
     "postcss-reporter": "7.1.0",
     "postcss-scss": "4.0.9",
-    "prettier": "3.2.5",
+    "prettier": "3.3.1",
     "pseudoizer": "^0.1.0",
     "react-refresh": "0.14.0",
     "react-select-event": "5.5.1",
@@ -391,7 +391,7 @@
     "systemjs-cjs-extra": "0.2.1",
     "tether-drop": "https://github.com/torkelo/drop",
     "tinycolor2": "1.6.0",
-    "tslib": "2.6.2",
+    "tslib": "2.6.3",
     "tween-functions": "^1.2.0",
     "type-fest": "^4.18.2",
     "uplot": "1.6.30",
@@ -429,7 +429,7 @@
   },
   "packageManager": "yarn@4.2.2",
   "dependenciesMeta": {
-    "prettier@3.2.5": {
+    "prettier@3.3.1": {
       "unplugged": true
     }
   }

@@ -191,4 +191,5 @@ export interface FeatureToggles {
   alertingDisableSendAlertsExternal?: boolean;
   preserveDashboardStateWhenNavigating?: boolean;
   alertingCentralAlertHistory?: boolean;
+  pluginProxyPreserveTrailingSlash?: boolean;
 }
