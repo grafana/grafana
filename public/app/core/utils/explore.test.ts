@@ -62,6 +62,11 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => getDataSourceSrvMock(),
 }));
 
+// Avoids errors caused by circular dependencies
+jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
+  ignoreNextSave: jest.fn(),
+}));
+
 describe('state functions', () => {
   describe('serializeStateToUrlParam', () => {
     it('returns url parameter value for a state object', () => {

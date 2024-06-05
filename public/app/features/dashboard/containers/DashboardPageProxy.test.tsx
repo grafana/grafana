@@ -78,6 +78,12 @@ jest.mock('react-virtualized-auto-sizer', () => {
     });
 });
 
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: () => ({
+    getDashboardDTO: jest.fn().mockResolvedValue(dashMock),
+  }),
+}));
+
 function setup(props: Partial<DashboardPageProxyProps>) {
   const context = getGrafanaContextMock();
   const store = configureStore({});

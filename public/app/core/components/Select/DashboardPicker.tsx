@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
 
@@ -54,7 +55,7 @@ export const DashboardPicker = ({
     (async () => {
       // value was manually changed from outside or we are rendering for the first time.
       // We need to fetch dashboard information.
-      const res = await backendSrv.getDashboardByUid(value);
+      const res = await getDashboardAPI().getDashboardDTO(value);
       if (res.dashboard) {
         setCurrent({
           value: {

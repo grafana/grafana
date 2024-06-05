@@ -9,6 +9,7 @@ import (
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -177,8 +178,9 @@ func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, query *Dashboard
 
 func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid string) (*dashboardsV0.Dashboard, error) {
 	r, err := a.GetDashboards(ctx, &DashboardQuery{
-		OrgID: orgId,
-		UID:   uid,
+		OrgID:  orgId,
+		UID:    uid,
+		Labels: labels.Everything(),
 	})
 	if err != nil {
 		return nil, err

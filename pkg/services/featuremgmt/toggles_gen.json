@@ -2224,6 +2224,19 @@
         "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend"
       }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesDashboards",
+        "resourceVersion": "1717593661635",
+        "creationTimestamp": "2024-06-05T13:21:01Z"
+      },
+      "spec": {
+        "description": "Use the kubernetes API in the frontend for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true
+      }
     }
   ]
 }

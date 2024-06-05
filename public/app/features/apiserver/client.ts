@@ -37,6 +37,10 @@ export class ScopedResourceClient<T = object, K = string> implements ResourceCli
     return getBackendSrv().get<Resource<T, K>>(`${this.url}/${name}`);
   }
 
+  public async subresource<S>(name: string, path: string): Promise<S> {
+    return getBackendSrv().get<S>(`${this.url}/${name}/${path}`);
+  }
+
   public async list(opts?: ListOptions | undefined): Promise<ResourceList<T, K>> {
     const finalOpts = opts || {};
     finalOpts.labelSelector = this.parseListOptionsSelector(finalOpts?.labelSelector);

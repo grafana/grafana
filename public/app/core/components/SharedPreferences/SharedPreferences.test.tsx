@@ -7,21 +7,26 @@ import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/prefe
 
 import SharedPreferences from './SharedPreferences';
 
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: () => ({
+    getDashboardDTO: jest.fn().mockResolvedValue({
+      dashboard: {
+        id: 2,
+        title: 'My Dashboard',
+        uid: 'myDash',
+        templating: {
+          list: [],
+        },
+        panels: [],
+      },
+      meta: {},
+    }),
+  }),
+}));
+
 jest.mock('app/core/services/backend_srv', () => {
   return {
     backendSrv: {
-      getDashboardByUid: jest.fn().mockResolvedValue({
-        dashboard: {
-          id: 2,
-          title: 'My Dashboard',
-          uid: 'myDash',
-          templating: {
-            list: [],
-          },
-          panels: [],
-        },
-        meta: {},
-      }),
       search: jest.fn().mockResolvedValue([
         {
           id: 2,

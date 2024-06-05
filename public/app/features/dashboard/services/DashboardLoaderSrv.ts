@@ -12,6 +12,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDTO } from 'app/types';
 
 import { appEvents } from '../../../core/core';
+import { getDashboardAPI } from '../api/dashboard_api';
 
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
@@ -81,8 +82,8 @@ export class DashboardLoaderSrv {
         return Promise.resolve(cachedDashboard);
       }
 
-      promise = backendSrv
-        .getDashboardByUid(uid)
+      promise = getDashboardAPI()
+        .getDashboardDTO(uid)
         .then((result) => {
           if (result.meta.isFolder) {
             appEvents.emit(AppEvents.alertError, ['Dashboard not found']);

@@ -53,6 +53,12 @@ const setup = (propOverrides?: object) => {
   );
 };
 
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: () => ({
+    getDashboardDTO: jest.fn().mockResolvedValue({}),
+  }),
+}));
+
 describe('Render', () => {
   beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
