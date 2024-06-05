@@ -92,15 +92,15 @@ For the logs where a `level` label is specified, we use the value of this label 
 
 **Supported log levels and mapping of log level abbreviation and expressions:**
 
-| Log level | Color      | Supported expressions                    |
-| :-------- | :--------- | ---------------------------------------- |
-| critical  | purple     | emerg, fatal, alert, crit, critical      |
-| error     | red        | err, eror, error                         |
-| warning   | yellow     | warn, warning                            |
-| info      | green      | info, information, informational, notice |
-| debug     | blue       | dbug, debug                              |
-| trace     | light blue | trace                                    |
-| unknown   | grey       | \*                                       |
+| Log level | Color      | Supported expressions                          |
+| :-------- | :--------- | ---------------------------------------------- |
+| critical  | purple     | emerg, fatal, alert, crit, critical, 0, 1, 2   |
+| error     | red        | err, eror, error, 3                            |
+| warning   | yellow     | warn, warning, 4                               |
+| info      | green      | info, information, informational, notice, 5, 6 |
+| debug     | blue       | dbug, debug, 7                                 |
+| trace     | light blue | trace                                          |
+| unknown   | grey       | \*                                             |
 
 ### Highlight searched words
 

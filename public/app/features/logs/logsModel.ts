@@ -425,7 +425,7 @@ export function logSeriesToLogsModel(
 
       let logLevel = LogLevel.unknown;
       const logLevelKey = (logLevelField && logLevelField.values[j]) || (labels && labels['level']);
-      if (logLevelKey) {
+      if (typeof logLevelKey === 'number' || typeof logLevelKey === 'string') {
         logLevel = getLogLevelFromKey(logLevelKey);
       } else {
         logLevel = getLogLevel(entry);

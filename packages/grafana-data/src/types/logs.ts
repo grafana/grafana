@@ -33,6 +33,21 @@ export enum LogLevel {
   unknown = 'unknown',
 }
 
+/**
+ * Mapping of log level abbreviation to canonical log level.
+ * Supported levels are reduce to limit color variation.
+ */
+export const NumericLogLevel: Record<string, LogLevel> = {
+  '0': LogLevel.critical,
+  '1': LogLevel.critical,
+  '2': LogLevel.critical,
+  '3': LogLevel.error,
+  '4': LogLevel.warning,
+  '5': LogLevel.info,
+  '6': LogLevel.info,
+  '7': LogLevel.debug,
+};
+
 // Used for meta information such as common labels or returned log rows in logs view in Explore
 export enum LogsMetaKind {
   Number,
