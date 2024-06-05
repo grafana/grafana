@@ -2,9 +2,11 @@ package constants
 
 import "github.com/grafana/grafana-aws-sdk/pkg/cloudWatchConsts"
 
+// NamespaceMetricsMap is a map of Cloudwatch namespaces to their metrics
 // Deprecated: use cloudWatchConsts.NamespaceMetricsMap from grafana-aws-sdk instead
 var NamespaceMetricsMap = cloudWatchConsts.NamespaceMetricsMap
 
+// NamespaceDimensionKeysMap is a map of CloudWatch namespaces to their dimension keys
 // Deprecated: use cloudWatchConsts.NamespaceDimensionKeysMap from grafana-aws-sdk instead
 var NamespaceDimensionKeysMap = cloudWatchConsts.NamespaceDimensionKeysMap
 
