@@ -73,9 +73,10 @@ refs:
 
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" caption="Time series" >}}
 
-Time series visualizations are the default and primary way to visualize time series data as a graph. They can render series as lines, points, or bars. They're versatile enough to display almost any time-series data. Morevoer, you can [link alerts](ref:link-alert) rules to the time series visualization to observe when alerts fire and get resolved in the form of annotations. In addition, you can create alert rules from the Alert tab within the panel options.
+Time series visualizations are the default and primary way to visualize time series data as a graph. They can render series as lines, points, or bars. They're versatile enough to display almost any time-series data.
 
 {{% admonition type="note" %}}
+You can [link alerts](ref:link-alert) rules to the time series visualization to observe when alerts fire and get resolved in the form of annotations. In addition, you can create alert rules from the Alert tab within the panel options.
 At the moment, alerts are only supported in the time series, and [alert list](ref:alert-list) visualizations.
 {{% /admonition %}}
 
