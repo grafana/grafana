@@ -637,7 +637,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
     HOST: grafana-server
-  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:3.0.0
+  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.1.0:1.0.0
   name: end-to-end-tests-cloud-plugins-suite-azure
   when:
     paths:
@@ -1900,7 +1900,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
     HOST: grafana-server
-  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:3.0.0
+  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.1.0:1.0.0
   name: end-to-end-tests-cloud-plugins-suite-azure
   when:
     paths:
@@ -4676,6 +4676,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 4b0934103612f1f41dd2b086069ff8c5ad660cc52ed8424b14e49650d3a3ec86
+hmac: 2b7963a4e07d91f641600f41964d657cf6583c5f9be79c8229ad367db21101e9
 
 ...
