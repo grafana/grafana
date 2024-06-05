@@ -691,7 +691,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 				UID:       dashFolder.UID,
 				OrgID:     cmd.OrgID,
 			}); err != nil {
-				s.log.ErrorContext(ctx, "failed to publish FolderTitleUpdated event", "uid", foldr.UID, "user", id, "namespace", namespace, "error", err)
+				s.log.ErrorContext(ctx, "Failed to publish FolderTitleUpdated event", "folderUid", foldr.UID, "user", id, "namespace", namespace, "error", err)
 				return err
 			}
 		}
@@ -960,7 +960,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 			UID:       dashFolder.UID,
 			OrgID:     cmd.OrgID,
 		}); err != nil {
-			s.log.ErrorContext(ctx, "failed to publish FolderFullPathUpdated event", "uid", dashFolder.UID, "error", err)
+			s.log.ErrorContext(ctx, "Failed to publish FolderFullPathUpdated event", "folderUid", dashFolder.UID, "error", err)
 			return err
 		}
 

@@ -493,7 +493,7 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 		logger.Info("Got folder title updated event. updating rules in the folder", "folderUID", evt.UID)
 		_, err := dbStore.IncreaseVersionForAllRulesInNamespace(ctx, evt.OrgID, evt.UID)
 		if err != nil {
-			logger.Error("Failed to update alert rules in the folder after its full path was changed", "error", err, "folderUID", evt.UID)
+			logger.Error("Failed to update alert rules in the folder after its full path was changed", "error", err, "folderUid", evt.UID)
 			return err
 		}
 		return nil
