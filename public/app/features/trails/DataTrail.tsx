@@ -229,7 +229,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       stateUpdate.topScene = new MetricSelectScene({});
     }
 
-    stateUpdate.metricSearch = values.metricSearch?.toString() || undefined;
+    if (typeof values.metricSearch === 'string') {
+      stateUpdate.metricSearch = values.metricSearch;
+    } else if (values.metric == null) {
+      stateUpdate.metricSearch = undefined;
+    }
 
     this.setState(stateUpdate);
   }
