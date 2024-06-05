@@ -1,15 +1,14 @@
 import { css } from 'emotion';
 import saveAs from 'file-saver';
-import React from 'react';
+import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
+import { SceneObjectRef } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Stack, Switch, useTheme2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
-import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -17,40 +16,23 @@ import { transformSceneToSaveModel } from '../../serialization/transformSceneToS
 import { getVariablesCompatibility } from '../../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../../utils/interactions';
 
-export interface ExportAsJSONState extends SceneObjectState {
+export interface Props {
   dashboardRef: SceneObjectRef<DashboardScene>;
-  isSharingExternally?: boolean;
 }
 
-export class ExportAsJSON extends SceneObjectBase<ExportAsJSONState> {
-  public tabId = shareDashboardType.export;
-  static Component = ExportAsJSONRenderer;
+export default function ExportAsJSON({ dashboardRef }: Props) {
+  const [isSharingExternally, setSharingExternallyState] = useState(true);
 
-  private _exporter = new DashboardExporter();
-
-  constructor(state: ExportAsJSONState) {
-    super({
-      isSharingExternally: true,
-      ...state,
-    });
+  function onShareExternallyChange() {
+    setSharingExternallyState(!isSharingExternally);
   }
 
-  public onShareExternallyChange = () => {
-    this.setState({
-      isSharingExternally: !this.state.isSharingExternally,
-    });
-  };
-
-  public getClipboardText() {
-    return;
-  }
-
-  public async getExportableDashboardJson() {
-    const { dashboardRef, isSharingExternally } = this.state;
+  const _exporter = new DashboardExporter();
+  async function getExportableDashboardJson() {
     const saveModel = transformSceneToSaveModel(dashboardRef.resolve());
 
     const exportable = isSharingExternally
-      ? await this._exporter.makeExportable(
+      ? await _exporter.makeExportable(
           new DashboardModel(saveModel, undefined, {
             getVariablesFromState: () => {
               return getVariablesCompatibility(window.__grafanaSceneContext);
@@ -62,10 +44,9 @@ export class ExportAsJSON extends SceneObjectBase<ExportAsJSONState> {
     return exportable;
   }
 
-  public async onSaveAsFile() {
-    const dashboardJson = await this.getExportableDashboardJson();
+  async function onSaveAsFile() {
+    const dashboardJson = await getExportableDashboardJson();
     const dashboardJsonPretty = JSON.stringify(dashboardJson, null, 2);
-    const { isSharingExternally } = this.state;
 
     const blob = new Blob([dashboardJsonPretty], {
       type: 'application/json;charset=utf-8',
@@ -82,37 +63,33 @@ export class ExportAsJSON extends SceneObjectBase<ExportAsJSONState> {
     });
   }
 
-  public onClose = () => {
-    this.state.dashboardRef.resolve().setState({ overlay: undefined });
-  };
-}
-
-function ExportAsJSONRenderer({ model }: SceneComponentProps<ExportAsJSON>) {
-  const { isSharingExternally } = model.useState();
+  function onClose() {
+    dashboardRef.resolve().setState({ overlay: undefined });
+  }
 
   const theme = useTheme2();
   const styles = getStyles(theme);
 
   const dashboardJson = useAsync(async () => {
-    const json = await model.getExportableDashboardJson();
+    const json = await getExportableDashboardJson();
     return JSON.stringify(json, null, 2);
   }, [isSharingExternally]);
 
   const exportExternallyTranslation = t(
-    'share-modal.export.share-externally-label',
+    'export.json.share-externally-label',
     `Export the dashboard to use in another instance`
   );
 
   return (
     <>
       <p className="share-modal-info-text">
-        <Trans i18nKey="share-modal.export.info-text">
+        <Trans i18nKey="export.json.info-text">
           Copy or download a JSON file containing the JSON of your dashboard.
         </Trans>
       </p>
 
       <div className={styles.switchItem}>
-        <Switch id="share-externally-toggle" value={isSharingExternally} onChange={model.onShareExternallyChange} />
+        <Switch id="share-externally-toggle" value={isSharingExternally} onChange={onShareExternallyChange} />
         <Label className={styles.switchItemLabel}>{exportExternallyTranslation}</Label>
       </div>
 
@@ -140,8 +117,8 @@ function ExportAsJSONRenderer({ model }: SceneComponentProps<ExportAsJSON>) {
       </AutoSizer>
 
       <Stack direction="row" wrap="wrap" alignItems="flex-start" gap={2} justifyContent="start">
-        <Button variant="primary" icon="download-alt" onClick={() => model.onSaveAsFile()}>
-          <Trans i18nKey="share-modal.export.save-button">Save to file</Trans>
+        <Button variant="primary" icon="download-alt" onClick={onSaveAsFile}>
+          <Trans i18nKey="export.json.save-button">Save to file</Trans>
         </Button>
         <ClipboardButton
           variant="secondary"
@@ -149,10 +126,10 @@ function ExportAsJSONRenderer({ model }: SceneComponentProps<ExportAsJSON>) {
           disabled={dashboardJson.loading}
           getText={() => dashboardJson.value ?? ''}
         >
-          <Trans i18nKey="share-modal.view-json.copy-button">Copy to Clipboard</Trans>
+          <Trans i18nKey="export.json.copy-button">Copy to Clipboard</Trans>
         </ClipboardButton>
-        <Button variant="secondary" onClick={() => model.onClose()} fill="outline">
-          <Trans i18nKey="share-modal.export.cancel-button">Cancel</Trans>
+        <Button variant="secondary" onClick={onClose} fill="outline">
+          <Trans i18nKey="export.json.cancel-button">Cancel</Trans>
         </Button>
       </Stack>
     </>
