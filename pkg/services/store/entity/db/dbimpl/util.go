@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
@@ -25,9 +26,6 @@ func (g *sectionGetter) Err() error {
 }
 
 func (g *sectionGetter) String(key string) string {
-	if g.err != nil {
-		return ""
-	}
 	v := g.DynamicSection.Key(key).MustString("")
 	if !utf8.ValidString(v) {
 		g.err = fmt.Errorf("value for key %q: %w", key, ErrInvalidUTF8Sequence)
@@ -43,7 +41,10 @@ func (g *sectionGetter) String(key string) string {
 func MakeDSN(m map[string]string) (string, error) {
 	b := new(strings.Builder)
 
-	for k, v := range m {
+	ks := keys(m)
+	sort.Strings(ks) // provide deterministic behaviour
+	for _, k := range ks {
+		v := m[k]
 		if !utf8.ValidString(v) {
 			return "", fmt.Errorf("value for DSN key %q: %w", k,
 				ErrInvalidUTF8Sequence)
@@ -61,6 +62,14 @@ func MakeDSN(m map[string]string) (string, error) {
 	}
 
 	return b.String(), nil
+}
+
+func keys(m map[string]string) []string {
+	ret := make([]string, 0, len(m))
+	for k := range m {
+		ret = append(ret, k)
+	}
+	return ret
 }
 
 func writeDSNValue(b *strings.Builder, v string) {
@@ -83,6 +92,9 @@ func writeDSNValue(b *strings.Builder, v string) {
 	_ = b.WriteByte('\'')
 }
 
+// splitHostPortDefault is similar to net.SplitHostPort, but will also accept a
+// specification with no port and apply the default port instead. It also
+// applies the given defaults if the results are empty strings.
 func splitHostPortDefault(hostport, defaultHost, defaultPort string) (string, string, error) {
 	host, port, err := net.SplitHostPort(hostport)
 	if err != nil {

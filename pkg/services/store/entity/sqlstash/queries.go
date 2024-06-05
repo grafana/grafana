@@ -40,17 +40,13 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlEntityDelete  = mustTemplate("entity_delete.sql")
-	sqlEntityHistory = mustTemplate("entity_history.sql")
-	//sqlEntityHistoryList        = mustTemplate("entity_history_list.sql") // TODO: in upcoming PRs
+	sqlEntityDelete             = mustTemplate("entity_delete.sql")
 	sqlEntityInsert             = mustTemplate("entity_insert.sql")
 	sqlEntityListFolderElements = mustTemplate("entity_list_folder_elements.sql")
-	sqlEntityUpdate             = mustTemplate("entity_update.sql")
 	sqlEntityRead               = mustTemplate("entity_read.sql")
+	sqlEntityUpdate             = mustTemplate("entity_update.sql")
 
 	sqlEntityFolderInsert = mustTemplate("entity_folder_insert.sql")
-
-	sqlEntityRefFind = mustTemplate("entity_ref_find.sql")
 
 	sqlEntityLabelsDelete = mustTemplate("entity_labels_delete.sql")
 	sqlEntityLabelsInsert = mustTemplate("entity_labels_insert.sql")
@@ -75,12 +71,18 @@ var (
 // SQLError is an error returned by the database, which includes additionally
 // debugging information about what was sent to the database.
 type SQLError struct {
-	Err       error
-	CallType  string // either Query, QueryRow or Exec
-	Arguments []any
-	ScanDest  []any
-	Query     string
-	RawQuery  string
+	Err          error
+	CallType     string // either Query, QueryRow or Exec
+	TemplateName string
+	Query        string
+	RawQuery     string
+	ScanDest     []any
+
+	// potentially regulated information is not exported and only directly
+	// available for local testing and local debugging purposes, making sure it
+	// is never marshaled to JSON or any other serialization.
+
+	arguments []any
 }
 
 func (e SQLError) Unwrap() error {
@@ -88,20 +90,9 @@ func (e SQLError) Unwrap() error {
 }
 
 func (e SQLError) Error() string {
-	return fmt.Sprintf("calling %s in database: %v", e.CallType, e.Err)
-}
-
-func (e SQLError) Debug() string {
-	scanDestStr := "(none)"
-	if len(e.ScanDest) > 0 {
-		format := "[%T" + strings.Repeat(", %T", len(e.ScanDest)-1) + "]"
-		scanDestStr = fmt.Sprintf(format, e.ScanDest...)
-	}
-
-	return fmt.Sprintf("call %s in database: %v\n\tArguments (%d): %#v\n\t"+
-		"Return Value Types (%d): %s\n\tExecuted Query: %s\n\tRaw SQL "+
-		"Template Output: %s", e.CallType, e.Err, len(e.Arguments), e.Arguments,
-		len(e.ScanDest), scanDestStr, e.Query, e.RawQuery)
+	return fmt.Sprintf("%s: %s with %d input arguments and %d output "+
+		"destination arguments: %v", e.TemplateName, e.CallType,
+		len(e.arguments), len(e.ScanDest), e.Err)
 }
 
 // entity_folder table requests.
@@ -109,6 +100,10 @@ func (e SQLError) Debug() string {
 type sqlEntityFolderInsertRequest struct {
 	*sqltemplate.SQLTemplate
 	Items []*sqlEntityFolderInsertRequestItem
+}
+
+func (r sqlEntityFolderInsertRequest) Validate() error {
+	return nil // TODO
 }
 
 type sqlEntityFolderInsertRequestItem struct {
@@ -123,14 +118,6 @@ type sqlEntityFolderInsertRequestItem struct {
 	Detached  bool
 }
 
-// entity_ref table requests.
-
-type sqlEntityRefFindRequest struct {
-	*sqltemplate.SQLTemplate
-	Request *entity.ReferenceRequest
-	returnsEntitySet
-}
-
 // entity_labels table requests.
 
 type sqlEntityLabelsInsertRequest struct {
@@ -139,10 +126,18 @@ type sqlEntityLabelsInsertRequest struct {
 	Labels map[string]string
 }
 
+func (r sqlEntityLabelsInsertRequest) Validate() error {
+	return nil // TODO
+}
+
 type sqlEntityLabelsDeleteRequest struct {
 	*sqltemplate.SQLTemplate
 	GUID       string
 	KeepLabels []string
+}
+
+func (r sqlEntityLabelsDeleteRequest) Validate() error {
+	return nil // TODO
 }
 
 // entity_kind table requests.
@@ -164,11 +159,19 @@ type sqlKindVersionGetRequest struct {
 	*returnsKindVersion
 }
 
+func (r sqlKindVersionGetRequest) Validate() error {
+	return nil // TODO
+}
+
 type sqlKindVersionLockRequest struct {
 	*sqltemplate.SQLTemplate
 	Group    string
 	Resource string
 	*returnsKindVersion
+}
+
+func (r sqlKindVersionLockRequest) Validate() error {
+	return nil // TODO
 }
 
 type sqlKindVersionIncRequest struct {
@@ -179,12 +182,20 @@ type sqlKindVersionIncRequest struct {
 	UpdatedAt       int64
 }
 
+func (r sqlKindVersionIncRequest) Validate() error {
+	return nil // TODO
+}
+
 type sqlKindVersionInsertRequest struct {
 	*sqltemplate.SQLTemplate
 	Group     string
 	Resource  string
 	CreatedAt int64
 	UpdatedAt int64
+}
+
+func (r sqlKindVersionInsertRequest) Validate() error {
+	return nil // TODO
 }
 
 // entity and entity_history tables requests.
@@ -195,6 +206,10 @@ type sqlEntityListFolderElementsRequest struct {
 	Resource   string
 	Namespace  string
 	FolderInfo *folderInfo
+}
+
+func (r sqlEntityListFolderElementsRequest) Validate() error {
+	return nil // TODO
 }
 
 // sqlEntityReadRequest can be used to retrieve a row from either the "entity"
@@ -209,21 +224,17 @@ type sqlEntityReadRequest struct {
 	returnsEntitySet
 }
 
+func (r sqlEntityReadRequest) Validate() error {
+	return nil // TODO
+}
+
 type sqlEntityDeleteRequest struct {
 	*sqltemplate.SQLTemplate
 	Key *entity.Key
 }
 
-type sqlEntityHistoryRequest struct {
-	*sqltemplate.SQLTemplate
-	//historyToken // TODO: coming in another PR
-	returnsEntitySet
-}
-
-type sqlEntityHistoryListRequest struct {
-	*sqltemplate.SQLTemplate
-	//hitoryListToken // TODO: coming in another PR
-	returnsEntitySet
+func (r sqlEntityDeleteRequest) Validate() error {
+	return nil // TODO
 }
 
 type sqlEntityInsertRequest struct {
@@ -235,16 +246,33 @@ type sqlEntityInsertRequest struct {
 	TableEntity bool
 }
 
+func (r sqlEntityInsertRequest) Validate() error {
+	return nil // TODO
+}
+
 type sqlEntityUpdateRequest struct {
 	*sqltemplate.SQLTemplate
 	Entity *returnsEntity
 }
 
+func (r sqlEntityUpdateRequest) Validate() error {
+	return nil // TODO
+}
+
+// newEmptyEntity allocates a new entity.Entity and all its internal state to be
+// ready for use.
 func newEmptyEntity() *entity.Entity {
 	return &entity.Entity{
 		// we need to allocate all internal pointer types so that they
 		// are readily available to be populated in the template
 		Origin: new(entity.EntityOriginInfo),
+
+		// we also set default empty values in slices and maps instead of nil to
+		// provide the most consistent JSON representation fields that will be
+		// serialized this way to the database.
+		Labels: map[string]string{},
+		Fields: map[string]string{},
+		Errors: []*entity.EntityErrorInfo{},
 	}
 }
 
@@ -258,6 +286,36 @@ func cloneEntity(src *entity.Entity) *entity.Entity {
 // returnsEntitySet can be embedded in a request struct to provide automatic set
 // returning of []*entity.Entity from the database, deserializing as needed. It
 // should be embedded as a value type.
+// Example struct:
+//
+//	type sqlMyRequest struct {
+//		*sqltemplate.SQLTemplate
+//		returnsEntitySet          // embedded value type, not pointer type
+//		GUID               string // example argument
+//		MaxResourceVersion int    // example argument
+//	}
+//
+// Example struct usage::
+//
+//	req := sqlMyRequest{
+//		SQLTemplate:        sqltemplate.New(myDialect),
+//		returnsEntitySet:   newReturnsEntitySet(),
+//		GUID:               "abc",
+//		MaxResourceVersion: 1,
+//	}
+//	entities, err := query(myTx, myTmpl, req)
+//
+// Example usage in SQL template:
+//
+//	SELECT
+//			{{ .Ident "guid"             | .Into .Entity.Guid }},
+//			{{ .Ident "resource_version" | .Into .Entity.ResourceVersion }},
+//			{{ .Ident "body"             | .Into .Entity.Body }}
+//		FROM {{ .Ident "entity_history" }}
+//		WHERE 1 = 1
+//			AND {{ .Ident "guid" }}              = {{ .Arg .GUID }}
+//			AND {{ .Ident "resource_version" }} <= {{ .Arg .MaxResourceVersion }}
+//	;
 type returnsEntitySet struct {
 	Entity *returnsEntity
 }
@@ -278,13 +336,46 @@ func (e returnsEntitySet) Results() (*entity.Entity, error) {
 		return nil, err
 	}
 
-	return proto.Clone(ent).(*entity.Entity), nil
+	return cloneEntity(ent), nil
 }
 
 // returnsEntity is a wrapper that aids with database (de)serialization. It
 // embeds a *entity.Entity to provide transparent access to all its fields, but
 // overrides the ones that need database (de)serialization. It should be a named
 // field in your request struct, with pointer type.
+// Example struct:
+//
+//	type sqlMyRequest struct {
+//		*sqltemplate.SQLTemplate
+//		Entity          *returnsEntity // named field with pointer type
+//		GUID            string         // example argument
+//		ResourceVersion int            // example argument
+//	}
+//
+// Example struct usage:
+//
+//	req := sqlMyRequest{
+//		SQLTemplate:     sqltemplate.New(myDialect),
+//		Entity:          newReturnsEntity(),
+//		GUID:            "abc",
+//		ResourceVersion: 1,
+//	}
+//	err := queryRow(myTx, myTmpl, req)
+//	// check err here
+//	err = req.Entity.unmarshal()
+//	// check err, and you can now use req.Entity.Entity
+//
+// Example usage in SQL template:
+//
+//	SELECT
+//			{{ .Ident "guid"             | .Into .Entity.Guid }},
+//			{{ .Ident "resource_version" | .Into .Entity.ResourceVersion }},
+//			{{ .Ident "body"             | .Into .Entity.Body }}
+//		FROM {{ .Ident "entity" }}
+//		WHERE 1 =1
+//			AND {{ .Ident "guid" }}             = {{ .Arg .GUID }}
+//			AND {{ .Ident "resource_version" }} = {{ .Arg .ResourceVersion }}
+//	;
 type returnsEntity struct {
 	*entity.Entity
 	Labels []byte
@@ -348,23 +439,42 @@ func (e *returnsEntity) unmarshal() error {
 		if err := json.Unmarshal(e.Labels, &e.Entity.Labels); err != nil {
 			return fmt.Errorf("deserialize entity \"labels\" field: %w", err)
 		}
+	} else {
+		e.Entity.Labels = map[string]string{}
 	}
 
 	if len(e.Fields) > 0 {
 		if err := json.Unmarshal(e.Fields, &e.Entity.Fields); err != nil {
 			return fmt.Errorf("deserialize entity \"fields\" field: %w", err)
 		}
+	} else {
+		e.Entity.Fields = map[string]string{}
 	}
 
 	if len(e.Errors) > 0 {
 		if err := json.Unmarshal(e.Errors, &e.Entity.Errors); err != nil {
 			return fmt.Errorf("deserialize entity \"errors\" field: %w", err)
 		}
+	} else {
+		e.Entity.Errors = []*entity.EntityErrorInfo{}
 	}
 
 	return nil
 }
 
+// readEntity returns the entity defined by the given key as it existed at
+// version `asOfVersion`, if that value is greater than zero. The returned
+// entity will have at most that version. If `asOfVersion` is zero, then the
+// current version of that entity will be returned. If `optimisticLocking` is
+// true, then the latest version of the entity will be retrieved and return an
+// error if its version is not exactly `asOfVersion`. The option
+// `selectForUpdate` will cause to acquire a row-level exclusive lock upon
+// selecting it. `optimisticLocking` is ignored if `asOfVersion` is zero.
+// Common errors to check:
+//  1. ErrOptimisticLockingFailed: the latest version of the entity does not
+//     match the value of `asOfVersion`.
+//  2. ErrNotFound: the entity does not currently exist, did not exist at the
+//     version of `asOfVersion` or was deleted.
 func readEntity(
 	ctx context.Context,
 	x db.ContextExecer,
@@ -374,12 +484,8 @@ func readEntity(
 	optimisticLocking bool,
 	selectForUpdate bool,
 ) (*returnsEntity, error) {
-	if asOfVersion < 0 {
-		asOfVersion = 0
-	}
-	if asOfVersion == 0 {
-		optimisticLocking = false
-	}
+	asOfVersion = max(asOfVersion, 0)
+	optimisticLocking = optimisticLocking && asOfVersion != 0
 
 	v := asOfVersion
 	if optimisticLocking {
@@ -437,7 +543,7 @@ func kindVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemplate
 		// a new (Group, Resource) to the cell, which should be very unlikely,
 		// and the workaround is simply retrying. The alternative would be to
 		// use INSERT ... ON CONFLICT DO UPDATE ..., but that creates a
-		// requirement for support in Dialect only for this marginal case, but
+		// requirement for support in Dialect only for this marginal case, and
 		// we would rather keep Dialect as small as possible. Another
 		// alternative is to simply check if the INSERT returns a DUPLICATE KEY
 		// error and then retry the original SELECT, but that also adds some

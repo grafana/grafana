@@ -16,7 +16,7 @@ var (
 // embedding or with a named struct field if its Arg method would clash with
 // another struct field.
 type Args struct {
-	d      Dialect
+	d      interface{ ArgPlaceholder(argNum int) string }
 	values []any
 }
 
@@ -69,6 +69,10 @@ func (a *Args) ArgList(slice reflect.Value) (string, error) {
 	return b.String(), nil
 }
 
+func (a *Args) Reset() {
+	a.values = nil
+}
+
 func (a *Args) GetArgs() []any {
 	return a.values
 }
@@ -77,4 +81,5 @@ type ArgsIface interface {
 	Arg(x any) string
 	ArgList(slice reflect.Value) (string, error)
 	GetArgs() []any
+	Reset()
 }

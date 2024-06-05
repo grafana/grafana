@@ -15,11 +15,13 @@ import (
 )
 
 func createETag(body []byte, meta []byte, status []byte) string {
+	// TODO: can we change this to something more modern like sha256?
 	h := md5.New()
 	_, _ = h.Write(meta)
 	_, _ = h.Write(body)
 	_, _ = h.Write(status)
 	hash := h.Sum(nil)
+
 	return hex.EncodeToString(hash[:])
 }
 
@@ -34,8 +36,7 @@ func getCurrentUser(ctx context.Context) (string, error) {
 	return store.GetUserIDString(user), nil
 }
 
-// ptrOr returns the first non-nil pointer in the least or a new non-nil
-// pointer.
+// ptrOr returns the first non-nil pointer in the list or a new non-nil pointer.
 func ptrOr[P ~*E, E any](ps ...P) P {
 	for _, p := range ps {
 		if p != nil {
@@ -46,8 +47,8 @@ func ptrOr[P ~*E, E any](ps ...P) P {
 	return P(new(E))
 }
 
-// sliceOr returns the first slice that has at least one element, or a non-nil
-// empty slice.
+// sliceOr returns the first slice that has at least one element, or a new empty
+// slice.
 func sliceOr[S ~[]E, E comparable](vals ...S) S {
 	for _, s := range vals {
 		if len(s) > 0 {
@@ -58,7 +59,7 @@ func sliceOr[S ~[]E, E comparable](vals ...S) S {
 	return S{}
 }
 
-// mapOr returns the first map that has at least one element, or a non-nil empty
+// mapOr returns the first map that has at least one element, or a new empty
 // map.
 func mapOr[M ~map[K]V, K comparable, V any](vals ...M) M {
 	for _, m := range vals {
@@ -70,60 +71,15 @@ func mapOr[M ~map[K]V, K comparable, V any](vals ...M) M {
 	return M{}
 }
 
-// countTrue returns the number of true values in its arguments.
-func countTrue(bools ...bool) uint64 {
-	var ret uint64
-	for _, b := range bools {
-		if b {
-			ret++
-		}
-	}
-
-	return ret
-}
-
-// query uses `req` as input and output for a zero or more row-returning query
-// generated with `tmpl`, and executed in `x`.
-func query[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.WithResults[T]) ([]T, error) {
-	rawQuery, err := sqltemplate.Execute(tmpl, req)
-	if err != nil {
-		return nil, fmt.Errorf("execute template: %w", err)
-	}
-	query := sqltemplate.FormatSQL(rawQuery)
-
-	rows, err := x.QueryContext(ctx, query, req.GetArgs()...)
-	if err != nil {
-		return nil, SQLError{
-			Err:       err,
-			CallType:  "Query",
-			Arguments: req.GetArgs(),
-			ScanDest:  req.GetScanDest(),
-			Query:     query,
-			RawQuery:  rawQuery,
-		}
-	}
-	defer rows.Close() //nolint:errcheck
-
-	var ret []T
-	for rows.Next() {
-		res, err := scanRow(rows, req)
-		if err != nil {
-			return nil, err
-		}
-		ret = append(ret, res)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("rows err: %w", err)
-	}
-
-	return ret, nil
-}
-
 // queryRow uses `req` as input and output for a single-row returning query
 // generated with `tmpl`, and executed in `x`.
 func queryRow[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.WithResults[T]) (T, error) {
 	var zero T
+
+	if err := req.Validate(); err != nil {
+		return zero, fmt.Errorf("query: invalid request for template %q: %w",
+			tmpl.Name(), err)
+	}
 
 	rawQuery, err := sqltemplate.Execute(tmpl, req)
 	if err != nil {
@@ -134,12 +90,13 @@ func queryRow[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Tem
 	row := x.QueryRowContext(ctx, query, req.GetArgs()...)
 	if err := row.Err(); err != nil {
 		return zero, SQLError{
-			Err:       err,
-			CallType:  "QueryRow",
-			Arguments: req.GetArgs(),
-			ScanDest:  req.GetScanDest(),
-			Query:     query,
-			RawQuery:  rawQuery,
+			Err:          err,
+			CallType:     "QueryRow",
+			TemplateName: tmpl.Name(),
+			arguments:    req.GetArgs(),
+			ScanDest:     req.GetScanDest(),
+			Query:        query,
+			RawQuery:     rawQuery,
 		}
 	}
 
@@ -168,6 +125,11 @@ func scanRow[T any](sc scanner, req sqltemplate.WithResults[T]) (zero T, err err
 // exec uses `req` as input for a non-data returning query generated with
 // `tmpl`, and executed in `x`.
 func exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.SQLTemplateIface) (sql.Result, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("exec: invalid request for template %q: %w",
+			tmpl.Name(), err)
+	}
+
 	rawQuery, err := sqltemplate.Execute(tmpl, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template: %w", err)
@@ -177,11 +139,12 @@ func exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req 
 	res, err := x.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return nil, SQLError{
-			Err:       err,
-			CallType:  "Exec",
-			Arguments: req.GetArgs(),
-			Query:     query,
-			RawQuery:  rawQuery,
+			Err:          err,
+			CallType:     "Exec",
+			TemplateName: tmpl.Name(),
+			arguments:    req.GetArgs(),
+			Query:        query,
+			RawQuery:     rawQuery,
 		}
 	}
 

@@ -1,0 +1,22 @@
+{
+    "UserID": 2,
+    "UserUID": "ednity0wr3d34d",
+    "OrgID": 1,
+    "OrgName": "Main Org.",
+    "OrgRole": "Editor",
+    "Login": "editor",
+    "Name": "editor",
+    "Email": "editor",
+    "EmailVerified": false,
+    "AuthID": "",
+    "AuthenticatedBy": "",
+    "ApiKeyID": 0,
+    "IsServiceAccount": false,
+    "IsGrafanaAdmin": false,
+    "IsAnonymous": false,
+    "IsDisabled": false,
+    "HelpFlags1": 0,
+    "LastSeenAt": "2024-06-01T23:03:26-03:00",
+    "Teams": [],
+    "NamespacedID": {}
+}

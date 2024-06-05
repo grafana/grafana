@@ -17,15 +17,21 @@ var (
 // embedded for ease of use, or with a named struct field if any of its methods
 // would clash with other struct field names.
 type Dialect interface {
+	// Name identifies the Dialect. Note that a Dialect may be common to more
+	// than one DBMS (e.g. "postgres" is common to PostgreSQL and to
+	// CockroachDB), while we can maintain different Dialects for the same DBMS
+	// but different versions (e.g. "mysql5" and "mysql8").
+	Name() string
+
 	// Ident returns the given string quoted in a way that is suitable to be
 	// used as an identifier. Database names, schema names, table names, column
 	// names are all examples of identifiers.
 	Ident(string) (string, error)
 
 	// ArgPlaceholder returns a safe argument suitable to be used in a SQL
-	// prepared statement for the argNum-eth argument passed in execution. The
-	// SQL92 Standard specifies the question mark ('?') should be used in all
-	// cases, but some implementations differ.
+	// prepared statement for the argNum-eth argument passed in execution
+	// (starting at 1). The SQL92 Standard specifies the question mark ('?')
+	// should be used in all cases, but some implementations differ.
 	ArgPlaceholder(argNum int) string
 
 	// SelectFor parses and returns the given row-locking clause for a SELECT
@@ -75,12 +81,9 @@ const (
 	SelectForUpdateSkipLocked RowLockingClause = "UPDATE SKIP LOCKED"
 )
 
-// rowLockingClauseAll aids implementations that either support all the
-// row-locking clause options or none. If it's true, it returns the clause,
-// otherwise it returns an empty string.
-type rowLockingClauseAll bool
+type rowLockingClauseMap map[RowLockingClause]RowLockingClause
 
-func (rlc rowLockingClauseAll) SelectFor(s ...string) (string, error) {
+func (rlc rowLockingClauseMap) SelectFor(s ...string) (string, error) {
 	// all implementations should err on invalid input, otherwise we would just
 	// be hiding the error until we change the dialect
 	o, err := ParseRowLockingClause(s...)
@@ -88,11 +91,21 @@ func (rlc rowLockingClauseAll) SelectFor(s ...string) (string, error) {
 		return "", err
 	}
 
-	if !rlc {
-		return "", nil
+	var ret string
+	if len(rlc) > 0 {
+		ret = "FOR " + string(rlc[o])
 	}
 
-	return "FOR " + string(o), nil
+	return ret, nil
+}
+
+var rowLockingClauseAll = rowLockingClauseMap{
+	SelectForShare:            SelectForShare,
+	SelectForShareNoWait:      SelectForShareNoWait,
+	SelectForShareSkipLocked:  SelectForShareSkipLocked,
+	SelectForUpdate:           SelectForUpdate,
+	SelectForUpdateNoWait:     SelectForUpdateNoWait,
+	SelectForUpdateSkipLocked: SelectForUpdateSkipLocked,
 }
 
 // standardIdent provides standard SQL escaping of identifiers.
@@ -119,3 +132,9 @@ var (
 		return "$" + strconv.Itoa(argNum)
 	})
 )
+
+type name string
+
+func (n name) Name() string {
+	return string(n)
+}
