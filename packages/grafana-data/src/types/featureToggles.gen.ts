@@ -73,7 +73,6 @@ export interface FeatureToggles {
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
   refactorVariablesTimeRange?: boolean;
-  enableElasticsearchBackendQuerying?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
   extraThemes?: boolean;
