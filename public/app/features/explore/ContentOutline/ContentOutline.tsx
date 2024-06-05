@@ -51,7 +51,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
 
   const [sectionsExpanded, setSectionsExpanded] = useState(() => {
     return outlineItems.reduce((acc: { [key: string]: boolean }, item) => {
-      acc[item.id] = false;
+      acc[item.id] = !!item.expanded;
       return acc;
     }, {});
   });
@@ -140,6 +140,8 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       scrollIntoView(activeParent.ref, activeParent.panelId, activeParent.customTopOffset);
     }
   };
+
+  console.log(outlineItems);
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>

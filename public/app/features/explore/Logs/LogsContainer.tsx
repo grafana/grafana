@@ -60,6 +60,7 @@ interface LogsContainerProps extends PropsFromRedux {
   isFilterLabelActive: (key: string, value: string, refId?: string) => Promise<boolean>;
   onClickFilterValue: (value: string, refId?: string) => void;
   onClickFilterOutValue: (value: string, refId?: string) => void;
+  onPinLineCallback?: () => void;
 }
 
 type DataSourceInstance =
@@ -282,6 +283,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       exploreId,
       logsVolume,
       scrollElement,
+      onPinLineCallback,
     } = this.props;
 
     if (!logRows) {
@@ -352,6 +354,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             range={range}
             onClickFilterValue={this.filterValueAvailable() ? this.props.onClickFilterValue : undefined}
             onClickFilterOutValue={this.filterOutValueAvailable() ? this.props.onClickFilterOutValue : undefined}
+            onPinLineCallback={onPinLineCallback}
           />
         </LogsCrossFadeTransition>
       </>

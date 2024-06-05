@@ -41,6 +41,7 @@ export interface ContentOutlineItemBaseProps {
    * e.g. pinned log in Logs section
    */
   childOnTop?: boolean;
+  expanded?: boolean;
 }
 
 interface ContentOutlineItemProps extends ContentOutlineItemBaseProps {

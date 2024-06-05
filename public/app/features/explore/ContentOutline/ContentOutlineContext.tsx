@@ -18,6 +18,7 @@ export interface ContentOutlineContextProps {
   unregister: (id: string) => void;
   unregisterAllChildren: (parentId: string, childType: ITEM_TYPES) => void;
   updateOutlineItems: (newItems: ContentOutlineItemContextProps[]) => void;
+  updateItem: (id: string, properties: Partial<Omit<ContentOutlineItemContextProps, 'id'>>) => void;
 }
 
 interface ContentOutlineContextProviderProps {
@@ -178,6 +179,21 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
     setOutlineItems(newItems);
   }, []);
 
+  const updateItem = useCallback((id: string, properties: Partial<Omit<ContentOutlineItemContextProps, 'id'>>) => {
+    console.log('updateItem', id, properties);
+    setOutlineItems((prevItems) =>
+      prevItems.map((item) => {
+        if (item.id === id) {
+          return {
+            ...item,
+            ...properties,
+          };
+        }
+        return item;
+      })
+    );
+  }, []);
+
   const unregisterAllChildren = useCallback((parentId: string, childType: ITEM_TYPES) => {
     setOutlineItems((prevItems) =>
       prevItems.map((item) => {
@@ -202,7 +218,7 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
 
   return (
     <ContentOutlineContext.Provider
-      value={{ outlineItems, register, unregister, updateOutlineItems, unregisterAllChildren }}
+      value={{ outlineItems, register, unregister, updateOutlineItems, unregisterAllChildren, updateItem }}
     >
       {children}
     </ContentOutlineContext.Provider>
