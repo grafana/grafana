@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@grafana/ui';
 
 import appEvents from '../../../core/app_events';
+import { Trans } from '../../../core/internationalization';
 import { useDispatch } from '../../../types';
 import { ShowModalReactEvent } from '../../../types/events';
 import { setAllSelection, useActionSelectionState } from '../../browse-dashboards/state';
@@ -46,8 +47,7 @@ export function RecentlyDeletedAction() {
 
   return (
     <Button onClick={showRestoreModal} variant="secondary">
-      {/*TODO: add Trans tag for i18n*/}
-      Restore
+      <Trans i18nKey="recentlyDeleted.buttons.restore">Restore</Trans>
     </Button>
   );
 }
