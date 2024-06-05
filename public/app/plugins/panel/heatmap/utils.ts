@@ -69,10 +69,9 @@ export function prepConfig(opts: PrepConfigOpts) {
   } = opts;
 
   const xScaleKey = 'x';
-  const xField = dataRef.current?.heatmap?.fields[0]!;
   let isTime = true;
 
-  if (xField.type !== FieldType.time) {
+  if (dataRef.current?.heatmap?.fields[0].type !== FieldType.time) {
     isTime = false;
   }
 
