@@ -396,6 +396,13 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 							Format: "",
 						},
 					},
+					"disableMultiSelect": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
 					"linkType": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Possible enum values:\n - `\"scope\"`",
@@ -412,7 +419,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 						},
 					},
 				},
-				Required: []string{"nodeType", "title"},
+				Required: []string{"nodeType", "title", "disableMultiSelect"},
 			},
 		},
 	}

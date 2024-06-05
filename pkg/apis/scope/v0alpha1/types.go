@@ -107,8 +107,9 @@ type ScopeNodeSpec struct {
 
 	NodeType NodeType `json:"nodeType"` // container | leaf
 
-	Title       string `json:"title"`
-	Description string `json:"description,omitempty"`
+	Title              string `json:"title"`
+	Description        string `json:"description,omitempty"`
+	DisableMultiSelect bool   `json:"disableMultiSelect"`
 
 	LinkType LinkType `json:"linkType,omitempty"` // scope (later more things)
 	LinkID   string   `json:"linkId,omitempty"`   // the k8s name
