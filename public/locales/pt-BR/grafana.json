@@ -1478,6 +1478,11 @@
     },
     "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
   },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Atualização automática desativada. Escolha o intervalo de tempo de atualização",
