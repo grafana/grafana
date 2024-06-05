@@ -33,7 +33,7 @@ interface Props {
   // The ID of the plugin we would like to load and display
   pluginId: string;
   // The root navModelItem for the plugin (root = lives directly under 'home')
-  pluginNavSection: NavModelItem;
+  pluginNavSection?: NavModelItem;
 }
 
 interface State {
@@ -52,7 +52,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
   const { plugin, loading, loadingError, pluginNav } = state;
-  const navModel = buildPluginSectionNav(pluginNavSection, pluginNav, currentUrl);
+  const navModel = pluginNavSection ? buildPluginSectionNav(pluginNavSection, currentUrl) : undefined;
   const queryParams = useMemo(() => locationSearchToObject(location.search), [location.search]);
   const context = useMemo(() => buildPluginPageContext(navModel), [navModel]);
   const grafanaContext = useGrafana();
