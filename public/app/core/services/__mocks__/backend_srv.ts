@@ -36,7 +36,7 @@ export const backendSrv = {
 
   /** @deprecated */
   getDashboardByUid: jest.fn(),
-  
+
   // Observable support
   fetch: (options: BackendSrvRequest) => {
     return of(makePromResponse() as FetchResponse);
