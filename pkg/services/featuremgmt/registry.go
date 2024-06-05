@@ -256,15 +256,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:           "nestedFolderPicker",
-			Description:    "Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaFrontendPlatformSquad,
-			FrontendOnly:   true,
-			Expression:     "true", // enabled by default
-			AllowSelfServe: true,
-		},
-		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,
@@ -423,14 +414,6 @@ var (
 			HideFromAdminPage: true, // Non-feature, used to test out a bug fix that impacts the performance of template variables.
 		},
 		{
-			Name:           "enableElasticsearchBackendQuerying",
-			Description:    "Enable the processing of queries and responses in the Elasticsearch data source through backend",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaObservabilityLogsSquad,
-			Expression:     "true", // enabled by default
-			AllowSelfServe: true,
-		},
-		{
 			Name:         "faroDatasourceSelector",
 			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability",
 			Stage:        FeatureStagePublicPreview,
@@ -479,13 +462,6 @@ var (
 			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaDatavizSquad,
 			HideFromAdminPage: true,
-		},
-		{
-			Name:         "lokiFormatQuery",
-			Description:  "Enables the ability to format Loki queries",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:           "recordedQueriesMulti",
@@ -757,6 +733,13 @@ var (
 			RequiresRestart: true, // changes the API routing
 		},
 		{
+			Name:         "kubernetesDashboards",
+			Description:  "Use the kubernetes API in the frontend for dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAppPlatformSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:            "datasourceQueryTypes",
 			Description:     "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
 			Stage:           FeatureStageExperimental,
@@ -953,7 +936,8 @@ var (
 		{
 			Name:         "logsInfiniteScrolling",
 			Description:  "Enables infinite scrolling for the Logs panel in Explore and Dashboards",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true",
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
@@ -1307,6 +1291,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:        "pluginProxyPreserveTrailingSlash",
+			Description: "Preserve plugin proxy trailing slash.",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 	}
 )

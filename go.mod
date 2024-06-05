@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.22.3
+go 1.22.4
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
@@ -86,7 +86,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.12.3 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20240517150520-282da04de5ed // @grafana/alerting-squad-backend
+	github.com/grafana/alerting v0.0.0-20240605165250-2a01d30a527b // @grafana/alerting-squad-backend
 	github.com/grafana/authlib v0.0.0-20240531094430-c24866c0cded // @grafana/identity-access-team
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
