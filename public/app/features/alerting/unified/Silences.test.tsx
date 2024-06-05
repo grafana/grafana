@@ -27,7 +27,7 @@ import {
 } from './mocks';
 import { grafanaRulerRule } from './mocks/alertRuleApi';
 import { setupDataSources } from './testSetup/datasources';
-import { DataSourceType } from './utils/datasource';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('app/core/services/context_srv');
 
@@ -43,7 +43,7 @@ const renderSilences = (location = '/alerting/silences/') => {
 
 const dataSources = {
   am: mockDataSource({
-    name: 'Alertmanager',
+    name: GRAFANA_RULES_SOURCE_NAME,
     type: DataSourceType.Alertmanager,
   }),
   [MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER]: mockDataSource({
@@ -347,7 +347,7 @@ describe('Silence create/edit', () => {
 
       const postRequest = waitForServerRequest(silenceCreateHandler());
 
-      renderSilences(`${baseUrlPath}?alertmanager=Alertmanager`);
+      renderSilences(`${baseUrlPath}?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`);
       await waitFor(() => expect(ui.editor.durationField.query()).not.toBeNull());
 
       await enterSilenceLabel(0, 'foo', MatcherOperator.equal, 'bar');
@@ -356,7 +356,7 @@ describe('Silence create/edit', () => {
 
       expect(await ui.notExpiredTable.find()).toBeInTheDocument();
 
-      expect(locationService.getSearch().get('alertmanager')).toBe('Alertmanager');
+      expect(locationService.getSearch().get('alertmanager')).toBe(GRAFANA_RULES_SOURCE_NAME);
 
       const createSilenceRequest = await postRequest;
       const requestBody = await createSilenceRequest.clone().json();
