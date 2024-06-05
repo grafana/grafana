@@ -25,7 +25,7 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { HeatmapTooltip } from './HeatmapTooltip';
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
-import { HeatmapSelectionMode, Options } from './types';
+import { Options } from './types';
 import { prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<Options> {}
@@ -113,7 +113,7 @@ export const HeatmapPanel = ({
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
-      selectionMode: HeatmapSelectionMode.Xy, //options.selectionMode,
+      selectionMode: options.selectionMode,
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps

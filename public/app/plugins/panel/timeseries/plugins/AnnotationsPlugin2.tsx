@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic, FieldType } from '@grafana/data';
+import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR, getPortalContainer, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
 
@@ -54,69 +54,6 @@ function getVals(frame: DataFrame) {
 
   return vals;
 }
-
-// remove before merging!
-const xyMarkFrame = {
-  name: 'xymark',
-  meta: {
-    dataTopic: DataTopic.Annotations,
-  },
-  length: 1,
-  fields: [
-    {
-      name: 'xMin',
-      config: {},
-      type: FieldType.number,
-      values: [1717538017984.1462],
-      // values: [range.x?.from ?? 0],
-    },
-    {
-      name: 'xMax',
-      config: {},
-      type: FieldType.number,
-      values: [1717545426520.7317],
-      // values: [range.x?.to ?? 0],
-    },
-    {
-      name: 'yMin',
-      config: {},
-      type: FieldType.number,
-      values: [0.5715623232513972],
-      // values: [range.y?.from ?? 0],
-    },
-    {
-      name: 'yMax',
-      config: {},
-      type: FieldType.number,
-      values: [2098.4203479996304],
-      // values: [range.y?.to ?? 0],
-    },
-    {
-      name: 'color',
-      config: {},
-      type: FieldType.string,
-      values: ['#0f0'],
-    },
-    {
-      name: 'fillOpacity',
-      config: {},
-      type: FieldType.number,
-      values: [0.05],
-    },
-    {
-      name: 'lineWidth',
-      config: {},
-      type: FieldType.number,
-      values: [1],
-    },
-    {
-      name: 'lineStyle',
-      config: {},
-      type: FieldType.string,
-      values: ['dash'],
-    },
-  ],
-};
 
 export const AnnotationsPlugin2 = ({
   annotations,
@@ -194,7 +131,7 @@ export const AnnotationsPlugin2 = ({
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
-      annos.concat(xyMarkFrame).forEach((frame) => {
+      annos.forEach((frame) => {
         let vals = getVals(frame);
 
         if (frame.name === 'xymark') {

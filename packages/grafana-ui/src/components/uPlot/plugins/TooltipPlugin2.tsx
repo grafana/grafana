@@ -338,8 +338,6 @@ export const TooltipPlugin2 = ({
             // get x selection
             if (xDrag) {
               xSel = {
-                // type: 'time', // TODO: remove hardcode
-                // unit: config.scales.find((scale) => scale.props.scaleKey === 'x')!.props.unit ?? '',
                 from: isXAxisHorizontal
                   ? u.posToVal(u.select.left!, 'x')
                   : u.posToVal(u.select.top + u.select.height, 'x'),
@@ -356,8 +354,6 @@ export const TooltipPlugin2 = ({
 
                 if (key !== 'x') {
                   let ySel = {
-                    // type: 'number', // TODO: remove hardcode
-                    // unit: scale.props.unit ?? '',
                     from: isXAxisHorizontal
                       ? u.posToVal(u.select.top + u.select.height, key)
                       : u.posToVal(u.select.left + u.select.width, key),

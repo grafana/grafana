@@ -12,8 +12,6 @@ export enum SeriesVisibilityChangeMode {
 export type OnSelectRangeCallback = (selections: CartesianSelection2D[]) => void;
 
 export interface RangeSelection1D {
-  // type: string; // field type (number, time)
-  // unit: string; // scale unit
   from: number;
   to: number;
 }
