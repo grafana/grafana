@@ -9,14 +9,14 @@ export enum SeriesVisibilityChangeMode {
   AppendToSelection = 'append',
 }
 
-export type OnSelectRangeCallback = (selections: CartesianSelection2D[]) => void;
+export type OnSelectRangeCallback = (selections: RangeSelection2D[]) => void;
 
 export interface RangeSelection1D {
   from: number;
   to: number;
 }
 
-export interface CartesianSelection2D {
+export interface RangeSelection2D {
   x?: RangeSelection1D;
   y?: RangeSelection1D;
 }

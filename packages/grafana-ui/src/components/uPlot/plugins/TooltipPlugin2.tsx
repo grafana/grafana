@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
-import { CartesianSelection2D, OnSelectRangeCallback, RangeSelection1D } from '../../PanelChrome';
+import { RangeSelection1D, RangeSelection2D, OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
@@ -327,7 +327,7 @@ export const TooltipPlugin2 = ({
       if (!viaSync && (clientZoom || queryZoom != null)) {
         if (maybeZoomAction(u.cursor!.event)) {
           if (onSelectRange != null) {
-            let selections: CartesianSelection2D[] = [];
+            let selections: RangeSelection2D[] = [];
 
             const yDrag = Boolean(u.cursor!.drag!.y);
             const xDrag = Boolean(u.cursor!.drag!.x);
