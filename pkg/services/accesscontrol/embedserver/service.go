@@ -28,6 +28,7 @@ type ServiceCfg struct {
 
 	ListenHTTP                 bool
 	MaxConcurrentReadsForCheck uint32
+	ResolveNodeLimit           uint32
 }
 
 type Service struct {
@@ -51,6 +52,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 			LogLevel:                   section.Key("log_level").MustString("info"),
 			ListenHTTP:                 section.Key("listen_http").MustBool(true),
 			MaxConcurrentReadsForCheck: uint32(section.Key("max_concurrent_reads_for_check").MustUint(0)),
+			ResolveNodeLimit:           uint32(section.Key("resolve_node_limit").MustUint(0)),
 		},
 	}
 
@@ -81,6 +83,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 		ListObjectsDeadline:        3 * time.Second,
 		ListenHTTP:                 s.Cfg.ListenHTTP,
 		MaxConcurrentReadsForCheck: s.Cfg.MaxConcurrentReadsForCheck,
+		ResolveNodeLimit:           s.Cfg.ResolveNodeLimit,
 	})
 	if err != nil {
 		return nil, err
