@@ -40,7 +40,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 		expectedEmail           string
 		expectedOrgRoles        map[int64]org.RoleType
 		expectedGrafanaAdmin    *bool
-		wantErr                 bool
+		expectedErr             error
 	}{
 		{
 			name:              "should give role from JSON and email from id token",
@@ -55,7 +55,6 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			expectedEmail:        "okto.octopus@test.com",
 			expectedOrgRoles:     map[int64]org.RoleType{1: org.RoleAdmin},
 			expectedGrafanaAdmin: boolPointer,
-			wantErr:              false,
 		},
 		{
 			name:              "should give empty role and nil pointer for GrafanaAdmin when skip org role sync enable",
@@ -71,7 +70,6 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			expectedEmail:        "okto.octopus@test.com",
 			expectedOrgRoles:     nil,
 			expectedGrafanaAdmin: boolPointer,
-			wantErr:              false,
 		},
 		{
 			name:                    "should give grafanaAdmin role for specific GrafanaAdmin in the role assignement",
@@ -87,7 +85,6 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			expectedEmail:        "okto.octopus@test.com",
 			expectedOrgRoles:     map[int64]org.RoleType{1: org.RoleAdmin},
 			expectedGrafanaAdmin: trueBoolPtr(),
-			wantErr:              false,
 		},
 		{
 			name:        "should fallback to default org role when role attribute path is empty",
@@ -100,7 +97,6 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			},
 			expectedEmail:    "okto.octopus@test.com",
 			expectedOrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
-			wantErr:          false,
 		},
 		{
 			name:                "should map role when only org mapping is set",
@@ -116,7 +112,6 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			},
 			expectedEmail:    "okto.octopus@test.com",
 			expectedOrgRoles: map[int64]org.RoleType{4: org.RoleEditor, 5: org.RoleViewer},
-			wantErr:          false,
 		},
 		{
 			name:                "should map role when only org mapping is set and role attribute strict is enabled",
@@ -132,7 +127,6 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			},
 			expectedEmail:    "okto.octopus@test.com",
 			expectedOrgRoles: map[int64]org.RoleType{4: org.RoleEditor, 5: org.RoleViewer},
-			wantErr:          false,
 		},
 		{
 			name:              "should return nil OrgRoles when SkipOrgRoleSync is enabled",
@@ -147,7 +141,6 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			},
 			expectedOrgRoles: nil,
 			expectedEmail:    "okto.octopus@test.com",
-			wantErr:          false,
 		},
 		{
 			name:                "should return error when neither role attribute path nor org mapping evaluates to a role and role attribute strict is enabled",
@@ -160,7 +153,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 				// },
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6Im9rdG8ub2N0b3B1c0B0ZXN0LmNvbSJ9.yhg0nvYCpMVCVrRvwtmHzhF0RJqid_YFbjJ_xuBCyHs",
 			},
-			wantErr: true,
+			expectedErr: errRoleAttributeStrictViolation,
 		},
 		{
 			name:                "should return error when neither role attribute path nor org mapping is set and role attribute strict is enabled",
@@ -172,7 +165,7 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 				// },
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6Im9rdG8ub2N0b3B1c0B0ZXN0LmNvbSJ9.yhg0nvYCpMVCVrRvwtmHzhF0RJqid_YFbjJ_xuBCyHs",
 			},
-			wantErr: true,
+			expectedErr: errRoleAttributeStrictViolation,
 		},
 	}
 	for _, tt := range tests {
@@ -221,8 +214,9 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			token := staticToken.WithExtra(tt.oAuth2Extra)
 			actual, err := provider.UserInfo(context.Background(), server.Client(), token)
 
-			if tt.wantErr {
+			if tt.expectedErr != nil {
 				require.Error(t, err)
+				require.ErrorIs(t, err, tt.expectedErr)
 				return
 			}
 
