@@ -50,11 +50,13 @@ func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, c
 	}
 	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
 
+	createdCopy := created.DeepCopyObject()
+
 	go func() {
 		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage create timeout"))
 		defer cancel()
 
-		objStorage, errEnrichObj := enrichLegacyObject(original, created, true)
+		objStorage, errEnrichObj := enrichLegacyObject(original, createdCopy, true)
 		if errEnrichObj != nil {
 			cancel()
 		}
@@ -183,6 +185,7 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	go func() {
 		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage update timeout"))
 
+		resCopy := res.DeepCopyObject()
 		// get the object to be updated
 		foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
@@ -193,7 +196,7 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 			log.Info("object not found for update, creating one")
 		}
 
-		updated, err := objInfo.UpdatedObject(ctx, res)
+		updated, err := objInfo.UpdatedObject(ctx, resCopy)
 		if err != nil {
 			log.WithValues("object", updated).Error(err, "could not update or create object")
 			cancel()
@@ -201,14 +204,14 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 
 		// if the object is found, create a new updateWrapper with the object found
 		if foundObj != nil {
-			res, err := enrichLegacyObject(foundObj, res, false)
+			resCopy, err := enrichLegacyObject(foundObj, resCopy, false)
 			if err != nil {
 				log.Error(err, "could not enrich object")
 				cancel()
 			}
 			objInfo = &updateWrapper{
 				upstream: objInfo,
-				updated:  res,
+				updated:  resCopy,
 			}
 		}
 		startStorage := time.Now()

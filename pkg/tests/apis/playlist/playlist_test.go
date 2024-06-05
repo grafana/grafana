@@ -121,6 +121,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
 			DisableAnonymous:     true,
+<<<<<<< HEAD
 			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
@@ -128,6 +129,11 @@ func TestIntegrationPlaylist(t *testing.T) {
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
 				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
+=======
+			APIServerStorageType: "file", // write the files to disk
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+>>>>>>> c3ca3bc7881 (Fix mode1 and add more tests for playlists in mode 1)
 			},
 		}))
 	})
@@ -139,10 +145,14 @@ func TestIntegrationPlaylist(t *testing.T) {
 			APIServerStorageType: "unified", // use the entity api tables
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagUnifiedStorage,
+<<<<<<< HEAD
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
 				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
+=======
+				featuremgmt.FlagKubernetesPlaylists,
+>>>>>>> c3ca3bc7881 (Fix mode1 and add more tests for playlists in mode 1)
 			},
 		}))
 	})
@@ -157,9 +167,12 @@ func TestIntegrationPlaylist(t *testing.T) {
 			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+<<<<<<< HEAD
 			},
 			DualWriterDesiredModes: map[string]grafanarest.DualWriterMode{
 				playlistv0alpha1.GROUPRESOURCE: grafanarest.Mode1,
+=======
+>>>>>>> c3ca3bc7881 (Fix mode1 and add more tests for playlists in mode 1)
 			},
 		})
 
