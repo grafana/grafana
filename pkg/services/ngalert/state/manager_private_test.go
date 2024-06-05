@@ -754,9 +754,9 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 	t.Run("no-data", func(t *testing.T) {
 		rules := map[ngmodels.NoDataState]*ngmodels.AlertRule{
 			ngmodels.NoData:   baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.NoData)),
-			ngmodels.Alerting: baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.Alerting)),
-			ngmodels.OK:       baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.OK)),
-			ngmodels.KeepLast: baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.KeepLast)),
+			ngmodels.Alerting: baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.Alerting), ngmodels.RuleMuts.WithAnnotations(map[string]string{"datasource_uids": "1", "ref_ids": "A"})),
+			ngmodels.OK:       baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.OK), ngmodels.RuleMuts.WithAnnotations(map[string]string{"datasource_uids": "1", "ref_ids": "A"})),
+			ngmodels.KeepLast: baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.KeepLast), ngmodels.RuleMuts.WithAnnotations(map[string]string{"datasource_uids": "1", "ref_ids": "A"})),
 		}
 
 		type noDataTestCase struct {
