@@ -1,4 +1,5 @@
 import { act, cleanup, waitFor } from '@testing-library/react';
+import userEvents from '@testing-library/user-event';
 
 import { config } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
@@ -8,34 +9,34 @@ import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { ScopesScene } from './ScopesScene';
 import {
   buildTestScene,
-  clickAdvancedApply,
-  clickAdvancedCancel,
-  clickApplicationsClustersExpand,
-  clickApplicationsExpand,
-  clickApplicationsSlothPictureFactorySelect,
-  clickApplicationsSlothVoteTrackerSelect,
-  clickBasicInput,
-  clickBasicOpenAdvanced,
-  clickClustersSelect,
-  clickRootExpand,
   fetchDashboardsSpy,
   fetchNodesSpy,
   fetchScopeSpy,
   fetchScopesSpy,
   getAdvancedApply,
+  getAdvancedCancel,
+  getApplicationsClustersExpand,
+  getApplicationsClustersSelect,
+  getApplicationsExpand,
+  getApplicationsSlothPictureFactorySelect,
   getApplicationsSlothPictureFactoryTitle,
+  getApplicationsSlothVoteTrackerSelect,
   getBasicInnerContainer,
   getBasicInput,
+  getBasicOpenAdvanced,
+  getClustersSelect,
   getDashboard,
   getDashboardsContainer,
+  getDashboardsSearch,
+  getRootExpand,
   mocksNodes,
   mocksScopeDashboardBindings,
   mocksScopes,
   queryAdvancedApply,
+  queryApplicationsClustersSlothClusterNorthTitle,
   queryBasicInnerContainer,
   queryDashboard,
   renderDashboard,
-  scopesNamesPaths,
 } from './testUtils';
 
 jest.mock('@grafana/runtime', () => ({
@@ -109,46 +110,66 @@ describe('ScopesScene', () => {
 
     describe('Tree', () => {
       it('Navigates through scopes nodes', async () => {
-        await clickBasicInput();
-        await clickApplicationsExpand();
-        await clickApplicationsClustersExpand();
-        await clickApplicationsExpand();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsClustersExpand());
+        await userEvents.click(getApplicationsExpand());
       });
 
-      it('Fetches sub-nodes on expand', () => {
-        filtersScene.updateNode(scopesNamesPaths[0], true, '');
-        expect(fetchNodesSpy).toHaveBeenCalled();
+      it('Fetches scope details on select', async () => {
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsSlothVoteTrackerSelect());
+        await waitFor(() => expect(fetchScopeSpy).toHaveBeenCalledTimes(1));
       });
 
-      it('Fetches scope details on select', () => {
-        filtersScene.updateNode(scopesNamesPaths[0], true, '');
-        filtersScene.toggleNodeSelect(scopesNamesPaths[0]);
-        expect(fetchScopeSpy).toHaveBeenCalled();
+      it('Selects the proper scopes', async () => {
+        await act(async () => filtersScene.updateScopes(['slothPictureFactory', 'slothVoteTracker']));
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsExpand());
+        expect(getApplicationsSlothVoteTrackerSelect()).toBeChecked();
+        expect(getApplicationsSlothPictureFactorySelect()).toBeChecked();
       });
 
-      it('Selects the proper scopes', () => {});
+      it('Can select scopes from same level', async () => {
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getApplicationsClustersSelect());
+        await userEvents.click(getBasicInput());
+        expect(getBasicInput().value).toBe('slothVoteTracker, slothPictureFactory, Cluster Index Helper');
+      });
 
-      it("Doesn't refetch the scope details on subsequent selects", () => {});
+      it("Can't navigate deeper than the level where scopes are selected", async () => {
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getApplicationsClustersExpand());
+        expect(queryApplicationsClustersSlothClusterNorthTitle()).not.toBeInTheDocument();
+      });
 
-      it('Can select scopes from same level', () => {});
-
-      it("Can't navigate deeper than the level where scopes are selected", () => {});
-
-      it('Can select a node from an upper level', () => {});
-
-      it('Can select a node from an upper level', () => {});
+      it('Can select a node from an upper level', async () => {
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getClustersSelect());
+        await userEvents.click(getBasicInput());
+        expect(getBasicInput().value).toBe('Cluster Index Helper');
+      });
     });
 
     describe('Basic selector', () => {
       it('Opens', async () => {
-        await clickBasicInput();
+        await userEvents.click(getBasicInput());
         expect(getBasicInnerContainer()).toBeInTheDocument();
       });
 
       it('Fetches scope details on save', async () => {
-        await clickBasicInput();
-        await clickClustersSelect();
-        await clickBasicInput();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getClustersSelect());
+        await userEvents.click(getBasicInput());
         await waitFor(() => expect(fetchScopesSpy).toHaveBeenCalled());
         expect(filtersScene.getSelectedScopes()).toEqual(
           mocksScopes.filter(({ metadata: { name } }) => name === 'indexHelperCluster')
@@ -156,26 +177,26 @@ describe('ScopesScene', () => {
       });
 
       it('Shows selected scopes', async () => {
-        await clickBasicInput();
-        await clickClustersSelect();
-        await clickBasicInput();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getClustersSelect());
+        await userEvents.click(getBasicInput());
         expect(getBasicInput().value).toEqual('Cluster Index Helper');
       });
     });
 
     describe('Advanced selector', () => {
       it('Opens', async () => {
-        await clickBasicInput();
-        await clickBasicOpenAdvanced();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getBasicOpenAdvanced());
         expect(queryBasicInnerContainer()).not.toBeInTheDocument();
         expect(getAdvancedApply()).toBeInTheDocument();
       });
 
       it('Fetches scope details on save', async () => {
-        await clickBasicInput();
-        await clickBasicOpenAdvanced();
-        await clickClustersSelect();
-        await clickAdvancedApply();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getBasicOpenAdvanced());
+        await userEvents.click(getClustersSelect());
+        await userEvents.click(getAdvancedApply());
         await waitFor(() => expect(fetchScopesSpy).toHaveBeenCalled());
         expect(filtersScene.getSelectedScopes()).toEqual(
           mocksScopes.filter(({ metadata: { name } }) => name === 'indexHelperCluster')
@@ -183,10 +204,10 @@ describe('ScopesScene', () => {
       });
 
       it("Doesn't save the scopes on close", async () => {
-        await clickBasicInput();
-        await clickBasicOpenAdvanced();
-        await clickClustersSelect();
-        await clickAdvancedCancel();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getBasicOpenAdvanced());
+        await userEvents.click(getClustersSelect());
+        await userEvents.click(getAdvancedCancel());
         await waitFor(() => expect(fetchScopesSpy).not.toHaveBeenCalled());
         expect(filtersScene.getSelectedScopes()).toEqual([]);
       });
@@ -194,78 +215,90 @@ describe('ScopesScene', () => {
 
     describe('Selectors interoperability', () => {
       it('Replicates the same structure from basic to advanced selector', async () => {
-        await clickBasicInput();
-        await clickApplicationsExpand();
-        await clickBasicOpenAdvanced();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getBasicOpenAdvanced());
         expect(getApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
       });
 
       it('Replicates the same structure from advanced to basic selector', async () => {
-        await clickBasicInput();
-        await clickBasicOpenAdvanced();
-        await clickApplicationsExpand();
-        await clickAdvancedApply();
-        await clickBasicInput();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getBasicOpenAdvanced());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getAdvancedApply());
+        await userEvents.click(getBasicInput());
         expect(getApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
       });
     });
 
     describe('Dashboards list', () => {
       it('Toggles expanded state', async () => {
-        await clickRootExpand();
+        await userEvents.click(getRootExpand());
         expect(getDashboardsContainer()).toBeInTheDocument();
       });
 
       it('Does not fetch dashboards list when the list is not expanded', async () => {
-        await clickBasicInput();
-        await clickApplicationsExpand();
-        await clickApplicationsSlothPictureFactorySelect();
-        await clickBasicInput();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getBasicInput());
         await waitFor(() => expect(fetchDashboardsSpy).not.toHaveBeenCalled());
       });
 
       it('Fetches dashboards list when the list is expanded', async () => {
-        await clickRootExpand();
-        await clickBasicInput();
-        await clickApplicationsExpand();
-        await clickApplicationsSlothPictureFactorySelect();
-        await clickBasicInput();
+        await userEvents.click(getRootExpand());
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getBasicInput());
         await waitFor(() => expect(fetchDashboardsSpy).toHaveBeenCalled());
       });
 
       it('Fetches dashboards list when the list is expanded after scope selection', async () => {
-        await clickBasicInput();
-        await clickApplicationsExpand();
-        await clickApplicationsSlothPictureFactorySelect();
-        await clickBasicInput();
-        await clickRootExpand();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getRootExpand());
         await waitFor(() => expect(fetchDashboardsSpy).toHaveBeenCalled());
       });
 
       it('Shows dashboards for multiple scopes', async () => {
-        await clickRootExpand();
-        await clickBasicInput();
-        await clickApplicationsExpand();
-        await clickApplicationsSlothPictureFactorySelect();
-        await clickBasicInput();
+        await userEvents.click(getRootExpand());
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getBasicInput());
         expect(getDashboard('1')).toBeInTheDocument();
         expect(getDashboard('2')).toBeInTheDocument();
         expect(queryDashboard('3')).not.toBeInTheDocument();
         expect(queryDashboard('4')).not.toBeInTheDocument();
-        await clickBasicInput();
-        await clickApplicationsSlothVoteTrackerSelect();
-        await clickBasicInput();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getBasicInput());
         expect(getDashboard('1')).toBeInTheDocument();
         expect(getDashboard('2')).toBeInTheDocument();
         expect(getDashboard('3')).toBeInTheDocument();
         expect(getDashboard('4')).toBeInTheDocument();
-        await clickBasicInput();
-        await clickApplicationsSlothPictureFactorySelect();
-        await clickBasicInput();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getBasicInput());
         expect(queryDashboard('1')).not.toBeInTheDocument();
         expect(queryDashboard('2')).not.toBeInTheDocument();
         expect(getDashboard('3')).toBeInTheDocument();
         expect(getDashboard('4')).toBeInTheDocument();
+      });
+
+      it('Filters the dashboards list', async () => {
+        await userEvents.click(getRootExpand());
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getBasicInput());
+        expect(getDashboard('1')).toBeInTheDocument();
+        expect(getDashboard('2')).toBeInTheDocument();
+        await userEvents.type(getDashboardsSearch(), '1');
+        expect(queryDashboard('2')).not.toBeInTheDocument();
       });
     });
 
@@ -277,14 +310,14 @@ describe('ScopesScene', () => {
       });
 
       it('Closes basic selector on enter', async () => {
-        await clickBasicInput();
+        await userEvents.click(getBasicInput());
         await act(async () => dashboardScene.onEnterEditMode());
         expect(queryBasicInnerContainer()).not.toBeInTheDocument();
       });
 
       it('Closes advanced selector on enter', async () => {
-        await clickBasicInput();
-        await clickBasicOpenAdvanced();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getBasicOpenAdvanced());
         await act(async () => dashboardScene.onEnterEditMode());
         expect(queryAdvancedApply()).not.toBeInTheDocument();
       });
@@ -292,10 +325,10 @@ describe('ScopesScene', () => {
 
     describe('Data requests', () => {
       it('Enriches data requests', async () => {
-        await clickBasicInput();
-        await clickApplicationsExpand();
-        await clickApplicationsSlothPictureFactorySelect();
-        await clickBasicInput();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getBasicInput());
         await waitFor(() => {
           const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
           expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(
@@ -303,9 +336,9 @@ describe('ScopesScene', () => {
           );
         });
 
-        await clickBasicInput();
-        await clickApplicationsSlothVoteTrackerSelect();
-        await clickBasicInput();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getBasicInput());
         await waitFor(() => {
           const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
           expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(
@@ -315,9 +348,9 @@ describe('ScopesScene', () => {
           );
         });
 
-        await clickBasicInput();
-        await clickApplicationsSlothPictureFactorySelect();
-        await clickBasicInput();
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getBasicInput());
         await waitFor(() => {
           const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
           expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(

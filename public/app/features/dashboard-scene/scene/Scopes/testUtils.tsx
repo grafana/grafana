@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react';
-import userEvents from '@testing-library/user-event';
 import React from 'react';
 import { render } from 'test/test-utils';
 
@@ -195,15 +194,6 @@ export const fetchScopeSpy = jest.spyOn(scopesApi, 'fetchScope');
 export const fetchScopesSpy = jest.spyOn(scopesApi, 'fetchScopes');
 export const fetchDashboardsSpy = jest.spyOn(dashboardsApi, 'fetchDashboards');
 
-export const scopesNamesPaths = [
-  ['', 'applications'],
-  ['', 'applications'],
-  ['', 'applications', 'applications.clusters'],
-  ['', 'applications', 'applications.clusters'],
-];
-export const scopesNames = ['slothPictureFactory', 'slothVoteTracker', 'slothClusterNorth', 'slothClusterSouth'];
-export const scopes = scopesNames.map((scopeName) => mocksScopes.find((scope) => scope.metadata.name === scopeName)!);
-
 const selectors = {
   root: {
     expand: 'scopes-root-expand',
@@ -235,15 +225,22 @@ const selectors = {
   },
 };
 
-export const queryBasicInnerContainer = () => screen.queryByTestId(selectors.basicSelector.innerContainer);
-export const queryAdvancedApply = () => screen.queryByTestId(selectors.advancedSelector.apply);
-export const queryDashboard = (uid: string) => screen.queryByTestId(selectors.dashboards.dashboard(uid));
 export const getRootExpand = () => screen.getByTestId(selectors.root.expand);
-export const getBasicInput = () => screen.getByTestId<HTMLInputElement>(selectors.basicSelector.input);
+
+export const queryBasicInnerContainer = () => screen.queryByTestId(selectors.basicSelector.innerContainer);
 export const getBasicInnerContainer = () => screen.getByTestId(selectors.basicSelector.innerContainer);
+export const getBasicInput = () => screen.getByTestId<HTMLInputElement>(selectors.basicSelector.input);
 export const getBasicOpenAdvanced = () => screen.getByTestId(selectors.basicSelector.openAdvanced);
+
+export const queryAdvancedApply = () => screen.queryByTestId(selectors.advancedSelector.apply);
 export const getAdvancedApply = () => screen.getByTestId(selectors.advancedSelector.apply);
 export const getAdvancedCancel = () => screen.getByTestId(selectors.advancedSelector.cancel);
+
+export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
+export const getDashboardsSearch = () => screen.getByTestId(selectors.dashboards.search);
+export const queryDashboard = (uid: string) => screen.queryByTestId(selectors.dashboards.dashboard(uid));
+export const getDashboard = (uid: string) => screen.getByTestId(selectors.dashboards.dashboard(uid));
+
 export const getApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
 export const getApplicationsSlothPictureFactoryTitle = () =>
   screen.getByTestId(selectors.tree.title('applications-slothPictureFactory'));
@@ -251,21 +248,12 @@ export const getApplicationsSlothPictureFactorySelect = () =>
   screen.getByTestId(selectors.tree.select('applications-slothPictureFactory'));
 export const getApplicationsSlothVoteTrackerSelect = () =>
   screen.getByTestId(selectors.tree.select('applications-slothVoteTracker'));
-export const getApplicationsClustersExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
+export const getApplicationsClustersSelect = () => screen.getByTestId(selectors.tree.select('applications.clusters'));
+export const getApplicationsClustersExpand = () => screen.getByTestId(selectors.tree.expand('applications.clusters'));
+export const queryApplicationsClustersSlothClusterNorthTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications.clusters-slothClusterNorth'));
+
 export const getClustersSelect = () => screen.getByTestId(selectors.tree.select('clusters'));
-export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
-export const getDashboard = (uid: string) => screen.getByTestId(selectors.dashboards.dashboard(uid));
-export const clickRootExpand = () => userEvents.click(getRootExpand());
-export const clickBasicInput = () => userEvents.click(getBasicInput());
-export const clickBasicOpenAdvanced = () => userEvents.click(getBasicOpenAdvanced());
-export const clickAdvancedApply = () => userEvents.click(getAdvancedApply());
-export const clickAdvancedCancel = () => userEvents.click(getAdvancedCancel());
-export const clickApplicationsExpand = () => userEvents.click(getApplicationsExpand());
-export const clickApplicationsSlothPictureFactorySelect = () =>
-  userEvents.click(getApplicationsSlothPictureFactorySelect());
-export const clickApplicationsSlothVoteTrackerSelect = () => userEvents.click(getApplicationsSlothVoteTrackerSelect());
-export const clickApplicationsClustersExpand = () => userEvents.click(getApplicationsClustersExpand());
-export const clickClustersSelect = () => userEvents.click(getClustersSelect());
 
 export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
   return new DashboardScene({
