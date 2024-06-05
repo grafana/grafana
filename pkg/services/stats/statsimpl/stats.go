@@ -64,68 +64,133 @@ func notServiceAccount(dialect migrator.Dialect) string {
 }
 
 func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetSystemStatsQuery) (result *stats.SystemStats, err error) {
-	dialect := ss.db.GetDialect()
-	err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
-		sb := &db.SQLBuilder{}
-		sb.Write("SELECT ")
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `) AS users,`)
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("org") + `) AS orgs,`)
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("star") + `) AS stars,`)
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("playlist") + `) AS playlists,`)
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("alert") + `) AS alerts,`)
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("correlation") + `) AS correlations,`)
+	if ss.repl != nil {
+		dialect := ss.repl.GetDialect()
+		err = ss.repl.WithDbSession(ctx, func(dbSession *db.Session) error {
+			sb := &db.SQLBuilder{}
+			sb.Write("SELECT ")
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `) AS users,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("org") + `) AS orgs,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("star") + `) AS stars,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("playlist") + `) AS playlists,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("alert") + `) AS alerts,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("correlation") + `) AS correlations,`)
 
-		now := time.Now()
-		activeUserDeadlineDate := now.Add(-activeUserTimeLimit)
-		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
-			notServiceAccount(dialect)+` AND last_seen_at > ?) AS active_users,`, activeUserDeadlineDate)
+			now := time.Now()
+			activeUserDeadlineDate := now.Add(-activeUserTimeLimit)
+			sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
+				notServiceAccount(dialect)+` AND last_seen_at > ?) AS active_users,`, activeUserDeadlineDate)
 
-		dailyActiveUserDeadlineDate := now.Add(-dailyActiveUserTimeLimit)
-		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
-			notServiceAccount(dialect)+` AND last_seen_at > ?) AS daily_active_users,`, dailyActiveUserDeadlineDate)
+			dailyActiveUserDeadlineDate := now.Add(-dailyActiveUserTimeLimit)
+			sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
+				notServiceAccount(dialect)+` AND last_seen_at > ?) AS daily_active_users,`, dailyActiveUserDeadlineDate)
 
-		monthlyActiveUserDeadlineDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
-			notServiceAccount(dialect)+` AND last_seen_at > ?) AS monthly_active_users,`, monthlyActiveUserDeadlineDate)
+			monthlyActiveUserDeadlineDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+			sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
+				notServiceAccount(dialect)+` AND last_seen_at > ?) AS monthly_active_users,`, monthlyActiveUserDeadlineDate)
 
-		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboards,`, dialect.BooleanStr(false))
-		sb.Write(`(SELECT SUM(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_total,`, dialect.BooleanStr(false))
-		sb.Write(`(SELECT MAX(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_max,`, dialect.BooleanStr(false))
-		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS folders,`, dialect.BooleanStr(true))
+			sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboards,`, dialect.BooleanStr(false))
+			sb.Write(`(SELECT SUM(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_total,`, dialect.BooleanStr(false))
+			sb.Write(`(SELECT MAX(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_max,`, dialect.BooleanStr(false))
+			sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS folders,`, dialect.BooleanStr(true))
 
-		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
-		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
-		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_version") + `) AS dashboard_versions,`)
-		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("annotation") + `) AS annotations,`)
-		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams,`)
-		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens,`)
-		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("alert_rule") + `) AS alert_rules,`)
-		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("api_key") + `WHERE service_account_id IS NULL) AS api_keys,`)
-		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, model.PanelElement)
-		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, model.VariableElement)
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `) AS data_keys,`)
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `WHERE active = true) AS active_data_keys,`)
-		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard_public") + `) AS public_dashboards,`)
-		sb.Write(`(SELECT MIN(timestamp) FROM ` + dialect.Quote("migration_log") + `) AS database_created_time,`)
-		if ss.IsUnifiedAlertingEnabled() {
-			sb.Write(`(SELECT COUNT(DISTINCT (` + dialect.Quote("rule_group") + `)) FROM ` + dialect.Quote("alert_rule") + `) AS rule_groups,`)
-		}
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_version") + `) AS dashboard_versions,`)
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("annotation") + `) AS annotations,`)
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams,`)
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens,`)
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("alert_rule") + `) AS alert_rules,`)
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("api_key") + `WHERE service_account_id IS NULL) AS api_keys,`)
+			sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, model.PanelElement)
+			sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, model.VariableElement)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `) AS data_keys,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `WHERE active = true) AS active_data_keys,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard_public") + `) AS public_dashboards,`)
+			sb.Write(`(SELECT MIN(timestamp) FROM ` + dialect.Quote("migration_log") + `) AS database_created_time,`)
+			if ss.IsUnifiedAlertingEnabled() {
+				sb.Write(`(SELECT COUNT(DISTINCT (` + dialect.Quote("rule_group") + `)) FROM ` + dialect.Quote("alert_rule") + `) AS rule_groups,`)
+			}
 
-		sb.Write(ss.roleCounterSQL(ctx))
+			sb.Write(ss.roleCounterSQL(ctx))
 
-		var stats stats.SystemStats
-		_, err := dbSession.SQL(sb.GetSQLString(), sb.GetParams()...).Get(&stats)
-		if err != nil {
-			return err
-		}
+			var stats stats.SystemStats
+			_, err := dbSession.SQL(sb.GetSQLString(), sb.GetParams()...).Get(&stats)
+			if err != nil {
+				return err
+			}
 
-		result = &stats
+			result = &stats
 
-		result.DatabaseDriver = dialect.DriverName()
+			result.DatabaseDriver = dialect.DriverName()
 
-		return nil
-	})
+			return nil
+		})
+	} else {
+		dialect := ss.db.GetDialect()
+		err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+			sb := &db.SQLBuilder{}
+			sb.Write("SELECT ")
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `) AS users,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("org") + `) AS orgs,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("star") + `) AS stars,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("playlist") + `) AS playlists,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("alert") + `) AS alerts,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("correlation") + `) AS correlations,`)
+
+			now := time.Now()
+			activeUserDeadlineDate := now.Add(-activeUserTimeLimit)
+			sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
+				notServiceAccount(dialect)+` AND last_seen_at > ?) AS active_users,`, activeUserDeadlineDate)
+
+			dailyActiveUserDeadlineDate := now.Add(-dailyActiveUserTimeLimit)
+			sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
+				notServiceAccount(dialect)+` AND last_seen_at > ?) AS daily_active_users,`, dailyActiveUserDeadlineDate)
+
+			monthlyActiveUserDeadlineDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+			sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
+				notServiceAccount(dialect)+` AND last_seen_at > ?) AS monthly_active_users,`, monthlyActiveUserDeadlineDate)
+
+			sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboards,`, dialect.BooleanStr(false))
+			sb.Write(`(SELECT SUM(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_total,`, dialect.BooleanStr(false))
+			sb.Write(`(SELECT MAX(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_max,`, dialect.BooleanStr(false))
+			sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS folders,`, dialect.BooleanStr(true))
+
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_version") + `) AS dashboard_versions,`)
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("annotation") + `) AS annotations,`)
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams,`)
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens,`)
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("alert_rule") + `) AS alert_rules,`)
+			sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("api_key") + `WHERE service_account_id IS NULL) AS api_keys,`)
+			sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, model.PanelElement)
+			sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_variables,`, model.VariableElement)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `) AS data_keys,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `WHERE active = true) AS active_data_keys,`)
+			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard_public") + `) AS public_dashboards,`)
+			sb.Write(`(SELECT MIN(timestamp) FROM ` + dialect.Quote("migration_log") + `) AS database_created_time,`)
+			if ss.IsUnifiedAlertingEnabled() {
+				sb.Write(`(SELECT COUNT(DISTINCT (` + dialect.Quote("rule_group") + `)) FROM ` + dialect.Quote("alert_rule") + `) AS rule_groups,`)
+			}
+
+			sb.Write(ss.roleCounterSQL(ctx))
+
+			var stats stats.SystemStats
+			_, err := dbSession.SQL(sb.GetSQLString(), sb.GetParams()...).Get(&stats)
+			if err != nil {
+				return err
+			}
+
+			result = &stats
+
+			result.DatabaseDriver = dialect.DriverName()
+
+			return nil
+		})
+	}
 
 	return result, err
 }
