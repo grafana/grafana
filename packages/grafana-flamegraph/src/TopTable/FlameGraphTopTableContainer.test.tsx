@@ -6,6 +6,7 @@ import { createDataFrame } from '@grafana/data';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
+import { ColorScheme } from '../types';
 
 import FlameGraphTopTableContainer from './FlameGraphTopTableContainer';
 
@@ -22,6 +23,7 @@ describe('FlameGraphTopTableContainer', () => {
         onSymbolClick={jest.fn()}
         onSearch={onSearch}
         onSandwich={onSandwich}
+        colorScheme={ColorScheme.ValueBased}
       />
     );
 

@@ -404,6 +404,7 @@ export const TooltipPlugin2 = ({
     config.addHook('setData', (u) => {
       yZoomed = false;
       yDrag = false;
+      dismiss();
     });
 
     // fires on series focus/proximity changes
@@ -526,6 +527,10 @@ export const TooltipPlugin2 = ({
     return () => {
       window.removeEventListener('resize', updateWinSize);
       window.removeEventListener('scroll', onscroll, true);
+
+      // in case this component unmounts while anchored (due to data auto-refresh + re-config)
+      document.removeEventListener('mousedown', downEventOutside, true);
+      document.removeEventListener('keydown', downEventOutside, true);
     };
   }, [config]);
 
@@ -545,7 +550,12 @@ export const TooltipPlugin2 = ({
 
       // if not viaSync, re-dispatch real event
       if (event != null) {
-        plot!.over.dispatchEvent(event);
+        // this works around the fact that uPlot does not unset cursor.event (for perf reasons)
+        // so if the last real mouse event was mouseleave and you manually trigger u.setCursor()
+        // it would end up re-dispatching mouseleave
+        const isStaleEvent = performance.now() - event.timeStamp > 16;
+
+        !isStaleEvent && plot!.over.dispatchEvent(event);
       } else {
         plot!.setCursor(
           {

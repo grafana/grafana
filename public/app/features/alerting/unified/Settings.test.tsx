@@ -24,8 +24,8 @@ const ui = {
   builtInAlertmanagerSection: byText('Built-in Alertmanager'),
   otherAlertmanagerSection: byText('Other Alertmanagers'),
 
+  alertmanagerCard: (name: string) => byTestId(`alertmanager-card-${name}`),
   builtInAlertmanagerCard: byTestId('alertmanager-card-Grafana built-in'),
-  otherAlertmanagerCard: (name: string) => byTestId(`alertmanager-card-${name}`),
 
   statusReceiving: byText(/receiving grafana-managed alerts/i),
   statusNotReceiving: byText(/not receiving/i),
@@ -34,7 +34,11 @@ const ui = {
   editConfigurationButton: byRole('button', { name: /edit configuration/i }),
   saveConfigurationButton: byRole('button', { name: /save/i }),
 
+  enableButton: byRole('button', { name: 'Enable' }),
+  disableButton: byRole('button', { name: 'Disable' }),
+
   versionsTab: byRole('tab', { name: /versions/i }),
+  provisionedBadge: byText(/^Provisioned$/),
 };
 
 describe('Alerting settings', () => {
@@ -59,7 +63,7 @@ describe('Alerting settings', () => {
     // check external altermanagers
     DataSourcesResponse.forEach((ds) => {
       // get the card for datasource
-      const card = ui.otherAlertmanagerCard(ds.name).get();
+      const card = ui.alertmanagerCard(ds.name).get();
 
       // expect link to data source, provisioned badge, type, and status
       expect(within(card).getByRole('link', { name: ds.name })).toBeInTheDocument();
@@ -119,5 +123,27 @@ describe('Alerting settings', () => {
     await waitFor(() => {
       expect(screen.getByText(/last applied/i)).toBeInTheDocument();
     });
+  });
+
+  it('should correctly render provisioned data sources', async () => {
+    render(<SettingsPage />);
+
+    // wait for loading to be done
+    await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
+
+    // provisioned alertmanager card
+    const provisionedCard = ui.alertmanagerCard('Provisioned Mimir-based Alertmanager').get();
+    expect(ui.provisionedBadge.get(provisionedCard)).toBeInTheDocument();
+
+    // should still be editable
+    const editConfigButton = ui.editConfigurationButton.get(provisionedCard);
+    expect(editConfigButton).toBeInTheDocument();
+
+    // enable / disable should not be avaiable when provisioned
+    const enableButton = ui.enableButton.query(provisionedCard);
+    const disableButton = ui.disableButton.query(provisionedCard);
+
+    expect(enableButton).not.toBeInTheDocument();
+    expect(disableButton).not.toBeInTheDocument();
   });
 });

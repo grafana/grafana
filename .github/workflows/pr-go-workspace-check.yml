@@ -22,7 +22,7 @@ jobs:
     - name: Set go version
       uses: actions/setup-go@v4
       with:
-        go-version: '1.22.2'
+        go-version-file: go.mod
 
     - name: Workspace Sync
       run: go work sync
@@ -33,6 +33,7 @@ jobs:
           echo "Changes detected:"
           git diff
           echo "Please run 'go work sync' and commit the changes."
+          echo "If there is a change in enterprise dependencies, please update pkg/extensions/main.go."
           exit 1
         fi
 
@@ -45,5 +46,6 @@ jobs:
           echo "Changes detected:"
           git diff
           echo "Please run 'make build-go' and commit the changes."
+          echo "If there is a change in enterprise dependencies, please update pkg/extensions/main.go."
           exit 1
         fi

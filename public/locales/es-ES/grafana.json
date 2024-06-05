@@ -25,6 +25,28 @@
       "user": "Usuario"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -465,6 +487,16 @@
   },
   "explore": {
     "add-to-dashboard": "Añadir al tablero",
+    "add-to-library-modal": {
+      "auto-star": "",
+      "data-source-name": "",
+      "data-source-type": "",
+      "description": "",
+      "info": "",
+      "query": "",
+      "title": "",
+      "visibility": ""
+    },
     "rich-history": {
       "close-tooltip": "Cerrar el historial de consultas",
       "datasource-a-z": "Fuente de datos A-Z",
@@ -479,6 +511,7 @@
     "rich-history-card": {
       "add-comment-form": "Añadir formulario de comentarios",
       "add-comment-tooltip": "Añadir comentario",
+      "add-to-library": "",
       "cancel": "Cancelar",
       "confirm-delete": "Eliminar",
       "copy-query-tooltip": "Copiar consulta al portapapeles",
@@ -491,15 +524,12 @@
       "delete-query-tooltip": "Eliminar consulta",
       "delete-starred-query-confirmation-text": "¿Seguro que desea eliminar permanentemente su consulta destacada?",
       "edit-comment-tooltip": "Editar comentario",
-      "left-pane": "",
       "optional-description": "Una descripción opcional de lo que hace la consulta.",
       "query-comment-label": "Comentario de la consulta",
+      "query-template-added": "",
       "query-text-label": "Texto de la consulta",
-      "right-pane": "",
-      "run-query-button": "Ejecutar consulta",
       "save-comment": "Guardar comentario",
       "star-query-tooltip": "Consulta destacada",
-      "switch-datasource-button": "Cambiar la fuente de datos y ejecutar la consulta",
       "unstar-query-tooltip": "Desmarcar consulta",
       "update-comment-form": "Actualizar el formulario de comentarios"
     },
@@ -568,6 +598,12 @@
       "saving-failed": "Error al guardar el historial enriquecido",
       "update-failed": "Error al actualizar el extenso historial"
     },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
+    },
     "secondary-actions": {
       "query-add-button": "Añadir consulta",
       "query-add-button-aria-label": "Añadir consulta",
@@ -618,6 +654,9 @@
     "select": {
       "no-options-label": "No se ha encontrado ninguna opción",
       "placeholder": "Elegir"
+    },
+    "spinner": {
+      "aria-label": ""
     }
   },
   "graph": {
@@ -887,7 +926,8 @@
       "title": "Alertas"
     },
     "alerting-admin": {
-      "title": "Configuración"
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Determinar cómo se enrutan las alertas a los puntos de contacto",
@@ -1109,6 +1149,10 @@
     },
     "public": {
       "title": "Paneles de control públicos"
+    },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
     },
     "recorded-queries": {
       "title": "Consultas grabadas"
@@ -1433,6 +1477,11 @@
       "toggle-edit-mode": "Alternar el modo de edición de texto"
     },
     "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
+  },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
+    }
   },
   "refresh-picker": {
     "aria-label": {

@@ -221,12 +221,12 @@ function validateMuteTiming(
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  input: css`
-    width: 400px;
-  `,
-  submitButton: css`
-    margin-right: ${theme.spacing(1)};
-  `,
+  input: css({
+    width: '400px',
+  }),
+  submitButton: css({
+    marginRight: theme.spacing(1),
+  }),
 });
 
 export default MuteTimingForm;

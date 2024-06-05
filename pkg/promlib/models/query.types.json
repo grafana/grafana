@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1713187448137",
+        "resourceVersion": "1715871691891",
         "creationTimestamp": "2024-03-25T13:19:04Z"
       },
       "spec": {
@@ -69,6 +69,13 @@
               "type": "string",
               "x-enum-description": {}
             },
+            "groupByKeys": {
+              "description": "Group By parameters to apply to aggregate expressions in the query",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "instant": {
               "description": "Returns only the latest value that Prometheus has scraped for the requested time series",
               "type": "boolean"
@@ -85,55 +92,64 @@
               "description": "Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series",
               "type": "boolean"
             },
-            "scope": {
-              "additionalProperties": false,
+            "scopes": {
               "description": "A set of filters applied to apply to the query",
-              "properties": {
-                "category": {
-                  "type": "string"
-                },
-                "description": {
-                  "type": "string"
-                },
-                "filters": {
-                  "items": {
-                    "additionalProperties": false,
-                    "description": "ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go to avoid import (temp fix)",
-                    "properties": {
-                      "key": {
-                        "type": "string"
-                      },
-                      "operator": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "key",
-                      "value",
-                      "operator"
-                    ],
-                    "type": "object"
+              "items": {
+                "additionalProperties": false,
+                "description": "ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go to avoid import (temp fix).",
+                "properties": {
+                  "category": {
+                    "type": "string"
                   },
-                  "type": "array"
+                  "description": {
+                    "type": "string"
+                  },
+                  "filters": {
+                    "items": {
+                      "additionalProperties": false,
+                      "description": "ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go to avoid import (temp fix)",
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "operator": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "value",
+                        "operator"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "name": {
+                    "description": "This is the identifier from metadata.name of the scope model.",
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
                 },
-                "title": {
-                  "type": "string"
-                },
-                "type": {
-                  "type": "string"
-                }
+                "required": [
+                  "name",
+                  "title",
+                  "type",
+                  "description",
+                  "category",
+                  "filters"
+                ],
+                "type": "object"
               },
-              "required": [
-                "title",
-                "type",
-                "description",
-                "category",
-                "filters"
-              ],
-              "type": "object"
+              "type": "array"
             }
           },
           "required": [

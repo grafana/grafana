@@ -42,11 +42,11 @@ export function RuleConfigStatus({ rule }: RuleConfigStatusProps) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    globalLimitValue: css`
-      font-weight: ${theme.typography.fontWeightBold};
-    `,
-    icon: css`
-      fill: ${theme.colors.warning.text};
-    `,
+    globalLimitValue: css({
+      fontWeight: theme.typography.fontWeightBold,
+    }),
+    icon: css({
+      fill: theme.colors.warning.text,
+    }),
   };
 }

@@ -10,14 +10,40 @@ labels:
 title: Public dashboards
 description: Make your Grafana dashboards public and share them with anyone
 weight: 8
+refs:
+  dashboard-sharing:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/
+  custom-branding:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/configure-custom-branding/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/configure-custom-branding/
+  dashboard-insights-documentation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/assess-dashboard-usage/#dashboard-insights
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/assess-dashboard-usage/#dashboard-insights
+  caching:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
+  grafana-enterprise:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
 ---
 
 # Public dashboards
 
 > **Warning:** Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
-> This can be mitigated by utilizing the enterprise [caching][] and/or rate limiting features.
+> This can be mitigated by utilizing the enterprise [caching](ref:caching) and/or rate limiting features.
 
-Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization. This differs from [dashboard sharing][], which either requires recipients to be users in the same Grafana organization or provides limited information, as with a snapshot.
+Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization. This differs from [dashboard sharing](ref:dashboard-sharing), which either requires recipients to be users in the same Grafana organization or provides limited information, as with a snapshot.
 
 You can see a list of all your public dashboards in one place by navigating to **Dashboards > Public dashboards**. For each dashboard in the list, the page displays the status, a link to view the dashboard, a link to the public dashboard configuration, and the option to revoke the public URL.
 
@@ -119,13 +145,13 @@ If a Grafana user has read access to the parent dashboard, they can view the pub
 
 ## Assess public dashboard usage
 
-> **Note:** Available in [Grafana Enterprise][] and [Grafana Cloud](/docs/grafana-cloud).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud).
 
 You can check usage analytics about your public dashboard by clicking the insights icon in the dashboard header:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
 
-Learn more about the kind of information provided in the [dashboard insights documentation][].
+Learn more about the kind of information provided in the [dashboard insights documentation](ref:dashboard-insights-documentation).
 
 ## Supported data sources
 
@@ -247,21 +273,4 @@ guaranteed because plugin developers can override this functionality. The follow
 
 ## Custom branding
 
-If you're a Grafana Enterprise customer, you can use custom branding to change the appearance of a public dashboard footer. For more information, refer to [Custom branding][].
-
-{{% docs/reference %}}
-[caching]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management#query-and-resource-caching"
-[caching]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management#query-and-resource-caching"
-
-[Grafana Enterprise]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
-[Grafana Enterprise]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
-
-[dashboard insights documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/assess-dashboard-usage#dashboard-insights"
-[dashboard insights documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/assess-dashboard-usage#dashboard-insights"
-
-[dashboard sharing]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/share-dashboards-panels"
-[dashboard sharing]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/share-dashboards-panels"
-
-[Custom branding]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/configure-custom-branding"
-[Custom branding]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/configure-custom-branding"
-{{% /docs/reference %}}
+If you're a Grafana Enterprise customer, you can use custom branding to change the appearance of a public dashboard footer. For more information, refer to [Custom branding](ref:custom-branding).

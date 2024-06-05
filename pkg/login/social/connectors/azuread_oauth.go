@@ -78,9 +78,9 @@ type keySetJWKS struct {
 	jose.JSONWebKeySet
 }
 
-func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
+func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(social.AzureADProviderName, info, features, cfg),
+		SocialBase:           newSocialBase(social.AzureADProviderName, orgRoleMapper, info, features, cfg),
 		cache:                cache,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], ExtraAzureADSettingKeys[forceUseGraphAPIKey].DefaultValue.(bool)),
@@ -179,7 +179,7 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(social.AzureADProviderName, newInfo)
+	s.updateInfo(ctx, social.AzureADProviderName, newInfo)
 
 	if newInfo.UseRefreshToken {
 		appendUniqueScope(s.Config, social.OfflineAccessScope)
@@ -191,7 +191,7 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 	return nil
 }
 
-func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
+func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSettings, _ ssoModels.SSOSettings, requester identity.Requester) error {
 	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
@@ -204,8 +204,7 @@ func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSett
 
 	return validation.Validate(info, requester,
 		validateAllowedGroups,
-		// FIXME: uncomment this after the Terraform provider is updated
-		//validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
 		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"))
 }
@@ -410,7 +409,7 @@ func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Tok
 
 	// If no endpoint was specified or if the endpoints provided in _claim_source is pointing to the deprecated
 	// "graph.windows.net" api, use an handcrafted url to graph.microsoft.com
-	// See https://docs.microsoft.com/en-us/graph/migrate-azure-ad-graph-overview
+	// See https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim
 	if endpoint == "" || strings.Contains(endpoint, "graph.windows.net") {
 		tenantID := claims.TenantID
 		// If tenantID wasn't found in the id_token, parse access token

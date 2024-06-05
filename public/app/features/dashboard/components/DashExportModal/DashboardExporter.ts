@@ -1,6 +1,6 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { DataSourceRef, PanelPluginMeta } from '@grafana/data';
+import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -9,8 +9,8 @@ import { variableRegex } from 'app/features/variables/utils';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
-import { isConstant, isQuery } from '../../../variables/guard';
-import { VariableOption, VariableRefresh } from '../../../variables/types';
+import { DashboardJson } from '../../../manage-dashboards/types';
+import { isConstant } from '../../../variables/guard';
 import { DashboardModel } from '../../state/DashboardModel';
 import { GridPos } from '../../state/PanelModel';
 
@@ -225,12 +225,14 @@ export class DashboardExporter {
 
       // templatize template vars
       for (const variable of saveModel.getVariables()) {
-        if (isQuery(variable)) {
+        if (variable.type === 'query') {
           await templateizeDatasourceUsage(variable);
           variable.options = [];
           variable.current = {} as unknown as VariableOption;
           variable.refresh =
             variable.refresh !== VariableRefresh.never ? variable.refresh : VariableRefresh.onDashboardLoad;
+        } else if (variable.type === 'datasource') {
+          variable.current = {};
         }
       }
 
@@ -293,7 +295,7 @@ export class DashboardExporter {
       );
 
       // make inputs and requires a top thing
-      const newObj: ExternalDashboard = defaults(
+      const newObj: DashboardJson = defaults(
         {
           __inputs: inputs,
           __elements,

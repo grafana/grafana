@@ -223,14 +223,6 @@ type ErrCaseInsensitiveLoginConflict struct {
 	Users []User
 }
 
-type UserDisplayDTO struct {
-	ID        int64  `json:"id,omitempty"`
-	UID       string `json:"uid,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Login     string `json:"login,omitempty"`
-	AvatarURL string `json:"avatarUrl"`
-}
-
 func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
 	return ErrCaseInsensitive
 }

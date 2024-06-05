@@ -7,6 +7,7 @@ import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { ExternalAlertmanagerDataSourceWithStatus } from '../../hooks/useExternalAmSelector';
 import {
   isAlertmanagerDataSourceInterestedInAlerts,
+  isProvisionedDataSource,
   isVanillaPrometheusAlertManagerDataSource,
 } from '../../utils/datasource';
 import { createUrl } from '../../utils/url';
@@ -19,8 +20,13 @@ interface Props {
 }
 
 export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
-  const { externalAlertmanagerDataSourcesWithStatus, configuration, enableAlertmanager, disableAlertmanager } =
-    useSettings();
+  const {
+    externalAlertmanagerDataSourcesWithStatus,
+    configuration,
+    enableAlertmanager,
+    disableAlertmanager,
+    forwardingDisabled,
+  } = useSettings();
 
   // determine if the alertmanger is receiving alerts
   // this is true if Grafana is configured to send to either "both" or "external" and the Alertmanager datasource _wants_ to receive alerts.
@@ -44,12 +50,14 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
         const { status } = alertmanager;
 
         const isReceiving = isReceivingGrafanaAlerts(alertmanager);
-        const isProvisioned = alertmanager.dataSourceSettings.readOnly === true;
-        const isReadOnly =
-          isProvisioned || isVanillaPrometheusAlertManagerDataSource(alertmanager.dataSourceSettings.name);
+        const isProvisioned = isProvisionedDataSource(alertmanager.dataSourceSettings);
+        const isReadOnly = isVanillaPrometheusAlertManagerDataSource(alertmanager.dataSourceSettings.name);
+
         const detailHref = createUrl(DATASOURCES_ROUTES.Edit.replace(/:uid/gi, uid));
 
         const handleEditConfiguration = () => onEditConfiguration(name);
+        const handleEnable = forwardingDisabled ? undefined : () => enableAlertmanager(uid);
+        const handleDisable = forwardingDisabled ? undefined : () => disableAlertmanager(uid);
 
         return (
           <AlertmanagerCard
@@ -59,12 +67,13 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
             url={url}
             provisioned={isProvisioned}
             readOnly={isReadOnly}
+            showStatus={!forwardingDisabled}
             implementation={jsonData.implementation ?? 'Prometheus'}
             receiving={isReceiving}
             status={status}
             onEditConfiguration={handleEditConfiguration}
-            onDisable={() => disableAlertmanager(uid)}
-            onEnable={() => enableAlertmanager(uid)}
+            onDisable={handleDisable}
+            onEnable={handleEnable}
           />
         );
       })}

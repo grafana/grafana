@@ -12,9 +12,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -42,6 +45,11 @@ func (b *ScopeAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 func (b *ScopeAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return scope.SchemeGroupVersion
+}
+
+func (b *ScopeAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
+	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
+	return grafanarest.Mode0
 }
 
 func (b *ScopeAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -112,7 +120,7 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
-	_ bool, // dual write (not relevant)
+	_ grafanarest.DualWriterMode, // dual write desired mode (not relevant)
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(scope.GROUP, scheme, metav1.ParameterCodec, codecs)
 
@@ -140,6 +148,11 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	}
 	storage[scopeNodeResourceInfo.StoragePath()] = scopeNodeStorage
 
+	// Adds a rest.Connector
+	// NOTE! the server has a hardcoded rewrite filter that fills in a name
+	// so the standard k8s plumbing continues to work
+	storage["find"] = &findREST{scopeNodeStorage: scopeNodeStorage}
+
 	apiGroupInfo.VersionedResourcesStorageMap[scope.VERSION] = storage
 	return &apiGroupInfo, nil
 }
@@ -151,4 +164,48 @@ func (b *ScopeAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 // Register additional routes with the server
 func (b *ScopeAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil
+}
+
+func (b *ScopeAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	// The plugin description
+	oas.Info.Description = "Grafana scopes"
+
+	// The root api URL
+	root := "/apis/" + b.GetGroupVersion().String() + "/"
+
+	// Add query parameters to the rest.Connector
+	sub := oas.Paths.Paths[root+"namespaces/{namespace}/find/{name}"]
+	if sub != nil && sub.Get != nil {
+		sub.Parameters = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "namespace",
+					In:          "path",
+					Description: "object name and auth scope, such as for teams and projects",
+					Example:     "default",
+					Required:    true,
+					Schema:      spec.StringProperty().UniqueValues(),
+				},
+			},
+		}
+		sub.Get.Description = "Navigate the scopes tree"
+		sub.Get.Parameters = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "parent",
+					In:          "query",
+					Description: "The parent scope node",
+				},
+			},
+		}
+		delete(oas.Paths.Paths, root+"namespaces/{namespace}/find/{name}")
+		oas.Paths.Paths[root+"namespaces/{namespace}/find"] = sub
+	}
+
+	// The root API discovery list
+	sub = oas.Paths.Paths[root]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	}
+	return oas, nil
 }
