@@ -515,6 +515,8 @@ export class BackendSrv implements BackendService {
 
   /** @deprecated */
   getDashboardByUid(uid: string): Promise<DashboardDTO> {
+    // NOTE: When this is removed, we can also remove most instances of:
+    // jest.mock('app/features/live/dashboard/dashboardWatcher
     return getDashboardAPI().getDashboardDTO(uid);
   }
 

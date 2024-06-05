@@ -28,13 +28,15 @@ function makePromResponse() {
 
 export const backendSrv = {
   get: jest.fn(),
-  getDashboardByUid: jest.fn(),
   getFolderByUid: jest.fn(),
   post: jest.fn(),
   resolveCancelerIfExists: jest.fn(),
   search: jest.fn(),
   datasourceRequest: jest.fn(() => Promise.resolve(makePromResponse())),
 
+  /** @deprecated */
+  getDashboardByUid: jest.fn(),
+  
   // Observable support
   fetch: (options: BackendSrvRequest) => {
     return of(makePromResponse() as FetchResponse);
