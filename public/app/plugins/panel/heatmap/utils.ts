@@ -3,13 +3,13 @@ import uPlot, { Cursor } from 'uplot';
 
 import {
   DataFrameType,
-  FieldType,
   formattedValueToString,
   getValueFormat,
   GrafanaTheme2,
   incrRoundDn,
   incrRoundUp,
   TimeRange,
+  FieldType,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, HeatmapCellLayout } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
