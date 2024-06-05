@@ -181,7 +181,7 @@ Refer to the following table for information on what to configure based on how t
 
 ### Configure a refresh token
 
-> **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
+> Available in Grafana v9.3 and later versions.
 
 When a user logs in using an OAuth2 provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
 
@@ -192,7 +192,7 @@ To configure generic OAuth2 to use a refresh token, set `use_refresh_token` conf
 1. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with additional scopes.
 1. Enable the refresh token on the provider.
 
-> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+> **Note:** The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
 
 ### Configure role mapping
 
