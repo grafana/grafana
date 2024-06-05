@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { isInternalAlertmanagerInterestedInAlerts } from '../../utils/settings';

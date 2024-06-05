@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import {
   GrafanaTheme2,

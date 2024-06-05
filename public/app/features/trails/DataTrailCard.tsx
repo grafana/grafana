@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';

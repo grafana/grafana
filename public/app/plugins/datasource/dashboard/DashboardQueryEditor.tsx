@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useId } from '@react-aria/utils';
 import pluralize from 'pluralize';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataQuery, GrafanaTheme2, SelectableValue, DataTopic, QueryEditorProps } from '@grafana/data';

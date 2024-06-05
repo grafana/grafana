@@ -1,4 +1,4 @@
-import React from 'react';
+import { createContext, useContext } from 'react';
 
 import {
   EventBusSrv,
@@ -93,7 +93,7 @@ export interface PanelContext {
   dataLinkPostProcessor?: DataLinkPostProcessor;
 }
 
-export const PanelContextRoot = React.createContext<PanelContext>({
+export const PanelContextRoot = createContext<PanelContext>({
   eventsScope: 'global',
   eventBus: new EventBusSrv(),
 });
@@ -106,4 +106,4 @@ export const PanelContextProvider = PanelContextRoot.Provider;
 /**
  * @alpha
  */
-export const usePanelContext = () => React.useContext(PanelContextRoot);
+export const usePanelContext = () => useContext(PanelContextRoot);

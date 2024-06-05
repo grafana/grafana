@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { SemVer } from 'semver';
 
 import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/data';

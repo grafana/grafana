@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import { uniqueId } from 'lodash';
-import React from 'react';
 
 import { dateMath, dateTime, EventBus, LoadingState, TimeRange, toDataFrame, VizOrientation } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

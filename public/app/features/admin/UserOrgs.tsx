@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { PureComponent, ReactElement } from 'react';
+import { createRef, PureComponent, ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -38,7 +38,7 @@ interface State {
 }
 
 export class UserOrgs extends PureComponent<Props, State> {
-  addToOrgButtonRef = React.createRef<HTMLButtonElement>();
+  addToOrgButtonRef = createRef<HTMLButtonElement>();
   state = {
     showAddOrgModal: false,
   };

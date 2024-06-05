@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SceneComponentProps } from '@grafana/scenes';
 import { CreatePublicDashboardBase } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/CreatePublicDashboard/CreatePublicDashboard';
 

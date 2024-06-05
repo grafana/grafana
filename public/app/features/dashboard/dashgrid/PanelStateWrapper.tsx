@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
 import {

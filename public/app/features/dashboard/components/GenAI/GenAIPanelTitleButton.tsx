@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Dashboard, Panel } from '@grafana/schema';
 
 import { GenAIButton } from './GenAIButton';

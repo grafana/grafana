@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { ScalarDimensionConfig } from '@grafana/schema';

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useEffectOnce, useToggle } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { Observable, map } from 'rxjs';
 
 import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';

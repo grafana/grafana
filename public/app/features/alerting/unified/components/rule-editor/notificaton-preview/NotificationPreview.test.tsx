@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, waitFor, within, userEvent } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 

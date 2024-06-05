@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { config } from '@grafana/runtime';

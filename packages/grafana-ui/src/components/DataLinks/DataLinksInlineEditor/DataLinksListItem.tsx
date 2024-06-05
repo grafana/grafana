@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 

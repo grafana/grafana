@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { dateTimeFormat } from '@grafana/data';
 import { Button, LinkButton } from '@grafana/ui';

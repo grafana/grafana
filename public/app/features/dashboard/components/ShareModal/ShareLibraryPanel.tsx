@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { reportInteraction } from '@grafana/runtime/src';
 import { Trans } from 'app/core/internationalization';

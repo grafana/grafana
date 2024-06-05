@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import uPlot, { Options, AlignedData } from 'uplot';
 
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';

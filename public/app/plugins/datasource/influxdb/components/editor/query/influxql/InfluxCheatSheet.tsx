@@ -1,5 +1,3 @@
-import React from 'react';
-
 const CHEAT_SHEET_ITEMS = [
   {
     title: 'Getting started',

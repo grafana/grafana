@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { GrafanaBootConfig } from '@grafana/runtime/src';

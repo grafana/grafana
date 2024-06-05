@@ -1,5 +1,4 @@
 import { FeatureLike } from 'ol/Feature';
-import React from 'react';
 
 import { ArrayDataFrame, DataFrame } from '@grafana/data';
 

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -152,7 +152,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
 
           {outlineItems.map((item) => {
             return (
-              <React.Fragment key={item.id}>
+              <Fragment key={item.id}>
                 <ContentOutlineItemButton
                   key={item.id}
                   title={contentOutlineExpanded ? item.title : undefined}
@@ -215,7 +215,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                       </div>
                     ))}
                 </div>
-              </React.Fragment>
+              </Fragment>
             );
           })}
         </div>

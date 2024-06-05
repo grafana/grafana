@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';

@@ -1,6 +1,6 @@
 import { isNearMembraneProxy } from '@locker/near-membrane-shared';
 import { cloneDeep } from 'lodash';
-import React from 'react';
+import * as React from 'react';
 
 import { PluginSignatureType, PluginType } from '@grafana/data';
 import { LogContext } from '@grafana/faro-web-sdk';

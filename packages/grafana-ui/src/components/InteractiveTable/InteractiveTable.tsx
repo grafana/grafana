@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { Fragment, ReactNode, useCallback, useEffect, useMemo } from 'react';
+import { Fragment, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import {
   HeaderGroup,
   PluginHook,

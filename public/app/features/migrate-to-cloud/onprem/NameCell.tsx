@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { DataSourceInstanceSettings } from '@grafana/data';

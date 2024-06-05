@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Route } from 'react-router-dom';
 import { Props } from 'react-virtualized-auto-sizer';
 import { render, waitFor, waitForElementToBeRemoved, userEvent } from 'test/test-utils';

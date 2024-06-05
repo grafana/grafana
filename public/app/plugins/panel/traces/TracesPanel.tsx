@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, createRef } from 'react';
+import { useMemo, createRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { Field, LinkModel, PanelProps } from '@grafana/data';

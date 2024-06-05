@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourcePluginMeta } from '@grafana/data';
 import { LinkButton } from '@grafana/ui';
 import { DataSourcePluginCategory } from 'app/types';

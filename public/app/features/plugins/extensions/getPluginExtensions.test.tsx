@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { PluginExtensionComponentConfig, PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';

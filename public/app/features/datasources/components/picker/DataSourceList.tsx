@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useRef } from 'react';
+import { useRef } from 'react';
+import * as React from 'react';
 import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';

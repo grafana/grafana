@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { UserEvent } from '@testing-library/user-event/dist/types/setup/setup';
-import React from 'react';
+import * as React from 'react';
 import { of } from 'rxjs';
 
 import { CoreApp } from '@grafana/data';

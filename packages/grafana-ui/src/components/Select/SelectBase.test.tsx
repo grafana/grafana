@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { select } from 'react-select-event';
 
 import { SelectableValue } from '@grafana/data';

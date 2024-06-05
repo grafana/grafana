@@ -1,5 +1,5 @@
 import { shuffle } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { QueryEditorHelpProps } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';

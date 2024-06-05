@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { importDashboard, removeDashboard } from 'app/features/dashboard/state/actions';

@@ -1,4 +1,4 @@
-import React, { useCallback, useContext } from 'react';
+import { createContext, useCallback, useContext } from 'react';
 
 import { GrafanaConfig } from '@grafana/data';
 import { LocationService, locationService, BackendSrv } from '@grafana/runtime';
@@ -16,7 +16,7 @@ export interface GrafanaContextType {
   newAssetsChecker: NewFrontendAssetsChecker;
 }
 
-export const GrafanaContext = React.createContext<GrafanaContextType | undefined>(undefined);
+export const GrafanaContext = createContext<GrafanaContextType | undefined>(undefined);
 
 export function useGrafana(): GrafanaContextType {
   const context = useContext(GrafanaContext);

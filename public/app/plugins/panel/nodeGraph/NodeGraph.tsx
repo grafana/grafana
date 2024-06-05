@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { memo, MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';

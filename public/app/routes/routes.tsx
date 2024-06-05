@@ -1,4 +1,3 @@
-import React from 'react';
 import { Redirect, RouteComponentProps } from 'react-router-dom';
 
 import { isTruthy } from '@grafana/data';

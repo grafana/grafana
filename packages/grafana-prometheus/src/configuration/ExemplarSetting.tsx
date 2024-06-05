@@ -1,5 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/ExemplarSetting.tsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

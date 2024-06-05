@@ -14,7 +14,7 @@
 
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import React from 'react';
+import { PureComponent } from 'react';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
@@ -106,7 +106,7 @@ export type SpanDetailRowProps = {
   setRedrawListView: (redraw: {}) => void;
 };
 
-export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
+export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
   _detailToggle = () => {
     this.props.onDetailToggled(this.props.span.spanID);
   };

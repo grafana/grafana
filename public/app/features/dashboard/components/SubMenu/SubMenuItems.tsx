@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { TypedVariableModel, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

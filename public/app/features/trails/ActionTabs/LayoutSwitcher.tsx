@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SelectableValue } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Field, RadioButtonGroup } from '@grafana/ui';

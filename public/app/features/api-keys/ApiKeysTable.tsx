@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { Button, DeleteButton, Icon, Stack, Tooltip, useTheme2 } from '@grafana/ui';

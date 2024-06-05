@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { PanelData, GrafanaTheme2, PanelModel, LinkModel, AlertState, DataLink } from '@grafana/data';
 import { Icon, PanelChrome, Tooltip, useStyles2, TimePickerTooltip } from '@grafana/ui';

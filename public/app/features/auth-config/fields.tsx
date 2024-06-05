@@ -1,4 +1,3 @@
-import React from 'react';
 import { validate as uuidValidate } from 'uuid';
 
 import { config } from '@grafana/runtime';

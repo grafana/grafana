@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Divider, Drawer, Stack } from '@grafana/ui';
 import { AlertManagerPicker } from 'app/features/alerting/unified/components/AlertManagerPicker';
 import { GrafanaAlertmanagerDeliveryWarning } from 'app/features/alerting/unified/components/GrafanaAlertmanagerDeliveryWarning';

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataQuery } from '@grafana/schema';
 
 import ExploreRunQueryButton from '../../ExploreRunQueryButton';

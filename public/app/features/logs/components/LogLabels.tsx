@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { memo, forwardRef, useMemo } from 'react';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
 import { Tooltip, useStyles2 } from '@grafana/ui';
@@ -12,7 +12,7 @@ interface Props {
   emptyMessage?: string;
 }
 
-export const LogLabels = React.memo(({ labels, emptyMessage }: Props) => {
+export const LogLabels = memo(({ labels, emptyMessage }: Props) => {
   const styles = useStyles2(getStyles);
   const displayLabels = useMemo(
     () =>
@@ -53,7 +53,7 @@ interface LogLabelsArrayProps {
   labels: string[];
 }
 
-export const LogLabelsList = React.memo(({ labels }: LogLabelsArrayProps) => {
+export const LogLabelsList = memo(({ labels }: LogLabelsArrayProps) => {
   const styles = useStyles2(getStyles);
   return (
     <span className={cx([styles.logsLabels])}>
@@ -73,17 +73,15 @@ interface LogLabelProps {
   children: JSX.Element | string;
 }
 
-const LogLabel = React.forwardRef<HTMLSpanElement, LogLabelProps>(
-  ({ styles, tooltip, children }: LogLabelProps, ref) => {
-    return (
-      <span className={cx([styles.logsLabel])} ref={ref}>
-        <span className={cx([styles.logsLabelValue])} title={tooltip}>
-          {children}
-        </span>
+const LogLabel = forwardRef<HTMLSpanElement, LogLabelProps>(({ styles, tooltip, children }: LogLabelProps, ref) => {
+  return (
+    <span className={cx([styles.logsLabel])} ref={ref}>
+      <span className={cx([styles.logsLabelValue])} title={tooltip}>
+        {children}
       </span>
-    );
-  }
-);
+    </span>
+  );
+});
 LogLabel.displayName = 'LogLabel';
 
 const getStyles = (theme: GrafanaTheme2) => {

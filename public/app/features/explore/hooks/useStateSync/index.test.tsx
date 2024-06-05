@@ -2,7 +2,7 @@ import { act, waitFor } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { createMemoryHistory } from 'history';
 import { stringify } from 'querystring';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 

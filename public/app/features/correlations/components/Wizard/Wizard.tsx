@@ -1,4 +1,3 @@
-import React from 'react';
 import { useForm, FormProvider, FieldValues } from 'react-hook-form';
 
 import { WizardContent } from './WizardContent';

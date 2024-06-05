@@ -1,6 +1,5 @@
 import { screen, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { byText } from 'testing-library-selector';
 

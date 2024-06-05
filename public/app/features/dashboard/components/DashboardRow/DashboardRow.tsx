@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import { indexOf } from 'lodash';
-import React from 'react';
+import { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -19,7 +19,7 @@ export interface DashboardRowProps {
   dashboard: DashboardModel;
 }
 
-export class DashboardRow extends React.Component<DashboardRowProps> {
+export class DashboardRow extends Component<DashboardRowProps> {
   sub?: Unsubscribable;
 
   componentDidMount() {

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';

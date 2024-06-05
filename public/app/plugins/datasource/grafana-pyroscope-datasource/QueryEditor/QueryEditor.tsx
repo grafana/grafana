@@ -1,6 +1,6 @@
 import deepEqual from 'fast-deep-equal';
 import { debounce } from 'lodash';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
 import { LoadingPlaceholder } from '@grafana/ui';

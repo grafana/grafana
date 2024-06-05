@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';

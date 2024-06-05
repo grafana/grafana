@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { PureComponent, useEffect, useState } from 'react';
+import { PureComponent, useEffect, useState } from 'react';
+import * as React from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import {

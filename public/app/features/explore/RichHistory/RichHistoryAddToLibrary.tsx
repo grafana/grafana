@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { AppEvents, dateTime } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';

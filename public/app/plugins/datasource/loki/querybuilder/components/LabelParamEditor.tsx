@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { DataSourceApi, SelectableValue } from '@grafana/data';
 import {

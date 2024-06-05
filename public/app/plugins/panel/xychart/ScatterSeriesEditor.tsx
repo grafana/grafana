@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { StandardEditorProps, FieldNamePickerBaseNameMode } from '@grafana/data';
 import { Field } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';

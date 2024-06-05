@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
 import config from 'app/core/config';

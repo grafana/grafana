@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FormEvent } from 'react';
+import { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles2, Stack } from '@grafana/ui';

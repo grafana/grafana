@@ -1,4 +1,5 @@
-import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, InlineSelect } from '@grafana/experimental';

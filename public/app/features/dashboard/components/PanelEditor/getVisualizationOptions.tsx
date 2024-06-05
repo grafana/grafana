@@ -1,5 +1,4 @@
 import { get as lodashGet } from 'lodash';
-import React from 'react';
 
 import {
   EventBus,

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useId } from 'react';
+import { useId } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';

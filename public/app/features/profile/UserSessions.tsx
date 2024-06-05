@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { t } from 'i18next';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Icon, LoadingPlaceholder } from '@grafana/ui';

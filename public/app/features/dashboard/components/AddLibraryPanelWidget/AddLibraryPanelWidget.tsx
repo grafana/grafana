@@ -1,5 +1,5 @@
 import { css, cx, keyframes } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';

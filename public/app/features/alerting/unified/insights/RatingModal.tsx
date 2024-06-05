@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src/themes';
 import { Button, Dropdown, Icon, IconButton, Menu, Modal, useStyles2 } from '@grafana/ui';

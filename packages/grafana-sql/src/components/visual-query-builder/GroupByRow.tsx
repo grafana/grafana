@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';

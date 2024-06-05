@@ -1,7 +1,6 @@
 import { SerializedError } from '@reduxjs/toolkit';
 import userEvent from '@testing-library/user-event';
 import { setupServer } from 'msw/node';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { prettyDOM, render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';

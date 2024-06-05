@@ -1,6 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
 import $ from 'jquery';
-import React from 'react';
 
 import { GraphSeriesXY, FieldType, dateTime, FieldColorModeId, DisplayProcessor } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';

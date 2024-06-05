@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { OrgRole } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';

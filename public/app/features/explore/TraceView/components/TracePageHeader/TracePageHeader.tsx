@@ -14,7 +14,8 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
+import * as React from 'react';
 
 import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';

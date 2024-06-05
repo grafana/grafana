@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { MetadataInspectorProps } from '@grafana/data';
 import { Stack } from '@grafana/ui';
 

@@ -14,7 +14,6 @@
 
 import { fireEvent, render, screen } from '@testing-library/react';
 import cx from 'classnames';
-import React from 'react';
 
 import TimelineColumnResizer, { getStyles, TimelineColumnResizerProps } from './TimelineColumnResizer';
 

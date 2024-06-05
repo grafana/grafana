@@ -1,4 +1,4 @@
-import React, { FormEvent } from 'react';
+import { FormEvent } from 'react';
 
 import { PanelOptionsEditorProps, PanelProps } from '@grafana/data';
 import { Field, Input, usePanelContext } from '@grafana/ui';

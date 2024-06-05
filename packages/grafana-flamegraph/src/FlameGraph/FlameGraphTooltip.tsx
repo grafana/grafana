@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { DisplayValue, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import { InteractiveTable, Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';

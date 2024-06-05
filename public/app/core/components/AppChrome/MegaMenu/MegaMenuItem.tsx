@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useLocalStorage } from 'react-use';
 

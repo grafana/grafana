@@ -1,7 +1,7 @@
 // this file is pretty much a copy-paste of TimeSeriesPanel.tsx :(
 // with some extra renderers passed to the <TimeSeries> component
 
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import uPlot from 'uplot';
 
 import { Field, getDisplayProcessor, PanelProps } from '@grafana/data';

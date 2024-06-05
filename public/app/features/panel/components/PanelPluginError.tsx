@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent, ReactNode } from 'react';
+import { PureComponent, ReactNode } from 'react';
 
 // Types
 import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta } from '@grafana/data';

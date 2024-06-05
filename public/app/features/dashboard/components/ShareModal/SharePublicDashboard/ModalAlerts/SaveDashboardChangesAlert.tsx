@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Alert } from '@grafana/ui/src';
 import { t } from 'app/core/internationalization';
 

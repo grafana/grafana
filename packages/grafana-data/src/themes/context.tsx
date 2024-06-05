@@ -1,8 +1,8 @@
-import React from 'react';
+import { createContext } from 'react';
 
 import { createTheme } from './createTheme';
 
 /** @public */
-export const ThemeContext = React.createContext(createTheme());
+export const ThemeContext = createContext(createTheme());
 
 ThemeContext.displayName = 'ThemeContext';

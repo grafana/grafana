@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const AnnotationsHelp = () => {
   return (
     <div className="grafana-info-box alert-info">

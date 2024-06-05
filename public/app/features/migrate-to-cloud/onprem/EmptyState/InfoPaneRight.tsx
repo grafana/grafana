@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Box } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 

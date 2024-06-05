@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FormEvent } from 'react';
+import { forwardRef, FormEvent } from 'react';
 
 import { Checkbox, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
@@ -16,7 +16,7 @@ interface RoleMenuOptionProps {
   hideDescription?: boolean;
 }
 
-export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithChildren<RoleMenuOptionProps>>(
+export const RoleMenuOption = forwardRef<HTMLDivElement, React.PropsWithChildren<RoleMenuOptionProps>>(
   ({ data, isFocused, isSelected, disabled, onChange, hideDescription }, ref) => {
     const theme = useTheme2();
     const styles = getSelectStyles(theme);

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 
 import { AbsoluteTimeRange, LogRowModel, TimeRange } from '@grafana/data';
 import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';

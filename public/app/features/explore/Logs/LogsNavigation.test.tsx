@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
 
 import { LogsSortOrder } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';

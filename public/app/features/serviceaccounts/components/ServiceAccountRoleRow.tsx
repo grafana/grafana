@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Label } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';

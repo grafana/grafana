@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { Tooltip, ButtonGroup, ToolbarButton } from '@grafana/ui';

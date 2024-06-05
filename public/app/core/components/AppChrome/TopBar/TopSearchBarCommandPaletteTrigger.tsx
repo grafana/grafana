@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useKBar, VisualState } from 'kbar';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getInputStyles, Icon, Text, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';

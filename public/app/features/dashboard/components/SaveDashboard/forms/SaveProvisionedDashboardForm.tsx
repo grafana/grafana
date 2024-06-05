@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Button, ClipboardButton, HorizontalGroup, TextArea, Stack } from '@grafana/ui';
 

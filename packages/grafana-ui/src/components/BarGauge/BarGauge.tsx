@@ -1,6 +1,7 @@
 // Library
 import { cx } from '@emotion/css';
-import React, { CSSProperties, PureComponent, ReactNode } from 'react';
+import { CSSProperties, PureComponent, ReactNode } from 'react';
+import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import {

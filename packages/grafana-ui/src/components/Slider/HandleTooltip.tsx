@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import Tooltip, { TooltipRef } from 'rc-tooltip';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 

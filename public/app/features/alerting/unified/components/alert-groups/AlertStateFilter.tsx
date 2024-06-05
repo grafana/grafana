@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonGroup, Label } from '@grafana/ui';
 import { AlertState } from 'app/plugins/datasource/alertmanager/types';

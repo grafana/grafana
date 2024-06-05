@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { CoreApp, DataFrame, DataFrameType, Field, LinkModel, LogRowModel } from '@grafana/data';
 import { Themeable2, withTheme2 } from '@grafana/ui';

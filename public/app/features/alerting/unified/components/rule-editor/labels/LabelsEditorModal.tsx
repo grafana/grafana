@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Modal } from '@grafana/ui';
 
 import { LabelsSubForm } from './LabelsField';

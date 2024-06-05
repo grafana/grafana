@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 

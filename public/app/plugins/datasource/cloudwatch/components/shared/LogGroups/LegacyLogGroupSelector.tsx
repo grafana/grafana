@@ -1,5 +1,6 @@
 import { debounce, unionBy } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 
 import { AppEvents, SelectableValue, toOption } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';

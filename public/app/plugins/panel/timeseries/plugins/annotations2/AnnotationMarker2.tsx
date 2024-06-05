@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { flip, shift, autoUpdate } from '@floating-ui/dom';
 import { useFloating } from '@floating-ui/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 import { createPortal } from 'react-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';

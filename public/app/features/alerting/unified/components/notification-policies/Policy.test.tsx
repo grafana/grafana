@@ -1,7 +1,6 @@
 import { render, renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
-import React from 'react';
 import { Router } from 'react-router-dom';
 
 import { config, locationService } from '@grafana/runtime';

@@ -1,6 +1,5 @@
 import { fireEvent, render, RenderResult } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { dateTimeParse, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

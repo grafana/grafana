@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, useCallback, useMemo, useState } from 'react';
+import { CSSProperties, useCallback, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 

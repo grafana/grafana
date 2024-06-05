@@ -1,6 +1,5 @@
 import { render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';

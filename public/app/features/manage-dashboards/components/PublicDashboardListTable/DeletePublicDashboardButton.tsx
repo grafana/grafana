@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { Button, ModalsController, ButtonProps } from '@grafana/ui/src';
 import { t } from 'app/core/internationalization';

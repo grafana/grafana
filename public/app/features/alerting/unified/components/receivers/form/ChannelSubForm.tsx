@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 import { useFormContext, FieldErrors, FieldValues, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';

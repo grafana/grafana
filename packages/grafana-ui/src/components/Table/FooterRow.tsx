@@ -1,4 +1,3 @@
-import React from 'react';
 import { ColumnInstance, HeaderGroup } from 'react-table';
 
 import { fieldReducers, ReducerID } from '@grafana/data';

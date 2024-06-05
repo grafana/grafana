@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useReducer } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useReducer } from 'react';
+import * as React from 'react';
 import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';

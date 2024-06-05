@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { LinkButton, FilterInput, InlineField } from '@grafana/ui';

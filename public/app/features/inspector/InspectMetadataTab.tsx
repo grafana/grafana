@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { Trans } from 'app/core/internationalization';
 

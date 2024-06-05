@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';

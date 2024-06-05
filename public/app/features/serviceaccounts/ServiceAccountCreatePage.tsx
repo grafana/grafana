@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Input, Field, FieldSet } from '@grafana/ui';

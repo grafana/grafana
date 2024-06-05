@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';

@@ -1,6 +1,6 @@
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
 
 import { DataFrame, DataSourceApi, FieldType, toDataFrame } from '@grafana/data';
 import { QueryBuilderOperation, QueryBuilderOperationParamDef } from '@grafana/experimental';

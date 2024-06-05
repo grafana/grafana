@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import { compact } from 'lodash';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 import {
   DragDropContext,
   Draggable,

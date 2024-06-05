@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';

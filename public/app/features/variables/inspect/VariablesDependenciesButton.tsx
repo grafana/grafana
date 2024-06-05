@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Provider } from 'react-redux';
 
 import { reportInteraction } from '@grafana/runtime';

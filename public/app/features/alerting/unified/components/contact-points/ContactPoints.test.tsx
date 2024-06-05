@@ -1,7 +1,7 @@
 import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
-import React, { ComponentProps, PropsWithChildren } from 'react';
+import { ComponentProps, PropsWithChildren } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';

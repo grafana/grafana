@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import uPlot, { TypedArray, Scale } from 'uplot';
 
 import { AbsoluteTimeRange } from '@grafana/data';

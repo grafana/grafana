@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Route, Switch } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
@@ -71,7 +71,7 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
 }
 
 function DataTrailView({ trail }: { trail: DataTrail }) {
-  const [isInitialized, setIsInitialized] = React.useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     if (!isInitialized) {

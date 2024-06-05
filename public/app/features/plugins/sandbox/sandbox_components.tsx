@@ -1,5 +1,6 @@
 import { isFunction } from 'lodash';
-import React, { ComponentType, FC } from 'react';
+import { ComponentType, FC } from 'react';
+import * as React from 'react';
 
 import { GrafanaPlugin, PluginExtensionConfig, PluginType } from '@grafana/data';
 

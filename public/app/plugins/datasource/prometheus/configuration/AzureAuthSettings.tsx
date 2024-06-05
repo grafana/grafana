@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { config } from '@grafana/runtime';

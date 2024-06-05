@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { getBackendSrv } from '@grafana/runtime';

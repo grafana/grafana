@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import * as React from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { createRef, PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
 import {
@@ -38,7 +38,7 @@ interface State {
 export class AnnoListPanel extends PureComponent<Props, State> {
   style = getStyles(config.theme2);
   subs = new Subscription();
-  tagListRef = React.createRef<HTMLUListElement>();
+  tagListRef = createRef<HTMLUListElement>();
 
   constructor(props: Props) {
     super(props);

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { StandardEditorProps, StringFieldConfigSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';

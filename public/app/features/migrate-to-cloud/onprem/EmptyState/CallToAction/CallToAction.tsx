@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Box, Button, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';

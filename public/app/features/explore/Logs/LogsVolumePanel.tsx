@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { identity } from 'lodash';
-import React from 'react';
+import * as React from 'react';
 
 import {
   AbsoluteTimeRange,

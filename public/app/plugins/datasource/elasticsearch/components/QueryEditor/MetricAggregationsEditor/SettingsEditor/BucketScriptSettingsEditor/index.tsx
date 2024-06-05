@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { Fragment, useEffect } from 'react';
+import { Fragment, useEffect } from 'react';
 
 import { Input, InlineLabel } from '@grafana/ui';
 

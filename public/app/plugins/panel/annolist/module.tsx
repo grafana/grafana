@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { PanelModel, PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { AsyncMultiSelect, InlineField, SegmentAsync, Select } from '@grafana/ui';

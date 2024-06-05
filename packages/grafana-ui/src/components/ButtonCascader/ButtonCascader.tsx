@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import RCCascader, { BaseOptionType } from 'rc-cascader';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 

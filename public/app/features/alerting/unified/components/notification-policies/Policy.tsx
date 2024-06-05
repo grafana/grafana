@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { defaults, groupBy, isArray, sumBy, uniqueId, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
-import React, { FC, Fragment, ReactNode, useState } from 'react';
+import { FC, Fragment, ReactNode, useState } from 'react';
+import * as React from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';

@@ -1,6 +1,6 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';

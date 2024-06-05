@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { DataFrame, GrafanaTheme2, CoreApp } from '@grafana/data';
 import { FlameGraph } from '@grafana/flamegraph';

@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { select, openMenu } from 'react-select-event';
 
 import { MetricSelect, Props } from './MetricSelect';

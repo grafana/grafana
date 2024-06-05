@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 import * as reactUse from 'react-use';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';

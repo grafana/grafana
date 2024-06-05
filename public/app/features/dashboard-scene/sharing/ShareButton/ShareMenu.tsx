@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Observable, map } from 'rxjs';
 
 import { DataFrame } from '@grafana/data';

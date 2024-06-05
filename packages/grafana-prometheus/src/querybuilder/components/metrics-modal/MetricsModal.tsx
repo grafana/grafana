@@ -2,7 +2,7 @@
 import { cx } from '@emotion/css';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import debounce from 'debounce-promise';
-import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

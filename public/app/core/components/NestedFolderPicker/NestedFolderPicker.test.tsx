@@ -2,7 +2,6 @@ import { fireEvent, render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config } from '@grafana/runtime';

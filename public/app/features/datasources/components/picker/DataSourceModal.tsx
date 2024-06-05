@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { once } from 'lodash';
-import React, { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -93,7 +93,7 @@ export function DataSourceModal({
     });
   };
   // Memoizing to keep once() cached so it avoids reporting multiple times
-  const reportSearchUsageOnce = React.useMemo(
+  const reportSearchUsageOnce = useMemo(
     () =>
       once(() => {
         reportInteraction(INTERACTION_EVENT_NAME, { item: 'search', src: analyticsInteractionSrc });

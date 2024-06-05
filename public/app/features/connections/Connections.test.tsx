@@ -1,5 +1,4 @@
 import { render, RenderResult, screen } from '@testing-library/react';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';

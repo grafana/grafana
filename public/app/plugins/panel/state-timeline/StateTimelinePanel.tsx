@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { DashboardCursorSync, PanelProps } from '@grafana/data';
 import { getLastStreamingDataFramePacket } from '@grafana/data/src/dataframe/StreamingDataFrame';

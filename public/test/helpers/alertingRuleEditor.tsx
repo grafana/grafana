@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import React from 'react';
 import { Route } from 'react-router-dom';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 

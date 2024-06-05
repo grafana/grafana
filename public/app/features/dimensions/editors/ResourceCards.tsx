@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { memo, CSSProperties } from 'react';
+import { memo, CSSProperties } from 'react';
+import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { areEqual, FixedSizeGrid as Grid } from 'react-window';
 

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useFocusRing } from '@react-aria/focus';
-import React from 'react';
+import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';

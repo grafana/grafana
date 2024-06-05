@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useRef } from 'react';
+import { useRef } from 'react';
+import * as React from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { GrafanaTheme2 } from '@grafana/data';

@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import classnames from 'classnames';
 import { debounce } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Editor, EventHook, Plugin } from 'slate-react';

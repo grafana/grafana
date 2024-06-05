@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { getValueFromDimension } from '@grafana/data';
 
 import { SeriesTable } from '../../../components/VizTooltip';

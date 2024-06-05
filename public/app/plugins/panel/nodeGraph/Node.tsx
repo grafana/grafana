@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { MouseEvent, memo } from 'react';
+import { MouseEvent, memo } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { Field, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';

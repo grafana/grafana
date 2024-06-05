@@ -1,5 +1,5 @@
 import debounce from 'debounce-promise';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';

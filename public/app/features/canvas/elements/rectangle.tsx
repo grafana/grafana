@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';

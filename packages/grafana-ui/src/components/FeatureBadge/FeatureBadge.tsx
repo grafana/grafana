@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { FeatureState } from '@grafana/data';
 
 import { Badge, BadgeProps } from '../Badge/Badge';

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { dateMath, TimeRange, TimeZone } from '@grafana/data';

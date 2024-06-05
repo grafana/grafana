@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Avatar } from '@grafana/ui';
 
 import { useQueryLibraryListStyles } from './styles';

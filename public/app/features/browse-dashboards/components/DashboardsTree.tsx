@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useEffect, useId, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
+import * as React from 'react';
 import { TableInstance, useTable } from 'react-table';
 import { VariableSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';

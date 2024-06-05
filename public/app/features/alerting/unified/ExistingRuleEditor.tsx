@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 

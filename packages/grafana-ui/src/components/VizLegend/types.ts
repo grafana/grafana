@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
 import { LegendDisplayMode, LegendPlacement, LineStyle } from '@grafana/schema';

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { InlineFieldRow, InlineField } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import Calendar from 'react-calendar';
 
 import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone } from '@grafana/data';

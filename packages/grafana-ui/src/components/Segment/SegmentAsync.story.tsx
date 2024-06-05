@@ -1,6 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 import { AsyncState } from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';

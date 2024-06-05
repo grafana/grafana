@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { TemplateForm } from './TemplateForm';

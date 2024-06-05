@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2 } from '@grafana/data';

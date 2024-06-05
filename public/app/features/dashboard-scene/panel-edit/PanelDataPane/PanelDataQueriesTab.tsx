@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

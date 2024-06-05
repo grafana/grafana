@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { take, takeRight, uniqueId } from 'lodash';
-import React, { FC } from 'react';
+import { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getTagColorsFromName, useStyles2, Stack } from '@grafana/ui';

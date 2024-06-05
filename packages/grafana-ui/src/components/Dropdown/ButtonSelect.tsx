@@ -10,7 +10,7 @@ import {
   useInteractions,
 } from '@floating-ui/react';
 import { FocusScope } from '@react-aria/focus';
-import React, { HTMLAttributes, useState } from 'react';
+import { memo, HTMLAttributes, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
@@ -118,7 +118,7 @@ ButtonSelectComponent.displayName = 'ButtonSelect';
 // needed to properly forward the generic type through React.memo
 // see https://github.com/DefinitelyTyped/DefinitelyTyped/issues/37087#issuecomment-656596623
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-export const ButtonSelect = React.memo(ButtonSelectComponent) as typeof ButtonSelectComponent;
+export const ButtonSelect = memo(ButtonSelectComponent) as typeof ButtonSelectComponent;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { MappingType } from '@grafana/data';

@@ -1,4 +1,4 @@
-import React, { useCallback, useContext } from 'react';
+import { createContext, useCallback, useContext } from 'react';
 
 import { DataFrame, DataFrameFieldIndex, Field } from '@grafana/data';
 
@@ -12,7 +12,7 @@ interface GraphNGContextType {
 }
 
 /** @deprecated */
-export const GraphNGContext = React.createContext<GraphNGContextType>({} as GraphNGContextType);
+export const GraphNGContext = createContext<GraphNGContextType>({} as GraphNGContextType);
 
 /** @deprecated */
 export const useGraphNGContext = () => {

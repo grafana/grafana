@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRule, CombinedRuleNamespace } from 'app/types/unified-alerting';

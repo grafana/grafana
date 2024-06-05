@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { stripIndent, stripIndents } from 'common-tags';
 import Prism from 'prismjs';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Collapse } from '@grafana/ui';
 import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';

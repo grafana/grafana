@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useState, createContext, useContext, useEffect } from 'react';
+import { PropsWithChildren, useState, createContext, useContext, useEffect } from 'react';
 
 import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types';

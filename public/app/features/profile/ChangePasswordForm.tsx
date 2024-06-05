@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Button, Field, LinkButton, Stack } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';

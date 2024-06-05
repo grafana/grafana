@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 
 import { PluginErrorCode } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

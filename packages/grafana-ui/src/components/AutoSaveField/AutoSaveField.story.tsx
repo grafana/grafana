@@ -1,5 +1,5 @@
 import { StoryFn, Meta } from '@storybook/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Checkbox } from '../Forms/Checkbox';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';

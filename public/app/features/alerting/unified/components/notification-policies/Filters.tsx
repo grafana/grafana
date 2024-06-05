@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
-import React, { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Button, Field, Icon, Input, Label, Select, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';

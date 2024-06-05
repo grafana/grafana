@@ -1,5 +1,5 @@
 import { groupBy } from 'lodash';
-import React, { FC, useCallback, useMemo, useState } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 
 import { Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
 import {

@@ -1,4 +1,5 @@
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
+import * as React from 'react';
 
 /** Returns the ID value of the first, and only, child element  */
 export function getChildId(children: ReactElement): string | undefined {

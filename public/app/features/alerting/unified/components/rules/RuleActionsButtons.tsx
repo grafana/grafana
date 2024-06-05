@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';

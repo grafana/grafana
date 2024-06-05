@@ -1,5 +1,4 @@
 import { cloneDeep } from 'lodash';
-import React from 'react';
 
 import { locationService } from '@grafana/runtime/src';
 import { Alert, LoadingPlaceholder } from '@grafana/ui/src';

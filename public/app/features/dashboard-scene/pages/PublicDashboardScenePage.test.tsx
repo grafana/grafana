@@ -1,5 +1,4 @@
 import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
-import React from 'react';
 import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';

@@ -1,4 +1,4 @@
-import React, { Component, createRef } from 'react';
+import { Component, createRef } from 'react';
 import uPlot, { AlignedData, Options } from 'uplot';
 
 import { PlotProps } from './types';

@@ -1,5 +1,4 @@
 import { getByTestId, render } from '@testing-library/react';
-import React from 'react';
 import { byRole } from 'testing-library-selector';
 
 import { LogRecordViewerByTimestamp } from './LogRecordViewer';

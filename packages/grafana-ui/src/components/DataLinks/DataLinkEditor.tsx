@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ChangeEvent } from 'react';
+import { memo, ChangeEvent } from 'react';
 
 import { VariableSuggestion, GrafanaTheme2, DataLink } from '@grafana/data';
 
@@ -30,7 +30,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export const DataLinkEditor = React.memo(({ index, value, onChange, suggestions, isLast }: DataLinkEditorProps) => {
+export const DataLinkEditor = memo(({ index, value, onChange, suggestions, isLast }: DataLinkEditorProps) => {
   const styles = useStyles2(getStyles);
 
   const onUrlChange = (url: string, callback?: () => void) => {

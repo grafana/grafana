@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Stack, Text } from '@grafana/ui';
 
 export const MetricsHeader = () => (

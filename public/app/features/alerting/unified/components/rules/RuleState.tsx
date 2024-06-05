@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Spinner, useStyles2, Stack } from '@grafana/ui';

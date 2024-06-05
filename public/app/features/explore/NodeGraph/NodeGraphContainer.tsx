@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useToggle, useWindowSize } from 'react-use';
 

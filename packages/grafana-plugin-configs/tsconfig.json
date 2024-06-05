@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "jsx": "react-jsx",
     "alwaysStrict": true,
     "declaration": false,
     "resolveJsonModule": true

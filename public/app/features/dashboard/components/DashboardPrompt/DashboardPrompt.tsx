@@ -1,6 +1,6 @@
 import * as H from 'history';
 import { find } from 'lodash';
-import React, { useContext, useEffect, useState } from 'react';
+import { memo, useContext, useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
@@ -26,7 +26,7 @@ interface State {
   originalPath?: string;
 }
 
-export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
+export const DashboardPrompt = memo(({ dashboard }: Props) => {
   const [state, setState] = useState<State>({ original: null });
   const dispatch = useDispatch();
   const { original, originalPath } = state;

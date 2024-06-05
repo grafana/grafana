@@ -1,6 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import { useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
@@ -32,7 +32,7 @@ const options = [
 ];
 
 const CascaderWithOptionsStateUpdate = (props: Omit<CascaderProps, 'options' | 'theme'>) => {
-  const [updatedOptions, setOptions] = React.useState<CascaderOption[]>([
+  const [updatedOptions, setOptions] = useState<CascaderOption[]>([
     {
       label: 'Initial state option',
       value: 'initial',

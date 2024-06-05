@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Tab, TabProps } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 

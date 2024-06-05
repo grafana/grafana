@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { AnnotationEvent, FieldConfigSource, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { locationService } from '@grafana/runtime';

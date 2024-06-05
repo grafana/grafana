@@ -1,5 +1,4 @@
 import { capitalize } from 'lodash';
-import React from 'react';
 
 import { Badge, Button, Card, Stack, Text, TextLink } from '@grafana/ui';
 

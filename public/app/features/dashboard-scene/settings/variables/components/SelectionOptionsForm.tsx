@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FormEvent } from 'react';
+import { ChangeEvent, FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/ui';

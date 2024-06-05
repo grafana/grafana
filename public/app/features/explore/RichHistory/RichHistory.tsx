@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

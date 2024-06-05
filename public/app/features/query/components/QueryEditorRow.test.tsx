@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import React, { PropsWithChildren } from 'react';
+import { PropsWithChildren } from 'react';
 
 import { DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';

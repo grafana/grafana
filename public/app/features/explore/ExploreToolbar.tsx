@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { pick } from 'lodash';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';

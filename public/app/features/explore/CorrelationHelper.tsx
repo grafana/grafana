@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState, useEffect, useId } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 

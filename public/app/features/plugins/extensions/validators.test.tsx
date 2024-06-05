@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 
 import { PluginExtension, PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 
@@ -274,7 +274,7 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE if we pass in a component wrapped with React.memo()', () => {
       const Component = () => <div>Some text</div>;
-      const wrapped = React.memo(() => (
+      const wrapped = memo(() => (
         <div>
           <Component />
         </div>

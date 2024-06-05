@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { FilterInput } from '@grafana/ui';

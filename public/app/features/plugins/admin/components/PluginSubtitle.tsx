@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { Fragment } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, useStyles2 } from '@grafana/ui';
@@ -38,12 +38,12 @@ export const PluginSubtitle = ({ plugin }: Props) => {
       {plugin?.details?.links && plugin.details.links.length > 0 && (
         <span>
           {plugin.details.links.map((link, index) => (
-            <React.Fragment key={index}>
+            <Fragment key={index}>
               {index > 0 && ' | '}
               <a href={link.url} className="external-link">
                 {link.name}
               </a>
-            </React.Fragment>
+            </Fragment>
           ))}
         </span>
       )}

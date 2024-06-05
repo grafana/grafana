@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';

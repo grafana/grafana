@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import { max } from 'lodash';
-import React, { RefCallback, useEffect, useMemo, useRef } from 'react';
+import { RefCallback, useEffect, useMemo, useRef } from 'react';
+import * as React from 'react';
 import { MenuListProps } from 'react-select';
 import { FixedSizeList as List } from 'react-window';
 

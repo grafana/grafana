@@ -1,4 +1,4 @@
-import React from 'react';
+import { PureComponent } from 'react';
 
 import { AnnotationQuery, DataSourceApi } from '@grafana/data';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
@@ -17,7 +17,7 @@ interface ScopeProps {
   };
 }
 
-export class AngularEditorLoader extends React.PureComponent<Props> {
+export class AngularEditorLoader extends PureComponent<Props> {
   ref: HTMLDivElement | null = null;
   angularComponent?: AngularComponent;
   scopeProps?: ScopeProps;

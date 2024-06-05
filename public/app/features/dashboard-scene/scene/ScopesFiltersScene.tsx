@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { AppEvents, GrafanaTheme2, Scope, ScopeSpec, ScopeTreeItemSpec } from '@grafana/data';
 import { config, getAppEvents, getBackendSrv } from '@grafana/runtime';
