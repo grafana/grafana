@@ -6,7 +6,6 @@
 @import 'mixins/grid-framework';
 @import 'mixins/hover';
 @import 'mixins/forms';
-@import 'mixins/drop_element';
 
 // BASE
 @import 'base/normalize';
@@ -34,7 +33,6 @@
 @import 'components/modals';
 @import 'components/dropdown';
 @import 'components/infobox';
-@import 'components/drop';
 @import 'components/query_editor';
 @import 'components/tabbed_view';
 @import 'components/query_part';
