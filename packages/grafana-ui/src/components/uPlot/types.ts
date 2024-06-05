@@ -1,5 +1,5 @@
 import React from 'react';
-import uPlot, { AlignedData, Options } from 'uplot';
+import uPlot, { Options, AlignedData } from 'uplot';
 
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
