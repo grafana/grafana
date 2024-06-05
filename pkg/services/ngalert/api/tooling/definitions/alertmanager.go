@@ -474,7 +474,9 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 }
 
 // swagger:model postableSilence
-type PostableSilence = amv2.PostableSilence
+type PostableSilence struct {
+	amv2.PostableSilence `json:",inline"`
+}
 
 // swagger:model postSilencesOKBody
 type PostSilencesOKBody struct { // vendored from "github.com/prometheus/alertmanager/api/v2/restapi/operations/silence/PostSilencesOKBody" because import brings too many other things
@@ -486,7 +488,9 @@ type PostSilencesOKBody struct { // vendored from "github.com/prometheus/alertma
 type GettableSilences = amv2.GettableSilences
 
 // swagger:model gettableSilence
-type GettableSilence = amv2.GettableSilence
+type GettableSilence struct {
+	amv2.GettableSilence `json:",inline"`
+}
 
 // swagger:model gettableGrafanaSilence
 type GettableGrafanaSilence struct {
@@ -541,16 +545,22 @@ type GettableGrafanaSilences []*GettableGrafanaSilence
 type GettableAlerts = amv2.GettableAlerts
 
 // swagger:model gettableAlert
-type GettableAlert = amv2.GettableAlert
+type GettableAlert struct {
+	amv2.GettableAlert `json:",inline"`
+}
 
 // swagger:model alertGroups
 type AlertGroups = amv2.AlertGroups
 
 // swagger:model alertGroup
-type AlertGroup = amv2.AlertGroup
+type AlertGroup struct {
+	amv2.AlertGroup `json:",inline"`
+}
 
 // swagger:model receiver
-type Receiver = amv2.Receiver
+type Receiver struct {
+	amv2.Receiver `json:",inline"`
+}
 
 // swagger:response receiversResponse
 type ReceiversResponse struct {
@@ -559,7 +569,9 @@ type ReceiversResponse struct {
 }
 
 // swagger:model integration
-type Integration = amv2.Integration
+type Integration struct {
+	amv2.Integration `json:",inline"`
+}
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
