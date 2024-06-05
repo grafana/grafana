@@ -15,6 +15,7 @@ import {
   LokiOperationOrder,
   LokiQueryPattern,
   LokiQueryPatternType,
+  LokiVisualQueryOperationCategory,
 } from '../types';
 
 import { QueryPattern } from './QueryPattern';
@@ -29,15 +30,13 @@ type Props = {
   onAddQuery?: (query: LokiQuery) => void;
 };
 
-const keepOperationOrderRanks = [
-  LokiOperationOrder.Parsers,
-  LokiOperationOrder.PipeOperations,
-  LokiOperationOrder.LineFilters,
-  LokiOperationOrder.NoErrors,
-  LokiOperationOrder.Unwrap,
+const keepOperationCategories: string[] = [
+  LokiVisualQueryOperationCategory.Formats,
+  LokiVisualQueryOperationCategory.LineFilters,
+  LokiVisualQueryOperationCategory.LabelFilters,
 ];
 const keepOperations = operationDefinitions.filter(
-  (operation) => operation.orderRank && keepOperationOrderRanks.includes(operation.orderRank)
+  (operation) => operation.category && keepOperationCategories.includes(operation.category)
 ).map(operation => operation.id);
 
 export const QueryPatternsModal = (props: Props) => {
