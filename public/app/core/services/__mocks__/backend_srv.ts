@@ -34,7 +34,7 @@ export const backendSrv = {
   search: jest.fn(),
   datasourceRequest: jest.fn(() => Promise.resolve(makePromResponse())),
 
-  /** @deprecated */
+  /** @deprecated Use getDashboardAPI().getDashboardDTO(uid) */
   getDashboardByUid: jest.fn(),
 
   // Observable support
