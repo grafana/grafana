@@ -297,9 +297,9 @@ var DatasourceQueryActions = []string{
 	datasources.ActionQuery,
 }
 
-func ProvideDatasourcePermissionsService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, db db.DB) *DatasourcePermissionsService {
+func ProvideDatasourcePermissionsService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, db db.DB, embedServer *embedserver.Service) *DatasourcePermissionsService {
 	return &DatasourcePermissionsService{
-		store: resourcepermissions.NewStore(cfg, db, features),
+		store: resourcepermissions.NewStore(cfg, db, features, embedServer),
 	}
 }
 
