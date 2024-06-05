@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/cloudmigration/cloudmigrationimpl"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/cloudmigrationimpl/fake"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -424,7 +424,7 @@ func TestCloudMigrationAPI_DeleteMigration(t *testing.T) {
 func runSimpleApiTest(tt TestCase) func(t *testing.T) {
 	return func(t *testing.T) {
 		// setup server
-		api := RegisterApi(routing.NewRouteRegister(), cloudmigrationimpl.FakeServiceImpl{ReturnError: tt.serviceReturnError}, tracing.InitializeTracerForTest())
+		api := RegisterApi(routing.NewRouteRegister(), fake.FakeServiceImpl{ReturnError: tt.serviceReturnError}, tracing.InitializeTracerForTest())
 		server := webtest.NewServer(t, api.routeRegister)
 
 		var body io.Reader = nil
