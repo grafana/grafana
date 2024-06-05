@@ -45,7 +45,7 @@
     "history": "4.10.1",
     "lodash": "4.17.21",
     "rxjs": "7.8.1",
-    "tslib": "2.6.2"
+    "tslib": "2.6.3"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.3.0-rc1",

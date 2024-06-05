@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@grafana/tsconfig": "^1.3.0-rc1",
-    "tslib": "2.6.2",
+    "tslib": "2.6.3",
     "typescript": "5.4.5"
   }
 }
