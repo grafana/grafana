@@ -12,7 +12,7 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: () => ({
     getDashboardDTO: () => {
       return Promise.resolve(mockDashboard);
-    }
+    },
   }),
 }));
 
@@ -79,7 +79,7 @@ describe('addPanelToDashboard', () => {
   it('Previous panels should not be removed', async () => {
     const queries: DataQuery[] = [{ refId: 'A' }];
     const existingPanel = { prop: 'this should be kept' };
-    
+
     // Set the mocked dashboard
     mockDashboard = {
       dashboard: {
