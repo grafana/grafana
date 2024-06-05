@@ -249,7 +249,7 @@ func (s *service) start(ctx context.Context) error {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
-		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features)
+		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features, s.tracing)
 		if err != nil {
 			return err
 		}
@@ -265,7 +265,7 @@ func (s *service) start(ctx context.Context) error {
 
 	case grafanaapiserveroptions.StorageTypeUnifiedGrpc:
 		// Create a connection to the gRPC server
-		conn, err := grpc.Dial(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(o.StorageOptions.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return err
 		}
@@ -308,13 +308,8 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	// dual writing is only enabled when the storage type is not legacy.
-	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
-	// support the legacy storage type.
-	dualWriteEnabled := o.StorageOptions.StorageType != grafanaapiserveroptions.StorageTypeLegacy
-
 	// Install the API group+version
-	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, dualWriteEnabled)
+	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions)
 	if err != nil {
 		return err
 	}

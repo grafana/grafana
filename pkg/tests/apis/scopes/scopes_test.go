@@ -1,4 +1,4 @@
-package playlist
+package scopes
 
 import (
 	"context"
@@ -141,7 +141,7 @@ func TestIntegrationScopes(t *testing.T) {
 
 		// Field Selector test
 		found, err := scopeClient.Resource.List(ctx, metav1.ListOptions{
-			FieldSelector: "spec.category=fun",
+			FieldSelector: "spec.title=foo-scope",
 		})
 		require.NoError(t, err)
 		require.Len(t, found.Items, 1)

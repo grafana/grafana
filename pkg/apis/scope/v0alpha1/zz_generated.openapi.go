@@ -171,6 +171,13 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref common.Referen
 							Format:  "",
 						},
 					},
+					"dashboardTitle": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"scope": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -179,7 +186,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingSpec(ref common.Referen
 						},
 					},
 				},
-				Required: []string{"dashboard", "scope"},
+				Required: []string{"dashboard", "dashboardTitle", "scope"},
 			},
 		},
 	}
@@ -389,6 +396,13 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 							Format: "",
 						},
 					},
+					"disableMultiSelect": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
 					"linkType": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Possible enum values:\n - `\"scope\"`",
@@ -397,7 +411,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 							Enum:        []interface{}{"scope"},
 						},
 					},
-					"linkID": {
+					"linkId": {
 						SchemaProps: spec.SchemaProps{
 							Description: "scope (later more things)",
 							Type:        []string{"string"},
@@ -405,7 +419,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 						},
 					},
 				},
-				Required: []string{"nodeType", "title"},
+				Required: []string{"nodeType", "title", "disableMultiSelect"},
 			},
 		},
 	}
@@ -424,21 +438,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref common.ReferenceCallback) comm
 							Format:  "",
 						},
 					},
-					"type": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
 					"description": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"category": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
@@ -464,7 +464,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref common.ReferenceCallback) comm
 						},
 					},
 				},
-				Required: []string{"title", "type", "description", "category", "filters"},
+				Required: []string{"title", "description", "filters"},
 			},
 		},
 		Dependencies: []string{
@@ -514,7 +514,7 @@ func schema_pkg_apis_scope_v0alpha1_TreeItem(ref common.ReferenceCallback) commo
 							Enum:        []interface{}{"scope"},
 						},
 					},
-					"linkID": {
+					"linkId": {
 						SchemaProps: spec.SchemaProps{
 							Description: "scope (later more things)",
 							Type:        []string{"string"},

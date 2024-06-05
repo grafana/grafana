@@ -110,6 +110,21 @@ To add a link:
 
 To vote for a link, click the triangle icon next to the name of the link.
 
+## Open Grafana
+
+Grafana is an open-source platform for monitoring and observability that lets you visualize and explore the state of your systems.
+
+1. Open a new tab.
+1. Browse to [localhost:3000](http://localhost:3000).
+
+{{< admonition type="note" >}}
+This demo does not require a login page or credentials. However, if you choose to install Grafana locally, you will need to log in and provide credentials. In that case, the default username and password is `admin`.
+{{< /admonition >}}
+
+The first thing you see is the Home dashboard, which helps you get started.
+
+In the top left corner, you can see the menu icon. Clicking it will open the _sidebar_, the main menu for navigating Grafana.
+
 ## Explore your metrics
 
 Grafana Explore is a workflow for troubleshooting and data exploration. In this step, you'll be using Explore to create ad-hoc queries to understand the metrics exposed by the sample application.
@@ -283,11 +298,11 @@ The most basic alert consists of two parts:
 
    Some popular channels include:
 
-   - Email
-   - [Webhooks](#create-a-contact-point-for-grafana-managed-alerts)
-   - [Telegram](https://grafana.com/blog/2023/12/28/how-to-integrate-grafana-alerting-and-telegram/)
-   - [Slack](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/configure-slack/)
-   - PagerDuty
+   - [Email](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-email/)
+   - [Webhooks](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/)
+   - [Telegram](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-telegram/)
+   - [Slack](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-slack/)
+   - [PagerDuty](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/)
 
 1. An _Alert rule_ - An Alert rule defines one or more _conditions_ that Grafana regularly evaluates. When these evaluations meet the rule's criteria, the alert is triggered.
 
@@ -339,15 +354,7 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
 1. Choose an Evaluation interval (how often the alert will be evaluated). For example, every `10s` (10 seconds).
 1. Set the pending period. This is the time that a condition has to be met until the alert enters in Firing state and a notification is sent. Enter `0s`. For the purposes of this tutorial, the evaluation interval is intentionally short. This makes it easier to test. This setting makes Grafana wait until an alert has fired for a given time before Grafana sends the notification.
 1. In **Section 4**, choose **RequestBin** as the **Contact point**.
-1. In **Section 5**, you can optionally add some sample text to your summary message. [Read more about message templating here](/docs/grafana/latest/alerting/unified-alerting/message-templating/).
 1. Click **Save rule and exit** at the top of the page.
-1. In Grafana's sidebar, navigate to **Notification policies**.
-1. Under **Default policy**, select **...** &rsaquo; **Edit** and change the **Default contact point** from **grafana-default-email** to **RequestBin**.
-1. Expand the **Timing options** dropdown and under **Group wait** and **Group interval** update the value to `30s` for testing purposes. Group wait is the time Grafana waits before sending the first notification for a new group of alerts. In contrast, group interval is the time Grafana waits before sending notifications about changes to the group.
-1. Click **Update default policy**.
-
-   As a system grows, admins can use the **Notification policies** setting to organize and match alert rules to
-   specific contact points.
 
 ### Trigger a Grafana Managed Alert
 

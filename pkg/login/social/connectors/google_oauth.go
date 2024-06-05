@@ -48,9 +48,9 @@ type googleUserData struct {
 	rawJSON       []byte `json:"-"`
 }
 
-func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
+func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
 	provider := &SocialGoogle{
-		SocialBase: newSocialBase(social.GoogleProviderName, info, features, cfg),
+		SocialBase: newSocialBase(social.GoogleProviderName, orgRoleMapper, info, features, cfg),
 		validateHD: MustBool(info.Extra[validateHDKey], true),
 	}
 
@@ -65,7 +65,7 @@ func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 	return provider
 }
 
-func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
+func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSettings, _ ssoModels.SSOSettings, requester identity.Requester) error {
 	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
@@ -95,7 +95,7 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(social.GoogleProviderName, newInfo)
+	s.updateInfo(ctx, social.GoogleProviderName, newInfo)
 	s.validateHD = MustBool(newInfo.Extra[validateHDKey], true)
 
 	return nil

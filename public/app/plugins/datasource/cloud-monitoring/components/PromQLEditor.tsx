@@ -5,6 +5,7 @@ import { EditorField, EditorRow } from '@grafana/experimental';
 import { TextArea, Input } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../datasource';
+import { selectors } from '../e2e/selectors';
 import { PromQLQuery } from '../types/query';
 
 import { Project } from './Project';
@@ -41,7 +42,7 @@ export function PromQLQueryEditor({
   }
 
   return (
-    <>
+    <span data-testid={selectors.components.queryEditor.promQlQueryEditor.container.input}>
       <EditorRow>
         <Project
           refId={refId}
@@ -75,6 +76,6 @@ export function PromQLQueryEditor({
           />
         </EditorField>
       </EditorRow>
-    </>
+    </span>
   );
 }

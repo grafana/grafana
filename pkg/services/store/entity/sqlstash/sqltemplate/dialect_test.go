@@ -91,7 +91,7 @@ func TestRowLockingClauseAll_SelectFor(t *testing.T) {
 
 		{
 			input:  splitSpace(string(SelectForShare)),
-			output: SelectForShare,
+			output: "FOR " + SelectForShare,
 		},
 	}
 

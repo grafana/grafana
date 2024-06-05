@@ -111,10 +111,6 @@ const (
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
-	// FlagReturnToPrevious
-	// Enables the return to previous context functionality
-	FlagReturnToPrevious = "returnToPrevious"
-
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -142,10 +138,6 @@ const (
 	// FlagNestedFolders
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
-
-	// FlagNestedFolderPicker
-	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
-	FlagNestedFolderPicker = "nestedFolderPicker"
 
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
@@ -266,10 +258,6 @@ const (
 	// FlagSqlDatasourceDatabaseSelection
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
-
-	// FlagLokiFormatQuery
-	// Enables the ability to format Loki queries
-	FlagLokiFormatQuery = "lokiFormatQuery"
 
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
@@ -414,6 +402,14 @@ const (
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
+
+	// FlagKubernetesDashboards
+	// Use the kubernetes API in the frontend for dashboards
+	FlagKubernetesDashboards = "kubernetesDashboards"
+
+	// FlagDatasourceQueryTypes
+	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
+	FlagDatasourceQueryTypes = "datasourceQueryTypes"
 
 	// FlagQueryService
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
@@ -675,7 +671,35 @@ const (
 	// Enables the new sharing drawer design
 	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
 
+	// FlagAlertingListViewV2
+	// Enables the new alert list view design
+	FlagAlertingListViewV2 = "alertingListViewV2"
+
 	// FlagNotificationBanner
 	// Enables the notification banner UI and API
 	FlagNotificationBanner = "notificationBanner"
+
+	// FlagDashboardRestore
+	// Enables deleted dashboard restore feature
+	FlagDashboardRestore = "dashboardRestore"
+
+	// FlagDatasourceProxyDisableRBAC
+	// Disables applying a plugin route&#39;s ReqAction field to authorization
+	FlagDatasourceProxyDisableRBAC = "datasourceProxyDisableRBAC"
+
+	// FlagAlertingDisableSendAlertsExternal
+	// Disables the ability to send alerts to an external Alertmanager datasource.
+	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
+
+	// FlagPreserveDashboardStateWhenNavigating
+	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
+	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"
+
+	// FlagAlertingCentralAlertHistory
+	// Enables the new central alert history.
+	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
+
+	// FlagPluginProxyPreserveTrailingSlash
+	// Preserve plugin proxy trailing slash.
+	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 )

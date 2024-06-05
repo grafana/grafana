@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"time"
 
@@ -134,11 +135,11 @@ func ApiAlertRuleGroupFromAlertRuleGroup(d models.AlertRuleGroup) definitions.Al
 	}
 }
 
-// AlertingFileExportFromAlertRuleGroupWithFolderTitle creates an definitions.AlertingFileExport DTO from []models.AlertRuleGroupWithFolderTitle.
-func AlertingFileExportFromAlertRuleGroupWithFolderTitle(groups []models.AlertRuleGroupWithFolderTitle) (definitions.AlertingFileExport, error) {
+// AlertingFileExportFromAlertRuleGroupWithFolderFullpath creates an definitions.AlertingFileExport DTO from []models.AlertRuleGroupWithFolderTitle.
+func AlertingFileExportFromAlertRuleGroupWithFolderFullpath(groups []models.AlertRuleGroupWithFolderFullpath) (definitions.AlertingFileExport, error) {
 	f := definitions.AlertingFileExport{APIVersion: 1}
 	for _, group := range groups {
-		export, err := AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle(group)
+		export, err := AlertRuleGroupExportFromAlertRuleGroupWithFolderFullpath(group)
 		if err != nil {
 			return definitions.AlertingFileExport{}, err
 		}
@@ -147,8 +148,8 @@ func AlertingFileExportFromAlertRuleGroupWithFolderTitle(groups []models.AlertRu
 	return f, nil
 }
 
-// AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle creates a definitions.AlertRuleGroupExport DTO from models.AlertRuleGroup.
-func AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle(d models.AlertRuleGroupWithFolderTitle) (definitions.AlertRuleGroupExport, error) {
+// AlertRuleGroupExportFromAlertRuleGroupWithFolderFullpath creates a definitions.AlertRuleGroupExport DTO from models.AlertRuleGroup.
+func AlertRuleGroupExportFromAlertRuleGroupWithFolderFullpath(d models.AlertRuleGroupWithFolderFullpath) (definitions.AlertRuleGroupExport, error) {
 	rules := make([]definitions.AlertRuleExport, 0, len(d.Rules))
 	for i := range d.Rules {
 		alert, err := AlertRuleExportFromAlertRule(d.Rules[i])
@@ -160,7 +161,7 @@ func AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle(d models.AlertRuleGro
 	return definitions.AlertRuleGroupExport{
 		OrgID:           d.OrgID,
 		Name:            d.Title,
-		Folder:          d.FolderTitle,
+		Folder:          d.FolderFullpath,
 		FolderUID:       d.FolderUID,
 		Interval:        model.Duration(time.Duration(d.Interval) * time.Second),
 		IntervalSeconds: d.Interval,
@@ -204,6 +205,17 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 	return result, nil
 }
 
+func encodeQueryModel(m map[string]any) (string, error) {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	err := enc.Encode(m)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes.TrimRight(buf.Bytes(), "\n")), nil
+}
+
 // AlertQueryExportFromAlertQuery creates a definitions.AlertQueryExport DTO from models.AlertQuery.
 func AlertQueryExportFromAlertQuery(query models.AlertQuery) (definitions.AlertQueryExport, error) {
 	// We unmarshal the json.RawMessage model into a map in order to facilitate yaml marshalling.
@@ -216,6 +228,12 @@ func AlertQueryExportFromAlertQuery(query models.AlertQuery) (definitions.AlertQ
 	if query.QueryType != "" {
 		queryType = &query.QueryType
 	}
+
+	modelString, err := encodeQueryModel(mdl)
+	if err != nil {
+		return definitions.AlertQueryExport{}, err
+	}
+
 	return definitions.AlertQueryExport{
 		RefID:     query.RefID,
 		QueryType: queryType,
@@ -225,7 +243,7 @@ func AlertQueryExportFromAlertQuery(query models.AlertQuery) (definitions.AlertQ
 		},
 		DatasourceUID: query.DatasourceUID,
 		Model:         mdl,
-		ModelString:   string(query.Model),
+		ModelString:   modelString,
 	}, nil
 }
 
@@ -435,5 +453,25 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 			RepeatInterval:    ns.RepeatInterval,
 			MuteTimeIntervals: ns.MuteTimeIntervals,
 		},
+	}
+}
+
+func ApiRecordFromModelRecord(r *models.Record) *definitions.Record {
+	if r == nil {
+		return nil
+	}
+	return &definitions.Record{
+		Metric: r.Metric,
+		From:   r.From,
+	}
+}
+
+func ModelRecordFromApiRecord(r *definitions.Record) *models.Record {
+	if r == nil {
+		return nil
+	}
+	return &models.Record{
+		Metric: r.Metric,
+		From:   r.From,
 	}
 }

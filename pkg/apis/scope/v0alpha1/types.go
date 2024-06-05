@@ -19,9 +19,7 @@ type Scope struct {
 
 type ScopeSpec struct {
 	Title       string `json:"title"`
-	Type        string `json:"type"`
 	Description string `json:"description"`
-	Category    string `json:"category"`
 
 	// +listType=atomic
 	Filters []ScopeFilter `json:"filters"`
@@ -62,8 +60,10 @@ type ScopeDashboardBinding struct {
 }
 
 type ScopeDashboardBindingSpec struct {
-	Dashboard string `json:"dashboard"`
-	Scope     string `json:"scope"`
+	Dashboard      string `json:"dashboard"`
+	DashboardTitle string `json:"dashboardTitle"`
+
+	Scope string `json:"scope"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -107,11 +107,12 @@ type ScopeNodeSpec struct {
 
 	NodeType NodeType `json:"nodeType"` // container | leaf
 
-	Title       string `json:"title"`
-	Description string `json:"description,omitempty"`
+	Title              string `json:"title"`
+	Description        string `json:"description,omitempty"`
+	DisableMultiSelect bool   `json:"disableMultiSelect"`
 
 	LinkType LinkType `json:"linkType,omitempty"` // scope (later more things)
-	LinkID   string   `json:"linkID,omitempty"`   // the k8s name
+	LinkID   string   `json:"linkId,omitempty"`   // the k8s name
 	// ?? should this be a slice of links
 }
 
@@ -139,5 +140,5 @@ type TreeItem struct {
 	Description string `json:"description,omitempty"`
 
 	LinkType LinkType `json:"linkType,omitempty"` // scope (later more things)
-	LinkID   string   `json:"linkID,omitempty"`   // the k8s name
+	LinkID   string   `json:"linkId,omitempty"`   // the k8s name
 }
