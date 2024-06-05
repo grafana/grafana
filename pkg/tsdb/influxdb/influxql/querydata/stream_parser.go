@@ -23,10 +23,6 @@ func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *back
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, buf, 1024)
 	r := converter.ReadInfluxQLStyleResult(iter, query)
 
-	if statusCode/100 != 2 {
-		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", r.Error)}
-	}
-
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
 	for i, frame := range r.Frames {
 		if i == 0 {
