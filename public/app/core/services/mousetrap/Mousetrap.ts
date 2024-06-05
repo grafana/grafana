@@ -588,7 +588,6 @@ export class Mousetrap {
    * handles a character key event
    */
   private _handleKey = (character: string, modifiers: string[], e: KeyboardEvent) => {
-    console.log('_handleKey', e.type, character);
     let callbacks = this._getMatches(character, modifiers, e);
     let i;
     let doNotReset: Record<string, number> = {};
