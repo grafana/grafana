@@ -491,4 +491,3 @@ describe('getNodePositionsFromQuery', () => {
     expect(nodePositions.length).toBe(0);
   });
 });
-
