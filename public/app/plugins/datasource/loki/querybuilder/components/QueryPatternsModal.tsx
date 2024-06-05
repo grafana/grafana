@@ -11,12 +11,7 @@ import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { operationDefinitions } from '../operations';
 import { buildVisualQueryFromString } from '../parsing';
-import {
-  LokiOperationOrder,
-  LokiQueryPattern,
-  LokiQueryPatternType,
-  LokiVisualQueryOperationCategory,
-} from '../types';
+import { LokiOperationId, LokiQueryPattern, LokiQueryPatternType, LokiVisualQueryOperationCategory } from '../types';
 
 import { QueryPattern } from './QueryPattern';
 
@@ -35,9 +30,15 @@ const keepOperationCategories: string[] = [
   LokiVisualQueryOperationCategory.LineFilters,
   LokiVisualQueryOperationCategory.LabelFilters,
 ];
-const keepOperations = operationDefinitions.filter(
-  (operation) => operation.category && keepOperationCategories.includes(operation.category)
-).map(operation => operation.id);
+const excludeOperationIds: string[] = [LokiOperationId.Unwrap];
+const keepOperations = operationDefinitions
+  .filter(
+    (operation) =>
+      operation.category &&
+      keepOperationCategories.includes(operation.category) &&
+      !excludeOperationIds.includes(operation.id)
+  )
+  .map((operation) => operation.id);
 
 export const QueryPatternsModal = (props: Props) => {
   const { isOpen, onClose, onChange, onAddQuery, query, queries, app } = props;
