@@ -54,7 +54,6 @@ alertStateHistoryLokiOnly,experimental,@grafana/alerting-squad,false,false,false
 unifiedRequestLog,experimental,@grafana/grafana-backend-group,false,false,false
 renderAuthJWT,preview,@grafana/grafana-as-code,false,false,false
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
-enableElasticsearchBackendQuerying,GA,@grafana/observability-logs,false,false,false
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,true
 extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true

@@ -1,49 +1,10 @@
-SELECT
-        {{ .Ident "guid"             | .Into .Entity.Guid }},
-        {{ .Ident "resource_version" | .Into .Entity.ResourceVersion }},
-
-        {{ .Ident "key"              | .Into .Entity.Key }},
-
-        {{ .Ident "group"            | .Into .Entity.Group }},
-        {{ .Ident "group_version"    | .Into .Entity.GroupVersion }},
-        {{ .Ident "resource"         | .Into .Entity.Resource }},
-        {{ .Ident "namespace"        | .Into .Entity.Namespace }},
-        {{ .Ident "name"             | .Into .Entity.Name }},
-
-        {{ .Ident "folder"           | .Into .Entity.Folder }},
-
-        {{ .Ident "meta"             | .Into .Entity.Meta }},
-        {{ .Ident "body"             | .Into .Entity.Body }},
-        {{ .Ident "status"           | .Into .Entity.Status }},
-
-        {{ .Ident "size"             | .Into .Entity.Size }},
-        {{ .Ident "etag"             | .Into .Entity.ETag }},
-
-        {{ .Ident "created_at"       | .Into .Entity.CreatedAt }},
-        {{ .Ident "created_by"       | .Into .Entity.CreatedBy }},
-        {{ .Ident "updated_at"       | .Into .Entity.UpdatedAt }},
-        {{ .Ident "updated_by"       | .Into .Entity.UpdatedBy }},
-
-        {{ .Ident "origin"           | .Into .Entity.Origin.Source }},
-        {{ .Ident "origin_key"       | .Into .Entity.Origin.Key }},
-        {{ .Ident "origin_ts"        | .Into .Entity.Origin.Time }},
-
-        {{ .Ident "title"            | .Into .Entity.Title }},
-        {{ .Ident "slug"             | .Into .Entity.Slug }},
-        {{ .Ident "description"      | .Into .Entity.Description }},
-
-        {{ .Ident "message"          | .Into .Entity.Message }},
-        {{ .Ident "labels"           | .Into .Entity.Labels }},
-        {{ .Ident "fields"           | .Into .Entity.Fields }},
-        {{ .Ident "errors"           | .Into .Entity.Errors }},
-
-        {{ .Ident "action"           | .Into .Entity.Action }}
+SELECT {{ template "common_entity_select_into" . }}
 
     FROM
         {{ if gt .ResourceVersion 0 }}
-            {{ .Ident "entity_history" }}
+            {{ .Ident "entity_history" }} AS e
         {{ else }}
-            {{ .Ident "entity" }}
+            {{ .Ident "entity" }} AS e
         {{ end }}
 
     WHERE 1 = 1
@@ -73,6 +34,6 @@ SELECT
       {{ end }}
 
       {{ if .SelectForUpdate }}
-          {{ .SelectFor "UPDATE" }}
+          {{ .SelectFor "UPDATE NOWAIT" }}
       {{ end }}
 ;
