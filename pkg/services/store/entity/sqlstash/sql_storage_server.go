@@ -1230,7 +1230,7 @@ func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntitySto
 				break
 			}
 
-			// record watch latency - the duration from when the event was updated/created to when it was sent
+			// record watch latency: the duration from when the event was updated/created to when it was sent
 			latency := time.Now().UnixMilli() - resp.Entity.UpdatedAt
 			StorageServerMetrics.WatchEventLatency.With(map[string]string{"entity": result.Entity.Group + result.Entity.Resource}).Observe(float64(latency))
 
