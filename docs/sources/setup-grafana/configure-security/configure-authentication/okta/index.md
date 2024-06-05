@@ -227,7 +227,7 @@ To learn about adding custom claims to the user info in Okta, refer to [add cust
 
 #### Org roles mapping example
 
-In this example the `org_mapping` uses the `groups` attribute as the source (`org_attribute_path`) to map the current user to different organizations and roles. The user has been granted the role of a `Viewer` in the `org_foo` org if they are a member of the `Group 1` group, the role of an `Editor` in the `org_bar` org if they are a member of the `Group 2` group, and the role of an `Editor` in the `org_baz`(OrgID=3) org.
+In this example, the `org_mapping` uses the `groups` attribute as the source (`org_attribute_path`) to map the current user to different organizations and roles. The user has been granted the role of a `Viewer` in the `org_foo` org if they are a member of the `Group 1` group, the role of an `Editor` in the `org_bar` org if they are a member of the `Group 2` group, and the role of an `Editor` in the `org_baz`(OrgID=3) org.
 
 Config:
 
