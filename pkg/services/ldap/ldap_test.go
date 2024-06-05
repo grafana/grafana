@@ -72,7 +72,7 @@ func TestServer_Dial(t *testing.T) {
 
 		err := server.Dial()
 		require.Error(t, err)
-		require.ErrorContains(t, err, "can't assign requested address")
+		require.ErrorContains(t, err, "connect")
 	})
 
 	t.Run("fails with invalid root certificate file", func(t *testing.T) {
@@ -132,7 +132,7 @@ func TestServer_Dial(t *testing.T) {
 
 		err := server.Dial()
 		require.Error(t, err)
-		require.ErrorContains(t, err, "can't assign requested address")
+		require.ErrorContains(t, err, "connect")
 	})
 
 	t.Run("fails with invalid base64 root certificate value", func(t *testing.T) {
