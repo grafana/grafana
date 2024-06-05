@@ -15,7 +15,7 @@ import {
 } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AppEvents, DataQueryErrorType } from '@grafana/data';
+import { AppEvents, DataQueryErrorType, deprecationWarning } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
@@ -517,6 +517,7 @@ export class BackendSrv implements BackendService {
   getDashboardByUid(uid: string): Promise<DashboardDTO> {
     // NOTE: When this is removed, we can also remove most instances of:
     // jest.mock('app/features/live/dashboard/dashboardWatcher
+    deprecationWarning('backend_srv', 'getDashboardByUid(uid)', 'getDashboardAPI().getDashboardDTO(uid)');
     return getDashboardAPI().getDashboardDTO(uid);
   }
 
@@ -526,7 +527,7 @@ export class BackendSrv implements BackendService {
     //  config.featureToggles.showDashboardValidationWarnings
     return Promise.resolve({
       isValid: false,
-      message: 'dashboard validation is supported',
+      message: 'dashboard validation is not supported',
     });
   }
 

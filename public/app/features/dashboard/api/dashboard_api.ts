@@ -7,10 +7,12 @@ import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 export interface DashboardAPI {
-  dashboardExists(uid: string): Promise<boolean>;
+  /** Get a dashboard with the access control metadata */
   getDashboardDTO(uid: string): Promise<DashboardDTO>;
-  deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse>;
+  /** Save dashboard */
   saveDashboard(options: SaveDashboardCommand): Promise<unknown>;
+  /** Delete a dashboard */
+  deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse>;
 }
 
 // Implemented using /api/dashboards/*
@@ -26,10 +28,6 @@ class LegacyDashboardAPI implements DashboardAPI {
       overwrite: options.overwrite ?? false,
       folderUid: options.folderUid,
     });
-  }
-
-  dashboardExists(uid: string): Promise<boolean> {
-    throw new Error('Method not implemented.');
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
@@ -54,16 +52,6 @@ class K8sDashboardAPI implements DashboardAPI {
 
   saveDashboard(options: SaveDashboardCommand): Promise<unknown> {
     return this.legacy.saveDashboard(options);
-  }
-
-  async dashboardExists(uid: string): Promise<boolean> {
-    try {
-      const r = await this.client.get(uid);
-      if (r.metadata.name) {
-        return Promise.resolve(true);
-      }
-    } catch {}
-    return Promise.resolve(false);
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
