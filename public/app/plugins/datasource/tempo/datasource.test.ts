@@ -1264,6 +1264,9 @@ export const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
     nodeGraph: {
       enabled: true,
     },
+    streaming: {
+      search: true,
+    },
   },
   readOnly: false,
 };
