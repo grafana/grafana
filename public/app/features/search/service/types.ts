@@ -27,6 +27,7 @@ export interface SearchQuery {
   from?: number;
   starred?: boolean;
   permission?: PermissionLevelString;
+  deleted?: boolean;
 }
 
 export interface DashboardQueryResult {

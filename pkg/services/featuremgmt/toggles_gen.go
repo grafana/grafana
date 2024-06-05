@@ -139,10 +139,6 @@ const (
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
 
-	// FlagNestedFolderPicker
-	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
-	FlagNestedFolderPicker = "nestedFolderPicker"
-
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
@@ -262,10 +258,6 @@ const (
 	// FlagSqlDatasourceDatabaseSelection
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
-
-	// FlagLokiFormatQuery
-	// Enables the ability to format Loki queries
-	FlagLokiFormatQuery = "lokiFormatQuery"
 
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
@@ -702,4 +694,8 @@ const (
 	// FlagAlertingCentralAlertHistory
 	// Enables the new central alert history.
 	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
+
+	// FlagPluginProxyPreserveTrailingSlash
+	// Preserve plugin proxy trailing slash.
+	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 )

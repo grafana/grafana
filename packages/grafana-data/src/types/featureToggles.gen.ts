@@ -51,7 +51,6 @@ export interface FeatureToggles {
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
-  nestedFolderPicker?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
@@ -82,7 +81,6 @@ export interface FeatureToggles {
   pluginsFrontendSandbox?: boolean;
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
-  lokiFormatQuery?: boolean;
   recordedQueriesMulti?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
@@ -192,4 +190,5 @@ export interface FeatureToggles {
   alertingDisableSendAlertsExternal?: boolean;
   preserveDashboardStateWhenNavigating?: boolean;
   alertingCentralAlertHistory?: boolean;
+  pluginProxyPreserveTrailingSlash?: boolean;
 }
