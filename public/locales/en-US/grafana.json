@@ -1484,6 +1484,14 @@
     },
     "filter": {
       "placeholder": "Search for dashboards"
+    },
+    "restoreModal": {
+      "confirmText": {
+        "ongoing": "Restoring...",
+        "success": "Restore"
+      },
+      "text": "This action will restore the following content:",
+      "title": "Restore"
     }
   },
   "refresh-picker": {

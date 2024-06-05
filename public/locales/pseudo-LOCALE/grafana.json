@@ -1484,6 +1484,14 @@
     },
     "filter": {
       "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş"
+    },
+    "restoreModal": {
+      "confirmText": {
+        "ongoing": "Ŗęşŧőřįŉģ...",
+        "success": "Ŗęşŧőřę"
+      },
+      "text": "Ŧĥįş äčŧįőŉ ŵįľľ řęşŧőřę ŧĥę ƒőľľőŵįŉģ čőŉŧęŉŧ:",
+      "title": "Ŗęşŧőřę"
     }
   },
   "refresh-picker": {
