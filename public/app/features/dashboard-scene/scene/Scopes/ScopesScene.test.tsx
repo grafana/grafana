@@ -94,10 +94,11 @@ describe('ScopesScene', () => {
 
     beforeAll(() => {
       config.featureToggles.scopeFilters = true;
-      jest.spyOn(console, 'error').mockImplementation();
     });
 
     beforeEach(() => {
+      jest.spyOn(console, 'error').mockImplementation(jest.fn());
+
       fetchNodesSpy.mockClear();
       fetchScopeSpy.mockClear();
       fetchScopesSpy.mockClear();

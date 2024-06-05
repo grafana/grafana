@@ -11,7 +11,7 @@ import { ScopesTreeLevel } from './ScopesTreeLevel';
 
 export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<ScopesFiltersScene>) {
   const styles = useStyles2(getStyles);
-  const { nodes, loadingNodeId, dirtyScopeNames, isLoadingScopes, isAdvancedOpened } = model.useState();
+  const { nodes, loadingNodeName, dirtyScopeNames, isLoadingScopes, isAdvancedOpened } = model.useState();
 
   if (!isAdvancedOpened) {
     return null;
@@ -33,7 +33,7 @@ export function ScopesFiltersAdvancedSelector({ model }: SceneComponentProps<Sco
           showQuery={true}
           nodes={nodes}
           nodePath={['']}
-          loadingNodeId={loadingNodeId}
+          loadingNodeName={loadingNodeName}
           scopeNames={dirtyScopeNames}
           onNodeUpdate={(path, isExpanded, query) => model.updateNode(path, isExpanded, query)}
           onNodeSelectToggle={(path) => model.toggleNodeSelect(path)}

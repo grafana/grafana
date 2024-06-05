@@ -12,7 +12,7 @@ export interface ScopesTreeLevelProps {
   showQuery: boolean;
   nodes: NodesMap;
   nodePath: string[];
-  loadingNodeId: string | undefined;
+  loadingNodeName: string | undefined;
   scopeNames: string[];
   onNodeUpdate: (path: string[], isExpanded: boolean, query: string) => void;
   onNodeSelectToggle: (path: string[]) => void;
@@ -22,7 +22,7 @@ export function ScopesTreeLevel({
   showQuery,
   nodes,
   nodePath,
-  loadingNodeId,
+  loadingNodeName,
   scopeNames,
   onNodeUpdate,
   onNodeSelectToggle,
@@ -43,7 +43,7 @@ export function ScopesTreeLevel({
         <Input
           prefix={<Icon name="filter" />}
           className={styles.searchInput}
-          disabled={!!loadingNodeId}
+          disabled={!!loadingNodeName}
           placeholder={t('scopes.tree.search', 'Filter')}
           defaultValue={node.query}
           data-testid={`scopes-tree-${nodeId}-search`}
@@ -69,7 +69,7 @@ export function ScopesTreeLevel({
                 {childNode.isSelectable && !childNode.isExpanded ? (
                   <Checkbox
                     checked={isSelected}
-                    disabled={!!loadingNodeId || (anyChildSelected && !isSelected && node.disableMultiSelect)}
+                    disabled={!!loadingNodeName || (anyChildSelected && !isSelected && node.disableMultiSelect)}
                     data-testid={`scopes-tree-${childNode.name}-checkbox`}
                     onChange={() => {
                       onNodeSelectToggle(childNodePath);
@@ -79,11 +79,11 @@ export function ScopesTreeLevel({
 
                 {childNode.isExpandable && (
                   <IconButton
-                    disabled={(anyChildSelected && !childNode.isExpanded) || !!loadingNodeId}
+                    disabled={(anyChildSelected && !childNode.isExpanded) || !!loadingNodeName}
                     name={
                       !childNode.isExpanded
                         ? 'angle-right'
-                        : loadingNodeId === childNode.name
+                        : loadingNodeName === childNode.name
                           ? 'spinner'
                           : 'angle-down'
                     }
@@ -106,7 +106,7 @@ export function ScopesTreeLevel({
                     showQuery={showQuery}
                     nodes={node.nodes}
                     nodePath={childNodePath}
-                    loadingNodeId={loadingNodeId}
+                    loadingNodeName={loadingNodeName}
                     scopeNames={scopeNames}
                     onNodeUpdate={onNodeUpdate}
                     onNodeSelectToggle={onNodeSelectToggle}

@@ -11,7 +11,7 @@ import { ScopesTreeLevel } from './ScopesTreeLevel';
 
 export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<ScopesFiltersScene>) {
   const styles = useStyles2(getStyles);
-  const { nodes, loadingNodeId, scopes, dirtyScopeNames, isLoadingScopes, isBasicOpened } = model.useState();
+  const { nodes, loadingNodeName, scopes, dirtyScopeNames, isLoadingScopes, isBasicOpened } = model.useState();
 
   const scopesTitles = scopes.map(({ spec: { title } }) => title).join(', ');
 
@@ -29,7 +29,7 @@ export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<Scopes
                 showQuery={false}
                 nodes={nodes}
                 nodePath={['']}
-                loadingNodeId={loadingNodeId}
+                loadingNodeName={loadingNodeName}
                 scopeNames={dirtyScopeNames}
                 onNodeUpdate={(path, isExpanded, query) => model.updateNode(path, isExpanded, query)}
                 onNodeSelectToggle={(path) => model.toggleNodeSelect(path)}
