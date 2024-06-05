@@ -62,7 +62,6 @@ lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,tr
 pluginsFrontendSandbox,experimental,@grafana/plugins-platform-backend,false,false,true
 frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/dataviz-squad,false,false,true
-lokiFormatQuery,experimental,@grafana/observability-logs,false,false,true
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false
 vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,true
 prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-metrics,false,false,true
