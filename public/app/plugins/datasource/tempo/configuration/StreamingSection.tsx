@@ -9,7 +9,7 @@ import { ConfigSection } from '@grafana/experimental';
 import { InlineFieldRow, InlineField, InlineSwitch } from '@grafana/ui';
 
 interface StreamingOptions extends DataSourceJsonData {
-  streaming?: {
+  streamingEnablement?: {
     search?: boolean;
   };
 }
@@ -22,10 +22,10 @@ export const StreamingSection = ({ options, onOptionsChange }: Props) => {
         <InlineField tooltip="Enable streaming for search queries" label="Queries" labelWidth={26}>
           <InlineSwitch
             id={'streaming.search'}
-            value={options.jsonData.streaming?.search || false}
+            value={options.jsonData.streamingEnablement?.search || false}
             onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'streaming', {
-                ...options.jsonData.streaming,
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'streamingEnablement', {
+                ...options.jsonData.streamingEnablement,
                 search: event.currentTarget.checked,
               });
             }}

@@ -111,7 +111,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   spanBar?: SpanBarOptions;
   languageProvider: TempoLanguageProvider;
 
-  streaming?: {
+  streamingEnablement?: {
     search?: boolean;
   };
 
@@ -129,7 +129,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.search = instanceSettings.jsonData.search;
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
     this.traceQuery = instanceSettings.jsonData.traceQuery;
-    this.streaming = instanceSettings.jsonData.streaming;
+    this.streamingEnablement = instanceSettings.jsonData.streamingEnablement;
 
     this.languageProvider = new TempoLanguageProvider(this);
 
@@ -318,7 +318,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               app: options.app ?? '',
               grafana_version: config.buildInfo.version,
               query: queryValue ?? '',
-              streaming: this.streaming,
+              streaming: this.streamingEnablement,
             });
             subQueries.push(this.handleTraceQlQuery(options, targets, queryValue));
           }
@@ -352,10 +352,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
             query: queryValueFromFilters ?? '',
-            streaming: this.streaming,
+            streaming: this.streamingEnablement,
           });
 
-          if (this.streaming?.search && this.isFeatureAvailable(FeatureName.streaming) && config.liveEnabled) {
+          if (this.streamingEnablement?.search && this.isFeatureAvailable(FeatureName.streaming) && config.liveEnabled) {
             subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValueFromFilters));
           } else {
             subQueries.push(
@@ -616,7 +616,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     },
     queryValue: string
   ): Observable<DataQueryResponse> => {
-    if (this.streaming?.search && this.isFeatureAvailable(FeatureName.streaming) && config.liveEnabled) {
+    if (this.streamingEnablement?.search && this.isFeatureAvailable(FeatureName.streaming) && config.liveEnabled) {
       return this.handleStreamingSearch(options, targets.traceql, queryValue);
     } else {
       return this._request('/api/search', {
