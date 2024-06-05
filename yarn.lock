@@ -3307,16 +3307,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:1.3.1":
-  version: 1.3.1
-  resolution: "@grafana/plugin-e2e@npm:1.3.1"
+"@grafana/plugin-e2e@npm:1.3.2":
+  version: 1.3.2
+  resolution: "@grafana/plugin-e2e@npm:1.3.2"
   dependencies:
     semver: "npm:^7.5.4"
     uuid: "npm:^9.0.1"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.41.2
-  checksum: 10/7370a822309fb688ce8dfb77386d98bb21ece963d73f2dd63c3153d19966d4a7797ef8b296d6f4c282973dc62e5651dbd8eed36e095e78b3308683d9f24235a8
+  checksum: 10/a5d19e529c24f566f97d2d0da216b75a0c7918ee0a0d4c55760e76117c74c64e9e4e487643c6850b15dc769abaa5781ce98a2edd28dd25a23228aeaedd8a644a
   languageName: node
   linkType: hard
 
@@ -16670,7 +16670,7 @@ __metadata:
     "@grafana/lezer-logql": "npm:0.2.4"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:1.3.1"
+    "@grafana/plugin-e2e": "npm:1.3.2"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
