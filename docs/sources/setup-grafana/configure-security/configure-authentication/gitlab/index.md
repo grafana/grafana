@@ -163,7 +163,7 @@ The GitLab integration uses the external users' groups in the `org_mapping` conf
 
 In this example, the user has been granted the role of a `Viewer` in the `org_foo` organization, and the role of an `Editor` in the `org_bar` and `org_baz` orgs.
 
-The external user is part of the following GitHub teams: `groupd-1` and `group-2`.
+The external user is part of the following GitLab groups: `groupd-1` and `group-2`.
 
 Config:
 
