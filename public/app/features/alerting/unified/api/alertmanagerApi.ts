@@ -4,13 +4,13 @@ import { dispatch } from 'app/store/store';
 import { ReceiversStateDTO } from 'app/types/alerting';
 
 import {
+  AlertManagerCortexConfig,
   AlertmanagerAlert,
   AlertmanagerChoice,
-  AlertManagerCortexConfig,
   AlertmanagerGroup,
-  GrafanaAlertingConfiguration,
   ExternalAlertmanagersConnectionStatus,
   ExternalAlertmanagersStatusResponse,
+  GrafanaAlertingConfiguration,
   GrafanaManagedContactPoint,
   Matcher,
   MuteTimeInterval,
@@ -19,8 +19,8 @@ import { NotifierDTO } from '../../../../types';
 import { withPerformanceLogging } from '../Analytics';
 import { matcherToOperator } from '../utils/alertmanager';
 import {
-  getDatasourceAPIUid,
   GRAFANA_RULES_SOURCE_NAME,
+  getDatasourceAPIUid,
   isVanillaPrometheusAlertManagerDataSource,
 } from '../utils/datasource';
 import { retryWhile, wrapWithQuotes } from '../utils/misc';
@@ -52,9 +52,9 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getAlertmanagerAlerts: build.query<
       AlertmanagerAlert[],
-      { amSourceName: string; filter?: AlertmanagerAlertsFilter }
+      { amSourceName: string; filter?: AlertmanagerAlertsFilter; showErrorAlert?: boolean }
     >({
-      query: ({ amSourceName, filter }) => {
+      query: ({ amSourceName, filter, showErrorAlert = true }) => {
         // TODO Add support for active, silenced, inhibited, unprocessed filters
         const filterMatchers = filter?.matchers
           ?.filter((matcher) => matcher.name && matcher.value)
@@ -77,6 +77,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         return {
           url: `/api/alertmanager/${getDatasourceAPIUid(amSourceName)}/api/v2/alerts`,
           params,
+          showErrorAlert,
         };
       },
       providesTags: ['AlertmanagerAlerts'],

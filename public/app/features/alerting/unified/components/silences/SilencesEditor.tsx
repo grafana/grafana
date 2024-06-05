@@ -27,7 +27,7 @@ import {
 } from '@grafana/ui';
 import { alertSilencesApi, SilenceCreatedResponse } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
-import { getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
+import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { MatcherOperator, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 
 import { SilenceFormFields } from '../../types/silence-form';
@@ -49,7 +49,7 @@ interface Props {
  *
  * Fetches silence details from API, based on `silenceId`
  */
-export const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Props) => {
+const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Props) => {
   const {
     data: silence,
     isLoading: getSilenceIsLoading,
@@ -57,9 +57,12 @@ export const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Pro
   } = alertSilencesApi.endpoints.getSilence.useQuery({
     id: silenceId,
     datasourceUid: getDatasourceAPIUid(alertManagerSourceName),
+    ruleMetadata: true,
+    accessControl: true,
   });
 
   const ruleUid = silence?.matchers?.find((m) => m.name === MATCHER_ALERT_RULE_UID)?.value;
+  const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   const defaultValues = useMemo(() => {
     if (!silence) {
@@ -78,6 +81,12 @@ export const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Pro
 
   if (existingSilenceNotFound) {
     return <Alert title={`Existing silence "${silenceId}" not found`} severity="warning" />;
+  }
+
+  const canEditSilence = isGrafanaAlertManager ? silence?.accessControl?.write : true;
+
+  if (!canEditSilence) {
+    return <Alert title={`You do not have permission to edit/recreate this silence`} severity="error" />;
   }
 
   return (
@@ -258,6 +267,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'flex-start',
     gap: theme.spacing(1),
     maxWidth: theme.breakpoints.values.sm,
+    paddingTop: theme.spacing(2),
   }),
 });
 
