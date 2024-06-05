@@ -6,8 +6,8 @@ import appEvents from '../../../core/app_events';
 import { Trans } from '../../../core/internationalization';
 import { useDispatch } from '../../../types';
 import { ShowModalReactEvent } from '../../../types/events';
+import { useRestoreDashboardMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
 import { setAllSelection, useActionSelectionState } from '../../browse-dashboards/state';
-import { useRestoreItemsMutation } from '../api/restoreDashboardsAPI';
 import { RestoreModal } from '../components/RestoreModal';
 import { useRecentlyDeletedStateManager } from '../utils/useRecentlyDeletedStateManager';
 
@@ -17,7 +17,7 @@ export function RecentlyDeletedAction() {
   const [, stateManager] = useRecentlyDeletedStateManager();
   const isSearching = stateManager.hasSearchFilters();
 
-  const [restoreItems, { isLoading: isRestoreLoading }] = useRestoreItemsMutation();
+  const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
 
   const onActionComplete = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
@@ -28,7 +28,7 @@ export function RecentlyDeletedAction() {
   };
 
   const onRestore = async () => {
-    await restoreItems({ selectedItems });
+    await restoreDashboard({ selectedItems });
     onActionComplete();
   };
 
