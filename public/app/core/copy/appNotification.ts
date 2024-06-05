@@ -47,7 +47,7 @@ export const createErrorNotification = (
   const logzLogger = logzioServices.LoggerService;
   logzLogger.logError({
     origin: logzLogger.Origin.GRAFANA,
-    message: getMessageFromError(text),
+  message: getMessageFromError(text) || title || 'Unknown error from metrics product', // DEV-45291 - use title if message is empty string
     error: null,
     uxType: logzLogger.UxType.TOAST,
     extra: {
