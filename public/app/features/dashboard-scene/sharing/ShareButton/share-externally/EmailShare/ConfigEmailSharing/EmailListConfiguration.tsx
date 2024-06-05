@@ -28,7 +28,7 @@ const RecipientMenu = ({
   return (
     <Menu>
       <Menu.Item disabled={disabled} label="Resend invite" onClick={onReshare} />
-      <Menu.Item disabled={disabled} label="Remove access" destructive onClick={onDelete} />
+      <Menu.Item disabled={disabled} label="Revoke access" destructive onClick={onDelete} />
     </Menu>
   );
 };
@@ -69,7 +69,7 @@ const EmailList = ({
                 <div className={styles.icon}>
                   <Icon name="user" />
                 </div>
-                <Text>{recipient.recipient} (guest)</Text>
+                <Text>{recipient.recipient}</Text>
               </Stack>
             </td>
             <td>{isLoading && <Spinner />}</td>

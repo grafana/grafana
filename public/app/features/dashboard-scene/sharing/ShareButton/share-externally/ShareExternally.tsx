@@ -9,7 +9,7 @@ import { contextSrv } from 'app/core/core';
 import {
   useDeletePublicDashboardMutation,
   useGetPublicDashboardQuery,
-  useUpdatePublicDashboardMutation,
+  usePauseOrResumePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
 import { NoUpsertPermissionsAlert } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/NoUpsertPermissionsAlert';
 import { Loader } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
@@ -112,7 +112,7 @@ function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExter
 }
 
 function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; publicDashboard: PublicDashboard }) {
-  const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
+  const [update, { isLoading: isUpdateLoading }] = usePauseOrResumePublicDashboardMutation();
   const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
 
   const isLoading = isUpdateLoading || isDeleteLoading;
@@ -156,7 +156,7 @@ function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; pu
           getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
           onClipboardCopy={onCopyURL}
         >
-          {publicDashboard.share === PublicDashboardShareType.PUBLIC ? 'Copy public link' : 'Copy link'}
+          Copy external link
         </ClipboardButton>
         <Button
           icon="trash-alt"
@@ -165,7 +165,7 @@ function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; pu
           disabled={isLoading || !hasWritePermissions}
           onClick={onDeleteClick}
         >
-          {publicDashboard.share === PublicDashboardShareType.PUBLIC ? 'Revoke public URL' : 'Remove access'}
+          Revoke access
         </Button>
         <Button
           icon={publicDashboard.isEnabled ? 'pause' : 'play'}
@@ -177,7 +177,7 @@ function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; pu
           onClick={onPauseOrResumeClick}
           disabled={isLoading || !hasWritePermissions}
         >
-          {publicDashboard.isEnabled ? 'Pause access' : 'Resume'}
+          {publicDashboard.isEnabled ? 'Pause access' : 'Resume access'}
         </Button>
       </Stack>
       {isLoading && <Spinner />}

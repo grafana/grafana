@@ -42,7 +42,7 @@ export default function CreatePublicSharing({
   return (
     <>
       {hasWritePermissions && (
-        <Alert title="" severity="warning" bottomSpacing={0}>
+        <Alert title="" severity="info" bottomSpacing={0}>
           <Stack justifyContent="space-between" gap={2} alignItems="center">
             Sharing this dashboard externally makes it entirely accessible to anyone with the link. Currently, this
             feature is limited to some data sources.

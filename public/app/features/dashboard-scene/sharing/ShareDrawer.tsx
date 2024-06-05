@@ -33,7 +33,7 @@ function ShareDrawerRenderer({ model }: SceneComponentProps<ShareDrawer>) {
   const { title, body } = model.useState();
 
   return (
-    <Drawer title={title} onClose={model.onDismiss} size="md" closeOnMaskClick={false}>
+    <Drawer title={title} onClose={model.onDismiss} size="md">
       {<body.Component model={body} />}
     </Drawer>
   );

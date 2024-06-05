@@ -7,6 +7,7 @@ import { createErrorNotification, createSuccessNotification } from 'app/core/cop
 import {
   PublicDashboard,
   PublicDashboardSettings,
+  PublicDashboardShareType,
   SessionDashboard,
   SessionUser,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
@@ -82,16 +83,22 @@ export const publicDashboardApi = createApi({
           data: params.payload,
         };
       },
-      async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ dashboard, payload: { share } }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
-        dispatch(notifyApp(createSuccessNotification('Your dashboard is now public')));
+        let message = 'Dashboard is public!';
+        if (config.featureToggles.newDashboardSharingComponent) {
+          message =
+            share === PublicDashboardShareType.PUBLIC
+              ? 'Your dashboard is now publicly accessible'
+              : 'Your dashboard is ready for external sharing';
+        }
+        dispatch(notifyApp(createSuccessNotification(message)));
 
         if (dashboard instanceof DashboardScene) {
           dashboard.setState({
             meta: { ...dashboard.state.meta, publicDashboardEnabled: data.isEnabled },
           });
         } else {
-          // Update runtime meta flag
           dashboard.updateMeta({
             publicDashboardEnabled: data.isEnabled,
           });
@@ -121,10 +128,50 @@ export const publicDashboardApi = createApi({
         dispatch(
           notifyApp(
             createSuccessNotification(
-              config.featureToggles.newDashboardSharingComponent ? 'Configuration updated' : 'Public dashboard updated!'
+              config.featureToggles.newDashboardSharingComponent
+                ? 'Settings have been successfully updated'
+                : 'Public dashboard updated!'
             )
           )
         );
+
+        if (dashboard instanceof DashboardScene) {
+          dashboard.setState({
+            meta: { ...dashboard.state.meta, publicDashboardEnabled: data.isEnabled },
+          });
+        } else {
+          dashboard.updateMeta?.({
+            publicDashboardEnabled: data.isEnabled,
+          });
+        }
+      },
+      invalidatesTags: (result, error, { payload }) => [
+        { type: 'PublicDashboard', id: payload.dashboardUid },
+        'AuditTablePublicDashboard',
+      ],
+    }),
+    pauseOrResumePublicDashboard: builder.mutation<
+      PublicDashboard,
+      {
+        dashboard: (Pick<DashboardModel, 'uid'> & Partial<Pick<DashboardModel, 'updateMeta'>>) | DashboardScene;
+        payload: Partial<PublicDashboard>;
+      }
+    >({
+      query: ({ payload, dashboard }) => {
+        const dashUid = dashboard instanceof DashboardScene ? dashboard.state.uid : dashboard.uid;
+        return {
+          url: `/dashboards/uid/${dashUid}/public-dashboards/${payload.uid}`,
+          method: 'PATCH',
+          data: payload,
+        };
+      },
+      async onQueryStarted({ dashboard, payload: { isEnabled } }, { dispatch, queryFulfilled }) {
+        const { data } = await queryFulfilled;
+        let message = 'Public dashboard updated!';
+        if (config.featureToggles.newDashboardSharingComponent) {
+          message = isEnabled ? 'Your dashboard access has been resumed' : 'Your dashboard access has been paused';
+        }
+        dispatch(notifyApp(createSuccessNotification(message)));
 
         if (dashboard instanceof DashboardScene) {
           dashboard.setState({
@@ -195,7 +242,7 @@ export const publicDashboardApi = createApi({
           notifyApp(
             createSuccessNotification(
               config.featureToggles.newDashboardSharingComponent
-                ? 'Your dashboard is not public anymore'
+                ? 'Your dashboard is no longer shareable'
                 : 'Public dashboard deleted!'
             )
           )
@@ -239,4 +286,5 @@ export const {
   useGetActiveUsersQuery,
   useGetActiveUserDashboardsQuery,
   useRevokeAllAccessMutation,
+  usePauseOrResumePublicDashboardMutation,
 } = publicDashboardApi;
