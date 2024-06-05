@@ -25,7 +25,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeFilter":                       schema_pkg_apis_scope_v0alpha1_ScopeFilter(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeList":                         schema_pkg_apis_scope_v0alpha1_ScopeList(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeNode":                         schema_pkg_apis_scope_v0alpha1_ScopeNode(ref),
-		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeNodeChild":                    schema_pkg_apis_scope_v0alpha1_ScopeNodeChild(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeNodeList":                     schema_pkg_apis_scope_v0alpha1_ScopeNodeList(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeNodeSpec":                     schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeSpec":                         schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref),
@@ -52,7 +51,7 @@ func schema_pkg_apis_scope_v0alpha1_FindScopeDashboardBindingsResults(ref common
 							Format:      "",
 						},
 					},
-					"found": {
+					"items": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -72,7 +71,6 @@ func schema_pkg_apis_scope_v0alpha1_FindScopeDashboardBindingsResults(ref common
 						},
 					},
 				},
-				Required: []string{"found"},
 			},
 		},
 		Dependencies: []string{
@@ -113,7 +111,7 @@ func schema_pkg_apis_scope_v0alpha1_FindScopeNodeChildrenResults(ref common.Refe
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeNodeChild"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeNode"),
 									},
 								},
 							},
@@ -123,7 +121,7 @@ func schema_pkg_apis_scope_v0alpha1_FindScopeNodeChildrenResults(ref common.Refe
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeNodeChild", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeNode", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -408,62 +406,6 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNode(ref common.ReferenceCallback) comm
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeNodeSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-	}
-}
-
-func schema_pkg_apis_scope_v0alpha1_ScopeNodeChild(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"nodeId": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"nodeType": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"container\"`\n - `\"leaf\"`",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"container", "leaf"},
-						},
-					},
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"description": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"linkType": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"scope\"`",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"scope"},
-						},
-					},
-					"linkId": {
-						SchemaProps: spec.SchemaProps{
-							Description: "scope (later more things)",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"nodeType", "title"},
-			},
-		},
 	}
 }
 

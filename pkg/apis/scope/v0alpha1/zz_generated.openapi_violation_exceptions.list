@@ -1,4 +1,2 @@
-API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,FindScopeDashboardBindingsResults,Found
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeNodeChild,LinkID
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeNodeChild,NodeID
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,FindScopeDashboardBindingsResults,Items
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeNodeSpec,LinkID

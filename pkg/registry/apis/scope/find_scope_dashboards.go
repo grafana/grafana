@@ -78,7 +78,7 @@ func (f *findScopeDashboardsREST) Connect(ctx context.Context, name string, opts
 		scopes := req.URL.Query()["scope"]
 		results := &scope.FindScopeDashboardBindingsResults{
 			Message: fmt.Sprintf("Find: %s", scopes),
-			Found:   make([]scope.ScopeDashboardBinding, 0),
+			Items:   make([]scope.ScopeDashboardBinding, 0),
 		}
 
 		// we can improve the performance by calling .List once per scope if they are index by labels.
@@ -86,7 +86,7 @@ func (f *findScopeDashboardsREST) Connect(ctx context.Context, name string, opts
 		for _, item := range all.Items {
 			for _, s := range scopes {
 				if item.Spec.Scope == s {
-					results.Found = append(results.Found, item)
+					results.Items = append(results.Items, item)
 				}
 			}
 		}

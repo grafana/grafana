@@ -104,12 +104,5 @@ func filterAndAppendItem(item scope.ScopeNode, parent string, query string, resu
 		return
 	}
 
-	results.Items = append(results.Items, scope.ScopeNodeChild{
-		NodeID:      item.Name,
-		NodeType:    item.Spec.NodeType,
-		Title:       item.Spec.Title,
-		Description: item.Spec.Description,
-		LinkType:    item.Spec.LinkType,
-		LinkID:      item.Spec.LinkID,
-	})
+	results.Items = append(results.Items, item)
 }

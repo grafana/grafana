@@ -78,7 +78,7 @@ type ScopeDashboardBindingList struct {
 type FindScopeDashboardBindingsResults struct {
 	metav1.TypeMeta `json:",inline"`
 
-	Found   []ScopeDashboardBinding `json:"found"`
+	Items   []ScopeDashboardBinding `json:"items,omitempty"`
 	Message string                  `json:"message,omitempty"`
 }
 
@@ -137,16 +137,5 @@ type FindScopeNodeChildrenResults struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []ScopeNodeChild `json:"items,omitempty"`
-}
-
-type ScopeNodeChild struct {
-	NodeID   string   `json:"nodeId,omitempty"`
-	NodeType NodeType `json:"nodeType"` // container | leaf
-
-	Title       string `json:"title"`
-	Description string `json:"description,omitempty"`
-
-	LinkType LinkType `json:"linkType,omitempty"` // scope (later more things)
-	LinkID   string   `json:"linkId,omitempty"`   // the k8s name
+	Items []ScopeNode `json:"items,omitempty"`
 }
