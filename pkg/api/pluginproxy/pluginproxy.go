@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 
@@ -76,7 +77,12 @@ func (proxy *PluginProxy) HandleRequest() {
 		}
 
 		if path, exists := params["*"]; exists {
+			hasSlash := strings.HasSuffix(proxy.proxyPath, "/")
 			proxy.proxyPath = path
+
+			if hasSlash && !strings.HasSuffix(path, "/") && proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagPluginProxyPreserveTrailingSlash) {
+				proxy.proxyPath += "/"
+			}
 		} else {
 			proxy.proxyPath = ""
 		}

@@ -694,4 +694,8 @@ const (
 	// FlagAlertingCentralAlertHistory
 	// Enables the new central alert history.
 	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
+
+	// FlagPluginProxyPreserveTrailingSlash
+	// Preserve plugin proxy trailing slash.
+	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 )
