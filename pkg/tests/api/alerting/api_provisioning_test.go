@@ -552,7 +552,7 @@ func TestMuteTimings(t *testing.T) {
 	})
 
 	t.Run("should update existing mute timing", func(t *testing.T) {
-		mt, _, body := apiClient.GetMuteTimingByNameWithStatus(t, anotherMuteTiming.Name)
+		mt, _, _ := apiClient.GetMuteTimingByNameWithStatus(t, anotherMuteTiming.Name)
 
 		anotherMuteTiming.TimeIntervals = []timeinterval.TimeInterval{
 			{
