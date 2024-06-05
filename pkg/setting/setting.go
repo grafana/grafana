@@ -1692,15 +1692,14 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
 	}
 
-	userLastSeenUpdateIntervalVal := valueAsString(users, "last_seen_update_interval", "15m")
-	userLastSeenUpdateIntervalDuration, err := gtime.ParseDuration(userLastSeenUpdateIntervalVal)
+	cfg.UserLastSeenUpdateInterval, err = gtime.ParseDuration(valueAsString(users, "last_seen_update_interval", "15m"))
 	if err != nil {
 		return err
 	}
 
-	cfg.UserLastSeenUpdateInterval = userLastSeenUpdateIntervalDuration
-	if cfg.UserInviteMaxLifetime < time.Minute*5 {
-		return errors.New("the minimum supported value for the `last_seen_update_interval` configuration is 5m (5 minutes)")
+	if cfg.UserLastSeenUpdateInterval < time.Minute*5 {
+		cfg.Logger.Warn("the minimum supported value for the `last_seen_update_interval` configuration is 5m (5 minutes)")
+		cfg.UserLastSeenUpdateInterval = 5
 	}
 
 	cfg.HiddenUsers = make(map[string]struct{})

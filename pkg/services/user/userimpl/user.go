@@ -301,14 +301,14 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 		return err
 	}
 
-	if !s.shouldUpdateLastSeen(s.cfg ,u.LastSeenAt) {
+	if !s.shouldUpdateLastSeen(u.LastSeenAt) {
 		return user.ErrLastSeenUpToDate
 	}
 
 	return s.store.UpdateLastSeenAt(ctx, cmd)
 }
 
-func (s *Service) shouldUpdateLastSeen(cfg *setting.Cfg,t time.Time) bool {
+func (s *Service) shouldUpdateLastSeen(t time.Time) bool {
 	return time.Since(t) > s.cfg.UserLastSeenUpdateInterval
 }
 
