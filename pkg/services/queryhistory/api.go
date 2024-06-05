@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -61,6 +62,10 @@ func (s *QueryHistoryService) createHandler(c *contextmodel.ReqContext) response
 // 401: unauthorisedError
 // 500: internalServerError
 func (s *QueryHistoryService) searchHandler(c *contextmodel.ReqContext) response.Response {
+	if (c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit) {
+		return response.Error(http.StatusUnauthorized, "Failed to get query history", nil)
+	}
+
 	timeRange := legacydata.NewDataTimeRange(c.Query("from"), c.Query("to"))
 
 	query := SearchInQueryHistoryQuery{
