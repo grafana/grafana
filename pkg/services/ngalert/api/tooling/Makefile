@@ -60,7 +60,7 @@ fix:
 	sed $(SED_INPLACE) -e 's/apimodels\.\[\]PostableApiReceiver/apimodels.TestReceiversConfigParams/' $(GENERATED_GO_MATCHERS)
 	goimports -w -v $(GENERATED_GO_MATCHERS)
 
-clean:
+clean: clean-go
 	rm spec.json
 	rm spec-stable.json
 
