@@ -5,7 +5,7 @@ go 1.22.3
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-replace github.com/docker/docker => github.com/moby/moby v25.0.5+incompatible
+replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible
 
 // contains openapi encoder fixes. remove ASAP
 replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014e3f // @grafana/grafana-as-code
@@ -69,7 +69,7 @@ require (
 	github.com/go-openapi/strfmt v0.23.0 // @grafana/alerting-squad-backend
 	github.com/go-redis/redis/v8 v8.11.5 // @grafana/grafana-backend-group
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // @grafana/grafana-backend-group
-	github.com/go-sql-driver/mysql v1.8.1 // @grafana/grafana-search-and-storage
+	github.com/go-sql-driver/mysql v1.7.1 // @grafana/grafana-search-and-storage
 	github.com/go-stack/stack v1.8.1 // @grafana/grafana-backend-group
 	github.com/gobwas/glob v0.2.3 // @grafana/grafana-backend-group
 	github.com/gogo/protobuf v1.3.2 // @grafana/alerting-squad-backend
@@ -137,8 +137,8 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // @grafana/alerting-squad-backend
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // @grafana/alerting-squad-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
-	github.com/olekukonko/tablewriter v0.0.5 // @grafana/grafana-backend-group
 	github.com/openfga/openfga v1.5.3 // @grafana/grafana-authnz-team
+	github.com/olekukonko/tablewriter v0.0.5 // @grafana/grafana-backend-group
 	github.com/patrickmn/go-cache v2.1.0+incompatible // @grafana/alerting-squad-backend
 	github.com/prometheus/alertmanager v0.27.0 // @grafana/alerting-squad-backend
 	github.com/prometheus/client_golang v1.19.0 // @grafana/alerting-squad-backend
@@ -380,7 +380,7 @@ require (
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0 // indirect
+	github.com/opencontainers/image-spec v1.0.3-0.20220512140940-7b36cea86235 // indirect
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
@@ -482,10 +482,5 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
 // Use our fork xorm. go.work currently overrides this and points to the local ./pkg/util/xorm directory.
 replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
-
-// locks for compat k8s api server compat
-replace github.com/prometheus/common => github.com/prometheus/common v0.46.0
-
-replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.18.0
 
 replace github.com/google/cel-go => github.com/google/cel-go v0.17.7

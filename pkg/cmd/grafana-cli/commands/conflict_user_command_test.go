@@ -637,7 +637,7 @@ func TestIntegrationMergeUser(t *testing.T) {
 	t.Run("should be able to merge user", func(t *testing.T) {
 		// Restore after destructive operation
 		sqlStore := db.InitTestDB(t)
-		teamSvc, err := teamimpl.ProvideService(sqlStore, setting.NewCfg(), tracing.InitializeTracerForTest())
+		teamSvc, err := teamimpl.ProvideService(sqlStore, setting.NewCfg(), tracing.InitializeTracerForTest(), nil)
 		require.NoError(t, err)
 		team1, err := teamSvc.CreateTeam(context.Background(), "team1 name", "", 1)
 		require.NoError(t, err)
