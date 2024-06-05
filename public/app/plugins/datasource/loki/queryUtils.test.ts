@@ -492,26 +492,3 @@ describe('getNodePositionsFromQuery', () => {
   });
 });
 
-describe('formatLogqlQuery', () => {
-  const ds = createLokiDatasource();
-
-  it('formats a logs query', () => {
-    expect(formatLogqlQuery('{job="grafana"}', ds)).toBe('{job="grafana"}');
-  });
-
-  it('formats a metrics query', () => {
-    expect(formatLogqlQuery('count_over_time({job="grafana"}[1m])', ds)).toBe(
-      'count_over_time(\n  {job="grafana"}\n  [1m]\n)'
-    );
-  });
-
-  it('formats a metrics query with variables', () => {
-    // mock the interpolateString return value so it passes the isValid check
-    ds.interpolateString = jest.fn(() => 'rate({job="grafana"}[1s])');
-
-    expect(formatLogqlQuery('rate({job="grafana"}[$__range])', ds)).toBe('rate(\n  {job="grafana"}\n  [$__range]\n)');
-    expect(formatLogqlQuery('rate({job="grafana"}[$__interval])', ds)).toBe(
-      'rate(\n  {job="grafana"}\n  [$__interval]\n)'
-    );
-  });
-});
