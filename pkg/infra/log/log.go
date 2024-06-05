@@ -544,3 +544,29 @@ func SetupConsoleLogger(level string) error {
 
 	return nil
 }
+
+type KeyValue struct {
+	Key   string
+	Value any
+}
+
+func NewKeyValue(key string, value any) KeyValue {
+	return KeyValue{
+		Key:   key,
+		Value: value,
+	}
+}
+
+func (kv KeyValue) Attribute() []any {
+	return []any{kv.Key, kv.Value}
+}
+
+func Attributes(kv ...KeyValue) []any {
+	attrs := []any{}
+
+	for _, p := range kv {
+		attrs = append(attrs, p.Attribute()...)
+	}
+
+	return attrs
+}

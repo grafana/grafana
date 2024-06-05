@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/o11ysemconv"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -147,11 +148,11 @@ func errorLogParams(err error) []any {
 		return []any{"error", err.Error()}
 	}
 
-	return []any{
-		"errorReason", gfErr.Reason,
-		"errorMessageID", gfErr.MessageID,
-		"error", gfErr.LogMessage,
-	}
+	return log.Attributes(
+		o11ysemconv.ErrorReason.LogKV(gfErr.Reason),
+		o11ysemconv.ErrorMessageID.LogKV(gfErr.MessageID),
+		o11ysemconv.Error.LogKV(gfErr.LogMessage),
+	)
 }
 
 var sensitiveQueryStrings = [...]string{

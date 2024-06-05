@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/o11ysemconv"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -109,7 +109,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		ctx = trace.ContextWithSpan(reqContext.Req.Context(), span)
 		traceID := tracing.TraceIDFromContext(ctx, false)
 		if traceID != "" {
-			reqContext.Logger = reqContext.Logger.New("traceID", traceID)
+			reqContext.Logger = reqContext.Logger.New(o11ysemconv.TraceID.LogAttribute(traceID))
 		}
 
 		identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
@@ -124,11 +124,15 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.IsRenderCall = identity.IsAuthenticatedBy(login.RenderModule)
 		}
 
-		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
+		reqContext.Logger = reqContext.Logger.New(log.Attributes(
+			o11ysemconv.UserID.LogKV(reqContext.UserID),
+			o11ysemconv.OrgID.LogKV(reqContext.OrgID),
+			o11ysemconv.Username.LogKV(reqContext.Login),
+		))
 		span.AddEvent("user", trace.WithAttributes(
-			attribute.String("uname", reqContext.Login),
-			attribute.Int64("orgId", reqContext.OrgID),
-			attribute.Int64("userId", reqContext.UserID),
+			o11ysemconv.Username.SpanAttribute(reqContext.Login),
+			o11ysemconv.OrgID.SpanAttribute(reqContext.OrgID),
+			o11ysemconv.UserID.SpanAttribute(reqContext.UserID),
 		))
 
 		if h.Cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
