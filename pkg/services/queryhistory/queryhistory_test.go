@@ -74,8 +74,8 @@ func testScenario(t *testing.T, desc string, isViewer bool, fn func(t *testing.T
 		require.NoError(t, err)
 
 		var role roletype.RoleType
-		if (isViewer)  {
-			role = org.RoleViewer 
+		if isViewer {
+			role = org.RoleViewer
 		} else {
 			role = org.RoleEditor
 		}

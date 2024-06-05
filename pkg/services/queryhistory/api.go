@@ -62,7 +62,7 @@ func (s *QueryHistoryService) createHandler(c *contextmodel.ReqContext) response
 // 401: unauthorisedError
 // 500: internalServerError
 func (s *QueryHistoryService) searchHandler(c *contextmodel.ReqContext) response.Response {
-	if (c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit) {
+	if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit {
 		return response.Error(http.StatusUnauthorized, "Failed to get query history", nil)
 	}
 
