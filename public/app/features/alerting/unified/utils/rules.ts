@@ -296,14 +296,19 @@ export const getNumberEvaluationsToStartAlerting = (forDuration: string, current
 };
 
 // extract the rule group location from a combined rule type
+// @TODO test these functions
 export function getRuleGroupLocationFromCombinedRule(rule: CombinedRule): RuleGroupIdentifier {
   const ruleSourceName = isGrafanaRulesSource(rule.namespace.rulesSource)
     ? rule.namespace.rulesSource
     : rule.namespace.rulesSource.name;
 
+  const namespace = isGrafanaRulerRule(rule.rulerRule)
+    ? rule.rulerRule.grafana_alert.namespace_uid
+    : rule.namespace.name;
+
   return {
     ruleSourceName,
-    namespace: rule.namespace.uid ?? rule.namespace.name,
+    namespace,
     group: rule.group.name,
   };
 }
