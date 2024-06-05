@@ -355,7 +355,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             streaming: this.streamingEnablement,
           });
 
-          if (this.streamingEnablement?.search && this.isFeatureAvailable(FeatureName.streaming) && config.liveEnabled) {
+          if (
+            this.streamingEnablement?.search &&
+            this.isFeatureAvailable(FeatureName.streaming) &&
+            config.liveEnabled
+          ) {
             subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValueFromFilters));
           } else {
             subQueries.push(
