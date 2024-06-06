@@ -315,7 +315,8 @@ export function getRuleGroupLocationFromCombinedRule(rule: CombinedRule): RuleGr
 
 export function getRuleGroupLocationFromRuleWithLocation(rule: RuleWithLocation): RuleGroupIdentifier {
   const ruleSourceName = rule.ruleSourceName;
-  const namespace = rule.namespace_uid ?? rule.namespace;
+
+  const namespace = isGrafanaRulerRule(rule.rule) ? rule.rule.grafana_alert.namespace_uid : rule.namespace;
   const group = rule.group.name;
 
   return {

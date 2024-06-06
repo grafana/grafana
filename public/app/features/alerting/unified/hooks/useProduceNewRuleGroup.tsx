@@ -56,7 +56,7 @@ export function useProduceNewRuleGroup() {
 export function usePauseRuleInGroup() {
   const [produceNewRuleGroup, updateState] = useProduceNewRuleGroup();
 
-  const updateFn = useCallback(
+  const pauseFn = useCallback(
     async (ruleGroup: RuleGroupIdentifier, rule: RulerGrafanaRuleDTO, pause: boolean) => {
       const uid = rule.grafana_alert.uid;
       const action = pauseRuleAction({ uid, pause });
@@ -66,7 +66,7 @@ export function usePauseRuleInGroup() {
     [produceNewRuleGroup]
   );
 
-  return [updateFn, updateState] as const;
+  return [pauseFn, updateState] as const;
 }
 
 export function useAddRuleInGroup() {

@@ -7,6 +7,7 @@ import {
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from '../../../../../../types/unified-alerting-dto';
+import { AlertRuleUpdated } from '../../../api/alertRuleApi';
 import { grafanaRulerRule, namespaceByUid, namespaces } from '../../alertRuleApi';
 
 export const rulerRulesHandler = () => {
@@ -20,18 +21,40 @@ export const rulerRulesHandler = () => {
   });
 };
 
-export const rulerRuleNamespaceHandler = () => {
-  return http.get<{ folderUid: string }>(`/api/ruler/grafana/api/v1/rules/:folderUid`, ({ params: { folderUid } }) => {
-    // This mimic API response as closely as possible - Invalid folderUid returns 403
-    const namespace = namespaces[folderUid];
-    if (!namespace) {
-      return new HttpResponse(null, { status: 403 });
-    }
+export const rulerRuleNamespaceHandlers = () => {
+  const fetchNamespace = http.get<{ folderUid: string }>(
+    `/api/ruler/grafana/api/v1/rules/:folderUid`,
+    ({ params: { folderUid } }) => {
+      // This mimic API response as closely as possible - Invalid folderUid returns 403
+      const namespace = namespaces[folderUid];
+      if (!namespace) {
+        return new HttpResponse(null, { status: 403 });
+      }
 
-    return HttpResponse.json<RulerRulesConfigDTO>({
-      [namespaceByUid[folderUid].name]: namespaces[folderUid],
-    });
-  });
+      return HttpResponse.json<RulerRulesConfigDTO>({
+        [namespaceByUid[folderUid].name]: namespaces[folderUid],
+      });
+    }
+  );
+
+  const updateNamespace = http.post<{ folderUid: string }>(
+    `/api/ruler/grafana/api/v1/rules/:folderUid`,
+    ({ params: { folderUid } }) => {
+      // This mimic API response as closely as possible.
+      // Invalid folderUid returns 403 but invalid group will return 202 with empty list of rules
+      const namespace = namespaces[folderUid];
+      if (!namespace) {
+        return new HttpResponse(null, { status: 403 });
+      }
+
+      return HttpResponse.json<AlertRuleUpdated>({
+        message: 'updated',
+        updated: [],
+      });
+    }
+  );
+
+  return [fetchNamespace, updateNamespace];
 };
 
 export const rulerRuleGroupHandler = () => {
@@ -69,5 +92,5 @@ export const rulerRuleHandler = () => {
   });
 };
 
-const handlers = [rulerRulesHandler(), rulerRuleNamespaceHandler(), rulerRuleGroupHandler(), rulerRuleHandler()];
+const handlers = [rulerRulesHandler(), ...rulerRuleNamespaceHandlers(), rulerRuleGroupHandler(), rulerRuleHandler()];
 export default handlers;
