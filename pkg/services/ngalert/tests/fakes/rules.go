@@ -210,6 +210,9 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 		if len(q.RuleGroups) > 0 && !slices.Contains(q.RuleGroups, r.RuleGroup) {
 			continue
 		}
+		if len(q.RuleUIDs) > 0 && !slices.Contains(q.RuleUIDs, r.UID) {
+			continue
+		}
 
 		ruleList = append(ruleList, r)
 	}

@@ -7,15 +7,14 @@ interface IncidentsPluginConfigDto {
   isIncidentCreated: boolean;
 }
 
-const getProxyApiUrl = (path: string) =>
-  `/api/plugins/grafana-incident-app/resources/${SupportedPlugin.Incident}${path}`;
+const getProxyApiUrl = (path: string) => `/api/plugins/${SupportedPlugin.Incident}/resources${path}`;
 
 export const incidentsApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getIncidentsPluginConfig: build.query<IncidentsPluginConfigDto, void>({
-      query: (integration) => ({
+      query: () => ({
         url: getProxyApiUrl('/api/ConfigurationTrackerService.GetConfigurationTracker'),
-        data: integration,
+        data: {},
         method: 'POST',
         showErrorAlert: false,
       }),

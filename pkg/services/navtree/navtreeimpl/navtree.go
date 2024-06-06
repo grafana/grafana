@@ -356,10 +356,10 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 
 		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestore) && hasAccess(ac.EvalPermission(dashboards.ActionDashboardsDelete)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text:     "Trash",
-				SubTitle: "Any items remaining in the Trash for more than 30 days will be automatically deleted",
-				Id:       "dashboards/trash",
-				Url:      s.cfg.AppSubURL + "/dashboard/trash",
+				Text:     "Recently Deleted",
+				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
+				Id:       "dashboards/recentlyDeleted",
+				Url:      s.cfg.AppSubURL + "/dashboard/recentlyDeleted",
 			})
 		}
 	}
