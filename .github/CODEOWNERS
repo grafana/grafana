@@ -148,7 +148,6 @@
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
 /pkg/tests/api/correlations/ @grafana/explore-squad
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
-/pkg/tsdb/legacydata/ @grafana/grafana-backend-group
 /pkg/tsdb/opentsdb/ @grafana/grafana-backend-group
 /pkg/util/ @grafana/grafana-backend-group
 /pkg/web/ @grafana/grafana-backend-group
