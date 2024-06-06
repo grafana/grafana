@@ -1,11 +1,7 @@
 import { e2e } from '../utils';
 import { fromBaseUrl } from '../utils/support/url';
 
-const options = {
-  defaultCommandTimeout: 5 * 1000,
-};
-
-describe('Keyboard shortcuts', options, () => {
+describe('Keyboard shortcuts', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 
@@ -26,7 +22,7 @@ describe('Keyboard shortcuts', options, () => {
     e2e.components.Panels.Panel.title('Latest from the blog').should('be.visible');
   });
 
-  it('ctrl+z should zoom out the time range', options, () => {
+  it('ctrl+z should zoom out the time range', () => {
     cy.get('body').type('ge');
     e2e.pages.Explore.General.container().should('be.visible');
 
@@ -37,14 +33,13 @@ describe('Keyboard shortcuts', options, () => {
       zone: 'Browser',
     });
     e2e.components.TimePicker.fromField().should('not.exist');
-    cy.wait(500); // waiting is anti-pattern, but it's inconsistent for me locally without this
 
     cy.get('body').type('{ctrl}z');
     let expectedRange = `Time range selected: 2024-06-05 10:03:30 to 2024-06-05 10:07:30`;
     e2e.components.TimePicker.openButton().should('have.attr', 'aria-label', expectedRange);
   });
 
-  it('multiple time range shortcuts should work', options, () => {
+  it('multiple time range shortcuts should work', () => {
     cy.get('body').type('ge');
     e2e.pages.Explore.General.container().should('be.visible');
 
@@ -55,7 +50,6 @@ describe('Keyboard shortcuts', options, () => {
       zone: 'Browser',
     });
     e2e.components.TimePicker.fromField().should('not.exist');
-    cy.wait(500); // waiting is anti-pattern, but it's inconsistent for me locally without this
 
     cy.log('Trying one shift-left');
     cy.get('body').type('t{leftarrow}');
