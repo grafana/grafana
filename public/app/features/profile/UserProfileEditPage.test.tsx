@@ -22,6 +22,12 @@ jest.mock('app/core/hooks/useQueryParams', () => ({
   useQueryParams: () => [{}],
 }));
 
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: () => ({
+    getDashboardDTO: jest.fn().mockResolvedValue({}),
+  }),
+}));
+
 const defaultProps: Props = {
   ...initialUserState,
   user: {

@@ -1270,6 +1270,7 @@
       "new-alert-rule": "Nouvelle règle d'alerte",
       "query": "Requête",
       "remove": "Supprimer",
+      "replace-library-panel": "",
       "share": "Partager",
       "show-legend": "Afficher la légende",
       "unlink-library-panel": "Dissocier le panneau Bibliothèque",
@@ -1478,6 +1479,11 @@
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
   },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Actualisation automatique désactivée. Choisir un intervalle de temps d'actualisation",
@@ -1664,6 +1670,21 @@
     "empty-state": {
       "button-title": "",
       "title": ""
+    },
+    "table": {
+      "add-silence-button": "",
+      "edit-button": "",
+      "expired-silences": "",
+      "no-matching-silences": "",
+      "noConfig": "",
+      "recreate-button": "",
+      "unsilence-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "",
+      "state": ""
     }
   },
   "snapshot": {

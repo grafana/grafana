@@ -104,6 +104,10 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				URL:  "http://www.test.com",
 				Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
 			},
+			{
+				Path: "mypath",
+				URL:  "https://example.com/api/v1/",
+			},
 		}
 
 		ds := &datasources.DataSource{
@@ -207,6 +211,16 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			content, err := io.ReadAll(req.Body)
 			require.NoError(t, err)
 			require.Equal(t, `{ "url": "https://dynamic.grafana.com", "secret": "123"	}`, string(content))
+		})
+
+		t.Run("When matching route path ending with a slash", func(t *testing.T) {
+			ctx, req := setUp()
+			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "mypath/some-route/")
+			require.NoError(t, err)
+			proxy.matchedRoute = routes[6]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, proxy.cfg)
+
+			assert.Equal(t, "https://example.com/api/v1/some-route/", req.URL.String())
 		})
 
 		t.Run("Validating request", func(t *testing.T) {
