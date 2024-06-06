@@ -14,6 +14,7 @@ import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabl
 import { GrafanaApp } from './app';
 import { AppChrome } from './core/components/AppChrome/AppChrome';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
+import { SplitPaneWrapper } from './core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { ModalsContextProvider } from './core/context/ModalsContextProvider';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
@@ -106,43 +107,51 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 actions={[]}
                 options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
               >
-                <Router history={locationService.getHistory()}>
-                  <CompatRouter>
-                    <ModalsContextProvider>
-                      <GlobalStyles />
-                      <div className="grafana-app">
-                        <AppChrome>
-                          {pageBanners.map((Banner, index) => (
-                            <Banner key={index.toString()} />
-                          ))}
-                          <AngularRoot />
-                          <AppNotificationList />
-                          {ready && this.renderRoutes()}
-                          {bodyRenderHooks.map((Hook, index) => (
-                            <Hook key={index.toString()} />
-                          ))}
-                        </AppChrome>
-                      </div>
-                      <LiveConnectionWarning />
-                      <ModalRoot />
-                      <PortalContainer />
-                    </ModalsContextProvider>
-                  </CompatRouter>
-                </Router>
-                {secondAppId && (
-                  <MemoryRouter>
-                    <CompatRouter>
-                      <ModalsContextProvider>
-                        <GlobalStyles />
-                        <div className="grafana-app">
+                <div className="grafana-app">
+                  <SplitPaneWrapper
+                    splitOrientation="vertical"
+                    paneSize={0.5}
+                    minSize={200}
+                    maxSize={200 * -1}
+                    primary="second"
+                    splitVisible={!!secondAppId}
+                    paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
+                  >
+                    <Router history={locationService.getHistory()}>
+                      <CompatRouter>
+                        <ModalsContextProvider>
+                          <GlobalStyles />
                           <AppChrome>
-                            <AppRootPage pluginId={secondAppId} />
+                            {pageBanners.map((Banner, index) => (
+                              <Banner key={index.toString()} />
+                            ))}
+                            <AngularRoot />
+                            <AppNotificationList />
+                            {ready && this.renderRoutes()}
+                            {bodyRenderHooks.map((Hook, index) => (
+                              <Hook key={index.toString()} />
+                            ))}
                           </AppChrome>
-                        </div>
-                      </ModalsContextProvider>
-                    </CompatRouter>
-                  </MemoryRouter>
-                )}
+                          <LiveConnectionWarning />
+                          <ModalRoot />
+                          <PortalContainer />
+                        </ModalsContextProvider>
+                      </CompatRouter>
+                    </Router>
+                    {secondAppId && (
+                      <MemoryRouter>
+                        <CompatRouter>
+                          <ModalsContextProvider>
+                            <GlobalStyles />
+                            <AppChrome>
+                              <AppRootPage pluginId={secondAppId} />
+                            </AppChrome>
+                          </ModalsContextProvider>
+                        </CompatRouter>
+                      </MemoryRouter>
+                    )}
+                  </SplitPaneWrapper>
+                </div>
               </KBarProvider>
             </ThemeProvider>
           </GrafanaContext.Provider>
