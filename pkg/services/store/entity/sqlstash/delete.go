@@ -16,6 +16,10 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
 	defer span.End()
 
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
 	key, err := entity.ParseKey(r.Key)
 	if err != nil {
 		return nil, fmt.Errorf("delete entity: parse entity key: %w", err)
