@@ -35,13 +35,13 @@ Policies have a tree structure and each policy can have one or more child polici
 
 Each alert is evaluated by the default policy and subsequently by each child policy.
 
-If the **Continue matching subsequent sibling nodes** option is enabled for a child policy, evaluation continues even after one or more matches. A parent policy’s configuration settings and contact point information govern the behavior of an alert that does not match any of the nested policies. A default policy governs any alert that does not match a nested policy.
+If the **Continue matching subsequent sibling nodes** option is enabled for a child policy, evaluation continues even after one or more matches. A parent policy’s configuration settings and contact point information govern the behavior of an alert that does not match any of the child policies. A default policy governs any alert that does not match a child policy.
 
 You can configure Grafana-managed notification policies as well as notification policies for an external Alertmanager data source.
 
 For more information on notification policies, refer to [fundamentals of Notification Policies](ref:notification-policies).
 
-## Edit default notification policy
+## Edit the default notification policy
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
@@ -57,14 +57,14 @@ For more information on notification policies, refer to [fundamentals of Notific
 
 ## Add a child policy
 
-To create a new notification policy, you need to follow its tree structure. New policies created on the trunk of the tree (default policy), are the tree branches. And, subsequently, each branch can bear their own child policies. This is why you always add a new new policy under either the default policy, or under a already nested policy.
+Child policies are always added under the default policy and are automatically added to the end of the tree structure. If you want to choose where to position your policy, see the section on **Add a sibling policy**.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
 1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the **Grafana Alertmanager** is selected.
-1. To add a top level specific policy, go to the specific routing section (either to the default policy, or to another existing policy in which you would like to add a new nested policy) and click **+New child policy**.
+1. Click **+New child policy** from the default policy.
 1. In the Matching labels section, add one or more rules for matching alert labels.
-1. In the **Contact point** dropdown, select the contact point to send notification to if alert matches only this specific policy and not any of the nested policies.
+1. In the **Contact point** dropdown, select the contact point to send notification to if alert matches only this specific policy and not any of the child policies.
 1. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching sibling policies even after the alert matched the current policy. When this option is enabled, you can get more than one notification for one alert.
 1. Optionally, enable **Override grouping** to specify the same grouping as the default policy. If this option is not enabled, the default policy grouping is used.
 1. Optionally, enable **Override general timings** to override the timing options configured in the group notification policy.
@@ -74,12 +74,12 @@ To create a new notification policy, you need to follow its tree structure. New 
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
-1. Expand the specific policy you want to update.
-1. Click **Add new policy** -> **Insert above** or **Insert below**.
+1. Find the child policy you want to create a sibling for.
+1. Click **Add new policy** -> **New sibling above** or **New sibling below**.
 
    Notification policies are evaluated from top to bottom, so it is key to be able to choose which notification policy receives alerts first. Adding sibling notification policies instead of always inserting a child policy as well as being able tp choose where to insert is key to managing where your alerts go.
 
-1. Click **Save policy** to save your changes.
+4. Click **Save policy** to save your changes.
 
 ## Search for policies
 
@@ -92,15 +92,11 @@ To search by contact point simply select a contact point from the **Search by co
 
 To search by label matchers simply enter a valid matcher in the **Search by matchers** input field. Multiple matchers can be combined with a comma (`,`).
 
-An example of a valid matchers search input is:
+It is important to note that all matched policies are **exact** matches. Grafana supports regular expressions for creating label matchers. It does not support regular expression or partial matching in the search for policies.
 
-`severity=high, region=~EMEA|NASA`
+## Mute timings
 
-> All matched policies are **exact** matches. Regex-style or partial matching is currently not supported.
-
-## Caveat
-
-Mute timings are not inherited from a parent notification policy, they have to be configured in full on each level.
+Mute timings are not inherited from a parent notification policy. They have to be configured in full on each level.
 
 ## Example
 
