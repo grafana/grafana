@@ -25,14 +25,14 @@ type AuthZParams struct {
 // ServiceAuthzFuncOverride is an interface that can be implemented by a service to override the default
 // authorization behavior.
 type ServiceAuthzFuncOverride interface {
-	AuthzFuncOverride(ctx context.Context, method string) (context.Context, error)
+	AuthZFuncOverride(ctx context.Context, method string) (context.Context, error)
 }
 
 func AuthZUnaryInterceptor(authorizer Authorizer) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 		var newCtx context.Context
 		if ovverideSrv, ok := info.Server.(ServiceAuthzFuncOverride); ok {
-			newCtx, err = ovverideSrv.AuthzFuncOverride(ctx, info.FullMethod)
+			newCtx, err = ovverideSrv.AuthZFuncOverride(ctx, info.FullMethod)
 			if err != nil {
 				return nil, err
 			}
@@ -62,7 +62,7 @@ func AuthZStreamInterceptor(authorizer Authorizer) grpc.StreamServerInterceptor 
 		var newCtx context.Context
 		var err error
 		if overrideSrv, ok := srv.(ServiceAuthzFuncOverride); ok {
-			newCtx, err = overrideSrv.AuthzFuncOverride(stream.Context(), info.FullMethod)
+			newCtx, err = overrideSrv.AuthZFuncOverride(stream.Context(), info.FullMethod)
 			authzStream.skipAuthZ = true
 		} else {
 			newCtx = stream.Context()

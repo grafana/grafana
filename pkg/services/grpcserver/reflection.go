@@ -25,8 +25,8 @@ func (s *reflectionServer) AuthFuncOverride(ctx context.Context, _ string) (cont
 	return ctx, nil
 }
 
-// AuthzFuncOverride no authz for reflection service.
-func (s *reflectionServer) AuthzFuncOverride(ctx context.Context, _ string) (context.Context, error) {
+// AuthZFuncOverride no authz for reflection service.
+func (s *reflectionServer) AuthZFuncOverride(ctx context.Context, _ string) (context.Context, error) {
 	return ctx, nil
 }
 
