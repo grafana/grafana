@@ -57,18 +57,20 @@ For more information on notification policies, refer to [fundamentals of Notific
 
 ## Add a child policy
 
-Child policies are always added under the default policy and are automatically added to the end of the tree structure. If you want to choose where to position your policy, see the section on **Add a sibling policy**.
+To create a new notification policy, you need to follow its tree structure. New policies created on the trunk of the tree (default policy), are the tree branches. And, subsequently, each branch can bear their own child policies. This is why you will always be adding a new child policy under either the default policy, or under an existing child policy.
+
+If you want to choose where to position your policy, see the section on **Add a sibling policy**.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
-1. Click **Notification policies**.
-1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the **Grafana Alertmanager** is selected.
-1. Click **+New child policy** from the default policy.
-1. In the Matching labels section, add one or more rules for matching alert labels.
-1. In the **Contact point** dropdown, select the contact point to send notification to if alert matches only this specific policy and not any of the child policies.
-1. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching sibling policies even after the alert matched the current policy. When this option is enabled, you can get more than one notification for one alert.
-1. Optionally, enable **Override grouping** to specify the same grouping as the default policy. If this option is not enabled, the default policy grouping is used.
-1. Optionally, enable **Override general timings** to override the timing options configured in the group notification policy.
-1. Click **Save policy** to save your changes.
+2. Click **Notification policies**.
+3. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the **Grafana Alertmanager** is selected.
+4. Click **+New child policy** from the default policy.
+5. In the Matching labels section, add one or more rules for matching alert labels.
+6. In the **Contact point** dropdown, select the contact point to send notification to if alert matches only this specific policy and not any of the child policies.
+7. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching sibling policies even after the alert matched the current policy. When this option is enabled, you can get more than one notification for one alert.
+8. Optionally, enable **Override grouping** to specify the same grouping as the default policy. If this option is not enabled, the default policy grouping is used.
+9. Optionally, enable **Override general timings** to override the timing options configured in the group notification policy.
+10. Click **Save policy** to save your changes.
 
 ## Add a sibling policy
 
