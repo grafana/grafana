@@ -152,13 +152,9 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	if mt.Version != "" {
-		curVersion := calculateMuteTimeIntervalFingerprint(old)
-		if curVersion != mt.Version {
-			return definitions.MuteTimeInterval{}, ErrVersionConflict.Errorf("provided version %s of time interval %s does not match current version %s", mt.Version, mt.Name, curVersion)
-		}
-	} else if mt.Provenance != definitions.Provenance(models.ProvenanceFile) {
-		svc.log.Debug("ignoring optimistic concurrency check because version was not provided", "timeInterval", mt.Name, "operation", "update")
+	err = svc.checkOptimisticConcurrency(old, models.Provenance(mt.Provenance), mt.Version, "update")
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
 	}
 
 	revision.cfg.AlertmanagerConfig.MuteTimeIntervals[idx] = mt.MuteTimeInterval
@@ -204,18 +200,15 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 		return ErrTimeIntervalInUse.Errorf("")
 	}
 	for i, existing := range revision.cfg.AlertmanagerConfig.MuteTimeIntervals {
-		if name == existing.Name {
-			if version != "" {
-				currentVersion := calculateMuteTimeIntervalFingerprint(existing)
-				if currentVersion != version {
-					return ErrVersionConflict.Errorf("provided version %s of time interval %s does not match current version %s", version, name, currentVersion)
-				}
-			} else if provenance != definitions.Provenance(models.ProvenanceFile) {
-				svc.log.Debug("ignoring optimistic concurrency check because version was not provided", "timeInterval", name, "operation", "delete")
-			}
-			intervals := revision.cfg.AlertmanagerConfig.MuteTimeIntervals
-			revision.cfg.AlertmanagerConfig.MuteTimeIntervals = append(intervals[:i], intervals[i+1:]...)
+		if name != existing.Name {
+			continue
 		}
+		err = svc.checkOptimisticConcurrency(existing, models.Provenance(provenance), version, "delete")
+		if err != nil {
+			return err
+		}
+		intervals := revision.cfg.AlertmanagerConfig.MuteTimeIntervals
+		revision.cfg.AlertmanagerConfig.MuteTimeIntervals = append(intervals[:i], intervals[i+1:]...)
 	}
 
 	return svc.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -308,4 +301,19 @@ func calculateMuteTimeIntervalFingerprint(interval config.MuteTimeInterval) stri
 		}
 	}
 	return fmt.Sprintf("%016x", sum.Sum64())
+}
+
+func (svc *MuteTimingService) checkOptimisticConcurrency(current config.MuteTimeInterval, provenance models.Provenance, desiredVersion string, action string) error {
+	if desiredVersion == "" {
+		if provenance != models.ProvenanceFile {
+			// if version is not specified and it's not a file provisioning, emit a log message to reflect that optimistic concurrency is disabled for this request
+			svc.log.Debug("ignoring optimistic concurrency check because version was not provided", "timeInterval", current.Name, "operation", action)
+		}
+		return nil
+	}
+	currentVersion := calculateMuteTimeIntervalFingerprint(current)
+	if currentVersion != desiredVersion {
+		return ErrVersionConflict.Errorf("provided version %s of time interval %s does not match current version %s", desiredVersion, current.Name, currentVersion)
+	}
+	return nil
 }
