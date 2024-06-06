@@ -667,7 +667,7 @@ export function guessTextBoundingBox(
       } else {
         lines.push({
           width: lineWidth,
-          line: currentLine
+          line: currentLine,
         });
 
         currentLine = currentWord;
@@ -676,7 +676,7 @@ export function guessTextBoundingBox(
     }
 
     // We can have extra long strings, for these
-    // we estimate if it overshoots the line by 
+    // we estimate if it overshoots the line by
     // at least one other line
     for (let i = 0; i < lines.length; i++) {
       if (lines[i].width > width) {
