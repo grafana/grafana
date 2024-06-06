@@ -17,6 +17,8 @@ import { contextSrv } from 'app/core/core';
 import { DashboardGridItem } from 'app/features/dashboard-scene/scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from 'app/features/dashboard-scene/scene/DashboardScene';
 
+import { ShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
+
 import ShareAlerts from './ShareAlerts';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
@@ -106,5 +108,11 @@ async function setup(panelState?: Partial<VizPanelState>, dashboardState?: Parti
     ...dashboardState,
   });
 
-  await act(async () => render(<ShareAlerts dashboard={dashboard} />));
+  await act(async () =>
+    render(
+      <ShareDrawerContext.Provider value={{ dashboard }}>
+        <ShareAlerts />
+      </ShareDrawerContext.Provider>
+    )
+  );
 }
