@@ -42,7 +42,7 @@ export function isAlertStateWithReason(
   return state !== null && state !== undefined && !propAlertingRuleStateValues.includes(state);
 }
 
-export function getReasonFromState(state: GrafanaAlertStateWithReason): string {
+export function mapStateWithReasonToReason(state: GrafanaAlertStateWithReason): string {
   const match = state.match(/\((.*?)\)/);
   return match ? match[1] : '';
 }

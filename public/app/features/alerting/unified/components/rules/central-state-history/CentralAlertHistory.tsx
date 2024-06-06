@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { hash } from 'immutable';
 import React, { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMeasure } from 'react-use';
@@ -24,10 +25,10 @@ import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound'
 import { Trans, t } from 'app/core/internationalization';
 import {
   GrafanaAlertStateWithReason,
-  getReasonFromState,
   isAlertStateWithReason,
   isGrafanaAlertState,
   mapStateWithReasonToBaseState,
+  mapStateWithReasonToReason,
 } from 'app/types/unified-alerting-dto';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
@@ -113,8 +114,8 @@ function HistoryLogEvents({ logRecords }: HistoryLogEventsProps) {
   // display log records
   return (
     <ul>
-      {logRecords.map((record, index) => {
-        return <EventRow key={index} record={record} />;
+      {logRecords.map((record) => {
+        return <EventRow key={record.timestamp + hash(record.line.labels ?? {})} record={record} />;
       })}
     </ul>
   );
@@ -241,10 +242,10 @@ function EventState({ state }: { state: GrafanaAlertStateWithReason }) {
       </Tooltip>
     );
   }
-  const stateWithReason = mapStateWithReasonToBaseState(state);
-  const reason = getReasonFromState(state);
+  const baseState = mapStateWithReasonToBaseState(state);
+  const reason = mapStateWithReasonToReason(state);
 
-  switch (stateWithReason) {
+  switch (baseState) {
     case 'Normal':
       return (
         <Tooltip content={Boolean(reason) ? reason : ''}>
