@@ -5,6 +5,7 @@ import { SelectableValue, toIconName } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Icon, Label, Select, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 import {
   publicDashboardApi,
   useUpdatePublicDashboardAccessMutation,
@@ -63,7 +64,9 @@ export default function ShareTypeSelect({
   return (
     <div>
       <Stack justifyContent="space-between">
-        <Label description={value.description}>Link access</Label>
+        <Label description={value.description}>
+          <Trans i18nKey="public-dashboard.share-configuration.share-type-label">Link access</Trans>
+        </Label>
         {isLoading && <Spinner />}
       </Stack>
       <Stack direction="row" gap={1} alignItems="center">
@@ -88,7 +91,7 @@ export default function ShareTypeSelect({
           </>
         )}
         <Text element="p" variant="bodySmall" color="disabled">
-          can access
+          <Trans i18nKey="public-dashboard.share-configuration.access-label">can access</Trans>
         </Text>
       </Stack>
     </div>

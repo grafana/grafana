@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Checkbox, FieldSet, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { PublicDashboardShareType } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -46,10 +47,10 @@ export default function CreatePublicSharing({ hasError }: { hasError: boolean })
           </div>
           <Stack direction="row" gap={1} alignItems="center">
             <Button type="submit" disabled={!isValid}>
-              Accept
+              <Trans i18nKey="public-dashboard.public-sharing.accept-button">Accept</Trans>
             </Button>
             <Button variant="secondary" onClick={dashboard.closeModal}>
-              Cancel
+              <Trans i18nKey="public-dashboard.public-sharing.cancel-button">Cancel</Trans>
             </Button>
             {isLoading && <Spinner />}
           </Stack>

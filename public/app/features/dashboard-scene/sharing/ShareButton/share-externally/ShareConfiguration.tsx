@@ -6,6 +6,7 @@ import { sceneGraph } from '@grafana/scenes';
 import { FieldSet, Icon, Label, Spinner, Stack, Text, TimeRangeInput, Tooltip } from '@grafana/ui';
 import { Switch } from '@grafana/ui/src/components/Switch/Switch';
 import { contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 import { publicDashboardApi, useUpdatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { ConfigPublicDashboardForm } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -57,7 +58,9 @@ export default function ShareConfiguration() {
 
   return (
     <Stack direction="column" gap={2}>
-      <Text element="p">Settings</Text>
+      <Text element="p">
+        <Trans i18nKey="public-dashboard.share-configuration.settings-label">Settings</Trans>
+      </Text>
       <Stack justifyContent="space-between">
         <form onSubmit={handleSubmit(onUpdate)}>
           <FieldSet disabled={disableForm}>
@@ -80,7 +83,11 @@ export default function ShareConfiguration() {
                   control={control}
                   name="isTimeSelectionEnabled"
                 />
-                <Label description="Allow people to change time range">Enable time range</Label>
+                <Label description="Allow people to change time range">
+                  <Trans i18nKey="public-dashboard.share-configuration.enable-time-range-label">
+                    Enable time range
+                  </Trans>
+                </Label>
               </Stack>
               <Stack gap={1}>
                 <Controller
@@ -101,7 +108,9 @@ export default function ShareConfiguration() {
                   name="isAnnotationsEnabled"
                 />
                 <Label style={{ flex: 1 }} description="Present annotations on this Dashboard">
-                  Display annotations
+                  <Trans i18nKey="public-dashboard.share-configuration.display-annotations-label">
+                    Display annotations
+                  </Trans>
                 </Label>
               </Stack>
               <Stack gap={1} alignItems="center">

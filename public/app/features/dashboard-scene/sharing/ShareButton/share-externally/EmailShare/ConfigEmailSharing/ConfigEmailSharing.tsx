@@ -4,8 +4,8 @@ import { useForm } from 'react-hook-form';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Button, Divider, Field, FieldSet, Icon, Stack, Tooltip } from '@grafana/ui';
 import { Input } from '@grafana/ui/src/components/Input/Input';
-import { Trans, t } from '@grafana/ui/src/utils/i18n';
 import { contextSrv } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 import { publicDashboardApi, useAddRecipientMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { validEmailRegex } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -55,7 +55,7 @@ export const ConfigEmailSharing = () => {
           <Field
             label={
               <Stack gap={1} alignItems="center">
-                <span>Invite</span>
+                <Trans i18nKey="public-dashboard.email-sharing.invite-button">Invite</Trans>
                 <Tooltip
                   placement="right"
                   content="This dashboard contains sensitive data. By using this feature you will be sharing with external people."

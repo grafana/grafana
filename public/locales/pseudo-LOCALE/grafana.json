@@ -1379,11 +1379,15 @@
       "revoke-title": "Ŗęvőĸę pūþľįč ŮŖĿ"
     },
     "email-sharing": {
+      "accept-button": "Åččępŧ",
+      "alert-text": "Ēƒƒęčŧįvę įmmęđįäŧęľy, şĥäřįŉģ pūþľįč đäşĥþőäřđş þy ęmäįľ įŉčūřş ä čőşŧ pęř äčŧįvę ūşęř. Ğőįŉģ ƒőřŵäřđ, yőū’ľľ þę přőmpŧęđ ƒőř päymęŉŧ ŵĥęŉęvęř yőū äđđ ŉęŵ ūşęřş ŧő yőūř đäşĥþőäřđ.",
+      "cancel-button": "Cäŉčęľ",
       "input-invalid-email-text": "Ĩŉväľįđ ęmäįľ",
       "input-required-email-text": "Ēmäįľ įş řęqūįřęđ",
       "invite-button": "Ĩŉvįŧę",
       "invite-field-desc": "Ĩŉvįŧę pęőpľę þy ęmäįľ",
       "invite-field-label": "Ĩŉvįŧę",
+      "learn-more-button": "Ŀęäřŉ mőřę",
       "resend-button": "Ŗęşęŉđ",
       "resend-button-title": "Ŗęşęŉđ",
       "revoke-button": "Ŗęvőĸę",
@@ -1398,6 +1402,12 @@
       "unsupported-data-source-alert-title": "Ůŉşūppőřŧęđ đäŧä şőūřčęş",
       "unsupported-template-variable-alert-desc": "Ŧĥįş pūþľįč đäşĥþőäřđ mäy ŉőŧ ŵőřĸ şįŉčę įŧ ūşęş ŧęmpľäŧę väřįäþľęş",
       "unsupported-template-variable-alert-title": "Ŧęmpľäŧę väřįäþľęş äřę ŉőŧ şūppőřŧęđ"
+    },
+    "public-sharing": {
+      "accept-button": "Åččępŧ",
+      "alert-text": "Ŝĥäřįŉģ ŧĥįş đäşĥþőäřđ ęχŧęřŉäľľy mäĸęş įŧ ęŉŧįřęľy äččęşşįþľę ŧő äŉyőŉę ŵįŧĥ ŧĥę ľįŉĸ.",
+      "cancel-button": "Cäŉčęľ",
+      "learn-more-button": "Ŀęäřŉ mőřę"
     },
     "settings-bar-header": {
       "collapse-settings-tooltip": "Cőľľäpşę şęŧŧįŉģş",
@@ -1417,6 +1427,19 @@
       "time-range-picker-disabled-text": "Ŧįmę řäŉģę pįčĸęř = đįşäþľęđ",
       "time-range-picker-enabled-text": "Ŧįmę řäŉģę pįčĸęř = ęŉäþľęđ",
       "time-range-text": "Ŧįmę řäŉģę = "
+    },
+    "share-actions": {
+      "copy-link-button": "Cőpy ęχŧęřŉäľ ľįŉĸ",
+      "pause-access-button": "Päūşę äččęşş",
+      "resume-access-button": "Ŗęşūmę äččęşş",
+      "revoke-access-button": "Ŗęvőĸę äččęşş"
+    },
+    "share-configuration": {
+      "access-label": "čäŉ äččęşş",
+      "display-annotations-label": "Đįşpľäy äŉŉőŧäŧįőŉş",
+      "enable-time-range-label": "Ēŉäþľę ŧįmę řäŉģę",
+      "settings-label": "Ŝęŧŧįŉģş",
+      "share-type-label": "Ŀįŉĸ äččęşş"
     }
   },
   "public-dashboard-list": {

@@ -5,6 +5,7 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Button, ClipboardButton, Divider, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 import {
   useDeletePublicDashboardMutation,
   useGetPublicDashboardQuery,
@@ -147,7 +148,7 @@ function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
           getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
           onClipboardCopy={onCopyURL}
         >
-          Copy external link
+          <Trans i18nKey="public-dashboard.share-actions.copy-link-button">Copy external link</Trans>
         </ClipboardButton>
         <Button
           icon="trash-alt"
@@ -156,7 +157,7 @@ function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
           disabled={isLoading || !hasWritePermissions}
           onClick={onDeleteClick}
         >
-          Revoke access
+          <Trans i18nKey="public-dashboard.share-actions.revoke-access-button">Revoke access</Trans>
         </Button>
         <Button
           icon={publicDashboard.isEnabled ? 'pause' : 'play'}
@@ -168,7 +169,11 @@ function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
           onClick={onPauseOrResumeClick}
           disabled={isLoading || !hasWritePermissions}
         >
-          {publicDashboard.isEnabled ? 'Pause access' : 'Resume access'}
+          {publicDashboard.isEnabled ? (
+            <Trans i18nKey="public-dashboard.share-actions.pause-access-button">Pause access</Trans>
+          ) : (
+            <Trans i18nKey="public-dashboard.share-actions.resume-access-button">Resume access</Trans>
+          )}
         </Button>
       </Stack>
       {isLoading && <Spinner />}

@@ -1379,11 +1379,15 @@
       "revoke-title": "Revoke public URL"
     },
     "email-sharing": {
+      "accept-button": "Accept",
+      "alert-text": "Effective immediately, sharing public dashboards by email incurs a cost per active user. Going forward, you’ll be prompted for payment whenever you add new users to your dashboard.",
+      "cancel-button": "Cancel",
       "input-invalid-email-text": "Invalid email",
       "input-required-email-text": "Email is required",
       "invite-button": "Invite",
       "invite-field-desc": "Invite people by email",
       "invite-field-label": "Invite",
+      "learn-more-button": "Learn more",
       "resend-button": "Resend",
       "resend-button-title": "Resend",
       "revoke-button": "Revoke",
@@ -1398,6 +1402,12 @@
       "unsupported-data-source-alert-title": "Unsupported data sources",
       "unsupported-template-variable-alert-desc": "This public dashboard may not work since it uses template variables",
       "unsupported-template-variable-alert-title": "Template variables are not supported"
+    },
+    "public-sharing": {
+      "accept-button": "Accept",
+      "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link.",
+      "cancel-button": "Cancel",
+      "learn-more-button": "Learn more"
     },
     "settings-bar-header": {
       "collapse-settings-tooltip": "Collapse settings",
@@ -1417,6 +1427,19 @@
       "time-range-picker-disabled-text": "Time range picker = disabled",
       "time-range-picker-enabled-text": "Time range picker = enabled",
       "time-range-text": "Time range = "
+    },
+    "share-actions": {
+      "copy-link-button": "Copy external link",
+      "pause-access-button": "Pause access",
+      "resume-access-button": "Resume access",
+      "revoke-access-button": "Revoke access"
+    },
+    "share-configuration": {
+      "access-label": "can access",
+      "display-annotations-label": "Display annotations",
+      "enable-time-range-label": "Enable time range",
+      "settings-label": "Settings",
+      "share-type-label": "Link access"
     }
   },
   "public-dashboard-list": {
