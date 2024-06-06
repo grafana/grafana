@@ -569,6 +569,7 @@ github.com/grafana/grafana-plugin-sdk-go v0.230.0 h1:Y4IL+eT1jXqTCctlNzdCvxAozpB
 github.com/grafana/grafana-plugin-sdk-go v0.230.0/go.mod h1:6V6ikT4ryva8MrAp7Bdz5fTJx3/ztzKvpMJFfpzr4CI=
 github.com/grafana/grafana-plugin-sdk-go v0.231.1-0.20240523124942-62dae9836284/go.mod h1:bNgmNmub1I7Mc8dzIncgNqHC5jTgSZPPHlZ3aG8HKJQ=
 github.com/grafana/grafana/pkg/promlib v0.0.3/go.mod h1:3El4NlsfALz8QQCbEGHGFvJUG+538QLMuALRhZ3pcoo=
+github.com/grafana/grafana/pkg/promlib v0.0.6/go.mod h1:shFkrG1fQ/PPNRGhxAPNMLp0SAeG/jhqaLoG6n2191M=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 h1:pdN6V1QBWetyv/0+wjACpqVH+eVULgEjkurDLq3goeM=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1/go.mod h1:YvJ2f6MplWDhfxiUC3KpyTy76kYUZA4W3pTv/wdKQ9Y=
 github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 h1:MJG/KsmcqMwFAkh8mTnAwhyKoB+sTAnY4CACC110tbU=
@@ -719,6 +720,7 @@ github.com/mitchellh/gox v0.4.0 h1:lfGJxY7ToLJQjHHwi0EX6uYBdK78egf954SQl13PQJc=
 github.com/mitchellh/iochan v1.0.0 h1:C+X3KsSTLFVBr/tK1eYN/vs4rJcvsiLU338UhYPJWeY=
 github.com/mithrandie/readline-csvq v1.2.1 h1:4cfeYeVSrqKEWi/1t7CjyhFD2yS6fm+l+oe+WyoSNlI=
 github.com/mithrandie/readline-csvq v1.2.1/go.mod h1:ydD9Eyp3/wn8KPSNbKmMZe4RQQauCuxi26yEo4N40dk=
+github.com/mithrandie/readline-csvq v1.3.0 h1:VTJEOGouJ8j27jJCD4kBBbNTxM0OdBvE1aY1tMhlqE8=
 github.com/mithrandie/readline-csvq v1.3.0/go.mod h1:FKyYqDgf/G4SNov7SMFXRWO6LQLXIOeTog/NB97FZl0=
 github.com/moby/docker-image-spec v1.3.1 h1:jMKff3w6PgbfSa69GfNg+zN/XLhfXJGnEx3Nl2EsFP0=
 github.com/modocache/gover v0.0.0-20171022184752-b58185e213c5 h1:8Q0qkMVC/MmWkpIdlvZgcv2o2jrlF6zqVOh7W5YHdMA=
