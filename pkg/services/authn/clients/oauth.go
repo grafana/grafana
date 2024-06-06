@@ -168,7 +168,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 
 	// This is required to implement OrgRole mapping for OAuth providers step by step
 	switch c.providerName {
-	case social.GenericOAuthProviderName, social.GitHubProviderName, social.GitlabProviderName:
+	case social.GenericOAuthProviderName, social.GitHubProviderName, social.GitlabProviderName, social.OktaProviderName:
 		// Do nothing, these providers already supports OrgRole mapping
 	default:
 		userInfo.OrgRoles, userInfo.IsGrafanaAdmin, _ = getRoles(c.cfg, func() (org.RoleType, *bool, error) {
