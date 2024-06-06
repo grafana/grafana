@@ -1512,6 +1512,31 @@
     },
     "dismissable-button": "Close"
   },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "title": "Select scopes"
+    },
+    "basicSelector": {
+      "openAdvanced": "Open advanced scope selector <1></1>",
+      "placeholder": "Select scopes...",
+      "removeAll": "Remove all scopes"
+    },
+    "root": {
+      "collapse": "Collapse scope filters",
+      "expand": "Expand scope filters"
+    },
+    "suggestedDashboards": {
+      "loading": "Loading dashboards",
+      "search": "Filter"
+    },
+    "tree": {
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "search": "Filter"
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "Include panels",
