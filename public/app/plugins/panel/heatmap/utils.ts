@@ -18,7 +18,7 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { HeatmapData } from './fields';
-import { FieldConfig, YAxisConfig } from './types';
+import { FieldConfig, HeatmapSelectionMode, YAxisConfig } from './types';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -51,10 +51,22 @@ interface PrepConfigOpts {
   hideGE?: number;
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
+  selectionMode?: HeatmapSelectionMode;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
-  const { dataRef, theme, timeZone, getTimeRange, cellGap, hideLE, hideGE, yAxisConfig, ySizeDivisor } = opts;
+  const {
+    dataRef,
+    theme,
+    timeZone,
+    getTimeRange,
+    cellGap,
+    hideLE,
+    hideGE,
+    yAxisConfig,
+    ySizeDivisor,
+    selectionMode = HeatmapSelectionMode.X,
+  } = opts;
 
   const xScaleKey = 'x';
   let isTime = true;
@@ -449,10 +461,13 @@ export function prepConfig(opts: PrepConfigOpts) {
     scaleKey: '', // facets' scales used (above)
   });
 
+  const dragX = selectionMode === HeatmapSelectionMode.X || selectionMode === HeatmapSelectionMode.Xy;
+  const dragY = selectionMode === HeatmapSelectionMode.Y || selectionMode === HeatmapSelectionMode.Xy;
+
   const cursor: Cursor = {
     drag: {
-      x: true,
-      y: false,
+      x: dragX,
+      y: dragY,
       setScale: false,
     },
     dataIdx: (u, seriesIdx) => {
