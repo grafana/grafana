@@ -1,11 +1,9 @@
 package influxql
 
 import (
-	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -166,7 +164,6 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.Dataso
 	}
 
 	req.URL.RawQuery = params.Encode()
-	req.Header.Add("Accept-Encoding", "gzip")
 
 	logger.Debug("Influxdb request", "url", req.URL.String())
 	return req, nil
@@ -182,42 +179,21 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 		return backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %v", res.Body)}, nil
 	}
 
-	_, endSpan := startTrace(ctx, tracer, "datasource.influxdb.influxql.parseResponse")
-
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			logger.Warn("Failed to close response body", "err", err)
 		}
-
-		logger.Info(fmt.Sprintf("influxqlStreamingParser: %v - Executed Query: %v", isStreamingParserEnabled, query.RawQuery), "info")
-
-		endSpan()
 	}()
 
-	var reader io.ReadCloser
-	if encoding := res.Header.Get("Content-Encoding"); encoding == "gzip" {
-		reader, err = gzip.NewReader(res.Body)
-		defer func(reader io.ReadCloser) {
-			err := reader.Close()
-			if err != nil {
-				logger.Error(fmt.Sprintf("Failed to close gzip reader: %v", err))
-			}
-		}(reader)
-		if err != nil {
-			errMsg := "failed to create gzip response body"
-			logger.Error(fmt.Sprintf("%s: %v", errMsg, err))
-			return backend.DataResponse{Error: errors.New(errMsg)}, err
-		}
-	} else {
-		reader = res.Body
-	}
+	_, endSpan := startTrace(ctx, tracer, "datasource.influxdb.influxql.parseResponse")
+	defer endSpan()
 
 	var resp *backend.DataResponse
 	if isStreamingParserEnabled {
 		logger.Info("InfluxDB InfluxQL streaming parser enabled: ", "info")
-		resp = querydata.ResponseParse(reader, res.StatusCode, query)
+		resp = querydata.ResponseParse(res.Body, res.StatusCode, query)
 	} else {
-		resp = buffered.ResponseParse(reader, res.StatusCode, query)
+		resp = buffered.ResponseParse(res.Body, res.StatusCode, query)
 	}
 	return *resp, nil
 }
