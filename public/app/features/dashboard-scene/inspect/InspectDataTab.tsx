@@ -81,7 +81,7 @@ function hasTransformations(dataProvider: SceneDataProvider) {
 }
 
 function getDataProviderToSubscribeTo(dataProvider: SceneDataProvider, withTransforms: boolean) {
-  if (!withTransforms && dataProvider instanceof SceneDataTransformer) {
+  if (!withTransforms && dataProvider instanceof SceneDataTransformer && dataProvider.state.$data) {
     return dataProvider.state.$data;
   }
 
