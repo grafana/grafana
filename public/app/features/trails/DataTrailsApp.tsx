@@ -4,13 +4,7 @@ import { Route, Switch } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import {
-  SceneComponentProps,
-  SceneObjectBase,
-  SceneObjectState,
-  UrlSyncContextProvider,
-  getUrlSyncManager,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, UrlSyncContextProvider } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 

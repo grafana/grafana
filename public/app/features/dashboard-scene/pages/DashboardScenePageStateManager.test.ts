@@ -1,7 +1,6 @@
 import { advanceBy } from 'jest-date-mock';
 
-import { BackendSrv, locationService, setBackendSrv } from '@grafana/runtime';
-import { getUrlSyncManager } from '@grafana/scenes';
+import { BackendSrv, setBackendSrv } from '@grafana/runtime';
 import store from 'app/core/store';
 import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
 import { DashboardRoutes } from 'app/types';
