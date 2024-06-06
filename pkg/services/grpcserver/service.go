@@ -81,8 +81,8 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 			mtauthz.AuthZUnaryInterceptor(authorizer),
 		),
 		grpc.ChainStreamInterceptor(
-			interceptors.TracingStreamInterceptor(tracer),
 			middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
+			interceptors.TracingStreamInterceptor(tracer),
 			grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
 			mtauthz.AuthZStreamInterceptor(authorizer),
 		),

@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/services/store/entity"
 )
@@ -61,6 +63,7 @@ func AuthZStreamInterceptor(authorizer Authorizer) grpc.StreamServerInterceptor 
 		var err error
 		if overrideSrv, ok := srv.(ServiceAuthzFuncOverride); ok {
 			newCtx, err = overrideSrv.AuthzFuncOverride(stream.Context(), info.FullMethod)
+			authzStream.skipAuthZ = true
 		} else {
 			newCtx = stream.Context()
 			// TODO: implement authorize for stream requests
@@ -78,6 +81,7 @@ type authzServerStream struct {
 	grpc.ServerStream
 	authorizer Authorizer
 	ctx        context.Context
+	skipAuthZ  bool
 }
 
 func (s *authzServerStream) Context() context.Context {
@@ -89,6 +93,10 @@ func (w *authzServerStream) RecvMsg(m any) error {
 }
 
 func (w *authzServerStream) SendMsg(m any) error {
+	if w.skipAuthZ {
+		return w.ServerStream.SendMsg(m)
+	}
+
 	if parsedRes, ok := m.(*entity.EntityWatchResponse); ok {
 		key, _ := entity.ParseKey(parsedRes.Entity.Key)
 		authzParams := &AuthZParams{
@@ -107,7 +115,7 @@ func (w *authzServerStream) SendMsg(m any) error {
 	}
 
 	// TODO: implement authorize for other stream requests
-	return w.ServerStream.SendMsg(m)
+	return status.Error(codes.Internal, "unhandled stream message type")
 }
 
 func extractRequestEntityData(info *grpc.UnaryServerInfo, req any) (*AuthZParams, error) {
