@@ -42,7 +42,7 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 
 	token, err := s.GetToken(context.Background())
 	assert.NoError(t, err)
-	assert.NotNil(t, token)
+	assert.NotEmpty(t, token.Name)
 
 	err = s.DeleteToken(context.Background(), token.ID)
 	assert.NoError(t, err)
@@ -80,6 +80,9 @@ func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
 	listResp, err := s.GetMigrationList(context.Background())
 	require.NoError(t, err)
 	require.NotNil(t, listResp)
+	require.Equal(t, 1, len(listResp.Migrations))
+	require.Equal(t, createResp.UID, listResp.Migrations[0].UID)
+	require.Equal(t, createResp.Stack, listResp.Migrations[0].Stack)
 
 	runResp, err := s.RunMigration(ctxWithSignedInUser(), createResp.UID)
 	require.NoError(t, err)
@@ -94,15 +97,16 @@ func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
 
 	runStatusResp, err := s.GetMigrationStatus(context.Background(), runResp.RunUID)
 	require.NoError(t, err)
-	require.NotNil(t, runStatusResp)
+	require.Equal(t, runResp.RunUID, runStatusResp.UID)
 
 	listRunResp, err := s.GetMigrationRunList(context.Background(), createResp.UID)
 	require.NoError(t, err)
-	require.NotNil(t, listRunResp)
+	require.Equal(t, 1, len(listRunResp.Runs))
+	require.Equal(t, runResp.RunUID, listRunResp.Runs[0].RunUID)
 
 	delMigResp, err := s.DeleteMigration(context.Background(), createResp.UID)
 	require.NoError(t, err)
-	require.NotNil(t, delMigResp)
+	require.NotNil(t, createResp.UID, delMigResp.UID)
 }
 
 func ctxWithSignedInUser() context.Context {
