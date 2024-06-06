@@ -1,3 +1,3 @@
-import mousetrapInstance from './Mousetrap';
+import { Mousetrap } from './Mousetrap';
 
-export const mousetrap = mousetrapInstance;
+export const mousetrap = new Mousetrap(document);
