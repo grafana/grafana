@@ -4,7 +4,13 @@ import { Route, Switch } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, getUrlSyncManager } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneObjectBase,
+  SceneObjectState,
+  UrlSyncContextProvider,
+  getUrlSyncManager,
+} from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -84,7 +90,11 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
     return null;
   }
 
-  return <trail.Component model={trail} />;
+  return (
+    <UrlSyncContextProvider scene={trail}>
+      <trail.Component model={trail} />
+    </UrlSyncContextProvider>
+  );
 }
 
 let dataTrailsApp: DataTrailsApp;
@@ -116,9 +126,9 @@ function getInitialTrail() {
 
   // Set the initial state of the newTrail based on the URL,
   // In case we are initializing from an externally created URL or a page reload
-  getUrlSyncManager().initSync(newTrail);
+  //  getUrlSyncManager().initSync(newTrail);
   // Remove the URL sync for now. It will be restored on the trail if it is activated.
-  getUrlSyncManager().cleanUp(newTrail);
+  //  getUrlSyncManager().cleanUp(newTrail);
 
   // If one of the recent trails is a match to the newTrail derived from the current URL,
   // let's restore that trail so that a page refresh doesn't create a new trail.

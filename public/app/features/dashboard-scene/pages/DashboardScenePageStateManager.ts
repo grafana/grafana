@@ -182,9 +182,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         restoreDashboardStateFromLocalStorage(dashboard);
       }
 
-      if (!(config.publicDashboardAccessToken && dashboard.state.controls?.state.hideTimeControls)) {
-        dashboard.startUrlSync();
-      }
+      // I do not think disabling all url sync is the right way to disable time controls (as it makes view panel in fullscreen not work)
+      // if (!(config.publicDashboardAccessToken && dashboard.state.controls?.state.hideTimeControls)) {
+      //   dashboard.startUrlSync();
+      // }
 
       this.setState({ dashboard: dashboard, isLoading: false });
       const measure = stopMeasure(LOAD_SCENE_MEASUREMENT);

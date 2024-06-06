@@ -99,14 +99,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       this.restoreFromHistoryStep(currentState);
     }
 
-    this.enableUrlSync();
+    //  this.enableUrlSync();
 
     // Save the current trail as a recent if the browser closes or reloads
     const saveRecentTrail = () => getTrailStore().setRecentTrail(this);
     window.addEventListener('unload', saveRecentTrail);
 
     return () => {
-      this.disableUrlSync();
+      //      this.disableUrlSync();
 
       if (!this.state.embedded) {
         saveRecentTrail();
@@ -115,17 +115,17 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     };
   }
 
-  private enableUrlSync() {
-    if (!this.state.embedded) {
-      getUrlSyncManager().initSync(this);
-    }
-  }
+  // private enableUrlSync() {
+  //   if (!this.state.embedded) {
+  //     getUrlSyncManager().initSync(this);
+  //   }
+  // }
 
-  private disableUrlSync() {
-    if (!this.state.embedded) {
-      getUrlSyncManager().cleanUp(this);
-    }
-  }
+  // private disableUrlSync() {
+  //   if (!this.state.embedded) {
+  //     getUrlSyncManager().cleanUp(this);
+  //   }
+  // }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE],
@@ -167,7 +167,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   public restoreFromHistoryStep(state: DataTrailState) {
-    this.disableUrlSync();
+    //this.disableUrlSync();
 
     if (!state.topScene && !state.metric) {
       // If the top scene for an  is missing, correct it.
@@ -185,7 +185,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
     locationService.replace(fullUrl);
 
-    this.enableUrlSync();
+    // this.enableUrlSync();
   }
 
   private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {

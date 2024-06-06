@@ -18,9 +18,9 @@ export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene)
       if (!currentQueryParams.has(key)) {
         currentQueryParams.append(key, value);
       } else {
-        if (!currentQueryParams.getAll(key).includes(value)) {
-          currentQueryParams.append(key, value);
-        }
+        // if (!currentQueryParams.getAll(key).includes(value)) {
+        //   currentQueryParams.append(key, value);
+        // }
       }
     });
 
@@ -38,9 +38,7 @@ export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene)
 
     const finalParams = currentQueryParams.toString();
     if (finalParams) {
-      locationService.replace({
-        search: finalParams,
-      });
+      locationService.replace({ search: finalParams });
     }
   }
 }
