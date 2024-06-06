@@ -17,6 +17,10 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
 	defer span.End()
 
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
 	key, err := entity.ParseKey(r.Entity.Key)
 	if err != nil {
 		return nil, fmt.Errorf("create entity: parse entity key: %w", err)
