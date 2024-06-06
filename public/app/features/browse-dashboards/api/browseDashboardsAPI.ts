@@ -30,7 +30,7 @@ interface RequestOptions extends BackendSrvRequest {
   showErrorAlert?: boolean;
 }
 
-export interface DeleteItemsArgs {
+interface DeleteItemsArgs {
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
 }
 
