@@ -2,6 +2,7 @@ package converter
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -359,6 +360,18 @@ func handleTimeSeriesFormatWithTimeColumn(valueFields data.Fields, tags map[stri
 
 func handleTimeSeriesFormatWithoutTimeColumn(valueFields data.Fields, columns []string, measurement string, query *models.Query) *data.Frame {
 	// Frame without time column
+	if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("CARDINALITY")) {
+		var stringArray []*string
+		for _, v := range valueFields {
+			if f, ok := v.At(0).(*float64); ok {
+				str := strconv.FormatFloat(*f, 'f', -1, 64)
+				stringArray = append(stringArray, util.ParseString(str))
+			} else {
+				stringArray = append(stringArray, util.ParseString(v.At(0)))
+			}
+		}
+		return data.NewFrame(measurement, data.NewField("Value", nil, stringArray))
+	}
 	if len(columns) >= 2 && strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
 		return data.NewFrame(measurement, valueFields[1])
 	}

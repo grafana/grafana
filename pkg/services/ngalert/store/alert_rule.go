@@ -11,6 +11,8 @@ import (
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -23,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
-	"xorm.io/xorm"
 )
 
 // AlertRuleMaxTitleLength is the maximum length of the alert rule title
@@ -160,6 +161,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 				For:                  r.For,
 				Annotations:          r.Annotations,
 				Labels:               r.Labels,
+				Record:               r.Record,
 				NotificationSettings: r.NotificationSettings,
 			})
 		}
@@ -237,6 +239,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 				IntervalSeconds:      r.New.IntervalSeconds,
 				NoDataState:          r.New.NoDataState,
 				ExecErrState:         r.New.ExecErrState,
+				Record:               r.New.Record,
 				For:                  r.New.For,
 				Annotations:          r.New.Annotations,
 				Labels:               r.New.Labels,
@@ -360,17 +363,18 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		}
 
 		if len(query.NamespaceUIDs) > 0 {
-			args := make([]any, 0, len(query.NamespaceUIDs))
-			in := make([]string, 0, len(query.NamespaceUIDs))
-			for _, namespaceUID := range query.NamespaceUIDs {
-				args = append(args, namespaceUID)
-				in = append(in, "?")
-			}
+			args, in := getINSubQueryArgs(query.NamespaceUIDs)
 			q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
 		}
 
-		if query.RuleGroup != "" {
-			q = q.Where("rule_group = ?", query.RuleGroup)
+		if len(query.RuleUIDs) > 0 {
+			args, in := getINSubQueryArgs(query.RuleUIDs)
+			q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
+		}
+
+		if len(query.RuleGroups) > 0 {
+			args, in := getINSubQueryArgs(query.RuleGroups)
+			q = q.Where(fmt.Sprintf("rule_group IN (%s)", strings.Join(in, ",")), args...)
 		}
 
 		if query.ReceiverName != "" {
@@ -768,4 +772,32 @@ func ruleConstraintViolationToErr(rule ngmodels.AlertRule, err error) error {
 	} else {
 		return ngmodels.ErrAlertRuleConflict(rule, err)
 	}
+}
+
+// GetNamespacesByRuleUID returns a map of rule UIDs to their namespace UID.
+func (st DBstore) GetNamespacesByRuleUID(ctx context.Context, orgID int64, uids ...string) (map[string]string, error) {
+	result := make(map[string]string)
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var rules []ngmodels.AlertRule
+		err := sess.Table(ngmodels.AlertRule{}).Select("uid, namespace_uid").Where("org_id = ?", orgID).In("uid", uids).Find(&rules)
+		if err != nil {
+			return err
+		}
+		for _, rule := range rules {
+			result[rule.UID] = rule.NamespaceUID
+		}
+		return nil
+	})
+	return result, err
+}
+
+func getINSubQueryArgs[T any](inputSlice []T) ([]any, []string) {
+	args := make([]any, 0, len(inputSlice))
+	in := make([]string, 0, len(inputSlice))
+	for _, t := range inputSlice {
+		args = append(args, t)
+		in = append(in, "?")
+	}
+
+	return args, in
 }

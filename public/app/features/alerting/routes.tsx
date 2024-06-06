@@ -79,10 +79,6 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/silence/:id/edit',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingInstanceUpdate,
-        AccessControlAction.AlertingInstancesExternalWrite,
-      ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
       ),
@@ -217,7 +213,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       path: '/alerting/admin',
       roles: () => ['Admin'],
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertingAdmin" */ 'app/features/alerting/unified/Admin')
+        () => import(/* webpackChunkName: "AlertingSettings" */ 'app/features/alerting/unified/Settings')
       ),
     },
   ];

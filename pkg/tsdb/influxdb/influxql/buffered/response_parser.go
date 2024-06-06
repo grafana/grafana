@@ -23,10 +23,6 @@ func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *back
 func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResponse {
 	response, jsonErr := parseJSON(buf)
 
-	if statusCode/100 != 2 {
-		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", response.Error)}
-	}
-
 	if jsonErr != nil {
 		return &backend.DataResponse{Error: jsonErr}
 	}
@@ -330,18 +326,22 @@ func newFrameWithoutTimeField(row models.Row, query models.Query) *data.Frame {
 	var values []*string
 
 	for _, valuePair := range row.Values {
-		if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
-			if len(valuePair) >= 2 {
-				values = append(values, util.ParseString(valuePair[1]))
-			}
-		} else if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW DIAGNOSTICS")) {
-			// https://docs.influxdata.com/platform/monitoring/influxdata-platform/tools/show-diagnostics/
-			for _, vp := range valuePair {
-				values = append(values, util.ParseString(vp))
-			}
+		if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("CARDINALITY")) {
+			values = append(values, util.ParseString(valuePair[0]))
 		} else {
-			if len(valuePair) >= 1 {
-				values = append(values, util.ParseString(valuePair[0]))
+			if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
+				if len(valuePair) >= 2 {
+					values = append(values, util.ParseString(valuePair[1]))
+				}
+			} else if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW DIAGNOSTICS")) {
+				// https://docs.influxdata.com/platform/monitoring/influxdata-platform/tools/show-diagnostics/
+				for _, vp := range valuePair {
+					values = append(values, util.ParseString(vp))
+				}
+			} else {
+				if len(valuePair) >= 1 {
+					values = append(values, util.ParseString(valuePair[0]))
+				}
 			}
 		}
 	}

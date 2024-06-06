@@ -10,6 +10,7 @@ import {
   DataSourceApi,
   DataSourceRef,
   DefaultTimeZone,
+  getNextRefId,
   IntervalValues,
   LogsDedupStrategy,
   LogsSortOrder,
@@ -26,8 +27,6 @@ import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { QueryOptions, QueryTransaction } from 'app/types/explore';
-
-import { getNextRefIdChar } from './query';
 
 export const DEFAULT_UI_STATE = {
   dedupStrategy: LogsDedupStrategy.none,
@@ -192,12 +191,12 @@ export async function generateEmptyQuery(
     defaultQuery = datasourceInstance.getDefaultQuery?.(CoreApp.Explore);
   }
 
-  return { ...defaultQuery, refId: getNextRefIdChar(queries), key: generateKey(index), datasource: datasourceRef };
+  return { ...defaultQuery, refId: getNextRefId(queries), key: generateKey(index), datasource: datasourceRef };
 }
 
 export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: DataQuery[], index = 0): DataQuery => {
   const key = generateKey(index);
-  const refId = target.refId || getNextRefIdChar(queries);
+  const refId = target.refId || getNextRefId(queries);
 
   return { ...target, refId, key };
 };
@@ -218,7 +217,7 @@ export async function ensureQueries(
       const key = generateKey(index);
       let refId = query.refId;
       if (!refId) {
-        refId = getNextRefIdChar(allQueries);
+        refId = getNextRefId(allQueries);
       }
 
       // if a query has a datasource, validate it and only add it if valid

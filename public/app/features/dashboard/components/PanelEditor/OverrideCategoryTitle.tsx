@@ -8,7 +8,7 @@ import { FieldMatcherUIRegistryItem } from '@grafana/ui/src/components/MatchersU
 interface Props {
   isExpanded: boolean;
   registry: FieldConfigOptionsRegistry;
-  matcherUi: FieldMatcherUIRegistryItem<any>;
+  matcherUi: FieldMatcherUIRegistryItem<ConfigOverrideRule>;
   override: ConfigOverrideRule;
   overrideName: string;
   onOverrideRemove: () => void;

@@ -24,9 +24,9 @@ type pluginMetrics struct {
 // MetricsMiddleware is a middleware that instruments plugin requests.
 // It tracks requests count, duration and size as prometheus metrics.
 type MetricsMiddleware struct {
+	baseMiddleware
 	pluginMetrics
 	pluginRegistry registry.Service
-	next           plugins.Client
 }
 
 func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) *MetricsMiddleware {
@@ -77,7 +77,9 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) plugins.ClientMiddleware {
 	imw := newMetricsMiddleware(promRegisterer, pluginRegistry)
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
-		imw.next = next
+		imw.baseMiddleware = baseMiddleware{
+			next: next,
+		}
 		return imw
 	})
 }
@@ -184,14 +186,32 @@ func (m *MetricsMiddleware) CollectMetrics(ctx context.Context, req *backend.Col
 	return result, err
 }
 
-func (m *MetricsMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
+func (m *MetricsMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	var result *backend.ValidationResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointMutateAdmission, func(ctx context.Context) (status requestStatus, innerErr error) {
+		result, innerErr = m.next.ValidateAdmission(ctx, req)
+		return requestStatusFromError(innerErr), innerErr
+	})
+
+	return result, err
 }
 
-func (m *MetricsMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
+func (m *MetricsMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	var result *backend.MutationResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointMutateAdmission, func(ctx context.Context) (status requestStatus, innerErr error) {
+		result, innerErr = m.next.MutateAdmission(ctx, req)
+		return requestStatusFromError(innerErr), innerErr
+	})
+
+	return result, err
 }
 
-func (m *MetricsMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
+func (m *MetricsMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	var result *backend.ConversionResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointMutateAdmission, func(ctx context.Context) (status requestStatus, innerErr error) {
+		result, innerErr = m.next.ConvertObject(ctx, req)
+		return requestStatusFromError(innerErr), innerErr
+	})
+
+	return result, err
 }

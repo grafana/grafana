@@ -4,15 +4,13 @@ import { AppEvents, Field, getFieldDisplayName, LinkModel, PluginState, Selectab
 import appEvents from 'app/core/app_events';
 import { hasAlphaPanels, config } from 'app/core/config';
 import {
-  defaultElementItems,
-  advancedElementItems,
-  CanvasElementItem,
-  canvasElementRegistry,
-  CanvasElementOptions,
   CanvasConnection,
+  CanvasElementItem,
+  CanvasElementOptions,
   ConnectionDirection,
-} from 'app/features/canvas';
+} from 'app/features/canvas/element';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
+import { advancedElementItems, canvasElementRegistry, defaultElementItems } from 'app/features/canvas/registry';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
@@ -119,7 +117,9 @@ const addDataLinkForField = (
 ): void => {
   if (field?.getLinks) {
     const disp = field.display ? field.display(data) : { text: `${data}`, numeric: +data! };
-    field.getLinks({ calculatedValue: disp }).forEach((link) => {
+    // TODO add more control over which row index each element uses
+    const valueRowIndex = field.values.length - 1;
+    field.getLinks({ calculatedValue: disp, valueRowIndex }).forEach((link) => {
       const key = `${link.title}/${link.href}`;
       if (!linkLookup.has(key)) {
         links.push(link);
@@ -320,6 +320,9 @@ export function updateConnectionsForSource(element: ElementState, scene: Scene) 
     const connections = sourceConnections.filter((con) => con.targetName !== element.getName());
     connection.source.onChange({ ...connection.source.options, connections });
   });
+
+  // Update scene connection state to clear out old connections
+  scene.connections.updateState();
 }
 
 export const calculateCoordinates = (

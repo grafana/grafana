@@ -35,8 +35,6 @@ def yarn_install_step():
         "name": "yarn-install",
         "image": images["node"],
         "commands": [
-            # Python is needed to build `esfx`, which is needed by `msagl`
-            "apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python",
             "yarn install --immutable || yarn install --immutable",
         ],
         "depends_on": [],
@@ -644,13 +642,11 @@ def verify_i18n_step():
     uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'make i18n-extract', commit the changes and push again."
     return {
         "name": "verify-i18n",
-        "image": images["node"],
+        "image": images["node_deb"],
         "depends_on": [
             "yarn-install",
         ],
-        "failure": "ignore",
         "commands": [
-            "apk add --update git",
             "make i18n-extract || (echo \"{}\" && false)".format(extract_error_message),
             # Verify that translation extraction has been committed
             '''
@@ -835,7 +831,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
         "name": "end-to-end-tests-{}-{}".format(suite, cloud),
-        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:3.0.0",
+        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.10.0:1.0.0",
         "depends_on": [
             "grafana-server",
         ],

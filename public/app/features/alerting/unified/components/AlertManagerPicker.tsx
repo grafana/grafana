@@ -17,7 +17,6 @@ function getAlertManagerLabel(alertManager: AlertManagerDataSource) {
 
 export const AlertManagerPicker = ({ disabled = false }: Props) => {
   const styles = useStyles2(getStyles);
-
   const { selectedAlertmanager, availableAlertManagers, setSelectedAlertmanager } = useAlertmanager();
 
   const options: Array<SelectableValue<string>> = useMemo(() => {
@@ -29,15 +28,13 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
     }));
   }, [availableAlertManagers]);
 
+  const isDisabled = disabled || options.length === 1;
+  const label = isDisabled ? 'Alertmanager' : 'Choose Alertmanager';
+
   return (
-    <InlineField
-      className={styles.field}
-      label={disabled ? 'Alertmanager' : 'Choose Alertmanager'}
-      disabled={disabled || options.length === 1}
-      data-testid="alertmanager-picker"
-    >
+    <InlineField className={styles.field} label={label} disabled={isDisabled} data-testid="alertmanager-picker">
       <Select
-        aria-label={disabled ? 'Alertmanager' : 'Choose Alertmanager'}
+        aria-label={label}
         width={29}
         className="ds-picker select-container"
         backspaceRemovesValue={false}
@@ -57,7 +54,7 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  field: css`
-    margin: 0;
-  `,
+  field: css({
+    margin: 0,
+  }),
 });

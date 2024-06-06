@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -26,6 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Service Define the cloudmigration.Service Implementation.
@@ -103,15 +105,61 @@ func ProvideService(
 		s.gcomService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken})
 	} else {
 		s.cmsClient = cmsclient.NewInMemoryClient()
-		s.gcomService = &gcomStub{map[string]gcom.AccessPolicy{}}
+		s.gcomService = &gcomStub{policies: map[string]gcom.AccessPolicy{}, token: nil}
 		s.cfg.StackID = "12345"
 	}
 
-	if err := s.registerMetrics(prom, s.metrics); err != nil {
-		s.log.Warn("error registering prom metrics", "error", err.Error())
+	if err := prom.Register(s.metrics); err != nil {
+		var alreadyRegisterErr prometheus.AlreadyRegisteredError
+		if errors.As(err, &alreadyRegisterErr) {
+			s.log.Warn("cloud migration metrics already registered")
+		} else {
+			return s, fmt.Errorf("registering cloud migration metrics: %w", err)
+		}
 	}
 
 	return s, nil
+}
+
+func (s *Service) GetToken(ctx context.Context) (gcom.TokenView, error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetToken")
+	defer span.End()
+	logger := s.log.FromContext(ctx)
+	requestID := tracing.TraceIDFromContext(ctx, false)
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, s.cfg.CloudMigration.FetchInstanceTimeout)
+	defer cancel()
+	instance, err := s.gcomService.GetInstanceByID(timeoutCtx, requestID, s.cfg.StackID)
+	if err != nil {
+		return gcom.TokenView{}, fmt.Errorf("fetching instance by id: id=%s %w", s.cfg.StackID, err)
+	}
+
+	logger.Info("instance found", "slug", instance.Slug)
+
+	accessPolicyName := fmt.Sprintf("%s-%s", cloudMigrationAccessPolicyNamePrefix, s.cfg.StackID)
+	accessTokenName := fmt.Sprintf("%s-%s", cloudMigrationTokenNamePrefix, s.cfg.StackID)
+
+	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.ListTokensTimeout)
+	defer cancel()
+	tokens, err := s.gcomService.ListTokens(timeoutCtx, gcom.ListTokenParams{
+		RequestID:        requestID,
+		Region:           instance.RegionSlug,
+		AccessPolicyName: accessPolicyName,
+		TokenName:        accessTokenName})
+	if err != nil {
+		return gcom.TokenView{}, fmt.Errorf("listing tokens: %w", err)
+	}
+	logger.Info("found access tokens", "num_tokens", len(tokens))
+
+	for _, token := range tokens {
+		if token.Name == accessTokenName {
+			logger.Info("found existing cloud migration token", "tokenID", token.ID, "accessPolicyID", token.AccessPolicyID)
+			return token, nil
+		}
+	}
+
+	logger.Info("cloud migration token not found")
+	return gcom.TokenView{}, cloudmigration.ErrTokenNotFound
 }
 
 func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessTokenResponse, error) {
@@ -238,10 +286,39 @@ func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigr
 	return nil
 }
 
-func (s *Service) GetMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
+func (s *Service) DeleteToken(ctx context.Context, tokenID string) error {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.DeleteToken", trace.WithAttributes(attribute.String("tokenID", tokenID)))
+	defer span.End()
+	logger := s.log.FromContext(ctx)
+	requestID := tracing.TraceIDFromContext(ctx, false)
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, s.cfg.CloudMigration.FetchInstanceTimeout)
+	defer cancel()
+	instance, err := s.gcomService.GetInstanceByID(timeoutCtx, requestID, s.cfg.StackID)
+	if err != nil {
+		return fmt.Errorf("fetching instance by id: id=%s %w", s.cfg.StackID, err)
+	}
+	logger.Info("found instance", "instanceID", instance.ID)
+
+	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.DeleteTokenTimeout)
+	defer cancel()
+	if err := s.gcomService.DeleteToken(timeoutCtx, gcom.DeleteTokenParams{
+		RequestID: tracing.TraceIDFromContext(ctx, false),
+		Region:    instance.RegionSlug,
+		TokenID:   tokenID,
+	}); err != nil && !errors.Is(err, gcom.ErrTokenNotFound) {
+		return fmt.Errorf("deleting cloud migration token: tokenID=%s %w", tokenID, err)
+	}
+	logger.Info("deleted cloud migration token", "tokenID", tokenID)
+	s.metrics.accessTokenDeleted.With(prometheus.Labels{"slug": s.cfg.Slug}).Inc()
+
+	return nil
+}
+
+func (s *Service) GetMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigration, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetMigration")
 	defer span.End()
-	migration, err := s.store.GetMigration(ctx, id)
+	migration, err := s.store.GetMigrationByUID(ctx, uid)
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +335,7 @@ func (s *Service) GetMigrationList(ctx context.Context) (*cloudmigration.CloudMi
 	migrations := make([]cloudmigration.CloudMigrationResponse, 0)
 	for _, v := range values {
 		migrations = append(migrations, cloudmigration.CloudMigrationResponse{
-			ID:      v.ID,
+			UID:     v.UID,
 			Stack:   v.Stack,
 			Created: v.Created,
 			Updated: v.Updated,
@@ -293,21 +370,21 @@ func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudM
 	}
 
 	return &cloudmigration.CloudMigrationResponse{
-		ID:      cm.ID,
+		UID:     cm.UID,
 		Stack:   token.Instance.Slug,
 		Created: cm.Created,
 		Updated: cm.Updated,
 	}, nil
 }
 
-func (s *Service) UpdateMigration(ctx context.Context, id int64, cm cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
+func (s *Service) UpdateMigration(ctx context.Context, uid string, request cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
 	// TODO: Implement method
 	return nil, nil
 }
 
-func (s *Service) RunMigration(ctx context.Context, id int64) (*cloudmigration.MigrateDataResponseDTO, error) {
+func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration.MigrateDataResponseDTO, error) {
 	// Get migration to read the auth token
-	migration, err := s.GetMigration(ctx, id)
+	migration, err := s.GetMigration(ctx, uid)
 	if err != nil {
 		return nil, fmt.Errorf("migration get error: %w", err)
 	}
@@ -334,15 +411,15 @@ func (s *Service) RunMigration(ctx context.Context, id int64) (*cloudmigration.M
 	}
 
 	// save the result of the migration
-	runID, err := s.SaveMigrationRun(ctx, &cloudmigration.CloudMigrationRun{
-		CloudMigrationUID: strconv.Itoa(int(id)),
+	runUID, err := s.CreateMigrationRun(ctx, cloudmigration.CloudMigrationRun{
+		CloudMigrationUID: migration.UID,
 		Result:            respData,
 	})
 	if err != nil {
 		response.Error(http.StatusInternalServerError, "migration run save error", err)
 	}
 
-	resp.RunID = runID
+	resp.RunUID = runUID
 
 	return resp, nil
 }
@@ -470,51 +547,41 @@ func (s *Service) getDashboards(ctx context.Context) ([]dashboards.Dashboard, er
 	return result, nil
 }
 
-func (s *Service) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) (int64, error) {
-	cmr.Created = time.Now()
-	cmr.Updated = time.Now()
-	cmr.Finished = time.Now()
-	err := s.store.SaveMigrationRun(ctx, cmr)
+func (s *Service) CreateMigrationRun(ctx context.Context, cmr cloudmigration.CloudMigrationRun) (string, error) {
+	uid, err := s.store.CreateMigrationRun(ctx, cmr)
 	if err != nil {
 		s.log.Error("Failed to save migration run", "err", err)
-		return -1, err
+		return "", err
 	}
-	return cmr.ID, nil
+	return uid, nil
 }
 
-func (s *Service) GetMigrationStatus(ctx context.Context, id string, runID string) (*cloudmigration.CloudMigrationRun, error) {
-	cmr, err := s.store.GetMigrationStatus(ctx, id, runID)
+func (s *Service) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.CloudMigrationRun, error) {
+	cmr, err := s.store.GetMigrationStatus(ctx, runUID)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving migration status from db: %w", err)
 	}
-
 	return cmr, nil
 }
 
-func (s *Service) GetMigrationRunList(ctx context.Context, migrationID string) (*cloudmigration.CloudMigrationRunList, error) {
-	runs, err := s.store.GetMigrationStatusList(ctx, migrationID)
+func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*cloudmigration.CloudMigrationRunList, error) {
+	runs, err := s.store.GetMigrationStatusList(ctx, migUID)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving migration statuses from db: %w", err)
 	}
 
-	runList := &cloudmigration.CloudMigrationRunList{Runs: []cloudmigration.MigrateDataResponseDTO{}}
+	runList := &cloudmigration.CloudMigrationRunList{Runs: []cloudmigration.MigrateDataResponseListDTO{}}
 	for _, s := range runs {
-		// attempt to bind the raw result to a list of response item DTOs
-		r := cloudmigration.MigrateDataResponseDTO{
-			Items: []cloudmigration.MigrateDataResponseItemDTO{},
-		}
-		if err := json.Unmarshal(s.Result, &r); err != nil {
-			return nil, fmt.Errorf("error unmarshalling migration response items: %w", err)
-		}
-		r.RunID = s.ID
-		runList.Runs = append(runList.Runs, r)
+		runList.Runs = append(runList.Runs, cloudmigration.MigrateDataResponseListDTO{
+			RunUID: s.UID,
+		})
 	}
 
 	return runList, nil
 }
 
-func (s *Service) DeleteMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
-	c, err := s.store.DeleteMigration(ctx, id)
+func (s *Service) DeleteMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigration, error) {
+	c, err := s.store.DeleteMigration(ctx, uid)
 	if err != nil {
 		return c, fmt.Errorf("deleting migration from db: %w", err)
 	}

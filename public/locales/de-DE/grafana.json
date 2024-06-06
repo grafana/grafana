@@ -25,6 +25,28 @@
       "user": "Nutzer"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -128,7 +150,7 @@
       "light-theme": "Hell"
     },
     "empty-state": {
-      "message": ""
+      "message": "Keine Ergebnisse gefunden"
     },
     "search-box": {
       "placeholder": "Suche oder springe zu ..."
@@ -269,7 +291,7 @@
     "empty": {
       "add-library-panel-body": "Visualisierungen hinzufügen, die mit anderen Dashboards geteilt werden.",
       "add-library-panel-button": "Bibliotheksfenster hinzufügen",
-      "add-library-panel-header": "",
+      "add-library-panel-header": "Panel importieren",
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
@@ -460,11 +482,21 @@
       "label": "Neue Datenquelle hinzufügen"
     },
     "empty-state": {
-      "message": ""
+      "message": "Keine Datenquellen gefunden"
     }
   },
   "explore": {
     "add-to-dashboard": "Zum Dashboard hinzufügen",
+    "add-to-library-modal": {
+      "auto-star": "",
+      "data-source-name": "",
+      "data-source-type": "",
+      "description": "",
+      "info": "",
+      "query": "",
+      "title": "",
+      "visibility": ""
+    },
     "rich-history": {
       "close-tooltip": "Abfrageverlauf schließen",
       "datasource-a-z": "Datenquelle A-Z",
@@ -479,6 +511,7 @@
     "rich-history-card": {
       "add-comment-form": "Kommentarformular hinzufügen",
       "add-comment-tooltip": "Kommentar hinzufügen",
+      "add-to-library": "",
       "cancel": "Abbrechen",
       "confirm-delete": "Löschen",
       "copy-query-tooltip": "Abfrage in Zwischenablage kopieren",
@@ -491,15 +524,12 @@
       "delete-query-tooltip": "Abfrage löschen",
       "delete-starred-query-confirmation-text": "Sind Sie sicher, dass Sie die markierte Abfrage dauerhaft löschen möchten?",
       "edit-comment-tooltip": "Kommentar bearbeiten",
-      "left-pane": "",
       "optional-description": "Eine optionale Beschreibung dessen, was die Abfrage tut.",
       "query-comment-label": "Abfrage-Kommentar",
+      "query-template-added": "",
       "query-text-label": "Abfragetext",
-      "right-pane": "",
-      "run-query-button": "Abfrage ausführen",
       "save-comment": "Kommentar speichern",
       "star-query-tooltip": "Abfrage anwählen",
-      "switch-datasource-button": "Datenquelle wechseln und Abfrage ausführen",
       "unstar-query-tooltip": "Abfrage abwählen",
       "update-comment-form": "Kommentarformular aktualisieren"
     },
@@ -568,6 +598,12 @@
       "saving-failed": "Speichern des umfangreichen Verlaufs fehlgeschlagen",
       "update-failed": "Aktualisierung des umfangreichen Verlaufs fehlgeschlagen"
     },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
+    },
     "secondary-actions": {
       "query-add-button": "Abfrage hinzufügen",
       "query-add-button-aria-label": "Abfrage hinzufügen",
@@ -584,11 +620,11 @@
     "toolbar": {
       "aria-label": "Werkzeugleiste durchsuchen",
       "copy-link": "URL kopieren",
-      "copy-link-abs-time": "",
+      "copy-link-abs-time": "Absolute URL kopieren",
       "copy-links-absolute-category": "Zeitsynchronisierte URL-Links (Freigabe mit intaktem Zeitraum)",
       "copy-links-normal-category": "Normale URL-Links",
       "copy-shortened-link": "Gekürzte URL kopieren",
-      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-abs-time": "Absolut verkürzte URL kopieren",
       "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Abbrechen",
       "refresh-picker-run": "Abfrage ausführen",
@@ -618,6 +654,9 @@
     "select": {
       "no-options-label": "Keine Optionen gefunden",
       "placeholder": "Auswählen"
+    },
+    "spinner": {
+      "aria-label": ""
     }
   },
   "graph": {
@@ -702,7 +741,7 @@
       "message": ""
     },
     "modal": {
-      "button-cancel": "",
+      "button-cancel": "Abbrechen",
       "button-view-panel1": "Fenster in {{label}} anzeigen...",
       "button-view-panel2": "Fenster im Dashboard anzeigen...",
       "panel-not-linked": "Fenster ist nicht mit einem Dashboard verbunden. Fügen Sie das Fenster einem Dashboard hinzu und versuchen Sie es erneut.",
@@ -727,10 +766,12 @@
     "forgot-password": "Passwort vergessen?",
     "form": {
       "password-label": "Passwort",
+      "password-placeholder": "",
       "password-required": "Passwort ist erforderlich",
       "submit-label": "Einloggen",
       "submit-loading-label": "Einloggen...",
       "username-label": "E-Mail oder Benutzername",
+      "username-placeholder": "",
       "username-required": "E-Mail oder Benutzername ist erforderlich"
     },
     "services": {
@@ -842,13 +883,13 @@
     "resource-type": {
       "dashboard": "Dashboard",
       "datasource": "Datenquelle",
-      "folder": "",
+      "folder": "Ordner",
       "unknown": "Unbekannt"
     },
     "summary": {
-      "disconnect": "",
+      "disconnect": "Verbindung trennen",
       "disconnect-error-description": "",
-      "disconnect-error-title": "",
+      "disconnect-error-title": "Es gab einen Fehler beim Trennen der Verbindung",
       "run-migration-error-description": "",
       "run-migration-error-title": "",
       "start-migration": "",
@@ -885,7 +926,8 @@
       "title": "Meldungen"
     },
     "alerting-admin": {
-      "title": "Administrator"
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Lege fest, wie Warnungen an Kontaktpunkte weitergeleitet werden",
@@ -971,7 +1013,7 @@
       "title": "Erstellen"
     },
     "create-alert": {
-      "title": ""
+      "title": "Neue Warnregel"
     },
     "create-dashboard": {
       "title": "Dashboard"
@@ -1107,6 +1149,10 @@
     },
     "public": {
       "title": "Öffentliche Dashboards"
+    },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
     },
     "recorded-queries": {
       "title": "Aufgezeichnete Abfragen"
@@ -1432,6 +1478,11 @@
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
   },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
@@ -1561,7 +1612,7 @@
       "library-panel": "Bibliotheks-Panel",
       "link": "Link",
       "panel-embed": "Einbetten",
-      "public-dashboard": "",
+      "public-dashboard": "Öffentliches Dashboard",
       "public-dashboard-title": "Öffentliches Dashboard",
       "snapshot": "Schnappschuss"
     },
