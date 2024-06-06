@@ -7,8 +7,28 @@
     { "type": "dashboard", "name": "Azure / Alert Consumption", "path": "dashboards/v1Alerts.json" },
     {
       "type": "dashboard",
-      "name": "Azure / Infrastructure / Infrastructure Monitoring",
-      "path": "dashboards/infrastructureMonitoring.json"
+      "name": "Azure / Infrastructure / Apps Monitoring",
+      "path": "dashboards/azureInfraApps.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Infrastructure / Compute Monitoring",
+      "path": "dashboards/azureInfraCompute.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Infrastructure / Data Monitoring",
+      "path": "dashboards/azureInfraData.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Infrastructure / Network Monitoring",
+      "path": "dashboards/azureInfraNetwork.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Infrastructure / Storage and Key Vaults Monitoring",
+      "path": "dashboards/azureInfraStorageVaults.json"
     },
     {
       "type": "dashboard",
