@@ -23,6 +23,7 @@ import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import AppRootPage from './features/plugins/components/AppRootPage';
+import { useSelector } from './types';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -96,8 +97,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
       });
     };
 
-    const secondAppId = 'grafana-querylibrary-app';
-
     return (
       <Provider store={store}>
         <ErrorBoundaryAlert style="page">
@@ -108,49 +107,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
               >
                 <div className="grafana-app">
-                  <SplitPaneWrapper
-                    splitOrientation="vertical"
-                    paneSize={0.5}
-                    minSize={200}
-                    maxSize={200 * -1}
-                    primary="second"
-                    splitVisible={!!secondAppId}
-                    paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
-                  >
-                    <Router history={locationService.getHistory()}>
-                      <CompatRouter>
-                        <ModalsContextProvider>
-                          <GlobalStyles />
-                          <AppChrome>
-                            {pageBanners.map((Banner, index) => (
-                              <Banner key={index.toString()} />
-                            ))}
-                            <AngularRoot />
-                            <AppNotificationList />
-                            {ready && this.renderRoutes()}
-                            {bodyRenderHooks.map((Hook, index) => (
-                              <Hook key={index.toString()} />
-                            ))}
-                          </AppChrome>
-                          <LiveConnectionWarning />
-                          <ModalRoot />
-                          <PortalContainer />
-                        </ModalsContextProvider>
-                      </CompatRouter>
-                    </Router>
-                    {secondAppId && (
-                      <MemoryRouter>
-                        <CompatRouter>
-                          <ModalsContextProvider>
-                            <GlobalStyles />
-                            <AppChrome>
-                              <AppRootPage pluginId={secondAppId} />
-                            </AppChrome>
-                          </ModalsContextProvider>
-                        </CompatRouter>
-                      </MemoryRouter>
-                    )}
-                  </SplitPaneWrapper>
+                  <WindowSplitWrapper routes={ready && this.renderRoutes()} />
                 </div>
               </KBarProvider>
             </ThemeProvider>
@@ -159,4 +116,53 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
       </Provider>
     );
   }
+}
+
+function WindowSplitWrapper(props: { routes: React.ReactNode }) {
+  const secondAppId = useSelector((state) => state.windowSplit.secondAppId);
+  return (
+    <SplitPaneWrapper
+      splitOrientation="vertical"
+      paneSize={0.5}
+      minSize={200}
+      maxSize={200 * -1}
+      primary="second"
+      splitVisible={!!secondAppId}
+      paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
+    >
+      <Router history={locationService.getHistory()}>
+        <CompatRouter>
+          <ModalsContextProvider>
+            <GlobalStyles />
+            <AppChrome>
+              {pageBanners.map((Banner, index) => (
+                <Banner key={index.toString()} />
+              ))}
+              <AngularRoot />
+              <AppNotificationList />
+              {props.routes}
+              {bodyRenderHooks.map((Hook, index) => (
+                <Hook key={index.toString()} />
+              ))}
+            </AppChrome>
+            <LiveConnectionWarning />
+            <ModalRoot />
+            <PortalContainer />
+          </ModalsContextProvider>
+        </CompatRouter>
+      </Router>
+      {secondAppId && (
+        <MemoryRouter>
+          <CompatRouter>
+            <ModalsContextProvider>
+              <GlobalStyles />
+              <AppChrome>
+                <AppRootPage pluginId={secondAppId} />
+              </AppChrome>
+            </ModalsContextProvider>
+          </CompatRouter>
+        </MemoryRouter>
+      )}
+    </SplitPaneWrapper>
+  );
 }

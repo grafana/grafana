@@ -2,6 +2,7 @@ import { ReducersMapObject } from '@reduxjs/toolkit';
 import { AnyAction, combineReducers } from 'redux';
 
 import sharedReducers from 'app/core/reducers';
+import windowSplitSlice from 'app/core/reducers/windowSplit';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
 import apiKeysReducers from 'app/features/api-keys/state/reducers';
@@ -59,6 +60,7 @@ const rootReducers = {
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
   [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
   [queryLibraryApi.reducerPath]: queryLibraryApi.reducer,
+  [windowSplitSlice.reducerPath]: windowSplitSlice.reducer,
 };
 
 const addedReducers = {};
