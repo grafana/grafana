@@ -10,6 +10,7 @@ import {
   SceneGridRow,
   SceneObject,
   SceneObjectBase,
+  SceneObjectRef,
   SceneObjectState,
   sceneUtils,
   SceneVariable,
@@ -812,9 +813,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.partial({ editview: 'settings' });
   };
 
-  public onShowAddLibraryPanelDrawer() {
+  public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<LibraryVizPanel>) {
     this.setState({
-      overlay: new AddLibraryPanelDrawer({}),
+      overlay: new AddLibraryPanelDrawer({ panelToReplaceRef }),
     });
   }
 
