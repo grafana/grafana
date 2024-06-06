@@ -3,17 +3,24 @@ package access
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/labels"
+
 	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
 )
 
 // This does not check if you have permissions!
 
 type DashboardQuery struct {
-	OrgID     int64
-	UID       string // to select a single dashboard
-	FolderUID string
-	Limit     int
-	MaxBytes  int
+	OrgID    int64
+	UID      string // to select a single dashboard
+	Limit    int
+	MaxBytes int
+
+	// FolderUID etc
+	Requirements entity.Requirements
+	// Post processing label filter
+	Labels labels.Selector
 
 	// The token from previous query
 	ContinueToken string

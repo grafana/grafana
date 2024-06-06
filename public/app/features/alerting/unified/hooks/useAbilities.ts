@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 
 import { contextSrv as ctx } from 'app/core/services/context_srv';
+import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRule } from 'app/types/unified-alerting';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
@@ -170,7 +171,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   const duplicateSupported = isPluginProvided ? NotSupported : MaybeSupported;
 
   const rulesPermissions = getRulesPermissions(rulesSourceName);
-  const canSilence = useCanSilence(rulesSource);
+  const canSilence = useCanSilence(rule);
 
   const abilities: Abilities<AlertRuleAction> = {
     [AlertRuleAction.Duplicate]: toAbility(duplicateSupported, rulesPermissions.create),
@@ -272,7 +273,8 @@ export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability
  * 1. the user has no permissions to create silences
  * 2. the admin has configured to only send instances to external AMs
  */
-function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
+function useCanSilence(rule: CombinedRule): [boolean, boolean] {
+  const rulesSource = rule.namespace.rulesSource;
   const isGrafanaManagedRule = rulesSource === GRAFANA_RULES_SOURCE_NAME;
 
   const { currentData: amConfigStatus, isLoading } =
@@ -280,9 +282,12 @@ function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
       skip: !isGrafanaManagedRule,
     });
 
+  const folderUID = isGrafanaRulerRule(rule.rulerRule) ? rule.rulerRule.grafana_alert.namespace_uid : undefined;
+  const { loading: folderIsLoading, folder } = useFolder(folderUID);
+
   // we don't support silencing when the rule is not a Grafana managed rule
   // we simply don't know what Alertmanager the ruler is sending alerts to
-  if (!isGrafanaManagedRule || isLoading) {
+  if (!isGrafanaManagedRule || isLoading || folderIsLoading || !folder) {
     return [false, false];
   }
 
@@ -290,7 +295,16 @@ function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
   const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;
   const silenceSupported = !interactsOnlyWithExternalAMs || interactsWithAll;
 
-  return toAbility(silenceSupported, AccessControlAction.AlertingInstanceCreate);
+  const { accessControl = {} } = folder;
+
+  // User is permitted to silence if they either have the "global" permissions of "AlertingInstanceCreate",
+  // or the folder specific access control of "AlertingSilenceCreate"
+  const allowedToSilence = Boolean(
+    ctx.hasPermission(AccessControlAction.AlertingInstanceCreate) ||
+      accessControl[AccessControlAction.AlertingSilenceCreate]
+  );
+
+  return [silenceSupported, allowedToSilence];
 }
 
 // just a convenient function
