@@ -154,6 +154,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string) => {
       color: theme.colors.text.secondary,
       background: 'transparent',
       border: 'none',
+      overflow: 'hidden',
 
       '&:hover': {
         color: theme.colors.text.primary,
@@ -165,6 +166,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string) => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       fontSize: theme.typography.bodySmall.fontSize,
+      marginLeft: theme.spacing(0.5),
     }),
     active: css({
       backgroundColor: theme.colors.background.secondary,
@@ -209,7 +211,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string) => {
       width: theme.spacing(1),
       height: theme.spacing(1),
       padding: theme.spacing(0.75, 0.75),
-      marginRight: theme.spacing(1),
+      marginRight: theme.spacing(0.5),
     }),
   };
 };

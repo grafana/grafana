@@ -267,7 +267,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
       paddingLeft: theme.spacing(3),
     }),
     indentChild: css({
-      paddingLeft: expanded ? theme.spacing(5) : theme.spacing(3.375),
+      paddingLeft: expanded ? theme.spacing(5) : theme.spacing(2.75),
     }),
     itemWrapper: css({
       display: 'flex',
