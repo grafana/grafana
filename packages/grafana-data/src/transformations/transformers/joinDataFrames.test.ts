@@ -477,7 +477,7 @@ describe('align frames', () => {
     `);
   });
 
-  it('adds frame.name as field.labels._frameName, when it exists', () => {
+  it('add frame.name as field.labels.name only when field.labels.name does not exist', () => {
     const series1 = toDataFrame({
       name: 'Frame A',
       fields: [
