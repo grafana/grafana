@@ -1,7 +1,7 @@
 import { PluginExtensionPoints } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { getExploreExtensionConfigs } from './getExploreExtensionConfigs';
+import { getExploreAddedLinks } from './getExploreExtensionConfigs';
 
 jest.mock('app/core/services/context_srv');
 
@@ -10,7 +10,7 @@ const contextSrvMock = jest.mocked(contextSrv);
 describe('getExploreExtensionConfigs', () => {
   describe('configured items returned', () => {
     it('should return array with core extensions added in explore', () => {
-      const extensions = getExploreExtensionConfigs();
+      const extensions = getExploreAddedLinks();
 
       expect(extensions).toEqual([
         {
@@ -42,7 +42,7 @@ describe('getExploreExtensionConfigs', () => {
     it('should return undefined if insufficient permissions', () => {
       contextSrvMock.hasPermission.mockReturnValue(false);
 
-      const extensions = getExploreExtensionConfigs();
+      const extensions = getExploreAddedLinks();
       const [extension] = extensions;
 
       expect(extension?.configure?.()).toBeUndefined();
@@ -51,7 +51,7 @@ describe('getExploreExtensionConfigs', () => {
     it('should return empty object if sufficient permissions', () => {
       contextSrvMock.hasPermission.mockReturnValue(true);
 
-      const extensions = getExploreExtensionConfigs();
+      const extensions = getExploreAddedLinks();
       const [extension] = extensions;
 
       expect(extension?.configure?.()).toEqual({});

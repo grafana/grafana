@@ -9,40 +9,43 @@ export type RegistryType = {
   [id: string]: PluginExportedComponent;
 };
 
-export function add(registry: RegistryType, item: PluginPreloadResult): RegistryType {
-  const { pluginId, exportedComponents, error } = item;
-
-  if (error) {
-    registryLog.error({
-      message: 'Plugin failed to load, skip exposing its components.',
-      pluginId,
-      error,
+export class ExportedComponentRegistry extends Registry<RegistryType> {
+  constructor(initialState: RegistryType = {}) {
+    super({
+      initialState,
     });
-    return registry;
   }
 
-  if (!exportedComponents) {
-    return registry;
-  }
+  mapToRegistry(registry: RegistryType, item: PluginPreloadResult): RegistryType {
+    const { pluginId, exportedComponents, error } = item;
 
-  for (const config of exportedComponents) {
-    const { id } = config;
-
-    // check if config is valid, skip and warn if invalid.
-    // if(isConfigValid(config)) { ... }
-
-    if (registry[id]) {
-      // log a warning that a component already exists for that id.
-      continue;
+    if (error) {
+      registryLog.error({
+        message: 'Plugin failed to load, skip exposing its components.',
+        pluginId,
+        error,
+      });
+      return registry;
     }
 
-    registry[id] = config;
+    if (!exportedComponents) {
+      return registry;
+    }
+
+    for (const config of exportedComponents) {
+      const { id } = config;
+
+      // check if config is valid, skip and warn if invalid.
+      // if(isConfigValid(config)) { ... }
+
+      if (registry[id]) {
+        // log a warning that a component already exists for that id.
+        continue;
+      }
+
+      registry[id] = config;
+    }
+
+    return registry;
   }
-
-  return registry;
 }
-
-export const registry = new Registry<RegistryType>({
-  add,
-  getInitialState: () => ({}),
-});

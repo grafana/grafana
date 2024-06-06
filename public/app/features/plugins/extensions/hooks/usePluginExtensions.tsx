@@ -1,27 +1,26 @@
 import { useObservable } from 'react-use';
 
 import { PluginExtension } from '@grafana/data';
-import { UsePluginLinksParams, UsePluginExtensionsResult } from '@grafana/runtime';
-
-import { AddedLinkRegistry } from '../registry/addedLinkRegistry';
+import { GetPluginExtensionsOptions, UsePluginExtensionsResult } from '@grafana/runtime';
 
 import { getPluginExtensions } from './getPluginExtensions';
+import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 
-export function createUsePluginLinks(registry: AddedLinkRegistry) {
-  const observableRegistry = registry.asObservable();
+export function createPluginExtensionsHook(extensionsRegistry: ReactivePluginExtensionsRegistry) {
+  const observableRegistry = extensionsRegistry.asObservable();
   const cache: {
     id: string;
-    links: Record<string, { context: UsePluginLinksParams['context']; extensions: PluginExtension[] }>;
+    extensions: Record<string, { context: GetPluginExtensionsOptions['context']; extensions: PluginExtension[] }>;
   } = {
     id: '',
-    links: {},
+    extensions: {},
   };
 
-  return function usePluginLinks(options: UsePluginLinksParams): UsePluginExtensionsResult<PluginExtension> {
+  return function usePluginExtensions(options: GetPluginExtensionsOptions): UsePluginExtensionsResult<PluginExtension> {
     const registry = useObservable(observableRegistry);
 
     if (!registry) {
-      return { links: [], isLoading: false };
+      return { extensions: [], isLoading: false };
     }
 
     if (registry.id !== cache.id) {

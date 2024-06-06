@@ -17,6 +17,16 @@ export type PluginExportedComponent = {
   component: React.ComponentType;
 };
 
+export type UsePluginLinksParams = {
+  extensionPointId: string;
+  context?: object | Record<string | symbol, unknown>;
+  limitPerPlugin?: number;
+};
+
+export type UsePluginLinksResult = {
+  links: PluginExtensionLink[];
+  isLoading: boolean;
+};
 
 // Plugin Extensions types
 // ---------------------------------------

@@ -13,7 +13,7 @@ import { AddToDashboardForm } from './AddToDashboard/AddToDashboardForm';
 import { getAddToDashboardTitle } from './AddToDashboard/getAddToDashboardTitle';
 import { type PluginExtensionExploreContext } from './ToolbarExtensionPoint';
 
-export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
+export function getExploreAddedLinks(): PluginExtensionLinkConfig[] {
   try {
     return [
       createExtensionLinkConfig<PluginExtensionExploreContext>({

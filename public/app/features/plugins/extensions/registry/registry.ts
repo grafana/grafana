@@ -3,17 +3,17 @@ import { Observable, ReplaySubject, Subject, firstValueFrom, map, scan, startWit
 import { PluginPreloadResult } from '../../pluginPreloader';
 import { deepFreeze } from '../utils';
 
-type RegistryOptions<T extends Record<string | symbol, unknown>> = {
-  add: (registry: T, item: PluginPreloadResult) => T;
-  getInitialState: () => T;
+type ConstructorOptions<T extends Record<string | symbol, unknown>> = {
+  initialState: T;
 };
 
+// This is the base-class used by the separate specific registries.
 export class Registry<T extends Record<string | symbol, unknown>> {
   private resultSubject: Subject<PluginPreloadResult>;
   private registrySubject: ReplaySubject<T>;
 
-  constructor(options: RegistryOptions<T>) {
-    const { add: mapToRegistry, getInitialState } = options;
+  constructor(options: ConstructorOptions<T>) {
+    const { initialState } = options;
     this.resultSubject = new Subject<PluginPreloadResult>();
     // This is the subject that we expose.
     // (It will buffer the last value on the stream - the registry - and emit it to new subscribers immediately.)
@@ -21,13 +21,17 @@ export class Registry<T extends Record<string | symbol, unknown>> {
 
     this.resultSubject
       .pipe(
-        scan(mapToRegistry, getInitialState()),
+        scan(this.mapToRegistry, initialState),
         // Emit an empty registry to start the stream (it is only going to do it once during construction, and then just passes down the values)
-        startWith(getInitialState()),
+        startWith(initialState),
         map((registry) => deepFreeze(registry))
       )
       // Emitting the new registry to `this.registrySubject`
       .subscribe(this.registrySubject);
+  }
+
+  mapToRegistry(registry: T, item: PluginPreloadResult): T {
+    return registry;
   }
 
   register(result: PluginPreloadResult): void {

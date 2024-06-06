@@ -13,42 +13,45 @@ type RegistryType = {
   [target: string]: AddedLink[];
 };
 
-export function add(registry: RegistryType, item: PluginPreloadResult): RegistryType {
-  const { pluginId, addedLinks, error } = item;
-
-  if (error) {
-    registryLog.error({
-      message: 'Plugin failed to load, skip adding its links to targets.',
-      pluginId,
-      error,
+export class AddedLinkRegistry extends Registry<RegistryType> {
+  constructor(initialState: RegistryType = {}) {
+    super({
+      initialState,
     });
-    return registry;
   }
 
-  if (!addedLinks) {
-    return registry;
-  }
+  mapToRegistry(registry: RegistryType, item: PluginPreloadResult): RegistryType {
+    const { pluginId, addedLinks, error } = item;
 
-  for (const config of addedLinks) {
-    const { extensionPointId } = config;
-
-    // check if config is valid, skip and warn if invalid.
-    // if(isConfigValid(config)) { ... }
-
-    if (!Array.isArray(registry[extensionPointId])) {
-      registry[extensionPointId] = [];
+    if (error) {
+      registryLog.error({
+        message: 'Plugin failed to load, skip adding its links to targets.',
+        pluginId,
+        error,
+      });
+      return registry;
     }
 
-    registry[extensionPointId].push({
-      pluginId,
-      ...config,
-    });
+    if (!addedLinks) {
+      return registry;
+    }
+
+    for (const config of addedLinks) {
+      const { extensionPointId } = config;
+
+      // check if config is valid, skip and warn if invalid.
+      // if(isConfigValid(config)) { ... }
+
+      if (!Array.isArray(registry[extensionPointId])) {
+        registry[extensionPointId] = [];
+      }
+
+      registry[extensionPointId].push({
+        pluginId,
+        ...config,
+      });
+    }
+
+    return registry;
   }
-
-  return registry;
 }
-
-export const registry = new Registry<RegistryType>({
-  add,
-  getInitialState: () => ({}),
-});
