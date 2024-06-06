@@ -21,7 +21,7 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   tooltip?: VizTooltipOptions;
 }
 
-const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip'];
+const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip', 'height'];
 
 export class TimelineChart extends React.Component<TimelineProps> {
   getValueColor = (frameIdx: number, fieldIdx: number, value: unknown) => {
