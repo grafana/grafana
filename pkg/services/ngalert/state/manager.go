@@ -426,7 +426,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	if oldState == eval.Alerting && currentState.State == eval.Normal { // TODO: What about previous state NoData or Error?
 		currentState.ResolvedAt = result.EvaluatedAt
 		newlyResolved = true
-	} else {
+	} else if currentState.State != eval.Normal { // Retain the last resolved time if the state normal.
 		currentState.ResolvedAt = time.Time{}
 	}
 

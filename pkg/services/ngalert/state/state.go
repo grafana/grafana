@@ -397,13 +397,13 @@ func resultKeepLast(state *State, rule *models.AlertRule, result eval.Result, lo
 func (a *State) NeedsSending(resendDelay time.Duration) bool {
 	switch a.State {
 	case eval.Pending:
-		// We do not send notifications for pending states
+		// We do not send notifications for pending states.
 		return false
 	case eval.Normal:
-		// We should send a notification if the state is Normal because it was resolved
-		return !a.ResolvedAt.IsZero()
+		// We should send a notification if the state has been resolved since the last notification.
+		return a.ResolvedAt.After(a.LastSentAt)
 	default:
-		// We should send, and re-send notifications, each time LastSentAt is <= LastEvaluationTime + resendDelay
+		// We should send, and re-send notifications, each time LastSentAt is <= LastEvaluationTime + resendDelay.
 		nextSent := a.LastSentAt.Add(resendDelay)
 		return nextSent.Before(a.LastEvaluationTime) || nextSent.Equal(a.LastEvaluationTime)
 	}

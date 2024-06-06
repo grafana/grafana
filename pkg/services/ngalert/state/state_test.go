@@ -405,14 +405,25 @@ func TestNeedsSending(t *testing.T) {
 			},
 		},
 		{
-			name:        "state: normal + resolved should send without waiting",
+			name:        "state: normal + resolved should send without waiting if ResolvedAt > LastSentAt",
 			resendDelay: 1 * time.Minute,
 			expected:    true,
 			testState: &State{
 				State:              eval.Normal,
 				ResolvedAt:         evaluationTime,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime,
+				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+			},
+		},
+		{
+			name:        "state: normal + resolved should not send if LastSentAt >= ResolvedAt",
+			resendDelay: 1 * time.Minute,
+			expected:    false,
+			testState: &State{
+				State:              eval.Normal,
+				ResolvedAt:         evaluationTime.Add(-2 * time.Minute),
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
 			},
 		},
 		{
