@@ -87,10 +87,12 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
                 placeholder={t('time-picker.content.filter-placeholder', 'Search quick ranges')}
               />
             </div>
-            {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
-            {!hideQuickRanges && (
-              <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
-            )}
+            <div className={styles.scrollContent}>
+              {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
+              {!hideQuickRanges && (
+                <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
+              )}
+            </div>
           </div>
         )}
         {isFullscreen && (
@@ -306,6 +308,10 @@ const getStyles = (
   }),
   spacing: css({
     marginTop: '16px',
+  }),
+  scrollContent: css({
+    overflowY: 'auto',
+    scrollbarWidth: 'thin',
   }),
 });
 

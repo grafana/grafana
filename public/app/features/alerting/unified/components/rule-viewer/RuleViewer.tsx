@@ -225,11 +225,13 @@ interface TitleProps {
 
 export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin }: TitleProps) => {
   const styles = useStyles2(getStyles);
+  const [queryParams] = useQueryParams();
   const isRecordingRule = ruleType === PromRuleType.Recording;
+  const returnTo = queryParams.returnTo ? String(queryParams.returnTo) : '/alerting/list';
 
   return (
     <div className={styles.title}>
-      <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
+      <LinkButton variant="secondary" icon="angle-left" href={returnTo} />
       {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} />}
       <Text variant="h1" truncate>
         {name}

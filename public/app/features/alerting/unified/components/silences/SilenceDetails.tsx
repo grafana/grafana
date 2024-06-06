@@ -25,11 +25,15 @@ export const SilenceDetails = ({ silence }: Props) => {
       <div className={styles.title}>Schedule</div>
       <div>{`${startsAtDate?.format(dateDisplayFormat)} - ${endsAtDate?.format(dateDisplayFormat)}`}</div>
       <div className={styles.title}>Duration</div>
-      <div> {duration}</div>
+      <div>{duration}</div>
       <div className={styles.title}>Created by</div>
-      <div> {createdBy}</div>
-      <div className={styles.title}>Affected alerts</div>
-      <SilencedAlertsTable silencedAlerts={silencedAlerts} />
+      <div>{createdBy}</div>
+      {silencedAlerts.length > 0 && (
+        <>
+          <div className={styles.title}>Affected alerts</div>
+          <SilencedAlertsTable silencedAlerts={silencedAlerts} />
+        </>
+      )}
     </div>
   );
 };
@@ -39,6 +43,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'grid',
     gridTemplateColumns: '1fr 9fr',
     gridRowGap: '1rem',
+    paddingBottom: theme.spacing(2),
   }),
   title: css({
     color: theme.colors.text.primary,
