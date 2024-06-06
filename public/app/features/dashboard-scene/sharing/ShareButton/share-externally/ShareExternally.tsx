@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -20,6 +20,8 @@ import {
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
+
+import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 
 import { EmailSharing } from './EmailShare/EmailSharing';
 import { PublicSharing } from './PublicShare/PublicSharing';
@@ -45,7 +47,8 @@ if (isEmailSharingEnabled) {
   });
 }
 
-export function ShareExternally({ dashboard }: { dashboard: DashboardScene }) {
+export function ShareExternally() {
+  const { dashboard } = useShareDrawerContext();
   const [shareType, setShareType] = useState<SelectableValue<PublicDashboardShareType>>(SHARE_EXTERNALLY_OPTIONS[0]);
   const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
 
@@ -58,19 +61,15 @@ export function ShareExternally({ dashboard }: { dashboard: DashboardScene }) {
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
-  const onCancel = useCallback(() => {
-    dashboard.closeModal();
-  }, [dashboard]);
-
   const Config = useMemo(() => {
     if (shareType.value === PublicDashboardShareType.EMAIL && isEmailSharingEnabled) {
-      return <EmailSharing dashboard={dashboard} onCancel={onCancel} />;
+      return <EmailSharing />;
     }
     if (shareType.value === PublicDashboardShareType.PUBLIC) {
-      return <PublicSharing dashboard={dashboard} onCancel={onCancel} />;
+      return <PublicSharing />;
     }
     return <></>;
-  }, [shareType, dashboard, onCancel]);
+  }, [shareType]);
 
   if (isLoading) {
     return <Loader />;
@@ -78,7 +77,7 @@ export function ShareExternally({ dashboard }: { dashboard: DashboardScene }) {
 
   return (
     <Stack direction="column" gap={2} data-testid={selectors.container}>
-      <ShareAlerts dashboard={dashboard} />
+      <ShareAlerts dashboard={dashboard} publicDashboard={publicDashboard} />
       <ShareTypeSelect
         dashboard={dashboard}
         setShareType={setShareType}

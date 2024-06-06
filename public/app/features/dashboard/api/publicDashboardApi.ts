@@ -124,7 +124,7 @@ export const publicDashboardApi = createApi({
         };
       },
       async onQueryStarted({ dashboard }, { dispatch, queryFulfilled }) {
-        const { data } = await queryFulfilled;
+        await queryFulfilled;
         dispatch(
           notifyApp(
             createSuccessNotification(
@@ -134,16 +134,6 @@ export const publicDashboardApi = createApi({
             )
           )
         );
-
-        if (dashboard instanceof DashboardScene) {
-          dashboard.setState({
-            meta: { ...dashboard.state.meta, publicDashboardEnabled: data.isEnabled },
-          });
-        } else {
-          dashboard.updateMeta?.({
-            publicDashboardEnabled: data.isEnabled,
-          });
-        }
       },
       invalidatesTags: (result, error, { payload }) => [
         { type: 'PublicDashboard', id: payload.dashboardUid },
@@ -182,6 +172,38 @@ export const publicDashboardApi = createApi({
             publicDashboardEnabled: data.isEnabled,
           });
         }
+      },
+      invalidatesTags: (result, error, { payload }) => [
+        { type: 'PublicDashboard', id: payload.dashboardUid },
+        'AuditTablePublicDashboard',
+      ],
+    }),
+    updatePublicDashboardAccess: builder.mutation<
+      PublicDashboard,
+      {
+        dashboard: (Pick<DashboardModel, 'uid'> & Partial<Pick<DashboardModel, 'updateMeta'>>) | DashboardScene;
+        payload: Partial<PublicDashboard>;
+      }
+    >({
+      query: ({ payload, dashboard }) => {
+        const dashUid = dashboard instanceof DashboardScene ? dashboard.state.uid : dashboard.uid;
+        return {
+          url: `/dashboards/uid/${dashUid}/public-dashboards/${payload.uid}`,
+          method: 'PATCH',
+          data: payload,
+        };
+      },
+      async onQueryStarted({ dashboard, payload: { share } }, { dispatch, queryFulfilled }) {
+        await queryFulfilled;
+        let message = 'Public dashboard updated!';
+
+        if (config.featureToggles.newDashboardSharingComponent) {
+          message =
+            share === PublicDashboardShareType.PUBLIC
+              ? 'Dashboard access updated: Anyone with the link can now access'
+              : 'Dashboard access restricted: Only specific people can now access with the link';
+        }
+        dispatch(notifyApp(createSuccessNotification(message)));
       },
       invalidatesTags: (result, error, { payload }) => [
         { type: 'PublicDashboard', id: payload.dashboardUid },
@@ -287,4 +309,5 @@ export const {
   useGetActiveUserDashboardsQuery,
   useRevokeAllAccessMutation,
   usePauseOrResumePublicDashboardMutation,
+  useUpdatePublicDashboardAccessMutation,
 } = publicDashboardApi;

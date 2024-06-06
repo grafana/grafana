@@ -8,10 +8,10 @@ import { Trans, t } from '@grafana/ui/src/utils/i18n';
 import { contextSrv } from 'app/core/core';
 import { publicDashboardApi, useAddRecipientMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { validEmailRegex } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
 
+import { useShareDrawerContext } from '../../../../ShareDrawer/ShareDrawerContext';
 import ShareConfiguration from '../../ShareConfiguration';
 
 import { EmailListConfiguration } from './EmailListConfiguration';
@@ -20,7 +20,8 @@ const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard.EmailSh
 
 type EmailSharingForm = { email: string };
 
-export const ConfigEmailSharing = ({ dashboard }: { dashboard: DashboardScene }) => {
+export const ConfigEmailSharing = () => {
+  const { dashboard } = useShareDrawerContext();
   const {
     register,
     handleSubmit,

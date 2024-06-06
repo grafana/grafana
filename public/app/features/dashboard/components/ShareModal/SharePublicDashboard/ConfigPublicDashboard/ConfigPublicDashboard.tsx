@@ -19,6 +19,7 @@ import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Trans, t } from 'app/core/internationalization';
 import {
   useDeletePublicDashboardMutation,
+  usePauseOrResumePublicDashboardMutation,
   useUpdatePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -79,8 +80,9 @@ export function ConfigPublicDashboardBase({
   const isDesktop = useIsDesktop();
 
   const [update, { isLoading }] = useUpdatePublicDashboardMutation();
+  const [pauseOrResume, { isLoading: isPauseOrResumeLoading }] = usePauseOrResumePublicDashboardMutation();
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
-  const disableInputs = !hasWritePermissions || isLoading;
+  const disableInputs = !hasWritePermissions || isLoading || isPauseOrResumeLoading;
 
   const { handleSubmit, setValue, register } = useForm<ConfigPublicDashboardForm>({
     defaultValues: {
@@ -104,9 +106,28 @@ export function ConfigPublicDashboardBase({
     });
   };
 
+  const onPauseOrResume = async (values: ConfigPublicDashboardForm) => {
+    const { isAnnotationsEnabled, isTimeSelectionEnabled, isPaused } = values;
+
+    pauseOrResume({
+      dashboard: dashboard,
+      payload: {
+        ...publicDashboard!,
+        annotationsEnabled: isAnnotationsEnabled,
+        timeSelectionEnabled: isTimeSelectionEnabled,
+        isEnabled: !isPaused,
+      },
+    });
+  };
+
   const onChange = async (name: keyof ConfigPublicDashboardForm, value: boolean) => {
     setValue(name, value);
     await handleSubmit((data) => onPublicDashboardUpdate(data))();
+  };
+
+  const onTogglePause = async (value: boolean) => {
+    setValue('isPaused', value);
+    await handleSubmit((data) => onPauseOrResume(data))();
   };
 
   function onCopyURL() {
@@ -156,7 +177,7 @@ export function ConfigPublicDashboardBase({
               DashboardInteractions.publicDashboardPauseSharingClicked({
                 paused: e.currentTarget.checked,
               });
-              onChange('isPaused', e.currentTarget.checked);
+              onTogglePause(e.currentTarget.checked);
             }}
             data-testid={selectors.PauseSwitch}
           />

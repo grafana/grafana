@@ -8,15 +8,17 @@ import { Switch } from '@grafana/ui/src/components/Switch/Switch';
 import { contextSrv } from 'app/core/core';
 import { publicDashboardApi, useUpdatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { ConfigPublicDashboardForm } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
+
+import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
 type FormInput = Omit<ConfigPublicDashboardForm, 'isPaused'>;
 
-export default function ShareConfiguration({ dashboard }: { dashboard: DashboardScene }) {
+export default function ShareConfiguration() {
+  const { dashboard } = useShareDrawerContext();
   const [update, { isLoading }] = useUpdatePublicDashboardMutation();
 
   const { data: publicDashboard } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(

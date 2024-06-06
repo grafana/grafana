@@ -7,20 +7,14 @@ import { Alert, Button, Checkbox, FieldSet, Spinner, Stack, useStyles2 } from '@
 import { contextSrv } from 'app/core/core';
 import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { PublicDashboardShareType } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
 
+import { useShareDrawerContext } from '../../../ShareDrawer/ShareDrawerContext';
+
 const PUBLIC_DASHBOARD_URL = 'https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/';
-export default function CreatePublicSharing({
-  dashboard,
-  onCancel,
-  hasError,
-}: {
-  dashboard: DashboardScene;
-  onCancel: () => void;
-  hasError: boolean;
-}) {
+export default function CreatePublicSharing({ hasError }: { hasError: boolean }) {
+  const { dashboard } = useShareDrawerContext();
   const styles = useStyles2(getStyles);
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
@@ -44,8 +38,7 @@ export default function CreatePublicSharing({
       {hasWritePermissions && (
         <Alert title="" severity="info" bottomSpacing={0}>
           <Stack justifyContent="space-between" gap={2} alignItems="center">
-            Sharing this dashboard externally makes it entirely accessible to anyone with the link. Currently, this
-            feature is limited to some data sources.
+            Sharing this dashboard externally makes it entirely accessible to anyone with the link.
             <Button variant="secondary" onClick={() => window.open(PUBLIC_DASHBOARD_URL, '_blank')} type="button">
               Learn more
             </Button>
@@ -64,7 +57,7 @@ export default function CreatePublicSharing({
             <Button type="submit" disabled={!isValid}>
               Accept
             </Button>
-            <Button variant="secondary" onClick={onCancel}>
+            <Button variant="secondary" onClick={dashboard.closeModal}>
               Cancel
             </Button>
             {isLoading && <Spinner />}

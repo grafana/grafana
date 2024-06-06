@@ -5,7 +5,10 @@ import { SelectableValue, toIconName } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Icon, Label, Select, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { publicDashboardApi, useUpdatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
+import {
+  publicDashboardApi,
+  useUpdatePublicDashboardAccessMutation,
+} from 'app/features/dashboard/api/publicDashboardApi';
 import {
   isEmailSharingEnabled,
   PublicDashboardShareType,
@@ -32,7 +35,7 @@ export default function ShareTypeSelect({
   const { data: publicDashboard } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
     dashboard.state.uid!
   );
-  const [updateShareType, { isLoading }] = useUpdatePublicDashboardMutation();
+  const [updateAccess, { isLoading }] = useUpdatePublicDashboardAccessMutation();
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
@@ -53,7 +56,7 @@ export default function ShareTypeSelect({
       },
     };
 
-    updateShareType(req);
+    updateAccess(req);
   };
 
   return (

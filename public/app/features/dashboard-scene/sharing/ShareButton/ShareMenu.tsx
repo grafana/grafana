@@ -7,7 +7,7 @@ import { Menu } from '@grafana/ui';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardScene } from '../../scene/DashboardScene';
-import { ShareDrawer } from '../ShareDrawer';
+import { ShareDrawer } from '../ShareDrawer/ShareDrawer';
 
 import { ShareExternally } from './share-externally/ShareExternally';
 import { buildShareUrl } from './utils';
@@ -22,7 +22,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
   const onShareExternallyClick = () => {
     const drawer = new ShareDrawer({
       title: 'Share externally',
-      body: <ShareExternally dashboard={dashboard.getRef().resolve()} />,
+      body: <ShareExternally />,
     });
 
     dashboard.showModal(drawer);
