@@ -57,7 +57,7 @@ For more information on notification policies, refer to [fundamentals of Notific
 
 ## Add a child policy
 
-To create a new notification policy, you need to follow its tree structure. New policies created on the trunk of the tree (default policy), are the tree branches. And, subsequently, each branch can bear their own child policies. This is why you will always be adding a new child policy under either the default policy, or under an existing child policy.
+You can create a child policy under a default policy or under an existing child policy.
 
 If you want to choose where to position your policy, see the section on **Add a sibling policy**.
 
