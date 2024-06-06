@@ -3487,6 +3487,7 @@ __metadata:
   resolution: "@grafana/saga-icons@workspace:packages/grafana-icons"
   dependencies:
     "@babel/core": "npm:7.24.7"
+    "@babel/preset-react": "npm:7.24.7"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@rollup/plugin-node-resolve": "npm:^15.2.3"
     "@rollup/plugin-typescript": "npm:^11.1.6"
