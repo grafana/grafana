@@ -1498,6 +1498,11 @@
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": "Search for dashboards"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
@@ -1684,6 +1689,21 @@
     "empty-state": {
       "button-title": "Create silence",
       "title": "You haven't created any silences yet"
+    },
+    "table": {
+      "add-silence-button": "Add Silence",
+      "edit-button": "Edit",
+      "expired-silences": "Expired silences are automatically deleted after 5 days.",
+      "no-matching-silences": "No matching silences found;",
+      "noConfig": "Create a new contact point to create a configuration using the default values or contact your administrator to set up the Alertmanager.",
+      "recreate-button": "Recreate",
+      "unsilence-button": "Unsilence"
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "Alert name",
+      "state": "State"
     }
   },
   "snapshot": {

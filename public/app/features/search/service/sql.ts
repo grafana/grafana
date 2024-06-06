@@ -23,6 +23,7 @@ interface APIQuery {
   sort?: string;
   starred?: boolean;
   permission?: PermissionLevelString;
+  deleted?: boolean;
 }
 
 // Internal object to hold folderId
@@ -89,6 +90,7 @@ export class SQLSearcher implements GrafanaSearcher {
         sort: query.sort,
         permission: query.permission,
         page,
+        deleted: query.deleted,
       },
       query
     );

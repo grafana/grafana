@@ -25,6 +25,28 @@
       "user": "用户"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -1449,6 +1471,11 @@
       "toggle-edit-mode": "切换文本编辑模式"
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
+  },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
+    }
   },
   "refresh-picker": {
     "aria-label": {
