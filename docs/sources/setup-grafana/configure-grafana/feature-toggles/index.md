@@ -63,7 +63,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingQueryOptimization`        | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
 | `betterPageScrolling`              | Removes CustomScrollbar from the UI, relying on native browser scrollbars                                                                                                                                                    | Yes                |
 | `cloudWatchNewLabelParsing`        | Updates CloudWatch label parsing to be more accurate                                                                                                                                                                         | Yes                |
-| `pluginProxyPreserveTrailingSlash` | Preserve plugin proxy trailing slash.                                                                                                                                                                                        | Yes                |
+| `pluginProxyPreserveTrailingSlash` | Preserve plugin proxy trailing slash.                                                                                                                                                                                        |                    |
 
 ## Public preview feature toggles
 
