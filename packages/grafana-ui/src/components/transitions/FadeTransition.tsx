@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 
 type Props = {
-  children: React.ReactNode;
+  children: React.ReactElement;
   visible: boolean;
   duration?: number;
 };
@@ -15,10 +15,18 @@ type Props = {
 export function FadeTransition(props: Props) {
   const { visible, children, duration = 250 } = props;
   const styles = useStyles2(getStyles, duration);
+  const transitionRef = useRef(null);
 
   return (
-    <CSSTransition in={visible} mountOnEnter={true} unmountOnExit={true} timeout={duration} classNames={styles}>
-      {children}
+    <CSSTransition
+      in={visible}
+      mountOnEnter={true}
+      unmountOnExit={true}
+      timeout={duration}
+      classNames={styles}
+      nodeRef={transitionRef}
+    >
+      {React.cloneElement(children, { ref: transitionRef })}
     </CSSTransition>
   );
 }
