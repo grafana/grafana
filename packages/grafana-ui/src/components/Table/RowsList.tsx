@@ -284,7 +284,7 @@ export const RowsList = (props: RowsListProps) => {
 
       // If there's a text wrapping field we set the height of it here
       if (textWrapField) {
-        const seriesIndex = textWrapField.state?.seriesIndex ?? 0;
+        const seriesIndex = data.fields.findIndex((field) => field.name === textWrapField.name);
         const pxLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
         const bbox = guessTextBoundingBox(
           textWrapField.values[index],
@@ -366,7 +366,7 @@ export const RowsList = (props: RowsListProps) => {
     }
 
     if (textWrapField) {
-      const seriesIndex = textWrapField.state?.seriesIndex ?? 0;
+      const seriesIndex = data.fields.findIndex((field) => field.name === textWrapField.name);
       const pxLineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
       return guessTextBoundingBox(
         textWrapField.values[index],

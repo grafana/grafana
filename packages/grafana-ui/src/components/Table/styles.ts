@@ -27,16 +27,17 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       width: '100%',
       // Cell height need to account for row border
       height: `${rowHeight - 1}px`,
+      wordBreak: textWrapped ? 'break-all' : 'inherit',
 
       display: 'flex',
 
       ...(asCellText
         ? {
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            userSelect: 'text',
-            whiteSpace: 'nowrap',
-          }
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          userSelect: 'text',
+          whiteSpace: 'nowrap',
+        }
         : {}),
 
       alignItems: 'center',
