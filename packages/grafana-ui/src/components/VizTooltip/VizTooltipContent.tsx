@@ -46,6 +46,7 @@ export const VizTooltipContent = ({
           justify={'space-between'}
           isPinned={isPinned}
           lineStyle={lineStyle}
+          showValueScroll={!scrollable}
         />
       ))}
       {children}
