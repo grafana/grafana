@@ -3507,8 +3507,8 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:^4.24.4":
-  version: 4.26.3
-  resolution: "@grafana/scenes@npm:4.26.3"
+  version: 4.27.0
+  resolution: "@grafana/scenes@npm:4.27.0"
   dependencies:
     "@grafana/e2e-selectors": "npm:^11.0.0"
     "@leeoniya/ufuzzy": "npm:^1.0.14"
