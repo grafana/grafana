@@ -75,6 +75,7 @@ type AlertRuleV1 struct {
 	Labels               values.StringMapValue   `json:"labels" yaml:"labels"`
 	IsPaused             values.BoolValue        `json:"isPaused" yaml:"isPaused"`
 	NotificationSettings *NotificationSettingsV1 `json:"notification_settings" yaml:"notification_settings"`
+	Record               *RecordV1               `json:"record" yaml:"record"`
 }
 
 func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
@@ -138,6 +139,13 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 		}
 		alertRule.NotificationSettings = append(alertRule.NotificationSettings, ns)
+	}
+	if rule.Record != nil {
+		record, err := rule.Record.mapToModel()
+		if err != nil {
+			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
+		}
+		alertRule.Record = &record
 	}
 	return alertRule, nil
 }
@@ -244,5 +252,17 @@ func (nsV1 *NotificationSettingsV1) mapToModel() (models.NotificationSettings, e
 		GroupInterval:     gi,
 		RepeatInterval:    ri,
 		MuteTimeIntervals: mute,
+	}, nil
+}
+
+type RecordV1 struct {
+	Metric values.StringValue `json:"metric" yaml:"metric"`
+	From   values.StringValue `json:"from" yaml:"from"`
+}
+
+func (record *RecordV1) mapToModel() (models.Record, error) {
+	return models.Record{
+		Metric: record.Metric.Value(),
+		From:   record.From.Value(),
 	}, nil
 }

@@ -77,7 +77,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	t.Run("updating record field should increase version", func(t *testing.T) {
 		rule := createRule(t, store, recordingRuleGen)
 		newRule := models.CopyRule(rule)
-		newRule.Record.Metric = "new-metric"
+		newRule.Record.Metric = "new_metric"
 
 		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
 			Existing: rule,
@@ -719,6 +719,26 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 				require.Nil(t, rule.NotificationSettings)
 			}
 		}
+	})
+
+	t.Run("inserted recording rules fail validation if metric name is invalid", func(t *testing.T) {
+		t.Run("invalid UTF-8", func(t *testing.T) {
+			invalidMetric := "my_metric\x80"
+			invalidRule := recordingRulesGen.Generate()
+			invalidRule.Record.Metric = invalidMetric
+			_, err := store.InsertAlertRules(context.Background(), []models.AlertRule{invalidRule})
+			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+			require.ErrorContains(t, err, "metric name for recording rule must be a valid utf8 string")
+		})
+
+		t.Run("invalid metric name", func(t *testing.T) {
+			invalidMetric := "with-dashes"
+			invalidRule := recordingRulesGen.Generate()
+			invalidRule.Record.Metric = invalidMetric
+			_, err := store.InsertAlertRules(context.Background(), []models.AlertRule{invalidRule})
+			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+			require.ErrorContains(t, err, "metric name for recording rule must be a valid Prometheus metric name")
+		})
 	})
 
 	t.Run("fail to insert rules with same ID", func(t *testing.T) {

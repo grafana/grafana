@@ -478,6 +478,18 @@ type AlertRuleNotificationSettings struct {
 }
 
 // swagger:model
+type Record struct {
+	// Name of the recorded metric.
+	// required: true
+	// example: grafana_alerts_ratio
+	Metric string `json:"metric" yaml:"metric"`
+	// Which expression node should be used as the input for the recorded metric.
+	// required: true
+	// example: A
+	From string `json:"from" yaml:"from"`
+}
+
+// swagger:model
 type PostableGrafanaRule struct {
 	Title                string                         `json:"title" yaml:"title"`
 	Condition            string                         `json:"condition" yaml:"condition"`
@@ -576,12 +588,6 @@ func (d *Duration) UnmarshalYAML(unmarshal func(any) error) error {
 	default:
 		return fmt.Errorf("invalid duration %v", v)
 	}
-}
-
-// Record defines how data produced by a recording rule is written.
-type Record struct {
-	Metric string `json:"metric" yaml:"metric"`
-	From   string `json:"from" yaml:"from"`
 }
 
 // swagger:model

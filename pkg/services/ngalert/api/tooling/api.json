@@ -218,6 +218,9 @@
      "format": "int64",
      "type": "integer"
     },
+    "record": {
+     "$ref": "#/definitions/AlertRuleRecordExport"
+    },
     "title": {
      "type": "string"
     },
@@ -365,6 +368,18 @@
     }
    },
    "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
+   "type": "object"
+  },
+  "AlertRuleRecordExport": {
+   "properties": {
+    "from": {
+     "type": "string"
+    },
+    "metric": {
+     "type": "string"
+    }
+   },
+   "title": "Record is the provisioned export of models.Record.",
    "type": "object"
   },
   "AlertingFileExport": {
@@ -2922,6 +2937,9 @@
     "provenance": {
      "$ref": "#/definitions/Provenance"
     },
+    "record": {
+     "$ref": "#/definitions/Record"
+    },
     "ruleGroup": {
      "example": "eval_group_1",
      "maxLength": 190,
@@ -3256,13 +3274,20 @@
   "Record": {
    "properties": {
     "from": {
+     "description": "Which expression node should be used as the input for the recorded metric.",
+     "example": "A",
      "type": "string"
     },
     "metric": {
+     "description": "Name of the recorded metric.",
+     "example": "grafana_alerts_ratio",
      "type": "string"
     }
    },
-   "title": "Record defines how data produced by a recording rule is written.",
+   "required": [
+    "metric",
+    "from"
+   ],
    "type": "object"
   },
   "RelativeTimeRange": {
@@ -4435,7 +4460,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4459,7 +4483,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4626,6 +4649,7 @@
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4681,6 +4705,7 @@
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4861,7 +4886,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
