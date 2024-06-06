@@ -77,7 +77,7 @@ Time series visualizations are the default and primary way to visualize time ser
 
 {{% admonition type="note" %}}
 You can [link alert rules](ref:link-alert) to time series visualization to observe when alerts fire and are resolved in the form of annotations. In addition, you can create alert rules from the Alert tab within the panel options.
-At the moment, alerts are only supported in the time series, and [alert list](ref:alert-list) visualizations.
+At the moment, alerts are only supported in the time series and [alert list](ref:alert-list) visualizations.
 {{% /admonition %}}
 
 {{% admonition type="note" %}}
