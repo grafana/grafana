@@ -4,6 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { IconButton, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { ScopesDashboardsScene } from './ScopesDashboardsScene';
 import { ScopesFiltersScene } from './ScopesFiltersScene';
@@ -27,44 +28,52 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
     });
 
     this.addActivationHandler(() => {
-      this.state.filters.fetchBaseNodes();
+      this._subs.add(
+        this.state.filters.subscribeToState((newState, prevState) => {
+          if (newState.scopes !== prevState.scopes) {
+            if (this.state.isExpanded) {
+              this.state.dashboards.fetchDashboards(newState.scopes);
+            }
 
-      const filtersValueSubscription = this.state.filters.subscribeToState((newState, prevState) => {
-        if (newState.scopes !== prevState.scopes) {
-          this.state.dashboards.fetchDashboards(newState.scopes);
-          sceneGraph.getTimeRange(this.parent!).onRefresh();
-        }
-      });
-
-      const dashboardEditModeSubscription = this.parent?.subscribeToState((newState) => {
-        const isEditing = 'isEditing' in newState ? !!newState.isEditing : false;
-
-        if (isEditing !== this.state.isViewing) {
-          if (isEditing) {
-            this.enterViewMode();
-          } else {
-            this.exitViewMode();
+            sceneGraph.getTimeRange(this.parent!).onRefresh();
           }
-        }
-      });
+        })
+      );
 
-      return () => {
-        filtersValueSubscription.unsubscribe();
-        dashboardEditModeSubscription?.unsubscribe();
-      };
+      this._subs.add(
+        this.parent?.subscribeToState((newState) => {
+          const isEditing = 'isEditing' in newState ? !!newState.isEditing : false;
+
+          if (isEditing !== this.state.isViewing) {
+            if (isEditing) {
+              this.enterViewMode();
+            } else {
+              this.exitViewMode();
+            }
+          }
+        })
+      );
     });
   }
 
   public getSelectedScopes() {
-    return this.state.filters.state.scopes;
+    return this.state.filters.getSelectedScopes();
   }
 
   public toggleIsExpanded() {
-    this.setState({ isExpanded: !this.state.isExpanded });
+    const isExpanded = !this.state.isExpanded;
+
+    if (isExpanded) {
+      this.state.dashboards.fetchDashboards(this.getSelectedScopes());
+    }
+
+    this.setState({ isExpanded });
   }
 
   private enterViewMode() {
     this.setState({ isExpanded: false, isViewing: true });
+
+    this.state.filters.enterViewMode();
   }
 
   private exitViewMode() {
@@ -82,17 +91,21 @@ export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>)
         {!isViewing && (
           <IconButton
             name="arrow-to-right"
-            aria-label={isExpanded ? 'Collapse scope filters' : 'Expand scope filters'}
             className={cx(!isExpanded && styles.iconNotExpanded)}
-            data-testid="scopes-scene-toggle-expand-button"
+            aria-label={
+              isExpanded
+                ? t('scopes.root.collapse', 'Collapse scope filters')
+                : t('scopes.root.expand', 'Expand scope filters')
+            }
+            data-testid="scopes-root-expand"
             onClick={() => model.toggleIsExpanded()}
           />
         )}
         <filters.Component model={filters} />
       </div>
 
-      {isExpanded && (
-        <div className={styles.dashboardsContainer} data-testid="scopes-scene-dashboards-container">
+      {isExpanded && !isViewing && (
+        <div className={styles.dashboardsContainer} data-testid="scopes-dashboards-container">
           <dashboards.Component model={dashboards} />
         </div>
       )}
