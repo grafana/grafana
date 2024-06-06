@@ -356,11 +356,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             streaming: this.streamingEnablement,
           });
 
-          if (
-            this.streamingEnablement?.search &&
-            this.isFeatureAvailable(FeatureName.streaming) &&
-            config.liveEnabled
-          ) {
+          if (this.streamingEnablement?.search && config.liveEnabled) {
             subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValueFromFilters));
           } else {
             subQueries.push(
@@ -621,7 +617,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     },
     queryValue: string
   ): Observable<DataQueryResponse> => {
-    if (this.streamingEnablement?.search && this.isFeatureAvailable(FeatureName.streaming) && config.liveEnabled) {
+    if (this.streamingEnablement?.search && config.liveEnabled) {
       return this.handleStreamingSearch(options, targets.traceql, queryValue);
     } else {
       return this._request('/api/search', {
@@ -757,7 +753,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             range: {
               from: dateTime(from),
               to: dateTime(now),
-              raw: { from: '15m', to: 'now' },
+              raw: { from: 'now-15m', to: 'now' },
             },
             requestId: '',
             interval: '',
@@ -771,7 +767,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           [
             {
               datasource: this.instanceSettings,
-              limit: 20,
+              limit: 1,
               query: '{}',
               queryType: 'traceql',
               refId: 'A',

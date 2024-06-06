@@ -74,7 +74,7 @@ describe('Tempo data source', () => {
     const range = {
       from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
       to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
-      raw: { from: '15m', to: 'now' },
+      raw: { from: 'now-15m', to: 'now' },
     };
     const traceqlQuery = {
       targets: [{ refId: 'refid1', queryType: 'traceql', query: '{}' }],
@@ -393,7 +393,7 @@ describe('Tempo data source', () => {
     const range = {
       from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
       to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
-      raw: { from: '15m', to: 'now' },
+      raw: { from: 'now-15m', to: 'now' },
     };
 
     const request = ds.traceIdQueryRequest(
@@ -438,7 +438,7 @@ describe('Tempo data source', () => {
         range: {
           from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
           to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
-          raw: { from: '15m', to: 'now' },
+          raw: { from: 'now-15m', to: 'now' },
         },
       },
       [{ refId: 'refid1', queryType: 'traceql', query: '' } as TempoQuery]
