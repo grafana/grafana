@@ -1270,6 +1270,7 @@
       "new-alert-rule": "Nova regra de alerta",
       "query": "Consulta",
       "remove": "Remover",
+      "replace-library-panel": "",
       "share": "Compartilhar",
       "show-legend": "Mostrar legenda",
       "unlink-library-panel": "Desvincular painel de biblioteca",
@@ -1478,6 +1479,11 @@
     },
     "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
   },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Atualização automática desativada. Escolha o intervalo de tempo de atualização",
@@ -1664,6 +1670,21 @@
     "empty-state": {
       "button-title": "",
       "title": ""
+    },
+    "table": {
+      "add-silence-button": "",
+      "edit-button": "",
+      "expired-silences": "",
+      "no-matching-silences": "",
+      "noConfig": "",
+      "recreate-button": "",
+      "unsilence-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "",
+      "state": ""
     }
   },
   "snapshot": {

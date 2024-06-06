@@ -29,11 +29,6 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - name: Setup Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '>=1.22.3'
-
       - name: Generate a GitHub app installation token
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
@@ -48,6 +43,11 @@ jobs:
           token: ${{ steps.generate_token.outputs.token }}
           ref: main
           path: ephemeral
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: ephemeral/go.mod
 
       - name: Get latest grafana version number
         run: |
