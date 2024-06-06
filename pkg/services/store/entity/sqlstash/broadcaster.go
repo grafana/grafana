@@ -23,7 +23,7 @@ func NewBroadcaster[T any](ctx context.Context, connect ConnectFunc[T]) (Broadca
 }
 
 type broadcaster[T any] struct {
-	running     bool
+	running     bool // FIXME: race condition between `Subscribe`/`Unsubscribe` and `start`
 	ctx         context.Context
 	subs        map[chan T]struct{}
 	cache       Cache[T]
