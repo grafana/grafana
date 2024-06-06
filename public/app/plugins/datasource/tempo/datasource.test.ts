@@ -364,7 +364,9 @@ describe('Tempo data source', () => {
   describe('test the testDatasource function', () => {
     it('should return a success msg if response.ok is true', async () => {
       mockObservable = () => of({ ok: true });
-      const handleStreamingSearch = jest.spyOn(TempoDatasource.prototype, 'handleStreamingSearch').mockImplementation(() => of({ data: [] }));
+      const handleStreamingSearch = jest
+        .spyOn(TempoDatasource.prototype, 'handleStreamingSearch')
+        .mockImplementation(() => of({ data: [] }));
 
       const ds = new TempoDatasource(defaultSettings);
       const response = await ds.testDatasource();
