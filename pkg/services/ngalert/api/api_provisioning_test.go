@@ -426,6 +426,15 @@ func TestProvisioningApi(t *testing.T) {
 				uid := util.GenerateShortUID()
 				rule := createTestAlertRule("rule", 3)
 				rule.UID = uid
+
+				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+					UID:          rule.FolderUID,
+					Title:        "Folder Title",
+					OrgID:        rule.OrgID,
+					SignedInUser: &user.SignedInUser{OrgID: rule.OrgID},
+				})
+				require.NoError(t, err)
+
 				insertRuleInOrg(t, sut, rule, 3)
 
 				// make rule a recording rule
@@ -461,6 +470,15 @@ func TestProvisioningApi(t *testing.T) {
 				uid := util.GenerateShortUID()
 				rule := createTestAlertRule("rule", 3)
 				rule.UID = uid
+
+				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+					UID:          rule.FolderUID,
+					Title:        "Folder Title",
+					OrgID:        rule.OrgID,
+					SignedInUser: &user.SignedInUser{OrgID: rule.OrgID},
+				})
+				require.NoError(t, err)
+
 				insertRuleInOrg(t, sut, rule, 3)
 
 				// make rule a recording rule
