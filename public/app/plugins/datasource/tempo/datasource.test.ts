@@ -25,6 +25,7 @@ import {
   TemplateSrv,
   DataSourceSrv,
   BackendSrv,
+  getGrafanaLiveSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, DataQuery, TableCellDisplayMode } from '@grafana/schema';
 
@@ -365,7 +366,7 @@ describe('Tempo data source', () => {
   describe('test the testDatasource function', () => {
     it('should return a success msg if response.ok is true', async () => {
       mockObservable = () => of({ ok: true });
-      const ds = new TempoDatasource(defaultSettings);
+      const ds = new TempoDatasource({...defaultSettings, jsonData: { streamingEnablement: { search: false } }});
       const response = await ds.testDatasource();
       expect(response.status).toBe('success');
     });
