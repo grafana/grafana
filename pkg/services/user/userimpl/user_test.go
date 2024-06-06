@@ -290,10 +290,6 @@ func (f *FakeUserStore) GetByID(context.Context, int64) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }
 
-func (f *FakeUserStore) CaseInsensitiveLoginConflict(context.Context, string, string) error {
-	return f.ExpectedError
-}
-
 func (f *FakeUserStore) LoginConflict(context.Context, string, string) error {
 	return f.ExpectedError
 }
