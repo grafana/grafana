@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Button, ClipboardButton, Divider, Spinner, Stack } from '@grafana/ui';
+import { Button, ClipboardButton, Divider, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import {
   useDeletePublicDashboardMutation,
@@ -49,12 +50,17 @@ if (isEmailSharingEnabled) {
 export function ShareExternally() {
   const { dashboard } = useShareDrawerContext();
   const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
+  const styles = useStyles2(getStyles);
 
   if (isLoading) {
     return <Loader />;
   }
 
-  return <ShareExternallyRenderer publicDashboard={publicDashboard} />;
+  return (
+    <div className={styles.container}>
+      <ShareExternallyRenderer publicDashboard={publicDashboard} />
+    </div>
+  );
 }
 
 function ShareExternallyRenderer({ publicDashboard }: { publicDashboard?: PublicDashboard }) {
@@ -169,3 +175,9 @@ function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
     </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    paddingBottom: theme.spacing(2),
+  }),
+});

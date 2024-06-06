@@ -124,7 +124,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: 0,
   }),
   listContainer: css({
-    maxHeight: '200px',
+    maxHeight: '140px',
     overflowY: 'auto',
   }),
   table: css({

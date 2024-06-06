@@ -3,16 +3,16 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Checkbox, FieldSet, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, FieldSet, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { PublicDashboardShareType } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
 
+import { PublicDashboardAlert } from '../../../../../dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/PublicDashboardAlert';
 import { useShareDrawerContext } from '../../../ShareDrawer/ShareDrawerContext';
 
-const PUBLIC_DASHBOARD_URL = 'https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/';
 export default function CreatePublicSharing({ hasError }: { hasError: boolean }) {
   const { dashboard } = useShareDrawerContext();
   const styles = useStyles2(getStyles);
@@ -35,16 +35,7 @@ export default function CreatePublicSharing({ hasError }: { hasError: boolean })
 
   return (
     <>
-      {hasWritePermissions && (
-        <Alert title="" severity="info" bottomSpacing={0}>
-          <Stack justifyContent="space-between" gap={2} alignItems="center">
-            Sharing this dashboard externally makes it entirely accessible to anyone with the link.
-            <Button variant="secondary" onClick={() => window.open(PUBLIC_DASHBOARD_URL, '_blank')} type="button">
-              Learn more
-            </Button>
-          </Stack>
-        </Alert>
-      )}
+      {hasWritePermissions && <PublicDashboardAlert />}
       <form onSubmit={handleSubmit(onCreate)}>
         <FieldSet disabled={disableInputs}>
           <div className={styles.checkbox}>
