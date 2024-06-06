@@ -25,7 +25,6 @@ import {
   TemplateSrv,
   DataSourceSrv,
   BackendSrv,
-  getGrafanaLiveSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, DataQuery, TableCellDisplayMode } from '@grafana/schema';
 
