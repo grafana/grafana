@@ -147,7 +147,6 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.Equal(t, "Correlation can only be edited via provisioning", response.Message)
 		require.Equal(t, http.StatusForbidden, res.StatusCode)
 
-
 		require.NoError(t, res.Body.Close())
 	})
 
