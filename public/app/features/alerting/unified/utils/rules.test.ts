@@ -1,9 +1,20 @@
 import { config } from '@grafana/runtime';
 
-import { mockCombinedRule } from '../mocks';
+import {
+  mockCombinedCloudRuleNamespace,
+  mockCombinedRule,
+  mockCombinedRuleGroup,
+  mockGrafanaRulerRule,
+  mockRuleWithLocation,
+  mockRulerAlertingRule,
+} from '../mocks';
 
 import { GRAFANA_ORIGIN_LABEL } from './labels';
-import { getRulePluginOrigin } from './rules';
+import {
+  getRuleGroupLocationFromCombinedRule,
+  getRuleGroupLocationFromRuleWithLocation,
+  getRulePluginOrigin,
+} from './rules';
 
 describe('getRuleOrigin', () => {
   it('returns undefined when no origin label is present', () => {
@@ -41,5 +52,40 @@ describe('getRuleOrigin', () => {
       labels: { [GRAFANA_ORIGIN_LABEL]: 'plugin/installed_plugin' },
     });
     expect(getRulePluginOrigin(rule)).toEqual({ pluginId: 'installed_plugin' });
+  });
+});
+
+describe('ruleGroupLocation', () => {
+  it('should be able to extract rule group location from a Grafana managed combinedRule', () => {
+    const rule = mockCombinedRule({
+      group: mockCombinedRuleGroup('group-1', []),
+      rulerRule: mockGrafanaRulerRule({ namespace_uid: 'abc123' }),
+    });
+
+    const groupLocation = getRuleGroupLocationFromCombinedRule(rule);
+    expect(groupLocation).toEqual({ ruleSourceName: 'grafana', namespace: 'abc123', group: 'group-1' });
+  });
+
+  it('should be able to extract rule group location from a data source managed combinedRule', () => {
+    const rule = mockCombinedRule({
+      group: mockCombinedRuleGroup('group-1', []),
+      namespace: mockCombinedCloudRuleNamespace({ name: 'abc123' }, 'prometheus-1'),
+      rulerRule: mockRulerAlertingRule(),
+    });
+
+    const groupLocation = getRuleGroupLocationFromCombinedRule(rule);
+    expect(groupLocation).toEqual({ ruleSourceName: 'prometheus-1', namespace: 'abc123', group: 'group-1' });
+  });
+
+  it('should be able to extract rule group location from a Grafana managed ruleWithLocation', () => {
+    const rule = mockRuleWithLocation(mockGrafanaRulerRule({ namespace_uid: 'abc123' }));
+    const groupLocation = getRuleGroupLocationFromRuleWithLocation(rule);
+    expect(groupLocation).toEqual({ ruleSourceName: 'grafana', namespace: 'abc123', group: 'group-1' });
+  });
+
+  it('should be able to extract rule group location from a data source managed ruleWithLocation', () => {
+    const rule = mockRuleWithLocation(mockRulerAlertingRule({}), { namespace: 'abc123' });
+    const groupLocation = getRuleGroupLocationFromRuleWithLocation(rule);
+    expect(groupLocation).toEqual({ ruleSourceName: 'grafana', namespace: 'abc123', group: 'group-1' });
   });
 });
