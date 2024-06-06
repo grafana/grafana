@@ -494,10 +494,19 @@ describe('align frames', () => {
       ],
     });
 
-    const out = joinDataFrames({ frames: [series1, series2] })!;
+    const series3 = toDataFrame({
+      name: 'Frame C',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000] },
+        { name: 'Value', type: FieldType.number, values: [150] }, // weird that in this "Value" case it doesnt get moved into field.labels.name
+      ],
+    });
 
-    expect(out.fields[1].labels).toEqual({ _frameName: 'Frame A', name: 'bar' });
-    expect(out.fields[2].labels).toEqual({ _frameName: 'Frame B' });
+    const out = joinDataFrames({ frames: [series1, series2, series3] })!;
+
+    expect(out.fields[1].labels).toEqual({ name: 'bar' });
+    expect(out.fields[2].labels).toEqual({ name: 'Frame B' });
+    expect(out.fields[3].labels).toEqual({});
   });
 
   it('supports duplicate times', () => {
