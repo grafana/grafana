@@ -646,13 +646,15 @@ export function guessTextBoundingBox(
   defaultRowHeight: number
 ) {
   const width = Number(headerGroup.width ?? 300);
-  const LINE_SCALE_FACTOR = 1.15;
-  const LOW_LINE_PAD = 42;
+  const LINE_SCALE_FACTOR = 1.1;
+  const LOW_LINE_PAD = 30;
 
   if (osContext !== null && typeof text === 'string') {
     const words = text.split(/\s/);
     const lines = [];
     let currentLine = '';
+    let wordCount = 0;
+    let extraLines = 0;
 
     // Let's just wrap the lines and see how well the measurement works
     for (let i = 0; i < words.length; i++) {
@@ -661,15 +663,31 @@ export function guessTextBoundingBox(
 
       if (lineWidth < width) {
         currentLine += ' ' + currentWord;
+        wordCount++;
       } else {
-        lines.push(currentLine);
+        lines.push({
+          width: lineWidth,
+          line: currentLine
+        });
+
         currentLine = currentWord;
+        wordCount = 0;
+      }
+    }
+
+    // We can have extra long strings, for these
+    // we estimate if it overshoots the line by 
+    // at least one other line
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].width > width) {
+        let extra = Math.floor(lines[i].width / width) - 1;
+        extraLines += extra;
       }
     }
 
     // Estimated height would be lines multiplied
     // by the line height
-    let lineNumber = lines.length;
+    let lineNumber = lines.length + extraLines;
     let height = 38;
     if (lineNumber > 5) {
       height = lineNumber * lineHeight * LINE_SCALE_FACTOR;
