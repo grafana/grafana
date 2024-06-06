@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { hash } from 'immutable';
 import React, { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -83,18 +83,16 @@ const HistoryEventsList = ({ timeRange }: { timeRange?: TimeRange }) => {
 
   return (
     <Stack direction="column" gap={1}>
-      <Stack gap={1} direction="row" justifyContent={'space-between'}>
-        <div className={styles.labelsFilter}>
-          <form onSubmit={handleSubmit((data) => setEventsFilter(data.query))}>
-            <SearchFieldInput
-              {...register('query')}
-              showClearFilterSuffix={!!eventsFilter}
-              onClearFilterClick={onFilterCleared}
-            />
-            <input type="submit" hidden />
-          </form>
-        </div>
-      </Stack>
+      <div className={styles.labelsFilter}>
+        <form onSubmit={handleSubmit((data) => setEventsFilter(data.query))}>
+          <SearchFieldInput
+            {...register('query')}
+            showClearFilterSuffix={!!eventsFilter}
+            onClearFilterClick={onFilterCleared}
+          />
+          <input type="submit" hidden />
+        </form>
+      </div>
       <LoadingIndicator visible={isLoading} />
       <HistoryLogEvents logRecords={historyRecords} />
     </Stack>
@@ -248,25 +246,34 @@ function EventState({ state }: { state: GrafanaAlertStateWithReason }) {
   switch (baseState) {
     case 'Normal':
       return (
-        <Tooltip content={Boolean(reason) ? reason : ''}>
-          <Icon name="check" size="md" className={Boolean(reason) ? styles.warningColor : styles.normalColor} />
+        <Tooltip content={Boolean(reason) ? `Normal (${reason})` : 'Normal'}>
+          <Icon name="check-circle" size="md" className={Boolean(reason) ? styles.warningColor : styles.normalColor} />
         </Tooltip>
       );
     case 'Alerting':
-      return <Icon name="exclamation-circle" size="md" className={styles.alertingColor} />;
+      return (
+        <Tooltip content={'Alerting'}>
+          <Icon name="exclamation-circle" size="md" className={styles.alertingColor} />
+        </Tooltip>
+      );
     case 'NoData': //todo:change icon
       return (
-        <Tooltip content={'No Data'}>
-          <Icon name="cloud" size="md" className={styles.warningColor} />
+        <Tooltip content={'Insufficient data'}>
+          <Icon name="exclamation-triangle" size="md" className={styles.warningColor} />
           {/* no idea which icon to use */}
         </Tooltip>
       );
     case 'Error':
-      return <Icon name="exclamation-circle" size="md" />;
+      return (
+        <Tooltip content={'Error'}>
+          <Icon name="exclamation-circle" size="md" />
+        </Tooltip>
+      );
+
     case 'Pending':
       return (
-        <Tooltip content={Boolean(reason) ? reason : ''}>
-          <Icon name="hourglass" size="md" className={cx(Boolean(reason) && styles.warningColor)} />
+        <Tooltip content={Boolean(reason) ? `Pending (${reason})` : 'Pending'}>
+          <Icon name="circle" size="md" className={styles.warningColor} />
         </Tooltip>
       );
     default:
