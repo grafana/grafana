@@ -12,6 +12,8 @@ export type UsePluginExtensions<T = PluginExtension> = (
 
 export type GetPluginExtensionsOptions = {
   extensionPointId: string;
+  openSplitApp?: (appId: string) => void;
+  secondAppId?: string;
   context?: object | Record<string | symbol, unknown>;
   limitPerPlugin?: number;
 };
@@ -55,6 +57,7 @@ export const getPluginLinkExtensions: GetPluginExtensions<PluginExtensionLink> =
 // This getter doesn't support the `context` option (contextual information can be passed in as component props)
 export const getPluginComponentExtensions = <Props = {}>(options: {
   extensionPointId: string;
+  openSplitApp: (appId: string) => void;
   limitPerPlugin?: number;
 }): { extensions: Array<PluginExtensionComponent<Props>> } => {
   const { extensions } = getPluginExtensions(options);

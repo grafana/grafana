@@ -1,7 +1,11 @@
+import { useCallback } from 'react';
 import { useObservable } from 'react-use';
 
 import { PluginExtension } from '@grafana/data';
 import { GetPluginExtensionsOptions, UsePluginExtensionsResult } from '@grafana/runtime';
+import windowSplitSlice from 'app/core/reducers/windowSplit';
+
+import { useDispatch, useSelector } from '../../../types';
 
 import { getPluginExtensions } from './getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
@@ -18,6 +22,12 @@ export function createPluginExtensionsHook(extensionsRegistry: ReactivePluginExt
 
   return function usePluginExtensions(options: GetPluginExtensionsOptions): UsePluginExtensionsResult<PluginExtension> {
     const registry = useObservable(observableRegistry);
+    const secondAppId = useSelector((state) => state.windowSplit.secondAppId);
+    const dispatch = useDispatch();
+    const openSplitApp = useCallback(
+      (appId: string) => dispatch(windowSplitSlice.actions.openSplitApp({ secondAppId: appId })),
+      [dispatch]
+    );
 
     if (!registry) {
       return { extensions: [], isLoading: false };
@@ -39,7 +49,7 @@ export function createPluginExtensionsHook(extensionsRegistry: ReactivePluginExt
       };
     }
 
-    const { extensions } = getPluginExtensions({ ...options, registry });
+    const { extensions } = getPluginExtensions({ ...options, registry, secondAppId, openSplitApp });
 
     cache.extensions[key] = {
       context: options.context,

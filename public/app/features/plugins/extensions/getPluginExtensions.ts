@@ -34,11 +34,15 @@ type GetExtensions = ({
   extensionPointId,
   limitPerPlugin,
   registry,
+  secondAppId,
+  openSplitApp,
 }: {
   context?: object | Record<string | symbol, unknown>;
   extensionPointId: string;
   limitPerPlugin?: number;
   registry: PluginExtensionRegistry;
+  secondAppId?: string;
+  openSplitApp: (appId: string) => void;
 }) => { extensions: PluginExtension[] };
 
 let registry: PluginExtensionRegistry = { id: '', extensions: {} };
@@ -54,7 +58,14 @@ export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginEx
 }
 
 // Returns with a list of plugin extensions for the given extension point
-export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, limitPerPlugin, registry }) => {
+export const getPluginExtensions: GetExtensions = ({
+  context,
+  extensionPointId,
+  limitPerPlugin,
+  registry,
+  openSplitApp,
+  secondAppId,
+}) => {
   const frozenContext = context ? getReadOnlyProxy(context) : {};
   const registryItems = registry.extensions[extensionPointId] ?? [];
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
@@ -78,7 +89,7 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
       // LINK
       if (isPluginExtensionLinkConfig(extensionConfig)) {
         // Run the configure() function with the current context, and apply the ovverides
-        const overrides = getLinkExtensionOverrides(pluginId, extensionConfig, frozenContext);
+        const overrides = getLinkExtensionOverrides(pluginId, secondAppId === pluginId, extensionConfig, frozenContext);
 
         // configure() returned an `undefined` -> hide the extension
         if (extensionConfig.configure && overrides === undefined) {
@@ -86,11 +97,14 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
         }
 
         const path = overrides?.path || extensionConfig.path;
+        const isAppOpened = secondAppId === pluginId;
+        const openApp = () => openSplitApp(pluginId);
+
         const extension: PluginExtensionLink = {
           id: generateExtensionId(pluginId, extensionConfig),
           type: PluginExtensionTypes.link,
           pluginId: pluginId,
-          onClick: getLinkExtensionOnClick(pluginId, extensionConfig, frozenContext),
+          onClick: getLinkExtensionOnClick({ pluginId, isAppOpened, openApp, config: extensionConfig }, frozenContext),
 
           // Configurable properties
           icon: overrides?.icon || extensionConfig.icon,
@@ -131,9 +145,14 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
   return { extensions };
 };
 
-function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLinkConfig, context?: object) {
+function getLinkExtensionOverrides(
+  pluginId: string,
+  isAppOpened: boolean,
+  config: PluginExtensionLinkConfig,
+  context?: object
+) {
   try {
-    const overrides = config.configure?.(context);
+    const overrides = config.configure?.(isAppOpened, context);
 
     // Hiding the extension
     if (overrides === undefined) {
@@ -184,11 +203,15 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
 }
 
 function getLinkExtensionOnClick(
-  pluginId: string,
-  config: PluginExtensionLinkConfig,
+  options: {
+    pluginId: string;
+    config: PluginExtensionLinkConfig;
+    isAppOpened: boolean;
+    openApp: () => void;
+  },
   context?: object
 ): ((event?: React.MouseEvent) => void) | undefined {
-  const { onClick } = config;
+  const { onClick } = options.config;
 
   if (!onClick) {
     return;
@@ -197,13 +220,13 @@ function getLinkExtensionOnClick(
   return function onClickExtensionLink(event?: React.MouseEvent) {
     try {
       reportInteraction('ui_extension_link_clicked', {
-        pluginId: pluginId,
-        extensionPointId: config.extensionPointId,
-        title: config.title,
-        category: config.category,
+        pluginId: options.pluginId,
+        extensionPointId: options.config.extensionPointId,
+        title: options.config.title,
+        category: options.config.category,
       });
 
-      const result = onClick(event, getEventHelpers(pluginId, context));
+      const result = onClick(event, getEventHelpers(options.pluginId, options.isAppOpened, options.openApp, context));
 
       if (isPromise(result)) {
         result.catch((e) => {
