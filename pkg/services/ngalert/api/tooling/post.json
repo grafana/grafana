@@ -218,6 +218,9 @@
      "format": "int64",
      "type": "integer"
     },
+    "record": {
+     "$ref": "#/definitions/AlertRuleRecordExport"
+    },
     "title": {
      "type": "string"
     },
@@ -365,6 +368,18 @@
     }
    },
    "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
+   "type": "object"
+  },
+  "AlertRuleRecordExport": {
+   "properties": {
+    "from": {
+     "type": "string"
+    },
+    "metric": {
+     "type": "string"
+    }
+   },
+   "title": "Record is the provisioned export of models.Record.",
    "type": "object"
   },
   "AlertingFileExport": {
@@ -967,7 +982,9 @@
    },
    "type": "object"
   },
-  "EvalQueriesResponse": {},
+  "EvalQueriesResponse": {
+   "type": "object"
+  },
   "ExplorePanelsState": {
    "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
   },
@@ -2922,6 +2939,9 @@
     "provenance": {
      "$ref": "#/definitions/Provenance"
     },
+    "record": {
+     "$ref": "#/definitions/Record"
+    },
     "ruleGroup": {
      "example": "eval_group_1",
      "maxLength": 190,
@@ -3256,13 +3276,20 @@
   "Record": {
    "properties": {
     "from": {
+     "description": "Which expression node should be used as the input for the recorded metric.",
+     "example": "A",
      "type": "string"
     },
     "metric": {
+     "description": "Name of the recorded metric.",
+     "example": "grafana_alerts_ratio",
      "type": "string"
     }
    },
-   "title": "Record defines how data produced by a recording rule is written.",
+   "required": [
+    "metric",
+    "from"
+   ],
    "type": "object"
   },
   "RelativeTimeRange": {
@@ -4461,7 +4488,8 @@
   },
   "alertGroups": {
    "items": {
-    "$ref": "#/definitions/alertGroup"
+    "$ref": "#/definitions/alertGroup",
+    "type": "object"
    },
    "type": "array"
   },
@@ -4564,49 +4592,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
-   "properties": {
-    "annotations": {
-     "$ref": "#/definitions/labelSet"
-    },
-    "endsAt": {
-     "description": "ends at",
-     "format": "date-time",
-     "type": "string"
-    },
-    "fingerprint": {
-     "description": "fingerprint",
-     "type": "string"
-    },
-    "generatorURL": {
-     "description": "generator URL\nFormat: uri",
-     "format": "uri",
-     "type": "string"
-    },
-    "labels": {
-     "$ref": "#/definitions/labelSet"
-    },
-    "receivers": {
-     "description": "receivers",
-     "items": {
-      "$ref": "#/definitions/receiver"
-     },
-     "type": "array"
-    },
-    "startsAt": {
-     "description": "starts at",
-     "format": "date-time",
-     "type": "string"
-    },
-    "status": {
-     "$ref": "#/definitions/alertStatus"
-    },
-    "updatedAt": {
-     "description": "updated at",
-     "format": "date-time",
-     "type": "string"
-    }
-   },
    "required": [
     "labels",
     "annotations",
@@ -4620,49 +4605,13 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
-    "$ref": "#/definitions/gettableAlert"
+    "$ref": "#/definitions/gettableAlert",
+    "type": "object"
    },
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
-   "properties": {
-    "comment": {
-     "description": "comment",
-     "type": "string"
-    },
-    "createdBy": {
-     "description": "created by",
-     "type": "string"
-    },
-    "endsAt": {
-     "description": "ends at",
-     "format": "date-time",
-     "type": "string"
-    },
-    "id": {
-     "description": "id",
-     "type": "string"
-    },
-    "matchers": {
-     "$ref": "#/definitions/matchers"
-    },
-    "startsAt": {
-     "description": "starts at",
-     "format": "date-time",
-     "type": "string"
-    },
-    "status": {
-     "$ref": "#/definitions/silenceStatus"
-    },
-    "updatedAt": {
-     "description": "updated at",
-     "format": "date-time",
-     "type": "string"
-    }
-   },
    "required": [
     "comment",
     "createdBy",
@@ -4677,11 +4626,13 @@
   },
   "gettableSilences": {
    "items": {
-    "$ref": "#/definitions/gettableSilence"
+    "$ref": "#/definitions/gettableSilence",
+    "type": "object"
    },
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4825,6 +4776,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4862,6 +4814,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",

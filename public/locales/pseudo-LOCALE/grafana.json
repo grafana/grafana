@@ -1276,6 +1276,7 @@
       "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
       "query": "Qūęřy",
       "remove": "Ŗęmővę",
+      "replace-library-panel": "Ŗępľäčę ľįþřäřy päŉęľ",
       "share": "Ŝĥäřę",
       "show-legend": "Ŝĥőŵ ľęģęŉđ",
       "unlink-library-panel": "Ůŉľįŉĸ ľįþřäřy päŉęľ",
@@ -1517,6 +1518,31 @@
     },
     "dismissable-button": "Cľőşę"
   },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "Åppľy",
+      "cancel": "Cäŉčęľ",
+      "title": "Ŝęľęčŧ şčőpęş"
+    },
+    "basicSelector": {
+      "openAdvanced": "Øpęŉ äđväŉčęđ şčőpę şęľęčŧőř <1></1>",
+      "placeholder": "Ŝęľęčŧ şčőpęş...",
+      "removeAll": "Ŗęmővę äľľ şčőpęş"
+    },
+    "root": {
+      "collapse": "Cőľľäpşę şčőpę ƒįľŧęřş",
+      "expand": "Ēχpäŉđ şčőpę ƒįľŧęřş"
+    },
+    "suggestedDashboards": {
+      "loading": "Ŀőäđįŉģ đäşĥþőäřđş",
+      "search": "Fįľŧęř"
+    },
+    "tree": {
+      "collapse": "Cőľľäpşę",
+      "expand": "Ēχpäŉđ",
+      "search": "Fįľŧęř"
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "Ĩŉčľūđę päŉęľş",
@@ -1675,6 +1701,21 @@
     "empty-state": {
       "button-title": "Cřęäŧę şįľęŉčę",
       "title": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy şįľęŉčęş yęŧ"
+    },
+    "table": {
+      "add-silence-button": "Åđđ Ŝįľęŉčę",
+      "edit-button": "Ēđįŧ",
+      "expired-silences": "Ēχpįřęđ şįľęŉčęş äřę äūŧőmäŧįčäľľy đęľęŧęđ äƒŧęř 5 đäyş.",
+      "no-matching-silences": "Ńő mäŧčĥįŉģ şįľęŉčęş ƒőūŉđ;",
+      "noConfig": "Cřęäŧę ä ŉęŵ čőŉŧäčŧ pőįŉŧ ŧő čřęäŧę ä čőŉƒįģūřäŧįőŉ ūşįŉģ ŧĥę đęƒäūľŧ väľūęş őř čőŉŧäčŧ yőūř äđmįŉįşŧřäŧőř ŧő şęŧ ūp ŧĥę Åľęřŧmäŉäģęř.",
+      "recreate-button": "Ŗęčřęäŧę",
+      "unsilence-button": "Ůŉşįľęŉčę"
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "Åľęřŧ ŉämę",
+      "state": "Ŝŧäŧę"
     }
   },
   "snapshot": {
