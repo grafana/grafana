@@ -2,12 +2,14 @@ package generic
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
 )
@@ -18,7 +20,7 @@ type genericStrategy struct {
 }
 
 // NewStrategy creates and returns a genericStrategy instance.
-func NewStrategy(typer runtime.ObjectTyper) genericStrategy {
+func NewStrategy(typer runtime.ObjectTyper) rest.RESTCreateUpdateStrategy {
 	return genericStrategy{typer, names.SimpleNameGenerator}
 }
 
@@ -27,35 +29,49 @@ func (genericStrategy) NamespaceScoped() bool {
 	return true
 }
 
-func (genericStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {}
+// Creation setup -- no errors, typically just to remove things that can not be there
+func (genericStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
+	fmt.Printf("PrepareForCreate %v\n", obj.GetObjectKind().GroupVersionKind())
+}
 
-func (genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {}
-
+// Validate on create
 func (genericStrategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	fmt.Printf("Validate %v\n", obj.GetObjectKind().GroupVersionKind())
+	// Eventually the error list
 	return field.ErrorList{}
 }
 
 // WarningsOnCreate returns warnings for the creation of the given object.
-func (genericStrategy) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string { return nil }
+func (genericStrategy) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string {
+	fmt.Printf("WarningsOnCreate %v\n", obj.GetObjectKind().GroupVersionKind())
+	// Potentially add warnings for formats
+	return nil
+}
+
+func (genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+	fmt.Printf("PrepareForUpdate %v\n", obj.GetObjectKind().GroupVersionKind())
+}
+
+func (genericStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	fmt.Printf("ValidateUpdate %v\n", obj.GetObjectKind().GroupVersionKind())
+	return field.ErrorList{}
+}
+
+// WarningsOnUpdate returns warnings for the given update.
+func (genericStrategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Object) []string {
+	fmt.Printf("WarningsOnUpdate %v\n", obj.GetObjectKind().GroupVersionKind())
+	return nil
+}
 
 func (genericStrategy) AllowCreateOnUpdate() bool {
 	return true
 }
 
 func (genericStrategy) AllowUnconditionalUpdate() bool {
-	return true
+	return true // all an update when `resourceVersion` is not specified
 }
 
 func (genericStrategy) Canonicalize(obj runtime.Object) {}
-
-func (genericStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return field.ErrorList{}
-}
-
-// WarningsOnUpdate returns warnings for the given update.
-func (genericStrategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Object) []string {
-	return nil
-}
 
 // GetAttrs returns labels and fields of an object.
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
