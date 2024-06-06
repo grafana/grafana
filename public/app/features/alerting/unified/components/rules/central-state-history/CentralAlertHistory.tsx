@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMeasure } from 'react-use';
@@ -22,7 +22,13 @@ import {
 } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { Trans, t } from 'app/core/internationalization';
-import { GrafanaAlertStateWithReason, isGrafanaAlertState } from 'app/types/unified-alerting-dto';
+import {
+  GrafanaAlertStateWithReason,
+  getReasonFromState,
+  isAlertStateWithReason,
+  isGrafanaAlertState,
+  mapStateWithReasonToBaseState,
+} from 'app/types/unified-alerting-dto';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { GRAFANA_DATASOURCE_NAME } from '../../../utils/datasource';
@@ -227,25 +233,41 @@ function EventTransition({ previous, current }: EventTransitionProps) {
 
 function EventState({ state }: { state: GrafanaAlertStateWithReason }) {
   const styles = useStyles2(getStyles);
-  if (!isGrafanaAlertState(state)) {
-    // missing series , not sure what to render here. They are always normal state?
+
+  if (!isGrafanaAlertState(state) && !isAlertStateWithReason(state)) {
     return (
-      <Tooltip content={'Missing series'}>
-        <Icon name="check" size="md" className={styles.normalColor} />
+      <Tooltip content={'No recognized state'}>
+        <Icon name="exclamation-triangle" size="md" />
       </Tooltip>
     );
   }
-  switch (state) {
+  const stateWithReason = mapStateWithReasonToBaseState(state);
+  const reason = getReasonFromState(state);
+
+  switch (stateWithReason) {
     case 'Normal':
-      return <Icon name="check" size="md" className={styles.normalColor} />;
+      return (
+        <Tooltip content={Boolean(reason) ? reason : ''}>
+          <Icon name="check" size="md" className={Boolean(reason) ? styles.warningColor : styles.normalColor} />
+        </Tooltip>
+      );
     case 'Alerting':
       return <Icon name="exclamation-circle" size="md" className={styles.alertingColor} />;
-    case 'NoData': //todo: add tooltip and change icon
-      return <Icon name="cloud" size="md" />; // no idea which icon to use
+    case 'NoData': //todo:change icon
+      return (
+        <Tooltip content={'No Data'}>
+          <Icon name="cloud" size="md" className={styles.warningColor} />
+          {/* no idea which icon to use */}
+        </Tooltip>
+      );
     case 'Error':
       return <Icon name="exclamation-circle" size="md" />;
     case 'Pending':
-      return <Icon name="hourglass" size="md" />;
+      return (
+        <Tooltip content={Boolean(reason) ? reason : ''}>
+          <Icon name="hourglass" size="md" className={cx(Boolean(reason) && styles.warningColor)} />
+        </Tooltip>
+      );
     default:
       return <Icon name="exclamation-triangle" size="md" />;
   }
@@ -302,6 +324,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     normalColor: css({
       fill: theme.colors.success.text,
+    }),
+    warningColor: css({
+      fill: theme.colors.warning.text,
     }),
     alertingColor: css({
       fill: theme.colors.error.text,
