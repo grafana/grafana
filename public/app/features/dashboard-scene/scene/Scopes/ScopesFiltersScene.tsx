@@ -4,6 +4,7 @@ import React from 'react';
 import { Scope } from '@grafana/data';
 import {
   SceneComponentProps,
+  sceneGraph,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectUrlSyncConfig,
@@ -13,6 +14,7 @@ import {
 
 import { ScopesFiltersAdvancedSelector } from './ScopesFiltersAdvancedSelector';
 import { ScopesFiltersBasicSelector } from './ScopesFiltersBasicSelector';
+import { ScopesScene } from './ScopesScene';
 import { fetchNodes, fetchScope, fetchScopes } from './api';
 import { NodesMap } from './types';
 
@@ -30,6 +32,10 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   static Component = ScopesFiltersSceneRenderer;
 
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scopes'] });
+
+  get scopesParent(): ScopesScene {
+    return sceneGraph.getAncestor(this, ScopesScene);
+  }
 
   constructor() {
     super({
@@ -125,7 +131,9 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public openBasicSelector() {
-    this.setState({ isBasicOpened: true, isAdvancedOpened: false });
+    if (!this.scopesParent.state.isViewing) {
+      this.setState({ isBasicOpened: true, isAdvancedOpened: false });
+    }
   }
 
   public closeBasicSelector() {
@@ -133,7 +141,9 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public openAdvancedSelector() {
-    this.setState({ isBasicOpened: false, isAdvancedOpened: true });
+    if (!this.scopesParent.state.isViewing) {
+      this.setState({ isBasicOpened: false, isAdvancedOpened: true });
+    }
   }
 
   public closeAdvancedSelector() {

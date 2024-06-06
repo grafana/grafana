@@ -12,6 +12,7 @@ import { ScopesTreeLevel } from './ScopesTreeLevel';
 export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<ScopesFiltersScene>) {
   const styles = useStyles2(getStyles);
   const { nodes, loadingNodeName, scopes, dirtyScopeNames, isLoadingScopes, isBasicOpened } = model.useState();
+  const { isViewing } = model.scopesParent.useState();
 
   const scopesTitles = scopes.map(({ spec: { title } }) => title).join(', ');
 
@@ -62,7 +63,7 @@ export function ScopesFiltersBasicSelector({ model }: SceneComponentProps<Scopes
           aria-label={t('scopes.basicSelector.placeholder', 'Select scopes...')}
           data-testid="scopes-basic-input"
           suffix={
-            scopes.length > 0 ? (
+            scopes.length > 0 && !isViewing ? (
               <IconButton
                 aria-label={t('scopes.basicSelector.removeAll', 'Remove all scopes')}
                 name="times"

@@ -104,7 +104,7 @@ export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>)
         <filters.Component model={filters} />
       </div>
 
-      {isExpanded && (
+      {isExpanded && !isViewing && (
         <div className={styles.dashboardsContainer} data-testid="scopes-dashboards-container">
           <dashboards.Component model={dashboards} />
         </div>

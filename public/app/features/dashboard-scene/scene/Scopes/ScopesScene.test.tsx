@@ -18,6 +18,7 @@ import {
   getApplicationsClustersExpand,
   getApplicationsClustersSelect,
   getApplicationsExpand,
+  getApplicationsSearch,
   getApplicationsSlothPictureFactorySelect,
   getApplicationsSlothPictureFactoryTitle,
   getApplicationsSlothVoteTrackerSelect,
@@ -37,8 +38,13 @@ import {
   mocksScopes,
   queryAdvancedApply,
   queryApplicationsClustersSlothClusterNorthTitle,
+  queryApplicationsClustersTitle,
+  queryApplicationsSlothPictureFactoryTitle,
+  queryApplicationsSlothVoteTrackerTitle,
   queryBasicInnerContainer,
   queryDashboard,
+  queryDashboardsContainer,
+  queryRootExpand,
   renderDashboard,
 } from './testUtils';
 
@@ -46,31 +52,31 @@ jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
-    get: jest
-      .fn()
-      .mockImplementation((url: string, params: { fieldSelector: string; parent: string; scope: string[] }) => {
-        if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_node_children')) {
-          return {
-            items: mocksNodes.filter((node) => node.parent === params.parent),
-          };
-        }
+    get: jest.fn().mockImplementation((url: string, params: { parent: string; scope: string[]; query?: string }) => {
+      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_node_children')) {
+        return {
+          items: mocksNodes.filter(
+            ({ parent, spec: { title } }) => parent === params.parent && title.includes(params.query ?? '')
+          ),
+        };
+      }
 
-        if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/')) {
-          const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/', '');
+      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/')) {
+        const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/', '');
 
-          return mocksScopes.find((scope) => scope.metadata.name === name) ?? {};
-        }
+        return mocksScopes.find((scope) => scope.metadata.name === name) ?? {};
+      }
 
-        if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_dashboard_bindings')) {
-          return {
-            items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) =>
-              params.scope.includes(bindingScope)
-            ),
-          };
-        }
+      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_dashboard_bindings')) {
+        return {
+          items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) =>
+            params.scope.includes(bindingScope)
+          ),
+        };
+      }
 
-        return {};
-      }),
+      return {};
+    }),
   }),
 }));
 
@@ -171,6 +177,23 @@ describe('ScopesScene', () => {
         await userEvents.click(getClustersExpand());
         await userEvents.click(getClustersSlothClusterNorthSelect());
         expect(getClustersSlothClusterSouthSelect()).toBeDisabled();
+      });
+
+      it('Search works', async () => {
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getBasicOpenAdvanced());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.type(getApplicationsSearch(), 'Clusters');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
+        expect(queryApplicationsSlothPictureFactoryTitle()).not.toBeInTheDocument();
+        expect(queryApplicationsSlothVoteTrackerTitle()).not.toBeInTheDocument();
+        expect(getApplicationsClustersSelect()).toBeInTheDocument();
+        await userEvents.clear(getApplicationsSearch());
+        await userEvents.type(getApplicationsSearch(), 'sloth');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(4));
+        expect(getApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+        expect(getApplicationsSlothVoteTrackerSelect()).toBeInTheDocument();
+        expect(queryApplicationsClustersTitle()).not.toBeInTheDocument();
       });
     });
 
@@ -334,6 +357,23 @@ describe('ScopesScene', () => {
         await userEvents.click(getBasicOpenAdvanced());
         await act(async () => dashboardScene.onEnterEditMode());
         expect(queryAdvancedApply()).not.toBeInTheDocument();
+      });
+
+      it('Closes dashboards list on enter', async () => {
+        await userEvents.click(getRootExpand());
+        await act(async () => dashboardScene.onEnterEditMode());
+        expect(queryDashboardsContainer()).not.toBeInTheDocument();
+      });
+
+      it('Does not open basic selector when view mode is active', async () => {
+        await act(async () => dashboardScene.onEnterEditMode());
+        await userEvents.click(getBasicInput());
+        expect(queryBasicInnerContainer()).not.toBeInTheDocument();
+      });
+
+      it('Hides the expand button when view mode is active', async () => {
+        await act(async () => dashboardScene.onEnterEditMode());
+        expect(queryRootExpand()).not.toBeInTheDocument();
       });
     });
 

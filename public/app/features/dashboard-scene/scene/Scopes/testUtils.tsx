@@ -249,6 +249,7 @@ const selectors = {
   },
 };
 
+export const queryRootExpand = () => screen.queryByTestId(selectors.root.expand);
 export const getRootExpand = () => screen.getByTestId(selectors.root.expand);
 
 export const queryBasicInnerContainer = () => screen.queryByTestId(selectors.basicSelector.innerContainer);
@@ -260,18 +261,25 @@ export const queryAdvancedApply = () => screen.queryByTestId(selectors.advancedS
 export const getAdvancedApply = () => screen.getByTestId(selectors.advancedSelector.apply);
 export const getAdvancedCancel = () => screen.getByTestId(selectors.advancedSelector.cancel);
 
+export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
 export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
 export const getDashboardsSearch = () => screen.getByTestId(selectors.dashboards.search);
 export const queryDashboard = (uid: string) => screen.queryByTestId(selectors.dashboards.dashboard(uid));
 export const getDashboard = (uid: string) => screen.getByTestId(selectors.dashboards.dashboard(uid));
 
 export const getApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
+export const getApplicationsSearch = () => screen.getByTestId(selectors.tree.search('applications'));
+export const queryApplicationsSlothPictureFactoryTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-slothPictureFactory'));
 export const getApplicationsSlothPictureFactoryTitle = () =>
   screen.getByTestId(selectors.tree.title('applications-slothPictureFactory'));
 export const getApplicationsSlothPictureFactorySelect = () =>
   screen.getByTestId(selectors.tree.select('applications-slothPictureFactory'));
+export const queryApplicationsSlothVoteTrackerTitle = () =>
+  screen.queryByTestId(selectors.tree.title('applications-slothVoteTracker'));
 export const getApplicationsSlothVoteTrackerSelect = () =>
   screen.getByTestId(selectors.tree.select('applications-slothVoteTracker'));
+export const queryApplicationsClustersTitle = () => screen.queryByTestId(selectors.tree.title('applications.clusters'));
 export const getApplicationsClustersSelect = () => screen.getByTestId(selectors.tree.select('applications.clusters'));
 export const getApplicationsClustersExpand = () => screen.getByTestId(selectors.tree.expand('applications.clusters'));
 export const queryApplicationsClustersSlothClusterNorthTitle = () =>
