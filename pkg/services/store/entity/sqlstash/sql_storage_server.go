@@ -57,10 +57,6 @@ func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer /*, c
 		entityServer.log.Warn("error registering storage server metrics", "error", err)
 	}
 
-	if err := entityServer.Init(); err != nil {
-		return nil, fmt.Errorf("initialize Entity Server: %w", err)
-	}
-
 	return entityServer, nil
 }
 
@@ -80,7 +76,7 @@ type sqlEntityServer struct {
 	ctx         context.Context // TODO: remove
 	cancel      context.CancelFunc
 	stream      chan *entity.EntityWatchResponse
-	tracer      tracing.Tracer
+	tracer      trace.Tracer
 
 	once    sync.Once
 	initErr error
@@ -93,6 +89,10 @@ func (s *sqlEntityServer) Init() error {
 	s.once.Do(func() {
 		s.initErr = s.init()
 	})
+
+	if s.initErr != nil {
+		return fmt.Errorf("initialize Entity Server: %w", s.initErr)
+	}
 
 	return s.initErr
 }
@@ -155,6 +155,12 @@ func (s *sqlEntityServer) init() error {
 }
 
 func (s *sqlEntityServer) IsHealthy(ctx context.Context, r *entity.HealthCheckRequest) (*entity.HealthCheckResponse, error) {
+	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "isHealthy"}))
+	if err := s.Init(); err != nil {
+		ctxLogger.Error("init error", "error", err)
+		return nil, err
+	}
+
 	if err := s.sqlDB.PingContext(ctx); err != nil {
 		return nil, err
 	}
