@@ -13,6 +13,7 @@ import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 import { GrafanaApp } from './app';
 import { AppChrome } from './core/components/AppChrome/AppChrome';
+import { TOP_BAR_LEVEL_HEIGHT } from './core/components/AppChrome/types';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SplitPaneWrapper } from './core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { GrafanaContext } from './core/context/GrafanaContext';
@@ -156,9 +157,9 @@ function WindowSplitWrapper(props: { routes: React.ReactNode }) {
           <CompatRouter>
             <ModalsContextProvider>
               <GlobalStyles />
-              <AppChrome>
+              <div style={{ display: 'flex', height: '100%', paddingTop: TOP_BAR_LEVEL_HEIGHT * 2, flexGrow: 1 }}>
                 <AppRootPage pluginId={secondAppId} />
-              </AppChrome>
+              </div>
             </ModalsContextProvider>
           </CompatRouter>
         </MemoryRouter>
