@@ -146,7 +146,7 @@ func FromStateTransitionToPostableAlerts(firingStates []StateTransition, stateMa
 
 	sentAlerts := make([]*State, 0, len(firingStates))
 	for _, alertState := range firingStates {
-		if !alertState.NeedsSending(stateManager.ResendDelay) {
+		if !alertState.NeedsSending(stateManager.ResendDelay, stateManager.ResolvedRetention) {
 			continue
 		}
 		alert := StateToPostableAlert(alertState, appURL)

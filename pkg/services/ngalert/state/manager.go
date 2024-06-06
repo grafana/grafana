@@ -20,7 +20,8 @@ import (
 )
 
 var (
-	ResendDelay = 30 * time.Second
+	ResendDelay       = 30 * time.Second
+	ResolvedRetention = 15 * time.Minute
 )
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
@@ -39,9 +40,10 @@ type Manager struct {
 	metrics *metrics.State
 	tracer  tracing.Tracer
 
-	clock       clock.Clock
-	cache       *cache
-	ResendDelay time.Duration
+	clock             clock.Clock
+	cache             *cache
+	ResendDelay       time.Duration
+	ResolvedRetention time.Duration // Duration for which a resolved alert state will continue to be sent to Alertmanager.
 
 	instanceStore InstanceStore
 	images        ImageCapturer
@@ -87,7 +89,8 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 
 	m := &Manager{
 		cache:                          c,
-		ResendDelay:                    ResendDelay, // TODO: make this configurable
+		ResendDelay:                    ResendDelay,       // TODO: make this configurable
+		ResolvedRetention:              ResolvedRetention, // TODO: make this configurable
 		log:                            cfg.Log,
 		metrics:                        cfg.Metrics,
 		instanceStore:                  cfg.InstanceStore,

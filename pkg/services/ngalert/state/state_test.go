@@ -351,10 +351,11 @@ func TestEnd(t *testing.T) {
 func TestNeedsSending(t *testing.T) {
 	evaluationTime, _ := time.Parse("2006-01-02", "2021-03-25")
 	testCases := []struct {
-		name        string
-		resendDelay time.Duration
-		expected    bool
-		testState   *State
+		name              string
+		resendDelay       time.Duration
+		resolvedRetention time.Duration
+		expected          bool
+		testState         *State
 	}{
 		{
 			name:        "state: alerting and LastSentAt before LastEvaluationTime + ResendDelay",
@@ -416,12 +417,37 @@ func TestNeedsSending(t *testing.T) {
 			},
 		},
 		{
-			name:        "state: normal + resolved should not send if LastSentAt >= ResolvedAt",
-			resendDelay: 1 * time.Minute,
-			expected:    false,
+			name:              "state: normal + recently resolved should send with wait",
+			resendDelay:       1 * time.Minute,
+			resolvedRetention: 15 * time.Minute,
+			expected:          true,
 			testState: &State{
 				State:              eval.Normal,
 				ResolvedAt:         evaluationTime.Add(-2 * time.Minute),
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+			},
+		},
+		{
+			name:              "state: normal + recently resolved should not send without wait",
+			resendDelay:       2 * time.Minute,
+			resolvedRetention: 15 * time.Minute,
+			expected:          false,
+			testState: &State{
+				State:              eval.Normal,
+				ResolvedAt:         evaluationTime.Add(-2 * time.Minute),
+				LastEvaluationTime: evaluationTime,
+				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+			},
+		},
+		{
+			name:              "state: normal + not recently resolved should not send even with wait",
+			resendDelay:       1 * time.Minute,
+			resolvedRetention: 15 * time.Minute,
+			expected:          false,
+			testState: &State{
+				State:              eval.Normal,
+				ResolvedAt:         evaluationTime.Add(-16 * time.Minute),
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
 			},
@@ -481,7 +507,7 @@ func TestNeedsSending(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, tc.testState.NeedsSending(tc.resendDelay))
+			assert.Equal(t, tc.expected, tc.testState.NeedsSending(tc.resendDelay, tc.resolvedRetention))
 		})
 	}
 }
