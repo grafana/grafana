@@ -729,7 +729,7 @@ export function guessLongestField(fieldConfig: any, data: DataFrame) {
           // going to leave that one as an exercise for
           // the reader to contemplate and possibly code
           const vals = sampleSize(field.values, SAMPLE_SIZE);
-          const meanLength = (vals[0].length + vals[1].length + vals[2].length) / 3;
+          const meanLength = (vals[0]?.length + vals[1]?.length + vals[2]?.length) / 3;
 
           if (meanLength > longestLength) {
             longestLength = meanLength;
