@@ -7,7 +7,8 @@ import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { VariablesDependenciesButton } from 'app/features/variables/inspect/VariablesDependenciesButton';
+
+import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
 
 import { VariableEditorListRow } from './VariableEditorListRow';
 

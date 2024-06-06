@@ -1,14 +1,14 @@
 import React, { useMemo } from 'react';
 
-import { TypedVariableModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
+import { NetworkGraphModal } from 'app/features/variables/inspect/NetworkGraphModal';
 
-import { NetworkGraphModal } from './NetworkGraphModal';
 import { createDependencyEdges, createDependencyNodes, filterNodesWithDependencies } from './utils';
 
 interface Props {
-  variables: TypedVariableModel[];
+  variables: Array<SceneVariable<SceneVariableState>>;
 }
 
 export const VariablesDependenciesButton = ({ variables }: Props) => {

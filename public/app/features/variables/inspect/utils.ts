@@ -1,9 +1,7 @@
 import { DataLinkBuiltInVars } from '@grafana/data';
-import { SceneVariable, SceneVariableState, isSceneObject } from '@grafana/scenes';
 import { Graph } from 'app/core/utils/dag';
 import { mapSet } from 'app/core/utils/set';
 import { stringifyPanelModel } from 'app/features/dashboard/state/PanelModel';
-import { isSceneVariableInstance } from 'app/features/dashboard-scene/settings/variables/utils';
 
 import { safeStringifyValue } from '../../../core/utils/explore';
 import { DashboardModel, PanelModel } from '../../dashboard/state';
@@ -22,23 +20,11 @@ export interface GraphEdge {
   to: string;
 }
 
-function isSceneVariableArray(variables: unknown): variables is Array<SceneVariable<SceneVariableState>> {
-  return Array.isArray(variables) && isSceneObject(variables[0]) && isSceneVariableInstance(variables[0]);
-}
-
-export const createDependencyNodes = (
-  variables: VariableModel[] | Array<SceneVariable<SceneVariableState>>
-): GraphNode[] => {
+export const createDependencyNodes = (variables: VariableModel[]): GraphNode[] => {
   const nodes: GraphNode[] = [];
 
-  if (isSceneVariableArray(variables)) {
-    for (const variable of variables) {
-      nodes.push({ id: variable.state.name, label: `${variable.state.name}` });
-    }
-  } else {
-    for (const variable of variables) {
-      nodes.push({ id: variable.id, label: `${variable.id}` });
-    }
+  for (const variable of variables) {
+    nodes.push({ id: variable.id, label: `${variable.id}` });
   }
 
   return nodes;
@@ -48,35 +34,19 @@ export const filterNodesWithDependencies = (nodes: GraphNode[], edges: GraphEdge
   return nodes.filter((node) => edges.some((edge) => edge.from === node.id || edge.to === node.id));
 };
 
-export const createDependencyEdges = (
-  variables: VariableModel[] | Array<SceneVariable<SceneVariableState>>
-): GraphEdge[] => {
+export const createDependencyEdges = (variables: VariableModel[]): GraphEdge[] => {
   const edges: GraphEdge[] = [];
 
-  if (isSceneVariableArray(variables)) {
-    for (const variable of variables) {
-      for (const other of variables) {
-        if (variable === other) {
-          continue;
-        }
-
-        const dependsOn = variable.variableDependency?.hasDependencyOn(other.state.name);
-        if (dependsOn) {
-          edges.push({ from: variable.state.name, to: other.state.name });
-        }
+  for (const variable of variables) {
+    for (const other of variables) {
+      if (variable === other) {
+        continue;
       }
-    }
-  } else {
-    for (const variable of variables) {
-      for (const other of variables) {
-        if (variable === other) {
-          continue;
-        }
 
-        const dependsOn = variableAdapters.get(variable.type).dependsOn(variable, other);
-        if (dependsOn) {
-          edges.push({ from: variable.id, to: other.id });
-        }
+      const dependsOn = variableAdapters.get(variable.type).dependsOn(variable, other);
+
+      if (dependsOn) {
+        edges.push({ from: variable.id, to: other.id });
       }
     }
   }
@@ -99,7 +69,7 @@ export function getVariableName(expression: string) {
   return variableName;
 }
 
-export const getUnknownVariableStrings = (variables: VariableModel[], model: any) => {
+export const getUnknownVariableStrings = (variables: VariableModel[], model: DashboardModel) => {
   variableRegex.lastIndex = 0;
   const unknownVariableNames: string[] = [];
   const modelAsString = safeStringifyValue(model, 2);
@@ -372,7 +342,7 @@ export const transformUsagesToNetwork = (usages: VariableUsageTree[]): UsagesToN
 };
 
 const countLeaves = (object: object): number => {
-  const total = Object.values(object).reduce((count: number, value: any) => {
+  const total = Object.values(object).reduce<number>((count, value) => {
     if (typeof value === 'object') {
       return count + countLeaves(value);
     }
