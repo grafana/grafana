@@ -1264,6 +1264,7 @@
       "new-alert-rule": "新建警报规则",
       "query": "查询",
       "remove": "删除",
+      "replace-library-panel": "",
       "share": "分享",
       "show-legend": "显示图例",
       "unlink-library-panel": "取消链接库面板",
@@ -1663,6 +1664,21 @@
     "empty-state": {
       "button-title": "",
       "title": ""
+    },
+    "table": {
+      "add-silence-button": "",
+      "edit-button": "",
+      "expired-silences": "",
+      "no-matching-silences": "",
+      "noConfig": "",
+      "recreate-button": "",
+      "unsilence-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "",
+      "state": ""
     }
   },
   "snapshot": {

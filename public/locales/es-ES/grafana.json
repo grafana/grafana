@@ -1270,6 +1270,7 @@
       "new-alert-rule": "Nueva regla de alerta",
       "query": "Consulta",
       "remove": "Eliminar",
+      "replace-library-panel": "",
       "share": "Compartir",
       "show-legend": "Mostrar leyenda",
       "unlink-library-panel": "Desvincular panel de librería",
@@ -1669,6 +1670,21 @@
     "empty-state": {
       "button-title": "",
       "title": ""
+    },
+    "table": {
+      "add-silence-button": "",
+      "edit-button": "",
+      "expired-silences": "",
+      "no-matching-silences": "",
+      "noConfig": "",
+      "recreate-button": "",
+      "unsilence-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "",
+      "state": ""
     }
   },
   "snapshot": {
