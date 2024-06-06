@@ -88,6 +88,10 @@
       "small": "img/cloud_monitoring_logo.svg",
       "large": "img/cloud_monitoring_logo.svg"
     },
+    "keywords": [
+      "gcp",
+      "stackdriver",
+    ],
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
