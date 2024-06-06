@@ -191,4 +191,5 @@ export interface FeatureToggles {
   preserveDashboardStateWhenNavigating?: boolean;
   alertingCentralAlertHistory?: boolean;
   pluginProxyPreserveTrailingSlash?: boolean;
+  azureMonitorPrometheusExemplars?: boolean;
 }
