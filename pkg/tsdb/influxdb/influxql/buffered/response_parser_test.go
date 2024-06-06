@@ -363,10 +363,11 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 	})
 
-	t.Run("Influxdb response parser parseTimestamp valid JSON.number", func(t *testing.T) {
+	t.Run("Influxdb response parser parseTimestamp valid number", func(t *testing.T) {
 		// currently we use milliseconds-precision with influxdb, so the test works with that.
 		// if we change this to for example nanoseconds-precision, the tests will have to change.
-		timestamp, err := util.ParseTimestamp(json.Number("1609556645000"))
+		ts := float64(1609556645000)
+		timestamp, err := util.ParseTimestamp(ts)
 		require.NoError(t, err)
 		require.Equal(t, timestamp.Format(time.RFC3339), "2021-01-02T03:04:05Z")
 	})
