@@ -9,7 +9,7 @@ import { CustomScrollbar, Icon, Input, LoadingPlaceholder, useStyles2 } from '@g
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t } from 'app/core/internationalization';
 
-import { fetchDashboards } from './api/dashboards';
+import { fetchDashboards } from './api';
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
   dashboards: ScopeDashboardBinding[];

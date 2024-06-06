@@ -14,7 +14,7 @@ import {
 
 import { ScopesFiltersAdvancedSelector } from './ScopesFiltersAdvancedSelector';
 import { ScopesFiltersBasicSelector } from './ScopesFiltersBasicSelector';
-import { fetchNodes, fetchScope, fetchScopes } from './api/scopes';
+import { fetchNodes, fetchScope, fetchScopes } from './api';
 import { NodesMap } from './types';
 
 export interface ScopesFiltersSceneState extends SceneObjectState {

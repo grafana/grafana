@@ -1,21 +1,24 @@
-import { Scope, ScopeSpec, ScopeNode } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { Scope, ScopeSpec, ScopeNode, ScopeDashboardBinding } from '@grafana/data';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import { NodesMap } from 'app/features/dashboard-scene/scene/Scopes/types';
 
-import { group, namespace, version } from './common';
+const group = 'scope.grafana.app';
+const version = 'v0alpha1';
+const namespace = config.namespace ?? 'default';
 
 const nodesEndpoint = `/apis/${group}/${version}/namespaces/${namespace}/find/scope_node_children`;
+const dashboardsEndpoint = `/apis/${group}/${version}/namespaces/${namespace}/find/scope_dashboard_bindings`;
 
-const client = new ScopedResourceClient<ScopeSpec, 'Scope'>({
+const scopesClient = new ScopedResourceClient<ScopeSpec, 'Scope'>({
   group,
   version,
   resource: 'scopes',
 });
 
-const cache = new Map<string, Promise<Scope>>();
+const scopesCache = new Map<string, Promise<Scope>>();
 
-async function fetchScopeTreeItems(parent: string, query: string): Promise<ScopeNode[]> {
+async function fetchScopeNodes(parent: string, query: string): Promise<ScopeNode[]> {
   try {
     return (await getBackendSrv().get<{ items: ScopeNode[] }>(nodesEndpoint, { parent, query }))?.items ?? [];
   } catch (err) {
@@ -24,7 +27,7 @@ async function fetchScopeTreeItems(parent: string, query: string): Promise<Scope
 }
 
 export async function fetchNodes(parent: string, query: string): Promise<NodesMap> {
-  return (await fetchScopeTreeItems(parent, query)).reduce<NodesMap>((acc, { metadata: { name }, spec }) => {
+  return (await fetchScopeNodes(parent, query)).reduce<NodesMap>((acc, { metadata: { name }, spec }) => {
     acc[name] = {
       name,
       ...spec,
@@ -39,8 +42,8 @@ export async function fetchNodes(parent: string, query: string): Promise<NodesMa
 }
 
 export async function fetchScope(name: string): Promise<Scope> {
-  if (cache.has(name)) {
-    return cache.get(name)!;
+  if (scopesCache.has(name)) {
+    return scopesCache.get(name)!;
   }
 
   const response = new Promise<Scope>(async (resolve) => {
@@ -56,7 +59,7 @@ export async function fetchScope(name: string): Promise<Scope> {
     };
 
     try {
-      const serverScope = await client.get(name);
+      const serverScope = await scopesClient.get(name);
 
       const scope = {
         ...basicScope,
@@ -72,17 +75,29 @@ export async function fetchScope(name: string): Promise<Scope> {
 
       resolve(scope);
     } catch (err) {
-      cache.delete(name);
+      scopesCache.delete(name);
 
       resolve(basicScope);
     }
   });
 
-  cache.set(name, response);
+  scopesCache.set(name, response);
 
   return response;
 }
 
 export async function fetchScopes(names: string[]): Promise<Scope[]> {
   return await Promise.all(names.map(fetchScope));
+}
+
+export async function fetchDashboards(scopes: Scope[]): Promise<ScopeDashboardBinding[]> {
+  try {
+    const response = await getBackendSrv().get<{ items: ScopeDashboardBinding[] }>(dashboardsEndpoint, {
+      scope: scopes.map(({ metadata: { name } }) => name),
+    });
+
+    return response?.items ?? [];
+  } catch (err) {
+    return [];
+  }
 }

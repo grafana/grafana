@@ -7,8 +7,7 @@ import { behaviors, SceneGridItem, SceneGridLayout, SceneQueryRunner, SceneTimeR
 import { DashboardControls } from 'app/features/dashboard-scene/scene//DashboardControls';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import * as dashboardsApi from './api/dashboards';
-import * as scopesApi from './api/scopes';
+import * as api from './api';
 
 export const mocksScopes: Scope[] = [
   {
@@ -214,10 +213,10 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
   },
 ] as const;
 
-export const fetchNodesSpy = jest.spyOn(scopesApi, 'fetchNodes');
-export const fetchScopeSpy = jest.spyOn(scopesApi, 'fetchScope');
-export const fetchScopesSpy = jest.spyOn(scopesApi, 'fetchScopes');
-export const fetchDashboardsSpy = jest.spyOn(dashboardsApi, 'fetchDashboards');
+export const fetchNodesSpy = jest.spyOn(api, 'fetchNodes');
+export const fetchScopeSpy = jest.spyOn(api, 'fetchScope');
+export const fetchScopesSpy = jest.spyOn(api, 'fetchScopes');
+export const fetchDashboardsSpy = jest.spyOn(api, 'fetchDashboards');
 
 const selectors = {
   root: {
