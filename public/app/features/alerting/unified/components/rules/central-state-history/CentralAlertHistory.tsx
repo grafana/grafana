@@ -45,7 +45,7 @@ const LIMIT_EVENTS = 250;
 
 const HistoryEventsList = ({ timeRange }: { timeRange?: TimeRange }) => {
   const styles = useStyles2(getStyles);
-  const { useGetRuleHistoryQuery } = stateHistoryApi;
+
   // Filter state
   const [eventsFilter, setEventsFilter] = useState('');
   // form for filter fields
@@ -62,7 +62,7 @@ const HistoryEventsList = ({ timeRange }: { timeRange?: TimeRange }) => {
     isLoading,
     isError,
     error,
-  } = useGetRuleHistoryQuery(
+  } = stateHistoryApi.endpoints.getRuleHistory.useQuery(
     {
       from: from,
       to: to,
