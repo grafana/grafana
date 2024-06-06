@@ -646,8 +646,8 @@ export function guessTextBoundingBox(
   defaultRowHeight: number
 ) {
   const width = Number(headerGroup.width ?? 300);
-  const LINE_SCALE_FACTOR = 1.1;
-  const LOW_LINE_PAD = 30;
+  const LINE_SCALE_FACTOR = 1.17;
+  const LOW_LINE_PAD = 42;
 
   if (osContext !== null && typeof text === 'string') {
     const words = text.split(/\s/);
