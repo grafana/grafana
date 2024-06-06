@@ -5,7 +5,7 @@ import { Router, Redirect, Switch, RouteComponentProps } from 'react-router-dom'
 import { CompatRouter, CompatRoute } from 'react-router-dom-v5-compat';
 
 import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
-import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer } from '@grafana/ui';
+import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer, Stack } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
@@ -111,18 +111,12 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                         <AppChrome>
                           <AngularRoot />
                           <AppNotificationList />
-                          <div
-                            style={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              flexGrow: 1,
-                            }}
-                          >
+                          <Stack gap={0} grow={1} direction="column">
                             {pageBanners.map((Banner, index) => (
                               <Banner key={index.toString()} />
                             ))}
                             {ready && this.renderRoutes()}
-                          </div>
+                          </Stack>
                           {bodyRenderHooks.map((Hook, index) => (
                             <Hook key={index.toString()} />
                           ))}
