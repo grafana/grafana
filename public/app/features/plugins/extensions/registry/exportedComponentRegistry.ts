@@ -1,4 +1,4 @@
-import { PluginPreloadResult } from '../pluginPreloader';
+import { PluginPreloadResult } from '../../pluginPreloader';
 
 import { Registry } from './registry';
 import { registryLog } from './registryLog';
@@ -10,12 +10,12 @@ export type ExportedComponent = {
   component: React.FunctionComponent;
 };
 
-export type RegistryType = {
+export type ComponentByIdState = {
   [id: string]: ExportedComponent;
 };
 
-export function add(registry: RegistryType, item: PluginPreloadResult): RegistryType {
-  const { pluginId, exportedComponents, error } = item;
+export function addComponentToState(state: ComponentByIdState, result: PluginPreloadResult): ComponentByIdState {
+  const { pluginId, exportedComponents, error } = result;
 
   if (error) {
     registryLog.error({
@@ -23,11 +23,11 @@ export function add(registry: RegistryType, item: PluginPreloadResult): Registry
       pluginId,
       error,
     });
-    return registry;
+    return state;
   }
 
   if (!exportedComponents) {
-    return registry;
+    return state;
   }
 
   for (const config of exportedComponents) {
@@ -36,18 +36,18 @@ export function add(registry: RegistryType, item: PluginPreloadResult): Registry
     // check if config is valid, skip and warn if invalid.
     // if(isConfigValid(config)) { ... }
 
-    if (registry[id]) {
+    if (state[id]) {
       // log a warning that a component already exists for that id.
       continue;
     }
 
-    registry[id] = config;
+    state[id] = config;
   }
 
-  return registry;
+  return state;
 }
 
-export const registry = new Registry<RegistryType>({
-  add,
+export const registry = new Registry<ComponentByIdState>({
   getInitialState: () => ({}),
+  addToState: addComponentToState,
 });

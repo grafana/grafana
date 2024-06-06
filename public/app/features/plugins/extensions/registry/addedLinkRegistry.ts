@@ -9,12 +9,12 @@ export type AddedLink = PluginExtensionLinkConfig & {
   pluginId: string;
 };
 
-type RegistryType = {
+type LinksByTargetState = {
   [target: string]: AddedLink[];
 };
 
-export function add(registry: RegistryType, item: PluginPreloadResult): RegistryType {
-  const { pluginId, addedLinks, error } = item;
+export function addLinksToState(state: LinksByTargetState, result: PluginPreloadResult): LinksByTargetState {
+  const { pluginId, addedLinks, error } = result;
 
   if (error) {
     registryLog.error({
@@ -22,11 +22,11 @@ export function add(registry: RegistryType, item: PluginPreloadResult): Registry
       pluginId,
       error,
     });
-    return registry;
+    return state;
   }
 
   if (!addedLinks) {
-    return registry;
+    return state;
   }
 
   for (const config of addedLinks) {
@@ -35,20 +35,20 @@ export function add(registry: RegistryType, item: PluginPreloadResult): Registry
     // check if config is valid, skip and warn if invalid.
     // if(isConfigValid(config)) { ... }
 
-    if (!Array.isArray(registry[extensionPointId])) {
-      registry[extensionPointId] = [];
+    if (!Array.isArray(state[extensionPointId])) {
+      state[extensionPointId] = [];
     }
 
-    registry[extensionPointId].push({
+    state[extensionPointId].push({
       pluginId,
       ...config,
     });
   }
 
-  return registry;
+  return state;
 }
 
-export const registry = new Registry<RegistryType>({
-  add,
+export const registry = new Registry<LinksByTargetState>({
   getInitialState: () => ({}),
+  addToState: addLinksToState,
 });

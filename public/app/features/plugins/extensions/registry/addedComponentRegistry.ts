@@ -9,12 +9,15 @@ export type AddedComponent = PluginExtensionComponentConfig & {
   pluginId: string;
 };
 
-type RegistryType = {
+type ComponentsByTargetState = {
   [target: string]: AddedComponent[];
 };
 
-export function add(registry: RegistryType, item: PluginPreloadResult): RegistryType {
-  const { pluginId, addedComponents, error } = item;
+export function addComponentsToState(
+  state: ComponentsByTargetState,
+  result: PluginPreloadResult
+): ComponentsByTargetState {
+  const { pluginId, addedComponents, error } = result;
 
   if (error) {
     registryLog.error({
@@ -22,11 +25,11 @@ export function add(registry: RegistryType, item: PluginPreloadResult): Registry
       pluginId,
       error,
     });
-    return registry;
+    return state;
   }
 
   if (!addedComponents) {
-    return registry;
+    return state;
   }
 
   for (const config of addedComponents) {
@@ -35,20 +38,20 @@ export function add(registry: RegistryType, item: PluginPreloadResult): Registry
     // check if config is valid, skip and warn if invalid.
     // if(isConfigValid(config)) { ... }
 
-    if (!Array.isArray(registry[extensionPointId])) {
-      registry[extensionPointId] = [];
+    if (!Array.isArray(state[extensionPointId])) {
+      state[extensionPointId] = [];
     }
 
-    registry[extensionPointId].push({
+    state[extensionPointId].push({
       pluginId,
       ...config,
     });
   }
 
-  return registry;
+  return state;
 }
 
-export const registry = new Registry<RegistryType>({
-  add,
+export const registry = new Registry<ComponentsByTargetState>({
   getInitialState: () => ({}),
+  addToState: addComponentsToState,
 });
