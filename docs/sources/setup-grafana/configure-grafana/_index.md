@@ -1637,7 +1637,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ### ha_reconnect_timeout
 
-Length of time to attempt to reconnect to a lost peer. Recommended to be short (<15m) when Grafana is running in a Kubernetes cluster.
+Length of time to attempt to reconnect to a lost peer. When running Grafana in a Kubernetes cluster, set this duration to less than `15m`.
 
 The string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
