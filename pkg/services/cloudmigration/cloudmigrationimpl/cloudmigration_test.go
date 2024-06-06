@@ -12,8 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	secretsfakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -31,7 +33,7 @@ func Test_NoopServiceDoesNothing(t *testing.T) {
 	assert.ErrorIs(t, e, cloudmigration.ErrFeatureDisabledError)
 }
 
-func Test_1(t *testing.T) {
+func Test_CreateGetAndDeleteToken(t *testing.T) {
 	s := setUpServiceTest(t, false)
 
 	createResp, err := s.CreateToken(context.Background())
@@ -45,15 +47,15 @@ func Test_1(t *testing.T) {
 	err = s.DeleteToken(context.Background(), token.ID)
 	assert.NoError(t, err)
 
+	_, err = s.GetToken(context.Background())
+	assert.ErrorIs(t, cloudmigration.ErrTokenNotFound, err)
+
 	cm := cloudmigration.CloudMigration{}
 	err = s.ValidateToken(context.Background(), cm)
 	assert.NoError(t, err)
-
-	_, err = s.GetToken(context.Background())
-	assert.ErrorIs(t, cloudmigration.ErrTokenNotFound, err)
 }
 
-func Test_2(t *testing.T) {
+func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
 	s := setUpServiceTest(t, true)
 
 	createTokenResp, err := s.CreateToken(context.Background())
@@ -82,6 +84,13 @@ func Test_2(t *testing.T) {
 	runResp, err := s.RunMigration(ctxWithSignedInUser(), createResp.UID)
 	require.NoError(t, err)
 	require.NotNil(t, runResp)
+	resultItemsByType := make(map[string]int)
+	for _, item := range runResp.Items {
+		resultItemsByType[string(item.Type)] = resultItemsByType[string(item.Type)] + 1
+	}
+	require.Equal(t, 1, resultItemsByType["DASHBOARD"])
+	require.Equal(t, 2, resultItemsByType["DATASOURCE"])
+	require.Equal(t, 2, len(resultItemsByType))
 
 	runStatusResp, err := s.GetMigrationStatus(context.Background(), runResp.RunUID)
 	require.NoError(t, err)
@@ -112,7 +121,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	spanRecorder := tracetest.NewSpanRecorder()
 	tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
 	mockFolder := &foldertest.FakeService{
-		//	ExpectedFolder: &folder.Folder{UID: "folderUID", Title: "Folder"},
+		ExpectedFolder: &folder.Folder{UID: "folderUID", Title: "Folder"},
 	}
 
 	cfg := setting.NewCfg()
@@ -136,8 +145,13 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		)
 	}
 
-	// TODO add datasources
-	dsService := &datafakes.FakeDataSourceService{}
+	dsService := &datafakes.FakeDataSourceService{
+		DataSources: []*datasources.DataSource{
+			{Name: "mmm", Type: "mysql"},
+			{Name: "ZZZ", Type: "infinity"},
+		},
+	}
+
 	s, err := ProvideService(
 		cfg,
 		featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations),
