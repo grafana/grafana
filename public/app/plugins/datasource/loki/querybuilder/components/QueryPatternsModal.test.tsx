@@ -133,7 +133,7 @@ describe('QueryPatternsModal', () => {
     expect(screen.getByText(queryPatterns.metricQueryPatterns[0].name)).toBeInTheDocument();
     const firstUseQueryButton = screen.getAllByRole('button', { name: 'Use this query' })[0];
     await userEvent.click(firstUseQueryButton);
-    const createNewQueryButton = screen.getByRole('button', { name: 'Replace query' });
+    const createNewQueryButton = screen.getByRole('button', { name: 'Apply to query' });
     await userEvent.click(createNewQueryButton);
     await waitFor(() => {
       expect(defaultProps.onChange).toHaveBeenCalledWith({
