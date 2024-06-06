@@ -10,10 +10,11 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
-	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
+
+	alertingModels "github.com/grafana/alerting/models"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -73,7 +74,7 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 	}
 
 	state := alertState.State
-	if alertState.Resolved {
+	if !alertState.ResolvedAt.IsZero() {
 		// If this is a resolved alert, we need to send an alert with the correct labels such that they will expire the previous alert.
 		// In most cases the labels on the state will be correct, however when the previous alert was a NoData or Error alert, we need to
 		// ensure to modify it appropriately.

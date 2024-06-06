@@ -1670,7 +1670,7 @@ func TestStaleResults(t *testing.T) {
 			assert.Equal(t, models.StateReasonMissingSeries, s.StateReason)
 			assert.Equal(t, clk.Now(), s.EndsAt)
 			if s.CacheID == state2 {
-				assert.Truef(t, s.Resolved, "Returned stale state should have Resolved set to true")
+				assert.Equalf(t, clk.Now(), s.ResolvedAt, "Returned stale state should have ResolvedAt set")
 			}
 			key, err := s.GetAlertInstanceKey()
 			require.NoError(t, err)
@@ -1819,11 +1819,11 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 				assert.Equal(t, expectedReason, s.StateReason)
 				if oldState.State == eval.Normal {
 					assert.Equal(t, oldState.StartsAt, s.StartsAt)
-					assert.False(t, s.Resolved)
+					assert.Zero(t, s.ResolvedAt)
 				} else {
 					assert.Equal(t, clk.Now(), s.StartsAt)
 					if oldState.State == eval.Alerting {
-						assert.True(t, s.Resolved)
+						assert.Equal(t, clk.Now(), s.ResolvedAt)
 					}
 				}
 				assert.Equal(t, clk.Now(), s.EndsAt)
@@ -1959,11 +1959,11 @@ func TestResetStateByRuleUID(t *testing.T) {
 				assert.Equal(t, models.StateReasonPaused, s.StateReason)
 				if oldState.State == eval.Normal {
 					assert.Equal(t, oldState.StartsAt, s.StartsAt)
-					assert.False(t, s.Resolved)
+					assert.Zero(t, s.ResolvedAt)
 				} else {
 					assert.Equal(t, clk.Now(), s.StartsAt)
 					if oldState.State == eval.Alerting {
-						assert.True(t, s.Resolved)
+						assert.Equal(t, clk.Now(), s.ResolvedAt)
 					}
 				}
 				assert.Equal(t, clk.Now(), s.EndsAt)

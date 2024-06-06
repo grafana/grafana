@@ -45,10 +45,6 @@ type State struct {
 	// can still contain the results of previous evaluations.
 	Error error
 
-	// Resolved is set to true if this state is the transitional state between Firing and Normal.
-	// All subsequent states will be false until the next transition from Firing to Normal.
-	Resolved bool
-
 	// Image contains an optional image for the state. It tends to be included in notifications
 	// as a visualization to show why the alert fired.
 	Image *models.Image
@@ -65,8 +61,14 @@ type State struct {
 	// conditions.
 	Values map[string]float64
 
-	StartsAt             time.Time
-	EndsAt               time.Time
+	StartsAt time.Time
+	// EndsAt is different from the Prometheus EndsAt as EndsAt is updated for both Normal states
+	// and states that have been resolved. It cannot be used to determine when a state was resolved.
+	EndsAt time.Time
+	// ResolvedAt is set when the state is first resolved. That is to say, when the state first transitions
+	// from Alerting, NoData, or Error to Normal. It is reset to zero when the state transitions from Normal
+	// to any other state.
+	ResolvedAt           time.Time
 	LastSentAt           time.Time
 	LastEvaluationString string
 	LastEvaluationTime   time.Time
@@ -132,14 +134,6 @@ func (a *State) SetNormal(reason string, startsAt, endsAt time.Time) {
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
 	a.Error = nil
-}
-
-// Resolve sets the State to Normal. It updates the StateReason, the end time, and sets Resolved to true.
-func (a *State) Resolve(reason string, endsAt time.Time) {
-	a.State = eval.Normal
-	a.StateReason = reason
-	a.Resolved = true
-	a.EndsAt = endsAt
 }
 
 // Maintain updates the end time using the most recent evaluation.
@@ -407,7 +401,7 @@ func (a *State) NeedsSending(resendDelay time.Duration) bool {
 		return false
 	case eval.Normal:
 		// We should send a notification if the state is Normal because it was resolved
-		return a.Resolved
+		return !a.ResolvedAt.IsZero()
 	default:
 		// We should send, and re-send notifications, each time LastSentAt is <= LastEvaluationTime + resendDelay
 		nextSent := a.LastSentAt.Add(resendDelay)

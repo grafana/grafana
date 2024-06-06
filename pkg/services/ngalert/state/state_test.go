@@ -11,10 +11,11 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/grafana/alerting/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -409,7 +410,7 @@ func TestNeedsSending(t *testing.T) {
 			expected:    true,
 			testState: &State{
 				State:              eval.Normal,
-				Resolved:           true,
+				ResolvedAt:         evaluationTime,
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime,
 			},
@@ -420,7 +421,7 @@ func TestNeedsSending(t *testing.T) {
 			expected:    false,
 			testState: &State{
 				State:              eval.Normal,
-				Resolved:           false,
+				ResolvedAt:         time.Time{},
 				LastEvaluationTime: evaluationTime,
 				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
 			},
@@ -529,13 +530,6 @@ func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 		require.Contains(t, result, "A")
 		require.Truef(t, math.IsNaN(result["A"]), "expected NaN but got %v", result["A"])
 	})
-}
-
-func TestResolve(t *testing.T) {
-	s := State{State: eval.Alerting, EndsAt: time.Now().Add(time.Minute)}
-	expected := State{State: eval.Normal, StateReason: "This is a reason", EndsAt: time.Now(), Resolved: true}
-	s.Resolve("This is a reason", expected.EndsAt)
-	assert.Equal(t, expected, s)
 }
 
 func TestShouldTakeImage(t *testing.T) {

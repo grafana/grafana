@@ -9,11 +9,12 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
-	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	alertingModels "github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -267,7 +268,9 @@ func TestStateToPostableAlertFromNodataError(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			alertState := randomTransition(tc.from, tc.to)
-			alertState.Resolved = tc.resolved
+			if tc.resolved {
+				alertState.ResolvedAt = alertState.LastEvaluationTime
+			}
 			alertState.Labels = data.Labels(standardLabels)
 			result := StateToPostableAlert(alertState, appURL)
 			require.Equal(t, tc.expectedLabels, result.Labels)
