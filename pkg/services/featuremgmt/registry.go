@@ -1289,7 +1289,7 @@ var (
 			Description: "Preserve plugin proxy trailing slash.",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
-			Expression:  "true", // enabled by default
+			Expression:  "false", // disabled by default
 		},
 	}
 )
