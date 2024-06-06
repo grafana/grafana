@@ -405,7 +405,7 @@ function belongsTo(element: null | ParentNode | Element | Document, ancestor: El
   return belongsTo(element.parentNode, ancestor);
 }
 
-class Mousetrap {
+export class Mousetrap {
   target: HTMLElement | Document;
 
   /**
@@ -971,7 +971,3 @@ class Mousetrap {
     REVERSE_MAP = null;
   };
 }
-
-const mousetrapInstance = new Mousetrap(document);
-
-export default mousetrapInstance;
