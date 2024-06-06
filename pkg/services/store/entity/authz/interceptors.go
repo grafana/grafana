@@ -77,9 +77,12 @@ func (w *authzServerStream) SendMsg(m any) error {
 			// Not calling SendMsg() means the entity is not sent back to the client.
 			return w.ServerStream.SendMsg(m)
 		}
+		// Failed to authorize, don't send the entity back to the client.
+		return err
 	}
 
-	return nil
+	// Not an entity watch response, just send the message back to the client.
+	return w.ServerStream.SendMsg(m)
 }
 
 func extractRequestEntityData(info *grpc.UnaryServerInfo, req any) (*AuthZParams, error) {
