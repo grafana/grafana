@@ -25,6 +25,11 @@ func (s *reflectionServer) AuthFuncOverride(ctx context.Context, _ string) (cont
 	return ctx, nil
 }
 
+// AuthzFuncOverride no authz for reflection service.
+func (s *reflectionServer) AuthzFuncOverride(ctx context.Context, _ string) (context.Context, error) {
+	return ctx, nil
+}
+
 func ProvideReflectionService(cfg *setting.Cfg, grpcServerProvider Provider) (*ReflectionService, error) {
 	re := &reflectionServer{reflection.NewServer(reflection.ServerOptions{Services: grpcServerProvider.GetServer()})}
 	grpc_reflection_v1alpha.RegisterServerReflectionServer(grpcServerProvider.GetServer(), re)

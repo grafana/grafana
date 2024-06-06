@@ -20,31 +20,56 @@ type AuthZParams struct {
 	Folder string
 }
 
+// ServiceAuthzFuncOverride is an interface that can be implemented by a service to override the default
+// authorization behavior.
+type ServiceAuthzFuncOverride interface {
+	AuthzFuncOverride(ctx context.Context, method string) (context.Context, error)
+}
+
 func AuthZUnaryInterceptor(authorizer Authorizer) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
-		authzParams, err := extractRequestEntityData(info, req)
-		if err != nil {
-			return nil, err
+		var newCtx context.Context
+		if ovverideSrv, ok := info.Server.(ServiceAuthzFuncOverride); ok {
+			newCtx, err = ovverideSrv.AuthzFuncOverride(ctx, info.FullMethod)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			authzParams, err := extractRequestEntityData(info, req)
+			if err != nil {
+				return nil, err
+			}
+
+			newCtx, err = authorizer.Authorize(ctx, authzParams)
+			if err != nil {
+				return nil, err
+			}
 		}
 
-		ctx, err = authorizer.Authorize(ctx, authzParams)
-		if err != nil {
-			return nil, err
-		}
-
-		return handler(ctx, req)
+		return handler(newCtx, req)
 	}
 }
 
 func AuthZStreamInterceptor(authorizer Authorizer) grpc.StreamServerInterceptor {
 	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		ctx := stream.Context()
 		authzStream := &authzServerStream{
 			ServerStream: stream,
 			authorizer:   authorizer,
-			ctx:          ctx,
 		}
 
+		var newCtx context.Context
+		var err error
+		if overrideSrv, ok := srv.(ServiceAuthzFuncOverride); ok {
+			newCtx, err = overrideSrv.AuthzFuncOverride(stream.Context(), info.FullMethod)
+		} else {
+			newCtx = stream.Context()
+			// TODO: implement authorize for stream requests
+		}
+		if err != nil {
+			return err
+		}
+
+		authzStream.ctx = newCtx
 		return handler(srv, authzStream)
 	}
 }
@@ -81,7 +106,7 @@ func (w *authzServerStream) SendMsg(m any) error {
 		return err
 	}
 
-	// Not an entity watch response, just send the message back to the client.
+	// TODO: implement authorize for other stream requests
 	return w.ServerStream.SendMsg(m)
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -76,14 +77,14 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 			middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
 			interceptors.TracingUnaryInterceptor(tracer),
 			interceptors.LoggingUnaryInterceptor(s.cfg, s.logger), // needs to be registered after tracing interceptor to get trace id
+			grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
 			mtauthz.AuthZUnaryInterceptor(authorizer),
-			// grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
 		),
 		grpc.ChainStreamInterceptor(
 			interceptors.TracingStreamInterceptor(tracer),
 			middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
+			grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
 			mtauthz.AuthZStreamInterceptor(authorizer),
-			// grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
 		),
 	}...)
 
