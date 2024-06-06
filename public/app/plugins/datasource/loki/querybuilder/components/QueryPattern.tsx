@@ -68,7 +68,7 @@ export const QueryPattern = (props: Props) => {
                 onPatternSelect(pattern);
               }}
             >
-              Replace query
+              Apply to query
             </Button>
             {hasNewQueryOption && (
               <Button

@@ -1,9 +1,9 @@
 import {
-  AnyObject,
   BasicConfig,
   Config,
   JsonTree,
   Operator,
+  OperatorOptionsI,
   Settings,
   SimpleField,
   SqlFormatOperator,
@@ -262,7 +262,7 @@ function getCustomOperators(config: BasicConfig) {
     valueSrc: ValueSource,
     valueType: string,
     opDef: Operator,
-    operatorOptions: AnyObject,
+    operatorOptions: OperatorOptionsI,
     fieldDef: SimpleField
   ) => {
     return sqlFormatInOpOrNoop()(
@@ -292,7 +292,7 @@ function getCustomOperators(config: BasicConfig) {
     valueSrc: ValueSource,
     valueType: string,
     opDef: Operator,
-    operatorOptions: AnyObject,
+    operatorOptions: OperatorOptionsI,
     fieldDef: SimpleField
   ) => {
     return sqlFormatNotInOpOrNoop()(

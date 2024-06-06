@@ -25,6 +25,28 @@
       "user": "User"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": "Define how the alert rule is evaluated."
+      },
+      "info-help": {
+        "text": "Define the alert behavior when the evaluation fails or the query returns no data."
+      },
+      "pending-period": "Pending period"
+    },
+    "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
+    "evaluation-behaviour-description2": "An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the same evaluation group are evaluated over the same evaluation interval.",
+    "evaluation-behaviour-description3": "Pending period specifies how long the threshold condition must be met before the alert starts firing. This option helps prevent alerts from being triggered by temporary issues.",
+    "evaluation-behaviour-for": {
+      "error-parsing": "Failed to parse duration",
+      "validation": "Pending period must be greater than or equal to the evaluation interval."
+    },
+    "evaluation-behaviour-group": {
+      "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
+    },
+    "pause": "Pause evaluation"
+  },
   "annotations": {
     "empty-state": {
       "button-title": "Add annotation query",
@@ -1128,6 +1150,10 @@
     "public": {
       "title": "Public dashboards"
     },
+    "recentlyDeleted": {
+      "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
+      "title": "Recently Deleted"
+    },
     "recorded-queries": {
       "title": "Recorded queries"
     },
@@ -1189,10 +1215,6 @@
       "subtitle": "Optimize performance with k6 and Synthetic Monitoring insights",
       "title": "Testing & synthetics"
     },
-    "trash": {
-      "subtitle": "Any items remaining in the Trash for more than 30 days will be automatically deleted",
-      "title": "Trash"
-    },
     "upgrading": {
       "title": "Stats and license"
     },
@@ -1248,6 +1270,7 @@
       "new-alert-rule": "New alert rule",
       "query": "Query",
       "remove": "Remove",
+      "replace-library-panel": "Replace library panel",
       "share": "Share",
       "show-legend": "Show legend",
       "unlink-library-panel": "Unlink library panel",
@@ -1456,6 +1479,11 @@
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": "Search for dashboards"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
@@ -1483,6 +1511,31 @@
       "label": "Back to {{title}}"
     },
     "dismissable-button": "Close"
+  },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "title": "Select scopes"
+    },
+    "basicSelector": {
+      "openAdvanced": "Open advanced scope selector <1></1>",
+      "placeholder": "Select scopes...",
+      "removeAll": "Remove all scopes"
+    },
+    "root": {
+      "collapse": "Collapse scope filters",
+      "expand": "Expand scope filters"
+    },
+    "suggestedDashboards": {
+      "loading": "Loading dashboards",
+      "search": "Filter"
+    },
+    "tree": {
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "search": "Filter"
+    }
   },
   "search": {
     "actions": {
@@ -1642,6 +1695,21 @@
     "empty-state": {
       "button-title": "Create silence",
       "title": "You haven't created any silences yet"
+    },
+    "table": {
+      "add-silence-button": "Add Silence",
+      "edit-button": "Edit",
+      "expired-silences": "Expired silences are automatically deleted after 5 days.",
+      "no-matching-silences": "No matching silences found;",
+      "noConfig": "Create a new contact point to create a configuration using the default values or contact your administrator to set up the Alertmanager.",
+      "recreate-button": "Recreate",
+      "unsilence-button": "Unsilence"
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "Alert name",
+      "state": "State"
     }
   },
   "snapshot": {
