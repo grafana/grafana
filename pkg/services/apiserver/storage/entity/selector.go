@@ -1,13 +1,13 @@
 package entity
 
 import (
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
-const FolderAnnoKey = "grafana.app/folder"
 const SortByKey = "grafana.app/sortBy"
 const ListDeletedKey = "grafana.app/listDeleted"
 const ListHistoryKey = "grafana.app/listHistory"
@@ -37,9 +37,9 @@ func ReadLabelSelectors(selector labels.Selector) (Requirements, labels.Selector
 
 	for _, r := range labelSelectors {
 		switch r.Key() {
-		case FolderAnnoKey:
+		case utils.AnnoKeyFolder:
 			if (r.Operator() != selection.Equals) && (r.Operator() != selection.DoubleEquals) {
-				return requirements, newSelector, apierrors.NewBadRequest(FolderAnnoKey + " label selector only supports equality")
+				return requirements, newSelector, apierrors.NewBadRequest(utils.AnnoKeyFolder + " label selector only supports equality")
 			}
 			folder := r.Values().List()[0]
 			requirements.Folder = &folder
@@ -50,7 +50,7 @@ func ReadLabelSelectors(selector labels.Selector) (Requirements, labels.Selector
 			requirements.SortBy = r.Values().List()
 		case utils.AnnoKeyOriginKey:
 			if r.Operator() != selection.In {
-				return requirements, newSelector, apierrors.NewBadRequest(SortByKey + " label selector only supports in")
+				return requirements, newSelector, apierrors.NewBadRequest(utils.AnnoKeyOriginKey + " label selector only supports in")
 			}
 			requirements.ListOriginKeys = r.Values().List()
 		case ListDeletedKey:

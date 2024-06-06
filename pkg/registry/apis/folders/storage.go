@@ -1,6 +1,8 @@
 package folders
 
 import (
+	"context"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
@@ -8,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -17,7 +20,11 @@ type storage struct {
 }
 
 func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, legacy *legacyStorage) (*storage, error) {
-	strategy := grafanaregistry.NewStrategy(scheme)
+	strategy := grafanaregistry.NewStrategy(scheme, grafanaregistry.StrategyOptions{
+		FolderAccess: func(ctx context.Context, user identity.Requester, folder string) bool {
+			return true // TODO! this should include access control!!
+		},
+	})
 
 	resource := v0alpha1.FolderResourceInfo
 	store := &genericregistry.Store{

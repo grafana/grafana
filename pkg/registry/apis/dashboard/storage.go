@@ -1,17 +1,21 @@
 package dashboard
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
-	"k8s.io/apimachinery/pkg/runtime"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -21,7 +25,11 @@ type storage struct {
 }
 
 func newStorage(scheme *runtime.Scheme) (*storage, error) {
-	strategy := grafanaregistry.NewStrategy(scheme)
+	strategy := grafanaregistry.NewStrategy(scheme, grafanaregistry.StrategyOptions{
+		FolderAccess: func(ctx context.Context, user identity.Requester, folder string) bool {
+			return true // TODO! this should include access control!!
+		},
+	})
 	resourceInfo := v0alpha1.DashboardResourceInfo
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
