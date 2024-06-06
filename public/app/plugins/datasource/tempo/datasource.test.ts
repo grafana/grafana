@@ -66,7 +66,6 @@ describe('Tempo data source', () => {
   beforeEach(() => (console.error = consoleErrorMock));
 
   describe('runs correctly', () => {
-    config.featureToggles.traceQLStreaming = true;
     jest.spyOn(TempoDatasource.prototype, 'isFeatureAvailable').mockImplementation(() => true);
     const handleStreamingSearch = jest.spyOn(TempoDatasource.prototype, 'handleStreamingSearch');
     const request = jest.spyOn(TempoDatasource.prototype, '_request');
@@ -365,9 +364,12 @@ describe('Tempo data source', () => {
   describe('test the testDatasource function', () => {
     it('should return a success msg if response.ok is true', async () => {
       mockObservable = () => of({ ok: true });
-      const ds = new TempoDatasource({...defaultSettings, jsonData: { streamingEnablement: { search: false } }});
+      const handleStreamingSearch = jest.spyOn(TempoDatasource.prototype, 'handleStreamingSearch').mockImplementation(() => of({ data: [] }));
+
+      const ds = new TempoDatasource(defaultSettings);
       const response = await ds.testDatasource();
       expect(response.status).toBe('success');
+      expect(handleStreamingSearch).toHaveBeenCalled();
     });
   });
 
