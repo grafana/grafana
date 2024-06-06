@@ -79,7 +79,7 @@ If you want to choose where to position your policy, see the section on **Add a 
 1. Find the child policy you want to create a sibling for.
 1. Click **Add new policy** -> **New sibling above** or **New sibling below**.
 
-   Notification policies are evaluated from top to bottom, so it is key to be able to choose which notification policy receives alerts first. Adding sibling notification policies instead of always inserting a child policy as well as being able tp choose where to insert is key to managing where your alerts go.
+   Notification policies are evaluated from top to bottom, so it is key to be able to choose which notification policy receives alerts first. Adding sibling notification policies instead of always inserting a child policy as well as being able to choose where to insert is key to managing where your alerts go.
 
 4. Click **Save policy** to save your changes.
 
