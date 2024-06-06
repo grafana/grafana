@@ -166,14 +166,14 @@
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk-folders/ @grafana/grafana-frontend-platform
-/devenv/bulk_alerting_dashboards/ @grafana/alerting-backend-product
+/devenv/bulk_alerting_dashboards/ @grafana/alerting-backend
 /devenv/create_docker_compose.sh @grafana/backend-platform
 /devenv/dashboards.yaml @grafana/dashboards-squad
 /devenv/datasources.yaml @grafana/backend-platform
 /devenv/datasources_docker.yaml @grafana/backend-platform
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
 /devenv/dev-dashboards/ @grafana/dashboards-squad
-/devenv/docker/blocks/alert_webhook_listener/ @grafana/alerting-backend-product
+/devenv/docker/blocks/alert_webhook_listener/ @grafana/alerting-backend
 /devenv/docker/blocks/clickhouse/ @grafana/partner-datasources
 /devenv/docker/blocks/collectd/ @grafana/observability-metrics
 /devenv/docker/blocks/etcd @grafana/grafana-app-platform-squad
@@ -187,7 +187,7 @@
 /devenv/docker/blocks/maildev/ @grafana/alerting-frontend
 /devenv/docker/blocks/mariadb/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/memcached/ @grafana/backend-platform
-/devenv/docker/blocks/mimir_backend/ @grafana/alerting-backend-product
+/devenv/docker/blocks/mimir_backend/ @grafana/alerting-backend
 /devenv/docker/blocks/mssql/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/mssql_arm64/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/mssql_tests/ @grafana/grafana-bi-squad
@@ -209,11 +209,11 @@
 /devenv/docker/blocks/tempo/ @grafana/observability-traces-and-profiling
 /devenv/docker/blocks/traefik/ @mckn
 /devenv/docker/blocks/zipkin/ @grafana/observability-traces-and-profiling
-/devenv/docker/blocks/webdav/ @grafana/alerting-backend-product
+/devenv/docker/blocks/webdav/ @grafana/alerting-backend
 /devenv/docker/buildcontainer/ @bergquist
 /devenv/docker/compose_header.yml @grafana/backend-platform
 /devenv/docker/debtest/ @bergquist
-/devenv/docker/ha-test-unified-alerting/ @grafana/alerting-backend-product
+/devenv/docker/ha-test-unified-alerting/ @grafana/alerting-backend
 /devenv/docker/ha_test/ @grafana/backend-platform
 /devenv/docker/loadtest/ @grafana/backend-platform
 /devenv/docker/rpmtest/ @grafana/backend-platform
@@ -277,10 +277,10 @@
 /pkg/services/grpcserver/ @grafana/grafana-app-platform-squad
 
 # Alerting
-/pkg/services/ngalert/ @grafana/alerting-backend-product
-/pkg/services/sqlstore/migrations/ualert/ @grafana/alerting-backend-product
-/pkg/services/alerting/ @grafana/alerting-backend-product
-/pkg/tests/api/alerting/ @grafana/alerting-backend-product
+/pkg/services/ngalert/ @grafana/alerting-backend
+/pkg/services/sqlstore/migrations/ualert/ @grafana/alerting-backend
+/pkg/services/alerting/ @grafana/alerting-backend
+/pkg/tests/api/alerting/ @grafana/alerting-backend
 /public/app/features/alerting/ @grafana/alerting-frontend
 
 # Library Services
@@ -632,7 +632,7 @@ embed.go @grafana/grafana-as-code
 /.github/pr-commands.json @marefr
 /.github/renovate.json5 @grafana/frontend-ops
 /.github/teams.yml @armandgrillet
-/.github/workflows/alerting-swagger-gen.yml @grafana/alerting-backend-product
+/.github/workflows/alerting-swagger-gen.yml @grafana/alerting-backend
 /.github/workflows/auto-milestone.yml @grafana/grafana-release-guild
 /.github/workflows/backport.yml @grafana/grafana-release-guild
 /.github/workflows/bump-version.yml @grafana/grafana-release-guild
@@ -692,7 +692,7 @@ embed.go @grafana/grafana-as-code
 /conf/ldap.toml @grafana/identity-access-team
 /conf/ldap_multiple.toml @grafana/identity-access-team
 /conf/provisioning/access-control/ @grafana/identity-access-team
-/conf/provisioning/alerting/ @grafana/alerting-backend-product
+/conf/provisioning/alerting/ @grafana/alerting-backend
 /conf/provisioning/dashboards/ @grafana/dashboards-squad
 /conf/provisioning/datasources/ @grafana/plugins-platform-backend
 /conf/provisioning/notifiers/ @bergquist
