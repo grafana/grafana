@@ -357,12 +357,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-class HistoryEventsListObject extends SceneObjectBase {
-  public static Component = ({ model }: SceneComponentProps<HistoryEventsListObject>) => {
-    const { value: timeRange } = sceneGraph.getTimeRange(model).useState();
-
-    return <HistoryEventsList timeRange={timeRange} />;
-  };
+export class HistoryEventsListObject extends SceneObjectBase {
+  public static Component = HistoryEventsListObjectRenderer;
 }
 
 export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
