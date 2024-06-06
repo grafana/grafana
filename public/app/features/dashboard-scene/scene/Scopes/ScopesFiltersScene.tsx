@@ -1,6 +1,5 @@
 import { isEqual } from 'lodash';
 import React from 'react';
-import { from, Subscription } from 'rxjs';
 
 import { Scope } from '@grafana/data';
 import {
@@ -32,9 +31,6 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scopes'] });
 
-  private fetchNodesSub: Subscription | undefined;
-  private fetchScopesSub: Subscription | undefined;
-
   constructor() {
     super({
       nodes: {
@@ -59,11 +55,6 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
     this.addActivationHandler(() => {
       this.fetchBaseNodes();
-
-      return () => {
-        this.fetchNodesSub?.unsubscribe();
-        this.fetchScopesSub?.unsubscribe();
-      };
     });
   }
 
@@ -82,7 +73,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     return this.updateNode([''], true, '');
   }
 
-  public updateNode(path: string[], isExpanded: boolean, query: string) {
+  public async updateNode(path: string[], isExpanded: boolean, query: string) {
     let nodes = { ...this.state.nodes };
     let currentLevel: NodesMap = nodes;
 
@@ -94,24 +85,9 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     const currentNode = currentLevel[name];
 
     if (isExpanded || currentNode.query !== query) {
-      this.fetchNodesSub?.unsubscribe();
-
       this.setState({ loadingNodeName: name });
 
-      this.fetchNodesSub = from(fetchNodes(name, query)).subscribe((childNodes) => {
-        currentNode.nodes = childNodes;
-        currentNode.isExpanded = isExpanded;
-        currentNode.query = query;
-
-        this.fetchNodesSub?.unsubscribe();
-
-        this.setState({
-          nodes,
-          loadingNodeName: undefined,
-        });
-      });
-
-      return;
+      currentNode.nodes = await fetchNodes(name, query);
     }
 
     currentNode.isExpanded = isExpanded;
@@ -168,20 +144,14 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     return this.state.scopes;
   }
 
-  public updateScopes(dirtyScopeNames = this.state.dirtyScopeNames) {
+  public async updateScopes(dirtyScopeNames = this.state.dirtyScopeNames) {
     if (isEqual(dirtyScopeNames, this.getScopeNames())) {
       return;
     }
 
-    this.fetchScopesSub?.unsubscribe();
-
     this.setState({ dirtyScopeNames, isLoadingScopes: true });
 
-    this.fetchScopesSub = from(fetchScopes(dirtyScopeNames)).subscribe((scopes) => {
-      this.fetchScopesSub?.unsubscribe();
-
-      this.setState({ scopes, isLoadingScopes: false });
-    });
+    this.setState({ scopes: await fetchScopes(dirtyScopeNames), isLoadingScopes: false });
   }
 
   public resetDirtyScopeNames() {
