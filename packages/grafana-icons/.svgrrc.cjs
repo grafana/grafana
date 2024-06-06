@@ -17,11 +17,6 @@ module.exports = {
   },
   jsx: {
     babelConfig: {
-      presets: [
-        ["@babel/preset-react", {
-          "runtime": "automatic"
-        }]
-      ],
       plugins: [
         // Remove fill and id attributes from SVG child elements
         [
