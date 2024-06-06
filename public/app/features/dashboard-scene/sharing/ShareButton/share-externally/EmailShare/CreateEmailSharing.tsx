@@ -18,7 +18,10 @@ export const CreateEmailSharing = ({ hasError }: { hasError: boolean }) => {
   const { dashboard } = useShareDrawerContext();
   const styles = useStyles2(getStyles);
 
+  const [createPublicDashboard, { isLoading, isError }] = useCreatePublicDashboardMutation();
+
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
+  const disableInputs = !hasWritePermissions || isLoading || isError || hasError;
 
   const {
     handleSubmit,
@@ -26,13 +29,10 @@ export const CreateEmailSharing = ({ hasError }: { hasError: boolean }) => {
     formState: { isValid },
   } = useForm<{ billAcknowledgment: boolean }>({ mode: 'onChange' });
 
-  const [createPublicDashboard, { isLoading, isError }] = useCreatePublicDashboardMutation();
   const onCreate = () => {
     DashboardInteractions.generatePublicDashboardUrlClicked({ share: PublicDashboardShareType.EMAIL });
     createPublicDashboard({ dashboard, payload: { share: PublicDashboardShareType.EMAIL, isEnabled: true } });
   };
-
-  const disableInputs = !hasWritePermissions || isLoading || isError || hasError;
 
   return (
     <>

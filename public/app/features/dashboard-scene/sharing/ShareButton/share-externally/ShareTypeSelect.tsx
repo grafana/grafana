@@ -13,25 +13,26 @@ import {
   isEmailSharingEnabled,
   PublicDashboardShareType,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
+
+import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 
 import { ANYONE_WITH_THE_LINK_SHARE_OPTION } from './ShareExternally';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
 export default function ShareTypeSelect({
-  dashboard,
   setShareType,
   options,
   value,
 }: {
-  dashboard: DashboardScene;
   setShareType: (v: SelectableValue<PublicDashboardShareType>) => void;
   value: SelectableValue<PublicDashboardShareType>;
   options: Array<SelectableValue<PublicDashboardShareType>>;
 }) {
+  const { dashboard } = useShareDrawerContext();
   const styles = useStyles2(getStyles);
+
   const { data: publicDashboard } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
     dashboard.state.uid!
   );

@@ -22,6 +22,14 @@ type EmailSharingForm = { email: string };
 
 export const ConfigEmailSharing = () => {
   const { dashboard } = useShareDrawerContext();
+
+  const { data: publicDashboard, isError } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
+    dashboard.state.uid!
+  );
+  const [addEmail, { isLoading: isAddEmailLoading }] = useAddRecipientMutation();
+
+  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
+
   const {
     register,
     handleSubmit,
@@ -33,12 +41,6 @@ export const ConfigEmailSharing = () => {
     },
     mode: 'onSubmit',
   });
-
-  const { data: publicDashboard, isError } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
-    dashboard.state.uid!
-  );
-  const [addEmail, { isLoading: isAddEmailLoading }] = useAddRecipientMutation();
-  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
   const onSubmit = async (data: EmailSharingForm) => {
     DashboardInteractions.publicDashboardEmailInviteClicked();
@@ -94,7 +96,7 @@ export const ConfigEmailSharing = () => {
       </form>
       <EmailListConfiguration dashboard={dashboard} />
       <Divider />
-      <ShareConfiguration dashboard={dashboard} />
+      <ShareConfiguration />
     </div>
   );
 };

@@ -9,18 +9,13 @@ import {
   PublicDashboard,
   PublicDashboardShareType,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AccessControlAction } from 'app/types';
 
+import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 import { useUnsupportedDatasources } from '../../public-dashboards/hooks';
 
-export default function ShareAlerts({
-  dashboard,
-  publicDashboard,
-}: {
-  dashboard: DashboardScene;
-  publicDashboard?: PublicDashboard;
-}) {
+export default function ShareAlerts({ publicDashboard }: { publicDashboard?: PublicDashboard }) {
+  const { dashboard } = useShareDrawerContext();
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
   const unsupportedDataSources = useUnsupportedDatasources(dashboard);
   const hasTemplateVariables = (dashboard.state.$variables?.state.variables.length ?? 0) > 0;

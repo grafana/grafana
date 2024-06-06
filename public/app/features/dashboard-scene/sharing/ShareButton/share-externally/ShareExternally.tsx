@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -17,7 +17,6 @@ import {
   PublicDashboard,
   PublicDashboardShareType,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
 
@@ -49,16 +48,26 @@ if (isEmailSharingEnabled) {
 
 export function ShareExternally() {
   const { dashboard } = useShareDrawerContext();
-  const [shareType, setShareType] = useState<SelectableValue<PublicDashboardShareType>>(SHARE_EXTERNALLY_OPTIONS[0]);
   const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
 
-  useEffect(() => {
+  if (isLoading) {
+    return <Loader />;
+  }
+
+  return <ShareExternallyRenderer publicDashboard={publicDashboard} />;
+}
+
+function ShareExternallyRenderer({ publicDashboard }: { publicDashboard?: PublicDashboard }) {
+  const getShareType = useMemo(() => {
     if (publicDashboard && isEmailSharingEnabled) {
       const opt = SHARE_EXTERNALLY_OPTIONS.find((opt) => opt.value === publicDashboard?.share)!;
-      setShareType(opt);
+      return opt ?? SHARE_EXTERNALLY_OPTIONS[0];
     }
+
+    return SHARE_EXTERNALLY_OPTIONS[0];
   }, [publicDashboard]);
 
+  const [shareType, setShareType] = useState<SelectableValue<PublicDashboardShareType>>(getShareType);
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
   const Config = useMemo(() => {
@@ -71,31 +80,23 @@ export function ShareExternally() {
     return <></>;
   }, [shareType]);
 
-  if (isLoading) {
-    return <Loader />;
-  }
-
   return (
     <Stack direction="column" gap={2} data-testid={selectors.container}>
-      <ShareAlerts dashboard={dashboard} publicDashboard={publicDashboard} />
-      <ShareTypeSelect
-        dashboard={dashboard}
-        setShareType={setShareType}
-        value={shareType}
-        options={SHARE_EXTERNALLY_OPTIONS}
-      />
+      <ShareAlerts publicDashboard={publicDashboard} />
+      <ShareTypeSelect setShareType={setShareType} value={shareType} options={SHARE_EXTERNALLY_OPTIONS} />
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode={publicDashboard ? 'edit' : 'create'} />}
       {Config}
       {publicDashboard && (
         <>
           <Divider spacing={0} />
-          <Actions dashboard={dashboard} publicDashboard={publicDashboard} />
+          <Actions publicDashboard={publicDashboard} />
         </>
       )}
     </Stack>
   );
 }
-function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; publicDashboard: PublicDashboard }) {
+function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
+  const { dashboard } = useShareDrawerContext();
   const [update, { isLoading: isUpdateLoading }] = usePauseOrResumePublicDashboardMutation();
   const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
 
