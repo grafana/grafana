@@ -80,8 +80,8 @@ func (m FakeServiceImpl) GetMigrationList(_ context.Context) (*cloudmigration.Cl
 	}
 	return &cloudmigration.CloudMigrationListResponse{
 		Migrations: []cloudmigration.CloudMigrationResponse{
-			{UID: "mock_uid_1", Stack: "mock_stack_1", Created: time.Unix(5, 0), Updated: fixedDate},
-			{UID: "mock_uid_2", Stack: "mock_stack_2", Created: time.Unix(5, 0), Updated: fixedDate},
+			{UID: "mock_uid_1", Stack: "mock_stack_1", Created: fixedDate, Updated: fixedDate},
+			{UID: "mock_uid_2", Stack: "mock_stack_2", Created: fixedDate, Updated: fixedDate},
 		},
 	}, nil
 }
