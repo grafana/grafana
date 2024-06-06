@@ -51,19 +51,5 @@ export * from './alerts';
 export * from './slider';
 export * from './accesscontrol';
 export * from './icon';
-export {
-  PluginExtensionTypes,
-  PluginExtensionPoints,
-  type PluginExtension,
-  type PluginExtensionLink,
-  type PluginExtensionComponent,
-  type PluginExtensionConfig,
-  type PluginExtensionLinkConfig,
-  type PluginExtensionComponentConfig,
-  type PluginExtensionEventHelpers,
-  type PluginExtensionPanelContext,
-  type PluginExtensionDataSourceConfigContext,
-  type PluginExtensionCommandPaletteContext,
-  type PluginExtensionOpenModalOptions,
-} from './pluginExtensions';
+export * from './pluginExtensions';
 export * from './scopes';

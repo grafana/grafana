@@ -1,5 +1,7 @@
+type LogLevel = 'info' | 'warn' | 'error';
+
 type LogItem = {
-  level: 'info' | 'warn' | 'error';
+  level: LogLevel;
   message: string;
   error?: Error | unknown;
   pluginId: string;
@@ -23,6 +25,7 @@ class RegistryLog {
       ...log,
       level: 'info',
     });
+    console.log(log.message);
   }
 
   warn(log: WarnLog) {
@@ -30,6 +33,8 @@ class RegistryLog {
       ...log,
       level: 'warn',
     });
+
+    console.warn(log.message, log.error);
   }
 
   error(log: ErrorLog) {
@@ -37,6 +42,7 @@ class RegistryLog {
       ...log,
       level: 'error',
     });
+    console.error(log.message, log.error);
   }
 }
 

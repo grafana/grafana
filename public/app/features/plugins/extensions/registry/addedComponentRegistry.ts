@@ -1,6 +1,6 @@
 import { PluginExtensionComponentConfig } from '@grafana/data';
 
-import { PluginPreloadResult } from '../pluginPreloader';
+import { PluginPreloadResult } from '../../pluginPreloader';
 
 import { Registry } from './registry';
 import { registryLog } from './registryLog';
@@ -9,15 +9,12 @@ export type AddedComponent = PluginExtensionComponentConfig & {
   pluginId: string;
 };
 
-type ComponentsByTargetState = {
+type RegistryType = {
   [target: string]: AddedComponent[];
 };
 
-export function addComponentsToState(
-  state: ComponentsByTargetState,
-  result: PluginPreloadResult
-): ComponentsByTargetState {
-  const { pluginId, addedComponents, error } = result;
+export function add(registry: RegistryType, item: PluginPreloadResult): RegistryType {
+  const { pluginId, addedComponents, error } = item;
 
   if (error) {
     registryLog.error({
@@ -25,11 +22,11 @@ export function addComponentsToState(
       pluginId,
       error,
     });
-    return state;
+    return registry;
   }
 
   if (!addedComponents) {
-    return state;
+    return registry;
   }
 
   for (const config of addedComponents) {
@@ -38,20 +35,20 @@ export function addComponentsToState(
     // check if config is valid, skip and warn if invalid.
     // if(isConfigValid(config)) { ... }
 
-    if (!Array.isArray(state[extensionPointId])) {
-      state[extensionPointId] = [];
+    if (!Array.isArray(registry[extensionPointId])) {
+      registry[extensionPointId] = [];
     }
 
-    state[extensionPointId].push({
+    registry[extensionPointId].push({
       pluginId,
       ...config,
     });
   }
 
-  return state;
+  return registry;
 }
 
-export const registry = new Registry<ComponentsByTargetState>({
+export const registry = new Registry<RegistryType>({
+  add,
   getInitialState: () => ({}),
-  addToState: addComponentsToState,
 });

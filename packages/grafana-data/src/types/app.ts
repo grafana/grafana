@@ -7,7 +7,7 @@ import {
   type PluginExtensionLinkConfig,
   PluginExtensionTypes,
   PluginExtensionComponentConfig,
-  PluginExtensionConfig,
+  PluginExportedComponent,
 } from './pluginExtensions';
 
 /**
@@ -56,7 +56,9 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
 }
 
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
-  private _extensionConfigs: PluginExtensionConfig[] = [];
+  private _links: PluginExtensionLinkConfig[] = [];
+  private _components: PluginExtensionComponentConfig[] = [];
+  private _exportedComponents: PluginExportedComponent[] = [];
 
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
@@ -99,11 +101,25 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   }
 
   get extensionConfigs() {
-    return this._extensionConfigs;
+    return [...this._links, ...this._components];
   }
 
+  /** @deprecated Use .addLink() instead */
   configureExtensionLink<Context extends object>(extension: Omit<PluginExtensionLinkConfig<Context>, 'type'>) {
-    this._extensionConfigs.push({
+    this.addLink(extension);
+
+    return this;
+  }
+
+  /** @deprecated Use .addComponent() instead */
+  configureExtensionComponent<Props = {}>(extension: Omit<PluginExtensionComponentConfig<Props>, 'type'>) {
+    this.addComponent(extension);
+
+    return this;
+  }
+
+  addLink<Props = {}>(extension: Omit<PluginExtensionLinkConfig<Props>, 'type'>) {
+    this._links.push({
       ...extension,
       type: PluginExtensionTypes.link,
     } as PluginExtensionLinkConfig);
@@ -111,11 +127,17 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this;
   }
 
-  configureExtensionComponent<Props = {}>(extension: Omit<PluginExtensionComponentConfig<Props>, 'type'>) {
-    this._extensionConfigs.push({
+  addComponent<Props = {}>(extension: Omit<PluginExtensionComponentConfig<Props>, 'type'>) {
+    this._components.push({
       ...extension,
       type: PluginExtensionTypes.component,
     } as PluginExtensionComponentConfig);
+
+    return this;
+  }
+
+  exportComponent<Props = {}>(component: PluginExportedComponent) {
+    this._exportedComponents.push(component);
 
     return this;
   }
