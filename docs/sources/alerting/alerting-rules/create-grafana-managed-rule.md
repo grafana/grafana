@@ -34,6 +34,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
+<<<<<<< HEAD
   expression-queries:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/
@@ -49,6 +50,18 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#time-units-and-relative-ranges
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/use-dashboards/#time-units-and-relative-ranges
+=======
+  alert-list:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/alert-list/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/alert-list/
+  time-series:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
+>>>>>>> 000b5dd6eab (docs: alerting: clarify which panels support alerts (#88756))
 ---
 
 # Configure Grafana-managed alert rules
@@ -211,6 +224,10 @@ Annotations add metadata to provide more information on the alert in your alert 
 1. Optional: Add a **dashboard and panel link**.
 
    Links alerts to panels in a dashboard.
+
+   {{% admonition type="note" %}}
+   At the moment, alerts are only supported in the [time series](ref:time-series) and [alert list](ref:alert-list) visualizations.
+   {{% /admonition %}}
 
    {{< docs/play title="visualizations with linked alerts in Grafana" url="https://play.grafana.org/d/000000074/" >}}
 
