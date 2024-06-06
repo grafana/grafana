@@ -37,7 +37,7 @@ export const QueryHeader = ({ query, onQueryChange }: QueryTypeFieldProps) => {
       <EditorHeader>
         <InlineSelect
           label="Service"
-          value={query.queryType}
+          value={query.queryType === AzureQueryType.TraceExemplar ? AzureQueryType.AzureTraces : query.queryType}
           placeholder="Service..."
           allowCustomValue
           options={queryTypes}

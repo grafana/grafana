@@ -687,3 +687,82 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 		t.Error("expecting the error to inform of bad credentials")
 	}
 }
+
+func Test_exemplarsFeatureToggle(t *testing.T) {
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		correlationRes := AzureCorrelationAPIResponse{
+			ID:   "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1",
+			Name: "guid-1",
+			Type: "microsoft.insights/transactions",
+			Properties: AzureCorrelationAPIResponseProperties{
+				Resources: []string{
+					"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1",
+				},
+				NextLink: nil,
+			},
+		}
+		err := json.NewEncoder(w).Encode(correlationRes)
+		if err != nil {
+			t.Errorf("failed to encode correlation API response")
+		}
+	}))
+
+	provider := httpclient.NewProvider(httpclient.ProviderOptions{Timeout: &httpclient.DefaultTimeoutOptions})
+	client, err := provider.New()
+	if err != nil {
+		t.Errorf("failed to create fake client")
+	}
+
+	ds := AzureLogAnalyticsDatasource{}
+	dsInfo := types.DatasourceInfo{
+		Services: map[string]types.DatasourceService{
+			"Azure Log Analytics": {URL: "http://ds"},
+			"Azure Monitor":       {URL: svr.URL, HTTPClient: client},
+		},
+		Settings: types.AzureMonitorSettings{
+			SubscriptionId: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+		},
+	}
+
+	t.Run("does not error if feature toggle enabled", func(t *testing.T) {
+		ctx := context.Background()
+		ctx = backend.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "azureMonitorPrometheusExemplars"}))
+		query := backend.DataQuery{
+			JSON: []byte(`{
+					"queryType": "traceql",
+					"azureTraces": {
+						"operationId": "traceid"
+					},
+					"query":     "traceid"
+				}`),
+			RefID:     "A",
+			QueryType: string(dataquery.AzureQueryTypeTraceql),
+		}
+
+		_, err := ds.buildQueries(ctx, []backend.DataQuery{query}, dsInfo, false)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("errors if feature toggle disabled", func(t *testing.T) {
+		ctx := context.Background()
+		ctx = backend.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": ""}))
+		query := backend.DataQuery{
+			JSON: []byte(`{
+					"queryType": "traceql",
+					"azureTraces": {
+						"operationId": "traceid"
+					},
+					"query":     "traceid"
+				}`),
+			RefID:     "A",
+			QueryType: string(dataquery.AzureQueryTypeTraceql),
+		}
+
+		_, err := ds.buildQueries(ctx, []backend.DataQuery{query}, dsInfo, false)
+
+		require.Error(t, err, "query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled")
+	})
+}

@@ -172,3 +172,4 @@ alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,fal
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
 pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,false,false
+azureMonitorPrometheusExemplars,experimental,@grafana/partner-datasources,false,false,false

@@ -69,38 +69,50 @@ func TestTraceTableToFrame(t *testing.T) {
 		testFile      string
 		expectedFrame func() *data.Frame
 		resultFormat  dataquery.ResultFormat
+		queryType     dataquery.AzureQueryType
 	}{
 		{
 			name:         "multi trace",
 			testFile:     "traces/1-traces-multiple-table.json",
 			resultFormat: dataquery.ResultFormatTable,
+			queryType:    dataquery.AzureQueryTypeAzureTraces,
 		},
 		{
 			name:         "multi trace as trace format",
 			testFile:     "traces/1-traces-multiple-table.json",
 			resultFormat: dataquery.ResultFormatTrace,
+			queryType:    dataquery.AzureQueryTypeAzureTraces,
 		},
 		{
 			name:         "single trace",
 			testFile:     "traces/2-traces-single-table.json",
 			resultFormat: dataquery.ResultFormatTable,
+			queryType:    dataquery.AzureQueryTypeAzureTraces,
 		},
 		{
 			name:         "single trace as trace format",
 			testFile:     "traces/2-traces-single-table.json",
 			resultFormat: dataquery.ResultFormatTrace,
+			queryType:    dataquery.AzureQueryTypeAzureTraces,
 		},
 		{
 			name:         "single trace with empty serviceTags and tags",
 			testFile:     "traces/3-traces-empty-dynamics.json",
 			resultFormat: dataquery.ResultFormatTrace,
+			queryType:    dataquery.AzureQueryTypeAzureTraces,
+		},
+		{
+			name:         "single trace as trace format from exemplars query",
+			testFile:     "traces/2-traces-single-table.json",
+			resultFormat: dataquery.ResultFormatTrace,
+			queryType:    dataquery.AzureQueryTypeTraceql,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res := loadTestFileWithNumber(t, tt.testFile)
-			frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeAzureTraces, tt.resultFormat)
+			frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", tt.queryType, tt.resultFormat)
 			appendErrorNotice(frame, res.Error)
 			require.NoError(t, err)
 

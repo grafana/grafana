@@ -9,9 +9,11 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
 	"k8s.io/utils/strings/slices"
 )
 
@@ -182,7 +184,7 @@ func buildTraceQueries(query backend.DataQuery, dsInfo types.DatasourceInfo, tra
 	return queryString, &traceQueries, nil
 }
 
-func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo types.DatasourceInfo, appInsightsRegExp *regexp.Regexp) (*AzureLogAnalyticsQuery, error) {
+func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo types.DatasourceInfo, appInsightsRegExp *regexp.Regexp, logger log.Logger) (*AzureLogAnalyticsQuery, error) {
 	dashboardTime := true
 	timeColumn := ""
 	queryJSONModel := types.TracesJSONQuery{}
@@ -196,7 +198,15 @@ func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo 
 	resultFormat := ParseResultFormat(azureTracesTarget.ResultFormat, dataquery.AzureQueryTypeAzureTraces)
 
 	resources := azureTracesTarget.Resources
-	resourceOrWorkspace := azureTracesTarget.Resources[0]
+	if query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+		subscription, err := utils.GetFirstSubscriptionOrDefault(ctx, dsInfo, logger)
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve subscription for trace exemplars query: %w", err)
+		}
+		resources = []string{fmt.Sprintf("/subscriptions/%s", subscription)}
+	}
+
+	resourceOrWorkspace := resources[0]
 	appInsightsQuery := appInsightsRegExp.Match([]byte(resourceOrWorkspace))
 	resourcesMap := make(map[string]bool, 0)
 	if len(resources) > 1 {
@@ -221,6 +231,11 @@ func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo 
 		queryResources = append(queryResources, resource)
 	}
 	sort.Strings(queryResources)
+
+	if query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+		resources = queryResources
+		resourceOrWorkspace = resources[0]
+	}
 
 	queryString, traceQueries, err := buildTraceQueries(query, dsInfo, queryJSONModel.AzureTraces, operationId, resultFormat, queryResources)
 	if err != nil {

@@ -188,6 +188,7 @@ const EditorForQueryType = ({
       );
 
     case AzureQueryType.AzureTraces:
+    case AzureQueryType.TraceExemplar:
       return (
         <TracesQueryEditor
           subscriptionId={subscriptionId}
