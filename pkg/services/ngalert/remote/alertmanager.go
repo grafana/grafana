@@ -166,36 +166,33 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 }
 
 // ApplyConfig is called everytime we've determined we need to apply an existing configuration to the Alertmanager,
-// including the first time the Alertmanager is started. In the context of a "remote Alertmanager" it's as good of a heuristic,
-// for "a function that gets called when the Alertmanager starts". As a result we do two things:
+// including the first time the Alertmanager is started. As a result we do two things:
 // 1. Execute a readiness check to make sure the remote Alertmanager we're about to communicate with is up and ready.
 // 2. Upload the configuration and state we currently hold.
+// TODO(santiago): Make ApplyConfig control the sync loop, we can compare configuration here on an interval.
 func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	if am.ready {
-		am.log.Debug("Alertmanager previously marked as ready, skipping readiness check and config + state update")
-		return nil
+		am.log.Debug("Alertmanager previously marked as ready, skipping readiness check")
+	} else {
+		am.log.Debug("Start readiness check for remote Alertmanager", "url", am.url)
+		if err := am.checkReadiness(ctx); err != nil {
+			return fmt.Errorf("unable to pass the readiness check: %w", err)
+		}
+		am.log.Debug("Completed readiness check for remote Alertmanager", "url", am.url)
+
+		am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
+		if err := am.CompareAndSendState(ctx); err != nil {
+			return fmt.Errorf("unable to upload the state to the remote Alertmanager: %w", err)
+		}
+		am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
 	}
 
-	// First, execute a readiness check to make sure the remote Alertmanager is ready.
-	am.log.Debug("Start readiness check for remote Alertmanager", "url", am.url)
-	if err := am.checkReadiness(ctx); err != nil {
-		am.log.Error("Unable to pass the readiness check", "err", err)
-		return err
-	}
-	am.log.Debug("Completed readiness check for remote Alertmanager", "url", am.url)
-
-	// Send configuration and base64-encoded state if necessary.
 	am.log.Debug("Start configuration upload to remote Alertmanager", "url", am.url)
 	if err := am.CompareAndSendConfiguration(ctx, config); err != nil {
-		am.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
+		return fmt.Errorf("unable to upload the configuration to the remote Alertmanager: %w", err)
 	}
 	am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
 
-	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
-	if err := am.CompareAndSendState(ctx); err != nil {
-		am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
-	}
-	am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
 	return nil
 }
 

@@ -118,8 +118,15 @@ func TestNewAlertmanager(t *testing.T) {
 }
 
 func TestApplyConfig(t *testing.T) {
+	// errorHandler returns an error response for the readiness check and state sync.
 	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusInternalServerError)
+		if strings.Contains(r.URL.Path, "/ready") || r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/state") {
+			w.Header().Add("content-type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"status": "error"})
+		}
+		w.Header().Add("content-type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "success"})
 	})
 
 	var configSent client.UserGrafanaConfig
@@ -127,7 +134,8 @@ func TestApplyConfig(t *testing.T) {
 		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
 			require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
 		}
-		w.WriteHeader(http.StatusOK)
+		w.Header().Add("content-type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "success"})
 	})
 
 	// Encrypt receivers to save secrets in the database.
@@ -183,7 +191,7 @@ func TestApplyConfig(t *testing.T) {
 	require.JSONEq(t, testGrafanaConfigWithSecret, string(amCfg))
 	require.True(t, configSent.Promoted)
 
-	// If we already got a 200 status code response, we shouldn't make the HTTP request again.
+	// If we already got a 200 status code response, we shouldn't send the state again, only the configuration.
 	server.Config.Handler = errorHandler
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.True(t, am.Ready())
