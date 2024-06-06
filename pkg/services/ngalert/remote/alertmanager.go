@@ -38,10 +38,13 @@ type stateStore interface {
 	GetNotificationLog(ctx context.Context) (string, error)
 }
 
+type AutogenFn func(ctx context.Context, logger log.Logger, orgId int64, config *apimodels.PostableApiAlertingConfig) error
+
 // DecryptFn is a function that takes in an encrypted value and returns it decrypted.
 type DecryptFn func(ctx context.Context, payload []byte) ([]byte, error)
 
 type Alertmanager struct {
+	autogenFn         AutogenFn
 	decrypt           DecryptFn
 	defaultConfig     string
 	defaultConfigHash string
@@ -85,7 +88,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -151,6 +154,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 
 	return &Alertmanager{
 		amClient:          amc,
+		autogenFn:         autogenFn,
 		decrypt:           decryptFn,
 		defaultConfig:     string(rawCfg),
 		defaultConfigHash: fmt.Sprintf("%x", md5.Sum(rawCfg)),
@@ -192,7 +196,6 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 		return fmt.Errorf("unable to upload the configuration to the remote Alertmanager: %w", err)
 	}
 	am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
-
 	return nil
 }
 
@@ -217,6 +220,10 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
 	c, err := notifier.Load([]byte(config.AlertmanagerConfiguration))
 	if err != nil {
+		return err
+	}
+
+	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig); err != nil {
 		return err
 	}
 
@@ -289,6 +296,10 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 	}
 	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
 
+	if err := am.autogenFn(ctx, am.log, am.orgID, &cfg.AlertmanagerConfig); err != nil {
+		return err
+	}
+
 	// Decrypt and send.
 	decrypted, err := am.decryptConfiguration(ctx, cfg)
 	if err != nil {
@@ -302,6 +313,10 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	c, err := notifier.Load([]byte(am.defaultConfig))
 	if err != nil {
 		return fmt.Errorf("unable to parse the default configuration: %w", err)
+	}
+
+	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig); err != nil {
+		return err
 	}
 
 	// Decrypt before sending.

@@ -47,7 +47,7 @@ func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer /*, c
 
 	entityServer := &sqlEntityServer{
 		db:     db,
-		log:    log.New("sql-entity-server"),
+		log:    log.NewNopLogger(),
 		ctx:    ctx,
 		cancel: cancel,
 		tracer: tracer,
@@ -1100,7 +1100,7 @@ func (s *sqlEntityServer) poll(since int64, out chan *entity.EntityWatchResponse
 			return nil
 		}()
 		if err != nil {
-			ctxLogger.Error("poll error", "error", err)
+			// ctxLogger.Error("poll error", "error", err)
 			return since, err
 		}
 	}
