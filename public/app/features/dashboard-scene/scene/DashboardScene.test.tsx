@@ -890,13 +890,15 @@ describe('DashboardScene', () => {
       });
 
       it('Should create a library panel', () => {
+        const vizPanel = new VizPanel({
+          title: 'Panel A',
+          key: 'panel-1',
+          pluginId: 'table',
+        });
+
         const gridItem = new DashboardGridItem({
           key: 'griditem-1',
-          body: new VizPanel({
-            title: 'Panel A',
-            key: 'panel-1',
-            pluginId: 'table',
-          }),
+          body: vizPanel,
         });
 
         const scene = buildTestScene({
@@ -910,7 +912,7 @@ describe('DashboardScene', () => {
           name: 'name',
         };
 
-        scene.createLibraryPanel(gridItem, libPanel as LibraryPanel);
+        scene.createLibraryPanel(vizPanel, libPanel as LibraryPanel);
 
         const layout = scene.state.body as SceneGridLayout;
         const newGridItem = layout.state.children[0] as DashboardGridItem;
@@ -922,13 +924,15 @@ describe('DashboardScene', () => {
       });
 
       it('Should create a library panel under a row', () => {
+        const vizPanel = new VizPanel({
+          title: 'Panel A',
+          key: 'panel-1',
+          pluginId: 'table',
+        });
+
         const gridItem = new DashboardGridItem({
           key: 'griditem-1',
-          body: new VizPanel({
-            title: 'Panel A',
-            key: 'panel-1',
-            pluginId: 'table',
-          }),
+          body: vizPanel,
         });
 
         const scene = buildTestScene({
@@ -947,7 +951,7 @@ describe('DashboardScene', () => {
           name: 'name',
         };
 
-        scene.createLibraryPanel(gridItem, libPanel as LibraryPanel);
+        scene.createLibraryPanel(vizPanel, libPanel as LibraryPanel);
 
         const layout = scene.state.body as SceneGridLayout;
         const newGridItem = (layout.state.children[0] as SceneGridRow).state.children[0] as DashboardGridItem;
