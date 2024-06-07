@@ -80,6 +80,8 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 				tracer.InitTracer(o.Options.TracingOptions.TracingService)
 			}
 
+			defer o.factory.Shutdown()
+
 			if err := o.RunAPIServer(config, stopCh); err != nil {
 				return err
 			}
