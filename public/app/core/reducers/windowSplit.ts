@@ -9,7 +9,7 @@ type OpenSplitAction = {
 };
 
 export const initialState: WindowSplitState = {
-  secondAppId: 'grafana-querylibrary-app',
+  secondAppId: undefined,
 };
 
 export default createSlice({

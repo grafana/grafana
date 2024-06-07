@@ -54,7 +54,7 @@ export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginEx
     registry = r;
   });
 
-  return (options) => getPluginExtensions({ ...options, registry });
+  return (options) => getPluginExtensions({ ...options, registry, secondAppId: undefined, openSplitApp: () => {} });
 }
 
 // Returns with a list of plugin extensions for the given extension point

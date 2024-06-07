@@ -57,8 +57,8 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   return (
     <>
       <Dropdown onVisibleChange={setIsOpen} placement="bottom-start" overlay={menu}>
-        <ToolbarButton aria-label="Add" disabled={!Boolean(noQueriesInPane)} variant="canvas" isOpen={isOpen}>
-          Add
+        <ToolbarButton aria-label="Extensions" disabled={!Boolean(noQueriesInPane)} variant="canvas" isOpen={isOpen}>
+          Extensions
         </ToolbarButton>
       </Dropdown>
       {!!selectedExtension && !!selectedExtension.path && (
