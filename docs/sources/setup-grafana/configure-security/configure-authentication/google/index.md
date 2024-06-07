@@ -222,7 +222,7 @@ The external user is part of the following Google groups: `group-1` and `group-2
 Config:
 
 ```ini
-org_mapping = group-1:org_foo:Viewer groupd-1:org_bar:Editor *:org_baz:Editor
+org_mapping = group-1:org_foo:Viewer group-2:org_bar:Editor *:org_baz:Editor
 ```
 
 ###### Map roles using user information from OAuth token
