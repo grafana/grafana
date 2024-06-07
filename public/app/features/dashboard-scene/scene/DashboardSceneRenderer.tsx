@@ -37,7 +37,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const emptyState = <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />;
 
   const withPanels = (
-    <div className={cx(styles.body)}>
+    <div className={cx(styles.body, kioskMode === KioskMode.Full && styles.bodyInKioskMode)}>
       <bodyToRender.Component model={bodyToRender} />
     </div>
   );
@@ -140,6 +140,9 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       gap: '8px',
       marginBottom: theme.spacing(2),
+    }),
+    bodyInKioskMode: css({
+      margin: `${theme.spacing(2)} 0`,
     }),
   };
 }
