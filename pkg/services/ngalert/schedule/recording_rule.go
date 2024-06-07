@@ -161,6 +161,10 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 		logger.Error("Failed to evaluate rule", "attempt", attempt, "error", err)
 		evalAttemptFailures.Inc()
 
+		if eval.IsNonRetryableError(err) {
+			break
+		}
+
 		if attempt < r.maxAttempts {
 			select {
 			case <-ctx.Done():

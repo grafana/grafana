@@ -163,19 +163,28 @@ func (evalResults Results) HasErrors() bool {
 // HasNonRetryableErrors returns true if we have at least 1 result with:
 // 1. A `State` of `Error`
 // 2. The `Error` attribute is not nil
-// 3. The `Error` type is of `&invalidEvalResultFormatError` or `ErrSeriesMustBeWide`
+// 3. The `Error` matches IsNonRetryableError
 // Our thinking with this approach, is that we don't want to retry errors that have relation with invalid alert definition format.
 func (evalResults Results) HasNonRetryableErrors() bool {
 	for _, r := range evalResults {
 		if r.State == Error && r.Error != nil {
-			var nonRetryableError *invalidEvalResultFormatError
-			if errors.As(r.Error, &nonRetryableError) {
-				return true
-			}
-			if errors.Is(r.Error, expr.ErrSeriesMustBeWide) {
+			if IsNonRetryableError(r.Error) {
 				return true
 			}
 		}
+	}
+	return false
+}
+
+// IsNonRetryableError indicates whether an error is considered persistent and not worth performing evaluation retries.
+// Currently it is true if err is `&invalidEvalResultFormatError` or `ErrSeriesMustBeWide`
+func IsNonRetryableError(err error) bool {
+	var nonRetryableError *invalidEvalResultFormatError
+	if errors.As(err, &nonRetryableError) {
+		return true
+	}
+	if errors.Is(err, expr.ErrSeriesMustBeWide) {
+		return true
 	}
 	return false
 }
