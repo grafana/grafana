@@ -64,11 +64,9 @@ Each policy consists of a set of label matchers (0 or more) that specify which a
 
 To determine which notification policies handle an alert instance, the system looks for matching policies starting from the top of the tree—beginning with the default notification policy.
 
-If a matching policy is found, the system continues to look for child policies in order. If a child policy is a matching policy, it continues to look for any child policies that might have label matchers that further narrow down the set of labels, and so forth until no more child policies are found. In this case, only the deepest matching child policy handles the alert instance.
+If a matching policy is found, the system continues to look for child policies in the order they are displayed. If a child policy matches the alert, the system then look for its child policies recursively until no more matching child policies are found. In this case, only the deepest matching child policy handles the alert instance.
 
-Note that policies are evaluated in the order they are displayed, and as soon as a matching policy is found, the system does not continue to look for sibling policies by default.
-
-If you want sibling policies of one matching policy to handle the alert instance as well, then enable **Continue matching siblings** on the particular matching policy.
+By default, once a matching policy is found, the system does not continue to look for sibling policies. If you want sibling policies of one matching policy to handle the alert instance as well, then enable **Continue matching siblings** on the particular matching policy.
 
 {{% admonition type="note" %}}
 
