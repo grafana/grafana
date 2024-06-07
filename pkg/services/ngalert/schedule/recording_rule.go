@@ -116,7 +116,10 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	logger := r.logger.FromContext(ctx).New("now", ev.scheduledAt, "fingerprint", ev.Fingerprint())
 	orgID := fmt.Sprint(ev.rule.OrgID)
 	evalDuration := r.metrics.EvalDuration.WithLabelValues(orgID)
+	evalAttemptTotal := r.metrics.EvalAttemptTotal.WithLabelValues(orgID)
+	evalAttemptFailures := r.metrics.EvalAttemptFailures.WithLabelValues(orgID)
 	evalTotal := r.metrics.EvalTotal.WithLabelValues(orgID)
+	evalTotalFailures := r.metrics.EvalFailures.WithLabelValues(orgID)
 	evalStart := r.clock.Now()
 
 	defer func() {
@@ -139,6 +142,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	))
 	defer span.End()
 
+	var latestError error
 	for attempt := int64(1); attempt <= r.maxAttempts; attempt++ {
 		logger := logger.New("attempt", attempt)
 		if ctx.Err() != nil {
@@ -147,52 +151,55 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 			return
 		}
 
+		evalAttemptTotal.Inc()
 		err := r.tryEvaluation(ctx, ev, logger)
+		latestError = err
 		if err == nil {
-			return
+			break
 		}
 
 		logger.Error("Failed to evaluate rule", "attempt", attempt, "error", err)
-		select {
-		case <-ctx.Done():
-			logger.Error("Context has been cancelled while backing off", "attempt", attempt)
-			return
-		case <-time.After(retryDelay):
-			continue
+		evalAttemptFailures.Inc()
+
+		if attempt < r.maxAttempts {
+			select {
+			case <-ctx.Done():
+				logger.Error("Context has been cancelled while backing off", "attempt", attempt)
+				return
+			case <-time.After(retryDelay):
+				continue
+			}
 		}
+	}
+
+	if latestError != nil {
+		evalTotalFailures.Inc()
+		span.SetStatus(codes.Error, "rule evaluation failed")
+		span.RecordError(latestError)
+		if r.maxAttempts > 0 {
+			logger.Error("Recording rule evaluation failed after all attempts", "lastError", latestError)
+		}
+	} else {
+		logger.Debug("Recording rule evaluation succeeded")
 	}
 }
 
 func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logger log.Logger) error {
-	orgID := fmt.Sprint(ev.rule.OrgID)
-	evalAttemptTotal := r.metrics.EvalAttemptTotal.WithLabelValues(orgID)
-	evalAttemptFailures := r.metrics.EvalAttemptFailures.WithLabelValues(orgID)
-	evalTotalFailures := r.metrics.EvalFailures.WithLabelValues(orgID)
-
 	evalStart := r.clock.Now()
 	evalCtx := eval.NewContext(ctx, SchedulerUserFor(ev.rule.OrgID))
 	result, err := r.buildAndExecutePipeline(ctx, evalCtx, ev, logger)
 	evalDur := r.clock.Now().Sub(evalStart)
-
-	evalAttemptTotal.Inc()
-	span := trace.SpanFromContext(ctx)
-
-	// There might be errors in the pipeline results, even if the query succeeded.
-	var responseErr error
-	if result != nil {
-		responseErr = eval.FindConditionError(result, ev.rule.Record.From)
-	}
-
-	if err != nil || responseErr != nil {
-		evalAttemptFailures.Inc()
-		// TODO: figure out retries
-		evalTotalFailures.Inc()
-		span.SetStatus(codes.Error, "rule evaluation failed")
-		span.RecordError(err)
+	if err != nil {
 		return fmt.Errorf("server side expressions pipeline returned an error: %w", err)
 	}
 
+	// There might be errors in the pipeline results, even if the query succeeded.
+	if err := eval.FindConditionError(result, ev.rule.Record.From); err != nil {
+		return fmt.Errorf("the query failed with an error: %w", err)
+	}
+
 	logger.Info("Recording rule evaluated", "results", result, "duration", evalDur)
+	span := trace.SpanFromContext(ctx)
 	span.AddEvent("rule evaluated", trace.WithAttributes(
 		attribute.Int64("results", int64(len(result.Responses))),
 	))
