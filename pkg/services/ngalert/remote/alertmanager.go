@@ -41,6 +41,11 @@ type stateStore interface {
 // AutogenFn is a function that adds auto-generated routes to a configuration.
 type AutogenFn func(ctx context.Context, logger log.Logger, orgId int64, config *apimodels.PostableApiAlertingConfig) error
 
+// NoopAutogenFn is used to skip auto-generating routes.
+func NoopAutogenFn(ctx context.Context, logger log.Logger, orgId int64, config *apimodels.PostableApiAlertingConfig) error {
+	return nil
+}
+
 // DecryptFn is a function that takes in an encrypted value and returns it decrypted.
 type DecryptFn func(ctx context.Context, payload []byte) ([]byte, error)
 
