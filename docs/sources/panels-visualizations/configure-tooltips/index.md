@@ -128,6 +128,10 @@ Set the hover proximity (in pixels) to control how close the cursor must be to a
 
 ![Adding a hover proximity limit for tooltips](/media/docs/grafana/gif-grafana-10-4-hover-proximity.gif)
 
+### Max width
+
+Set the maximum width of the tooltip box.
+
 ### Max height
 
 Set the maximum height of the tooltip box. The default is 600 pixels.
