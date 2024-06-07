@@ -42,7 +42,7 @@ refs:
 
 # Notification policies
 
-Notification policies provide you with a flexible way to design how to handle notifications and minimize alert noise.
+Notification policies provide you with a flexible way of designing how to handle notifications and minimize alert noise.
 
 Using label matchers, alert instances are [routed to notification policies](#routing). The notification policy can then [group multiple alert instances into a single notification](ref:group-alert-notifications) and deliver it to the contact point.
 
