@@ -40,7 +40,7 @@ func TestResponseAdapter(t *testing.T) {
 		require.Equal(t, "OK", string(bodyBytes))
 	})
 
-	t.Run("should handle synchronous write", func(t *testing.T) {
+	t.Run("should handle asynchronous write", func(t *testing.T) {
 		generateRandomStrings(10)
 		client := &http.Client{
 			Transport: &roundTripperFunc{
@@ -87,21 +87,51 @@ func TestResponseAdapter(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("should handle asynchronous err", func(t *testing.T) {
+		client := &http.Client{
+			Transport: &roundTripperFunc{
+				ready: make(chan struct{}),
+				// ignore the lint error because the response is passed directly to the client,
+				// so the client will be responsible for closing the response body.
+				//nolint:bodyclose
+				fn: grafanaresponsewriter.WrapHandler(http.HandlerFunc(asyncErrHandler)),
+			},
+		}
+		close(client.Transport.(*roundTripperFunc).ready)
+		req, err := http.NewRequest("GET", "http://localhost/test?watch=true", nil)
+		require.NoError(t, err)
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+
+		defer func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		}()
+
+		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	})
 }
 
 func syncHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("OK"))
 }
 
 func asyncHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
 	for _, s := range randomStrings {
 		time.Sleep(100 * time.Millisecond)
 		// write the current iteration
 		_, _ = w.Write([]byte(s))
 		w.(http.Flusher).Flush()
 	}
+}
+
+func asyncErrHandler(w http.ResponseWriter, _ *http.Request) {
+	time.Sleep(100 * time.Millisecond)
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Write([]byte("error"))
+	w.(http.Flusher).Flush()
 }
 
 var randomStrings = []string{}
