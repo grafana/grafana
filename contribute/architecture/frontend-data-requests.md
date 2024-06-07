@@ -10,9 +10,9 @@ A data request can take a long time to finish. During the time between when a re
 
 If we wait for canceled requests to complete, they might create unnecessary load on the data sources.
 
-## Request cancelation by Grafana version
+## Request cancellation by Grafana version
 
-Grafana uses a concept called _request cancelation_ to cancel any ongoing request that Grafana doesn't need. The process for canceling requests in this manner varies by Grafana version.
+Grafana uses a concept called _request cancellation_ to cancel any ongoing request that Grafana doesn't need. The process for canceling requests in this manner varies by Grafana version.
 
 ### Before Grafana 7.2
 
