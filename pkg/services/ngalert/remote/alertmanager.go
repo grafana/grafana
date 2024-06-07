@@ -38,6 +38,7 @@ type stateStore interface {
 	GetNotificationLog(ctx context.Context) (string, error)
 }
 
+// AutogenFn is a function that adds auto-generated routes to a configuration.
 type AutogenFn func(ctx context.Context, logger log.Logger, orgId int64, config *apimodels.PostableApiAlertingConfig) error
 
 // DecryptFn is a function that takes in an encrypted value and returns it decrypted.
