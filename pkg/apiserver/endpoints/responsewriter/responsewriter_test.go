@@ -5,6 +5,7 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"sync"
 	"testing"
 	"time"
 
@@ -24,7 +25,6 @@ func TestResponseAdapter(t *testing.T) {
 				fn: grafanaresponsewriter.WrapHandler(http.HandlerFunc(syncHandler)),
 			},
 		}
-		close(client.Transport.(*roundTripperFunc).ready)
 		req, err := http.NewRequest("GET", "http://localhost/test", nil)
 		require.NoError(t, err)
 
@@ -52,7 +52,6 @@ func TestResponseAdapter(t *testing.T) {
 				fn: grafanaresponsewriter.WrapHandler(http.HandlerFunc(asyncHandler)),
 			},
 		}
-		close(client.Transport.(*roundTripperFunc).ready)
 		req, err := http.NewRequest("GET", "http://localhost/test?watch=true", nil)
 		require.NoError(t, err)
 
@@ -99,7 +98,6 @@ func TestResponseAdapter(t *testing.T) {
 				fn: grafanaresponsewriter.WrapHandler(http.HandlerFunc(asyncErrHandler)),
 			},
 		}
-		close(client.Transport.(*roundTripperFunc).ready)
 		req, err := http.NewRequest("GET", "http://localhost/test?watch=true", nil)
 		require.NoError(t, err)
 
@@ -115,34 +113,50 @@ func TestResponseAdapter(t *testing.T) {
 	})
 
 	t.Run("should handle context cancellation", func(t *testing.T) {
+		var cancel context.CancelFunc
 		client := &http.Client{
 			Transport: &roundTripperFunc{
 				ready: make(chan struct{}),
 				// ignore the lint error because the response is passed directly to the client,
 				// so the client will be responsible for closing the response body.
 				//nolint:bodyclose
-				fn: grafanaresponsewriter.WrapHandler(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {})),
+				fn: grafanaresponsewriter.WrapHandler(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
+					cancel()
+				})),
 			},
 		}
-		close(client.Transport.(*roundTripperFunc).ready)
 		req, err := http.NewRequest("GET", "http://localhost/test?watch=true", nil)
 		require.NoError(t, err)
 
 		ctx, cancel := context.WithCancel(req.Context())
 		req = req.WithContext(ctx)
-		go func() {
-			time.Sleep(100 * time.Millisecond)
-			cancel()
-		}()
 		resp, err := client.Do(req)
+		require.Nil(t, resp)
+		require.Error(t, err)
+		require.ErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("should gracefully handle concurrent WriteHeader calls", func(t *testing.T) {
+		t.Parallel()
+
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
 		require.NoError(t, err)
 
-		defer func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
-		}()
-
-		require.Equal(t, 499, resp.StatusCode)
+		const maxAttempts = 1000
+		var wg sync.WaitGroup
+		for i := 0; i < maxAttempts; i++ {
+			ra := grafanaresponsewriter.NewAdapter(req)
+			wg.Add(2)
+			go func() {
+				defer wg.Done()
+				ra.WriteHeader(http.StatusOK)
+			}()
+			go func() {
+				defer wg.Done()
+				ra.WriteHeader(http.StatusOK)
+			}()
+		}
+		wg.Wait()
 	})
 }
 
