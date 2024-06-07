@@ -135,9 +135,9 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	// create user
 	usr := &user.User{
 		UID:              cmd.UID,
-		Email:            cmd.Email,
+		Email:            strings.ToLower(cmd.Email),
 		Name:             cmd.Name,
-		Login:            cmd.Login,
+		Login:            strings.ToLower(cmd.Login),
 		Company:          cmd.Company,
 		IsAdmin:          cmd.IsAdmin,
 		IsDisabled:       cmd.IsDisabled,
@@ -228,9 +228,6 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	cmd.Login = strings.ToLower(cmd.Login)
-	cmd.Email = strings.ToLower(cmd.Email)
-
 	return s.store.Update(ctx, cmd)
 }
 

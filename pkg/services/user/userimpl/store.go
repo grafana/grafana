@@ -283,15 +283,11 @@ func (ss *sqlStore) loginConflict(ctx context.Context, sess *db.Session, login, 
 }
 
 func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	// enforcement of lowercase due to forcement of caseinsensitive login
-	cmd.Login = strings.ToLower(cmd.Login)
-	cmd.Email = strings.ToLower(cmd.Email)
-
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{
 			Name:    cmd.Name,
-			Email:   cmd.Email,
-			Login:   cmd.Login,
+			Email:   strings.ToLower(cmd.Email),
+			Login:   strings.ToLower(cmd.Login),
 			Theme:   cmd.Theme,
 			Updated: time.Now(),
 		}
