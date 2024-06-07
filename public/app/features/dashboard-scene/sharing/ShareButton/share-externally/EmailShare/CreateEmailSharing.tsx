@@ -50,7 +50,7 @@ export const CreateEmailSharing = ({ hasError }: { hasError: boolean }) => {
             <Button type="submit" disabled={!isValid}>
               <Trans i18nKey="public-dashboard.email-sharing.accept-button">Accept</Trans>
             </Button>
-            <Button variant="secondary" onClick={dashboard.closeModal}>
+            <Button variant="secondary" onClick={() => dashboard.closeModal()}>
               <Trans i18nKey="public-dashboard.email-sharing.cancel-button">Cancel</Trans>
             </Button>
             {isLoading && <Spinner />}

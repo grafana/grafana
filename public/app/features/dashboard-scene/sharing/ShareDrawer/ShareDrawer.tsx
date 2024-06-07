@@ -25,7 +25,7 @@ export class ShareDrawer extends SceneObjectBase<ShareDrawerState> implements Mo
 
 function ShareDrawerRenderer({ model }: SceneComponentProps<ShareDrawer>) {
   const { title, body } = model.useState();
-  const dashboard = getDashboardSceneFor(model.getRef().resolve());
+  const dashboard = getDashboardSceneFor(model);
 
   return (
     <Drawer title={title} onClose={model.onDismiss} size="md">
