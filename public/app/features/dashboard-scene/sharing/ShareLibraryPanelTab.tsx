@@ -32,7 +32,8 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
     return null;
   }
 
-  const parent = panelRef.resolve().parent;
+  const panel = panelRef.resolve();
+  const parent = panel.parent;
 
   if (parent instanceof DashboardGridItem) {
     const dashboardScene = dashboardRef.resolve();
@@ -50,7 +51,7 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
         onDismiss={() => {
           modalRef?.resolve().onDismiss();
         }}
-        onCreateLibraryPanel={(libPanel: LibraryPanel) => dashboardScene.createLibraryPanel(parent, libPanel)}
+        onCreateLibraryPanel={(libPanel: LibraryPanel) => dashboardScene.createLibraryPanel(panel, libPanel)}
       />
     );
   }
