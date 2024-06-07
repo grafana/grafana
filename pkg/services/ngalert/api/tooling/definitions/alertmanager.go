@@ -473,7 +473,6 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 	}
 }
 
-// swagger:model postableSilence
 type PostableSilence = amv2.PostableSilence
 
 // swagger:model postSilencesOKBody
@@ -485,7 +484,6 @@ type PostSilencesOKBody struct { // vendored from "github.com/prometheus/alertma
 // swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
 
-// swagger:model gettableSilence
 type GettableSilence = amv2.GettableSilence
 
 // swagger:model gettableGrafanaSilence
@@ -540,16 +538,13 @@ type GettableGrafanaSilences []*GettableGrafanaSilence
 // swagger:model gettableAlerts
 type GettableAlerts = amv2.GettableAlerts
 
-// swagger:model gettableAlert
 type GettableAlert = amv2.GettableAlert
 
 // swagger:model alertGroups
 type AlertGroups = amv2.AlertGroups
 
-// swagger:model alertGroup
 type AlertGroup = amv2.AlertGroup
 
-// swagger:model receiver
 type Receiver = amv2.Receiver
 
 // swagger:response receiversResponse
@@ -558,7 +553,6 @@ type ReceiversResponse struct {
 	Body []amv2.Receiver
 }
 
-// swagger:model integration
 type Integration = amv2.Integration
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
@@ -871,6 +865,26 @@ func (c *GettableApiAlertingConfig) UnmarshalJSON(b []byte) error {
 	}
 
 	if err := json.Unmarshal(b, &overrides{Receivers: &c.Receivers}); err != nil {
+		return err
+	}
+
+	return c.validate()
+}
+
+func (c *GettableApiAlertingConfig) UnmarshalYAML(value *yaml.Node) error {
+	type plain GettableApiAlertingConfig
+	if err := value.Decode((*plain)(c)); err != nil {
+		return err
+	}
+
+	// Since Config implements yaml.Unmarshaler, we must handle _all_ other fields independently.
+	// Otherwise, the yaml decoder will detect this and only use the embedded type.
+	// Additionally, we'll use pointers to slices in order to reference the intended target.
+	type overrides struct {
+		Receivers *[]*GettableApiReceiver `yaml:"receivers,omitempty"`
+	}
+
+	if err := value.Decode(&overrides{Receivers: &c.Receivers}); err != nil {
 		return err
 	}
 

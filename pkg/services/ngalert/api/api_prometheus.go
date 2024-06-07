@@ -451,7 +451,7 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 			Name:           rule.Title,
 			Labels:         rule.GetLabels(labelOptions...),
 			Health:         "ok",
-			Type:           apiv1.RuleTypeAlerting,
+			Type:           rule.Type().String(),
 			LastEvaluation: time.Time{},
 		}
 
