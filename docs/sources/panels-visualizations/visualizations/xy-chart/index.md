@@ -89,6 +89,8 @@ When you select **Auto** as your series mapping mode, the following options are 
 - [Frame](#frame)
 - [X-field](#x-field)
 - [Y-field](#y-field)
+- [Size field](#size-field)
+- [Color field](#color-field)
 
 ##### Frame
 
@@ -122,6 +124,16 @@ You can also use [overrides](ref:configure-field-overrides) to exclude y-fields 
 - Override property: **Series > Hide in area**
 - Area: **Viz**
 
+##### Size field
+
+Set which field's values control the size of the points in the chart. This value is relative to the min and max of all the values in the data frame.
+
+##### Color field
+
+Set which field's values control the color of the points in the chart. To use the color value options under the Standard options, you must set this field.
+
+Typically, this field is used when you only have one series displayed in the chart.
+
 #### Manual series mapping options
 
 When you select **Manual** as your series mode, you can add, edit, and delete series. To manage a series, click the **Series** field; to rename the series, click the series name.
@@ -131,18 +143,8 @@ In **Manual** mode, you must set the following options:
 - **Frame** - Select your data frame or dataset. You can add as many frames as you want.
 - **X-field** - Select which field x represents.
 - **Y-field** - Select which field y represents.
-
-### Size field
-
-Use this option to set which field's values control the size of the points in the chart. This value is relative to the min and max of all the values in the data frame.
-
-When you select this option, you can then set the [Min point size](#minmax-point-size) and [Max point size](#minmax-point-size) options.
-
-### Color field
-
-Use this option to set which field's values control the color of the points in the chart. To use the color value options under the **Standard options**, you must set this field.
-
-Typically, this option is used when you only have one series displayed in the chart.
+- **Size field** - Select which field controls the size of the points in the chart.
+- **Color field** - Select which field controls the color of the points in the chart.
 
 ### Show
 
@@ -159,6 +161,17 @@ Set the size of all points in the chart, from one to one hundred pixels in diame
 ### Min/Max point size
 
 Use these options to control the minimum or maximum point size when you've set the **Size field** option. You can [override](ref:configure-field-overrides) these options for specific series.
+
+### Point shape
+
+Set the shape of the points in the chart.
+
+- **Circle** - Display points as circles. This is the default setting.
+- **Square** - Display points as squares.
+
+### Point stroke width
+
+Set the width of the point stroke in pixels. The default is one pixel.
 
 ### Line style
 
