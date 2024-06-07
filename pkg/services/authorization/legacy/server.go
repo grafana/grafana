@@ -1,4 +1,4 @@
-package server
+package legacy
 
 import (
 	"context"
@@ -8,11 +8,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	authzv1 "github.com/grafana/grafana/pkg/services/accesscontrol/embedservice/proto/v1"
+	authzv1 "github.com/grafana/grafana/pkg/services/authorization/proto/v1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
-	// "github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 )
 
 var _ authzv1.AuthzServiceServer = (*Server)(nil)

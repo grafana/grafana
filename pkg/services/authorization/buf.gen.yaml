@@ -2,7 +2,7 @@ version: 'v1'
 managed:
   enabled: true
   go_package_prefix:
-    default: github.com/grafana/grafana/pkg/services/accesscontrol/embedservice/proto/v1
+    default: github.com/grafana/grafana/pkg/services/authorization/proto/v1
     except:
       - buf.build/googleapis/googleapis
       - buf.build/envoyproxy/protoc-gen-validate
