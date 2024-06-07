@@ -281,4 +281,27 @@ function isLabelMatch(matcher: ObjectMatcher, label: Label): boolean {
   return matchFunction(labelValue, matcherValue);
 }
 
-export { findMatchingAlertGroups, findMatchingRoutes, getInheritedProperties, isLabelMatchInSet };
+// recursive function to rename receivers in all routes (notification policies)
+function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
+  const updated: Route = {
+    ...route,
+  };
+
+  if (updated.receiver === oldName) {
+    updated.receiver = newName;
+  }
+
+  if (updated.routes) {
+    updated.routes = updated.routes.map((route) => renameReceiverInRoute(route, oldName, newName));
+  }
+
+  return updated;
+}
+
+export {
+  findMatchingAlertGroups,
+  findMatchingRoutes,
+  getInheritedProperties,
+  isLabelMatchInSet,
+  renameReceiverInRoute,
+};

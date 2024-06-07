@@ -1,19 +1,24 @@
 import { createAction, createReducer } from '@reduxjs/toolkit';
 import { remove } from 'lodash';
 
-import { AlertManagerCortexConfig, Receiver, Route } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
 
-import initialState from './initialState';
+import { renameReceiverInRoute } from '../../utils/notification-policies';
 
 export const addReceiverAction = createAction<Receiver>('receiver/add');
 export const updateReceiverAction = createAction<{ name: string; receiver: Receiver }>('receiver/update');
 export const deleteReceiverAction = createAction<string>('receiver/delete');
 
+const initialState: AlertManagerCortexConfig = {
+  alertmanager_config: {},
+  template_files: {},
+};
+
 /**
  * This reducer will manage action related to receiver (Contact points) and make sure all operations on the alertmanager
  * configuration happen immutably and only mutate what they need.
  */
-export const alertmanagerConfigurationReducer = createReducer<AlertManagerCortexConfig>(initialState, (builder) => {
+export const alertmanagerConfigurationReducer = createReducer(initialState, (builder) => {
   builder
     // add a new receiver
     .addCase(addReceiverAction, (draft, { payload: newReceiver }) => {
@@ -52,7 +57,6 @@ export const alertmanagerConfigurationReducer = createReducer<AlertManagerCortex
       receivers[targetIndex] = receiver;
 
       // check if we need to update routes if the contact point was renamed
-      // technically we don't have to check for "existingReceiverName" but TypeScript is not able to infer that it can't be undefined
       const renaming = name !== receiver.name;
       const routeTree = draft.alertmanager_config.route;
 
@@ -68,17 +72,3 @@ export const alertmanagerConfigurationReducer = createReducer<AlertManagerCortex
       throw new Error(`Unknown action for receiver reducer: ${action.type}`);
     });
 });
-
-// recursive function to rename receivers in all routes (notification policies)
-export function renameReceiverInRoute(route: Route, oldName: string, newName: string) {
-  const updated: Route = {
-    ...route,
-  };
-  if (updated.receiver === oldName) {
-    updated.receiver = newName;
-  }
-  if (updated.routes) {
-    updated.routes = updated.routes.map((route) => renameReceiverInRoute(route, oldName, newName));
-  }
-  return updated;
-}

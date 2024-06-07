@@ -97,7 +97,7 @@ const ContactPoints = () => {
   const [activeTab, setActiveTab] = useTabQueryParam();
 
   let { isLoading, error, contactPoints } = useContactPointsWithStatus();
-  const [deleteTrigger, updateAlertmanagerState] = useDeleteContactPoint();
+  const [deleteTrigger, deleteState] = useDeleteContactPoint();
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.CreateContactPoint
   );
@@ -108,7 +108,7 @@ const ContactPoints = () => {
     AlertmanagerAction.CreateNotificationTemplate
   );
 
-  const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
+  const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, deleteState.isLoading);
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 
   const search = queryParams.get('search');
@@ -186,7 +186,7 @@ const ContactPoints = () => {
                         search={search}
                         pageSize={DEFAULT_PAGE_SIZE}
                         onDelete={(name) => showDeleteModal(name)}
-                        disabled={updateAlertmanagerState.isLoading}
+                        disabled={deleteState.isLoading}
                       />
                       {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
                       {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}

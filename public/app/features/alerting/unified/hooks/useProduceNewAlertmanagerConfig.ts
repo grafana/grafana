@@ -4,6 +4,8 @@ import { alertmanagerApi } from '../api/alertmanagerApi';
 import { alertmanagerConfigurationReducer } from '../reducers/alertmanagerConfiguration/receivers';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 
+import { mergeRequestStates } from './mergeRequestStates';
+
 const ERR_NO_ACTIVE_AM = new Error('no active Alertmanager');
 
 /**
@@ -12,11 +14,13 @@ const ERR_NO_ACTIVE_AM = new Error('no active Alertmanager');
  */
 export function useProduceNewAlertmanagerConfiguration() {
   const { selectedAlertmanager } = useAlertmanager();
-  const [fetchAlertmanagerConfig, _fetchAlertmanagerState] =
+  const [fetchAlertmanagerConfig, fetchAlertmanagerState] =
     alertmanagerApi.endpoints.getAlertmanagerConfiguration.useLazyQuery();
 
   const [updateAlertManager, updateAlertmanagerState] =
     alertmanagerApi.endpoints.updateAlertmanagerConfiguration.useMutation();
+
+  const newConfigurationState = mergeRequestStates(fetchAlertmanagerState, updateAlertmanagerState);
 
   if (!selectedAlertmanager) {
     throw ERR_NO_ACTIVE_AM;
@@ -32,6 +36,5 @@ export function useProduceNewAlertmanagerConfiguration() {
     }).unwrap();
   };
 
-  // @TODO merge loading state with the fetching state
-  return [produceNewAlertmanagerConfiguration, updateAlertmanagerState] as const;
+  return [produceNewAlertmanagerConfiguration, newConfigurationState] as const;
 }

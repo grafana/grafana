@@ -1,7 +1,3 @@
-/**
- * This hook will combine data from both the Alertmanager config
- * and (if available) it will also fetch the status from the Grafana Managed status endpoint
- */
 import { useCallback } from 'react';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
