@@ -712,7 +712,7 @@ export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
 
 export interface GetTagResponse {
   data: MetricFindValue[];
-  errors?: DataQueryError[];
+  error?: DataQueryError;
 }
 
 abstract class LanguageProvider {
