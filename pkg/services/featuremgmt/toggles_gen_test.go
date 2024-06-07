@@ -25,46 +25,8 @@ import (
 )
 
 func TestFeatureToggleFiles(t *testing.T) {
-	legacyNames := map[string]bool{
-		"live-service-web-worker": true,
-	}
-
 	t.Run("check registry constraints", func(t *testing.T) {
-		invalidNames := make([]string, 0)
-
-		// Check that all flags set in code are valid
-		for _, flag := range standardFeatureFlags {
-			if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated) {
-				t.Errorf("only FeatureStageGeneralAvailability or FeatureStageDeprecated features can be enabled by default.  See: %s", flag.Name)
-			}
-			if flag.RequiresDevMode && flag.Stage != FeatureStageExperimental {
-				t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)
-			}
-			if flag.Stage == FeatureStageUnknown {
-				t.Errorf("standard toggles should not have an unknown state.  See: %s", flag.Name)
-			}
-			if flag.Description != strings.TrimSpace(flag.Description) {
-				t.Errorf("flag Description should not start/end with spaces.  See: %s", flag.Name)
-			}
-			if flag.Name != strings.TrimSpace(flag.Name) {
-				t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
-			}
-			if flag.AllowSelfServe && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStagePublicPreview || flag.Stage == FeatureStageDeprecated) {
-				t.Errorf("only allow self-serving GA, PublicPreview and Deprecated toggles")
-			}
-			if flag.Owner == "" {
-				t.Errorf("feature %s does not have an owner. please fill the FeatureFlag.Owner property", flag.Name)
-			}
-			// Check camel case names
-			if flag.Name != strcase.ToLowerCamel(flag.Name) && !legacyNames[flag.Name] {
-				invalidNames = append(invalidNames, flag.Name)
-			}
-		}
-
-		// Make sure the names are valid
-		require.Empty(t, invalidNames, "%s feature names should be camel cased", invalidNames)
-		// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
-
+		verifyFlagsConfiguration(t)
 		// Now that we know they are valid, update the json database
 		t.Run("update k8s resource list", func(t *testing.T) {
 			created := v1.NewTime(time.Now().UTC())
@@ -178,6 +140,53 @@ func TestFeatureToggleFiles(t *testing.T) {
 			generateCSV(),
 		)
 	})
+}
+
+// Check if all flags are configured properly
+func verifyFlagsConfiguration(t *testing.T) {
+	legacyNames := map[string]bool{
+		"live-service-web-worker": true,
+	}
+	invalidNames := make([]string, 0)
+
+	// Check that all flags set in code are valid
+	for _, flag := range standardFeatureFlags {
+		if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated) {
+			t.Errorf("only FeatureStageGeneralAvailability or FeatureStageDeprecated features can be enabled by default.  See: %s", flag.Name)
+		}
+		if flag.RequiresDevMode && flag.Stage != FeatureStageExperimental {
+			t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)
+		}
+		if flag.Stage == FeatureStageUnknown {
+			t.Errorf("standard toggles should not have an unknown state.  See: %s", flag.Name)
+		}
+		if flag.Description != strings.TrimSpace(flag.Description) {
+			t.Errorf("flag Description should not start/end with spaces.  See: %s", flag.Name)
+		}
+		if flag.Name != strings.TrimSpace(flag.Name) {
+			t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
+		}
+		if flag.AllowSelfServe && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStagePublicPreview || flag.Stage == FeatureStageDeprecated) {
+			t.Errorf("only allow self-serving GA, PublicPreview and Deprecated toggles")
+		}
+		if flag.Owner == "" {
+			t.Errorf("feature %s does not have an owner. please fill the FeatureFlag.Owner property", flag.Name)
+		}
+		if flag.Stage == FeatureStageGeneralAvailability && flag.Expression == "" {
+			t.Errorf("GA features must be explicitly enabled or disabled, please add the `Expression` property for %s", flag.Name)
+		}
+		if !(flag.Expression == "" || flag.Expression == "true" || flag.Expression == "false") {
+			t.Errorf("the `Expression` property for %s is incorrect. valid values are: `true`, `false` or empty string for default", flag.Name)
+		}
+		// Check camel case names
+		if flag.Name != strcase.ToLowerCamel(flag.Name) && !legacyNames[flag.Name] {
+			invalidNames = append(invalidNames, flag.Name)
+		}
+	}
+
+	// Make sure the names are valid
+	require.Empty(t, invalidNames, "%s feature names should be camel cased", invalidNames)
+	// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
 }
 
 func verifyAndGenerateFile(t *testing.T, fpath string, gen string) {
