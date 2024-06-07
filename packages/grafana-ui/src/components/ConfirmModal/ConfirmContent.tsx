@@ -19,17 +19,17 @@ export interface ConfirmContentProps {
   /** Modal description */
   description?: React.ReactNode;
   /** Text for confirm button */
-  confirmText: string;
-  /** Text for dismiss button */
-  dismissText?: string;
-  /** Variant for dismiss button */
-  dismissVariant?: ButtonVariant;
-  /** Text user needs to fill in before confirming */
-  fillToConfirmText?: string;
-  /** Text for alternative button */
-  alternativeText?: string;
+  confirmButtonLabel: string;
   /** Confirm button variant */
   confirmButtonVariant?: ButtonVariant;
+  /** Text user needs to fill in before confirming */
+  confirmationText?: string;
+  /** Text for dismiss button */
+  dismissButtonLabel?: string;
+  /** Variant for dismiss button */
+  dismissButtonVariant?: ButtonVariant;
+  /** Text for alternative button */
+  alternativeButtonLabel?: string;
   /** Justify for buttons placement */
   justifyButtons?: ResponsiveProp<JustifyContent>;
   /** Confirm action callback
@@ -44,24 +44,24 @@ export interface ConfirmContentProps {
 
 export const ConfirmContent = ({
   body,
-  fillToConfirmText,
-  confirmText,
+  confirmationText,
+  confirmButtonLabel,
   confirmButtonVariant,
-  dismissVariant,
-  dismissText,
+  dismissButtonVariant,
+  dismissButtonLabel,
   onConfirm,
   onDismiss,
   onAlternative,
-  alternativeText,
+  alternativeButtonLabel,
   description,
   justifyButtons = 'flex-end',
 }: ConfirmContentProps) => {
-  const [disabled, setDisabled] = useState(Boolean(fillToConfirmText));
+  const [disabled, setDisabled] = useState(Boolean(confirmationText));
   const styles = useStyles2(getStyles);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setDisabled(fillToConfirmText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
+    setDisabled(confirmationText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
   };
 
   useEffect(() => {
@@ -69,8 +69,8 @@ export const ConfirmContent = ({
   }, []);
 
   useEffect(() => {
-    setDisabled(Boolean(fillToConfirmText));
-  }, [fillToConfirmText]);
+    setDisabled(Boolean(confirmationText));
+  }, [confirmationText]);
 
   const onConfirmClick = async () => {
     setDisabled(true);
@@ -88,11 +88,11 @@ export const ConfirmContent = ({
       <div className={styles.text}>
         {body}
         {description ? <div className={styles.description}>{description}</div> : null}
-        {fillToConfirmText ? (
+        {confirmationText ? (
           <div className={styles.confirmationInput}>
             <Stack alignItems="flex-start">
               <Box>
-                <Input placeholder={`Type "${fillToConfirmText}" to confirm`} onChange={onConfirmationTextChange} />
+                <Input placeholder={`Type "${confirmationText}" to confirm`} onChange={onConfirmationTextChange} />
               </Box>
             </Stack>
           </div>
@@ -100,8 +100,8 @@ export const ConfirmContent = ({
       </div>
       <div className={styles.buttonsContainer}>
         <Stack justifyContent={justifyButtons} gap={2} wrap="wrap">
-          <Button variant={dismissVariant} onClick={onDismiss} fill="outline">
-            {dismissText}
+          <Button variant={dismissButtonVariant} onClick={onDismiss} fill="outline">
+            {dismissButtonLabel}
           </Button>
           <Button
             type="submit"
@@ -110,11 +110,11 @@ export const ConfirmContent = ({
             ref={buttonRef}
             data-testid={selectors.pages.ConfirmModal.delete}
           >
-            {confirmText}
+            {confirmButtonLabel}
           </Button>
           {onAlternative ? (
             <Button variant="primary" onClick={onAlternative}>
-              {alternativeText}
+              {alternativeButtonLabel}
             </Button>
           ) : null}
         </Stack>
