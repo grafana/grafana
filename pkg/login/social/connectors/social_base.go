@@ -153,15 +153,6 @@ func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string
 	return "", false, nil
 }
 
-func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
-	role, gAdmin, err := s.extractRoleAndAdminOptional(rawJSON, groups)
-	if role == "" {
-		role = s.defaultRole()
-	}
-
-	return role, gAdmin, err
-}
-
 func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, bool) {
 	role, err := util.SearchJSONForStringAttr(s.info.RoleAttributePath, rawJSON)
 	if err == nil && role != "" {
