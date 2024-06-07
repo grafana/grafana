@@ -52,7 +52,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
-	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures())
+	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -336,7 +336,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
-	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures())
+	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -509,7 +509,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 
 			require.Equal(t, "folder1", allExport.Groups[0].Folder)
 			require.Equal(t, "folder2", allExport.Groups[1].Folder)
-			require.Equal(t, "subfolder", allExport.Groups[2].Folder)
+			require.Equal(t, "folder1/subfolder", allExport.Groups[2].Folder)
 		})
 
 		t.Run("Export from one folder", func(t *testing.T) {
@@ -632,7 +632,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 			require.Equal(t, http.StatusOK, status)
 			require.Len(t, export.Groups, 2)
 			require.Equal(t, "folder1", export.Groups[0].Folder)
-			require.Equal(t, "subfolder", export.Groups[1].Folder)
+			require.Equal(t, "folder1/subfolder", export.Groups[1].Folder)
 		})
 
 		t.Run("Export from one folder", func(t *testing.T) {
@@ -732,7 +732,7 @@ func TestAlertRulePostExport(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
-	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures())
+	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -1412,7 +1412,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		AppModeProduction:     true,
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures())
+	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{

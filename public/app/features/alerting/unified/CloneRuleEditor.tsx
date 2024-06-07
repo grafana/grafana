@@ -1,32 +1,25 @@
 import { cloneDeep } from 'lodash';
 import React from 'react';
-import { useAsync } from 'react-use';
 
 import { locationService } from '@grafana/runtime/src';
 import { Alert, LoadingPlaceholder } from '@grafana/ui/src';
 
-import { useDispatch } from '../../../types';
 import { RuleIdentifier, RuleWithLocation } from '../../../types/unified-alerting';
 import { RulerRuleDTO } from '../../../types/unified-alerting-dto';
 
 import { AlertRuleForm } from './components/rule-editor/alert-rule-form/AlertRuleForm';
-import { fetchEditableRuleAction } from './state/actions';
+import { useRuleWithLocation } from './hooks/useCombinedRule';
 import { generateCopiedName } from './utils/duplicate';
+import { stringifyErrorLike } from './utils/misc';
 import { rulerRuleToFormValues } from './utils/rule-form';
 import { getRuleName, isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './utils/rules';
 import { createUrl } from './utils/url';
 
 export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier }) {
-  const dispatch = useDispatch();
-
-  const {
-    loading,
-    value: rule,
-    error,
-  } = useAsync(() => dispatch(fetchEditableRuleAction(sourceRuleId)).unwrap(), [sourceRuleId]);
+  const { loading, result: rule, error } = useRuleWithLocation({ ruleIdentifier: sourceRuleId });
 
   if (loading) {
-    return <LoadingPlaceholder text="Loading the rule" />;
+    return <LoadingPlaceholder text="Loading the rule..." />;
   }
 
   if (rule) {
@@ -39,7 +32,7 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
   if (error) {
     return (
       <Alert title="Error" severity="error">
-        {error.message}
+        {stringifyErrorLike(error)}
       </Alert>
     );
   }

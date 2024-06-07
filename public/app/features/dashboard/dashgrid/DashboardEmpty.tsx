@@ -12,6 +12,7 @@ import {
   onCreateNewPanel,
   onImportDashboard,
 } from 'app/features/dashboard/utils/dashboard';
+import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { useDispatch, useSelector } from 'app/types';
@@ -31,13 +32,15 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const onAddVisualization = () => {
     let id;
     if (dashboard instanceof DashboardScene) {
-      id = dashboard.onCreateNewPanel();
+      const panel = dashboard.onCreateNewPanel();
+      dashboard.setState({ editPanel: buildPanelEditScene(panel, true) });
+      locationService.partial({ firstPanel: true });
     } else {
       id = onCreateNewPanel(dashboard, initialDatasource);
       dispatch(setInitialDatasource(undefined));
+      locationService.partial({ editPanel: id, firstPanel: true });
     }
 
-    locationService.partial({ editPanel: id, firstPanel: true });
     DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
   };
 

@@ -20,6 +20,7 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	definitions "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -185,12 +186,12 @@ func TestAlertRule(t *testing.T) {
 			require.False(t, success)
 			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
 		})
-		t.Run("stop should do nothing", func(t *testing.T) {
+		t.Run("calling stop multiple times should not panic", func(t *testing.T) {
 			r := blankRuleForTests(context.Background())
 			r.Stop(nil)
 			r.Stop(nil)
 		})
-		t.Run("stop should do nothing if parent context stopped", func(t *testing.T) {
+		t.Run("stop should not panic if parent context stopped", func(t *testing.T) {
 			ctx, cancelFn := context.WithCancel(context.Background())
 			r := blankRuleForTests(ctx)
 			cancelFn()
@@ -240,10 +241,27 @@ func TestAlertRule(t *testing.T) {
 
 		wg.Wait()
 	})
+
+	t.Run("Run should exit if idle when Stop is called", func(t *testing.T) {
+		rule := blankRuleForTests(context.Background())
+		runResult := make(chan error)
+		go func() {
+			runResult <- rule.Run(models.AlertRuleKey{})
+		}()
+
+		rule.Stop(nil)
+
+		select {
+		case err := <-runResult:
+			require.NoError(t, err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("Run() never exited")
+		}
+	})
 }
 
 func blankRuleForTests(ctx context.Context) *alertRule {
-	return newAlertRule(context.Background(), nil, false, 0, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	return newAlertRule(context.Background(), nil, false, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
 }
 
 func TestRuleRoutine(t *testing.T) {
@@ -279,7 +297,7 @@ func TestRuleRoutine(t *testing.T) {
 			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			ruleInfo := factory.new(ctx)
+			ruleInfo := factory.new(ctx, rule)
 			go func() {
 				_ = ruleInfo.Run(rule.GetKey())
 			}()
@@ -442,7 +460,7 @@ func TestRuleRoutine(t *testing.T) {
 
 			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
-			ruleInfo := factory.new(ctx)
+			ruleInfo := factory.new(ctx, rule)
 			go func() {
 				err := ruleInfo.Run(models.AlertRuleKey{})
 				stoppedChan <- err
@@ -462,7 +480,7 @@ func TestRuleRoutine(t *testing.T) {
 			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 
 			factory := ruleFactoryFromScheduler(sch)
-			ruleInfo := factory.new(context.Background())
+			ruleInfo := factory.new(context.Background(), rule)
 			go func() {
 				err := ruleInfo.Run(rule.GetKey())
 				stoppedChan <- err
@@ -492,7 +510,7 @@ func TestRuleRoutine(t *testing.T) {
 		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := factory.new(ctx)
+		ruleInfo := factory.new(ctx, rule)
 
 		go func() {
 			_ = ruleInfo.Run(rule.GetKey())
@@ -574,7 +592,7 @@ func TestRuleRoutine(t *testing.T) {
 		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := factory.new(ctx)
+		ruleInfo := factory.new(ctx, rule)
 
 		go func() {
 			_ = ruleInfo.Run(rule.GetKey())
@@ -693,7 +711,7 @@ func TestRuleRoutine(t *testing.T) {
 			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			ruleInfo := factory.new(ctx)
+			ruleInfo := factory.new(ctx, rule)
 
 			go func() {
 				_ = ruleInfo.Run(rule.GetKey())
@@ -727,7 +745,7 @@ func TestRuleRoutine(t *testing.T) {
 		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := factory.new(ctx)
+		ruleInfo := factory.new(ctx, rule)
 
 		go func() {
 			_ = ruleInfo.Run(rule.GetKey())
@@ -747,5 +765,5 @@ func TestRuleRoutine(t *testing.T) {
 }
 
 func ruleFactoryFromScheduler(sch *schedule) ruleFactory {
-	return newRuleFactory(sch.appURL, sch.disableGrafanaFolder, sch.maxAttempts, sch.alertsSender, sch.stateManager, sch.evaluatorFactory, &sch.schedulableAlertRules, sch.clock, sch.metrics, sch.log, sch.tracer, sch.evalAppliedFunc, sch.stopAppliedFunc)
+	return newRuleFactory(sch.appURL, sch.disableGrafanaFolder, sch.maxAttempts, sch.alertsSender, sch.stateManager, sch.evaluatorFactory, &sch.schedulableAlertRules, sch.clock, sch.featureToggles, sch.metrics, sch.log, sch.tracer, sch.recordingWriter, sch.evalAppliedFunc, sch.stopAppliedFunc)
 }

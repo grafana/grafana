@@ -27,11 +27,21 @@ Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-e
 
 SAML authentication integration allows your Grafana users to log in by using an external SAML 2.0 Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
 
-You can configure SAML authentication in Grafana through the user interface (UI) or the Grafana configuration file. For instructions on how to set up SAML through Grafana's UI, refer to [Configure SAML authentication using the Grafana user interface]({{< relref "../saml-ui" >}}).
-Both methods offer the same configuration options, but you might prefer using the Grafana configuration file if you want to keep all of Grafana's authentication settings in one place. Grafana Cloud users do not have access to Grafana configuration file, so they should configure SAML through Grafana's UI.
+You can configure SAML authentication in Grafana through one of the following methods:
+
+- the Grafana configuration file
+- the API (refer to [SSO Settings API]({{< relref "../../../../developers/http_api/sso-settings" >}}))
+- the user interface (refer to [Configure SAML authentication using the Grafana user interface]({{< relref "../saml-ui" >}}))
+- the Terraform provider (refer to [Terraform docs](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings))
 
 {{% admonition type="note" %}}
-Configuration in the UI takes precedence over the configuration in the Grafana configuration file. SAML settings from the UI will override any SAML configuration set in the Grafana configuration file.
+The API and Terraform support are available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. You must also enable the `ssoSettingsApi` flag.
+{{% /admonition %}}
+
+All methods offer the same configuration options, but you might prefer using the Grafana configuration file or the Terraform provider if you want to keep all of Grafana's authentication settings in one place. Grafana Cloud users do not have access to Grafana configuration file, so they should configure SAML through the other methods.
+
+{{% admonition type="note" %}}
+Configuration in the API takes precedence over the configuration in the Grafana configuration file. SAML settings from the API will override any SAML configuration set in the Grafana configuration file.
 {{% /admonition %}}
 
 ## Supported SAML
@@ -103,6 +113,16 @@ assertion_attribute_groups = Group
 To use the SAML integration, in the `auth.saml` section of in the Grafana custom configuration file, set `enabled` to `true`.
 
 Refer to [Configuration]({{< relref "../../../configure-grafana" >}}) for more information about configuring Grafana.
+
+## Additional configuration for HTTP-Post binding
+
+If multiple bindings are supported for SAML Single Sign-On (SSO) by the Identity Provider (IdP), Grafana will use the `HTTP-Redirect` binding by default. If the IdP only supports the `HTTP-Post binding` then updating the `content_security_policy_template` (in case `content_security_policy = true`) and `content_security_policy_report_only_template` (in case `content_security_policy_report_only = true`) might be required to allow Grafana to initiate a POST request to the IdP. These settings are used to define the [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy) headers that are sent by Grafana.
+
+To allow Grafana to initiate a POST request to the IdP, update the `content_security_policy_template` and `content_security_policy_report_only_template` settings in the Grafana configuration file and add the IdP's domain to the `form-action` directive. By default, the `form-action` directive is set to `self` which only allows POST requests to the same domain as Grafana. To allow POST requests to the IdP's domain, update the `form-action` directive to include the IdP's domain, for example: `form-action 'self' https://idp.example.com`.
+
+{{% admonition type="note" %}}
+For Grafana Cloud instances, please contact Grafana Support to update the `content_security_policy_template` and `content_security_policy_report_only_template` settings of your Grafana instance. Please provide the metadata URL/file of your IdP.
+{{% /admonition %}}
 
 ## Certificate and private key
 
@@ -202,8 +222,9 @@ The table below describes all SAML configuration options. Continue reading below
 | `assertion_attribute_role`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user roles                                                                                                                    |                                                       |
 | `assertion_attribute_org`                                  | No       | Friendly name or name of the attribute within the SAML assertion to use as the user organization                                                                                                             |                                                       |
 | `allowed_organizations`                                    | No       | List of comma- or space-separated organizations. User should be a member of at least one organization to log in.                                                                                             |                                                       |
-| `org_mapping`                                              | No       | List of comma- or space-separated Organization:OrgId:Role mappings. Organization can be `*` meaning "All users". Role is optional and can have the following values: `Viewer`, `Editor` or `Admin`.          |                                                       |
+| `org_mapping`                                              | No       | List of comma- or space-separated Organization:OrgId:Role mappings. Organization can be `*` meaning "All users". Role is optional and can have the following values: `None`, `Viewer`, `Editor` or `Admin`.  |                                                       |
 | `role_values_none`                                         | No       | List of comma- or space-separated roles which will be mapped into the None role                                                                                                                              |                                                       |
+| `role_values_viewer`                                       | No       | List of comma- or space-separated roles which will be mapped into the Viewer role                                                                                                                            |                                                       |
 | `role_values_editor`                                       | No       | List of comma- or space-separated roles which will be mapped into the Editor role                                                                                                                            |                                                       |
 | `role_values_admin`                                        | No       | List of comma- or space-separated roles which will be mapped into the Admin role                                                                                                                             |                                                       |
 | `role_values_grafana_admin`                                | No       | List of comma- or space-separated roles which will be mapped into the Grafana Admin (Super Admin) role                                                                                                       |                                                       |
@@ -375,11 +396,12 @@ Role sync allows you to map user roles from an identity provider to Grafana. To 
 
 1. In the configuration file, set [`assertion_attribute_role`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_role" >}}) option to the attribute name where the role information will be extracted from.
 1. Set the [`role_values_none`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_none" >}}) option to the values mapped to the `None` role.
+1. Set the [`role_values_viewer`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_viewer" >}}) option to the values mapped to the `Viewer` role.
 1. Set the [`role_values_editor`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_editor" >}}) option to the values mapped to the `Editor` role.
 1. Set the [`role_values_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_admin" >}}) option to the values mapped to the organization `Admin` role.
 1. Set the [`role_values_grafana_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_grafana_admin" >}}) option to the values mapped to the `Grafana Admin` role.
 
-If a user role doesn't match any of configured values, then the `Viewer` role will be assigned.
+If a user role doesn't match any of configured values, then the role specified by the `auto_assign_org_role` config option will be assigned. If the `auto_assign_org_role` field is not set then the user role will default to `Viewer`.
 
 For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
 
@@ -388,7 +410,8 @@ Example configuration:
 ```ini
 [auth.saml]
 assertion_attribute_role = role
-role_values_none = none, external
+role_values_none = none
+role_values_viewer = external
 role_values_editor = editor, developer
 role_values_admin = admin, operator
 role_values_grafana_admin = superadmin
@@ -478,12 +501,47 @@ assertion_attribute_email = mail
 assertion_attribute_groups = Group
 assertion_attribute_role = Role
 assertion_attribute_org = Org
+role_values_viewer = external
 role_values_editor = editor, developer
 role_values_admin = admin, operator
 role_values_grafana_admin = superadmin
 org_mapping = Engineering:2:Editor, Engineering:3:Viewer, Sales:3:Editor, *:1:Editor
 allowed_organizations = Engineering, Sales
 ```
+
+### Example SAML configuration in Terraform
+
+{{% admonition type="note" %}}
+Available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. Supported in the Terraform provider since v2.17.0.
+{{% /admonition %}}
+
+```terraform
+resource "grafana_sso_settings" "saml_sso_settings" {
+  provider_name = "saml"
+  saml_settings {
+    name                       = "SAML"
+    auto_login                 = false
+    certificate_path           = "/path/to/certificate.cert"
+    private_key_path           = "/path/to/private_key.pem"
+    idp_metadata_path          = "/my/metadata.xml"
+    max_issue_delay            = "90s"
+    metadata_valid_duration    = "48h"
+    assertion_attribute_name   = "displayName"
+    assertion_attribute_login  = "mail"
+    assertion_attribute_email  = "mail"
+    assertion_attribute_groups = "Group"
+    assertion_attribute_role   = "Role"
+    assertion_attribute_org    = "Org"
+    role_values_editor         = "editor, developer"
+    role_values_admin          = "admin, operator"
+    role_values_grafana_admin  = "superadmin"
+    org_mapping                = "Engineering:2:Editor, Engineering:3:Viewer, Sales:3:Editor, *:1:Editor"
+    allowed_organizations      = "Engineering, Sales"
+  }
+}
+```
+
+Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings) for a complete reference on using the `grafana_sso_settings` resource.
 
 ## Troubleshoot SAML authentication in Grafana
 
@@ -513,7 +571,7 @@ The keys may be in a different format (PKCS#1 or PKCS#12); in that case, it may 
 The following command creates a pkcs8 key file.
 
 ```bash
-$ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes​
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
 ```
 
 #### **Convert** the private key format to base64

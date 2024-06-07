@@ -3,6 +3,7 @@ apiVersion: 1
 providers:
  - name: 'Bulk dashboards'
    folder: 'Bulk dashboards'
+   updateIntervalSeconds: 3600
    type: file
    options:
      path: devenv/bulk-dashboards
