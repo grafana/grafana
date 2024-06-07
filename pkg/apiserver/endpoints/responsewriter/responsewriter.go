@@ -14,6 +14,12 @@ var _ responsewriter.CloseNotifierFlusher = (*ResponseAdapter)(nil)
 var _ http.ResponseWriter = (*ResponseAdapter)(nil)
 var _ io.ReadCloser = (*ResponseAdapter)(nil)
 
+// WrapHandler wraps an http.Handler to return a function that can be used as a [http.RoundTripper].
+// This is used to directly connect the LoopbackConfig [http.RoundTripper]
+// with the apiserver's [http.Handler], which avoids the need to start a listener
+// for internal clients that use the LoopbackConfig.
+// All other requests should not use this wrapper, and should be handled by the
+// Grafana HTTP server to ensure that signedInUser middleware is applied.
 func WrapHandler(handler http.Handler) func(req *http.Request) (*http.Response, error) {
 	// ignore the lint error because the response is passed directly to the client,
 	// so the client will be responsible for closing the response body.
