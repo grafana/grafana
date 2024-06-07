@@ -177,12 +177,15 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	evalAttemptTotal.Inc()
 	span := trace.SpanFromContext(ctx)
 
-	// TODO: In some cases, err can be nil but the dataframe itself contains embedded error frames. Parse these out like we do when evaluating alert rules.
-	// TODO: (Maybe, refactor something in eval package so we can use shared code for this)
-	if err != nil {
+	// There might be errors in the pipeline results, even if the query succeeded.
+	var responseErr error
+	if result != nil {
+		responseErr = eval.FindConditionError(result, ev.rule.Record.From)
+	}
+
+	if err != nil || responseErr != nil {
 		evalAttemptFailures.Inc()
-		// TODO: Only errors embedded in the frame can be considered retryable.
-		// TODO: Since we are not handling these yet per the above TODO, we can blindly consider all errors to be non-retryable for now, and just exit.
+		// TODO: figure out retries
 		evalTotalFailures.Inc()
 		span.SetStatus(codes.Error, "rule evaluation failed")
 		span.RecordError(err)
