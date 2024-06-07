@@ -5,8 +5,6 @@ import (
 	"crypto/md5"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -56,9 +54,5 @@ func (f *FakeAlertmanagerConfigStore) UpdateAlertmanagerConfiguration(ctx contex
 		OrgID:                     cmd.OrgID,
 	}
 	f.LastSaveCommand = cmd
-	return nil
-}
-
-func FakeAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *apimodels.PostableApiAlertingConfig) error {
 	return nil
 }
