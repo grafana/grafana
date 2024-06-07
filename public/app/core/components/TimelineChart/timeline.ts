@@ -311,7 +311,7 @@ export function getConfig(opts: TimelineCoreOptions) {
               let discrete = isDiscrete(sidx);
               let mappedNull = discrete && hasMappedNull(sidx);
 
-              let y = round(yOff + yMids[sidx - 1]);
+              let y = round(valToPosY(ySplits[sidx - 1], scaleY, yDim, yOff));
 
               for (let ix = 0; ix < dataY.length; ix++) {
                 if (dataY[ix] != null || mappedNull) {
@@ -447,7 +447,6 @@ export function getConfig(opts: TimelineCoreOptions) {
     },
   };
 
-  const yMids: number[] = Array(numSeries).fill(0);
   const ySplits: number[] = Array(numSeries).fill(0);
   const yRange: uPlot.Range.MinMax = [0, 1];
 
@@ -502,8 +501,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     ySplits: (u: uPlot) => {
       walk(rowHeight, null, numSeries, u.bbox.height, (iy, y0, hgt) => {
         // vertical midpoints of each series' timeline (stored relative to .u-over)
-        yMids[iy] = round(y0 + hgt / 2);
-        ySplits[iy] = u.posToVal(yMids[iy] / uPlot.pxRatio, FIXED_UNIT);
+        let yMid = round(y0 + hgt / 2);
+        ySplits[iy] = u.posToVal(yMid / uPlot.pxRatio, FIXED_UNIT);
       });
 
       return ySplits;
