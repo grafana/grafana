@@ -25,7 +25,7 @@ The cancellation logic is as follows:
 
 ### After Grafana 7.2
 
-Grafana 7.2 introduced an additional way of canceling requests using [RxJs](https://github.com/ReactiveX/rxjs). To support the new cancelation functionality, the data source needs to use the new `fetch` function in [BackendSrv](https://github.com/grafana/grafana/blob/main/packages/grafana-runtime/src/services/backendSrv.ts).
+Grafana 7.2 introduced an additional way of canceling requests using [RxJs](https://github.com/ReactiveX/rxjs). To support the new cancellation functionality, the data source needs to use the new `fetch` function in [BackendSrv](https://github.com/grafana/grafana/blob/main/packages/grafana-runtime/src/services/backendSrv.ts).
 
 Migrating the core data sources to the new `fetch` function is an ongoing process. To learn more, refer to [this issue](https://github.com/grafana/grafana/issues/27222).
 
