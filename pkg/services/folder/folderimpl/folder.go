@@ -180,7 +180,17 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 		}
 	}
 
-	return dashFolders, nil
+	// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
+	result := make([]*folder.Folder, 0, len(dashFolders))
+	requesterIsSvcAccount := qry.SignedInUser.GetID().Namespace() == identity.NamespaceServiceAccount
+	for _, folder := range dashFolders {
+		if (folder.UID == accesscontrol.K6FolderUID || folder.ParentUID == accesscontrol.K6FolderUID) && !requesterIsSvcAccount {
+			continue
+		}
+		result = append(result, folder)
+	}
+
+	return result, nil
 }
 
 func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
@@ -870,8 +880,18 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	// k6-specific check to prevent folder move for a k6-app folder
-	if strings.HasPrefix(cmd.UID, "k6-app") {
+	// k6-specific check to prevent folder move for a k6-app folder and its children
+	if cmd.UID == accesscontrol.K6FolderUID {
+		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
+	}
+	query := &folder.GetFolderQuery{
+		UID:          &cmd.UID,
+		OrgID:        cmd.OrgID,
+		SignedInUser: cmd.SignedInUser,
+	}
+	if f, err := s.Get(ctx, query); err != nil {
+		return nil, err
+	} else if f.ParentUID == accesscontrol.K6FolderUID {
 		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
 	}
 
@@ -908,11 +928,6 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	}
 
 	for _, parent := range parents {
-		// k6-specific check to prevent folder move for a k6-app folder
-		if strings.HasPrefix(parent.UID, "k6-app") {
-			return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
-		}
-
 		// if the current folder is already a parent of newparent, we should return error
 		if parent.UID == cmd.UID {
 			return nil, folder.ErrCircularReference.Errorf("failed to move folder")
