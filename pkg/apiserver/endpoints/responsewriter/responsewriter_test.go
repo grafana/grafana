@@ -1,8 +1,10 @@
 package responsewriter_test
 
 import (
+	"context"
 	"io"
 	"math/rand"
+	"net"
 	"net/http"
 	"testing"
 	"time"
@@ -111,6 +113,35 @@ func TestResponseAdapter(t *testing.T) {
 		}()
 
 		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	})
+
+	t.Run("should handle asynchronous err - stdlib", func(t *testing.T) {
+		l, err := net.Listen("tcp", "127.0.0.1:0")
+		require.NoError(t, err)
+
+		server := &http.Server{
+			Handler: http.HandlerFunc(asyncErrHandler),
+		}
+
+		serverDone := make(chan struct{})
+		go func() {
+			defer close(serverDone)
+			err := server.Serve(l)
+			require.ErrorIs(t, err, http.ErrServerClosed)
+		}()
+
+		resp, err := http.Get("http://" + l.Addr().String() + "/test?watch=true")
+		require.NoError(t, err)
+		defer func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		}()
+
+		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+
+		err = server.Shutdown(context.Background())
+		require.NoError(t, err)
+		<-serverDone
 	})
 }
 
