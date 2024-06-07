@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
@@ -20,7 +21,7 @@ type storage struct {
 }
 
 func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, legacy *legacyStorage) (*storage, error) {
-	strategy := grafanaregistry.NewStrategy(scheme, grafanaregistry.StrategyOptions{
+	strategy := utils.NewGrafanaAppStrategy(scheme, utils.ResourceOptions{
 		FolderAccess: func(ctx context.Context, user identity.Requester, folder string) bool {
 			return true // TODO! this should include access control!!
 		},
