@@ -161,6 +161,25 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 
 	slug := slugify.Slugify(cmd.Name)
 
+	// update the service account's action sets
+	if esa.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && esa.actionSetsSvc != nil {
+		svc := *esa.actionSetsSvc
+		// Add the new action sets
+		if cmd.Self.ActionSets != nil {
+			for _, actionSet := range cmd.Self.ActionSets {
+				// TODO: need to know which resource, permissions and actions are needed
+				svc.StoreActionSet(slug, actionSet.Action, actionSet.Actions)
+				// add the actionset as part of the permissions
+				// convert actionset to permissions
+				// add the permissions to the service account
+				cmd.Self.Permissions = append(cmd.Self.Permissions, ac.Permission{
+					Action: actionSet.Action,
+					Scope:  "*",
+				})
+			}
+		}
+
+	}
 	saID, err := esa.ManageExtSvcAccount(ctx, &sa.ManageExtSvcAccountCmd{
 		ExtSvcSlug:  slug,
 		Enabled:     cmd.Self.Enabled,

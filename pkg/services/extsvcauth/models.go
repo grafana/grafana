@@ -4,14 +4,13 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 )
 
 const (
 	ServiceAccounts AuthProvider = "ServiceAccounts"
 
-	// TmpOrgID is the orgID we use while global service accounts are not supported.
-	TmpOrgIDStr string = "1"
-	TmpOrgID    int64  = 1
+	TmpOrgID int64 = 1
 )
 
 type AuthProvider string
@@ -38,6 +37,8 @@ type SelfCfg struct {
 	Enabled bool
 	// Permissions are the permissions that the external service needs its associated service account to have.
 	Permissions []accesscontrol.Permission
+	// ActionSets
+	ActionSets []resourcepermissions.ActionSet
 }
 
 // ExternalServiceRegistration represents the registration form to save new client.
