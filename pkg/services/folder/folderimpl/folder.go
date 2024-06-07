@@ -870,6 +870,11 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
+	// k6-specific check to prevent folder move for a k6-app folder
+	if strings.HasPrefix(cmd.UID, "k6-app") {
+		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
+	}
+
 	// Check that the user is allowed to move the folder to the destination folder
 	var evaluator accesscontrol.Evaluator
 	if cmd.NewParentUID != "" {
@@ -902,16 +907,16 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, folder.ErrMaximumDepthReached.Errorf("failed to move folder")
 	}
 
-	// if the current folder is already a parent of newparent, we should return error
 	for _, parent := range parents {
+		// k6-specific check to prevent folder move for a k6-app folder
+		if strings.HasPrefix(parent.UID, "k6-app") {
+			return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
+		}
+
+		// if the current folder is already a parent of newparent, we should return error
 		if parent.UID == cmd.UID {
 			return nil, folder.ErrCircularReference.Errorf("failed to move folder")
 		}
-	}
-
-	newParentUID := ""
-	if cmd.NewParentUID != "" {
-		newParentUID = cmd.NewParentUID
 	}
 
 	var f *folder.Folder
@@ -919,7 +924,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		if f, err = s.store.Update(ctx, folder.UpdateFolderCommand{
 			UID:          cmd.UID,
 			OrgID:        cmd.OrgID,
-			NewParentUID: &newParentUID,
+			NewParentUID: &cmd.NewParentUID,
 			SignedInUser: cmd.SignedInUser,
 		}); err != nil {
 			if s.db.GetDialect().IsUniqueConstraintViolation(err) {
@@ -931,7 +936,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		if _, err := s.legacyUpdate(ctx, &folder.UpdateFolderCommand{
 			UID:          cmd.UID,
 			OrgID:        cmd.OrgID,
-			NewParentUID: &newParentUID,
+			NewParentUID: &cmd.NewParentUID,
 			SignedInUser: cmd.SignedInUser,
 			// bypass optimistic locking used for dashboards
 			Overwrite: true,
