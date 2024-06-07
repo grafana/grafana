@@ -7,6 +7,17 @@ import { PluginExtensionTypes } from '@grafana/data';
 import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 import { createUsePluginComponent } from './usePluginComponent';
 
+jest.mock('app/features/plugins/pluginSettings', () => ({
+  getPluginSettings: jest.fn().mockResolvedValue({
+    id: 'my-app-plugin',
+    enabled: true,
+    jsonData: {},
+    type: 'panel',
+    name: 'My App Plugin',
+    module: 'app/plugins/my-app-plugin/module',
+  }),
+}));
+
 describe('usePluginComponent()', () => {
   let reactiveRegistry: ReactivePluginExtensionsRegistry;
 
@@ -22,7 +33,7 @@ describe('usePluginComponent()', () => {
     expect(result.current.isLoading).toEqual(false);
   });
 
-  it('should return component, that can be rendered, from the registry', () => {
+  it('should return component, that can be rendered, from the registry', async () => {
     const id = 'my-app-plugin/foo/bar';
     const pluginId = 'my-app-plugin';
 
@@ -43,14 +54,16 @@ describe('usePluginComponent()', () => {
     const { result } = renderHook(() => usePluginComponent(id));
     const Component = result.current.component;
 
-    render(Component && <Component />);
+    act(() => {
+      render(Component && <Component />);
+    });
 
     expect(result.current.isLoading).toEqual(false);
     expect(result.current.component).not.toBeNull();
-    expect(screen.getByText('Hello World')).toBeVisible();
+    expect(await screen.findByText('Hello World')).toBeVisible();
   });
 
-  it('should dynamically update when component is registered to the registry', () => {
+  it('should dynamically update when component is registered to the registry', async () => {
     const id = 'my-app-plugin/foo/bar';
     const pluginId = 'my-app-plugin';
     const usePluginComponent = createUsePluginComponent(reactiveRegistry);
@@ -80,12 +93,14 @@ describe('usePluginComponent()', () => {
     rerender();
 
     const Component = result.current.component;
-
-    render(Component && <Component />);
-
     expect(result.current.isLoading).toEqual(false);
     expect(result.current.component).not.toBeNull();
-    expect(screen.getByText('Hello World')).toBeVisible();
+
+    act(() => {
+      render(Component && <Component />);
+    });
+
+    expect(await screen.findByText('Hello World')).toBeVisible();
   });
 
   it('should only render the hook once', () => {
