@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, IconButton, Input, useStyles2 } from '@grafana/ui';

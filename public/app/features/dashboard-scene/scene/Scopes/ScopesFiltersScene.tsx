@@ -1,5 +1,4 @@
 import { isEqual } from 'lodash';
-import React from 'react';
 
 import { Scope } from '@grafana/data';
 import {
