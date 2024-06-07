@@ -6,7 +6,7 @@ Follow this guide to identify and communicate breaking changes introduced to our
 - [What is Levitate?](#what-is-levitate)
 - [What does the CI workflow look like?](#what-does-the-ci-workflow-look-like)
 - [What do comments on my PR mean?](#what-do-comments-on-my-pr-mean)
-- [I know it's a breaking change, what's next?(#i-know-its-a-breaking-change-whats-next)
+- [I know it's a breaking change, what's next?](#i-know-its-a-breaking-change-whats-next)
   - [Introduce breaking changes only in major versions](#introduce-breaking-changes-only-in-major-versions)
   - [Deprecate first](#deprecate-first)
   - [Communicate](#communicate)
