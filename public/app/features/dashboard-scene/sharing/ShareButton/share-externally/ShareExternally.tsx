@@ -15,7 +15,6 @@ import { NoUpsertPermissionsAlert } from 'app/features/dashboard/components/Shar
 import { Loader } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import {
   generatePublicDashboardUrl,
-  isEmailSharingEnabled,
   PublicDashboard,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -27,7 +26,7 @@ import { EmailSharing } from './EmailShare/EmailSharing';
 import { PublicSharing } from './PublicShare/PublicSharing';
 import ShareAlerts from './ShareAlerts';
 import ShareTypeSelect from './ShareTypeSelect';
-import { PublicDashboardShareType } from './utils';
+import { isEmailSharingEnabled, PublicDashboardShareType } from './utils';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
 
