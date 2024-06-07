@@ -62,9 +62,10 @@ func DirAsLocalSources(pluginsPath string, class plugins.Class) ([]*LocalSource,
 	}
 	slices.Sort(pluginDirs)
 
-	var sources []*LocalSource
-	for _, dir := range pluginDirs {
-		sources = append(sources, NewLocalSource(class, []string{dir}))
+	sources := make([]*LocalSource, len(pluginDirs))
+	for i, dir := range pluginDirs {
+		sources[i] = NewLocalSource(class, []string{dir})
 	}
+
 	return sources, nil
 }
