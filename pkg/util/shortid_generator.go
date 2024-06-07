@@ -68,7 +68,7 @@ func GenerateShortUID() string {
 			}
 		}
 		uuid := uid.String()
-		if rune(uuid[0]) < rune('a') {
+		if rune(uuid[0]) < 'a' {
 			uuid = string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
 		}
 		return uuid

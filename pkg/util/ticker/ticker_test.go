@@ -27,7 +27,7 @@ func TestTicker(t *testing.T) {
 		case tick := <-c:
 			return tick
 		case <-ctx.Done():
-			require.Failf(t, fmt.Sprintf("%v", ctx.Err()), "timeout reading the channel")
+			require.Failf(t, ctx.Err().Error(), "timeout reading the channel")
 		default:
 			require.Failf(t, "channel is empty but it should have a tick", "")
 		}
