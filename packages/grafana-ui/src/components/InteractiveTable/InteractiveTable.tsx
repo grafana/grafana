@@ -38,12 +38,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       width: '100%',
 
-      td: {
-        padding: theme.spacing(1),
-      },
-
-      'td, th': {
-        minWidth: theme.spacing(3),
+      '> tbody, > thead': {
+        '> tr > td': {
+          padding: theme.spacing(1),
+        },
+        '> tr > td, > tr > th': {
+          minWidth: theme.spacing(3),
+        },
       },
     }),
     disableGrow: css({
@@ -88,7 +89,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     expandedContentRow: css({
       label: 'expanded-row-content',
 
-      td: {
+      '> td': {
         borderBottom: `1px solid ${theme.colors.border.weak}`,
         position: 'relative',
         padding: theme.spacing(2, 2, 2, 5),
