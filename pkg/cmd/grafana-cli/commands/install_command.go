@@ -51,7 +51,7 @@ func validateInput(c utils.CommandLine) error {
 
 	fileInfo, err := os.Stat(pluginsDir)
 	if err != nil {
-		if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
+		if err = os.MkdirAll(pluginsDir, 0o750); err != nil {
 			return fmt.Errorf("pluginsDir (%s) is not a writable directory", pluginsDir)
 		}
 		return nil
