@@ -677,7 +677,35 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should map role when only org mapping is set",
+			name: "should map role when org mapping is set, IdP returns with invalid role and role attribute strict is enabled",
+			fields: fields{
+				providerCfg: &social.OAuthInfo{
+					Name:                "azuread",
+					ClientId:            "client-id-example",
+					RoleAttributeStrict: true,
+					OrgMapping:          []string{"group1:Org4:Editor", "*:5:Viewer"},
+				},
+				cfg: &setting.Cfg{},
+			},
+			claims: &azureClaims{
+				PreferredUsername: "",
+				Roles:             []string{"Invalid"},
+				Groups:            []string{"group1", "group3"},
+				Name:              "My Name",
+				ID:                "1234",
+				Email:             "me@example.com",
+			},
+			want: &social.BasicUserInfo{
+				Id:       "1234",
+				Name:     "My Name",
+				Email:    "me@example.com",
+				Login:    "me@example.com",
+				OrgRoles: map[int64]org.RoleType{4: org.RoleEditor, 5: org.RoleViewer},
+				Groups:   []string{"group1", "group3"},
+			},
+		},
+		{
+			name: "should map role when org mapping is set and IdP returns with empty role list",
 			fields: fields{
 				providerCfg: &social.OAuthInfo{
 					Name:       "azuread",

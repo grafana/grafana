@@ -135,12 +135,8 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		Groups: groups,
 	}
 
-	// setting the role, grafanaAdmin to empty to reflect that we are not syncronizing with the external provider
 	if !s.info.SkipOrgRoleSync {
-		directlyMappedRole, grafanaAdmin, err := s.extractRoleAndAdminOptional(claims)
-		if err != nil {
-			s.log.Warn("Failed to extract role", "err", err)
-		}
+		directlyMappedRole, grafanaAdmin := s.extractRoleAndAdminOptional(claims)
 
 		s.log.Debug("AzureAD OAuth: extracted role", "email", email, "role", directlyMappedRole)
 
@@ -291,12 +287,9 @@ func (claims *azureClaims) extractEmail() string {
 }
 
 // extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
-func (s *SocialAzureAD) extractRoleAndAdminOptional(claims *azureClaims) (org.RoleType, bool, error) {
+func (s *SocialAzureAD) extractRoleAndAdminOptional(claims *azureClaims) (org.RoleType, bool) {
 	if len(claims.Roles) == 0 {
-		if s.info.RoleAttributeStrict {
-			return "", false, errRoleAttributePathNotSet.Errorf("role_attribute_path not set and role_attribute_strict is set")
-		}
-		return "", false, nil
+		return "", false
 	}
 
 	roleOrder := []org.RoleType{social.RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor,
@@ -304,18 +297,14 @@ func (s *SocialAzureAD) extractRoleAndAdminOptional(claims *azureClaims) (org.Ro
 	for _, role := range roleOrder {
 		if found := hasRole(claims.Roles, role); found {
 			if role == social.RoleGrafanaAdmin {
-				return org.RoleAdmin, true, nil
+				return org.RoleAdmin, true
 			}
 
-			return role, false, nil
+			return role, false
 		}
 	}
 
-	if s.info.RoleAttributeStrict {
-		return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: idP did not return a valid role %q", claims.Roles)
-	}
-
-	return s.defaultRole(), false, nil
+	return "", false
 }
 
 func hasRole(roles []string, role org.RoleType) bool {
