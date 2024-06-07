@@ -1095,6 +1095,11 @@ func (s *sqlEntityServer) poll(since int64, out chan *entity.EntityWatchResponse
 						return err
 					}
 
+					if len(history.Versions) == 0 {
+						ctxLogger.Error("error reading previous entity", "guid", updated.Guid, "err", "no previous version found")
+						return errors.New("no previous version found")
+					}
+
 					result.Previous = history.Versions[0]
 				}
 
