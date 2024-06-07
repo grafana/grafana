@@ -394,6 +394,11 @@ func resultKeepLast(state *State, rule *models.AlertRule, result eval.Result, lo
 	}
 }
 
+// NeedsSending returns true if the given state needs to be sent to the Alertmanager.
+// Reasons for sending include:
+// - The state has been resolved since the last notification.
+// - The state is firing and the last notification was sent at least resendDelay ago.
+// - The state was resolved within the resolvedRetention period, and the last notification was sent at least resendDelay ago.
 func (a *State) NeedsSending(resendDelay time.Duration, resolvedRetention time.Duration) bool {
 	if a.State == eval.Pending {
 		// We do not send notifications for pending states.
@@ -417,6 +422,8 @@ func (a *State) NeedsSending(resendDelay time.Duration, resolvedRetention time.D
 	return nextSent.Before(a.LastEvaluationTime) || nextSent.Equal(a.LastEvaluationTime)
 }
 
+// RecentlyResolved returns true if the state has been resolved within the resolvedRetention period. Will return false
+// if the state is not resolved or if the state was resolved outside the resolvedRetention period.
 func (a *State) RecentlyResolved(resolvedRetention time.Duration) bool {
 	return !a.ResolvedAt.IsZero() && a.LastEvaluationTime.Sub(a.ResolvedAt) <= resolvedRetention
 }

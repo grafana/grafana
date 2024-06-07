@@ -428,10 +428,10 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	// Set Resolved property so the scheduler knows to send a postable alert
 	// to Alertmanager.
 	newlyResolved := false
-	if oldState == eval.Alerting && currentState.State == eval.Normal { // TODO: What about previous state NoData or Error?
+	if oldState == eval.Alerting && currentState.State == eval.Normal {
 		currentState.ResolvedAt = result.EvaluatedAt
 		newlyResolved = true
-	} else if currentState.State != eval.Normal { // Retain the last resolved time if the state normal.
+	} else if currentState.State != eval.Normal { // Retain the last resolved time if the state is normal.
 		currentState.ResolvedAt = time.Time{}
 	}
 

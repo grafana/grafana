@@ -819,7 +819,6 @@ func TestRuleRoutine(t *testing.T) {
 			sender.AssertNumberOfCalls(t, "Send", calls)
 		}
 	})
-
 }
 
 func ruleFactoryFromScheduler(sch *schedule) ruleFactory {
