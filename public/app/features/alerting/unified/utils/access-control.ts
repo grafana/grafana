@@ -48,6 +48,21 @@ export const notificationsPermissions = {
   },
 };
 
+export const silencesPermissions = {
+  read: {
+    grafana: AccessControlAction.AlertingSilenceRead,
+    external: AccessControlAction.AlertingInstanceRead,
+  },
+  create: {
+    grafana: AccessControlAction.AlertingSilenceCreate,
+    external: AccessControlAction.AlertingInstancesExternalWrite,
+  },
+  update: {
+    grafana: AccessControlAction.AlertingSilenceUpdate,
+    external: AccessControlAction.AlertingInstancesExternalWrite,
+  },
+};
+
 export const provisioningPermissions = {
   read: AccessControlAction.AlertingProvisioningRead,
   readSecrets: AccessControlAction.AlertingProvisioningReadSecrets,

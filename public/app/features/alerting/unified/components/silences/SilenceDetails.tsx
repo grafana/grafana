@@ -29,7 +29,7 @@ export const SilenceDetails = ({ silence }: Props) => {
       <div>{duration}</div>
       <div className={styles.title}>Created by</div>
       <div>{createdBy}</div>
-      {silencedAlerts.length > 0 && (
+      {Array.isArray(silencedAlerts) && (
         <>
           <div className={styles.title}>Affected alerts</div>
           <SilencedAlertsTable silencedAlerts={silencedAlerts} />

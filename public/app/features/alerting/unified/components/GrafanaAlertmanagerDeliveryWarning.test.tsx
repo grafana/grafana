@@ -5,14 +5,20 @@ import { Provider } from 'react-redux';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/server/configure';
 import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
+import { grantUserPermissions } from '../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { GrafanaAlertmanagerDeliveryWarning } from './GrafanaAlertmanagerDeliveryWarning';
 setupMswServer();
 
 describe('GrafanaAlertmanagerDeliveryWarning', () => {
+  beforeEach(() => {
+    grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
+  });
+
   it('Should not render when the datasource is not Grafana', () => {
     setAlertmanagerChoices(AlertmanagerChoice.External, 0);
 
