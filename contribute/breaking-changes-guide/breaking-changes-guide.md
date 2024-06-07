@@ -32,8 +32,8 @@ Any change that causes dependent software to behave differently is considered to
 
 Levitate can list exported members of an NPM package or imports used by an NPM package, _but it is most commonly used for comparing different versions of the same package to see changes in the exported members._
 
-A Github workflow runs against every pull request and comments a hint in case there are
-possible breaking changes. It also adds the `"breaking change"` label to the pull request.
+A GitHub workflow runs against every pull request and comments a hint in case there are possible breaking changes.
+It also adds the `breaking change` label to the pull request.
 
 ## What does the CI workflow look like?
 
