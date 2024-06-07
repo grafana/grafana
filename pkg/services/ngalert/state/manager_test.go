@@ -975,7 +975,7 @@ func TestProcessEvalResults(t *testing.T) {
 				{
 					CacheID: func() string {
 						lbls := models.InstanceLabels(labels["system + rule + labels1"])
-						r, err := lbls.StringKey()
+						_, r, err := lbls.StringAndHash()
 						if err != nil {
 							panic(err)
 						}
@@ -1408,7 +1408,7 @@ func TestProcessEvalResults(t *testing.T) {
 		for _, op := range instanceStore.RecordedOps() {
 			switch q := op.(type) {
 			case models.AlertInstance:
-				cacheId, err := q.Labels.StringKey()
+				_, cacheId, err := q.Labels.StringAndHash()
 				require.NoError(t, err)
 				savedStates[cacheId] = q
 			}
@@ -1588,7 +1588,7 @@ func TestStaleResults(t *testing.T) {
 			labels[key] = value
 		}
 		lbls := models.InstanceLabels(labels)
-		key, err := lbls.StringKey()
+		_, key, err := lbls.StringAndHash()
 		require.NoError(t, err)
 		return key
 	}
@@ -1996,7 +1996,7 @@ func setCacheID(s *state.State) *state.State {
 		return s
 	}
 	il := models.InstanceLabels(s.Labels)
-	id, err := il.StringKey()
+	_, id, err := il.StringAndHash()
 	if err != nil {
 		panic(err)
 	}

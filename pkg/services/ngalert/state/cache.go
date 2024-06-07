@@ -200,7 +200,7 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 	}
 
 	il := ngModels.InstanceLabels(lbs)
-	id, err := il.StringKey()
+	_, id, err := il.StringAndHash()
 	if err != nil {
 		log.Error("Error getting cacheId for entry", "error", err)
 	}

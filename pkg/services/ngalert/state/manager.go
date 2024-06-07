@@ -185,7 +185,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 			}
 
 			lbs := map[string]string(entry.Labels)
-			cacheID, err := entry.Labels.StringKey()
+			_, cacheID, err := entry.Labels.StringAndHash()
 			if err != nil {
 				st.log.Error("Error getting cacheId for entry", "error", err)
 			}
@@ -214,6 +214,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 			statesCount++
 		}
 	}
+
 	st.cache.setAllStates(states)
 	st.log.Info("State cache has been initialized", "states", statesCount, "duration", time.Since(startTime))
 }

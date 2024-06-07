@@ -2526,7 +2526,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 
 		cacheID := func(lbls data.Labels) string {
 			l := ngmodels.InstanceLabels(lbls)
-			r, err := l.StringKey()
+			_, r, err := l.StringAndHash()
 			if err != nil {
 				panic(err)
 			}
@@ -3543,7 +3543,7 @@ func setCacheID(s *State) *State {
 		return s
 	}
 	il := ngmodels.InstanceLabels(s.Labels)
-	id, err := il.StringKey()
+	_, id, err := il.StringAndHash()
 	if err != nil {
 		panic(err)
 	}
