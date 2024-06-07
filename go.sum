@@ -2305,8 +2305,8 @@ github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20240605165250-2a01d30a527b h1:C+lIq3fjzJeOHxc+3v7SuLND8gPMoHdqtG/v4j6icCA=
-github.com/grafana/alerting v0.0.0-20240605165250-2a01d30a527b/go.mod h1:kJBlQIE0MDu5Dr+Zo/MUHTkFjJkzDQtVgy8ncN5Wl5Y=
+github.com/grafana/alerting v0.0.0-20240606211712-071c8609797a h1:MvrEgxNxmUqaFWkBtRlbgxStbdD8FcmtjlRp98bmMJU=
+github.com/grafana/alerting v0.0.0-20240606211712-071c8609797a/go.mod h1:U7Ta3K4T7jVgqGSYuPsfuPKHFiL2GbCZSHa3nHjmCos=
 github.com/grafana/authlib v0.0.0-20240515154731-fe4779055ef4 h1:Bfa397TXkM0X97MhbCC+fNSwVtg21c0Mg5STes1dRug=
 github.com/grafana/authlib v0.0.0-20240515154731-fe4779055ef4/go.mod h1:86rRD5P6u2JPWtNWTMOlqlU+YMv2fUvVz/DomA6L7w4=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
@@ -2341,6 +2341,7 @@ github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4/g
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4 h1:tIbI5zgos92vwJ8lV3zwHwuxkV03GR3FGLkFW9V5LxY=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4/go.mod h1:vpYI6DHvFO595rpQGooUjcyicjt9rOevldDdW79peV0=
 github.com/grafana/grafana/pkg/promlib v0.0.6 h1:FuRyHMIgVVXkLuJnCflNfk3gqJflmyiI+/ZuJ9MoAfY=
+github.com/grafana/grafana/pkg/promlib v0.0.6/go.mod h1:shFkrG1fQ/PPNRGhxAPNMLp0SAeG/jhqaLoG6n2191M=
 github.com/grafana/grafana/pkg/util/xorm v0.0.1 h1:72QZjxWIWpSeOF8ob4aMV058kfgZyeetkAB8dmeti2o=
 github.com/grafana/grafana/pkg/util/xorm v0.0.1/go.mod h1:eNfbB9f2jM8o9RfwqwjY8SYm5tvowJ8Ly+iE4P9rXII=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20240422145632-c33c6b5b6e6b h1:HCbWyVL6vi7gxyO76gQksSPH203oBJ1MJ3JcG1OQlsg=
