@@ -9,13 +9,13 @@ import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
-import { useSelector } from 'app/types';
+import { KioskMode, useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty, scopes, meta } = model.useState();
+  const { controls, overlay, editview, editPanel, isEmpty, scopes, meta, kioskMode } = model.useState();
   const { isExpanded: isScopesExpanded } = scopes?.useState() ?? {};
   const styles = useStyles2(getStyles);
   const location = useLocation();
@@ -56,7 +56,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         >
           {scopes && <scopes.Component model={scopes} />}
           <NavToolbarActions dashboard={model} />
-          {!isHomePage && controls && (
+          {!isHomePage && kioskMode !== KioskMode.Full && controls && (
             <div
               className={cx(styles.controlsWrapper, scopes && !isScopesExpanded && styles.controlsWrapperWithScopes)}
             >
