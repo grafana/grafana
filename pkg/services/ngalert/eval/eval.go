@@ -141,9 +141,6 @@ type ExecutionResults struct {
 	// Results contains the results of all queries, reduce and math expressions
 	Results map[string]data.Frames
 
-	// Errors contains a map of RefIDs that returned an error
-	Errors map[string]error
-
 	// NoData contains the DatasourceUID for RefIDs that returned no data.
 	NoData map[string]string
 
@@ -433,17 +430,10 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	}
 
 	result := ExecutionResults{Results: make(map[string]data.Frames)}
-	for refID, res := range execResp.Responses {
-		if res.Error != nil {
-			if result.Errors == nil {
-				result.Errors = make(map[string]error)
-			}
-			result.Errors[refID] = res.Error
-			if refID == c.Condition {
-				result.Error = res.Error
-			}
-		}
 
+	result.Error = FindConditionError(execResp, c.Condition)
+
+	for refID, res := range execResp.Responses {
 		// There are two possible frame formats for No Data:
 		//
 		// 1. A response with no frames
@@ -526,30 +516,50 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 		}
 	}
 
+	return result
+}
+
+// FindConditionError extracts the error from a query response that caused the given condition to fail.
+// If a condition failed because a node it depends on had an error, that error is returned instead.
+// It returns nil if there are no errors related to the condition.
+func FindConditionError(resp *backend.QueryDataResponse, condition string) error {
+	if resp == nil {
+		return nil
+	}
+
+	errs := make(map[string]error)
+	for refID, node := range resp.Responses {
+		if node.Error != nil {
+			errs[refID] = node.Error
+		}
+	}
+
+	conditionErr := errs[condition]
+
 	// If the error of the condition is an Error that indicates the condition failed
 	// because one of its dependent query or expressions failed, then we follow
 	// the dependency chain to an error that is not a dependency error.
-	if len(result.Errors) > 0 && result.Error != nil {
-		if errors.Is(result.Error, expr.DependencyError) {
+	if conditionErr != nil {
+		if errors.Is(conditionErr, expr.DependencyError) {
 			var utilError errutil.Error
-			e := result.Error
+			e := conditionErr
 			for {
 				errors.As(e, &utilError)
 				depRefID := utilError.PublicPayload["depRefId"].(string)
-				depError, ok := result.Errors[depRefID]
+				depError, ok := errs[depRefID]
 				if !ok {
-					return result
+					return conditionErr
 				}
 				if !errors.Is(depError, expr.DependencyError) {
-					result.Error = depError
-					return result
+					conditionErr = depError
+					return conditionErr
 				}
 				e = depError
 			}
 		}
 	}
 
-	return result
+	return conditionErr
 }
 
 // datasourceUIDsToRefIDs returns a sorted slice of Ref IDs for each Datasource UID.
