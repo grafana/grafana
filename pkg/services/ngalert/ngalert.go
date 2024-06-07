@@ -176,7 +176,7 @@ func (ng *AlertNG) init() error {
 		autogenFn := remote.NoopAutogenFn
 		if ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertingSimplifiedRouting) {
 			autogenFn = func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig) error {
-				return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, false)
+				return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, true)
 			}
 		}
 
