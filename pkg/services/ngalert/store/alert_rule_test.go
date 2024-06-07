@@ -693,7 +693,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 
 	t.Run("inserted alerting rules should have nil recording rule fields on model", func(t *testing.T) {
 		for _, rule := range dbRules {
-			if !rule.IsRecordingRule() {
+			if rule.Type() == models.RuleTypeAlerting {
 				require.Nil(t, rule.Record)
 			}
 		}
@@ -701,7 +701,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 
 	t.Run("inserted recording rules map identical fields when listed", func(t *testing.T) {
 		for _, rule := range dbRules {
-			if rule.IsRecordingRule() {
+			if rule.Type() == models.RuleTypeRecording {
 				require.NotNil(t, rule.Record)
 				require.Equal(t, "my_metric", rule.Record.Metric)
 				require.Equal(t, "A", rule.Record.From)
@@ -711,7 +711,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 
 	t.Run("inserted recording rules have empty or default alert-specific settings", func(t *testing.T) {
 		for _, rule := range dbRules {
-			if rule.IsRecordingRule() {
+			if rule.Type() == models.RuleTypeRecording {
 				require.Empty(t, rule.Condition)
 				require.Equal(t, models.NoDataState(""), rule.NoDataState)
 				require.Equal(t, models.ExecutionErrorState(""), rule.ExecErrState)

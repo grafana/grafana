@@ -189,7 +189,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		return fmt.Errorf("server side expressions pipeline returned an error: %w", err)
 	}
 
-	logger.Debug("Alert rule evaluated", "results", result, "duration", evalDur)
+	logger.Info("Recording rule evaluated", "results", result, "duration", evalDur)
 	span.AddEvent("rule evaluated", trace.WithAttributes(
 		attribute.Int64("results", int64(len(result.Responses))),
 	))

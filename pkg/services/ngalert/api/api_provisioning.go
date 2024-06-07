@@ -341,7 +341,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	if upstreamModel.IsRecordingRule() && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+	if upstreamModel.Type() == alerting_models.RuleTypeRecording && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
 		return ErrResp(
 			http.StatusBadRequest,
 			fmt.Errorf("%w: recording rules cannot be created on this instance", alerting_models.ErrAlertRuleFailedValidation),
@@ -377,7 +377,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 		ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	if updated.IsRecordingRule() && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+	if updated.Type() == alerting_models.RuleTypeRecording && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
 		return ErrResp(
 			http.StatusBadRequest,
 			fmt.Errorf("%w: recording rules cannot be created on this instance", alerting_models.ErrAlertRuleFailedValidation),

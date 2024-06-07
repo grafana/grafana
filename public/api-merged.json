@@ -12476,7 +12476,7 @@
           }
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -19148,7 +19148,7 @@
           "type": "string"
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -19258,10 +19258,6 @@
           "type": "string"
         }
       }
-    },
-    "RuleType": {
-      "type": "string",
-      "title": "RuleType models the type of a rule."
     },
     "SNSConfig": {
       "type": "object",
@@ -21749,7 +21745,6 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -21758,16 +21753,6 @@
     },
     "gettableGrafanaSilence": {
       "type": "object",
-      "required": [
-        "comment",
-        "createdBy",
-        "endsAt",
-        "matchers",
-        "startsAt",
-        "id",
-        "status",
-        "updatedAt"
-      ],
       "properties": {
         "accessControl": {
           "type": "object",
@@ -21780,41 +21765,8 @@
             "write": false
           }
         },
-        "comment": {
-          "description": "comment",
-          "type": "string"
-        },
-        "createdBy": {
-          "description": "created by",
-          "type": "string"
-        },
-        "endsAt": {
-          "description": "ends at",
-          "type": "string",
-          "format": "date-time"
-        },
-        "id": {
-          "description": "id",
-          "type": "string"
-        },
-        "matchers": {
-          "$ref": "#/definitions/matchers"
-        },
         "metadata": {
           "$ref": "#/definitions/SilenceMetadata"
-        },
-        "startsAt": {
-          "description": "starts at",
-          "type": "string",
-          "format": "date-time"
-        },
-        "status": {
-          "$ref": "#/definitions/silenceStatus"
-        },
-        "updatedAt": {
-          "description": "updated at",
-          "type": "string",
-          "format": "date-time"
         }
       }
     },

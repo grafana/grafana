@@ -478,7 +478,7 @@
      "type": "object"
     },
     "type": {
-     "$ref": "#/definitions/RuleType"
+     "type": "string"
     }
    },
    "required": [
@@ -3479,7 +3479,7 @@
      "type": "string"
     },
     "type": {
-     "$ref": "#/definitions/RuleType"
+     "type": "string"
     }
    },
    "required": [
@@ -3596,10 +3596,6 @@
     "status"
    ],
    "type": "object"
-  },
-  "RuleType": {
-   "title": "RuleType models the type of a rule.",
-   "type": "string"
   },
   "SNSConfig": {
    "properties": {
@@ -4668,7 +4664,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert",
     "type": "object"
@@ -4735,6 +4730,31 @@
     "status",
     "updatedAt"
    ],
+   "type": "object"
+  },
+  "gettableGrafanaSilences": {
+   "items": {
+    "$ref": "#/definitions/gettableGrafanaSilence"
+   },
+   "type": "array"
+  },
+  "gettableGrafanaSilence": {
+   "properties": {
+    "accessControl": {
+     "additionalProperties": {
+      "type": "boolean"
+     },
+     "example": {
+      "create": false,
+      "read": true,
+      "write": false
+     },
+     "type": "object"
+    },
+    "metadata": {
+     "$ref": "#/definitions/SilenceMetadata"
+    }
+   },
    "type": "object"
   },
   "gettableGrafanaSilences": {

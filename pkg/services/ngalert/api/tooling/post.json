@@ -478,7 +478,7 @@
      "type": "object"
     },
     "type": {
-     "$ref": "#/definitions/RuleType"
+     "type": "string"
     }
    },
    "required": [
@@ -3476,7 +3476,7 @@
      "type": "string"
     },
     "type": {
-     "$ref": "#/definitions/RuleType"
+     "type": "string"
     }
    },
    "required": [
@@ -3593,10 +3593,6 @@
     "status"
    ],
    "type": "object"
-  },
-  "RuleType": {
-   "title": "RuleType models the type of a rule.",
-   "type": "string"
   },
   "SNSConfig": {
    "properties": {
@@ -4503,6 +4499,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup",
     "type": "object"
