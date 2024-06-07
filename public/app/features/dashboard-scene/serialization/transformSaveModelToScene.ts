@@ -28,6 +28,7 @@ import {
   UserActionEvent,
   GroupByVariable,
   AdHocFiltersVariable,
+  SnapshotVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
@@ -196,22 +197,45 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   let alertStatesLayer: AlertStatesDataLayer | undefined;
 
   if (oldModel.templating?.list?.length) {
-    const variableObjects = oldModel.templating.list
-      .map((v) => {
-        try {
-          return createSceneVariableFromVariableModel(v);
-        } catch (err) {
-          console.error(err);
-          return null;
-        }
-      })
-      // TODO: Remove filter
-      // Added temporarily to allow skipping non-compatible variables
-      .filter((v): v is SceneVariable => Boolean(v));
+    if (oldModel.meta.isSnapshot) {
+      //create the variable set only with custom variables
 
-    variables = new SceneVariableSet({
-      variables: variableObjects,
-    });
+      const variableObjects = oldModel.templating.list
+        .map((v) => {
+          try {
+            return createVariableForSnapshots(v);
+          } catch (err) {
+            console.error(err);
+            return null;
+          }
+        })
+
+        // TODO: Remove filter
+        // Added temporarily to allow skipping non-compatible variables
+        .filter((v): v is SceneVariable => Boolean(v));
+
+      console.log('variableObjects', variableObjects);
+      variables = new SceneVariableSet({
+        variables: variableObjects,
+      });
+    } else {
+      const variableObjects = oldModel.templating.list
+        .map((v) => {
+          try {
+            return createSceneVariableFromVariableModel(v);
+          } catch (err) {
+            console.error(err);
+            return null;
+          }
+        })
+        // TODO: Remove filter
+        // Added temporarily to allow skipping non-compatible variables
+        .filter((v): v is SceneVariable => Boolean(v));
+
+      variables = new SceneVariableSet({
+        variables: variableObjects,
+      });
+    }
   } else {
     // Create empty variable set
     variables = new SceneVariableSet({
@@ -295,6 +319,25 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   });
 
   return dashboardScene;
+}
+
+export function createVariableForSnapshots(variable: TypedVariableModel): SceneVariable {
+  const snapshotVariable = new SnapshotVariable({
+    name: variable.name,
+    label: variable.label,
+    description: variable.description,
+    value: variable.current?.value ?? '',
+    text: variable.current?.text ?? '',
+    query: variable.query,
+    isMulti: variable.multi,
+    allValue: variable.allValue || undefined,
+    includeAll: variable.includeAll,
+    defaultToAll: Boolean(variable.includeAll),
+    skipUrlSync: variable.skipUrlSync,
+    hide: variable.hide,
+  });
+  console.log('customVariable', snapshotVariable);
+  return snapshotVariable;
 }
 
 export function createSceneVariableFromVariableModel(variable: TypedVariableModel): SceneVariable {
