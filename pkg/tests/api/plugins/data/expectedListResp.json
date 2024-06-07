@@ -18,6 +18,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -34,7 +35,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Alertmanager",
@@ -60,6 +62,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": [
         "alerts",
@@ -83,7 +86,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Annotations list",
@@ -104,6 +108,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -120,7 +125,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Azure Monitor",
@@ -163,6 +169,7 @@
           "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
+      "version": "11.1.0-pre",
       "updated": "",
       "keywords": [
         "azure",
@@ -185,7 +192,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Bar chart",
@@ -206,6 +214,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -222,7 +231,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Bar gauge",
@@ -243,6 +253,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -259,7 +270,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Candlestick",
@@ -280,6 +292,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": [
         "financial",
@@ -301,7 +314,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Canvas",
@@ -322,6 +336,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -338,7 +353,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "CloudWatch",
@@ -359,8 +375,12 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
-      "keywords": null
+      "keywords": [
+        "aws",
+        "amazon"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -375,7 +395,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Dashboard list",
@@ -396,6 +417,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -412,7 +434,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Datagrid",
@@ -433,6 +456,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -449,7 +473,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Elasticsearch",
@@ -475,6 +500,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": [
         "elasticsearch"
@@ -493,7 +519,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Flame Graph",
@@ -514,6 +541,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -530,7 +558,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Gauge",
@@ -551,6 +580,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -567,7 +597,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Geomap",
@@ -588,6 +619,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -604,7 +636,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Getting Started",
@@ -625,6 +658,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -641,7 +675,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Google Cloud Monitoring",
@@ -662,6 +697,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -678,7 +714,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Grafana Pyroscope",
@@ -704,6 +741,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.1.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -728,7 +766,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Graph (old)",
@@ -749,6 +788,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -765,7 +805,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Graphite",
@@ -795,6 +836,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -811,7 +853,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Heatmap",
@@ -832,6 +875,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -848,7 +892,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Histogram",
@@ -869,6 +914,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": [
         "distribution",
@@ -890,7 +936,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "InfluxDB",
@@ -911,6 +958,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -927,7 +975,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Jaeger",
@@ -957,6 +1006,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -973,7 +1023,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Logs",
@@ -994,6 +1045,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1010,7 +1062,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Loki",
@@ -1040,6 +1093,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1056,7 +1110,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Microsoft SQL Server",
@@ -1077,6 +1132,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1093,7 +1149,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "MySQL",
@@ -1114,11 +1171,12 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.1.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": ">=10.4.0",
+      "grafanaDependency": "\u003e=10.4.0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -1130,7 +1188,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "News",
@@ -1151,6 +1210,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1167,7 +1227,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Node Graph",
@@ -1188,6 +1249,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1204,7 +1266,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "OpenTSDB",
@@ -1225,6 +1288,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1241,7 +1305,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Parca",
@@ -1267,6 +1332,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.1.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -1288,7 +1354,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Pie chart",
@@ -1309,6 +1376,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1325,7 +1393,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "PostgreSQL",
@@ -1346,6 +1415,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1362,7 +1432,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Prometheus",
@@ -1388,6 +1459,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1404,7 +1476,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Stat",
@@ -1425,6 +1498,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1441,7 +1515,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "State timeline",
@@ -1462,6 +1537,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1478,7 +1554,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Status history",
@@ -1499,6 +1576,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1515,7 +1593,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Table",
@@ -1536,6 +1615,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1552,7 +1632,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Table (old)",
@@ -1573,6 +1654,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1589,7 +1671,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Tempo",
@@ -1615,6 +1698,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1631,7 +1715,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "TestData",
@@ -1652,6 +1737,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1669,7 +1755,7 @@
     "signatureType": "",
     "signatureOrg": "",
     "angularDetected": false,
-    "apiVersion": "v0alpha1"
+    "apiVersion": ""
   },
   {
     "name": "Text",
@@ -1690,6 +1776,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1706,7 +1793,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Time series",
@@ -1727,6 +1815,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1743,7 +1832,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Traces",
@@ -1764,6 +1854,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1780,7 +1871,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Trend",
@@ -1801,6 +1893,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1817,7 +1910,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Welcome",
@@ -1838,6 +1932,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": null
     },
@@ -1854,7 +1949,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "XY Chart",
@@ -1875,6 +1971,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "",
       "updated": "",
       "keywords": [
         "scatter",
@@ -1894,7 +1991,8 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   },
   {
     "name": "Zipkin",
@@ -1920,6 +2018,7 @@
       },
       "build": {},
       "screenshots": null,
+      "version": "11.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1936,6 +2035,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularDetected": false,
+    "apiVersion": ""
   }
 ]
