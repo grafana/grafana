@@ -192,4 +192,5 @@ export interface FeatureToggles {
   authZGRPCServer?: boolean;
   alertingCentralAlertHistory?: boolean;
   pluginProxyPreserveTrailingSlash?: boolean;
+  azureMonitorPrometheusExemplars?: boolean;
 }

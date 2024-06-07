@@ -2380,9 +2380,21 @@
     },
     {
       "metadata": {
+        "name": "azureMonitorPrometheusExemplars",
+        "resourceVersion": "1717667267324",
+        "creationTimestamp": "2024-06-06T09:47:47Z"
+      },
+      "spec": {
+        "description": "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
+        "stage": "experimental",
+        "codeowner": "@grafana/partner-datasources"
+      }
+    },
+    {
+      "metadata": {
         "name": "authZGRPCServer",
-        "resourceVersion": "1717613645905",
-        "creationTimestamp": "2024-06-05T18:54:05Z"
+        "resourceVersion": "1717776106346",
+        "creationTimestamp": "2024-06-07T16:01:46Z"
       },
       "spec": {
         "description": "Enables the gRPC server for authorization",
