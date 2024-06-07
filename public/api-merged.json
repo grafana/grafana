@@ -14717,7 +14717,9 @@
         }
       }
     },
-    "EvalQueriesResponse": {},
+    "EvalQueriesResponse": {
+      "type": "object"
+    },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
     },
@@ -19762,6 +19764,20 @@
       "type": "integer",
       "format": "int64"
     },
+    "SilenceMetadata": {
+      "type": "object",
+      "properties": {
+        "folder_uid": {
+          "type": "string"
+        },
+        "rule_title": {
+          "type": "string"
+        },
+        "rule_uid": {
+          "type": "string"
+        }
+      }
+    },
     "SlackAction": {
       "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
       "type": "object",
@@ -21520,6 +21536,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -21545,6 +21562,7 @@
     "alertGroups": {
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/alertGroup"
       }
     },
@@ -21675,6 +21693,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -21733,7 +21752,76 @@
       "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableAlert"
+      }
+    },
+    "gettableGrafanaSilence": {
+      "type": "object",
+      "required": [
+        "comment",
+        "createdBy",
+        "endsAt",
+        "matchers",
+        "startsAt",
+        "id",
+        "status",
+        "updatedAt"
+      ],
+      "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "example": {
+            "create": false,
+            "read": true,
+            "write": false
+          }
+        },
+        "comment": {
+          "description": "comment",
+          "type": "string"
+        },
+        "createdBy": {
+          "description": "created by",
+          "type": "string"
+        },
+        "endsAt": {
+          "description": "ends at",
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "description": "id",
+          "type": "string"
+        },
+        "matchers": {
+          "$ref": "#/definitions/matchers"
+        },
+        "metadata": {
+          "$ref": "#/definitions/SilenceMetadata"
+        },
+        "startsAt": {
+          "description": "starts at",
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "$ref": "#/definitions/silenceStatus"
+        },
+        "updatedAt": {
+          "description": "updated at",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "gettableGrafanaSilences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/gettableGrafanaSilence"
       }
     },
     "gettableSilence": {
@@ -21786,9 +21874,9 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableSilence"
       }
     },
@@ -21937,6 +22025,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -22002,6 +22091,7 @@
       }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
