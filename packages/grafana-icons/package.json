@@ -46,7 +46,7 @@
     "@svgr/plugin-svgo": "^8.1.0",
     "@types/babel__core": "^7",
     "@types/node": "20.14.2",
-    "@types/react": "18.3.2",
+    "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
     "esbuild": "0.20.2",
     "prettier": "3.3.1",
