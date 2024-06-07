@@ -64,7 +64,7 @@ Each policy consists of a set of label matchers (0 or more) that specify which a
 
 To determine which notification policies handle an alert instance, the system looks for matching policies starting from the top of the tree—beginning with the default notification policy.
 
-If a matching policy is found, the system continues to look for child policies in the order they are displayed. If a child policy matches the alert, the system then look for its child policies recursively until no more matching child policies are found. In this case, only the deepest matching child policy handles the alert instance.
+If a matching policy is found, the system continues to evaluate its child policies in the order they are displayed. If a child policy matches the alert, the system then evaluates its child policies recursively until no more matching child policies are found. In this case, only the deepest matching child policy handles the alert instance.
 
 By default, once a matching policy is found, the system does not continue to look for sibling policies. If you want sibling policies of one matching policy to handle the alert instance as well, then enable **Continue matching siblings** on the particular matching policy.
 
@@ -87,6 +87,8 @@ The `team=security` policy is not a match and **Continue matching siblings** was
 **Unauthorized log entry** has a `team` label but does not match the first policy (`team=operations`) since the values are not the same, so it will continue searching and match the `team=security` policy. It does not have any child policies, so the additional `severity=high` label is ignored.
 
 {{< /collapse >}}
+
+This routing and tree structure make it easy to organize and handle alerts for dedicated teams, while also narrowing down specific cases within the team by applying additional labels.
 
 ## Inheritance
 
