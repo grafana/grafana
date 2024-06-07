@@ -1,7 +1,6 @@
 import React from 'react';
-// import { useAsyncFn } from 'react-use';
 
-// import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Menu } from '@grafana/ui';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -9,7 +8,7 @@ import { ShareDrawer } from '../ShareDrawer';
 
 import ExportAsJSON from './ExportAsJSON';
 
-// const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
+const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newExportButton.menu;
 
 export default function ExportMenu({ dashboard }: { dashboard: DashboardScene }) {
   const onExportAsJSONClick = () => {
@@ -22,9 +21,9 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
   };
 
   return (
-    <Menu>
+    <Menu data-testid={newExportButtonSelector.container}>
       <Menu.Item
-        // testId={newShareButtonSelector.exportAsJSON}
+        testId={newExportButtonSelector.exportAsJson}
         label="Export as JSON"
         icon="file-alt"
         onClick={onExportAsJSONClick}

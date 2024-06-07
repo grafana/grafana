@@ -28,6 +28,7 @@ export default function ExportAsJSON({ dashboardRef }: Props) {
   }
 
   const _exporter = new DashboardExporter();
+
   async function getExportableDashboardJson() {
     const saveModel = transformSceneToSaveModel(dashboardRef.resolve());
 
