@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -172,6 +173,13 @@ func (ng *AlertNG) init() error {
 	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
+		autogenFn := remote.NoopAutogenFn
+		if ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertingSimplifiedRouting) {
+			autogenFn = func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig) error {
+				return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, true)
+			}
+		}
+
 		switch {
 		case remoteOnly:
 			ng.Log.Debug("Starting Grafana with remote only mode enabled")
@@ -189,8 +197,9 @@ func (ng *AlertNG) init() error {
 						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 						PromoteConfig:     true,
+						SyncInterval:      ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 					}
-					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, m)
+					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager", "err", err)
 						return nil, err
@@ -228,7 +237,7 @@ func (ng *AlertNG) init() error {
 						DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
 						PromoteConfig:     true,
 					}
-					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, m)
+					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 						return internalAM, nil
@@ -262,8 +271,9 @@ func (ng *AlertNG) init() error {
 						OrgID:             orgID,
 						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+						SyncInterval:      ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 					}
-					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, m)
+					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 						return internalAM, nil
@@ -615,6 +625,6 @@ func ApplyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 	}
 }
 
-func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVStore, decryptFn remote.DecryptFn, m *metrics.RemoteAlertmanager) (*remote.Alertmanager, error) {
-	return remote.NewAlertmanager(cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, m)
+func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVStore, decryptFn remote.DecryptFn, autogenFn remote.AutogenFn, m *metrics.RemoteAlertmanager) (*remote.Alertmanager, error) {
+	return remote.NewAlertmanager(cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, autogenFn, m)
 }

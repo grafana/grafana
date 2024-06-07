@@ -102,7 +102,7 @@ func TestNewAlertmanager(t *testing.T) {
 				DefaultConfig:     defaultGrafanaConfig,
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
+			am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -118,16 +118,26 @@ func TestNewAlertmanager(t *testing.T) {
 }
 
 func TestApplyConfig(t *testing.T) {
+	// errorHandler returns an error response for the readiness check and state sync.
 	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("content-type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"status": "error"}))
 	})
 
 	var configSent client.UserGrafanaConfig
+	var lastConfigSync, lastStateSync time.Time
 	okHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
-			require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
+		if r.Method == http.MethodPost {
+			if strings.Contains(r.URL.Path, "/config") {
+				require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
+				lastConfigSync = time.Now()
+			} else {
+				lastStateSync = time.Now()
+			}
 		}
-		w.WriteHeader(http.StatusOK)
+		w.Header().Add("content-type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"status": "success"}))
 	})
 
 	// Encrypt receivers to save secrets in the database.
@@ -153,6 +163,7 @@ func TestApplyConfig(t *testing.T) {
 		URL:           server.URL,
 		DefaultConfig: defaultGrafanaConfig,
 		PromoteConfig: true,
+		SyncInterval:  1 * time.Hour,
 	}
 
 	ctx := context.Background()
@@ -163,7 +174,7 @@ func TestApplyConfig(t *testing.T) {
 
 	// An error response from the remote Alertmanager should result in the readiness check failing.
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m)
 	require.NoError(t, err)
 
 	config := &ngmodels.AlertConfiguration{
@@ -183,10 +194,20 @@ func TestApplyConfig(t *testing.T) {
 	require.JSONEq(t, testGrafanaConfigWithSecret, string(amCfg))
 	require.True(t, configSent.Promoted)
 
-	// If we already got a 200 status code response, we shouldn't make the HTTP request again.
-	server.Config.Handler = errorHandler
+	// If we already got a 200 status code response and the sync interval hasn't elapsed,
+	// we shouldn't send the state/configuration again.
+	expStateSync := lastStateSync
+	expConfigSync := lastConfigSync
 	require.NoError(t, am.ApplyConfig(ctx, config))
-	require.True(t, am.Ready())
+	require.Equal(t, expStateSync, lastStateSync)
+	require.Equal(t, expConfigSync, lastConfigSync)
+
+	// Changing the sync interval and calling ApplyConfig again
+	// should result in us sending the configuration but not the state.
+	am.syncInterval = 0
+	require.NoError(t, am.ApplyConfig(ctx, config))
+	require.Equal(t, lastStateSync, expStateSync)
+	require.Greater(t, lastConfigSync, expConfigSync)
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
@@ -225,6 +246,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	am, err := NewAlertmanager(cfg,
 		fstore,
 		decryptFn,
+		NoopAutogenFn,
 		m,
 	)
 	require.NoError(t, err)
@@ -321,7 +343,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m)
 	require.NoError(t, err)
 
 	encodedFullState, err := am.getFullState(ctx)
@@ -468,7 +490,7 @@ func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
 	require.NoError(t, err)
 
 	// We should get the default Cloud Alertmanager configuration.
@@ -502,7 +524,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -587,7 +609,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
 	require.NoError(t, err)
 
 	// Wait until the Alertmanager is ready to send alerts.
@@ -656,7 +678,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
 	require.NoError(t, err)
 
 	// We should start with the default config.
