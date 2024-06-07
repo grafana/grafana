@@ -194,7 +194,7 @@ describe('Azure monitor datasource', () => {
       dataSourceName,
       visitDashboardAtStart: false,
       queriesForm: () => {
-        e2eSelectors.queryEditor.header.select().find('input').type('{selectall}Logs{enter}');
+        e2eSelectors.queryEditor.header.select().find('input').type('Logs{enter}');
         e2eSelectors.queryEditor.resourcePicker.select.button().click();
         e2eSelectors.queryEditor.resourcePicker.search
           .input()
@@ -214,7 +214,7 @@ describe('Azure monitor datasource', () => {
       dataSourceName,
       visitDashboardAtStart: false,
       queriesForm: () => {
-        e2eSelectors.queryEditor.header.select().find('input').type('{selectall}Azure Resource Graph{enter}');
+        e2eSelectors.queryEditor.header.select().find('input').type('Azure Resource Graph{enter}');
         cy.wait(1000); // Need to wait for code editor to completely load
         e2eSelectors.queryEditor.argsQueryEditor.subscriptions
           .input()
@@ -233,7 +233,7 @@ describe('Azure monitor datasource', () => {
       dataSourceName,
       visitDashboardAtStart: false,
       queriesForm: () => {
-        e2eSelectors.queryEditor.header.select().find('input').type('{selectall}Traces{enter}');
+        e2eSelectors.queryEditor.header.select().find('input').type('Traces{enter}');
         e2eSelectors.queryEditor.resourcePicker.select.button().click();
         e2eSelectors.queryEditor.resourcePicker.search
           .input()
@@ -306,7 +306,7 @@ describe('Azure monitor datasource', () => {
         e2eSelectors.queryEditor.resourcePicker.advanced.region.input().find('input').type('$region');
         e2eSelectors.queryEditor.resourcePicker.advanced.resource.input().find('input').type('$resource');
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
-        e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Blob Capacity{enter}');
+        e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Transactions{enter}');
       },
       timeout: 10000,
     });
