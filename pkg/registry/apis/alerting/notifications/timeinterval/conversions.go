@@ -32,7 +32,7 @@ func convertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval
 				Annotations: map[string]string{ // TODO find a better place for provenance?
 					"grafana.com/provenance": string(interval.Provenance),
 				},
-				// TODO ResourceVersion and CreationTimestamp
+				ResourceVersion: interval.Version,
 			},
 			Spec: spec,
 		})
@@ -59,6 +59,7 @@ func convertToK8sResource(orgID int64, interval definitions.MuteTimeInterval, na
 			Annotations: map[string]string{ // TODO find a better place for provenance?
 				"grafana.com/provenance": string(interval.Provenance),
 			},
+			ResourceVersion: interval.Version,
 		},
 		Spec: spec,
 	}, nil
@@ -69,7 +70,9 @@ func convertToDomainModel(interval *model.TimeInterval) (definitions.MuteTimeInt
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
-	result := definitions.MuteTimeInterval{}
+	result := definitions.MuteTimeInterval{
+		Version: interval.ResourceVersion,
+	}
 	err = json.Unmarshal(b, &result)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err

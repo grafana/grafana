@@ -28,7 +28,7 @@ type TimeIntervalService interface {
 	GetMuteTiming(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error)
 	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
 	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
-	DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance) error
+	DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance, version string) error
 }
 
 type legacyStorage struct {
@@ -128,7 +128,6 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	// TODO use preconditions to check version
 	old, err := s.Get(ctx, name, nil)
 	if err != nil {
 		return old, false, err
@@ -175,8 +174,12 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 			return nil, false, err
 		}
 	}
-	err = s.service.DeleteMuteTiming(ctx, name, info.OrgID, definitions.Provenance(models.ProvenanceNone)) // TODO add support for dry-run option
-	return old, false, err                                                                                 // false - will be deleted async
+	version := ""
+	if options.Preconditions != nil && options.Preconditions.ResourceVersion != nil {
+		version = *options.Preconditions.ResourceVersion
+	}
+	err = s.service.DeleteMuteTiming(ctx, name, info.OrgID, definitions.Provenance(models.ProvenanceNone), version) // TODO add support for dry-run option
+	return old, false, err                                                                                          // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
