@@ -3,12 +3,13 @@ package strategies
 import (
 	"context"
 	"encoding/json"
-	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/services/ldap/service"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
