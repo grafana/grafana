@@ -57,9 +57,8 @@ func TestAuthenticateJWT(t *testing.T) {
 					SyncPermissions: true,
 					SyncTeams:       true,
 					LookUpParams: login.UserLookupParams{
-						UserID: nil,
-						Email:  stringPtr("eai.doe@cor.po"),
-						Login:  stringPtr("eai-doe"),
+						Email: stringPtr("eai.doe@cor.po"),
+						Login: stringPtr("eai-doe"),
 					},
 				},
 			},
@@ -111,9 +110,8 @@ func TestAuthenticateJWT(t *testing.T) {
 					SyncPermissions: true,
 					SyncTeams:       false,
 					LookUpParams: login.UserLookupParams{
-						UserID: nil,
-						Email:  stringPtr("eai.doe@cor.po"),
-						Login:  stringPtr("eai-doe"),
+						Email: stringPtr("eai.doe@cor.po"),
+						Login: stringPtr("eai-doe"),
 					},
 				},
 			},
