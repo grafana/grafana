@@ -128,6 +128,8 @@ You can also use [overrides](ref:configure-field-overrides) to exclude y-fields 
 
 Set which field's values control the size of the points in the chart. This value is relative to the min and max of all the values in the data frame.
 
+When you select this option, you can then set the [Min point size](#minmax-point-size) and [Max point size](#minmax-point-size) options.
+
 ##### Color field
 
 Set which field's values control the color of the points in the chart. To use the color value options under the Standard options, you must set this field.
@@ -173,9 +175,13 @@ Set the shape of the points in the chart.
 
 Set the width of the point stroke in pixels. The default is one pixel.
 
+### Fill opacity
+
+Set the opacity of the point fill. The default is 50.
+
 ### Line style
 
-Set the style of the line. To change the color, use the standard [Color scheme](ref:color-scheme) field option.
+Set the style of the lines that connect points. To change the color, use the standard [Color scheme](ref:color-scheme) field option.
 
 ![Line style option](/static/img/docs/time-series-panel/line-style-option-v9.png)
 
@@ -185,7 +191,7 @@ Set the style of the line. To change the color, use the standard [Color scheme](
 
 ### Line width
 
-Set the width of the lines in pixels.
+Set the width of the lines that connect points, in pixels.
 
 ## Tooltip options
 
