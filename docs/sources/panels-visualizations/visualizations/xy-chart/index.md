@@ -187,6 +187,10 @@ When you hover your cursor over the visualization, Grafana can display tooltips.
 
 Use an override to hide individual series from the tooltip.
 
+### Max width
+
+Set the maximum width of the tooltip box.
+
 ### Max height
 
 Set the maximum height of the tooltip box. The default is 600 pixels.
