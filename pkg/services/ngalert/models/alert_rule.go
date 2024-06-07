@@ -14,8 +14,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	alertingModels "github.com/grafana/alerting/models"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	prommodels "github.com/prometheus/common/model"
+
+	alertingModels "github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
@@ -183,42 +186,42 @@ type AlertRuleGroup struct {
 	Rules      []AlertRule
 }
 
-// AlertRuleGroupWithFolderTitle extends AlertRuleGroup with orgID and folder title
-type AlertRuleGroupWithFolderTitle struct {
+// AlertRuleGroupWithFolderFullpath extends AlertRuleGroup with orgID and folder title
+type AlertRuleGroupWithFolderFullpath struct {
 	*AlertRuleGroup
-	OrgID       int64
-	FolderTitle string
+	OrgID          int64
+	FolderFullpath string
 }
 
-func NewAlertRuleGroupWithFolderTitle(groupKey AlertRuleGroupKey, rules []AlertRule, folderTitle string) AlertRuleGroupWithFolderTitle {
+func NewAlertRuleGroupWithFolderFullpath(groupKey AlertRuleGroupKey, rules []AlertRule, folderFullpath string) AlertRuleGroupWithFolderFullpath {
 	SortAlertRulesByGroupIndex(rules)
 	var interval int64
 	if len(rules) > 0 {
 		interval = rules[0].IntervalSeconds
 	}
-	var result = AlertRuleGroupWithFolderTitle{
+	var result = AlertRuleGroupWithFolderFullpath{
 		AlertRuleGroup: &AlertRuleGroup{
 			Title:     groupKey.RuleGroup,
 			FolderUID: groupKey.NamespaceUID,
 			Interval:  interval,
 			Rules:     rules,
 		},
-		FolderTitle: folderTitle,
-		OrgID:       groupKey.OrgID,
+		FolderFullpath: folderFullpath,
+		OrgID:          groupKey.OrgID,
 	}
 	return result
 }
 
-func NewAlertRuleGroupWithFolderTitleFromRulesGroup(groupKey AlertRuleGroupKey, rules RulesGroup, folderTitle string) AlertRuleGroupWithFolderTitle {
+func NewAlertRuleGroupWithFolderFullpathFromRulesGroup(groupKey AlertRuleGroupKey, rules RulesGroup, folderFullpath string) AlertRuleGroupWithFolderFullpath {
 	derefRules := make([]AlertRule, 0, len(rules))
 	for _, rule := range rules {
 		derefRules = append(derefRules, *rule)
 	}
-	return NewAlertRuleGroupWithFolderTitle(groupKey, derefRules, folderTitle)
+	return NewAlertRuleGroupWithFolderFullpath(groupKey, derefRules, folderFullpath)
 }
 
 // SortAlertRuleGroupWithFolderTitle sorts AlertRuleGroupWithFolderTitle by folder UID and group name
-func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderTitle) {
+func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderFullpath) {
 	sort.SliceStable(g, func(i, j int) bool {
 		if g[i].AlertRuleGroup.FolderUID == g[j].AlertRuleGroup.FolderUID {
 			return g[i].AlertRuleGroup.Title < g[j].AlertRuleGroup.Title
@@ -243,7 +246,7 @@ type AlertRule struct {
 	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
 	RuleGroupIndex  int     `xorm:"rule_group_idx"`
-	Record          *Record `xorm:"text null 'record'"`
+	Record          *Record `xorm:"json"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -297,6 +300,10 @@ func (s AlertRulesSorter) Len() int           { return len(s.rules) }
 func (s AlertRulesSorter) Swap(i, j int)      { s.rules[i], s.rules[j] = s.rules[j], s.rules[i] }
 func (s AlertRulesSorter) Less(i, j int) bool { return s.by(s.rules[i], s.rules[j]) }
 
+func (alertRule *AlertRule) GetNamespaceUID() string {
+	return alertRule.NamespaceUID
+}
+
 // GetDashboardUID returns the DashboardUID or "".
 func (alertRule *AlertRule) GetDashboardUID() string {
 	if alertRule.DashboardUID != nil {
@@ -337,6 +344,12 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 }
 
 func (alertRule *AlertRule) GetEvalCondition() Condition {
+	if alertRule.IsRecordingRule() {
+		return Condition{
+			Condition: alertRule.Record.From,
+			Data:      alertRule.Data,
+		}
+	}
 	return Condition{
 		Condition: alertRule.Condition,
 		Data:      alertRule.Data,
@@ -498,11 +511,13 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ErrAlertRuleFailedValidation)
 	}
 
-	if _, err := ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
-		return err
+	var err error
+	if alertRule.IsRecordingRule() {
+		err = validateRecordingRuleFields(alertRule)
+	} else {
+		err = validateAlertRuleFields(alertRule)
 	}
-
-	if _, err := NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
+	if err != nil {
 		return err
 	}
 
@@ -518,10 +533,6 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		}
 	}
 
-	if alertRule.Record != nil {
-		return fmt.Errorf("%w: storing recording rules is not yet allowed", ErrAlertRuleFailedValidation)
-	}
-
 	if len(alertRule.NotificationSettings) > 0 {
 		if len(alertRule.NotificationSettings) != 1 {
 			return fmt.Errorf("%w: only one notification settings entry is allowed", ErrAlertRuleFailedValidation)
@@ -529,6 +540,29 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		if err := alertRule.NotificationSettings[0].Validate(); err != nil {
 			return errors.Join(ErrAlertRuleFailedValidation, fmt.Errorf("invalid notification settings: %w", err))
 		}
+	}
+	return nil
+}
+
+func validateAlertRuleFields(rule *AlertRule) error {
+	if _, err := ErrStateFromString(string(rule.ExecErrState)); err != nil {
+		return err
+	}
+
+	if _, err := NoDataStateFromString(string(rule.NoDataState)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateRecordingRuleFields(rule *AlertRule) error {
+	metricName := prommodels.LabelValue(rule.Record.Metric)
+	if !metricName.IsValid() {
+		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid utf8 string")
+	}
+	if !prommodels.IsValidMetricName(metricName) {
+		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
 	}
 	return nil
 }
@@ -552,6 +586,10 @@ func (alertRule *AlertRule) GetFolderKey() FolderKey {
 	}
 }
 
+func (alertRule *AlertRule) IsRecordingRule() bool {
+	return alertRule.Record != nil
+}
+
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
 type AlertRuleVersion struct {
 	ID               int64  `xorm:"pk autoincr 'id'"`
@@ -569,7 +607,7 @@ type AlertRuleVersion struct {
 	Condition       string
 	Data            []AlertQuery
 	IntervalSeconds int64
-	Record          *Record `xorm:"text null 'record'"`
+	Record          *Record `xorm:"json"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -596,9 +634,10 @@ type GetAlertRulesGroupByRuleUIDQuery struct {
 // ListAlertRulesQuery is the query for listing alert rules
 type ListAlertRulesQuery struct {
 	OrgID         int64
+	RuleUIDs      []string
 	NamespaceUIDs []string
 	ExcludeOrgs   []int64
-	RuleGroup     string
+	RuleGroups    []string
 
 	// DashboardUID and PanelID are optional and allow filtering rules
 	// to return just those for a dashboard and panel.

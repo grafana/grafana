@@ -409,7 +409,8 @@ func TestService_Logout(t *testing.T) {
 		identity     *authn.Identity
 		sessionToken *usertoken.UserToken
 
-		client authn.Client
+		client             authn.Client
+		signoutRedirectURL string
 
 		expectedErr          error
 		expectedTokenRevoked bool
@@ -439,6 +440,14 @@ func TestService_Logout(t *testing.T) {
 			identity:             &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
+			expectedTokenRevoked: true,
+		},
+		{
+			desc:                 "should use signout redirect url if configured",
+			identity:             &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
+			expectedRedirect:     &authn.Redirect{URL: "some-url"},
+			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
+			signoutRedirectURL:   "some-url",
 			expectedTokenRevoked: true,
 		},
 		{
@@ -472,6 +481,10 @@ func TestService_Logout(t *testing.T) {
 						assert.False(t, soft)
 						return nil
 					},
+				}
+
+				if tt.signoutRedirectURL != "" {
+					svc.cfg.SignoutRedirectUrl = tt.signoutRedirectURL
 				}
 			})
 
@@ -548,6 +561,7 @@ func setupTests(t *testing.T, opts ...func(svc *Service)) *Service {
 		metrics:                newMetrics(nil),
 		postAuthHooks:          newQueue[authn.PostAuthHookFn](),
 		postLoginHooks:         newQueue[authn.PostLoginHookFn](),
+		preLogoutHooks:         newQueue[authn.PreLogoutHookFn](),
 	}
 
 	for _, o := range opts {

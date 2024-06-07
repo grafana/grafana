@@ -88,4 +88,10 @@ describe('MenuItem', () => {
     render(<MenuItem label="URL Item" url="/some-url" role="menuitem" />);
     expect(screen.getByRole('menuitem', { name: 'URL Item' })).toBeInTheDocument();
   });
+
+  it('renders extra component if provided', async () => {
+    render(<MenuItem label="main label" component={() => <p>extra content</p>} />);
+    expect(screen.getByText('main label')).toBeInTheDocument();
+    expect(screen.getByText('extra content')).toBeInTheDocument();
+  });
 });

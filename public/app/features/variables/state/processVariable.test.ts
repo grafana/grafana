@@ -1,4 +1,4 @@
-import { UrlQueryMap } from '@grafana/data';
+import { UrlQueryMap, VariableRefresh } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -11,7 +11,6 @@ import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQu
 import { createQueryVariableAdapter } from '../query/adapter';
 import { updateVariableOptions } from '../query/reducer';
 import { customBuilder, queryBuilder } from '../shared/testing/builders';
-import { VariableRefresh } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { initDashboardTemplating, processVariable } from './actions';

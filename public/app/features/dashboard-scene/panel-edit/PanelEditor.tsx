@@ -14,6 +14,7 @@ import { PanelOptionsPane } from './PanelOptionsPane';
 import { VizPanelManager, VizPanelManagerState } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
+  isNewPanel: boolean;
   isDirty?: boolean;
   panelId: number;
   optionsPane: PanelOptionsPane;
@@ -59,6 +60,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     return () => {
       if (!this._discardChanges) {
         this.commitChanges();
+      } else if (this.state.isNewPanel) {
+        getDashboardSceneFor(this).removePanel(panelManager.state.sourcePanel.resolve()!);
       }
     };
   }
@@ -113,16 +116,17 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       return;
     }
 
-    if (gridItem instanceof DashboardGridItem) {
-      this.handleRepeatOptionChanges(gridItem);
-    } else {
+    if (!(gridItem instanceof DashboardGridItem)) {
       console.error('Unsupported scene object type');
+      return;
     }
+
+    this.commitChangesToSource(gridItem);
   }
 
-  private handleRepeatOptionChanges(panelRepeater: DashboardGridItem) {
-    let width = panelRepeater.state.width ?? 1;
-    let height = panelRepeater.state.height;
+  private commitChangesToSource(gridItem: DashboardGridItem) {
+    let width = gridItem.state.width ?? 1;
+    let height = gridItem.state.height;
 
     const panelManager = this.state.vizManager;
     const horizontalToVertical =
@@ -130,12 +134,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const verticalToHorizontal =
       this._initialRepeatOptions.repeatDirection === 'v' && panelManager.state.repeatDirection === 'h';
     if (horizontalToVertical) {
-      width = Math.floor(width / (panelRepeater.state.maxPerRow ?? 1));
+      width = Math.floor(width / (gridItem.state.maxPerRow ?? 1));
     } else if (verticalToHorizontal) {
       width = 24;
     }
 
-    panelRepeater.setState({
+    gridItem.setState({
       body: panelManager.state.panel.clone(),
       repeatDirection: panelManager.state.repeatDirection,
       variableName: panelManager.state.repeat,
@@ -172,10 +176,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 }
 
-export function buildPanelEditScene(panel: VizPanel): PanelEditor {
+export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
   return new PanelEditor({
     panelId: getPanelIdForVizPanel(panel),
     optionsPane: new PanelOptionsPane({}),
     vizManager: VizPanelManager.createFor(panel),
+    isNewPanel,
   });
 }

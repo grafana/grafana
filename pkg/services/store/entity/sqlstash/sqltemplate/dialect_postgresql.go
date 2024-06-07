@@ -6,7 +6,11 @@ import (
 )
 
 // PostgreSQL is an implementation of Dialect for the PostgreSQL DMBS.
-var PostgreSQL postgresql
+var PostgreSQL = postgresql{
+	rowLockingClauseMap: rowLockingClauseAll,
+	argPlaceholderFunc:  argFmtPositional,
+	name:                "postgres",
+}
 
 var _ Dialect = PostgreSQL
 
@@ -17,6 +21,9 @@ var (
 
 type postgresql struct {
 	standardIdent
+	rowLockingClauseMap
+	argPlaceholderFunc
+	name
 }
 
 func (p postgresql) Ident(s string) (string, error) {
@@ -27,8 +34,4 @@ func (p postgresql) Ident(s string) (string, error) {
 	}
 
 	return p.standardIdent.Ident(s)
-}
-
-func (postgresql) SelectFor(s ...string) (string, error) {
-	return rowLockingClauseAll(true).SelectFor(s...)
 }

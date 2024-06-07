@@ -13,19 +13,19 @@ import (
 	"k8s.io/apiserver/pkg/apis/example"
 )
 
-var exampleObj = &example.Pod{TypeMeta: metav1.TypeMeta{}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
-var exampleObjDifferentRV = &example.Pod{TypeMeta: metav1.TypeMeta{}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "3"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
-var anotherObj = &example.Pod{TypeMeta: metav1.TypeMeta{}, ObjectMeta: metav1.ObjectMeta{Name: "bar", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
-var failingObj = &example.Pod{TypeMeta: metav1.TypeMeta{}, ObjectMeta: metav1.ObjectMeta{Name: "object-fail", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
-var exampleList = &example.PodList{TypeMeta: metav1.TypeMeta{}, ListMeta: metav1.ListMeta{}, Items: []example.Pod{*exampleObj}}
+var exampleObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
+var exampleObjDifferentRV = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "3"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
+var anotherObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "bar", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
+var failingObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "object-fail", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
+var exampleList = &example.PodList{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ListMeta: metav1.ListMeta{}, Items: []example.Pod{*exampleObj}}
 var anotherList = &example.PodList{Items: []example.Pod{*anotherObj}}
 
 func TestMode1_Create(t *testing.T) {
 	type testCase struct {
-		name           string
 		input          runtime.Object
 		setupLegacyFn  func(m *mock.Mock, input runtime.Object)
 		setupStorageFn func(m *mock.Mock, input runtime.Object)
+		name           string
 		wantErr        bool
 	}
 	tests :=
@@ -51,42 +51,44 @@ func TestMode1_Create(t *testing.T) {
 		}
 
 	for _, tt := range tests {
-		l := (LegacyStorage)(nil)
-		s := (Storage)(nil)
-		m := &mock.Mock{}
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
 
-		ls := legacyStoreMock{m, l}
-		us := storageMock{m, s}
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
 
-		if tt.setupLegacyFn != nil {
-			tt.setupLegacyFn(m, tt.input)
-		}
-		if tt.setupStorageFn != nil {
-			tt.setupStorageFn(m, tt.input)
-		}
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m, tt.input)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m, tt.input)
+			}
 
-		dw := selectDualWriter(Mode1, ls, us)
+			dw := NewDualWriter(Mode1, ls, us)
 
-		obj, err := dw.Create(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
+			obj, err := dw.Create(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
 
-		if tt.wantErr {
-			assert.Error(t, err)
-			continue
-		}
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
 
-		us.AssertNotCalled(t, "Create", context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
+			us.AssertNotCalled(t, "Create", context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
 
-		assert.Equal(t, obj, exampleObj)
-		assert.NotEqual(t, obj, anotherObj)
+			assert.Equal(t, obj, exampleObj)
+			assert.NotEqual(t, obj, anotherObj)
+		})
 	}
 }
 
 func TestMode1_Get(t *testing.T) {
 	type testCase struct {
-		name           string
-		input          string
 		setupLegacyFn  func(m *mock.Mock, name string)
 		setupStorageFn func(m *mock.Mock, name string)
+		name           string
+		input          string
 		wantErr        bool
 	}
 	tests :=
@@ -112,41 +114,43 @@ func TestMode1_Get(t *testing.T) {
 		}
 
 	for _, tt := range tests {
-		l := (LegacyStorage)(nil)
-		s := (Storage)(nil)
-		m := &mock.Mock{}
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
 
-		ls := legacyStoreMock{m, l}
-		us := storageMock{m, s}
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
 
-		if tt.setupLegacyFn != nil {
-			tt.setupLegacyFn(m, tt.input)
-		}
-		if tt.setupStorageFn != nil {
-			tt.setupStorageFn(m, tt.input)
-		}
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m, tt.input)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m, tt.input)
+			}
 
-		dw := selectDualWriter(Mode1, ls, us)
+			dw := NewDualWriter(Mode1, ls, us)
 
-		obj, err := dw.Get(context.Background(), tt.input, &metav1.GetOptions{})
+			obj, err := dw.Get(context.Background(), tt.input, &metav1.GetOptions{})
 
-		if tt.wantErr {
-			assert.Error(t, err)
-			continue
-		}
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
 
-		us.AssertNotCalled(t, "Get", context.Background(), tt.name, &metav1.GetOptions{})
+			us.AssertNotCalled(t, "Get", context.Background(), tt.name, &metav1.GetOptions{})
 
-		assert.Equal(t, obj, exampleObj)
-		assert.NotEqual(t, obj, anotherObj)
+			assert.Equal(t, obj, exampleObj)
+			assert.NotEqual(t, obj, anotherObj)
+		})
 	}
 }
 
 func TestMode1_List(t *testing.T) {
 	type testCase struct {
-		name           string
 		setupLegacyFn  func(m *mock.Mock)
 		setupStorageFn func(m *mock.Mock)
+		name           string
 		wantErr        bool
 	}
 	tests :=
@@ -161,37 +165,39 @@ func TestMode1_List(t *testing.T) {
 		}
 
 	for _, tt := range tests {
-		l := (LegacyStorage)(nil)
-		s := (Storage)(nil)
-		m := &mock.Mock{}
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
 
-		ls := legacyStoreMock{m, l}
-		us := storageMock{m, s}
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
 
-		if tt.setupLegacyFn != nil {
-			tt.setupLegacyFn(m)
-		}
-		if tt.setupStorageFn != nil {
-			tt.setupStorageFn(m)
-		}
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m)
+			}
 
-		dw := selectDualWriter(Mode1, ls, us)
+			dw := NewDualWriter(Mode1, ls, us)
 
-		_, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
+			_, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
 
-		if tt.wantErr {
-			assert.Error(t, err)
-			continue
-		}
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+		})
 	}
 }
 
 func TestMode1_Delete(t *testing.T) {
 	type testCase struct {
-		name           string
-		input          string
 		setupLegacyFn  func(m *mock.Mock, name string)
 		setupStorageFn func(m *mock.Mock, name string)
+		name           string
+		input          string
 		wantErr        bool
 	}
 	tests :=
@@ -214,41 +220,43 @@ func TestMode1_Delete(t *testing.T) {
 		}
 
 	for _, tt := range tests {
-		l := (LegacyStorage)(nil)
-		s := (Storage)(nil)
-		m := &mock.Mock{}
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
 
-		ls := legacyStoreMock{m, l}
-		us := storageMock{m, s}
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
 
-		if tt.setupLegacyFn != nil {
-			tt.setupLegacyFn(m, tt.input)
-		}
-		if tt.setupStorageFn != nil {
-			tt.setupStorageFn(m, tt.input)
-		}
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m, tt.input)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m, tt.input)
+			}
 
-		dw := selectDualWriter(Mode1, ls, us)
+			dw := NewDualWriter(Mode1, ls, us)
 
-		obj, _, err := dw.Delete(context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
+			obj, _, err := dw.Delete(context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 
-		if tt.wantErr {
-			assert.Error(t, err)
-			continue
-		}
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
 
-		us.AssertNotCalled(t, "Delete", context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
-		assert.Equal(t, obj, exampleObj)
-		assert.NotEqual(t, obj, anotherObj)
+			us.AssertNotCalled(t, "Delete", context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
+			assert.Equal(t, obj, exampleObj)
+			assert.NotEqual(t, obj, anotherObj)
+		})
 	}
 }
 
 func TestMode1_DeleteCollection(t *testing.T) {
 	type testCase struct {
-		name           string
 		input          *metav1.DeleteOptions
 		setupLegacyFn  func(m *mock.Mock, input *metav1.DeleteOptions)
 		setupStorageFn func(m *mock.Mock, input *metav1.DeleteOptions)
+		name           string
 		wantErr        bool
 	}
 	tests :=
@@ -271,42 +279,44 @@ func TestMode1_DeleteCollection(t *testing.T) {
 		}
 
 	for _, tt := range tests {
-		l := (LegacyStorage)(nil)
-		s := (Storage)(nil)
-		m := &mock.Mock{}
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
 
-		ls := legacyStoreMock{m, l}
-		us := storageMock{m, s}
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
 
-		if tt.setupLegacyFn != nil {
-			tt.setupLegacyFn(m, tt.input)
-		}
-		if tt.setupStorageFn != nil {
-			tt.setupStorageFn(m, tt.input)
-		}
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m, tt.input)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m, tt.input)
+			}
 
-		dw := selectDualWriter(Mode1, ls, us)
+			dw := NewDualWriter(Mode1, ls, us)
 
-		obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
+			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
 
-		if tt.wantErr {
-			assert.Error(t, err)
-			continue
-		}
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
 
-		us.AssertNotCalled(t, "DeleteCollection", context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
-		assert.Equal(t, obj, exampleObj)
-		assert.NotEqual(t, obj, anotherObj)
+			us.AssertNotCalled(t, "DeleteCollection", context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
+			assert.Equal(t, obj, exampleObj)
+			assert.NotEqual(t, obj, anotherObj)
+		})
 	}
 }
 
 func TestMode1_Update(t *testing.T) {
 	type testCase struct {
-		name           string
-		input          string
 		setupLegacyFn  func(m *mock.Mock, input string)
 		setupStorageFn func(m *mock.Mock, input string)
 		setupGetFn     func(m *mock.Mock, input string)
+		name           string
+		input          string
 		wantErr        bool
 	}
 	tests :=
@@ -341,34 +351,36 @@ func TestMode1_Update(t *testing.T) {
 		}
 
 	for _, tt := range tests {
-		l := (LegacyStorage)(nil)
-		s := (Storage)(nil)
-		m := &mock.Mock{}
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
 
-		ls := legacyStoreMock{m, l}
-		us := storageMock{m, s}
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
 
-		if tt.setupLegacyFn != nil {
-			tt.setupLegacyFn(m, tt.input)
-		}
-		if tt.setupStorageFn != nil {
-			tt.setupStorageFn(m, tt.input)
-		}
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m, tt.input)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m, tt.input)
+			}
 
-		if tt.setupGetFn != nil {
-			tt.setupGetFn(m, tt.input)
-		}
+			if tt.setupGetFn != nil {
+				tt.setupGetFn(m, tt.input)
+			}
 
-		dw := selectDualWriter(Mode1, ls, us)
+			dw := NewDualWriter(Mode1, ls, us)
 
-		obj, _, err := dw.Update(context.Background(), tt.input, UpdatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
+			obj, _, err := dw.Update(context.Background(), tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 
-		if tt.wantErr {
-			assert.Error(t, err)
-			continue
-		}
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
 
-		assert.Equal(t, obj, exampleObj)
-		assert.NotEqual(t, obj, anotherObj)
+			assert.Equal(t, obj, exampleObj)
+			assert.NotEqual(t, obj, anotherObj)
+		})
 	}
 }

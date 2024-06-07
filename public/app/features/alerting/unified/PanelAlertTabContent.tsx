@@ -11,6 +11,7 @@ import { NewRuleFromPanelButton } from './components/panel-alerts-tab/NewRuleFro
 import { RulesTable } from './components/rules/RulesTable';
 import { usePanelCombinedRules } from './hooks/usePanelCombinedRules';
 import { getRulesPermissions } from './utils/access-control';
+import { stringifyErrorLike } from './utils/misc';
 
 interface Props {
   dashboard: DashboardModel;
@@ -30,7 +31,7 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
   const alert = errors.length ? (
     <Alert title="Errors loading rules" severity="error">
       {errors.map((error, index) => (
-        <div key={index}>Failed to load Grafana rules state: {error.message || 'Unknown error.'}</div>
+        <div key={index}>Failed to load Grafana rules state: {stringifyErrorLike(error)}</div>
       ))}
     </Alert>
   ) : null;

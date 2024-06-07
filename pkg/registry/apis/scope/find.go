@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -28,7 +29,7 @@ var (
 
 func (r *findREST) New() runtime.Object {
 	// This is added as the "ResponseType" regarless what ProducesObject() says :)
-	return &scope.TreeResults{}
+	return &scope.FindScopeNodeChildrenResults{}
 }
 
 func (r *findREST) Destroy() {}
@@ -38,7 +39,7 @@ func (r *findREST) NamespaceScoped() bool {
 }
 
 func (r *findREST) GetSingularName() string {
-	return "TreeResult" // Used for the
+	return "FindScopeNodeChildrenResults" // Used for the
 }
 
 func (r *findREST) ProducesMIMETypes(verb string) []string {
@@ -46,7 +47,7 @@ func (r *findREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *findREST) ProducesObject(verb string) interface{} {
-	return &scope.TreeResults{}
+	return &scope.FindScopeNodeChildrenResults{}
 }
 
 func (r *findREST) ConnectMethods() []string {
@@ -66,15 +67,18 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		parent := req.URL.Query().Get("parent")
-		results := &scope.TreeResults{}
+		query := req.URL.Query().Get("query")
+		results := &scope.FindScopeNodeChildrenResults{}
 
 		raw, err := r.scopeNodeStorage.List(ctx, &internalversion.ListOptions{
 			Limit: 1000,
 		})
+
 		if err != nil {
 			responder.Error(err)
 			return
 		}
+
 		all, ok := raw.(*scope.ScopeNodeList)
 		if !ok {
 			responder.Error(fmt.Errorf("expected ScopeNodeList"))
@@ -82,18 +86,23 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		}
 
 		for _, item := range all.Items {
-			if parent != item.Spec.ParentName {
-				continue // Someday this will have an index in raw storage on parentName
-			}
-			results.Items = append(results.Items, scope.TreeItem{
-				NodeID:      item.Name,
-				NodeType:    item.Spec.NodeType,
-				Title:       item.Spec.Title,
-				Description: item.Spec.Description,
-				LinkType:    item.Spec.LinkType,
-				LinkID:      item.Spec.LinkID,
-			})
+			filterAndAppendItem(item, parent, query, results)
 		}
+
 		responder.Object(200, results)
 	}), nil
+}
+
+func filterAndAppendItem(item scope.ScopeNode, parent string, query string, results *scope.FindScopeNodeChildrenResults) {
+	if parent != item.Spec.ParentName {
+		return // Someday this will have an index in raw storage on parentName
+	}
+
+	// skip if query is passed and title doesn't match.
+	// HasPrefix is not the end goal but something that that gets us started.
+	if query != "" && !strings.HasPrefix(item.Spec.Title, query) {
+		return
+	}
+
+	results.Items = append(results.Items, item)
 }

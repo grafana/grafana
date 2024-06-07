@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -488,6 +489,39 @@ func (a *AlertRuleMutators) WithIsPaused(paused bool) AlertRuleMutator {
 	}
 }
 
+func (a *AlertRuleMutators) WithRandomRecordingRules() AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rand.Int63()%2 == 0 {
+			return
+		}
+		convertToRecordingRule(rule)
+	}
+}
+
+func (a *AlertRuleMutators) WithAllRecordingRules() AlertRuleMutator {
+	return func(rule *AlertRule) {
+		convertToRecordingRule(rule)
+	}
+}
+
+func (a *AlertRuleMutators) WithMetric(metric string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rule.Record == nil {
+			rule.Record = &Record{}
+		}
+		rule.Record.Metric = metric
+	}
+}
+
+func (a *AlertRuleMutators) WithRecordFrom(from string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rule.Record == nil {
+			rule.Record = &Record{}
+		}
+		rule.Record.From = from
+	}
+}
+
 func (g *AlertRuleGenerator) GenerateLabels(min, max int, prefix string) data.Labels {
 	count := max
 	if min > max {
@@ -569,6 +603,7 @@ func CopyRule(r *AlertRule, mutators ...AlertRuleMutator) *AlertRule {
 		NoDataState:     r.NoDataState,
 		ExecErrState:    r.ExecErrState,
 		For:             r.For,
+		Record:          r.Record,
 	}
 
 	if r.DashboardUID != nil {
@@ -603,6 +638,13 @@ func CopyRule(r *AlertRule, mutators ...AlertRuleMutator) *AlertRule {
 		result.Labels = make(map[string]string, len(r.Labels))
 		for s, s2 := range r.Labels {
 			result.Labels[s] = s2
+		}
+	}
+
+	if r.Record != nil {
+		result.Record = &Record{
+			From:   r.Record.From,
+			Metric: r.Record.Metric,
 		}
 	}
 
@@ -1014,9 +1056,49 @@ func (n SilenceMutators) WithMatcher(name, value string, matchType labels.MatchT
 		s.Silence.Matchers = append(s.Silence.Matchers, &m)
 	}
 }
+func (n SilenceMutators) WithRuleUID(value string) Mutator[Silence] {
+	return func(s *Silence) {
+		name := alertingModels.RuleUIDLabel
+		m := amv2.Matcher{
+			Name:    &name,
+			Value:   &value,
+			IsRegex: util.Pointer(false),
+			IsEqual: util.Pointer(true),
+		}
+		for _, matcher := range s.Silence.Matchers {
+			if isRuleUIDMatcher(*matcher) {
+				*matcher = m
+				return
+			}
+		}
+		s.Silence.Matchers = append(s.Silence.Matchers, &m)
+	}
+}
+func (n SilenceMutators) Expired() Mutator[Silence] {
+	return func(s *Silence) {
+		s.EndsAt = util.Pointer(strfmt.DateTime(time.Now().Add(-time.Minute)))
+	}
+}
 
 func (n SilenceMutators) WithEmptyId() Mutator[Silence] {
 	return func(s *Silence) {
 		s.ID = util.Pointer("")
 	}
+}
+
+func convertToRecordingRule(rule *AlertRule) {
+	if rule.Record == nil {
+		rule.Record = &Record{}
+	}
+	if rule.Record.From == "" {
+		rule.Record.From = rule.Condition
+	}
+	if rule.Record.Metric == "" {
+		rule.Record.Metric = fmt.Sprintf("some_metric_%s", util.GenerateShortUID())
+	}
+	rule.Condition = ""
+	rule.NoDataState = ""
+	rule.ExecErrState = ""
+	rule.For = 0
+	rule.NotificationSettings = nil
 }

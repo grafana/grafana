@@ -72,13 +72,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       (value: string | string[], variable: CustomFormatterVariable) => {
         // If it's not a data source variable, or single value
         if (!Array.isArray(value)) {
-          batches.push({
-            datasource: getDataSourceSrv().get(queries[0].datasource, request.scopedVars),
-            queries,
-            scopedVars: request.scopedVars,
-          });
-
-          return;
+          return value;
         }
 
         for (const uid of value) {
