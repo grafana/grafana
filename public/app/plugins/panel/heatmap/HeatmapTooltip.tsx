@@ -59,6 +59,9 @@ export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
   return <HeatmapHoverCell {...props} />;
 };
 
+const canvasWidth = 264;
+const canvasHeight = 64;
+
 const HeatmapHoverCell = ({
   dataIdxs,
   dataRef,
@@ -304,8 +307,11 @@ const HeatmapHoverCell = ({
 
   let can = useRef<HTMLCanvasElement>(null);
 
-  let histCssWidth = Math.min(264, maxWidth ? maxWidth - 20 : 264);
-  let histCssHeight = 64;
+  const theme = useTheme2();
+  const themeSpacing = parseInt(theme.spacing(1), 10);
+
+  let histCssWidth = Math.min(canvasWidth, maxWidth ? maxWidth - themeSpacing * 2 : canvasWidth);
+  let histCssHeight = canvasHeight;
   let histCanWidth = Math.round(histCssWidth * uPlot.pxRatio);
   let histCanHeight = Math.round(histCssHeight * uPlot.pxRatio);
 
@@ -354,7 +360,6 @@ const HeatmapHoverCell = ({
   }
 
   const styles = useStyles2(getStyles);
-  const theme = useTheme2();
 
   return (
     <div className={styles.wrapper}>
