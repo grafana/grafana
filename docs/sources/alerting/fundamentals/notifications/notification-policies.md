@@ -99,7 +99,6 @@ By default, a child policy inherits the following notification properties from i
 - [Contact point](ref:contact-points)
 - [Grouping options](ref:group-alert-notifications)
 - [Timing options](ref:notification-timings)
-- [Mute timings](ref:mute-timings)
 
 Then, each policy can overwrite these properties if needed.
 
