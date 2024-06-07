@@ -162,7 +162,7 @@ func asyncHandler(w http.ResponseWriter, r *http.Request) {
 func asyncErrHandler(w http.ResponseWriter, _ *http.Request) {
 	time.Sleep(100 * time.Millisecond)
 	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte("error"))
+	_, _ = w.Write([]byte("error"))
 	w.(http.Flusher).Flush()
 }
 
