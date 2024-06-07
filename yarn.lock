@@ -2418,6 +2418,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@faker-js/faker@npm:^8.4.1":
+  version: 8.4.1
+  resolution: "@faker-js/faker@npm:8.4.1"
+  checksum: 10/5983c2ea64f26055ad6648de748878e11ebe2fb751e3c7435ae141cdffabc2dccfe4c4f49da69a3d2add71e21b415c683ac5fba196fab0d5ed6779fbec436c80
+  languageName: node
+  linkType: hard
+
 "@fal-works/esbuild-plugin-global-externals@npm:^2.1.2":
   version: 2.1.2
   resolution: "@fal-works/esbuild-plugin-global-externals@npm:2.1.2"
@@ -3605,6 +3612,7 @@ __metadata:
     "@babel/core": "npm:7.24.7"
     "@emotion/css": "npm:11.11.2"
     "@emotion/react": "npm:11.11.4"
+    "@faker-js/faker": "npm:^8.4.1"
     "@floating-ui/react": "npm:0.26.16"
     "@grafana/data": "npm:11.0.0"
     "@grafana/e2e-selectors": "npm:11.0.0"
