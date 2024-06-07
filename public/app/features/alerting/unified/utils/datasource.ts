@@ -14,7 +14,7 @@ import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
-import { instancesPermissions, notificationsPermissions } from './access-control';
+import { instancesPermissions, notificationsPermissions, silencesPermissions } from './access-control';
 import { getAllDataSources } from './config';
 
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
@@ -144,9 +144,13 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
   const permissions = {
     instance: instancesPermissions.read,
     notification: notificationsPermissions.read,
+    silence: silencesPermissions.read,
   };
 
-  if (contextSrv.hasPermission(permissions[permission].grafana)) {
+  const hasSomeGrafanaReadPermissions = Object.values(permissions)
+    .flatMap((p) => p.grafana)
+    .some((p) => p.endsWith('read'));
+  if (hasSomeGrafanaReadPermissions) {
     availableInternalDataSources.push(grafanaAlertManagerDataSource);
   }
 

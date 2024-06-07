@@ -157,6 +157,7 @@ describe('Silences', () => {
   it(
     'shows the correct number of silenced alerts',
     async () => {
+      grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
       renderSilences();
 
       const notExpiredTable = await ui.notExpiredTable.find();
