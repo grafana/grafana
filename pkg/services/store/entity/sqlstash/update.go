@@ -17,6 +17,10 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
 	defer span.End()
 
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
 	key, err := entity.ParseKey(r.Entity.Key)
 	if err != nil {
 		return nil, fmt.Errorf("update entity: parse entity key: %w", err)
