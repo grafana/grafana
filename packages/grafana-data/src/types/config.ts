@@ -230,6 +230,7 @@ export interface GrafanaConfig {
   cloudMigrationIsTarget?: boolean;
   listDashboardScopesEndpoint?: string;
   listScopesEndpoint?: string;
+  reportingStaticContext?: string | Record<string, string>;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;

@@ -366,6 +366,7 @@ type Cfg struct {
 	ApplicationInsightsConnectionString string
 	ApplicationInsightsEndpointUrl      string
 	FeedbackLinksEnabled                bool
+	ReportingStaticContext              string
 
 	// Frontend analytics
 	GoogleAnalyticsID                   string
@@ -1150,6 +1151,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.ApplicationInsightsConnectionString = analytics.Key("application_insights_connection_string").String()
 	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
 	cfg.FeedbackLinksEnabled = analytics.Key("feedback_links_enabled").MustBool(true)
+	cfg.ReportingStaticContext = analytics.Key("reporting_static_context").String()
 
 	if err := cfg.readAlertingSettings(iniFile); err != nil {
 		return err
