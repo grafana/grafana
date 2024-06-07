@@ -115,9 +115,9 @@ const updateAllSelection = (state: OptionsPickerState): OptionsPickerState => {
 };
 
 // Utility function to select all options except 'ALL_VARIABLE_VALUE'
-const selectAllOptions = (options: VariableOption[]) =>
+const selectAllOptions = (options: VariableOption[], needleText: String) =>
   options
-    .filter((option) => option.value !== ALL_VARIABLE_VALUE)
+    .filter((option) => option.value !== ALL_VARIABLE_VALUE && option.text !== needleText)
     .map((option) => ({
       ...option,
       selected: true,
@@ -208,6 +208,7 @@ const optionsPickerSlice = createSlice({
       // Check if 'All' option is configured by the user and if it's selected in the dropdown
       const isAllSelected = state.selectedValues.find((option) => option.value === ALL_VARIABLE_VALUE);
       const allOptionConfigured = state.options.find((option) => option.value === ALL_VARIABLE_VALUE);
+      const needleText = '> ' + state.queryValue.trim();
 
       // If 'All' option is not selected from the dropdown, but some options are, clear all options and select 'All'
       if (state.selectedValues.length > 0 && !!allOptionConfigured && !isAllSelected) {
@@ -224,7 +225,7 @@ const optionsPickerSlice = createSlice({
 
       // If 'All' option is the only one selected in the dropdown, unselect "All" and select each one of the other options.
       if (isAllSelected && state.selectedValues.length === 1) {
-        state.selectedValues = selectAllOptions(state.options);
+        state.selectedValues = selectAllOptions(state.options, needleText);
         return applyStateChanges(state, updateOptions);
       }
 
@@ -236,7 +237,7 @@ const optionsPickerSlice = createSlice({
       }
 
       // If no options are selected and 'All' is not selected, select all options
-      state.selectedValues = selectAllOptions(state.options);
+      state.selectedValues = selectAllOptions(state.options, needleText);
       return applyStateChanges(state, updateOptions);
     },
 
