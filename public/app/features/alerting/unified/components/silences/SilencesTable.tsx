@@ -37,7 +37,7 @@ import { SilenceStateTag } from './SilenceStateTag';
 import { SilencesFilter } from './SilencesFilter';
 
 export interface SilenceTableItem extends Silence {
-  silencedAlerts: AlertmanagerAlert[];
+  silencedAlerts: AlertmanagerAlert[] | undefined;
 }
 
 type SilenceTableColumnProps = DynamicTableColumnProps<SilenceTableItem>;
@@ -50,6 +50,7 @@ const API_QUERY_OPTIONS = { pollingInterval: SILENCES_POLL_INTERVAL_MS, refetchO
 
 const SilencesTable = ({ alertManagerSourceName }: Props) => {
   const instanceReadPermissions = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
+
   const { data: alertManagerAlerts = [], isLoading: amAlertsIsLoading } =
     alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
       { amSourceName: alertManagerSourceName, filter: { silenced: true, active: true, inhibited: true } },
@@ -86,7 +87,7 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
       return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
     };
     return filteredSilencesNotExpired.map((silence) => {
-      const silencedAlerts = instanceReadPermissions ? findSilencedAlerts(silence.id) : [];
+      const silencedAlerts = instanceReadPermissions ? findSilencedAlerts(silence.id) : undefined;
       return {
         id: silence.id,
         data: { ...silence, silencedAlerts },
@@ -99,7 +100,7 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
       return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
     };
     return filteredSilencesExpired.map((silence) => {
-      const silencedAlerts = instanceReadPermissions ? findSilencedAlerts(silence.id) : [];
+      const silencedAlerts = instanceReadPermissions ? findSilencedAlerts(silence.id) : undefined;
       return {
         id: silence.id,
         data: { ...silence, silencedAlerts },
@@ -307,7 +308,7 @@ function useColumns(alertManagerSourceName: string) {
         id: 'alerts',
         label: 'Alerts silenced',
         renderCell: function renderSilencedAlerts({ data: { silencedAlerts } }) {
-          return <span data-testid="alerts">{silencedAlerts.length}</span>;
+          return <span data-testid="alerts">{Array.isArray(silencedAlerts) ? silencedAlerts.length : '-'}</span>;
         },
         size: 2,
       },
