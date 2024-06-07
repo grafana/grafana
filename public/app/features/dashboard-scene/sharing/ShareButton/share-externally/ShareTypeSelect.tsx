@@ -70,7 +70,7 @@ export default function ShareTypeSelect({
         {isLoading && <Spinner />}
       </Stack>
       <Stack direction="row" gap={1} alignItems="center">
-        {isEmailSharingEnabled ? (
+        {isEmailSharingEnabled() ? (
           <Select
             data-testid={selectors.shareTypeSelect}
             options={options}

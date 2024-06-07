@@ -39,7 +39,7 @@ export const ANYONE_WITH_THE_LINK_SHARE_OPTION = {
 };
 
 const SHARE_EXTERNALLY_OPTIONS = [ANYONE_WITH_THE_LINK_SHARE_OPTION];
-if (isEmailSharingEnabled) {
+if (isEmailSharingEnabled()) {
   SHARE_EXTERNALLY_OPTIONS.unshift({
     label: 'Only specific people',
     description: 'Only people with access can open with the link',
@@ -66,7 +66,7 @@ export function ShareExternally() {
 
 function ShareExternallyRenderer({ publicDashboard }: { publicDashboard?: PublicDashboard }) {
   const getShareType = useMemo(() => {
-    if (publicDashboard && isEmailSharingEnabled) {
+    if (publicDashboard && isEmailSharingEnabled()) {
       const opt = SHARE_EXTERNALLY_OPTIONS.find((opt) => opt.value === publicDashboard?.share)!;
       return opt ?? SHARE_EXTERNALLY_OPTIONS[0];
     }
@@ -78,7 +78,7 @@ function ShareExternallyRenderer({ publicDashboard }: { publicDashboard?: Public
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
   const Config = useMemo(() => {
-    if (shareType.value === PublicDashboardShareType.EMAIL && isEmailSharingEnabled) {
+    if (shareType.value === PublicDashboardShareType.EMAIL && isEmailSharingEnabled()) {
       return <EmailSharing />;
     }
     if (shareType.value === PublicDashboardShareType.PUBLIC) {

@@ -105,7 +105,6 @@ export function ConfigPublicDashboardBase({
       },
     });
   };
-
   const onPauseOrResume = async (values: ConfigPublicDashboardForm) => {
     const { isAnnotationsEnabled, isTimeSelectionEnabled, isPaused } = values;
 
@@ -143,7 +142,7 @@ export function ConfigPublicDashboardBase({
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDatasources.join(', ')} />
       )}
 
-      {isEmailSharingEnabled && <EmailSharingConfiguration dashboard={dashboard} />}
+      {isEmailSharingEnabled() && <EmailSharingConfiguration dashboard={dashboard} />}
 
       <Field
         label={t('public-dashboard.config.dashboard-url-field-label', 'Dashboard URL')}

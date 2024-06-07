@@ -26,7 +26,7 @@ export default function ShareAlerts({ publicDashboard }: { publicDashboard?: Pub
       {hasWritePermissions && !!unsupportedDataSources?.length && (
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
       )}
-      {publicDashboard?.share === PublicDashboardShareType.EMAIL && isEmailSharingEnabled && (
+      {publicDashboard?.share === PublicDashboardShareType.EMAIL && isEmailSharingEnabled() && (
         <EmailSharingPricingAlert />
       )}
     </>

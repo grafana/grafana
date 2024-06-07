@@ -83,10 +83,10 @@ export default function UserListPage() {
               data-testid={selectors.tabs.anonUserDevices}
             />
           )}
-          {isEmailSharingEnabled && <PublicDashboardsTab view={view} setView={setView} />}
+          {isEmailSharingEnabled() && <PublicDashboardsTab view={view} setView={setView} />}
         </TabsBar>
       ) : (
-        isEmailSharingEnabled && (
+        isEmailSharingEnabled() && (
           <TabsBar className={styles.tabsMargin}>
             <Tab
               label="Users"
