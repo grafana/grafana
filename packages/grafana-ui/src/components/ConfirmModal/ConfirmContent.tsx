@@ -23,7 +23,7 @@ export interface ConfirmContentProps {
   /** Confirm button variant */
   confirmButtonVariant?: ButtonVariant;
   /** Text user needs to fill in before confirming */
-  confirmationText?: string;
+  confirmPromptText?: string;
   /** Text for dismiss button */
   dismissButtonLabel?: string;
   /** Variant for dismiss button */
@@ -44,7 +44,7 @@ export interface ConfirmContentProps {
 
 export const ConfirmContent = ({
   body,
-  confirmationText,
+  confirmPromptText,
   confirmButtonLabel,
   confirmButtonVariant,
   dismissButtonVariant,
@@ -56,12 +56,12 @@ export const ConfirmContent = ({
   description,
   justifyButtons = 'flex-end',
 }: ConfirmContentProps) => {
-  const [disabled, setDisabled] = useState(Boolean(confirmationText));
+  const [disabled, setDisabled] = useState(Boolean(confirmPromptText));
   const styles = useStyles2(getStyles);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setDisabled(confirmationText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
+    setDisabled(confirmPromptText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
   };
 
   useEffect(() => {
@@ -69,8 +69,8 @@ export const ConfirmContent = ({
   }, []);
 
   useEffect(() => {
-    setDisabled(Boolean(confirmationText));
-  }, [confirmationText]);
+    setDisabled(Boolean(confirmPromptText));
+  }, [confirmPromptText]);
 
   const onConfirmClick = async () => {
     setDisabled(true);
@@ -88,11 +88,11 @@ export const ConfirmContent = ({
       <div className={styles.text}>
         {body}
         {description ? <div className={styles.description}>{description}</div> : null}
-        {confirmationText ? (
+        {confirmPromptText ? (
           <div className={styles.confirmationInput}>
             <Stack alignItems="flex-start">
               <Box>
-                <Input placeholder={`Type "${confirmationText}" to confirm`} onChange={onConfirmationTextChange} />
+                <Input placeholder={`Type "${confirmPromptText}" to confirm`} onChange={onConfirmationTextChange} />
               </Box>
             </Stack>
           </div>
