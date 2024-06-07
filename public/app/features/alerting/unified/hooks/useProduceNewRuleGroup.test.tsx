@@ -1,4 +1,3 @@
-import { UseQueryStateResult } from '@reduxjs/toolkit/dist/query/react/buildHooks';
 import { waitFor, renderHook } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
