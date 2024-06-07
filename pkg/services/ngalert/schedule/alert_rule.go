@@ -217,7 +217,6 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 	logger := a.logger.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
 
-	evalRunning := false
 	var currentFingerprint fingerprint
 	defer a.stopApplied(key)
 	for {
@@ -239,19 +238,14 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 				logger.Debug("Evaluation channel has been closed. Exiting")
 				return nil
 			}
-			if evalRunning {
-				continue
-			}
 
 			func() {
 				orgID := fmt.Sprint(key.OrgID)
 				evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
 				evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
 
-				evalRunning = true
 				evalStart := a.clock.Now()
 				defer func() {
-					evalRunning = false
 					a.evalApplied(key, ctx.scheduledAt)
 					evalDuration.Observe(a.clock.Now().Sub(evalStart).Seconds())
 				}()

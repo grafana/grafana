@@ -1270,6 +1270,7 @@
       "new-alert-rule": "Nova regra de alerta",
       "query": "Consulta",
       "remove": "Remover",
+      "replace-library-panel": "",
       "share": "Compartilhar",
       "show-legend": "Mostrar legenda",
       "unlink-library-panel": "Desvincular painel de biblioteca",
@@ -1511,6 +1512,31 @@
     },
     "dismissable-button": "Fechar"
   },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "",
+      "cancel": "",
+      "title": ""
+    },
+    "basicSelector": {
+      "openAdvanced": "",
+      "placeholder": "",
+      "removeAll": ""
+    },
+    "root": {
+      "collapse": "",
+      "expand": ""
+    },
+    "suggestedDashboards": {
+      "loading": "",
+      "search": ""
+    },
+    "tree": {
+      "collapse": "",
+      "expand": "",
+      "search": ""
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "Incluir painéis",
@@ -1669,6 +1695,21 @@
     "empty-state": {
       "button-title": "",
       "title": ""
+    },
+    "table": {
+      "add-silence-button": "",
+      "edit-button": "",
+      "expired-silences": "",
+      "no-matching-silences": "",
+      "noConfig": "",
+      "recreate-button": "",
+      "unsilence-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "",
+      "state": ""
     }
   },
   "snapshot": {
