@@ -89,7 +89,7 @@ case "$1" in
         ;;
    "scenes")
       env[SCENES]=true
-      cypressConfig[specPattern]=$rootForScenesSuite/various-suite/$testFilesForSingleSuite
+      cypressConfig[specPattern]=$rootForScenesSuite/*/$testFilesForSingleSuite
       cypressConfig[video]=false
         case "$2" in
             "debug")
