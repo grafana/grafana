@@ -43,7 +43,7 @@ It also adds the `breaking change` label to the pull request.
 
 ![Example Levitate comment on PR](./breaking-changes-comment-screenshot.png)
 
-Receiving a comment like the one above does not necessarily mean that you actually introduced breaking
+Receiving a comment like this does not necessarily mean that you actually introduced breaking
 changes. This is because certain edge cases are still not covered by the tool, but there is a good chance that they may happen, so we call it to your attention.
 
 By clicking the links in the comment ("more info" or "Check console output") you can view more detailed information about what triggered the notification.
