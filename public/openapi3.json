@@ -183,6 +183,19 @@
         },
         "description": "(empty)"
       },
+      "cloudMigrationDeleteTokenResponse": {
+        "description": "(empty)"
+      },
+      "cloudMigrationGetTokenResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetAccessTokenResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "cloudMigrationListResponse": {
         "content": {
           "application/json": {
@@ -2572,6 +2585,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "record": {
+            "$ref": "#/components/schemas/AlertRuleRecordExport"
+          },
           "title": {
             "type": "string"
           },
@@ -2719,6 +2735,18 @@
           }
         },
         "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
+        "type": "object"
+      },
+      "AlertRuleRecordExport": {
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          }
+        },
+        "title": "Record is the provisioned export of models.Record.",
         "type": "object"
       },
       "AlertingFileExport": {
@@ -3652,6 +3680,14 @@
               "$ref": "#/components/schemas/CloudMigrationResponse"
             },
             "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CloudMigrationRequest": {
+        "properties": {
+          "authToken": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -5524,6 +5560,29 @@
         },
         "type": "object"
       },
+      "GetAccessTokenResponseDTO": {
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "firstUsedAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "GetAnnotationTagsResponse": {
         "properties": {
           "result": {
@@ -5961,6 +6020,9 @@
               "$ref": "#/components/schemas/TimeIntervalItem"
             },
             "type": "array"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8101,6 +8163,9 @@
               "$ref": "#/components/schemas/TimeIntervalItem"
             },
             "type": "array"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8283,6 +8348,9 @@
           },
           "provenance": {
             "$ref": "#/components/schemas/Provenance"
+          },
+          "record": {
+            "$ref": "#/components/schemas/Record"
           },
           "ruleGroup": {
             "example": "eval_group_1",
@@ -8864,13 +8932,20 @@
       "Record": {
         "properties": {
           "from": {
+            "description": "Which expression node should be used as the input for the recorded metric.",
+            "example": "A",
             "type": "string"
           },
           "metric": {
+            "description": "Name of the recorded metric.",
+            "example": "grafana_alerts_ratio",
             "type": "string"
           }
         },
-        "title": "Record defines how data produced by a recording rule is written.",
+        "required": [
+          "metric",
+          "from"
+        ],
         "type": "object"
       },
       "RecordingRuleJSON": {
@@ -11823,7 +11898,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -11847,7 +11921,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12042,6 +12115,7 @@
         "type": "array"
       },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12097,6 +12171,7 @@
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12305,7 +12380,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -14995,6 +15069,17 @@
       },
       "post": {
         "operationId": "createMigration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudMigrationRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "Body"
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/cloudMigrationResponse"
@@ -15181,6 +15266,30 @@
       }
     },
     "/cloudmigration/token": {
+      "get": {
+        "operationId": "getCloudMigrationToken",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationGetTokenResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Fetch the cloud migration token if it exists.",
+        "tags": [
+          "migrations"
+        ]
+      },
       "post": {
         "operationId": "createCloudMigrationToken",
         "responses": {
@@ -15198,6 +15307,40 @@
           }
         },
         "summary": "Create gcom access token.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/token/{uid}": {
+      "delete": {
+        "operationId": "deleteCloudMigrationToken",
+        "parameters": [
+          {
+            "description": "UID of a cloud migration token",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/cloudMigrationDeleteTokenResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Deletes a cloud migration token.",
         "tags": [
           "migrations"
         ]
@@ -24567,6 +24710,21 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Version of mute timing to use for optimistic concurrency. Leave empty to disable validation",
+            "in": "query",
+            "name": "version",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -24672,6 +24830,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Replace an existing mute timing.",
