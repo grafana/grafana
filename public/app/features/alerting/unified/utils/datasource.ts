@@ -147,10 +147,12 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
     silence: silencesPermissions.read,
   };
 
-  const hasSomeGrafanaReadPermissions = Object.values(permissions)
-    .flatMap((p) => p.grafana)
-    .some((p) => p.endsWith('read'));
-  if (hasSomeGrafanaReadPermissions) {
+  const builtinAlertmanagerPermissions = Object.values(permissions).flatMap((permissions) => permissions.grafana);
+  const hasPermissionsForInternalAlertmanager = builtinAlertmanagerPermissions.some((permission) =>
+    contextSrv.hasPermission(permission)
+  );
+
+  if (hasPermissionsForInternalAlertmanager) {
     availableInternalDataSources.push(grafanaAlertManagerDataSource);
   }
 
