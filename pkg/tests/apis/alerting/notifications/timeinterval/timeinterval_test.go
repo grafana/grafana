@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestMain(m *testing.M) {
@@ -323,5 +324,90 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 	t.Run("should not let delete if provisioned", func(t *testing.T) {
 		err := adminClient.Delete(ctx, created.Name, v1.DeleteOptions{})
 		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+	})
+}
+
+func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+
+	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().TimeIntervals("default")
+
+	interval := v0alpha1.TimeInterval{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+			Name:      "time-interval",
+		},
+		Spec: v0alpha1.TimeIntervalSpec{
+			TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
+		},
+	}
+
+	created, err := adminClient.Create(ctx, &interval, v1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, created)
+	require.NotEmpty(t, created.ResourceVersion)
+
+	t.Run("should forbid if version does not match", func(t *testing.T) {
+		updated := created.DeepCopy()
+		updated.ResourceVersion = "test"
+		_, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
+		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
+	})
+	t.Run("should update if version matches", func(t *testing.T) {
+		updated := created.DeepCopy()
+		actualUpdated, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
+		require.NoError(t, err)
+		require.EqualValues(t, updated, actualUpdated)
+	})
+	t.Run("should update if version is empty", func(t *testing.T) {
+		updated := created.DeepCopy()
+		updated.ResourceVersion = ""
+		updated.Spec = v0alpha1.TimeIntervalSpec{
+			TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
+		}
+		actualUpdated, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
+		require.NoError(t, err)
+		require.EqualValues(t, updated.Spec, actualUpdated.Spec)
+		require.NotEqual(t, created.ResourceVersion, actualUpdated.ResourceVersion)
+	})
+	t.Run("should fail to delete if version does not match", func(t *testing.T) {
+		actual, err := adminClient.Get(ctx, interval.Name, v1.GetOptions{})
+		require.NoError(t, err)
+
+		err = adminClient.Delete(ctx, actual.Name, v1.DeleteOptions{
+			Preconditions: &v1.Preconditions{
+				ResourceVersion: util.Pointer("something"),
+			},
+		})
+		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
+	})
+	t.Run("should succeed if version matches", func(t *testing.T) {
+		actual, err := adminClient.Get(ctx, interval.Name, v1.GetOptions{})
+		require.NoError(t, err)
+
+		err = adminClient.Delete(ctx, actual.Name, v1.DeleteOptions{
+			Preconditions: &v1.Preconditions{
+				ResourceVersion: util.Pointer(actual.ResourceVersion),
+			},
+		})
+		require.NoError(t, err)
+	})
+	t.Run("should succeed if version is empty", func(t *testing.T) {
+		actual, err := adminClient.Create(ctx, &interval, v1.CreateOptions{})
+		require.NoError(t, err)
+
+		err = adminClient.Delete(ctx, actual.Name, v1.DeleteOptions{
+			Preconditions: &v1.Preconditions{
+				ResourceVersion: util.Pointer(actual.ResourceVersion),
+			},
+		})
+		require.NoError(t, err)
 	})
 }
