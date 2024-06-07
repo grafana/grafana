@@ -1,4 +1,4 @@
-# Handling breaking changes in Grafana frontend APIs
+# Handle breaking changes in Grafana frontend APIs
 
 Follow this guide to identify and communicate breaking changes introduced to our frontend API.
 
