@@ -53,6 +53,7 @@ export enum AlertmanagerAction {
   CreateSilence = 'create-silence',
   ViewSilence = 'view-silence',
   UpdateSilence = 'update-silence',
+  PreviewSilencedInstances = 'preview-silenced-alerts',
 
   // mute timings
   ViewMuteTiming = 'view-mute-timing',
@@ -247,6 +248,7 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.CreateSilence]: toAbility(AlwaysSupported, instancePermissions.create),
     [AlertmanagerAction.ViewSilence]: toAbility(AlwaysSupported, instancePermissions.read),
     [AlertmanagerAction.UpdateSilence]: toAbility(AlwaysSupported, instancePermissions.update),
+    [AlertmanagerAction.PreviewSilencedInstances]: toAbility(AlwaysSupported, instancePermissions.read),
     // -- mute timtings --
     [AlertmanagerAction.CreateMuteTiming]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
     [AlertmanagerAction.ViewMuteTiming]: toAbility(AlwaysSupported, notificationsPermissions.read),

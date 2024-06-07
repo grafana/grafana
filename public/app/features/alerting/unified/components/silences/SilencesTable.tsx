@@ -15,13 +15,11 @@ import {
 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Trans } from 'app/core/internationalization';
-import { contextSrv } from 'app/core/services/context_srv';
 import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { featureDiscoveryApi } from 'app/features/alerting/unified/api/featureDiscoveryApi';
 import { MATCHER_ALERT_RULE_UID, SILENCES_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
 import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
@@ -49,12 +47,15 @@ interface Props {
 const API_QUERY_OPTIONS = { pollingInterval: SILENCES_POLL_INTERVAL_MS, refetchOnFocus: true };
 
 const SilencesTable = ({ alertManagerSourceName }: Props) => {
-  const instanceReadPermissions = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
+  const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.PreviewSilencedInstances
+  );
+  const canPreview = previewAlertsSupported && previewAlertsAllowed;
 
   const { data: alertManagerAlerts = [], isLoading: amAlertsIsLoading } =
     alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
       { amSourceName: alertManagerSourceName, filter: { silenced: true, active: true, inhibited: true } },
-      { ...API_QUERY_OPTIONS, skip: !instanceReadPermissions }
+      { ...API_QUERY_OPTIONS, skip: !canPreview }
     );
 
   const {
@@ -87,26 +88,26 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
       return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
     };
     return filteredSilencesNotExpired.map((silence) => {
-      const silencedAlerts = instanceReadPermissions ? findSilencedAlerts(silence.id) : undefined;
+      const silencedAlerts = canPreview ? findSilencedAlerts(silence.id) : undefined;
       return {
         id: silence.id,
         data: { ...silence, silencedAlerts },
       };
     });
-  }, [filteredSilencesNotExpired, alertManagerAlerts, instanceReadPermissions]);
+  }, [filteredSilencesNotExpired, alertManagerAlerts, canPreview]);
 
   const itemsExpired = useMemo((): SilenceTableItemProps[] => {
     const findSilencedAlerts = (id: string) => {
       return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
     };
     return filteredSilencesExpired.map((silence) => {
-      const silencedAlerts = instanceReadPermissions ? findSilencedAlerts(silence.id) : undefined;
+      const silencedAlerts = canPreview ? findSilencedAlerts(silence.id) : undefined;
       return {
         id: silence.id,
         data: { ...silence, silencedAlerts },
       };
     });
-  }, [filteredSilencesExpired, alertManagerAlerts, instanceReadPermissions]);
+  }, [filteredSilencesExpired, alertManagerAlerts, canPreview]);
 
   if (isLoading || amAlertsIsLoading) {
     return <LoadingPlaceholder text="Loading silences..." />;
