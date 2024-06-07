@@ -89,7 +89,7 @@ case "$1" in
         ;;
    "scenes")
       env[SCENES]=true
-      cypressConfig[specPattern]=$rootForScenesSuite/*/$testFilesForSingleSuite
+      cypressConfig[specPattern]=$rootForScenesSuite/various-suite/$testFilesForSingleSuite
       cypressConfig[video]=false
         case "$2" in
             "debug")
@@ -104,6 +104,12 @@ case "$1" in
                 enterpriseSuite=$(basename "${args[2]}")
                 ;;
         esac
+      ;;
+      
+    "oldDash")
+      cypressConfig[specPattern]=./e2e/various-suite/$testFilesForSingleSuite
+      cypressConfig[video]=false
+      CMD="cypress open"
       ;;
 
     *)
