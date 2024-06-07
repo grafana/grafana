@@ -156,7 +156,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this;
   }
 
-  /** @deprecated Use .addedLink() instead */
+  /** @deprecated Use .addLink() instead */
   configureExtensionLink<Context extends object>(extension: Omit<PluginExtensionLinkConfig<Context>, 'type'>) {
     this.addLink({
       targets: [extension.extensionPointId],
