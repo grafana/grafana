@@ -4,7 +4,6 @@ import (
 	"context"
 	"path"
 	"slices"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -144,14 +143,11 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 		return
 	}
 	child.IncludedInAppID = parent.ID
-	child.BaseURL = parent.BaseURL
 
-	// TODO move this logic within assetpath package
-	appSubPath := strings.ReplaceAll(strings.Replace(child.FS.Base(), parent.FS.Base(), "", 1), "\\", "/")
-	if parent.IsCorePlugin() {
-		child.Module = path.Join("core:plugin", parent.ID, appSubPath)
-	} else {
-		child.Module = path.Join("public/plugins", parent.ID, appSubPath, "module.js")
+	// If the child plugin does not have a version, it will inherit the version from the parent.
+	// This is to ensure that the frontend can appropriately cache the plugin assets.
+	if child.Info.Version == "" {
+		child.Info.Version = parent.Info.Version
 	}
 }
 
