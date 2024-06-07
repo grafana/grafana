@@ -59,8 +59,8 @@ export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
   return <HeatmapHoverCell {...props} />;
 };
 
-const canvasWidth = 264;
-const canvasHeight = 64;
+const defaultHistogramWidth = 264;
+const defaultHistogramHeight = 64;
 
 const HeatmapHoverCell = ({
   dataIdxs,
@@ -310,8 +310,8 @@ const HeatmapHoverCell = ({
   const theme = useTheme2();
   const themeSpacing = parseInt(theme.spacing(1), 10);
 
-  let histCssWidth = Math.min(canvasWidth, maxWidth ? maxWidth - themeSpacing * 2 : canvasWidth);
-  let histCssHeight = canvasHeight;
+  let histCssWidth = Math.min(defaultHistogramWidth, maxWidth ? maxWidth - themeSpacing * 2 : defaultHistogramWidth);
+  let histCssHeight = defaultHistogramHeight;
   let histCanWidth = Math.round(histCssWidth * uPlot.pxRatio);
   let histCanHeight = Math.round(histCssHeight * uPlot.pxRatio);
 
