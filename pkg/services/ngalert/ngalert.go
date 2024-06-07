@@ -197,6 +197,7 @@ func (ng *AlertNG) init() error {
 						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 						PromoteConfig:     true,
+						SyncInterval:      ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 					}
 					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m)
 					if err != nil {
@@ -234,6 +235,7 @@ func (ng *AlertNG) init() error {
 						OrgID:             orgID,
 						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+						SyncInterval:      ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 					}
 					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m)
 					if err != nil {

@@ -63,6 +63,9 @@ type Alertmanager struct {
 	tenantID          string
 	url               string
 
+	lastConfigSync time.Time
+	syncInterval   time.Duration
+
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
 }
@@ -77,6 +80,9 @@ type AlertmanagerConfig struct {
 	// PromoteConfig is a flag that determines whether the configuration should be used in the remote Alertmanager.
 	// The same flag is used for promoting state.
 	PromoteConfig bool
+
+	// SyncInterval determines how often we should attempt to synchronize configuration.
+	SyncInterval time.Duration
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -170,6 +176,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		orgID:             cfg.OrgID,
 		state:             store,
 		sender:            s,
+		syncInterval:      cfg.SyncInterval,
 		tenantID:          cfg.TenantID,
 		url:               cfg.URL,
 	}, nil
@@ -195,6 +202,10 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 			return fmt.Errorf("unable to upload the state to the remote Alertmanager: %w", err)
 		}
 		am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
+	}
+
+	if time.Since(am.lastConfigSync) < am.syncInterval {
+		return nil
 	}
 
 	am.log.Debug("Start configuration upload to remote Alertmanager", "url", am.url)
@@ -270,6 +281,7 @@ func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimod
 		return err
 	}
 	am.metrics.LastConfigSync.SetToCurrentTime()
+	am.lastConfigSync = time.Now()
 	return nil
 }
 
