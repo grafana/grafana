@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { PluginPreloadResult } from '../pluginPreloader';
 
 import { PluginExtensionRegistry, PluginExtensionRegistryItem } from './types';
-import { deepFreeze, logWarning } from './utils';
+import { deepFreeze, isPluginCapability, logWarning } from './utils';
 import { isPluginExtensionConfigValid } from './validators';
 
 export class ReactivePluginExtensionsRegistry {
@@ -54,6 +54,22 @@ function resultsToRegistry(registry: PluginExtensionRegistry, result: PluginPrel
   for (const extensionConfig of extensionConfigs) {
     const { extensionPointId } = extensionConfig;
 
+    // Change the extension point id for capabilities
+    if (isPluginCapability(extensionConfig)) {
+      const regex = /capabilities\/([a-zA-Z0-9_.\-\/]+)$/;
+      const match = regex.exec(extensionPointId);
+
+      if (!match) {
+        logWarning(
+          `"${pluginId}" plugin has an invalid capability ID: ${extensionPointId.replace('capabilities/', '')} (It must be a string)`
+        );
+        continue;
+      }
+
+      extensionConfig.extensionPointId = `capabilities/${match[1]}`;
+    }
+
+    // Check if the config is valid
     if (!extensionConfig || !isPluginExtensionConfigValid(pluginId, extensionConfig)) {
       return registry;
     }
@@ -65,7 +81,12 @@ function resultsToRegistry(registry: PluginExtensionRegistry, result: PluginPrel
       pluginId,
     };
 
-    if (!Array.isArray(registry.extensions[extensionPointId])) {
+    // Capability (only a single value per identifier, can be overriden)
+    if (isPluginCapability(extensionConfig)) {
+      registry.extensions[extensionPointId] = [registryItem];
+    }
+    // Extension (multiple extensions per extension point identifier)
+    else if (!Array.isArray(registry.extensions[extensionPointId])) {
       registry.extensions[extensionPointId] = [registryItem];
     } else {
       registry.extensions[extensionPointId].push(registryItem);
