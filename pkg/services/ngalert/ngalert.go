@@ -289,6 +289,24 @@ func (ng *AlertNG) init() error {
 	ng.AlertsRouter = alertsRouter
 
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
+
+	var recordingWriter writer.Writer
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+		promWriterCfg := writer.PrometheusWriterConfig{
+			URL:               ng.Cfg.UnifiedAlerting.RecordingRules.URL,
+			BasicAuthUsername: ng.Cfg.UnifiedAlerting.RecordingRules.BasicAuthUsername,
+			BasicAuthPassword: ng.Cfg.UnifiedAlerting.RecordingRules.BasicAuthPassword,
+			TenantID:          ng.Cfg.UnifiedAlerting.RecordingRules.TenantID,
+			Timeout:           10 * time.Second,
+		}
+		recordingWriter, err = writer.NewPrometheusWriter(promWriterCfg, log.New("ngalert.writer"))
+		if err != nil {
+			return err
+		}
+	} else {
+		recordingWriter = writer.NoopWriter{}
+	}
+
 	schedCfg := schedule.SchedulerCfg{
 		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
 		C:                    clk,
@@ -304,7 +322,7 @@ func (ng *AlertNG) init() error {
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
 		Log:                  log.New("ngalert.scheduler"),
-		RecordingWriter:      writer.NewPrometheusWriter(log.New("ngalert.recording.writer")),
+		RecordingWriter:      recordingWriter,
 	}
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
