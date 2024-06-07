@@ -6,7 +6,7 @@ import { sceneGraph } from '@grafana/scenes';
 import { FieldSet, Icon, Label, Spinner, Stack, Text, TimeRangeInput, Tooltip } from '@grafana/ui';
 import { Switch } from '@grafana/ui/src/components/Switch/Switch';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { publicDashboardApi, useUpdatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { ConfigPublicDashboardForm } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -77,7 +77,7 @@ export default function ShareConfiguration() {
                         });
                         onChange('isTimeSelectionEnabled', e.currentTarget.checked);
                       }}
-                      label="Enable time range"
+                      label={t('public-dashboard.share-configuration.enable-time-range-label', 'Enable time range')}
                     />
                   )}
                   control={control}
@@ -101,7 +101,7 @@ export default function ShareConfiguration() {
                         });
                         onChange('isAnnotationsEnabled', e.currentTarget.checked);
                       }}
-                      label="Display annotations"
+                      label={t('public-dashboard.share-configuration.display-annotations-label', 'Display annotations')}
                     />
                   )}
                   control={control}
@@ -117,7 +117,10 @@ export default function ShareConfiguration() {
                 <TimeRangeInput value={timeRange.value} showIcon disabled onChange={() => {}} />
                 <Tooltip
                   placement="right"
-                  content="The shared dashboard uses the default time range settings of the dashboard"
+                  content={t(
+                    'public-dashboard.share-configuration.time-range-tooltip',
+                    'The shared dashboard uses the default time range settings of the dashboard'
+                  )}
                 >
                   <Icon name="info-circle" size="sm" />
                 </Tooltip>

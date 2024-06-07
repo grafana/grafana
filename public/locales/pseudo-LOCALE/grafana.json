@@ -1381,6 +1381,7 @@
     "email-sharing": {
       "accept-button": "Åččępŧ",
       "alert-text": "Ēƒƒęčŧįvę įmmęđįäŧęľy, şĥäřįŉģ pūþľįč đäşĥþőäřđş þy ęmäįľ įŉčūřş ä čőşŧ pęř äčŧįvę ūşęř. Ğőįŉģ ƒőřŵäřđ, yőū’ľľ þę přőmpŧęđ ƒőř päymęŉŧ ŵĥęŉęvęř yőū äđđ ŉęŵ ūşęřş ŧő yőūř đäşĥþőäřđ.",
+      "bill-ack": "\"Ĩ ūŉđęřşŧäŉđ ŧĥäŧ äđđįŉģ ūşęřş řęqūįřęş päymęŉŧ.*\"",
       "cancel-button": "Cäŉčęľ",
       "input-invalid-email-text": "Ĩŉväľįđ ęmäįľ",
       "input-required-email-text": "Ēmäįľ įş řęqūįřęđ",
@@ -1388,6 +1389,14 @@
       "invite-field-desc": "Ĩŉvįŧę pęőpľę þy ęmäįľ",
       "invite-field-label": "Ĩŉvįŧę",
       "learn-more-button": "Ŀęäřŉ mőřę",
+      "recipient-email-placeholder": "Ŧypę įŉ ŧĥę řęčįpįęŉŧ ęmäįľ äđđřęşş äŉđ přęşş Ēŉŧęř",
+      "recipient-invalid-email-text": "Ĩŉväľįđ ęmäįľ",
+      "recipient-invitation-button": "Ĩŉvįŧę",
+      "recipient-invitation-description": "Ĩŉvįŧę şőmęőŉę þy ęmäįľ",
+      "recipient-invitation-tooltip": "Ŧĥįş đäşĥþőäřđ čőŉŧäįŉş şęŉşįŧįvę đäŧä. ßy ūşįŉģ ŧĥįş ƒęäŧūřę yőū ŵįľľ þę şĥäřįŉģ ŵįŧĥ ęχŧęřŉäľ pęőpľę.",
+      "recipient-list-description": "Øŉľy pęőpľę yőū'vę đįřęčŧľy įŉvįŧęđ čäŉ äččęşş ŧĥįş đäşĥþőäřđ",
+      "recipient-list-title": "Pęőpľę ŵįŧĥ äččęşş",
+      "recipient-required-email-text": "Ēmäįľ įş řęqūįřęđ",
       "resend-button": "Ŗęşęŉđ",
       "resend-button-title": "Ŗęşęŉđ",
       "revoke-button": "Ŗęvőĸę",
@@ -1407,7 +1416,8 @@
       "accept-button": "Åččępŧ",
       "alert-text": "Ŝĥäřįŉģ ŧĥįş đäşĥþőäřđ ęχŧęřŉäľľy mäĸęş įŧ ęŉŧįřęľy äččęşşįþľę ŧő äŉyőŉę ŵįŧĥ ŧĥę ľįŉĸ.",
       "cancel-button": "Cäŉčęľ",
-      "learn-more-button": "Ŀęäřŉ mőřę"
+      "learn-more-button": "Ŀęäřŉ mőřę",
+      "public-ack": "Ĩ ūŉđęřşŧäŉđ ŧĥäŧ ŧĥįş ęŉŧįřę đäşĥþőäřđ ŵįľľ þę pūþľįč.*"
     },
     "settings-bar-header": {
       "collapse-settings-tooltip": "Cőľľäpşę şęŧŧįŉģş",
@@ -1428,18 +1438,24 @@
       "time-range-picker-enabled-text": "Ŧįmę řäŉģę pįčĸęř = ęŉäþľęđ",
       "time-range-text": "Ŧįmę řäŉģę = "
     },
-    "share-actions": {
-      "copy-link-button": "Cőpy ęχŧęřŉäľ ľįŉĸ",
-      "pause-access-button": "Päūşę äččęşş",
-      "resume-access-button": "Ŗęşūmę äččęşş",
-      "revoke-access-button": "Ŗęvőĸę äččęşş"
-    },
     "share-configuration": {
       "access-label": "čäŉ äččęşş",
       "display-annotations-label": "Đįşpľäy äŉŉőŧäŧįőŉş",
       "enable-time-range-label": "Ēŉäþľę ŧįmę řäŉģę",
       "settings-label": "Ŝęŧŧįŉģş",
-      "share-type-label": "Ŀįŉĸ äččęşş"
+      "share-type-label": "Ŀįŉĸ äččęşş",
+      "time-range-tooltip": "Ŧĥę şĥäřęđ đäşĥþőäřđ ūşęş ŧĥę đęƒäūľŧ ŧįmę řäŉģę şęŧŧįŉģş őƒ ŧĥę đäşĥþőäřđ"
+    },
+    "share-externally": {
+      "copy-link-button": "Cőpy ęχŧęřŉäľ ľįŉĸ",
+      "email-share-type-option-description": "Øŉľy pęőpľę ŵįŧĥ äččęşş čäŉ őpęŉ ŵįŧĥ ŧĥę ľįŉĸ",
+      "email-share-type-option-label": "Øŉľy şpęčįƒįč pęőpľę",
+      "pause-access-button": "Päūşę äččęşş",
+      "pause-access-tooltip": "Päūşįŉģ ŵįľľ ŧęmpőřäřįľy đįşäþľę äččęşş ŧő ŧĥįş đäşĥþőäřđ ƒőř äľľ ūşęřş",
+      "public-share-type-option-description": "Åŉyőŉę ŵįŧĥ ŧĥę ľįŉĸ čäŉ äččęşş",
+      "public-share-type-option-label": "Åŉyőŉę ŵįŧĥ ŧĥę ľįŉĸ",
+      "resume-access-button": "Ŗęşūmę äččęşş",
+      "revoke-access-button": "Ŗęvőĸę äččęşş"
     }
   },
   "public-dashboard-list": {

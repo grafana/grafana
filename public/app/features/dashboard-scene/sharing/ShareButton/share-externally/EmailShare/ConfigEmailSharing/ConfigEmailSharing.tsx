@@ -55,29 +55,38 @@ export const ConfigEmailSharing = () => {
           <Field
             label={
               <Stack gap={1} alignItems="center">
-                <Trans i18nKey="public-dashboard.email-sharing.invite-button">Invite</Trans>
+                <Trans i18nKey="public-dashboard.email-sharing.recipient-invitation-button">Invite</Trans>
                 <Tooltip
                   placement="right"
-                  content="This dashboard contains sensitive data. By using this feature you will be sharing with external people."
+                  content={t(
+                    'public-dashboard.email-sharing.recipient-invitation-tooltip',
+                    'This dashboard contains sensitive data. By using this feature you will be sharing with external people.'
+                  )}
                 >
                   <Icon name="info-circle" size="sm" />
                 </Tooltip>
               </Stack>
             }
-            description="Invite someone by email"
+            description={t(
+              'public-dashboard.email-sharing.recipient-invitation-description',
+              'Invite someone by email'
+            )}
             error={errors.email?.message}
             invalid={!!errors.email?.message}
           >
             <Stack direction="row">
               <Input
-                placeholder="Type in the recipient email address and press Enter"
+                placeholder={t(
+                  'public-dashboard.email-sharing.recipient-email-placeholder',
+                  'Type in the recipient email address and press Enter'
+                )}
                 autoCapitalize="none"
                 loading={isAddEmailLoading}
                 {...register('email', {
-                  required: t('public-dashboard.email-sharing.input-required-email-text', 'Email is required'),
+                  required: t('public-dashboard.email-sharing.recipient-required-email-text', 'Email is required'),
                   pattern: {
                     value: validEmailRegex,
-                    message: t('public-dashboard.email-sharing.input-invalid-email-text', 'Invalid email'),
+                    message: t('public-dashboard.email-sharing.recipient-invalid-email-text', 'Invalid email'),
                   },
                 })}
                 data-testid={selectors.EmailSharingInput}
@@ -88,7 +97,7 @@ export const ConfigEmailSharing = () => {
                 disabled={isAddEmailLoading || !isValid}
                 data-testid={selectors.EmailSharingInviteButton}
               >
-                <Trans i18nKey="public-dashboard.email-sharing.invite-button">Invite</Trans>
+                <Trans i18nKey="public-dashboard.email-sharing.recipient-invitation-button">Invite</Trans>
               </Button>
             </Stack>
           </Field>

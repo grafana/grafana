@@ -5,7 +5,7 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Button, ClipboardButton, Divider, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import {
   useDeletePublicDashboardMutation,
   useGetPublicDashboardQuery,
@@ -31,8 +31,11 @@ import { isEmailSharingEnabled, PublicDashboardShareType } from './utils';
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
 
 export const ANYONE_WITH_THE_LINK_SHARE_OPTION = {
-  label: 'Anyone with the link',
-  description: 'Anyone with the link can access',
+  label: t('public-dashboard.share-externally.public-share-type-option-label', 'Anyone with the link'),
+  description: t(
+    'public-dashboard.share-externally.public-share-type-option-description',
+    'Anyone with the link can access'
+  ),
   value: PublicDashboardShareType.PUBLIC,
   icon: 'globe',
 };
@@ -40,8 +43,11 @@ export const ANYONE_WITH_THE_LINK_SHARE_OPTION = {
 const SHARE_EXTERNALLY_OPTIONS = [ANYONE_WITH_THE_LINK_SHARE_OPTION];
 if (isEmailSharingEnabled()) {
   SHARE_EXTERNALLY_OPTIONS.unshift({
-    label: 'Only specific people',
-    description: 'Only people with access can open with the link',
+    label: t('public-dashboard.share-externally.email-share-type-option-label', 'Only specific people'),
+    description: t(
+      'public-dashboard.share-externally.email-share-type-option-description',
+      'Only people with access can open with the link'
+    ),
     value: PublicDashboardShareType.EMAIL,
     icon: 'users-alt',
   });
@@ -105,6 +111,7 @@ function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
   const { dashboard } = useShareDrawerContext();
   const [update, { isLoading: isUpdateLoading }] = usePauseOrResumePublicDashboardMutation();
   const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
+  const styles = useStyles2(getStyles);
 
   const isLoading = isUpdateLoading || isDeleteLoading;
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
@@ -137,44 +144,51 @@ function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
 
   return (
     <Stack alignItems="center" direction={{ xs: 'column', sm: 'row' }}>
-      <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
-        <ClipboardButton
-          data-testid={selectors.copyUrlButton}
-          variant="primary"
-          fill="outline"
-          icon="link"
-          disabled={!publicDashboard.isEnabled}
-          getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
-          onClipboardCopy={onCopyURL}
-        >
-          <Trans i18nKey="public-dashboard.share-actions.copy-link-button">Copy external link</Trans>
-        </ClipboardButton>
-        <Button
-          icon="trash-alt"
-          variant="destructive"
-          fill="outline"
-          disabled={isLoading || !hasWritePermissions}
-          onClick={onDeleteClick}
-        >
-          <Trans i18nKey="public-dashboard.share-actions.revoke-access-button">Revoke access</Trans>
-        </Button>
-        <Button
-          icon={publicDashboard.isEnabled ? 'pause' : 'play'}
-          variant="secondary"
-          fill="outline"
-          tooltip={
-            publicDashboard.isEnabled ? 'Pausing will temporarily disable access to this dashboard for all users' : ''
-          }
-          onClick={onPauseOrResumeClick}
-          disabled={isLoading || !hasWritePermissions}
-        >
-          {publicDashboard.isEnabled ? (
-            <Trans i18nKey="public-dashboard.share-actions.pause-access-button">Pause access</Trans>
-          ) : (
-            <Trans i18nKey="public-dashboard.share-actions.resume-access-button">Resume access</Trans>
-          )}
-        </Button>
-      </Stack>
+      <div className={styles.actionsContainer}>
+        <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
+          <ClipboardButton
+            data-testid={selectors.copyUrlButton}
+            variant="primary"
+            fill="outline"
+            icon="link"
+            disabled={!publicDashboard.isEnabled}
+            getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
+            onClipboardCopy={onCopyURL}
+          >
+            <Trans i18nKey="public-dashboard.share-externally.copy-link-button">Copy external link</Trans>
+          </ClipboardButton>
+          <Button
+            icon="trash-alt"
+            variant="destructive"
+            fill="outline"
+            disabled={isLoading || !hasWritePermissions}
+            onClick={onDeleteClick}
+          >
+            <Trans i18nKey="public-dashboard.share-externally.revoke-access-button">Revoke access</Trans>
+          </Button>
+          <Button
+            icon={publicDashboard.isEnabled ? 'pause' : 'play'}
+            variant="secondary"
+            fill="outline"
+            tooltip={
+              publicDashboard.isEnabled
+                ? t(
+                    'public-dashboard.share-externally.pause-access-tooltip',
+                    'Pausing will temporarily disable access to this dashboard for all users'
+                  )
+                : ''
+            }
+            onClick={onPauseOrResumeClick}
+            disabled={isLoading || !hasWritePermissions}
+          >
+            {publicDashboard.isEnabled ? (
+              <Trans i18nKey="public-dashboard.share-externally.pause-access-button">Pause access</Trans>
+            ) : (
+              <Trans i18nKey="public-dashboard.share-externally.resume-access-button">Resume access</Trans>
+            )}
+          </Button>
+        </Stack>
+      </div>
       {isLoading && <Spinner />}
     </Stack>
   );
@@ -183,5 +197,8 @@ function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     paddingBottom: theme.spacing(2),
+  }),
+  actionsContainer: css({
+    width: '100%',
   }),
 });

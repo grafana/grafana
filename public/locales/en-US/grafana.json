@@ -1381,6 +1381,7 @@
     "email-sharing": {
       "accept-button": "Accept",
       "alert-text": "Effective immediately, sharing public dashboards by email incurs a cost per active user. Going forward, you’ll be prompted for payment whenever you add new users to your dashboard.",
+      "bill-ack": "\"I understand that adding users requires payment.*\"",
       "cancel-button": "Cancel",
       "input-invalid-email-text": "Invalid email",
       "input-required-email-text": "Email is required",
@@ -1388,6 +1389,14 @@
       "invite-field-desc": "Invite people by email",
       "invite-field-label": "Invite",
       "learn-more-button": "Learn more",
+      "recipient-email-placeholder": "Type in the recipient email address and press Enter",
+      "recipient-invalid-email-text": "Invalid email",
+      "recipient-invitation-button": "Invite",
+      "recipient-invitation-description": "Invite someone by email",
+      "recipient-invitation-tooltip": "This dashboard contains sensitive data. By using this feature you will be sharing with external people.",
+      "recipient-list-description": "Only people you've directly invited can access this dashboard",
+      "recipient-list-title": "People with access",
+      "recipient-required-email-text": "Email is required",
       "resend-button": "Resend",
       "resend-button-title": "Resend",
       "revoke-button": "Revoke",
@@ -1407,7 +1416,8 @@
       "accept-button": "Accept",
       "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link.",
       "cancel-button": "Cancel",
-      "learn-more-button": "Learn more"
+      "learn-more-button": "Learn more",
+      "public-ack": "I understand that this entire dashboard will be public.*"
     },
     "settings-bar-header": {
       "collapse-settings-tooltip": "Collapse settings",
@@ -1428,18 +1438,24 @@
       "time-range-picker-enabled-text": "Time range picker = enabled",
       "time-range-text": "Time range = "
     },
-    "share-actions": {
-      "copy-link-button": "Copy external link",
-      "pause-access-button": "Pause access",
-      "resume-access-button": "Resume access",
-      "revoke-access-button": "Revoke access"
-    },
     "share-configuration": {
       "access-label": "can access",
       "display-annotations-label": "Display annotations",
       "enable-time-range-label": "Enable time range",
       "settings-label": "Settings",
-      "share-type-label": "Link access"
+      "share-type-label": "Link access",
+      "time-range-tooltip": "The shared dashboard uses the default time range settings of the dashboard"
+    },
+    "share-externally": {
+      "copy-link-button": "Copy external link",
+      "email-share-type-option-description": "Only people with access can open with the link",
+      "email-share-type-option-label": "Only specific people",
+      "pause-access-button": "Pause access",
+      "pause-access-tooltip": "Pausing will temporarily disable access to this dashboard for all users",
+      "public-share-type-option-description": "Anyone with the link can access",
+      "public-share-type-option-label": "Anyone with the link",
+      "resume-access-button": "Resume access",
+      "revoke-access-button": "Revoke access"
     }
   },
   "public-dashboard-list": {

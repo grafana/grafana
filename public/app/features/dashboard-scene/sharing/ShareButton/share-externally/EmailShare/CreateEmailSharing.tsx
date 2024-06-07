@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Checkbox, FieldSet, Spinner, Stack } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { PublicDashboardShareType } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -43,7 +43,10 @@ export const CreateEmailSharing = ({ hasError }: { hasError: boolean }) => {
           <div className={styles.checkbox}>
             <Checkbox
               {...register('billAcknowledgment', { required: true })}
-              label="I understand that adding users requires payment.*"
+              label={t(
+                'public-dashboard.email-sharing.bill-ack',
+                '"I understand that adding users requires payment.*"'
+              )}
             />
           </div>
           <Stack direction="row" gap={1} alignItems="center">

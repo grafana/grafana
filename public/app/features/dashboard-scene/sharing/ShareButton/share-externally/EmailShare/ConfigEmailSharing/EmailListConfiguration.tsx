@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Dropdown, Field, Icon, Menu, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { IconButton } from '@grafana/ui/';
+import { t } from 'app/core/internationalization';
 import {
   useReshareAccessToRecipientMutation,
   useDeleteRecipientMutation,
@@ -100,8 +101,11 @@ export const EmailListConfiguration = ({ dashboard }: { dashboard: DashboardScen
   );
   return (
     <Field
-      label="People with access"
-      description="Only people you've directly invited can access this dashboard"
+      label={t('public-dashboard.email-sharing.recipient-list-title', 'People with access')}
+      description={t(
+        'public-dashboard.email-sharing.recipient-list-description',
+        "Only people you've directly invited can access this dashboard"
+      )}
       className={styles.listField}
     >
       {!!publicDashboard?.recipients?.length ? (

@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Checkbox, FieldSet, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { PublicDashboardShareType } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -42,7 +42,10 @@ export default function CreatePublicSharing({ hasError }: { hasError: boolean })
           <div className={styles.checkbox}>
             <Checkbox
               {...register('publicAcknowledgment', { required: true })}
-              label="I understand that this entire dashboard will be public.*"
+              label={t(
+                'public-dashboard.public-sharing.public-ack',
+                'I understand that this entire dashboard will be public.*'
+              )}
             />
           </div>
           <Stack direction="row" gap={1} alignItems="center">
