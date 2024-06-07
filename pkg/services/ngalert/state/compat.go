@@ -140,9 +140,9 @@ func errorAlert(labels, annotations data.Labels, alertState *State, urlStr strin
 	}
 }
 
-func FromStateTransitionToPostableAlerts(firingStates []StateTransition, stateManager *Manager, appURL *url.URL) apimodels.PostableAlerts {
+func FromStateTransitionToPostableAlerts(evaluatedAt time.Time, firingStates []StateTransition, stateManager *Manager, appURL *url.URL) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
-	ts := time.Now()
+	ts := evaluatedAt
 
 	sentAlerts := make([]*State, 0, len(firingStates))
 	for _, alertState := range firingStates {
