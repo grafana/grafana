@@ -1,6 +1,7 @@
 package responsewriter_test
 
 import (
+	"context"
 	"io"
 	"math/rand"
 	"net/http"
@@ -111,6 +112,37 @@ func TestResponseAdapter(t *testing.T) {
 		}()
 
 		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	})
+
+	t.Run("should handle context cancellation", func(t *testing.T) {
+		client := &http.Client{
+			Transport: &roundTripperFunc{
+				ready: make(chan struct{}),
+				// ignore the lint error because the response is passed directly to the client,
+				// so the client will be responsible for closing the response body.
+				//nolint:bodyclose
+				fn: grafanaresponsewriter.WrapHandler(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {})),
+			},
+		}
+		close(client.Transport.(*roundTripperFunc).ready)
+		req, err := http.NewRequest("GET", "http://localhost/test?watch=true", nil)
+		require.NoError(t, err)
+
+		ctx, cancel := context.WithCancel(req.Context())
+		req = req.WithContext(ctx)
+		go func() {
+			time.Sleep(100 * time.Millisecond)
+			cancel()
+		}()
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+
+		defer func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		}()
+
+		require.Equal(t, 499, resp.StatusCode)
 	})
 }
 
