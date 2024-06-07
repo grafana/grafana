@@ -1,4 +1,4 @@
-## Frontend data requests
+# Frontend data requests
 
 [BackendSrv](https://github.com/grafana/grafana/blob/main/packages/grafana-runtime/src/services/backendSrv.ts) handles all outgoing HTTP requests from Grafana. This document explains the high-level concepts used by `BackendSrv`.
 
