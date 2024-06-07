@@ -375,6 +375,7 @@ export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuer
    */
   timeRange?: TimeRange;
   queries?: TQuery[];
+  scopes?: Scope[] | undefined;
 }
 
 /**
@@ -391,6 +392,7 @@ export interface DataSourceGetTagValuesOptions<TQuery extends DataQuery = DataQu
    */
   timeRange?: TimeRange;
   queries?: TQuery[];
+  scopes?: Scope[] | undefined;
 }
 
 export interface MetadataInspectorProps<
