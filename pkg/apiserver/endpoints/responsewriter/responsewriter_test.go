@@ -128,13 +128,13 @@ func TestResponseAdapter(t *testing.T) {
 		req, err := http.NewRequest("GET", "http://localhost/test?watch=true", nil)
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithCancel(req.Context())
+		ctx, cancel := context.WithCancel(req.Context()) //nolint:govet
 		req = req.WithContext(ctx)
-		resp, err := client.Do(req)
+		resp, err := client.Do(req) //nolint:bodyclose
 		require.Nil(t, resp)
 		require.Error(t, err)
 		require.ErrorIs(t, err, context.Canceled)
-	})
+	}) //nolint:govet
 
 	t.Run("should gracefully handle concurrent WriteHeader calls", func(t *testing.T) {
 		t.Parallel()
