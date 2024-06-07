@@ -39,10 +39,10 @@ type stateStore interface {
 }
 
 // AutogenFn is a function that adds auto-generated routes to a configuration.
-type AutogenFn func(ctx context.Context, logger log.Logger, orgId int64, config *apimodels.PostableApiAlertingConfig) error
+type AutogenFn func(ctx context.Context, logger log.Logger, orgId int64, config *apimodels.PostableApiAlertingConfig, skipInvalid bool) error
 
 // NoopAutogenFn is used to skip auto-generating routes.
-func NoopAutogenFn(ctx context.Context, logger log.Logger, orgId int64, config *apimodels.PostableApiAlertingConfig) error {
+func NoopAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *apimodels.PostableApiAlertingConfig, _ bool) error {
 	return nil
 }
 
@@ -241,7 +241,7 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	}
 
 	// Add auto-generated routes and decrypt before comparing.
-	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig); err != nil {
+	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig, true); err != nil {
 		return err
 	}
 	decrypted, err := am.decryptConfiguration(ctx, c)
@@ -314,7 +314,7 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
 
 	// Add auto-generated routes and decrypt before sending.
-	if err := am.autogenFn(ctx, am.log, am.orgID, &cfg.AlertmanagerConfig); err != nil {
+	if err := am.autogenFn(ctx, am.log, am.orgID, &cfg.AlertmanagerConfig, false); err != nil {
 		return err
 	}
 	decrypted, err := am.decryptConfiguration(ctx, cfg)
@@ -333,7 +333,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	}
 
 	// Add auto-generated routes and decrypt before sending.
-	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig); err != nil {
+	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig, true); err != nil {
 		return err
 	}
 	decrypted, err := am.decryptConfiguration(ctx, c)
