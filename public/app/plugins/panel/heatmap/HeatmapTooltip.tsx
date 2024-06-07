@@ -41,6 +41,7 @@ interface HeatmapTooltipProps {
   panelData: PanelData;
   annotate?: () => void;
   maxHeight?: number;
+  maxWidth?: number;
 }
 
 export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
@@ -67,6 +68,7 @@ const HeatmapHoverCell = ({
   mode,
   annotate,
   maxHeight,
+  maxWidth,
 }: HeatmapTooltipProps) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
@@ -302,7 +304,7 @@ const HeatmapHoverCell = ({
 
   let can = useRef<HTMLCanvasElement>(null);
 
-  let histCssWidth = 264;
+  let histCssWidth = Math.min(264, maxWidth ? maxWidth - 20 : 264);
   let histCssHeight = 64;
   let histCanWidth = Math.round(histCssWidth * uPlot.pxRatio);
   let histCanHeight = Math.round(histCssHeight * uPlot.pxRatio);
