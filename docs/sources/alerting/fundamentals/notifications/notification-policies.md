@@ -54,28 +54,26 @@ Notification policies are _not_ a list, but rather are structured according to a
 - Each policy can have child policies.
 - Each policy can have sibling policies, sharing the same parent and hierarchical level.
 
-Each policy consists of a set of label matchers (0 or more) that specify which labels they are or aren't interested in handling.
+Each policy consists of a set of label matchers (0 or more) that specify which alerts they are or aren't interested in handling. A matching policy refers to a notification policy with label matchers that match the alert instance’s labels.
 
 {{< docs/shared lookup="alerts/how_label_matching_works.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{< figure src="/media/docs/alerting/notification-routing.png" max-width="750px" caption="Matching alert instances with notification policies" alt="Example of a notification policy tree" >}}
 
-{{% admonition type="note" %}}
-
-To prevent any alerts from being missed, the default notification policy always handles alert instances if there are no child policies or if none of the child policies have any label matchers that match the alert instance's labels.
-
-{{% /admonition %}}
-
 ## Routing
 
-To determine which notification policy handles which alert instances, the system starts evaluating from the top of the tree; the default notification policy.
+To determine which notification policies handle an alert instance, the system looks for matching policies starting from the top of the tree—beginning with the default notification policy.
 
-If a notification policy has label matchers that match the labels of the alert instance, it descends in to its child policies in the order they are displayed. If there are a matching policy, continues to look for any child policies that might have label matchers that further narrow down the set of labels, and so forth until no more child policies are found.
+If a matching policy is found, the system continues to look for child policies in order. If a child policy is a matching policy, it continues to look for any child policies that might have label matchers that further narrow down the set of labels, and so forth until no more child policies are found. In this case, only the deepest matching child policy handles the alert instance.
 
-As soon as the deepest matching policy is found, the system does not continue to look for sibling policies. If you want to continue to look for other matching policies at the same hierarchical level, enable **Continue matching siblings** on that particular policy.
+Note that policies are evaluated in the order they are displayed, and as soon as a matching policy is found, the system does not continue to look for sibling policies by default.
+
+If you want sibling policies of one matching policy to handle the alert instance as well, then enable **Continue matching siblings** on the particular matching policy.
 
 {{% admonition type="note" %}}
-If you haven't configured any label matchers for your notification policy, your notification policy matches _all_ alert instances. This may prevent child policies from being evaluated unless you have enabled **Continue matching siblings** on the notification policy.
+
+The default notification policy matches all alert instances. It always handles alert instances if there are no child policies or if none of the child policies match the alert instance's labels—this prevents any alerts from being missed.
+
 {{% /admonition %}}
 
 {{< collapse title="Routing example" >}}
