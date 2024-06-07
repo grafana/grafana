@@ -95,11 +95,18 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
 		&AlertmanagerSrv{
-			crypto:     api.MultiOrgAlertmanager.Crypto,
-			log:        logger,
-			ac:         api.AccessControl,
-			mam:        api.MultiOrgAlertmanager,
-			silenceSvc: notifier.NewSilenceService(accesscontrol.NewSilenceService(api.AccessControl, api.RuleStore), api.TransactionManager, logger, api.MultiOrgAlertmanager),
+			crypto: api.MultiOrgAlertmanager.Crypto,
+			log:    logger,
+			ac:     api.AccessControl,
+			mam:    api.MultiOrgAlertmanager,
+			silenceSvc: notifier.NewSilenceService(
+				accesscontrol.NewSilenceService(api.AccessControl, api.RuleStore),
+				api.TransactionManager,
+				logger,
+				api.MultiOrgAlertmanager,
+				api.RuleStore,
+				ruleAuthzService,
+			),
 		},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
@@ -157,6 +164,8 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		templates:           api.Templates,
 		muteTimings:         api.MuteTimings,
 		alertRules:          api.AlertRules,
+		// XXX: Used to flag recording rules, remove when FT is removed
+		featureManager: api.FeatureManager,
 	}), m)
 
 	api.RegisterHistoryApiEndpoints(NewStateHistoryApi(&HistorySrv{
