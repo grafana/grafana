@@ -210,14 +210,14 @@ function getLinkExtensionOnClick(
     openApp: () => void;
   },
   context?: object
-): ((event?: React.MouseEvent) => void) | undefined {
+): ((event?: React.MouseEvent, context?: object) => void) | undefined {
   const { onClick } = options.config;
 
   if (!onClick) {
     return;
   }
 
-  return function onClickExtensionLink(event?: React.MouseEvent) {
+  return function onClickExtensionLink(event?: React.MouseEvent, onClickContext?: object) {
     try {
       reportInteraction('ui_extension_link_clicked', {
         pluginId: options.pluginId,
@@ -226,7 +226,10 @@ function getLinkExtensionOnClick(
         category: options.config.category,
       });
 
-      const result = onClick(event, getEventHelpers(options.pluginId, options.isAppOpened, options.openApp, context));
+      const result = onClick(
+        event,
+        getEventHelpers(options.pluginId, options.isAppOpened, options.openApp, onClickContext || context)
+      );
 
       if (isPromise(result)) {
         result.catch((e) => {

@@ -27,7 +27,7 @@ type PluginExtensionBase = {
 export type PluginExtensionLink = PluginExtensionBase & {
   type: PluginExtensionTypes.link;
   path?: string;
-  onClick?: (event?: React.MouseEvent) => void;
+  onClick?: (event?: React.MouseEvent, context?: object) => void;
   icon?: IconName;
   category?: string;
 };

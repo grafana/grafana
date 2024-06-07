@@ -25,7 +25,7 @@ export function getPluginSettings(pluginId: string, options?: Partial<BackendSrv
         return Promise.reject(e);
       }
 
-      return Promise.reject(new Error('Unknown Plugin'));
+      return Promise.reject(new Error(`Unknown Plugin ${pluginId}`));
     });
 }
 

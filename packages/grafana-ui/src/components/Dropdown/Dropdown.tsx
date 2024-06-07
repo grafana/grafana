@@ -63,6 +63,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
     onOpenChange: handleOpenChange,
     middleware,
     whileElementsMounted: autoUpdate,
+    strategy: 'fixed',
   });
 
   const click = useClick(context);

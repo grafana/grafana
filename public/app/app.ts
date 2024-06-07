@@ -13,6 +13,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 
 import {
+  DataQuery,
   locationUtil,
   monacoLanguageRegistry,
   setLocale,
@@ -76,6 +77,7 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
+import { setQueriesAction } from './features/explore/state/query';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
@@ -84,6 +86,7 @@ import { getCoreExtensionConfigurations } from './features/plugins/extensions/ge
 import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
 import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
 import { createPluginExtensionsHook } from './features/plugins/extensions/usePluginExtensions';
+import { createExtensionLinkConfig } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -158,7 +161,7 @@ export class GrafanaApp {
 
       // Important that extension reducers are initialized before store
       addExtensionReducers();
-      configureStore();
+      const store = configureStore();
       initExtensions();
 
       initAlerting();
@@ -212,6 +215,39 @@ export class GrafanaApp {
       extensionsRegistry.register({
         pluginId: 'grafana',
         extensionConfigs: getCoreExtensionConfigurations(),
+      });
+
+      // TODO: This should probably live somewhere else more near Explore
+      extensionsRegistry.register({
+        pluginId: 'explore',
+        extensionConfigs: [
+          createExtensionLinkConfig<{ query: DataQuery }>({
+            title: 'Run query',
+            description: 'Run query in explore',
+            extensionPointId: 'plugins/grafana-querylibrary-app/query/actions',
+            icon: 'play',
+            configure: (isAppOpened, context) => {
+              if (isAppOpened) {
+                return {};
+              } else {
+                return {
+                  title: 'Open in explore',
+                  description: 'Open in explore',
+                  icon: undefined,
+                };
+              }
+            },
+            onClick: (_, helpers) => {
+              if (helpers.isAppOpened) {
+                // getting the first id, we assume for the POC we will only have single pane anyway.
+                const exploreId = Object.keys(store.getState().explore.panes)[0];
+                store.dispatch(setQueriesAction({ exploreId, queries: [helpers.context!.query] }));
+              } else {
+                helpers.openSplitApp();
+              }
+            },
+          }),
+        ],
       });
 
       if (contextSrv.user.orgRole !== '') {
