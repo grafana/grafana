@@ -71,7 +71,6 @@ func NewRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal no
 // ApplyConfig will only log errors for the remote Alertmanager and ensure we delegate the call to the internal Alertmanager.
 // We don't care about errors in the remote Alertmanager in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	fmt.Println("ApplyConfig() called at", time.Now())
 	var wg sync.WaitGroup
 	wg.Add(1)
 	// Figure out if we need to sync the external Alertmanager in another goroutine.

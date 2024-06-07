@@ -170,14 +170,14 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	}, nil
 }
 
-// ApplyConfig is called everytime we've determined we need to apply an existing configuration to the Alertmanager,
-// including the first time the Alertmanager is started. As a result we do two things:
+// ApplyConfig is called by the multi-org Alertmanager on startup and on every sync loop iteration (1m default).
+// We do two things on startup:
 // 1. Execute a readiness check to make sure the remote Alertmanager we're about to communicate with is up and ready.
 // 2. Upload the configuration and state we currently hold.
-// TODO(santiago): Make ApplyConfig control the sync loop, we can compare configuration here on an interval.
+// On each subsequent call to ApplyConfig we compare and upload only the configuration.
 func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	if am.ready {
-		am.log.Debug("Alertmanager previously marked as ready, skipping readiness check")
+		am.log.Debug("Alertmanager previously marked as ready, skipping readiness check and state sync")
 	} else {
 		am.log.Debug("Start readiness check for remote Alertmanager", "url", am.url)
 		if err := am.checkReadiness(ctx); err != nil {
@@ -224,11 +224,10 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return err
 	}
 
+	// Add auto-generated routes and decrypt before comparing.
 	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig); err != nil {
 		return err
 	}
-
-	// Decrypt the configuration before comparing.
 	decrypted, err := am.decryptConfiguration(ctx, c)
 	if err != nil {
 		return err
@@ -297,15 +296,15 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 	}
 	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
 
+	// Add auto-generated routes and decrypt before sending.
 	if err := am.autogenFn(ctx, am.log, am.orgID, &cfg.AlertmanagerConfig); err != nil {
 		return err
 	}
-
-	// Decrypt and send.
 	decrypted, err := am.decryptConfiguration(ctx, cfg)
 	if err != nil {
 		return err
 	}
+
 	return am.sendConfiguration(ctx, decrypted, hash, time.Now().Unix(), false)
 }
 
@@ -316,11 +315,10 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		return fmt.Errorf("unable to parse the default configuration: %w", err)
 	}
 
+	// Add auto-generated routes and decrypt before sending.
 	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig); err != nil {
 		return err
 	}
-
-	// Decrypt before sending.
 	decrypted, err := am.decryptConfiguration(ctx, c)
 	if err != nil {
 		return err

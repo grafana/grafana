@@ -123,10 +123,10 @@ func TestApplyConfig(t *testing.T) {
 		if strings.Contains(r.URL.Path, "/ready") || r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/state") {
 			w.Header().Add("content-type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"status": "error"})
+			require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"status": "error"}))
 		}
 		w.Header().Add("content-type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"status": "success"}))
 	})
 
 	var configSent client.UserGrafanaConfig
@@ -135,7 +135,7 @@ func TestApplyConfig(t *testing.T) {
 			require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
 		}
 		w.Header().Add("content-type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"status": "success"}))
 	})
 
 	// Encrypt receivers to save secrets in the database.
