@@ -135,7 +135,7 @@ export function PanelChrome({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
-  const panelTitleId = useId();
+  const panelTitleId = useId().replace(/:/g, '_');
 
   const hasHeader = !hoverHeader;
 
