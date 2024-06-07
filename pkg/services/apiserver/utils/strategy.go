@@ -66,9 +66,10 @@ type workingValues struct {
 }
 
 // This processes the annotations making sure the requested user can set the given fields
-func (s *genericStrategy) prepare(ctx context.Context, op backend.AdmissionRequestOperation, obj, old runtime.Object) (rsp workingValues) {
+func (s *genericStrategy) prepare(ctx context.Context, op backend.AdmissionRequestOperation, obj, old runtime.Object) workingValues {
 	var err error
-
+	rsp := workingValues{}
+	// When validation/mutation hooks exist delegate the functions
 	if s.opts.MutationHook != nil {
 		gvk := obj.GetObjectKind().GroupVersionKind()
 		mrsp, err := s.opts.MutationHook(ctx, &backend.AdmissionRequest{
@@ -123,7 +124,7 @@ func (s *genericStrategy) prepare(ctx context.Context, op backend.AdmissionReque
 	}
 
 	if old != nil {
-		rsp.metaold, err = MetaAccessor(obj)
+		rsp.metaold, err = MetaAccessor(old)
 		if err != nil {
 			rsp.errors = append(rsp.errors, &field.Error{
 				Type:   field.ErrorTypeInternal,
@@ -131,8 +132,7 @@ func (s *genericStrategy) prepare(ctx context.Context, op backend.AdmissionReque
 			})
 		}
 	}
-
-	return // rsp
+	return rsp
 }
 
 // This processes the annotations making sure the requested user can set the given fields
@@ -189,7 +189,7 @@ func (genericStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object)
 func (s *genericStrategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
 	work := s.prepare(ctx, backend.AdmissionRequestCreate, obj, nil)
 
-	work.meta.SetCreatedBy(work.user.GetID().String())
+	work.meta.SetCreatedBy(work.user.GetUID().String())
 	work.meta.SetUpdatedBy("")
 	work.meta.SetUpdatedTimestamp(nil)
 
@@ -213,7 +213,7 @@ func (s *genericStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.O
 	}
 	work := s.prepare(ctx, backend.AdmissionRequestUpdate, obj, old)
 
-	work.meta.SetUpdatedBy(work.user.GetID().String())
+	work.meta.SetUpdatedBy(work.user.GetUID().String())
 	work.meta.SetUpdatedTimestamp(toPtr(time.Now()))
 	work.meta.SetCreatedBy(work.metaold.GetCreatedBy()) // Reset the created by field
 
