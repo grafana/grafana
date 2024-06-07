@@ -875,6 +875,7 @@ github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusrec
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver v0.74.0/go.mod h1:uiW3V9EX8A5DOoxqDLuSh++ewHr+owtonCSiqMcpy3w=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.74.0 h1:2uysjsaqkf9STFeJN/M6i/sSYEN5pZJ94Qd2/Hg1pKE=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.74.0/go.mod h1:qoGuayD7cAtshnKosIQHd6dobcn6/sqgUn0v/Cg2UB8=
+github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQb2IpWsCzug=
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
 github.com/opencontainers/runtime-spec v1.0.2 h1:UfAcuLBJB9Coz72x1hgl8O5RVzTdNiaglX6v2DM6FI0=
 github.com/openfga/api/proto v0.0.0-20240318145204-66b9e5cb403c h1:2UmuAlvXoZGQRuZ4gzl0CQGLB+rSke2uo+OXlw9/1t8=
