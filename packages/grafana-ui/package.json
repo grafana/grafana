@@ -143,7 +143,7 @@
     "@types/mock-raf": "1.0.6",
     "@types/node": "20.14.2",
     "@types/prismjs": "1.26.4",
-    "@types/react": "18.3.2",
+    "@types/react": "18.3.3",
     "@types/react-beautiful-dnd": "13.1.8",
     "@types/react-color": "3.0.12",
     "@types/react-dom": "18.2.25",
