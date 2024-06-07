@@ -41,7 +41,7 @@ It also adds the `breaking change` label to the pull request.
 
 ## What do comments on my PR mean?
 
-![Levitate comment](./breaking-changes-comment-screenshot.png)
+![Example Levitate comment on PR](./breaking-changes-comment-screenshot.png)
 
 Receiving a comment like the one above does not necessarily mean that you actually introduced breaking
 changes. This is because certain edge cases are still not covered by the tool, but there is a good chance that they may happen, so we call it to your attention.
@@ -51,17 +51,17 @@ By clicking the links in the comment ("more info" or "Check console output") you
 **Removed exported members** (console view):<br />
 This means that some previously exported members won't be available in the newer version of the package, so dependent plugins can break.
 
-![](./breaking-changes-console-screenshot-1.png)
+![Removed exported members](./breaking-changes-console-screenshot-1.png)
 
 **Changed an existing member** (console view):<br />
 This means that a member was changed in a way that can break dependent plugins.
 
-![](./breaking-changes-console-screenshot-2.png)
+![Changed an existing member](./breaking-changes-console-screenshot-2.png)
 
 **No breaking changes** (console view):<br />
 Seeing this suggests that while changes were made, most probably none of them were breaking. You are good to go! 👏
 
-![](./breaking-changes-console-screenshot-3.png)
+![No breaking changes](./breaking-changes-console-screenshot-3.png)
 
 ## How can I decide if it is really a breaking change?
 
