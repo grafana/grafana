@@ -43,10 +43,7 @@ export const CreateEmailSharing = ({ hasError }: { hasError: boolean }) => {
           <div className={styles.checkbox}>
             <Checkbox
               {...register('billAcknowledgment', { required: true })}
-              label={t(
-                'public-dashboard.email-sharing.bill-ack',
-                '"I understand that adding users requires payment.*"'
-              )}
+              label={t('public-dashboard.email-sharing.bill-ack', 'I understand that adding users requires payment.*')}
             />
           </div>
           <Stack direction="row" gap={1} alignItems="center">

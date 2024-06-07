@@ -1381,7 +1381,7 @@
     "email-sharing": {
       "accept-button": "Accept",
       "alert-text": "Effective immediately, sharing public dashboards by email incurs a cost per active user. Going forward, you’ll be prompted for payment whenever you add new users to your dashboard.",
-      "bill-ack": "\"I understand that adding users requires payment.*\"",
+      "bill-ack": "I understand that adding users requires payment.*",
       "cancel-button": "Cancel",
       "input-invalid-email-text": "Invalid email",
       "input-required-email-text": "Email is required",

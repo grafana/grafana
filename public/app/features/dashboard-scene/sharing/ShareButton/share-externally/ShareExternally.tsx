@@ -30,28 +30,33 @@ import { isEmailSharingEnabled, PublicDashboardShareType } from './utils';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
 
-export const ANYONE_WITH_THE_LINK_SHARE_OPTION = {
-  label: t('public-dashboard.share-externally.public-share-type-option-label', 'Anyone with the link'),
-  description: t(
-    'public-dashboard.share-externally.public-share-type-option-description',
-    'Anyone with the link can access'
-  ),
-  value: PublicDashboardShareType.PUBLIC,
-  icon: 'globe',
+export const getAnyOneWithTheLinkShareOption = () => {
+  return {
+    label: t('public-dashboard.share-externally.public-share-type-option-label', 'Anyone with the link'),
+    description: t(
+      'public-dashboard.share-externally.public-share-type-option-description',
+      'Anyone with the link can access'
+    ),
+    value: PublicDashboardShareType.PUBLIC,
+    icon: 'globe',
+  };
 };
 
-const SHARE_EXTERNALLY_OPTIONS = [ANYONE_WITH_THE_LINK_SHARE_OPTION];
-if (isEmailSharingEnabled()) {
-  SHARE_EXTERNALLY_OPTIONS.unshift({
-    label: t('public-dashboard.share-externally.email-share-type-option-label', 'Only specific people'),
-    description: t(
-      'public-dashboard.share-externally.email-share-type-option-description',
-      'Only people with access can open with the link'
-    ),
-    value: PublicDashboardShareType.EMAIL,
-    icon: 'users-alt',
-  });
-}
+const getOnlySpecificPeopleShareOption = () => ({
+  label: t('public-dashboard.share-externally.email-share-type-option-label', 'Only specific people'),
+  description: t(
+    'public-dashboard.share-externally.email-share-type-option-description',
+    'Only people with access can open with the link'
+  ),
+  value: PublicDashboardShareType.EMAIL,
+  icon: 'users-alt',
+});
+
+const getShareExternallyOptions = () => {
+  return isEmailSharingEnabled()
+    ? [getOnlySpecificPeopleShareOption(), getAnyOneWithTheLinkShareOption()]
+    : [getAnyOneWithTheLinkShareOption()];
+};
 
 export function ShareExternally() {
   const { dashboard } = useShareDrawerContext();
@@ -70,14 +75,15 @@ export function ShareExternally() {
 }
 
 function ShareExternallyRenderer({ publicDashboard }: { publicDashboard?: PublicDashboard }) {
+  const options = getShareExternallyOptions();
   const getShareType = useMemo(() => {
     if (publicDashboard && isEmailSharingEnabled()) {
-      const opt = SHARE_EXTERNALLY_OPTIONS.find((opt) => opt.value === publicDashboard?.share)!;
-      return opt ?? SHARE_EXTERNALLY_OPTIONS[0];
+      const opt = options.find((opt) => opt.value === publicDashboard?.share)!;
+      return opt ?? options[0];
     }
 
-    return SHARE_EXTERNALLY_OPTIONS[0];
-  }, [publicDashboard]);
+    return options[0];
+  }, [publicDashboard, options]);
 
   const [shareType, setShareType] = useState<SelectableValue<PublicDashboardShareType>>(getShareType);
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
@@ -95,7 +101,7 @@ function ShareExternallyRenderer({ publicDashboard }: { publicDashboard?: Public
   return (
     <Stack direction="column" gap={2} data-testid={selectors.container}>
       <ShareAlerts publicDashboard={publicDashboard} />
-      <ShareTypeSelect setShareType={setShareType} value={shareType} options={SHARE_EXTERNALLY_OPTIONS} />
+      <ShareTypeSelect setShareType={setShareType} value={shareType} options={options} />
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode={publicDashboard ? 'edit' : 'create'} />}
       {Config}
       {publicDashboard && (

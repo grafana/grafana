@@ -19,7 +19,7 @@ import { AccessControlAction } from 'app/types';
 
 import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 
-import { ANYONE_WITH_THE_LINK_SHARE_OPTION } from './ShareExternally';
+import { getAnyOneWithTheLinkShareOption } from './ShareExternally';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
 export default function ShareTypeSelect({
@@ -40,6 +40,7 @@ export default function ShareTypeSelect({
   const [updateAccess, { isLoading }] = useUpdatePublicDashboardAccessMutation();
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
+  const anyOneWithTheLinkOpt = getAnyOneWithTheLinkShareOption();
 
   const onUpdateShareType = (shareType: PublicDashboardShareType) => {
     if (!publicDashboard) {
@@ -84,10 +85,8 @@ export default function ShareTypeSelect({
           />
         ) : (
           <>
-            {toIconName(ANYONE_WITH_THE_LINK_SHARE_OPTION.icon) && (
-              <Icon name={toIconName(ANYONE_WITH_THE_LINK_SHARE_OPTION.icon)!} />
-            )}
-            <Text>{ANYONE_WITH_THE_LINK_SHARE_OPTION.label}</Text>
+            {toIconName(anyOneWithTheLinkOpt.icon) && <Icon name={toIconName(anyOneWithTheLinkOpt.icon)!} />}
+            <Text>{anyOneWithTheLinkOpt.label}</Text>
           </>
         )}
         <Text element="p" variant="bodySmall" color="disabled">
