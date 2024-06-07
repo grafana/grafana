@@ -105,12 +105,6 @@ case "$1" in
                 ;;
         esac
       ;;
-      
-    "oldDash")
-      cypressConfig[specPattern]=./e2e/various-suite/$testFilesForSingleSuite
-      cypressConfig[video]=false
-      CMD="cypress open"
-      ;;
 
     *)
         cypressConfig[specPattern]=./e2e/"${args[0]}"/$testFilesForSingleSuite
