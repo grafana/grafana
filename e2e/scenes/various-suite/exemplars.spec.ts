@@ -69,7 +69,7 @@ describe('Exemplars', () => {
 
     cy.get(`[data-testid="time-series-zoom-to-data"]`).click();
 
-    e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mousemove');
+    e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mousemove', { force: true });
     cy.contains('Query with gdev-tempo').click();
     e2e.components.TraceViewer.spanBar().should('have.length', 11);
   });
