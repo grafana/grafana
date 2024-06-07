@@ -2,7 +2,7 @@
 
 [BackendSrv](https://github.com/grafana/grafana/blob/main/packages/grafana-runtime/src/services/backendSrv.ts) handles all outgoing HTTP requests from Grafana. This document explains the high-level concepts used by `BackendSrv`.
 
-## Canceling requests
+## Cancel requests
 
 While data sources can implement their own cancellation concept, we recommend that you use the method described in this section.
 
