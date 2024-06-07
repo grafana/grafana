@@ -29,6 +29,12 @@ type ServiceCfg struct {
 	ListenHTTP                 bool
 	MaxConcurrentReadsForCheck uint32
 	ResolveNodeLimit           uint32
+
+	// Enables caching of Check results for the Check and List objects APIs
+	CheckQueryCacheEnabled bool
+	// sets the cache size limit (in items)
+	CheckQueryCacheLimit uint32
+	CheckQueryCacheTTL   time.Duration
 }
 
 type Service struct {
@@ -53,6 +59,9 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 			ListenHTTP:                 section.Key("listen_http").MustBool(true),
 			MaxConcurrentReadsForCheck: uint32(section.Key("max_concurrent_reads_for_check").MustUint(0)),
 			ResolveNodeLimit:           uint32(section.Key("resolve_node_limit").MustUint(0)),
+			CheckQueryCacheEnabled:     section.Key("check_query_cache_enabled").MustBool(true),
+			CheckQueryCacheLimit:       uint32(section.Key("check_query_cache_limit").MustUint(0)),
+			CheckQueryCacheTTL:         time.Duration(section.Key("check_query_cache_ttl").MustInt(60) * int(time.Second)),
 		},
 	}
 

@@ -459,7 +459,7 @@ require (
 )
 
 require (
-	github.com/grafana/zanzana v0.0.0-20240607091936-b9f9d97427f3
+	github.com/grafana/zanzana v0.0.0-20240607095945-217a05305b2d
 	github.com/openfga/api/proto v0.0.0-20240318145204-66b9e5cb403c
 )
 
