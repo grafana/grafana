@@ -1,5 +1,4 @@
-//go:build ignore
-// +build ignore
+//go:build ruleguard
 
 // The MIT License (MIT)
 //
@@ -25,13 +24,13 @@
 
 package gorules
 
-import "github.com/quasilyte/go-ruleguard/dsl/fluent"
+import "github.com/quasilyte/go-ruleguard/dsl"
 
 // This is a collection of rules for ruleguard: https://github.com/quasilyte/go-ruleguard
 // Copied from https://github.com/dgryski/semgrep-go
 
 // Remove extra conversions: mdempsky/unconvert
-func unconvert(m fluent.Matcher) {
+func unconvert(m dsl.Matcher) {
 	m.Match("int($x)").Where(m["x"].Type.Is("int") && !m["x"].Const).Report("unnecessary conversion").Suggest("$x")
 
 	m.Match("float32($x)").Where(m["x"].Type.Is("float32") && !m["x"].Const).Report("unnecessary conversion").Suggest("$x")
@@ -56,14 +55,14 @@ func unconvert(m fluent.Matcher) {
 
 // Don't use == or != with time.Time
 // https://github.com/dominikh/go-tools/issues/47 : Wontfix
-func timeeq(m fluent.Matcher) {
+func timeeq(m dsl.Matcher) {
 	m.Match("$t0 == $t1").Where(m["t0"].Type.Is("time.Time")).Report("using == with time.Time")
 	m.Match("$t0 != $t1").Where(m["t0"].Type.Is("time.Time")).Report("using != with time.Time")
 	m.Match(`map[$k]$v`).Where(m["k"].Type.Is("time.Time")).Report("map with time.Time keys are easy to misuse")
 }
 
 // Wrong err in error check
-func wrongerr(m fluent.Matcher) {
+func wrongerr(m dsl.Matcher) {
 	m.Match("if $*_, $err0 := $*_; $err1 != nil { $*_ }").
 		Where(m["err0"].Text == "err" && m["err0"].Type.Is("error") && m["err1"].Text != "err" && m["err1"].Type.Is("error")).
 		Report("maybe wrong err in error check")
@@ -130,7 +129,7 @@ func wrongerr(m fluent.Matcher) {
 }
 
 // err but no an error
-func errnoterror(m fluent.Matcher) {
+func errnoterror(m dsl.Matcher) {
 
 	// Would be easier to check for all err identifiers instead, but then how do we get the type from m[] ?
 
@@ -156,7 +155,7 @@ func errnoterror(m fluent.Matcher) {
 }
 
 // Identical if and else bodies
-func ifbodythenbody(m fluent.Matcher) {
+func ifbodythenbody(m dsl.Matcher) {
 	m.Match("if $*_ { $body } else { $body }").
 		Report("identical if and else bodies")
 
@@ -177,12 +176,12 @@ func subtractnoteq(m fluent.Matcher) {
 */
 
 // Self-assignment
-func selfassign(m fluent.Matcher) {
+func selfassign(m dsl.Matcher) {
 	m.Match("$x = $x").Report("useless self-assignment")
 }
 
 // Odd nested ifs
-func oddnestedif(m fluent.Matcher) {
+func oddnestedif(m dsl.Matcher) {
 	m.Match("if $x { if $x { $*_ }; $*_ }",
 		"if $x == $y { if $x != $y {$*_ }; $*_ }",
 		"if $x != $y { if $x == $y {$*_ }; $*_ }",
@@ -199,7 +198,7 @@ func oddnestedif(m fluent.Matcher) {
 }
 
 // odd bitwise expressions
-func oddbitwise(m fluent.Matcher) {
+func oddbitwise(m dsl.Matcher) {
 	m.Match("$x | $x",
 		"$x | ^$x",
 		"^$x | $x").
@@ -215,7 +214,7 @@ func oddbitwise(m fluent.Matcher) {
 }
 
 // odd sequence of if tests with return
-func ifreturn(m fluent.Matcher) {
+func ifreturn(m dsl.Matcher) {
 	m.Match("if $x { return $*_ }; if $x {$*_ }").Report("odd sequence of if test")
 	m.Match("if $x { return $*_ }; if !$x {$*_ }").Report("odd sequence of if test")
 	m.Match("if !$x { return $*_ }; if $x {$*_ }").Report("odd sequence of if test")
@@ -224,7 +223,7 @@ func ifreturn(m fluent.Matcher) {
 
 }
 
-func oddifsequence(m fluent.Matcher) {
+func oddifsequence(m dsl.Matcher) {
 	m.Match("if $x { $*_ }; if $x {$*_ }").Report("odd sequence of if test")
 
 	m.Match("if $x == $y { $*_ }; if $y == $x {$*_ }").Report("odd sequence of if tests")
@@ -238,7 +237,7 @@ func oddifsequence(m fluent.Matcher) {
 }
 
 // odd sequence of nested if tests
-func nestedifsequence(m fluent.Matcher) {
+func nestedifsequence(m dsl.Matcher) {
 	m.Match("if $x < $y { if $x >= $y {$*_ }; $*_ }").Report("odd sequence of nested if tests")
 	m.Match("if $x <= $y { if $x > $y {$*_ }; $*_ }").Report("odd sequence of nested if tests")
 	m.Match("if $x > $y { if $x <= $y {$*_ }; $*_ }").Report("odd sequence of nested if tests")
@@ -246,11 +245,11 @@ func nestedifsequence(m fluent.Matcher) {
 }
 
 // odd sequence of assignments
-func identicalassignments(m fluent.Matcher) {
+func identicalassignments(m dsl.Matcher) {
 	m.Match("$x  = $y; $y = $x").Report("odd sequence of assignments")
 }
 
-func oddcompoundop(m fluent.Matcher) {
+func oddcompoundop(m dsl.Matcher) {
 	m.Match("$x += $x + $_",
 		"$x += $x - $_").
 		Report("odd += expression")
@@ -260,13 +259,13 @@ func oddcompoundop(m fluent.Matcher) {
 		Report("odd -= expression")
 }
 
-func constswitch(m fluent.Matcher) {
+func constswitch(m dsl.Matcher) {
 	m.Match("switch $x { $*_ }", "switch $*_; $x { $*_ }").
 		Where(m["x"].Const && !m["x"].Text.Matches(`^runtime\.`)).
 		Report("constant switch")
 }
 
-func oddcomparisons(m fluent.Matcher) {
+func oddcomparisons(m dsl.Matcher) {
 	m.Match(
 		"$x - $y == 0",
 		"$x - $y != 0",
@@ -279,7 +278,7 @@ func oddcomparisons(m fluent.Matcher) {
 	).Report("odd comparison")
 }
 
-func oddmathbits(m fluent.Matcher) {
+func oddmathbits(m dsl.Matcher) {
 	m.Match(
 		"64 - bits.LeadingZeros64($x)",
 		"32 - bits.LeadingZeros32($x)",
@@ -314,7 +313,7 @@ func floateq(m fluent.Matcher) {
 }
 */
 
-func badexponent(m fluent.Matcher) {
+func badexponent(m dsl.Matcher) {
 	m.Match(
 		"2 ^ $x",
 		"10 ^ $x",
@@ -340,7 +339,7 @@ func floatloop(m fluent.Matcher) {
 }
 */
 
-func urlredacted(m fluent.Matcher) {
+func urlredacted(m dsl.Matcher) {
 
 	m.Match(
 		"log.Println($x, $*_)",
@@ -359,7 +358,7 @@ func urlredacted(m fluent.Matcher) {
 		Report("consider $x.Redacted() when outputting URLs")
 }
 
-func sprinterr(m fluent.Matcher) {
+func sprinterr(m dsl.Matcher) {
 	m.Match(`fmt.Sprint($err)`,
 		`fmt.Sprintf("%s", $err)`,
 		`fmt.Sprintf("%v", $err)`,
@@ -369,15 +368,16 @@ func sprinterr(m fluent.Matcher) {
 
 }
 
-func largeloopcopy(m fluent.Matcher) {
-	m.Match(
-		`for $_, $v := range $_ { $*_ }`,
-	).
-		Where(m["v"].Type.Size > 512).
-		Report(`loop copies large value each iteration`)
-}
+// panics, so disabling for now
+// func largeloopcopy(m dsl.Matcher) {
+// 	m.Match(
+// 		`for $_, $v := range $_ { $*_ }`,
+// 	).
+// 		Where(m["v"].Type.Size > 512).
+// 		Report(`loop copies large value each iteration`)
+// }
 
-func joinpath(m fluent.Matcher) {
+func joinpath(m dsl.Matcher) {
 	m.Match(
 		`strings.Join($_, "/")`,
 		`strings.Join($_, "\\")`,
@@ -386,7 +386,7 @@ func joinpath(m fluent.Matcher) {
 		Report(`did you mean path.Join() or filepath.Join() ?`)
 }
 
-func readfull(m fluent.Matcher) {
+func readfull(m dsl.Matcher) {
 	m.Match(`$n, $err := io.ReadFull($_, $slice)
                  if $err != nil || $n != len($slice) {
                               $*_
@@ -418,7 +418,7 @@ func readfull(m fluent.Matcher) {
 	).Report("io.ReadFull() returns err == nil iff n == len(slice)")
 }
 
-func nilerr(m fluent.Matcher) {
+func nilerr(m dsl.Matcher) {
 	m.Match(
 		`if err == nil { return err }`,
 		`if err == nil { return $*_, err }`,
@@ -427,7 +427,7 @@ func nilerr(m fluent.Matcher) {
 
 }
 
-func mailaddress(m fluent.Matcher) {
+func mailaddress(m dsl.Matcher) {
 	m.Match(
 		"fmt.Sprintf(`\"%s\" <%s>`, $NAME, $EMAIL)",
 		"fmt.Sprintf(`\"%s\"<%s>`, $NAME, $EMAIL)",
@@ -442,7 +442,7 @@ func mailaddress(m fluent.Matcher) {
 		Suggest("(&mail.Address{Name:$NAME, Address:$EMAIL}).String()")
 }
 
-func errnetclosed(m fluent.Matcher) {
+func errnetclosed(m dsl.Matcher) {
 	m.Match(
 		`strings.Contains($err.Error(), $text)`,
 	).
@@ -452,7 +452,7 @@ func errnetclosed(m fluent.Matcher) {
 
 }
 
-func httpheaderadd(m fluent.Matcher) {
+func httpheaderadd(m dsl.Matcher) {
 	m.Match(
 		`$H.Add($KEY, $VALUE)`,
 	).
@@ -461,7 +461,7 @@ func httpheaderadd(m fluent.Matcher) {
 		Suggest(`$H.Set($KEY, $VALUE)`)
 }
 
-func hmacnew(m fluent.Matcher) {
+func hmacnew(m dsl.Matcher) {
 	m.Match("hmac.New(func() hash.Hash { return $x }, $_)",
 		`$f := func() hash.Hash { return $x }
 	$*_
@@ -470,7 +470,7 @@ func hmacnew(m fluent.Matcher) {
 		Report("invalid hash passed to hmac.New()")
 }
 
-func readeof(m fluent.Matcher) {
+func readeof(m dsl.Matcher) {
 	m.Match(
 		`$n, $err = $r.Read($_)
 	if $err != nil {
@@ -483,13 +483,13 @@ func readeof(m fluent.Matcher) {
 		Report("Read() can return n bytes and io.EOF")
 }
 
-func writestring(m fluent.Matcher) {
+func writestring(m dsl.Matcher) {
 	m.Match(`io.WriteString($w, string($b))`).
 		Where(m["b"].Type.Is("[]byte")).
 		Suggest("$w.Write($b)")
 }
 
-func badlock(m fluent.Matcher) {
+func badlock(m dsl.Matcher) {
 	// Shouldn't give many false positives without type filter
 	// as Lock+Unlock pairs in combination with defer gives us pretty
 	// a good chance to guess correctly. If we constrain the type to sync.Mutex

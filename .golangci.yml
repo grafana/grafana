@@ -200,7 +200,7 @@ linters-settings:
       - ruleguard
     settings:
       ruleguard:
-        rules: pkg/ruleguard.rules.go
+        rules: "${configDir}/pkg/ruleguard.rules.go"
   misspell:
     ignore-words:
       - Unknwon
@@ -217,6 +217,7 @@ linters:
     - errcheck
     - errorlint
     - exhaustive
+    - gocritic
     - gocyclo
     - goimports
     - goprintffuncname
@@ -304,3 +305,6 @@ issues:
         - gosec
       path: (.+)_test\.go
       text: G601
+    - linters:
+        - gocritic
+      path: (.+)\.pb\.go
