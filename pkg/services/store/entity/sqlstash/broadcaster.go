@@ -3,18 +3,21 @@ package sqlstash
 import (
 	"context"
 	"fmt"
+	"io"
 )
 
-type ConnectFunc[T any] func(chan T) error
+type ConnectFunc[T any] func(chan<- T) error
 
 type Broadcaster[T any] interface {
 	Subscribe(context.Context) (<-chan T, error)
-	Unsubscribe(chan T)
+	Unsubscribe(<-chan T)
 }
 
 func NewBroadcaster[T any](ctx context.Context, connect ConnectFunc[T]) (Broadcaster[T], error) {
-	b := &broadcaster[T]{}
-	err := b.start(ctx, connect)
+	b := &broadcaster[T]{
+		started: make(chan struct{}),
+	}
+	err := b.init(ctx, connect)
 	if err != nil {
 		return nil, err
 	}
@@ -23,21 +26,26 @@ func NewBroadcaster[T any](ctx context.Context, connect ConnectFunc[T]) (Broadca
 }
 
 type broadcaster[T any] struct {
-	running     bool // FIXME: race condition between `Subscribe`/`Unsubscribe` and `start`
-	ctx         context.Context
-	subs        map[chan T]struct{}
-	cache       Cache[T]
-	subscribe   chan chan T
-	unsubscribe chan chan T
+	ctx                 context.Context
+	subs                map[<-chan T]chan T
+	cache               Cache[T]
+	subscribe           chan chan T
+	unsubscribe         chan (<-chan T)
+	started, terminated chan struct{}
 }
 
 func (b *broadcaster[T]) Subscribe(ctx context.Context) (<-chan T, error) {
-	if !b.running {
-		return nil, fmt.Errorf("broadcaster not running")
+	// wait for broadcaster to start
+	select {
+	case <-b.started:
 	}
 
 	sub := make(chan T, 100)
-	b.subscribe <- sub
+	select {
+	case <-b.terminated:
+		return nil, io.EOF
+	case b.subscribe <- sub:
+	}
 	go func() {
 		<-ctx.Done()
 		b.unsubscribe <- sub
@@ -46,15 +54,20 @@ func (b *broadcaster[T]) Subscribe(ctx context.Context) (<-chan T, error) {
 	return sub, nil
 }
 
-func (b *broadcaster[T]) Unsubscribe(sub chan T) {
-	b.unsubscribe <- sub
-}
-
-func (b *broadcaster[T]) start(ctx context.Context, connect ConnectFunc[T]) error {
-	if b.running {
-		return fmt.Errorf("broadcaster already running")
+func (b *broadcaster[T]) Unsubscribe(sub <-chan T) {
+	// wait for broadcaster to start
+	select {
+	case <-b.started:
 	}
 
+	select {
+	case b.unsubscribe <- sub:
+	case <-b.terminated:
+	}
+}
+
+// init initializes the broadcaster. It should not be run more than once.
+func (b *broadcaster[T]) init(ctx context.Context, connect ConnectFunc[T]) error {
 	stream := make(chan T, 100)
 
 	err := connect(stream)
@@ -66,27 +79,31 @@ func (b *broadcaster[T]) start(ctx context.Context, connect ConnectFunc[T]) erro
 
 	b.cache = NewCache[T](ctx, 100)
 	b.subscribe = make(chan chan T, 100)
-	b.unsubscribe = make(chan chan T, 100)
-	b.subs = make(map[chan T]struct{})
+	b.unsubscribe = make(chan (<-chan T), 100)
+	b.subs = make(map[<-chan T]chan T)
+	b.terminated = make(chan struct{})
 
+	close(b.started)
 	go b.stream(stream)
 
-	b.running = true
 	return nil
 }
 
-func (b *broadcaster[T]) stream(input chan T) {
+func (b *broadcaster[T]) stream(input <-chan T) {
+	defer func() {
+		close(b.terminated)
+		for _, sub := range b.subs {
+			close(sub)
+			delete(b.subs, sub)
+		}
+	}()
+
 	for {
 		select {
 		// context cancelled
 		case <-b.ctx.Done():
-			close(input)
-			for sub := range b.subs {
-				close(sub)
-				delete(b.subs, sub)
-			}
-			b.running = false
 			return
+
 		// new subscriber
 		case sub := <-b.subscribe:
 			// send initial batch of cached items
@@ -95,29 +112,23 @@ func (b *broadcaster[T]) stream(input chan T) {
 				close(sub)
 				continue
 			}
+			b.subs[sub] = sub
 
-			b.subs[sub] = struct{}{}
 		// unsubscribe
-		case sub := <-b.unsubscribe:
-			if _, ok := b.subs[sub]; ok {
+		case recv := <-b.unsubscribe:
+			if sub, ok := b.subs[recv]; ok {
 				close(sub)
 				delete(b.subs, sub)
 			}
+
 		// read item from input
 		case item, ok := <-input:
 			// input closed, drain subscribers and exit
 			if !ok {
-				for sub := range b.subs {
-					close(sub)
-					delete(b.subs, sub)
-				}
-				b.running = false
 				return
 			}
-
 			b.cache.Add(item)
-
-			for sub := range b.subs {
+			for _, sub := range b.subs {
 				select {
 				case sub <- item:
 				default:
