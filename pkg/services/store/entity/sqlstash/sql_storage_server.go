@@ -63,6 +63,9 @@ func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer /*, c
 type SqlEntityServer interface {
 	entity.EntityStoreServer
 
+	// FIXME: accpet a context.Context in the lifecycle methods, and Stop should
+	// also return an error.
+
 	Init() error
 	Stop()
 }
@@ -994,7 +997,11 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 func (s *sqlEntityServer) poller(stream chan<- *entity.EntityWatchResponse) {
 	var err error
 
+	// FIXME: we need a way to state startup of server from a (Group, Resource)
+	// standpoint, and consider that new (Group, Resource) may be added to
+	// `kind_version`, so we should probably also poll for changes in there
 	since := int64(0)
+
 	interval := 1 * time.Second
 
 	t := time.NewTicker(interval)
