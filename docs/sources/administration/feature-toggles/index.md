@@ -51,5 +51,7 @@ To edit a feature toggle, follow these steps:
 1. Click **Save changes** and wait for your Grafana instance to restart with the updated feature toggles.
 
 {{% admonition type="note" %}}
+If you don't have the feature toggle management page, enable the `featureToggleAdminPage` feature toggle.
+
 Editing feature toggles with the feature toggle management page is available now in all tiers of [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
