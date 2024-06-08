@@ -29,6 +29,15 @@ export enum HeatmapColorScale {
 }
 
 /**
+ * Controls which axis to allow selection on
+ */
+export enum HeatmapSelectionMode {
+  X = 'x',
+  Xy = 'xy',
+  Y = 'y',
+}
+
+/**
  * Controls various color options
  */
 export interface HeatmapColorOptions {
@@ -223,6 +232,10 @@ export interface Options {
    */
   rowsFrame?: RowsHeatmapOptions;
   /**
+   * Controls which axis to allow selection on
+   */
+  selectionMode?: HeatmapSelectionMode;
+  /**
    * | *{
    * 	layout: ui.HeatmapCellLayout & "auto" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
    * }
@@ -265,6 +278,7 @@ export const defaultOptions: Partial<Options> = {
   legend: {
     show: true,
   },
+  selectionMode: HeatmapSelectionMode.X,
   showValue: ui.VisibilityMode.Auto,
   tooltip: {
     mode: ui.TooltipDisplayMode.Single,

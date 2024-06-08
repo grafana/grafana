@@ -67,7 +67,7 @@ For more information on creating custom roles, refer to [Create custom roles](ht
 
 The following examples give you an idea of how you can combine permissions for Grafana Alerting.
 
-A custom role for read access to alert rules that uses data source DS1 and DS2 in folder F:
+A custom role for read access to alert rules in folder F:
 
 <!-- prettier-ignore-start -->
 ```
@@ -77,14 +77,6 @@ PUT access-control/roles
 	"displayName": "Alert rule reader in folder F",
 	"description": "Read access to rules in folder F that use DS1 and DS2",
 	"permissions": [
-    	{
-        	"action": "datasources:query",
-        	"scope": "datasources:uid:UID_DS1"
-    	},
-    	{
-        	"action": "datasources:query",
-        	"scope": "datasources:uid:UID_DS2"
-    	},
     	{
         	"action": "alert.rules:read",
         	"scope": "folders:uid:UID_F"
@@ -108,14 +100,6 @@ PUT access-control/roles
 	"displayName": "Alert rules editor in folder F",
 	"description": "Edit access to rules in folder F that use DS1 and DS2",
 	"permissions": [
-    	{
-        	"action": "datasources:query",
-        	"scope": "datasources:uid:UID_DS1"
-    	},
-    	{
-        	"action": "datasources:query",
-        	"scope": "datasources:uid:UID_DS2"
-    	},
     	{
         	"action": "alert.rules:read",
         	"scope": "folders:uid:UID_F"
