@@ -71,20 +71,106 @@ If you want to receive every alert as a separate notification, you can do so by 
 
 The timing options decide how often notifications are sent for each group of alerts. There are three timers that you need to know about: Group wait, Group interval, and Repeat interval.
 
-#### Group wait
+These timers wait for the defined period to combine multiple alerts instances into a single notification. They may introduce notification delays but help to minimize the number of notifications.
 
-Group wait is the amount of time Grafana waits before sending the first notification for a new group of alerts. The longer Group wait is the more time you have for other alerts to arrive. The shorter Group wait is the earlier the first notification is sent, but at the risk of sending incomplete notifications. You should always choose a Group wait that makes the most sense for your use case.
+### Group wait
 
 **Default** 30 seconds
 
-#### Group interval
+Group wait is the amount of time Grafana waits before sending the first notification for a new group of alerts.
 
-Once the first notification has been sent for a new group of alerts, the Group interval timer starts. This is the amount of wait time before notifications about changes to the group are sent. For example, another firing alert might have just been added to the group while an existing alert might have resolved. If an alert was too late to be included in the first notification due to Group wait, it is included in subsequent notifications after Group interval. Once Group interval has elapsed, Grafana resets the Group interval timer. This repeats until there are no more alerts in the group after which the group is deleted.
+The longer the Group wait is the more time other alerts have to be included in the first notification of the new group. The shorter the Group wait is the earlier the first notification is sent, but at the risk of not including some notifications.
+
+**Example**
+
+Consider a notification policy that:
+
+- Matches all alert instances with the `team` label—matching labels equals to `team=~".*"`.
+- Groups notifications by the `team` label—one group for each distinct `team`.
+- Sets the group wait option to `30s`.
+
+| Time               | Incoming alert instance         | Notification policy group | Number of instances |                                                                     |
+| ------------------ | ------------------------------- | ------------------------- | ------------------- | ------------------------------------------------------------------- |
+| 00:00              | `alert_name=f1` `team=frontend` | `frontend`                | 1                   | Starts the group wait timer of the `frontend` group.                |
+| 00:10              | `alert_name=f2` `team=frontend` | `frontend`                | 2                   |                                                                     |
+| 00:20              | `alert_name=b1` `team=backend`  | `backend`                 | 1                   | Starts the group wait timer of the `backend` group.                 |
+| 00:30<sup>\*</sup> |                                 | `frontend`                | 2                   | Group wait elapsed. <br/> Send one notification reporting 2 alerts. |
+| 00:35              | `alert_name=b2` `team=backend`  | `backend`                 | 2                   |                                                                     |
+| 00:40              | `alert_name=b3` `team=backend`  | `backend`                 | 3                   |                                                                     |
+| 00:50<sup>\*</sup> |                                 | `backend`                 | 3                   | Group wait elapsed. <br/> Send one notification reporting 3 alerts. |
+
+### Group interval
 
 **Default** 5 minutes
 
-#### Repeat interval
+If an alert was late to be included in the first notification due to Group wait, it's then included in subsequent notifications after Group interval.
 
-Repeat interval decides how often notifications are repeated if the group has not changed since the last notification. You can think of these as reminders that some alerts are still firing. Repeat interval is closely related to Group interval, which means your Repeat interval must not only be greater than or equal to Group interval, but also must be a multiple of Group interval. If Repeat interval is not a multiple of Group interval it is coerced into one. For example, if your Group interval is 5 minutes, and your Repeat interval is 9 minutes, the Repeat interval is rounded up to the nearest multiple of 5 which is 10 minutes.
+Group interval is the amount of time to wait before sending notifications about group changes. For instance, a group change may be adding a new firing alert to the group, or resolving an existing alert.
+
+**Example**
+
+Below is the previous example setting the group interval timer to 5 minutes:
+
+| Time               | Incoming alert instance         | Notification policy group | Number of instances |                                                                                                     |
+| ------------------ | ------------------------------- | ------------------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
+| 00:30<sup>\*</sup> |                                 | `frontend`                | 2                   | Group wait elapsed and starts Group interval timer. <br/> Send one notification reporting 2 alerts. |
+| 00:50<sup>\*</sup> |                                 | `backend`                 | 3                   | Group wait elapsed and starts Group interval timer. <br/> Send one notification reporting 3 alerts. |
+|                    |                                 |                           |                     |                                                                                                     |
+| 01:30              | `alert_name=f3` `team=frontend` | `frontend`                | 3                   |                                                                                                     |
+| 02:30              | `alert_name=f4` `team=frontend` | `frontend`                | 4                   |                                                                                                     |
+| 05:30<sup>\*</sup> |                                 | `frontend`                | 4                   | Group interval elapsed and resets timer. <br/> Send one notification reporting 4 alerts.            |
+| 05:50<sup>\*</sup> |                                 | `backend`                 | 3                   | Group interval elapsed and resets timer. <br/> No group changes, and do not send notification.      |
+| 08:00              | `alert_name=f4` `team=backend`  | `backend`                 | 4                   |                                                                                                     |
+| 10:30<sup>\*</sup> |                                 | `frontend`                | 4                   | Group interval elapsed and resets timer. <br/> No group changes, and do not send notification.      |
+| 10:50<sup>\*</sup> |                                 | `backend`                 | 4                   | Group interval elapsed and resets timer. <br/> Send one notification reporting 4 alerts.            |
+
+**How it works**
+
+Once the first notification has been sent for a new group of alerts, the Group interval timer starts. The timer resets after it has elapsed, repeating this process until there are no more alerts.
+
+It's important to note that an alert instance exits the group after being resolved and notified of its state change. When no alerts remain, the group is deleted, and then the Group wait timer handles the first notification for the next incoming alert once again.
+
+### Repeat interval
 
 **Default** 4 hours
+
+Repeat interval acts as a reminder that alerts in the group are still firing.
+
+The Repeat interval timer decides how often notifications are sent (or repeated) if the group has not changed since the last notification.
+
+Repeat interval must not only be greater than or equal to Group interval, but also must be a multiple of Group interval. If Repeat interval is not a multiple of Group interval it is coerced into one. For example, if your Group interval is 5 minutes, and your Repeat interval is 9 minutes, the Repeat interval is rounded up to the nearest multiple of 5 which is 10 minutes.
+
+**Example**
+
+Below is the previous example setting the repeat interval timer to 4 hours:
+
+| Time               | Incoming alert instance | Notification policy group | Number of instances |                                                                                                  |
+| ------------------ | ----------------------- | ------------------------- | ------------------- | ------------------------------------------------------------------------------------------------ |
+| 05:30<sup>\*</sup> |                         | `frontend`                | 4                   | Group interval elapsed and resets. <br/> Send one notification and starts Repeat interval timer. |
+| 10:50<sup>\*</sup> |                         | `backend`                 | 4                   | Group interval elapsed and resets. <br/> Send one notification and starts Repeat interval timer. |
+|                    |                         |                           |                     |                                                                                                  |
+| 04:05:30           |                         | `frontend`                | 4                   | Repeat interval elapsed and waits starting the group wait timer.                                 |
+| 04:06:00           |                         | `frontend`                | 4                   | Group wait elapsed. Send one notification reminding the 4 firing alerts.                         |
+| 04:10:50           |                         | `backend`                 | 4                   | Repeat interval elapsed and waits starting the group wait timer.                                 |
+| 04:11:20           |                         | `backend`                 | 4                   | Group wait elapsed. Send one notification reminding the 4 firing alerts.                         |
+
+TODO: add FlowChart
+
+-- Incoming new Alert - starts Group wait timer - optional loop receives more notifications - elapses Group wait timer - send first notification - starts Group interval and Repeat interval timers
+
+      - starts Group interval timer
+        - optional loop receiving more notifications
+      - Group interval timer elapsed (move to starts Group interval timer)
+        - has group changes
+            - send notification about group changes
+            - resets Repeat interval timer
+            - resets timer (move to starts Group interval timer)
+        - no group changes
+            - resets timer (move to starts Group interval timer)
+        - no alerts
+            - delete group and timers
+
+      - elapses Repeat interval timer without group changes
+      - starts Group wait timer
+      - elapses Group wait timer
+      - send reminding notification
