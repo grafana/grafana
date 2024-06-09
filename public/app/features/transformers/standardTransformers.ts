@@ -33,6 +33,7 @@ import { regressionTransformerRegistryItem } from './regression/regressionEditor
 import { rowsToFieldsTransformRegistryItem } from './rowsToFields/RowsToFieldsTransformerEditor';
 import { spatialTransformRegistryItem } from './spatial/SpatialTransformerEditor';
 import { timeSeriesTableTransformRegistryItem } from './timeSeriesTable/TimeSeriesTableTransformEditor';
+import { transposeTransformerRegistryItem } from "./editors/TransposeTransformerEditor";
 
 export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
   return [
@@ -68,5 +69,6 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     ...(config.featureToggles.groupToNestedTableTransformation ? [groupToNestedTableTransformRegistryItem] : []),
     formatTimeTransformerRegistryItem,
     timeSeriesTableTransformRegistryItem,
+    transposeTransformerRegistryItem,
   ];
 };
