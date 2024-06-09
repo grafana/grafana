@@ -258,6 +258,10 @@ func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *u
 	return &user.SignedInUser{IsAnonymous: true, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), permissions)}}
 }
 
+func userAdminWithPermissions(orgID int64, orgRole org.RoleType, permissions []accesscontrol.Permission) *user.SignedInUser {
+	return &user.SignedInUser{IsGrafanaAdmin: true, IsAnonymous: false, OrgID: orgID, OrgRole: orgRole, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
+}
+
 func setupSimpleHTTPServer(features featuremgmt.FeatureToggles) *HTTPServer {
 	if features == nil {
 		features = featuremgmt.WithFeatures()

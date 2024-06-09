@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -29,12 +30,15 @@ import (
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/auth/idtest"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -1152,4 +1156,101 @@ func updateSignedInUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPSer
 
 		ctx.fn(sc)
 	})
+}
+
+func TestUsersAPI_WithAdminUser(t *testing.T) {
+	type testCase struct {
+		desc         string
+		orgId        int64
+		role         org.RoleType
+		permission   []accesscontrol.Permission
+		expectedCode int
+		expectedBody string
+	}
+
+	tests := []testCase{
+		{
+			desc:  "without any org should return all users",
+			orgId: accesscontrol.NoOrgID,
+			role:  org.RoleNone,
+			permission: []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionUsersRead,
+				},
+			},
+			expectedCode: http.StatusOK,
+			expectedBody: `[{"id":0,"uid":"","name":"user1","login":"","email":"","avatarUrl":"","isAdmin":false,"isDisabled":false,"lastSeenAt":"0001-01-01T00:00:00Z","lastSeenAtAge":"","authLabels":[]},{"id":0,"uid":"","name":"user2","login":"","email":"","avatarUrl":"","isAdmin":false,"isDisabled":false,"lastSeenAt":"0001-01-01T00:00:00Z","lastSeenAtAge":"","authLabels":[]}]`,
+		},
+		{
+			desc:  "with org and role Viewer should return all users",
+			orgId: testOrgID,
+			role:  org.RoleViewer,
+			permission: []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionUsersRead,
+				},
+			},
+			expectedCode: http.StatusOK,
+			expectedBody: `[{"id":0,"uid":"","name":"user1","login":"","email":"","avatarUrl":"","isAdmin":false,"isDisabled":false,"lastSeenAt":"0001-01-01T00:00:00Z","lastSeenAtAge":"","authLabels":[]},{"id":0,"uid":"","name":"user2","login":"","email":"","avatarUrl":"","isAdmin":false,"isDisabled":false,"lastSeenAt":"0001-01-01T00:00:00Z","lastSeenAtAge":"","authLabels":[]}]`,
+		},
+		{
+			desc:  "with org and role Editor should return all users",
+			orgId: testOrgID,
+			role:  org.RoleEditor,
+			permission: []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionUsersRead,
+				},
+			},
+			expectedCode: http.StatusOK,
+			expectedBody: `[{"id":0,"uid":"","name":"user1","login":"","email":"","avatarUrl":"","isAdmin":false,"isDisabled":false,"lastSeenAt":"0001-01-01T00:00:00Z","lastSeenAtAge":"","authLabels":[]},{"id":0,"uid":"","name":"user2","login":"","email":"","avatarUrl":"","isAdmin":false,"isDisabled":false,"lastSeenAt":"0001-01-01T00:00:00Z","lastSeenAtAge":"","authLabels":[]}]`,
+		},
+		{
+			desc:  "with org and role Admin should return all users",
+			orgId: testOrgID,
+			role:  org.RoleEditor,
+			permission: []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionUsersRead,
+				},
+			},
+			expectedCode: http.StatusOK,
+			expectedBody: `[{"id":0,"uid":"","name":"user1","login":"","email":"","avatarUrl":"","isAdmin":false,"isDisabled":false,"lastSeenAt":"0001-01-01T00:00:00Z","lastSeenAtAge":"","authLabels":[]},{"id":0,"uid":"","name":"user2","login":"","email":"","avatarUrl":"","isAdmin":false,"isDisabled":false,"lastSeenAt":"0001-01-01T00:00:00Z","lastSeenAtAge":"","authLabels":[]}]`,
+		},
+	}
+	userMock := usertest.NewUserServiceFake()
+	userMock.ExpectedSearchUsers = user.SearchUserQueryResult{
+		Users: []*user.UserSearchHitDTO{
+			{Name: "user1"},
+			{Name: "user2"},
+		},
+		TotalCount: 2,
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			expectedIdentity := &authn.Identity{
+				OrgID: tt.orgId,
+				Permissions: map[int64]map[string][]string{
+					0: accesscontrol.GroupScopesByAction(tt.permission),
+					1: accesscontrol.GroupScopesByAction(tt.permission),
+				},
+			}
+
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.searchUsersService = searchusers.ProvideUsersService(hs.Cfg, filters.ProvideOSSSearchUserFilter(), userMock)
+				hs.authnService = &authntest.FakeService{ExpectedIdentity: expectedIdentity}
+			})
+
+			req := webtest.RequestWithSignedInUser(server.NewGetRequest("/api/users/"), userAdminWithPermissions(tt.orgId, tt.role, tt.permission))
+
+			res, err := server.Send(req)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			body, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedBody, string(body))
+			require.NoError(t, res.Body.Close())
+		})
+	}
 }
