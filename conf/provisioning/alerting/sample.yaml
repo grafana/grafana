@@ -1,73 +1,133 @@
-# apiVersion: 1
+# # config file version
+apiVersion: 1
 
+# # List of rule groups to import or update
 # groups:
+#     # <int> organization ID, default = 1
 #   - orgId: 1
+#     # <string, required> name of the rule group
 #     name: my_rule_group
+#     # <string, required> name of the folder the rule group will be stored in
 #     folder: my_first_folder
+#     # <duration, required> interval of the rule group evaluation
 #     interval: 60s
+#     # <list, required> list of rules that are part of the rule group
 #     rules:
-#       - uid: my_id_1
-#         title: my_first_rule
-#         condition: A
-#         data:
-#           - refId: A
-#             datasourceUid: '__expr__'
-#             model:
-#               conditions:
-#                 - evaluator:
-#                     params:
-#                       - 3
-#                     type: gt
-#                   operator:
-#                     type: and
-#                   query:
-#                     params:
-#                       - A
-#                   reducer:
-#                     type: last
-#                   type: query
-#               datasource:
-#                 type: __expr__
-#                 uid: '__expr__'
-#               expression: 1==0
-#               intervalMs: 1000
-#               maxDataPoints: 43200
-#               refId: A
-#               type: math
-#         dashboardUid: my_dashboard
-#         panelId: 123
-#         noDataState: Alerting
-#         executionErrorState: Alerting
-#         for: 60s
-#         annotations:
-#           some_key: some_value
-#         labels:
-#           team: sre_team_1
-#         isPaused: false
+#       # <string, required> unique identifier for the rule. Should not exceed 40 symbols. Only letters, numbers, - (hyphen), and _ (underscore) allowed.
+#     - uid: my_id_1
+#       # <string, required> title of the rule, will be displayed in the UI
+#       title: my_first_rule
+#       # <string, required> query used for the condition
+#       condition: A
+#       # <list, required> list of query objects that should be executed on each
+#       #                  evaluation - should be obtained via the API
+#       data:
+#       - refId: A
+#         datasourceUid: "__expr__"
+#         model:
+#           conditions:
+#           - evaluator:
+#               params:
+#               - 3
+#               type: gt
+#             operator:
+#               type: and
+#             query:
+#               params:
+#               - A
+#             reducer:
+#               type: last
+#             type: query
+#           datasource:
+#             type: __expr__
+#             uid: "__expr__"
+#           expression: 1==0
+#           intervalMs: 1000
+#           maxDataPoints: 43200
+#           refId: A
+#           type: math
+#       # <string> UID of a dashboard that the alert rule should be linked to
+#       dashboardUid: my_dashboard
+#       # <int> ID of the panel that the alert rule should be linked to
+#       panelId: 123
+#       # <string> state of the alert rule when no data is returned
+#       #          possible values: "NoData", "Alerting", "OK", default = NoData
+#       noDataState: Alerting
+#       # <string> state of the alert rule when the query execution
+#       #          fails - possible values: "Error", "Alerting", "OK"
+#       #          default = Alerting
+#       executionErrorState: Alerting
+#       # <duration, required> how long the alert condition should be breached before Firing. Before this time has elapsed, the alert is considered to be Pending
+#       for: 60s
+#       # <map<string, string>> map of strings to attach arbitrary custom data
+#       annotations:
+#         some_key: some_value
+#       # <map<string, string> map of strings to filter and
+#       #                      route alerts
+#       labels:
+#         team: sre_team_1
+#       isPaused: false
+#       # optional settings that let configure notification settings applied to alerts created by this rule
+#       notification_settings:
+#          # <string> name of the receiver (contact-point) that should be used for this route
+#          receiver: grafana-default-email
+#          # <list<string>> The labels by which incoming alerts are grouped together. For example,
+#          #        multiple alerts coming in for cluster=A and alertname=LatencyHigh would
+#          #        be batched into a single group.
+#          #
+#          #        To aggregate by all possible labels, use the special value '...' as
+#          #        the sole label name, for example:
+#          #        group_by: ['...']
+#          #        This effectively disables aggregation entirely, passing through all
+#          #        alerts as-is. This is unlikely to be what you want, unless you have
+#          #        a very low alert volume or your upstream notification system performs
+#          #        its own grouping.
+#          # If defined, must contain the labels 'alertname' and 'grafana_folder', except when contains '...'
+#          group_by: ["alertname", "grafana_folder", "region"]
+#          # <list> Times when the route should be muted. These must match the name of a
+#          #        mute time interval.
+#          #        Additionally, the root node cannot have any mute times.
+#          #        When a route is muted it will not send any notifications, but
+#          #        otherwise acts normally (including ending the route-matching process
+#          #        if the `continue` option is not set)
+#          mute_time_intervals:
+#          - abc
+#          # <duration> How long to initially wait to send a notification for a group
+#          #            of alerts. Allows to collect more initial alerts for the same group.
+#          #            (Usually ~0s to few minutes).
+#          #            If not specified, the corresponding setting of the default policy is used.
+#          group_wait: 30s
+#          # <duration> How long to wait before sending a notification about new alerts that
+#          #            are added to a group of alerts for which an initial notification has
+#          #            already been sent. (Usually ~5m or more).
+#          #            If not specified, the corresponding setting of the default policy is used.
+#          group_interval: 5m
+#          # <duration>  How long to wait before sending a notification again if it has already
+#          #             been sent successfully for an alert. (Usually ~3h or more)
+#          #             If not specified, the corresponding setting of the default policy is used.
+#          repeat_interval: 4h
 
+# # List of alert rule UIDs that should be deleted
+# deleteRules:
+#    # <int> organization ID, default = 1
+#  - orgId: 1
+#    # <string, required> unique identifier for the rule
+#    uid: my_id_1
+
+# # List of contact points to import or update
 # contactPoints:
+#     # <int> organization ID, default = 1
 #   - orgId: 1
+#     # <string, required> name of the contact point
 #     name: cp_1
 #     receivers:
-#       - uid: first_uid
-#         type: prometheus-alertmanager
-#         settings:
-#           url: http://test:9000
-
-# policies:
-#   - orgId: 1
-#     receiver: grafana-default-email
-#     group_by:
-#       - grafana_folder
-#       - alertname
-#     matchers:
-#       - alertname = Watchdog
-#       - severity =~ "warning|critical"
-#     group_wait: 30s
-#     group_interval: 5m
-#     repeat_interval: 4h
-#     routes:
-#       - receiver: cp_1
+#       # <string, required> unique identifier for the receiver. Should not exceed 40 symbols. Only letters, numbers, - (hyphen), and _ (underscore) allowed.
+#     - uid: first_uid
+#       # <string, required> type of the receiver
+#       type: prometheus-alertmanager
+#       # <object, required> settings for the specific receiver type
+#       settings:
+#         url: http://test:9000
 
 # # List of receivers that should be deleted
 # deleteContactPoints:
@@ -140,6 +200,7 @@
 #  - orgId: 1
 #    # <string, required> name of the template, must be unique
 #    name: my_first_template
+
 
 # # List of mute time intervals to import or update
 # muteTimes:
