@@ -23,6 +23,14 @@ initIconCache();
 const testAppEvents = new EventBusSrv();
 const global = window as any;
 global.$ = global.jQuery = $;
+const logzio = {
+  log: jest.fn(),
+  configs: {},
+  services: {},
+  productLoaded: jest.fn(),
+};
+global.logzio = logzio;
+global.parent.__logzio__ = logzio;
 
 // mock the default window.grafanaBootData settings
 const settings: Partial<GrafanaBootConfig> = {

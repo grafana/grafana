@@ -1,5 +1,6 @@
 // LOGZ.IO GRAFANA CHANGE :: DEV-19985: add datasource logos
 export const changeDatasourceLogos = (datasources: any): any => {
+  if (!datasources) { return }
   const logos = {
     metrics: 'public/app/plugins/datasource/elasticsearch/img/logzio-metrics.svg',
     logs: 'public/app/plugins/datasource/elasticsearch/img/logzio-logs.svg',

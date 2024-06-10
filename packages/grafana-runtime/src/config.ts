@@ -198,10 +198,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
     changeDatasourceLogos(options.datasources);
 
     // LOGZ.IO GRAFANA CHANGE :: Add logzio presets to grafana config
-    if (Object.keys(logzioConfigs).length === 0) {
-      console.error('Error loading logzioConfigs');
+    if (Object.keys(logzioConfigs).length > 0) {
+      merge(this, defaults, options, logzioConfigs);
     }
-    merge(this, defaults, options, logzioConfigs);
     // LOGZ.IO GRAFANA CHANGE :: end
 
     this.buildInfo = options.buildInfo || defaults.buildInfo;
