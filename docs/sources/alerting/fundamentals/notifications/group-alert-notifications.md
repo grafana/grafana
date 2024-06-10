@@ -55,7 +55,7 @@ For example, given the `Group by` option set to the `team` label:
 
 ### Group by alert rule or labels
 
-By default, notification policies in Grafana **group alerts by the alert rule**—they are grouped by the `alertname` and `grafana_folder` labels, since alert names are not unique across folders.
+By default, notification policies in Grafana **group alerts by the alert rule**. Specifically, they are grouped using the `alertname` and `grafana_folder` labels, as alert rule names are not unique across folders.
 
 If you want to **group alerts by other labels**, something other than the alert rule, change the `Group by` option to any other combination of labels.
 
