@@ -57,6 +57,39 @@ describe('adHocVariableFiltersEqual', () => {
       )
     ).toBeFalsy();
   });
+
+  describe('when filter property is undefined', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    afterEach(() => {
+      warnSpy.mockClear();
+    });
+
+    afterAll(() => {
+      warnSpy.mockRestore();
+    });
+
+    it('should compare two adhoc variables where both are missing the filter property and return true', () => {
+      expect(
+        adHocVariableFiltersEqual({} as unknown as AdHocVariableModel, {} as unknown as AdHocVariableModel)
+      ).toBeTruthy();
+
+      expect(warnSpy).toHaveBeenCalledWith('Adhoc variable filter property is undefined');
+    });
+
+    it('should compare two adhoc variables where one has no filter property and return false', () => {
+      expect(
+        adHocVariableFiltersEqual(
+          {} as unknown as AdHocVariableModel,
+          {
+            filters: [{ value: 'asdio', key: 'qwe', operator: 'wer' }],
+          } as unknown as AdHocVariableModel
+        )
+      ).toBeFalsy();
+
+      expect(warnSpy).toHaveBeenCalledWith('Adhoc variable filter property is undefined');
+    });
+  });
 });
 
 describe('getDashboardChanges', () => {
@@ -85,6 +118,7 @@ describe('getDashboardChanges', () => {
       ],
     },
   };
+
   it('should return the correct result when no changes', () => {
     const changed = { ...initial };
 
