@@ -92,10 +92,8 @@ function ShareExternallyRenderer({ publicDashboard }: { publicDashboard?: Public
     if (shareType.value === PublicDashboardShareType.EMAIL && isEmailSharingEnabled()) {
       return <EmailSharing />;
     }
-    if (shareType.value === PublicDashboardShareType.PUBLIC) {
-      return <PublicSharing />;
-    }
-    return <></>;
+
+    return <PublicSharing />;
   }, [shareType]);
 
   return (
