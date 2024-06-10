@@ -695,6 +695,11 @@ export class Mousetrap {
     }
     const event: KeyboardEvent = rawEvent;
 
+    // Don't trigger shortcuts when a key is just held down
+    if (event.repeat) {
+      return;
+    }
+
     // normalize e.which for key events
     // @see http://stackoverflow.com/questions/4285627/javascript-keycode-vs-charcode-utter-confusion
     if (typeof event.which !== 'number') {
