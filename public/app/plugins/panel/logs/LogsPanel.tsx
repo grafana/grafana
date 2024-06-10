@@ -29,7 +29,14 @@ import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
 import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 
-import { Options } from './types';
+import {
+  isIsFilterLabelActive,
+  isOnClickFilterLabel,
+  isOnClickFilterOutLabel,
+  isOnClickFilterOutValue,
+  isOnClickFilterValue,
+  Options,
+} from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
 
 interface LogsPanelProps extends PanelProps<Options> {}
@@ -55,6 +62,11 @@ export const LogsPanel = ({
     dedupStrategy,
     enableLogDetails,
     showLogContextToggle,
+    onClickFilterLabel,
+    onClickFilterOutLabel,
+    onClickFilterOutValue,
+    onClickFilterValue,
+    isFilterLabelActive,
   },
   id,
 }: LogsPanelProps) => {
@@ -275,6 +287,11 @@ export const LogsPanel = ({
             onLogRowHover={onLogRowHover}
             app={CoreApp.Dashboard}
             onOpenContext={onOpenContext}
+            onClickFilterLabel={isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : undefined}
+            onClickFilterOutLabel={isOnClickFilterOutLabel(onClickFilterOutLabel) ? onClickFilterOutLabel : undefined}
+            onClickFilterValue={isOnClickFilterValue(onClickFilterValue) ? onClickFilterValue : undefined}
+            onClickFilterOutValue={isOnClickFilterOutValue(onClickFilterOutValue) ? onClickFilterOutValue : undefined}
+            isFilterLabelActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>
