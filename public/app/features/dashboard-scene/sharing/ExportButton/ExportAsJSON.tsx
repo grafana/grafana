@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneObjectRef } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Stack, Switch, useTheme2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -15,6 +16,8 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { transformSceneToSaveModel } from '../../serialization/transformSceneToSaveModel';
 import { getVariablesCompatibility } from '../../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../../utils/interactions';
+
+const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
 
 export interface Props {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -77,20 +80,25 @@ export default function ExportAsJSON({ dashboardRef }: Props) {
   }, [isSharingExternally]);
 
   const exportExternallyTranslation = t(
-    'export.json.share-externally-label',
+    'export.json.export-externally-label',
     `Export the dashboard to use in another instance`
   );
 
   return (
     <>
-      <p className="share-modal-info-text">
+      <p className="export-json-drawer-info-text">
         <Trans i18nKey="export.json.info-text">
           Copy or download a JSON file containing the JSON of your dashboard.
         </Trans>
       </p>
 
       <div className={styles.switchItem}>
-        <Switch id="share-externally-toggle" value={isSharingExternally} onChange={onShareExternallyChange} />
+        <Switch
+          data-testid={selector.exportExternallyToggle}
+          id="export-externally-toggle"
+          value={isSharingExternally}
+          onChange={onShareExternallyChange}
+        />
         <Label className={styles.switchItemLabel}>{exportExternallyTranslation}</Label>
       </div>
 
@@ -99,6 +107,7 @@ export default function ExportAsJSON({ dashboardRef }: Props) {
           if (dashboardJson.value) {
             return (
               <CodeEditor
+                data-testid={selector.codeEditor}
                 value={dashboardJson.value ?? ''}
                 language="json"
                 showMiniMap={false}
@@ -118,10 +127,11 @@ export default function ExportAsJSON({ dashboardRef }: Props) {
       </AutoSizer>
 
       <Stack direction="row" wrap="wrap" alignItems="flex-start" gap={2} justifyContent="start">
-        <Button variant="primary" icon="download-alt" onClick={onSaveAsFile}>
+        <Button data-testid={selector.saveToFileButton} variant="primary" icon="download-alt" onClick={onSaveAsFile}>
           <Trans i18nKey="export.json.save-button">Save to file</Trans>
         </Button>
         <ClipboardButton
+          data-testid={selector.copyToClipboardButton}
           variant="secondary"
           icon="copy"
           disabled={dashboardJson.loading}
@@ -129,7 +139,7 @@ export default function ExportAsJSON({ dashboardRef }: Props) {
         >
           <Trans i18nKey="export.json.copy-button">Copy to Clipboard</Trans>
         </ClipboardButton>
-        <Button variant="secondary" onClick={onClose} fill="outline">
+        <Button data-testid={selector.cancelButton} variant="secondary" onClick={onClose} fill="outline">
           <Trans i18nKey="export.json.cancel-button">Cancel</Trans>
         </Button>
       </Stack>
