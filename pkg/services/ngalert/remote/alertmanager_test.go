@@ -20,7 +20,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -51,6 +53,7 @@ const (
 
 var (
 	defaultGrafanaConfig = setting.GetAlertmanagerDefaultConfiguration()
+	errTest              = errors.New("test")
 )
 
 func TestMain(m *testing.M) {
@@ -208,18 +211,21 @@ func TestApplyConfig(t *testing.T) {
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.Equal(t, lastStateSync, expStateSync)
 	require.Greater(t, lastConfigSync, expConfigSync)
+
+	// Failing to add the auto-generated routes should result in an error.
+	am.autogenFn = errAutogenFn
+	require.ErrorIs(t, am.ApplyConfig(ctx, config), errTest)
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
 	cfgWithSecret, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
 	testValue := []byte("test")
-	testErr := errors.New("test error")
 	decryptFn := func(_ context.Context, payload []byte) ([]byte, error) {
 		if string(payload) == string(testValue) {
 			return testValue, nil
 		}
-		return nil, testErr
+		return nil, errTest
 	}
 
 	var got string
@@ -243,41 +249,48 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		URL:           server.URL,
 		DefaultConfig: defaultGrafanaConfig,
 	}
-	am, err := NewAlertmanager(cfg,
-		fstore,
-		decryptFn,
-		NoopAutogenFn,
-		m,
-	)
-	require.NoError(t, err)
 
 	tests := []struct {
-		name   string
-		config string
-		expCfg *client.UserGrafanaConfig
-		expErr string
+		name      string
+		config    string
+		autogenFn AutogenFn
+		expCfg    *client.UserGrafanaConfig
+		expErr    string
 	}{
 		{
 			"invalid config",
 			"{}",
+			NoopAutogenFn,
 			nil,
 			"unable to parse Alertmanager configuration: no route provided in config",
 		},
 		{
 			"invalid base-64 in key",
 			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, `"password":"!"`, 1),
+			NoopAutogenFn,
 			nil,
 			"unable to decrypt the configuration: failed to decode value for key 'password': illegal base64 data at input byte 0",
 		},
 		{
 			"decrypt error",
 			testGrafanaConfigWithSecret,
+			NoopAutogenFn,
 			nil,
-			fmt.Sprintf("unable to decrypt the configuration: failed to decrypt value for key 'password': %s", testErr.Error()),
+			fmt.Sprintf("unable to decrypt the configuration: failed to decrypt value for key 'password': %s", errTest.Error()),
+		},
+		{
+			"error from autogen function",
+			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, fmt.Sprintf("%q:%q", "password", base64.StdEncoding.EncodeToString(testValue)), 1),
+			errAutogenFn,
+			&client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: cfgWithSecret,
+			},
+			errTest.Error(),
 		},
 		{
 			"no error",
 			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, fmt.Sprintf("%q:%q", "password", base64.StdEncoding.EncodeToString(testValue)), 1),
+			NoopAutogenFn,
 			&client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithSecret,
 			},
@@ -287,6 +300,14 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
+			am, err := NewAlertmanager(cfg,
+				fstore,
+				decryptFn,
+				test.autogenFn,
+				m,
+			)
+			require.NoError(t, err)
+
 			cfg := ngmodels.AlertConfiguration{
 				AlertmanagerConfiguration: test.config,
 			}
@@ -439,6 +460,11 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		require.JSONEq(t, testGrafanaConfigWithSecret, string(got))
 		require.Equal(t, fmt.Sprintf("%x", md5.Sum(encryptedConfig)), config.Hash)
 		require.False(t, config.Default)
+
+		// An error while adding auto-generated rutes should be returned.
+		am.autogenFn = errAutogenFn
+		require.ErrorIs(t, am.SaveAndApplyConfig(ctx, postableCfg), errTest)
+		am.autogenFn = NoopAutogenFn
 	}
 
 	// `SaveAndApplyDefaultConfig` should send the default Alertmanager configuration to the remote Alertmanager.
@@ -461,6 +487,11 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		require.JSONEq(t, string(want), string(got))
 		require.Equal(t, fmt.Sprintf("%x", md5.Sum(want)), config.Hash)
 		require.True(t, config.Default)
+
+		// An error while adding auto-generated rutes should be returned.
+		am.autogenFn = errAutogenFn
+		require.ErrorIs(t, am.SaveAndApplyDefaultConfig(ctx), errTest)
+		am.autogenFn = NoopAutogenFn
 	}
 
 	// TODO: Now, shutdown the Alertmanager and we expect the latest configuration to be uploaded.
@@ -702,6 +733,11 @@ func genAlert(active bool, labels map[string]string) amv2.PostableAlert {
 			Labels:       labels,
 		},
 	}
+}
+
+// errAutogenFn is an AutogenFn that always returns an error.
+func errAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *definition.PostableApiAlertingConfig, _ bool) error {
+	return errTest
 }
 
 const defaultCloudAMConfig = `
