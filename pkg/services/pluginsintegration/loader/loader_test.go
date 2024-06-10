@@ -82,6 +82,7 @@ func TestLoader_Load(t *testing.T) {
 								URL:  "https://grafana.com",
 							},
 							Description: "Data source for Amazon AWS monitoring service",
+							Keywords:    []string{"aws", "amazon"},
 							Logos: plugins.Logos{
 								Small: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 								Large: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
@@ -1414,8 +1415,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					Plugins:           []plugins.Dependency{},
 				},
 			},
-			Module:          "public/plugins/myorgid-simple-app/child/module.js",
-			BaseURL:         "public/plugins/myorgid-simple-app",
+			Module:          "public/plugins/myorgid-simple-panel/module.js",
+			BaseURL:         "public/plugins/myorgid-simple-panel",
 			FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "app-with-child/dist/child")),
 			IncludedInAppID: parent.ID,
 			Signature:       plugins.SignatureStatusValid,

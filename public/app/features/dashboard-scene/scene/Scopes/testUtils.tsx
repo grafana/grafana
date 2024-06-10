@@ -3,7 +3,17 @@ import React from 'react';
 import { render } from 'test/test-utils';
 
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
-import { behaviors, SceneGridItem, SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  behaviors,
+  GroupByVariable,
+  SceneGridItem,
+  SceneGridLayout,
+  SceneQueryRunner,
+  SceneTimeRange,
+  SceneVariableSet,
+  VizPanel,
+} from '@grafana/scenes';
 import { DashboardControls } from 'app/features/dashboard-scene/scene//DashboardControls';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
@@ -304,6 +314,18 @@ export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
     }),
     controls: new DashboardControls({}),
     $behaviors: [new behaviors.CursorSync({})],
+    $variables: new SceneVariableSet({
+      variables: [
+        new AdHocFiltersVariable({
+          name: 'adhoc',
+          datasource: { uid: 'my-ds-uid' },
+        }),
+        new GroupByVariable({
+          name: 'groupby',
+          datasource: { uid: 'my-ds-uid' },
+        }),
+      ],
+    }),
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({
