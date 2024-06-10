@@ -3237,15 +3237,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.2.4":
-  version: 0.2.4
-  resolution: "@grafana/lezer-logql@npm:0.2.4"
-  peerDependencies:
-    "@lezer/lr": ^1.0.0
-  checksum: 10/acc691f26e083fbe6bcb6798baf730749eda4a86634f3b06bae49f507f10ade1901d18218d990a11dcccdd7d55b01365369f08fafb59c8dd3f9adf1db5f1cca2
-  languageName: node
-  linkType: hard
-
 "@grafana/lezer-traceql@npm:0.0.17":
   version: 0.0.17
   resolution: "@grafana/lezer-traceql@npm:0.0.17"
