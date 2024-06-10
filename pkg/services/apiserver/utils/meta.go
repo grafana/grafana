@@ -16,7 +16,6 @@ const AnnoKeyUpdatedTimestamp = "grafana.app/updatedTimestamp"
 const AnnoKeyUpdatedBy = "grafana.app/updatedBy"
 const AnnoKeyFolder = "grafana.app/folder"
 const AnnoKeySlug = "grafana.app/slug"
-const AnnoKeyAction = "grafana.app/action"
 
 // Identify where values came from
 
@@ -58,8 +57,6 @@ type GrafanaResourceMetaAccessor interface {
 	SetFolder(uid string)
 	GetSlug() string
 	SetSlug(v string)
-	GetAction() string
-	SetAction(v string)
 
 	GetOriginInfo() (*ResourceOriginInfo, error)
 	SetOriginInfo(info *ResourceOriginInfo)
@@ -124,6 +121,7 @@ func (m *grafanaResourceMetaAccessor) GetUpdatedTimestamp() (*time.Time, error) 
 	if err != nil {
 		return nil, fmt.Errorf("invalid updated timestamp: %s", err.Error())
 	}
+	t = t.UTC()
 	return &t, nil
 }
 
@@ -176,14 +174,6 @@ func (m *grafanaResourceMetaAccessor) SetSlug(v string) {
 	m.set(AnnoKeySlug, v)
 }
 
-func (m *grafanaResourceMetaAccessor) GetAction() string {
-	return m.get(AnnoKeyAction)
-}
-
-func (m *grafanaResourceMetaAccessor) SetAction(v string) {
-	m.set(AnnoKeyAction, v)
-}
-
 func (m *grafanaResourceMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
 	anno := m.obj.GetAnnotations()
 	if anno == nil {
@@ -206,7 +196,7 @@ func (m *grafanaResourceMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
 			anno[AnnoKeyOriginKey] = info.Key
 		}
 		if info.Timestamp != nil {
-			anno[AnnoKeyOriginTimestamp] = info.Timestamp.Format(time.RFC3339)
+			anno[AnnoKeyOriginTimestamp] = info.Timestamp.UTC().Format(time.RFC3339)
 		}
 	}
 	m.obj.SetAnnotations(anno)
