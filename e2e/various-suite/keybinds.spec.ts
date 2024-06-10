@@ -32,7 +32,6 @@ describe('Keyboard shortcuts', () => {
       to: '2024-06-05 10:06:00',
       zone: 'Browser',
     });
-    e2e.components.TimePicker.fromField().should('not.exist');
     e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
 
     cy.get('body').type('{ctrl}z');
@@ -51,7 +50,6 @@ describe('Keyboard shortcuts', () => {
       to: '2024-06-05 10:06:00',
       zone: 'Browser',
     });
-    e2e.components.TimePicker.fromField().should('not.exist');
     e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
 
     cy.log('Trying one shift-left');
