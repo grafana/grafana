@@ -114,7 +114,22 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 		if err != nil {
 			return err
 		}
-		result = rules
+		// make sure we keep the case-sensitive comparison.
+		var groupKey ngmodels.AlertRuleGroupKey
+		// find the rule, which group we fetch
+		for _, rule := range rules {
+			if rule.UID == query.UID {
+				groupKey = rule.GetGroupKey()
+				break
+			}
+		}
+		result = make([]*ngmodels.AlertRule, 0, len(rules))
+		// now pick only groups that have the same group key (case-sensitive comparison)
+		for _, rule := range rules {
+			if rule.GetGroupKey() == groupKey {
+				result = append(result, rule)
+			}
+		}
 		return nil
 	})
 	return result, err
@@ -372,9 +387,14 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
 		}
 
+		var groupsMap map[string]struct{}
 		if len(query.RuleGroups) > 0 {
+			groupsMap = make(map[string]struct{})
 			args, in := getINSubQueryArgs(query.RuleGroups)
 			q = q.Where(fmt.Sprintf("rule_group IN (%s)", strings.Join(in, ",")), args...)
+			for _, group := range query.RuleGroups {
+				groupsMap[group] = struct{}{}
+			}
 		}
 
 		if query.ReceiverName != "" {
@@ -408,6 +428,11 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 				if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
 					return settings.Receiver == query.ReceiverName
 				}) {
+					continue
+				}
+			}
+			if groupsMap != nil {
+				if _, ok := groupsMap[rule.RuleGroup]; !ok { // compare groups using case-sensitive logic.
 					continue
 				}
 			}
