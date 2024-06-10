@@ -644,6 +644,9 @@
       "info-text": "Copy or download a JSON file containing the JSON of your dashboard.",
       "loading-text": "Loading...",
       "save-button": "Save to file"
+    },
+    "menu": {
+      "export-as-json-label": "Export"
     }
   },
   "folder-picker": {

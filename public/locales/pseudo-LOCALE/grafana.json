@@ -644,6 +644,9 @@
       "info-text": "Cőpy őř đőŵŉľőäđ ä ĴŜØŃ ƒįľę čőŉŧäįŉįŉģ ŧĥę ĴŜØŃ őƒ yőūř đäşĥþőäřđ.",
       "loading-text": "Ŀőäđįŉģ...",
       "save-button": "Ŝävę ŧő ƒįľę"
+    },
+    "menu": {
+      "export-as-json-label": "Ēχpőřŧ"
     }
   },
   "folder-picker": {
