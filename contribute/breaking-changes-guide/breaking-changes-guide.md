@@ -10,7 +10,7 @@ Follow this guide to identify and communicate breaking changes introduced to our
   - [Introduce breaking changes only in major versions](#introduce-breaking-changes-only-in-major-versions)
   - [Deprecate first](#deprecate-first)
   - [Communicate](#communicate)
-- [I still have questions, who can help me out?](#i-still-have-questions-who-can-help-me-out)
+- [Who can help with other questions?](#who-can-help-with-other-questions)
 
 ---
 
@@ -110,7 +110,7 @@ Reach out to `@grafana/plugins-platform-frontend` to help find which plugins are
 
 ---
 
-## I still have questions, who can help me out?
+## Who can help with other questions?
 
 We are here to help.
 
