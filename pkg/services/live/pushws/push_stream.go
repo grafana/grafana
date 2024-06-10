@@ -2,6 +2,7 @@ package pushws
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
@@ -60,6 +61,8 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	defer func() { _ = conn.Close() }()
 	setupWSConn(r.Context(), conn, s.config)
 
+	started := time.Now()
+
 	for {
 		_, body, err := conn.ReadMessage()
 		if err != nil {
@@ -67,7 +70,7 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		stream, err := s.managedStreamRunner.GetOrCreateStream(user.OrgID, liveDto.ScopeStream, streamID)
+		stream, err := s.managedStreamRunner.GetOrCreateStream(user.GetOrgID(), liveDto.ScopeStream, streamID)
 		if err != nil {
 			logger.Error("Error getting stream", "error", err)
 			continue
@@ -78,10 +81,11 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		frameFormat := pushurl.FrameFormatFromValues(urlValues)
 
 		logger.Debug("Live Push request",
-			"protocol", "http",
+			"protocol", "ws",
 			"streamId", streamID,
 			"bodyLength", len(body),
 			"frameFormat", frameFormat,
+			"duration", time.Since(started).String(),
 		)
 
 		metricFrames, err := s.converter.Convert(body, frameFormat)

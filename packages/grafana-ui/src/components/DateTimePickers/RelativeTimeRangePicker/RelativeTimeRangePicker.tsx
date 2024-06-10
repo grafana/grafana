@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
+import { autoUpdate, flip, shift, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import React, { FormEvent, useCallback, useRef, useState } from 'react';
-import { usePopper } from 'react-popper';
 
 import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
 
@@ -59,11 +59,30 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
   );
   const { dialogProps } = useDialog({}, ref);
 
-  const [markerElement, setMarkerElement] = useState<HTMLDivElement | null>(null);
-  const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>(null);
-  const popper = usePopper(markerElement, selectorElement, {
-    placement: 'auto-start',
+  // the order of middleware is important!
+  // see https://floating-ui.com/docs/arrow#order
+  const middleware = [
+    flip({
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+    }),
+    shift(),
+  ];
+
+  const { context, refs, floatingStyles } = useFloating({
+    open: isOpen,
+    placement: 'bottom-start',
+    onOpenChange: setIsOpen,
+    middleware,
+    whileElementsMounted: autoUpdate,
+    strategy: 'fixed',
   });
+
+  const click = useClick(context);
+  const dismiss = useDismiss(context);
+
+  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
 
   const styles = useStyles2(getStyles(from.validation.errorMessage, to.validation.errorMessage));
 
@@ -109,8 +128,14 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
   };
 
   return (
-    <div className={styles.container} ref={setMarkerElement}>
-      <button className={styles.pickerInput} type="button" onClick={onOpen}>
+    <div className={styles.container}>
+      <button
+        ref={refs.setReference}
+        className={styles.pickerInput}
+        type="button"
+        onClick={onOpen}
+        {...getReferenceProps()}
+      >
         <span className={styles.clockIcon}>
           <Icon name="clock-nine" />
         </span>
@@ -126,12 +151,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
           <div role="presentation" className={styles.backdrop} {...underlayProps} />
           <FocusScope contain autoFocus restoreFocus>
             <div ref={ref} {...overlayProps} {...dialogProps}>
-              <div
-                className={styles.content}
-                ref={setSelectorElement}
-                style={popper.styles.popper}
-                {...popper.attributes}
-              >
+              <div className={styles.content} ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
                 <div className={styles.body}>
                   <CustomScrollbar className={styles.leftSide} hideHorizontalTrack>
                     <TimeRangeList

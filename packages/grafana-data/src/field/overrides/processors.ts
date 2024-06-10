@@ -8,7 +8,7 @@ import {
   ValueMapping,
 } from '../../types';
 
-export const identityOverrideProcessor = <T>(value: T, _context: FieldOverrideContext, _settings: any) => {
+export const identityOverrideProcessor = <T>(value: T) => {
   return value;
 };
 
@@ -33,7 +33,7 @@ export const numberOverrideProcessor = (
 };
 
 export const displayNameOverrideProcessor = (
-  value: any,
+  value: unknown,
   context: FieldOverrideContext,
   settings?: StringFieldConfigSettings
 ) => {
@@ -100,14 +100,14 @@ export interface StringFieldConfigSettings {
 }
 
 export const stringOverrideProcessor = (
-  value: any,
+  value: unknown,
   context: FieldOverrideContext,
   settings?: StringFieldConfigSettings
 ) => {
   if (value === null || value === undefined) {
     return value;
   }
-  if (settings && settings.expandTemplateVars && context.replaceVariables) {
+  if (settings && settings.expandTemplateVars && context.replaceVariables && typeof value === 'string') {
     return context.replaceVariables(value, context.field!.state!.scopedVars);
   }
   return `${value}`;
@@ -174,6 +174,12 @@ export interface StatsPickerConfigSettings {
   defaultStat?: string;
 }
 
+export enum FieldNamePickerBaseNameMode {
+  IncludeAll = 'all',
+  ExcludeBaseNames = 'exclude',
+  OnlyBaseNames = 'only',
+}
+
 export interface FieldNamePickerConfigSettings {
   /**
    * Function is a predicate, to test each element of the array.
@@ -186,10 +192,15 @@ export interface FieldNamePickerConfigSettings {
    */
   noFieldsMessage?: string;
 
-  /**addFieldNamePicker
+  /**
    * Sets the width to a pixel value.
    */
   width?: number;
+
+  /**
+   * Exclude names that can match a collection of values
+   */
+  baseNameMode?: FieldNamePickerBaseNameMode;
 
   /**
    * Placeholder text to display when nothing is selected.

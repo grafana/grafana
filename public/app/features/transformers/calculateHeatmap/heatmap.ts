@@ -14,8 +14,10 @@ import {
   formattedValueToString,
   durationToMilliseconds,
   parseDuration,
+  TransformationApplicabilityLevels,
 } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import { config } from '@grafana/runtime';
 import {
   ScaleDistribution,
   HeatmapCellLayout,
@@ -33,11 +35,47 @@ export interface HeatmapTransformerOptions extends HeatmapCalculationOptions {
 export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransformerOptions> = {
   id: DataTransformerID.heatmap,
   name: 'Create heatmap',
-  description: 'Calculate heatmap from source data.',
+  description: 'Generate heatmap data from source data.',
   defaultOptions: {},
+  isApplicable: (data) => {
+    const { xField, yField, xs, ys } = findHeatmapFields(data);
 
+    if (xField || yField) {
+      return TransformationApplicabilityLevels.NotPossible;
+    }
+
+    if (!xs.length || !ys.length) {
+      return TransformationApplicabilityLevels.NotPossible;
+    }
+
+    return TransformationApplicabilityLevels.Applicable;
+  },
+  isApplicableDescription:
+    'The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found.',
   operator: (options, ctx) => (source) =>
-    source.pipe(map((data) => heatmapTransformer.transformer(options, ctx)(data))),
+    source.pipe(
+      map((data) => {
+        if (config.featureToggles.transformationsVariableSupport) {
+          const optionsCopy = {
+            ...options,
+            xBuckets: { ...options.xBuckets } ?? undefined,
+            yBuckets: { ...options.yBuckets } ?? undefined,
+          };
+
+          if (optionsCopy.xBuckets?.value) {
+            optionsCopy.xBuckets.value = ctx.interpolate(optionsCopy.xBuckets.value);
+          }
+
+          if (optionsCopy.yBuckets?.value) {
+            optionsCopy.yBuckets.value = ctx.interpolate(optionsCopy.yBuckets.value);
+          }
+
+          return heatmapTransformer.transformer(optionsCopy, ctx)(data);
+        } else {
+          return heatmapTransformer.transformer(options, ctx)(data);
+        }
+      })
+    ),
 
   transformer: (options: HeatmapTransformerOptions) => {
     return (data: DataFrame[]) => {
@@ -255,16 +293,93 @@ export function prepBucketFrames(frames: DataFrame[]): DataFrame[] {
 }
 
 export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCalculationOptions): DataFrame {
-  //console.time('calculateHeatmapFromData');
+  // Find fields in the heatmap
+  const { xField, yField, xs, ys } = findHeatmapFields(frames);
 
-  // optimization
-  //let xMin = Infinity;
-  //let xMax = -Infinity;
+  if (!xField || !yField) {
+    throw 'no heatmap fields found';
+  }
 
+  if (!xs.length || !ys.length) {
+    throw 'no values found';
+  }
+
+  const xBucketsCfg = options.xBuckets ?? {};
+  const yBucketsCfg = options.yBuckets ?? {};
+
+  if (xBucketsCfg.scale?.type === ScaleDistribution.Log) {
+    throw 'X axis only supports linear buckets';
+  }
+
+  const scaleDistribution = options.yBuckets?.scale ?? {
+    type: ScaleDistribution.Linear,
+  };
+
+  const heat2d = heatmap(xs, ys, {
+    xSorted: isLikelyAscendingVector(xs),
+    xTime: xField.type === FieldType.time,
+    xMode: xBucketsCfg.mode,
+    xSize:
+      xBucketsCfg.mode === HeatmapCalculationMode.Size
+        ? durationToMilliseconds(parseDuration(xBucketsCfg.value ?? ''))
+        : xBucketsCfg.value
+          ? +xBucketsCfg.value
+          : undefined,
+    yMode: yBucketsCfg.mode,
+    ySize: yBucketsCfg.value ? +yBucketsCfg.value : undefined,
+    yLog:
+      scaleDistribution?.type === ScaleDistribution.Log ? (scaleDistribution?.log as 2 | 10 | undefined) : undefined,
+  });
+
+  const frame = {
+    length: heat2d.x.length,
+    name: getFieldDisplayName(yField),
+    meta: {
+      type: DataFrameType.HeatmapCells,
+    },
+    fields: [
+      {
+        name: 'xMin',
+        type: xField.type,
+        values: heat2d.x,
+        config: xField.config,
+      },
+      {
+        name: 'yMin',
+        type: FieldType.number,
+        values: heat2d.y,
+        config: {
+          ...yField.config, // keep units from the original source
+          custom: {
+            scaleDistribution,
+          },
+        },
+      },
+      {
+        name: 'Count',
+        type: FieldType.number,
+        values: heat2d.count,
+        config: {
+          unit: 'short', // always integer
+        },
+      },
+    ],
+  };
+
+  return frame;
+}
+
+/**
+ * Find fields that can be used within a heatmap
+ *
+ * @param frames
+ *  An array of DataFrames
+ */
+function findHeatmapFields(frames: DataFrame[]) {
   let xField: Field | undefined = undefined;
   let yField: Field | undefined = undefined;
-
   let dataLen = 0;
+
   // pre-allocate arrays
   for (let frame of frames) {
     // TODO: assumes numeric timestamps, ordered asc, without nulls
@@ -306,77 +421,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     }
   }
 
-  if (!xField || !yField) {
-    throw 'no heatmap fields found';
-  }
-
-  if (!xs.length || !ys.length) {
-    throw 'no values found';
-  }
-
-  const xBucketsCfg = options.xBuckets ?? {};
-  const yBucketsCfg = options.yBuckets ?? {};
-
-  if (xBucketsCfg.scale?.type === ScaleDistribution.Log) {
-    throw 'X axis only supports linear buckets';
-  }
-
-  const scaleDistribution = options.yBuckets?.scale ?? {
-    type: ScaleDistribution.Linear,
-  };
-
-  const heat2d = heatmap(xs, ys, {
-    xSorted: isLikelyAscendingVector(xs),
-    xTime: xField.type === FieldType.time,
-    xMode: xBucketsCfg.mode,
-    xSize:
-      xBucketsCfg.mode === HeatmapCalculationMode.Size
-        ? durationToMilliseconds(parseDuration(xBucketsCfg.value ?? ''))
-        : xBucketsCfg.value
-        ? +xBucketsCfg.value
-        : undefined,
-    yMode: yBucketsCfg.mode,
-    ySize: yBucketsCfg.value ? +yBucketsCfg.value : undefined,
-    yLog: scaleDistribution?.type === ScaleDistribution.Log ? (scaleDistribution?.log as any) : undefined,
-  });
-
-  const frame = {
-    length: heat2d.x.length,
-    name: getFieldDisplayName(yField),
-    meta: {
-      type: DataFrameType.HeatmapCells,
-    },
-    fields: [
-      {
-        name: 'xMin',
-        type: xField.type,
-        values: heat2d.x,
-        config: xField.config,
-      },
-      {
-        name: 'yMin',
-        type: FieldType.number,
-        values: heat2d.y,
-        config: {
-          ...yField.config, // keep units from the original source
-          custom: {
-            scaleDistribution,
-          },
-        },
-      },
-      {
-        name: 'Count',
-        type: FieldType.number,
-        values: heat2d.count,
-        config: {
-          unit: 'short', // always integer
-        },
-      },
-    ],
-  };
-
-  //console.timeEnd('calculateHeatmapFromData');
-  return frame;
+  return { xField, yField, xs, ys };
 }
 
 interface HeatmapOpts {

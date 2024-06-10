@@ -2,7 +2,7 @@ import { cx, css, keyframes } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, styleMixins } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { Branding } from '../Branding/Branding';
 import { BrandingSettings } from '../Branding/types';
@@ -92,90 +92,89 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       justifyContent: 'center',
     }),
-    loginAnim: css`
-      &:before {
-        opacity: 1;
-      }
+    loginAnim: css({
+      ['&:before']: {
+        opacity: 1,
+      },
 
-      .login-content-box {
-        opacity: 1;
-      }
-    `,
-    submitButton: css`
-      justify-content: center;
-      width: 100%;
-    `,
-    loginLogo: css`
-      width: 100%;
-      max-width: 60px;
-      margin-bottom: 15px;
+      ['.login-content-box']: {
+        opacity: 1,
+      },
+    }),
+    submitButton: css({
+      justifyContent: 'center',
+      width: '100%',
+    }),
+    loginLogo: css({
+      width: '100%',
+      maxWidth: 60,
+      marginBottom: theme.spacing(2),
 
-      @media ${styleMixins.mediaUp(theme.v1.breakpoints.sm)} {
-        max-width: 100px;
-      }
-    `,
-    loginLogoWrapper: css`
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      padding: ${theme.spacing(3)};
-    `,
-    titleWrapper: css`
-      text-align: center;
-    `,
-    mainTitle: css`
-      font-size: 22px;
+      [theme.breakpoints.up('sm')]: {
+        maxWidth: 100,
+      },
+    }),
+    loginLogoWrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column',
+      padding: theme.spacing(3),
+    }),
+    titleWrapper: css({
+      textAlign: 'center',
+    }),
+    mainTitle: css({
+      fontSize: 22,
 
-      @media ${styleMixins.mediaUp(theme.v1.breakpoints.sm)} {
-        font-size: 32px;
-      }
-    `,
-    subTitle: css`
-      font-size: ${theme.typography.size.md};
-      color: ${theme.colors.text.secondary};
-    `,
-    loginContent: css`
-      max-width: 478px;
-      width: calc(100% - 2rem);
-      display: flex;
-      align-items: stretch;
-      flex-direction: column;
-      position: relative;
-      justify-content: flex-start;
-      z-index: 1;
-      min-height: 320px;
-      border-radius: ${theme.shape.borderRadius(4)};
-      padding: ${theme.spacing(2, 0)};
-      opacity: 0;
-      transition: opacity 0.5s ease-in-out;
+      [theme.breakpoints.up('sm')]: {
+        fontSize: 32,
+      },
+    }),
+    subTitle: css({
+      fontSize: theme.typography.size.md,
+      color: theme.colors.text.secondary,
+    }),
+    loginContent: css({
+      maxWidth: 478,
+      width: `calc(100% - 2rem)`,
+      display: 'flex',
+      alignItems: 'stretch',
+      flexDirection: 'column',
+      position: 'relative',
+      justifyContent: 'flex-start',
+      zIndex: 1,
+      minHeight: 320,
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(2, 0),
+      opacity: 0,
+      transition: 'opacity 0.5s ease-in-out',
 
-      @media ${styleMixins.mediaUp(theme.v1.breakpoints.sm)} {
-        min-height: 320px;
-        justify-content: center;
-      }
-    `,
-    loginOuterBox: css`
-      display: flex;
-      overflow-y: hidden;
-      align-items: center;
-      justify-content: center;
-    `,
-    loginInnerBox: css`
-      padding: ${theme.spacing(0, 2, 2, 2)};
-
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      flex-grow: 1;
-      max-width: 415px;
-      width: 100%;
-      transform: translate(0px, 0px);
-      transition: 0.25s ease;
-    `,
-    enterAnimation: css`
-      animation: ${flyInAnimation} ease-out 0.2s;
-    `,
+      [theme.breakpoints.up('sm')]: {
+        minHeight: theme.spacing(40),
+        justifyContent: 'center',
+      },
+    }),
+    loginOuterBox: css({
+      display: 'flex',
+      overflowY: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
+    loginInnerBox: css({
+      padding: theme.spacing(0, 2, 2, 2),
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexGrow: 1,
+      maxWidth: 415,
+      width: '100%',
+      transform: 'translate(0px, 0px)',
+      transition: '0.25s ease',
+    }),
+    enterAnimation: css({
+      animation: `${flyInAnimation} ease-out 0.2s`,
+    }),
   };
 };

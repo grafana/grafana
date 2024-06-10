@@ -1,0 +1,65 @@
+package idimpl
+
+import (
+	"context"
+
+	"github.com/go-jose/go-jose/v3"
+	"github.com/go-jose/go-jose/v3/jwt"
+
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
+)
+
+const (
+	keyPrefix   = "id"
+	headerKeyID = "kid"
+)
+
+var _ auth.IDSigner = (*LocalSigner)(nil)
+
+func ProvideLocalSigner(keyService signingkeys.Service, features featuremgmt.FeatureToggles) (*LocalSigner, error) {
+	return &LocalSigner{features, keyService}, nil
+}
+
+type LocalSigner struct {
+	features   featuremgmt.FeatureToggles
+	keyService signingkeys.Service
+}
+
+func (s *LocalSigner) SignIDToken(ctx context.Context, claims *auth.IDClaims) (string, error) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagIdForwarding) {
+		return "", nil
+	}
+
+	signer, err := s.getSigner(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	builder := jwt.Signed(signer).Claims(claims)
+
+	token, err := builder.CompactSerialize()
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func (s *LocalSigner) getSigner(ctx context.Context) (jose.Signer, error) {
+	id, key, err := s.keyService.GetOrCreatePrivateKey(ctx, keyPrefix, jose.ES256)
+	if err != nil {
+		return nil, err
+	}
+
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, &jose.SignerOptions{
+		ExtraHeaders: map[jose.HeaderKey]any{headerKeyID: id},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return signer, nil
+}

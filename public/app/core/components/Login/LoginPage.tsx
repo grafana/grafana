@@ -3,10 +3,11 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 // Components
-import { Alert, HorizontalGroup, LinkButton } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Alert, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
-import config from 'app/core/config';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { ChangePassword } from '../ForgottenPassword/ChangePassword';
 
@@ -16,17 +17,10 @@ import { LoginLayout, InnerBox } from './LoginLayout';
 import { LoginServiceButtons } from './LoginServiceButtons';
 import { UserSignup } from './UserSignup';
 
-const forgottenPasswordStyles = css`
-  padding: 0;
-  margin-top: 4px;
-`;
-
-const alertStyles = css({
-  width: '100%',
-});
-
 export const LoginPage = () => {
+  const styles = useStyles2(getStyles);
   document.title = Branding.AppTitle;
+
   return (
     <LoginCtrl>
       {({
@@ -46,7 +40,7 @@ export const LoginPage = () => {
           {!isChangingPassword && (
             <InnerBox>
               {loginErrorMessage && (
-                <Alert className={alertStyles} severity="error" title={t('login.error.title', 'Login failed')}>
+                <Alert className={styles.alert} severity="error" title={t('login.error.title', 'Login failed')}>
                   {loginErrorMessage}
                 </Alert>
               )}
@@ -54,13 +48,15 @@ export const LoginPage = () => {
               {!disableLoginForm && (
                 <LoginForm onSubmit={login} loginHint={loginHint} passwordHint={passwordHint} isLoggingIn={isLoggingIn}>
                   <HorizontalGroup justify="flex-end">
-                    <LinkButton
-                      className={forgottenPasswordStyles}
-                      fill="text"
-                      href={`${config.appSubUrl}/user/password/send-reset-email`}
-                    >
-                      Forgot your password?
-                    </LinkButton>
+                    {!config.auth.disableLogin && (
+                      <LinkButton
+                        className={styles.forgottenPassword}
+                        fill="text"
+                        href={`${config.appSubUrl}/user/password/send-reset-email`}
+                      >
+                        <Trans i18nKey="login.forgot-password">Forgot your password?</Trans>
+                      </LinkButton>
+                    )}
                   </HorizontalGroup>
                 </LoginForm>
               )}
@@ -82,4 +78,17 @@ export const LoginPage = () => {
       )}
     </LoginCtrl>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    forgottenPassword: css({
+      padding: 0,
+      marginTop: theme.spacing(0.5),
+    }),
+
+    alert: css({
+      width: '100%',
+    }),
+  };
 };

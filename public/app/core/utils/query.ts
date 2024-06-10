@@ -1,5 +1,6 @@
 import { DataQuery, DataSourceRef } from '@grafana/data';
 
+// @deprecated use the `getNextRefId` function from grafana/data instead
 export const getNextRefIdChar = (queries: DataQuery[]): string => {
   for (let num = 0; ; num++) {
     const refId = getRefId(num);
@@ -27,15 +28,17 @@ export function queryIsEmpty(query: DataQuery): boolean {
 }
 
 export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>, datasource?: DataSourceRef): DataQuery[] {
-  const q = query || {};
-  q.refId = getNextRefIdChar(queries);
-  q.hide = false;
+  const q: DataQuery = {
+    ...query,
+    refId: getNextRefIdChar(queries),
+    hide: false,
+  };
 
   if (!q.datasource && datasource) {
     q.datasource = datasource;
   }
 
-  return [...queries, q as DataQuery];
+  return [...queries, q];
 }
 
 export function isDataQuery(url: string): boolean {

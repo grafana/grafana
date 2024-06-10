@@ -2,11 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { logInfo } from '@grafana/runtime';
 import { PanelModel } from 'app/features/dashboard/state';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
-import { LogMessages } from '../../Analytics';
+import * as analytics from '../../Analytics';
 
 import { NewRuleFromPanelButton } from './NewRuleFromPanelButton';
 
@@ -24,15 +23,10 @@ jest.mock('react-router-dom', () => ({
   }),
 }));
 
-jest.mock('@grafana/runtime', () => {
-  const original = jest.requireActual('@grafana/runtime');
-  return {
-    ...original,
-    logInfo: jest.fn(),
-  };
-});
+jest.spyOn(analytics, 'logInfo');
 
 jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
   useAsync: () => ({ loading: false, value: {} }),
 }));
 
@@ -46,12 +40,12 @@ describe('Analytics', () => {
     });
     render(<NewRuleFromPanelButton panel={panel} dashboard={dashboard} />);
 
-    const button = screen.getByText('Create alert rule from this panel');
+    const button = screen.getByText('New alert rule');
 
     button.addEventListener('click', (event) => event.preventDefault(), false);
 
     await userEvent.click(button);
 
-    expect(logInfo).toHaveBeenCalledWith(LogMessages.alertRuleFromPanel);
+    expect(analytics.logInfo).toHaveBeenCalledWith(analytics.LogMessages.alertRuleFromPanel);
   });
 });

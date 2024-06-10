@@ -18,7 +18,7 @@ type DashboardQuery struct {
 	Query              string       `json:"query"`
 	Location           string       `json:"location,omitempty"` // parent folder ID
 	Sort               string       `json:"sort,omitempty"`     // field ASC/DESC
-	Datasource         string       `json:"ds_uid,omitempty"`   // "datasource" collides with the JSON value at the same leel :()
+	Datasource         string       `json:"ds_uid,omitempty"`   // "datasource" collides with the JSON value at the same level :()
 	DatasourceType     string       `json:"ds_type,omitempty"`
 	Tags               []string     `json:"tags,omitempty"`
 	Kind               []string     `json:"kind,omitempty"`

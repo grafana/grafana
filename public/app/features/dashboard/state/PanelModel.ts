@@ -1,4 +1,4 @@
-import { cloneDeep, defaultsDeep, isArray, isEqual, keys } from 'lodash';
+import { cloneDeep, defaultsDeep, isArray, isEqual } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -36,6 +36,8 @@ import {
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { TimeOverrideResult } from '../utils/panel';
 
+import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
+
 export interface GridPos {
   x: number;
   y: number;
@@ -67,6 +69,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   dataSupport: true,
   key: true,
   isNew: true,
+  refreshWhenInView: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -95,6 +98,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   links: true,
   fullscreen: true,
   isEditing: true,
+  isViewing: true,
   hasRefreshed: true,
   events: true,
   cacheTimeout: true,
@@ -120,12 +124,23 @@ const defaults: any = {
   cachedPluginOptions: {},
   transparent: false,
   options: {},
+  links: [],
+  transformations: [],
   fieldConfig: {
     defaults: {},
     overrides: [],
   },
   title: '',
 };
+
+export const explicitlyControlledMigrationPanels = [
+  'graph',
+  'table-old',
+  'grafana-piechart-panel',
+  'grafana-worldmap-panel',
+  'singlestat',
+  'grafana-singlestat-panel',
+];
 
 export const autoMigrateAngular: Record<string, string> = {
   graph: 'timeseries',
@@ -136,7 +151,7 @@ export const autoMigrateAngular: Record<string, string> = {
   'grafana-worldmap-panel': 'geomap',
 };
 
-const autoMigratePanelType: Record<string, string> = {
+export const autoMigrateRemovedPanelPlugins: Record<string, string> = {
   'heatmap-new': 'heatmap', // this was a temporary development panel that is now standard
 };
 
@@ -191,6 +206,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   cacheTimeout?: string | null;
   queryCachingTTL?: number | null;
   isNew?: boolean;
+  refreshWhenInView = true;
 
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
@@ -228,15 +244,15 @@ export class PanelModel implements DataConfigSource, IPanelModel {
         continue;
       }
 
-      if (typeof (this as any)[property] === 'function') {
+      if (typeof this[property] === 'function') {
         continue;
       }
 
-      if (typeof (this as any)[property] === 'symbol') {
+      if (typeof this[property] === 'symbol') {
         continue;
       }
 
-      delete (this as any)[property];
+      delete this[property];
     }
 
     // copy properties from persisted model
@@ -244,7 +260,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       (this as any)[property] = model[property];
     }
 
-    const newType = autoMigratePanelType[this.type];
+    const newType = getPanelPluginToMigrateTo(this);
     if (newType) {
       this.autoMigrateFrom = this.type;
       this.type = newType;
@@ -359,19 +375,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.render();
   }
 
-  runAllPanelQueries({
-    dashboardUID,
-    dashboardTimezone,
-    timeData,
-    width,
-    publicDashboardAccessToken,
-  }: RunPanelQueryOptions) {
+  runAllPanelQueries({ dashboardUID, dashboardTimezone, timeData, width }: RunPanelQueryOptions) {
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
+      panelPluginId: this.type,
       dashboardUID: dashboardUID,
-      publicDashboardAccessToken,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
@@ -398,7 +408,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
   }
 
-  private getOptionsToRemember() {
+  public getOptionsToRemember(): any {
     return Object.keys(this).reduce((acc, property) => {
       if (notPersistedProperties[property] || mustKeepProps[property]) {
         return acc;
@@ -436,7 +446,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.options = options.options;
   }
 
-  pluginLoaded(plugin: PanelPlugin) {
+  async pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
 
     const version = getPluginVersion(plugin);
@@ -458,7 +468,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     if (plugin.onPanelMigration) {
       if (version !== this.pluginVersion) {
-        this.options = plugin.onPanelMigration(this);
+        const newPanelOptions = plugin.onPanelMigration(this);
+        this.options = await newPanelOptions;
         this.pluginVersion = version;
       }
     }
@@ -469,11 +480,11 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   clearPropertiesBeforePluginChange() {
     // remove panel type specific  options
-    for (const key of keys(this)) {
+    for (const key in this) {
       if (mustKeepProps[key]) {
         continue;
       }
-      delete (this as any)[key];
+      delete this[key];
     }
 
     this.options = {};
@@ -620,7 +631,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   isAngularPlugin(): boolean {
-    return (this.plugin && this.plugin.angularPanelCtrl) !== undefined;
+    return (
+      (this.plugin && this.plugin.angularPanelCtrl) !== undefined || (this.plugin?.meta?.angular?.detected ?? false)
+    );
   }
 
   destroy() {
@@ -696,7 +709,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 }
 
-function getPluginVersion(plugin: PanelPlugin): string {
+export function getPluginVersion(plugin: PanelPlugin): string {
   return plugin && plugin.meta.info.version ? plugin.meta.info.version : config.buildInfo.version;
 }
 

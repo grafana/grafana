@@ -116,7 +116,7 @@ func AddUserPermissionToDB(t testing.TB, db db.DB, user *user.SignedInUser) {
 				p := accesscontrol.Permission{
 					RoleID: role.ID, Action: action, Scope: scope, Created: time.Now(), Updated: time.Now(),
 				}
-				//p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+				p.Kind, p.Attribute, p.Identifier = p.SplitScope()
 
 				permissions = append(permissions, p)
 			}

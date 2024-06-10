@@ -7,10 +7,9 @@ import { GrafanaTheme2, isIconName } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
 
-import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
-import { getIconSubDir, getSvgSize } from './utils';
+import { getIconRoot, getIconSubDir, getSvgSize } from './utils';
 
-export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface IconProps extends Omit<React.SVGProps<SVGElement>, 'onLoad' | 'onError' | 'ref'> {
   name: IconName;
   size?: IconSize;
   type?: IconType;
@@ -19,16 +18,14 @@ export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const getIconStyles = (theme: GrafanaTheme2) => {
   return {
-    // line-height: 0; is needed for correct icon alignment in Safari
-    container: css({
-      label: 'Icon',
-      display: 'inline-block',
-      lineHeight: 0,
-    }),
     icon: css({
-      verticalAlign: 'middle',
       display: 'inline-block',
       fill: 'currentColor',
+      flexShrink: 0,
+      label: 'Icon',
+      // line-height: 0; is needed for correct icon alignment in Safari
+      lineHeight: 0,
+      verticalAlign: 'middle',
     }),
     orange: css({
       fill: theme.v1.palette.orange,
@@ -36,56 +33,44 @@ const getIconStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
-  ({ size = 'md', type = 'default', name, className, style, title = '', ...divElementProps }, ref) => {
+export const Icon = React.forwardRef<SVGElement, IconProps>(
+  ({ size = 'md', type = 'default', name, className, style, title = '', ...rest }, ref) => {
     const styles = useStyles2(getIconStyles);
-
-    /* Temporary solution to display also font awesome icons */
-    if (name?.startsWith('fa fa-')) {
-      return <i className={getFontAwesomeIconStyles(name, className)} {...divElementProps} style={style} />;
-    }
-
-    if (!cacheInitialized) {
-      initIconCache();
-    }
 
     if (!isIconName(name)) {
       console.warn('Icon component passed an invalid icon name', name);
     }
 
-    if (!name || name.includes('..')) {
-      return <div ref={ref}>invalid icon name</div>;
-    }
+    // handle the deprecated 'fa fa-spinner'
+    const iconName: IconName = name === 'fa fa-spinner' ? 'spinner' : name;
 
+    const iconRoot = getIconRoot();
     const svgSize = getSvgSize(size);
     const svgHgt = svgSize;
     const svgWid = name.startsWith('gf-bar-align') ? 16 : name.startsWith('gf-interp') ? 30 : svgSize;
-    const subDir = getIconSubDir(name, type);
-    const svgPath = `${iconRoot}${subDir}/${name}.svg`;
+    const subDir = getIconSubDir(iconName, type);
+    const svgPath = `${iconRoot}${subDir}/${iconName}.svg`;
+
+    const composedClassName = cx(
+      styles.icon,
+      className,
+      type === 'mono' ? { [styles.orange]: name === 'favorite' } : '',
+      iconName === 'spinner' && 'fa-spin'
+    );
 
     return (
-      <div className={styles.container} {...divElementProps} ref={ref}>
-        <SVG
-          src={svgPath}
-          width={svgWid}
-          height={svgHgt}
-          title={title}
-          className={cx(styles.icon, className, type === 'mono' ? { [styles.orange]: name === 'favorite' } : '')}
-          style={style}
-        />
-      </div>
+      <SVG
+        innerRef={ref}
+        src={svgPath}
+        width={svgWid}
+        height={svgHgt}
+        title={title}
+        className={composedClassName}
+        style={style}
+        {...rest}
+      />
     );
   }
 );
 
 Icon.displayName = 'Icon';
-
-function getFontAwesomeIconStyles(iconName: string, className?: string): string {
-  return cx(
-    iconName,
-    {
-      'fa-spin': iconName === 'fa fa-spinner',
-    },
-    className
-  );
-}

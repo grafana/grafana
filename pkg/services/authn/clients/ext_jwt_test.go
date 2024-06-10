@@ -12,17 +12,17 @@ import (
 	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
-	"github.com/grafana/grafana/pkg/services/oauthserver/oastest"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -151,7 +151,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			},
 			want: &authn.Identity{
 				OrgID:           1,
-				OrgCount:        0,
 				OrgName:         "",
 				OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleAdmin},
 				ID:              "user:2",
@@ -176,13 +175,13 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					},
 				},
 				ClientParams: authn.ClientParams{
-					SyncUser:            false,
-					AllowSignUp:         false,
-					FetchSyncedUser:     false,
-					EnableDisabledUsers: false,
-					SyncOrgRoles:        false,
-					SyncTeams:           false,
-					SyncPermissions:     false,
+					SyncUser:        false,
+					AllowSignUp:     false,
+					FetchSyncedUser: false,
+					EnableUser:      false,
+					SyncOrgRoles:    false,
+					SyncTeams:       false,
+					SyncPermissions: false,
 					LookUpParams: login.UserLookupParams{
 						UserID: nil,
 						Email:  nil,
@@ -262,27 +261,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				},
 				ClientID: "grafana",
 				Scopes:   []string{"profile", "groups"},
-			},
-			orgID:   1,
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name: "should return error when the client was not found",
-			payload: ExtendedJWTClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "user:id:2",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
-				ClientID: "unknown-client-id",
-				Scopes:   []string{"profile", "groups"},
-			},
-			initTestEnv: func(env *testEnv) {
-				env.oauthSvc.ExpectedErr = oauthserver.ErrClientNotFound("unknown-client-id")
 			},
 			orgID:   1,
 			want:    nil,
@@ -514,30 +492,29 @@ func setupTestCtx(t *testing.T, cfg *setting.Cfg) *testEnv {
 		}
 	}
 
-	signingKeysSvc := &signingkeystest.FakeSigningKeysService{}
-	signingKeysSvc.ExpectedServerPublicKey = &pk.PublicKey
+	signingKeysSvc := &signingkeystest.FakeSigningKeysService{
+		ExpectedSinger: pk,
+		ExpectedKeyID:  signingkeys.ServerPrivateKeyID,
+	}
 
 	userSvc := &usertest.FakeUserService{}
-	oauthSvc := &oastest.FakeService{}
 
-	extJwtClient := ProvideExtendedJWT(userSvc, cfg, signingKeysSvc, oauthSvc)
+	extJwtClient := ProvideExtendedJWT(userSvc, cfg, signingKeysSvc)
 
 	return &testEnv{
-		oauthSvc: oauthSvc,
-		userSvc:  userSvc,
-		s:        extJwtClient,
+		userSvc: userSvc,
+		s:       extJwtClient,
 	}
 }
 
 type testEnv struct {
-	oauthSvc *oastest.FakeService
-	userSvc  *usertest.FakeUserService
-	s        *ExtendedJWT
+	userSvc *usertest.FakeUserService
+	s       *ExtendedJWT
 }
 
-func generateToken(payload ExtendedJWTClaims, signingKey interface{}, alg jose.SignatureAlgorithm) string {
+func generateToken(payload ExtendedJWTClaims, signingKey any, alg jose.SignatureAlgorithm) string {
 	signer, _ := jose.NewSigner(jose.SigningKey{Algorithm: alg, Key: signingKey}, &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{
+		ExtraHeaders: map[jose.HeaderKey]any{
 			jose.HeaderType: "at+jwt",
 		}})
 

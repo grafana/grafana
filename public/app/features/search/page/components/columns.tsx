@@ -11,8 +11,7 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/unstable';
+import { Checkbox, Icon, IconName, TagList, Text } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { PluginIconName } from 'app/features/plugins/admin/types';
@@ -44,7 +43,7 @@ export const generateColumns = (
   const uidField = access.uid;
   const kindField = access.kind;
   let sortFieldWith = 0;
-  const sortField = (access as any)[response.view.dataFrame.meta?.custom?.sortBy] as Field;
+  const sortField: Field = access[response.view.dataFrame.meta?.custom?.sortBy];
   if (sortField) {
     sortFieldWith = 175;
     if (sortField.type === FieldType.time) {
@@ -179,6 +178,7 @@ export const generateColumns = (
                   return info ? (
                     <a key={p} href={info.url} className={styles.locationItem}>
                       <Icon name={getIconForKind(info.kind)} />
+
                       <Text variant="body" truncate>
                         {info.name}
                       </Text>

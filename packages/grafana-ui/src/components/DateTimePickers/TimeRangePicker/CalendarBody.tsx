@@ -2,15 +2,16 @@ import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 import Calendar from 'react-calendar';
 
-import { GrafanaTheme2, dateTime, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
+import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
+import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
 
 import { TimePickerCalendarProps } from './TimePickerCalendar';
 
 export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) {
-  const value = inputToValue(from, to);
+  const value = inputToValue(from, to, new Date(), timeZone);
   const onCalendarChange = useOnCalendarChange(onChange, timeZone);
   const styles = useStyles2(getBodyStyles);
 
@@ -32,16 +33,25 @@ export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) 
 
 Body.displayName = 'Body';
 
-export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): [Date, Date] {
-  const fromAsDate = from.toDate();
-  const toAsDate = to.toDate();
-  const fromAsValidDate = dateTime(fromAsDate).isValid() ? fromAsDate : invalidDateDefault;
-  const toAsValidDate = dateTime(toAsDate).isValid() ? toAsDate : invalidDateDefault;
+export function inputToValue(
+  from: DateTime,
+  to: DateTime,
+  invalidDateDefault: Date = new Date(),
+  timezone?: string
+): [Date, Date] {
+  let fromAsDate = from.isValid() ? from.toDate() : invalidDateDefault;
+  let toAsDate = to.isValid() ? to.toDate() : invalidDateDefault;
 
-  if (fromAsValidDate > toAsValidDate) {
-    return [toAsValidDate, fromAsValidDate];
+  if (timezone) {
+    fromAsDate = adjustDateForReactCalendar(fromAsDate, timezone);
+    toAsDate = adjustDateForReactCalendar(toAsDate, timezone);
   }
-  return [fromAsValidDate, toAsValidDate];
+
+  if (fromAsDate > toAsDate) {
+    return [toAsDate, fromAsDate];
+  }
+
+  return [fromAsDate, toAsDate];
 }
 
 function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void, timeZone?: TimeZone) {

@@ -1,15 +1,12 @@
 import { Meta, Story } from '@storybook/react';
 import React, { useState } from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import mdx from './ColorPicker.mdx';
 import { NamedColorsPalette, NamedColorsPaletteProps } from './NamedColorsPalette';
 
 const meta: Meta = {
   title: 'Pickers and Editors/ColorPicker/Palettes/NamedColorsPalette',
   component: NamedColorsPalette,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

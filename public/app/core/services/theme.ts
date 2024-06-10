@@ -18,7 +18,7 @@ export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
   if (oldTheme.colors.mode !== newTheme.colors.mode) {
     const newCssLink = document.createElement('link');
     newCssLink.rel = 'stylesheet';
-    newCssLink.href = config.bootData.themePaths[newTheme.colors.mode];
+    newCssLink.href = config.bootData.assets[newTheme.colors.mode];
     newCssLink.onload = () => {
       // Remove old css file
       const bodyLinks = document.getElementsByTagName('link');

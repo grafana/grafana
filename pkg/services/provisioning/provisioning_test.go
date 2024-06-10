@@ -7,17 +7,18 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestProvisioningServiceImpl(t *testing.T) {
 	t.Run("Restart dashboard provisioning and stop service", func(t *testing.T) {
-		serviceTest := setup()
+		serviceTest := setup(t)
 		err := serviceTest.service.ProvisionDashboards(context.Background())
 		assert.Nil(t, err)
 		serviceTest.startService()
@@ -40,11 +41,11 @@ func TestProvisioningServiceImpl(t *testing.T) {
 		serviceTest.waitForStop()
 
 		assert.False(t, serviceTest.serviceRunning, "Service should not be running")
-		assert.Nil(t, serviceTest.serviceError, "Service should not return canceled error")
+		assert.Equal(t, context.Canceled, serviceTest.serviceError, "Service should have returned canceled error")
 	})
 
 	t.Run("Failed reloading does not stop polling with old provisioned", func(t *testing.T) {
-		serviceTest := setup()
+		serviceTest := setup(t)
 		err := serviceTest.service.ProvisionDashboards(context.Background())
 		assert.Nil(t, err)
 		serviceTest.startService()
@@ -82,7 +83,7 @@ type serviceTestStruct struct {
 	service *ProvisioningServiceImpl
 }
 
-func setup() *serviceTestStruct {
+func setup(t *testing.T) *serviceTestStruct {
 	serviceTest := &serviceTestStruct{}
 	serviceTest.waitTimeout = time.Second
 
@@ -95,14 +96,14 @@ func setup() *serviceTestStruct {
 	}
 
 	serviceTest.service = newProvisioningServiceImpl(
-		func(context.Context, string, dashboardstore.DashboardProvisioningService, org.Service, utils.DashboardStore) (dashboards.DashboardProvisioner, error) {
+		func(context.Context, string, dashboardstore.DashboardProvisioningService, org.Service, utils.DashboardStore, folder.Service) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},
 		nil,
 		nil,
-		nil,
 	)
-	serviceTest.service.Cfg = setting.NewCfg()
+	err := serviceTest.service.setDashboardProvisioner()
+	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	serviceTest.cancel = cancel

@@ -78,10 +78,14 @@ composableKinds: PanelCfg: lineage: {
 			} @cuetsy(kind="interface")
 			// Controls tooltip options
 			HeatmapTooltip: {
-				// Controls if the tooltip is shown
-				show: bool
+				// Controls how the tooltip is shown
+				mode:       ui.TooltipDisplayMode
+				maxHeight?: number
+				maxWidth?:  number
 				// Controls if the tooltip shows a histogram of the y-axis values
 				yHistogram?: bool
+				// Controls if the tooltip shows a color scale in header
+				showColorScale?: bool
 			} @cuetsy(kind="interface")
 			// Controls legend options
 			HeatmapLegend: {
@@ -143,8 +147,9 @@ composableKinds: PanelCfg: lineage: {
 				}
 				// Controls tooltip options
 				tooltip: HeatmapTooltip | *{
-					show:       true
-					yHistogram: false
+					mode:           ui.TooltipDisplayMode & (*"single" | _)
+					yHistogram:     false
+					showColorScale: false
 				}
 				// Controls exemplar options
 				exemplars: ExemplarConfig | *{

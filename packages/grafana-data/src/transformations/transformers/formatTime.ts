@@ -1,38 +1,44 @@
-import moment from 'moment-timezone';
 import { map } from 'rxjs/operators';
 
-import { getTimeZone, getTimeZoneInfo } from '../../datetime';
-import { Field, FieldType } from '../../types';
-import { DataTransformerInfo } from '../../types/transformations';
+import { TimeZone } from '@grafana/schema';
 
+import { cacheFieldDisplayNames } from '../../field';
+import { DataFrame, TransformationApplicabilityLevels } from '../../types';
+import { DataTransformContext, DataTransformerInfo } from '../../types/transformations';
+
+import { fieldToStringField } from './convertFieldType';
 import { DataTransformerID } from './ids';
 
 export interface FormatTimeTransformerOptions {
   timeField: string;
   outputFormat: string;
-  useTimezone: boolean;
+  timezone: TimeZone;
 }
 
 export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOptions> = {
   id: DataTransformerID.formatTime,
-  name: 'Format Time',
+  name: 'Format time',
   description: 'Set the output format of a time field',
   defaultOptions: { timeField: '', outputFormat: '', useTimezone: true },
-  operator: (options) => (source) =>
+  isApplicable: (data: DataFrame[]) => {
+    // Search for a time field
+    // if there is one then we can use this transformation
+    for (const frame of data) {
+      for (const field of frame.fields) {
+        if (field.type === 'time') {
+          return TransformationApplicabilityLevels.Applicable;
+        }
+      }
+    }
+
+    return TransformationApplicabilityLevels.NotApplicable;
+  },
+  isApplicableDescription:
+    'The Format time transformation requires a time field to work. No time field could be found.',
+  operator: (options, ctx) => (source) =>
     source.pipe(
       map((data) => {
-        // If a field and a format are configured
-        // then format the time output
-        const formatter = createTimeFormatter(options.timeField, options.outputFormat, options.useTimezone);
-
-        if (!Array.isArray(data) || data.length === 0) {
-          return data;
-        }
-
-        return data.map((frame) => ({
-          ...frame,
-          fields: formatter(frame.fields),
-        }));
+        return applyFormatTime(options, data, ctx);
       })
     ),
 };
@@ -40,37 +46,27 @@ export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOpt
 /**
  * @internal
  */
-export const createTimeFormatter =
-  (timeField: string, outputFormat: string, useTimezone: boolean) => (fields: Field[]) => {
-    const tz = getTimeZone();
+export const applyFormatTime = (
+  { timeField, outputFormat, timezone }: FormatTimeTransformerOptions,
+  data: DataFrame[],
+  ctx?: DataTransformContext
+) => {
+  if (!Array.isArray(data) || data.length === 0) {
+    return data;
+  }
 
-    return fields.map((field) => {
-      // Find the configured field
-      if (field.name === timeField) {
-        // Update values to use the configured format
-        const newVals = field.values.map((value) => {
-          const date = moment(value);
+  cacheFieldDisplayNames(data);
 
-          // Apply configured timezone if the
-          // option has been set. Otherwise
-          // use the date directly
-          if (useTimezone) {
-            const info = getTimeZoneInfo(tz, value);
-            const realTz = info !== undefined ? info.ianaName : 'UTC';
+  outputFormat = ctx?.interpolate(outputFormat) ?? outputFormat;
 
-            return date.tz(realTz).format(outputFormat);
-          } else {
-            return date.format(outputFormat);
-          }
-        });
-
-        return {
-          ...field,
-          type: FieldType.string,
-          values: newVals,
-        };
+  return data.map((frame) => ({
+    ...frame,
+    fields: frame.fields.map((field) => {
+      if (field.state?.displayName === timeField) {
+        field = fieldToStringField(field, outputFormat, { timeZone: timezone });
       }
 
       return field;
-    });
-  };
+    }),
+  }));
+};

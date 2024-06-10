@@ -472,7 +472,6 @@
     }
   ],
   "schemaVersion": 26,
-  "style": "dark",
   "tags": ["Compute", "Cloud Monitoring", "GCP"],
   "templating": {
     "list": [

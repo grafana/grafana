@@ -1,15 +1,12 @@
 import React from 'react';
 
-import { PanelModel, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
-
-import {
-  ALL_FOLDER,
-  GENERAL_FOLDER,
-  ReadonlyFolderPicker,
-} from '../../../core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { PermissionLevelString } from 'app/types';
 
 import { DashList } from './DashList';
+import { dashlistMigrationHandler } from './migrations';
 import { defaultOptions, Options } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options>(DashList)
@@ -56,16 +53,17 @@ export const plugin = new PanelPlugin<Options>(DashList)
         defaultValue: defaultOptions.query,
       })
       .addCustomEditor({
-        path: 'folderId',
+        path: 'folderUID',
         name: 'Folder',
-        id: 'folderId',
+        id: 'folderUID',
         defaultValue: undefined,
         editor: function RenderFolderPicker({ value, onChange }) {
           return (
-            <ReadonlyFolderPicker
-              initialFolderId={value}
-              onChange={(folder) => onChange(folder?.id)}
-              extraFolders={[ALL_FOLDER, GENERAL_FOLDER]}
+            <FolderPicker
+              clearable
+              permission={PermissionLevelString.View}
+              value={value}
+              onChange={(folderUID) => onChange(folderUID)}
             />
           );
         },
@@ -81,23 +79,4 @@ export const plugin = new PanelPlugin<Options>(DashList)
         },
       });
   })
-  .setMigrationHandler((panel: PanelModel<Options> & Record<string, any>) => {
-    const newOptions = {
-      showStarred: panel.options.showStarred ?? panel.starred,
-      showRecentlyViewed: panel.options.showRecentlyViewed ?? panel.recent,
-      showSearch: panel.options.showSearch ?? panel.search,
-      showHeadings: panel.options.showHeadings ?? panel.headings,
-      maxItems: panel.options.maxItems ?? panel.limit,
-      query: panel.options.query ?? panel.query,
-      folderId: panel.options.folderId ?? panel.folderId,
-      tags: panel.options.tags ?? panel.tags,
-    };
-
-    const previousVersion = parseFloat(panel.pluginVersion || '6.1');
-    if (previousVersion < 6.3) {
-      const oldProps = ['starred', 'recent', 'search', 'headings', 'limit', 'query', 'folderId'];
-      oldProps.forEach((prop) => delete panel[prop]);
-    }
-
-    return newOptions;
-  });
+  .setMigrationHandler(dashlistMigrationHandler);

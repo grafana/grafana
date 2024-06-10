@@ -14,6 +14,9 @@ jest.mock('@grafana/runtime', () => ({
     post: postMock,
   }),
   config: {
+    auth: {
+      disableLogin: false,
+    },
     loginError: false,
     buildInfo: {
       version: 'v1.0',
@@ -39,9 +42,9 @@ describe('Login Page', () => {
     render(<LoginPage />);
 
     expect(screen.getByRole('heading', { name: 'Welcome to Grafana' })).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Username input field' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Password input field')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Login button' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Email or username' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Log in' })).toBeInTheDocument();
 
     expect(screen.getByRole('link', { name: 'Forgot your password?' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Forgot your password?' })).toHaveAttribute(
@@ -56,20 +59,20 @@ describe('Login Page', () => {
   it('should pass validation checks for username field', async () => {
     render(<LoginPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Login button' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
     expect(await screen.findByText('Email or username is required')).toBeInTheDocument();
 
-    await userEvent.type(screen.getByRole('textbox', { name: 'Username input field' }), 'admin');
+    await userEvent.type(screen.getByRole('textbox', { name: 'Email or username' }), 'admin');
     await waitFor(() => expect(screen.queryByText('Email or username is required')).not.toBeInTheDocument());
   });
 
   it('should pass validation checks for password field', async () => {
     render(<LoginPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Login button' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
     expect(await screen.findByText('Password is required')).toBeInTheDocument();
 
-    await userEvent.type(screen.getByLabelText('Password input field'), 'admin');
+    await userEvent.type(screen.getByLabelText('Password'), 'admin');
     await waitFor(() => expect(screen.queryByText('Password is required')).not.toBeInTheDocument());
   });
 
@@ -82,9 +85,9 @@ describe('Login Page', () => {
     postMock.mockResolvedValueOnce({ message: 'Logged in' });
     render(<LoginPage />);
 
-    await userEvent.type(screen.getByLabelText('Username input field'), 'admin');
-    await userEvent.type(screen.getByLabelText('Password input field'), 'test');
-    fireEvent.click(screen.getByLabelText('Login button'));
+    await userEvent.type(screen.getByLabelText('Email or username'), 'admin');
+    await userEvent.type(screen.getByLabelText('Password'), 'test');
+    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
 
     await waitFor(() =>
       expect(postMock).toHaveBeenCalledWith('/login', { password: 'test', user: 'admin' }, { showErrorAlert: false })
@@ -128,9 +131,9 @@ describe('Login Page', () => {
 
     render(<LoginPage />);
 
-    await userEvent.type(screen.getByLabelText('Username input field'), 'admin');
-    await userEvent.type(screen.getByLabelText('Password input field'), 'test');
-    await userEvent.click(screen.getByRole('button', { name: 'Login button' }));
+    await userEvent.type(screen.getByLabelText('Email or username'), 'admin');
+    await userEvent.type(screen.getByLabelText('Password'), 'test');
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
 
     const alert = await screen.findByRole('alert', { name: 'Login failed' });
     expect(alert).toBeInTheDocument();
@@ -150,9 +153,9 @@ describe('Login Page', () => {
 
     render(<LoginPage />);
 
-    await userEvent.type(screen.getByLabelText('Username input field'), 'admin');
-    await userEvent.type(screen.getByLabelText('Password input field'), 'test');
-    await userEvent.click(screen.getByRole('button', { name: 'Login button' }));
+    await userEvent.type(screen.getByLabelText('Email or username'), 'admin');
+    await userEvent.type(screen.getByLabelText('Password'), 'test');
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
 
     const alert = await screen.findByRole('alert', { name: 'Login failed' });
     expect(alert).toBeInTheDocument();

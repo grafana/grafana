@@ -19,6 +19,7 @@ import (
 type Command interface {
 	NeedsVars() []string
 	Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error)
+	Type() string
 }
 
 // MathCommand is a command for a math expression such as "1 + $GA / 2"
@@ -70,21 +71,25 @@ func (gm *MathCommand) NeedsVars() []string {
 // failed to execute.
 func (gm *MathCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteMath")
-	span.SetAttributes("expression", gm.RawExpression, attribute.Key("expression").String(gm.RawExpression))
+	span.SetAttributes(attribute.String("expression", gm.RawExpression))
 	defer span.End()
 	return gm.Expression.Execute(gm.refID, vars, tracer)
 }
 
+func (gm *MathCommand) Type() string {
+	return TypeMath.String()
+}
+
 // ReduceCommand is an expression command for reduction of a timeseries such as a min, mean, or max.
 type ReduceCommand struct {
-	Reducer      string
+	Reducer      mathexp.ReducerID
 	VarToReduce  string
 	refID        string
 	seriesMapper mathexp.ReduceMapper
 }
 
 // NewReduceCommand creates a new ReduceCMD.
-func NewReduceCommand(refID, reducer, varToReduce string, mapper mathexp.ReduceMapper) (*ReduceCommand, error) {
+func NewReduceCommand(refID string, reducer mathexp.ReducerID, varToReduce string, mapper mathexp.ReduceMapper) (*ReduceCommand, error) {
 	_, err := mathexp.GetReduceFunc(reducer)
 	if err != nil {
 		return nil, err
@@ -114,16 +119,17 @@ func UnmarshalReduceCommand(rn *rawNode) (*ReduceCommand, error) {
 	if !ok {
 		return nil, errors.New("no reducer specified")
 	}
-	redFunc, ok := rawReducer.(string)
+	redString, ok := rawReducer.(string)
 	if !ok {
 		return nil, fmt.Errorf("expected reducer to be a string, got %T", rawReducer)
 	}
+	redFunc := mathexp.ReducerID(strings.ToLower(redString))
 
 	var mapper mathexp.ReduceMapper = nil
 	settings, ok := rn.Query["settings"]
 	if ok {
 		switch s := settings.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			mode, ok := s["mode"]
 			if ok && mode != "" {
 				switch mode {
@@ -163,10 +169,10 @@ func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.
 	_, span := tracer.Start(ctx, "SSE.ExecuteReduce")
 	defer span.End()
 
-	span.SetAttributes("reducer", gr.Reducer, attribute.Key("reducer").String(gr.Reducer))
+	span.SetAttributes(attribute.String("reducer", string(gr.Reducer)))
 
 	newRes := mathexp.Results{}
-	for _, val := range vars[gr.VarToReduce].Values {
+	for i, val := range vars[gr.VarToReduce].Values {
 		switch v := val.(type) {
 		case mathexp.Series:
 			num, err := v.Reduce(gr.refID, gr.Reducer, gr.seriesMapper)
@@ -175,12 +181,21 @@ func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.
 			}
 			newRes.Values = append(newRes.Values, num)
 		case mathexp.Number: // if incoming vars is just a number, any reduce op is just a noop, add it as it is
+			value := v.GetFloat64Value()
+			if gr.seriesMapper != nil {
+				value = gr.seriesMapper.MapInput(value)
+				if value == nil { // same logic as in mapSeries
+					continue
+				}
+			}
 			copyV := mathexp.NewNumber(gr.refID, v.GetLabels())
-			copyV.SetValue(v.GetFloat64Value())
-			copyV.AddNotice(data.Notice{
-				Severity: data.NoticeSeverityWarning,
-				Text:     fmt.Sprintf("Reduce operation is not needed. Input query or expression %s is already reduced data.", gr.VarToReduce),
-			})
+			copyV.SetValue(value)
+			if gr.seriesMapper == nil && i == 0 { // Add notice to only the first result to not multiple them in presentation
+				copyV.AddNotice(data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     fmt.Sprintf("Reduce operation is not needed. Input query or expression %s is already reduced data.", gr.VarToReduce),
+				})
+			}
 			newRes.Values = append(newRes.Values, copyV)
 		case mathexp.NoData:
 			newRes.Values = append(newRes.Values, v.New())
@@ -191,18 +206,22 @@ func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.
 	return newRes, nil
 }
 
+func (gr *ReduceCommand) Type() string {
+	return TypeReduce.String()
+}
+
 // ResampleCommand is an expression command for resampling of a timeseries.
 type ResampleCommand struct {
 	Window        time.Duration
 	VarToResample string
-	Downsampler   string
-	Upsampler     string
+	Downsampler   mathexp.ReducerID
+	Upsampler     mathexp.Upsampler
 	TimeRange     TimeRange
 	refID         string
 }
 
 // NewResampleCommand creates a new ResampleCMD.
-func NewResampleCommand(refID, rawWindow, varToResample string, downsampler string, upsampler string, tr TimeRange) (*ResampleCommand, error) {
+func NewResampleCommand(refID, rawWindow, varToResample string, downsampler mathexp.ReducerID, upsampler mathexp.Upsampler, tr TimeRange) (*ResampleCommand, error) {
 	// TODO: validate reducer here, before execution
 	window, err := gtime.ParseDuration(rawWindow)
 	if err != nil {
@@ -261,7 +280,11 @@ func UnmarshalResampleCommand(rn *rawNode) (*ResampleCommand, error) {
 		return nil, fmt.Errorf("expected resample downsampler to be a string, got type %T", upsampler)
 	}
 
-	return NewResampleCommand(rn.RefID, window, varToResample, downsampler, upsampler, rn.TimeRange)
+	return NewResampleCommand(rn.RefID, window,
+		varToResample,
+		mathexp.ReducerID(downsampler),
+		mathexp.Upsampler(upsampler),
+		rn.TimeRange)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -298,6 +321,10 @@ func (gr *ResampleCommand) Execute(ctx context.Context, now time.Time, vars math
 	return newRes, nil
 }
 
+func (gr *ResampleCommand) Type() string {
+	return TypeResample.String()
+}
+
 // CommandType is the type of the expression command.
 type CommandType int
 
@@ -314,6 +341,8 @@ const (
 	TypeClassicConditions
 	// TypeThreshold is the CMDType for checking if a threshold has been crossed
 	TypeThreshold
+	// TypeSQL is the CMDType for running SQL expressions
+	TypeSQL
 )
 
 func (gt CommandType) String() string {
@@ -326,6 +355,10 @@ func (gt CommandType) String() string {
 		return "resample"
 	case TypeClassicConditions:
 		return "classic_conditions"
+	case TypeThreshold:
+		return "threshold"
+	case TypeSQL:
+		return "sql"
 	default:
 		return "unknown"
 	}
@@ -344,6 +377,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeClassicConditions, nil
 	case "threshold":
 		return TypeThreshold, nil
+	case "sql":
+		return TypeSQL, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}

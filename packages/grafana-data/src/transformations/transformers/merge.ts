@@ -3,7 +3,7 @@ import { map } from 'rxjs/operators';
 
 import { MutableDataFrame } from '../../dataframe';
 import { DataFrame, Field } from '../../types/dataFrame';
-import { DataTransformerInfo } from '../../types/transformations';
+import { DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 
@@ -19,6 +19,14 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
   name: 'Merge series/tables',
   description: 'Merges multiple series/tables into a single serie/table',
   defaultOptions: {},
+  isApplicable: (data: DataFrame[]) => {
+    return data.length > 1
+      ? TransformationApplicabilityLevels.Applicable
+      : TransformationApplicabilityLevels.NotApplicable;
+  },
+  isApplicableDescription: (data: DataFrame[]) => {
+    return `The merge transformation requires at least 2 data series to work. There is currently ${data.length} data series.`;
+  },
   operator: (options) => (source) =>
     source.pipe(
       map((dataFrames) => {
@@ -65,7 +73,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
           return dataFrames;
         }
 
-        const valuesByKey: Record<string, Array<Record<string, any>>> = {};
+        const valuesByKey: Record<string, Array<Record<string, unknown>>> = {};
         const valuesInOrder: ValuePointer[] = [];
         const keyFactory = createKeyFactory(data, fieldIndexByName, fieldNamesForKey);
         const valueMapper = createValueMapper(data, fieldNames, fieldIndexByName);
@@ -149,7 +157,7 @@ const createValueMapper = (
   fieldIndexByName: Record<string, Record<number, number>>
 ) => {
   return (frameIndex: number, valueIndex: number) => {
-    const value: Record<string, any> = {};
+    const value: Record<string, unknown> = {};
     const fieldNames = Array.from(fieldByName);
 
     for (const fieldName of fieldNames) {
@@ -180,7 +188,7 @@ const createValueMapper = (
   };
 };
 
-const isMergable = (existing: Record<string, any>, value: Record<string, any>): boolean => {
+const isMergable = (existing: Record<string, unknown>, value: Record<string, unknown>): boolean => {
   let mergable = true;
 
   for (const prop in value) {
@@ -209,7 +217,7 @@ const fieldExistsInAllFrames = (
   return Object.keys(fieldIndexByName[field.name]).length === data.length;
 };
 
-const createPointer = (key: string, valuesByKey: Record<string, Array<Record<string, any>>>): ValuePointer => {
+const createPointer = (key: string, valuesByKey: Record<string, Array<Record<string, unknown>>>): ValuePointer => {
   return {
     key,
     index: valuesByKey[key].length - 1,

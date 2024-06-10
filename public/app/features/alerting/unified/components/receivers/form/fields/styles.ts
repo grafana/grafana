@@ -11,7 +11,7 @@ export const getReceiverFormFieldStyles = (theme: GrafanaTheme2) => ({
     margin: ${theme.spacing(2, 0)};
     padding: ${theme.spacing(1)};
     border: solid 1px ${theme.colors.border.medium};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     position: relative;
   `,
   description: css`

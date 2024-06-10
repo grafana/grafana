@@ -22,8 +22,8 @@ type BasicDiff struct {
 // A BasicBlock represents a top-level element in a basic diff.
 type BasicBlock struct {
 	Title     string
-	Old       interface{}
-	New       interface{}
+	Old       any
+	New       any
 	Change    ChangeType
 	Changes   []*BasicChange
 	Summaries []*BasicSummary
@@ -35,8 +35,8 @@ type BasicBlock struct {
 // BasicChanges in a BasicBlock.
 type BasicChange struct {
 	Key       string
-	Old       interface{}
-	New       interface{}
+	Old       any
+	New       any
 	Change    ChangeType
 	LineStart int
 	LineEnd   int
@@ -60,7 +60,7 @@ type BasicFormatter struct {
 	tpl      *template.Template
 }
 
-func NewBasicFormatter(left interface{}) *BasicFormatter {
+func NewBasicFormatter(left any) *BasicFormatter {
 	tpl := template.Must(template.New("block").Funcs(tplFuncMap).Parse(tplBlock))
 	tpl = template.Must(tpl.New("change").Funcs(tplFuncMap).Parse(tplChange))
 	tpl = template.Must(tpl.New("summary").Funcs(tplFuncMap).Parse(tplSummary))

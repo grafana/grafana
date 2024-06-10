@@ -87,7 +87,7 @@ func (m *adminOnlyMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) erro
 
 		// Remove managed permission for editors and viewers if there was any
 		removeSQL := `DELETE FROM permission WHERE scope = ? AND role_id IN(?` + strings.Repeat(", ?", len(roleIDS)-1) + `) `
-		params := []interface{}{removeSQL, scope}
+		params := []any{removeSQL, scope}
 		for _, id := range roleIDS {
 			params = append(params, id)
 		}

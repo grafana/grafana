@@ -233,7 +233,6 @@
     }
   ],
   "schemaVersion": 26,
-  "style": "dark",
   "tags": ["Storage", "Cloud Monitoring", "GCP"],
   "templating": {
     "list": [

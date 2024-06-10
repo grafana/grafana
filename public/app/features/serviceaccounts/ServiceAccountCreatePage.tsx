@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { getBackendSrv, locationService } from '@grafana/runtime';
-import { Form, Button, Input, Field, FieldSet } from '@grafana/ui';
+import { Button, Input, Field, FieldSet } from '@grafana/ui';
+import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
@@ -29,7 +30,7 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
   const [serviceAccount, setServiceAccount] = useState<ServiceAccountDTO>({
     id: 0,
     orgId: contextSrv.user.orgId,
-    role: OrgRole.Viewer,
+    role: contextSrv.licensedAccessControlEnabled() ? OrgRole.None : OrgRole.Viewer,
     tokens: 0,
     name: '',
     login: '',

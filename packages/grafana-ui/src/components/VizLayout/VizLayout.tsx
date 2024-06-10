@@ -107,7 +107,7 @@ export const getVizStyles = (theme: GrafanaTheme2) => {
   return {
     viz: css({
       flexGrow: 2,
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
       '&:focus-visible': getFocusStyles(theme),
     }),
   };

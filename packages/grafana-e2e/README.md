@@ -1,5 +1,5 @@
 # Grafana End-to-End Test library
 
-> **@grafana/e2e is currently in BETA**.
-
-This package contains an API wrapper built on top of [Cypress](https://www.cypress.io) that simplifies creating end-to-end tests for Grafana. More information can be found [here](https://github.com/grafana/grafana/blob/main/contribute/style-guides/e2e.md).
+> [!CAUTION]
+> This package is deprecated.
+> If you'd like to write end-to-end tests for a Grafana plugin (core or external), use the [`@grafana/plugin-e2e`](https://grafana.com/developers/plugin-tools/e2e-test-a-plugin/introduction) package.

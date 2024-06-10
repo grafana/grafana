@@ -130,9 +130,9 @@ $headings-line-height: ${theme.typography.bodySmall.lineHeight} !default;
 
 $border-width: 1px !default;
 
-$border-radius: ${theme.shape.borderRadius(1)} !default;
+$border-radius: ${theme.shape.radius.default} !default;
 $border-radius-lg: ${theme.shape.borderRadius(3)} !default;
-$border-radius-sm: ${theme.shape.borderRadius(1)} !default;
+$border-radius-sm: ${theme.shape.radius.default} !default;
 
 // Page
 

@@ -61,7 +61,7 @@ describe('Browse list of plugins', () => {
       expect(queryByText('Plugin 4')).toBeNull();
     });
 
-    it('should list all plugins (except core plugins) when filtering by all', async () => {
+    it('should list all plugins (including core plugins) when filtering by all', async () => {
       const { queryByText } = renderBrowse('/plugins?filterBy=all&filterByType=all', [
         getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
         getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
@@ -73,8 +73,8 @@ describe('Browse list of plugins', () => {
       expect(queryByText('Plugin 2')).toBeInTheDocument();
       expect(queryByText('Plugin 3')).toBeInTheDocument();
 
-      // Core plugins should not be listed
-      expect(queryByText('Plugin 4')).not.toBeInTheDocument();
+      // Core plugins should still be listed
+      expect(queryByText('Plugin 4')).toBeInTheDocument();
     });
 
     it('should list installed plugins (including core plugins) when filtering by installed', async () => {
@@ -183,13 +183,19 @@ describe('Browse list of plugins', () => {
 
   describe('when searching', () => {
     it('should only list plugins matching search', async () => {
-      const { queryByText } = renderBrowse('/plugins?filterBy=all&q=zabbix', [
-        getCatalogPluginMock({ id: 'zabbix', name: 'Zabbix' }),
-        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2' }),
-        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3' }),
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&q=matches', [
+        getCatalogPluginMock({ id: 'matches-the-search', name: 'Matches the search' }),
+        getCatalogPluginMock({
+          id: 'plugin-2',
+          name: 'Plugin 2',
+        }),
+        getCatalogPluginMock({
+          id: 'plugin-3',
+          name: 'Plugin 3',
+        }),
       ]);
 
-      await waitFor(() => expect(queryByText('Zabbix')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText('Matches the search')).toBeInTheDocument());
 
       // Other plugin types shouldn't be shown
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();

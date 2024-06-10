@@ -17,15 +17,15 @@ import (
 )
 
 type Data struct {
-	Value1     float64                `json:"value1"`
-	Value2     float64                `json:"value2"`
-	Value3     *float64               `json:"value3"`
-	Value4     float64                `json:"value4"`
-	Annotation string                 `json:"annotation"`
-	Array      []float64              `json:"array"`
-	Map        map[string]interface{} `json:"map"`
-	Host       string                 `json:"host"`
-	Status     string                 `json:"status"`
+	Value1     float64        `json:"value1"`
+	Value2     float64        `json:"value2"`
+	Value3     *float64       `json:"value3"`
+	Value4     float64        `json:"value4"`
+	Annotation string         `json:"annotation"`
+	Array      []float64      `json:"array"`
+	Map        map[string]any `json:"map"`
+	Host       string         `json:"host"`
+	Status     string         `json:"status"`
 }
 
 // TODO: temporary for development, remove.
@@ -41,7 +41,7 @@ func postTestData() {
 			Value4:     float64(i % 10),
 			Annotation: "odd",
 			Array:      []float64{float64(rand.Intn(10)), float64(rand.Intn(10))},
-			Map: map[string]interface{}{
+			Map: map[string]any{
 				"red":    1,
 				"yellow": 4,
 				"green":  7,

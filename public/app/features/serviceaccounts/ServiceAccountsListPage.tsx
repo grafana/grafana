@@ -4,17 +4,29 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2, InlineField } from '@grafana/ui';
+import {
+  ConfirmModal,
+  FilterInput,
+  LinkButton,
+  RadioButtonGroup,
+  useStyles2,
+  InlineField,
+  Pagination,
+  Stack,
+  EmptyState,
+} from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
 import ServiceAccountListItem from './components/ServiceAccountsListItem';
 import {
   changeQuery,
+  changePage,
   fetchACOptions,
   fetchServiceAccounts,
   deleteServiceAccount,
@@ -34,6 +46,7 @@ function mapStateToProps(state: StoreState) {
 }
 
 const mapDispatchToProps = {
+  changePage,
   changeQuery,
   fetchACOptions,
   fetchServiceAccounts,
@@ -45,7 +58,20 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
+const availableFilters = [
+  { label: 'All', value: ServiceAccountStateFilter.All },
+  { label: 'With expired tokens', value: ServiceAccountStateFilter.WithExpiredTokens },
+  { label: 'Disabled', value: ServiceAccountStateFilter.Disabled },
+];
+
+if (config.featureToggles.externalServiceAccounts) {
+  availableFilters.push({ label: 'Managed', value: ServiceAccountStateFilter.External });
+}
+
 export const ServiceAccountsListPageUnconnected = ({
+  page,
+  changePage,
+  totalPages,
   serviceAccounts,
   isLoading,
   roleOptions,
@@ -165,7 +191,19 @@ export const ServiceAccountsListPageUnconnected = ({
   );
 
   return (
-    <Page navId="serviceaccounts" subTitle={subTitle}>
+    <Page
+      navId="serviceaccounts"
+      subTitle={subTitle}
+      actions={
+        <>
+          {!noServiceAccountsCreated && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
+            <LinkButton href="org/serviceaccounts/create" variant="primary">
+              Add service account
+            </LinkButton>
+          )}
+        </>
+      }
+    >
       <Page.Contents>
         <div className="page-action-bar">
           <InlineField grow>
@@ -177,22 +215,18 @@ export const ServiceAccountsListPageUnconnected = ({
             />
           </InlineField>
           <RadioButtonGroup
-            options={[
-              { label: 'All', value: ServiceAccountStateFilter.All },
-              { label: 'With expired tokens', value: ServiceAccountStateFilter.WithExpiredTokens },
-              { label: 'Disabled', value: ServiceAccountStateFilter.Disabled },
-            ]}
+            options={availableFilters}
             onChange={onStateFilterChange}
             value={serviceAccountStateFilter}
             className={styles.filter}
           />
-          {!noServiceAccountsCreated && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
-            <LinkButton href="org/serviceaccounts/create" variant="primary">
-              Add service account
-            </LinkButton>
-          )}
         </div>
-        {isLoading && <PageLoader />}
+        {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && (
+          <EmptyState
+            variant="not-found"
+            message={t('service-accounts.empty-state.message', 'No services accounts found')}
+          />
+        )}
         {!isLoading && noServiceAccountsCreated && (
           <>
             <EmptyListCTA
@@ -209,7 +243,7 @@ export const ServiceAccountsListPageUnconnected = ({
           </>
         )}
 
-        {!isLoading && serviceAccounts.length !== 0 && (
+        {(isLoading || serviceAccounts.length !== 0) && (
           <>
             <div className={cx(styles.table, 'admin-list-table')}>
               <table className="filter-table filter-table--hover">
@@ -220,24 +254,36 @@ export const ServiceAccountsListPageUnconnected = ({
                     <th>ID</th>
                     <th>Roles</th>
                     <th>Tokens</th>
-                    <th style={{ width: '34px' }} />
+                    <th style={{ width: '120px' }} />
                   </tr>
                 </thead>
                 <tbody>
-                  {serviceAccounts.map((serviceAccount: ServiceAccountDTO) => (
-                    <ServiceAccountListItem
-                      serviceAccount={serviceAccount}
-                      key={serviceAccount.id}
-                      roleOptions={roleOptions}
-                      onRoleChange={onRoleChange}
-                      onRemoveButtonClick={onRemoveButtonClick}
-                      onDisable={onDisableButtonClick}
-                      onEnable={onEnable}
-                      onAddTokenClick={onTokenAdd}
-                    />
-                  ))}
+                  {isLoading ? (
+                    <>
+                      <ServiceAccountListItem.Skeleton />
+                      <ServiceAccountListItem.Skeleton />
+                      <ServiceAccountListItem.Skeleton />
+                    </>
+                  ) : (
+                    serviceAccounts.map((serviceAccount) => (
+                      <ServiceAccountListItem
+                        serviceAccount={serviceAccount}
+                        key={serviceAccount.id}
+                        roleOptions={roleOptions}
+                        onRoleChange={onRoleChange}
+                        onRemoveButtonClick={onRemoveButtonClick}
+                        onDisable={onDisableButtonClick}
+                        onEnable={onEnable}
+                        onAddTokenClick={onTokenAdd}
+                      />
+                    ))
+                  )}
                 </tbody>
               </table>
+
+              <Stack justifyContent="flex-end">
+                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
+              </Stack>
             </div>
           </>
         )}
@@ -282,55 +328,55 @@ export const ServiceAccountsListPageUnconnected = ({
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    table: css`
-      margin-top: ${theme.spacing(3)};
-    `,
-    filter: css`
-      margin: 0 ${theme.spacing(1)};
-    `,
-    row: css`
-      display: flex;
-      align-items: center;
-      height: 100% !important;
+    table: css({
+      marginTop: theme.spacing(3),
+    }),
+    filter: css({
+      margin: `0 ${theme.spacing(1)}`,
+    }),
+    row: css({
+      display: 'flex',
+      alignItems: 'center',
+      height: '100% !important',
 
-      a {
-        padding: ${theme.spacing(0.5)} 0 !important;
-      }
-    `,
-    unitTooltip: css`
-      display: flex;
-      flex-direction: column;
-    `,
-    unitItem: css`
-      cursor: pointer;
-      padding: ${theme.spacing(0.5)} 0;
-      margin-right: ${theme.spacing(1)};
-    `,
-    disabled: css`
-      color: ${theme.colors.text.disabled};
-    `,
-    link: css`
-      color: inherit;
-      cursor: pointer;
-      text-decoration: underline;
-    `,
-    pageHeader: css`
-      display: flex;
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    apiKeyInfoLabel: css`
-      margin-left: ${theme.spacing(1)};
-      line-height: 2.2;
-      flex-grow: 1;
-      color: ${theme.colors.text.secondary};
+      a: {
+        padding: `${theme.spacing(0.5)} 0 !important`,
+      },
+    }),
+    unitTooltip: css({
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    unitItem: css({
+      cursor: 'pointer',
+      padding: theme.spacing(0.5, 0),
+      marginRight: theme.spacing(1),
+    }),
+    disabled: css({
+      color: theme.colors.text.disabled,
+    }),
+    link: css({
+      color: 'inherit',
+      cursor: 'pointer',
+      textDecoration: 'underline',
+    }),
+    pageHeader: css({
+      display: 'flex',
+      marginBottom: theme.spacing(2),
+    }),
+    apiKeyInfoLabel: css({
+      marginLeft: theme.spacing(1),
+      lineHeight: 2.2,
+      flexGrow: 1,
+      color: theme.colors.text.secondary,
 
-      span {
-        padding: ${theme.spacing(0.5)};
-      }
-    `,
-    filterDelimiter: css`
-      flex-grow: 1;
-    `,
+      span: {
+        padding: theme.spacing(0.5),
+      },
+    }),
+    filterDelimiter: css({
+      flexGrow: 1,
+    }),
   };
 };
 

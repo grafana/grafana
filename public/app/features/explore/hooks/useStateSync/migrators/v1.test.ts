@@ -9,16 +9,8 @@ jest.mock('app/core/utils/explore', () => ({
 
 describe('v1 migrator', () => {
   describe('parse', () => {
-    beforeEach(function () {
-      jest.spyOn(console, 'error').mockImplementation(() => void 0);
-    });
-
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
-
     it('correctly returns default state when no params are provided', () => {
-      expect(v1Migrator.parse({})).toMatchObject({
+      expect(v1Migrator.parse({}).to).toMatchObject({
         panes: {
           ID: {
             datasource: null,
@@ -30,7 +22,7 @@ describe('v1 migrator', () => {
     });
 
     it('correctly returns default state when panes param is an empty object', () => {
-      expect(v1Migrator.parse({ panes: '{}' })).toMatchObject({
+      expect(v1Migrator.parse({ panes: '{}' }).to).toMatchObject({
         panes: {
           ID: {
             datasource: null,
@@ -42,7 +34,7 @@ describe('v1 migrator', () => {
     });
 
     it('correctly returns default state when panes param is not a valid JSON object', () => {
-      expect(v1Migrator.parse({ panes: '{a malformed json}' })).toMatchObject({
+      expect(v1Migrator.parse({ panes: '{a malformed json}' }).to).toMatchObject({
         panes: {
           ID: {
             datasource: null,
@@ -51,12 +43,10 @@ describe('v1 migrator', () => {
           },
         },
       });
-
-      expect(console.error).toHaveBeenCalledTimes(1);
     });
 
     it('correctly returns default state when a pane in panes params is an empty object', () => {
-      expect(v1Migrator.parse({ panes: '{"aaa": {}}' })).toMatchObject({
+      expect(v1Migrator.parse({ panes: '{"aaa": {}}' }).to).toMatchObject({
         panes: {
           aaa: {
             datasource: null,
@@ -68,7 +58,7 @@ describe('v1 migrator', () => {
     });
 
     it('correctly returns default state when a pane in panes params is not a valid JSON object', () => {
-      expect(v1Migrator.parse({ panes: '{"aaa": "NOT A VALID URL STATE"}' })).toMatchObject({
+      expect(v1Migrator.parse({ panes: '{"aaa": "NOT A VALID URL STATE"}' }).to).toMatchObject({
         panes: {
           aaa: {
             datasource: null,
@@ -96,7 +86,7 @@ describe('v1 migrator', () => {
               }
             }
           }`,
-        })
+        }).to
       ).toMatchObject({
         panes: {
           aaa: {

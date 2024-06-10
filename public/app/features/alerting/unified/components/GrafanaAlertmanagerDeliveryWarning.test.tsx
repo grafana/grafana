@@ -1,9 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import 'whatwg-fetch';
+import { render, screen, waitFor } from '@testing-library/react';
 import { setupServer } from 'msw/node';
 import React from 'react';
 import { Provider } from 'react-redux';
-
-import 'whatwg-fetch';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -76,7 +75,9 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
       <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />
     );
 
-    expect(container).toBeEmptyDOMElement();
+    await waitFor(() => {
+      expect(container).toBeEmptyDOMElement();
+    });
   });
 
   it('Should render no warning when choice is All but no active AM instances', async () => {
@@ -89,7 +90,9 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
       <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />
     );
 
-    expect(container).toBeEmptyDOMElement();
+    await waitFor(() => {
+      expect(container).toBeEmptyDOMElement();
+    });
   });
 });
 

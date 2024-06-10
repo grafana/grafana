@@ -91,7 +91,7 @@ const getHook: GetHook = (c) => () => {
     throw new Error('use ElasticsearchProvider first.');
   }
 
-  return contextValue as NonNullable<typeof contextValue>;
+  return contextValue;
 };
 
 export const useQuery = getHook(QueryContext);

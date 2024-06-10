@@ -4,16 +4,21 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -51,9 +56,9 @@ func notAuthorized(c *contextmodel.ReqContext) {
 
 func tokenRevoked(c *contextmodel.ReqContext, err *auth.TokenRevokedError) {
 	if c.IsApiRequest() {
-		c.JSON(401, map[string]interface{}{
+		c.JSON(http.StatusUnauthorized, map[string]any{
 			"message": "Token revoked",
-			"error": map[string]interface{}{
+			"error": map[string]any{
 				"id":                    "ERR_TOKEN_REVOKED",
 				"maxConcurrentSessions": err.MaxConcurrentSessions,
 			},
@@ -86,13 +91,62 @@ func removeForceLoginParams(str string) string {
 	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
-func CanAdminPlugins(cfg *setting.Cfg) func(c *contextmodel.ReqContext) {
+func CanAdminPlugins(cfg *setting.Cfg, accessControl ac.AccessControl) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
-		if !pluginaccesscontrol.ReqCanAdminPlugins(cfg)(c) {
+		hasAccess := ac.HasAccess(accessControl, c)
+		if !pluginaccesscontrol.ReqCanAdminPlugins(cfg)(c) && !hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
 			accessForbidden(c)
 			return
 		}
 	}
+}
+
+func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, features featuremgmt.FeatureToggles,
+	logger log.Logger) func(c *contextmodel.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
+		pluginID := web.Params(c.Req)[":id"]
+		p, exists := ps.Plugin(c.Req.Context(), pluginID)
+		if !exists {
+			// The frontend will handle app not found appropriately
+			return
+		}
+
+		permitted := true
+		path := normalizeIncludePath(c.Req.URL.Path)
+		hasAccess := ac.HasAccess(accessControl, c)
+		for _, i := range p.Includes {
+			if i.Type != "page" {
+				continue
+			}
+
+			u, err := url.Parse(i.Path)
+			if err != nil {
+				logger.Error("failed to parse include path", "pluginId", pluginID, "include", i.Name, "err", err)
+				continue
+			}
+
+			if normalizeIncludePath(u.Path) == path {
+				useRBAC := features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && i.RequiresRBACAction()
+				if useRBAC && !hasAccess(ac.EvalPermission(i.Action)) {
+					logger.Debug("Plugin include is covered by RBAC, user doesn't have access", "plugin", pluginID, "include", i.Name)
+					permitted = false
+					break
+				} else if !useRBAC && !c.HasUserRole(i.Role) {
+					permitted = false
+					break
+				}
+			}
+		}
+
+		if !permitted {
+			accessForbidden(c)
+			return
+		}
+	}
+}
+
+func normalizeIncludePath(p string) string {
+	return strings.TrimPrefix(filepath.Clean(p), "/")
 }
 
 func RoleAuth(roles ...org.RoleType) web.Handler {
@@ -118,7 +172,7 @@ func Auth(options *AuthOptions) web.Handler {
 			if !forceLogin {
 				orgIDValue := c.Req.URL.Query().Get("orgId")
 				orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
-				if err == nil && orgID > 0 && orgID != c.OrgID {
+				if err == nil && orgID > 0 && orgID != c.SignedInUser.GetOrgID() {
 					forceLogin = true
 				}
 			}

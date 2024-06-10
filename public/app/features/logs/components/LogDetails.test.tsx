@@ -1,7 +1,17 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { Field, LogLevel, LogRowModel, MutableDataFrame, createTheme, FieldType } from '@grafana/data';
+import {
+  Field,
+  LogLevel,
+  LogRowModel,
+  MutableDataFrame,
+  createTheme,
+  FieldType,
+  createDataFrame,
+  DataFrameType,
+} from '@grafana/data';
 
 import { LogDetails, Props } from './LogDetails';
 import { createLogRow } from './__mocks__/logRow';
@@ -46,6 +56,79 @@ describe('LogDetails', () => {
       expect(screen.getByRole('cell', { name: 'label1' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'key2' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'label2' })).toBeInTheDocument();
+    });
+    it('should render filter controls when the callbacks are provided', () => {
+      setup(
+        {
+          onClickFilterLabel: () => {},
+          onClickFilterOutLabel: () => {},
+        },
+        { labels: { key1: 'label1' } }
+      );
+      expect(screen.getByLabelText('Filter for value in query A')).toBeInTheDocument();
+      expect(screen.getByLabelText('Filter out value in query A')).toBeInTheDocument();
+    });
+    describe('Toggleable filters', () => {
+      it('should provide the log row to Explore filter functions', async () => {
+        const onClickFilterLabelMock = jest.fn();
+        const onClickFilterOutLabelMock = jest.fn();
+        const isFilterLabelActiveMock = jest.fn().mockResolvedValue(true);
+        const mockRow = createLogRow({
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          labels: { key1: 'label1' },
+        });
+
+        setup({
+          onClickFilterLabel: onClickFilterLabelMock,
+          onClickFilterOutLabel: onClickFilterOutLabelMock,
+          isFilterLabelActive: isFilterLabelActiveMock,
+          row: mockRow,
+        });
+
+        expect(isFilterLabelActiveMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
+
+        await userEvent.click(screen.getByLabelText('Filter for value in query A'));
+        expect(onClickFilterLabelMock).toHaveBeenCalledTimes(1);
+        expect(onClickFilterLabelMock).toHaveBeenCalledWith(
+          'key1',
+          'label1',
+          expect.objectContaining({
+            fields: [
+              expect.objectContaining({ values: [0] }),
+              expect.objectContaining({ values: ['line1'] }),
+              expect.objectContaining({ values: [{ app: 'app01' }] }),
+            ],
+            length: 1,
+          })
+        );
+
+        await userEvent.click(screen.getByLabelText('Filter out value in query A'));
+        expect(onClickFilterOutLabelMock).toHaveBeenCalledTimes(1);
+        expect(onClickFilterOutLabelMock).toHaveBeenCalledWith(
+          'key1',
+          'label1',
+          expect.objectContaining({
+            fields: [
+              expect.objectContaining({ values: [0] }),
+              expect.objectContaining({ values: ['line1'] }),
+              expect.objectContaining({ values: [{ app: 'app01' }] }),
+            ],
+            length: 1,
+          })
+        );
+      });
+    });
+    it('should not render filter controls when the callbacks are not provided', () => {
+      setup(
+        {
+          onClickFilterLabel: undefined,
+          onClickFilterOutLabel: undefined,
+        },
+        { labels: { key1: 'label1' } }
+      );
+      expect(screen.queryByLabelText('Filter for value')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Filter out value')).not.toBeInTheDocument();
     });
   });
   describe('when log row has error', () => {
@@ -120,5 +203,67 @@ describe('LogDetails', () => {
     const link = within(traceIdRow!).getByRole('link', { name: 'link' });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', 'localhost:3210/1234');
+  });
+
+  it('should show correct log details fields, links and labels for DataFrameType.LogLines frames', () => {
+    const entry = 'test';
+    const dataFrame = createDataFrame({
+      fields: [
+        { name: 'timestamp', config: {}, type: FieldType.time, values: [1] },
+        { name: 'body', type: FieldType.string, values: [entry] },
+        {
+          name: 'labels',
+          type: FieldType.other,
+          values: [
+            {
+              label1: 'value1',
+            },
+          ],
+        },
+        {
+          name: 'shouldNotShowFieldName',
+          type: FieldType.string,
+          values: ['shouldNotShowFieldValue'],
+        },
+        {
+          name: 'shouldShowLinkName',
+          type: FieldType.string,
+          values: ['shouldShowLinkValue'],
+          config: { links: [{ title: 'link', url: 'localhost:3210/${__value.text}' }] },
+        },
+      ],
+      meta: {
+        type: DataFrameType.LogLines,
+      },
+    });
+
+    setup(
+      {
+        getFieldLinks: (field: Field, rowIndex: number) => {
+          if (field.config && field.config.links) {
+            return field.config.links.map((link) => {
+              return {
+                href: link.url.replace('${__value.text}', field.values[rowIndex]),
+                title: link.title,
+                target: '_blank',
+                origin: field,
+              };
+            });
+          }
+          return [];
+        },
+      },
+      { entry, dataFrame, entryFieldIndex: 0, rowIndex: 0, labels: { label1: 'value1' } }
+    );
+
+    // Don't show additional fields for DataFrameType.LogLines
+    expect(screen.queryByText('shouldNotShowFieldName')).not.toBeInTheDocument();
+    expect(screen.queryByText('shouldNotShowFieldValue')).not.toBeInTheDocument();
+
+    // Show labels and links
+    expect(screen.getByText('label1')).toBeInTheDocument();
+    expect(screen.getByText('value1')).toBeInTheDocument();
+    expect(screen.getByText('shouldShowLinkName')).toBeInTheDocument();
+    expect(screen.getByText('shouldShowLinkValue')).toBeInTheDocument();
   });
 });

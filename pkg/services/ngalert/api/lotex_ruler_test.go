@@ -3,16 +3,20 @@ package api
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
+	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -114,7 +118,7 @@ type fakeCacheService struct {
 	err        error
 }
 
-func (f fakeCacheService) GetDatasource(_ context.Context, datasourceID int64, _ *user.SignedInUser, _ bool) (*datasources.DataSource, error) {
+func (f fakeCacheService) GetDatasource(_ context.Context, datasourceID int64, _ identity.Requester, _ bool) (*datasources.DataSource, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -122,10 +126,269 @@ func (f fakeCacheService) GetDatasource(_ context.Context, datasourceID int64, _
 	return f.datasource, nil
 }
 
-func (f fakeCacheService) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
+func (f fakeCacheService) GetDatasourceByUID(ctx context.Context, datasourceUID string, _ identity.Requester, skipCache bool) (*datasources.DataSource, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
 
 	return f.datasource, nil
+}
+
+func TestLotexRuler_RouteDeleteNamespaceRulesConfig(t *testing.T) {
+	tc := []struct {
+		name        string
+		namespace   string
+		expected    string
+		urlParams   string
+		namedParams map[string]string
+		datasource  *datasources.DataSource
+	}{
+		{
+			name:        "with a namespace that has to be escaped",
+			namespace:   "namespace/with/slashes",
+			expected:    "http://mimir.com/config/v1/rules/namespace%2Fwith%2Fslashes?subtype=mimir",
+			urlParams:   "?subtype=mimir",
+			namedParams: map[string]string{":DatasourceUID": "d164"},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+		},
+		{
+			name:        "with a namespace that does not need to be escaped",
+			namespace:   "namespace_without_slashes",
+			expected:    "http://mimir.com/config/v1/rules/namespace_without_slashes?subtype=mimir",
+			urlParams:   "?subtype=mimir",
+			namedParams: map[string]string{":DatasourceUID": "d164"},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			requestMock := RequestMock{}
+			defer requestMock.AssertExpectations(t)
+
+			requestMock.On(
+				"withReq",
+				mock.Anything,
+				mock.Anything,
+				mock.AnythingOfType("*url.URL"),
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(response.Empty(200)).Run(func(args mock.Arguments) {
+				// Validate that the full url as string is equal to the expected value
+				require.Equal(t, tt.expected, args.Get(2).(*url.URL).String())
+			})
+
+			// Setup Proxy.
+			proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}}}
+			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), requester: &requestMock}
+
+			// Setup request context.
+			httpReq, err := http.NewRequest(http.MethodGet, tt.datasource.URL+tt.urlParams, nil)
+			require.NoError(t, err)
+			ctx := &contextmodel.ReqContext{Context: &web.Context{Req: web.SetURLParams(httpReq, tt.namedParams)}}
+
+			ruler.RouteDeleteNamespaceRulesConfig(ctx, tt.namespace)
+		})
+	}
+}
+
+func TestLotexRuler_RouteDeleteRuleGroupConfig(t *testing.T) {
+	tc := []struct {
+		name        string
+		namespace   string
+		group       string
+		expected    string
+		urlParams   string
+		namedParams map[string]string
+		datasource  *datasources.DataSource
+	}{
+		{
+			name:        "with a namespace that has to be escaped",
+			namespace:   "namespace/with/slashes",
+			group:       "group/with/slashes",
+			expected:    "http://mimir.com/config/v1/rules/namespace%2Fwith%2Fslashes/group%2Fwith%2Fslashes?subtype=mimir",
+			urlParams:   "?subtype=mimir",
+			namedParams: map[string]string{":DatasourceUID": "d164"},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+		},
+		{
+			name:        "with a namespace that does not need to be escaped",
+			namespace:   "namespace_without_slashes",
+			group:       "group_without_slashes",
+			expected:    "http://mimir.com/config/v1/rules/namespace_without_slashes/group_without_slashes?subtype=mimir",
+			urlParams:   "?subtype=mimir",
+			namedParams: map[string]string{":DatasourceUID": "d164"},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			requestMock := RequestMock{}
+			defer requestMock.AssertExpectations(t)
+
+			requestMock.On(
+				"withReq",
+				mock.Anything,
+				mock.Anything,
+				mock.AnythingOfType("*url.URL"),
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(response.Empty(200)).Run(func(args mock.Arguments) {
+				// Validate that the full url as string is equal to the expected value
+				require.Equal(t, tt.expected, args.Get(2).(*url.URL).String())
+			})
+
+			// Setup Proxy.
+			proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}}}
+			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), requester: &requestMock}
+
+			// Setup request context.
+			httpReq, err := http.NewRequest(http.MethodGet, tt.datasource.URL+tt.urlParams, nil)
+			require.NoError(t, err)
+			ctx := &contextmodel.ReqContext{Context: &web.Context{Req: web.SetURLParams(httpReq, tt.namedParams)}}
+
+			ruler.RouteDeleteRuleGroupConfig(ctx, tt.namespace, tt.group)
+		})
+	}
+}
+
+func TestLotexRuler_RouteGetNamespaceRulesConfig(t *testing.T) {
+	tc := []struct {
+		name        string
+		namespace   string
+		group       string
+		expected    string
+		urlParams   string
+		namedParams map[string]string
+		datasource  *datasources.DataSource
+	}{
+		{
+			name:        "with a namespace that has to be escaped",
+			namespace:   "namespace/with/slashes",
+			expected:    "http://mimir.com/config/v1/rules/namespace%2Fwith%2Fslashes?subtype=mimir",
+			urlParams:   "?subtype=mimir",
+			namedParams: map[string]string{":DatasourceUID": "d164"},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+		},
+		{
+			name:        "with a namespace that does not need to be escaped",
+			namespace:   "namespace_without_slashes",
+			expected:    "http://mimir.com/config/v1/rules/namespace_without_slashes?subtype=mimir",
+			urlParams:   "?subtype=mimir",
+			namedParams: map[string]string{":DatasourceUID": "d164"},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			requestMock := RequestMock{}
+			defer requestMock.AssertExpectations(t)
+
+			requestMock.On(
+				"withReq",
+				mock.Anything,
+				mock.Anything,
+				mock.AnythingOfType("*url.URL"),
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(response.Empty(200)).Run(func(args mock.Arguments) {
+				// Validate that the full url as string is equal to the expected value
+				require.Equal(t, tt.expected, args.Get(2).(*url.URL).String())
+			})
+
+			// Setup Proxy.
+			proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}}}
+			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), requester: &requestMock}
+
+			// Setup request context.
+			httpReq, err := http.NewRequest(http.MethodGet, tt.datasource.URL+tt.urlParams, nil)
+			require.NoError(t, err)
+			ctx := &contextmodel.ReqContext{Context: &web.Context{Req: web.SetURLParams(httpReq, tt.namedParams)}}
+
+			ruler.RouteGetNamespaceRulesConfig(ctx, tt.namespace)
+		})
+	}
+}
+
+func TestLotexRuler_RouteGetRulegGroupConfig(t *testing.T) {
+	tc := []struct {
+		name        string
+		namespace   string
+		group       string
+		expected    string
+		urlParams   string
+		namedParams map[string]string
+		datasource  *datasources.DataSource
+	}{
+		{
+			name:        "with a namespace that has to be escaped",
+			namespace:   "namespace/with/slashes",
+			group:       "group/with/slashes",
+			expected:    "http://mimir.com/config/v1/rules/namespace%2Fwith%2Fslashes/group%2Fwith%2Fslashes?subtype=mimir",
+			urlParams:   "?subtype=mimir",
+			namedParams: map[string]string{":DatasourceUID": "d164"},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+		},
+		{
+			name:        "with a namespace that does not need to be escaped",
+			namespace:   "namespace_without_slashes",
+			group:       "group_without_slashes",
+			expected:    "http://mimir.com/config/v1/rules/namespace_without_slashes/group_without_slashes?subtype=mimir",
+			urlParams:   "?subtype=mimir",
+			namedParams: map[string]string{":DatasourceUID": "d164"},
+			datasource:  &datasources.DataSource{URL: "http://mimir.com", Type: PrometheusDatasourceType},
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			requestMock := RequestMock{}
+			defer requestMock.AssertExpectations(t)
+
+			requestMock.On(
+				"withReq",
+				mock.Anything,
+				mock.Anything,
+				mock.AnythingOfType("*url.URL"),
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(response.Empty(200)).Run(func(args mock.Arguments) {
+				// Validate that the full url as string is equal to the expected value
+				require.Equal(t, tt.expected, args.Get(2).(*url.URL).String())
+			})
+
+			// Setup Proxy.
+			proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}}}
+			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), requester: &requestMock}
+
+			// Setup request context.
+			httpReq, err := http.NewRequest(http.MethodGet, tt.datasource.URL+tt.urlParams, nil)
+			require.NoError(t, err)
+			ctx := &contextmodel.ReqContext{Context: &web.Context{Req: web.SetURLParams(httpReq, tt.namedParams)}}
+
+			ruler.RouteGetRulegGroupConfig(ctx, tt.namespace, tt.group)
+		})
+	}
+}
+
+type RequestMock struct {
+	mock.Mock
+}
+
+func (a *RequestMock) withReq(
+	ctx *contextmodel.ReqContext,
+	method string,
+	u *url.URL,
+	body io.Reader,
+	extractor func(*response.NormalResponse) (any, error),
+	headers map[string]string,
+) response.Response {
+	args := a.Called(ctx, method, u, body, extractor, headers)
+	return args.Get(0).(response.Response)
 }

@@ -14,7 +14,7 @@ import (
 )
 
 // Exist returns true if the record exist otherwise return false
-func (session *Session) Exist(bean ...interface{}) (bool, error) {
+func (session *Session) Exist(bean ...any) (bool, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -24,7 +24,7 @@ func (session *Session) Exist(bean ...interface{}) (bool, error) {
 	}
 
 	var sqlStr string
-	var args []interface{}
+	var args []any
 	var joinStr string
 	var err error
 	if session.statement.RawSQL == "" {
@@ -57,7 +57,7 @@ func (session *Session) Exist(bean ...interface{}) (bool, error) {
 				} else {
 					sqlStr = fmt.Sprintf("SELECT * FROM %s %s LIMIT 1", tableName, joinStr)
 				}
-				args = []interface{}{}
+				args = []any{}
 			}
 		} else {
 			beanValue := reflect.ValueOf(bean[0])

@@ -4,60 +4,64 @@ import (
 	"encoding/json"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // AlertRuleFromProvisionedAlertRule converts definitions.ProvisionedAlertRule to models.AlertRule
 func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (models.AlertRule, error) {
 	return models.AlertRule{
-		ID:           a.ID,
-		UID:          a.UID,
-		OrgID:        a.OrgID,
-		NamespaceUID: a.FolderUID,
-		RuleGroup:    a.RuleGroup,
-		Title:        a.Title,
-		Condition:    a.Condition,
-		Data:         AlertQueriesFromApiAlertQueries(a.Data),
-		Updated:      a.Updated,
-		NoDataState:  models.NoDataState(a.NoDataState),          // TODO there must be a validation
-		ExecErrState: models.ExecutionErrorState(a.ExecErrState), // TODO there must be a validation
-		For:          time.Duration(a.For),
-		Annotations:  a.Annotations,
-		Labels:       a.Labels,
-		IsPaused:     a.IsPaused,
+		ID:                   a.ID,
+		UID:                  a.UID,
+		OrgID:                a.OrgID,
+		NamespaceUID:         a.FolderUID,
+		RuleGroup:            a.RuleGroup,
+		Title:                a.Title,
+		Condition:            a.Condition,
+		Data:                 AlertQueriesFromApiAlertQueries(a.Data),
+		Updated:              a.Updated,
+		NoDataState:          models.NoDataState(a.NoDataState),          // TODO there must be a validation
+		ExecErrState:         models.ExecutionErrorState(a.ExecErrState), // TODO there must be a validation
+		For:                  time.Duration(a.For),
+		Annotations:          a.Annotations,
+		Labels:               a.Labels,
+		IsPaused:             a.IsPaused,
+		NotificationSettings: NotificationSettingsFromAlertRuleNotificationSettings(a.NotificationSettings),
 	}, nil
 }
 
 // ProvisionedAlertRuleFromAlertRule converts models.AlertRule to definitions.ProvisionedAlertRule and sets provided provenance status
 func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.Provenance) definitions.ProvisionedAlertRule {
 	return definitions.ProvisionedAlertRule{
-		ID:           rule.ID,
-		UID:          rule.UID,
-		OrgID:        rule.OrgID,
-		FolderUID:    rule.NamespaceUID,
-		RuleGroup:    rule.RuleGroup,
-		Title:        rule.Title,
-		For:          model.Duration(rule.For),
-		Condition:    rule.Condition,
-		Data:         ApiAlertQueriesFromAlertQueries(rule.Data),
-		Updated:      rule.Updated,
-		NoDataState:  definitions.NoDataState(rule.NoDataState),          // TODO there may be a validation
-		ExecErrState: definitions.ExecutionErrorState(rule.ExecErrState), // TODO there may be a validation
-		Annotations:  rule.Annotations,
-		Labels:       rule.Labels,
-		Provenance:   definitions.Provenance(provenance), // TODO validate enum conversion?
-		IsPaused:     rule.IsPaused,
+		ID:                   rule.ID,
+		UID:                  rule.UID,
+		OrgID:                rule.OrgID,
+		FolderUID:            rule.NamespaceUID,
+		RuleGroup:            rule.RuleGroup,
+		Title:                rule.Title,
+		For:                  model.Duration(rule.For),
+		Condition:            rule.Condition,
+		Data:                 ApiAlertQueriesFromAlertQueries(rule.Data),
+		Updated:              rule.Updated,
+		NoDataState:          definitions.NoDataState(rule.NoDataState),          // TODO there may be a validation
+		ExecErrState:         definitions.ExecutionErrorState(rule.ExecErrState), // TODO there may be a validation
+		Annotations:          rule.Annotations,
+		Labels:               rule.Labels,
+		Provenance:           definitions.Provenance(provenance), // TODO validate enum conversion?
+		IsPaused:             rule.IsPaused,
+		NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
 	}
 }
 
 // ProvisionedAlertRuleFromAlertRules converts a collection of models.AlertRule to definitions.ProvisionedAlertRules with provenance status models.ProvenanceNone
-func ProvisionedAlertRuleFromAlertRules(rules []*models.AlertRule) definitions.ProvisionedAlertRules {
+func ProvisionedAlertRuleFromAlertRules(rules []*models.AlertRule, provenances map[string]models.Provenance) definitions.ProvisionedAlertRules {
 	result := make([]definitions.ProvisionedAlertRule, 0, len(rules))
 	for _, r := range rules {
-		result = append(result, ProvisionedAlertRuleFromAlertRule(*r, models.ProvenanceNone))
+		result = append(result, ProvisionedAlertRuleFromAlertRule(*r, provenances[r.UID]))
 	}
 	return result
 }
@@ -151,11 +155,13 @@ func AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle(d models.AlertRuleGro
 		rules = append(rules, alert)
 	}
 	return definitions.AlertRuleGroupExport{
-		OrgID:    d.OrgID,
-		Name:     d.Title,
-		Folder:   d.FolderTitle,
-		Interval: model.Duration(time.Duration(d.Interval) * time.Second),
-		Rules:    rules,
+		OrgID:           d.OrgID,
+		Name:            d.Title,
+		Folder:          d.FolderTitle,
+		FolderUID:       d.FolderUID,
+		Interval:        model.Duration(time.Duration(d.Interval) * time.Second),
+		IntervalSeconds: d.Interval,
+		Rules:           rules,
 	}, nil
 }
 
@@ -170,49 +176,53 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		data = append(data, query)
 	}
 
-	var dashboardUID string
-	if rule.DashboardUID != nil {
-		dashboardUID = *rule.DashboardUID
+	result := definitions.AlertRuleExport{
+		UID:                  rule.UID,
+		Title:                rule.Title,
+		For:                  model.Duration(rule.For),
+		Condition:            rule.Condition,
+		Data:                 data,
+		DashboardUID:         rule.DashboardUID,
+		PanelID:              rule.PanelID,
+		NoDataState:          definitions.NoDataState(rule.NoDataState),
+		ExecErrState:         definitions.ExecutionErrorState(rule.ExecErrState),
+		IsPaused:             rule.IsPaused,
+		NotificationSettings: AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings),
 	}
-
-	var panelID int64
-	if rule.PanelID != nil {
-		panelID = *rule.PanelID
+	if rule.For.Seconds() > 0 {
+		result.ForString = util.Pointer(model.Duration(rule.For).String())
 	}
-
-	return definitions.AlertRuleExport{
-		UID:          rule.UID,
-		Title:        rule.Title,
-		For:          model.Duration(rule.For),
-		Condition:    rule.Condition,
-		Data:         data,
-		DashboardUID: dashboardUID,
-		PanelID:      panelID,
-		NoDataState:  definitions.NoDataState(rule.NoDataState),
-		ExecErrState: definitions.ExecutionErrorState(rule.ExecErrState),
-		Annotations:  rule.Annotations,
-		Labels:       rule.Labels,
-		IsPaused:     rule.IsPaused,
-	}, nil
+	if rule.Annotations != nil {
+		result.Annotations = &rule.Annotations
+	}
+	if rule.Labels != nil {
+		result.Labels = &rule.Labels
+	}
+	return result, nil
 }
 
 // AlertQueryExportFromAlertQuery creates a definitions.AlertQueryExport DTO from models.AlertQuery.
 func AlertQueryExportFromAlertQuery(query models.AlertQuery) (definitions.AlertQueryExport, error) {
 	// We unmarshal the json.RawMessage model into a map in order to facilitate yaml marshalling.
-	var mdl map[string]interface{}
+	var mdl map[string]any
 	err := json.Unmarshal(query.Model, &mdl)
 	if err != nil {
 		return definitions.AlertQueryExport{}, err
 	}
+	var queryType *string
+	if query.QueryType != "" {
+		queryType = &query.QueryType
+	}
 	return definitions.AlertQueryExport{
 		RefID:     query.RefID,
-		QueryType: query.QueryType,
-		RelativeTimeRange: definitions.RelativeTimeRange{
-			From: definitions.Duration(query.RelativeTimeRange.From),
-			To:   definitions.Duration(query.RelativeTimeRange.To),
+		QueryType: queryType,
+		RelativeTimeRange: definitions.RelativeTimeRangeExport{
+			FromSeconds: int64(time.Duration(query.RelativeTimeRange.From).Seconds()),
+			ToSeconds:   int64(time.Duration(query.RelativeTimeRange.To).Seconds()),
 		},
 		DatasourceUID: query.DatasourceUID,
 		Model:         mdl,
+		ModelString:   string(query.Model),
 	}, nil
 }
 
@@ -266,8 +276,8 @@ func AlertingFileExportFromRoute(orgID int64, route definitions.Route) (definiti
 	f := definitions.AlertingFileExport{
 		APIVersion: 1,
 		Policies: []definitions.NotificationPolicyExport{{
-			OrgID:  orgID,
-			Policy: RouteExportFromRoute(&route),
+			OrgID:       orgID,
+			RouteExport: RouteExportFromRoute(&route),
 		}},
 	}
 	return f, nil
@@ -275,18 +285,36 @@ func AlertingFileExportFromRoute(orgID int64, route definitions.Route) (definiti
 
 // RouteExportFromRoute creates a definitions.RouteExport DTO from definitions.Route.
 func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
+	toStringIfNotNil := func(d *model.Duration) *string {
+		if d == nil {
+			return nil
+		}
+		s := d.String()
+		return &s
+	}
+
+	matchers := make([]*definitions.MatcherExport, 0, len(route.ObjectMatchers))
+	for _, matcher := range route.ObjectMatchers {
+		matchers = append(matchers, &definitions.MatcherExport{
+			Label: matcher.Name,
+			Match: matcher.Type.String(),
+			Value: matcher.Value,
+		})
+	}
+
 	export := definitions.RouteExport{
-		Receiver:          route.Receiver,
-		GroupByStr:        route.GroupByStr,
-		Match:             route.Match,
-		MatchRE:           route.MatchRE,
-		Matchers:          route.Matchers,
-		ObjectMatchers:    route.ObjectMatchers,
-		MuteTimeIntervals: route.MuteTimeIntervals,
-		Continue:          route.Continue,
-		GroupWait:         route.GroupWait,
-		GroupInterval:     route.GroupInterval,
-		RepeatInterval:    route.RepeatInterval,
+		Receiver:            route.Receiver,
+		GroupByStr:          NilIfEmpty(util.Pointer(route.GroupByStr)),
+		Match:               route.Match,
+		MatchRE:             route.MatchRE,
+		Matchers:            route.Matchers,
+		ObjectMatchers:      route.ObjectMatchers,
+		ObjectMatchersSlice: matchers,
+		MuteTimeIntervals:   NilIfEmpty(util.Pointer(route.MuteTimeIntervals)),
+		Continue:            OmitDefault(util.Pointer(route.Continue)),
+		GroupWait:           toStringIfNotNil(route.GroupWait),
+		GroupInterval:       toStringIfNotNil(route.GroupInterval),
+		RepeatInterval:      toStringIfNotNil(route.RepeatInterval),
 	}
 
 	if len(route.Routes) > 0 {
@@ -297,4 +325,112 @@ func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
 	}
 
 	return &export
+}
+
+// OmitDefault returns nil if the value is the default.
+func OmitDefault[T comparable](v *T) *T {
+	var def T
+	if v == nil {
+		return v
+	}
+	if *v == def {
+		return nil
+	}
+	return v
+}
+
+// NilIfEmpty returns nil if pointer to slice points to the empty slice.
+func NilIfEmpty[T any](v *[]T) *[]T {
+	if v == nil || len(*v) == 0 {
+		return nil
+	}
+	return v
+}
+
+func AlertingFileExportFromMuteTimings(orgID int64, m []definitions.MuteTimeInterval) definitions.AlertingFileExport {
+	f := definitions.AlertingFileExport{
+		APIVersion:  1,
+		MuteTimings: make([]definitions.MuteTimeIntervalExport, 0, len(m)),
+	}
+	for _, mi := range m {
+		f.MuteTimings = append(f.MuteTimings, MuteTimeIntervalExportFromMuteTiming(orgID, mi))
+	}
+	return f
+}
+
+func MuteTimeIntervalExportFromMuteTiming(orgID int64, m definitions.MuteTimeInterval) definitions.MuteTimeIntervalExport {
+	return definitions.MuteTimeIntervalExport{
+		OrgID:            orgID,
+		MuteTimeInterval: m.MuteTimeInterval,
+	}
+}
+
+// Converts definitions.MuteTimeIntervalExport to definitions.MuteTimeIntervalExportHcl using JSON marshalling. Returns error if structure could not be marshalled\unmarshalled
+func MuteTimingIntervalToMuteTimeIntervalHclExport(m definitions.MuteTimeIntervalExport) (definitions.MuteTimeIntervalExportHcl, error) {
+	result := definitions.MuteTimeIntervalExportHcl{}
+	j := jsoniter.ConfigCompatibleWithStandardLibrary
+	mdata, err := j.Marshal(m)
+	if err != nil {
+		return result, err
+	}
+	err = j.Unmarshal(mdata, &result)
+	return result, err
+}
+
+// AlertRuleNotificationSettingsFromNotificationSettings converts []models.NotificationSettings to definitions.AlertRuleNotificationSettings
+func AlertRuleNotificationSettingsFromNotificationSettings(ns []models.NotificationSettings) *definitions.AlertRuleNotificationSettings {
+	if len(ns) == 0 {
+		return nil
+	}
+	m := ns[0]
+	return &definitions.AlertRuleNotificationSettings{
+		Receiver:          m.Receiver,
+		GroupBy:           m.GroupBy,
+		GroupWait:         m.GroupWait,
+		GroupInterval:     m.GroupInterval,
+		RepeatInterval:    m.RepeatInterval,
+		MuteTimeIntervals: m.MuteTimeIntervals,
+	}
+}
+
+// AlertRuleNotificationSettingsFromNotificationSettings converts []models.NotificationSettings to definitions.AlertRuleNotificationSettingsExport
+func AlertRuleNotificationSettingsExportFromNotificationSettings(ns []models.NotificationSettings) *definitions.AlertRuleNotificationSettingsExport {
+	if len(ns) == 0 {
+		return nil
+	}
+	m := ns[0]
+
+	toStringIfNotNil := func(d *model.Duration) *string {
+		if d == nil {
+			return nil
+		}
+		s := d.String()
+		return &s
+	}
+
+	return &definitions.AlertRuleNotificationSettingsExport{
+		Receiver:          m.Receiver,
+		GroupBy:           m.GroupBy,
+		GroupWait:         toStringIfNotNil(m.GroupWait),
+		GroupInterval:     toStringIfNotNil(m.GroupInterval),
+		RepeatInterval:    toStringIfNotNil(m.RepeatInterval),
+		MuteTimeIntervals: m.MuteTimeIntervals,
+	}
+}
+
+// NotificationSettingsFromAlertRuleNotificationSettings converts definitions.AlertRuleNotificationSettings to []models.NotificationSettings
+func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.AlertRuleNotificationSettings) []models.NotificationSettings {
+	if ns == nil {
+		return nil
+	}
+	return []models.NotificationSettings{
+		{
+			Receiver:          ns.Receiver,
+			GroupBy:           ns.GroupBy,
+			GroupWait:         ns.GroupWait,
+			GroupInterval:     ns.GroupInterval,
+			RepeatInterval:    ns.RepeatInterval,
+			MuteTimeIntervals: ns.MuteTimeIntervals,
+		},
+	}
 }

@@ -50,3 +50,14 @@ export interface ScatterSeries {
     };
   };
 }
+
+export interface ExtraFacets {
+  colorFacetFieldName: string;
+  sizeFacetFieldName: string;
+  colorFacetValue: number;
+  sizeFacetValue: number;
+}
+
+export interface DataFilterBySeries {
+  frame: number;
+}

@@ -18,7 +18,7 @@ export const EditTemplateView = ({ config, templateName, alertManagerSourceName 
   if (!template) {
     return (
       <Alert severity="error" title="Template not found">
-        Sorry, this template does not seem to exists.
+        Sorry, this template does not seem to exist.
       </Alert>
     );
   }

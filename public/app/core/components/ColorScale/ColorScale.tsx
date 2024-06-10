@@ -64,8 +64,8 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useSto
       {display && (
         <div className={styles.followerContainer}>
           <div className={styles.legendValues}>
-            <span>{display(min)}</span>
-            <span>{display(max)}</span>
+            <span className={styles.disabled}>{display(min)}</span>
+            <span className={styles.disabled}>{display(max)}</span>
           </div>
           {percent != null && (scaleHover.isShown || hoverValue !== undefined) && (
             <span className={styles.hoverValue} style={{ left: `${percent}%` }}>
@@ -128,40 +128,43 @@ function clampPercent100(v: number) {
 }
 
 const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
-  scaleWrapper: css`
-    width: 100%;
-    font-size: 11px;
-    opacity: 1;
-  `,
-  scaleGradient: css`
-    background: linear-gradient(90deg, ${colors.join()});
-    height: 10px;
-    pointer-events: none;
-  `,
-  legendValues: css`
-    display: flex;
-    justify-content: space-between;
-    pointer-events: none;
-  `,
-  hoverValue: css`
-    position: absolute;
-    margin-top: -14px;
-    padding: 3px 15px;
-    background: ${theme.colors.background.primary};
-    transform: translateX(-50%);
-  `,
-  followerContainer: css`
-    position: relative;
-    pointer-events: none;
-    white-space: nowrap;
-  `,
-  follower: css`
-    position: absolute;
-    height: 14px;
-    width: 14px;
-    border-radius: 50%;
-    transform: translateX(-50%) translateY(-50%);
-    border: 2px solid ${theme.colors.text.primary};
-    margin-top: 5px;
-  `,
+  scaleWrapper: css({
+    width: '100%',
+    fontSize: '11px',
+    opacity: 1,
+  }),
+  scaleGradient: css({
+    background: `linear-gradient(90deg, ${colors.join()})`,
+    height: '9px',
+    pointerEvents: 'none',
+    borderRadius: theme.shape.radius.default,
+  }),
+  legendValues: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    pointerEvents: 'none',
+  }),
+  hoverValue: css({
+    position: 'absolute',
+    marginTop: '-14px',
+    padding: '3px 15px',
+    transform: 'translateX(-50%)',
+  }),
+  followerContainer: css({
+    position: 'relative',
+    pointerEvents: 'none',
+    whiteSpace: 'nowrap',
+  }),
+  follower: css({
+    position: 'absolute',
+    height: '13px',
+    width: '13px',
+    borderRadius: theme.shape.radius.default,
+    transform: 'translateX(-50%) translateY(-50%)',
+    border: `2px solid ${theme.colors.text.primary}`,
+    top: '5px',
+  }),
+  disabled: css({
+    color: theme.colors.text.disabled,
+  }),
 });

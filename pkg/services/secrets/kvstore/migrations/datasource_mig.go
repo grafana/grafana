@@ -44,7 +44,7 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 	}
 	logger.Debug(fmt.Sprint("secret migration status is ", migrationStatus))
 	// If this flag is true, delete secrets from the legacy secrets store as they are migrated
-	disableSecretsCompatibility := s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility)
+	disableSecretsCompatibility := s.features.IsEnabled(ctx, featuremgmt.FlagDisableSecretsCompatibility)
 	// If migration hasn't happened, migrate to unified secrets and keep copy in legacy
 	// If a complete migration happened and now backwards compatibility is enabled, copy secrets back to legacy
 	needCompatibility := migrationStatus != compatibleSecretMigrationValue && !disableSecretsCompatibility

@@ -2,29 +2,22 @@ import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { connect } from 'react-redux';
 
-import { EventBusSrv, GrafanaTheme2 } from '@grafana/data';
+import { EventBusSrv } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useStyles2 } from '@grafana/ui';
+import { CustomScrollbar } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
 import { StoreState, useSelector } from 'app/types';
 
 import Explore from './Explore';
 import { getExploreItemSelector } from './state/selectors';
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    explore: css`
-      display: flex;
-      flex: 1 1 auto;
-      flex-direction: column;
-      overflow: hidden;
-      min-width: 600px;
-      & + & {
-        border-left: 1px dotted ${theme.colors.border.medium};
-      }
-    `,
-  };
-};
+const containerStyles = css({
+  label: 'explorePaneContainer',
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: '600px',
+  height: '100%',
+});
 
 interface Props {
   exploreId: string;
@@ -41,7 +34,6 @@ interface Props {
 */
 function ExplorePaneContainerUnconnected({ exploreId }: Props) {
   useStopQueries(exploreId);
-  const styles = useStyles2(getStyles);
   const eventBus = useRef(new EventBusSrv());
   const ref = useRef(null);
 
@@ -51,9 +43,11 @@ function ExplorePaneContainerUnconnected({ exploreId }: Props) {
   }, []);
 
   return (
-    <div className={styles.explore} ref={ref} data-testid={selectors.pages.Explore.General.container}>
-      <Explore exploreId={exploreId} eventBus={eventBus.current} />
-    </div>
+    <CustomScrollbar hideVerticalTrack>
+      <div className={containerStyles} ref={ref} data-testid={selectors.pages.Explore.General.container}>
+        <Explore exploreId={exploreId} eventBus={eventBus.current} />
+      </div>
+    </CustomScrollbar>
   );
 }
 

@@ -1,6 +1,6 @@
 import { SyntaxNode } from '@lezer/common';
-import { BinModifiers, OnOrIgnoring } from '@prometheus-io/lezer-promql';
 
+import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationParamValue } from '@grafana/experimental';
 import {
   And,
   BinOpExpr,
@@ -8,6 +8,9 @@ import {
   By,
   ConvOp,
   Decolorize,
+  DropLabel,
+  DropLabels,
+  DropLabelsExpr,
   Filter,
   FilterOp,
   Grouping,
@@ -17,13 +20,18 @@ import {
   Ip,
   IpLabelFilter,
   Json,
-  JsonExpression,
   JsonExpressionParser,
+  KeepLabel,
+  KeepLabels,
+  KeepLabelsExpr,
+  LabelExtractionExpression,
   LabelFilter,
   LabelFormatMatcher,
   LabelParser,
   LineFilter,
   LineFormatExpr,
+  LogfmtExpressionParser,
+  LogfmtParser,
   LogRangeExpr,
   Matcher,
   MetricExpr,
@@ -31,6 +39,7 @@ import {
   On,
   Or,
   parser,
+  ParserFlag,
   Range,
   RangeAggregationExpr,
   RangeOp,
@@ -41,8 +50,13 @@ import {
   VectorAggregationExpr,
   VectorOp,
   Without,
+  BinOpModifier,
+  OnOrIgnoringModifier,
+  OrFilter,
 } from '@grafana/lezer-logql';
 
+import { binaryScalarDefs } from './binaryScalarOperations';
+import { checkParamsAreValid, getDefinitionById } from './operations';
 import {
   ErrorId,
   getAllByType,
@@ -51,15 +65,7 @@ import {
   makeBinOp,
   makeError,
   replaceVariables,
-} from '../../prometheus/querybuilder/shared/parsingUtils';
-import {
-  QueryBuilderLabelFilter,
-  QueryBuilderOperation,
-  QueryBuilderOperationParamValue,
-} from '../../prometheus/querybuilder/shared/types';
-
-import { binaryScalarDefs } from './binaryScalarOperations';
-import { checkParamsAreValid, getDefinitionById } from './operations';
+} from './parsingUtils';
 import { LokiOperationId, LokiVisualQuery, LokiVisualQueryBinary } from './types';
 
 interface Context {
@@ -72,6 +78,11 @@ interface ParsingError {
   from?: number;
   to?: number;
   parentType?: string;
+}
+
+interface GetOperationResult {
+  operation?: QueryBuilderOperation;
+  error?: string;
 }
 
 export function buildVisualQueryFromString(expr: string): Context {
@@ -154,6 +165,18 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
+    case LogfmtParser:
+    case LogfmtExpressionParser: {
+      const { operation, error } = getLogfmtParser(expr, node);
+      if (operation) {
+        visQuery.operations.push(operation);
+      }
+      if (error) {
+        context.errors.push(createNotSupportedError(expr, node, error));
+      }
+      break;
+    }
+
     case LineFormatExpr: {
       visQuery.operations.push(getLineFormat(expr, node));
       break;
@@ -205,6 +228,16 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
+    case DropLabelsExpr: {
+      visQuery.operations.push(handleDropFilter(expr, node, context));
+      break;
+    }
+
+    case KeepLabelsExpr: {
+      visQuery.operations.push(handleKeepFilter(expr, node, context));
+      break;
+    }
+
     default: {
       // Any other nodes we just ignore and go to its children. This should be fine as there are lots of wrapper
       // nodes that can be skipped.
@@ -222,7 +255,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
 function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
   const labelNode = node.getChild(Identifier);
   const label = getString(expr, labelNode);
-  const op = getString(expr, labelNode!.nextSibling);
+  const op = getString(expr, labelNode?.nextSibling);
   let value = getString(expr, node.getChild(String));
   // `value` is wrapped in double quotes, so we need to remove them. As a value can contain double quotes, we can't use RegEx here.
   value = value.substring(1, value.length - 1);
@@ -234,11 +267,10 @@ function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
   };
 }
 
-function getLineFilter(expr: string, node: SyntaxNode): { operation?: QueryBuilderOperation; error?: string } {
+function getLineFilter(expr: string, node: SyntaxNode): GetOperationResult {
   const filter = getString(expr, node.getChild(Filter));
   const filterExpr = handleQuotes(getString(expr, node.getChild(String)));
   const ipLineFilter = node.getChild(FilterOp)?.getChild(Ip);
-
   if (ipLineFilter) {
     return {
       operation: {
@@ -247,6 +279,14 @@ function getLineFilter(expr: string, node: SyntaxNode): { operation?: QueryBuild
       },
     };
   }
+
+  const params = [filterExpr];
+  let orFilter = node.getChild(OrFilter);
+  while (orFilter) {
+    params.push(handleQuotes(getString(expr, orFilter.getChild(String))));
+    orFilter = orFilter.getChild(OrFilter);
+  }
+
   const mapFilter: Record<string, LokiOperationId> = {
     '|=': LokiOperationId.LineContains,
     '!=': LokiOperationId.LineContainsNot,
@@ -257,7 +297,7 @@ function getLineFilter(expr: string, node: SyntaxNode): { operation?: QueryBuild
   return {
     operation: {
       id: mapFilter[filter],
-      params: [filterExpr],
+      params,
     },
   };
 }
@@ -283,14 +323,43 @@ function getJsonExpressionParser(expr: string, node: SyntaxNode): QueryBuilderOp
   const parserNode = node.getChild(Json);
   const parser = getString(expr, parserNode);
 
-  const params = [...getAllByType(expr, node, JsonExpression)];
+  const params = [...getAllByType(expr, node, LabelExtractionExpression)];
   return {
     id: parser,
     params,
   };
 }
 
-function getLabelFilter(expr: string, node: SyntaxNode): { operation?: QueryBuilderOperation; error?: string } {
+function getLogfmtParser(expr: string, node: SyntaxNode): GetOperationResult {
+  const flags: string[] = [];
+  const labels: string[] = [];
+  let error: string | undefined = undefined;
+
+  const offset = node.from;
+  node.toTree().iterate({
+    enter: (subNode) => {
+      if (subNode.type.id === ParserFlag) {
+        flags.push(expr.substring(subNode.from + offset, subNode.to + offset));
+      } else if (subNode.type.id === LabelExtractionExpression) {
+        labels.push(expr.substring(subNode.from + offset, subNode.to + offset));
+      } else if (subNode.type.id === ErrorId) {
+        error = `Unexpected string "${expr.substring(subNode.from + offset, subNode.to + offset)}"`;
+      }
+    },
+  });
+
+  const operation = {
+    id: LokiOperationId.Logfmt,
+    params: [flags.includes('--strict'), flags.includes('--keep-empty'), ...labels],
+  };
+
+  return {
+    operation,
+    error,
+  };
+}
+
+function getLabelFilter(expr: string, node: SyntaxNode): GetOperationResult {
   // Check for nodes not supported in visual builder and return error
   if (node.getChild(Or) || node.getChild(And) || node.getChild('Comma')) {
     return {
@@ -383,11 +452,7 @@ function getDecolorize(): QueryBuilderOperation {
   };
 }
 
-function handleUnwrapExpr(
-  expr: string,
-  node: SyntaxNode,
-  context: Context
-): { operation?: QueryBuilderOperation; error?: string } {
+function handleUnwrapExpr(expr: string, node: SyntaxNode, context: Context): GetOperationResult {
   const unwrapExprChild = node.getChild(UnwrapExpr);
   const labelFilterChild = node.getChild(LabelFilter);
   const unwrapChild = node.getChild(Unwrap);
@@ -431,9 +496,14 @@ function handleRangeAggregation(expr: string, node: SyntaxNode, context: Context
   const params = number !== null && number !== undefined ? [getString(expr, number)] : [];
   const range = logExpr?.getChild(Range);
   const rangeValue = range ? getString(expr, range) : null;
+  const grouping = node.getChild(Grouping);
 
   if (rangeValue) {
     params.unshift(rangeValue.substring(1, rangeValue.length - 1));
+  }
+
+  if (grouping) {
+    params.push(...getAllByType(expr, grouping, Identifier));
   }
 
   const op = {
@@ -479,6 +549,15 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   const op: QueryBuilderOperation = { id: funcName, params };
 
   if (metricExpr) {
+    // A vector aggregation expression with a child of metric expression with a child of binary expression is ambiguous after being parsed into a visual query
+    if (metricExpr.firstChild?.type.id === BinOpExpr) {
+      context.errors.push({
+        text: 'Query parsing is ambiguous.',
+        from: metricExpr.firstChild.from,
+        to: metricExpr.firstChild?.to,
+      });
+    }
+
     handleExpression(expr, metricExpr, context);
   }
 
@@ -504,7 +583,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
-  const binModifier = getBinaryModifier(expr, node.getChild(BinModifiers));
+  const binModifier = getBinaryModifier(expr, node.getChild(BinOpModifier));
 
   const right = node.lastChild!;
 
@@ -530,7 +609,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
-    if (leftMostChild?.name === 'Number') {
+    if (leftMostChild?.type.id === NumberLezer) {
       visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
     }
 
@@ -563,15 +642,17 @@ function getBinaryModifier(
   node: SyntaxNode | null
 ):
   | { isBool: true; isMatcher: false }
-  | { isBool: false; isMatcher: true; matches: string; matchType: 'ignoring' | 'on' }
+  | { isBool: boolean; isMatcher: true; matches: string; matchType: 'ignoring' | 'on' }
   | undefined {
   if (!node) {
     return undefined;
   }
-  if (node.getChild(Bool)) {
+  const matcher = node.getChild(OnOrIgnoringModifier);
+  const boolMatcher = node.getChild(Bool);
+
+  if (!matcher && boolMatcher) {
     return { isBool: true, isMatcher: false };
   } else {
-    const matcher = node.getChild(OnOrIgnoring);
     if (!matcher) {
       // Not sure what this could be, maybe should be an error.
       return undefined;
@@ -579,7 +660,7 @@ function getBinaryModifier(
     const labels = getString(expr, matcher.getChild(GroupingLabels)?.getChild(GroupingLabelList));
     return {
       isMatcher: true,
-      isBool: false,
+      isBool: !!boolMatcher,
       matches: labels,
       matchType: matcher.getChild(On) ? 'on' : 'ignoring',
     };
@@ -635,4 +716,38 @@ function isEmptyQuery(query: LokiVisualQuery) {
     return true;
   }
   return false;
+}
+
+function handleDropFilter(expr: string, node: SyntaxNode, context: Context): QueryBuilderOperation {
+  const labels: string[] = [];
+  let exploringNode = node.getChild(DropLabels);
+  while (exploringNode) {
+    const label = getString(expr, exploringNode.getChild(DropLabel));
+    if (label) {
+      labels.push(label);
+    }
+    exploringNode = exploringNode?.getChild(DropLabels);
+  }
+  labels.reverse();
+  return {
+    id: LokiOperationId.Drop,
+    params: labels,
+  };
+}
+
+function handleKeepFilter(expr: string, node: SyntaxNode, context: Context): QueryBuilderOperation {
+  const labels: string[] = [];
+  let exploringNode = node.getChild(KeepLabels);
+  while (exploringNode) {
+    const label = getString(expr, exploringNode.getChild(KeepLabel));
+    if (label) {
+      labels.push(label);
+    }
+    exploringNode = exploringNode?.getChild(KeepLabels);
+  }
+  labels.reverse();
+  return {
+    id: LokiOperationId.Keep,
+    params: labels,
+  };
 }

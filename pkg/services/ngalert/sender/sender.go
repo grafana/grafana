@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"sort"
 	"strings"
@@ -40,35 +41,46 @@ type ExternalAlertmanager struct {
 	sdManager *discovery.Manager
 }
 
-type externalAMcfg struct {
-	amURL   string
-	headers map[string]string
+type ExternalAMcfg struct {
+	URL     string
+	Headers http.Header
 }
 
-func (cfg *externalAMcfg) SHA256() string {
-	return asSHA256([]string{cfg.headerString(), cfg.amURL})
+type Option func(*ExternalAlertmanager)
+
+type doFunc func(context.Context, *http.Client, *http.Request) (*http.Response, error)
+
+// WithDoFunc receives a function to use when making HTTP requests from the Manager.
+func WithDoFunc(doFunc doFunc) Option {
+	return func(s *ExternalAlertmanager) {
+		s.manager.opts.Do = doFunc
+	}
+}
+
+func (cfg *ExternalAMcfg) SHA256() string {
+	return asSHA256([]string{cfg.headerString(), cfg.URL})
 }
 
 // headersString transforms all the headers in a sorted way as a
 // single string so it can be used for hashing and comparing.
-func (cfg *externalAMcfg) headerString() string {
+func (cfg *ExternalAMcfg) headerString() string {
 	var result strings.Builder
 
-	headerKeys := make([]string, 0, len(cfg.headers))
-	for key := range cfg.headers {
+	headerKeys := make([]string, 0, len(cfg.Headers))
+	for key := range cfg.Headers {
 		headerKeys = append(headerKeys, key)
 	}
 
 	sort.Strings(headerKeys)
 
 	for _, key := range headerKeys {
-		result.WriteString(fmt.Sprintf("%s:%s", key, cfg.headers[key]))
+		result.WriteString(fmt.Sprintf("%s:%s", key, cfg.Headers[key]))
 	}
 
 	return result.String()
 }
 
-func NewExternalAlertmanagerSender() *ExternalAlertmanager {
+func NewExternalAlertmanagerSender(opts ...Option) *ExternalAlertmanager {
 	l := log.New("ngalert.sender.external-alertmanager")
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &ExternalAlertmanager{
@@ -85,11 +97,15 @@ func NewExternalAlertmanagerSender() *ExternalAlertmanager {
 
 	s.sdManager = discovery.NewManager(sdCtx, s.logger)
 
+	for _, opt := range opts {
+		opt(s)
+	}
+
 	return s
 }
 
 // ApplyConfig syncs a configuration with the sender.
-func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []externalAMcfg) error {
+func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []ExternalAMcfg) error {
 	notifierCfg, headers, err := buildNotifierConfig(alertmanagers)
 	if err != nil {
 		return err
@@ -111,13 +127,14 @@ func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []exte
 }
 
 func (s *ExternalAlertmanager) Run() {
+	logger := s.logger
 	s.wg.Add(2)
 
 	go func() {
-		s.logger.Info("Initiating communication with a group of external Alertmanagers")
+		logger.Info("Initiating communication with a group of external Alertmanagers")
 
 		if err := s.sdManager.Run(); err != nil {
-			s.logger.Error("Failed to start the sender service discovery manager", "error", err)
+			logger.Error("Failed to start the sender service discovery manager", "error", err)
 		}
 		s.wg.Done()
 	}()
@@ -160,11 +177,11 @@ func (s *ExternalAlertmanager) DroppedAlertmanagers() []*url.URL {
 	return s.manager.DroppedAlertmanagers()
 }
 
-func buildNotifierConfig(alertmanagers []externalAMcfg) (*config.Config, map[string]map[string]string, error) {
+func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[string]http.Header, error) {
 	amConfigs := make([]*config.AlertmanagerConfig, 0, len(alertmanagers))
-	headers := map[string]map[string]string{}
+	headers := map[string]http.Header{}
 	for i, am := range alertmanagers {
-		u, err := url.Parse(am.amURL)
+		u, err := url.Parse(am.URL)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -185,10 +202,10 @@ func buildNotifierConfig(alertmanagers []externalAMcfg) (*config.Config, map[str
 			ServiceDiscoveryConfigs: sdConfig,
 		}
 
-		if am.headers != nil {
+		if am.Headers != nil {
 			// The key has the same format as the AlertmanagerConfigs.ToMap() would generate
 			// so we can use it later on when working with the alertmanager config map.
-			headers[fmt.Sprintf("config-%d", i)] = am.headers
+			headers[fmt.Sprintf("config-%d", i)] = am.Headers
 		}
 
 		// Check the URL for basic authentication information first

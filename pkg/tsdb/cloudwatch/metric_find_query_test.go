@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/url"
-	"sort"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -15,126 +14,27 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-func TestQuery_Regions(t *testing.T) {
-	origNewEC2Client := newEC2Client
-	t.Cleanup(func() {
-		newEC2Client = origNewEC2Client
-	})
-
-	var cli fakeEC2Client
-
-	newEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
-		return cli
-	}
-
-	t.Run("An extra region", func(t *testing.T) {
-		const regionName = "xtra-region"
-		cli = fakeEC2Client{
-			regions: []string{regionName},
-		}
-
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
-		})
-
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-		resp, err := executor.handleGetRegions(
-			context.Background(),
-			backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-			}, url.Values{
-				"region":    []string{"us-east-1"},
-				"namespace": []string{"custom"},
-			},
-		)
-		require.NoError(t, err)
-
-		expRegions := buildSortedSliceOfDefaultAndExtraRegions(t, regionName)
-		expFrame := data.NewFrame(
-			"",
-			data.NewField("text", nil, expRegions),
-			data.NewField("value", nil, expRegions),
-		)
-		expFrame.Meta = &data.FrameMeta{
-			Custom: map[string]interface{}{
-				"rowCount": len(constants.Regions()) + 1,
-			},
-		}
-
-		expResponse := []suggestData{}
-		for _, region := range expRegions {
-			expResponse = append(expResponse, suggestData{Text: region, Value: region, Label: region})
-		}
-		assert.Equal(t, expResponse, resp)
-	})
-}
-
-func buildSortedSliceOfDefaultAndExtraRegions(t *testing.T, regionName string) []string {
-	t.Helper()
-	regions := constants.Regions()
-	regions[regionName] = struct{}{}
-	var expRegions []string
-	for region := range regions {
-		expRegions = append(expRegions, region)
-	}
-	sort.Strings(expRegions)
-	return expRegions
-}
-
-func Test_handleGetRegions_regionCache(t *testing.T) {
-	origNewEC2Client := newEC2Client
-	t.Cleanup(func() {
-		newEC2Client = origNewEC2Client
-	})
-	cli := mockEC2Client{}
-	newEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
-		return &cli
-	}
-	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{}}, nil
-	})
-
-	t.Run("AWS only called once for multiple calls to handleGetRegions", func(t *testing.T) {
-		cli.On("DescribeRegions", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{}, nil)
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-		_, err := executor.handleGetRegions(
-			context.Background(),
-			backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}, nil)
-		require.NoError(t, err)
-
-		_, err = executor.handleGetRegions(
-			context.Background(),
-			backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}, nil)
-		require.NoError(t, err)
-
-		cli.AssertNumberOfCalls(t, "DescribeRegions", 1)
-	})
-}
-
 func TestQuery_InstanceAttributes(t *testing.T) {
-	origNewEC2Client := newEC2Client
+	origNewEC2Client := NewEC2Client
 	t.Cleanup(func() {
-		newEC2Client = origNewEC2Client
+		NewEC2Client = origNewEC2Client
 	})
 
-	var cli fakeEC2Client
+	var cli oldEC2Client
 
-	newEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
+	NewEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
 		return cli
 	}
 
 	t.Run("Get instance ID", func(t *testing.T) {
 		const instanceID = "i-12345678"
-		cli = fakeEC2Client{
+		cli = oldEC2Client{
 			reservations: []*ec2.Reservation{
 				{
 					Instances: []*ec2.Instance{
@@ -152,8 +52,8 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 			},
 		}
 
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 
 		filterMap := map[string][]string{
@@ -162,7 +62,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		filterJson, err := json.Marshal(filterMap)
 		require.NoError(t, err)
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, log.NewNullLogger())
 		resp, err := executor.handleGetEc2InstanceAttribute(
 			context.Background(),
 			backend.PluginContext{
@@ -183,19 +83,19 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 }
 
 func TestQuery_EBSVolumeIDs(t *testing.T) {
-	origNewEC2Client := newEC2Client
+	origNewEC2Client := NewEC2Client
 	t.Cleanup(func() {
-		newEC2Client = origNewEC2Client
+		NewEC2Client = origNewEC2Client
 	})
 
-	var cli fakeEC2Client
+	var cli oldEC2Client
 
-	newEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
+	NewEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
 		return cli
 	}
 
 	t.Run("", func(t *testing.T) {
-		cli = fakeEC2Client{
+		cli = oldEC2Client{
 			reservations: []*ec2.Reservation{
 				{
 					Instances: []*ec2.Instance{
@@ -236,11 +136,11 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 			},
 		}
 
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, log.NewNullLogger())
 		resp, err := executor.handleGetEbsVolumeIds(
 			context.Background(),
 			backend.PluginContext{
@@ -297,8 +197,8 @@ func TestQuery_ResourceARNs(t *testing.T) {
 			},
 		}
 
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
 
 		tagMap := map[string][]string{
@@ -307,7 +207,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 		tagJson, err := json.Marshal(tagMap)
 		require.NoError(t, err)
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, log.NewNullLogger())
 		resp, err := executor.handleGetResourceArns(
 			context.Background(),
 			backend.PluginContext{

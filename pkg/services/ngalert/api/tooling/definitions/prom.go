@@ -9,14 +9,14 @@ import (
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
-// swagger:route GET /api/prometheus/grafana/api/v1/rules prometheus RouteGetGrafanaRuleStatuses
+// swagger:route GET /prometheus/grafana/api/v1/rules prometheus RouteGetGrafanaRuleStatuses
 //
 // gets the evaluation statuses of all rules
 //
 //     Responses:
 //       200: RuleResponse
 
-// swagger:route GET /api/prometheus/{DatasourceUID}/api/v1/rules prometheus RouteGetRuleStatuses
+// swagger:route GET /prometheus/{DatasourceUID}/api/v1/rules prometheus RouteGetRuleStatuses
 //
 // gets the evaluation statuses of all rules
 //
@@ -24,14 +24,14 @@ import (
 //       200: RuleResponse
 //       404: NotFound
 
-// swagger:route GET /api/prometheus/grafana/api/v1/alerts prometheus RouteGetGrafanaAlertStatuses
+// swagger:route GET /prometheus/grafana/api/v1/alerts prometheus RouteGetGrafanaAlertStatuses
 //
 // gets the current alerts
 //
 //     Responses:
 //       200: AlertResponse
 
-// swagger:route GET /api/prometheus/{DatasourceUID}/api/v1/alerts prometheus RouteGetAlertStatuses
+// swagger:route GET /prometheus/{DatasourceUID}/api/v1/alerts prometheus RouteGetAlertStatuses
 //
 // gets the current alerts
 //

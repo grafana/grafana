@@ -5,7 +5,7 @@ import { Select } from '@grafana/ui';
 
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { addValueToOptions } from '../../utils/common';
-import { Field } from '../Field';
+import { Field } from '../shared/Field';
 
 import { setCustomNamespace } from './setQueryValue';
 

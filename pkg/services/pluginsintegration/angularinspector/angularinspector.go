@@ -1,7 +1,6 @@
 package angularinspector
 
 import (
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -12,11 +11,11 @@ type Service struct {
 	angularinspector.Inspector
 }
 
-func ProvideService(cfg *config.Cfg, dynamic *angulardetectorsprovider.Dynamic) (*Service, error) {
+func ProvideService(features featuremgmt.FeatureToggles, dynamic *angulardetectorsprovider.Dynamic) (*Service, error) {
 	var detectorsProvider angulardetector.DetectorsProvider
 	var err error
 	static := angularinspector.NewDefaultStaticDetectorsProvider()
-	if cfg.Features != nil && cfg.Features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
+	if features.IsEnabledGlobally(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
 		detectorsProvider = angulardetector.SequenceDetectorsProvider{dynamic, static}
 	} else {
 		detectorsProvider = static
@@ -24,5 +23,5 @@ func ProvideService(cfg *config.Cfg, dynamic *angulardetectorsprovider.Dynamic) 
 	if err != nil {
 		return nil, err
 	}
-	return &Service{Inspector: &angularinspector.PatternsListInspector{DetectorsProvider: detectorsProvider}}, nil
+	return &Service{Inspector: angularinspector.NewPatternListInspector(detectorsProvider)}, nil
 }

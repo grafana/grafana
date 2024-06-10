@@ -10,6 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
+	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/stats/statstest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -150,11 +152,16 @@ func TestAdmin_AccessControl(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			fakeStatsService := statstest.NewFakeService()
+			fakeStatsService.ExpectedAdminStats = &stats.AdminStats{}
+			fakeAnonService := anontest.NewFakeService()
+			fakeAnonService.ExpectedCountDevices = 0
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.SQLStore = dbtest.NewFakeDB()
 				hs.SettingsProvider = &setting.OSSImpl{Cfg: hs.Cfg}
-				hs.statsService = statstest.NewFakeService()
+				hs.statsService = fakeStatsService
+				hs.anonService = fakeAnonService
 			})
 
 			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest(tt.url), userWithPermissions(1, tt.permissions)))

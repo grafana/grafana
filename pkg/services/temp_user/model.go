@@ -15,11 +15,14 @@ var (
 type TempUserStatus string
 
 const (
-	TmpUserSignUpStarted TempUserStatus = "SignUpStarted"
-	TmpUserInvitePending TempUserStatus = "InvitePending"
-	TmpUserCompleted     TempUserStatus = "Completed"
-	TmpUserRevoked       TempUserStatus = "Revoked"
-	TmpUserExpired       TempUserStatus = "Expired"
+	TmpUserSignUpStarted        TempUserStatus = "SignUpStarted"
+	TmpUserInvitePending        TempUserStatus = "InvitePending"
+	TmpUserCompleted            TempUserStatus = "Completed"
+	TmpUserRevoked              TempUserStatus = "Revoked"
+	TmpUserExpired              TempUserStatus = "Expired"
+	TmpUserEmailUpdateStarted   TempUserStatus = "EmailUpdateStarted"
+	TmpUserEmailUpdateCompleted TempUserStatus = "EmailUpdateCompleted"
+	TmpUserEmailUpdateExpired   TempUserStatus = "EmailUpdateExpired"
 )
 
 // TempUser holds data for org invites and unconfirmed sign ups
@@ -67,6 +70,12 @@ type ExpireTempUsersCommand struct {
 	NumExpired int64
 }
 
+type ExpirePreviousVerificationsCommand struct {
+	InvitedByUserID int64
+
+	NumExpired int64
+}
+
 type UpdateTempUserWithEmailSentCommand struct {
 	Code string
 }
@@ -87,6 +96,7 @@ type TempUserDTO struct {
 	Name           string         `json:"name"`
 	Email          string         `json:"email"`
 	Role           org.RoleType   `json:"role"`
+	InvitedByID    int64          `json:"-" xorm:"invited_by_id"`
 	InvitedByLogin string         `json:"invitedByLogin"`
 	InvitedByEmail string         `json:"invitedByEmail"`
 	InvitedByName  string         `json:"invitedByName"`

@@ -4,18 +4,17 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.1.2";
+export const pluginVersion = "%VERSION%";
 
-export type PhlareQueryType = ('metrics' | 'profile' | 'both');
+export type PyroscopeQueryType = ('metrics' | 'profile' | 'both');
 
-export const defaultPhlareQueryType: PhlareQueryType = 'both';
+export const defaultPyroscopeQueryType: PyroscopeQueryType = 'both';
 
 export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
   /**
@@ -34,9 +33,14 @@ export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
    * Specifies the type of profile to query.
    */
   profileTypeId: string;
+  /**
+   * Specifies the query span selectors.
+   */
+  spanSelector?: Array<string>;
 }
 
 export const defaultGrafanaPyroscopeDataQuery: Partial<GrafanaPyroscopeDataQuery> = {
   groupBy: [],
   labelSelector: '{}',
+  spanSelector: [],
 };

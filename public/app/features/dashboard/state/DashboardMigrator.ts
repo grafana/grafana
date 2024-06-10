@@ -15,6 +15,7 @@ import {
   isEmptyObject,
   MappingType,
   PanelPlugin,
+  ReducerID,
   SpecialValueMatch,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
@@ -42,6 +43,10 @@ import {
 import getFactors from 'app/core/utils/factors';
 import kbn from 'app/core/utils/kbn';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import {
+  RefIdTransformerOptions,
+  TimeSeriesTableTransformerOptions,
+} from 'app/features/transformers/timeSeriesTable/timeSeriesTableTransformer';
 import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
 import { CloudWatchMetricsQuery, LegacyAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
@@ -63,6 +68,14 @@ standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
+
+/**
+ * The current version of the dashboard schema.
+ * To add a dashboard migration increment this number
+ * and then add your migration at the bottom of 'updateSchema'
+ * hint: search "Add migration here"
+ */
+export const DASHBOARD_SCHEMA_VERSION = 39;
 export class DashboardMigrator {
   dashboard: DashboardModel;
 
@@ -79,7 +92,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 38;
+    this.dashboard.schemaVersion = DASHBOARD_SCHEMA_VERSION;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -174,7 +187,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 6) {
       // move drop-downs to new schema
-      const annotations: any = find(old.pulldowns, { type: 'annotations' });
+      const annotations = find(old.pulldowns, { type: 'annotations' });
 
       if (annotations) {
         this.dashboard.annotations = {
@@ -195,7 +208,7 @@ export class DashboardMigrator {
           variable.type = 'query';
         }
         if (variable.allFormat === void 0) {
-          variable.allFormat = 'glob';
+          delete variable.allFormat;
         }
       }
     }
@@ -305,16 +318,18 @@ export class DashboardMigrator {
 
     if (oldVersion < 12) {
       // update template variables
-      each(this.dashboard.getVariables(), (templateVariable: any) => {
-        if (templateVariable.refresh) {
-          templateVariable.refresh = 1;
+      each(this.dashboard.getVariables(), (templateVariable) => {
+        if ('refresh' in templateVariable) {
+          if (templateVariable.refresh) {
+            templateVariable.refresh = 1;
+          }
+          if (!templateVariable.refresh) {
+            templateVariable.refresh = 0;
+          }
         }
-        if (!templateVariable.refresh) {
-          templateVariable.refresh = 0;
-        }
-        if (templateVariable.hideVariable) {
+        if ('hideVariable' in templateVariable && templateVariable.hideVariable) {
           templateVariable.hide = 2;
-        } else if (templateVariable.hideLabel) {
+        } else if ('hideLabel' in templateVariable && templateVariable.hideLabel) {
           templateVariable.hide = 1;
         }
       });
@@ -627,6 +642,9 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 27) {
+      // remove old repeated panel left-overs
+      this.removeRepeatedPanels();
+
       this.dashboard.templating.list = this.dashboard.templating.list.map((variable) => {
         if (!isConstant(variable)) {
           return variable;
@@ -787,7 +805,7 @@ export class DashboardMigrator {
               if (panelDataSourceWasDefault && target.datasource?.uid !== '__expr__') {
                 // We can have situations when default ds changed and the panel level data source is different from the queries
                 // In this case we use the query level data source as source for truth
-                panel.datasource = target.datasource as DataSourceRef;
+                panel.datasource = target.datasource;
               }
             }
           }
@@ -846,6 +864,46 @@ export class DashboardMigrator {
       });
     }
 
+    // Update the configuration of the Timeseries to table transformation
+    // to support multiple options per query
+    if (oldVersion < 39) {
+      panelUpgrades.push((panel: PanelModel) => {
+        panel.transformations?.forEach((transformation) => {
+          // If we run into a timeSeriesTable transformation
+          // and it doesn't have undefined options then we migrate
+          if (
+            transformation.id === 'timeSeriesTable' &&
+            transformation.options !== undefined &&
+            transformation.options.refIdToStat !== undefined
+          ) {
+            let tableTransformOptions: TimeSeriesTableTransformerOptions = {};
+
+            // For each {refIdtoStat} record which maps refId to a statistic
+            // we add that to the stat property of the the new
+            // RefIdTransformerOptions interface which includes multiple settings
+            for (const [refId, stat] of Object.entries(transformation.options.refIdToStat)) {
+              let newSettings: RefIdTransformerOptions = {};
+              // In this case the easiest way is just to do a type
+              // assertion as iterated entries have unknown types
+              newSettings.stat = stat as ReducerID;
+              tableTransformOptions[refId] = newSettings;
+            }
+
+            // Update the options
+            transformation.options = tableTransformOptions;
+          }
+        });
+
+        return panel;
+      });
+    }
+
+    /**
+     * -==- Add migration here -==-
+     * Your migration should go below the previous
+     * block and above this (hopefully) helpful message.
+     */
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -861,6 +919,26 @@ export class DashboardMigrator {
         }
       }
     }
+  }
+
+  private removeRepeatedPanels() {
+    const newPanels = [];
+
+    for (const panel of this.dashboard.panels) {
+      // @ts-expect-error
+      if (panel.repeatPanelId || panel.repeatByRow) {
+        continue;
+      }
+
+      // Filter out repeats in collapsed rows
+      if (panel.type === 'row' && Array.isArray(panel.panels)) {
+        panel.panels = panel.panels.filter((x) => !x.repeatPanelId);
+      }
+
+      newPanels.push(panel);
+    }
+
+    this.dashboard.panels = newPanels;
   }
 
   // Migrates metric queries and/or annotation queries that use more than one statistic.
@@ -917,7 +995,7 @@ export class DashboardMigrator {
         continue;
       }
 
-      const height: any = row.height || DEFAULT_ROW_HEIGHT;
+      const height = row.height || DEFAULT_ROW_HEIGHT;
       const rowGridHeight = getGridHeight(height);
 
       const rowPanel: any = {};
@@ -1183,7 +1261,7 @@ export function migrateDatasourceNameToRef(
 
   const ds = getDataSourceSrv().getInstanceSettings(nameOrRef);
   if (!ds) {
-    return { uid: nameOrRef as string }; // not found
+    return { uid: nameOrRef ? nameOrRef : undefined }; // not found
   }
 
   return getDataSourceRef(ds);
@@ -1325,7 +1403,7 @@ function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): 
 }
 
 function migrateTooltipOptions(panel: PanelModel) {
-  if (panel.type === 'timeseries' || panel.type === 'xychart') {
+  if (panel.type === 'timeseries' || panel.type === 'xychart' || panel.type === 'xychart2') {
     if (panel.options.tooltipOptions) {
       panel.options = {
         ...panel.options,

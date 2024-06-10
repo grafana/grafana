@@ -10,7 +10,7 @@ import (
 )
 
 func (s *AuthService) initClaimExpectations() error {
-	if err := json.Unmarshal([]byte(s.Cfg.JWTAuthExpectClaims), &s.expect); err != nil {
+	if err := json.Unmarshal([]byte(s.Cfg.JWTAuth.ExpectClaims), &s.expect); err != nil {
 		return err
 	}
 
@@ -32,7 +32,7 @@ func (s *AuthService) initClaimExpectations() error {
 			delete(s.expect, key)
 		case "aud":
 			switch value := value.(type) {
-			case []interface{}:
+			case []any:
 				for _, val := range value {
 					if v, ok := val.(string); ok {
 						s.expectRegistered.Audience = append(s.expectRegistered.Audience, v)
@@ -52,7 +52,7 @@ func (s *AuthService) initClaimExpectations() error {
 	return nil
 }
 
-func (s *AuthService) validateClaims(claims JWTClaims) error {
+func (s *AuthService) validateClaims(claims map[string]any) error {
 	var registeredClaims jwt.Claims
 	for key, value := range claims {
 		switch key {
@@ -70,7 +70,7 @@ func (s *AuthService) validateClaims(claims JWTClaims) error {
 			}
 		case "aud":
 			switch value := value.(type) {
-			case []interface{}:
+			case []any:
 				for _, val := range value {
 					if v, ok := val.(string); ok {
 						registeredClaims.Audience = append(registeredClaims.Audience, v)

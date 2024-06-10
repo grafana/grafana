@@ -3,15 +3,23 @@ package influxql
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+	"sync"
 
+	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/buffered"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/querydata"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
@@ -22,43 +30,94 @@ var (
 	glog               = log.New("tsdb.influx_influxql")
 )
 
-func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, req *backend.QueryDataRequest, features featuremgmt.FeatureToggles) (*backend.QueryDataResponse, error) {
 	logger := glog.FromContext(ctx)
 	response := backend.NewQueryDataResponse()
+	var err error
 
-	for _, reqQuery := range req.Queries {
-		query, err := models.QueryParse(reqQuery)
+	// We are testing running of queries in parallel behind feature flag
+	if features.IsEnabled(ctx, featuremgmt.FlagInfluxdbRunQueriesInParallel) {
+		concurrentQueryCount, err := req.PluginContext.GrafanaConfig.ConcurrentQueryCount()
 		if err != nil {
-			return &backend.QueryDataResponse{}, err
+			logger.Debug(fmt.Sprintf("Concurrent Query Count read/parse error: %v", err), featuremgmt.FlagInfluxdbRunQueriesInParallel)
+			concurrentQueryCount = 10
 		}
 
-		rawQuery, err := query.Build(req)
+		responseLock := sync.Mutex{}
+		err = concurrency.ForEachJob(ctx, len(req.Queries), concurrentQueryCount, func(ctx context.Context, idx int) error {
+			reqQuery := req.Queries[idx]
+			query, err := models.QueryParse(reqQuery)
+			if err != nil {
+				return err
+			}
+
+			rawQuery, err := query.Build(req)
+			if err != nil {
+				return err
+			}
+
+			query.RefID = reqQuery.RefID
+			query.RawQuery = rawQuery
+
+			if setting.Env == setting.Dev {
+				logger.Debug("Influxdb query", "raw query", rawQuery)
+			}
+
+			request, err := createRequest(ctx, logger, dsInfo, rawQuery, query.Policy)
+			if err != nil {
+				return err
+			}
+
+			resp, err := execute(ctx, tracer, dsInfo, logger, query, request, features.IsEnabled(ctx, featuremgmt.FlagInfluxqlStreamingParser))
+
+			responseLock.Lock()
+			defer responseLock.Unlock()
+			if err != nil {
+				response.Responses[query.RefID] = backend.DataResponse{Error: err}
+			} else {
+				response.Responses[query.RefID] = resp
+			}
+			return nil // errors are saved per-query,always return nil
+		})
+
 		if err != nil {
-			return &backend.QueryDataResponse{}, err
+			logger.Debug("Influxdb concurrent query error", "concurrent query", err)
 		}
+	} else {
+		for _, reqQuery := range req.Queries {
+			query, err := models.QueryParse(reqQuery)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
 
-		query.RefID = reqQuery.RefID
-		query.RawQuery = rawQuery
+			rawQuery, err := query.Build(req)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
 
-		if setting.Env == setting.Dev {
-			logger.Debug("Influxdb query", "raw query", rawQuery)
-		}
+			query.RefID = reqQuery.RefID
+			query.RawQuery = rawQuery
 
-		request, err := createRequest(ctx, logger, dsInfo, rawQuery, query.Policy)
-		if err != nil {
-			return &backend.QueryDataResponse{}, err
-		}
+			if setting.Env == setting.Dev {
+				logger.Debug("Influxdb query", "raw query", rawQuery)
+			}
 
-		resp, err := execute(dsInfo, logger, query, request)
+			request, err := createRequest(ctx, logger, dsInfo, rawQuery, query.Policy)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
 
-		if err != nil {
-			response.Responses[query.RefID] = backend.DataResponse{Error: err}
-		} else {
-			response.Responses[query.RefID] = resp
+			resp, err := execute(ctx, tracer, dsInfo, logger, query, request, features.IsEnabled(ctx, featuremgmt.FlagInfluxqlStreamingParser))
+
+			if err != nil {
+				response.Responses[query.RefID] = backend.DataResponse{Error: err}
+			} else {
+				response.Responses[query.RefID] = resp
+			}
 		}
 	}
 
-	return response, nil
+	return response, err
 }
 
 func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.DatasourceInfo, queryStr string, retentionPolicy string) (*http.Request, error) {
@@ -110,7 +169,7 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.Dataso
 	return req, nil
 }
 
-func execute(dsInfo *models.DatasourceInfo, logger log.Logger, query *models.Query, request *http.Request) (backend.DataResponse, error) {
+func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, logger log.Logger, query *models.Query, request *http.Request, isStreamingParserEnabled bool) (backend.DataResponse, error) {
 	res, err := dsInfo.HTTPClient.Do(request)
 	if err != nil {
 		return backend.DataResponse{}, err
@@ -120,6 +179,27 @@ func execute(dsInfo *models.DatasourceInfo, logger log.Logger, query *models.Que
 			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
-	resp := ResponseParse(res.Body, res.StatusCode, query)
+
+	_, endSpan := startTrace(ctx, tracer, "datasource.influxdb.influxql.parseResponse")
+	defer endSpan()
+
+	var resp *backend.DataResponse
+	if isStreamingParserEnabled {
+		logger.Info("InfluxDB InfluxQL streaming parser enabled: ", "info")
+		resp = querydata.ResponseParse(res.Body, res.StatusCode, query)
+	} else {
+		resp = buffered.ResponseParse(res.Body, res.StatusCode, query)
+	}
 	return *resp, nil
+}
+
+// startTrace setups a trace but does not panic if tracer is nil which helps with testing
+func startTrace(ctx context.Context, tracer trace.Tracer, name string, attributes ...attribute.KeyValue) (context.Context, func()) {
+	if tracer == nil {
+		return ctx, func() {}
+	}
+	ctx, span := tracer.Start(ctx, name, trace.WithAttributes(attributes...))
+	return ctx, func() {
+		span.End()
+	}
 }

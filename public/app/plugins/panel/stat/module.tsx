@@ -17,22 +17,36 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
     addOrientationOption(builder, mainCategory);
     commonOptionsBuilder.addTextSizeOptions(builder);
 
-    builder.addSelect({
-      path: 'textMode',
-      name: 'Text mode',
-      description: 'Control if name and value is displayed or just name',
-      category: mainCategory,
-      settings: {
-        options: [
-          { value: BigValueTextMode.Auto, label: 'Auto' },
-          { value: BigValueTextMode.Value, label: 'Value' },
-          { value: BigValueTextMode.ValueAndName, label: 'Value and name' },
-          { value: BigValueTextMode.Name, label: 'Name' },
-          { value: BigValueTextMode.None, label: 'None' },
-        ],
-      },
-      defaultValue: defaultOptions.textMode,
-    });
+    builder
+      .addSelect({
+        path: 'textMode',
+        name: 'Text mode',
+        description: 'Control if name and value is displayed or just name',
+        category: mainCategory,
+        settings: {
+          options: [
+            { value: BigValueTextMode.Auto, label: 'Auto' },
+            { value: BigValueTextMode.Value, label: 'Value' },
+            { value: BigValueTextMode.ValueAndName, label: 'Value and name' },
+            { value: BigValueTextMode.Name, label: 'Name' },
+            { value: BigValueTextMode.None, label: 'None' },
+          ],
+        },
+        defaultValue: defaultOptions.textMode,
+      })
+      .addRadio({
+        path: 'wideLayout',
+        name: 'Wide layout',
+        category: mainCategory,
+        settings: {
+          options: [
+            { value: true, label: 'On' },
+            { value: false, label: 'Off' },
+          ],
+        },
+        defaultValue: defaultOptions.wideLayout,
+        showIf: (config) => config.textMode === BigValueTextMode.ValueAndName,
+      });
 
     builder
       .addSelect({
@@ -73,6 +87,13 @@ export const plugin = new PanelPlugin<Options>(StatPanel)
             { value: BigValueJustifyMode.Center, label: 'Center' },
           ],
         },
+      })
+      .addBooleanSwitch({
+        path: 'showPercentChange',
+        name: 'Show percent change',
+        defaultValue: defaultOptions.showPercentChange,
+        category: mainCategory,
+        showIf: (config) => !config.reduceOptions.values,
       });
   })
   .setNoPadding()

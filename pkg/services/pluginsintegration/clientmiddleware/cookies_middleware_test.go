@@ -33,7 +33,7 @@ func TestCookiesMiddleware(t *testing.T) {
 			clienttest.WithMiddlewares(NewCookiesMiddleware([]string{"grafana_session"})),
 		)
 
-		jsonDataMap := map[string]interface{}{}
+		jsonDataMap := map[string]any{}
 		jsonDataBytes, err := json.Marshal(&jsonDataMap)
 		require.NoError(t, err)
 
@@ -102,7 +102,7 @@ func TestCookiesMiddleware(t *testing.T) {
 			clienttest.WithMiddlewares(NewCookiesMiddleware([]string{"grafana_session"})),
 		)
 
-		jsonDataMap := map[string]interface{}{
+		jsonDataMap := map[string]any{
 			"keepCookies": []string{"cookie2", "grafana_session"},
 		}
 		jsonDataBytes, err := json.Marshal(&jsonDataMap)

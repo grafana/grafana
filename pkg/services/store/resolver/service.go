@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
@@ -22,7 +23,7 @@ var getNow = func() time.Time { return time.Now() }
 
 type ResolutionInfo struct {
 	OK        bool      `json:"ok"`
-	Key       string    `json:"key,omitempty"`  // GRN? UID?
+	Key       string    `json:"key,omitempty"`  // k8s key
 	Warning   string    `json:"kind,omitempty"` // old syntax?  (name>uid) references a renamed object?
 	Timestamp time.Time `json:"timestamp,omitempty"`
 }
@@ -31,7 +32,7 @@ type EntityReferenceResolver interface {
 	Resolve(ctx context.Context, ref *entity.EntityExternalReference) (ResolutionInfo, error)
 }
 
-func ProvideEntityReferenceResolver(ds datasources.DataSourceService, pluginStore plugins.Store) EntityReferenceResolver {
+func ProvideEntityReferenceResolver(ds datasources.DataSourceService, pluginStore pluginstore.Store) EntityReferenceResolver {
 	return &standardReferenceResolver{
 		pluginStore: pluginStore,
 		ds: dsCache{
@@ -42,7 +43,7 @@ func ProvideEntityReferenceResolver(ds datasources.DataSourceService, pluginStor
 }
 
 type standardReferenceResolver struct {
-	pluginStore plugins.Store
+	pluginStore pluginstore.Store
 	ds          dsCache
 }
 

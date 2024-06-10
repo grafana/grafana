@@ -19,7 +19,7 @@ const timeLimitCodeLength = timeLimitStartDateLength + timeLimitMinutesLength + 
 
 // create a time limit code
 // code format: 12 length date time string + 6 minutes string + 64 HMAC-SHA256 encoded string
-func createTimeLimitCode(payload string, minutes int, startStr string) (string, error) {
+func createTimeLimitCode(secretKey string, payload string, minutes int, startStr string) (string, error) {
 	format := "200601021504"
 
 	var start, end time.Time
@@ -42,7 +42,7 @@ func createTimeLimitCode(payload string, minutes int, startStr string) (string, 
 	endStr = end.Format(format)
 
 	// create HMAC-SHA256 encoded string
-	key := []byte(setting.SecretKey)
+	key := []byte(secretKey)
 	h := hmac.New(sha256.New, key)
 	if _, err := h.Write([]byte(payload + startStr + endStr)); err != nil {
 		return "", fmt.Errorf("cannot create hmac: %v", err)
@@ -70,8 +70,8 @@ func validateUserEmailCode(cfg *setting.Cfg, user *user.User, code string) (bool
 	}
 
 	// right active code
-	payload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + user.Password + user.Rands
-	expectedCode, err := createTimeLimitCode(payload, minutes, startStr)
+	payload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + string(user.Password) + user.Rands
+	expectedCode, err := createTimeLimitCode(cfg.SecretKey, payload, minutes, startStr)
 	if err != nil {
 		return false, err
 	}
@@ -103,8 +103,8 @@ func getLoginForEmailCode(code string) string {
 
 func createUserEmailCode(cfg *setting.Cfg, user *user.User, startStr string) (string, error) {
 	minutes := cfg.EmailCodeValidMinutes
-	payload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + user.Password + user.Rands
-	code, err := createTimeLimitCode(payload, minutes, startStr)
+	payload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + string(user.Password) + user.Rands
+	code, err := createTimeLimitCode(cfg.SecretKey, payload, minutes, startStr)
 	if err != nil {
 		return "", err
 	}

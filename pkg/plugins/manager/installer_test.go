@@ -23,6 +23,8 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		const (
 			pluginID, v1 = "test-panel", "1.0.0"
 			zipNameV1    = "test-panel-1.0.0.zip"
+			v2           = "2.0.0"
+			zipNameV2    = "test-panel-2.0.0.zip"
 		)
 
 		// mock a plugin to be returned automatically by the plugin loader
@@ -39,6 +41,9 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
 				require.Equal(t, []string{zipNameV1}, src.PluginURIs(ctx))
 				return []*plugins.Plugin{pluginV1}, nil
+			},
+			UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+				return p, nil
 			},
 		}
 
@@ -62,7 +67,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc)
+		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
 		err := inst.Add(context.Background(), pluginID, v1, testCompatOpts())
 		require.NoError(t, err)
 
@@ -80,10 +85,6 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		})
 
 		t.Run("Update plugin to different version", func(t *testing.T) {
-			const (
-				v2        = "2.0.0"
-				zipNameV2 = "test-panel-2.0.0.zip"
-			)
 			// mock a plugin to be returned automatically by the plugin loader
 			pluginV2 := createPlugin(t, pluginID, plugins.ClassExternal, true, true, func(plugin *plugins.Plugin) {
 				plugin.Info.Version = v2
@@ -129,13 +130,13 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 
 			var unloadedPlugins []string
 			inst.pluginLoader = &fakes.FakeLoader{
-				UnloadFunc: func(_ context.Context, id string) error {
-					unloadedPlugins = append(unloadedPlugins, id)
-					return nil
+				UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+					unloadedPlugins = append(unloadedPlugins, p.ID)
+					return p, nil
 				},
 			}
 
-			err = inst.Remove(context.Background(), pluginID)
+			err = inst.Remove(context.Background(), pluginID, v2)
 			require.NoError(t, err)
 
 			require.Equal(t, []string{pluginID}, unloadedPlugins)
@@ -143,7 +144,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			t.Run("Won't remove if not exists", func(t *testing.T) {
 				inst.pluginRegistry = fakes.NewFakePluginRegistry()
 
-				err = inst.Remove(context.Background(), pluginID)
+				err = inst.Remove(context.Background(), pluginID, v2)
 				require.Equal(t, plugins.ErrPluginNotInstalled, err)
 			})
 		})
@@ -168,7 +169,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				},
 			}
 
-			pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc)
+			pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &fakes.FakeAuthService{})
 			err := pm.Add(context.Background(), p.ID, "3.2.0", testCompatOpts())
 			require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
 
@@ -176,7 +177,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			require.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 			t.Run(fmt.Sprintf("Can't uninstall %s plugin", tc.class), func(t *testing.T) {
-				err = pm.Remove(context.Background(), p.ID)
+				err = pm.Remove(context.Background(), p.ID, p.Info.Version)
 				require.Equal(t, plugins.ErrUninstallCorePlugin, err)
 			})
 		}

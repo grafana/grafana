@@ -55,7 +55,7 @@ func updateUsageStats(ctx context.Context, reader *bluge.Reader, logger log.Logg
 	// execute this search on the reader
 	documentMatchIterator, err := reader.Search(ctx, req)
 	if err != nil {
-		logger.Error("error executing search", "err", err)
+		logger.Error("Error executing search", "err", err)
 		return
 	}
 

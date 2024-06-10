@@ -85,7 +85,6 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
         <Drawer
           title={getNewFolderPhrase()}
           subtitle={parentFolder?.title ? `Location: ${parentFolder.title}` : undefined}
-          scrollableContent
           onClose={() => setShowNewFolderDrawer(false)}
           size="sm"
         >

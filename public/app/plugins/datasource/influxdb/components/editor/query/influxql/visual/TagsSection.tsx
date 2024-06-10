@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { AccessoryButton } from '@grafana/experimental';
 
 import { InfluxQueryTag } from '../../../../../types';
 import { adjustOperatorIfNeeded, getCondition, getOperator } from '../utils/tagUtils';
@@ -9,8 +10,8 @@ import { toSelectableValue } from '../utils/toSelectableValue';
 import { AddButton } from './AddButton';
 import { Seg } from './Seg';
 
-type KnownOperator = '=' | '!=' | '<>' | '<' | '>' | '=~' | '!~';
-const knownOperators: KnownOperator[] = ['=', '!=', '<>', '<', '>', '=~', '!~'];
+type KnownOperator = '=' | '!=' | '<>' | '<' | '>' | '>=' | '<=' | '=~' | '!~' | 'Is' | 'Is Not';
+const knownOperators: KnownOperator[] = ['=', '!=', '<>', '<', '>', '>=', '<=', '=~', '!~', 'Is', 'Is Not'];
 
 type KnownCondition = 'AND' | 'OR';
 const knownConditions: KnownCondition[] = ['AND', 'OR'];
@@ -56,7 +57,7 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
         console.error(err);
         return [];
       })
-      .then((tags) => [{ label: '-- remove filter --', value: undefined }, ...tags.map(toSelectableValue)]);
+      .then((tags) => tags.map(toSelectableValue));
   };
 
   const getTagValueSegmentOptions = () => {
@@ -101,6 +102,15 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
         onChange={(v) => {
           const value = v.value ?? '';
           onChange({ ...tag, value, operator: adjustOperatorIfNeeded(operator, value) });
+        }}
+      />
+      <AccessoryButton
+        style={{ marginRight: '4px' }}
+        aria-label="remove"
+        icon="times"
+        variant="secondary"
+        onClick={() => {
+          onRemove();
         }}
       />
     </div>

@@ -206,8 +206,8 @@ func TestAdjustFrame(t *testing.T) {
 	})
 
 	t.Run("should parse response stats", func(t *testing.T) {
-		stats := map[string]interface{}{
-			"summary": map[string]interface{}{
+		stats := map[string]any{
+			"summary": map[string]any{
 				"bytesProcessedPerSecond": 1,
 				"linesProcessedPerSecond": 2,
 				"totalBytesProcessed":     3,
@@ -215,7 +215,7 @@ func TestAdjustFrame(t *testing.T) {
 				"execTime":                5.5,
 			},
 
-			"store": map[string]interface{}{
+			"store": map[string]any{
 				"totalChunksRef":        6,
 				"totalChunksDownloaded": 7,
 				"chunksDownloadTime":    8.8,
@@ -227,7 +227,7 @@ func TestAdjustFrame(t *testing.T) {
 				"totalDuplicates":       14,
 			},
 
-			"ingester": map[string]interface{}{
+			"ingester": map[string]any{
 				"totalReached":       15,
 				"totalChunksMatched": 16,
 				"totalBatches":       17,
@@ -242,7 +242,7 @@ func TestAdjustFrame(t *testing.T) {
 		}
 
 		meta := data.FrameMeta{
-			Custom: map[string]interface{}{
+			Custom: map[string]any{
 				"stats": stats,
 			},
 		}

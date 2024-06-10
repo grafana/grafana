@@ -3,15 +3,22 @@
 import './global-jquery-shim';
 
 import angular from 'angular';
+import { TextEncoder, TextDecoder } from 'util';
 
 import { EventBusSrv } from '@grafana/data';
 import { GrafanaBootConfig } from '@grafana/runtime';
+import { initIconCache } from 'app/core/icons/iconBundle';
+
 import 'blob-polyfill';
 import 'mutationobserver-shim';
 import './mocks/workers';
 
 import '../vendor/flot/jquery.flot';
 import '../vendor/flot/jquery.flot.time';
+
+// icon cache needs to be initialized for test to prevent
+// libraries such as msw from throwing "unhandled resource"-errors
+initIconCache();
 
 const testAppEvents = new EventBusSrv();
 const global = window as any;
@@ -62,6 +69,9 @@ const mockIntersectionObserver = jest
   }));
 global.IntersectionObserver = mockIntersectionObserver;
 
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
 jest.mock('../app/core/core', () => ({
   ...jest.requireActual('../app/core/core'),
   appEvents: testAppEvents,
@@ -96,6 +106,7 @@ global.ResizeObserver = class ResizeObserver {
               left: 100,
               right: 0,
             },
+            target: {},
           } as ResizeObserverEntry,
         ],
         this

@@ -2,8 +2,13 @@ package commands
 
 import (
 	"fmt"
+	"net/http"
 	"os"
+	"runtime"
+	"runtime/trace"
 	"strconv"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -82,5 +87,54 @@ func (td *tracingDiagnostics) overrideWithEnv() error {
 		td.file = fileEnv
 	}
 
+	return nil
+}
+
+func setupProfiling(profile bool, profileAddr string, profilePort uint64) error {
+	profileDiagnostics := newProfilingDiagnostics(profile, profileAddr, profilePort)
+	if err := profileDiagnostics.overrideWithEnv(); err != nil {
+		return err
+	}
+
+	if profileDiagnostics.enabled {
+		fmt.Println("diagnostics: pprof profiling enabled", "addr", profileDiagnostics.addr, "port", profileDiagnostics.port)
+		runtime.SetBlockProfileRate(1)
+		go func() {
+			// TODO: We should enable the linter and fix G114 here.
+			//	G114: Use of net/http serve function that has no support for setting timeouts (gosec)
+			//
+			//nolint:gosec
+			err := http.ListenAndServe(fmt.Sprintf("%s:%d", profileDiagnostics.addr, profileDiagnostics.port), nil)
+			if err != nil {
+				panic(err)
+			}
+		}()
+	}
+	return nil
+}
+
+func setupTracing(tracing bool, tracingFile string, logger *log.ConcreteLogger) error {
+	traceDiagnostics := newTracingDiagnostics(tracing, tracingFile)
+	if err := traceDiagnostics.overrideWithEnv(); err != nil {
+		return err
+	}
+
+	if traceDiagnostics.enabled {
+		fmt.Println("diagnostics: tracing enabled", "file", traceDiagnostics.file)
+		f, err := os.Create(traceDiagnostics.file)
+		if err != nil {
+			panic(err)
+		}
+		defer func() {
+			if err := f.Close(); err != nil {
+				logger.Error("Failed to write trace diagnostics", "path", traceDiagnostics.file, "err", err)
+			}
+		}()
+
+		if err := trace.Start(f); err != nil {
+			panic(err)
+		}
+		defer trace.Stop()
+	}
 	return nil
 }

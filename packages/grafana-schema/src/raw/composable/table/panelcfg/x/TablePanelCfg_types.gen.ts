@@ -4,14 +4,13 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "10.1.2";
+export const pluginVersion = "11.0.0";
 
 export interface Options {
   /**
@@ -61,3 +60,5 @@ export const defaultOptions: Partial<Options> = {
   showTypeIcons: false,
   sortBy: [],
 };
+
+export interface FieldConfig extends ui.TableFieldOptions {}

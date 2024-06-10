@@ -6,14 +6,15 @@ import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import {
   DataFrame,
   DataFrameJSON,
-  DataSourceApi,
+  DataSourceInstanceSettings,
   Field,
   FieldType,
-  getDefaultRelativeTimeRange,
   LoadingState,
+  getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
-import { DataSourceSrv, FetchResponse } from '@grafana/runtime';
+import { DataSourceSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -36,7 +37,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')]);
+    runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [data] = values;
@@ -44,6 +45,7 @@ describe('AlertingQueryRunner', () => {
         A: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238, 1620051632238],
@@ -59,6 +61,7 @@ describe('AlertingQueryRunner', () => {
         B: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238],
@@ -91,7 +94,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')]);
+    runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [data] = values;
@@ -123,7 +126,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')]);
+    runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(data.pipe(take(2))).toEmitValuesWith((values) => {
       const [loading, data] = values;
@@ -135,6 +138,7 @@ describe('AlertingQueryRunner', () => {
         A: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238, 1620051632238],
@@ -150,6 +154,7 @@ describe('AlertingQueryRunner', () => {
         B: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238],
@@ -176,7 +181,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')]);
+    runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [data] = values;
@@ -198,7 +203,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')]);
+    runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [data] = values;
@@ -226,15 +231,18 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([
-      createQuery('A', {
-        model: {
-          refId: 'A',
-          hide: true,
-        },
-      }),
-      createQuery('B'),
-    ]);
+    runner.run(
+      [
+        createQuery('A', {
+          model: {
+            refId: 'A',
+            hide: true,
+          },
+        }),
+        createQuery('B'),
+      ],
+      'B'
+    );
 
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [loading, _data] = values;
@@ -256,9 +264,15 @@ const mockBackendSrv = ({ fetch }: MockBackendSrvConfig): BackendSrv => {
   } as unknown as BackendSrv;
 };
 
-const mockDataSourceSrv = (dsApi?: Partial<DataSourceApi>) => {
+interface MockOpts {
+  filterQuery?: (query: DataQuery) => boolean;
+}
+
+const mockDataSourceSrv = (opts?: MockOpts) => {
+  const ds = new DataSourceWithBackend({} as unknown as DataSourceInstanceSettings);
+  ds.filterQuery = opts?.filterQuery;
   return {
-    get: () => Promise.resolve(dsApi ?? {}),
+    get: () => Promise.resolve(ds),
   } as unknown as DataSourceSrv;
 };
 

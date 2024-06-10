@@ -3,23 +3,15 @@ aliases:
   - ../features/dashboard/dashboards/
   - ../panels/working-with-panels/organize-dashboard/
   - ../reference/dashboard_folders/
-  - ../reference/export_import/
-  - ../reference/timerange/
-  - ../troubleshooting/troubleshoot-dashboards/
   - dashboard-folders/
   - dashboard-manage/
-  - export-import/
+canonical: https://grafana.com/docs/grafana/latest/dashboards/manage-dashboards/
 keywords:
   - grafana
   - dashboard
   - dashboard folders
   - folder
   - folders
-  - import
-  - export
-  - troubleshoot
-  - time range
-  - scripting
 labels:
   products:
     - cloud
@@ -27,144 +19,103 @@ labels:
     - oss
 menuTitle: Manage dashboards
 title: Manage dashboards
+description: Learn about dashboard management and generative AI features for dashboards
 weight: 8
 ---
 
 # Manage dashboards
 
-A dashboard is a set of one or more [panels]({{< relref "../../panels-visualizations/" >}}) that visually presents your data in one or more rows.
+On the **Dashboards** page, you can perform dashboard management tasks such as:
 
-For more information about creating dashboards, refer to [Add and organize panels](../add-organize-panels).
+- [Browsing](#browse-dashboards) and [creating](#create-a-dashboard-folder) dashboard folders
+- [Managing folder permissions](#folder-permissions)
+- [Adding generative AI features to dashboards](#set-up-generative-ai-features-for-dashboards)
 
-This topic includes techniques you can use to manage your Grafana dashboards, including:
+For more information about creating dashboards, refer to [Build dashboards][].
 
-- [Creating and managing dashboard folders](#create-and-manage-dashboard-folders)
-- [Exporting and importing dashboards](#export-and-import-dashboards)
-- [Organizing dashboards](#organize-a-dashboard)
-- [Troubleshooting dashboards](#troubleshoot-dashboards)
+## Browse dashboards
+
+On the **Dashboards** page, you can browse and manage folders and dashboards. This includes the options to:
+
+- Create folders and dashboards.
+- Move dashboards between folders.
+- Delete multiple dashboards and folders.
+- Navigate to a folder.
+- Manage folder permissions. For more information, refer to [Dashboard permissions][].
+
+The page lists all the dashboards to which you have access, grouped into folders. Dashboards without a folder are displayed at the top level alongside folders.
+
+### Shared with me
+
+The **Shared with me** section displays folders and dashboards that are directly shared with you. These folders and dashboards aren't shown in the main list because you don't have access to one or more of their parent folders.
+
+If you have permission to view all folders, you won't see a **Shared with me**.
 
 ## Create a dashboard folder
 
 Folders help you organize and group dashboards, which is useful when you have many dashboards or multiple teams using the same Grafana instance.
 
-**Before you begin:**
-
-- Ensure that you have Grafana Admin or Super Admin permissions. For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../administration/roles-and-permissions/#dashboard-permissions" >}}).
+> **Before you begin:** Ensure you have Editor permissions or greater to create folders. For more information about dashboard permissions, refer to [Dashboard permissions][].
 
 **To create a dashboard folder:**
 
-1. Sign in to Grafana.
-1. Click **Dashboards** in the left-side menu.
-1. On the Dashboards page, click **New** and select **New folder** in the dropdown.
+1. Click **Dashboards** in the primary menu.
+1. Do one of the following:
+
+   - On the **Dashboards** page, click **New** and select **New folder** in the drop-down.
+   - Click an existing folder and on the folder’s page, click **New** and select **New folder** in the drop-down.
+
 1. Enter a unique name and click **Create**.
 
-When you save a dashboard, you can either select a folder for the dashboard to be saved in or create a new folder.
+When you nest folders, you can do so up to four levels deep.
 
-## Manage dashboards
+When you save a dashboard, you can optionally select a folder to save the dashboard in.
 
-On the Dashboards page, you can:
+{{% admonition type="note" %}}
+Alerts can't be placed in folders with slashes (\ /) in the name. If you wish to place alerts in the folder, don't use slashes in the folder name.
+{{% /admonition %}}
 
-- create a folder
-- create a dashboard
-- move dashboards into folders
-- delete multiple dashboards
-- navigate to a folder page where you can assign folder and dashboard permissions
+**To edit the name of a folder:**
 
-### Dashboard folder page
+1. Click **Dashboards** in the primary menu.
+1. Navigate to the folder by selecting it in the list, or searching for it.
+1. Click the **Edit title** icon (pencil) in the header and update the name of the folder.
 
-You can complete the following tasks on a dashboard folder page:
+The new folder name is automatically saved.
 
-- Move or delete dashboards in a folder
-- Rename a folder (available on the Settings tab)
-- Assign permissions to folders (which are inherited by the dashboards in the folder)
+### Folder permissions
 
-To navigate to the dashboard folder page, hover over the name of the folder and click **Go to folder** in the dashboard search result list or on the Dashboards page.
+You can assign permissions to a folder. Dashboards in the folder inherit any permissions that you've assigned to the folder. You can assign permissions to organization roles, teams, and users.
 
-### Dashboard permissions
+**To modify permissions for a folder:**
 
-You can assign permissions to a folder. Any permissions you assign are inherited by the dashboards in the folder. An Access Control List (ACL) is used where **Organization Role**, **Team**, and a **User** can be assigned permissions.
+1. Click **Dashboards** in the primary menu.
+1. Navigate to the folder by selecting it in the list, or searching for it.
+1. On the folder's page, click **Folder actions** and select **Manage permissions** in the drop-down.
+1. Update the permissions as desired.
 
-For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../administration/roles-and-permissions/#dashboard-permissions" >}}).
+Changes are saved automatically.
 
-## Export and import dashboards
+For more information about dashboard permissions, refer to [Dashboard permissions][].
 
-You can use the Grafana UI or the [HTTP API]({{< relref "../../developers/http_api/dashboard/#create-update-dashboard" >}}) to export and import dashboards.
+## Set up generative AI features for dashboards
 
-### Export a dashboard
+You can use generative AI to help you with the following tasks:
 
-The dashboard export action creates a Grafana JSON file that contains everything you need, including layout, variables, styles, data sources, queries, and so on, so that you can later import the dashboard.
+- **Generate panel and dashboard titles and descriptions**: Generate a title and description based on the data you’ve added for your panel or dashboard. This is useful when you want to visualize your data quickly and don’t want to spend time coming up with a title or description.
+- **Generate dashboard save changes summary**: Generate a summary of the changes you’ve made to a dashboard when you save it. This is great for easily tracking the history of a dashboard.
 
-1. Click **Dashboards** in the left-side menu.
-1. Open the dashboard you want to export.
-1. Click the **Share** icon.
-1. Click **Export**.
-1. Click **Save to file**.
+To access these features, install and configure Grafana’s Large Language Model (LLM) app plugin. For more information, refer to the [Grafana LLM plugin documentation][].
 
-Grafana downloads a JSON file to your local machine.
+When enabled, the **✨ Auto generate** option displays next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
 
-#### Make a dashboard portable
+{{% docs/reference %}}
+[Dashboard permissions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#dashboard-permissions"
+[Dashboard permissions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#dashboard-permissions"
 
-If you want to export a dashboard for others to use, you can add template variables for things like a metric prefix (use a constant variable) and server name.
+[Grafana LLM plugin documentation]: "/docs/grafana/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin"
+[Grafana LLM plugin documentation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin"
 
-A template variable of the type `Constant` will automatically be hidden in the dashboard, and will also be added as a required input when the dashboard is imported.
-
-### Import a dashboard
-
-1. Click **Dashboards** in the left-side menu.
-1. Click **New** and select **Import** in the dropdown menu.
-1. Perform one of the following steps:
-
-   - Upload a dashboard JSON file
-   - Paste a [Grafana.com](https://grafana.com) dashboard URL
-   - Paste dashboard JSON text directly into the text area
-
-<!--{{< figure src="/static/img/docs/v70/import_step2_grafana.com.png"  max-width="700px" >}}
--->
-
-The import process enables you to change the name of the dashboard, pick the data source you want the dashboard to use, and specify any metric prefixes (if the dashboard uses any).
-
-### Discover dashboards on Grafana.com
-
-Find dashboards for common server applications at [Grafana.com/dashboards](https://grafana.com/dashboards).
-
-{{< figure src="/media/docs/grafana/dashboards/screenshot-gcom-dashboards.png" >}}
-
-## Troubleshoot dashboards
-
-This section provides information to help you solve common dashboard problems.
-
-### Dashboard is slow
-
-- Are you trying to render dozens (or hundreds or thousands) of time-series on a graph? This can cause the browser to lag. Try using functions like `highestMax` (in Graphite) to reduce the returned series.
-- Sometimes the series names can be very large. This causes larger response sizes. Try using `alias` to reduce the size of the returned series names.
-- Are you querying many time-series or for a long range of time? Both of these conditions can cause Grafana or your data source to pull in a lot of data, which may slow it down.
-- It could be high load on your network infrastructure. If the slowness isn't consistent, this may be the problem.
-
-### Dashboard refresh rate issues
-
-By default, Grafana queries your data source every 30 seconds. Setting a low refresh rate on your dashboards puts unnecessary stress on the backend. In many cases, querying this frequently isn't necessary because the data isn't being sent to the system such that changes would be seen.
-
-We recommend the following:
-
-- Do not enable auto-refreshing on dashboards, panels, or variables unless you need it. Users can refresh their browser manually, or you can set the refresh rate for a time period that makes sense (every ten minutes, every hour, and so on).
-- If it is required, then set the refresh rate to once a minute. Users can always refresh the dashboard manually.
-- If your dashboard has a longer time period (such as a week), then you really don't need automated refreshing.
-
-#### Handling or rendering null data is wrong or confusing
-
-Some applications publish data intermittently; for example, they only post a metric when an event occurs. By default, Grafana graphs connect lines between the data points. This can be very deceiving.
-
-In the picture below we have enabled:
-
-- Points and 3-point radius to highlight where data points are actually present.
-- **Connect null values\* is set to **Always\*\*.
-
-{{< figure src="/static/img/docs/troubleshooting/grafana_null_connected.png" max-width="1200px" >}}
-
-In this graph, we set graph to show bars instead of lines and set the **No value** under **Standard options** to **0**. There is a very big difference in the visuals.
-
-{{< figure src="/static/img/docs/troubleshooting/grafana_null_zero.png" max-width="1200px" >}}
-
-### More examples
-
-You can find more examples in `public/dashboards/` directory of your Grafana installation.
+[Build dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+[Build dashboards]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards"
+{{% /docs/reference %}}

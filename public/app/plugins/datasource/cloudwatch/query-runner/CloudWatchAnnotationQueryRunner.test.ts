@@ -22,11 +22,11 @@ describe('CloudWatchAnnotationQueryRunner', () => {
   ];
 
   it('should issue the correct query', async () => {
-    const { runner, fetchMock, request } = setupMockedAnnotationQueryRunner({
+    const { runner, queryMock, request } = setupMockedAnnotationQueryRunner({
       variables: [namespaceVariable, regionVariable],
     });
-    await expect(runner.handleAnnotationQuery(queries, request)).toEmitValuesWith(() => {
-      expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject(
+    await expect(runner.handleAnnotationQuery(queries, request, queryMock)).toEmitValuesWith(() => {
+      expect(queryMock.mock.calls[0][0].targets[0]).toMatchObject(
         expect.objectContaining({
           region: regionVariable.current.value,
           namespace: namespaceVariable.current.value,

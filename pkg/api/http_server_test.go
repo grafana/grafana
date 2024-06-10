@@ -27,3 +27,13 @@ func TestHTTPServer_MetricsBasicAuth(t *testing.T) {
 		assert.False(t, ts.metricsEndpointBasicAuthEnabled())
 	})
 }
+
+func TestHTTPServer_readCertificates(t *testing.T) {
+	ts := &HTTPServer{
+		Cfg: setting.NewCfg(),
+	}
+	t.Run("ReadCertificates should return error when cert files are not configured", func(t *testing.T) {
+		_, err := ts.readCertificates()
+		assert.NotNil(t, err)
+	})
+}

@@ -3,9 +3,8 @@ import React from 'react';
 import { useToggle } from 'react-use';
 
 import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Collapse, Icon, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { QueryStats } from 'app/plugins/datasource/loki/types';
 
 export interface Props {
@@ -19,11 +18,6 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
   const [isOpen, toggleOpen] = useToggle(false);
   const styles = useStyles2(getStyles);
 
-  const convertUnits = (): string => {
-    const { text, suffix } = getValueFormat('bytes')(queryStats!.bytes, 1);
-    return text + suffix;
-  };
-
   return (
     <div className={styles.wrapper}>
       <Collapse
@@ -32,7 +26,7 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
         isOpen={isOpen}
         onToggle={toggleOpen}
         label={
-          <Stack gap={0} wrap={false}>
+          <Stack gap={0}>
             <h6 className={styles.title}>{title}</h6>
             {!isOpen && (
               <div className={styles.description}>
@@ -46,12 +40,14 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
       >
         <div className={styles.body}>{children}</div>
       </Collapse>
+
       {queryStats && config.featureToggles.lokiQuerySplitting && (
         <Tooltip content="Note: the query will be split into multiple parts and executed in sequence. Query limits will only apply each individual part.">
           <Icon tabIndex={0} name="info-circle" className={styles.tooltip} size="sm" />
         </Tooltip>
       )}
-      {queryStats && <p className={styles.stats}>This query will process approximately {convertUnits()}.</p>}
+
+      {queryStats && <p className={styles.stats}>{generateQueryStats(queryStats)}</p>}
     </div>
   );
 }
@@ -102,4 +98,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginRight: theme.spacing(0.25),
     }),
   };
+};
+
+const generateQueryStats = (queryStats: QueryStats) => {
+  if (queryStats.message) {
+    return queryStats.message;
+  }
+
+  return `This query will process approximately ${convertUnits(queryStats)}.`;
+};
+
+const convertUnits = (queryStats: QueryStats): string => {
+  const { text, suffix } = getValueFormat('bytes')(queryStats.bytes, 1);
+  return text + suffix;
 };

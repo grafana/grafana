@@ -1,4 +1,12 @@
-import { DataFrame, Field, TIME_SERIES_VALUE_FIELD_NAME, FieldType, TIME_SERIES_TIME_FIELD_NAME } from '../types';
+import { getFieldMatcher } from '../transformations';
+import {
+  DataFrame,
+  Field,
+  TIME_SERIES_VALUE_FIELD_NAME,
+  FieldType,
+  TIME_SERIES_TIME_FIELD_NAME,
+  FieldConfigSource,
+} from '../types';
 import { formatLabels } from '../utils/labels';
 
 /**
@@ -29,7 +37,7 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   }
 
   // list all the
-  if (index === undefined) {
+  if (index === undefined && frame.fields.length > 0) {
     return frame.fields
       .filter((f) => f.type !== FieldType.time)
       .map((f) => getFieldDisplayName(f, frame))
@@ -47,6 +55,53 @@ export function cacheFieldDisplayNames(frames: DataFrame[]) {
   frames.forEach((frame) => {
     frame.fields.forEach((field) => {
       getFieldDisplayName(field, frame, frames);
+    });
+  });
+}
+
+/**
+ *
+ * moves each field's config.custom.hideFrom to field.state.hideFrom
+ * and mutates orgiginal field.config.custom.hideFrom to one with explicit overrides only, (without the ad-hoc stateful __system override from legend toggle)
+ */
+export function decoupleHideFromState(frames: DataFrame[], fieldConfig: FieldConfigSource<any>) {
+  frames.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      const hideFrom = {
+        legend: false,
+        tooltip: false,
+        viz: false,
+        ...fieldConfig.defaults.custom?.hideFrom,
+      };
+
+      // with ad hoc __system override applied
+      const hideFromState = field.config.custom?.hideFrom;
+
+      fieldConfig.overrides.forEach((o) => {
+        if ('__systemRef' in o) {
+          return;
+        }
+
+        const m = getFieldMatcher(o.matcher);
+
+        if (m(field, frame, frames)) {
+          for (const p of o.properties) {
+            if (p.id === 'custom.hideFrom') {
+              Object.assign(hideFrom, p.value);
+            }
+          }
+        }
+      });
+
+      field.state = {
+        ...field.state,
+        hideFrom: {
+          ...hideFromState,
+        },
+      };
+
+      // original with perm overrides
+      field.config.custom.hideFrom = hideFrom;
     });
   });
 }
@@ -72,15 +127,15 @@ export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?:
  */
 export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const hasConfigTitle = field.config?.displayName && field.config?.displayName.length;
-
+  const isComparisonSeries = Boolean(frame?.meta?.timeCompare?.isTimeShiftQuery);
   let displayName = hasConfigTitle ? field.config!.displayName! : field.name;
 
   if (hasConfigTitle) {
-    return displayName;
+    return isComparisonSeries ? `${displayName} (comparison)` : displayName;
   }
 
   if (frame && field.config?.displayNameFromDS) {
-    return field.config.displayNameFromDS;
+    return isComparisonSeries ? `${field.config.displayNameFromDS} (comparison)` : field.config.displayNameFromDS;
   }
 
   // This is an ugly exception for time field
@@ -151,10 +206,13 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
     displayName = getUniqueFieldName(field, frame);
   }
 
+  if (isComparisonSeries) {
+    displayName = `${displayName} (comparison)`;
+  }
   return displayName;
 }
 
-function getUniqueFieldName(field: Field, frame?: DataFrame) {
+export function getUniqueFieldName(field: Field, frame?: DataFrame) {
   let dupeCount = 0;
   let foundSelf = false;
 

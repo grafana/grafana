@@ -180,7 +180,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 ```
 
-Use hook useStyles2(getStyles) to memoize the styles generation and try to avoid passing props to the the getStyles function and instead compose classes using emotion cx function.
+Use hook useStyles2(getStyles) to memoize the styles generation and try to avoid passing props to the getStyles function and instead compose classes using emotion cx function.
 
 #### Use `ALL_CAPS` for constants.
 

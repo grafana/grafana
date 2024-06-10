@@ -23,10 +23,10 @@ func TestProvisionedSymlinkedFolder(t *testing.T) {
 		Type:    "file",
 		OrgID:   1,
 		Folder:  "",
-		Options: map[string]interface{}{"path": symlinkedFolder},
+		Options: map[string]any{"path": symlinkedFolder},
 	}
 
-	reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil, nil)
+	reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil, nil, nil)
 	if err != nil {
 		t.Error("expected err to be nil")
 	}

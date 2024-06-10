@@ -9,6 +9,7 @@ import { fetchUserRoles, updateUserRoles } from './api';
 
 export interface Props {
   basicRole: OrgRole;
+  roles?: Role[];
   userId: number;
   orgId?: number;
   onBasicRoleChange: (newRole: OrgRole) => void;
@@ -31,10 +32,13 @@ export interface Props {
   onApplyRoles?: (newRoles: Role[], userId: number, orgId: number | undefined) => void;
   pendingRoles?: Role[];
   maxWidth?: string | number;
+  width?: string | number;
+  isLoading?: boolean;
 }
 
 export const UserRolePicker = ({
   basicRole,
+  roles,
   userId,
   orgId,
   onBasicRoleChange,
@@ -46,14 +50,19 @@ export const UserRolePicker = ({
   onApplyRoles,
   pendingRoles,
   maxWidth,
+  width,
+  isLoading,
 }: Props) => {
-  const [{ loading, value: appliedRoles = [] }, getUserRoles] = useAsyncFn(async () => {
+  const [{ loading, value: appliedRoles = roles || [] }, getUserRoles] = useAsyncFn(async () => {
     try {
+      if (roles) {
+        return roles;
+      }
       if (apply && Boolean(pendingRoles?.length)) {
         return pendingRoles;
       }
 
-      if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)) {
+      if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) && userId > 0) {
         return await fetchUserRoles(userId, orgId);
       }
     } catch (e) {
@@ -61,14 +70,14 @@ export const UserRolePicker = ({
       console.error('Error loading options');
     }
     return [];
-  }, [orgId, userId, pendingRoles]);
+  }, [orgId, userId, pendingRoles, roles]);
 
   useEffect(() => {
     // only load roles when there is an Org selected
     if (orgId) {
       getUserRoles();
     }
-  }, [orgId, getUserRoles, pendingRoles]);
+  }, [getUserRoles, orgId]);
 
   const onRolesChange = async (roles: Role[]) => {
     if (!apply) {
@@ -90,7 +99,7 @@ export const UserRolePicker = ({
       onRolesChange={onRolesChange}
       onBasicRoleChange={onBasicRoleChange}
       roleOptions={roleOptions}
-      isLoading={loading}
+      isLoading={loading || isLoading}
       disabled={disabled}
       basicRoleDisabled={basicRoleDisabled}
       basicRoleDisabledMessage={basicRoleDisabledMessage}
@@ -98,6 +107,7 @@ export const UserRolePicker = ({
       apply={apply}
       canUpdateRoles={canUpdateRoles}
       maxWidth={maxWidth}
+      width={width}
     />
   );
 };

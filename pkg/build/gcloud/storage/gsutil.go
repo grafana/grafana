@@ -418,7 +418,7 @@ func GetLatestMainBuild(ctx context.Context, bucket *storage.BucketHandle, path 
 
 	var latestVersion string
 	for i := 0; i < len(files); i++ {
-		captureVersion := regexp.MustCompile(`(\d+\.\d+\.\d+-\d+pre)`)
+		captureVersion := regexp.MustCompile(`(\d+\.\d+\.\d+-\d+)`)
 		if captureVersion.MatchString(files[i]) {
 			latestVersion = captureVersion.FindString(files[i])
 			break

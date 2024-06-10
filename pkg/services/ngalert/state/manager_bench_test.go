@@ -6,27 +6,31 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/mock"
 )
 
 func BenchmarkProcessEvalResults(b *testing.B) {
 	as := annotations.FakeAnnotationsRepo{}
 	as.On("SaveMany", mock.Anything, mock.Anything).Return(nil)
-	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 	store := historian.NewAnnotationStore(&as, nil, metrics)
 	hist := historian.NewAnnotationBackend(store, nil, metrics)
 	cfg := state.ManagerCfg{
-		Historian:               hist,
-		MaxStateSaveConcurrency: 1,
+		Historian: hist,
+		Tracer:    tracing.InitializeTracerForTest(),
+		Log:       log.New("ngalert.state.manager"),
 	}
-	sut := state.NewManager(cfg)
+	sut := state.NewManager(cfg, state.NewNoopPersister())
 	now := time.Now().UTC()
 	rule := makeBenchRule()
 	results := makeBenchResults(100)

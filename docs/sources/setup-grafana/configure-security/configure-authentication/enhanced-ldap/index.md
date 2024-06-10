@@ -30,10 +30,10 @@ The enhanced LDAP integration adds additional functionality on top of the [LDAP 
 
 ## LDAP group synchronization for teams
 
-{{< figure src="/static/img/docs/enterprise/team_members_ldap.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
-
 With enhanced LDAP integration, you can set up synchronization between LDAP groups and teams. This enables LDAP users that are members
 of certain LDAP groups to automatically be added or removed as members to certain teams in Grafana.
+
+![LDAP group synchronization](/static/img/docs/enterprise/team_members_ldap.png)
 
 Grafana keeps track of all synchronized users in teams, and you can see which users have been synchronized from LDAP in the team members list, see `LDAP` label in screenshot.
 This mechanism allows Grafana to remove an existing synchronized user from a team when its LDAP group membership changes. This mechanism also allows you to manually add
@@ -58,11 +58,11 @@ Removed users are automatically logged out and their account disabled. These acc
 ...
 
 # You can use the Cron syntax or several predefined schedulers -
-# @yearly (or @annually) | Run once a year, midnight, Jan. 1st        | 0 0 0 1 1 *
-# @monthly               | Run once a month, midnight, first of month | 0 0 0 1 * *
-# @weekly                | Run once a week, midnight between Sat/Sun  | 0 0 0 * * 0
-# @daily (or @midnight)  | Run once a day, midnight                   | 0 0 0 * * *
-# @hourly                | Run once an hour, beginning of hour        | 0 0 * * * *
+# @yearly (or @annually) | Run once a year, midnight, Jan. 1st        | 0 0 1 1 *
+# @monthly               | Run once a month, midnight, first of month | 0 0 1 * *
+# @weekly                | Run once a week, midnight between Sat/Sun  | 0 0 * * 0
+# @daily (or @midnight)  | Run once a day, midnight                   | 0 0 * * *
+# @hourly                | Run once an hour, beginning of hour        | 0 * * * *
 sync_cron = "0 1 * * *" # This is default value (At 1 am every day)
 # This cron expression format uses 5 space-separated fields, for example
 # sync_cron = "*/10 * * * *"

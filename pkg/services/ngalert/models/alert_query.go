@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr"
 )
 
@@ -26,7 +28,7 @@ func (d Duration) MarshalJSON() ([]byte, error) {
 }
 
 func (d *Duration) UnmarshalJSON(b []byte) error {
-	var v interface{}
+	var v any
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
@@ -39,12 +41,12 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	}
 }
 
-func (d Duration) MarshalYAML() (interface{}, error) {
+func (d Duration) MarshalYAML() (any, error) {
 	return time.Duration(d).Seconds(), nil
 }
 
-func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var v interface{}
+func (d *Duration) UnmarshalYAML(unmarshal func(any) error) error {
+	var v any
 	if err := unmarshal(&v); err != nil {
 		return err
 	}
@@ -94,7 +96,7 @@ type AlertQuery struct {
 	// JSON is the raw JSON query and includes the above properties as well as custom properties.
 	Model json.RawMessage `json:"model"`
 
-	modelProps map[string]interface{}
+	modelProps map[string]any
 }
 
 func (aq *AlertQuery) String() string {
@@ -102,7 +104,7 @@ func (aq *AlertQuery) String() string {
 }
 
 func (aq *AlertQuery) setModelProps() error {
-	aq.modelProps = make(map[string]interface{})
+	aq.modelProps = make(map[string]any)
 	err := json.Unmarshal(aq.Model, &aq.modelProps)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal query model: %w", err)
@@ -114,6 +116,28 @@ func (aq *AlertQuery) setModelProps() error {
 // IsExpression returns true if the alert query is an expression.
 func (aq *AlertQuery) IsExpression() (bool, error) {
 	return expr.NodeTypeFromDatasourceUID(aq.DatasourceUID) == expr.TypeCMDNode, nil
+}
+
+// IsHysteresisExpression returns true if the model describes a hysteresis command expression. Returns error if the Model is not a valid JSON
+func (aq *AlertQuery) IsHysteresisExpression() (bool, error) {
+	if aq.modelProps == nil {
+		err := aq.setModelProps()
+		if err != nil {
+			return false, err
+		}
+	}
+	return expr.IsHysteresisExpression(aq.modelProps), nil
+}
+
+// PatchHysteresisExpression updates the AlertQuery to include loaded metrics into hysteresis
+func (aq *AlertQuery) PatchHysteresisExpression(loadedMetrics map[data.Fingerprint]struct{}) error {
+	if aq.modelProps == nil {
+		err := aq.setModelProps()
+		if err != nil {
+			return err
+		}
+	}
+	return expr.SetLoadedDimensionsToHysteresisCommand(aq.modelProps, loadedMetrics)
 }
 
 // setMaxDatapoints sets the model maxDataPoints if it's missing or invalid

@@ -11,7 +11,7 @@ import (
 )
 
 // Delete records, bean's non-empty fields are conditions
-func (session *Session) Delete(bean interface{}) (int64, error) {
+func (session *Session) Delete(bean any) (int64, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -30,7 +30,7 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 	}
 	cleanupProcessorsClosures(&session.beforeClosures)
 
-	if processor, ok := interface{}(bean).(BeforeDeleteProcessor); ok {
+	if processor, ok := any(bean).(BeforeDeleteProcessor); ok {
 		processor.BeforeDelete()
 	}
 
@@ -124,7 +124,7 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 		condArgs[0] = val
 
 		var colName = deletedColumn.Name
-		session.afterClosures = append(session.afterClosures, func(bean interface{}) {
+		session.afterClosures = append(session.afterClosures, func(bean any) {
 			col := table.GetColumn(colName)
 			setColumnTime(bean, col, t)
 		})
@@ -140,7 +140,7 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 		for _, closure := range session.afterClosures {
 			closure(bean)
 		}
-		if processor, ok := interface{}(bean).(AfterDeleteProcessor); ok {
+		if processor, ok := any(bean).(AfterDeleteProcessor); ok {
 			processor.AfterDelete()
 		}
 	} else {
@@ -149,12 +149,12 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 			if value, has := session.afterDeleteBeans[bean]; has && value != nil {
 				*value = append(*value, session.afterClosures...)
 			} else {
-				afterClosures := make([]func(interface{}), lenAfterClosures)
+				afterClosures := make([]func(any), lenAfterClosures)
 				copy(afterClosures, session.afterClosures)
 				session.afterDeleteBeans[bean] = &afterClosures
 			}
 		} else {
-			if _, ok := interface{}(bean).(AfterDeleteProcessor); ok {
+			if _, ok := any(bean).(AfterDeleteProcessor); ok {
 				session.afterDeleteBeans[bean] = nil
 			}
 		}

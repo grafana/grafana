@@ -1,92 +1,35 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Card, useStyles2, Icon, Tooltip } from '@grafana/ui';
+import { isIconName } from '@grafana/data';
+import { Badge, Card, Icon } from '@grafana/ui';
 
-import { BASE_PATH } from '../constants';
-
-export const LOGO_SIZE = '48px';
+import { UIMap } from '../constants';
+import { getProviderUrl } from '../utils/url';
 
 type Props = {
   providerId: string;
-  displayName: string;
   enabled: boolean;
-  configFoundInIniFile?: boolean;
   configPath?: string;
   authType?: string;
-  badges?: JSX.Element[];
   onClick?: () => void;
 };
 
-export function ProviderCard({
-  providerId,
-  displayName,
-  enabled,
-  configFoundInIniFile,
-  configPath,
-  authType,
-  badges,
-  onClick,
-}: Props) {
-  const styles = useStyles2(getStyles);
-  configPath = BASE_PATH + (configPath || providerId);
-
+export function ProviderCard({ providerId, enabled, configPath, authType, onClick }: Props) {
+  //@ts-expect-error
+  const url = getProviderUrl({ configPath, id: providerId });
+  const [iconName, displayName] = UIMap[providerId] || ['lock', providerId.toUpperCase()];
   return (
-    <Card href={configPath} className={styles.container} onClick={() => onClick && onClick()}>
-      <Card.Heading className={styles.name}>{displayName}</Card.Heading>
-      {configFoundInIniFile && (
-        <>
-          <span className={styles.initext}>
-            <Tooltip
-              content={`Note: Settings enabled in the .ini configuration file will overwritten by the current settings.`}
-            >
-              <>
-                <Icon name="adjust-circle" />
-                Configuration found in .ini file
-              </>
-            </Tooltip>
-          </span>
-        </>
+    <Card href={url} onClick={onClick}>
+      <Card.Heading>{displayName}</Card.Heading>
+      <Card.Meta>{authType}</Card.Meta>
+      {isIconName(iconName) && (
+        <Card.Figure>
+          <Icon name={iconName} size={'xxxl'} />
+        </Card.Figure>
       )}
-      <div className={styles.footer}>
-        {authType && <Badge text={authType} color="blue" icon="info-circle" />}
-        {enabled ? <Badge text="Enabled" color="green" icon="check" /> : <Badge text="Not enabled" color="red" />}
-      </div>
+      <Card.Actions>
+        <Badge text={enabled ? 'Enabled' : 'Not enabled'} color={enabled ? 'green' : 'blue'} />
+      </Card.Actions>
     </Card>
   );
 }
-
-export const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    container: css`
-      min-height: ${theme.spacing(16)};
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: ${theme.spacing(2)};
-    `,
-    header: css`
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    footer: css`
-      display: flex;
-      justify-content: space-between;
-    `,
-    name: css`
-      align-self: flex-start;
-      font-size: ${theme.typography.h4.fontSize};
-      color: ${theme.colors.text.primary};
-      margin: 0;
-    `,
-    initext: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-      padding: ${theme.spacing(1)} 0; // Add some padding
-      max-width: 90%; // Add a max-width to prevent text from stretching too wide
-    `,
-  };
-};

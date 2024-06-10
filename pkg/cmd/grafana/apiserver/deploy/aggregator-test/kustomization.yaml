@@ -1,0 +1,3 @@
+resources:
+  - apiservice.yaml
+  - externalname.yaml

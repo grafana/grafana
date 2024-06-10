@@ -7,11 +7,15 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
-// UserHeaderName name of the header used when forwarding the Grafana user login.
-const UserHeaderName = "X-Grafana-User"
+const (
+	// UserHeaderName name of the header used when forwarding the Grafana user login.
+	UserHeaderName = "X-Grafana-User"
+	// IDHeaderName name of the header used when forwarding singed id token of the user
+	IDHeaderName = "X-Grafana-Id"
+)
 
 // PrepareProxyRequest prepares a request for being proxied.
 // Removes X-Forwarded-Host, X-Forwarded-Port, X-Forwarded-Proto, Origin, Referer headers.
@@ -103,9 +107,26 @@ func SetViaHeader(header http.Header, major, minor int) {
 }
 
 // ApplyUserHeader Set the X-Grafana-User header if needed (and remove if not).
-func ApplyUserHeader(sendUserHeader bool, req *http.Request, user *user.SignedInUser) {
+func ApplyUserHeader(sendUserHeader bool, req *http.Request, user identity.Requester) {
 	req.Header.Del(UserHeaderName)
-	if sendUserHeader && user != nil && !user.IsAnonymous {
-		req.Header.Set(UserHeaderName, user.Login)
+
+	if !sendUserHeader || user == nil || user.IsNil() {
+		return
+	}
+
+	namespace, _ := user.GetNamespacedID()
+	switch namespace {
+	case identity.NamespaceUser, identity.NamespaceServiceAccount:
+		req.Header.Set(UserHeaderName, user.GetLogin())
+	}
+}
+
+func ApplyForwardIDHeader(req *http.Request, user identity.Requester) {
+	if user == nil || user.IsNil() {
+		return
+	}
+
+	if token := user.GetIDToken(); token != "" {
+		req.Header.Set(IDHeaderName, token)
 	}
 }

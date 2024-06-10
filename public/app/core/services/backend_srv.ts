@@ -1,3 +1,4 @@
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { from, lastValueFrom, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import {
@@ -18,6 +19,7 @@ import { AppEvents, DataQueryErrorType } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
+import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
@@ -53,14 +55,20 @@ export interface FolderRequestOptions {
 
 const GRAFANA_TRACEID_HEADER = 'grafana-trace-id';
 
+export interface InspectorStream {
+  response: FetchResponse | FetchError;
+  requestId?: string;
+}
+
 export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
   private noBackendCache: boolean;
-  private inspectorStream: Subject<FetchResponse | FetchError> = new Subject<FetchResponse | FetchError>();
+  private inspectorStream: Subject<InspectorStream> = new Subject<InspectorStream>();
   private readonly fetchQueue: FetchQueue;
   private readonly responseQueue: ResponseQueue;
   private _tokenRotationInProgress?: Observable<FetchResponse> | null = null;
+  private deviceID?: string | null = null;
 
   private dependencies: BackendSrvDependencies = {
     fromFetch: fromFetch,
@@ -83,7 +91,20 @@ export class BackendSrv implements BackendService {
     this.internalFetch = this.internalFetch.bind(this);
     this.fetchQueue = new FetchQueue();
     this.responseQueue = new ResponseQueue(this.fetchQueue, this.internalFetch);
+
+    this.initGrafanaDeviceID();
+
     new FetchQueueWorker(this.fetchQueue, this.responseQueue, getConfig());
+  }
+
+  private async initGrafanaDeviceID() {
+    try {
+      const fp = await FingerprintJS.load();
+      const result = await fp.get();
+      this.deviceID = result.visitorId;
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   async request<T = any>(options: BackendSrvRequest): Promise<T> {
@@ -134,13 +155,15 @@ export class BackendSrv implements BackendService {
 
     const token = loadUrlToken();
     if (token !== null && token !== '') {
-      if (!options.headers) {
-        options.headers = {};
-      }
-
       if (config.jwtUrlLogin && config.jwtHeaderName) {
+        options.headers = options.headers ?? {};
         options.headers[config.jwtHeaderName] = `${token}`;
       }
+    }
+
+    if (!!this.deviceID) {
+      options.headers = options.headers ?? {};
+      options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
     }
 
     return this.getFromFetchStream<T>(options).pipe(
@@ -315,7 +338,7 @@ export class BackendSrv implements BackendService {
       }, 50);
     }
 
-    this.inspectorStream.next(err);
+    this.inspectorStream.next({ response: err, requestId: options.requestId });
     return err;
   }
 
@@ -338,7 +361,7 @@ export class BackendSrv implements BackendService {
         }),
         tap((response) => {
           this.showSuccessAlert(response);
-          this.inspectorStream.next(response);
+          this.inspectorStream.next({ response: response, requestId: options.requestId });
         })
       );
   }
@@ -366,7 +389,13 @@ export class BackendSrv implements BackendService {
                   return throwError(() => error);
                 }
 
-                let authChecker = config.featureToggles.clientTokenRotation ? this.rotateToken() : this.loginPing();
+                let authChecker = this.loginPing();
+                if (hasSessionExpiry()) {
+                  const expired = getSessionExpiry() * 1000 < Date.now();
+                  if (expired) {
+                    authChecker = this.rotateToken();
+                  }
+                }
 
                 return from(authChecker).pipe(
                   catchError((err) => {
@@ -387,7 +416,7 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  private handleStreamCancellation(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<any>> {
+  private handleStreamCancellation(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse> {
     return (inputStream) =>
       inputStream.pipe(
         takeUntil(
@@ -423,7 +452,7 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  getInspectorStream(): Observable<FetchResponse<any> | FetchError> {
+  getInspectorStream(): Observable<InspectorStream> {
     return this.inspectorStream;
   }
 
@@ -436,23 +465,23 @@ export class BackendSrv implements BackendService {
     return this.request<T>({ ...options, method: 'GET', url, params, requestId });
   }
 
-  async delete<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+  async delete<T = unknown>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>) {
     return this.request<T>({ ...options, method: 'DELETE', url, data });
   }
 
-  async post<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+  async post<T = any>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>) {
     return this.request<T>({ ...options, method: 'POST', url, data });
   }
 
-  async patch<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>) {
+  async patch<T = any>(url: string, data: unknown, options?: Partial<BackendSrvRequest>) {
     return this.request<T>({ ...options, method: 'PATCH', url, data });
   }
 
-  async put<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>): Promise<T> {
+  async put<T = any>(url: string, data: unknown, options?: Partial<BackendSrvRequest>): Promise<T> {
     return this.request<T>({ ...options, method: 'PUT', url, data });
   }
 
-  withNoBackendCache(callback: any) {
+  withNoBackendCache(callback: () => Promise<void>) {
     this.noBackendCache = true;
     return callback().finally(() => {
       this.noBackendCache = false;
@@ -487,16 +516,13 @@ export class BackendSrv implements BackendService {
     return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 
-  validateDashboard(dashboard: DashboardModel) {
-    // We want to send the dashboard as a JSON string (in the JSON body payload) so we can get accurate error line numbers back
-    const dashboardJson = JSON.stringify(dashboard, replaceJsonNulls, 2);
-
-    return this.request<ValidateDashboardResponse>({
-      method: 'POST',
-      url: `/api/dashboards/validate`,
-      data: { dashboard: dashboardJson },
-      showSuccessAlert: false,
-      showErrorAlert: false,
+  validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {
+    // support for this function will be implemented in the k8s flavored api-server
+    // hidden by experimental feature flag:
+    //  config.featureToggles.showDashboardValidationWarnings
+    return Promise.resolve({
+      isValid: false,
+      message: 'dashboard validation is supported',
     });
   }
 
@@ -510,7 +536,9 @@ export class BackendSrv implements BackendService {
       queryParams.set('accesscontrol', 'true');
     }
 
-    return this.get<FolderDTO>(`/api/folders/${uid}?${queryParams.toString()}`);
+    return this.get<FolderDTO>(`/api/folders/${uid}?${queryParams.toString()}`, undefined, undefined, {
+      showErrorAlert: false,
+    });
   }
 }
 
@@ -521,11 +549,4 @@ export const getBackendSrv = (): BackendSrv => backendSrv;
 interface ValidateDashboardResponse {
   isValid: boolean;
   message?: string;
-}
-
-function replaceJsonNulls<T extends unknown>(key: string, value: T): T | undefined {
-  if (typeof value === 'number' && !Number.isFinite(value)) {
-    return undefined;
-  }
-  return value;
 }

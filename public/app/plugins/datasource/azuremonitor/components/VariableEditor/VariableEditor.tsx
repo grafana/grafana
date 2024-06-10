@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
-import { Alert, InlineField, Select } from '@grafana/ui';
+import { Alert, Field, Select, Space } from '@grafana/ui';
 
 import DataSource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
@@ -12,7 +12,6 @@ import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../typ
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
-import { Space } from '../Space';
 
 import GrafanaTemplateVariableFnInput from './GrafanaTemplateVariableFn';
 
@@ -228,11 +227,7 @@ const VariableEditor = (props: Props) => {
 
   return (
     <>
-      <InlineField
-        label="Select query type"
-        labelWidth={20}
-        data-testid={selectors.components.variableEditor.queryType.input}
-      >
+      <Field label="Query Type" data-testid={selectors.components.variableEditor.queryType.input}>
         <Select
           aria-label="select query type"
           onChange={onQueryTypeChange}
@@ -240,7 +235,7 @@ const VariableEditor = (props: Props) => {
           width={25}
           value={queryType}
         />
-      </InlineField>
+      </Field>
       {query.queryType === AzureQueryType.LogAnalytics && (
         <>
           <LogsQueryEditor
@@ -266,11 +261,7 @@ const VariableEditor = (props: Props) => {
         <GrafanaTemplateVariableFnInput query={query} updateQuery={props.onChange} datasource={datasource} />
       )}
       {requireSubscription && (
-        <InlineField
-          label="Select subscription"
-          labelWidth={20}
-          data-testid={selectors.components.variableEditor.subscription.input}
-        >
+        <Field label="Subscription" data-testid={selectors.components.variableEditor.subscription.input}>
           <Select
             aria-label="select subscription"
             onChange={onChangeSubscription}
@@ -278,14 +269,10 @@ const VariableEditor = (props: Props) => {
             width={25}
             value={query.subscription || null}
           />
-        </InlineField>
+        </Field>
       )}
       {(requireResourceGroup || hasResourceGroup) && (
-        <InlineField
-          label="Select resource group"
-          labelWidth={20}
-          data-testid={selectors.components.variableEditor.resourceGroup.input}
-        >
+        <Field label="Resource Group" data-testid={selectors.components.variableEditor.resourceGroup.input}>
           <Select
             aria-label="select resource group"
             onChange={onChangeResourceGroup}
@@ -298,14 +285,10 @@ const VariableEditor = (props: Props) => {
             value={query.resourceGroup || null}
             placeholder={requireResourceGroup ? undefined : 'Optional'}
           />
-        </InlineField>
+        </Field>
       )}
       {(requireNamespace || hasNamespace) && (
-        <InlineField
-          label="Select namespace"
-          labelWidth={20}
-          data-testid={selectors.components.variableEditor.namespace.input}
-        >
+        <Field label="Namespace" data-testid={selectors.components.variableEditor.namespace.input}>
           <Select
             aria-label="select namespace"
             onChange={onChangeNamespace}
@@ -318,14 +301,10 @@ const VariableEditor = (props: Props) => {
             value={query.namespace || null}
             placeholder={requireNamespace ? undefined : 'Optional'}
           />
-        </InlineField>
+        </Field>
       )}
       {hasRegion && (
-        <InlineField
-          label="Select region"
-          labelWidth={20}
-          data-testid={selectors.components.variableEditor.region.input}
-        >
+        <Field label="Region" data-testid={selectors.components.variableEditor.region.input}>
           <Select
             aria-label="select region"
             onChange={onChangeRegion}
@@ -334,14 +313,10 @@ const VariableEditor = (props: Props) => {
             value={query.region || null}
             placeholder="Optional"
           />
-        </InlineField>
+        </Field>
       )}
       {requireResource && (
-        <InlineField
-          label="Select resource"
-          labelWidth={20}
-          data-testid={selectors.components.variableEditor.resource.input}
-        >
+        <Field label="Resource" data-testid={selectors.components.variableEditor.resource.input}>
           <Select
             aria-label="select resource"
             onChange={onChangeResource}
@@ -349,7 +324,7 @@ const VariableEditor = (props: Props) => {
             width={25}
             value={query.resource || null}
           />
-        </InlineField>
+        </Field>
       )}
       {query.queryType === AzureQueryType.AzureResourceGraph && (
         <>

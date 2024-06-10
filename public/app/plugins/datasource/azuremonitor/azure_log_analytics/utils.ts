@@ -1,5 +1,6 @@
-import { VariableModel } from '@grafana/data';
+import { TypedVariableModel } from '@grafana/data';
 
+import { EngineSchema } from '../types';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
 // matches (name):(type) = (defaultValue)
@@ -47,14 +48,15 @@ function transformMetadataFunction(sourceSchema: AzureLogAnalyticsMetadata) {
 export function transformMetadataToKustoSchema(
   sourceSchema: AzureLogAnalyticsMetadata,
   nameOrIdOrSomething: string,
-  templateVariables: VariableModel[]
-) {
+  templateVariables: TypedVariableModel[]
+): EngineSchema {
   const database = {
     name: nameOrIdOrSomething,
     tables: sourceSchema.tables,
     functions: transformMetadataFunction(sourceSchema),
     majorVersion: 0,
     minorVersion: 0,
+    entityGroups: [],
   };
 
   // Adding macros as known functions
@@ -114,7 +116,7 @@ export function transformMetadataToKustoSchema(
   );
 
   // Adding macros as global parameters
-  const globalParameters = templateVariables.map((v) => {
+  const globalScalarParameters = templateVariables.map((v) => {
     return {
       name: `$${v.name}`,
       type: 'dynamic',
@@ -128,6 +130,6 @@ export function transformMetadataToKustoSchema(
       databases: [database],
     },
     database: database,
-    globalParameters,
+    globalScalarParameters,
   };
 }

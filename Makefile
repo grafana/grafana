@@ -7,10 +7,10 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue
+.PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue gen-feature-toggles
 
 GO = go
-GO_FILES ?= ./pkg/...
+GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
@@ -36,49 +36,90 @@ node_modules: package.json yarn.lock ## Install node modules.
 
 ##@ Swagger
 SPEC_TARGET = public/api-spec.json
-MERGED_SPEC_TARGET := public/api-merged.json
+ENTERPRISE_SPEC_TARGET = public/api-enterprise-spec.json
+MERGED_SPEC_TARGET = public/api-merged.json
 NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/api.json
 
 $(NGALERT_SPEC_TARGET):
 	+$(MAKE) -C pkg/services/ngalert/api/tooling api.json
 
-$(MERGED_SPEC_TARGET): $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) $(SWAGGER) ## Merge generated and ngalert API specs
+$(MERGED_SPEC_TARGET): swagger-oss-gen swagger-enterprise-gen $(NGALERT_SPEC_TARGET) $(SWAGGER) ## Merge generated and ngalert API specs
 	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
-	$(SWAGGER) mixin $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
+	$(SWAGGER) mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
 
-$(SPEC_TARGET): $(SWAGGER) ## Generate API Swagger specification
-	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o $(SPEC_TARGET) \
+swagger-oss-gen: $(SWAGGER) ## Generate API Swagger specification
+	@echo "re-generating swagger for OSS"
+	rm -f $(SPEC_TARGET)
+	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
-	--exclude-tag=alpha
-	go run pkg/services/ngalert/api/tooling/cmd/clean-swagger/main.go -if $@ -of $@
+	--exclude-tag=alpha \
+	--exclude-tag=enterprise
 
-swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
+# this file only exists if enterprise is enabled
+ENTERPRISE_EXT_FILE = pkg/extensions/ext.go
+ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
+swagger-enterprise-gen:
+	@echo "skipping re-generating swagger for enterprise: not enabled"
+else
+swagger-enterprise-gen: $(SWAGGER) ## Generate API Swagger specification
+	@echo "re-generating swagger for enterprise"
+	rm -f $(ENTERPRISE_SPEC_TARGET)
+	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
+	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
+	-x "github.com/prometheus/alertmanager" \
+	-i pkg/api/swagger_tags.json \
+	--exclude-tag=alpha \
+	--include-tag=enterprise
+endif
 
-validate-api-spec: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
-	$(SWAGGER) validate $(<)
+swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
 
-clean-api-spec:
+swagger-validate: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
+	$(SWAGGER) validate --skip-warnings $(<)
+
+swagger-clean:
 	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
+
+.PHONY: cleanup-old-git-hooks
+cleanup-old-git-hooks:
+	./scripts/cleanup-husky.sh
+
+.PHONY: lefthook-install
+lefthook-install: cleanup-old-git-hooks $(LEFTHOOK) # install lefthook for pre-commit hooks
+	$(LEFTHOOK) install -f
+
+.PHONY: lefthook-uninstall
+lefthook-uninstall: $(LEFTHOOK)
+	$(LEFTHOOK) uninstall
 
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
 
-openapi3-gen: swagger-api-spec ## Generates OpenApi 3 specs from the Swagger 2 already generated
+openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 already generated
 	$(GO) run scripts/openapi3/openapi3conv.go $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
 ##@ Building
 gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
-	go generate ./pkg/plugins/plugindef
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
-	go generate ./pkg/kindsysreport/codegen/report.go
 
-gen-go: $(WIRE)
+gen-feature-toggles:
+## First go test run fails because it will re-generate the feature toggles.
+## Second go test run will compare the generated files and pass.
+	@echo "generate feature toggles"
+	go test -v ./pkg/services/featuremgmt/... > /dev/null 2>&1; \
+	if [ $$? -eq 0 ]; then \
+		echo "feature toggles already up-to-date"; \
+	else \
+		go test -v ./pkg/services/featuremgmt/...; \
+	fi
+
+gen-go:
 	@echo "generate go files"
-	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags $(WIRE_TAGS) ./pkg/server
 
 fix-cue: $(CUE)
 	@echo "formatting cue files"
@@ -109,6 +150,17 @@ build-js: ## Build frontend assets.
 	yarn run build
 	yarn run plugins:build-bundled
 
+PLUGIN_ID ?=
+
+build-plugin-go: ## Build decoupled plugins
+	@echo "build plugin $(PLUGIN_ID)"
+	@cd pkg/tsdb; \
+	if [ -z "$(PLUGIN_ID)" ]; then \
+		echo "PLUGIN_ID is not set"; \
+		exit 1; \
+	fi; \
+	mage -v buildplugin $(PLUGIN_ID)
+
 build: build-go build-js ## Build backend and frontend.
 
 run: $(BRA) ## Build and run web server on filesystem changes.
@@ -125,12 +177,20 @@ test-go: test-go-unit test-go-integration
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
-	$(GO) test -short -covermode=atomic -timeout=30m ./pkg/...
+	go list -f '{{.Dir}}/...' -m | xargs \
+	$(GO) test -short -covermode=atomic -timeout=30m
 
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
 	$(GO) test -count=1 -run "^TestIntegration" -covermode=atomic -timeout=5m $(GO_INTEGRATION_TESTS)
+
+.PHONY: test-go-integration-alertmanager
+test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
+	@echo "test remote alertmanager integration tests"
+	$(GO) clean -testcache
+	AM_URL=http://localhost:8080 AM_TENANT_ID=test \
+	$(GO) test -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/...
 
 .PHONY: test-go-integration-postgres
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
@@ -190,7 +250,7 @@ build-docker-full: ## Build Docker image for development.
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
-	--build-arg COMMIT_SHA=$$(git rev-parse --short HEAD) \
+	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--tag grafana/grafana$(TAG_SUFFIX):dev \
 	$(DOCKER_BUILD_ARGS)
@@ -203,10 +263,10 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
-	--build-arg COMMIT_SHA=$$(git rev-parse --short HEAD) \
+	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
-	--build-arg BASE_IMAGE=ubuntu:20.04 \
-	--build-arg GO_IMAGE=golang:1.20.8 \
+	--build-arg BASE_IMAGE=ubuntu:22.04 \
+	--build-arg GO_IMAGE=golang:1.21.10 \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
 	$(DOCKER_BUILD_ARGS)
 
@@ -251,6 +311,8 @@ devenv-mysql:
 protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
 	bash pkg/plugins/backendplugin/pluginextensionv2/generate.sh
+	bash pkg/plugins/backendplugin/secretsmanagerplugin/generate.sh
+	bash pkg/services/store/entity/generate.sh
 
 clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"
@@ -267,6 +329,7 @@ gen-ts:
 # Use this make target to regenerate the configuration YAML files when
 # you modify starlark files.
 drone: $(DRONE)
+	bash scripts/drone/env-var-check.sh
 	$(DRONE) starlark --format
 	$(DRONE) lint .drone.yml --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
@@ -276,7 +339,7 @@ scripts/drone/TAGS: $(shell find scripts/drone -name '*.star')
 	etags --lang none --regex="/def \(\w+\)[^:]+:/\1/" --regex="/\s*\(\w+\) =/\1/" $^ -o $@
 
 format-drone:
-	buildifier -r scripts/drone
+	buildifier --lint=fix -r scripts/drone
 
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)

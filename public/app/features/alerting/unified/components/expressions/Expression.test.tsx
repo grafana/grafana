@@ -1,11 +1,11 @@
-import { screen, render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { times } from 'lodash';
 import React from 'react';
 
 import { DataFrame, toDataFrame } from '@grafana/data';
 
-import { ExpressionResult } from './Expression';
+import { ExpressionResult, getGroupedByStateAndSeriesCount } from './Expression';
 
 describe('TestResult', () => {
   it('should be able to render', () => {
@@ -82,3 +82,74 @@ function makeSeries(n: number) {
     })
   );
 }
+
+describe('getGroupedByStateAndSeriesCount', () => {
+  it('should group series by state correctly and count the number of series', () => {
+    const series: DataFrame[] = [
+      toDataFrame({ fields: [{ name: 'value', values: [1] }] }),
+      toDataFrame({ fields: [{ name: 'value', values: [undefined] }] }),
+      toDataFrame({ fields: [{ name: 'value', values: [0] }] }),
+      toDataFrame({ fields: [{ name: 'value', values: [2] }] }),
+      toDataFrame({ fields: [{ name: 'value', values: [undefined] }] }),
+    ];
+
+    const { groupedByState, seriesCount } = getGroupedByStateAndSeriesCount(series);
+
+    expect(groupedByState['firing']).toEqual([series[0], series[3]]);
+    expect(groupedByState['inactive']).toEqual([series[2]]);
+    expect(seriesCount).toEqual(3);
+  });
+
+  it('should return empty group state and zero series count when input array is empty', () => {
+    const series: DataFrame[] = [];
+
+    const { groupedByState, seriesCount } = getGroupedByStateAndSeriesCount(series);
+
+    expect(groupedByState).toEqual({
+      firing: [],
+      inactive: [],
+    });
+    expect(seriesCount).toEqual(0);
+  });
+
+  it('should return zero series count and empty group state when all series have undefined values', () => {
+    const series = [
+      toDataFrame({ fields: [{ name: 'value', values: [undefined] }] }),
+      toDataFrame({ fields: [{ name: 'value', values: [undefined] }] }),
+    ];
+
+    const { groupedByState, seriesCount } = getGroupedByStateAndSeriesCount(series);
+
+    expect(groupedByState['firing']).toEqual([]);
+    expect(groupedByState['inactive']).toEqual([]);
+    expect(seriesCount).toEqual(0);
+  });
+
+  it('should group all series by inactive state when all series have zero values', () => {
+    const series = [
+      toDataFrame({ fields: [{ name: 'value', values: [0] }] }),
+      toDataFrame({ fields: [{ name: 'value', values: [0] }] }),
+      toDataFrame({ fields: [{ name: 'value', values: [0] }] }),
+    ];
+
+    const { groupedByState, seriesCount } = getGroupedByStateAndSeriesCount(series);
+
+    expect(groupedByState['firing']).toEqual([]);
+    expect(groupedByState['inactive']).toEqual(series);
+    expect(seriesCount).toEqual(series.length);
+  });
+
+  it('should group all series by Firing state when all series have non-zero values', () => {
+    const series = [
+      toDataFrame({ fields: [{ name: 'value', values: [1] }] }),
+      toDataFrame({ fields: [{ name: 'value', values: [2] }] }),
+      toDataFrame({ fields: [{ name: 'value', values: [3] }] }),
+    ];
+
+    const { groupedByState, seriesCount } = getGroupedByStateAndSeriesCount(series);
+
+    expect(groupedByState['firing']).toEqual(series);
+    expect(groupedByState['inactive']).toEqual([]);
+    expect(seriesCount).toEqual(series.length);
+  });
+});

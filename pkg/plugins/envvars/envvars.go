@@ -2,140 +2,51 @@ package envvars
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"strconv"
-	"strings"
-
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 )
 
+// permittedHostEnvVarNames is the list of environment variables that can be passed from Grafana's process to the
+// plugin's process
+var permittedHostEnvVarNames = []string{
+	// Env vars used by net/http (Go stdlib) for http/https proxy
+	// https://github.com/golang/net/blob/fbaf41277f28102c36926d1368dafbe2b54b4c1d/http/httpproxy/proxy.go#L91-L93
+	"HTTP_PROXY",
+	"http_proxy",
+	"HTTPS_PROXY",
+	"https_proxy",
+	"NO_PROXY",
+	"no_proxy",
+}
+
 type Provider interface {
-	Get(ctx context.Context, p *plugins.Plugin) ([]string, error)
+	PluginEnvVars(ctx context.Context, p *plugins.Plugin) []string
 }
 
-type Service struct {
-	cfg     *config.Cfg
-	license plugins.Licensing
+type Service struct{}
+
+func DefaultProvider() *Service {
+	return &Service{}
 }
 
-func NewProvider(cfg *config.Cfg, license plugins.Licensing) *Service {
-	return &Service{
-		cfg:     cfg,
-		license: license,
-	}
+func (s *Service) PluginEnvVars(_ context.Context, _ *plugins.Plugin) []string {
+	return PermittedHostEnvVars()
 }
 
-func (s *Service) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) {
-	hostEnv := []string{
-		fmt.Sprintf("GF_VERSION=%s", s.cfg.BuildVersion),
-	}
-
-	if s.license != nil {
-		hostEnv = append(
-			hostEnv,
-			fmt.Sprintf("GF_EDITION=%s", s.license.Edition()),
-			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", s.license.Path()),
-			fmt.Sprintf("GF_ENTERPRISE_APP_URL=%s", s.license.AppURL()),
-		)
-		hostEnv = append(hostEnv, s.license.Environment()...)
-	}
-
-	if p.ExternalService != nil {
-		hostEnv = append(
-			hostEnv,
-			fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaAppURL),
-			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_ID=%s", p.ExternalService.ClientID),
-			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_SECRET=%s", p.ExternalService.ClientSecret),
-			fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", p.ExternalService.PrivateKey),
-		)
-	}
-
-	hostEnv = append(hostEnv, s.awsEnvVars()...)
-	hostEnv = append(hostEnv, s.secureSocksProxyEnvVars()...)
-	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(s.cfg.Azure)...)
-	hostEnv = append(hostEnv, s.tracingEnvVars(p)...)
-
-	ev := getPluginSettings(p.ID, s.cfg).asEnvVar("GF_PLUGIN", hostEnv)
-	return ev, nil
-}
-
-func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
-	var pluginTracingEnabled bool
-	if v, exists := s.cfg.PluginSettings[plugin.ID]["tracing"]; exists {
-		pluginTracingEnabled = v == "true"
-	}
-	if !s.cfg.Tracing.IsEnabled() || !pluginTracingEnabled {
-		return nil
-	}
-
-	vars := []string{
-		fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", s.cfg.Tracing.OpenTelemetry.Address),
-		fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", s.cfg.Tracing.OpenTelemetry.Propagation),
-	}
-	if plugin.Info.Version != "" {
-		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
-	}
-	return vars
-}
-
-func (s *Service) awsEnvVars() []string {
-	var variables []string
-	if s.cfg.AWSAssumeRoleEnabled {
-		variables = append(variables, awsds.AssumeRoleEnabledEnvVarKeyName+"=true")
-	}
-	if len(s.cfg.AWSAllowedAuthProviders) > 0 {
-		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(s.cfg.AWSAllowedAuthProviders, ","))
-	}
-
-	return variables
-}
-
-func (s *Service) secureSocksProxyEnvVars() []string {
-	if s.cfg.ProxySettings.Enabled {
-		return []string{
-			proxy.PluginSecureSocksProxyClientCert + "=" + s.cfg.ProxySettings.ClientCert,
-			proxy.PluginSecureSocksProxyClientKey + "=" + s.cfg.ProxySettings.ClientKey,
-			proxy.PluginSecureSocksProxyRootCACert + "=" + s.cfg.ProxySettings.RootCA,
-			proxy.PluginSecureSocksProxyProxyAddress + "=" + s.cfg.ProxySettings.ProxyAddress,
-			proxy.PluginSecureSocksProxyServerName + "=" + s.cfg.ProxySettings.ServerName,
-			proxy.PluginSecureSocksProxyEnabled + "=" + strconv.FormatBool(s.cfg.ProxySettings.Enabled),
+// PermittedHostEnvVars returns the variables that can be passed from Grafana's process
+// (current process, also known as: "host") to the plugin process.
+// A string in format "k=v" is returned for each variable in PermittedHostEnvVarNames, if it's set.
+func PermittedHostEnvVars() []string {
+	var r []string
+	for _, envVarName := range PermittedHostEnvVarNames() {
+		if envVarValue, ok := os.LookupEnv(envVarName); ok {
+			r = append(r, envVarName+"="+envVarValue)
 		}
 	}
-	return nil
+	return r
 }
 
-type pluginSettings map[string]string
-
-func getPluginSettings(pluginID string, cfg *config.Cfg) pluginSettings {
-	ps := pluginSettings{}
-	for k, v := range cfg.PluginSettings[pluginID] {
-		if k == "path" || strings.ToLower(k) == "id" {
-			continue
-		}
-		ps[k] = v
-	}
-
-	return ps
-}
-
-func (ps pluginSettings) asEnvVar(prefix string, hostEnv []string) []string {
-	env := make([]string, 0, len(ps))
-	for k, v := range ps {
-		key := fmt.Sprintf("%s_%s", prefix, strings.ToUpper(k))
-		if value := os.Getenv(key); value != "" {
-			v = value
-		}
-
-		env = append(env, fmt.Sprintf("%s=%s", key, v))
-	}
-
-	env = append(env, hostEnv...)
-
-	return env
+func PermittedHostEnvVarNames() []string {
+	return permittedHostEnvVarNames
 }

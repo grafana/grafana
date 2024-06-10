@@ -3,9 +3,10 @@ import { map } from 'rxjs/operators';
 import { sortDataFrame } from '../../dataframe';
 import { getFieldDisplayName } from '../../field';
 import { DataFrame } from '../../types';
-import { DataTransformerInfo } from '../../types/transformations';
+import { DataTransformContext, DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
+import { transformationsVariableSupport } from './utils';
 
 export interface SortByField {
   field: string;
@@ -31,20 +32,20 @@ export const sortByTransformer: DataTransformerInfo<SortByTransformerOptions> = 
    * Return a modified copy of the series. If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: (options) => (source) =>
+  operator: (options, ctx) => (source) =>
     source.pipe(
       map((data) => {
         if (!Array.isArray(data) || data.length === 0 || !options?.sort?.length) {
           return data;
         }
-        return sortDataFrames(data, options.sort);
+        return sortDataFrames(data, options.sort, ctx);
       })
     ),
 };
 
-export function sortDataFrames(data: DataFrame[], sort: SortByField[]): DataFrame[] {
+function sortDataFrames(data: DataFrame[], sort: SortByField[], ctx: DataTransformContext): DataFrame[] {
   return data.map((frame) => {
-    const s = attachFieldIndex(frame, sort);
+    const s = attachFieldIndex(frame, sort, ctx);
     if (s.length && s[0].index != null) {
       return sortDataFrame(frame, s[0].index, s[0].desc);
     }
@@ -52,11 +53,17 @@ export function sortDataFrames(data: DataFrame[], sort: SortByField[]): DataFram
   });
 }
 
-function attachFieldIndex(frame: DataFrame, sort: SortByField[]): SortByField[] {
+function attachFieldIndex(frame: DataFrame, sort: SortByField[], ctx: DataTransformContext): SortByField[] {
   return sort.map((s) => {
     if (s.index != null) {
       // null or undefined
       return s;
+    }
+    if (transformationsVariableSupport()) {
+      return {
+        ...s,
+        index: frame.fields.findIndex((f) => ctx.interpolate(s.field) === getFieldDisplayName(f, frame)),
+      };
     }
     return {
       ...s,

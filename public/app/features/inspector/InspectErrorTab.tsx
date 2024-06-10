@@ -7,7 +7,7 @@ interface InspectErrorTabProps {
   errors?: DataQueryError[];
 }
 
-const parseErrorMessage = (message: string): { msg: string; json?: any } => {
+const parseErrorMessage = (message: string) => {
   try {
     const [msg, json] = message.split(/(\{.+)/);
     const jsonError = JSON.parse(json);
@@ -67,7 +67,7 @@ export const InspectErrorTab = ({ errors }: InspectErrorTabProps) => {
   return (
     <>
       {errors.map((error, index) => (
-        <Alert title={error.refId || `Query ${index + 1}`} severity="error" key={index}>
+        <Alert title={error.refId || `Error ${index + 1}`} severity="error" key={index}>
           {renderError(error)}
         </Alert>
       ))}

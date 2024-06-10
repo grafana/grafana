@@ -86,17 +86,17 @@ For example:
 - `Blob Type: {{ blobtype }}` becomes `Blob Type: PageBlob`, `Blob Type: BlockBlob`
 - `{{ resourcegroup }} - {{ resourcename }}` becomes `production - web_server`
 
-| Alias pattern                 | Description                                                                                            |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `{{ subscriptionid }}`        | Replaced with the subscription ID.                                                                     |
-| `{{ subscription }}`          | Replaced with the subscription name.                                                                   |
-| `{{ resourcegroup }}`         | Replaced with the the resource group.                                                                  |
-| `{{ namespace }}`             | Replaced with the resource type or namespace, such as `Microsoft.Compute/virtualMachines`.             |
-| `{{ resourcename }}`          | Replaced with the resource name.                                                                       |
-| `{{ metric }}`                | Replaced with the metric name, such as "Percentage CPU".                                               |
-| _`{{ arbitaryDimensionID }}`_ | Replaced with the value of the specified dimension. For example, `{{ blobtype }}` becomes `BlockBlob`. |
-| `{{ dimensionname }}`         | _(Legacy for backward compatibility)_ Replaced with the name of the first dimension.                   |
-| `{{ dimensionvalue }}`        | _(Legacy for backward compatibility)_ Replaced with the value of the first dimension.                  |
+| Alias pattern                  | Description                                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `{{ subscriptionid }}`         | Replaced with the subscription ID.                                                                     |
+| `{{ subscription }}`           | Replaced with the subscription name.                                                                   |
+| `{{ resourcegroup }}`          | Replaced with the resource group.                                                                      |
+| `{{ namespace }}`              | Replaced with the resource type or namespace, such as `Microsoft.Compute/virtualMachines`.             |
+| `{{ resourcename }}`           | Replaced with the resource name.                                                                       |
+| `{{ metric }}`                 | Replaced with the metric name, such as "Percentage CPU".                                               |
+| _`{{ arbitraryDimensionID }}`_ | Replaced with the value of the specified dimension. For example, `{{ blobtype }}` becomes `BlockBlob`. |
+| `{{ dimensionname }}`          | _(Legacy for backward compatibility)_ Replaced with the name of the first dimension.                   |
+| `{{ dimensionvalue }}`         | _(Legacy for backward compatibility)_ Replaced with the value of the first dimension.                  |
 
 ### Filter using dimensions
 
@@ -106,7 +106,7 @@ Grafana can display and filter metrics based on dimension values.
 
 The data source supports the `equals`, `not equals`, and `starts with` operators as detailed in the [Monitor Metrics API documentation](https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list).
 
-For more information onmulti-dimensional metrics, refer to the [Azure Monitor data platform metrics documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/data-platform-metrics#multi-dimensional-metrics) and [Azure Monitor filtering documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/metrics-charts#filters).
+For more information on multi-dimensional metrics, refer to the [Azure Monitor data platform metrics documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/data-platform-metrics#multi-dimensional-metrics) and [Azure Monitor filtering documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/metrics-charts#filters).
 
 ## Query Azure Monitor Logs
 
@@ -147,10 +147,10 @@ The Azure documentation includes resources to help you learn KQL:
 - [SQL to Kusto cheat sheet](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/sqlcheatsheet)
 
 > **Time-range:** The time-range that will be used for the query can be modified via the time-range switch. Selecting `Query` will only make use of time-ranges specified within the query.
-> Specifying `Intersection` will make use of the intersection between the time-ranges within the query and the Grafana time-range.
-> If there are no time-ranges specified within the query, the Grafana time-range will be used.
+> Specifying `Dashboard` will only make use of the Grafana time-range.
+> If there are no time-ranges specified within the query, the default Log Analytics time-range will apply.
 > For more details on this change, refer to the [Azure Monitor Logs API documentation](https://learn.microsoft.com/en-us/rest/api/loganalytics/dataaccess/query/get?tabs=HTTP#uri-parameters).
-> Note: v9.4.12, v10.0, and v10.0.1 do not have this switch and will implicitly use the intersection of the Grafana and query time-ranges.
+> If the `Intersection` option was previously chosen it will be migrated by default to `Dashboard`.
 
 This example query returns a virtual machine's CPU performance, averaged over 5ms time grains:
 

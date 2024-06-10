@@ -63,4 +63,7 @@ export {
   type PluginExtensionEventHelpers,
   type PluginExtensionPanelContext,
   type PluginExtensionDataSourceConfigContext,
+  type PluginExtensionCommandPaletteContext,
+  type PluginExtensionOpenModalOptions,
 } from './pluginExtensions';
+export * from './scopes';

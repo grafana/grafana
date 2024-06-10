@@ -42,7 +42,7 @@ func TestCanGetRouteNameFromContext(t *testing.T) {
 func TestOperationNameCanOnlyBeSetOnce(t *testing.T) {
 	req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://grafana.com", nil)
 
-	// set the the initial operation name
+	// set the initial operation name
 	req = addRouteNameToContext(req, "first")
 
 	// check that the operation name is set correctly

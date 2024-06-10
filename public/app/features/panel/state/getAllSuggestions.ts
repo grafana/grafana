@@ -21,6 +21,8 @@ export const panelsToCheckFirst = [
   'logs',
   'candlestick',
   'flamegraph',
+  'traces',
+  'nodeGraph',
 ];
 
 export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): Promise<VisualizationSuggestion[]> {
@@ -37,7 +39,7 @@ export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): P
 
   const list = builder.getList();
 
-  if (builder.dataSummary.fieldCount === 0) {
+  if (!config.featureToggles.vizAndWidgetSplit && builder.dataSummary.fieldCount === 0) {
     for (const plugin of Object.values(config.panels)) {
       if (!plugin.skipDataQuery || plugin.hideFromList) {
         continue;

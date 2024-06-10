@@ -8,13 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// @deprecated -- should use `featuremgmt.FeatureToggles`
+// Deprecated: should use `featuremgmt.FeatureToggles`
 func (cfg *Cfg) readFeatureToggles(iniFile *ini.File) error {
 	section := iniFile.Section("feature_toggles")
 	toggles, err := ReadFeatureTogglesFromInitFile(section)
 	if err != nil {
 		return err
 	}
+	// nolint:staticcheck
 	cfg.IsFeatureToggleEnabled = func(key string) bool { return toggles[key] }
 	return nil
 }

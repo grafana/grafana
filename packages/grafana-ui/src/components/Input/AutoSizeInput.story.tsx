@@ -4,7 +4,6 @@ import React from 'react';
 import { Button, AutoSizeInput } from '@grafana/ui';
 
 import { iconOptions } from '../../utils/storybook/icons';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './AutoSizeInput.mdx';
 import { parseAccessory } from './storyUtils';
@@ -22,7 +21,6 @@ const prefixSuffixOpts = {
 const meta: Meta = {
   title: 'Forms/Input/AutoSizeInput',
   component: AutoSizeInput,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

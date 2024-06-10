@@ -131,53 +131,54 @@ export function MarkersLegend(props: MarkersLegendProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  infoWrap: css`
-    display: flex;
-    flex-direction: column;
-    background: ${theme.colors.background.secondary};
-    border-radius: 1px;
-    padding: ${theme.spacing(1)};
-    border-bottom: 2px solid ${theme.colors.border.strong};
-    min-width: 150px;
-  `,
-  layerName: css`
-    font-size: ${theme.typography.body.fontSize};
-  `,
-  layerBody: css`
-    padding-left: 10px;
-  `,
-  legend: css`
-    line-height: 18px;
-    display: flex;
-    flex-direction: column;
-    font-size: ${theme.typography.bodySmall.fontSize};
-    padding: 5px 10px 0;
+  infoWrap: css({
+    display: 'flex',
+    flexDirection: 'column',
+    background: theme.colors.background.secondary,
+    // eslint-disable-next-line @grafana/no-border-radius-literal
+    borderRadius: '1px',
+    padding: theme.spacing(1),
+    borderBottom: `2px solid ${theme.colors.border.strong}`,
+    minWidth: '150px',
+  }),
+  layerName: css({
+    fontSize: theme.typography.body.fontSize,
+  }),
+  layerBody: css({
+    paddingLeft: '10px',
+  }),
+  legend: css({
+    lineHeight: '18px',
+    display: 'flex',
+    flexDirection: 'column',
+    fontSize: theme.typography.bodySmall.fontSize,
+    padding: '5px 10px 0',
 
-    i {
-      width: 15px;
-      height: 15px;
-      float: left;
-      margin-right: 8px;
-      opacity: 0.7;
-      border-radius: ${theme.shape.radius.circle};
-    }
-  `,
-  legendItem: css`
-    white-space: nowrap;
-  `,
-  fixedColorContainer: css`
-    min-width: 80px;
-    font-size: ${theme.typography.bodySmall.fontSize};
-    padding-top: 5px;
-  `,
-  legendSymbol: css`
-    height: 18px;
-    width: 18px;
-    margin: auto;
-  `,
-  colorScaleWrapper: css`
-    min-width: 200px;
-    font-size: ${theme.typography.bodySmall.fontSize};
-    padding-top: 10px;
-  `,
+    i: {
+      width: '15px',
+      height: '15px',
+      float: 'left',
+      marginRight: '8px',
+      opacity: 0.7,
+      borderRadius: theme.shape.radius.circle,
+    },
+  }),
+  legendItem: css({
+    whiteSpace: 'nowrap',
+  }),
+  fixedColorContainer: css({
+    minWidth: '80px',
+    fontSize: theme.typography.bodySmall.fontSize,
+    paddingTop: '5px',
+  }),
+  legendSymbol: css({
+    height: '18px',
+    width: '18px',
+    margin: 'auto',
+  }),
+  colorScaleWrapper: css({
+    minWidth: '200px',
+    fontSize: theme.typography.bodySmall.fontSize,
+    paddingTop: '10px',
+  }),
 });

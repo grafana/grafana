@@ -6,71 +6,15 @@ labels:
 title: Upgrade guide common tasks
 ---
 
-We recommend that you upgrade Grafana often to stay current with the latest fixes and enhancements.
-Because Grafana upgrades are backward compatible, the upgrade process is straightforward, and dashboards and graphs will not change.
-
-In addition to common tasks you should complete for all versions of Grafana, there might be additional upgrade tasks to complete for a version.
-
-{{% admonition type="note" %}}
-There might be breaking changes in some releases. We outline these changes in the [What's New ]({{< relref "../../whatsnew/" >}}) document for most releases or a separate [Breaking changes]({{< relref "../../breaking-changes/" >}}) document for releases with many breaking changes.
-{{% /admonition %}}
-
-For versions of Grafana prior to v9.2, we published additional information in the [Release Notes]({{< relref "../../release-notes/" >}}).
-
-When available, we list all changes with links to pull requests or issues in the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
-
-{{% admonition type="note" %}}
-When possible, we recommend that you test the Grafana upgrade process in a test or development environment.
-{{% /admonition %}}
-
-## Back up the Grafana database
-
-Although Grafana automatically upgrades the database on startup, we recommend that you back up your Grafana database so that you can roll back to a previous version, if required.
-
-### SQLite
-
-If you use SQLite, you only need to back up the `grafana.db` file. On Unix systems, the database file is usually located in `/var/lib/grafana/`.
-
-If you are unsure which database you use and where it is stored, check the Grafana configuration file. If you
-installed Grafana to a custom location using a binary tar/zip, the database is usually located in `<grafana_install_dir>/data`.
-
-### MySQL
-
-To back up or restore a MySQL Grafana database, run the following commands:
-
-```bash
-backup:
-> mysqldump -u root -p[root_password] [grafana] > grafana_backup.sql
-
-restore:
-> mysql -u root -p grafana < grafana_backup.sql
-```
-
-### Postgres
-
-To back up or restore a Postgres Grafana database, run the following commands:
-
-```bash
-backup:
-> pg_dump grafana > grafana_backup
-
-restore:
-> psql grafana < grafana_backup
-```
-
-## Backup plugins
-
-We recommend that you back up installed plugins before you upgrade Grafana so that you can roll back to a previous version of Grafana, if necessary.
-
 ## Upgrade Grafana
 
-The following sections provide instructions for how to upgrade Grafana based on your installation method.
+The following sections provide instructions for how to upgrade Grafana based on your installation method. For more information on where to find configuration files, refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location).
 
 ### Debian
 
 To upgrade Grafana installed from a Debian package (`.deb`), complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
+1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/grafana.ini`.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
@@ -88,7 +32,7 @@ To upgrade Grafana installed from a Debian package (`.deb`), complete the follow
 
 To upgrade Grafana installed from the Grafana Labs APT repository, complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
+1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/grafana.ini`.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
@@ -105,7 +49,7 @@ Grafana automatically updates when you run `apt-get upgrade`.
 
 To upgrade Grafana installed from the binary `.tar.gz` package, complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
+1. In your current installation of Grafana, save your custom configuration changes to the custom configuration file, `custom.ini` or `grafana.ini`.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
@@ -117,13 +61,13 @@ To upgrade Grafana installed from the binary `.tar.gz` package, complete the fol
 
 To upgrade Grafana installed using RPM or YUM complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
+1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/grafana.ini`.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
 1. Perform one of the following steps based on your installation.
 
-   - If you [downloaded an RPM package](https://grafana.com/grafana/download) to install Grafana, then complete the steps documented in [Install Grafana on Red Hat, RHEL, or Fedora]({{< relref "../../setup-grafana/installation/redhat-rhel-fedora/" >}}) or [Install Grafana on SUSE or openSUSE]({{< relref "../../setup-grafana/installation/suse-opensuse/" >}}) to upgrade Grafana.
+   - If you [downloaded an RPM package](https://grafana.com/grafana/download) to install Grafana, then complete the steps documented in [Install Grafana on Red Hat, RHEL, or Fedora](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/installation/redhat-rhel-fedora/) or [Install Grafana on SUSE or openSUSE](https://grafana.com/docs/grafana/<GRAFANA_VERSION>//setup-grafana/installation/suse-opensuse/) to upgrade Grafana.
    - If you used the Grafana YUM repository, run the following command:
 
      ```bash
@@ -140,7 +84,7 @@ To upgrade Grafana installed using RPM or YUM complete the following steps:
 
 To upgrade Grafana running in a Docker container, complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
+1. Use Grafana [environment variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#override-configuration-with-environment-variables) to save your custom configurations; this is the recommended method. Alternatively, you can view your configuration files manually by accessing the deployed container.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
@@ -175,7 +119,7 @@ To upgrade Grafana installed on Windows, complete the following steps:
 
 To upgrade Grafana installed on Mac, complete the following steps:
 
-1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
+1. In your current installation of Grafana, save your custom configuration changes to the custom configuration file, `custom.ini`.
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 

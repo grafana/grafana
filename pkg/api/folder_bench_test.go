@@ -10,6 +10,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -24,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -37,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -45,8 +50,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -93,52 +96,82 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		desc        string
 		url         string
 		expectedLen int
-		features    *featuremgmt.FeatureManager
+		features    featuremgmt.FeatureToggles
 	}{
 		{
-			desc:        "get root folders with nested folders feature enabled",
+			desc:        "impl=default nested_folders=on get root folders",
 			url:         "/api/folders",
-			expectedLen: LEVEL0_FOLDER_NUM,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+			expectedLen: LEVEL0_FOLDER_NUM + 1, // for shared with me folder
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		},
 		{
-			desc:        "get subfolders with nested folders feature enabled",
+			desc:        "impl=default nested_folders=on get subfolders",
 			url:         "/api/folders?parentUid=folder0",
 			expectedLen: LEVEL1_FOLDER_NUM,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		},
 		{
-			desc:        "list all inherited dashboards with nested folders feature enabled",
+			desc:        "impl=default nested_folders=on list all inherited dashboards",
+			url:         "/api/search?type=dash-db&limit=5000",
+			expectedLen: withLimit(all),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		},
+		{
+			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on list all inherited dashboards",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(all),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
-			desc:        "search for pattern with nested folders feature enabled",
+			desc:        "impl=default nested_folders=on search for pattern",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
+			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		},
+		{
+			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on search for pattern",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
 			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
-			desc:        "search for specific dashboard nested folders feature enabled",
+			desc:        "impl=default nested_folders=on search for specific dashboard",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
+			expectedLen: 1,
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		},
+		{
+			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on search for specific dashboard",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
-			desc:        "get root folders with nested folders feature disabled",
+			desc:        "impl=default nested_folders=off get root folders",
 			url:         "/api/folders?limit=5000",
 			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "list all dashboards with nested folders feature disabled",
+			desc:        "impl=default nested_folders=off list all dashboards",
+			url:         "/api/search?type=dash-db&limit=5000",
+			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
+			features:    featuremgmt.WithFeatures(),
+		},
+		{
+			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=off list all dashboards",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
-			desc:        "search specific dashboard with nested folders feature disabled",
+			desc:        "impl=default nested_folders=off search specific dashboard",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0",
+			expectedLen: 1,
+			features:    featuremgmt.WithFeatures(),
+		},
+		{
+			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=off search specific dashboard",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
@@ -174,20 +207,14 @@ func setupDB(b testing.TB) benchScenario {
 	quotaService := quotatest.New(false, nil)
 	cfg := setting.NewCfg()
 
-	teamSvc := teamimpl.ProvideService(db, cfg)
+	teamSvc, err := teamimpl.ProvideService(db, cfg)
+	require.NoError(b, err)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(b, err)
 
 	cache := localcache.ProvideService()
 	userSvc, err := userimpl.ProvideService(db, orgService, cfg, teamSvc, cache, &quotatest.FakeQuotaService{}, bundleregistry.ProvideService())
 	require.NoError(b, err)
-
-	origNewGuardian := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
-
-	b.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
 
 	var orgID int64 = 1
 
@@ -228,7 +255,7 @@ func setupDB(b testing.TB) benchScenario {
 				UserID:     userID,
 				TeamID:     teamID,
 				OrgID:      orgID,
-				Permission: dashboards.PERMISSION_VIEW,
+				Permission: dashboardaccess.PERMISSION_VIEW,
 				Created:    now,
 				Updated:    now,
 			})
@@ -293,25 +320,28 @@ func setupDB(b testing.TB) benchScenario {
 				Created: now,
 			},
 		)
+		signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = append(signedInUser.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
+		signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead] = append(signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
 
 		for j := 0; j < LEVEL0_DASHBOARD_NUM; j++ {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
 			dashID := generateID(IDs)
 			dashs = append(dashs, &dashboards.Dashboard{
-				ID:       dashID,
-				OrgID:    signedInUser.OrgID,
-				IsFolder: false,
-				UID:      str,
-				FolderID: f0.ID,
-				Slug:     str,
-				Title:    str,
-				Data:     simplejson.New(),
-				Created:  now,
-				Updated:  now,
+				ID:        dashID,
+				OrgID:     signedInUser.OrgID,
+				IsFolder:  false,
+				UID:       str,
+				FolderID:  f0.ID,
+				FolderUID: f0.UID,
+				Slug:      str,
+				Title:     str,
+				Data:      simplejson.New(),
+				Created:   now,
+				Updated:   now,
 			})
 
 			dashTags = append(dashTags, &dashboardTag{
-				DashboardId: dashID,
+				DashboardID: dashID,
 				Term:        fmt.Sprintf("tag%d", j),
 			})
 		}
@@ -325,20 +355,21 @@ func setupDB(b testing.TB) benchScenario {
 				str := fmt.Sprintf("dashboard_%d_%d_%d", i, j, k)
 				dashID := generateID(IDs)
 				dashs = append(dashs, &dashboards.Dashboard{
-					ID:       dashID,
-					OrgID:    signedInUser.OrgID,
-					IsFolder: false,
-					UID:      str,
-					FolderID: f1.ID,
-					Slug:     str,
-					Title:    str,
-					Data:     simplejson.New(),
-					Created:  now,
-					Updated:  now,
+					ID:        dashID,
+					OrgID:     signedInUser.OrgID,
+					IsFolder:  false,
+					UID:       str,
+					FolderID:  f1.ID,
+					FolderUID: f1.UID,
+					Slug:      str,
+					Title:     str,
+					Data:      simplejson.New(),
+					Created:   now,
+					Updated:   now,
 				})
 
 				dashTags = append(dashTags, &dashboardTag{
-					DashboardId: dashID,
+					DashboardID: dashID,
 					Term:        fmt.Sprintf("tag%d", k),
 				})
 			}
@@ -352,20 +383,21 @@ func setupDB(b testing.TB) benchScenario {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
 					dashID := generateID(IDs)
 					dashs = append(dashs, &dashboards.Dashboard{
-						ID:       dashID,
-						OrgID:    signedInUser.OrgID,
-						IsFolder: false,
-						UID:      str,
-						FolderID: f2.ID,
-						Slug:     str,
-						Title:    str,
-						Data:     simplejson.New(),
-						Created:  now,
-						Updated:  now,
+						ID:        dashID,
+						OrgID:     signedInUser.OrgID,
+						IsFolder:  false,
+						UID:       str,
+						FolderID:  f1.ID,
+						FolderUID: f2.UID,
+						Slug:      str,
+						Title:     str,
+						Data:      simplejson.New(),
+						Created:   now,
+						Updated:   now,
 					})
 
 					dashTags = append(dashTags, &dashboardTag{
-						DashboardId: dashID,
+						DashboardID: dashID,
 						Term:        fmt.Sprintf("tag%d", l),
 					})
 				}
@@ -396,7 +428,7 @@ func setupDB(b testing.TB) benchScenario {
 	}
 }
 
-func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureManager) *web.Macaron {
+func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureToggles) *web.Macaron {
 	b.Helper()
 
 	m := web.New()
@@ -416,39 +448,45 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 
 	quotaSrv := quotatest.New(false, nil)
 
-	dashStore, err := database.ProvideDashboardStore(sc.db, sc.db.Cfg, features, tagimpl.ProvideService(sc.db, sc.db.Cfg), quotaSrv)
+	dashStore, err := database.ProvideDashboardStore(sc.db, sc.db.Cfg, features, tagimpl.ProvideService(sc.db), quotaSrv)
 	require.NoError(b, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
 
 	ac := acimpl.ProvideAccessControl(sc.cfg)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), nil)
 
+	cfg := setting.NewCfg()
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
-		sc.cfg, dashStore, folderStore, nil,
+		sc.cfg, dashStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
-		folderServiceWithFlagOn,
+		folderServiceWithFlagOn, nil,
 	)
 	require.NoError(b, err)
 
 	starSvc := startest.NewStarServiceFake()
 	starSvc.ExpectedUserStars = &star.GetUserStarsResult{UserStars: make(map[int64]bool)}
+
 	hs := &HTTPServer{
-		CacheService:  localcache.New(5*time.Minute, 10*time.Minute),
-		Cfg:           sc.cfg,
-		SQLStore:      sc.db,
-		Features:      features,
-		QuotaService:  quotaSrv,
-		SearchService: search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc),
-		folderService: folderServiceWithFlagOn,
+		CacheService:     localcache.New(5*time.Minute, 10*time.Minute),
+		Cfg:              sc.cfg,
+		SQLStore:         sc.db,
+		Features:         features,
+		QuotaService:     quotaSrv,
+		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc),
+		folderService:    folderServiceWithFlagOn,
+		DashboardService: dashboardSvc,
 	}
+
+	hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
+	guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
 
 	m.Get("/api/folders", hs.GetFolders)
 	m.Get("/api/search", hs.Search)
@@ -474,8 +512,8 @@ func (f *f) TableName() string {
 
 // SQL bean helper to save tags
 type dashboardTag struct {
-	Id          int64
-	DashboardId int64
+	ID          int64 `xorm:"pk autoincr 'id'"`
+	DashboardID int64 `xorm:"dashboard_id"`
 	Term        string
 }
 
@@ -498,7 +536,7 @@ func addFolder(orgID int64, id int64, uid string, parentUID *string) (*f, *dashb
 		UID:      uid,
 		Version:  1,
 		Title:    title,
-		Data:     simplejson.NewFromAny(map[string]interface{}{"schemaVersion": 17, "title": title, "uid": uid, "version": 1}),
+		Data:     simplejson.NewFromAny(map[string]any{"schemaVersion": 17, "title": title, "uid": uid, "version": 1}),
 		IsFolder: true,
 		Created:  now,
 		Updated:  now,

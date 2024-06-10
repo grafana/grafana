@@ -55,6 +55,10 @@ Some functions like aliasByNode support an optional second argument. To add an a
 
 To learn more, refer to [Graphite's documentation on functions](https://graphite.readthedocs.io/en/latest/functions.html).
 
+{{% admonition type="warning" %}}
+Some functions take a second argument that may be a function that returns a series. If you are adding a second argument that is a function, it is suggested to use a series reference from a second query instead of the function itself. The query editor does not currently support parsing of a second argument that is a function when switching between the query editor and the code editor.
+{{% /admonition %}}
+
 ### Sort labels
 
 If you have the same labels on multiple graphs, they are both sorted differently and use different colors.

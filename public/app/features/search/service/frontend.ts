@@ -116,7 +116,7 @@ class FullResultCache {
     // eslint-disable-next-line
     const values = allFields.map((v) => [] as any[]); // empty value for each field
 
-    let [idxs, info, order] = this.ufuzzy.search(haystack, query, true);
+    let [idxs, info, order] = this.ufuzzy.search(haystack, query, 5);
 
     for (let c = 0; c < allFields.length; c++) {
       let src = allFields[c].values;

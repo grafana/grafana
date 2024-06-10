@@ -8,16 +8,17 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   LoadingState,
+  QueryFixAction,
   ScopedVars,
 } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
+import { instanceOfAzureCredential, isCredentialsComplete } from './credentials';
 import ResourcePickerData from './resourcePicker/resourcePickerData';
-import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from './types';
+import { AadCurrentUserCredentials, AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from './types';
 import migrateAnnotation from './utils/migrateAnnotation';
 import migrateQuery from './utils/migrateQuery';
 import { VariableSupport } from './variables';
@@ -31,6 +32,8 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
   resourcePickerData: ResourcePickerData;
   azureResourceGraphDatasource: AzureResourceGraphDatasource;
+  currentUserAuth: boolean;
+  currentUserAuthFallbackAvailable: boolean;
 
   pseudoDatasource: {
     [key in AzureQueryType]?: AzureMonitorDatasource | AzureLogAnalyticsDatasource | AzureResourceGraphDatasource;
@@ -55,14 +58,28 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     };
 
     this.variables = new VariableSupport(this);
+
+    this.currentUserAuth = instanceSettings.jsonData.azureAuthType === 'currentuser';
+    const credentials = instanceSettings.jsonData.azureCredentials;
+    if (credentials && instanceOfAzureCredential<AadCurrentUserCredentials>('currentuser', credentials)) {
+      if (!credentials.serviceCredentials) {
+        this.currentUserAuthFallbackAvailable = false;
+      } else {
+        this.currentUserAuthFallbackAvailable = isCredentialsComplete(credentials.serviceCredentials, true);
+      }
+    } else {
+      this.currentUserAuthFallbackAvailable = false;
+    }
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
     if (!item.queryType) {
       return false;
     }
+
+    const query = migrateQuery(item);
     const ds = this.pseudoDatasource[item.queryType];
-    return ds?.filterQuery?.(item) ?? true;
+    return ds?.filterQuery?.(query) ?? true;
   }
 
   query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
@@ -197,6 +214,27 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
   getVariablesRaw() {
     return this.templateSrv.getVariables();
+  }
+
+  modifyQuery(query: AzureMonitorQuery, action: QueryFixAction): AzureMonitorQuery {
+    if (!action.options) {
+      return query;
+    }
+    let expression = query.azureLogAnalytics?.query;
+    if (expression === undefined) {
+      return query;
+    }
+    switch (action.type) {
+      case 'ADD_FILTER': {
+        expression += `\n| where ${action.options.key} == "${action.options.value}"`;
+        break;
+      }
+      case 'ADD_FILTER_OUT': {
+        expression += `\n| where ${action.options.key} != "${action.options.value}"`;
+        break;
+      }
+    }
+    return { ...query, azureLogAnalytics: { ...query.azureLogAnalytics, query: expression } };
   }
 }
 

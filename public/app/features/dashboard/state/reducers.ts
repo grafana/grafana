@@ -3,8 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PanelPlugin } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
-import { processAclItems } from 'app/core/utils/acl';
-import { DashboardAclDTO, DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types';
+import { DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
@@ -12,7 +11,6 @@ import { PanelModel } from './PanelModel';
 export const initialState: DashboardState = {
   initPhase: DashboardInitPhase.NotStarted,
   getModel: () => null,
-  permissions: [],
   initError: null,
   initialDatasource: undefined,
 };
@@ -21,9 +19,6 @@ const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
   reducers: {
-    loadDashboardPermissions: (state, action: PayloadAction<DashboardAclDTO[]>) => {
-      state.permissions = processAclItems(action.payload);
-    },
     dashboardInitFetching: (state) => {
       state.initPhase = DashboardInitPhase.Fetching;
     },
@@ -70,11 +65,10 @@ export interface SetPanelAngularComponentPayload {
 
 export interface SetPanelInstanceStatePayload {
   panelId: number;
-  value: any;
+  value: unknown;
 }
 
 export const {
-  loadDashboardPermissions,
   dashboardInitFetching,
   dashboardInitFailed,
   dashboardInitCompleted,

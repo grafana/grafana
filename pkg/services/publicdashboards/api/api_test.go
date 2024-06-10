@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -22,17 +21,12 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var userAdmin = &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUser"}
-var userAdminRBAC = &user.SignedInUser{UserID: 2, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {dashboards.ScopeDashboardsAll}}}}
-var userViewer = &user.SignedInUser{UserID: 3, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUser"}
-var userViewerRBAC = &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}}}}
+var userNoRBACPerms = &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUserNoRBACPerms"}
+var userAdmin = &user.SignedInUser{UserID: 2, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {dashboards.ScopeDashboardsAll}}}}
+var userViewer = &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}}}}
 var anonymousUser = &user.SignedInUser{IsAnonymous: true}
 
-type JsonErrResponse struct {
-	Error string `json:"error"`
-}
-
-func TestAPIFeatureFlag(t *testing.T) {
+func TestAPIFeatureDisabled(t *testing.T) {
 	testCases := []struct {
 		Name   string
 		Method string
@@ -76,12 +70,18 @@ func TestAPIFeatureFlag(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		t.Run(test.Name, func(t *testing.T) {
+		t.Run(test.Name+" - setting disabled", func(t *testing.T) {
 			cfg := setting.NewCfg()
-			cfg.RBACEnabled = false
+			cfg.PublicDashboardsEnabled = false
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			features := featuremgmt.WithFeatures()
-			testServer := setupTestServer(t, cfg, features, service, nil, userAdmin)
+			testServer := setupTestServer(t, cfg, service, userAdmin, true)
+			response := callAPI(testServer, test.Method, test.Path, nil, t)
+			assert.Equal(t, http.StatusNotFound, response.Code)
+		})
+
+		t.Run(test.Name+" - feature flag disabled", func(t *testing.T) {
+			service := publicdashboards.NewFakePublicDashboardService(t)
+			testServer := setupTestServer(t, nil, service, userAdmin, false)
 			response := callAPI(testServer, test.Method, test.Path, nil, t)
 			assert.Equal(t, http.StatusNotFound, response.Code)
 		})
@@ -136,10 +136,7 @@ func TestAPIListPublicDashboard(t *testing.T) {
 			service.On("FindAllWithPagination", mock.Anything, mock.Anything, mock.Anything).
 				Return(test.Response, test.ResponseErr).Maybe()
 
-			cfg := setting.NewCfg()
-			cfg.RBACEnabled = false
-			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
-			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
+			testServer := setupTestServer(t, nil, service, test.User, true)
 
 			response := callAPI(testServer, http.MethodGet, "/api/dashboards/public-dashboards", nil, t)
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
@@ -266,19 +263,13 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 					Return(test.ResponseErr)
 			}
 
-			cfg := setting.NewCfg()
-
-			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
-			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
+			testServer := setupTestServer(t, nil, service, test.User, true)
 
 			response := callAPI(testServer, http.MethodDelete, fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards/%s", test.DashboardUid, test.PublicDashboardUid), nil, t)
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			if test.ExpectedHttpResponse == http.StatusOK {
-				var jsonResp any
-				err := json.Unmarshal(response.Body.Bytes(), &jsonResp)
-				require.NoError(t, err)
-				assert.Equal(t, jsonResp, nil)
+				assert.Equal(t, []byte(nil), response.Body.Bytes())
 			}
 
 			if !test.ShouldCallService {
@@ -314,7 +305,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse:  http.StatusNotFound,
 			PublicDashboardResult: nil,
 			PublicDashboardErr:    ErrDashboardNotFound.Errorf(""),
-			User:                  userViewerRBAC,
+			User:                  userViewer,
 			ShouldCallService:     true,
 		},
 		{
@@ -323,7 +314,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse:  http.StatusInternalServerError,
 			PublicDashboardResult: nil,
 			PublicDashboardErr:    errors.New("database broken"),
-			User:                  userViewerRBAC,
+			User:                  userViewer,
 			ShouldCallService:     true,
 		},
 		{
@@ -332,7 +323,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse:  http.StatusOK,
 			PublicDashboardResult: pubdash,
 			PublicDashboardErr:    nil,
-			User:                  userViewerRBAC,
+			User:                  userViewer,
 			ShouldCallService:     true,
 		},
 		{
@@ -340,7 +331,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse:  http.StatusForbidden,
 			PublicDashboardResult: pubdash,
 			PublicDashboardErr:    nil,
-			User:                  userViewer,
+			User:                  userNoRBACPerms,
 			ShouldCallService:     false,
 		},
 	}
@@ -354,16 +345,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 					Return(test.PublicDashboardResult, test.PublicDashboardErr)
 			}
 
-			cfg := setting.NewCfg()
-
-			testServer := setupTestServer(
-				t,
-				cfg,
-				featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards),
-				service,
-				nil,
-				test.User,
-			)
+			testServer := setupTestServer(t, nil, service, test.User, true)
 
 			response := callAPI(
 				testServer,
@@ -394,22 +376,25 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 		SaveDashboardErr     error
 		User                 *user.SignedInUser
 		ShouldCallService    bool
+		JsonBody             string
 	}{
 		{
 			Name:                 "returns 500 when not persisted",
 			ExpectedHttpResponse: http.StatusInternalServerError,
 			publicDashboard:      &PublicDashboard{},
 			SaveDashboardErr:     ErrInternalServerError.Errorf(""),
-			User:                 userAdminRBAC,
+			User:                 userAdmin,
 			ShouldCallService:    true,
+			JsonBody:             `{ "isPublic": true }`,
 		},
 		{
 			Name:                 "returns 404 when dashboard not found",
 			ExpectedHttpResponse: http.StatusNotFound,
 			publicDashboard:      &PublicDashboard{},
 			SaveDashboardErr:     ErrDashboardNotFound.Errorf(""),
-			User:                 userAdminRBAC,
+			User:                 userAdmin,
 			ShouldCallService:    true,
+			JsonBody:             `{ "isPublic": true }`,
 		},
 		{
 			Name:                 "returns 200 when update persists RBAC on",
@@ -417,16 +402,54 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 			publicDashboard:      &PublicDashboard{IsEnabled: true},
 			ExpectedHttpResponse: http.StatusOK,
 			SaveDashboardErr:     nil,
-			User:                 userAdminRBAC,
+			User:                 userAdmin,
 			ShouldCallService:    true,
+			JsonBody:             `{ "isPublic": true }`,
 		},
 		{
 			Name:                 "returns 403 when no permissions RBAC on",
 			ExpectedHttpResponse: http.StatusForbidden,
 			publicDashboard:      &PublicDashboard{IsEnabled: true},
 			SaveDashboardErr:     nil,
+			User:                 userNoRBACPerms,
+			ShouldCallService:    false,
+			JsonBody:             `{ "isPublic": true }`,
+		},
+		{
+			Name:                 "returns 400 when uid is invalid",
+			ExpectedHttpResponse: http.StatusBadRequest,
+			publicDashboard:      nil,
+			SaveDashboardErr:     nil,
 			User:                 userAdmin,
 			ShouldCallService:    false,
+			JsonBody:             `{ "uid": "*", "isEnabled": true }`,
+		},
+		{
+			Name:                 "returns 200 when uid is valid",
+			ExpectedHttpResponse: http.StatusOK,
+			publicDashboard:      &PublicDashboard{IsEnabled: true},
+			SaveDashboardErr:     nil,
+			User:                 userAdmin,
+			ShouldCallService:    true,
+			JsonBody:             `{ "uid": "123abc", "isEnabled": true}`,
+		},
+		{
+			Name:                 "returns 400 when access token is invalid",
+			ExpectedHttpResponse: http.StatusBadRequest,
+			publicDashboard:      nil,
+			SaveDashboardErr:     nil,
+			User:                 userAdmin,
+			ShouldCallService:    false,
+			JsonBody:             `{ "AccessToken": "123abc", "isEnabled": true }`,
+		},
+		{
+			Name:                 "returns 200 when access token is valid",
+			ExpectedHttpResponse: http.StatusOK,
+			publicDashboard:      &PublicDashboard{IsEnabled: true},
+			SaveDashboardErr:     nil,
+			User:                 userAdmin,
+			ShouldCallService:    true,
+			JsonBody:             `{ "accessToken": "d64457c699644079b50230cfefddb211", "isEnabled": true}`,
 		},
 	}
 
@@ -440,22 +463,13 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 					Return(&PublicDashboard{IsEnabled: true}, test.SaveDashboardErr)
 			}
 
-			cfg := setting.NewCfg()
-
-			testServer := setupTestServer(
-				t,
-				cfg,
-				featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards),
-				service,
-				nil,
-				test.User,
-			)
+			testServer := setupTestServer(t, nil, service, test.User, true)
 
 			response := callAPI(
 				testServer,
 				http.MethodPost,
 				"/api/dashboards/uid/1/public-dashboards",
-				strings.NewReader(`{ "isPublic": true }`),
+				strings.NewReader(test.JsonBody),
 				t,
 			)
 
@@ -474,86 +488,101 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 func TestAPIUpdatePublicDashboard(t *testing.T) {
 	dashboardUid := "abc1234"
 	publicDashboardUid := "1234asdfasdf"
-
-	adminUser := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Login: "testEditorUser", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {dashboards.ScopeDashboardsAll}}}}
-
-	userEditorPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Login: "testEditorUser", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {fmt.Sprintf("dashboards:uid:%s", dashboardUid)}}}}
-
-	userEditorAnotherPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Login: "testEditorUser", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {"another-uid"}}}}
+	userEditorPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {fmt.Sprintf("dashboards:uid:%s", dashboardUid)}}}}
+	userEditorAnotherPublicDashboard := &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleEditor, Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {"another-uid"}}}}
 
 	testCases := []struct {
 		Name                 string
 		User                 *user.SignedInUser
 		DashboardUid         string
 		PublicDashboardUid   string
-		PublicDashboardRes   *PublicDashboard
-		PublicDashboardErr   error
+		Body                 string
+		ExpectedResponse     *PublicDashboard
+		ExpectedError        interface{}
 		ExpectedHttpResponse int
 		ShouldCallService    bool
 	}{
 		{
-			Name:                 "Invalid dashboardUid",
-			User:                 adminUser,
-			DashboardUid:         "",
-			PublicDashboardUid:   "",
-			PublicDashboardRes:   nil,
-			PublicDashboardErr:   ErrPublicDashboardIdentifierNotSet.Errorf(""),
-			ExpectedHttpResponse: http.StatusNotFound,
+			Name:                 "Invalid dashboard uid bad request error",
+			User:                 userAdmin,
+			DashboardUid:         ".",
+			PublicDashboardUid:   publicDashboardUid,
+			Body:                 fmt.Sprintf(`{ "uid": "%s"}`, publicDashboardUid),
+			ExpectedResponse:     nil,
+			ExpectedError:        ErrInvalidUid.Errorf(""),
+			ExpectedHttpResponse: http.StatusBadRequest,
 			ShouldCallService:    false,
 		},
 		{
-			Name:                 "Invalid public dashboard uid",
-			User:                 adminUser,
+			Name:                 "Invalid public dashboard uid bad request error",
+			User:                 userAdmin,
 			DashboardUid:         dashboardUid,
-			PublicDashboardUid:   "",
-			PublicDashboardRes:   nil,
-			PublicDashboardErr:   ErrPublicDashboardNotFound.Errorf(""),
-			ExpectedHttpResponse: http.StatusNotFound,
+			PublicDashboardUid:   ".",
+			Body:                 fmt.Sprintf(`{ "uid": "%s"}`, publicDashboardUid),
+			ExpectedResponse:     nil,
+			ExpectedError:        ErrInvalidUid.Errorf(""),
+			ExpectedHttpResponse: http.StatusBadRequest,
 			ShouldCallService:    false,
 		},
 		{
-			Name:                 "Service Error",
-			User:                 adminUser,
+			Name:                 "Dashboard not found error",
+			User:                 userAdmin,
 			DashboardUid:         dashboardUid,
 			PublicDashboardUid:   publicDashboardUid,
-			PublicDashboardRes:   nil,
-			PublicDashboardErr:   ErrDashboardNotFound.Errorf(""),
+			Body:                 fmt.Sprintf(`{ "uid": "%s"}`, publicDashboardUid),
+			ExpectedResponse:     nil,
+			ExpectedError:        ErrDashboardNotFound.Errorf(""),
 			ExpectedHttpResponse: http.StatusNotFound,
 			ShouldCallService:    true,
 		},
 		{
 			Name:                 "Success",
-			User:                 adminUser,
+			User:                 userAdmin,
 			DashboardUid:         dashboardUid,
 			PublicDashboardUid:   publicDashboardUid,
-			PublicDashboardRes:   &PublicDashboard{Uid: "success"},
-			PublicDashboardErr:   nil,
+			Body:                 fmt.Sprintf(`{ "uid": "%s"}`, publicDashboardUid),
+			ExpectedResponse:     &PublicDashboard{Uid: "success"},
+			ExpectedError:        nil,
 			ExpectedHttpResponse: http.StatusOK,
 			ShouldCallService:    true,
 		},
-
-		// permissions
 		{
-			Name:                 "User can update this public dashboard",
+			Name:                 "Invalid payload bad request error",
+			User:                 userAdmin,
+			DashboardUid:         dashboardUid,
+			PublicDashboardUid:   publicDashboardUid,
+			Body:                 `{nonvalidjson,`,
+			ExpectedResponse:     nil,
+			ExpectedError:        ErrBadRequest.Errorf(""),
+			ExpectedHttpResponse: http.StatusBadRequest,
+			ShouldCallService:    false,
+		},
+		{
+			Name:                 "User has permissions to update this public dashboard",
 			User:                 userEditorPublicDashboard,
 			DashboardUid:         dashboardUid,
 			PublicDashboardUid:   publicDashboardUid,
-			PublicDashboardRes:   &PublicDashboard{Uid: "success"},
-			PublicDashboardErr:   nil,
+			Body:                 fmt.Sprintf(`{ "uid": "%s"}`, publicDashboardUid),
+			ExpectedResponse:     &PublicDashboard{Uid: "success"},
+			ExpectedError:        nil,
 			ExpectedHttpResponse: http.StatusOK,
 			ShouldCallService:    true,
 		},
 		{
-			Name:                 "User has permissions on another dashboard",
+			Name:                 "User has permissions to update another dashboard but not the requested one",
 			User:                 userEditorAnotherPublicDashboard,
+			DashboardUid:         dashboardUid,
 			PublicDashboardUid:   publicDashboardUid,
+			Body:                 fmt.Sprintf(`{ "uid": "%s"}`, publicDashboardUid),
 			ExpectedHttpResponse: http.StatusForbidden,
 			ShouldCallService:    false,
 		},
 		{
-			Name:                 "Viewer cannot update any dashboard",
+			Name:                 "User Viewer cannot update any dashboard",
 			User:                 userViewer,
+			DashboardUid:         dashboardUid,
 			PublicDashboardUid:   publicDashboardUid,
+			Body:                 fmt.Sprintf(`{ "uid": "%s"}`, publicDashboardUid),
 			ExpectedHttpResponse: http.StatusForbidden,
 			ShouldCallService:    false,
 		},
@@ -565,39 +594,30 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 
 			if test.ShouldCallService {
 				service.On("Update", mock.Anything, mock.Anything, mock.Anything).
-					Return(test.PublicDashboardRes, test.PublicDashboardErr)
+					Return(test.ExpectedResponse, test.ExpectedError)
 			}
 
-			cfg := setting.NewCfg()
-			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
-			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
+			testServer := setupTestServer(t, nil, service, test.User, true)
 			url := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards/%s", test.DashboardUid, test.PublicDashboardUid)
-			body := strings.NewReader(fmt.Sprintf(`{ "uid": "%s"}`, test.PublicDashboardUid))
+			body := strings.NewReader(test.Body)
 
 			response := callAPI(testServer, http.MethodPatch, url, body, t)
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
-			// check whether service called
-			if !test.ShouldCallService {
-				service.AssertNotCalled(t, "Update")
-			}
-
-			fmt.Println(response.Body.String())
-
-			// check response
-			if response.Code == http.StatusOK {
-				val, err := json.Marshal(test.PublicDashboardRes)
+			// check response when expected response is 200
+			if test.ExpectedHttpResponse == http.StatusOK {
+				val, err := json.Marshal(test.ExpectedResponse)
 				require.NoError(t, err)
 				assert.Equal(t, string(val), response.Body.String())
+			}
 
-				// verify 4XXs except 403 && 404
-			} else if test.ExpectedHttpResponse > 200 &&
-				test.ExpectedHttpResponse != 403 &&
-				test.ExpectedHttpResponse != 404 {
-				var errResp JsonErrResponse
+			// forbidden status is returned by middleware and does not have the format of the errutil.PublicError
+			if test.ExpectedHttpResponse != http.StatusOK && test.ExpectedHttpResponse != http.StatusForbidden {
+				var errResp errutil.PublicError
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, test.PublicDashboardErr.Error(), errResp.Error)
+				assert.Equal(t, test.ExpectedHttpResponse, errResp.StatusCode)
+				assert.Equal(t, test.ExpectedError.(errutil.Error).MessageID, errResp.MessageID)
 			}
 		})
 	}

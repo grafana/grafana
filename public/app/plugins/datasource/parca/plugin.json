@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "Parca",
   "id": "parca",
+  "executable": "gpx_parca",
   "category": "profiling",
   "metrics": true,
   "backend": true,
@@ -21,6 +22,10 @@
         "name": "GitHub Project",
         "url": "https://github.com/parca-dev/parca"
       }
-    ]
+    ],
+    "version": "%VERSION%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=10.3.0-0"
   }
 }

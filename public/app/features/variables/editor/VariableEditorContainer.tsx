@@ -105,9 +105,16 @@ class VariableEditorContainerUnconnected extends PureComponent<Props, State> {
   };
 
   render() {
-    const { editIndex, variables } = this.props;
+    const { editIndex, variables, sectionNav } = this.props;
     const variableToEdit = editIndex != null ? variables[editIndex] : undefined;
-    const subPageNav = variableToEdit ? { text: variableToEdit.name } : undefined;
+    const node = sectionNav.node;
+    const parentItem = node.parentItem
+      ? {
+          ...node.parentItem,
+          url: node.url,
+        }
+      : undefined;
+    const subPageNav = variableToEdit ? { text: variableToEdit.name, parentItem } : parentItem;
 
     return (
       <Page navModel={this.props.sectionNav} pageNav={subPageNav}>

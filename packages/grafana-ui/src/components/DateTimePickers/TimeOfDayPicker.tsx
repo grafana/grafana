@@ -2,12 +2,13 @@ import { css, cx } from '@emotion/css';
 import RcTimePicker from 'rc-time-picker';
 import React from 'react';
 
-import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2 } from '@grafana/data';
+import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2, isDateTimeInput } from '@grafana/data';
 
-import { Icon, useStyles2 } from '../../index';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
+import { Icon } from '../Icon/Icon';
 
 export interface Props {
   onChange: (value: DateTime) => void;
@@ -43,7 +44,11 @@ export const TimeOfDayPicker = ({
       className={cx(inputSizes()[size], styles.input)}
       popupClassName={cx(styles.picker, POPUP_CLASS_NAME)}
       defaultValue={dateTimeAsMoment()}
-      onChange={(value: any) => onChange(dateTime(value))}
+      onChange={(value) => {
+        if (isDateTimeInput(value)) {
+          return onChange(dateTime(value));
+        }
+      }}
       allowEmpty={false}
       showSecond={showSeconds}
       value={dateTimeAsMoment(value)}
@@ -74,7 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   const bgColor = theme.components.input.background;
   const menuShadowColor = theme.v1.palette.black;
   const optionBgHover = theme.colors.background.secondary;
-  const borderRadius = theme.shape.borderRadius(1);
+  const borderRadius = theme.shape.radius.default;
   const borderColor = theme.components.input.borderColor;
   return {
     caretWrapper: css({
@@ -90,6 +95,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       '.rc-time-picker-panel-select': {
         fontSize: '14px',
         backgroundColor: bgColor,
+        color: theme.colors.text.secondary,
         borderColor,
         li: {
           outlineWidth: '2px',
@@ -97,10 +103,12 @@ const getStyles = (theme: GrafanaTheme2) => {
             backgroundColor: 'inherit',
             border: `1px solid ${theme.v1.palette.orange}`,
             borderRadius,
+            color: theme.colors.text.primary,
           },
 
           '&:hover': {
             background: optionBgHover,
+            color: theme.colors.text.primary,
           },
 
           '&.rc-time-picker-panel-select-option-disabled': {
@@ -135,6 +143,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         backgroundColor: bgColor,
         borderRadius,
         borderColor,
+        color: theme.colors.text.primary,
         height: theme.spacing(4),
 
         '&:focus': getFocusStyles(theme),

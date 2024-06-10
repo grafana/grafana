@@ -15,4 +15,35 @@ describe('Icon utils', () => {
       expect(iconSubDir).toEqual(expected);
     });
   });
+
+  describe('getIconRoot', () => {
+    beforeEach(() => {
+      // will reset the iconRoot cached value
+      jest.resetModules();
+    });
+
+    describe('when public path is configured', () => {
+      beforeAll(() => {
+        //@ts-ignore
+        window.__grafana_public_path__ = 'somepath/public/';
+      });
+
+      it('should return icon root based on __grafana_public_path__', () => {
+        const { getIconRoot } = require('./utils');
+        expect(getIconRoot()).toEqual('somepath/public/img/icons/');
+      });
+    });
+
+    describe('when public path is not configured', () => {
+      beforeAll(() => {
+        //@ts-ignore
+        window.__grafana_public_path__ = undefined;
+      });
+
+      it('should return default icon root', () => {
+        const { getIconRoot } = require('./utils');
+        expect(getIconRoot()).toEqual('public/img/icons/');
+      });
+    });
+  });
 });

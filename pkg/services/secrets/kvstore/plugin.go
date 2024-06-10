@@ -48,7 +48,7 @@ func NewPluginSecretsKVStore(
 		secretsService:                 secretsService,
 		log:                            logger,
 		kvstore:                        kvstore,
-		backwardsCompatibilityDisabled: features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility),
+		backwardsCompatibilityDisabled: features.IsEnabledGlobally(featuremgmt.FlagDisableSecretsCompatibility),
 		fallbackStore:                  fallback,
 	}
 }

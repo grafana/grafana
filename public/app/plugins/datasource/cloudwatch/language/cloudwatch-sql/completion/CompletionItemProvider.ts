@@ -179,12 +179,15 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
               dimensionFilters = (labelKeyTokens || []).reduce((acc, curr) => {
                 return { ...acc, [curr.value]: null };
               }, {});
-              const keys = await this.resources.getDimensionKeys({
-                namespace: this.templateSrv.replace(namespaceToken.value.replace(/\"/g, '')),
-                region: this.templateSrv.replace(this.region),
-                metricName: metricNameToken?.value,
-                dimensionFilters,
-              });
+              const keys = await this.resources.getDimensionKeys(
+                {
+                  namespace: this.templateSrv.replace(namespaceToken.value.replace(/\"/g, '')),
+                  region: this.templateSrv.replace(this.region),
+                  metricName: metricNameToken?.value,
+                  dimensionFilters,
+                },
+                false
+              );
               keys.map((m) => {
                 const key = /[\s\.-]/.test(m.value ?? '') ? `"${m.value}"` : m.value;
                 key && addSuggestion(key);

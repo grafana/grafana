@@ -77,6 +77,8 @@ func (t NodeType) String() string {
 		return "NodeString"
 	case NodeNumber:
 		return "NodeNumber"
+	case NodeVar:
+		return "NodeVar"
 	default:
 		return "NodeUnknown"
 	}
@@ -403,6 +405,8 @@ const (
 	TypeVariantSet
 	// TypeNoData is a no data response without a known data type.
 	TypeNoData
+	// TypeTableData is a tabular data response.
+	TypeTableData
 )
 
 // String returns a string representation of the ReturnType.
@@ -420,6 +424,8 @@ func (f ReturnType) String() string {
 		return "variant"
 	case TypeNoData:
 		return "noData"
+	case TypeTableData:
+		return "tableData"
 	default:
 		return "unknown"
 	}

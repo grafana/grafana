@@ -96,5 +96,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginLeft: theme.spacing(0.5),
   }),
 });
+export const removeMarginBottom = css({ marginBottom: 8 });
 
 export default getStyles;

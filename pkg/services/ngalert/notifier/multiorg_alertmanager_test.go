@@ -3,10 +3,6 @@ package notifier
 import (
 	"bytes"
 	"context"
-	"errors"
-	"io/fs"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -15,10 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,8 +28,8 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 	}
 
 	tmpDir := t.TempDir()
-	kvStore := NewFakeKVStore(t)
-	provStore := provisioning.NewFakeProvisioningStore()
+	kvStore := ngfakes.NewFakeKVStore(t)
+	provStore := ngfakes.NewFakeProvisioningStore()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
@@ -45,7 +42,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 			DisabledOrgs:                   map[int64]struct{}{5: {}},
 		}, // do not poll in tests.
 	}
-	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, &featuremgmt.FeatureManager{})
 	require.NoError(t, err)
 	ctx := context.Background()
 
@@ -107,47 +104,22 @@ grafana_alerting_discovered_configurations 4
 	// Orphaned state should be removed.
 	{
 		orgID := int64(6)
-		// First we create a directory and two files for an ograniztation that
-		// is not existing in the current state.
-		orphanDir := filepath.Join(tmpDir, "alerting", "6")
-		err := os.Mkdir(orphanDir, 0750)
+
+		// Populate the kvstore with orphaned records.
+		err = kvStore.Set(ctx, orgID, KVNamespace, SilencesFilename, "file_1")
 		require.NoError(t, err)
 
-		silencesPath := filepath.Join(orphanDir, silencesFilename)
-		err = os.WriteFile(silencesPath, []byte("file_1"), 0644)
-		require.NoError(t, err)
-
-		notificationPath := filepath.Join(orphanDir, notificationLogFilename)
-		err = os.WriteFile(notificationPath, []byte("file_2"), 0644)
-		require.NoError(t, err)
-
-		// We make sure that both files are on disk.
-		info, err := os.Stat(silencesPath)
-		require.NoError(t, err)
-		require.Equal(t, info.Name(), silencesFilename)
-		info, err = os.Stat(notificationPath)
-		require.NoError(t, err)
-		require.Equal(t, info.Name(), notificationLogFilename)
-
-		// We also populate the kvstore with orphaned records.
-		err = kvStore.Set(ctx, orgID, KVNamespace, silencesFilename, "file_1")
-		require.NoError(t, err)
-
-		err = kvStore.Set(ctx, orgID, KVNamespace, notificationLogFilename, "file_1")
+		err = kvStore.Set(ctx, orgID, KVNamespace, NotificationLogFilename, "file_1")
 		require.NoError(t, err)
 
 		// Now re run the sync job once.
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
-		// The organization directory should be gone by now.
-		_, err = os.Stat(orphanDir)
-		require.True(t, errors.Is(err, fs.ErrNotExist))
-
 		// The organization kvstore records should be gone by now.
-		_, exists, _ := kvStore.Get(ctx, orgID, KVNamespace, silencesFilename)
+		_, exists, _ := kvStore.Get(ctx, orgID, KVNamespace, SilencesFilename)
 		require.False(t, exists)
 
-		_, exists, _ = kvStore.Get(ctx, orgID, KVNamespace, notificationLogFilename)
+		_, exists, _ = kvStore.Get(ctx, orgID, KVNamespace, NotificationLogFilename)
 		require.False(t, exists)
 	}
 }
@@ -165,8 +137,8 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 	}
 
 	tmpDir := t.TempDir()
-	kvStore := NewFakeKVStore(t)
-	provStore := provisioning.NewFakeProvisioningStore()
+	kvStore := ngfakes.NewFakeKVStore(t)
+	provStore := ngfakes.NewFakeProvisioningStore()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
@@ -178,7 +150,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
 		}, // do not poll in tests.
 	}
-	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, &featuremgmt.FeatureManager{})
 	require.NoError(t, err)
 	ctx := context.Background()
 
@@ -259,13 +231,13 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 		DataPath:        tmpDir,
 		UnifiedAlerting: setting.UnifiedAlertingSettings{AlertmanagerConfigPollInterval: 3 * time.Minute, DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration()}, // do not poll in tests.
 	}
-	kvStore := NewFakeKVStore(t)
-	provStore := provisioning.NewFakeProvisioningStore()
+	kvStore := ngfakes.NewFakeKVStore(t)
+	provStore := ngfakes.NewFakeProvisioningStore()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
-	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, &featuremgmt.FeatureManager{})
 	require.NoError(t, err)
 	ctx := context.Background()
 
@@ -285,9 +257,10 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	{
 		am, err := mam.AlertmanagerFor(2)
 		require.NoError(t, err)
-		require.Equal(t, *am.GetStatus().VersionInfo.Version, "N/A")
-		require.Equal(t, am.orgID, int64(2))
-		require.NotNil(t, am.Base.ConfigHash())
+		internalAm, ok := am.(*alertmanager)
+		require.True(t, ok)
+		require.Equal(t, "N/A", *am.GetStatus().VersionInfo.Version)
+		require.Equal(t, int64(2), internalAm.orgID)
 	}
 
 	// Let's now remove the previous queried organization.
@@ -310,13 +283,13 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 		DataPath:        tmpDir,
 		UnifiedAlerting: setting.UnifiedAlertingSettings{AlertmanagerConfigPollInterval: 3 * time.Minute, DefaultConfiguration: defaultConfig}, // do not poll in tests.
 	}
-	kvStore := NewFakeKVStore(t)
-	provStore := provisioning.NewFakeProvisioningStore()
+	kvStore := ngfakes.NewFakeKVStore(t)
+	provStore := ngfakes.NewFakeProvisioningStore()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
-	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, &featuremgmt.FeatureManager{})
 	require.NoError(t, err)
 	ctx := context.Background()
 

@@ -8,7 +8,7 @@ import { TemplateSrv } from '../../../../features/templating/template_srv';
 import { GraphiteDatasource } from '../datasource';
 import { FuncDefs } from '../gfunc';
 import GraphiteQuery, { GraphiteTarget } from '../graphite_query';
-import { GraphiteSegment, GraphiteTagOperator } from '../types';
+import { GraphiteSegment } from '../types';
 
 import { actions } from './actions';
 import {
@@ -91,7 +91,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
         fake: false,
       };
     } else {
-      segment = segmentOrString as GraphiteSegment;
+      segment = segmentOrString;
     }
 
     state.error = null;
@@ -131,7 +131,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   if (actions.addNewTag.match(action)) {
     const segment = action.payload.segment;
     const newTagKey = segment.value;
-    const newTag = { key: newTagKey, operator: '=' as GraphiteTagOperator, value: '' };
+    const newTag = { key: newTagKey, operator: '=' as const, value: '' };
     state.queryModel.addTag(newTag);
     handleTargetChanged(state);
   }

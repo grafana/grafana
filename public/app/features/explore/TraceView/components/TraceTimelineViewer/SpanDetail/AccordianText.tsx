@@ -21,10 +21,11 @@ import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import { TNil } from '../../types';
-import { uAlignIcon } from '../../uberUtilityStyles';
 
 import { getStyles as getAccordianKeyValuesStyles } from './AccordianKeyValues';
 import TextList from './TextList';
+
+import { alignIcon } from '.';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -70,7 +71,7 @@ export default function AccordianText(props: AccordianTextProps) {
   } = props;
   const isEmpty = !Array.isArray(data) || !data.length;
   const accordianKeyValuesStyles = useStyles2(getAccordianKeyValuesStyles);
-  const iconCls = cx(uAlignIcon, { [accordianKeyValuesStyles.emptyIcon]: isEmpty });
+  const iconCls = cx(alignIcon, { [accordianKeyValuesStyles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
   let headerProps: {} | null = null;
   if (interactive) {

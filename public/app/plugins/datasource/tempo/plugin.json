@@ -3,6 +3,7 @@
   "name": "Tempo",
   "id": "tempo",
   "category": "tracing",
+  "executable": "gpx_tempo",
 
   "metrics": true,
   "alerting": false,
@@ -27,6 +28,11 @@
         "name": "GitHub Project",
         "url": "https://github.com/grafana/tempo"
       }
-    ]
+    ],
+    "version": "%VERSION%"
+  },
+
+  "dependencies": {
+    "grafanaDependency": ">=10.3.0-0"
   }
 }

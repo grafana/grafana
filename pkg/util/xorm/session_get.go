@@ -14,14 +14,14 @@ import (
 
 // Get retrieve one record from database, bean's non-empty fields
 // will be as conditions
-func (session *Session) Get(bean interface{}) (bool, error) {
+func (session *Session) Get(bean any) (bool, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}
 	return session.get(bean)
 }
 
-func (session *Session) get(bean interface{}) (bool, error) {
+func (session *Session) get(bean any) (bool, error) {
 	defer session.resetStatement()
 
 	if session.statement.lastError != nil {
@@ -42,7 +42,7 @@ func (session *Session) get(bean interface{}) (bool, error) {
 	}
 
 	var sqlStr string
-	var args []interface{}
+	var args []any
 	var err error
 
 	if session.statement.RawSQL == "" {
@@ -69,7 +69,7 @@ func (session *Session) get(bean interface{}) (bool, error) {
 	return true, nil
 }
 
-func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bean interface{}, sqlStr string, args ...interface{}) (bool, error) {
+func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bean any, sqlStr string, args ...any) (bool, error) {
 	rows, err := session.queryRows(sqlStr, args...)
 	if err != nil {
 		return false, err

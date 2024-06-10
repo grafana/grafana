@@ -32,7 +32,7 @@ export const LoadingIndicator = ({ onCancel, loading }: LoadingIndicatorProps) =
         name="sync"
         size="sm"
         onClick={onCancel}
-        aria-label={selectors.components.LoadingIndicator.icon}
+        data-testid={selectors.components.LoadingIndicator.icon}
       />
     </Tooltip>
   );

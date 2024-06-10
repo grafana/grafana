@@ -8,6 +8,9 @@ export { toIconName } from '@grafana/data';
 
 export type IconType = 'mono' | 'default' | 'solid';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
+export const isIconSize = (value: string): value is IconSize => {
+  return ['xs', 'sm', 'md', 'lg', 'xl', 'xxl', 'xxxl'].includes(value);
+};
 
 // function remains for backwards compatibility
 export const getAvailableIcons = () => Object.keys(availableIconsIndex);

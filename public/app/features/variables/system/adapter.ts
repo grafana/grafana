@@ -20,7 +20,7 @@ export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<an
       current: { value: { toString: () => '' } },
       state: LoadingState.Done,
     },
-    reducer: (state: any, action: any) => state,
+    reducer: (state: any) => state,
     picker: null as unknown as ComponentType<VariablePickerProps<SystemVariable<any>>>,
     editor: null as unknown as ComponentType<VariableEditorProps<SystemVariable<any>>>,
     dependsOn: () => {

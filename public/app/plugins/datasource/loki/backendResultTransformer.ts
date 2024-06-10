@@ -2,7 +2,7 @@ import { DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta, 
 
 import { getDerivedFields } from './getDerivedFields';
 import { makeTableFrames } from './makeTableFrames';
-import { formatQuery, getHighlighterExpressionsFromQuery } from './queryUtils';
+import { getHighlighterExpressionsFromQuery } from './queryUtils';
 import { dataFrameHasLokiError } from './responseUtils';
 import { DerivedFieldConfig, LokiQuery, LokiQueryType } from './types';
 
@@ -39,7 +39,7 @@ function processStreamFrame(
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'logs',
     limit: query?.maxLines,
-    searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
+    searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(query.expr) : undefined,
     custom,
   };
 

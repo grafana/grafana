@@ -546,4 +546,12 @@ describe('fixCellTemplateExpressions', () => {
       '${__data.fields[10]} asd ${__data.fields[15]} asd ${__data.fields[20]}'
     );
   });
+
+  it('Should handle date formatting', () => {
+    expect(
+      fixCellTemplateExpressions('$__cell_10:date:iso asd ${__cell_15:date:seconds} asd [[__cell_20:date:YYYY-MM]]')
+    ).toEqual(
+      '${__data.fields[10]:date:iso} asd ${__data.fields[15]:date:seconds} asd ${__data.fields[20]:date:YYYY-MM}'
+    );
+  });
 });

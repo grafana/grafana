@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -11,6 +12,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
+
+// matches a dynamic label
+var dynamicLabel = regexp.MustCompile(`\$\{.+\}`)
 
 func (e *cloudWatchExecutor) parseResponse(startTime time.Time, endTime time.Time, metricDataOutputs []*cloudwatch.GetMetricDataOutput,
 	queries []*models.CloudWatchQuery) ([]*responseWrapper, error) {
@@ -110,6 +114,8 @@ func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery) data.Label
 func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse models.QueryRowResponse,
 	query *models.CloudWatchQuery) (data.Frames, error) {
 	frames := data.Frames{}
+	hasStaticLabel := query.Label != "" && !dynamicLabel.MatchString(query.Label)
+
 	for _, metric := range aggregatedResponse.Metrics {
 		label := *metric.Label
 
@@ -169,10 +175,15 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 		timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, timestamps)
 		valueField := data.NewField(data.TimeSeriesValueFieldName, labels, points)
 
-		valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: label, Links: createDataLinks(deepLink)})
+		name := label
+		// CloudWatch appends the dimensions to the returned label if the query label is not dynamic, so static labels need to be set
+		if hasStaticLabel {
+			name = query.Label
+		}
 
+		valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name, Links: createDataLinks(deepLink)})
 		frame := data.Frame{
-			Name: label,
+			Name: name,
 			Fields: []*data.Field{
 				timeField,
 				valueField,

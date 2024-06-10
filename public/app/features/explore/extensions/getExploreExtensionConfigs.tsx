@@ -2,9 +2,12 @@ import React from 'react';
 
 import { PluginExtensionPoints, type PluginExtensionLinkConfig } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
+import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 
 import { createExtensionLinkConfig, logWarning } from '../../plugins/extensions/utils';
+import { changeCorrelationEditorDetails } from '../state/main';
+import { runQueries } from '../state/query';
 
 import { AddToDashboardForm } from './AddToDashboard/AddToDashboardForm';
 import { getAddToDashboardTitle } from './AddToDashboard/getAddToDashboardTitle';
@@ -21,8 +24,8 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
         category: 'Dashboards',
         configure: () => {
           const canAddPanelToDashboard =
-            contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
-            contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);
+            contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
+            contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
 
           // hide option if user has insufficient permissions
           if (!canAddPanelToDashboard) {
@@ -36,6 +39,19 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
             title: getAddToDashboardTitle(),
             body: ({ onDismiss }) => <AddToDashboardForm onClose={onDismiss!} exploreId={context?.exploreId!} />,
           });
+        },
+      }),
+      createExtensionLinkConfig<PluginExtensionExploreContext>({
+        title: 'Add correlation',
+        description: 'Create a correlation from this query',
+        extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+        icon: 'link',
+        configure: (context) => {
+          return context?.shouldShowAddCorrelation ? {} : undefined;
+        },
+        onClick: (_, { context }) => {
+          dispatch(changeCorrelationEditorDetails({ editorMode: true }));
+          dispatch(runQueries({ exploreId: context!.exploreId }));
         },
       }),
     ];

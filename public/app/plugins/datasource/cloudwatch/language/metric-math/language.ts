@@ -7,6 +7,7 @@ export const METRIC_MATH_FNS = [
   'AVG',
   'CEIL',
   'DATAPOINT_COUNT',
+  'DB_PERF_INSIGHTS',
   'DIFF',
   'DIFF_TIME',
   'FILL',

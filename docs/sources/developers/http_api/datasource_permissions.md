@@ -27,124 +27,30 @@ title: Datasource Permissions HTTP API
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
-This API can be used to enable, disable, list, add and remove permissions for a data source.
+This API can be used to list, add and remove permissions for a data source.
 
-Permissions can be set for a user or a team. Permissions cannot be set for Admins - they always have access to everything.
-
-The permission levels for the permission field:
-
-- 1 = Query
-
-## Enable permissions for a data source
-
-`POST /api/datasources/:id/enable-permissions`
-
-Enables permissions for the data source with the given `id`. No one except Org Admins will be able to query the data source until permissions have been added which permit certain users or teams to query the data source.
-
-**Required permissions**
-
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
-
-| Action                        | Scope                                                                        |
-| ----------------------------- | ---------------------------------------------------------------------------- |
-| datasources.permissions:write | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
-
-### Examples
-
-**Example request:**
-
-```http
-POST /api/datasources/1/enable-permissions
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
-{}
-```
-
-**Example response:**
-
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json; charset=UTF-8
-Content-Length: 35
-
-{"message":"Datasource permissions enabled"}
-```
-
-Status codes:
-
-- **200** - Ok
-- **400** - Permissions cannot be enabled, see response body for details
-- **401** - Unauthorized
-- **403** - Access denied
-- **404** - Datasource not found
-
-## Disable permissions for a data source
-
-`POST /api/datasources/:id/disable-permissions`
-
-Disables permissions for the data source with the given `id`. All existing permissions will be removed and anyone will be able to query the data source.
-
-**Required permissions**
-
-See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
-
-| Action                        | Scope                                                                        |
-| ----------------------------- | ---------------------------------------------------------------------------- |
-| datasources.permissions:write | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
-
-### Examples
-
-**Example request:**
-
-```http
-POST /api/datasources/1/disable-permissions
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
-{}
-```
-
-**Example response:**
-
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json; charset=UTF-8
-Content-Length: 35
-
-{"message":"Datasource permissions disabled"}
-```
-
-Status codes:
-
-- **200** - Ok
-- **400** - Permissions cannot be disabled, see response body for details
-- **401** - Unauthorized
-- **403** - Access denied
-- **404** - Datasource not found
+Permissions can be set for a user, team, service account or a basic role (Admin, Editor, Viewer).
 
 ## Get permissions for a data source
 
-`GET /api/datasources/:id/permissions`
+`GET /api/access-control/datasources/:uid`
 
-Gets all existing permissions for the data source with the given `id`.
+Gets all existing permissions for the data source with the given `uid`.
 
 **Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
-| Action                       | Scope                                                                        |
-| ---------------------------- | ---------------------------------------------------------------------------- |
-| datasources.permissions:read | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+| Action                       | Scope                                                                                      |
+| ---------------------------- | ------------------------------------------------------------------------------------------ |
+| datasources.permissions:read | datasources:\*<br>datasources:uid:\*<br>datasources:uid:my_datasource (single data source) |
 
 ### Examples
 
 **Example request:**
 
 ```http
-GET /api/datasources/1/permissions HTTP/1.1
+GET /api/access-control/datasources/my_datasource HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -157,36 +63,57 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 Content-Length: 551
 
-{
-  "datasourceId": 1,
-  "enabled": true,
-  "permissions":
-  [
+[
     {
-      "id": 1,
-      "datasourceId": 1,
-      "userId": 1,
-      "userLogin": "user",
-      "userEmail": "user@test.com",
-      "userAvatarUrl": "/avatar/46d229b033af06a191ff2267bca9ae56",
-      "permission": 1,
-      "permissionName": "Query",
-      "created": "2017-06-20T02:00:00+02:00",
-      "updated": "2017-06-20T02:00:00+02:00",
+        "id": 1,
+        "roleName": "fixed:datasources:reader",
+        "isManaged": false,
+        "isInherited": false,
+        "isServiceAccount": false,
+        "userId": 1,
+        "userLogin": "admin_user",
+        "userAvatarUrl": "/avatar/admin_user",
+        "actions": [
+            "datasources:read",
+            "datasources:query",
+            "datasources:read",
+            "datasources:query",
+            "datasources:write",
+            "datasources:delete"
+        ],
+        "permission": "Edit"
     },
     {
-      "id": 2,
-      "datasourceId": 1,
-      "teamId": 1,
-      "team": "A Team",
-      "teamAvatarUrl": "/avatar/46d229b033af06a191ff2267bca9ae56",
-      "permission": 1,
-      "permissionName": "Query",
-      "created": "2017-06-20T02:00:00+02:00",
-      "updated": "2017-06-20T02:00:00+02:00",
-    }
-  ]
-}
+        "id": 2,
+        "roleName": "managed:teams:1:permissions",
+        "isManaged": true,
+        "isInherited": false,
+        "isServiceAccount": false,
+        "team": "A team",
+        "teamId": 1,
+        "teamAvatarUrl": "/avatar/523d70c8551046f441727d690431858c",
+        "actions": [
+            "datasources:read",
+            "datasources:query"
+        ],
+        "permission": "Query"
+    },
+    {
+        "id": 3,
+        "roleName": "basic:admin",
+        "isManaged": false,
+        "isInherited": false,
+        "isServiceAccount": false,
+        "builtInRole": "Admin",
+        "actions": [
+            "datasources:query",
+            "datasources:read",
+            "datasources:write",
+            "datasources:delete"
+        ],
+        "permission": "Edit"
+    },
+]
 ```
 
 Status codes:
@@ -194,35 +121,37 @@ Status codes:
 - **200** - Ok
 - **401** - Unauthorized
 - **403** - Access denied
-- **404** - Datasource not found
+- **500** - Internal error
 
-## Add permission for a data source
+## Add or revoke access to a data source for a user
 
-`POST /api/datasources/:id/permissions`
+`POST /api/access-control/datasources/:uid/users/:id`
 
-Adds a user permission for the data source with the given `id`.
+Sets user permission for the data source with the given `uid`.
+
+To add a permission, set the `permission` field to either `Query`, `Edit`, or `Admin`.
+To remove a permission, set the `permission` field to an empty string.
 
 **Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
-| Action                        | Scope                                                                        |
-| ----------------------------- | ---------------------------------------------------------------------------- |
-| datasources.permissions:write | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+| Action                        | Scope                                                                                      |
+| ----------------------------- | ------------------------------------------------------------------------------------------ |
+| datasources.permissions:write | datasources:\*<br>datasources:uid:\*<br>datasources:uid:my_datasource (single data source) |
 
 ### Examples
 
 **Example request:**
 
 ```http
-POST /api/datasources/1/permissions
+POST /api/access-control/datasources/my_datasource/users/1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
-  "userId": 1,
-  "permission": 1
+  "permission": "Query",
 }
 ```
 
@@ -233,22 +162,19 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 Content-Length: 35
 
-{"message":"Datasource permission added"}
+{"message": "Permission updated"}
 ```
-
-Adds a team permission for the data source with the given `id`.
 
 **Example request:**
 
 ```http
-POST /api/datasources/1/permissions
+POST /api/access-control/datasources/my_datasource/users/1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
-  "teamId": 1,
-  "permission": 1
+  "permission": "",
 }
 ```
 
@@ -259,7 +185,7 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 Content-Length: 35
 
-{"message":"Datasource permission added"}
+{"message": "Permission removed"}
 ```
 
 Status codes:
@@ -268,31 +194,37 @@ Status codes:
 - **400** - Permission cannot be added, see response body for details
 - **401** - Unauthorized
 - **403** - Access denied
-- **404** - Datasource not found
 
-## Remove permission for a data source
+## Add or revoke access to a data source for a team
 
-`DELETE /api/datasources/:id/permissions/:permissionId`
+`POST /api/access-control/datasources/:uid/teams/:id`
 
-Removes the permission with the given `permissionId` for the data source with the given `id`.
+Sets team permission for the data source with the given `uid`.
+
+To add a permission, set the `permission` field to either `Query`, `Edit`, or `Admin`.
+To remove a permission, set the `permission` field to an empty string.
 
 **Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
 
-| Action                        | Scope                                                                        |
-| ----------------------------- | ---------------------------------------------------------------------------- |
-| datasources.permissions:write | datasources:\*<br>datasources:id:\*<br>datasources:id:1 (single data source) |
+| Action                        | Scope                                                                                      |
+| ----------------------------- | ------------------------------------------------------------------------------------------ |
+| datasources.permissions:write | datasources:\*<br>datasources:uid:\*<br>datasources:uid:my_datasource (single data source) |
 
 ### Examples
 
 **Example request:**
 
 ```http
-DELETE /api/datasources/1/permissions/2
+POST /api/access-control/datasources/my_datasource/teams/1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "permission": "Edit",
+}
 ```
 
 **Example response:**
@@ -302,12 +234,109 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 Content-Length: 35
 
-{"message":"Datasource permission removed"}
+{"message": "Permission updated"}
+```
+
+**Example request:**
+
+```http
+POST /api/access-control/datasources/my_datasource/teams/1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "permission": "",
+}
+```
+
+**Example response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+Content-Length: 35
+
+{"message": "Permission removed"}
 ```
 
 Status codes:
 
 - **200** - Ok
+- **400** - Permission cannot be added, see response body for details
 - **401** - Unauthorized
 - **403** - Access denied
-- **404** - Datasource not found or permission not found
+
+## Add or revoke access to a data source for a basic role
+
+`POST /api/access-control/datasources/:uid/builtInRoles/:builtinRoleName`
+
+Sets permission for the data source with the given `uid` to all users who have the specified basic role.
+
+You can set permissions for the following basic roles: `Admin`, `Editor`, `Viewer`.
+
+To add a permission, set the `permission` field to either `Query`, `Edit`, or `Admin`.
+To remove a permission, set the `permission` field to an empty string.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#data-source-permissions-api" >}}) for an explanation.
+
+| Action                        | Scope                                                                                      |
+| ----------------------------- | ------------------------------------------------------------------------------------------ |
+| datasources.permissions:write | datasources:\*<br>datasources:uid:\*<br>datasources:uid:my_datasource (single data source) |
+
+### Examples
+
+**Example request:**
+
+```http
+POST /api/access-control/datasources/my_datasource/builtInRoles/Admin
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "permission": "Edit",
+}
+```
+
+**Example response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+Content-Length: 35
+
+{"message": "Permission updated"}
+```
+
+**Example request:**
+
+```http
+POST /api/access-control/datasources/my_datasource/builtInRoles/Viewer
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "permission": "",
+}
+```
+
+**Example response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+Content-Length: 35
+
+{"message": "Permission removed"}
+```
+
+Status codes:
+
+- **200** - Ok
+- **400** - Permission cannot be added, see response body for details
+- **401** - Unauthorized
+- **403** - Access denied

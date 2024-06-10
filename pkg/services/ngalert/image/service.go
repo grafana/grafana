@@ -93,12 +93,12 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 	if cfg.UnifiedAlerting.Screenshots.Capture {
 		cache = NewInmemCacheService(screenshotCacheTTL, r)
 		limiter = screenshot.NewTokenRateLimiter(cfg.UnifiedAlerting.Screenshots.MaxConcurrentScreenshots)
-		screenshots = screenshot.NewHeadlessScreenshotService(ds, rs, r)
+		screenshots = screenshot.NewHeadlessScreenshotService(cfg, ds, rs, r)
 		screenshotTimeout = cfg.UnifiedAlerting.Screenshots.CaptureTimeout
 
 		// Image uploading is an optional feature
 		if cfg.UnifiedAlerting.Screenshots.UploadExternalImageStorage {
-			m, err := imguploader.NewImageUploader()
+			m, err := imguploader.NewImageUploader(cfg)
 			if err != nil {
 				return nil, fmt.Errorf("failed to initialize uploading screenshot service: %w", err)
 			}
@@ -153,7 +153,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 
 	logger.Debug("Requesting screenshot")
 
-	result, err, _ := s.singleflight.Do(optsHash, func() (interface{}, error) {
+	result, err, _ := s.singleflight.Do(optsHash, func() (any, error) {
 		// We create both a context with timeout and set a timeout in ScreenshotOptions. The timeout
 		// in the context is used for both database queries and the request to the rendering service,
 		// while the timeout in ScreenshotOptions is passed to the rendering service where it is used as

@@ -22,7 +22,7 @@ weight: 500
 # Configure SAML authentication using the configuration file
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 SAML authentication integration allows your Grafana users to log in by using an external SAML 2.0 Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
@@ -69,7 +69,7 @@ By default, SP-initiated requests are enabled. For instructions on how to enable
    - [`assertion_attribute_email`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_email" >}})
    - [`assertion_attribute_name`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_name" >}})
    - [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_groups" >}})
-1. Save the configuration file and and then restart the Grafana server.
+1. Save the configuration file and then restart the Grafana server.
 
 When you are finished, the Grafana configuration might look like this example:
 
@@ -174,6 +174,7 @@ The table below describes all SAML configuration options. Continue reading below
 | Setting                                                    | Required | Description                                                                                                                                                                                                  | Default                                               |
 | ---------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
 | `enabled`                                                  | No       | Whether SAML authentication is allowed                                                                                                                                                                       | `false`                                               |
+| `name`                                                     | No       | Name used to refer to the SAML authentication in the Grafana user interface.                                                                                                                                 | `SAML`                                                |
 | `single_logout`                                            | No       | Whether SAML Single Logout enabled                                                                                                                                                                           | `false`                                               |
 | `allow_sign_up`                                            | No       | Whether to allow new Grafana user creation through SAML login. If set to `false`, then only existing Grafana users can log in with SAML.                                                                     | `true`                                                |
 | `auto_login`                                               | No       | Whether SAML auto login is enabled                                                                                                                                                                           | `false`                                               |
@@ -193,6 +194,7 @@ The table below describes all SAML configuration options. Continue reading below
 | `assertion_attribute_org`                                  | No       | Friendly name or name of the attribute within the SAML assertion to use as the user organization                                                                                                             |                                                       |
 | `allowed_organizations`                                    | No       | List of comma- or space-separated organizations. User should be a member of at least one organization to log in.                                                                                             |                                                       |
 | `org_mapping`                                              | No       | List of comma- or space-separated Organization:OrgId:Role mappings. Organization can be `*` meaning "All users". Role is optional and can have the following values: `Viewer`, `Editor` or `Admin`.          |                                                       |
+| `role_values_none`                                         | No       | List of comma- or space-separated roles which will be mapped into the None role                                                                                                                              |                                                       |
 | `role_values_editor`                                       | No       | List of comma- or space-separated roles which will be mapped into the Editor role                                                                                                                            |                                                       |
 | `role_values_admin`                                        | No       | List of comma- or space-separated roles which will be mapped into the Admin role                                                                                                                             |                                                       |
 | `role_values_grafana_admin`                                | No       | List of comma- or space-separated roles which will be mapped into the Grafana Admin (Super Admin) role                                                                                                       |                                                       |
@@ -363,6 +365,7 @@ Available in Grafana version 7.0 and later.
 Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
 
 1. In the configuration file, set [`assertion_attribute_role`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_role" >}}) option to the attribute name where the role information will be extracted from.
+1. Set the [`role_values_none`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_none" >}}) option to the values mapped to the `None` role.
 1. Set the [`role_values_editor`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_editor" >}}) option to the values mapped to the `Editor` role.
 1. Set the [`role_values_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_admin" >}}) option to the values mapped to the organization `Admin` role.
 1. Set the [`role_values_grafana_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_grafana_admin" >}}) option to the values mapped to the `Grafana Admin` role.
@@ -376,6 +379,7 @@ Example configuration:
 ```ini
 [auth.saml]
 assertion_attribute_role = role
+role_values_none = none, external
 role_values_editor = editor, developer
 role_values_admin = admin, operator
 role_values_grafana_admin = superadmin
@@ -484,6 +488,10 @@ filters = saml.auth:debug
 ## Troubleshooting
 
 Following are common issues found in configuring SAML authentication in Grafana and how to resolve them.
+
+### Infinite redirect loop / User gets redirected to the login page after successful login on the IdP side
+
+If you experience an infinite redirect loop when `auto_login = true` or redirected to the login page after successful login, it is likely that the `grafana_session` cookie's SameSite setting is set to `Strict`. This setting prevents the `grafana_session` cookie from being sent to Grafana during cross-site requests. To resolve this issue, set the `security.cookie_samesite` option to `Lax` in the Grafana configuration file.
 
 ### SAML authentication fails with error:
 

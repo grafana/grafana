@@ -2,10 +2,11 @@ import { screen, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
-import { byRole, byText } from 'testing-library-selector';
+import { byText } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../manage-dashboards/state/actions';
@@ -13,7 +14,7 @@ import { searchFolders } from '../../manage-dashboards/state/actions';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
+import { grantUserPermissions, mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { DataSourceType } from './utils/datasource';
@@ -68,6 +69,7 @@ const dataSources = {
     {
       type: DataSourceType.Prometheus,
       name: 'cortex with ruler',
+      isDefault: true,
     },
     { alerting: true }
   ),
@@ -102,6 +104,7 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: jest.fn(() => ({
     getInstanceSettings: () => dataSources.prom,
     get: () => dataSources.prom,
+    getList: () => Object.values(dataSources),
   })),
 }));
 
@@ -138,9 +141,9 @@ describe('RuleEditor cloud: checking editable data sources', () => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
+    // grant all permissions in AccessControlActionEnum
+    grantUserPermissions(Object.values(AccessControlAction));
   });
-
-  disableRBAC();
 
   it('for cloud alerts, should only allow to select editable rules sources', async () => {
     mocks.api.discoverFeatures.mockImplementation(async (dataSourceName) => {
@@ -185,10 +188,7 @@ describe('RuleEditor cloud: checking editable data sources', () => {
 
     await ui.inputs.name.find();
 
-    const removeExpressionsButtons = screen.getAllByLabelText('Remove expression');
-    expect(removeExpressionsButtons).toHaveLength(2);
-
-    const switchToCloudButton = screen.getByText('Switch to data source-managed alert rule');
+    const switchToCloudButton = screen.getByText('Data source-managed');
     expect(switchToCloudButton).toBeInTheDocument();
 
     await userEvent.click(switchToCloudButton);
@@ -198,10 +198,10 @@ describe('RuleEditor cloud: checking editable data sources', () => {
 
     // check that only rules sources that have ruler available are there
     const dataSourceSelect = ui.inputs.dataSource.get();
-    await userEvent.click(byRole('combobox').get(dataSourceSelect));
+    await userEvent.click(dataSourceSelect);
 
-    expect(await byText('loki with ruler').query()).toBeInTheDocument();
     expect(byText('cortex with ruler').query()).toBeInTheDocument();
+    expect(byText('loki with ruler').query()).toBeInTheDocument();
     expect(byText('loki with local rule store').query()).not.toBeInTheDocument();
     expect(byText('prom without ruler api').query()).not.toBeInTheDocument();
     expect(byText('splunk').query()).not.toBeInTheDocument();

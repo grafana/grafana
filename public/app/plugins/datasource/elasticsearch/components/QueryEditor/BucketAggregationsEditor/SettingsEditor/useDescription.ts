@@ -1,3 +1,4 @@
+import { defaultGeoHashPrecisionString } from '../../../../queryDef';
 import { BucketAggregation } from '../../../../types';
 import { describeMetric, convertOrderByToMetricId } from '../../../../utils';
 import { useQuery } from '../../ElasticsearchQueryContext';
@@ -61,7 +62,8 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
     }
 
     case 'geohash_grid': {
-      const precision = Math.max(Math.min(parseInt(bucketAgg.settings?.precision || '5', 10), 12), 1);
+      const precision = parseInt(bucketAgg.settings?.precision || defaultGeoHashPrecisionString, 10);
+
       return `Precision: ${precision}`;
     }
 

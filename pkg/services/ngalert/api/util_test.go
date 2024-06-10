@@ -46,21 +46,21 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 		Context: &web.Context{
 			Req: &http.Request{},
 		},
-		SignedInUser:          &user.SignedInUser{},
-		UserToken:             &auth.UserToken{},
-		IsSignedIn:            rand.Int63()%2 == 1,
-		IsRenderCall:          rand.Int63()%2 == 1,
-		AllowAnonymous:        rand.Int63()%2 == 1,
-		SkipDSCache:           rand.Int63()%2 == 1,
-		SkipQueryCache:        rand.Int63()%2 == 1,
-		Logger:                log.New("test"),
-		RequestNonce:          util.GenerateShortUID(),
-		IsPublicDashboardView: rand.Int63()%2 == 1,
+		SignedInUser:               &user.SignedInUser{},
+		UserToken:                  &auth.UserToken{},
+		IsSignedIn:                 rand.Int63()%2 == 1,
+		IsRenderCall:               rand.Int63()%2 == 1,
+		AllowAnonymous:             rand.Int63()%2 == 1,
+		SkipDSCache:                rand.Int63()%2 == 1,
+		SkipQueryCache:             rand.Int63()%2 == 1,
+		Logger:                     log.New("test"),
+		RequestNonce:               util.GenerateShortUID(),
+		PublicDashboardAccessToken: util.GenerateShortUID(),
 	}
 
 	t.Run("should create a copy of request context", func(t *testing.T) {
 		for _, mock := range []*accesscontrolmock.Mock{
-			accesscontrolmock.New(), accesscontrolmock.New().WithDisabled(),
+			accesscontrolmock.New(), accesscontrolmock.New(),
 		} {
 			proxy := AlertingProxy{
 				DataProxy: nil,
@@ -81,7 +81,7 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 			require.Equal(t, ctx.SkipQueryCache, newCtx.SkipQueryCache)
 			require.Equal(t, ctx.Logger, newCtx.Logger)
 			require.Equal(t, ctx.RequestNonce, newCtx.RequestNonce)
-			require.Equal(t, ctx.IsPublicDashboardView, newCtx.IsPublicDashboardView)
+			require.Equal(t, ctx.PublicDashboardAccessToken, newCtx.PublicDashboardAccessToken)
 		}
 	})
 	t.Run("should overwrite response writer", func(t *testing.T) {

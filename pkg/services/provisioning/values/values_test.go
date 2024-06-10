@@ -157,11 +157,11 @@ func TestValues(t *testing.T) {
                `
 				unmarshalingTest(t, doc, d)
 
-				type stringMap = map[string]interface{}
+				type stringMap = map[string]any
 				require.Equal(t, d.Val.Value(), stringMap{
 					"one": 1,
 					"two": "test",
-					"three": []interface{}{
+					"three": []any{
 						1,
 						"two",
 						stringMap{
@@ -171,7 +171,7 @@ func TestValues(t *testing.T) {
 						},
 						stringMap{
 							"six": stringMap{
-								"empty": interface{}(nil),
+								"empty": any(nil),
 							},
 						},
 					},
@@ -189,7 +189,7 @@ func TestValues(t *testing.T) {
 				require.Equal(t, d.Val.Raw, stringMap{
 					"one": 1,
 					"two": "$STRING",
-					"three": []interface{}{
+					"three": []any{
 						1,
 						"two",
 						stringMap{
@@ -199,7 +199,7 @@ func TestValues(t *testing.T) {
 						},
 						stringMap{
 							"six": stringMap{
-								"empty": interface{}(nil),
+								"empty": any(nil),
 							},
 						},
 					},
@@ -234,7 +234,7 @@ func TestValues(t *testing.T) {
                `
 				unmarshalingTest(t, doc, d)
 
-				type stringMap = map[string]interface{}
+				type stringMap = map[string]any
 
 				require.Equal(t, []stringMap{
 					{
@@ -297,7 +297,7 @@ func TestValues(t *testing.T) {
 	})
 }
 
-func unmarshalingTest(t *testing.T, document string, out interface{}) {
+func unmarshalingTest(t *testing.T, document string, out any) {
 	err := yaml.Unmarshal([]byte(document), out)
 	require.NoError(t, err)
 }

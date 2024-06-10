@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { openMenu } from 'react-select-event';
 
-import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
+import { CustomVariableModel } from '@grafana/data';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
@@ -12,10 +12,21 @@ import { MetricKind, ValueTypes } from '../types/query';
 
 import { Alignment } from './Alignment';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getTemplateSrv: () => new TemplateSrvMock({}),
-}));
+let getTempVars = () => [] as CustomVariableModel[];
+let replace = () => '';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    __esModule: true,
+    ...jest.requireActual('@grafana/runtime'),
+    getTemplateSrv: () => ({
+      replace: replace,
+      getVariables: getTempVars,
+      updateTimeRange: jest.fn(),
+      containsTemplate: jest.fn(),
+    }),
+  };
+});
 
 describe('Alignment', () => {
   it('renders alignment fields', () => {

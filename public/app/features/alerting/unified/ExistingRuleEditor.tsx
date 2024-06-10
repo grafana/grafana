@@ -6,7 +6,7 @@ import { useDispatch } from 'app/types';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from './AlertWarning';
-import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
+import { AlertRuleForm } from './components/rule-editor/alert-rule-form/AlertRuleForm';
 import { useIsRuleEditable } from './hooks/useIsRuleEditable';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchEditableRuleAction } from './state/actions';

@@ -7,17 +7,17 @@ import (
 	"math"
 	"net/url"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/google/uuid"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 type (
@@ -84,7 +84,7 @@ func (q *CloudWatchQuery) GetGetMetricDataAPIMode() GMDApiMode {
 		return GMDApiModeSQLExpression
 	}
 
-	q.logger.Warn("could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
+	q.logger.Warn("Could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
 	return GMDApiModeMetricStat
 }
 
@@ -166,9 +166,9 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time) 
 	if q.isSearchExpression() {
 		metricExpressions := &metricExpression{Expression: q.UsedExpression}
 		metricExpressions.Label = q.Label
-		link.Metrics = []interface{}{metricExpressions}
+		link.Metrics = []any{metricExpressions}
 	} else {
-		metricStat := []interface{}{q.Namespace, q.MetricName}
+		metricStat := []any{q.Namespace, q.MetricName}
 		for dimensionKey, dimensionValues := range q.Dimensions {
 			metricStat = append(metricStat, dimensionKey, dimensionValues[0])
 		}
@@ -181,7 +181,7 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time) 
 			metricStatMeta.AccountId = *q.AccountId
 		}
 		metricStat = append(metricStat, metricStatMeta)
-		link.Metrics = []interface{}{metricStat}
+		link.Metrics = []any{metricStat}
 	}
 
 	linkProps, err := json.Marshal(link)
@@ -240,9 +240,9 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 		cwQuery := &CloudWatchQuery{
 			logger:            logger,
 			RefId:             refId,
-			Id:                mdq.Id,
-			Region:            mdq.Region,
-			Namespace:         mdq.Namespace,
+			Id:                utils.Depointerizer(mdq.Id),
+			Region:            utils.Depointerizer(mdq.Region),
+			Namespace:         utils.Depointerizer(mdq.Namespace),
 			TimezoneUTCOffset: mdq.TimezoneUTCOffset,
 		}
 
@@ -315,7 +315,7 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		q.AccountId = metricsDataQuery.AccountId
 	}
 
-	if metricsDataQuery.Id == "" {
+	if utils.Depointerizer(metricsDataQuery.Id) == "" {
 		// Why not just use refId if id is not specified in the frontend? When specifying an id in the editor,
 		// and alphabetical must be used. The id must be unique, so if an id like for example a, b or c would be used,
 		// it would likely collide with some ref id. That's why the `query` prefix is used.
@@ -464,13 +464,13 @@ func getRetainedPeriods(timeSince time.Duration) []int {
 	}
 }
 
-func parseDimensions(dimensions map[string]interface{}) (map[string][]string, error) {
+func parseDimensions(dimensions map[string]any) (map[string][]string, error) {
 	parsedDimensions := make(map[string][]string)
 	for k, v := range dimensions {
 		// This is for backwards compatibility. Before 6.5 dimensions values were stored as strings and not arrays
 		if value, ok := v.(string); ok {
 			parsedDimensions[k] = []string{value}
-		} else if values, ok := v.([]interface{}); ok {
+		} else if values, ok := v.([]any); ok {
 			for _, value := range values {
 				parsedDimensions[k] = append(parsedDimensions[k], value.(string))
 			}
@@ -479,22 +479,7 @@ func parseDimensions(dimensions map[string]interface{}) (map[string][]string, er
 		}
 	}
 
-	sortedDimensions := sortDimensions(parsedDimensions)
-	return sortedDimensions, nil
-}
-
-func sortDimensions(dimensions map[string][]string) map[string][]string {
-	sortedDimensions := make(map[string][]string, len(dimensions))
-	keys := make([]string, 0, len(dimensions))
-	for k := range dimensions {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, k := range keys {
-		sortedDimensions[k] = dimensions[k]
-	}
-	return sortedDimensions
+	return parsedDimensions, nil
 }
 
 func getEndpoint(region string) string {

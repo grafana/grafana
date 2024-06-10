@@ -8,39 +8,39 @@ var (
 	debugmode = false
 )
 
-func Debug(args ...interface{}) {
+func Debug(args ...any) {
 	if debugmode {
 		fmt.Print(args...)
 	}
 }
 
-func Debugf(fmtString string, args ...interface{}) {
+func Debugf(fmtString string, args ...any) {
 	if debugmode {
 		fmt.Printf(fmtString, args...)
 	}
 }
 
-func Error(args ...interface{}) {
+func Error(args ...any) {
 	fmt.Print(args...)
 }
 
-func Errorf(fmtString string, args ...interface{}) {
+func Errorf(fmtString string, args ...any) {
 	fmt.Printf(fmtString, args...)
 }
 
-func Info(args ...interface{}) {
+func Info(args ...any) {
 	fmt.Print(args...)
 }
 
-func Infof(fmtString string, args ...interface{}) {
+func Infof(fmtString string, args ...any) {
 	fmt.Printf(fmtString, args...)
 }
 
-func Warn(args ...interface{}) {
+func Warn(args ...any) {
 	fmt.Print(args...)
 }
 
-func Warnf(fmtString string, args ...interface{}) {
+func Warnf(fmtString string, args ...any) {
 	fmt.Printf(fmtString, args...)
 }
 

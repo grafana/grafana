@@ -32,9 +32,9 @@ export type PluginExtensionLink = PluginExtensionBase & {
   category?: string;
 };
 
-export type PluginExtensionComponent = PluginExtensionBase & {
+export type PluginExtensionComponent<Props = {}> = PluginExtensionBase & {
   type: PluginExtensionTypes.component;
-  component: React.ComponentType;
+  component: React.ComponentType<Props>;
 };
 
 export type PluginExtension = PluginExtensionLink | PluginExtensionComponent;
@@ -77,14 +77,14 @@ export type PluginExtensionLinkConfig<Context extends object = object> = {
   category?: string;
 };
 
-export type PluginExtensionComponentConfig<Context extends object = object> = {
+export type PluginExtensionComponentConfig<Props = {}> = {
   type: PluginExtensionTypes.component;
   title: string;
   description: string;
 
   // The React component that will be rendered as the extension
-  // (This component receives the context as a prop when it is rendered. You can just return `null` from the component to hide for certain contexts)
-  component: React.ComponentType;
+  // (This component receives contextual information as props when it is rendered. You can just return `null` from the component to hide it.)
+  component: React.ComponentType<Props>;
 
   // The unique identifier of the Extension Point
   // (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
@@ -93,15 +93,21 @@ export type PluginExtensionComponentConfig<Context extends object = object> = {
 
 export type PluginExtensionConfig = PluginExtensionLinkConfig | PluginExtensionComponentConfig;
 
+export type PluginExtensionOpenModalOptions = {
+  // The title of the modal
+  title: string;
+  // A React element that will be rendered inside the modal
+  body: React.ElementType<{ onDismiss?: () => void }>;
+  // Width of the modal in pixels or percentage
+  width?: string | number;
+  // Height of the modal in pixels or percentage
+  height?: string | number;
+};
+
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
-  openModal: (options: {
-    // The title of the modal
-    title: string;
-    // A React element that will be rendered inside the modal
-    body: React.ElementType<{ onDismiss?: () => void }>;
-  }) => void;
+  openModal: (options: PluginExtensionOpenModalOptions) => void;
 };
 
 // Extension Points & Contexts
@@ -109,9 +115,12 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
 
 // Extension Points available in core Grafana
 export enum PluginExtensionPoints {
+  AlertInstanceAction = 'grafana/alerting/instance/action',
+  CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DataSourceConfig = 'grafana/datasources/config',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
+  UserProfileTab = 'grafana/user/profile/tab',
 }
 
 export type PluginExtensionPanelContext = {
@@ -143,6 +152,8 @@ export type PluginExtensionDataSourceConfigContext<JsonData extends DataSourceJs
   // (Only updates the form, it still needs to be saved by the user)
   setJsonData: (jsonData: JsonData) => void;
 };
+
+export type PluginExtensionCommandPaletteContext = {};
 
 type Dashboard = {
   uid: string;

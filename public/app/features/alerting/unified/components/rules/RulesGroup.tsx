@@ -3,13 +3,12 @@ import pluralize from 'pluralize';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { logInfo } from '@grafana/runtime';
-import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { LogMessages } from '../../Analytics';
+import { LogMessages, logInfo } from '../../Analytics';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
@@ -19,6 +18,9 @@ import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
+import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
+import { GrafanaRuleGroupExporter } from '../export/GrafanaRuleGroupExporter';
+import { decodeGrafanaNamespace } from '../expressions/util';
 
 import { ActionIcon } from './ActionIcon';
 import { EditCloudGroupModal } from './EditRuleGroupModal';
@@ -43,6 +45,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const [isEditingGroup, setIsEditingGroup] = useState(false);
   const [isDeletingGroup, setIsDeletingGroup] = useState(false);
   const [isReorderingGroup, setIsReorderingGroup] = useState(false);
+  const [isExporting, setIsExporting] = useState<'group' | 'folder' | undefined>(undefined);
   const [isCollapsed, setIsCollapsed] = useState(!expandAll);
 
   const { canEditRules } = useRulesAccess();
@@ -123,19 +126,45 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
               target="__blank"
             />
           );
+
+          if (folder?.canAdmin) {
+            actionIcons.push(
+              <ActionIcon
+                aria-label="manage permissions"
+                key="manage-perms"
+                icon="lock"
+                tooltip="manage permissions"
+                to={baseUrl + '/permissions'}
+                target="__blank"
+              />
+            );
+          }
         }
       }
-      if (folder?.canAdmin && isListView) {
-        actionIcons.push(
-          <ActionIcon
-            aria-label="manage permissions"
-            key="manage-perms"
-            icon="lock"
-            tooltip="manage permissions"
-            to={baseUrl + '/permissions'}
-            target="__blank"
-          />
-        );
+      if (folder) {
+        if (isListView) {
+          actionIcons.push(
+            <ActionIcon
+              aria-label="export rule folder"
+              data-testid="export-folder"
+              key="export-folder"
+              icon="download-alt"
+              tooltip="Export rules folder"
+              onClick={() => setIsExporting('folder')}
+            />
+          );
+        } else if (isGroupView) {
+          actionIcons.push(
+            <ActionIcon
+              aria-label="export rule group"
+              data-testid="export-group"
+              key="export-group"
+              icon="download-alt"
+              tooltip="Export rule group"
+              onClick={() => setIsExporting('group')}
+            />
+          );
+        }
       }
     }
   } else if (canEditRules(rulesSource.name) && hasRuler(rulesSource)) {
@@ -177,9 +206,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 
   // ungrouped rules are rules that are in the "default" group name
   const groupName = isListView ? (
-    <RuleLocation namespace={namespace.name} />
+    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />
   ) : (
-    <RuleLocation namespace={namespace.name} group={group.name} />
+    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />
   );
 
   const closeEditModal = (saved = false) => {
@@ -197,7 +226,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           className={styles.collapseToggle}
           isCollapsed={isCollapsed}
           onToggle={setIsCollapsed}
-          data-testid="group-collapse-toggle"
+          data-testid={selectors.components.AlertRules.groupToggle}
         />
         <Icon name={isCollapsed ? 'folder' : 'folder-open'} />
         {isCloudRulesSource(rulesSource) && (
@@ -250,11 +279,17 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           namespace={namespace}
           group={group}
           onClose={() => closeEditModal()}
-          folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder) : undefined}
+          folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder.uid) : undefined}
+          folderUid={folderUID}
         />
       )}
       {isReorderingGroup && (
-        <ReorderCloudGroupModal group={group} namespace={namespace} onClose={() => setIsReorderingGroup(false)} />
+        <ReorderCloudGroupModal
+          group={group}
+          folderUid={folderUID}
+          namespace={namespace}
+          onClose={() => setIsReorderingGroup(false)}
+        />
       )}
       <ConfirmModal
         isOpen={isDeletingGroup}
@@ -272,6 +307,16 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         onDismiss={() => setIsDeletingGroup(false)}
         confirmText="Delete"
       />
+      {folder && isExporting === 'folder' && (
+        <GrafanaRuleFolderExporter folder={folder} onClose={() => setIsExporting(undefined)} />
+      )}
+      {folder && isExporting === 'group' && (
+        <GrafanaRuleGroupExporter
+          folderUid={folder.uid}
+          groupName={group.name}
+          onClose={() => setIsExporting(undefined)}
+        />
+      )}
     </div>
   );
 });
@@ -288,6 +333,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0;
       flex-wrap: nowrap;
       border-bottom: 1px solid ${theme.colors.border.weak};
+
       &:hover {
         background-color: ${theme.components.table.rowHoverBackground};
       }

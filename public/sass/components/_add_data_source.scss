@@ -24,16 +24,12 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  background: $panel-editor-viz-item-bg;
-  border: 1px solid transparent;
+  background: $card-background;
   border-radius: 3px;
   margin-bottom: $space-xxs;
 
   &:hover {
-    box-shadow: $panel-editor-viz-item-shadow-hover;
-    background: $panel-editor-viz-item-bg-hover;
-    border: $panel-editor-viz-item-border-hover;
-    color: $text-color-strong;
+    background: $card-background-hover;
 
     .add-data-source-item-actions {
       opacity: 1;

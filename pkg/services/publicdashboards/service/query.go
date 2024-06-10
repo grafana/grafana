@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -36,7 +37,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 		return nil, models.ErrInternalServerError.Errorf("FindAnnotations: failed to unmarshal dashboard annotations: %w", err)
 	}
 
-	anonymousUser := buildAnonymousUser(ctx, dash)
+	anonymousUser := buildAnonymousUser(ctx, dash, pd.features)
 
 	uniqueEvents := make(map[int64]models.AnnotationEvent, 0)
 	for _, anno := range annoDto.Annotations.List {
@@ -138,7 +139,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 		return nil, models.ErrPanelQueriesNotFound.Errorf("GetQueryDataResponse: failed to extract queries from panel")
 	}
 
-	anonymousUser := buildAnonymousUser(ctx, dashboard)
+	anonymousUser := buildAnonymousUser(ctx, dashboard, pd.features)
 	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipDSCache, metricReq)
 
 	reqDatasources := metricReq.GetUniqueDatasourceTypes()
@@ -180,7 +181,7 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(dashboard *dashboards.D
 }
 
 // buildAnonymousUser creates a user with permissions to read from all datasources used in the dashboard
-func buildAnonymousUser(ctx context.Context, dashboard *dashboards.Dashboard) *user.SignedInUser {
+func buildAnonymousUser(ctx context.Context, dashboard *dashboards.Dashboard, features featuremgmt.FeatureToggles) *user.SignedInUser {
 	datasourceUids := getUniqueDashboardDatasourceUids(dashboard.Data)
 
 	// Create a user with blank permissions
@@ -204,8 +205,12 @@ func buildAnonymousUser(ctx context.Context, dashboard *dashboards.Dashboard) *u
 	permissions := make(map[string][]string)
 	permissions[datasources.ActionQuery] = queryScopes
 	permissions[datasources.ActionRead] = readScopes
-	permissions[accesscontrol.ActionAnnotationsRead] = annotationScopes
 	permissions[dashboards.ActionDashboardsRead] = dashboardScopes
+	permissions[accesscontrol.ActionAnnotationsRead] = annotationScopes
+
+	if features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
+		permissions[accesscontrol.ActionAnnotationsRead] = dashboardScopes
+	}
 
 	anonymousUser.Permissions[dashboard.OrgID] = permissions
 
@@ -244,8 +249,8 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 	return datasourceUids
 }
 
-func getFlattenedPanels(dashboard *simplejson.Json) []interface{} {
-	var flatPanels []interface{}
+func getFlattenedPanels(dashboard *simplejson.Json) []any {
+	var flatPanels []any
 	for _, panelObj := range dashboard.Get("panels").MustArray() {
 		panel := simplejson.NewFromAny(panelObj)
 		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
@@ -269,7 +274,7 @@ func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.J
 	return result
 }
 
-func extractQueriesFromPanels(panels []interface{}, result map[int64][]*simplejson.Json) {
+func extractQueriesFromPanels(panels []any, result map[int64][]*simplejson.Json) {
 	for _, panelObj := range panels {
 		panel := simplejson.NewFromAny(panelObj)
 
@@ -299,7 +304,7 @@ func extractQueriesFromPanels(panels []interface{}, result map[int64][]*simplejs
 			// if query target has no datasource, set it to have the datasource on the panel
 			if _, ok := query.CheckGet("datasource"); !ok {
 				uid := getDataSourceUidFromJson(panel)
-				datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
+				datasource := map[string]any{"type": "public-ds", "uid": uid}
 				query.Set("datasource", datasource)
 			}
 			panelQueries = append(panelQueries, query)
@@ -338,6 +343,27 @@ func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 			if frames[i].Meta != nil {
 				frames[i].Meta.ExecutedQueryString = ""
 			}
+		}
+	}
+}
+
+// sanitizeData removes the query expressions from the dashboard data
+func sanitizeData(data *simplejson.Json) {
+	for _, panelObj := range data.Get("panels").MustArray() {
+		panel := simplejson.NewFromAny(panelObj)
+
+		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
+		if panel.Get("type").MustString() == "row" && panel.Get("collapsed").MustBool() {
+			// recursive call to get queries from panels inside a row
+			sanitizeData(panel)
+			continue
+		}
+
+		for _, targetObj := range panel.Get("targets").MustArray() {
+			target := simplejson.NewFromAny(targetObj)
+			target.Del("expr")
+			target.Del("query")
+			target.Del("rawSql")
 		}
 	}
 }

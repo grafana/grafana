@@ -8,10 +8,11 @@ export type { ThemeShadows } from './createShadows';
 export type { ThemeShape } from './createShape';
 export type { ThemeTypography, ThemeTypographyVariant, ThemeTypographyVariantTypes } from './createTypography';
 export type { ThemeTransitions } from './createTransitions';
-export type { ThemeSpacing } from './createSpacing';
+export type { ThemeSpacing, ThemeSpacingTokens } from './createSpacing';
 export type { ThemeZIndices } from './zIndex';
 export type { ThemeVisualizationColors, ThemeVizColor, ThemeVizHue } from './createVisualizationColors';
 
 /** Exporting the module like this to be able to generate docs properly. */
 import * as colorManipulator from './colorManipulator';
 export { colorManipulator };
+export { ThemeContext } from './context';

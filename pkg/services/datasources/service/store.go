@@ -107,12 +107,21 @@ func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources
 		return nil, fmt.Errorf("datasource type cannot be empty")
 	}
 
+	typeQuery := "type=?"
+	args := []interface{}{query.Type}
+	for _, alias := range query.AliasIDs {
+		typeQuery += " OR type=?"
+		args = append(args, alias)
+	}
+	typeQuery = "(" + typeQuery + ")"
+
 	dataSources := make([]*datasources.DataSource, 0)
 	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if query.OrgID > 0 {
-			return sess.Where("type=? AND org_id=?", query.Type, query.OrgID).Asc("id").Find(&dataSources)
+			args = append([]interface{}{query.OrgID}, args...)
+			return sess.Where("org_id=? AND "+typeQuery, args...).Asc("id").Find(&dataSources)
 		}
-		return sess.Where("type=?", query.Type).Asc("id").Find(&dataSources)
+		return sess.Where(typeQuery, args...).Asc("id").Find(&dataSources)
 	})
 }
 
@@ -165,7 +174,7 @@ func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 		}
 
 		// Publish data source deletion event
-		if cmd.DeletedDatasourcesCount > 0 {
+		if cmd.DeletedDatasourcesCount > 0 && !cmd.SkipPublish {
 			sess.PublishAfterCommit(&events.DataSourceDeleted{
 				Timestamp: time.Now(),
 				Name:      ds.Name,
@@ -244,8 +253,8 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 				return fmt.Errorf("failed to generate UID for datasource %q: %w", cmd.Name, err)
 			}
 			cmd.UID = uid
-		} else if !util.IsValidShortUID(cmd.UID) {
-			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name)
+		} else if err := util.ValidateUID(cmd.UID); err != nil {
+			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, err)
 		}
 
 		ds = &datasources.DataSource{
@@ -379,8 +388,10 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			}
 		}
 
-		if !util.IsValidShortUID(cmd.UID) {
-			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name)
+		if cmd.UID != "" {
+			if err := util.ValidateUID(cmd.UID); err != nil {
+				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, err)
+			}
 		}
 
 		return err
@@ -406,11 +417,11 @@ func generateNewDatasourceUid(sess *db.Session, orgId int64) (string, error) {
 
 var generateNewUid func() string = util.GenerateShortUID
 
-func logDeprecatedInvalidDsUid(logger log.Logger, uid, name string) {
+func logDeprecatedInvalidDsUid(logger log.Logger, uid string, name string, err error) {
 	logger.Warn(
 		"Invalid datasource uid. The use of invalid uids is deprecated and this operation will fail in a future "+
 			"version of Grafana. A valid uid is a combination of a-z, A-Z, 0-9 (alphanumeric), - (dash) and _ "+
 			"(underscore) characters, maximum length 40",
-		"uid", uid, "name", name,
+		"uid", uid, "name", name, "error", err,
 	)
 }

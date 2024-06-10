@@ -1,4 +1,4 @@
-import memoizeOne from 'memoize-one';
+import memoize from 'micro-memoize';
 
 /**
  * @public
@@ -9,5 +9,5 @@ import memoizeOne from 'memoize-one';
 export function stylesFactory<ResultFn extends (this: any, ...newArgs: any[]) => ReturnType<ResultFn>>(
   stylesCreator: ResultFn
 ) {
-  return memoizeOne(stylesCreator);
+  return memoize(stylesCreator);
 }

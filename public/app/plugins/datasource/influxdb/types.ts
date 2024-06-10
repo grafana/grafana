@@ -5,6 +5,7 @@ export const DEFAULT_POLICY = 'default';
 export enum InfluxVersion {
   InfluxQL = 'InfluxQL',
   Flux = 'Flux',
+  SQL = 'SQL',
 }
 
 export interface InfluxOptions extends DataSourceJsonData {
@@ -19,6 +20,10 @@ export interface InfluxOptions extends DataSourceJsonData {
   organization?: string;
   defaultBucket?: string;
   maxSeries?: number;
+
+  // With SQL
+  metadata?: Array<Record<string, string>>;
+  insecureGrpc?: boolean;
 }
 
 /**

@@ -81,32 +81,33 @@ var ArtifactConfigs = []buildArtifact{
 		Arch:       "arm64",
 		urlPostfix: ".linux-arm64.tar.gz",
 	},
-	{
-		Os:         debOS,
-		Arch:       "armv7",
-		urlPostfix: "_armhf.deb",
-	},
-	{
-		Os:             debOS,
-		Arch:           "armv6",
-		packagePostfix: "-rpi",
-		urlPostfix:     "_armhf.deb",
-	},
-	{
-		Os:         rhelOS,
-		Arch:       "armv7",
-		urlPostfix: ".armhfp.rpm",
-	},
-	{
-		Os:         "linux",
-		Arch:       "armv6",
-		urlPostfix: ".linux-armv6.tar.gz",
-	},
-	{
-		Os:         "linux",
-		Arch:       "armv7",
-		urlPostfix: ".linux-armv7.tar.gz",
-	},
+	// https://github.com/golang/go/issues/58425 disabling arm builds until go issue is resolved
+	// {
+	// 	Os:         debOS,
+	// 	Arch:       "armv7",
+	// 	urlPostfix: "_armhf.deb",
+	// },
+	// {
+	// 	Os:             debOS,
+	// 	Arch:           "armv6",
+	// 	packagePostfix: "-rpi",
+	// 	urlPostfix:     "_armhf.deb",
+	// },
+	// {
+	// 	Os:         rhelOS,
+	// 	Arch:       "armv7",
+	// 	urlPostfix: ".armhfp.rpm",
+	// },
+	// {
+	// 	Os:         "linux",
+	// 	Arch:       "armv6",
+	// 	urlPostfix: ".linux-armv6.tar.gz",
+	// },
+	// {
+	// 	Os:         "linux",
+	// 	Arch:       "armv7",
+	// 	urlPostfix: ".linux-armv7.tar.gz",
+	// },
 	{
 		Os:         "darwin",
 		Arch:       "amd64",

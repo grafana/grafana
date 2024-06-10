@@ -98,7 +98,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   wrapper: css`
     width: auto;
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
   `,
   pagination: css`
     display: flex;

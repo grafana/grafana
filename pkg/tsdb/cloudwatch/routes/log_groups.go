@@ -7,7 +7,7 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
@@ -24,7 +24,7 @@ func LogGroupsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqC
 		return nil, models.NewHttpError("newLogGroupsService error", http.StatusInternalServerError, err)
 	}
 
-	logGroups, err := service.GetLogGroups(request)
+	logGroups, err := service.GetLogGroupsWithContext(ctx, request)
 	if err != nil {
 		return nil, models.NewHttpError("GetLogGroups error", http.StatusInternalServerError, err)
 	}
@@ -46,5 +46,5 @@ var newLogGroupsService = func(ctx context.Context, pluginCtx backend.PluginCont
 		return nil, err
 	}
 
-	return services.NewLogGroupsService(reqCtx.LogsAPIProvider, reqCtx.Features.IsEnabled(featuremgmt.FlagCloudWatchCrossAccountQuerying)), nil
+	return services.NewLogGroupsService(reqCtx.LogsAPIProvider, features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying)), nil
 }

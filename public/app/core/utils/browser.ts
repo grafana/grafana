@@ -1,6 +1,6 @@
 /**
  * Check to see if browser is not supported by Grafana
- * This function is copied to index-template.html but is here so we can write tests
+ * This function is copied to index.html but is here so we can write tests
  *  */
 export function checkBrowserCompatibility() {
   const isIE = navigator.userAgent.indexOf('MSIE') > -1;
@@ -39,5 +39,5 @@ export function userAgentIsApple() {
 }
 
 export function getModKey() {
-  return userAgentIsApple() ? 'cmd' : 'ctrl';
+  return userAgentIsApple() ? '⌘' : 'ctrl';
 }

@@ -4,7 +4,7 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     PluginTSTypesJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
@@ -162,7 +162,11 @@ export const defaultAzureMetricQuery: Partial<AzureMetricQuery> = {
  */
 export interface AzureLogsQuery {
   /**
-   * If set to true the intersection of time ranges specified in the query and Grafana will be used. Otherwise the query time ranges will be used. Defaults to false
+   * If set to true the dashboard time range will be used as a filter for the query. Otherwise the query time ranges will be used. Defaults to false.
+   */
+  dashboardTime?: boolean;
+  /**
+   * @deprecated Use dashboardTime instead
    */
   intersectTime?: boolean;
   /**
@@ -182,7 +186,11 @@ export interface AzureLogsQuery {
    */
   resultFormat?: ResultFormat;
   /**
-   * Workspace ID. This was removed in Grafana 8, but remains for backwards compat
+   * If dashboardTime is set to true this value dictates which column the time filter will be applied to. Defaults to the first tables timeSpan column, the first datetime column found, or TimeGenerated
+   */
+  timeColumn?: string;
+  /**
+   * Workspace ID. This was removed in Grafana 8, but remains for backwards compat.
    */
   workspace?: string;
 }
@@ -247,6 +255,7 @@ export const defaultAzureTracesFilter: Partial<AzureTracesFilter> = {
 };
 
 export enum ResultFormat {
+  Logs = 'logs',
   Table = 'table',
   TimeSeries = 'time_series',
   Trace = 'trace',
@@ -363,4 +372,4 @@ export interface WorkspacesQuery extends BaseGrafanaTemplateVariableQuery {
 
 export type GrafanaTemplateVariableQuery = (AppInsightsMetricNameQuery | AppInsightsGroupByQuery | SubscriptionsQuery | ResourceGroupsQuery | ResourceNamesQuery | MetricNamespaceQuery | MetricDefinitionsQuery | MetricNamesQuery | WorkspacesQuery | UnknownQuery);
 
-export interface AzureMonitor {}
+export interface AzureMonitorDataQuery {}

@@ -1,25 +1,24 @@
 import { css, cx } from '@emotion/css';
-import { flattenDeep, compact } from 'lodash';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { FieldArrayMethodProps, useFieldArray, useFormContext } from 'react-hook-form';
+import { useFieldArray, UseFieldArrayAppend, useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Field, InlineLabel, Label, useStyles2, Tooltip, Icon, Input, LoadingPlaceholder } from '@grafana/ui';
+import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
-import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
 import AlertLabelDropdown from '../AlertLabelDropdown';
 
+import { NeedHelpInfo } from './NeedHelpInfo';
+
 interface Props {
   className?: string;
   dataSourceName?: string | null;
 }
 
-const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsByKey: Record<string, string[]> } => {
+const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsByKey: Record<string, Set<string>> } => {
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -27,33 +26,45 @@ const useGetCustomLabels = (dataSourceName: string): { loading: boolean; labelsB
   }, [dispatch, dataSourceName]);
 
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-
   const rulerRequest = rulerRuleRequests[dataSourceName];
 
-  const result = rulerRequest?.result || {};
+  const labelsByKeyResult = useMemo<Record<string, Set<string>>>(() => {
+    const labelsByKey: Record<string, Set<string>> = {};
 
-  //store all labels in a flat array and remove empty values
-  const labels = compact(
-    flattenDeep(
-      Object.keys(result).map((ruleGroupKey) =>
-        result[ruleGroupKey].map((ruleItem: RulerRuleGroupDTO) => ruleItem.rules.map((item) => item.labels))
-      )
-    )
-  );
+    const rulerRulesConfig = rulerRequest?.result;
+    if (!rulerRulesConfig) {
+      return labelsByKey;
+    }
 
-  const labelsByKey: Record<string, string[]> = {};
+    const allRules = Object.values(rulerRulesConfig)
+      .flatMap((groups) => groups)
+      .flatMap((group) => group.rules);
 
-  labels.forEach((label: Record<string, string>) => {
-    Object.entries(label).forEach(([key, value]) => {
-      labelsByKey[key] = [...new Set([...(labelsByKey[key] || []), value])];
+    allRules.forEach((rule) => {
+      if (rule.labels) {
+        Object.entries(rule.labels).forEach(([key, value]) => {
+          if (!value) {
+            return;
+          }
+
+          const labelEntry = labelsByKey[key];
+          if (labelEntry) {
+            labelEntry.add(value);
+          } else {
+            labelsByKey[key] = new Set([value]);
+          }
+        });
+      }
     });
-  });
 
-  return { loading: rulerRequest?.loading, labelsByKey };
+    return labelsByKey;
+  }, [rulerRequest]);
+
+  return { loading: rulerRequest?.loading, labelsByKey: labelsByKeyResult };
 };
 
-function mapLabelsToOptions(items: string[] = []): Array<SelectableValue<string>> {
-  return items.map((item) => ({ label: item, value: item }));
+function mapLabelsToOptions(items: Iterable<string> = []): Array<SelectableValue<string>> {
+  return Array.from(items, (item) => ({ label: item, value: item }));
 }
 
 const RemoveButton: FC<{
@@ -74,10 +85,7 @@ const RemoveButton: FC<{
 );
 
 const AddButton: FC<{
-  append: (
-    value: Partial<{ key: string; value: string }> | Array<Partial<{ key: string; value: string }>>,
-    options?: FieldArrayMethodProps | undefined
-  ) => void;
+  append: UseFieldArrayAppend<RuleFormValues, 'labels'>;
   className: string;
 }> = ({ append, className }) => (
   <Button
@@ -96,11 +104,9 @@ const AddButton: FC<{
 const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName }) => {
   const styles = useStyles2(getStyles);
   const {
-    register,
     control,
     watch,
     formState: { errors },
-    setValue,
   } = useFormContext<RuleFormValues>();
 
   const labels = watch('labels');
@@ -129,7 +135,7 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
     <>
       {loading && <LoadingPlaceholder text="Loading" />}
       {!loading && (
-        <>
+        <Stack direction="column" gap={0.5}>
           {fields.map((field, index) => {
             return (
               <div key={field.id}>
@@ -140,17 +146,24 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
                     error={errors.labels?.[index]?.key?.message}
                     data-testid={`label-key-${index}`}
                   >
-                    <AlertLabelDropdown
-                      {...register(`labels.${index}.key`, {
-                        required: { value: Boolean(labels[index]?.value), message: 'Required.' },
-                      })}
-                      defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
-                      options={keys}
-                      onChange={(newValue: SelectableValue) => {
-                        setValue(`labels.${index}.key`, newValue.value);
-                        setSelectedKey(newValue.value);
+                    <Controller
+                      name={`labels.${index}.key`}
+                      control={control}
+                      rules={{ required: Boolean(labels[index]?.value) ? 'Required.' : false }}
+                      render={({ field: { onChange, ref, ...rest } }) => {
+                        return (
+                          <AlertLabelDropdown
+                            {...rest}
+                            defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
+                            options={keys}
+                            onChange={(newValue: SelectableValue) => {
+                              onChange(newValue.value);
+                              setSelectedKey(newValue.value);
+                            }}
+                            type="key"
+                          />
+                        );
                       }}
-                      type="key"
                     />
                   </Field>
                   <InlineLabel className={styles.equalSign}>=</InlineLabel>
@@ -160,19 +173,26 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
                     error={errors.labels?.[index]?.value?.message}
                     data-testid={`label-value-${index}`}
                   >
-                    <AlertLabelDropdown
-                      {...register(`labels.${index}.value`, {
-                        required: { value: Boolean(labels[index]?.key), message: 'Required.' },
-                      })}
-                      defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
-                      options={values}
-                      onChange={(newValue: SelectableValue) => {
-                        setValue(`labels.${index}.value`, newValue.value);
+                    <Controller
+                      control={control}
+                      name={`labels.${index}.value`}
+                      rules={{ required: Boolean(labels[index]?.value) ? 'Required.' : false }}
+                      render={({ field: { onChange, ref, ...rest } }) => {
+                        return (
+                          <AlertLabelDropdown
+                            {...rest}
+                            defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
+                            options={values}
+                            onChange={(newValue: SelectableValue) => {
+                              onChange(newValue.value);
+                            }}
+                            onOpenMenu={() => {
+                              setSelectedKey(labels[index].key);
+                            }}
+                            type="value"
+                          />
+                        );
                       }}
-                      onOpenMenu={() => {
-                        setSelectedKey(labels[index].key);
-                      }}
-                      type="value"
                     />
                   </Field>
 
@@ -182,7 +202,7 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
             );
           })}
           <AddButton className={styles.addLabelButton} append={append} />
-        </>
+        </Stack>
       )}
     </>
   );
@@ -245,84 +265,74 @@ const LabelsWithoutSuggestions: FC = () => {
   );
 };
 
-const LabelsField: FC<Props> = ({ className, dataSourceName }) => {
+const LabelsField: FC<Props> = ({ dataSourceName }) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={cx(className, styles.wrapper)}>
-      <Label>
-        <Stack gap={0.5}>
-          <span>Custom Labels</span>
-          <Tooltip
-            content={
-              <div>
-                The dropdown only displays labels that you have previously used for alerts. Select a label from the
-                dropdown or type in a new one.
-              </div>
-            }
-          >
-            <Icon className={styles.icon} name="info-circle" size="sm" />
-          </Tooltip>
+    <div>
+      <Stack direction="column" gap={1}>
+        <Text element="h5">Labels</Text>
+        <Stack direction={'row'} gap={1}>
+          <Text variant="bodySmall" color="secondary">
+            Add labels to your rule for searching, silencing, or routing to a notification policy.
+          </Text>
+          <NeedHelpInfo
+            contentText="The dropdown only displays labels that you have previously used for alerts.
+            Select a label from the options below or type in a new one."
+            title="Labels"
+          />
         </Stack>
-      </Label>
-      <>
-        <div className={styles.flexRow}>
-          <InlineLabel width={18}>Labels</InlineLabel>
-          <div className={styles.flexColumn}>
-            {dataSourceName && <LabelsWithSuggestions dataSourceName={dataSourceName} />}
-            {!dataSourceName && <LabelsWithoutSuggestions />}
-          </div>
-        </div>
-      </>
+      </Stack>
+      <div className={styles.labelsContainer}></div>
+      {dataSourceName ? <LabelsWithSuggestions dataSourceName={dataSourceName} /> : <LabelsWithoutSuggestions />}
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    icon: css`
-      margin-right: ${theme.spacing(0.5)};
-    `,
-    wrapper: css`
-      margin-bottom: ${theme.spacing(4)};
-    `,
-    flexColumn: css`
-      display: flex;
-      flex-direction: column;
-    `,
-    flexRow: css`
-      display: flex;
-      flex-direction: row;
-      justify-content: flex-start;
-
-      & + button {
-        margin-left: ${theme.spacing(0.5)};
-      }
-    `,
-    deleteLabelButton: css`
-      margin-left: ${theme.spacing(0.5)};
-      align-self: flex-start;
-    `,
-    addLabelButton: css`
-      flex-grow: 0;
-      align-self: flex-start;
-    `,
-    centerAlignRow: css`
-      align-items: baseline;
-    `,
-    equalSign: css`
-      align-self: flex-start;
-      width: 28px;
-      justify-content: center;
-      margin-left: ${theme.spacing(0.5)};
-    `,
-    labelInput: css`
-      width: 175px;
-      margin-bottom: ${theme.spacing(1)};
-      & + & {
-        margin-left: ${theme.spacing(1)};
-      }
-    `,
+    icon: css({
+      marginRight: theme.spacing(0.5),
+    }),
+    flexColumn: css({
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    flexRow: css({
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      '& + button': {
+        marginLeft: theme.spacing(0.5),
+      },
+    }),
+    deleteLabelButton: css({
+      marginLeft: theme.spacing(0.5),
+      alignSelf: 'flex-start',
+    }),
+    addLabelButton: css({
+      flexGrow: 0,
+      alignSelf: 'flex-start',
+    }),
+    centerAlignRow: css({
+      alignItems: 'baseline',
+    }),
+    equalSign: css({
+      alignSelf: 'flex-start',
+      width: '28px',
+      justifyContent: 'center',
+      marginLeft: theme.spacing(0.5),
+    }),
+    labelInput: css({
+      width: '175px',
+      marginBottom: `-${theme.spacing(1)}`,
+      '& + &': {
+        marginLeft: theme.spacing(1),
+      },
+    }),
+    labelsContainer: css({
+      marginBottom: theme.spacing(3),
+    }),
   };
 };
 

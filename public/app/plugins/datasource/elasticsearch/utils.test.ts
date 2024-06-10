@@ -1,5 +1,5 @@
 import { ElasticsearchQuery } from './types';
-import { isTimeSeriesQuery, removeEmpty } from './utils';
+import { flattenObject, isTimeSeriesQuery, removeEmpty } from './utils';
 
 describe('removeEmpty', () => {
   it('Should remove all empty', () => {
@@ -77,5 +77,41 @@ describe('isTimeSeriesQuery', () => {
     };
 
     expect(isTimeSeriesQuery(query)).toBe(true);
+  });
+});
+
+describe('flattenObject', () => {
+  it('flattens objects of arbitrary depth', () => {
+    const nestedObject = {
+      a: {
+        b: {
+          c: 1,
+          d: {
+            e: 2,
+            f: 3,
+          },
+        },
+        g: 4,
+      },
+      h: 5,
+    };
+
+    expect(flattenObject(nestedObject)).toEqual({
+      'a.b.c': 1,
+      'a.b.d.e': 2,
+      'a.b.d.f': 3,
+      'a.g': 4,
+      h: 5,
+    });
+  });
+
+  it('does not alter other objects', () => {
+    const nestedObject = {
+      a: 'uno',
+      b: 'dos',
+      c: 3,
+    };
+
+    expect(flattenObject(nestedObject)).toEqual(nestedObject);
   });
 });

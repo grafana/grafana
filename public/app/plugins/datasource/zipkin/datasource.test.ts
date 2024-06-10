@@ -2,13 +2,14 @@ import { lastValueFrom, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import { DataQueryRequest, DataSourceInstanceSettings, DataSourcePluginMeta, FieldType } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { BackendSrv, TemplateSrv } from '@grafana/runtime';
 
 import { ZipkinDatasource } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import { ZipkinQuery, ZipkinSpan } from './types';
 import { traceFrameFields, zipkinResponse } from './utils/testData';
+
+export const backendSrv = { fetch: jest.fn() } as unknown as BackendSrv;
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

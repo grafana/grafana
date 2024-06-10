@@ -84,13 +84,7 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
   const modalTitle = !token ? 'Add service account token' : 'Service account token created';
 
   return (
-    <Modal
-      isOpen={isOpen}
-      title={modalTitle}
-      onDismiss={onCloseInternal}
-      className={styles.modal}
-      contentClassName={styles.modalContent}
-    >
+    <Modal isOpen={isOpen} title={modalTitle} onDismiss={onCloseInternal} className={styles.modal}>
       {!token ? (
         <div>
           <Field
@@ -176,17 +170,14 @@ const getSecondsToLive = (date: Date | string) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    modal: css`
-      width: 550px;
-    `,
-    modalContent: css`
-      overflow: visible;
-    `,
-    modalTokenRow: css`
-      display: flex;
-    `,
-    modalCopyToClipboardButton: css`
-      margin-left: ${theme.spacing(0.5)};
-    `,
+    modal: css({
+      width: '550px',
+    }),
+    modalTokenRow: css({
+      display: 'flex',
+    }),
+    modalCopyToClipboardButton: css({
+      marginLeft: theme.spacing(0.5),
+    }),
   };
 };

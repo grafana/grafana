@@ -68,7 +68,8 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 1`] = `
       "y": false,
     },
     "focus": {
-      "prox": 30,
+      "dist": [Function],
+      "prox": 1000,
     },
     "points": {
       "bbox": [Function],
@@ -223,7 +224,8 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 2`] = `
       "y": false,
     },
     "focus": {
-      "prox": 30,
+      "dist": [Function],
+      "prox": 1000,
     },
     "points": {
       "bbox": [Function],
@@ -378,7 +380,8 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 3`] = `
       "y": false,
     },
     "focus": {
-      "prox": 30,
+      "dist": [Function],
+      "prox": 1000,
     },
     "points": {
       "bbox": [Function],
@@ -533,7 +536,8 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 1`] = `
       "y": false,
     },
     "focus": {
-      "prox": 30,
+      "dist": [Function],
+      "prox": 1000,
     },
     "points": {
       "bbox": [Function],
@@ -688,7 +692,8 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 2`] = `
       "y": false,
     },
     "focus": {
-      "prox": 30,
+      "dist": [Function],
+      "prox": 1000,
     },
     "points": {
       "bbox": [Function],
@@ -843,7 +848,8 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 3`] = `
       "y": false,
     },
     "focus": {
-      "prox": 30,
+      "dist": [Function],
+      "prox": 1000,
     },
     "points": {
       "bbox": [Function],
@@ -998,7 +1004,8 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 1`] = `
       "y": false,
     },
     "focus": {
-      "prox": 30,
+      "dist": [Function],
+      "prox": 1000,
     },
     "points": {
       "bbox": [Function],
@@ -1153,7 +1160,8 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 2`] = `
       "y": false,
     },
     "focus": {
-      "prox": 30,
+      "dist": [Function],
+      "prox": 1000,
     },
     "points": {
       "bbox": [Function],

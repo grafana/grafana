@@ -20,6 +20,7 @@ export interface RulesFilter {
   dataSourceNames: string[];
   labels: string[];
   ruleHealth?: RuleHealth;
+  dashboardUid?: string;
 }
 
 const filterSupportedTerms: FilterSupportedTerm[] = [
@@ -31,6 +32,7 @@ const filterSupportedTerms: FilterSupportedTerm[] = [
   FilterSupportedTerm.state,
   FilterSupportedTerm.type,
   FilterSupportedTerm.health,
+  FilterSupportedTerm.dashboard,
 ];
 
 export enum RuleHealth {
@@ -53,6 +55,7 @@ export function getSearchFilterFromQuery(query: string): RulesFilter {
     [terms.StateToken]: (value) => (filter.ruleState = parseStateToken(value)),
     [terms.TypeToken]: (value) => (isPromRuleType(value) ? (filter.ruleType = value) : undefined),
     [terms.HealthToken]: (value) => (filter.ruleHealth = getRuleHealth(value)),
+    [terms.DashboardToken]: (value) => (filter.dashboardUid = value),
     [terms.FreeFormExpression]: (value) => filter.freeFormWords.push(value),
   };
 
@@ -91,6 +94,9 @@ export function applySearchFilterToQuery(query: string, filter: RulesFilter): st
   }
   if (filter.labels) {
     filterStateArray.push(...filter.labels.map((l) => ({ type: terms.LabelToken, value: l })));
+  }
+  if (filter.dashboardUid) {
+    filterStateArray.push({ type: terms.DashboardToken, value: filter.dashboardUid });
   }
   if (filter.freeFormWords) {
     filterStateArray.push(...filter.freeFormWords.map((word) => ({ type: terms.FreeFormExpression, value: word })));

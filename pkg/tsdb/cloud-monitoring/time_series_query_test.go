@@ -6,12 +6,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	gdata "github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTimeSeriesQuery(t *testing.T) {
+	service := &Service{}
 	t.Run("multiple point descriptor is returned", func(t *testing.T) {
 		data, err := loadTestFile("./test-data/8-series-response-mql-multiple-point-descriptors.json")
 		require.NoError(t, err)
@@ -23,7 +25,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 		t.Run("and alias template is not specified", func(t *testing.T) {
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringTimeSeriesQuery{
-				parameters: &timeSeriesQuery{
+				parameters: &dataquery.TimeSeriesQuery{
 					ProjectName: "test-proj",
 					Query:       "test-query",
 				},
@@ -32,7 +34,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 					To:   fromStart.Add(34 * time.Minute),
 				},
 			}
-			err = query.parseResponse(res, data, "")
+			err = query.parseResponse(res, data, "", service.logger)
 			frames := res.Frames
 			assert.Equal(t, "grafana-prod asia-northeast1-c 6724404429462225363 200", frames[0].Fields[1].Name)
 			assert.Equal(t, 843302441.9, frames[0].Fields[1].At(0))
@@ -41,7 +43,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 		t.Run("and alias template is specified", func(t *testing.T) {
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringTimeSeriesQuery{
-				parameters: &timeSeriesQuery{
+				parameters: &dataquery.TimeSeriesQuery{
 					ProjectName: "test-proj",
 					Query:       "test-query",
 				},
@@ -51,7 +53,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 					To:   fromStart.Add(34 * time.Minute),
 				},
 			}
-			err = query.parseResponse(res, data, "")
+			err = query.parseResponse(res, data, "", service.logger)
 			frames := res.Frames
 			assert.Equal(t, "test-proj - asia-northeast1-c - 6724404429462225363 - 200", frames[0].Fields[1].Name)
 		})
@@ -68,7 +70,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringTimeSeriesQuery{
-				parameters: &timeSeriesQuery{
+				parameters: &dataquery.TimeSeriesQuery{
 					ProjectName: "test-proj",
 					Query:       "test-query",
 				},
@@ -78,7 +80,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 					To:   fromStart.Add(34 * time.Minute),
 				},
 			}
-			err = query.parseResponse(res, data, "")
+			err = query.parseResponse(res, data, "", service.logger)
 			require.NoError(t, err)
 			frames := res.Frames
 			assert.Equal(t, 1, len(res.Frames))
@@ -93,7 +95,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 		res := &backend.DataResponse{}
 		query := &cloudMonitoringTimeSeriesQuery{
-			parameters: &timeSeriesQuery{
+			parameters: &dataquery.TimeSeriesQuery{
 				ProjectName: "test-proj",
 				Query:       "test-query",
 			},
@@ -102,10 +104,10 @@ func TestTimeSeriesQuery(t *testing.T) {
 				To:   fromStart.Add(34 * time.Minute),
 			},
 		}
-		err = query.parseResponse(res, data, "")
+		err = query.parseResponse(res, data, "", service.logger)
 		require.NoError(t, err)
 		frames := res.Frames
-		custom, ok := frames[0].Meta.Custom.(map[string]interface{})
+		custom, ok := frames[0].Meta.Custom.(map[string]any)
 		require.True(t, ok)
 		labels, ok := custom["labels"].(gdata.Labels)
 		require.True(t, ok)
@@ -120,17 +122,17 @@ func TestTimeSeriesQuery(t *testing.T) {
 		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 		res := &backend.DataResponse{}
 		query := &cloudMonitoringTimeSeriesQuery{
-			parameters: &timeSeriesQuery{
+			parameters: &dataquery.TimeSeriesQuery{
 				ProjectName: "test-proj",
 				Query:       "test-query",
-				GraphPeriod: "60s",
+				GraphPeriod: strPtr("60s"),
 			},
 			timeRange: backend.TimeRange{
 				From: fromStart,
 				To:   fromStart.Add(34 * time.Minute),
 			},
 		}
-		err = query.parseResponse(res, data, "")
+		err = query.parseResponse(res, data, "", service.logger)
 		require.NoError(t, err)
 		frames := res.Frames
 		timeField := frames[0].Fields[0]
@@ -138,12 +140,12 @@ func TestTimeSeriesQuery(t *testing.T) {
 	})
 
 	t.Run("appends graph_period to the query", func(t *testing.T) {
-		query := &cloudMonitoringTimeSeriesQuery{parameters: &timeSeriesQuery{}}
+		query := &cloudMonitoringTimeSeriesQuery{parameters: &dataquery.TimeSeriesQuery{}}
 		assert.Equal(t, query.appendGraphPeriod(&backend.QueryDataRequest{Queries: []backend.DataQuery{{}}}), " | graph_period 1ms")
 	})
 
 	t.Run("skips graph_period if disabled", func(t *testing.T) {
-		query := &cloudMonitoringTimeSeriesQuery{parameters: &timeSeriesQuery{GraphPeriod: "disabled"}}
+		query := &cloudMonitoringTimeSeriesQuery{parameters: &dataquery.TimeSeriesQuery{GraphPeriod: strPtr("disabled")}}
 		assert.Equal(t, query.appendGraphPeriod(&backend.QueryDataRequest{Queries: []backend.DataQuery{{}}}), "")
 	})
 }

@@ -14,7 +14,7 @@ export class VariableInput extends PureComponent<Props> {
   onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (NavigationKey[event.keyCode] && event.keyCode !== NavigationKey.select) {
       const clearOthers = event.ctrlKey || event.metaKey || event.shiftKey;
-      this.props.onNavigate(event.keyCode as NavigationKey, clearOthers);
+      this.props.onNavigate(event.keyCode, clearOthers);
       event.preventDefault();
     }
   };
@@ -34,6 +34,7 @@ export class VariableInput extends PureComponent<Props> {
             instance.setAttribute('style', `width:${Math.max(instance.width, 150)}px`);
           }
         }}
+        id={id}
         type="text"
         className="gf-form-input"
         value={value ?? ''}

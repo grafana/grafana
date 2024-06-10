@@ -1,30 +1,40 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { CoreApp, TimeZone } from '@grafana/data';
+import { CoreApp, LoadingState } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
+import { defaultTimeZone, TimeZone } from '@grafana/schema';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
+import { requestIdGenerator } from 'app/core/utils/explore';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
 import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
+import { mixedRequestId } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState, ExploreItemState } from 'app/types';
 
-import { runQueries, selectIsWaitingForData } from './state/query';
+import { GetDataOptions } from '../query/state/PanelQueryRunner';
+
+import { runQueries } from './state/query';
 
 interface DispatchProps {
   width: number;
   exploreId: string;
   timeZone: TimeZone;
   onClose: () => void;
+  isMixed: boolean;
 }
 
 type Props = DispatchProps & ConnectedProps<typeof connector>;
 
 export function ExploreQueryInspector(props: Props) {
-  const { loading, width, onClose, queryResponse, timeZone } = props;
+  const { width, onClose, queryResponse, timeZone, isMixed, exploreId } = props;
+  const [dataOptions, setDataOptions] = useState<GetDataOptions>({
+    withTransforms: false,
+    withFieldConfig: true,
+  });
   const dataFrames = queryResponse?.series || [];
   let errors = queryResponse?.errors;
   if (!errors?.length && queryResponse?.error) {
@@ -39,7 +49,7 @@ export function ExploreQueryInspector(props: Props) {
     label: 'Stats',
     value: 'stats',
     icon: 'chart-line',
-    content: <InspectStatsTab data={queryResponse!} timeZone={queryResponse?.request?.timezone as TimeZone} />,
+    content: <InspectStatsTab data={queryResponse!} timeZone={queryResponse?.request?.timezone ?? defaultTimeZone} />,
   };
 
   const jsonTab: TabConfig = {
@@ -56,10 +66,13 @@ export function ExploreQueryInspector(props: Props) {
     content: (
       <InspectDataTab
         data={dataFrames}
-        isLoading={loading}
-        options={{ withTransforms: false, withFieldConfig: false }}
+        dataName={'Explore'}
+        isLoading={queryResponse.state === LoadingState.Loading}
+        options={dataOptions}
         timeZone={timeZone}
         app={CoreApp.Explore}
+        formattedDataDescription="Matches the format in the panel"
+        onOptionsChange={setDataOptions}
       />
     ),
   };
@@ -69,7 +82,11 @@ export function ExploreQueryInspector(props: Props) {
     value: 'query',
     icon: 'info-circle',
     content: (
-      <QueryInspector data={dataFrames} onRefreshQuery={() => props.runQueries({ exploreId: props.exploreId })} />
+      <QueryInspector
+        instanceId={isMixed ? mixedRequestId(0, requestIdGenerator(exploreId)) : requestIdGenerator(exploreId)}
+        data={queryResponse}
+        onRefreshQuery={() => props.runQueries({ exploreId })}
+      />
     ),
   };
 
@@ -96,7 +113,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const { queryResponse } = item;
 
   return {
-    loading: selectIsWaitingForData(exploreId)(state),
     queryResponse,
   };
 }

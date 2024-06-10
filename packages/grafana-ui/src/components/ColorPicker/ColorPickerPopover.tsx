@@ -141,7 +141,7 @@ ColorPickerPopover.displayName = 'ColorPickerPopover';
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     colorPickerPopover: css({
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
@@ -183,7 +183,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     colorPickerPopoverTabs: css({
       display: 'flex',
       width: '100%',
-      borderRadius: `${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0 0`,
+      borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
     }),
   };
 });

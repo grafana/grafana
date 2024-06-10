@@ -20,4 +20,6 @@ export type CloudMonitoringDashboardLoadedProps = {
   slo_queries: number;
   /** number of non hidden queries of type annotation if any  */
   annotation_queries: number;
+  /** number of non hidden queries of type PromQL if any  */
+  promQL_queries: number;
 };

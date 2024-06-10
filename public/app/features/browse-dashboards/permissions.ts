@@ -1,26 +1,30 @@
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, FolderDTO } from 'app/types';
 
-function checkFolderPermission(action: AccessControlAction, fallback: boolean, folderDTO?: FolderDTO) {
-  return folderDTO
-    ? contextSrv.hasAccessInMetadata(action, folderDTO, fallback)
-    : contextSrv.hasAccess(action, fallback);
+function checkFolderPermission(action: AccessControlAction, folderDTO?: FolderDTO) {
+  return folderDTO ? contextSrv.hasPermissionInMetadata(action, folderDTO) : contextSrv.hasPermission(action);
 }
 
 export function getFolderPermissions(folderDTO?: FolderDTO) {
-  // It is possible to have edit permissions for folders and dashboards, without being able to save, hence 'canSave'
-  const canEditInFolderFallback = folderDTO ? folderDTO.canSave : contextSrv.hasEditPermissionInFolders;
-
-  const canEditInFolder = checkFolderPermission(AccessControlAction.FoldersWrite, canEditInFolderFallback, folderDTO);
-  const canCreateFolder = checkFolderPermission(AccessControlAction.FoldersCreate, contextSrv.isEditor);
-  const canCreateDashboards = checkFolderPermission(
-    AccessControlAction.DashboardsCreate,
-    canEditInFolderFallback || !!folderDTO?.canSave
+  // Can only create a folder if we have permissions and either we're at root or nestedFolders is enabled
+  const canCreateDashboards = checkFolderPermission(AccessControlAction.DashboardsCreate, folderDTO);
+  const canCreateFolders = Boolean(
+    (!folderDTO || config.featureToggles.nestedFolders) && checkFolderPermission(AccessControlAction.FoldersCreate)
   );
+  const canDeleteFolders = checkFolderPermission(AccessControlAction.FoldersDelete, folderDTO);
+  const canEditDashboards = checkFolderPermission(AccessControlAction.DashboardsWrite, folderDTO);
+  const canEditFolders = checkFolderPermission(AccessControlAction.FoldersWrite, folderDTO);
+  const canSetPermissions = checkFolderPermission(AccessControlAction.FoldersPermissionsWrite, folderDTO);
+  const canViewPermissions = checkFolderPermission(AccessControlAction.FoldersPermissionsRead, folderDTO);
 
   return {
-    canEditInFolder,
     canCreateDashboards,
-    canCreateFolder,
+    canCreateFolders,
+    canDeleteFolders,
+    canEditDashboards,
+    canEditFolders,
+    canSetPermissions,
+    canViewPermissions,
   };
 }

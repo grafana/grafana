@@ -57,6 +57,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     title: css({
       display: 'flex',
       flexDirection: 'row',
+      maxWidth: '100%',
       h1: {
         display: 'flex',
         marginBottom: 0,

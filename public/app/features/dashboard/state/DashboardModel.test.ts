@@ -1,8 +1,7 @@
 import { keys as _keys } from 'lodash';
 
 import { dateTime, TimeRange, VariableHide } from '@grafana/data';
-import { defaultVariableModel } from '@grafana/schema';
-import { contextSrv } from 'app/core/services/context_srv';
+import { Dashboard, defaultVariableModel, RowPanel } from '@grafana/schema';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
 import { variableAdapters } from '../../variables/adapters';
@@ -16,13 +15,11 @@ import { PanelModel } from '../state/PanelModel';
 import {
   createAnnotationJSONFixture,
   createDashboardModelFixture,
-  createPanelJSONFixture,
+  createPanelSaveModel,
   createVariableJSONFixture,
 } from './__fixtures__/dashboardFixtures';
 
 jest.mock('app/core/services/context_srv');
-
-const mockContextSrv = jest.mocked(contextSrv);
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -52,12 +49,35 @@ describe('DashboardModel', () => {
     });
   });
 
+  describe('when storing original dashboard data', () => {
+    let originalDashboard: Dashboard = {
+      editable: true,
+      graphTooltip: 0,
+      schemaVersion: 1,
+      timezone: '',
+      title: 'original.title',
+    };
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel(originalDashboard);
+    });
+
+    it('should be returned from getOriginalDashboard without modifications', () => {
+      expect(model.getOriginalDashboard()).toEqual(originalDashboard);
+    });
+
+    it('should return a copy of the provided object', () => {
+      expect(model.getOriginalDashboard()).not.toBe(originalDashboard);
+    });
+  });
+
   describe('when getting next panel id', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
       model = createDashboardModelFixture({
-        panels: [createPanelJSONFixture({ id: 5 })],
+        panels: [createPanelSaveModel({ id: 5 })],
       });
     });
 
@@ -72,10 +92,10 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       model = createDashboardModelFixture({
         panels: [
-          createPanelJSONFixture({ id: 6 }),
-          createPanelJSONFixture({ id: 2 }),
-          createPanelJSONFixture({}), // undefined
-          createPanelJSONFixture({ id: 2 }),
+          createPanelSaveModel({ id: 6 }),
+          createPanelSaveModel({ id: 2 }),
+          createPanelSaveModel({}), // undefined
+          createPanelSaveModel({ id: 2 }),
         ],
       });
     });
@@ -96,21 +116,15 @@ describe('DashboardModel', () => {
       expect(keys[1]).toBe('editable');
     });
 
-    it('should remove add panel panels', () => {
+    it('should have only 1 panel after adding panel to a new dashboard', () => {
       const model = createDashboardModelFixture();
       model.addPanel({
-        type: 'add-panel',
-      });
-      model.addPanel({
         type: 'graph',
-      });
-      model.addPanel({
-        type: 'add-panel',
       });
       const saveModel = model.getSaveModelClone();
       const panels = saveModel.panels;
 
-      expect(panels.length).toBe(1);
+      expect(panels!.length).toBe(1);
     });
 
     it('should save model in edit mode', () => {
@@ -120,7 +134,7 @@ describe('DashboardModel', () => {
       const panel = model.initEditPanel(model.panels[0]);
       panel.title = 'updated';
 
-      const saveModel = model.getSaveModelClone();
+      const saveModel = model.getSaveModelCloneOld();
       const savedPanel = saveModel.panels[0];
 
       expect(savedPanel.title).toBe('updated');
@@ -169,6 +183,16 @@ describe('DashboardModel', () => {
       expect(dashboard.panels[1].repeat).toBe(undefined);
       expect(dashboard.panels[1].scopedVars).toBe(undefined);
     });
+
+    it('remove panel should call destroy', () => {
+      dashboard.addPanel({ type: 'test', title: 'test' });
+      const panel = dashboard.panels[0];
+      panel.destroy = jest.fn();
+
+      dashboard.removePanel(panel);
+
+      expect(panel.destroy).toHaveBeenCalled();
+    });
   });
 
   describe('Given editable false dashboard', () => {
@@ -184,7 +208,7 @@ describe('DashboardModel', () => {
     });
 
     it('getSaveModelClone should remove meta', () => {
-      const clone = model.getSaveModelClone();
+      const clone = model.getSaveModelCloneOld();
       expect(clone.meta).toBe(undefined);
     });
   });
@@ -197,7 +221,7 @@ describe('DashboardModel', () => {
       model = createDashboardModelFixture({
         schemaVersion: 1,
         panels: [
-          createPanelJSONFixture({
+          createPanelSaveModel({
             type: 'graph',
             targets: [
               {
@@ -398,11 +422,11 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       dashboard = createDashboardModelFixture({
         panels: [
-          createPanelJSONFixture({ id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 } }),
-          createPanelJSONFixture({ id: 2, type: 'row', gridPos: { x: 0, y: 2, w: 24, h: 2 } }),
-          createPanelJSONFixture({ id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 } }),
-          createPanelJSONFixture({ id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 } }),
-          createPanelJSONFixture({ id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 24, h: 2 } }),
+          createPanelSaveModel({ id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 } }),
+          createPanelSaveModel({ id: 2, type: 'row', gridPos: { x: 0, y: 2, w: 24, h: 2 } }),
+          createPanelSaveModel({ id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 } }),
+          createPanelSaveModel({ id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 } }),
+          createPanelSaveModel({ id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 24, h: 2 } }),
         ],
       });
       dashboard.toggleRow(dashboard.panels[1]);
@@ -518,6 +542,14 @@ describe('DashboardModel', () => {
     let dashboard: DashboardModel;
 
     beforeEach(() => {
+      const panels: RowPanel['panels'] = [
+        // this whole test is about dealing with out-of-spec (or at least ambigious) data...
+        // @ts-expect-error
+        { id: 3, type: 'graph', gridPos: { w: 12, h: 2 } },
+        // @ts-expect-error
+        { id: 4, type: 'graph', gridPos: { w: 12, h: 2 } },
+      ];
+
       dashboard = createDashboardModelFixture({
         panels: [
           { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
@@ -526,13 +558,7 @@ describe('DashboardModel', () => {
             type: 'row',
             gridPos: { x: 0, y: 6, w: 24, h: 1 },
             collapsed: true,
-            panels: [
-              // this whole test is about dealing with out-of-spec (or at least ambigious) data...
-              //@ts-expect-error
-              { id: 3, type: 'graph', gridPos: { w: 12, h: 2 } },
-              //@ts-expect-error
-              { id: 4, type: 'graph', gridPos: { w: 12, h: 2 } },
-            ],
+            panels: panels,
           },
           { id: 5, type: 'row', collapsed: false, panels: [], gridPos: { x: 0, y: 7, w: 1, h: 1 } },
         ],
@@ -588,37 +614,32 @@ describe('DashboardModel', () => {
       const options = { saveTimerange: false };
       const saveModel = model.getSaveModelClone(options);
 
-      expect(saveModel.time.from).toBe('now-6h');
-      expect(saveModel.time.to).toBe('now');
+      expect(saveModel.time!.from).toBe('now-6h');
+      expect(saveModel.time!.to).toBe('now');
     });
 
     it('getSaveModelClone should return updated time when saveTimerange=true', () => {
       const options = { saveTimerange: true };
       const saveModel = model.getSaveModelClone(options);
 
-      expect(saveModel.time.from).toBe('now-3h');
-      expect(saveModel.time.to).toBe('now-1h');
-    });
-
-    it('hasTimeChanged should be false when reset original time', () => {
-      model.resetOriginalTime();
-      expect(model.hasTimeChanged()).toBeFalsy();
+      expect(saveModel.time!.from).toBe('now-3h');
+      expect(saveModel.time!.to).toBe('now-1h');
     });
 
     it('getSaveModelClone should return original time when saveTimerange=false', () => {
       const options = { saveTimerange: false };
       const saveModel = model.getSaveModelClone(options);
 
-      expect(saveModel.time.from).toBe('now-6h');
-      expect(saveModel.time.to).toBe('now');
+      expect(saveModel.time!.from).toBe('now-6h');
+      expect(saveModel.time!.to).toBe('now');
     });
 
     it('getSaveModelClone should return updated time when saveTimerange=true', () => {
       const options = { saveTimerange: true };
       const saveModel = model.getSaveModelClone(options);
 
-      expect(saveModel.time.from).toBe('now-3h');
-      expect(saveModel.time.to).toBe('now-1h');
+      expect(saveModel.time!.from).toBe('now-3h');
+      expect(saveModel.time!.to).toBe('now-1h');
     });
 
     it('getSaveModelClone should remove repeated panels and scopedVars', () => {
@@ -664,13 +685,13 @@ describe('DashboardModel', () => {
       expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
       expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
-      const saveModel = model.getSaveModelClone();
+      const saveModel = model.getSaveModelCloneOld();
       expect(saveModel.panels.length).toBe(2);
       expect(saveModel.panels[0].scopedVars).toBe(undefined);
       expect(saveModel.panels[1].scopedVars).toBe(undefined);
 
       model.collapseRows();
-      const savedModelWithCollapsedRows = model.getSaveModelClone();
+      const savedModelWithCollapsedRows = model.getSaveModelCloneOld();
       expect(savedModelWithCollapsedRows.panels[0].panels!.length).toBe(1);
     });
 
@@ -718,14 +739,14 @@ describe('DashboardModel', () => {
       expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       model.snapshot = { timestamp: new Date() };
-      const saveModel = model.getSaveModelClone();
+      const saveModel = model.getSaveModelCloneOld();
       expect(saveModel.panels.filter((x) => x.type === 'row')).toHaveLength(2);
       expect(saveModel.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
       expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
       expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       model.collapseRows();
-      const savedModelWithCollapsedRows = model.getSaveModelClone();
+      const savedModelWithCollapsedRows = model.getSaveModelCloneOld();
       expect(savedModelWithCollapsedRows.panels[0].panels!.length).toBe(2);
     });
   });
@@ -740,6 +761,8 @@ describe('DashboardModel', () => {
             {
               name: 'Server',
               type: 'query',
+              refresh: 1,
+              options: [],
               current: {
                 selected: true,
                 text: 'server_001',
@@ -750,10 +773,10 @@ describe('DashboardModel', () => {
         },
       };
       model = getDashboardModel(json);
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be false when adding a template variable', () => {
+    it('hasVariablesChanged should be false when adding a template variable', () => {
       model.templating.list.push({
         name: 'Server2',
         type: 'query',
@@ -763,24 +786,24 @@ describe('DashboardModel', () => {
           value: 'server_002',
         },
       });
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be false when removing existing template variable', () => {
+    it('hasVariablesChanged should be false when removing existing template variable', () => {
       model.templating.list = [];
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be true when changing value of template variable', () => {
+    it('hasVariablesChanged should be true when changing value of template variable', () => {
       model.templating.list[0].current.text = 'server_002';
-      expect(model.hasVariableValuesChanged()).toBeTruthy();
+      expect(model.hasVariablesChanged()).toBeTruthy();
     });
 
     it('getSaveModelClone should return original variable when saveVariables=false', () => {
       model.templating.list[0].current.text = 'server_002';
 
       const options = { saveVariables: false };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.templating.list[0].current.text).toBe('server_001');
     });
@@ -789,7 +812,7 @@ describe('DashboardModel', () => {
       model.templating.list[0].current.text = 'server_002';
 
       const options = { saveVariables: true };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.templating.list[0].current.text).toBe('server_002');
     });
@@ -805,6 +828,7 @@ describe('DashboardModel', () => {
             {
               name: 'Filter',
               type: 'adhoc',
+              refresh: 0,
               filters: [
                 {
                   key: '@hostname',
@@ -817,10 +841,10 @@ describe('DashboardModel', () => {
         },
       };
       model = getDashboardModel(json);
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be false when adding a template variable', () => {
+    it('hasVariablesChanged should be false when adding a template variable', () => {
       model.templating.list.push({
         name: 'Filter',
         type: 'adhoc',
@@ -832,34 +856,34 @@ describe('DashboardModel', () => {
           },
         ],
       });
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be false when removing existing template variable', () => {
+    it('hasVariablesChanged should be false when removing existing template variable', () => {
       model.templating.list = [];
-      expect(model.hasVariableValuesChanged()).toBeFalsy();
+      expect(model.hasVariablesChanged()).toBeFalsy();
     });
 
-    it('hasVariableValuesChanged should be true when changing value of filter', () => {
+    it('hasVariablesChanged should be true when changing value of filter', () => {
       model.templating.list[0].filters[0].value = 'server 1';
-      expect(model.hasVariableValuesChanged()).toBeTruthy();
+      expect(model.hasVariablesChanged()).toBeTruthy();
     });
 
-    it('hasVariableValuesChanged should be true when adding an additional condition', () => {
+    it('hasVariablesChanged should be true when adding an additional condition', () => {
       model.templating.list[0].filters[0].condition = 'AND';
       model.templating.list[0].filters[1] = {
         key: '@metric',
         operator: '=',
         value: 'logins.count',
       };
-      expect(model.hasVariableValuesChanged()).toBeTruthy();
+      expect(model.hasVariablesChanged()).toBeTruthy();
     });
 
     it('getSaveModelClone should return original variable when saveVariables=false', () => {
       model.templating.list[0].filters[0].value = 'server 1';
 
       const options = { saveVariables: false };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.templating.list[0].filters[0].value).toBe('server 20');
     });
@@ -868,7 +892,7 @@ describe('DashboardModel', () => {
       model.templating.list[0].filters[0].value = 'server 1';
 
       const options = { saveVariables: true };
-      const saveModel = model.getSaveModelClone(options);
+      const saveModel = model.getSaveModelCloneOld(options);
 
       expect(saveModel.templating.list[0].filters[0].value).toBe('server 1');
     });
@@ -880,8 +904,11 @@ describe('DashboardModel', () => {
     beforeEach(() => {
       model = createDashboardModelFixture({
         panels: [
+          // @ts-expect-error
           { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 }, legend: { show: true } },
+          // @ts-expect-error
           { id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 }, legend: { show: false } },
+          // @ts-expect-error
           { id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 }, legend: { show: false } },
         ],
       });
@@ -927,7 +954,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canAddAnnotations();
         expect(result).toBe(expected);
       }
@@ -960,7 +986,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canEditAnnotations();
         expect(result).toBe(expected);
       }
@@ -991,7 +1016,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canEditAnnotations('testDashboardUID');
         expect(result).toBe(expected);
       }
@@ -1024,7 +1048,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canDeleteAnnotations();
         expect(result).toBe(expected);
       }
@@ -1055,7 +1078,6 @@ describe('DashboardModel', () => {
 
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
-        mockContextSrv.accessControlEnabled.mockReturnValue(true);
         const result = dashboard.canDeleteAnnotations('testDashboardUID');
         expect(result).toBe(expected);
       }
@@ -1090,10 +1112,13 @@ describe('DashboardModel', () => {
         panels: [
           { id: 1, type: 'row', collapsed: false, panels: [], gridPos: { x: 0, y: 0, w: 24, h: 6 } },
           { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
-          { id: 3, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 }, repeatPanelId: 2 },
+          { id: 3, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
         ],
       });
+
       const panel = dashboard.getPanelById(3);
+      panel!.repeatPanelId = 1;
+
       expect(dashboard.canEditPanel(panel)).toBe(false);
     });
 

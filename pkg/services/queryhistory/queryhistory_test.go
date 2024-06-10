@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -32,6 +33,10 @@ var (
 	testDsUID1 = "NCzh67i"
 	testDsUID2 = "ABch1a1"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 type scenarioContext struct {
 	ctx           *web.Context
@@ -99,7 +104,7 @@ func testScenarioWithQueryInQueryHistory(t *testing.T, desc string, fn func(t *t
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := CreateQueryInQueryHistoryCommand{
 			DatasourceUID: testDsUID1,
-			Queries: simplejson.NewFromAny(map[string]interface{}{
+			Queries: simplejson.NewFromAny(map[string]any{
 				"expr": "test",
 			}),
 		}
@@ -118,7 +123,7 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 		sc.service.now = func() time.Time { return start }
 		command1 := CreateQueryInQueryHistoryCommand{
 			DatasourceUID: testDsUID1,
-			Queries: simplejson.NewFromAny(map[string]interface{}{
+			Queries: simplejson.NewFromAny(map[string]any{
 				"expr": "test",
 			}),
 		}
@@ -135,7 +140,7 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 		sc.service.now = func() time.Time { return start.Add(time.Second) }
 		command2 := CreateQueryInQueryHistoryCommand{
 			DatasourceUID: testDsUID1,
-			Queries: simplejson.NewFromAny(map[string]interface{}{
+			Queries: simplejson.NewFromAny(map[string]any{
 				"expr": "test2",
 			}),
 		}
@@ -148,7 +153,7 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 		sc.service.now = func() time.Time { return start.Add(2 * time.Second) }
 		command3 := CreateQueryInQueryHistoryCommand{
 			DatasourceUID: testDsUID2,
-			Queries: simplejson.NewFromAny(map[string]interface{}{
+			Queries: simplejson.NewFromAny(map[string]any{
 				"expr": "test2",
 			}),
 		}
@@ -162,7 +167,7 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 	})
 }
 
-func mockRequestBody(v interface{}) io.ReadCloser {
+func mockRequestBody(v any) io.ReadCloser {
 	b, _ := json.Marshal(v)
 	return io.NopCloser(bytes.NewReader(b))
 }

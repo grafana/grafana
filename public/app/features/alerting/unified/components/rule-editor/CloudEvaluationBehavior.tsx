@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Field, Input, InputControl, Select, useStyles2 } from '@grafana/ui';
+import { Field, Input, Select, useStyles2 } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { timeOptions } from '../../utils/time';
@@ -24,13 +24,8 @@ export const CloudEvaluationBehavior = () => {
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  // cloud recording rules do not have alert conditions
-  if (type === RuleFormType.cloudRecording) {
-    return null;
-  }
-
   return (
-    <RuleEditorSection stepNo={3} title="Set alert evaluation behavior">
+    <RuleEditorSection stepNo={3} title="Set evaluation behavior">
       <Field
         label="Pending period"
         description="Period in which an alert rule can be in breach of the condition until the alert rule fires."
@@ -42,7 +37,7 @@ export const CloudEvaluationBehavior = () => {
               width={8}
             />
           </Field>
-          <InputControl
+          <Controller
             name="forTimeUnit"
             render={({ field: { onChange, ref, ...field } }) => (
               <Select

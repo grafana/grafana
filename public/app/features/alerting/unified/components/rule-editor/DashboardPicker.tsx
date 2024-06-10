@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { noop } from 'lodash';
 import React, { CSSProperties, useCallback, useMemo, useState } from 'react';
 import { useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -17,12 +18,16 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
+import { DashboardModel } from '../../../../dashboard/state';
 import { dashboardApi } from '../../api/dashboardApi';
 
+import { useDashboardQuery } from './useDashboardQuery';
+
 export interface PanelDTO {
-  id: number;
+  id?: number;
   title?: string;
   type: string;
+  collapsed?: boolean;
 }
 
 function panelSort(a: PanelDTO, b: PanelDTO) {
@@ -40,9 +45,9 @@ function panelSort(a: PanelDTO, b: PanelDTO) {
 
 interface DashboardPickerProps {
   isOpen: boolean;
-  dashboardUid?: string | undefined;
-  panelId?: string | undefined;
-  onChange: (dashboardUid: string, panelId: string) => void;
+  dashboardUid?: string;
+  panelId?: number;
+  onChange: (dashboardUid: string, panelId: number) => void;
   onDismiss: () => void;
 }
 
@@ -56,28 +61,28 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   const [debouncedDashboardFilter, setDebouncedDashboardFilter] = useState('');
 
   const [panelFilter, setPanelFilter] = useState('');
-  const { useSearchQuery, useDashboardQuery } = dashboardApi;
+  const { useSearchQuery } = dashboardApi;
 
   const { currentData: filteredDashboards = [], isFetching: isDashSearchFetching } = useSearchQuery({
     query: debouncedDashboardFilter,
   });
-  const { currentData: dashboardResult, isFetching: isDashboardFetching } = useDashboardQuery(
-    { uid: selectedDashboardUid ?? '' },
-    { skip: !selectedDashboardUid }
-  );
+  const { dashboardModel, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
 
   const handleDashboardChange = useCallback((dashboardUid: string) => {
     setSelectedDashboardUid(dashboardUid);
     setSelectedPanelId(undefined);
   }, []);
 
+  const allDashboardPanels = getVisualPanels(dashboardModel);
+
   const filteredPanels =
-    dashboardResult?.dashboard?.panels
-      ?.filter((panel): panel is PanelDTO => typeof panel.id === 'number' && typeof panel.type === 'string')
-      ?.filter((panel) => panel.title?.toLowerCase().includes(panelFilter.toLowerCase()))
+    allDashboardPanels
+      .filter((panel) => panel.title?.toLowerCase().includes(panelFilter.toLowerCase()))
       .sort(panelSort) ?? [];
 
-  const currentPanel = dashboardResult?.dashboard?.panels?.find((panel) => panel.id.toString() === selectedPanelId);
+  const currentPanel: PanelDTO | undefined = allDashboardPanels.find(
+    (panel: PanelDTO) => isValidPanel(panel) && panel.id?.toString() === selectedPanelId
+  );
 
   const selectedDashboardIndex = useMemo(() => {
     return filteredDashboards.map((dashboard) => dashboard.uid).indexOf(selectedDashboardUid ?? '');
@@ -128,25 +133,32 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   const PanelRow = ({ index, style }: { index: number; style: CSSProperties }) => {
     const panel = filteredPanels[index];
     const panelTitle = panel.title || '<No title>';
-    const isSelected = selectedPanelId === panel.id.toString();
+    const isSelected = Boolean(panel.id) && selectedPanelId === panel.id;
     const isAlertingCompatible = panel.type === 'graph' || panel.type === 'timeseries';
+    const disabled = !isValidPanel(panel);
 
     return (
       <button
         type="button"
         style={style}
+        disabled={disabled}
         className={cx(styles.rowButton, styles.panelButton, {
           [styles.rowOdd]: index % 2 === 1,
           [styles.rowSelected]: isSelected,
         })}
-        onClick={() => setSelectedPanelId(panel.id.toString())}
+        onClick={() => (disabled ? noop : setSelectedPanelId(panel.id))}
       >
         <div className={styles.rowButtonTitle} title={panelTitle}>
           {panelTitle}
         </div>
-        {!isAlertingCompatible && (
-          <Tooltip content="Alert tab will be disabled for this panel. It is only supported on graph and timeseries panels">
+        {!isAlertingCompatible && !disabled && (
+          <Tooltip content="The alert tab and alert annotations are only supported on graph and timeseries panels.">
             <Icon name="exclamation-triangle" className={styles.warnIcon} data-testid="warning-icon" />
+          </Tooltip>
+        )}
+        {disabled && (
+          <Tooltip content="This panel does not have a valid identifier.">
+            <Icon name="info-circle" data-testid="info-icon" />
           </Tooltip>
         )}
       </button>
@@ -163,13 +175,13 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
       contentClassName={styles.modalContent}
     >
       {/* This alert shows if the selected dashboard is not found in the first page of dashboards */}
-      {!selectedDashboardIsInPageResult && dashboardUid && (
+      {!selectedDashboardIsInPageResult && dashboardUid && dashboardModel && (
         <Alert title="Current selection" severity="info" topSpacing={0} bottomSpacing={1} className={styles.modalAlert}>
           <div>
-            Dashboard: {dashboardResult?.dashboard.title} ({dashboardResult?.dashboard.uid}) in folder{' '}
-            {dashboardResult?.meta.folderTitle ?? 'General'}
+            Dashboard: {dashboardModel.title} ({dashboardModel.uid}) in folder{' '}
+            {dashboardModel.meta?.folderTitle ?? 'General'}
           </div>
-          {Boolean(currentPanel) && (
+          {currentPanel && (
             <div>
               Panel: {currentPanel.title} ({currentPanel.id})
             </div>
@@ -248,6 +260,28 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
       </Modal.ButtonRow>
     </Modal>
   );
+};
+
+export function getVisualPanels(dashboardModel: DashboardModel | undefined) {
+  if (!dashboardModel) {
+    return [];
+  }
+
+  const panelsWithoutRows = dashboardModel.panels.filter((panel) => panel.type !== 'row');
+  const panelsNestedInRows = dashboardModel.panels
+    .filter((rowPanel) => rowPanel.collapsed)
+    .flatMap((collapsedRow) => collapsedRow.panels ?? []);
+
+  const allDashboardPanels = [...panelsWithoutRows, ...panelsNestedInRows];
+  return allDashboardPanels;
+}
+
+const isValidPanel = (panel: PanelDTO): boolean => {
+  const hasValidID = typeof panel.id === 'number';
+  const isValidPanelType = typeof panel.type === 'string';
+  const isLibraryPanel = 'libraryPanel' in panel;
+
+  return hasValidID && (isValidPanelType || isLibraryPanel);
 };
 
 const getPickerStyles = (theme: GrafanaTheme2) => {

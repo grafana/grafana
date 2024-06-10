@@ -3,6 +3,7 @@ aliases:
   - ../basics/timeseries-dimensions/
   - ../getting-started/timeseries-dimensions/
   - ../guides/timeseries-dimensions/
+  - /docs/grafana-cloud/introduction/timeseries-dimensions/
 description: time series dimensions
 keywords:
   - grafana
@@ -28,7 +29,7 @@ In [Introduction to time series][time-series-databases], the concept of _labels_
 
 With time series data, the data often contain more than a single series, and is a set of multiple time series. Many Grafana data sources support this type of data.
 
-{{< figure src="/static/img/docs/example_graph_multi_dim.png" class="docs-image--no-shadow" max-width="850px" >}}
+{{< figure src="/static/img/docs/example_graph_multi_dim.png" class="docs-image--no-shadow" max-width="850px" alt="Temperature by location" >}}
 
 The common case is issuing a single query for a measurement with one or more additional properties as dimensions. For example, querying a temperature measurement along with a location property. In this case, multiple series are returned back from that single query and each series has unique location as a dimension.
 
@@ -101,14 +102,12 @@ For more information, see the documentation on [creating alerts with multiple se
 
 In the case of SQL-like data sources, more than one numeric column can be selected, with or without additional string columns to be used as dimensions. For example, `AVG(Temperature) AS AvgTemp, MAX(Temperature) AS MaxTemp`. This, if combined with multiple dimensions, can result in a lot of series. Selecting multiple values is currently only designed to be used with visualization.
 
-Additional technical information on tabular time series formats and how dimensions are extracted can be found in [the developer documentation on data frames as time series]({{< relref "../../developers/plugins/introduction-to-plugin-development/data-frames#data-frames-as-time-series" >}}).
+Additional technical information on tabular time series formats and how dimensions are extracted can be found in [the developer documentation on data frames as time series](/developers/plugin-tools/introduction/data-frames#data-frames-as-time-series).
 
 {{% docs/reference %}}
+
 [create-grafana-managed-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#single-and-multi-dimensional-rule"
 [create-grafana-managed-rule]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#single-and-multi-dimensional-rule"
-
-[data-frames-as-time-series]: "/docs/grafana/ -> docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#data-frames-as-time-series"
-[data-frames-as-time-series]: "/docs/grafana-cloud/ -> docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#data-frames-as-time-series"
 
 [time-series-databases]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries#time-series-databases"
 [time-series-databases]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries#time-series-databases"

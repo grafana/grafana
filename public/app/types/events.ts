@@ -160,6 +160,18 @@ export class ShiftTimeEvent extends BusEventWithPayload<ShiftTimeEventPayload> {
   static type = 'shift-time';
 }
 
+export class CopyTimeEvent extends BusEventBase {
+  static type = 'copy-time';
+}
+
+interface PasteTimeEventPayload {
+  updateUrl?: boolean;
+}
+
+export class PasteTimeEvent extends BusEventWithPayload<PasteTimeEventPayload> {
+  static type = 'paste-time';
+}
+
 interface AbsoluteTimeEventPayload {
   updateUrl: boolean;
 }

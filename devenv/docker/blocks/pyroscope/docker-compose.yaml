@@ -1,6 +1,4 @@
   pyroscope:
-    image: "pyroscope/pyroscope:latest"
-    command:
-      - "server"
+    image: "grafana/pyroscope:latest"
     ports:
       - "4040:4040"

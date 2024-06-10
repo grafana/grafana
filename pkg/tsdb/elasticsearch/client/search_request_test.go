@@ -7,14 +7,21 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestSearchRequest(t *testing.T) {
 	timeField := "@timestamp"
+	from := time.Date(2018, 5, 10, 17, 50, 0, 0, time.UTC)
+	to := time.Date(2018, 5, 12, 17, 55, 0, 0, time.UTC)
+	timeRange := backend.TimeRange{
+		From: from,
+		To:   to,
+	}
 
 	setup := func() *SearchRequestBuilder {
-		return NewSearchRequestBuilder(15 * time.Second)
+		return NewSearchRequestBuilder(15*time.Second, timeRange)
 	}
 
 	t.Run("When building search request", func(t *testing.T) {
@@ -110,7 +117,7 @@ func TestSearchRequest(t *testing.T) {
 		t.Run("should set correct props", func(t *testing.T) {
 			require.Nil(t, b.customProps["fields"])
 
-			scriptFields, ok := b.customProps["script_fields"].(map[string]interface{})
+			scriptFields, ok := b.customProps["script_fields"].(map[string]any)
 			require.True(t, ok)
 			require.Equal(t, 0, len(scriptFields))
 
@@ -398,9 +405,15 @@ func TestSearchRequest(t *testing.T) {
 }
 
 func TestMultiSearchRequest(t *testing.T) {
+	from := time.Date(2018, 5, 10, 17, 50, 0, 0, time.UTC)
+	to := time.Date(2018, 5, 12, 17, 55, 0, 0, time.UTC)
+	timeRange := backend.TimeRange{
+		From: from,
+		To:   to,
+	}
 	t.Run("When adding one search request", func(t *testing.T) {
 		b := NewMultiSearchRequestBuilder()
-		b.Search(15 * time.Second)
+		b.Search(15*time.Second, timeRange)
 
 		t.Run("When building search request should contain one search request", func(t *testing.T) {
 			mr, err := b.Build()
@@ -411,8 +424,8 @@ func TestMultiSearchRequest(t *testing.T) {
 
 	t.Run("When adding two search requests", func(t *testing.T) {
 		b := NewMultiSearchRequestBuilder()
-		b.Search(15 * time.Second)
-		b.Search(15 * time.Second)
+		b.Search(15*time.Second, timeRange)
+		b.Search(15*time.Second, timeRange)
 
 		t.Run("When building search request should contain two search requests", func(t *testing.T) {
 			mr, err := b.Build()

@@ -15,9 +15,10 @@ export interface Props {
   timeRange?: TimeRange;
   userProps?: object;
   frame: DataFrame;
+  rowStyled?: boolean;
 }
 
-export const TableCell = ({ cell, tableStyles, onCellFilterAdded, timeRange, userProps, frame }: Props) => {
+export const TableCell = ({ cell, tableStyles, onCellFilterAdded, timeRange, userProps, frame, rowStyled }: Props) => {
   const cellProps = cell.getCellProps();
   const field = (cell.column as unknown as GrafanaTableColumn).field;
 
@@ -30,16 +31,21 @@ export const TableCell = ({ cell, tableStyles, onCellFilterAdded, timeRange, use
     cellProps.style.justifyContent = (cell.column as any).justifyContent;
   }
 
-  let innerWidth = ((cell.column.width as number) ?? 24) - tableStyles.cellPadding * 2;
+  let innerWidth = (typeof cell.column.width === 'number' ? cell.column.width : 24) - tableStyles.cellPadding * 2;
 
-  return cell.render('Cell', {
-    field,
-    tableStyles,
-    onCellFilterAdded,
-    cellProps,
-    innerWidth,
-    timeRange,
-    userProps,
-    frame,
-  }) as React.ReactElement;
+  return (
+    <>
+      {cell.render('Cell', {
+        field,
+        tableStyles,
+        onCellFilterAdded,
+        cellProps,
+        innerWidth,
+        timeRange,
+        userProps,
+        frame,
+        rowStyled,
+      })}
+    </>
+  );
 };

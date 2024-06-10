@@ -13,6 +13,7 @@ export interface SearchProps {
   to?: string;
   toOperator: string;
   tags: Tag[];
+  query?: string;
 }
 
 export interface Tag {

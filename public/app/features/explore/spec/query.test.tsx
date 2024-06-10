@@ -1,14 +1,26 @@
 import { screen } from '@testing-library/react';
+import { Props } from 'react-virtualized-auto-sizer';
 
-import { serializeStateToUrlParam } from '@grafana/data';
+import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 
 import { makeLogsQueryResponse } from './helper/query';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
-jest.mock('../../correlations/utils', () => {
-  return {
-    getCorrelationsBySourceUIDs: jest.fn().mockReturnValue({ correlations: [] }),
-  };
+const testEventBus = new EventBusSrv();
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: () => testEventBus,
+}));
+
+jest.mock('react-virtualized-auto-sizer', () => {
+  return ({ children }: Props) =>
+    children({
+      height: 1,
+      scaledHeight: 1,
+      scaledWidth: 1,
+      width: 1,
+    });
 });
 
 describe('Explore: handle running/not running query', () => {

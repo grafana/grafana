@@ -1,8 +1,9 @@
-import { Route } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../types/amroutes';
 
 import { amRouteToFormAmRoute, emptyRoute, formAmRouteToAmRoute } from './amroutes';
+import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 
 const emptyAmRoute: Route = {
   receiver: '',
@@ -53,6 +54,84 @@ describe('formAmRouteToAmRoute', () => {
       expect(amRoute.group_by).toStrictEqual(['SHOULD BE SET']);
     });
   });
+
+  it('should quote and escape matcher values', () => {
+    // Arrange
+    const route: FormAmRoute = buildFormAmRoute({
+      id: '1',
+      object_matchers: [
+        { name: 'foo', operator: MatcherOperator.equal, value: 'bar' },
+        { name: 'foo', operator: MatcherOperator.equal, value: 'bar"baz' },
+        { name: 'foo', operator: MatcherOperator.equal, value: 'bar\\baz' },
+        { name: 'foo', operator: MatcherOperator.equal, value: '\\bar\\baz"\\' },
+      ],
+    });
+
+    // Act
+    const amRoute = formAmRouteToAmRoute('mimir-am', route, { id: 'root' });
+
+    // Assert
+    expect(amRoute.matchers).toStrictEqual([
+      '"foo"="bar"',
+      '"foo"="bar\\"baz"',
+      '"foo"="bar\\\\baz"',
+      '"foo"="\\\\bar\\\\baz\\"\\\\"',
+    ]);
+  });
+
+  it('should quote and escape matcher names', () => {
+    // Arrange
+    const route: FormAmRoute = buildFormAmRoute({
+      id: '1',
+      object_matchers: [
+        { name: 'foo', operator: MatcherOperator.equal, value: 'bar' },
+        { name: 'foo with spaces', operator: MatcherOperator.equal, value: 'bar' },
+        { name: 'foo\\slash', operator: MatcherOperator.equal, value: 'bar' },
+        { name: 'foo"quote', operator: MatcherOperator.equal, value: 'bar' },
+        { name: 'fo\\o', operator: MatcherOperator.equal, value: 'ba\\r' },
+      ],
+    });
+
+    // Act
+    const amRoute = formAmRouteToAmRoute('mimir-am', route, { id: 'root' });
+
+    // Assert
+    expect(amRoute.matchers).toStrictEqual([
+      '"foo"="bar"',
+      '"foo with spaces"="bar"',
+      '"foo\\\\slash"="bar"',
+      '"foo\\"quote"="bar"',
+      '"fo\\\\o"="ba\\\\r"',
+    ]);
+  });
+
+  it('should allow matchers with empty values for cloud AM', () => {
+    // Arrange
+    const route: FormAmRoute = buildFormAmRoute({
+      id: '1',
+      object_matchers: [{ name: 'foo', operator: MatcherOperator.equal, value: '' }],
+    });
+
+    // Act
+    const amRoute = formAmRouteToAmRoute('mimir-am', route, { id: 'root' });
+
+    // Assert
+    expect(amRoute.matchers).toStrictEqual(['"foo"=""']);
+  });
+
+  it('should allow matchers with empty values for Grafana AM', () => {
+    // Arrange
+    const route: FormAmRoute = buildFormAmRoute({
+      id: '1',
+      object_matchers: [{ name: 'foo', operator: MatcherOperator.equal, value: '' }],
+    });
+
+    // Act
+    const amRoute = formAmRouteToAmRoute(GRAFANA_RULES_SOURCE_NAME, route, { id: 'root' });
+
+    // Assert
+    expect(amRoute.object_matchers).toStrictEqual([['foo', MatcherOperator.equal, '']]);
+  });
 });
 
 describe('amRouteToFormAmRoute', () => {
@@ -100,5 +179,43 @@ describe('amRouteToFormAmRoute', () => {
       expect(formRoute.groupBy).toStrictEqual(['SHOULD BE SET']);
       expect(formRoute.overrideGrouping).toBe(true);
     });
+  });
+
+  it('should unquote and unescape matchers values', () => {
+    // Arrange
+    const amRoute = buildAmRoute({
+      matchers: ['foo=bar', 'foo="bar"', 'foo="bar"baz"', 'foo="bar\\\\baz"', 'foo="\\\\bar\\\\baz"\\\\"'],
+    });
+
+    // Act
+    const formRoute = amRouteToFormAmRoute(amRoute);
+
+    // Assert
+    expect(formRoute.object_matchers).toStrictEqual([
+      { name: 'foo', operator: MatcherOperator.equal, value: 'bar' },
+      { name: 'foo', operator: MatcherOperator.equal, value: 'bar' },
+      { name: 'foo', operator: MatcherOperator.equal, value: 'bar"baz' },
+      { name: 'foo', operator: MatcherOperator.equal, value: 'bar\\baz' },
+      { name: 'foo', operator: MatcherOperator.equal, value: '\\bar\\baz"\\' },
+    ]);
+  });
+
+  it('should unquote and unescape matcher names', () => {
+    // Arrange
+    const amRoute = buildAmRoute({
+      matchers: ['"foo"=bar', '"foo with spaces"=bar', '"foo\\\\slash"=bar', '"foo"quote"=bar', '"fo\\\\o"="ba\\\\r"'],
+    });
+
+    // Act
+    const formRoute = amRouteToFormAmRoute(amRoute);
+
+    // Assert
+    expect(formRoute.object_matchers).toStrictEqual([
+      { name: 'foo', operator: MatcherOperator.equal, value: 'bar' },
+      { name: 'foo with spaces', operator: MatcherOperator.equal, value: 'bar' },
+      { name: 'foo\\slash', operator: MatcherOperator.equal, value: 'bar' },
+      { name: 'foo"quote', operator: MatcherOperator.equal, value: 'bar' },
+      { name: 'fo\\o', operator: MatcherOperator.equal, value: 'ba\\r' },
+    ]);
   });
 });

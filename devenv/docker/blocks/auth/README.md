@@ -9,7 +9,7 @@ Spin up a service with the following command from the base directory of this
 repository.
 
 ```bash
-make devenv=oauth
+make devenv=auth/oauth
 ```
 
 This will add the `oauth/docker-compose` block to the `docker-compose` file used

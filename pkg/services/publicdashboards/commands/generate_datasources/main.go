@@ -26,7 +26,7 @@ func main() {
 	tsTemplate := template.Must(template.New("").Parse(tsDatasourcesTemplate))
 
 	// Generate supported datasources for Typescript
-	tsFile, err := os.Create("./../../../public/app/features/dashboard/components/ShareModal/SharePublicDashboard/SupportedPubdashDatasources.ts")
+	tsFile, err := os.Create("./../../../../../public/app/features/dashboard/components/ShareModal/SharePublicDashboard/SupportedPubdashDatasources.ts")
 	if err != nil {
 		fmt.Println(err)
 	}

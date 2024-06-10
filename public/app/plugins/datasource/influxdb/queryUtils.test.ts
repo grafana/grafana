@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { buildRawQuery, changeGroupByPart, changeSelectPart, normalizeQuery } from './queryUtils';
-import { InfluxQuery } from './types';
+import { DEFAULT_POLICY, InfluxQuery } from './types';
 
 describe('InfluxDB query utils', () => {
   describe('buildRawQuery', () => {
@@ -10,7 +10,7 @@ describe('InfluxDB query utils', () => {
         buildRawQuery({
           refId: 'A',
           hide: false,
-          policy: 'default',
+          policy: DEFAULT_POLICY,
           resultFormat: 'time_series',
           orderByTime: 'ASC',
           tags: [],
@@ -147,6 +147,18 @@ describe('InfluxDB query utils', () => {
               operator: '!~',
               value: '/cpu0/',
             },
+            {
+              condition: 'AND',
+              key: 'cpu',
+              operator: 'Is',
+              value: 'false',
+            },
+            {
+              condition: 'AND',
+              key: 'cpu',
+              operator: 'Is Not',
+              value: 'false',
+            },
           ],
           groupBy: [],
         })
@@ -154,7 +166,7 @@ describe('InfluxDB query utils', () => {
         `SELECT "value" ` +
           `FROM "autogen"."measurement" ` +
           `WHERE ("cpu" = 'cpu0' AND "cpu" != 'cpu0' AND "cpu" <> 'cpu0' AND "cpu" < cpu0 AND ` +
-          `"cpu" > cpu0 AND "cpu" =~ /cpu0/ AND "cpu" !~ /cpu0/) AND $timeFilter`
+          `"cpu" > cpu0 AND "cpu" =~ /cpu0/ AND "cpu" !~ /cpu0/ AND "cpu" = false AND "cpu" != false) AND $timeFilter`
       );
     });
     it('should handle a complex query', () => {
@@ -182,7 +194,7 @@ describe('InfluxDB query utils', () => {
           hide: false,
           measurement: 'cpu',
           orderByTime: 'DESC',
-          policy: 'default',
+          policy: DEFAULT_POLICY,
           rawQuery: false,
           refId: 'A',
           resultFormat: 'time_series',
@@ -283,7 +295,7 @@ describe('InfluxDB query utils', () => {
         groupBy: [],
         measurement: 'cpu',
         orderByTime: 'ASC',
-        policy: 'default',
+        policy: DEFAULT_POLICY,
         resultFormat: 'table',
         select: [
           [

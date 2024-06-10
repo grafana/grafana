@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
 const (
@@ -18,6 +19,7 @@ const (
 	varRange      = "$__range"
 	varRangeS     = "$__range_s"
 	varRangeMs    = "$__range_ms"
+	varAuto       = "$__auto"
 )
 
 const (
@@ -26,10 +28,12 @@ const (
 	varRangeAlt      = "${__range}"
 	varRangeSAlt     = "${__range_s}"
 	varRangeMsAlt    = "${__range_ms}"
+	// $__auto is a new variable and we don't want to support this templating format
 )
 
-func interpolateVariables(expr string, interval time.Duration, timeRange time.Duration) string {
-	intervalText := intervalv2.FormatDuration(interval)
+func interpolateVariables(expr string, interval time.Duration, timeRange time.Duration, queryType dataquery.LokiQueryType, step time.Duration) string {
+	intervalText := gtime.FormatInterval(interval)
+	stepText := gtime.FormatInterval(step)
 	intervalMsText := strconv.FormatInt(int64(interval/time.Millisecond), 10)
 
 	rangeMs := timeRange.Milliseconds()
@@ -42,6 +46,13 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 	expr = strings.ReplaceAll(expr, varRangeMs, rangeMsText)
 	expr = strings.ReplaceAll(expr, varRangeS, rangeSText)
 	expr = strings.ReplaceAll(expr, varRange, rangeSText+"s")
+	if queryType == dataquery.LokiQueryTypeInstant {
+		expr = strings.ReplaceAll(expr, varAuto, rangeSText+"s")
+	}
+
+	if queryType == dataquery.LokiQueryTypeRange {
+		expr = strings.ReplaceAll(expr, varAuto, stepText)
+	}
 
 	// this is duplicated code, hopefully this can be handled in a nicer way when
 	// https://github.com/grafana/grafana/issues/42928 is done.
@@ -89,21 +100,26 @@ func parseDirection(jsonPointerValue *string) (Direction, error) {
 	}
 }
 
-func parseSupportingQueryType(jsonPointerValue *string) (SupportingQueryType, error) {
+func parseSupportingQueryType(jsonPointerValue *string) SupportingQueryType {
 	if jsonPointerValue == nil {
-		return SupportingQueryNone, nil
-	} else {
-		jsonValue := *jsonPointerValue
-		switch jsonValue {
-		case "logsVolume":
-			return SupportingQueryLogsVolume, nil
-		case "logsSample":
-			return SupportingQueryLogsSample, nil
-		case "dataSample":
-			return SupportingQueryDataSample, nil
-		default:
-			return SupportingQueryNone, fmt.Errorf("invalid supportingQueryType: %s", jsonValue)
-		}
+		return SupportingQueryNone
+	}
+
+	jsonValue := *jsonPointerValue
+	switch jsonValue {
+	case "logsVolume":
+		return SupportingQueryLogsVolume
+	case "logsSample":
+		return SupportingQueryLogsSample
+	case "dataSample":
+		return SupportingQueryDataSample
+	case "infiniteScroll":
+		return SupportingQueryInfiniteScroll
+	case "":
+		return SupportingQueryNone
+	default:
+		// `SupportingQueryType` is just a `string` in the schema, so we can just parse this as a string
+		return SupportingQueryType(jsonValue)
 	}
 }
 
@@ -131,12 +147,12 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 			return nil, err
 		}
 
-		expr := interpolateVariables(model.Expr, interval, timeRange)
-
 		queryType, err := parseQueryType(model.QueryType)
 		if err != nil {
 			return nil, err
 		}
+
+		expr := interpolateVariables(depointerizer(model.Expr), interval, timeRange, queryType, step)
 
 		direction, err := parseDirection(model.Direction)
 		if err != nil {
@@ -153,10 +169,7 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 			legendFormat = *model.LegendFormat
 		}
 
-		supportingQueryType, err := parseSupportingQueryType(model.SupportingQueryType)
-		if err != nil {
-			return nil, err
-		}
+		supportingQueryType := parseSupportingQueryType(model.SupportingQueryType)
 
 		qs = append(qs, &lokiQuery{
 			Expr:                expr,
@@ -173,4 +186,13 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	}
 
 	return qs, nil
+}
+
+func depointerizer[T any](v *T) T {
+	var emptyValue T
+	if v != nil {
+		emptyValue = *v
+	}
+
+	return emptyValue
 }

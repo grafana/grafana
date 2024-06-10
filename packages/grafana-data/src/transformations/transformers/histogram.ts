@@ -2,12 +2,14 @@ import { map } from 'rxjs/operators';
 
 import { getDisplayProcessor } from '../../field';
 import { createTheme, GrafanaTheme2 } from '../../themes';
-import { DataFrameType, SynchronousDataTransformerInfo } from '../../types';
+import { DataFrameType, DataTransformContext, SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
 import { roundDecimals } from '../../utils';
 
 import { DataTransformerID } from './ids';
 import { AlignedData, join } from './joinDataFrames';
+import { nullToValueField } from './nulls/nullToValue';
+import { transformationsVariableSupport } from './utils';
 
 /**
  * @internal
@@ -37,13 +39,23 @@ export const histogramBucketSizes = [
 ];
 /* eslint-enable */
 
-const histFilter = [null];
+const DEFAULT_BUCKET_COUNT = 30;
+
+const histFilter: number[] = [];
 const histSort = (a: number, b: number) => a - b;
+
+export interface HistogramTransformerInputs {
+  bucketCount?: number;
+  bucketSize?: string | number;
+  bucketOffset?: string | number;
+  combine?: boolean;
+}
 
 /**
  * @alpha
  */
 export interface HistogramTransformerOptions {
+  bucketCount?: number;
   bucketSize?: number; // 0 is auto
   bucketOffset?: number;
   // xMin?: number;
@@ -57,6 +69,10 @@ export interface HistogramTransformerOptions {
  * @internal
  */
 export const histogramFieldInfo = {
+  bucketCount: {
+    name: 'Bucket count',
+    description: 'approx bucket count',
+  },
   bucketSize: {
     name: 'Bucket size',
     description: undefined,
@@ -74,7 +90,7 @@ export const histogramFieldInfo = {
 /**
  * @alpha
  */
-export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTransformerOptions> = {
+export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTransformerInputs> = {
   id: DataTransformerID.histogram,
   name: 'Histogram',
   description: 'Calculate a histogram from input data.',
@@ -85,11 +101,51 @@ export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTrans
   operator: (options, ctx) => (source) =>
     source.pipe(map((data) => histogramTransformer.transformer(options, ctx)(data))),
 
-  transformer: (options: HistogramTransformerOptions) => (data: DataFrame[]) => {
+  transformer: (options: HistogramTransformerInputs, ctx: DataTransformContext) => (data: DataFrame[]) => {
     if (!Array.isArray(data) || data.length === 0) {
       return data;
     }
-    const hist = buildHistogram(data, options);
+
+    let bucketSize,
+      bucketOffset: number | undefined = undefined;
+
+    if (options.bucketSize) {
+      if (transformationsVariableSupport()) {
+        options.bucketSize = ctx.interpolate(options.bucketSize.toString());
+      }
+      if (typeof options.bucketSize === 'string') {
+        bucketSize = parseFloat(options.bucketSize);
+      } else {
+        bucketSize = options.bucketSize;
+      }
+
+      if (isNaN(bucketSize)) {
+        bucketSize = undefined;
+      }
+    }
+
+    if (options.bucketOffset) {
+      if (transformationsVariableSupport()) {
+        options.bucketOffset = ctx.interpolate(options.bucketOffset.toString());
+      }
+      if (typeof options.bucketOffset === 'string') {
+        bucketOffset = parseFloat(options.bucketOffset);
+      } else {
+        bucketOffset = options.bucketOffset;
+      }
+
+      if (isNaN(bucketOffset)) {
+        bucketOffset = undefined;
+      }
+    }
+
+    const interpolatedOptions: HistogramTransformerOptions = {
+      bucketSize: bucketSize,
+      bucketOffset: bucketOffset,
+      combine: options.combine,
+    };
+
+    const hist = buildHistogram(data, interpolatedOptions);
     if (hist == null) {
       return [];
     }
@@ -136,6 +192,95 @@ export interface HistogramFields {
  * @alpha
  */
 export function getHistogramFields(frame: DataFrame): HistogramFields | undefined {
+  // we ignore xMax (time field) and sum all counts together for each found bucket
+  if (frame.meta?.type === DataFrameType.HeatmapCells) {
+    // we assume uniform bucket size for now
+    // we assume xMax, yMin, yMax fields
+    let yMinField = frame.fields.find((f) => f.name === 'yMin')!;
+    let yMaxField = frame.fields.find((f) => f.name === 'yMax')!;
+    let countField = frame.fields.find((f) => f.name === 'count')!;
+
+    let uniqueMaxs = [...new Set(yMaxField.values)].sort((a, b) => a - b);
+    let uniqueMins = [...new Set(yMinField.values)].sort((a, b) => a - b);
+    let countsByMax = new Map<number, number>();
+    uniqueMaxs.forEach((max) => countsByMax.set(max, 0));
+
+    for (let i = 0; i < yMaxField.values.length; i++) {
+      let max = yMaxField.values[i];
+      countsByMax.set(max, countsByMax.get(max) + countField.values[i]);
+    }
+
+    let fields = {
+      xMin: {
+        ...yMinField,
+        name: 'xMin',
+        values: uniqueMins,
+      },
+      xMax: {
+        ...yMaxField,
+        name: 'xMax',
+        values: uniqueMaxs,
+      },
+      counts: [
+        {
+          ...countField,
+          values: [...countsByMax.values()],
+        },
+      ],
+    };
+
+    return fields;
+  } else if (frame.meta?.type === DataFrameType.HeatmapRows) {
+    // assumes le
+
+    // tick label strings (will be ordinal-ized)
+    let minVals: string[] = [];
+    let maxVals: string[] = [];
+
+    // sums of all timstamps per bucket
+    let countVals: number[] = [];
+
+    let minVal = '0';
+    frame.fields.forEach((f) => {
+      if (f.type === FieldType.number) {
+        let countsSum = f.values.reduce((acc, v) => acc + v, 0);
+        countVals.push(countsSum);
+        minVals.push(minVal);
+        maxVals.push((minVal = f.name));
+      }
+    });
+
+    // fake extra value for +Inf (for x scale ranging since bars are right-aligned)
+    countVals.push(0);
+    minVals.push(minVal);
+    maxVals.push(minVal);
+
+    let fields = {
+      xMin: {
+        ...frame.fields[1],
+        name: 'xMin',
+        type: FieldType.string,
+        values: minVals,
+      },
+      xMax: {
+        ...frame.fields[1],
+        name: 'xMax',
+        type: FieldType.string,
+        values: maxVals,
+      },
+      counts: [
+        {
+          ...frame.fields[1],
+          name: 'count',
+          type: FieldType.number,
+          values: countVals,
+        },
+      ],
+    };
+
+    return fields;
+  }
+
   let xMin: Field | undefined = undefined;
   let xMax: Field | undefined = undefined;
   const counts: Field[] = [];
@@ -182,14 +327,33 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
   return undefined;
 }
 
-const APPROX_BUCKETS = 20;
-
 /**
  * @alpha
  */
 export function buildHistogram(frames: DataFrame[], options?: HistogramTransformerOptions): HistogramFields | null {
   let bucketSize = options?.bucketSize;
+  let bucketCount = options?.bucketCount ?? DEFAULT_BUCKET_COUNT;
   let bucketOffset = options?.bucketOffset ?? 0;
+
+  // replace or filter nulls from numeric fields
+  frames = frames.map((frame) => {
+    return {
+      ...frame,
+      fields: frame.fields.map((field) => {
+        if (field.type === FieldType.number) {
+          const noValue = Number(field.config.noValue);
+
+          if (!Number.isNaN(noValue)) {
+            field = nullToValueField(field, noValue);
+          } else {
+            field = { ...field, values: field.values.filter((v) => v != null) };
+          }
+        }
+
+        return field;
+      }),
+    };
+  });
 
   // if bucket size is auto, try to calc from all numeric fields
   if (!bucketSize || bucketSize < 0) {
@@ -203,8 +367,6 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
         }
       }
     }
-
-    allValues = allValues.filter((v) => v != null);
 
     allValues.sort((a, b) => a - b);
 
@@ -228,7 +390,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
 
     let range = max - min;
 
-    const targetSize = range / APPROX_BUCKETS;
+    const targetSize = range / bucketCount;
 
     // choose bucket
     for (let i = 0; i < histogramBucketSizes.length; i++) {
@@ -241,7 +403,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     }
   }
 
-  const getBucket = (v: number) => incrRoundDn(v - bucketOffset, bucketSize!) + bucketOffset;
+  const getBucket = (v: number) => roundDecimals(incrRoundDn(v - bucketOffset, bucketSize!) + bucketOffset, 9);
 
   // guess number of decimals
   let bucketDecimals = (('' + bucketSize).match(/\.\d+$/) ?? ['.'])[0].length - 1;
@@ -253,7 +415,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   for (const frame of frames) {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
-        let fieldHist = histogram(field.values, getBucket, histFilter, histSort) as AlignedData;
+        let fieldHist = histogram(field.values, getBucket, histFilter, histSort);
         histograms.push(fieldHist);
         counts.push({
           ...field,
@@ -320,7 +482,12 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
         name: 'count',
         values: vals,
         type: FieldType.number,
-        state: undefined,
+        state: {
+          ...counts[0].state,
+          displayName: 'Count',
+          multipleFrames: false,
+          origin: { frameIndex: 0, fieldIndex: 2 },
+        },
       },
     ];
   } else {
@@ -360,9 +527,9 @@ export function incrRoundDn(num: number, incr: number) {
 function histogram(
   vals: number[],
   getBucket: (v: number) => number,
-  filterOut?: any[] | null,
-  sort?: ((a: any, b: any) => number) | null
-) {
+  filterOut?: number[],
+  sort?: ((a: number, b: number) => number) | null
+): AlignedData {
   let hist = new Map();
 
   for (let i = 0; i < vals.length; i++) {

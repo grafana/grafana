@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { InlineLabel, Input, InlineFormLabel, InlineSwitch } from '@grafana/ui';
+import { InlineLabel, Input, InlineFormLabel, InlineSwitch, Stack } from '@grafana/ui';
 
 import { OpenTsdbQuery } from '../types';
 
@@ -13,23 +13,22 @@ export interface RateSectionProps {
 
 export function RateSection({ query, onChange, onRunQuery, tsdbVersion }: RateSectionProps) {
   return (
-    <div className="gf-form-inline" data-testid={testIds.section}>
-      <div className="gf-form">
-        <InlineFormLabel className="query-keyword" width={8}>
-          Rate
-        </InlineFormLabel>
-        <InlineSwitch
-          data-testid={testIds.shouldComputeRate}
-          value={query.shouldComputeRate ?? false}
-          onChange={() => {
-            const shouldComputeRate = query.shouldComputeRate ?? false;
-            onChange({ ...query, shouldComputeRate: !shouldComputeRate });
-            onRunQuery();
-          }}
-        />
-      </div>
+    <Stack gap={0} data-testid={testIds.section}>
+      <InlineFormLabel className="query-keyword" width={8}>
+        Rate
+      </InlineFormLabel>
+      <InlineSwitch
+        data-testid={testIds.shouldComputeRate}
+        value={query.shouldComputeRate ?? false}
+        onChange={() => {
+          const shouldComputeRate = query.shouldComputeRate ?? false;
+          onChange({ ...query, shouldComputeRate: !shouldComputeRate });
+          onRunQuery();
+        }}
+      />
+
       {query.shouldComputeRate && (
-        <div className="gf-form">
+        <>
           <InlineFormLabel className="query-keyword" width={'auto'}>
             Counter
           </InlineFormLabel>
@@ -42,10 +41,10 @@ export function RateSection({ query, onChange, onRunQuery, tsdbVersion }: RateSe
               onRunQuery();
             }}
           />
-        </div>
+        </>
       )}
       {query.shouldComputeRate && query.isCounter && (
-        <div className="gf-form">
+        <Stack gap={0}>
           <InlineLabel width={'auto'} className="query-keyword">
             Counter max
           </InlineLabel>
@@ -72,10 +71,10 @@ export function RateSection({ query, onChange, onRunQuery, tsdbVersion }: RateSe
             }}
             onBlur={() => onRunQuery()}
           />
-        </div>
+        </Stack>
       )}
       {tsdbVersion > 2 && (
-        <div className="gf-form">
+        <>
           <InlineFormLabel className="query-keyword" width={'auto'}>
             Explicit tags
           </InlineFormLabel>
@@ -88,12 +87,12 @@ export function RateSection({ query, onChange, onRunQuery, tsdbVersion }: RateSe
               onRunQuery();
             }}
           />
-        </div>
+        </>
       )}
-      <div className="gf-form gf-form--grow">
-        <div className="gf-form-label gf-form-label--grow"></div>
-      </div>
-    </div>
+      <Stack gap={0} grow={1}>
+        <InlineLabel> </InlineLabel>
+      </Stack>
+    </Stack>
   );
 }
 

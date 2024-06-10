@@ -1,4 +1,4 @@
-import { ExplorePanelsState } from './explore';
+import { ExploreCorrelationHelperData, ExplorePanelsState } from './explore';
 import { InterpolateFunction } from './panel';
 import { DataQuery } from './query';
 import { TimeRange } from './time';
@@ -19,6 +19,7 @@ export interface DataLinkClickEvent<T = any> {
 export enum DataLinkConfigOrigin {
   Datasource = 'Datasource',
   Correlations = 'Correlations',
+  ExploreCorrelationsEditor = 'CorrelationsEditor',
 }
 
 /**
@@ -77,6 +78,9 @@ export interface InternalDataLink<T extends DataQuery = any> {
   datasourceUid: string;
   datasourceName: string; // used as a title if `DataLink.title` is empty
   panelsState?: ExplorePanelsState;
+  meta?: {
+    correlationData?: ExploreCorrelationHelperData;
+  };
   transformations?: DataLinkTransformationConfig[];
   range?: TimeRange;
 }

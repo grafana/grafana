@@ -1,13 +1,13 @@
 package models
 
 type cloudWatchLink struct {
-	View    string        `json:"view"`
-	Stacked bool          `json:"stacked"`
-	Title   string        `json:"title"`
-	Start   string        `json:"start"`
-	End     string        `json:"end"`
-	Region  string        `json:"region"`
-	Metrics []interface{} `json:"metrics"`
+	View    string `json:"view"`
+	Stacked bool   `json:"stacked"`
+	Title   string `json:"title"`
+	Start   string `json:"start"`
+	End     string `json:"end"`
+	Region  string `json:"region"`
+	Metrics []any  `json:"metrics"`
 }
 
 type metricExpression struct {

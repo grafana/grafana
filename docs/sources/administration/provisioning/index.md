@@ -15,7 +15,7 @@ weight: 600
 
 # Provision Grafana
 
-In previous versions of Grafana, you could only use the API for provisioning data sources and dashboards. But that required the service to be running before you started creating dashboards and you also needed to set up credentials for the HTTP API. In v5.0 we decided to improve this experience by adding a new active provisioning system that uses config files. This will make GitOps more natural as data sources and dashboards can be defined via files that can be version controlled. We hope to extend this system to later add support for users, orgs and alerts as well.
+In previous versions of Grafana, you could only use the API for provisioning data sources and dashboards. But that required the service to be running before you started creating dashboards and you also needed to set up credentials for the HTTP API. In v5.0 we decided to improve this experience by adding a new active provisioning system that uses config files. This will make GitOps more natural as data sources and dashboards can be defined via files that can be version controlled. We hope to extend this system to later add support for users and orgs as well.
 
 ## Config File
 
@@ -59,13 +59,14 @@ If you have a literal `$` in your value and want to avoid interpolation, `$$` ca
 
 Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily rely on the expertise of the community.
 
-| Tool      | Project                                                                                                        |
-| --------- | -------------------------------------------------------------------------------------------------------------- |
-| Puppet    | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/puppet/grafana)                             |
-| Ansible   | [https://github.com/cloudalchemy/ansible-grafana](https://github.com/cloudalchemy/ansible-grafana)             |
-| Chef      | [https://github.com/sous-chefs/chef-grafana](https://github.com/sous-chefs/chef-grafana)                       |
-| Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana) |
-| Jsonnet   | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)                         |
+| Tool      | Project                                                                                                                         |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Puppet    | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/puppet/grafana)                                              |
+| Ansible   | [https://github.com/grafana/grafana-ansible-collection](https://github.com/grafana/grafana-ansible-collection)                  |
+| Chef      | [https://github.com/sous-chefs/chef-grafana](https://github.com/sous-chefs/chef-grafana)                                        |
+| Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana)                  |
+| Jsonnet   | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)                                          |
+| NixOS     | [services.grafana.provision module](https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/monitoring/grafana.nix) |
 
 ## Data sources
 
@@ -156,6 +157,8 @@ datasources:
       password:
       # <string> Sets the basic authorization password.
       basicAuthPassword:
+    # <int> Sets the version. Used to compare versions when
+    # updating. Ignored when creating a new data source.
     version: 1
     # <bool> Allows users to edit data sources from the
     # Grafana UI.
@@ -343,7 +346,7 @@ providers:
 
 When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path every **updateIntervalSeconds** and look for updated json files and update/insert those into the database.
 
-> **Note:** Dashboards are provisioned to the General folder if the `folder` option is missing or empty.
+> **Note:** Dashboards are provisioned to the root level if the `folder` option is missing or empty.
 
 #### Making changes to a provisioned dashboard
 
@@ -371,8 +374,8 @@ By default, Grafana deletes dashboards in the database if the file is removed. Y
 
 {{% admonition type="note" %}}
 Provisioning allows you to overwrite existing dashboards
-which leads to problems if you re-use settings that are supposed to be unique.
-Be careful not to re-use the same `title` multiple times within a folder
+which leads to problems if you reuse settings that are supposed to be unique.
+Be careful not to reuse the same `title` multiple times within a folder
 or `uid` within the same installation as this will cause weird behaviors.
 {{% /admonition %}}
 
@@ -413,84 +416,16 @@ providers:
 {{% /admonition %}}
 
 {{% admonition type="note" %}}
-To provision dashboards to the General folder, store them in the root of your `path`.
+To provision dashboards to the root level, store them in the root of your `path`.
 {{% /admonition %}}
+
+{{< admonition type="note" >}}
+This feature doesn't currently allow you to create nested folder structures, that is, where you have folders within folders.
+{{< /admonition >}}
 
 ## Alerting
 
 For information on provisioning Grafana Alerting, refer to [Provision Grafana Alerting resources]({{< relref "../../alerting/set-up/provision-alerting-resources/"  >}}).
-
-## Alert Notification Channels
-
-{{% admonition type="note" %}}
-Alert Notification Channels are part of legacy alerting, which is deprecated and will be removed in Grafana 10. Use the Provision contact points section in [Create and manage alerting resources using file provisioning]({{< relref "../../alerting/set-up/provision-alerting-resources/file-provisioning" >}}).
-{{% /admonition %}}
-
-Alert Notification Channels can be provisioned by adding one or more YAML config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
-
-Each config file can contain the following top-level fields:
-
-- `notifiers`, a list of alert notifications that will be added or updated during start up. If the notification channel already exists, Grafana will update it to match the configuration file.
-- `delete_notifiers`, a list of alert notifications to be deleted before inserting/updating those in the `notifiers` list.
-
-Provisioning looks up alert notifications by uid, and will update any existing notification with the provided uid.
-
-By default, exporting a dashboard as JSON will use a sequential identifier to refer to alert notifications. The field `uid` can be optionally specified to specify a string identifier for the alert name.
-
-```json
-{
-  ...
-      "alert": {
-        ...,
-        "conditions": [...],
-        "frequency": "24h",
-        "noDataState": "ok",
-        "notifications": [
-           {"uid": "notifier1"},
-           {"uid": "notifier2"},
-        ]
-      }
-  ...
-}
-```
-
-### Example Alert Notification Channels Config File
-
-```yaml
-notifiers:
-  - name: notification-channel-1
-    type: slack
-    uid: notifier1
-    # either
-    org_id: 2
-    # or
-    org_name: Main Org.
-    is_default: true
-    send_reminder: true
-    frequency: 1h
-    disable_resolve_message: false
-    # See `Supported Settings` section for settings supported for each
-    # alert notification type.
-    settings:
-      recipient: 'XXX'
-      uploadImage: true
-      token: 'xoxb' # legacy setting since Grafana v7.2 (stored non-encrypted)
-      url: https://slack.com # legacy setting since Grafana v7.2 (stored non-encrypted)
-    # Secure settings that will be encrypted in the database (supported since Grafana v7.2). See `Supported Settings` section for secure settings supported for each notifier.
-    secure_settings:
-      token: 'xoxb'
-      url: https://slack.com
-
-delete_notifiers:
-  - name: notification-channel-1
-    uid: notifier1
-    # either
-    org_id: 2
-    # or
-    org_name: Main Org.
-  - name: notification-channel-2
-    # default org_id: 1
-```
 
 ### Supported Settings
 

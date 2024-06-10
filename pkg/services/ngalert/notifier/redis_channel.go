@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/prometheus/alertmanager/cluster"
-	"github.com/prometheus/alertmanager/cluster/clusterpb"
+	alertingCluster "github.com/grafana/alerting/cluster"
+	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 )
 
 type RedisChannel struct {
@@ -16,7 +16,7 @@ type RedisChannel struct {
 	msgc    chan []byte
 }
 
-func newRedisChannel(p *redisPeer, key, channel, msgType string) cluster.ClusterChannel {
+func newRedisChannel(p *redisPeer, key, channel, msgType string) alertingCluster.ClusterChannel {
 	redisChannel := &RedisChannel{
 		p:       p,
 		key:     key,
@@ -40,7 +40,7 @@ func (c *RedisChannel) handleMessages() {
 			// The state will eventually be propagated to other members by the full sync.
 			if pub.Err() != nil {
 				c.p.messagesPublishFailures.WithLabelValues(c.msgType, reasonRedisIssue).Inc()
-				c.p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", c.channel)
+				c.p.logger.Error("Error publishing a message to redis", "err", pub.Err(), "channel", c.channel)
 				continue
 			}
 			c.p.messagesSent.WithLabelValues(c.msgType).Inc()
@@ -50,9 +50,9 @@ func (c *RedisChannel) handleMessages() {
 }
 
 func (c *RedisChannel) Broadcast(b []byte) {
-	b, err := proto.Marshal(&clusterpb.Part{Key: c.key, Data: b})
+	b, err := proto.Marshal(&alertingClusterPB.Part{Key: c.key, Data: b})
 	if err != nil {
-		c.p.logger.Error("error marshalling broadcast into proto", "err", err, "channel", c.channel)
+		c.p.logger.Error("Error marshalling broadcast into proto", "err", err, "channel", c.channel)
 		return
 	}
 	select {
@@ -60,6 +60,6 @@ func (c *RedisChannel) Broadcast(b []byte) {
 	default:
 		// This is not the end of the world, we will catch up when we do a full state sync.
 		c.p.messagesPublishFailures.WithLabelValues(c.msgType, reasonBufferOverflow).Inc()
-		c.p.logger.Warn("buffer full, droping message", "channel", c.channel)
+		c.p.logger.Warn("Buffer full, droping message", "channel", c.channel)
 	}
 }

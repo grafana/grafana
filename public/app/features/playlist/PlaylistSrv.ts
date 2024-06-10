@@ -3,8 +3,10 @@ import { pickBy } from 'lodash';
 
 import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
-import { getPlaylist, loadDashboards } from './api';
+import { getPlaylistAPI, loadDashboards } from './api';
+import { PlaylistAPI } from './types';
 
 export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
@@ -12,7 +14,11 @@ export const queryParamsToPreserve: { [key: string]: boolean } = {
   orgId: true,
 };
 
-export class PlaylistSrv {
+export interface PlaylistSrvState {
+  isPlaying: boolean;
+}
+
+export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   private nextTimeoutId: ReturnType<typeof setTimeout> | undefined;
   private urls: string[] = []; // the URLs we need to load
   private index = 0;
@@ -21,11 +27,13 @@ export class PlaylistSrv {
   private numberOfLoops = 0;
   private declare validPlaylistUrl: string;
   private locationListenerUnsub?: () => void;
+  private api: PlaylistAPI;
 
-  isPlaying = false;
+  public constructor() {
+    super({ isPlaying: false });
 
-  constructor() {
     this.locationUpdated = this.locationUpdated.bind(this);
+    this.api = getPlaylistAPI();
   }
 
   next() {
@@ -73,17 +81,19 @@ export class PlaylistSrv {
 
     this.startUrl = window.location.href;
     this.index = 0;
-    this.isPlaying = true;
+
+    this.setState({ isPlaying: true });
 
     // setup location tracking
     this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
-
     const urls: string[] = [];
-    let playlist = await getPlaylist(playlistUid);
+
+    let playlist = await this.api.getPlaylist(playlistUid);
     if (!playlist.items?.length) {
       // alert
       return;
     }
+
     this.interval = rangeUtil.intervalToMs(playlist.interval);
 
     const items = await loadDashboards(playlist.items);
@@ -99,19 +109,21 @@ export class PlaylistSrv {
       // alert... not found, etc
       return;
     }
+
     this.urls = urls;
-    this.isPlaying = true;
+    this.setState({ isPlaying: true });
     this.next();
     return;
   }
 
   stop() {
-    if (!this.isPlaying) {
+    if (!this.state.isPlaying) {
       return;
     }
 
     this.index = 0;
-    this.isPlaying = false;
+
+    this.setState({ isPlaying: false });
 
     if (this.locationListenerUnsub) {
       this.locationListenerUnsub();

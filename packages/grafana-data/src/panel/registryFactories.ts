@@ -43,17 +43,17 @@ export function createFieldConfigRegistry<TFieldConfigOptions>(
   }
 
   for (let fieldConfigProp of standardConfigs) {
+    const id = fieldConfigProp.id as FieldConfigProperty;
     if (config.disableStandardOptions) {
-      const isDisabled = config.disableStandardOptions.indexOf(fieldConfigProp.id as FieldConfigProperty) > -1;
+      const isDisabled = config.disableStandardOptions.indexOf(id) > -1;
       if (isDisabled) {
         continue;
       }
     }
     if (config.standardOptions) {
-      const customHideFromDefaults =
-        config.standardOptions[fieldConfigProp.id as FieldConfigProperty]?.hideFromDefaults;
-      const customDefault = config.standardOptions[fieldConfigProp.id as FieldConfigProperty]?.defaultValue;
-      const customSettings = config.standardOptions[fieldConfigProp.id as FieldConfigProperty]?.settings;
+      const customHideFromDefaults = config.standardOptions[id]?.hideFromDefaults;
+      const customDefault = config.standardOptions[id]?.defaultValue;
+      const customSettings = config.standardOptions[id]?.settings;
 
       if (customHideFromDefaults) {
         fieldConfigProp = {

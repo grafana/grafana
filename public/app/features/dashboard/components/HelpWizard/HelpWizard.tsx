@@ -3,7 +3,6 @@ import React, { useMemo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { PanelPlugin, GrafanaTheme2, FeatureState } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import {
   Drawer,
@@ -21,6 +20,7 @@ import {
   Select,
   ClipboardButton,
   Icon,
+  Stack,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -66,15 +66,13 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
   ];
 
   const hasSupportBundleAccess =
-    config.supportBundlesEnabled &&
-    contextSrv.hasAccess(AccessControlAction.ActionSupportBundlesCreate, contextSrv.isGrafanaAdmin);
+    config.supportBundlesEnabled && contextSrv.hasPermission(AccessControlAction.ActionSupportBundlesCreate);
 
   return (
     <Drawer
       title={`Get help with this panel`}
       size="lg"
       onClose={onClose}
-      scrollableContent
       subtitle={
         <Stack direction="column" gap={1}>
           <Stack direction="row" gap={1}>

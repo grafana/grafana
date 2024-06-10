@@ -7,7 +7,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 // DataSourceService interface for interacting with datasources.
@@ -58,14 +58,14 @@ type DataSourceService interface {
 	// CustomHeaders returns a map of custom headers the user might have
 	// configured for this Datasource. Not every datasource can has the option
 	// to configure those.
-	CustomHeaders(ctx context.Context, ds *DataSource) (map[string]string, error)
+	CustomHeaders(ctx context.Context, ds *DataSource) (http.Header, error)
 }
 
 // CacheService interface for retrieving a cached datasource.
 type CacheService interface {
 	// GetDatasource gets a datasource identified by datasource numeric identifier.
-	GetDatasource(ctx context.Context, datasourceID int64, user *user.SignedInUser, skipCache bool) (*DataSource, error)
+	GetDatasource(ctx context.Context, datasourceID int64, user identity.Requester, skipCache bool) (*DataSource, error)
 
 	// GetDatasourceByUID gets a datasource identified by datasource unique identifier (UID).
-	GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*DataSource, error)
+	GetDatasourceByUID(ctx context.Context, datasourceUID string, user identity.Requester, skipCache bool) (*DataSource, error)
 }

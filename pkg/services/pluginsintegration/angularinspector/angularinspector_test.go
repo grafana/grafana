@@ -7,24 +7,24 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestProvideService(t *testing.T) {
 	t.Run("uses hardcoded inspector if feature flag is not present", func(t *testing.T) {
-		pCfg := &config.Cfg{Features: featuremgmt.WithFeatures()}
+		features := featuremgmt.WithFeatures()
 		dynamic, err := angulardetectorsprovider.ProvideDynamic(
-			pCfg,
+			setting.NewCfg(),
 			angularpatternsstore.ProvideService(kvstore.NewFakeKVStore()),
-			featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns),
+			features,
 		)
 		require.NoError(t, err)
-		inspector, err := ProvideService(pCfg, dynamic)
+		inspector, err := ProvideService(features, dynamic)
 		require.NoError(t, err)
 		require.IsType(t, inspector.Inspector, &angularinspector.PatternsListInspector{})
 		patternsListInspector := inspector.Inspector.(*angularinspector.PatternsListInspector)
@@ -33,16 +33,16 @@ func TestProvideService(t *testing.T) {
 	})
 
 	t.Run("uses dynamic inspector with hardcoded fallback if feature flag is present", func(t *testing.T) {
-		pCfg := &config.Cfg{Features: featuremgmt.WithFeatures(
+		features := featuremgmt.WithFeatures(
 			featuremgmt.FlagPluginsDynamicAngularDetectionPatterns,
-		)}
+		)
 		dynamic, err := angulardetectorsprovider.ProvideDynamic(
-			pCfg,
+			setting.NewCfg(),
 			angularpatternsstore.ProvideService(kvstore.NewFakeKVStore()),
-			featuremgmt.WithFeatures(),
+			features,
 		)
 		require.NoError(t, err)
-		inspector, err := ProvideService(pCfg, dynamic)
+		inspector, err := ProvideService(features, dynamic)
 		require.NoError(t, err)
 		require.IsType(t, inspector.Inspector, &angularinspector.PatternsListInspector{})
 		require.IsType(t, inspector.Inspector.(*angularinspector.PatternsListInspector).DetectorsProvider, angulardetector.SequenceDetectorsProvider{})

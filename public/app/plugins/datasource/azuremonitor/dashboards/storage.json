@@ -6313,7 +6313,6 @@
   ],
   "refresh": false,
   "schemaVersion": 27,
-  "style": "dark",
   "tags": [],
   "templating": {
     "list": [
@@ -6359,20 +6358,37 @@
         "useTags": false
       },
       {
-        "description": null,
-        "error": null,
+        "current": {},
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
         "hide": 2,
+        "includeAll": false,
         "label": "Namespace",
+        "multi": false,
         "name": "ns",
-        "query": "Microsoft.Storage/storageAccounts",
+        "options": [],
+        "query": {
+          "azureResourceGraph": {
+            "query": "resources\r\n| where [\"type\"] =~ \"Microsoft.Storage/storageAccounts\"\r\n| distinct [\"type\"]"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscriptions": ["$sub"]
+        },
+        "refresh": 1,
+        "regex": "",
         "skipUrlSync": false,
-        "type": "constant"
+        "sort": 5,
+        "type": "query"
       },
       {
         "allValue": null,
         "current": {},
         "datasource": "$ds",
-        "definition": "ResourceGroups($sub)",
+        "definition": "",
         "description": null,
         "error": null,
         "hide": 0,
@@ -6381,7 +6397,14 @@
         "multi": false,
         "name": "rg",
         "options": [],
-        "query": "ResourceGroups($sub)",
+        "query": {
+          "azureResourceGraph": {
+            "query": "resources\r\n| where [\"type\"] =~ \"Microsoft.Storage/storageAccounts\"\r\n| distinct resourceGroup"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscriptions": ["$sub"]
+        },
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
@@ -6396,7 +6419,7 @@
         "allValue": null,
         "current": {},
         "datasource": "$ds",
-        "definition": "ResourceNames($sub, $rg, $ns)",
+        "definition": "",
         "description": null,
         "error": null,
         "hide": 0,
@@ -6405,7 +6428,13 @@
         "multi": false,
         "name": "resource",
         "options": [],
-        "query": "ResourceNames($sub, $rg, $ns)",
+        "query": {
+          "namespace": "$ns",
+          "queryType": "Azure Resource Names",
+          "refId": "A",
+          "resourceGroup": "$rg",
+          "subscription": "$sub"
+        },
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,

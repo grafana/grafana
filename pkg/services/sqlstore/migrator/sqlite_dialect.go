@@ -75,8 +75,8 @@ func (db *SQLite3) SQLType(c *Column) string {
 	}
 }
 
-func (db *SQLite3) IndexCheckSQL(tableName, indexName string) (string, []interface{}) {
-	args := []interface{}{tableName, indexName}
+func (db *SQLite3) IndexCheckSQL(tableName, indexName string) (string, []any) {
+	args := []any{tableName, indexName}
 	sql := "SELECT 1 FROM " + db.Quote("sqlite_master") + " WHERE " + db.Quote("type") + "='index' AND " + db.Quote("tbl_name") + "=? AND " + db.Quote("name") + "=?"
 	return sql, args
 }
@@ -208,4 +208,8 @@ func (db *SQLite3) UpsertMultipleSQL(tableName string, keyCols, updateCols []str
 		setStr.String(),
 	)
 	return s, nil
+}
+
+func (db *SQLite3) Concat(strs ...string) string {
+	return strings.Join(strs, " || ")
 }

@@ -11,10 +11,10 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -73,7 +73,7 @@ func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleM
 	writeCtx := context.Background()
 	writeCtx, cancel := context.WithTimeout(writeCtx, StateHistoryWriteTimeout)
 	writeCtx = history_model.WithRuleData(writeCtx, rule)
-	writeCtx = tracing.ContextWithSpan(writeCtx, tracing.SpanFromContext(ctx))
+	writeCtx = trace.ContextWithSpan(writeCtx, trace.SpanFromContext(ctx))
 
 	go func(ctx context.Context) {
 		defer cancel()
@@ -111,8 +111,8 @@ func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQue
 	q := annotations.ItemQuery{
 		AlertID:      rule.ID,
 		OrgID:        query.OrgID,
-		From:         query.From.Unix(),
-		To:           query.To.Unix(),
+		From:         query.From.UnixMilli(),
+		To:           query.To.UnixMilli(),
 		SignedInUser: query.SignedInUser,
 	}
 	items, err := h.store.Find(ctx, &q)
@@ -173,12 +173,12 @@ func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQue
 func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransition, logger log.Logger) []annotations.Item {
 	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
-		if !shouldRecord(state) {
+		if !ShouldRecordAnnotation(state) {
 			continue
 		}
 		logger.Debug("Alert state changed creating annotation", "newState", state.Formatted(), "oldState", state.PreviousFormatted())
 
-		annotationText, annotationData := buildAnnotationTextAndData(rule, state.State)
+		annotationText, annotationData := BuildAnnotationTextAndData(rule, state.State)
 
 		item := annotations.Item{
 			AlertID:   rule.ID,
@@ -195,7 +195,7 @@ func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransitio
 	return items
 }
 
-func buildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state.State) (string, *simplejson.Json) {
+func BuildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state.State) (string, *simplejson.Json) {
 	jsonData := simplejson.New()
 	var value string
 

@@ -1,4 +1,4 @@
-import { explainOperator, getOperationDefinitions } from './operations';
+import { explainOperator, operationDefinitions } from './operations';
 import { LokiOperationId } from './types';
 
 const undocumentedOperationsIds: string[] = [
@@ -21,8 +21,7 @@ describe('explainOperator', () => {
   let operations = [];
   let undocumentedOperations = [];
 
-  const definitions = getOperationDefinitions();
-  for (const definition of definitions) {
+  for (const definition of operationDefinitions) {
     if (!undocumentedOperationsIds.includes(definition.id)) {
       operations.push(definition.id);
     } else {
@@ -31,7 +30,7 @@ describe('explainOperator', () => {
   }
 
   test('Resolves operation definitions', () => {
-    expect(definitions.length).toBeGreaterThan(0);
+    expect(operationDefinitions.length).toBeGreaterThan(0);
   });
 
   test.each(operations)('Returns docs for the %s operation', (operation) => {

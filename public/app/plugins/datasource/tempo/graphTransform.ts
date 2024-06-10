@@ -8,9 +8,9 @@ import {
   NodeGraphDataFrameFieldNames as Fields,
   TimeRange,
   FieldType,
+  toDataFrame,
 } from '@grafana/data';
-
-import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '../../../core/utils/tracing';
+import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '@grafana/o11y-ds-frontend';
 
 /**
  * Row in a trace dataFrame
@@ -138,11 +138,13 @@ export const failedMetric = 'traces_service_graph_request_failed_total';
 export const histogramMetric = 'traces_service_graph_request_server_seconds_bucket';
 
 export const rateMetric = {
-  expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
+  expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)',
+  topk: 5,
   params: [],
 };
 export const errorRateMetric = {
-  expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
+  expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)',
+  topk: 5,
   params: ['status_code="STATUS_CODE_ERROR"'],
 };
 export const durationMetric = {
@@ -189,35 +191,53 @@ function createServiceMapDataFrames() {
   }
 
   const nodes = createDF('Nodes', [
-    { name: Fields.id, type: FieldType.string },
-    { name: Fields.title, type: FieldType.string, config: { displayName: 'Service name' } },
-    { name: Fields.subTitle, type: FieldType.string, config: { displayName: 'Service namespace' } },
-    { name: Fields.mainStat, type: FieldType.number, config: { unit: 'ms/r', displayName: 'Average response time' } },
+    { name: Fields.id, type: FieldType.string, values: [] },
+    { name: Fields.title, type: FieldType.string, config: { displayName: 'Service name' }, values: [] },
+    { name: Fields.subTitle, type: FieldType.string, config: { displayName: 'Service namespace' }, values: [] },
+    {
+      name: Fields.mainStat,
+      type: FieldType.number,
+      config: { unit: 'ms/r', displayName: 'Average response time' },
+      values: [],
+    },
     {
       name: Fields.secondaryStat,
       type: FieldType.number,
       config: { unit: 'r/sec', displayName: 'Requests per second' },
+      values: [],
     },
     {
       name: Fields.arc + 'success',
       type: FieldType.number,
       config: { displayName: 'Success', color: { fixedColor: 'green', mode: FieldColorModeId.Fixed } },
+      values: [],
     },
     {
       name: Fields.arc + 'failed',
       type: FieldType.number,
       config: { displayName: 'Failed', color: { fixedColor: 'red', mode: FieldColorModeId.Fixed } },
+      values: [],
     },
   ]);
   const edges = createDF('Edges', [
-    { name: Fields.id, type: FieldType.string },
-    { name: Fields.source, type: FieldType.string },
-    { name: Fields.target, type: FieldType.string },
-    { name: Fields.mainStat, type: FieldType.number, config: { unit: 'ms/r', displayName: 'Average response time' } },
+    { name: Fields.id, type: FieldType.string, values: [] },
+    { name: Fields.source, type: FieldType.string, values: [] },
+    { name: AdditionalEdgeFields.sourceName, type: FieldType.string, values: [] },
+    { name: AdditionalEdgeFields.sourceNamespace, type: FieldType.string, values: [] },
+    { name: Fields.target, type: FieldType.string, values: [] },
+    { name: AdditionalEdgeFields.targetName, type: FieldType.string, values: [] },
+    { name: AdditionalEdgeFields.targetNamespace, type: FieldType.string, values: [] },
+    {
+      name: Fields.mainStat,
+      type: FieldType.number,
+      config: { unit: 'ms/r', displayName: 'Average response time' },
+      values: [],
+    },
     {
       name: Fields.secondaryStat,
       type: FieldType.number,
       config: { unit: 'r/sec', displayName: 'Requests per second' },
+      values: [],
     },
   ]);
 
@@ -230,8 +250,9 @@ function createServiceMapDataFrames() {
  * @param responses
  */
 function getMetricFrames(responses: DataQueryResponse[]): Record<string, DataFrameView> {
-  return responses[0].data.reduce<Record<string, DataFrameView>>((acc, frame) => {
-    acc[frame.refId] = new DataFrameView(frame);
+  return (responses[0]?.data || []).reduce<Record<string, DataFrameView>>((acc, frameDTO) => {
+    const frame = toDataFrame(frameDTO);
+    acc[frame.refId ?? 'A'] = new DataFrameView(frame);
     return acc;
   }, {});
 }
@@ -249,8 +270,21 @@ type NodeObject = ServiceMapStatistics & {
 
 type EdgeObject = ServiceMapStatistics & {
   source: string;
+  sourceName: string;
+  sourceNamespace: string;
   target: string;
+  targetName: string;
+  targetNamespace: string;
 };
+
+// These fields are not necessary for rendering, so not available from the Fields enum
+// Will be used for linking when namespace is present
+enum AdditionalEdgeFields {
+  sourceName = 'sourceName',
+  sourceNamespace = 'sourceNamespace',
+  targetName = 'targetName',
+  targetNamespace = 'targetNamespace',
+}
 
 /**
  * Collect data from a metric into a map of nodes and edges. The metric data is modeled as counts of metric per edge
@@ -275,7 +309,7 @@ function collectMetricData(
   }
 
   // The name of the value column is in this format
-  // TODO figure out if it can be changed
+  // Improvement: figure out if it can be changed
   const valueName = `Value #${metric}`;
 
   for (let i = 0; i < frame.length; i++) {
@@ -289,7 +323,11 @@ function collectMetricData(
       // Create edge as it does not exist yet
       edgesMap[edgeId] = {
         target: serverId,
+        targetName: row.server,
+        targetNamespace: row.server_service_namespace,
         source: clientId,
+        sourceName: row.client,
+        sourceNamespace: row.client_service_namespace,
         [stat]: row[valueName],
       };
     } else {
@@ -348,7 +386,11 @@ function convertToDataFrames(
     edges.add({
       [Fields.id]: edgeId,
       [Fields.source]: edge.source,
+      [AdditionalEdgeFields.sourceName]: edge.sourceName,
+      [AdditionalEdgeFields.sourceNamespace]: edge.sourceNamespace,
       [Fields.target]: edge.target,
+      [AdditionalEdgeFields.targetName]: edge.targetName,
+      [AdditionalEdgeFields.targetNamespace]: edge.targetNamespace,
       [Fields.mainStat]: edge.total ? (edge.seconds! / edge.total) * 1000 : Number.NaN, // Average response time
       [Fields.secondaryStat]: edge.total ? Math.round(edge.total * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
     });

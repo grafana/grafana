@@ -1,14 +1,6 @@
 import saveAs from 'file-saver';
 
-import {
-  dataFrameFromJSON,
-  DataFrameJSON,
-  dateTimeFormat,
-  dateTimeFormatISO,
-  FieldType,
-  LogRowModel,
-  LogsMetaKind,
-} from '@grafana/data';
+import { dataFrameFromJSON, DataFrameJSON, dateTimeFormat, FieldType, LogRowModel, LogsMetaKind } from '@grafana/data';
 
 import { downloadAsJson, downloadDataFrameAsCsv, downloadLogsModelAsTxt } from './download';
 
@@ -98,7 +90,7 @@ describe('inspector download', () => {
           rows: [{ timeEpochMs: 100, entry: 'testEntry' } as unknown as LogRowModel],
         },
         'test',
-        `testLabel: 1\nsecondTestLabel: 2\n\n\n${dateTimeFormatISO(100)}\ttestEntry\n`,
+        `testLabel: 1\nsecondTestLabel: 2\n\n\n${dateTimeFormat(100, { defaultWithMS: true })}\ttestEntry\n`,
       ],
     ])('should, when logsModel is %s and title is %s, resolve in %s', async (logsModel, title, expected) => {
       downloadLogsModelAsTxt(logsModel, title);

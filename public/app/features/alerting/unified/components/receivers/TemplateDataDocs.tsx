@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, Stack } from '@grafana/ui';
 
 import { HoverCard } from '../HoverCard';
 
@@ -30,7 +29,7 @@ export function TemplateDataDocs() {
   );
 
   return (
-    <Stack gap={2} flexGrow={1}>
+    <Stack gap={2}>
       <TemplateDataTable
         caption={<h4 className={styles.header}>Template Data</h4>}
         dataItems={GlobalTemplateData}

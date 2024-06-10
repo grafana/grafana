@@ -1,8 +1,12 @@
 import React from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
+import { GenAIPanelDescriptionButton } from '../GenAI/GenAIPanelDescriptionButton';
+import { GenAIPanelTitleButton } from '../GenAI/GenAIPanelTitleButton';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -10,12 +14,28 @@ import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OptionPaneRenderProps } from './types';
 
 export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
-  const { panel, onPanelConfigChange } = props;
+  const { dashboard, panel, onPanelConfigChange } = props;
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Panel options',
     id: 'Panel options',
     isOpenDefault: true,
   });
+
+  const setPanelTitle = (title: string) => {
+    const input = document.getElementById('PanelFrameTitle');
+    if (input instanceof HTMLInputElement) {
+      input.value = title;
+      onPanelConfigChange('title', title);
+    }
+  };
+
+  const setPanelDescription = (description: string) => {
+    const input = document.getElementById('description-text-area');
+    if (input instanceof HTMLTextAreaElement) {
+      input.value = description;
+      onPanelConfigChange('description', description);
+    }
+  };
 
   return descriptor
     .addItem(
@@ -26,12 +46,20 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         render: function renderTitle() {
           return (
             <Input
+              data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
               id="PanelFrameTitle"
               defaultValue={panel.title}
               onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)}
             />
           );
         },
+        addon: config.featureToggles.dashgpt && (
+          <GenAIPanelTitleButton
+            onGenerate={setPanelTitle}
+            panel={panel.getSaveModel()}
+            dashboard={dashboard.getSaveModelClone()}
+          />
+        ),
       })
     )
     .addItem(
@@ -42,12 +70,16 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         render: function renderDescription() {
           return (
             <TextArea
+              data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Description')}
               id="description-text-area"
               defaultValue={panel.description}
               onBlur={(e) => onPanelConfigChange('description', e.currentTarget.value)}
             />
           );
         },
+        addon: config.featureToggles.dashgpt && (
+          <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel.getSaveModel()} />
+        ),
       })
     )
     .addItem(
@@ -56,6 +88,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         render: function renderTransparent() {
           return (
             <Switch
+              data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Transparent background')}
               value={panel.transparent}
               id="transparent-background"
               onChange={(e) => onPanelConfigChange('transparent', e.currentTarget.checked)}
@@ -102,7 +135,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
                 <RepeatRowSelect
                   id="repeat-by-variable-select"
                   repeat={panel.repeat}
-                  onChange={(value?: string | null) => {
+                  onChange={(value?: string) => {
                     onPanelConfigChange('repeat', value);
                   }}
                 />

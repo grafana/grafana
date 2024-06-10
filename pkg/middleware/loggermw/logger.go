@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 
@@ -63,7 +64,7 @@ func (l *loggerImpl) Middleware() web.Middleware {
 			// put the start time on context so we can measure it later.
 			r = r.WithContext(log.InitstartTime(r.Context(), time.Now()))
 
-			if l.flags.IsEnabled(featuremgmt.FlagUnifiedRequestLog) {
+			if l.flags.IsEnabled(r.Context(), featuremgmt.FlagUnifiedRequestLog) {
 				r = r.WithContext(errutil.SetUnifiedLogging(r.Context()))
 			}
 
@@ -73,6 +74,7 @@ func (l *loggerImpl) Middleware() web.Middleware {
 			duration := time.Since(start)
 			timeTaken := duration / time.Millisecond
 			ctx := contexthandler.FromContext(r.Context())
+
 			if ctx != nil && ctx.PerfmonTimer != nil {
 				ctx.PerfmonTimer.Observe(float64(timeTaken))
 			}
@@ -126,6 +128,9 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 	if handler, exist := middleware.RouteOperationName(c.Req); exist {
 		logParams = append(logParams, "handler", handler)
 	}
+
+	rmd := requestmeta.GetRequestMetaData(c.Req.Context())
+	logParams = append(logParams, "status_source", rmd.StatusSource)
 
 	logParams = append(logParams, errorLogParams(c.Error)...)
 

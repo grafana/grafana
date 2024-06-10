@@ -1,5 +1,5 @@
 ---
-description: Breaking changes for Grafana v10.0
+description: Learn about breaking changes in Grafana v10.0
 keywords:
   - grafana
   - breaking changes
@@ -81,7 +81,7 @@ Grafana legacy alerting (dashboard alerts) has been deprecated since Grafana v9.
 
 #### Migration path
 
-The new Grafana Alerting was introduced in Grafana 8 and is a superset of legacy alerting. Learn how to migrate your alerts in the [Upgrade Alerting documentation]({{< relref "../alerting/set-up/migrating-alerts/" >}}).
+The new Grafana Alerting was introduced in Grafana 8 and is a superset of legacy alerting. Learn how to migrate your alerts in the [Upgrade Alerting documentation]({{< relref "./v10.4/alerting/set-up/migrating-alerts/" >}}).
 
 ### API keys are migrating to service accounts
 
@@ -192,7 +192,7 @@ We strongly recommend not doing this in case you are using Azure AD as an identi
 
 #### Learn more
 
-- [CVE-2023-3128 Advisory](https://grafana.com/security/security-advisories/CVE-2023-3128)
+- [CVE-2023-3128 Advisory](https://grafana.com/security/security-advisories/cve-2023-3128/)
 - [Enable email lookup]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}})
 
 ### The "Alias" field in the CloudWatch data source is removed
@@ -343,7 +343,7 @@ Here are some of the benefits of create-plugin:
 
 - **Improved testing capabilities:** Testing plugins with @grafana/create-plugin is much easier with GitHub workflows that automate unit and e2e test runs whenever changes are pushed to GitHub.
 
-- **Better documentation:** The [documentation](https://grafana.github.io/plugin-tools/docs/get-started/) for @grafana/create-plugin is more comprehensive and easier to discover than that of @grafana/toolkit.
+- **Better documentation:** The [documentation](https://grafana.com/developers/plugin-tools/) for @grafana/create-plugin is more comprehensive and easier to discover than that of @grafana/toolkit.
 
 #### Migration path
 
@@ -361,7 +361,7 @@ npx @grafana/create-plugin@latest migrate
 
 #### Learn more
 
-- [Migration guide](https://grafana.github.io/plugin-tools/docs/get-started/migrate-from-toolkit)
+- [Migration guide](https://grafana.com/developers/plugin-tools/migration-guides/migrate-from-toolkit)
 
 ## Deprecations
 

@@ -139,7 +139,7 @@ The default values for "cloud monitoring auto" are:
 
 The other automatic option is "grafana auto", which automatically sets the Group By time depending on the time range chosen and width of the time series panel.
 
-For more information about "grafana auto", refer to [Interval variable]({{< relref "../../../dashboards/variables/add-template-variables/#add-an-interval-variable" >}}).
+For more information about "grafana auto", refer to [Interval variable][add-template-variables-add-interval-variable].
 
 You can also choose fixed time intervals to group by, like `1h` or `1d`.
 
@@ -218,8 +218,6 @@ To understand basic MQL concepts, refer to [Introduction to Monitoring Query Lan
 **To create an MQL query:**
 
 1. Select the **Metrics** option in the **Query Type** dropdown.
-1. Select **<> Edit MQL** next to the **Query Type** field.
-   This toggles the MQL query builder mode.
 1. Select a project from the **Project** dropdown.
 1. Enter your MQL query in the text area.
 
@@ -274,6 +272,15 @@ The **Alias By** field helps you control the format of legend keys for SLO queri
 
 SLO queries use the same alignment period functionality as [metric queries](#define-the-alignment-period).
 
+### Create a Prometheus query
+
+**To create an Prometheus query:**
+
+1. Select the **PromQL** option in the **Query Type** dropdown.
+1. Select a project from the **Project** dropdown.
+1. Enter your Prometheus query in the text area.
+1. Enter a Min Step interval. The **Min step** setting defines the lower bounds on the interval between data points. For example, set this to `1h` to hint that measurements are taken hourly. This setting supports the `$__interval` and `$__rate_interval` macros.
+
 ## Apply annotations
 
 {{< figure src="/static/img/docs/google-cloud-monitoring/annotations-8-0.png" max-width= "400px" class="docs-image--right" >}}
@@ -305,6 +312,9 @@ Example result: `monitoring.googleapis.com/uptime_check/http_status has this val
 | `{{resource.label.xxx}}` | Returns the resource label value. | `{{resource.label.zone}}`        | `us-east1-b`                                      |
 
 {{% docs/reference %}}
+[add-template-variables-add-interval-variable]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#add-an-interval-variable"
+[add-template-variables-add-interval-variable]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#add-an-interval-variable"
+
 [annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
 [annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
 

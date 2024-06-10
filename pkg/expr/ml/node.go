@@ -31,6 +31,8 @@ type Command interface {
 	// Execute creates a payload send request to the ML API by calling the function argument sendRequest, and then parses response.
 	// Function sendRequest is supposed to abstract the client configuration such creating http request, adding authorization parameters, host etc.
 	Execute(from, to time.Time, sendRequest func(method string, path string, payload []byte) (response.Response, error)) (*backend.QueryDataResponse, error)
+
+	Type() string
 }
 
 // UnmarshalCommand parses a config parameters and creates a command. Requires key `type` to be specified.
@@ -39,7 +41,7 @@ func UnmarshalCommand(query []byte, appURL string) (Command, error) {
 	var expr CommandConfiguration
 	err := json.Unmarshal(query, &expr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshall Machine learning command: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal Machine learning command: %w", err)
 	}
 	if len(expr.Type) == 0 {
 		return nil, fmt.Errorf("required field 'type' is not specified or empty.  Should be one of [%s]", Outlier)

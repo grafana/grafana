@@ -44,7 +44,7 @@ func (m *MockImageUploader) Upload(arg0 context.Context, arg1 string) (string, e
 }
 
 // Upload indicates an expected call of Upload.
-func (mr *MockImageUploaderMockRecorder) Upload(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockImageUploaderMockRecorder) Upload(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upload", reflect.TypeOf((*MockImageUploader)(nil).Upload), arg0, arg1)
 }

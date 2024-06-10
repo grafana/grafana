@@ -89,4 +89,18 @@ describe('FieldToConfigMappingEditor', () => {
       expect.arrayContaining([{ fieldName: 'max', handlerKey: 'max', reducerId: 'last' }])
     );
   });
+
+  it('Shows additional settings', async () => {
+    setup({ mappings: [{ fieldName: 'max', handlerKey: 'threshold1' }] });
+
+    const select = await screen.findByText('Additional settings');
+    expect(select).toBeInTheDocument();
+  });
+
+  it('Does not show additional settings', async () => {
+    setup();
+
+    const select = screen.queryByText('Additional settings');
+    expect(select).not.toBeInTheDocument();
+  });
 });

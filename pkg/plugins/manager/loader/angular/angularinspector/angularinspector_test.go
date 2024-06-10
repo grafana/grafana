@@ -2,6 +2,7 @@ package angularinspector
 
 import (
 	"context"
+	"regexp"
 	"strconv"
 	"testing"
 
@@ -19,6 +20,10 @@ type fakeDetector struct {
 func (d *fakeDetector) DetectAngular(_ []byte) bool {
 	d.calls += 1
 	return d.returns
+}
+
+func (d *fakeDetector) String() string {
+	return "fake"
 }
 
 func TestPatternsListInspector(t *testing.T) {
@@ -73,9 +78,7 @@ func TestPatternsListInspector(t *testing.T) {
 			for _, d := range tc.fakeDetectors {
 				detectors = append(detectors, angulardetector.AngularDetector(d))
 			}
-			inspector := &PatternsListInspector{
-				DetectorsProvider: &angulardetector.StaticDetectorsProvider{Detectors: detectors},
-			}
+			inspector := NewPatternListInspector(&angulardetector.StaticDetectorsProvider{Detectors: detectors})
 			r, err := inspector.Inspect(context.Background(), plugin)
 			tc.exp(t, r, err, tc.fakeDetectors)
 		})
@@ -128,7 +131,7 @@ func TestDefaultStaticDetectorsInspector(t *testing.T) {
 			exp: false,
 		})
 	}
-	inspector := PatternsListInspector{DetectorsProvider: NewDefaultStaticDetectorsProvider()}
+	inspector := NewPatternListInspector(NewDefaultStaticDetectorsProvider())
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			isAngular, err := inspector.Inspect(context.Background(), tc.plugin)
@@ -141,5 +144,18 @@ func TestDefaultStaticDetectorsInspector(t *testing.T) {
 		p := &plugins.Plugin{FS: plugins.NewInMemoryFS(map[string][]byte{})}
 		_, err := inspector.Inspect(context.Background(), p)
 		require.NoError(t, err)
+	})
+}
+
+func TestDetectorStringer(t *testing.T) {
+	t.Run("contains bytes detector", func(t *testing.T) {
+		d := angulardetector.ContainsBytesDetector{Pattern: []byte("pattern")}
+		require.Equal(t, "pattern", d.String())
+	})
+
+	t.Run("regex detector", func(t *testing.T) {
+		const r = `["']QueryCtrl["']`
+		d := angulardetector.RegexDetector{Regex: regexp.MustCompile(r)}
+		require.Equal(t, r, d.String())
 	})
 }

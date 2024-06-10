@@ -120,10 +120,6 @@ export function EditDataSourceView({
 
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
 
-  const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
-  const isAlertManagerDatasource = dsi?.type === 'alertmanager';
-  const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
-
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     trackDsConfigClicked('save_and_test');
@@ -133,7 +129,7 @@ export function EditDataSourceView({
       trackDsConfigUpdated({ item: 'success' });
       appEvents.publish(new DataSourceUpdatedSuccessfully());
     } catch (error) {
-      trackDsConfigUpdated({ item: 'fail', error });
+      trackDsConfigUpdated({ item: 'fail' });
       return;
     }
 
@@ -143,7 +139,9 @@ export function EditDataSourceView({
   const extensions = useMemo(() => {
     const allowedPluginIds = ['grafana-pdc-app', 'grafana-auth-app'];
     const extensionPointId = PluginExtensionPoints.DataSourceConfig;
-    const { extensions } = getPluginComponentExtensions({ extensionPointId });
+    const { extensions } = getPluginComponentExtensions<{
+      context: PluginExtensionDataSourceConfigContext<DataSourceJsonData>;
+    }>({ extensionPointId });
 
     return extensions.filter((e) => allowedPluginIds.includes(e.pluginId));
   }, []);
@@ -190,7 +188,6 @@ export function EditDataSourceView({
         isDefault={dataSource.isDefault}
         onDefaultChange={onDefaultChange}
         onNameChange={onNameChange}
-        alertingSupported={alertingSupported}
         disabled={readOnly || !hasWriteRights}
       />
 
@@ -207,9 +204,7 @@ export function EditDataSourceView({
 
       {/* Extension point */}
       {extensions.map((extension) => {
-        const Component = extension.component as React.ComponentType<{
-          context: PluginExtensionDataSourceConfigContext<DataSourceJsonData>;
-        }>;
+        const Component = extension.component;
 
         return (
           <div key={extension.id}>

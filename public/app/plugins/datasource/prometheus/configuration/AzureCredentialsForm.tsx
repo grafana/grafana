@@ -1,16 +1,15 @@
 import { cx } from '@emotion/css';
-import React, { ChangeEvent, useEffect, useReducer, useState } from 'react';
+import React, { ChangeEvent, useEffect, useMemo, useReducer, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { InlineFormLabel, Button } from '@grafana/ui/src/components';
-import { Input } from '@grafana/ui/src/components/Forms/Legacy/Input/Input';
-import { Select } from '@grafana/ui/src/components/Forms/Legacy/Select/Select';
+import { InlineFormLabel, Button, Select, Input } from '@grafana/ui';
 
 import { AzureAuthType, AzureCredentials, isCredentialsComplete } from './AzureCredentials';
 
 export interface Props {
   managedIdentityEnabled: boolean;
+  workloadIdentityEnabled: boolean;
   credentials: AzureCredentials;
   azureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
@@ -18,23 +17,45 @@ export interface Props {
   disabled?: boolean;
 }
 
-const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
-  {
-    value: 'msi',
-    label: 'Managed Identity',
-  },
-  {
-    value: 'clientsecret',
-    label: 'App Registration',
-  },
-];
-
 export const AzureCredentialsForm = (props: Props) => {
-  const { credentials, azureCloudOptions, onCredentialsChange, getSubscriptions, disabled } = props;
+  const {
+    credentials,
+    azureCloudOptions,
+    onCredentialsChange,
+    getSubscriptions,
+    disabled,
+    managedIdentityEnabled,
+    workloadIdentityEnabled,
+  } = props;
   const hasRequiredFields = isCredentialsComplete(credentials);
 
   const [subscriptions, setSubscriptions] = useState<Array<SelectableValue<string>>>([]);
   const [loadSubscriptionsClicked, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
+
+  const authTypeOptions = useMemo(() => {
+    let opts: Array<SelectableValue<AzureAuthType>> = [
+      {
+        value: 'clientsecret',
+        label: 'App Registration',
+      },
+    ];
+
+    if (managedIdentityEnabled) {
+      opts.push({
+        value: 'msi',
+        label: 'Managed Identity',
+      });
+    }
+
+    if (workloadIdentityEnabled) {
+      opts.push({
+        value: 'workloadidentity',
+        label: 'Workload Identity',
+      });
+    }
+    return opts;
+  }, [managedIdentityEnabled, workloadIdentityEnabled]);
+
   useEffect(() => {
     if (!getSubscriptions || !hasRequiredFields) {
       updateSubscriptions([]);
@@ -70,19 +91,22 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
-    if (onCredentialsChange) {
-      setSubscriptions([]);
-      const updated: AzureCredentials = {
-        ...credentials,
-        authType: selected.value || 'msi',
-        defaultSubscriptionId: undefined,
-      };
-      onCredentialsChange(updated);
-    }
+    setSubscriptions([]);
+    const defaultAuthType = managedIdentityEnabled
+      ? 'msi'
+      : workloadIdentityEnabled
+        ? 'workloadidentity'
+        : 'clientsecret';
+    const updated: AzureCredentials = {
+      ...credentials,
+      authType: selected.value || defaultAuthType,
+      defaultSubscriptionId: undefined,
+    };
+    onCredentialsChange(updated);
   };
 
   const onAzureCloudChange = (selected: SelectableValue<string>) => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret') {
       setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
@@ -94,7 +118,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret') {
       setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
@@ -106,7 +130,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret') {
       setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
@@ -118,7 +142,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret') {
       setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
@@ -130,7 +154,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onClientSecretReset = () => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
+    if (credentials.authType === 'clientsecret') {
       setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
@@ -142,19 +166,17 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onSubscriptionChange = (selected: SelectableValue<string> | undefined) => {
-    if (onCredentialsChange) {
-      const updated: AzureCredentials = {
-        ...credentials,
-        defaultSubscriptionId: selected?.value,
-      };
-      onCredentialsChange(updated);
-    }
+    const updated: AzureCredentials = {
+      ...credentials,
+      defaultSubscriptionId: selected?.value,
+    };
+    onCredentialsChange(updated);
   };
   const prometheusConfigOverhaulAuth = config.featureToggles.prometheusConfigOverhaulAuth;
 
   return (
     <div className="gf-form-group">
-      {props.managedIdentityEnabled && (
+      {authTypeOptions.length > 1 && (
         <div className="gf-form-inline">
           <div className="gf-form">
             <InlineFormLabel className="width-12" tooltip="Choose the type of authentication to Azure services">

@@ -12,6 +12,8 @@ type Props = {
 
   angularSupportEnabled?: boolean;
   showPluginDetailsLink?: boolean;
+
+  interactionElementId?: string;
 };
 
 function deprecationMessage(pluginType?: string, angularSupportEnabled?: boolean): string {
@@ -42,8 +44,17 @@ function deprecationMessage(pluginType?: string, angularSupportEnabled?: boolean
 // An Alert showing information about Angular deprecation notice.
 // If the plugin does not use Angular (!plugin.angularDetected), it returns null.
 export function AngularDeprecationPluginNotice(props: Props): React.ReactElement | null {
-  const { className, angularSupportEnabled, pluginId, pluginType, showPluginDetailsLink } = props;
+  const { className, angularSupportEnabled, pluginId, pluginType, showPluginDetailsLink, interactionElementId } = props;
   const [dismissed, setDismissed] = useState(false);
+
+  const interactionAttributes: Record<string, string> = {};
+  if (pluginId) {
+    interactionAttributes.pluginId = pluginId;
+  }
+  if (interactionElementId) {
+    interactionAttributes.elementId = interactionElementId;
+  }
+
   return dismissed ? null : (
     <Alert severity="warning" title="Angular plugin" className={className} onRemove={() => setDismissed(true)}>
       <p>{deprecationMessage(pluginType, angularSupportEnabled)}</p>
@@ -56,9 +67,7 @@ export function AngularDeprecationPluginNotice(props: Props): React.ReactElement
               target="_blank"
               rel="noreferrer"
               onClick={() => {
-                reportInteraction('angular_deprecation_docs_clicked', {
-                  pluginId,
-                });
+                reportInteraction('angular_deprecation_docs_clicked', interactionAttributes);
               }}
             >
               Read our deprecation notice and migration advice.

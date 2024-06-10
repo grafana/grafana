@@ -184,11 +184,11 @@ export const alwaysFieldMatcher = (field: Field) => {
   return true;
 };
 
-export const alwaysFrameMatcher = (frame: DataFrame) => {
+const alwaysFrameMatcher = (frame: DataFrame) => {
   return true;
 };
 
-export const neverFieldMatcher = (field: Field) => {
+const neverFieldMatcher = (field: Field) => {
   return false;
 };
 
@@ -196,7 +196,7 @@ export const notTimeFieldMatcher = (field: Field) => {
   return field.type !== FieldType.time;
 };
 
-export const neverFrameMatcher = (frame: DataFrame) => {
+const neverFrameMatcher = (frame: DataFrame) => {
   return false;
 };
 
@@ -205,11 +205,11 @@ const alwaysFieldMatcherInfo: FieldMatcherInfo = {
   name: 'All Fields',
   description: 'Always Match',
 
-  get: (option: any) => {
+  get: (_option) => {
     return alwaysFieldMatcher;
   },
 
-  getOptionsDisplayText: (options: any) => {
+  getOptionsDisplayText: (_options) => {
     return 'Always';
   },
 };
@@ -219,11 +219,11 @@ const alwaysFrameMatcherInfo: FrameMatcherInfo = {
   name: 'All Frames',
   description: 'Always Match',
 
-  get: (option: any) => {
+  get: (_option) => {
     return alwaysFrameMatcher;
   },
 
-  getOptionsDisplayText: (options: any) => {
+  getOptionsDisplayText: (_options) => {
     return 'Always';
   },
 };
@@ -234,11 +234,11 @@ const neverFieldMatcherInfo: FieldMatcherInfo = {
   description: 'Never Match',
   excludeFromPicker: true,
 
-  get: (option: any) => {
+  get: (_option) => {
     return neverFieldMatcher;
   },
 
-  getOptionsDisplayText: (options: any) => {
+  getOptionsDisplayText: (_options) => {
     return 'Never';
   },
 };
@@ -248,11 +248,11 @@ const neverFrameMatcherInfo: FrameMatcherInfo = {
   name: 'No Frames',
   description: 'Never Match',
 
-  get: (option: any) => {
+  get: (_option) => {
     return neverFrameMatcher;
   },
 
-  getOptionsDisplayText: (options: any) => {
+  getOptionsDisplayText: (_options) => {
     return 'Never';
   },
 };

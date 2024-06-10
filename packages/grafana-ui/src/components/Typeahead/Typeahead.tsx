@@ -3,7 +3,8 @@ import React, { createRef, PureComponent } from 'react';
 import ReactDOM from 'react-dom';
 import { FixedSizeList } from 'react-window';
 
-import { ThemeContext } from '../../themes/ThemeContext';
+import { ThemeContext } from '@grafana/data';
+
 import { CompletionItem, CompletionItemGroup, CompletionItemKind } from '../../types/completion';
 import { flattenGroupItems, calculateLongestLabel, calculateListSizes } from '../../utils/typeahead';
 

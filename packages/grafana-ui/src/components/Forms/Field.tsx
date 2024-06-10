@@ -3,7 +3,7 @@ import React, { HTMLAttributes } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { getChildId } from '../../utils/reactUtils';
 
 import { FieldValidationMessage } from './FieldValidationMessage';
@@ -40,35 +40,6 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   htmlFor?: string;
 }
 
-export const getFieldStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    field: css({
-      display: 'flex',
-      flexDirection: 'column',
-      marginBottom: theme.spacing(2),
-    }),
-    fieldHorizontal: css({
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      flexWrap: 'wrap',
-    }),
-    fieldValidationWrapper: css({
-      marginTop: theme.spacing(0.5),
-    }),
-    fieldValidationWrapperHorizontal: css({
-      flex: '1 1 100%',
-    }),
-    validationMessageHorizontalOverflow: css({
-      width: 0,
-      overflowX: 'visible',
-
-      '& > *': {
-        whiteSpace: 'nowrap',
-      },
-    }),
-  };
-});
-
 export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
   (
     {
@@ -88,8 +59,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
     }: FieldProps,
     ref
   ) => {
-    const theme = useTheme2();
-    const styles = getFieldStyles(theme);
+    const styles = useStyles2(getFieldStyles);
     const inputId = htmlFor ?? getChildId(children);
 
     const labelElement =
@@ -143,3 +113,30 @@ function deleteUndefinedProps<T extends Object>(obj: T): Partial<T> {
 
   return obj;
 }
+
+export const getFieldStyles = (theme: GrafanaTheme2) => ({
+  field: css({
+    display: 'flex',
+    flexDirection: 'column',
+    marginBottom: theme.spacing(2),
+  }),
+  fieldHorizontal: css({
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+  }),
+  fieldValidationWrapper: css({
+    marginTop: theme.spacing(0.5),
+  }),
+  fieldValidationWrapperHorizontal: css({
+    flex: '1 1 100%',
+  }),
+  validationMessageHorizontalOverflow: css({
+    width: 0,
+    overflowX: 'visible',
+
+    '& > *': {
+      whiteSpace: 'nowrap',
+    },
+  }),
+});

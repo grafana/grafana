@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"filippo.io/age"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 )
@@ -30,7 +31,7 @@ func (s *Service) startBundleWork(ctx context.Context, collectors []string, uid 
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				s.log.Error("support bundle collector panic", "err", err, "stack", string(debug.Stack()))
+				s.log.Error("Support bundle collector panic", "err", err, "stack", string(debug.Stack()))
 				result <- bundleResult{err: ErrCollectorPanicked}
 			}
 		}()
@@ -47,25 +48,29 @@ func (s *Service) startBundleWork(ctx context.Context, collectors []string, uid 
 	case <-ctx.Done():
 		s.log.Warn("Context cancelled while collecting support bundle")
 		if err := s.store.Update(ctx, uid, supportbundles.StateTimeout, nil); err != nil {
-			s.log.Error("failed to update bundle after timeout")
+			s.log.Error("Failed to update bundle after timeout")
 		}
 		return
 	case r := <-result:
 		if r.err != nil {
-			s.log.Error("failed to make bundle", "error", r.err, "uid", uid)
+			s.log.Error("Failed to make bundle", "error", r.err, "uid", uid)
 			if err := s.store.Update(ctx, uid, supportbundles.StateError, nil); err != nil {
-				s.log.Error("failed to update bundle after error")
+				s.log.Error("Failed to update bundle after error")
 			}
 			return
 		}
 		if err := s.store.Update(ctx, uid, supportbundles.StateComplete, r.tarBytes); err != nil {
-			s.log.Error("failed to update bundle after completion")
+			s.log.Error("Failed to update bundle after completion")
 		}
 		return
 	}
 }
 
 func (s *Service) bundle(ctx context.Context, collectors []string, uid string) ([]byte, error) {
+	ctxTracer, span := s.tracer.Start(ctx, "SupportBundle.bundle")
+	span.SetAttributes(attribute.String("SupportBundle.bundle.uid", uid))
+	defer span.End()
+
 	lookup := make(map[string]bool, len(collectors))
 	for _, c := range collectors {
 		lookup[c] = true
@@ -74,10 +79,20 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 	files := map[string][]byte{}
 
 	for _, collector := range s.bundleRegistry.Collectors() {
-		if !lookup[collector.UID] && !collector.IncludedByDefault {
+		collectorEnabled := true
+		if collector.EnabledFn != nil {
+			collectorEnabled = collector.EnabledFn()
+		}
+
+		if !(lookup[collector.UID] || collector.IncludedByDefault) || !collectorEnabled {
 			continue
 		}
-		item, err := collector.Fn(ctx)
+
+		// Trace the collector run
+		ctxBundler, span := s.tracer.Start(ctxTracer, "SupportBundle.bundle.collector")
+		span.SetAttributes(attribute.String("SupportBundle.bundle.collector.uid", collector.UID))
+
+		item, err := collector.Fn(ctxBundler)
 		if err != nil {
 			s.log.Warn("Failed to collect support bundle item", "error", err, "collector", collector.UID)
 		}
@@ -86,6 +101,8 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 		if item != nil {
 			files[item.Filename] = item.FileBytes
 		}
+
+		span.End()
 	}
 
 	// create tar.gz file

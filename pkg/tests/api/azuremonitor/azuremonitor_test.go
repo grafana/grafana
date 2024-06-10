@@ -18,7 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationAzureMonitor(t *testing.T) {
 	if testing.Short() {
@@ -44,13 +49,13 @@ func TestIntegrationAzureMonitor(t *testing.T) {
 	}))
 	t.Cleanup(outgoingServer.Close)
 
-	jsonData := simplejson.NewFromAny(map[string]interface{}{
+	jsonData := simplejson.NewFromAny(map[string]any{
 		"httpHeaderName1": "X-CUSTOM-HEADER",
 		"clientId":        "test-client-id",
 		"tenantId":        "test-tenant-id",
 		"cloudName":       "customizedazuremonitor",
-		"customizedRoutes": map[string]interface{}{
-			"Azure Monitor": map[string]interface{}{
+		"customizedRoutes": map[string]any{
+			"Azure Monitor": map[string]any{
 				"URL": outgoingServer.URL,
 				"Headers": map[string]string{
 					"custom-azure-header": "custom-azure-value",
@@ -77,13 +82,13 @@ func TestIntegrationAzureMonitor(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("When calling /api/ds/query should set expected headers on outgoing HTTP request", func(t *testing.T) {
-		query := simplejson.NewFromAny(map[string]interface{}{
-			"datasource": map[string]interface{}{
+		query := simplejson.NewFromAny(map[string]any{
+			"datasource": map[string]any{
 				"type": "grafana-azure-monitor-datasource",
 				"uid":  uid,
 			},
 			"queryType": "Azure Monitor",
-			"azureMonitor": map[string]interface{}{
+			"azureMonitor": map[string]any{
 				"resourceGroup":   "test-rg",
 				"metricNamespace": "microsoft.storage/storageaccounts",
 				"resourceName":    "testacct",

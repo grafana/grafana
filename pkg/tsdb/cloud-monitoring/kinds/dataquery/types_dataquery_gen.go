@@ -67,6 +67,7 @@ const (
 // Defines values for QueryType.
 const (
 	QueryTypeAnnotation      QueryType = "annotation"
+	QueryTypePromQL          QueryType = "promQL"
 	QueryTypeSlo             QueryType = "slo"
 	QueryTypeTimeSeriesList  QueryType = "timeSeriesList"
 	QueryTypeTimeSeriesQuery QueryType = "timeSeriesQuery"
@@ -86,38 +87,40 @@ const (
 // AlignmentTypes defines model for AlignmentTypes.
 type AlignmentTypes string
 
-// Annotation sub-query properties.
-type AnnotationQuery struct {
-	// TimeSeriesList Time Series List sub-query properties.
-	TimeSeriesList
-
-	// Annotation text.
-	Text *string `json:"text,omitempty"`
-
-	// Annotation title.
-	Title *string `json:"title,omitempty"`
-}
-
 // CloudMonitoringQuery defines model for CloudMonitoringQuery.
 type CloudMonitoringQuery struct {
-	// DataQuery These are the common properties available to all queries in all datasources.
-	// Specific implementations will *extend* this interface, adding the required
-	// properties for the given context.
-	DataQuery
-
 	// Aliases can be set to modify the legend labels. e.g. {{metric.label.xxx}}. See docs for more detail.
 	AliasBy *string `json:"aliasBy,omitempty"`
+
+	// For mixed data sources the selected datasource is on the query level.
+	// For non mixed scenarios this is undefined.
+	// TODO find a better way to do this ^ that's friendly to schema
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource *any `json:"datasource,omitempty"`
+
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
+	Hide *bool `json:"hide,omitempty"`
 
 	// Time interval in milliseconds.
 	IntervalMs *float32 `json:"intervalMs,omitempty"`
 
+	// PromQL sub-query properties.
+	PromQLQuery *PromQLQuery `json:"promQLQuery,omitempty"`
+
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
+	RefId *string `json:"refId,omitempty"`
+
 	// SLO sub-query properties.
 	SloQuery *SLOQuery `json:"sloQuery,omitempty"`
 
-	// GCM query type.
-	// queryType: #QueryType
 	// Time Series List sub-query properties.
-	TimeSeriesList *any `json:"timeSeriesList,omitempty"`
+	TimeSeriesList *TimeSeriesList `json:"timeSeriesList,omitempty"`
 
 	// Time Series sub-query properties.
 	TimeSeriesQuery *TimeSeriesQuery `json:"timeSeriesQuery,omitempty"`
@@ -133,9 +136,7 @@ type DataQuery struct {
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource *any `json:"datasource,omitempty"`
 
-	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	// Note this does not always imply that the query should not be executed since
-	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
 	Hide *bool `json:"hide,omitempty"`
 
 	// Specify the query flavor
@@ -166,7 +167,7 @@ type Filter struct {
 // GoogleCloudMonitoringDataQuery defines model for GoogleCloudMonitoringDataQuery.
 type GoogleCloudMonitoringDataQuery = map[string]any
 
-// @deprecated Use AnnotationQuery instead. Legacy annotation query properties for migration purposes.
+// @deprecated Use TimeSeriesList instead. Legacy annotation query properties for migration purposes.
 type LegacyCloudMonitoringAnnotationQuery struct {
 	// Array of filters to query data by. Labels that can be filtered on are defined by the metric.
 	Filters    []string   `json:"filters"`
@@ -233,6 +234,18 @@ type MetricQuery struct {
 
 // Types of pre-processor available. Defined by the metric.
 type PreprocessorType string
+
+// PromQL sub-query properties.
+type PromQLQuery struct {
+	// PromQL expression/query to be executed.
+	Expr string `json:"expr"`
+
+	// GCP project to execute the query against.
+	ProjectName string `json:"projectName"`
+
+	// PromQL min step
+	Step string `json:"step"`
+}
 
 // Defines the supported queryTypes.
 type QueryType string
@@ -304,6 +317,12 @@ type TimeSeriesList struct {
 
 	// Only present if a preprocessor is selected. Alignment function to be used. Defaults to ALIGN_MEAN.
 	SecondaryPerSeriesAligner *string `json:"secondaryPerSeriesAligner,omitempty"`
+
+	// Annotation text.
+	Text *string `json:"text,omitempty"`
+
+	// Annotation title.
+	Title *string `json:"title,omitempty"`
 
 	// Data view, defaults to FULL.
 	View *string `json:"view,omitempty"`

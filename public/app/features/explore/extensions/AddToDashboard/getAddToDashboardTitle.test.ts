@@ -8,22 +8,22 @@ jest.mock('app/core/services/context_srv');
 const contextSrvMock = jest.mocked(contextSrv);
 
 describe('getAddToDashboardTitle', () => {
-  beforeEach(() => contextSrvMock.hasAccess.mockReset());
+  beforeEach(() => contextSrvMock.hasPermission.mockReset());
 
   it('should return title ending with "dashboard" if user has full access', () => {
-    contextSrvMock.hasAccess.mockReturnValue(true);
+    contextSrvMock.hasPermission.mockReturnValue(true);
 
     expect(getAddToDashboardTitle()).toBe('Add panel to dashboard');
   });
 
   it('should return title ending with "dashboard" if user has no access', () => {
-    contextSrvMock.hasAccess.mockReturnValue(false);
+    contextSrvMock.hasPermission.mockReturnValue(false);
 
     expect(getAddToDashboardTitle()).toBe('Add panel to dashboard');
   });
 
   it('should return title ending with "new dashboard" if user only has access to create dashboards', () => {
-    contextSrvMock.hasAccess.mockImplementation((action) => {
+    contextSrvMock.hasPermission.mockImplementation((action) => {
       return action === AccessControlAction.DashboardsCreate;
     });
 
@@ -31,7 +31,7 @@ describe('getAddToDashboardTitle', () => {
   });
 
   it('should return title ending with "existing dashboard" if user only has access to edit dashboards', () => {
-    contextSrvMock.hasAccess.mockImplementation((action) => {
+    contextSrvMock.hasPermission.mockImplementation((action) => {
       return action === AccessControlAction.DashboardsWrite;
     });
 

@@ -25,3 +25,10 @@ func addKVStoreMigrations(mg *Migrator) {
 
 	mg.AddMigration("add index kv_store.org_id-namespace-key", NewAddIndexMigration(kvStoreV1, kvStoreV1.Indices[0]))
 }
+
+// addKVStoreMySQLValueTypeLongTextMigration adds a migration to change the column type of kv_store.value to LONGTEXT for
+// MySQL to be more inline size-wise with PSQL (TEXT) and SQLite.
+func addKVStoreMySQLValueTypeLongTextMigration(mg *Migrator) {
+	mg.AddMigration("alter kv_store.value to longtext", NewRawSQLMigration("").
+		Mysql("ALTER TABLE kv_store MODIFY value LONGTEXT NOT NULL;"))
+}

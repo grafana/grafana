@@ -520,8 +520,7 @@
       }
     ],
     "schemaVersion": 37,
-    "style": "dark",
-    "tags": [
+      "tags": [
       "gdev",
       "transform"
     ],

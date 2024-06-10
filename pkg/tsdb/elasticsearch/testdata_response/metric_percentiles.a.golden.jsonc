@@ -7,7 +7,7 @@
 //          0
 //      ]
 //  }
-//  Name: 
+//  Name: p25.0 counter
 //  Dimensions: 2 Fields by 3 Rows
 //  +-----------------------------------+------------------+
 //  | Name: Time                        | Name: Value      |
@@ -28,7 +28,7 @@
 //          0
 //      ]
 //  }
-//  Name: 
+//  Name: p75.0 counter
 //  Dimensions: 2 Fields by 3 Rows
 //  +-----------------------------------+------------------+
 //  | Name: Time                        | Name: Value      |
@@ -47,6 +47,7 @@
   "frames": [
     {
       "schema": {
+        "name": "p25.0 counter",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -68,10 +69,6 @@
             "typeInfo": {
               "frame": "float64",
               "nullable": true
-            },
-            "labels": {},
-            "config": {
-              "displayNameFromDS": "p25.0 counter"
             }
           }
         ]
@@ -93,6 +90,7 @@
     },
     {
       "schema": {
+        "name": "p75.0 counter",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -114,10 +112,6 @@
             "typeInfo": {
               "frame": "float64",
               "nullable": true
-            },
-            "labels": {},
-            "config": {
-              "displayNameFromDS": "p75.0 counter"
             }
           }
         ]

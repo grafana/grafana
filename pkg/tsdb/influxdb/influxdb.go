@@ -8,10 +8,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/fsql"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
@@ -19,18 +23,20 @@ import (
 var logger log.Logger = log.New("tsdb.influxdb")
 
 type Service struct {
-	im instancemgmt.InstanceManager
+	im       instancemgmt.InstanceManager
+	features featuremgmt.FeatureToggles
 }
 
-func ProvideService(httpClient httpclient.Provider) *Service {
+func ProvideService(httpClient httpclient.Provider, features featuremgmt.FeatureToggles) *Service {
 	return &Service{
-		im: datasource.NewInstanceManager(newInstanceSettings(httpClient)),
+		im:       datasource.NewInstanceManager(newInstanceSettings(httpClient)),
+		features: features,
 	}
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		opts, err := settings.HTTPClientOptions()
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -45,22 +51,27 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
+
 		httpMode := jsonData.HTTPMode
 		if httpMode == "" {
 			httpMode = "GET"
 		}
+
 		maxSeries := jsonData.MaxSeries
 		if maxSeries == 0 {
 			maxSeries = 1000
 		}
+
 		version := jsonData.Version
 		if version == "" {
 			version = influxVersionInfluxQL
 		}
+
 		database := jsonData.DbName
 		if database == "" {
 			database = settings.Database
 		}
+
 		model := &models.DatasourceInfo{
 			HTTPClient:    client,
 			URL:           settings.URL,
@@ -71,7 +82,9 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			DefaultBucket: jsonData.DefaultBucket,
 			Organization:  jsonData.Organization,
 			MaxSeries:     maxSeries,
+			InsecureGrpc:  jsonData.InsecureGrpc,
 			Token:         settings.DecryptedSecureJSONData["token"],
+			Timeout:       opts.Timeouts.Timeout,
 		}
 		return model, nil
 	}
@@ -80,6 +93,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger := logger.FromContext(ctx)
 	logger.Debug("Received a query request", "numQueries", len(req.Queries))
+
+	tracer := tracing.DefaultTracer()
 
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
@@ -92,7 +107,9 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	case influxVersionFlux:
 		return flux.Query(ctx, dsInfo, *req)
 	case influxVersionInfluxQL:
-		return influxql.Query(ctx, dsInfo, req)
+		return influxql.Query(ctx, tracer, dsInfo, req, s.features)
+	case influxVersionSQL:
+		return fsql.Query(ctx, dsInfo, *req)
 	default:
 		return nil, fmt.Errorf("unknown influxdb version")
 	}

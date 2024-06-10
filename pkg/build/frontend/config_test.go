@@ -6,9 +6,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/build/config"
 )
 
 const (

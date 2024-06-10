@@ -2,15 +2,13 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { dateMath, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { CollapsableSection, Icon, Link, LinkButton, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Icon, Link, LinkButton, useStyles2, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { contextSrv } from 'app/core/services/context_srv';
 import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { expireSilenceAction } from '../../state/actions';
-import { getInstancesPermissions } from '../../utils/access-control';
 import { parseMatchers } from '../../utils/alertmanager';
 import { getSilenceFiltersFromUrlParams, makeAMLink } from '../../utils/misc';
 import { Authorize } from '../Authorize';
@@ -41,7 +39,6 @@ const SilencesTable = ({ silences, alertManagerAlerts, alertManagerSourceName }:
   const [queryParams] = useQueryParams();
   const filteredSilencesNotExpired = useFilteredSilences(silences, false);
   const filteredSilencesExpired = useFilteredSilences(silences, true);
-  const permissions = getInstancesPermissions(alertManagerSourceName);
 
   const { silenceState: silenceStateInParams } = getSilenceFiltersFromUrlParams(queryParams);
   const showExpiredFromUrl = silenceStateInParams === SilenceState.Expired;
@@ -77,7 +74,7 @@ const SilencesTable = ({ silences, alertManagerAlerts, alertManagerSourceName }:
       {!!silences.length && (
         <Stack direction="column">
           <SilencesFilter />
-          <Authorize actions={[permissions.create]} fallback={contextSrv.isEditor}>
+          <Authorize actions={[AlertmanagerAction.CreateSilence]}>
             <div className={styles.topButtonContainer}>
               <LinkButton href={makeAMLink('/alerting/silence/new', alertManagerSourceName)} icon="plus">
                 Add Silence
@@ -122,6 +119,7 @@ function SilenceList({
   if (!!items.length) {
     return (
       <DynamicTable
+        pagination={{ itemsPerPage: 25 }}
         items={items}
         cols={columns}
         isExpandable
@@ -148,15 +146,14 @@ const useFilteredSilences = (silences: Silence[], expired = false) => {
       }
       if (queryString) {
         const matchers = parseMatchers(queryString);
-        const matchersMatch = matchers.every(
-          (matcher) =>
-            silence.matchers?.some(
-              ({ name, value, isEqual, isRegex }) =>
-                matcher.name === name &&
-                matcher.value === value &&
-                matcher.isEqual === isEqual &&
-                matcher.isRegex === isRegex
-            )
+        const matchersMatch = matchers.every((matcher) =>
+          silence.matchers?.some(
+            ({ name, value, isEqual, isRegex }) =>
+              matcher.name === name &&
+              matcher.value === value &&
+              matcher.isEqual === isEqual &&
+              matcher.isRegex === isRegex
+          )
         );
         if (!matchersMatch) {
           return false;
@@ -183,7 +180,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   callout: css`
     background-color: ${theme.colors.background.secondary};
     border-top: 3px solid ${theme.colors.info.border};
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     height: 62px;
     display: flex;
     flex-direction: row;
@@ -204,12 +201,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
 function useColumns(alertManagerSourceName: string) {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
-  const permissions = getInstancesPermissions(alertManagerSourceName);
+  const [updateSupported, updateAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateSilence);
+
   return useMemo((): SilenceTableColumnProps[] => {
     const handleExpireSilenceClick = (id: string) => {
       dispatch(expireSilenceAction(alertManagerSourceName, id));
     };
-    const showActions = contextSrv.hasAccess(permissions.update, contextSrv.isEditor);
     const columns: SilenceTableColumnProps[] = [
       {
         id: 'state',
@@ -253,7 +250,7 @@ function useColumns(alertManagerSourceName: string) {
         size: 7,
       },
     ];
-    if (showActions) {
+    if (updateSupported && updateAllowed) {
       columns.push({
         id: 'actions',
         label: 'Actions',
@@ -284,6 +281,6 @@ function useColumns(alertManagerSourceName: string) {
       });
     }
     return columns;
-  }, [alertManagerSourceName, dispatch, styles, permissions]);
+  }, [alertManagerSourceName, dispatch, styles.editButton, updateAllowed, updateSupported]);
 }
 export default SilencesTable;

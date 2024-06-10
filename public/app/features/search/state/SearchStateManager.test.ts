@@ -64,6 +64,8 @@ describe('SearchStateManager', () => {
         sort: 'alpha-asc',
       }));
       const stm = getSearchStateManager();
+      // Set list layout since folders layout implies sort to be undefined
+      stm.onLayoutChange(SearchLayout.List);
       stm.initStateFromUrl();
 
       // Verify that they have been set

@@ -2,6 +2,8 @@
  * @preserve jquery-param (c) 2015 KNOWLEDGECODE | MIT
  */
 
+import { isDateTime } from '../datetime';
+import { URLRange, RawTimeRange } from '../types';
 import { ExploreUrlState } from '../types/explore';
 
 /**
@@ -25,7 +27,7 @@ function renderUrl(path: string, query: UrlQueryMap | undefined): string {
   return path;
 }
 
-function encodeURIComponentAsAngularJS(val: string, pctEncodeSpaces?: boolean) {
+function encodeURIComponentAsAngularJS(val: EncodeURIComponentParams, pctEncodeSpaces?: boolean) {
   return encodeURIComponent(val)
     .replace(/%40/gi, '@')
     .replace(/%3A/gi, ':')
@@ -38,21 +40,31 @@ function encodeURIComponentAsAngularJS(val: string, pctEncodeSpaces?: boolean) {
     });
 }
 
-function toUrlParams(a: any) {
+type EncodeURIComponentParams = Parameters<typeof encodeURIComponent>[0];
+/**
+ *  Encodes URL parameters in the style of AngularJS.
+ *  Use `serializeParams` to encode parameters using `encodeURIComponent` instead.
+ */
+function toUrlParams(a: any, encodeAsAngularJS = true) {
   const s: any[] = [];
   const rbracket = /\[\]$/;
 
-  const isArray = (obj: any) => {
+  const encodingFunction = encodeAsAngularJS
+    ? (value: EncodeURIComponentParams, pctEncodeSpaces?: boolean) =>
+        encodeURIComponentAsAngularJS(value, pctEncodeSpaces)
+    : (value: EncodeURIComponentParams, _: boolean) => encodeURIComponent(value);
+
+  const isArray = (obj: unknown) => {
     return Object.prototype.toString.call(obj) === '[object Array]';
   };
 
   const add = (k: string, v: any) => {
     v = typeof v === 'function' ? v() : v === null ? '' : v === undefined ? '' : v;
     if (typeof v !== 'boolean') {
-      s[s.length] = encodeURIComponentAsAngularJS(k, true) + '=' + encodeURIComponentAsAngularJS(v, true);
+      s[s.length] = encodingFunction(k, true) + '=' + encodingFunction(v, true);
     } else {
-      const valueQueryPart = v ? '' : '=' + encodeURIComponentAsAngularJS('false', true);
-      s[s.length] = encodeURIComponentAsAngularJS(k, true) + valueQueryPart;
+      const valueQueryPart = v ? '' : '=' + encodingFunction('false', true);
+      s[s.length] = encodingFunction(k, true) + valueQueryPart;
     }
   };
 
@@ -88,6 +100,16 @@ function toUrlParams(a: any) {
   };
 
   return buildParams('', a).join('&');
+}
+
+/**
+ * Converts params into a URL-encoded query string.
+ *
+ * @param params data to serialize
+ * @returns A URL-encoded string representing the provided data.
+ */
+function serializeParams(params: unknown): string {
+  return toUrlParams(params, false);
 }
 
 function appendQueryToUrl(url: string, stringToAppend: string) {
@@ -196,18 +218,42 @@ export const urlUtil = {
   appendQueryToUrl,
   getUrlSearchParams,
   parseKeyValue,
+  serializeParams,
 };
 
 /**
  * Create an string that is used in URL to represent the Explore state. This is basically just a stringified json
- * that is that used as a state of a single Explore pane so it does not represent full Explore URL.
+ * that is used as a state of a single Explore pane so it does not represent full Explore URL so some properties
+ * may be omitted (they will be filled in with default values).
  *
  * @param urlState
  * @param compact this parameter is deprecated and will be removed in a future release.
  */
-export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
+export function serializeStateToUrlParam(urlState: Partial<ExploreUrlState>, compact?: boolean): string {
   if (compact !== undefined) {
     console.warn('`compact` parameter is deprecated and will be removed in a future release');
   }
   return JSON.stringify(urlState);
 }
+
+/**
+ * Converts RawTimeRange to a string that is stored in the URL
+ * - relative - stays as it is (e.g. "now")
+ * - absolute - converted to ms
+ */
+export const toURLRange = (range: RawTimeRange): URLRange => {
+  let from = range.from;
+  if (isDateTime(from)) {
+    from = from.valueOf().toString();
+  }
+
+  let to = range.to;
+  if (isDateTime(to)) {
+    to = to.valueOf().toString();
+  }
+
+  return {
+    from,
+    to,
+  };
+};

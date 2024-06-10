@@ -73,10 +73,11 @@ type AlertmanagerAggregatedMetrics struct {
 	registries *metrics.TenantRegistries
 
 	// metrics gather from the in-house "Alertmanager" directly.
-	numReceivedAlerts      *prometheus.Desc
-	numInvalidAlerts       *prometheus.Desc
-	configuredReceivers    *prometheus.Desc
-	configuredIntegrations *prometheus.Desc
+	numReceivedAlerts         *prometheus.Desc
+	numInvalidAlerts          *prometheus.Desc
+	configuredReceivers       *prometheus.Desc
+	configuredIntegrations    *prometheus.Desc
+	configuredInhibitionRules *prometheus.Desc
 
 	// exported metrics, gathered from Alertmanager PipelineBuilder
 	numNotifications                   *prometheus.Desc
@@ -93,6 +94,9 @@ type AlertmanagerAggregatedMetrics struct {
 	nflogQueryErrorsTotal        *prometheus.Desc
 	nflogQueryDuration           *prometheus.Desc
 	nflogPropagatedMessagesTotal *prometheus.Desc
+
+	// exporter metrics, gathered from the Alertmanager Alert Marker.
+	markerAlerts *prometheus.Desc
 
 	// exported metrics, gathered from Alertmanager Silences
 	silencesGCDuration              *prometheus.Desc
@@ -114,6 +118,8 @@ type AlertmanagerAggregatedMetrics struct {
 	matchRE        *prometheus.Desc
 	match          *prometheus.Desc
 	objectMatchers *prometheus.Desc
+
+	configHash *prometheus.Desc
 }
 
 func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *AlertmanagerAggregatedMetrics {
@@ -136,6 +142,10 @@ func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *Ale
 			fmt.Sprintf("%s_%s_alertmanager_integrations", Namespace, Subsystem),
 			"Number of configured receivers.",
 			[]string{"org", "type"}, nil),
+		configuredInhibitionRules: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alertmanager_inhibition_rules", Namespace, Subsystem),
+			"Number of configured inhibition rules.",
+			[]string{"org"}, nil),
 
 		numNotifications: prometheus.NewDesc(
 			fmt.Sprintf("%s_%s_notifications_total", Namespace, Subsystem),
@@ -186,6 +196,11 @@ func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *Ale
 			fmt.Sprintf("%s_%s_nflog_gossip_messages_propagated_total", Namespace, Subsystem),
 			"Number of received gossip messages that have been further gossiped.",
 			nil, nil),
+
+		markerAlerts: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alertmanager_alerts", Namespace, Subsystem),
+			"How many alerts by state are in Grafana's Alertmanager.",
+			[]string{"org", "state"}, nil),
 
 		silencesGCDuration: prometheus.NewDesc(
 			fmt.Sprintf("%s_%s_silences_gc_duration_seconds", Namespace, Subsystem),
@@ -245,6 +260,11 @@ func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *Ale
 			fmt.Sprintf("%s_%s_alertmanager_config_object_matchers", Namespace, Subsystem),
 			"The total number of object_matchers",
 			nil, nil),
+
+		configHash: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alertmanager_config_hash", Namespace, Subsystem),
+			"The hash of the Alertmanager configuration.",
+			[]string{"org"}, nil),
 	}
 
 	return aggregatedMetrics
@@ -255,6 +275,7 @@ func (a *AlertmanagerAggregatedMetrics) Describe(out chan<- *prometheus.Desc) {
 	out <- a.numInvalidAlerts
 	out <- a.configuredReceivers
 	out <- a.configuredIntegrations
+	out <- a.configuredInhibitionRules
 
 	out <- a.numNotifications
 	out <- a.numFailedNotifications
@@ -269,6 +290,8 @@ func (a *AlertmanagerAggregatedMetrics) Describe(out chan<- *prometheus.Desc) {
 	out <- a.nflogQueryErrorsTotal
 	out <- a.nflogQueryDuration
 	out <- a.nflogPropagatedMessagesTotal
+
+	out <- a.markerAlerts
 
 	out <- a.silencesGCDuration
 	out <- a.silencesSnapshotDuration
@@ -286,6 +309,8 @@ func (a *AlertmanagerAggregatedMetrics) Describe(out chan<- *prometheus.Desc) {
 	out <- a.matchRE
 	out <- a.match
 	out <- a.objectMatchers
+
+	out <- a.configHash
 }
 
 func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
@@ -295,6 +320,7 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data.SendSumOfCountersPerTenant(out, a.numInvalidAlerts, "alertmanager_alerts_invalid_total")
 	data.SendSumOfGaugesPerTenantWithLabels(out, a.configuredReceivers, "grafana_alerting_alertmanager_receivers", "state")
 	data.SendSumOfGaugesPerTenantWithLabels(out, a.configuredIntegrations, "grafana_alerting_alertmanager_integrations", "type")
+	data.SendSumOfGaugesPerTenant(out, a.configuredInhibitionRules, "grafana_alerting_alertmanager_inhibition_rules")
 
 	data.SendSumOfCountersPerTenant(out, a.numNotifications, "alertmanager_notifications_total", metrics.WithLabels("integration"), metrics.WithSkipZeroValueMetrics)
 	data.SendSumOfCountersPerTenant(out, a.numFailedNotifications, "alertmanager_notifications_failed_total", metrics.WithLabels("integration"), metrics.WithSkipZeroValueMetrics)
@@ -309,6 +335,8 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data.SendSumOfCounters(out, a.nflogQueryErrorsTotal, "alertmanager_nflog_query_errors_total")
 	data.SendSumOfHistograms(out, a.nflogQueryDuration, "alertmanager_nflog_query_duration_seconds")
 	data.SendSumOfCounters(out, a.nflogPropagatedMessagesTotal, "alertmanager_nflog_gossip_messages_propagated_total")
+
+	data.SendSumOfGaugesPerTenantWithLabels(out, a.markerAlerts, "alertmanager_alerts", "state")
 
 	data.SendSumOfSummaries(out, a.silencesGCDuration, "alertmanager_silences_gc_duration_seconds")
 	data.SendSumOfSummaries(out, a.silencesSnapshotDuration, "alertmanager_silences_snapshot_duration_seconds")
@@ -326,4 +354,6 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data.SendSumOfGauges(out, a.matchRE, "alertmanager_config_match_re")
 	data.SendSumOfGauges(out, a.match, "alertmanager_config_match")
 	data.SendSumOfGauges(out, a.objectMatchers, "alertmanager_config_object_matchers")
+
+	data.SendMaxOfGaugesPerTenant(out, a.configHash, "alertmanager_config_hash")
 }

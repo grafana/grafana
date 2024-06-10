@@ -18,16 +18,16 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	secretstest "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -52,8 +52,9 @@ func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) 
 
 // `/ds/query` endpoint test
 func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
+	cfg := setting.NewCfg()
 	qds := query.ProvideService(
-		setting.NewCfg(),
+		cfg,
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
@@ -67,17 +68,16 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 				return &backend.QueryDataResponse{Responses: resp}, nil
 			},
 		},
-		plugincontext.ProvideService(localcache.ProvideService(), &fakes.FakePluginStore{
-			PluginList: []plugins.PluginDTO{
+		plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
 				{
 					JSONData: plugins.JSONData{
 						ID: "grafana",
 					},
 				},
 			},
-		}, &fakeDatasources.FakeDataSourceService{}, pluginSettings.ProvideService(dbtest.NewFakeDB(),
-			secretstest.NewFakeSecretsService()),
-		),
+		}, &fakeDatasources.FakeCacheService{}, &fakeDatasources.FakeDataSourceService{},
+			pluginSettings.ProvideService(dbtest.NewFakeDB(), secretstest.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider()),
 	)
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
@@ -110,11 +110,12 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 }
 
 func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
+	cfg := setting.NewCfg()
 	ds := &fakeDatasources.FakeDataSourceService{SimulatePluginFailure: true}
 	db := &dbtest.FakeDB{ExpectedError: pluginsettings.ErrPluginSettingNotFound}
-	pcp := plugincontext.ProvideService(localcache.ProvideService(),
-		&fakes.FakePluginStore{
-			PluginList: []plugins.PluginDTO{
+	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(),
+		&pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
 				{
 					JSONData: plugins.JSONData{
 						ID: "grafana",
@@ -122,10 +123,11 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 				},
 			},
 		},
-		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()),
+		&fakeDatasources.FakeCacheService{},
+		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider(),
 	)
 	qds := query.ProvideService(
-		setting.NewCfg(),
+		cfg,
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
@@ -160,7 +162,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 		var resObj secretsErrorResponseBody
 		err = json.Unmarshal(buf.Bytes(), &resObj)
 		require.NoError(t, err)
-		require.Equal(t, "unknown error", resObj.Error)
+		require.Equal(t, "", resObj.Error)
 		require.Contains(t, resObj.Message, "Secrets Plugin error:")
 	})
 }
@@ -233,15 +235,15 @@ func TestDataSourceQueryError(t *testing.T) {
 	}{
 		{
 			request:        reqValid,
-			clientErr:      backendplugin.ErrPluginUnavailable,
+			clientErr:      plugins.ErrPluginUnavailable,
 			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   `{"message":"Internal server error","messageId":"plugin.unavailable","statusCode":500,"traceID":""}`,
+			expectedBody:   `{"message":"Plugin unavailable","messageId":"plugin.unavailable","statusCode":500,"traceID":""}`,
 		},
 		{
 			request:        reqValid,
-			clientErr:      backendplugin.ErrMethodNotImplemented,
-			expectedStatus: http.StatusNotImplemented,
-			expectedBody:   `{"message":"Not implemented","messageId":"plugin.notImplemented","statusCode":501,"traceID":""}`,
+			clientErr:      plugins.ErrMethodNotImplemented,
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"message":"Method not implemented","messageId":"plugin.notImplemented","statusCode":404,"traceID":""}`,
 		},
 		{
 			request:        reqValid,
@@ -262,12 +264,12 @@ func TestDataSourceQueryError(t *testing.T) {
 		{
 			request:        reqDatasourceByUidNotFound,
 			expectedStatus: http.StatusNotFound,
-			expectedBody:   `{"error":"data source not found","message":"Data source not found","traceID":""}`,
+			expectedBody:   `{"message":"Data source not found","traceID":""}`,
 		},
 		{
 			request:        reqDatasourceByIdNotFound,
 			expectedStatus: http.StatusNotFound,
-			expectedBody:   `{"error":"data source not found","message":"Data source not found","traceID":""}`,
+			expectedBody:   `{"message":"Data source not found","traceID":""}`,
 		},
 	}
 
@@ -284,22 +286,23 @@ func TestDataSourceQueryError(t *testing.T) {
 				},
 			})
 			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
+				cfg := setting.NewCfg()
 				r := registry.NewInMemory()
 				err := r.Add(context.Background(), p)
 				require.NoError(t, err)
 				ds := &fakeDatasources.FakeDataSourceService{}
 				hs.queryDataService = query.ProvideService(
-					setting.NewCfg(),
+					cfg,
 					&fakeDatasources.FakeCacheService{},
 					nil,
 					&fakePluginRequestValidator{},
-					pluginClient.ProvideService(r, &config.Cfg{}),
-					plugincontext.ProvideService(localcache.ProvideService(), &fakes.FakePluginStore{
-						PluginList: []plugins.PluginDTO{p.ToDTO()},
+					pluginClient.ProvideService(r),
+					plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
+						PluginList: []pluginstore.Plugin{pluginstore.ToGrafanaDTO(p)},
 					},
-						ds, pluginSettings.ProvideService(dbtest.NewFakeDB(),
-							secretstest.NewFakeSecretsService()),
-					),
+						&fakeDatasources.FakeCacheService{}, ds,
+						pluginSettings.ProvideService(dbtest.NewFakeDB(),
+							secretstest.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider()),
 				)
 				hs.QuotaService = quotatest.New(false, nil)
 			})
@@ -308,7 +311,6 @@ func TestDataSourceQueryError(t *testing.T) {
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 
-			require.Equal(t, tc.expectedStatus, resp.StatusCode)
 			require.Equal(t, tc.expectedStatus, resp.StatusCode)
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)

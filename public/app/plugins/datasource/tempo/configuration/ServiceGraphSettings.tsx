@@ -5,8 +5,8 @@ import {
   DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
-import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { TempoJsonData } from '../types';
 

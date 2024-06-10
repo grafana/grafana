@@ -1,27 +1,24 @@
 import {
-  ArrayVector,
   DataFrame,
   Field,
   FieldType,
   getDisplayProcessor,
-  getLinksSupplier,
   GrafanaTheme2,
-  InterpolateFunction,
   isBooleanUnit,
-  SortedVector,
   TimeRange,
+  cacheFieldDisplayNames,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
-import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
-import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
-import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
-import { buildScaleKey } from '@grafana/ui/src/components/GraphNG/utils';
+import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
+import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
+import { GraphFieldConfig, LineInterpolation, TooltipDisplayMode, VizTooltipOptions } from '@grafana/schema';
+import { buildScaleKey } from '@grafana/ui/src/components/uPlot/internal';
 
 type ScaleKey = string;
 
 // this will re-enumerate all enum fields on the same scale to create one ordinal progression
 // e.g. ['a','b'][0,1,0] + ['c','d'][1,0,1] -> ['a','b'][0,1,0] + ['c','d'][3,2,3]
-function reEnumFields(frames: DataFrame[]) {
+function reEnumFields(frames: DataFrame[]): DataFrame[] {
   let allTextsByKey: Map<ScaleKey, string[]> = new Map();
 
   let frames2: DataFrame[] = frames.map((frame) => {
@@ -54,7 +51,7 @@ function reEnumFields(frames: DataFrame[]) {
 
           return {
             ...field,
-            values: new ArrayVector(idxs),
+            values: idxs,
           };
 
           // TODO: update displayProcessor?
@@ -81,6 +78,8 @@ export function prepareGraphableFields(
   if (!series?.length) {
     return null;
   }
+
+  cacheFieldDisplayNames(series);
 
   let useNumericX = xNumFieldIdx != null;
 
@@ -239,7 +238,7 @@ const matchEnumColorToSeriesColor = (frames: DataFrame[], theme: GrafanaTheme2) 
   }
 };
 
-const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipFieldIdx?: number) => {
+export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipFieldIdx?: number) => {
   let seriesIndex = 0;
   frames.forEach((frame) => {
     frame.fields.forEach((field, fieldIdx) => {
@@ -264,41 +263,6 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
   return timezones.map((v) => (v?.length ? v : defaultTimezone));
 }
 
-export function regenerateLinksSupplier(
-  alignedDataFrame: DataFrame,
-  frames: DataFrame[],
-  replaceVariables: InterpolateFunction,
-  timeZone: string
-): DataFrame {
-  alignedDataFrame.fields.forEach((field) => {
-    if (field.state?.origin?.frameIndex === undefined || frames[field.state?.origin?.frameIndex] === undefined) {
-      return;
-    }
-
-    /* check if field has sortedVector values
-      if it does, sort all string fields in the original frame by the order array already used for the field
-      otherwise just attach the fields to the temporary frame used to get the links
-    */
-    const tempFields: Field[] = [];
-    for (const frameField of frames[field.state?.origin?.frameIndex].fields) {
-      if (frameField.type === FieldType.string) {
-        if (field.values instanceof SortedVector) {
-          const copiedField = { ...frameField };
-          copiedField.values = new SortedVector(frameField.values, field.values.getOrderArray());
-          tempFields.push(copiedField);
-        } else {
-          tempFields.push(frameField);
-        }
-      }
-    }
-
-    const tempFrame: DataFrame = {
-      fields: [...alignedDataFrame.fields, ...tempFields],
-      length: alignedDataFrame.fields.length + tempFields.length,
-    };
-
-    field.getLinks = getLinksSupplier(tempFrame, field, field.state!.scopedVars!, replaceVariables, timeZone);
-  });
-
-  return alignedDataFrame;
-}
+export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions) => {
+  return tooltipOptions.mode === TooltipDisplayMode.Multi && tooltipOptions.maxHeight != null;
+};

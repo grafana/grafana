@@ -9,6 +9,7 @@ import (
 
 	"github.com/mattn/go-sqlite3"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,25 +20,25 @@ import (
 )
 
 var sessionLogger = log.New("sqlstore.session")
-var ErrMaximumRetriesReached = errutil.NewBase(errutil.StatusInternal, "sqlstore.max-retries-reached")
+var ErrMaximumRetriesReached = errutil.Internal("sqlstore.max-retries-reached")
 
 type DBSession struct {
 	*xorm.Session
 	transactionOpen bool
-	events          []interface{}
+	events          []any
 }
 
 type DBTransactionFunc func(sess *DBSession) error
 
-func (sess *DBSession) publishAfterCommit(msg interface{}) {
+func (sess *DBSession) publishAfterCommit(msg any) {
 	sess.events = append(sess.events, msg)
 }
 
-func (sess *DBSession) PublishAfterCommit(msg interface{}) {
+func (sess *DBSession) PublishAfterCommit(msg any) {
 	sess.events = append(sess.events, msg)
 }
 
-func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTran bool, tracer tracing.Tracer) (*DBSession, bool, tracing.Span, error) {
+func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTran bool, tracer tracing.Tracer) (*DBSession, bool, trace.Span, error) {
 	value := ctx.Value(ContextSessionKey{})
 	var sess *DBSession
 	sess, ok := value.(*DBSession)
@@ -50,7 +51,7 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 	}
 
 	tctx, span := tracer.Start(ctx, "open session")
-	span.SetAttributes("transaction", beginTran, attribute.Key("transaction").Bool(beginTran))
+	span.SetAttributes(attribute.Bool("transaction", beginTran))
 
 	newSess := &DBSession{Session: engine.NewSession(), transactionOpen: beginTran}
 
@@ -126,7 +127,7 @@ func (ss *SQLStore) withDbSession(ctx context.Context, engine *xorm.Engine, call
 	return retryer.Retry(ss.retryOnLocks(ctx, callback, sess, retry), ss.dbCfg.QueryRetries, time.Millisecond*time.Duration(10), time.Second)
 }
 
-func (sess *DBSession) InsertId(bean interface{}, dialect migrator.Dialect) error {
+func (sess *DBSession) InsertId(bean any, dialect migrator.Dialect) error {
 	table := sess.DB().Mapper.Obj2Table(getTypeName(bean))
 
 	if err := dialect.PreInsertId(table, sess.Session); err != nil {
@@ -143,7 +144,7 @@ func (sess *DBSession) InsertId(bean interface{}, dialect migrator.Dialect) erro
 	return nil
 }
 
-func (sess *DBSession) WithReturningID(driverName string, query string, args []interface{}) (int64, error) {
+func (sess *DBSession) WithReturningID(driverName string, query string, args []any) (int64, error) {
 	supported := driverName != migrator.Postgres
 	var id int64
 	if !supported {
@@ -152,7 +153,7 @@ func (sess *DBSession) WithReturningID(driverName string, query string, args []i
 			return id, err
 		}
 	} else {
-		sqlOrArgs := append([]interface{}{query}, args...)
+		sqlOrArgs := append([]any{query}, args...)
 		res, err := sess.Exec(sqlOrArgs...)
 		if err != nil {
 			return id, err
@@ -165,7 +166,7 @@ func (sess *DBSession) WithReturningID(driverName string, query string, args []i
 	return id, nil
 }
 
-func getTypeName(bean interface{}) (res string) {
+func getTypeName(bean any) (res string) {
 	t := reflect.TypeOf(bean)
 	for t.Kind() == reflect.Ptr {
 		t = t.Elem()

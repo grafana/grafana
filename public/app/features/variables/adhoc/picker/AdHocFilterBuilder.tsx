@@ -11,10 +11,10 @@ interface Props {
   datasource: DataSourceRef;
   onCompleted: (filter: AdHocVariableFilter) => void;
   appendBefore?: React.ReactNode;
-  getTagKeysOptions?: any;
+  allFilters: AdHocVariableFilter[];
 }
 
-export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, getTagKeysOptions }: Props) => {
+export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, allFilters }: Props) => {
   const [key, setKey] = useState<string | null>(null);
   const [operator, setOperator] = useState<string>('=');
 
@@ -39,7 +39,6 @@ export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, getT
       onCompleted({
         value: item.value ?? '',
         operator: operator,
-        condition: '',
         key: key!,
       });
       setKey(null);
@@ -49,14 +48,7 @@ export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, getT
   );
 
   if (key === null) {
-    return (
-      <AdHocFilterKey
-        datasource={datasource}
-        filterKey={key}
-        onChange={onKeyChanged}
-        getTagKeysOptions={getTagKeysOptions}
-      />
-    );
+    return <AdHocFilterKey datasource={datasource} filterKey={key} onChange={onKeyChanged} allFilters={allFilters} />;
   }
 
   return (
@@ -64,12 +56,12 @@ export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, getT
       {appendBefore}
       <AdHocFilterRenderer
         datasource={datasource}
-        filter={{ key, value: '', operator, condition: '' }}
+        filter={{ key, value: '', operator }}
         placeHolder={t('variable.adhoc.placeholder', 'Select value')}
         onKeyChange={onKeyChanged}
         onOperatorChange={onOperatorChanged}
         onValueChange={onValueChanged}
-        getTagKeysOptions={getTagKeysOptions}
+        allFilters={allFilters}
       />
     </React.Fragment>
   );

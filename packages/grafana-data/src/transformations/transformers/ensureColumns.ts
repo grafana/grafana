@@ -15,7 +15,7 @@ export const ensureColumnsTransformer: SynchronousDataTransformerInfo = {
   operator: (options, ctx) => (source) =>
     source.pipe(map((data) => ensureColumnsTransformer.transformer(options, ctx)(data))),
 
-  transformer: (_options: any, ctx) => (frames: DataFrame[]) => {
+  transformer: (_options, ctx) => (frames: DataFrame[]) => {
     // Assume timeseries should first be joined by time
     const timeFieldName = findConsistentTimeFieldName(frames);
 

@@ -1,10 +1,10 @@
-import { defaultAddOperationHandler } from '../../prometheus/querybuilder/shared/operationUtils';
 import {
   QueryBuilderOperation,
-  QueryBuilderOperationDef,
+  QueryBuilderOperationDefinition,
   QueryBuilderOperationParamDef,
-} from '../../prometheus/querybuilder/shared/types';
+} from '@grafana/experimental';
 
+import { defaultAddOperationHandler } from './operationUtils';
 import { LokiOperationId, LokiVisualQueryOperationCategory } from './types';
 
 export const binaryScalarDefs = [
@@ -78,16 +78,16 @@ export const binaryScalarDefs = [
 
 // Not sure about this one. It could also be a more generic 'Simple math operation' where user specifies
 // both the operator and the operand in a single input
-export const binaryScalarOperations: QueryBuilderOperationDef[] = binaryScalarDefs.map((opDef) => {
+export const binaryScalarOperations: QueryBuilderOperationDefinition[] = binaryScalarDefs.map((opDef) => {
   const params: QueryBuilderOperationParamDef[] = [{ name: 'Value', type: 'number' }];
   const defaultParams: any[] = [2];
   if (opDef.comparison) {
-    params.unshift({
+    params.push({
       name: 'Bool',
       type: 'boolean',
       description: 'If checked comparison will return 0 or 1 for the value rather than filtering.',
     });
-    defaultParams.unshift(false);
+    defaultParams.push(false);
   }
 
   return {
@@ -103,12 +103,15 @@ export const binaryScalarOperations: QueryBuilderOperationDef[] = binaryScalarDe
 });
 
 function getSimpleBinaryRenderer(operator: string) {
-  return function binaryRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+  return function binaryRenderer(
+    model: QueryBuilderOperation,
+    def: QueryBuilderOperationDefinition,
+    innerExpr: string
+  ) {
     let param = model.params[0];
     let bool = '';
     if (model.params.length === 2) {
-      param = model.params[1];
-      bool = model.params[0] ? ' bool' : '';
+      bool = model.params[1] ? ' bool' : '';
     }
 
     return `${innerExpr} ${operator}${bool} ${param}`;

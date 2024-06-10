@@ -8,8 +8,8 @@ import "encoding/json"
 
 // JSONInterface represents an interface to handle json data
 type JSONInterface interface {
-	Marshal(v interface{}) ([]byte, error)
-	Unmarshal(data []byte, v interface{}) error
+	Marshal(v any) ([]byte, error)
+	Unmarshal(data []byte, v any) error
 }
 
 var (
@@ -21,11 +21,11 @@ var (
 type StdJSON struct{}
 
 // Marshal implements JSONInterface
-func (StdJSON) Marshal(v interface{}) ([]byte, error) {
+func (StdJSON) Marshal(v any) ([]byte, error) {
 	return json.Marshal(v)
 }
 
 // Unmarshal implements JSONInterface
-func (StdJSON) Unmarshal(data []byte, v interface{}) error {
+func (StdJSON) Unmarshal(data []byte, v any) error {
 	return json.Unmarshal(data, v)
 }

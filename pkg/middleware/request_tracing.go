@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -97,9 +97,9 @@ func RequestTracing(tracer tracing.Tracer) web.Middleware {
 
 			status := rw.Status()
 
-			span.SetAttributes("http.status_code", status, attribute.Int("http.status_code", status))
-			span.SetAttributes("http.url", req.RequestURI, attribute.String("http.url", req.RequestURI))
-			span.SetAttributes("http.method", req.Method, attribute.String("http.method", req.Method))
+			span.SetAttributes(semconv.HTTPStatusCode(status))
+			span.SetAttributes(semconv.HTTPURL(req.RequestURI))
+			span.SetAttributes(semconv.HTTPMethod(req.Method))
 			if status >= 400 {
 				span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(status)))
 			}

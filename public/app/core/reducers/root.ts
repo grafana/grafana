@@ -1,3 +1,4 @@
+import { ReducersMapObject } from '@reduxjs/toolkit';
 import { AnyAction, combineReducers } from 'redux';
 
 import sharedReducers from 'app/core/reducers';
@@ -15,6 +16,7 @@ import exploreReducers from 'app/features/explore/state/main';
 import foldersReducers from 'app/features/folders/state/reducers';
 import invitesReducers from 'app/features/invites/state/reducers';
 import importDashboardReducers from 'app/features/manage-dashboards/state/reducers';
+import { migrateToCloudAPI } from 'app/features/migrate-to-cloud/api';
 import organizationReducers from 'app/features/org/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
 import { reducer as pluginsReducer } from 'app/features/plugins/admin/state/reducer';
@@ -54,11 +56,12 @@ const rootReducers = {
   [alertingApi.reducerPath]: alertingApi.reducer,
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
+  [migrateToCloudAPI.reducerPath]: migrateToCloudAPI.reducer,
 };
 
 const addedReducers = {};
 
-export const addReducer = (newReducers: any) => {
+export const addReducer = (newReducers: ReducersMapObject) => {
   Object.assign(addedReducers, newReducers);
 };
 

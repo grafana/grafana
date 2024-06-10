@@ -1,3 +1,5 @@
+import { renderHook } from '@testing-library/react-hooks';
+
 import { RuleIdentifier } from 'app/types/unified-alerting';
 import {
   GrafanaAlertStateDecision,
@@ -7,7 +9,7 @@ import {
   RulerRecordingRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { hashRulerRule, parse, stringifyIdentifier } from './rule-id';
+import { hashRulerRule, parse, stringifyIdentifier, getRuleIdFromPathname } from './rule-id';
 
 describe('hashRulerRule', () => {
   it('should not hash unknown rule types', () => {
@@ -44,7 +46,6 @@ describe('hashRulerRule', () => {
     const grafanaAlertDefinition: GrafanaRuleDefinition = {
       uid: RULE_UID,
       namespace_uid: 'namespace',
-      namespace_id: 0,
       title: 'my rule',
       condition: '',
       data: [],
@@ -112,5 +113,15 @@ describe('hashRulerRule', () => {
 
   it('should throw for malformed identifier', () => {
     expect(() => parse('foo$bar$baz', false)).toThrow(/failed to parse/i);
+  });
+});
+
+describe('useRuleIdFromPathname', () => {
+  it('should return undefined when there is no id in params', () => {
+    const { result } = renderHook(() => {
+      getRuleIdFromPathname({ id: undefined });
+    });
+
+    expect(result.current).toBe(undefined);
   });
 });

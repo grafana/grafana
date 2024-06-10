@@ -11,6 +11,7 @@ import {
   getRangeSnapInterval,
   parseSelector,
   toPromLikeQuery,
+  truncateResult,
 } from './language_utils';
 import { PrometheusCacheLevel } from './types';
 
@@ -175,13 +176,39 @@ describe('expandRecordingRules()', () => {
         metricA: 'rate(fooA[])',
         metricB: 'rate(fooB[])',
       })
-    ).toBe('rate(fooA{label1="value1"}[])/ rate(fooB{label2="value2"}[])');
+    ).toBe('rate(fooA{label1="value1"}[]) / rate(fooB{label2="value2"}[])');
     expect(
       expandRecordingRules('metricA{label1="value1",label2="value2"} / metricB{label3="value3"}', {
         metricA: 'rate(fooA[])',
         metricB: 'rate(fooB[])',
       })
-    ).toBe('rate(fooA{label1="value1", label2="value2"}[])/ rate(fooB{label3="value3"}[])');
+    ).toBe('rate(fooA{label1="value1", label2="value2"}[]) / rate(fooB{label3="value3"}[])');
+  });
+
+  it('expands the query even it is wrapped with parentheses', () => {
+    expect(
+      expandRecordingRules('sum (metric{label1="value1"}) by (env)', { metric: 'foo{labelInside="valueInside"}' })
+    ).toBe('sum (foo{labelInside="valueInside", label1="value1"}) by (env)');
+  });
+
+  it('expands the query with regex match', () => {
+    expect(
+      expandRecordingRules('sum (metric{label1=~"/value1/(sa|sb)"}) by (env)', {
+        metric: 'foo{labelInside="valueInside"}',
+      })
+    ).toBe('sum (foo{labelInside="valueInside", label1=~"/value1/(sa|sb)"}) by (env)');
+  });
+
+  it('ins:metric:per{pid="val-42", comp="api"}', () => {
+    const query = `aaa:111{pid="val-42", comp="api"} + bbb:222{pid="val-42"}`;
+    const mapping = {
+      'aaa:111':
+        '(max without (mp) (targetMetric{device=~"/dev/(sda1|sdb)"}) / max without (mp) (targetMetric2{device=~"/dev/(sda1|sdb)"}))',
+      'bbb:222': '(targetMetric2{device=~"/dev/(sda1|sdb)"})',
+    };
+    const expected = `(max without (mp) (targetMetric{device=~"/dev/(sda1|sdb)", pid="val-42", comp="api"}) / max without (mp) (targetMetric2{device=~"/dev/(sda1|sdb)", pid="val-42", comp="api"})) + (targetMetric2{device=~"/dev/(sda1|sdb)", pid="val-42"})`;
+    const result = expandRecordingRules(query, mapping);
+    expect(result).toBe(expected);
   });
 });
 
@@ -472,5 +499,17 @@ describe('toPromLikeQuery', () => {
       expr: '{label1="value1", label2!="value2", label3=~"value3", label4!~"value4"}',
       range: true,
     });
+  });
+});
+
+describe('truncateResult', () => {
+  it('truncates array longer then 1k from the start of array', () => {
+    // creates an array of 1k + 1 elements with values from 0 to 1k
+    const array = Array.from(Array(1001).keys());
+    expect(array[1000]).toBe(1000);
+    truncateResult(array);
+    expect(array.length).toBe(1000);
+    expect(array[0]).toBe(0);
+    expect(array[999]).toBe(999);
   });
 });

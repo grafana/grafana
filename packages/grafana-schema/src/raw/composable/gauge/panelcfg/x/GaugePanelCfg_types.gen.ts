@@ -4,21 +4,26 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.1.2";
+export const pluginVersion = "11.0.0";
 
 export interface Options extends common.SingleStatBaseOptions {
+  minVizHeight: number;
+  minVizWidth: number;
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
+  sizing: common.BarGaugeSizing;
 }
 
 export const defaultOptions: Partial<Options> = {
+  minVizHeight: 75,
+  minVizWidth: 75,
   showThresholdLabels: false,
   showThresholdMarkers: true,
+  sizing: common.BarGaugeSizing.Auto,
 };

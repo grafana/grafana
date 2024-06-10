@@ -101,7 +101,7 @@ To enable trusted types in report mode, where inputs that have not been sanitize
 - Enable `content_security_policy_report_only` in the configuration.
 - Add `require-trusted-types-for 'script'` to the `content_security_policy_report_only_template` in the configuration.
 
-As this is a feature currently in development, things may break. If they do, or if you have any other feedback, feel free to [leave a comment](https://github.com/grafana/grafana/discussions/66823).
+As this is a feature currently in development, things may break. If they do, or if you have any other feedback, feel free to [open an issue](https://github.com/grafana/grafana/issues/new/choose).
 
 ## Additional security hardening
 

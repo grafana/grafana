@@ -6,14 +6,12 @@ import React, { useState } from 'react';
 import { Button, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 
 import { getAvailableIcons } from '../../types';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Modal.mdx';
 
 const meta: Meta = {
   title: 'Overlays/Modal',
   component: Modal,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

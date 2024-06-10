@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { createDefaultConfigOptions } from '../mocks';
+import { createDefaultConfigOptions } from '../__mocks__/datasource';
 
 import { ConfigEditor } from './ConfigEditor';
 
@@ -15,7 +15,9 @@ describe('ConfigEditor', () => {
 
   it('should render the right sections', () => {
     render(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
-    expect(screen.getByRole('heading', { name: 'HTTP' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Connection' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Authentication' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Advanced HTTP settings' })).toBeInTheDocument();
     expect(screen.getByText('Maximum lines')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Derived fields' })).toBeInTheDocument();
   });

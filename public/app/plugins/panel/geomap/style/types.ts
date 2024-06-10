@@ -29,6 +29,7 @@ export interface StyleConfig {
   // Used for points and dynamic text
   size?: ScaleDimensionConfig;
   symbol?: ResourceDimensionConfig;
+  symbolAlign?: SymbolAlign;
 
   // Can show markers and text together!
   text?: TextDimensionConfig;
@@ -50,6 +51,16 @@ export enum TextBaseline {
   Middle = 'middle',
   Bottom = 'bottom',
 }
+export enum HorizontalAlign {
+  Left = 'left',
+  Center = 'center',
+  Right = 'right',
+}
+export enum VerticalAlign {
+  Top = 'top',
+  Center = 'center',
+  Bottom = 'bottom',
+}
 
 export const defaultStyleConfig = Object.freeze({
   size: {
@@ -65,6 +76,10 @@ export const defaultStyleConfig = Object.freeze({
     mode: ResourceDimensionMode.Fixed,
     fixed: 'img/icons/marker/circle.svg',
   },
+  symbolAlign: {
+    horizontal: HorizontalAlign.Center,
+    vertical: VerticalAlign.Center,
+  },
   textConfig: {
     fontSize: 12,
     textAlign: TextAlignment.Center,
@@ -79,6 +94,11 @@ export const defaultStyleConfig = Object.freeze({
     max: 360,
   },
 });
+
+export interface SymbolAlign {
+  horizontal?: HorizontalAlign;
+  vertical?: VerticalAlign;
+}
 
 /**
  * Static options for text display.  See:
@@ -99,11 +119,28 @@ export interface StyleConfigValues {
   lineWidth?: number;
   size?: number;
   symbol?: string; // the point symbol
+  symbolAlign?: SymbolAlign;
   rotation?: number;
   text?: string;
 
   // Pass though (not value dependant)
   textConfig?: TextStyleConfig;
+}
+
+export enum GeoJSONPolyStyles {
+  color = 'fill',
+  opacity = 'fill-opacity',
+  lineWidth = 'stroke-width',
+}
+
+export enum GeoJSONPointStyles {
+  color = 'marker-color',
+  size = 'marker-size',
+}
+
+export enum GeoJSONLineStyles {
+  color = 'stroke',
+  lineWidth = 'stroke-width',
 }
 
 /** When the style depends on a field */

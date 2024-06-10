@@ -8,7 +8,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 export default function Admin(): JSX.Element {
   return (
-    <AlertmanagerPageWrapper pageId="alerting-admin" accessType="notification">
+    <AlertmanagerPageWrapper navId="alerting-admin" accessType="notification">
       <AdminPageContents />
     </AlertmanagerPageWrapper>
   );

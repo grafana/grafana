@@ -1,30 +1,31 @@
 package clients
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 // this client wraps the CloudWatch API and handles pagination and the composition of the MetricResponse DTO
 type metricsClient struct {
 	models.CloudWatchMetricsAPIProvider
-	config *setting.Cfg
+	listMetricsPageLimit int
 }
 
-func NewMetricsClient(api models.CloudWatchMetricsAPIProvider, config *setting.Cfg) *metricsClient {
-	return &metricsClient{CloudWatchMetricsAPIProvider: api, config: config}
+func NewMetricsClient(api models.CloudWatchMetricsAPIProvider, pageLimit int) *metricsClient {
+	return &metricsClient{CloudWatchMetricsAPIProvider: api, listMetricsPageLimit: pageLimit}
 }
 
-func (l *metricsClient) ListMetricsWithPageLimit(params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error) {
+func (l *metricsClient) ListMetricsWithPageLimit(ctx context.Context, params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error) {
 	var cloudWatchMetrics []resources.MetricResponse
 	pageNum := 0
-	err := l.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+	err := l.ListMetricsPagesWithContext(ctx, params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
 		pageNum++
-		metrics.MAwsCloudWatchListMetrics.Inc()
+		utils.QueriesTotalCounter.WithLabelValues(utils.ListMetricsLabel).Inc()
 		metrics, err := awsutil.ValuesAtPath(page, "Metrics")
 		if err == nil {
 			for idx, metric := range metrics {
@@ -35,7 +36,7 @@ func (l *metricsClient) ListMetricsWithPageLimit(params *cloudwatch.ListMetricsI
 				cloudWatchMetrics = append(cloudWatchMetrics, metric)
 			}
 		}
-		return !lastPage && pageNum < l.config.AWSListMetricsPageLimit
+		return !lastPage && pageNum < l.listMetricsPageLimit
 	})
 
 	return cloudWatchMetrics, err

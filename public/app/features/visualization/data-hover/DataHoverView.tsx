@@ -10,9 +10,12 @@ import {
   GrafanaTheme2,
   LinkModel,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
+import { TextLink, useStyles2 } from '@grafana/ui';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
+
+import { ExemplarHoverView } from './ExemplarHoverView';
 
 export interface Props {
   data?: DataFrame; // source data
@@ -21,24 +24,26 @@ export interface Props {
   sortOrder?: SortOrder;
   mode?: TooltipDisplayMode | null;
   header?: string;
+  padding?: number;
 }
 
-interface DisplayValue {
+export interface DisplayValue {
   name: string;
   value: unknown;
   valueString: string;
   highlight: boolean;
 }
 
-export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header = undefined }: Props) => {
-  const styles = useStyles2(getStyles);
+export function getDisplayValuesAndLinks(
+  data: DataFrame,
+  rowIndex: number,
+  columnIndex?: number | null,
+  sortOrder?: SortOrder,
+  mode?: TooltipDisplayMode | null
+) {
+  const fields = data.fields;
+  const hoveredField = columnIndex != null ? fields[columnIndex] : null;
 
-  if (!data || rowIndex == null) {
-    return null;
-  }
-  const fields = data.fields.map((f, idx) => {
-    return { ...f, hovered: idx === columnIndex };
-  });
   const visibleFields = fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const traceIDField = visibleFields.find((field) => field.name === 'traceID') || fields[0];
   const orderedVisibleFields = [];
@@ -57,11 +62,13 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   const linkLookup = new Set<string>();
 
   for (const field of orderedVisibleFields) {
-    if (mode === TooltipDisplayMode.Single && columnIndex != null && !field.hovered) {
+    if (mode === TooltipDisplayMode.Single && field !== hoveredField) {
       continue;
     }
+
     const value = field.values[rowIndex];
     const fieldDisplay = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
+
     if (field.getLinks) {
       field.getLinks({ calculatedValue: fieldDisplay, valueRowIndex: rowIndex }).forEach((link) => {
         const key = `${link.title}/${link.href}`;
@@ -76,7 +83,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       name: getFieldDisplayName(field, data),
       value,
       valueString: formattedValueToString(fieldDisplay),
-      highlight: field.hovered,
+      highlight: field === hoveredField,
     });
   }
 
@@ -84,28 +91,27 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a.value, b.value));
   }
 
-  const renderLinks = () =>
-    links.length > 0 && (
-      <tr>
-        <td colSpan={2}>
-          <VerticalGroup>
-            {links.map((link, i) => (
-              <LinkButton
-                key={i}
-                icon={'external-link-alt'}
-                target={link.target}
-                href={link.href}
-                onClick={link.onClick}
-                fill="text"
-                style={{ width: '100%' }}
-              >
-                {link.title}
-              </LinkButton>
-            ))}
-          </VerticalGroup>
-        </td>
-      </tr>
-    );
+  return { displayValues, links };
+}
+
+export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header, padding = 0 }: Props) => {
+  const styles = useStyles2(getStyles, padding);
+
+  if (!data || rowIndex == null) {
+    return null;
+  }
+
+  const dispValuesAndLinks = getDisplayValuesAndLinks(data, rowIndex, columnIndex, sortOrder, mode);
+
+  if (dispValuesAndLinks == null) {
+    return null;
+  }
+
+  const { displayValues, links } = dispValuesAndLinks;
+
+  if (config.featureToggles.newVizTooltips && header === 'Exemplar') {
+    return <ExemplarHoverView displayValues={displayValues} links={links} header={header} />;
+  }
 
   return (
     <div className={styles.wrapper}>
@@ -117,62 +123,66 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       <table className={styles.infoWrap}>
         <tbody>
           {displayValues.map((displayValue, i) => (
-            <tr key={`${i}/${rowIndex}`} className={displayValue.highlight ? styles.highlight : ''}>
-              <th>{displayValue.name}:</th>
+            <tr key={`${i}/${rowIndex}`}>
+              <th>{displayValue.name}</th>
               <td>{renderValue(displayValue.valueString)}</td>
             </tr>
           ))}
-          {renderLinks()}
+          {links.map((link, i) => (
+            <tr key={i}>
+              <th>Link</th>
+              <td colSpan={2}>
+                <TextLink href={link.href} external={link.target === '_blank'} weight={'medium'} inline={false}>
+                  {link.title}
+                </TextLink>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => {
-  const bg = theme.isDark ? theme.v1.palette.dark2 : theme.v1.palette.white;
-  const headerBg = theme.isDark ? theme.v1.palette.dark9 : theme.v1.palette.gray5;
-  const tableBgOdd = theme.isDark ? theme.v1.palette.dark3 : theme.v1.palette.gray6;
-
+const getStyles = (theme: GrafanaTheme2, padding = 0) => {
   return {
-    wrapper: css`
-      background: ${bg};
-      border: 1px solid ${headerBg};
-      border-radius: ${theme.shape.borderRadius(2)};
-    `,
-    header: css`
-      background: ${headerBg};
-      padding: 6px 10px;
-      display: flex;
-    `,
-    title: css`
-      font-weight: ${theme.typography.fontWeightMedium};
-      padding-right: ${theme.spacing(2)};
-      overflow: hidden;
-      display: inline-block;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      flex-grow: 1;
-    `,
-    infoWrap: css`
-      padding: 8px;
-      th {
-        font-weight: ${theme.typography.fontWeightMedium};
-        padding: ${theme.spacing(0.25, 2)};
-      }
-      tr {
-        background-color: ${theme.colors.background.primary};
-        &:nth-child(even) {
-          background-color: ${tableBgOdd};
-        }
-      }
-    `,
-    highlight: css`
-      /* !important is required to overwrite default table styles */
-      background: ${theme.colors.action.hover} !important;
-    `,
-    link: css`
-      color: #6e9fff;
-    `,
+    wrapper: css({
+      padding: `${padding}px`,
+      background: theme.components.tooltip.background,
+      borderRadius: theme.shape.borderRadius(2),
+    }),
+    header: css({
+      background: theme.colors.background.secondary,
+      alignItems: 'center',
+      alignContent: 'center',
+      display: 'flex',
+      paddingBottom: theme.spacing(1),
+    }),
+    title: css({
+      fontWeight: theme.typography.fontWeightMedium,
+      overflow: 'hidden',
+      display: 'inline-block',
+      whiteSpace: 'nowrap',
+      textOverflow: 'ellipsis',
+      flexGrow: 1,
+    }),
+    infoWrap: css({
+      padding: theme.spacing(1),
+      background: 'transparent',
+      border: 'none',
+      th: {
+        fontWeight: theme.typography.fontWeightMedium,
+        padding: theme.spacing(0.25, 2, 0.25, 0),
+      },
+
+      tr: {
+        borderBottom: `1px solid ${theme.colors.border.weak}`,
+        '&:last-child': {
+          borderBottom: 'none',
+        },
+      },
+    }),
+    link: css({
+      color: theme.colors.text.link,
+    }),
   };
 };

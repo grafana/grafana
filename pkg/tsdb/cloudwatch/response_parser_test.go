@@ -376,6 +376,82 @@ func Test_buildDataFrames_uses_response_label_as_frame_name(t *testing.T) {
 		assert.Equal(t, "some label", frames[0].Name)
 	})
 
+	t.Run("when non-static label set on query", func(t *testing.T) {
+		timestamp := time.Unix(0, 0)
+		response := &models.QueryRowResponse{
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
+					Id:    aws.String("lb3"),
+					Label: aws.String("some label"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+					},
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
+				},
+			},
+		}
+
+		query := &models.CloudWatchQuery{
+			RefId:      "refId1",
+			Region:     "us-east-1",
+			Namespace:  "AWS/ApplicationELB",
+			MetricName: "TargetResponseTime",
+			Dimensions: map[string][]string{
+				"LoadBalancer": {"lb1"},
+				"InstanceType": {"micro"},
+				"Resource":     {"res"},
+			},
+			Statistic:        "Average",
+			Period:           60,
+			MetricQueryType:  models.MetricQueryTypeQuery,
+			MetricEditorMode: models.MetricEditorModeBuilder,
+			Label:            "set ${AVG} label",
+		}
+		frames, err := buildDataFrames(startTime, endTime, *response, query)
+		require.NoError(t, err)
+
+		assert.Equal(t, "some label", frames[0].Name)
+	})
+
+	t.Run("unless static label set on query", func(t *testing.T) {
+		timestamp := time.Unix(0, 0)
+		response := &models.QueryRowResponse{
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
+					Id:    aws.String("lb3"),
+					Label: aws.String("some label"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+					},
+					Values:     []*float64{aws.Float64(23)},
+					StatusCode: aws.String("Complete"),
+				},
+			},
+		}
+
+		query := &models.CloudWatchQuery{
+			RefId:      "refId1",
+			Region:     "us-east-1",
+			Namespace:  "AWS/ApplicationELB",
+			MetricName: "TargetResponseTime",
+			Dimensions: map[string][]string{
+				"LoadBalancer": {"lb1"},
+				"InstanceType": {"micro"},
+				"Resource":     {"res"},
+			},
+			Statistic:        "Average",
+			Period:           60,
+			MetricQueryType:  models.MetricQueryTypeQuery,
+			MetricEditorMode: models.MetricEditorModeBuilder,
+			Label:            "actual",
+		}
+		frames, err := buildDataFrames(startTime, endTime, *response, query)
+		require.NoError(t, err)
+
+		assert.Equal(t, "actual", frames[0].Name)
+	})
+
 	t.Run("Parse cloudwatch response", func(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &models.QueryRowResponse{

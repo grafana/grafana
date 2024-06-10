@@ -4,7 +4,7 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     PluginTSTypesJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
@@ -58,3 +58,5 @@ export const defaultOptions: Partial<Options> = {
   showTypeIcons: false,
   sortBy: [],
 };
+
+export interface FieldConfig extends ui.TableFieldOptions {}

@@ -21,6 +21,16 @@ func (e *ErrorInvalidRole) Error() string {
 	return "role is invalid"
 }
 
+type ErrorRoleNameMissing struct{}
+
+func (e *ErrorRoleNameMissing) Error() string {
+	return "role has been defined without a name"
+}
+
+func (e *ErrorRoleNameMissing) Unwrap() error {
+	return &ErrorInvalidRole{}
+}
+
 type ErrorRolePrefixMissing struct {
 	Role     string
 	Prefixes []string

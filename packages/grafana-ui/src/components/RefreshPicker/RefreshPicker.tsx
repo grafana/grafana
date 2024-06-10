@@ -1,4 +1,4 @@
-import formatDuration from 'date-fns/formatDuration';
+import { formatDuration } from 'date-fns';
 import React, { PureComponent } from 'react';
 
 import { SelectableValue, parseDuration } from '@grafana/data';
@@ -101,6 +101,10 @@ export class RefreshPicker extends PureComponent<Props> {
     );
     const ariaLabel = selectedValue.value === '' ? ariaLabelChooseIntervalMessage : ariaLabelDurationSelectedMessage;
 
+    const tooltipIntervalSelected = t('refresh-picker.tooltip.interval-selected', 'Set auto refresh interval');
+    const tooltipAutoRefreshOff = t('refresh-picker.tooltip.turned-off', 'Auto refresh off');
+    const tooltipAutoRefresh = selectedValue.value === '' ? tooltipAutoRefreshOff : tooltipIntervalSelected;
+
     return (
       <ButtonGroup className="refresh-picker">
         <ToolbarButton
@@ -108,7 +112,7 @@ export class RefreshPicker extends PureComponent<Props> {
           tooltip={tooltip}
           onClick={onRefresh}
           variant={variant}
-          icon={isLoading ? 'fa fa-spinner' : 'sync'}
+          icon={isLoading ? 'spinner' : 'sync'}
           style={width ? { width } : undefined}
           data-testid={selectors.components.RefreshPicker.runButtonV2}
         >
@@ -120,9 +124,9 @@ export class RefreshPicker extends PureComponent<Props> {
             options={options}
             onChange={this.onChangeSelect}
             variant={variant}
-            title={t('refresh-picker.select-button.auto-refresh', 'Set auto refresh interval')}
             data-testid={selectors.components.RefreshPicker.intervalButtonV2}
             aria-label={ariaLabel}
+            tooltip={tooltipAutoRefresh}
           />
         )}
       </ButtonGroup>

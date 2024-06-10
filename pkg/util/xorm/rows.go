@@ -20,13 +20,13 @@ type Rows struct {
 	lastError error
 }
 
-func newRows(session *Session, bean interface{}) (*Rows, error) {
+func newRows(session *Session, bean any) (*Rows, error) {
 	rows := new(Rows)
 	rows.session = session
 	rows.beanType = reflect.Indirect(reflect.ValueOf(bean)).Type()
 
 	var sqlStr string
-	var args []interface{}
+	var args []any
 	var err error
 
 	if err = rows.session.statement.setRefBean(bean); err != nil {
@@ -75,7 +75,7 @@ func (rows *Rows) Err() error {
 }
 
 // Scan row record to bean properties
-func (rows *Rows) Scan(bean interface{}) error {
+func (rows *Rows) Scan(bean any) error {
 	if rows.lastError != nil {
 		return rows.lastError
 	}

@@ -1,32 +1,23 @@
 package provisioning
 
-import (
-	"context"
-
-	"github.com/grafana/dskit/services"
-
-	"github.com/grafana/grafana/pkg/modules"
-)
+import "context"
 
 type Calls struct {
-	RunInitProvisioners                 []interface{}
-	ProvisionDatasources                []interface{}
-	ProvisionPlugins                    []interface{}
-	ProvisionNotifications              []interface{}
-	ProvisionDashboards                 []interface{}
-	ProvisionAlerting                   []interface{}
-	GetDashboardProvisionerResolvedPath []interface{}
-	GetAllowUIUpdatesFromConfig         []interface{}
-	Run                                 []interface{}
+	RunInitProvisioners                 []any
+	ProvisionDatasources                []any
+	ProvisionPlugins                    []any
+	ProvisionDashboards                 []any
+	ProvisionAlerting                   []any
+	GetDashboardProvisionerResolvedPath []any
+	GetAllowUIUpdatesFromConfig         []any
+	Run                                 []any
 }
 
 type ProvisioningServiceMock struct {
-	*services.BasicService
 	Calls                                   *Calls
 	RunInitProvisionersFunc                 func(ctx context.Context) error
 	ProvisionDatasourcesFunc                func(ctx context.Context) error
 	ProvisionPluginsFunc                    func() error
-	ProvisionNotificationsFunc              func() error
 	ProvisionDashboardsFunc                 func() error
 	GetDashboardProvisionerResolvedPathFunc func(name string) string
 	GetAllowUIUpdatesFromConfigFunc         func(name string) bool
@@ -34,11 +25,9 @@ type ProvisioningServiceMock struct {
 }
 
 func NewProvisioningServiceMock(ctx context.Context) *ProvisioningServiceMock {
-	s := &ProvisioningServiceMock{
+	return &ProvisioningServiceMock{
 		Calls: &Calls{},
 	}
-	s.BasicService = services.NewBasicService(s.RunInitProvisioners, s.Run, nil).WithName(modules.Provisioning)
-	return s
 }
 
 func (mock *ProvisioningServiceMock) RunInitProvisioners(ctx context.Context) error {
@@ -61,14 +50,6 @@ func (mock *ProvisioningServiceMock) ProvisionPlugins(ctx context.Context) error
 	mock.Calls.ProvisionPlugins = append(mock.Calls.ProvisionPlugins, nil)
 	if mock.ProvisionPluginsFunc != nil {
 		return mock.ProvisionPluginsFunc()
-	}
-	return nil
-}
-
-func (mock *ProvisioningServiceMock) ProvisionNotifications(ctx context.Context) error {
-	mock.Calls.ProvisionNotifications = append(mock.Calls.ProvisionNotifications, nil)
-	if mock.ProvisionNotificationsFunc != nil {
-		return mock.ProvisionNotificationsFunc()
 	}
 	return nil
 }

@@ -18,8 +18,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -47,7 +47,7 @@
         "name": "Prometheus alertmanager",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Add external Alertmanagers (supports Prometheus and Mimir implementations) so you can use the Grafana Alerting UI to manage silences, contact points, and notification policies.",
       "links": [
         {
           "name": "Learn more",
@@ -60,8 +60,15 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "alerts",
+        "alerting",
+        "prometheus",
+        "alertmanager",
+        "mimir",
+        "cortex"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -97,8 +104,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -156,12 +163,18 @@
           "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
-      "version": "1.0.0",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "azure",
+        "monitor",
+        "Application Insights",
+        "Log Analytics",
+        "App Insights"
+      ]
     },
     "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "5.2.x",
+      "grafanaDependency": "\u003e=10.3.0",
+      "grafanaVersion": "*",
       "plugins": []
     },
     "latestVersion": "",
@@ -193,8 +206,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -230,8 +243,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -259,7 +272,7 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Graphical representation of price movements of a security, derivative, or currency.",
       "links": null,
       "logos": {
         "small": "public/app/plugins/panel/candlestick/img/candlestick.svg",
@@ -267,8 +280,13 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "financial",
+        "price",
+        "currency",
+        "k-line"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -304,8 +322,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -341,8 +359,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -378,8 +396,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -415,8 +433,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -457,8 +475,10 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "elasticsearch"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -494,8 +514,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -531,8 +551,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -568,8 +588,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -605,8 +625,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -642,8 +662,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "1.0.0",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -671,11 +691,11 @@
         "name": "Grafana Labs",
         "url": "https://www.grafana.com"
       },
-      "description": "Supports Phlare and Pyroscope backends, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation systems.",
+      "description": "Data source for Grafana Pyroscope, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system.",
       "links": [
         {
           "name": "GitHub Project",
-          "url": "https://github.com/grafana/phlare"
+          "url": "https://github.com/grafana/pyroscope"
         }
       ],
       "logos": {
@@ -684,11 +704,19 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "grafana",
+        "datasource",
+        "phlare",
+        "flamegraph",
+        "profiling",
+        "continuous profiling",
+        "pyroscope"
+      ]
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -721,8 +749,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -767,8 +795,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -804,8 +832,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -833,7 +861,7 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Distribution of values presented as a bar chart.",
       "links": null,
       "logos": {
         "small": "public/app/plugins/panel/histogram/img/histogram.svg",
@@ -841,8 +869,13 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "distribution",
+        "bar chart",
+        "frequency",
+        "proportional"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -878,8 +911,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -924,11 +957,11 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -961,8 +994,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1007,8 +1040,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1044,8 +1077,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1081,8 +1114,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1118,8 +1151,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1155,8 +1188,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1192,8 +1225,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1234,11 +1267,16 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "grafana",
+        "datasource",
+        "parca",
+        "profiling"
+      ]
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -1271,8 +1309,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1292,7 +1330,7 @@
   {
     "name": "PostgreSQL",
     "type": "datasource",
-    "id": "postgres",
+    "id": "grafana-postgresql-datasource",
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1303,13 +1341,13 @@
       "description": "Data source for PostgreSQL and compatible databases",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/postgres/img/postgresql_logo.svg",
-        "large": "public/app/plugins/datasource/postgres/img/postgresql_logo.svg"
+        "small": "public/app/plugins/datasource/grafana-postgresql-datasource/img/postgresql_logo.svg",
+        "large": "public/app/plugins/datasource/grafana-postgresql-datasource/img/postgresql_logo.svg"
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1318,7 +1356,7 @@
     },
     "latestVersion": "",
     "hasUpdate": false,
-    "defaultNavUrl": "/plugins/postgres/",
+    "defaultNavUrl": "/plugins/grafana-postgresql-datasource/",
     "category": "sql",
     "state": "",
     "signature": "internal",
@@ -1350,8 +1388,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1387,8 +1425,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1424,8 +1462,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1461,8 +1499,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1498,8 +1536,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1535,8 +1573,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1577,11 +1615,11 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -1598,7 +1636,7 @@
   {
     "name": "TestData",
     "type": "datasource",
-    "id": "testdata",
+    "id": "grafana-testdata-datasource",
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1609,22 +1647,22 @@
       "description": "Generates test data in different forms",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/testdata/img/testdata.svg",
-        "large": "public/app/plugins/datasource/testdata/img/testdata.svg"
+        "small": "public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg",
+        "large": "public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg"
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
     "latestVersion": "",
     "hasUpdate": false,
-    "defaultNavUrl": "/plugins/testdata/",
+    "defaultNavUrl": "/plugins/grafana-testdata-datasource/",
     "category": "",
     "state": "",
     "signature": "internal",
@@ -1651,8 +1689,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1688,8 +1726,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1725,8 +1763,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1762,8 +1800,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1799,8 +1837,8 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1828,7 +1866,7 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "",
+      "description": "Supports arbitrary X vs Y in a graph to visualize the relationship between two variables.",
       "links": null,
       "logos": {
         "small": "public/app/plugins/panel/xychart/img/icn-xychart.svg",
@@ -1836,8 +1874,11 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": [
+        "scatter",
+        "plot"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1878,11 +1919,11 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
-      "updated": ""
+      "updated": "",
+      "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },

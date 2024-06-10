@@ -54,6 +54,6 @@ describe('DataLinksContextMenu', () => {
     );
 
     expect(screen.getByLabelText(fakeAriaLabel)).toBeInTheDocument();
-    expect(screen.getByLabelText(selectors.components.DataLinksContextMenu.singleLink)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.DataLinksContextMenu.singleLink)).toBeInTheDocument();
   });
 });

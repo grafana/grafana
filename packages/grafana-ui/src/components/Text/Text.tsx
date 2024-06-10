@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
-import React, { createElement, CSSProperties, useCallback } from 'react';
+import React, { createElement, CSSProperties } from 'react';
 
 import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
+import { TruncatedText } from './TruncatedText';
 import { customWeight, customColor, customVariant } from './utils';
 
-export interface TextProps {
+export interface TextProps extends Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   /** Defines what HTML element is defined underneath. "span" by default */
   element?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p';
   /** What typograpy variant should be used for the component. Only use if default variant for the defined element is not what is needed */
@@ -22,25 +23,40 @@ export interface TextProps {
   italic?: boolean;
   /** Whether to align the text to left, center or right */
   textAlignment?: CSSProperties['textAlign'];
-  children: React.ReactNode;
+  children: NonNullable<React.ReactNode>;
 }
 
 export const Text = React.forwardRef<HTMLElement, TextProps>(
-  ({ element = 'span', variant, weight, color, truncate, italic, textAlignment, children }, ref) => {
-    const styles = useStyles2(
-      useCallback(
-        (theme) => getTextStyles(theme, element, variant, color, weight, truncate, italic, textAlignment),
-        [color, textAlignment, truncate, italic, weight, variant, element]
-      )
-    );
+  ({ element = 'span', variant, weight, color, truncate, italic, textAlignment, children, ...restProps }, ref) => {
+    const styles = useStyles2(getTextStyles, element, variant, color, weight, truncate, italic, textAlignment);
 
-    return createElement(
-      element,
-      {
-        className: styles,
-        ref,
-      },
-      children
+    const childElement = (ref: React.ForwardedRef<HTMLElement> | undefined) => {
+      return createElement(
+        element,
+        {
+          ...restProps,
+          style: undefined, // Remove the style prop to avoid overriding the styles
+          className: styles,
+          // When overflowing, the internalRef is passed to the tooltip, which forwards it to the child element
+          ref,
+        },
+        children
+      );
+    };
+
+    // A 'span' is an inline element, so it can't be truncated
+    // and it should be wrapped in a parent element that will show the tooltip
+    if (!truncate || element === 'span') {
+      return childElement(undefined);
+    }
+
+    return (
+      <TruncatedText
+        childElement={childElement}
+        // eslint-disable-next-line react/no-children-prop
+        children={children}
+        ref={ref}
+      />
     );
   }
 );

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { ConfigEditor } from './ConfigEditor';
-import { createDefaultConfigOptions } from './mocks';
+import { createDefaultConfigOptions } from './__mocks__/configOptions';
 
 describe('ConfigEditor', () => {
   it('should render without error', () => {
@@ -15,7 +15,9 @@ describe('ConfigEditor', () => {
     render(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
 
     // Check DataSourceHttpSettings are rendered
-    expect(screen.getByRole('heading', { name: 'HTTP' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Connection' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Authentication' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Advanced HTTP settings' })).toBeInTheDocument();
 
     // Check ElasticDetails are rendered
     expect(screen.getByText('Elasticsearch details')).toBeInTheDocument();

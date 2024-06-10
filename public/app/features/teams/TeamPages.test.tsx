@@ -5,9 +5,8 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { createTheme } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { User } from 'app/core/services/context_srv';
 
-import { OrgRole, Team, TeamMember } from '../../types';
+import { Team } from '../../types';
 
 import { Props, TeamPages } from './TeamPages';
 import { getMockTeam } from './__mocks__/teamMocks';
@@ -18,9 +17,8 @@ jest.mock('app/core/components/Select/UserPicker', () => {
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
-    accessControlEnabled: () => false,
-    hasPermissionInMetadata: () => false,
-    hasAccessInMetadata: () => true,
+    accessControlEnabled: () => true,
+    hasPermissionInMetadata: () => true,
     user: {},
   },
 }));
@@ -31,12 +29,13 @@ jest.mock('@grafana/runtime', () => ({
     get: jest.fn().mockResolvedValue([{ userId: 1, login: 'Test' }]),
   }),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     licenseInfo: {
       enabledFeatures: { teamsync: true },
       stateInfo: '',
       licenseUrl: '',
     },
-    featureToggles: { accesscontrol: false },
+    featureToggles: { accesscontrol: true },
     bootData: { navTree: [], user: {} },
     buildInfo: {
       edition: 'Open Source',
@@ -76,17 +75,9 @@ const setup = (propOverrides?: object) => {
     pageNav: { text: 'Cool team ' },
     teamId: 1,
     loadTeam: jest.fn(),
-    loadTeamMembers: jest.fn(),
     pageName: 'members',
     team: {} as Team,
-    members: [] as TeamMember[],
-    editorsCanAdmin: false,
     theme: createTheme(),
-    signedInUser: {
-      id: 1,
-      isGrafanaAdmin: false,
-      orgRole: OrgRole.Viewer,
-    } as User,
   };
 
   Object.assign(props, propOverrides);
@@ -99,13 +90,6 @@ const setup = (propOverrides?: object) => {
 };
 
 describe('TeamPages', () => {
-  it('should render member page if team not empty', async () => {
-    setup({
-      team: getMockTeam(),
-    });
-    expect(await screen.findByRole('button', { name: 'Add member' })).toBeInTheDocument();
-  });
-
   it('should render settings and preferences page', async () => {
     setup({
       team: getMockTeam(),
@@ -127,27 +111,5 @@ describe('TeamPages', () => {
     });
 
     expect(await screen.findByText('Team group sync')).toBeInTheDocument();
-  });
-
-  describe('when feature toggle editorsCanAdmin is turned on', () => {
-    it('should render settings page if user is team admin', async () => {
-      setup({
-        team: getMockTeam(),
-        pageName: 'settings',
-        preferences: {
-          homeDashboardUID: 'home-dashboard',
-          theme: 'Default',
-          timezone: 'Default',
-        },
-        editorsCanAdmin: true,
-        signedInUser: {
-          id: 1,
-          isGrafanaAdmin: false,
-          orgRole: OrgRole.Admin,
-        } as User,
-      });
-
-      expect(await screen.findByText('Team settings')).toBeInTheDocument();
-    });
   });
 });

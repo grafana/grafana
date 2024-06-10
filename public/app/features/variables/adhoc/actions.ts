@@ -48,7 +48,7 @@ export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<vo
 
     if (index === -1) {
       const { value, key, operator } = options;
-      const filter = { value, key, operator, condition: '' };
+      const filter = { value, key, operator };
       return await dispatch(addFilter(toKeyedVariableIdentifier(variable), filter));
     }
 
@@ -149,7 +149,12 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
 const getVariableByOptions = (options: AdHocTableOptions, state: StoreState): AdHocVariableModel | undefined => {
   const key = getLastKey(state);
   const templatingState = getVariablesState(key, state);
-  return Object.values(templatingState.variables).find(
-    (v) => isAdHoc(v) && v.datasource?.uid === options.datasource.uid
-  ) as AdHocVariableModel;
+  let result: AdHocVariableModel | undefined;
+  for (const v of Object.values(templatingState.variables)) {
+    if (isAdHoc(v) && v.datasource?.uid === options.datasource.uid) {
+      result = v;
+      break;
+    }
+  }
+  return result;
 };

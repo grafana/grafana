@@ -44,7 +44,7 @@ func (m *MockCacheService) Get(arg0 context.Context, arg1 ScreenshotOptions) (*S
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockCacheServiceMockRecorder) Get(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockCacheServiceMockRecorder) Get(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCacheService)(nil).Get), arg0, arg1)
 }
@@ -58,7 +58,7 @@ func (m *MockCacheService) Set(arg0 context.Context, arg1 ScreenshotOptions, arg
 }
 
 // Set indicates an expected call of Set.
-func (mr *MockCacheServiceMockRecorder) Set(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockCacheServiceMockRecorder) Set(arg0, arg1, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockCacheService)(nil).Set), arg0, arg1, arg2)
 }

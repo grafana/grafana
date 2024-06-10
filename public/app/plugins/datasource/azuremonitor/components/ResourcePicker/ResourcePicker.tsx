@@ -2,13 +2,12 @@ import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { Alert, Button, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
+import { Alert, Button, LoadingPlaceholder, Modal, useStyles2, Space } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureMonitorResource } from '../../types';
 import messageFromError from '../../utils/messageFromError';
-import { Space } from '../Space';
 
 import AdvancedMulti from './AdvancedMulti';
 import NestedRow from './NestedRow';

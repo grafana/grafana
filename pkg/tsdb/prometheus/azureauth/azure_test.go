@@ -3,19 +3,16 @@ package azureauth
 import (
 	"testing"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestConfigureAzureAuthentication(t *testing.T) {
-	cfg := &setting.Cfg{
-		Azure: &azsettings.AzureSettings{},
-	}
+	azureSettings := &azsettings.AzureSettings{}
 
 	t.Run("should set Azure middleware when JsonData contains valid credentials", func(t *testing.T) {
 		settings := backend.DataSourceInstanceSettings{
@@ -27,9 +24,9 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 				}`),
 		}
 
-		var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
+		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
 		require.NoError(t, err)
 
 		require.NotNil(t, opts.Middlewares)
@@ -41,9 +38,9 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 			JSONData: []byte(`{ "httpMethod": "POST" }`),
 		}
 
-		var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
+		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
 		require.NoError(t, err)
 
 		assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
@@ -57,8 +54,8 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 				}`),
 		}
 
-		var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
-		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
+		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
+		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
 		assert.Error(t, err)
 	})
 
@@ -72,9 +69,9 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 					"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5"
 				}`),
 		}
-		var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
+		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
 		require.NoError(t, err)
 
 		require.NotNil(t, opts.Middlewares)
@@ -88,9 +85,9 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 					"azureEndpointResourceId": "https://api.example.com/abd5c4ce-ca73-41e9-9cb2-bed39aa2adb5"
 				}`),
 		}
-		var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
+		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
 		require.NoError(t, err)
 
 		if opts.Middlewares != nil {
@@ -109,9 +106,35 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 				}`),
 		}
 
-		var opts = &sdkhttpclient.Options{CustomOptions: map[string]interface{}{}}
+		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
+		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
 		assert.Error(t, err)
+	})
+}
+
+func TestGetPrometheusScopes(t *testing.T) {
+	azureSettings := &azsettings.AzureSettings{
+		Cloud: azsettings.AzureUSGovernment,
+	}
+
+	t.Run("should return scopes for cloud from settings with MSI credentials", func(t *testing.T) {
+		credentials := &azcredentials.AzureManagedIdentityCredentials{}
+		scopes, err := getPrometheusScopes(azureSettings, credentials)
+		require.NoError(t, err)
+
+		assert.NotNil(t, scopes)
+		assert.Len(t, scopes, 1)
+		assert.Equal(t, "https://prometheus.monitor.azure.us/.default", scopes[0])
+	})
+
+	t.Run("should return scopes for cloud from client secret credentials", func(t *testing.T) {
+		credentials := &azcredentials.AzureClientSecretCredentials{AzureCloud: azsettings.AzureChina}
+		scopes, err := getPrometheusScopes(azureSettings, credentials)
+		require.NoError(t, err)
+
+		assert.NotNil(t, scopes)
+		assert.Len(t, scopes, 1)
+		assert.Equal(t, "https://prometheus.monitor.azure.cn/.default", scopes[0])
 	})
 }

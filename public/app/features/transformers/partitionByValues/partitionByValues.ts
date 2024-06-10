@@ -67,13 +67,15 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Partit
   id: DataTransformerID.partitionByValues,
   name: 'Partition by values',
   description: `Splits a one-frame dataset into multiple series discriminated by unique/enum values in one or more fields.`,
-  defaultOptions: {},
+  defaultOptions: {
+    keepFields: false,
+  },
 
   operator: (options, ctx) => (source) =>
     source.pipe(map((data) => partitionByValuesTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: PartitionByValuesTransformerOptions, ctx: DataTransformContext) => {
-    const matcherConfig = getMatcherConfig({ names: options.fields });
+    const matcherConfig = getMatcherConfig(ctx, { names: options.fields });
 
     if (!matcherConfig) {
       return noopTransformer.transformer({}, ctx);
@@ -98,6 +100,11 @@ export function partitionByValues(
   options?: PartitionByValuesTransformerOptions
 ): DataFrame[] {
   const keyFields = frame.fields.filter((f) => matcher(f, frame, [frame]))!;
+
+  if (!keyFields.length) {
+    return [frame];
+  }
+
   const keyFieldsVals = keyFields.map((f) => f.values);
   const names = keyFields.map((f) => f.name);
 

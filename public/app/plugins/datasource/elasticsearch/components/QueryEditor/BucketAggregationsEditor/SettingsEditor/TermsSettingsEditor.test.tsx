@@ -2,10 +2,9 @@ import { screen } from '@testing-library/react';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
-import { describeMetric } from 'app/plugins/datasource/elasticsearch/utils';
-
 import { renderWithESProvider } from '../../../../test-helpers/render';
 import { ElasticsearchQuery, Terms, Average, Derivative, TopMetrics } from '../../../../types';
+import { describeMetric } from '../../../../utils';
 
 import { TermsSettingsEditor } from './TermsSettingsEditor';
 

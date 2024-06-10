@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { SemVer } from 'semver';
 
 import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
@@ -90,6 +90,7 @@ export const ElasticSearchQueryField = ({ value, onChange }: { value?: string; o
 const QueryEditorForm = ({ value }: Props) => {
   const dispatch = useDispatch();
   const nextId = useNextId();
+  const inputId = useId();
   const styles = useStyles2(getStyles);
 
   const isTimeSeries = isTimeSeriesQuery(value);
@@ -115,9 +116,10 @@ const QueryEditorForm = ({ value }: Props) => {
             label="Alias"
             labelWidth={15}
             tooltip="Aliasing only works for timeseries queries (when the last group is 'Date Histogram'). For all other query types this field is ignored."
+            htmlFor={inputId}
           >
             <Input
-              id={`ES-query-${value.refId}_alias`}
+              id={inputId}
               placeholder="Alias Pattern"
               onBlur={(e) => dispatch(changeAliasPattern(e.currentTarget.value))}
               defaultValue={value.alias}

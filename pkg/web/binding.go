@@ -11,7 +11,7 @@ import (
 )
 
 // Bind deserializes JSON payload from the request
-func Bind(req *http.Request, v interface{}) error {
+func Bind(req *http.Request, v any) error {
 	if req.Body != nil {
 		m, _, err := mime.ParseMediaType(req.Header.Get("Content-type"))
 		if err != nil {
@@ -33,7 +33,7 @@ type Validator interface {
 	Validate() error
 }
 
-func validate(obj interface{}) error {
+func validate(obj any) error {
 	// First check if obj is nil, because we cannot validate those.
 	if obj == nil {
 		return nil

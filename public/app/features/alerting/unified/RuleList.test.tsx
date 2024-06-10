@@ -5,25 +5,30 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { DataSourceSrv, locationService, logInfo, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { PluginExtensionTypes } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import {
+  DataSourceSrv,
+  getPluginLinkExtensions,
+  locationService,
+  setBackendSrv,
+  setDataSourceSrv,
+} from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { contextSrv } from 'app/core/services/context_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as actions from 'app/features/alerting/unified/state/actions';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
-import { LogMessages } from './Analytics';
+import * as analytics from './Analytics';
 import RuleList from './RuleList';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRules } from './api/prometheus';
 import { deleteNamespace, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from './api/ruler';
 import {
-  disableRBAC,
-  enableRBAC,
+  MockDataSourceSrv,
   grantUserPermissions,
   mockDataSource,
-  MockDataSourceSrv,
   mockPromAlert,
   mockPromAlertingRule,
   mockPromRecordingRule,
@@ -35,6 +40,11 @@ import {
 import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginLinkExtensions: jest.fn(),
+  useReturnToPrevious: jest.fn(),
+}));
 jest.mock('./api/buildInfo');
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
@@ -49,19 +59,14 @@ jest.mock('app/core/core', () => ({
     emit: () => {},
   },
 }));
-jest.mock('@grafana/runtime', () => {
-  const original = jest.requireActual('@grafana/runtime');
-  return {
-    ...original,
-    logInfo: jest.fn(),
-  };
-});
 
+jest.spyOn(analytics, 'logInfo');
 jest.spyOn(config, 'getAllDataSources');
 jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
+  getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
   rulesInSameGroupHaveInvalidForMock: jest.mocked(actions.rulesInSameGroupHaveInvalidFor),
 
   api: {
@@ -109,17 +114,16 @@ const dataSources = {
 const ui = {
   ruleGroup: byTestId('rule-group'),
   cloudRulesSourceErrors: byTestId('cloud-rulessource-errors'),
-  groupCollapseToggle: byTestId('group-collapse-toggle'),
-  ruleCollapseToggle: byTestId('collapse-toggle'),
+  groupCollapseToggle: byTestId(selectors.components.AlertRules.groupToggle),
+  ruleCollapseToggle: byTestId(selectors.components.AlertRules.toggle),
   rulesTable: byTestId('rules-table'),
   ruleRow: byTestId('row'),
-  expandedContent: byTestId('expanded-content'),
+  expandedContent: byTestId(selectors.components.AlertRules.expandedContent),
   rulesFilterInput: byTestId('search-query-input'),
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
-  newRuleButton: byRole('link', { name: 'New alert rule' }),
-  moreButton: byRole('button', { name: 'More' }),
-  exportButton: byRole('link', { name: /export/i }),
+  newRuleButton: byText(/new alert rule/i),
+  exportButton: byText(/export rules/i),
   editGroupModal: {
     dialog: byRole('dialog'),
     namespaceInput: byRole('textbox', { name: /^Namespace/ }),
@@ -137,8 +141,26 @@ beforeAll(() => {
 
 describe('RuleList', () => {
   beforeEach(() => {
-    contextSrv.isEditor = true;
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+    ]);
     mocks.rulesInSameGroupHaveInvalidForMock.mockReturnValue([]);
+    mocks.getPluginLinkExtensionsMock.mockReturnValue({
+      extensions: [
+        {
+          pluginId: 'grafana-ml-app',
+          id: '1',
+          type: PluginExtensionTypes.link,
+          title: 'Run investigation',
+          category: 'Sift',
+          description: 'Run a Sift investigation for this alert',
+          onClick: jest.fn(),
+        },
+      ],
+    });
   });
 
   afterEach(() => {
@@ -147,7 +169,6 @@ describe('RuleList', () => {
   });
 
   it('load & show rule groups from multiple cloud data sources', async () => {
-    disableRBAC();
     mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
 
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
@@ -379,13 +400,13 @@ describe('RuleList', () => {
     // expand details of an instance
     await userEvent.click(ui.ruleCollapseToggle.get(instanceRows![0]));
 
-    const alertDetails = byTestId('expanded-content').get(instanceRows[0]);
+    const alertDetails = byTestId(selectors.components.AlertRules.expandedContent).get(instanceRows[0]);
     expect(alertDetails).toHaveTextContent('Value2e+10');
     expect(alertDetails).toHaveTextContent('messagefirst alert message');
 
     // collapse everything again
     await userEvent.click(ui.ruleCollapseToggle.get(instanceRows![0]));
-    expect(byTestId('expanded-content').query(instanceRows[0])).not.toBeInTheDocument();
+    expect(byTestId(selectors.components.AlertRules.expandedContent).query(instanceRows[0])).not.toBeInTheDocument();
     await userEvent.click(ui.ruleCollapseToggle.getAll(ruleRows[1])[0]);
     await userEvent.click(ui.groupCollapseToggle.get(groups[1]));
     expect(ui.rulesTable.query()).not.toBeInTheDocument();
@@ -681,41 +702,38 @@ describe('RuleList', () => {
 
   describe('RBAC Enabled', () => {
     describe('Export button', () => {
-      it('Export button should be visible when the user has alert provisioning read permissions', async () => {
-        enableRBAC();
-
-        grantUserPermissions([AccessControlAction.AlertingProvisioningRead]);
+      it('Export button should be visible when the user has alert read permissions', async () => {
+        grantUserPermissions([AccessControlAction.AlertingRuleRead]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([]);
         setDataSourceSrv(new MockDataSourceSrv({}));
-        mocks.api.fetchRules.mockResolvedValue([]);
+        mocks.api.fetchRules.mockResolvedValue([
+          mockPromRuleNamespace({
+            name: 'foofolder',
+            dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+            groups: [
+              mockPromRuleGroup({
+                name: 'grafana-group',
+                rules: [
+                  mockPromAlertingRule({
+                    query: '[]',
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ]);
         mocks.api.fetchRulerRules.mockResolvedValue({});
 
         renderRuleList();
 
-        await userEvent.click(ui.moreButton.get());
+        await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
+
         expect(ui.exportButton.get()).toBeInTheDocument();
-      });
-      it('Export button should not be visible when the user has no alert provisioning read permissions', async () => {
-        enableRBAC();
-
-        grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.FoldersRead]);
-
-        mocks.getAllDataSourcesMock.mockReturnValue([]);
-        setDataSourceSrv(new MockDataSourceSrv({}));
-        mocks.api.fetchRules.mockResolvedValue([]);
-        mocks.api.fetchRulerRules.mockResolvedValue({});
-
-        renderRuleList();
-
-        await userEvent.click(ui.moreButton.get());
-        expect(ui.exportButton.query()).not.toBeInTheDocument();
       });
     });
     describe('Grafana Managed Alerts', () => {
       it('New alert button should be visible when the user has alert rule create and folder read permissions and no rules exists', async () => {
-        enableRBAC();
-
         grantUserPermissions([
           AccessControlAction.FoldersRead,
           AccessControlAction.AlertingRuleCreate,
@@ -734,8 +752,6 @@ describe('RuleList', () => {
       });
 
       it('New alert button should be visible when the user has alert rule create and folder read permissions and rules already exists', async () => {
-        enableRBAC();
-
         grantUserPermissions([
           AccessControlAction.FoldersRead,
           AccessControlAction.AlertingRuleCreate,
@@ -756,8 +772,6 @@ describe('RuleList', () => {
 
     describe('Cloud Alerts', () => {
       it('New alert button should be visible when the user has the alert rule external write and datasource read permissions and no rules exists', async () => {
-        enableRBAC();
-
         grantUserPermissions([
           // AccessControlAction.AlertingRuleRead,
           AccessControlAction.DataSourcesRead,
@@ -784,8 +798,6 @@ describe('RuleList', () => {
       });
 
       it('New alert button should be visible when the user has the alert rule external write and data source read permissions and rules already exists', async () => {
-        enableRBAC();
-
         grantUserPermissions([
           AccessControlAction.DataSourcesRead,
           AccessControlAction.AlertingRuleExternalRead,
@@ -814,8 +826,6 @@ describe('RuleList', () => {
 
   describe('Analytics', () => {
     it('Sends log info when creating an alert rule from a scratch', async () => {
-      enableRBAC();
-
       grantUserPermissions([
         AccessControlAction.FoldersRead,
         AccessControlAction.AlertingRuleCreate,
@@ -839,7 +849,7 @@ describe('RuleList', () => {
 
       await userEvent.click(button);
 
-      expect(logInfo).toHaveBeenCalledWith(LogMessages.alertRuleFromScratch);
+      expect(analytics.logInfo).toHaveBeenCalledWith(analytics.LogMessages.alertRuleFromScratch);
     });
   });
 });

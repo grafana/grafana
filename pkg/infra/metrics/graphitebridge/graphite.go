@@ -118,7 +118,7 @@ type Bridge struct {
 // log.Logger from the standard library implements this interface, and it is
 // easy to implement by custom loggers, if they don't do so already anyway.
 type Logger interface {
-	Println(v ...interface{})
+	Println(v ...any)
 }
 
 // NewBridge returns a pointer to a new Bridge struct.

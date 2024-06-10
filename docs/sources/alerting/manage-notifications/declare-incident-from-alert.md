@@ -1,6 +1,6 @@
 ---
 aliases:
-  - alerting/alerting-rules/declare-incident-from-alert/
+  - ../../alerting/alerting-rules/declare-incident-from-alert/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/declare-incident-from-alert/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/declare-incident-from-alert/
 description: Declare an incident from a firing alert
 keywords:

@@ -2,10 +2,14 @@ package schedule
 
 import (
 	"context"
+	"slices"
+	"sync"
 	"testing"
 	"time"
 
+	definitions "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	mock "github.com/stretchr/testify/mock"
 )
 
 // waitForTimeChannel blocks the execution until either the channel ch has some data or a timeout of 10 second expires.
@@ -57,10 +61,11 @@ func (f *fakeRulesStore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]
 }
 
 func (f *fakeRulesStore) GetAlertRulesForScheduling(ctx context.Context, query *models.GetAlertRulesForSchedulingQuery) error {
-	query.ResultFoldersTitles = map[string]string{}
+	query.ResultFoldersTitles = map[models.FolderKey]string{}
 	for _, rule := range f.rules {
 		query.ResultRules = append(query.ResultRules, rule)
-		query.ResultFoldersTitles[rule.NamespaceUID] = f.getNamespaceTitle(rule.NamespaceUID)
+		key := models.FolderKey{OrgID: rule.OrgID, UID: rule.UID}
+		query.ResultFoldersTitles[key] = f.getNamespaceTitle(rule.NamespaceUID)
 	}
 	return nil
 }
@@ -79,4 +84,27 @@ func (f *fakeRulesStore) DeleteRule(rules ...*models.AlertRule) {
 
 func (f *fakeRulesStore) getNamespaceTitle(uid string) string {
 	return "TEST-FOLDER-" + uid
+}
+
+type SyncAlertsSenderMock struct {
+	*AlertsSenderMock
+	mu sync.Mutex
+}
+
+func NewSyncAlertsSenderMock() *SyncAlertsSenderMock {
+	return &SyncAlertsSenderMock{
+		AlertsSenderMock: new(AlertsSenderMock),
+	}
+}
+
+func (m *SyncAlertsSenderMock) Send(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.AlertsSenderMock.Send(ctx, key, alerts)
+}
+
+func (m *SyncAlertsSenderMock) Calls() []mock.Call {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return slices.Clone(m.AlertsSenderMock.Calls)
 }

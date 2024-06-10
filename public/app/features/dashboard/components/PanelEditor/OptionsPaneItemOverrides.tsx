@@ -1,4 +1,4 @@
-import { css, CSSObject } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -25,12 +25,11 @@ export function OptionsPaneItemOverrides({ overrides }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const common: CSSObject = {
+  const common = {
     width: 8,
     height: 8,
     borderRadius: theme.shape.radius.circle,
     marginLeft: theme.spacing(1),
-    position: 'relative',
     top: '-1px',
   };
 
@@ -40,10 +39,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     rule: css({
       ...common,
+      position: 'relative',
       backgroundColor: theme.colors.primary.main,
     }),
     data: css({
       ...common,
+      position: 'relative',
       backgroundColor: theme.colors.warning.main,
     }),
   };

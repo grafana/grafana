@@ -1,4 +1,4 @@
-import { uniqBy } from 'lodash';
+import { first, uniqBy } from 'lodash';
 import { useCallback } from 'react';
 
 import {
@@ -16,13 +16,18 @@ import {
   DataLinkConfigOrigin,
   CoreApp,
   SplitOpenOptions,
+  DataLinkPostProcessor,
+  ExploreUrlState,
+  urlUtil,
 } from '@grafana/data';
 import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTransformationVars } from 'app/features/correlations/transformations';
+import { ExploreItemState } from 'app/types/explore';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
+import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 
 type DataLinkFilter = (link: DataLink, scopedVars: ScopedVars) => boolean;
 
@@ -50,6 +55,41 @@ export interface ExploreFieldLinkModel extends LinkModel<Field> {
 const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
 
 /**
+ * Creates an internal link supplier specific to Explore
+ */
+export const exploreDataLinkPostProcessorFactory = (
+  splitOpenFn: SplitOpen | undefined,
+  range: TimeRange
+): DataLinkPostProcessor => {
+  const exploreDataLinkPostProcessor: DataLinkPostProcessor = (options) => {
+    const { field, dataLinkScopedVars: vars, frame: dataFrame, link, linkModel } = options;
+    const { valueRowIndex: rowIndex } = options.config;
+
+    if (!link.internal || rowIndex === undefined) {
+      return linkModel;
+    }
+
+    /**
+     * Even though getFieldLinksForExplore can produce internal and external links we re-use the logic for creating
+     * internal links only. Eventually code from getFieldLinksForExplore can be moved here and getFieldLinksForExplore
+     * can be removed (once all Explore panels start using field.getLinks).
+     */
+    const links = getFieldLinksForExplore({
+      field,
+      rowIndex,
+      splitOpenFn,
+      range,
+      vars,
+      dataFrame,
+      linksToProcess: [link],
+    });
+
+    return links.length ? first(links) : undefined;
+  };
+  return exploreDataLinkPostProcessor;
+};
+
+/**
  * Get links from the field of a dataframe and in addition check if there is associated
  * metadata with datasource in which case we will add onClick to open the link in new split window. This assumes
  * that we just supply datasource name and field value and Explore split window will know how to render that
@@ -58,6 +98,7 @@ const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
  *
  * Note: accessing a field via ${__data.fields.variable} will stay consistent with dashboards and return as existing but with an empty string
  * Accessing a field with ${variable} will return undefined as this is unique to explore.
+ * @deprecated Use field.getLinks directly
  */
 export const getFieldLinksForExplore = (options: {
   field: Field;
@@ -66,6 +107,8 @@ export const getFieldLinksForExplore = (options: {
   range: TimeRange;
   vars?: ScopedVars;
   dataFrame?: DataFrame;
+  // if not provided, field.config.links are used
+  linksToProcess?: DataLink[];
 }): ExploreFieldLinkModel[] => {
   const { field, vars, splitOpenFn, range, rowIndex, dataFrame } = options;
   const scopedVars: ScopedVars = { ...(vars || {}) };
@@ -108,8 +151,10 @@ export const getFieldLinksForExplore = (options: {
     };
   }
 
-  if (field.config.links) {
-    const links = field.config.links.filter((link) => {
+  const linksToProcess = options.linksToProcess || field.config.links;
+
+  if (linksToProcess) {
+    const links = linksToProcess.filter((link) => {
       return DATA_LINK_FILTERS.every((filter) => filter(link, scopedVars));
     });
 
@@ -172,7 +217,6 @@ export const getFieldLinksForExplore = (options: {
             range,
             field,
             // Don't track internal links without split view as they are used only in Dashboards
-            // TODO: It should be revisited in #66570
             onClickFn: options.splitOpenFn ? (options) => splitFnWithTracking(options) : undefined,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
@@ -255,8 +299,8 @@ const builtInVariables = [
  * @param query
  * @param scopedVars
  */
-export function getVariableUsageInfo<T extends DataLink>(
-  query: T,
+export function getVariableUsageInfo(
+  query: object,
   scopedVars: ScopedVars
 ): { variables: VariableInterpolation[]; allVariablesDefined: boolean } {
   let variables: VariableInterpolation[] = [];
@@ -288,3 +332,26 @@ function getStringsFromObject(obj: Object): string {
   }
   return acc;
 }
+
+type StateEntry = [string, ExploreItemState];
+const isStateEntry = (entry: [string, ExploreItemState | undefined]): entry is StateEntry => {
+  return entry[1] !== undefined;
+};
+
+export const constructAbsoluteUrl = (panes: Record<string, ExploreItemState | undefined>) => {
+  const urlStates = Object.entries(panes)
+    .filter(isStateEntry)
+    .map(([exploreId, pane]) => {
+      const urlState = getUrlStateFromPaneState(pane);
+      urlState.range = {
+        to: pane.range.to.valueOf().toString(),
+        from: pane.range.from.valueOf().toString(),
+      };
+      const panes: [string, ExploreUrlState] = [exploreId, urlState];
+      return panes;
+    })
+    .reduce((acc, [exploreId, urlState]) => {
+      return { ...acc, [exploreId]: urlState };
+    }, {});
+  return urlUtil.renderUrl('/explore', { schemaVersion: 1, panes: JSON.stringify(urlStates) });
+};

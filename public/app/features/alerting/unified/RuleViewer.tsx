@@ -1,19 +1,17 @@
-import React, { useState } from 'react';
-import { Disable, Enable } from 'react-enable';
-import { useParams } from 'react-router-dom';
+import React from 'react';
 
-import { Button, HorizontalGroup, withErrorBoundary } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
+import { NavModelItem } from '@grafana/data';
+import { isFetchError } from '@grafana/runtime';
+import { Alert, withErrorBoundary } from '@grafana/ui';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { GrafanaRuleInspector } from './components/rule-editor/GrafanaRuleInspector';
-import { AlertingFeature } from './features';
-import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-
-const DetailViewV1 = SafeDynamicImport(() => import('./components/rule-viewer/RuleViewer.v1'));
-const DetailViewV2 = SafeDynamicImport(() => import('./components/rule-viewer/v2/RuleViewer.v2'));
+import { AlertRuleProvider } from './components/rule-viewer/RuleContext';
+import DetailView from './components/rule-viewer/RuleViewer';
+import { useCombinedRule } from './hooks/useCombinedRule';
+import { stringifyErrorLike } from './utils/misc';
+import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
 
 type RuleViewerProps = GrafanaRouteComponentProps<{
   id: string;
@@ -21,33 +19,68 @@ type RuleViewerProps = GrafanaRouteComponentProps<{
 }>;
 
 const RuleViewer = (props: RuleViewerProps): JSX.Element => {
-  const routeParams = useParams<{ type: string; id: string }>();
-  const uidFromParams = routeParams.id;
+  const id = getRuleIdFromPathname(props.match.params);
 
-  const sourceName = props.match.params.sourceName;
+  // we convert the stringified ID to a rule identifier object which contains additional
+  // type and source information
+  const identifier = React.useMemo(() => {
+    if (!id) {
+      throw new Error('Rule ID is required');
+    }
 
-  const [showYaml, setShowYaml] = useState(false);
-  const actionButtons =
-    sourceName === GRAFANA_RULES_SOURCE_NAME ? (
-      <HorizontalGroup height="auto" justify="flex-end">
-        <Button variant="secondary" type="button" onClick={() => setShowYaml(true)} size="sm">
-          View YAML
-        </Button>
-      </HorizontalGroup>
-    ) : null;
+    return parseRuleId(id, true);
+  }, [id]);
 
+  // we then fetch the rule from the correct API endpoint(s)
+  const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
+
+  if (error) {
+    return (
+      <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
+        <ErrorMessage error={error} />
+      </AlertingPageWrapper>
+    );
+  }
+
+  if (loading) {
+    return (
+      <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list" isLoading={true}>
+        <></>
+      </AlertingPageWrapper>
+    );
+  }
+
+  if (rule) {
+    return (
+      <AlertRuleProvider identifier={identifier} rule={rule}>
+        <DetailView />
+      </AlertRuleProvider>
+    );
+  }
+
+  // if we get here assume we can't find the rule
   return (
-    <AlertingPageWrapper>
-      <AppChromeUpdate actions={actionButtons} />
-      {showYaml && <GrafanaRuleInspector alertUid={uidFromParams} onClose={() => setShowYaml(false)} />}
-      <Enable feature={AlertingFeature.DetailsViewV2}>
-        <DetailViewV2 {...props} />
-      </Enable>
-      <Disable feature={AlertingFeature.DetailsViewV2}>
-        <DetailViewV1 {...props} />
-      </Disable>
+    <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
+      <EntityNotFound entity="Rule" />
     </AlertingPageWrapper>
   );
 };
+
+export const defaultPageNav: NavModelItem = {
+  id: 'alert-rule-view',
+  text: '',
+};
+
+interface ErrorMessageProps {
+  error: unknown;
+}
+
+function ErrorMessage({ error }: ErrorMessageProps) {
+  if (isFetchError(error) && error.status === 404) {
+    return <EntityNotFound entity="Rule" />;
+  }
+
+  return <Alert title={'Something went wrong loading the rule'}>{stringifyErrorLike(error)}</Alert>;
+}
 
 export default withErrorBoundary(RuleViewer, { style: 'page' });

@@ -7,7 +7,6 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { isOrgAdmin } from '../permissions';
 import { CatalogPlugin, PluginTabIds, PluginTabLabels } from '../types';
 
 type ReturnType = {
@@ -25,8 +24,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
 
   const currentPageId = pageId || defaultTab;
   const navModelChildren = useMemo(() => {
-    const canConfigurePlugins =
-      plugin && contextSrv.hasAccessInMetadata(AccessControlAction.PluginsWrite, plugin, isOrgAdmin());
+    const canConfigurePlugins = plugin && contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
     const navModelChildren: NavModelItem[] = [];
     if (isPublished) {
       navModelChildren.push({
@@ -43,7 +41,20 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
       return navModelChildren;
     }
 
-    if (config.featureToggles.panelTitleSearch && pluginConfig.meta.type === PluginType.panel) {
+    if (config.featureToggles.externalServiceAccounts && (plugin?.iam || plugin?.details?.iam)) {
+      navModelChildren.push({
+        text: PluginTabLabels.IAM,
+        icon: 'shield',
+        id: PluginTabIds.IAM,
+        url: `${pathname}?page=${PluginTabIds.IAM}`,
+        active: PluginTabIds.IAM === currentPageId,
+      });
+    }
+
+    if (
+      config.featureToggles.panelTitleSearch &&
+      (pluginConfig.meta.type === PluginType.panel || pluginConfig.meta.type === PluginType.datasource)
+    ) {
       navModelChildren.push({
         text: PluginTabLabels.USAGE,
         icon: 'list-ul',
@@ -122,7 +133,7 @@ function useDefaultPage(plugin: CatalogPlugin | undefined, pluginConfig: Grafana
     return PluginTabIds.OVERVIEW;
   }
 
-  const hasAccess = contextSrv.hasAccessInMetadata(AccessControlAction.PluginsWrite, plugin, isOrgAdmin());
+  const hasAccess = contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin);
 
   if (!hasAccess || pluginConfig.meta.type !== PluginType.app) {
     return PluginTabIds.OVERVIEW;

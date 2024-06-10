@@ -17,6 +17,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     border-bottom: 1px solid ${theme.colors.border.weak};
     margin-right: ${theme.spacing(1)};
     padding: ${theme.spacing(1)};
+    align-items: center;
 
     &:hover {
       a {
@@ -24,12 +25,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
         text-decoration: underline;
       }
     }
-  `,
-  dashlistStar: css`
-    align-self: center;
-    margin-right: 0px;
-    color: ${theme.colors.secondary.text};
-    z-index: 1;
   `,
   dashlistFolder: css`
     color: ${theme.colors.text.secondary};
@@ -54,12 +49,5 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   dashlistItem: css`
     position: relative;
     list-style: none;
-  `,
-  gridContainer: css`
-    display: grid;
-    gap: ${theme.spacing(1)};
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    list-style: none;
-    margin-bottom: ${theme.spacing(1)};
   `,
 });

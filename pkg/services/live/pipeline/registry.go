@@ -1,9 +1,9 @@
 package pipeline
 
 type EntityInfo struct {
-	Type        string      `json:"type"`
-	Description string      `json:"description"`
-	Example     interface{} `json:"example,omitempty"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	Example     any    `json:"example,omitempty"`
 }
 
 var SubscribersRegistry = []EntityInfo{

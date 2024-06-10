@@ -11,58 +11,52 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationUserGet(t *testing.T) {
 	testCases := []struct {
-		name            string
-		wantErr         error
-		searchLogin     string
-		searchEmail     string
-		caseInsensitive bool
+		name        string
+		wantErr     error
+		searchLogin string
+		searchEmail string
 	}{
 		{
-			name:            "user not found non exact - not case insensitive",
-			wantErr:         user.ErrUserNotFound,
-			searchLogin:     "Test",
-			searchEmail:     "Test@email.com",
-			caseInsensitive: false,
+			name:        "user found non exact",
+			wantErr:     nil,
+			searchLogin: "test",
+			searchEmail: "Test@email.com",
 		},
 		{
-			name:            "user found exact - not case insensitive",
-			wantErr:         nil,
-			searchLogin:     "test",
-			searchEmail:     "test@email.com",
-			caseInsensitive: false,
+			name:        "user found exact",
+			wantErr:     nil,
+			searchLogin: "test",
+			searchEmail: "test@email.com",
 		},
 		{
-			name:            "user found non exact - case insensitive",
-			wantErr:         nil,
-			searchLogin:     "Test",
-			searchEmail:     "Test@email.com",
-			caseInsensitive: true,
+			name:        "user found exact - case insensitive",
+			wantErr:     nil,
+			searchLogin: "Test",
+			searchEmail: "Test@email.com",
 		},
 		{
-			name:            "user found exact - case insensitive",
-			wantErr:         nil,
-			searchLogin:     "Test",
-			searchEmail:     "Test@email.com",
-			caseInsensitive: true,
-		},
-		{
-			name:            "user not found - case insensitive",
-			wantErr:         user.ErrUserNotFound,
-			searchLogin:     "Test_login",
-			searchEmail:     "Test*@email.com",
-			caseInsensitive: true,
+			name:        "user not found - case insensitive",
+			wantErr:     user.ErrUserNotFound,
+			searchLogin: "Test_login",
+			searchEmail: "Test*@email.com",
 		},
 	}
 
@@ -87,10 +81,9 @@ func TestIntegrationUserGet(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if !tc.caseInsensitive && db.IsTestDbMySQL() {
+			if db.IsTestDbMySQL() {
 				t.Skip("mysql is always case insensitive")
 			}
-			cfg.CaseInsensitiveLogin = tc.caseInsensitive
 			usr, err := userStore.Get(context.Background(),
 				&user.User{
 					Email: tc.searchEmail,
@@ -104,6 +97,7 @@ func TestIntegrationUserGet(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, usr)
+				require.NotEmpty(t, usr.UID)
 			}
 		})
 	}
@@ -150,6 +144,32 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("insert user (with known UID)", func(t *testing.T) {
+		ctx := context.Background()
+		id, err := userStore.Insert(ctx,
+			&user.User{
+				UID:     "abcd",
+				Email:   "next-test@email.com",
+				Name:    "next-test1",
+				Login:   "next-test1",
+				Created: time.Now(),
+				Updated: time.Now(),
+			},
+		)
+		require.NoError(t, err)
+
+		found, err := userStore.GetByID(ctx, id)
+		require.NoError(t, err)
+		require.Equal(t, "abcd", found.UID)
+
+		siu, err := userStore.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
+			UserID: id,
+			OrgID:  found.OrgID,
+		})
+		require.NoError(t, err)
+		require.Equal(t, "abcd", siu.UserUID)
+	})
+
 	t.Run("get user", func(t *testing.T) {
 		_, err := userStore.Get(context.Background(),
 			&user.User{
@@ -177,7 +197,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, result.Email, "usertest@test.com")
-		require.Equal(t, result.Password, "")
+		require.Equal(t, string(result.Password), "")
 		require.Len(t, result.Rands, 10)
 		require.Len(t, result.Salt, 10)
 		require.False(t, result.IsDisabled)
@@ -186,24 +206,21 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, result.Email, "usertest@test.com")
-		require.Equal(t, result.Password, "")
+		require.Equal(t, string(result.Password), "")
 		require.Len(t, result.Rands, 10)
 		require.Len(t, result.Salt, 10)
 		require.False(t, result.IsDisabled)
 
 		t.Run("Get User by email case insensitive", func(t *testing.T) {
-			userStore.cfg.CaseInsensitiveLogin = true
 			query := user.GetUserByEmailQuery{Email: "USERtest@TEST.COM"}
 			result, err := userStore.GetByEmail(context.Background(), &query)
 			require.Nil(t, err)
 
 			require.Equal(t, result.Email, "usertest@test.com")
-			require.Equal(t, result.Password, "")
+			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
 			require.Len(t, result.Salt, 10)
 			require.False(t, result.IsDisabled)
-
-			userStore.cfg.CaseInsensitiveLogin = false
 		})
 
 		t.Run("Testing DB - creates and loads user", func(t *testing.T) {
@@ -211,7 +228,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Nil(t, err)
 
 			require.Equal(t, result.Email, "usertest@test.com")
-			require.Equal(t, result.Password, "")
+			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
 			require.Len(t, result.Salt, 10)
 			require.False(t, result.IsDisabled)
@@ -220,11 +237,10 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Nil(t, err)
 
 			require.Equal(t, result.Email, "usertest@test.com")
-			require.Equal(t, result.Password, "")
+			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
 			require.Len(t, result.Salt, 10)
 			require.False(t, result.IsDisabled)
-			ss.Cfg.CaseInsensitiveLogin = false
 		})
 	})
 
@@ -232,73 +248,103 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		if ss.GetDBType() == migrator.MySQL {
 			t.Skip("Skipping on MySQL due to case insensitive indexes")
 		}
-		userStore.cfg.CaseInsensitiveLogin = true
-		cmd := user.CreateUserCommand{
-			Email: "confusertest@test.com",
-			Name:  "user name",
-			Login: "user_email_conflict",
-		}
-		// userEmailConflict
-		_, err = usrSvc.Create(context.Background(), &cmd)
+		testOrgID := int64(1)
+		err := ss.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// create a user
+			// add additional user with conflicting login where DOMAIN is upper case
+			cmd := user.User{
+				Email:   "confusertest@test.com",
+				Name:    "user name",
+				Login:   "user_email_conflict",
+				OrgID:   testOrgID,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
+			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		require.NoError(t, err)
+		err = ss.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// create a user
+			// add additional user with conflicting login where DOMAIN is upper case
+			cmd := user.User{
+				Email:   "confusertest@TEST.COM",
+				Name:    "user name",
+				Login:   "user_email_conflict_two",
+				OrgID:   testOrgID,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
+			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 		require.NoError(t, err)
 
-		cmd = user.CreateUserCommand{
-			Email: "confusertest@TEST.COM",
-			Name:  "user name",
-			Login: "user_email_conflict_two",
-		}
-		_, err := usrSvc.Create(context.Background(), &cmd)
+		err = ss.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// create a user
+			// add additional user with conflicting login where DOMAIN is upper case
+			// userLoginConflict
+			cmd := user.User{
+				Email:   "user_test_login_conflict@test.com",
+				Name:    "user name",
+				Login:   "user_test_login_conflict",
+				OrgID:   testOrgID,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
+			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 		require.NoError(t, err)
 
-		cmd = user.CreateUserCommand{
-			Email: "user_test_login_conflict@test.com",
-			Name:  "user name",
-			Login: "user_test_login_conflict",
-		}
-		// userLoginConflict
-		_, err = usrSvc.Create(context.Background(), &cmd)
+		err = ss.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// create a user
+			// add additional user with conflicting login where DOMAIN is upper case
+			// userLoginConflict
+			cmd := user.User{
+				Email:   "user_test_login_conflict_two@test.com",
+				Name:    "user name",
+				Login:   "user_test_login_CONFLICT",
+				OrgID:   testOrgID,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
+			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 		require.NoError(t, err)
-
-		cmd = user.CreateUserCommand{
-			Email: "user_test_login_conflict_two@test.com",
-			Name:  "user name",
-			Login: "user_test_login_CONFLICT",
-		}
-		_, err = usrSvc.Create(context.Background(), &cmd)
-		require.NoError(t, err)
-
-		ss.Cfg.CaseInsensitiveLogin = true
-
-		t.Run("GetByEmail - email conflict", func(t *testing.T) {
-			query := user.GetUserByEmailQuery{Email: "confusertest@test.com"}
-			_, err = userStore.GetByEmail(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByEmail - login conflict", func(t *testing.T) {
-			query := user.GetUserByEmailQuery{Email: "user_test_login_conflict@test.com"}
-			_, err = userStore.GetByEmail(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByLogin - email conflict", func(t *testing.T) {
-			query := user.GetUserByLoginQuery{LoginOrEmail: "user_email_conflict_two"}
-			_, err = userStore.GetByLogin(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByLogin - login conflict", func(t *testing.T) {
-			query := user.GetUserByLoginQuery{LoginOrEmail: "user_test_login_conflict"}
-			_, err = userStore.GetByLogin(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByLogin - login conflict by email", func(t *testing.T) {
-			query := user.GetUserByLoginQuery{LoginOrEmail: "user_test_login_conflict@test.com"}
-			_, err = userStore.GetByLogin(context.Background(), &query)
-			require.Error(t, err)
-		})
-
 		t.Run("GetByLogin - user2 uses user1.email as login", func(t *testing.T) {
 			// create user_1
 			user1 := &user.User{
@@ -339,8 +385,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.NotEqual(t, user2.Login, result.Login)
 			require.NotEqual(t, user2.Name, result.Name)
 		})
-
-		ss.Cfg.CaseInsensitiveLogin = false
 	})
 
 	t.Run("Change user password", func(t *testing.T) {
@@ -376,14 +420,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			OrgID: users[0].OrgID, UserID: users[1].ID,
 		})
 		require.Nil(t, err)
-
-		err = updateDashboardACL(t, ss, 1, &dashboards.DashboardACL{
-			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
-			Permission: dashboards.PERMISSION_EDIT,
-		})
-		require.Nil(t, err)
-
-		ss.CacheService.Flush()
 
 		query := &user.GetSignedInUserQuery{OrgID: users[1].OrgID, UserID: users[1].ID}
 		result, err := userStore.GetSignedInUser(context.Background(), query)
@@ -525,21 +561,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = updateDashboardACL(t, ss, 1, &dashboards.DashboardACL{
-			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
-			Permission: dashboards.PERMISSION_EDIT,
-		})
-		require.Nil(t, err)
-
 		// When the user is deleted
 		err = userStore.Delete(context.Background(), users[1].ID)
 		require.Nil(t, err)
-
-		permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
-		permQueryResult, err := userStore.getDashboardACLInfoList(permQuery)
-		require.Nil(t, err)
-
-		require.Len(t, permQueryResult, 0)
 
 		// A user is an org member and has been assigned permissions
 		// Re-init DB
@@ -558,14 +582,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			OrgID: users[0].OrgID, UserID: users[1].ID,
 		})
 		require.Nil(t, err)
-
-		err = updateDashboardACL(t, ss, 1, &dashboards.DashboardACL{
-			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
-			Permission: dashboards.PERMISSION_EDIT,
-		})
-		require.Nil(t, err)
-
-		ss.CacheService.Flush()
 
 		query3 := &user.GetSignedInUserQuery{OrgID: users[1].OrgID, UserID: users[1].ID}
 		query3Result, err := userStore.GetSignedInUser(context.Background(), query3)
@@ -590,12 +606,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		// the user is deleted
 		err = userStore.Delete(context.Background(), users[1].ID)
 		require.Nil(t, err)
-
-		permQuery = &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
-		permQueryResult, err = userStore.getDashboardACLInfoList(permQuery)
-		require.Nil(t, err)
-
-		require.Len(t, permQueryResult, 0)
 	})
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
@@ -822,6 +832,31 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 		require.Len(t, queryResult.Users, 1)
 		require.EqualValues(t, queryResult.TotalCount, 1)
+
+		// Custom ordering
+		sortOpts, err := sortopts.ParseSortQueryParam("login-asc,email-asc")
+		require.NoError(t, err)
+		query = user.SearchUsersQuery{Query: "", Page: 1, Limit: 3, SignedInUser: usr, SortOpts: sortOpts}
+		queryResult, err = userStore.Search(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Len(t, queryResult.Users, 3)
+		require.EqualValues(t, queryResult.TotalCount, 5)
+		for i := 0; i < 3; i++ {
+			require.Equal(t, fmt.Sprint("loginuser", i), queryResult.Users[i].Login)
+		}
+
+		sortOpts2, err := sortopts.ParseSortQueryParam("login-desc,email-asc")
+		require.NoError(t, err)
+		query = user.SearchUsersQuery{Query: "", Page: 1, Limit: 3, SignedInUser: usr, SortOpts: sortOpts2}
+		queryResult, err = userStore.Search(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Len(t, queryResult.Users, 3)
+		require.EqualValues(t, queryResult.TotalCount, 5)
+		for i := 0; i < 3; i++ {
+			require.Equal(t, fmt.Sprint("loginuser", 4-i), queryResult.Users[i].Login)
+		}
 	})
 
 	t.Run("Can get logged in user projection", func(t *testing.T) {
@@ -855,17 +890,6 @@ func TestIntegrationUserUpdate(t *testing.T) {
 			Login:      fmt.Sprint("loginUSER", i),
 			IsDisabled: false,
 		}
-	})
-
-	userStore.cfg.CaseInsensitiveLogin = true
-
-	t.Run("Testing DB - update generates duplicate user", func(t *testing.T) {
-		err := userStore.Update(context.Background(), &user.UpdateUserCommand{
-			Login:  "loginuser2",
-			UserID: users[0].ID,
-		})
-
-		require.Error(t, err)
 	})
 
 	t.Run("Testing DB - update lowercases existing user", func(t *testing.T) {
@@ -903,8 +927,6 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		require.Equal(t, "loginUSER3", result.Login)
 		require.Equal(t, "USER3@test.com", result.Email)
 	})
-
-	ss.Cfg.CaseInsensitiveLogin = false
 }
 
 func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.CreateUserCommand) []user.User {
@@ -921,124 +943,51 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 	return users
 }
 
-// TODO: Use FakeDashboardStore when org has its own service
-func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items ...*dashboards.DashboardACL) error {
-	t.Helper()
+func TestMetricsUsage(t *testing.T) {
+	ss := db.InitTestDB(t)
+	userStore := ProvideStore(ss, setting.NewCfg())
+	quotaService := quotaimpl.ProvideService(ss, ss.Cfg)
+	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+	require.NoError(t, err)
 
-	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
-		if err != nil {
-			return fmt.Errorf("deleting from dashboard_acl failed: %w", err)
+	_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+
+	t.Run("Get empty role metrics for an org", func(t *testing.T) {
+		orgId := int64(1)
+
+		// create first user
+		createFirtUserCmd := &user.CreateUserCommand{
+			Login: "admin",
+			Email: "admin@admin.com",
+			Name:  "admin",
+			OrgID: orgId,
 		}
+		_, err := usrSvc.Create(context.Background(), createFirtUserCmd)
+		require.NoError(t, err)
 
-		for _, item := range items {
-			item.Created = time.Now()
-			item.Updated = time.Now()
-			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-				return dashboards.ErrDashboardACLInfoMissing
-			}
-
-			if item.DashboardID == 0 {
-				return dashboards.ErrDashboardPermissionDashboardEmpty
-			}
-
-			sess.Nullable("user_id", "team_id")
-			if _, err := sess.Insert(item); err != nil {
-				return err
-			}
+		// create second user
+		createSecondUserCmd := &user.CreateUserCommand{
+			Login: "userWithoutRole",
+			Email: "userWithoutRole@userWithoutRole.com",
+			Name:  "userWithoutRole",
 		}
+		secondUser, err := usrSvc.Create(context.Background(), createSecondUserCmd)
+		require.NoError(t, err)
 
-		// Update dashboard HasACL flag
-		dashboard := dashboards.Dashboard{HasACL: true}
-		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
-		return err
+		// assign the user to the org
+		cmd := org.AddOrgUserCommand{
+			OrgID:  secondUser.OrgID,
+			UserID: orgId,
+			Role:   org.RoleNone,
+		}
+		err = orgService.AddOrgUser(context.Background(), &cmd)
+		require.NoError(t, err)
+
+		// get metric usage
+		stats, err := userStore.CountUserAccountsWithEmptyRole(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), stats)
 	})
-	return err
-}
-
-// This function was copied from pkg/services/dashboards/database to circumvent
-// import cycles. When this org-related code is refactored into a service the
-// tests can the real GetDashboardACLInfoList functions
-func (ss *sqlStore) getDashboardACLInfoList(query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
-	queryResult := make([]*dashboards.DashboardACLInfoDTO, 0)
-	outerErr := ss.db.WithDbSession(context.Background(), func(dbSession *db.Session) error {
-		falseStr := ss.dialect.BooleanStr(false)
-
-		if query.DashboardID == 0 {
-			sql := `SELECT
-		da.id,
-		da.org_id,
-		da.dashboard_id,
-		da.user_id,
-		da.team_id,
-		da.permission,
-		da.role,
-		da.created,
-		da.updated,
-		'' as user_login,
-		'' as user_email,
-		'' as team,
-		'' as title,
-		'' as slug,
-		'' as uid,` +
-				falseStr + ` AS is_folder,` +
-				falseStr + ` AS inherited
-		FROM dashboard_acl as da
-		WHERE da.dashboard_id = -1`
-			return dbSession.SQL(sql).Find(&queryResult)
-		}
-
-		rawSQL := `
-			-- get permissions for the dashboard and its parent folder
-			SELECT
-				da.id,
-				da.org_id,
-				da.dashboard_id,
-				da.user_id,
-				da.team_id,
-				da.permission,
-				da.role,
-				da.created,
-				da.updated,
-				u.login AS user_login,
-				u.email AS user_email,
-				ug.name AS team,
-				ug.email AS team_email,
-				d.title,
-				d.slug,
-				d.uid,
-				d.is_folder,
-				CASE WHEN (da.dashboard_id = -1 AND d.folder_id > 0) OR da.dashboard_id = d.folder_id THEN ` + ss.dialect.BooleanStr(true) + ` ELSE ` + falseStr + ` END AS inherited
-			FROM dashboard as d
-				LEFT JOIN dashboard folder on folder.id = d.folder_id
-				LEFT JOIN dashboard_acl AS da ON
-				da.dashboard_id = d.id OR
-				da.dashboard_id = d.folder_id OR
-				(
-					-- include default permissions -->
-					da.org_id = -1 AND (
-					  (folder.id IS NOT NULL AND folder.has_acl = ` + falseStr + `) OR
-					  (folder.id IS NULL AND d.has_acl = ` + falseStr + `)
-					)
-				)
-				LEFT JOIN ` + ss.dialect.Quote("user") + ` AS u ON u.id = da.user_id
-				LEFT JOIN team ug on ug.id = da.team_id
-			WHERE d.org_id = ? AND d.id = ? AND da.id IS NOT NULL
-			ORDER BY da.id ASC
-			`
-
-		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&queryResult)
-	})
-
-	if outerErr != nil {
-		return nil, outerErr
-	}
-
-	for _, p := range queryResult {
-		p.PermissionName = p.Permission.String()
-	}
-
-	return queryResult, nil
 }
 
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {

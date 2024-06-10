@@ -5,7 +5,7 @@ aliases:
   - ../../panels/visualizations/stat-panel/
   - ../../reference/singlestat/
   - ../../visualizations/stat-panel/
-description: Stat panel documentation
+description: Configure options for Grafana's stat visualization
 keywords:
   - grafana
   - docs
@@ -16,29 +16,81 @@ labels:
     - enterprise
     - oss
 title: Stat
-weight: 900
+weight: 100
 ---
 
 # Stat
 
-The Stat panel visualization shows a one large stat value with an optional graph sparkline. You can control the background or value color using thresholds or overrides.
-
-{{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
-
 {{% admonition type="note" %}}
-This panel replaces the Singlestat panel, which was deprecated in Grafana 7.0 and removed in Grafana 8.0.
+This visualization replaces the Singlestat visualization, which was deprecated in Grafana 7.0 and removed in Grafana 8.0.
 {{% /admonition %}}
 
-By default, the Stat panel displays one of the following:
+A stat visualization displays your data in single values of interest&mdash;such as the latest or current value of a series&mdash;with an optional graph sparkline. A graph sparkline, which is only available in stat visualizations, is a small time-series graph shown in the background of each value in the visualization.
+
+For example, if you're monitoring the utilization of various services, you can use a stat visualization to show their latest usage:
+
+{{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" alt="A stat panel showing latest usage of various services" >}}
+
+Use a stat visualization when you need to:
+
+- Monitor key metrics at a glance, such as the latest health of your application, number of high priority bugs in your application, or total number of sales.
+- Display aggregated data, such as the average response time of your services.
+- Highlight values above your normal thresholds to quickly identify if any metrics are outside your expected range.
+
+{{< docs/play title="Stat Visualizations in Grafana" url="https://play.grafana.org/d/Zb3f4veGk/" >}}
+
+## Configure a stat visualization
+
+Once you've [created a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a stat visualization:
+
+{{< youtube id="yNRnLyVntUw" start="1048" >}}
+
+Alternatively, refer to this blog post on [how to easily retrieve values from a range in Grafana using a stat visualization](https://grafana.com/blog/2023/10/18/how-to-easily-retrieve-values-from-a-range-in-grafana-using-a-stat-panel/).
+
+## Supported data formats
+
+The stat visualization supports a variety of formats for displaying data. Supported formats include:
+
+- **Single values** - The most common format and can be numerical, strings, or boolean values.
+- **Time-series data** - [Calculation types][] can be applied to your time-series data to display single values over a specified time range.
+
+### Examples
+
+The following tables are examples of the type of data you need for a stat visualization and how it should be formatted.
+
+#### Single numerical values
+
+| Number of high priority bugs |
+| ---------------------------- |
+| 80                           |
+| 52                           |
+| 59                           |
+| 40                           |
+
+The data is visualized as follows, with the last value displayed, along with a sparkline and [percentage change](#show-percent-change):
+
+{{< figure src="/static/img/docs/stat-panel/stat_panel_single.png" max-width="1025px" alt="A stat panel showing the latest number of high priority bugs" >}}
+
+#### Time-series data
+
+| Time                | Cellar | Living room | Porch | Bedroom | Guest room | Kitchen |
+| ------------------- | ------ | ----------- | ----- | ------- | ---------- | ------- |
+| 2024-03-20 06:34:40 | 12.3   | 18.3        | 18.8  | 15.9    | 9.29       | 9.61    |
+| 2024-03-20 06:41:40 | 16.8   | 17.1        | 21.5  | 14.1    | 10.5       | 17.5    |
+| 2024-03-20 06:48:40 | 16.7   | 18.0        | 21.0  | 9.51    | 13.6       | 20.1    |
+| 2024-03-20 06:55:40 | 14.3   | 18.7        | 16.5  | 9.11    | 14.8       | 12.5    |
+| 2024-03-20 07:02:40 | 12.8   | 15.2        | 21.1  | 15.6    | 7.98       | 13.0    |
+
+The data is visualized as follows, with the mean value displayed for each room, along with the room name, sparkline, and unit of measurement:
+
+{{< figure src="/static/img/docs/stat-panel/stat_panel_multiple.png" max-width="1025px" alt="A stat panel showing some statistics for each room in square meters" >}}
+
+By default, a stat displays one of the following:
 
 - Just the value for a single series or field.
 - Both the value and name for multiple series or fields.
 
-You can use the **Text mode** to control how the text is displayed.
-
-Example screenshot:
-
-{{< figure src="/static/img/docs/v71/stat-panel-text-modes.png" max-width="1025px" caption="Stat panel" >}}
+You can use the [**Text mode**](#text-mode) to control how the text is displayed.
 
 ## Automatic layout adjustment
 
@@ -56,15 +108,15 @@ Display a single value per column or series, or show values for each row.
 
 Display a calculated value based on all rows.
 
-- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types]({{< relref "../../calculation-types/" >}}).
-- **Fields -** Select the fields display in the panel.
+- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types][].
+- **Fields -** Select the fields display in the visualization.
 
 #### All values
 
 Show a separate stat for every row. If you select this option, then you can also limit the number of rows to display.
 
 - **Limit -** The maximum number of rows to display. Default is 5,000.
-- **Fields -** Select the fields display in the panel.
+- **Fields -** Select the fields display in the visualization.
 
 ## Stat styles
 
@@ -80,13 +132,24 @@ Choose a stacking direction.
 
 ### Text mode
 
-You can use the Text mode option to control what text the panel renders. If the value is not important, only the name and color is, then change the **Text mode** to **Name**. The value will still be used to determine color and is displayed in a tooltip.
+You can use the Text mode option to control what text the visualization renders. If the value is not important, only the name and color is, then change the **Text mode** to **Name**. The value will still be used to determine color and is displayed in a tooltip.
 
 - **Auto -** If the data contains multiple series or fields, show both name and value.
 - **Value -** Show only value, never name. Name is displayed in the hover tooltip instead.
 - **Value and name -** Always show value and name.
 - **Name -** Show name instead of value. Value is displayed in the hover tooltip.
 - **None -** Show nothing (empty). Name and value are displayed in the hover tooltip.
+
+### Wide layout
+
+Set whether wide layout is enabled or not. Wide layout is enabled by default.
+
+- **On -** Wide layout is enabled.
+- **Off -** Wide layout is disabled.
+
+{{% admonition type="note" %}}
+This option is only applicable when **Text mode** is set to **Value and name**. When wide layout is enabled, the value and name are displayed side-by-side with the value on the right, if the panel is wide enough. When wide layout is disabled, the value is always rendered underneath the name.
+{{% /admonition %}}
 
 ### Color mode
 
@@ -99,7 +162,7 @@ Select a color mode.
 
 ### Graph mode
 
-Select a graph and splarkline mode.
+Select a graph and sparkline mode.
 
 - **None -** Hides the graph and only shows the value.
 - **Area -** Shows the area graph below the value. This requires that your query returns a time column.
@@ -111,9 +174,42 @@ Choose an alignment mode.
 - **Auto -** If only a single value is shown (no repeat), then the value is centered. If multiple series or rows are shown, then the value is left-aligned.
 - **Center -** Stat value is centered.
 
+### Show percent change
+
+Set whether percent change is displayed or not. Disabled by default.
+
+{{% admonition type="note" %}}
+This option is not applicable when the **Show** setting, under **Value options**, is set to **All values**.
+{{% /admonition %}}
+
 ## Text size
 
 Adjust the sizes of the gauge text.
 
 - **Title -** Enter a numeric value for the gauge title size.
 - **Value -** Enter a numeric value for the gauge value size.
+
+## Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+{{% docs/reference %}}
+[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types"
+[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
+{{% /docs/reference %}}

@@ -29,7 +29,7 @@ export interface BrowseDashboardsState {
 
 export interface UIDashboardViewItem {
   kind: 'ui';
-  uiKind: 'empty-folder' | 'pagination-placeholder';
+  uiKind: 'empty-folder' | 'pagination-placeholder' | 'divider';
   uid: string;
 }
 
@@ -42,14 +42,13 @@ export interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = Das
   parentUID?: string;
 }
 
-export const INDENT_AMOUNT_CSS_VAR = '--dashboards-tree-indentation';
-
 interface RendererUserProps {
   // Note: userProps for cell renderers (e.g. second argument in `cell.render('Cell', foo)` )
   // aren't typed, so we must be careful when accessing this
   isSelected?: (kind: DashboardViewItem | '$all') => SelectionState;
   onAllSelectionChange?: (newState: boolean) => void;
   onItemSelectionChange?: (item: DashboardViewItem, newState: boolean) => void;
+  treeID?: string;
 }
 
 export type DashboardsTreeColumn = Column<DashboardsTreeItem>;

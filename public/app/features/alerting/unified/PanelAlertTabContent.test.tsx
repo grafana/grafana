@@ -13,13 +13,14 @@ import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReduce
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { PromOptions } from 'app/plugins/datasource/prometheus/types';
 import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { PanelAlertTabContent } from './PanelAlertTabContent';
 import { fetchRules } from './api/prometheus';
 import { fetchRulerRules } from './api/ruler';
 import {
-  disableRBAC,
+  grantUserPermissions,
   mockDataSource,
   MockDataSourceSrv,
   mockPromAlertingRule,
@@ -152,7 +153,7 @@ const dashboard = {
   },
   meta: {
     canSave: true,
-    folderId: 1,
+    folderUid: 'abc',
     folderTitle: 'super folder',
   },
 } as DashboardModel;
@@ -180,17 +181,21 @@ const ui = {
 describe('PanelAlertTabContent', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleDelete,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+    ]);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     const dsService = new MockDataSourceSrv(dataSources);
     dsService.datasources[dataSources.prometheus.uid] = new PrometheusDatasource(
       dataSources.prometheus
-    ) as DataSourceApi<any, any>;
-    dsService.datasources[dataSources.default.uid] = new PrometheusDatasource(dataSources.default) as DataSourceApi<
-      any,
-      any
-    >;
+    ) as DataSourceApi;
+    dsService.datasources[dataSources.default.uid] = new PrometheusDatasource(dataSources.default) as DataSourceApi;
     setDataSourceSrv(dsService);
-    disableRBAC();
   });
 
   it('Will take into account panel maxDataPoints', async () => {

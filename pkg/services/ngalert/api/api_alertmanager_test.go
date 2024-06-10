@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"math/rand"
 	"net/http"
@@ -9,8 +10,11 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	alertingNotify "github.com/grafana/alerting/notify"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
@@ -19,11 +23,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -229,21 +235,21 @@ func TestAlertmanagerConfig(t *testing.T) {
 		r := sut.RoutePostAlertingConfig(&rc, request)
 		require.Equal(t, 202, r.Status())
 
-		am, err := sut.mam.AlertmanagerFor(1)
-		require.NoError(t, err)
-		hash := am.Base.ConfigHash()
-
 		getResponse := sut.RouteGetAlertingConfig(&rc)
 		require.Equal(t, 200, getResponse.Status())
-		postable, err := notifier.Load(getResponse.Body())
+
+		body := getResponse.Body()
+		hash := md5.Sum(body)
+		postable, err := notifier.Load(body)
 		require.NoError(t, err)
 
 		r = sut.RoutePostAlertingConfig(&rc, *postable)
 		require.Equal(t, 202, r.Status())
 
-		am, err = sut.mam.AlertmanagerFor(1)
-		require.NoError(t, err)
-		newHash := am.Base.ConfigHash()
+		getResponse = sut.RouteGetAlertingConfig(&rc)
+		require.Equal(t, 200, getResponse.Status())
+
+		newHash := md5.Sum(getResponse.Body())
 		require.Equal(t, hash, newHash)
 	})
 
@@ -319,6 +325,131 @@ func TestAlertmanagerConfig(t *testing.T) {
 			require.NotNil(t, body.TemplateFileProvenances)
 			require.Len(t, body.TemplateFileProvenances, 1)
 			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.TemplateFileProvenances["a"])
+		})
+	})
+}
+
+func TestAlertmanagerAutogenConfig(t *testing.T) {
+	createSutForAutogen := func(t *testing.T) (AlertmanagerSrv, map[int64]*ngmodels.AlertConfiguration) {
+		sut := createSut(t)
+		configs := map[int64]*ngmodels.AlertConfiguration{
+			1: {AlertmanagerConfiguration: validConfig, OrgID: 1},
+			2: {AlertmanagerConfiguration: validConfigWithoutAutogen, OrgID: 2},
+		}
+		sut.mam = createMultiOrgAlertmanager(t, configs)
+		return sut, configs
+	}
+
+	compare := func(t *testing.T, expectedAm string, testAm string) {
+		test, err := notifier.Load([]byte(testAm))
+		require.NoError(t, err)
+
+		exp, err := notifier.Load([]byte(expectedAm))
+		require.NoError(t, err)
+
+		cOpt := []cmp.Option{
+			cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}),
+			cmpopts.IgnoreFields(apimodels.PostableGrafanaReceiver{}, "UID", "Settings"),
+		}
+		if !cmp.Equal(test, exp, cOpt...) {
+			t.Errorf("Unexpected AM Config: %v", cmp.Diff(test, exp, cOpt...))
+		}
+	}
+
+	t.Run("route POST config", func(t *testing.T) {
+		t.Run("does not save autogen routes", func(t *testing.T) {
+			sut, configs := createSutForAutogen(t)
+			rc := createRequestCtxInOrg(1)
+			request := createAmConfigRequest(t, validConfigWithAutogen)
+			response := sut.RoutePostAlertingConfig(rc, request)
+			require.Equal(t, 202, response.Status())
+
+			compare(t, validConfigWithoutAutogen, configs[1].AlertmanagerConfiguration)
+		})
+
+		t.Run("provenance guard ignores autogen routes", func(t *testing.T) {
+			sut := createSut(t)
+			rc := createRequestCtxInOrg(1)
+			request := createAmConfigRequest(t, validConfigWithoutAutogen)
+			_ = sut.RoutePostAlertingConfig(rc, request)
+
+			setRouteProvenance(t, 1, sut.mam.ProvStore)
+			request = createAmConfigRequest(t, validConfigWithAutogen)
+			request.AlertmanagerConfig.Route.Provenance = apimodels.Provenance(ngmodels.ProvenanceAPI)
+			response := sut.RoutePostAlertingConfig(rc, request)
+			require.Equal(t, 202, response.Status())
+		})
+	})
+
+	t.Run("route GET config", func(t *testing.T) {
+		t.Run("when admin return autogen routes", func(t *testing.T) {
+			sut, _ := createSutForAutogen(t)
+
+			rc := createRequestCtxInOrg(2)
+			rc.SignedInUser.OrgRole = org.RoleAdmin
+
+			response := sut.RouteGetAlertingConfig(rc)
+			require.Equal(t, 200, response.Status())
+
+			compare(t, validConfigWithAutogen, string(response.Body()))
+		})
+
+		t.Run("when not admin return no autogen routes", func(t *testing.T) {
+			sut, _ := createSutForAutogen(t)
+
+			rc := createRequestCtxInOrg(2)
+
+			response := sut.RouteGetAlertingConfig(rc)
+			require.Equal(t, 200, response.Status())
+
+			compare(t, validConfigWithoutAutogen, string(response.Body()))
+		})
+	})
+
+	t.Run("route GET status", func(t *testing.T) {
+		t.Run("when admin return autogen routes", func(t *testing.T) {
+			sut, _ := createSutForAutogen(t)
+
+			rc := createRequestCtxInOrg(2)
+			rc.SignedInUser.OrgRole = org.RoleAdmin
+
+			response := sut.RouteGetAMStatus(rc)
+			require.Equal(t, 200, response.Status())
+
+			var status struct {
+				Config apimodels.PostableApiAlertingConfig `json:"config"`
+			}
+			err := json.Unmarshal(response.Body(), &status)
+			require.NoError(t, err)
+			configBody, err := json.Marshal(apimodels.PostableUserConfig{
+				TemplateFiles:      map[string]string{"a": "template"},
+				AlertmanagerConfig: status.Config,
+			})
+			require.NoError(t, err)
+
+			compare(t, validConfigWithAutogen, string(configBody))
+		})
+
+		t.Run("when not admin return no autogen routes", func(t *testing.T) {
+			sut, _ := createSutForAutogen(t)
+
+			rc := createRequestCtxInOrg(2)
+
+			response := sut.RouteGetAMStatus(rc)
+			require.Equal(t, 200, response.Status())
+
+			var status struct {
+				Config apimodels.PostableApiAlertingConfig `json:"config"`
+			}
+			err := json.Unmarshal(response.Body(), &status)
+			require.NoError(t, err)
+			configBody, err := json.Marshal(apimodels.PostableUserConfig{
+				TemplateFiles:      map[string]string{"a": "template"},
+				AlertmanagerConfig: status.Config,
+			})
+			require.NoError(t, err)
+
+			compare(t, validConfigWithoutAutogen, string(configBody))
 		})
 	})
 }
@@ -569,7 +700,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			permissions: map[int64]map[string][]string{
 				1: {},
 			},
-			expectedStatus: http.StatusUnauthorized,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name:    "new silence, role-based access control is enabled, authorized",
@@ -585,7 +716,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			permissions: map[int64]map[string][]string{
 				1: {accesscontrol.ActionAlertingInstanceCreate: {}},
 			},
-			expectedStatus: http.StatusUnauthorized,
+			expectedStatus: http.StatusForbidden,
 		},
 		{
 			name:    "update silence, role-based access control is enabled, authorized",
@@ -617,7 +748,7 @@ func TestRouteCreateSilence(t *testing.T) {
 				alertmanagerFor, err := sut.mam.AlertmanagerFor(1)
 				require.NoError(t, err)
 				silence.ID = ""
-				newID, err := alertmanagerFor.CreateSilence(&silence)
+				newID, err := alertmanagerFor.CreateSilence(context.Background(), &silence)
 				require.NoError(t, err)
 				silence.ID = newID
 			}
@@ -631,7 +762,12 @@ func TestRouteCreateSilence(t *testing.T) {
 func createSut(t *testing.T) AlertmanagerSrv {
 	t.Helper()
 
-	mam := createMultiOrgAlertmanager(t)
+	configs := map[int64]*ngmodels.AlertConfiguration{
+		1: {AlertmanagerConfiguration: validConfig, OrgID: 1},
+		2: {AlertmanagerConfiguration: validConfig, OrgID: 2},
+		3: {AlertmanagerConfiguration: brokenConfig, OrgID: 3},
+	}
+	mam := createMultiOrgAlertmanager(t, configs)
 	log := log.NewNopLogger()
 	return AlertmanagerSrv{
 		mam:    mam,
@@ -651,19 +787,14 @@ func createAmConfigRequest(t *testing.T, config string) apimodels.PostableUserCo
 	return request
 }
 
-func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
+func createMultiOrgAlertmanager(t *testing.T, configs map[int64]*ngmodels.AlertConfiguration) *notifier.MultiOrgAlertmanager {
 	t.Helper()
 
-	configs := map[int64]*ngmodels.AlertConfiguration{
-		1: {AlertmanagerConfiguration: validConfig, OrgID: 1},
-		2: {AlertmanagerConfiguration: validConfig, OrgID: 2},
-		3: {AlertmanagerConfiguration: brokenConfig, OrgID: 3},
-	}
 	configStore := notifier.NewFakeConfigStore(t, configs)
 	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3})
-	provStore := provisioning.NewFakeProvisioningStore()
+	provStore := ngfakes.NewFakeProvisioningStore()
 	tmpDir := t.TempDir()
-	kvStore := notifier.NewFakeKVStore(t)
+	kvStore := ngfakes.NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
@@ -677,7 +808,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 		}, // do not poll in tests.
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, configStore, &orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	mam, err := notifier.NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, featuremgmt.WithManager(featuremgmt.FlagAlertingSimplifiedRouting))
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)
@@ -701,6 +832,90 @@ var validConfig = `{
 				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
+
+var validConfigWithoutAutogen = `{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "some email",
+			"routes": [{
+				"receiver": "other email",
+				"object_matchers": [["a", "=", "b"]]
+			}]
+		},
+		"receivers": [{
+			"name": "some email",
+			"grafana_managed_receiver_configs": [{
+				"name": "some email",
+				"type": "email",
+				"settings": {
+					"addresses": "<some@email.com>"
+				}
+			}]
+		},{
+			"name": "other email",
+			"grafana_managed_receiver_configs": [{
+				"name": "other email",
+				"type": "email",
+				"settings": {
+					"addresses": "<other@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
+
+var validConfigWithAutogen = `{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "some email",
+			"routes": [{
+				"receiver": "some email",
+				"object_matchers": [["__grafana_autogenerated__", "=", "true"]],
+				"routes": [{
+					"receiver": "some email",
+					"group_by": ["grafana_folder", "alertname"],
+					"object_matchers": [["__grafana_receiver__", "=", "some email"]],
+					"continue": false
+				},{
+					"receiver": "other email",
+					"group_by": ["grafana_folder", "alertname"],
+					"object_matchers": [["__grafana_receiver__", "=", "other email"]],
+					"continue": false
+				}]
+			},{
+				"receiver": "other email",
+				"object_matchers": [["a", "=", "b"]]
+			}]
+		},
+		"receivers": [{
+			"name": "some email",
+			"grafana_managed_receiver_configs": [{
+				"name": "some email",
+				"type": "email",
+				"settings": {
+					"addresses": "<some@email.com>"
+				}
+			}]
+		},{
+			"name": "other email",
+			"grafana_managed_receiver_configs": [{
+				"name": "other email",
+				"type": "email",
+				"settings": {
+					"addresses": "<other@email.com>"
 				}
 			}]
 		}]

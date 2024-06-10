@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -77,6 +78,31 @@ func TestService_Validate(t *testing.T) {
 			assert.Equal(t, tt.expectedErr, err)
 		})
 	}
+}
+
+func TestLoginAttempts(t *testing.T) {
+	ctx := context.Background()
+	cfg := setting.NewCfg()
+	cfg.DisableBruteForceLoginProtection = false
+	db := db.InitTestDB(t)
+	service := ProvideService(db, cfg, nil)
+
+	// add multiple login attempts with different uppercases, they all should be counted as the same user
+	_ = service.Add(ctx, "admin", "[::1]")
+	_ = service.Add(ctx, "Admin", "[::1]")
+	_ = service.Add(ctx, "aDmin", "[::1]")
+	_ = service.Add(ctx, "adMin", "[::1]")
+	_ = service.Add(ctx, "admIn", "[::1]")
+	_ = service.Add(ctx, "admIN", "[::1]")
+
+	// validate the number of attempts is correct for all the different uppercases
+	count, err := service.store.GetUserLoginAttemptCount(ctx, GetUserLoginAttemptCountQuery{Username: "admin"})
+	assert.Nil(t, err)
+	assert.Equal(t, int64(6), count)
+
+	ok, err := service.Validate(ctx, "admin")
+	assert.False(t, ok)
+	assert.Nil(t, err)
 }
 
 var _ store = new(fakeStore)

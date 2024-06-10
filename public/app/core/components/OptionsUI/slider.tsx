@@ -3,13 +3,13 @@ import { Global } from '@emotion/react';
 import Slider from 'rc-slider';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { FieldConfigEditorProps, GrafanaTheme2, SliderFieldConfigSettings } from '@grafana/data';
+import { StandardEditorProps, GrafanaTheme2, SliderFieldConfigSettings } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 import { getStyles } from '@grafana/ui/src/components/Slider/styles';
 
 import { NumberInput } from './NumberInput';
 
-type Props = FieldConfigEditorProps<number, SliderFieldConfigSettings>;
+type Props = StandardEditorProps<number, SliderFieldConfigSettings>;
 
 export const SliderValueEditor = ({ value, onChange, item }: Props) => {
   // Input reference
@@ -94,7 +94,7 @@ export const SliderValueEditor = ({ value, onChange, item }: Props) => {
     <div className={cx(styles.container, styles.slider)}>
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.slider} />
-      <label className={cx(styles.sliderInput, ...sliderInputClassNames)}>
+      <div className={cx(styles.sliderInput, ...sliderInputClassNames)}>
         <Slider
           min={min}
           max={max}
@@ -111,7 +111,7 @@ export const SliderValueEditor = ({ value, onChange, item }: Props) => {
         <span className={stylesSlider.numberInputWrapper} ref={inputRef}>
           <NumberInput value={sliderValue} onChange={onSliderInputChange} max={max} min={min} step={step} />
         </span>
-      </label>
+      </div>
     </div>
   );
 };
@@ -130,13 +130,13 @@ function getTextWidth(text: string, font: string): number | null {
 
 const getStylesSlider = (theme: GrafanaTheme2, width: number) => {
   return {
-    numberInputWrapper: css`
-      margin-left: ${theme.spacing(3)};
-      max-height: 32px;
-      max-width: ${width}px;
-      min-width: ${width}px;
-      overflow: visible;
-      width: 100%;
-    `,
+    numberInputWrapper: css({
+      marginLeft: theme.spacing(3),
+      maxHeight: '32px',
+      maxWidth: width,
+      minWidth: width,
+      overflow: 'visible',
+      width: '100%',
+    }),
   };
 };

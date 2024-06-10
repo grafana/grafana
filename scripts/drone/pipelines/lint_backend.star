@@ -10,6 +10,7 @@ load(
     "lint_backend_step",
     "lint_drone_step",
     "validate_modfile_step",
+    "validate_openapi_spec_step",
     "wire_install_step",
 )
 load(
@@ -46,6 +47,7 @@ def lint_backend_pipeline(trigger, ver_mode):
     test_steps = [
         lint_backend_step(),
         validate_modfile_step(),
+        validate_openapi_spec_step(),
     ]
 
     if ver_mode == "main":

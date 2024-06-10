@@ -8,6 +8,7 @@ import { FieldMatcherID, FrameMatcherID } from './ids';
 export interface RegexpOrNamesMatcherOptions {
   pattern?: string;
   names?: string[];
+  variable?: string;
 }
 
 /**
@@ -40,7 +41,7 @@ const fieldNameMatcher: FieldMatcherInfo<string> = {
   defaultOptions: '',
 
   get: (name: string): FieldMatcher => {
-    const uniqueNames = new Set<string>([name] ?? []);
+    const uniqueNames = new Set<string>([name]);
 
     const fallback = fieldNameFallback(uniqueNames);
 

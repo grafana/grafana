@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Label, TextLink, useStyles2 } from '@grafana/ui';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
@@ -53,7 +53,7 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
           <ServiceAccountProfileRow
             label="Name"
             value={serviceAccount.name}
-            onChange={onNameChange}
+            onChange={!serviceAccount.isExternal ? onNameChange : undefined}
             disabled={!ableToWrite || serviceAccount.isDisabled}
           />
           <ServiceAccountProfileRow label="ID" value={serviceAccount.login} disabled={serviceAccount.isDisabled} />
@@ -68,6 +68,16 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
             value={dateTimeFormat(serviceAccount.createdAt, { timeZone })}
             disabled={serviceAccount.isDisabled}
           />
+          {serviceAccount.isExternal && serviceAccount.requiredBy && (
+            <tr>
+              <td>
+                <Label>Used by</Label>
+              </td>
+              <td>
+                <TextLink href={`/plugins/${serviceAccount.requiredBy}`}>{serviceAccount.requiredBy}</TextLink>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

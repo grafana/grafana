@@ -9,7 +9,7 @@ import { useStyles2 } from '../../themes';
 import { MenuItemProps } from './MenuItem';
 
 /** @internal */
-export interface MenuItemsGroup<T = any> {
+export interface MenuItemsGroup<T = unknown> {
   /** Label for the menu items group */
   label?: string;
   /** Aria label for accessibility support */

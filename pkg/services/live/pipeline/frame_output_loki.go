@@ -38,7 +38,7 @@ type LokiStreamsEntry struct {
 
 type LokiStream struct {
 	Stream map[string]string `json:"stream"`
-	Values []interface{}     `json:"values"`
+	Values []any             `json:"values"`
 }
 
 func (out *LokiFrameOutput) OutputFrame(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
@@ -52,8 +52,8 @@ func (out *LokiFrameOutput) OutputFrame(_ context.Context, vars Vars, frame *dat
 	}
 	err = out.lokiWriter.write(LokiStream{
 		Stream: map[string]string{"frame": frame.Name, "channel": vars.Channel},
-		Values: []interface{}{
-			[]interface{}{time.Now().UnixNano(), string(frameJSON)},
+		Values: []any{
+			[]any{time.Now().UnixNano(), string(frameJSON)},
 		},
 	})
 	return nil, err

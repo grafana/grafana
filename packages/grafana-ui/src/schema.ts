@@ -27,7 +27,7 @@ export {
   StackingMode,
   type StackingConfig,
   type StackableFieldConfig,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   type GraphThresholdsStyleConfig,
   type GraphFieldConfig,
   type LegendPlacement,

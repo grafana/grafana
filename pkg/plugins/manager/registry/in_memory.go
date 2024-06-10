@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
+// InMemory is a registry that only allows a single version of a plugin to be registered at a time.
 type InMemory struct {
 	store map[string]*plugins.Plugin
 	alias map[string]*plugins.Plugin
@@ -25,7 +26,7 @@ func NewInMemory() *InMemory {
 	}
 }
 
-func (i *InMemory) Plugin(_ context.Context, pluginID string) (*plugins.Plugin, bool) {
+func (i *InMemory) Plugin(_ context.Context, pluginID, _ string) (*plugins.Plugin, bool) {
 	return i.plugin(pluginID)
 }
 
@@ -48,15 +49,15 @@ func (i *InMemory) Add(_ context.Context, p *plugins.Plugin) error {
 
 	i.mu.Lock()
 	i.store[p.ID] = p
-	if p.Alias != "" {
-		i.alias[p.Alias] = p
+	for _, a := range p.AliasIDs {
+		i.alias[a] = p
 	}
 	i.mu.Unlock()
 
 	return nil
 }
 
-func (i *InMemory) Remove(_ context.Context, pluginID string) error {
+func (i *InMemory) Remove(_ context.Context, pluginID, _ string) error {
 	p, ok := i.plugin(pluginID)
 	if !ok {
 		return fmt.Errorf("plugin %s is not registered", pluginID)
@@ -64,8 +65,10 @@ func (i *InMemory) Remove(_ context.Context, pluginID string) error {
 
 	i.mu.Lock()
 	delete(i.store, pluginID)
-	if p != nil && p.Alias != "" {
-		delete(i.alias, p.Alias)
+	if p != nil {
+		for _, a := range p.AliasIDs {
+			delete(i.alias, a)
+		}
 	}
 	i.mu.Unlock()
 

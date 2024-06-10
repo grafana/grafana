@@ -49,7 +49,7 @@ export async function getAllPolicies(datasource: InfluxDatasource): Promise<stri
   return data.map((item) => item.text);
 }
 
-export async function getAllMeasurementsForTags(
+export async function getAllMeasurements(
   datasource: InfluxDatasource,
   tags: InfluxQueryTag[],
   withMeasurementFilter?: string
@@ -58,9 +58,8 @@ export async function getAllMeasurementsForTags(
   return data.map((item) => item.text);
 }
 
-export async function getTagKeysForMeasurementAndTags(
+export async function getTagKeys(
   datasource: InfluxDatasource,
-  tags: InfluxQueryTag[],
   measurement?: string,
   retentionPolicy?: string
 ): Promise<string[]> {
@@ -71,16 +70,17 @@ export async function getTagKeysForMeasurementAndTags(
 export async function getTagValues(
   datasource: InfluxDatasource,
   tags: InfluxQueryTag[],
-  tagKey: string,
+  withKey: string,
   measurement?: string,
   retentionPolicy?: string
 ): Promise<string[]> {
-  if (tagKey.endsWith('::field')) {
+  if (withKey.endsWith('::field')) {
     return [];
   }
   const data = await runExploreQuery({
     type: 'TAG_VALUES',
-    withKey: tagKey,
+    tags,
+    withKey,
     datasource,
     measurement,
     retentionPolicy,
@@ -88,7 +88,7 @@ export async function getTagValues(
   return data.map((item) => item.text);
 }
 
-export async function getFieldKeysForMeasurement(
+export async function getFieldKeys(
   datasource: InfluxDatasource,
   measurement: string,
   retentionPolicy?: string

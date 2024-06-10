@@ -3,10 +3,12 @@ package server
 import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func ProvideTestEnv(
@@ -17,15 +19,17 @@ func ProvideTestEnv(
 	pluginRegistry registry.Service,
 	httpClientProvider httpclient.Provider,
 	oAuthTokenService *oauthtokentest.Service,
+	featureMgmt featuremgmt.FeatureToggles,
 ) (*TestEnv, error) {
 	return &TestEnv{
-		server,
-		store,
-		ns,
-		grpcServer,
-		pluginRegistry,
-		httpClientProvider,
-		oAuthTokenService,
+		Server:              server,
+		SQLStore:            store,
+		NotificationService: ns,
+		GRPCServer:          grpcServer,
+		PluginRegistry:      pluginRegistry,
+		HTTPClientProvider:  httpClientProvider,
+		OAuthTokenService:   oAuthTokenService,
+		FeatureToggles:      featureMgmt,
 	}, nil
 }
 
@@ -37,4 +41,6 @@ type TestEnv struct {
 	PluginRegistry      registry.Service
 	HTTPClientProvider  httpclient.Provider
 	OAuthTokenService   *oauthtokentest.Service
+	RequestMiddleware   web.Middleware
+	FeatureToggles      featuremgmt.FeatureToggles
 }

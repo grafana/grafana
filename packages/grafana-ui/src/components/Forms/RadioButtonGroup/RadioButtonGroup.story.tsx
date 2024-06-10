@@ -72,6 +72,8 @@ export const RadioButtons: Story = (args) => {
         <RadioButtonGroup
           options={optionsWithOnlyIcons}
           value={selected}
+          disabled={args.disabled}
+          disabledOptions={args.disabledOptions}
           onChange={(v) => setSelected(v!)}
           size={args.size}
           invalid={args.invalid}

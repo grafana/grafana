@@ -61,6 +61,10 @@ To install Grafana on macOS using the standalone binaries, complete the followin
    ./bin/grafana server
    ```
 
+Alternatively, watch the Grafana for Beginners video below:
+
+{{< youtube id="T51Qa7eE3W8" >}}
+
 ## Next steps
 
 - [Start the Grafana server]({{< relref "../../start-restart-grafana" >}})

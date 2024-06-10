@@ -1,28 +1,32 @@
 # syntax=docker/dockerfile:1
-ARG GF_VERSION
-
-ARG BASE_IMAGE=alpine:3.18.3
-ARG JS_IMAGE=node:18-alpine3.18
-ARG BUILDPLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.20.8
+ARG GF_VERSION=11.0.0
+ARG BASE_IMAGE=alpine:3.19.1
+ARG JS_IMAGE=node:20-alpine
+ARG JS_PLATFORM=linux/amd64
+ARG GO_IMAGE=golang:1.21.10
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
 
-FROM --platform=${BUILDPLATFORM} ${JS_IMAGE} as js-builder
+FROM --platform=${JS_PLATFORM} ${JS_IMAGE} as js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
 WORKDIR /tmp/grafana
 
-COPY package.json yarn.lock .yarnrc.yml ./
+COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY packages packages
 COPY plugins-bundled plugins-bundled
+COPY public public
+COPY LICENSE ./
+
+
+RUN apk add --no-cache make build-base python3
 
 RUN yarn install --immutable
 
-COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json .linguirc ./
+COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
 COPY public public
 COPY scripts scripts
 COPY emails emails
@@ -30,7 +34,7 @@ COPY emails emails
 ENV NODE_ENV production
 RUN yarn build
 
-FROM --platform=${BUILDPLATFORM} ${GO_IMAGE} as go-builder
+FROM --platform=${JS_PLATFORM} ${GO_IMAGE} as go-builder
 
 ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
@@ -39,14 +43,22 @@ ARG WIRE_TAGS="oss"
 ARG BINGO="true"
 
 # Install build dependencies
-RUN if grep -i -q alpine /etc/issue; then \
-      apk add --no-cache gcc g++ make git; \
+RUN if grep -i -q alpine /etc/issue; then \ 
+      apk add --no-cache binutils-gold gcc g++ make git; \
     fi
 
 WORKDIR /tmp/grafana
 
 COPY go.* ./
 COPY .bingo .bingo
+
+# Include vendored dependencies
+COPY pkg/util/xorm/go.* pkg/util/xorm/
+COPY pkg/apiserver/go.* pkg/apiserver/
+COPY pkg/apimachinery/go.* pkg/apimachinery/
+COPY pkg/promlib/go.* pkg/promlib/
+COPY pkg/build/wire/go.* pkg/build/wire/
+
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \
@@ -82,22 +94,19 @@ RUN apt-get update && \
 
 ENV GOARCH=arm64
 ENV CC=aarch64-linux-gnu-gcc
+
 RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
 FROM ${BASE_IMAGE} as tgz-builder
 
 WORKDIR /tmp/grafana
 
-# ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
+ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
 
-# COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
+COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
-# # add -v to make tar print every file it extracts
-# RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
-
-COPY ./public ./public
-COPY ./scripts ./scripts
-COPY ./plugins-bundled ./plugins-bundled
+# add -v to make tar print every file it extracts
+RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
 
 # helpers for COPY --from
 ARG TARGETARCH
@@ -184,7 +193,7 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
 
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
-COPY --from=go-src /tmp/grafana/LICENSE ./
+COPY --from=js-src /tmp/grafana/LICENSE ./
 
 EXPOSE 3000
 
@@ -205,7 +214,6 @@ USER 0
 ENV GF_PLUGIN_DIR="/usr/share/grafana/plugins" \
     GF_PATHS_PLUGINS="/usr/share/grafana/plugins"
 
-ENV GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=grafana-clickhouse-datasource
 RUN mkdir -p ${GF_PLUGIN_DIR} && \
     chmod -R 777 ${GF_PLUGIN_DIR} && \
     grafana cli plugins install grafana-clickhouse-datasource 4.0.3 && \

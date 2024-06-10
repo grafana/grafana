@@ -59,7 +59,11 @@ export class Echo implements EchoSrv {
         backend.addEvent(_event);
       }
     }
-    echoLog('Reporting event', false, _event);
+
+    echoLog(`${event.type} event`, false, {
+      ...event.payload,
+      meta: _event.meta,
+    });
   };
 
   getMeta = (): EchoMeta => {

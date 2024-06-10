@@ -197,6 +197,18 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'Azure Devops',
       imgUrl: 'public/img/plugins/azure-devops.png',
     }),
+    getPhantomPlugin({
+      id: 'grafana-sumologic-datasource',
+      description: 'SumoLogic integration and datasource',
+      name: 'SumoLogic',
+      imgUrl: 'public/img/plugins/sumo.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-pagerduty-datasource',
+      description: 'PagerDuty datasource',
+      name: 'PagerDuty',
+      imgUrl: 'public/img/plugins/pagerduty.svg',
+    }),
   ];
 }
 

@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -40,35 +39,41 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 const userInDbName = "user_in_db"
 const userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
 
+// run tests with cleanup
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
 func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with a library panel, it should connect the two",
 		func(t *testing.T, sc scenarioContext) {
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
+			dashJSON := map[string]any{
+				"panels": []any{
+					map[string]any{
 						"id": int64(1),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 0,
 							"y": 0,
 						},
 					},
-					map[string]interface{}{
+					map[string]any{
 						"id": int64(2),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 6,
 							"y": 0,
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
-						"libraryPanel": map[string]interface{}{
+						"libraryPanel": map[string]any{
 							"uid": sc.initialResult.Result.UID,
 						},
 						"title": "Text - Library Panel",
@@ -80,7 +85,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
 
 			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
@@ -94,8 +99,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with library panels inside and outside of rows, it should connect all",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.CreateLibraryElementCommand{
-				FolderID: sc.initialResult.Result.FolderID,
-				Name:     "Outside row",
+				Name: "Outside row",
 				Model: []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
@@ -105,24 +109,25 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			  "description": "A description"
 			}
 		`),
-				Kind: int64(model.PanelElement),
+				Kind:      int64(model.PanelElement),
+				FolderUID: &sc.folder.UID,
 			}
 			outsidePanel, err := sc.elementService.CreateElement(sc.ctx, sc.user, cmd)
 			require.NoError(t, err)
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
+			dashJSON := map[string]any{
+				"panels": []any{
+					map[string]any{
 						"id": int64(1),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 0,
 							"y": 0,
 						},
 					},
-					map[string]interface{}{
+					map[string]any{
 						"collapsed": true,
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 0,
@@ -130,26 +135,26 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"id":   int64(2),
 						"type": "row",
-						"panels": []interface{}{
-							map[string]interface{}{
+						"panels": []any{
+							map[string]any{
 								"id": int64(3),
-								"gridPos": map[string]interface{}{
+								"gridPos": map[string]any{
 									"h": 6,
 									"w": 6,
 									"x": 0,
 									"y": 7,
 								},
 							},
-							map[string]interface{}{
+							map[string]any{
 								"id": int64(4),
-								"gridPos": map[string]interface{}{
+								"gridPos": map[string]any{
 									"h": 6,
 									"w": 6,
 									"x": 6,
 									"y": 13,
 								},
 								"datasource": "${DS_GDEV-TESTDATA}",
-								"libraryPanel": map[string]interface{}{
+								"libraryPanel": map[string]any{
 									"uid": sc.initialResult.Result.UID,
 								},
 								"title": "Inside row",
@@ -157,16 +162,16 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 							},
 						},
 					},
-					map[string]interface{}{
+					map[string]any{
 						"id": int64(5),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 0,
 							"y": 19,
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
-						"libraryPanel": map[string]interface{}{
+						"libraryPanel": map[string]any{
 							"uid": outsidePanel.UID,
 						},
 						"title": "Outside row",
@@ -178,7 +183,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
 
 			err = sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
@@ -192,27 +197,27 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with a library panel without uid, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
+			dashJSON := map[string]any{
+				"panels": []any{
+					map[string]any{
 						"id": int64(1),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 0,
 							"y": 0,
 						},
 					},
-					map[string]interface{}{
+					map[string]any{
 						"id": int64(2),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 6,
 							"y": 0,
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
-						"libraryPanel": map[string]interface{}{
+						"libraryPanel": map[string]any{
 							"name": sc.initialResult.Result.Name,
 						},
 						"title": "Text - Library Panel",
@@ -224,7 +229,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
 
 			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
@@ -233,8 +238,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with unused/removed library panels, it should disconnect unused/removed library panels",
 		func(t *testing.T, sc scenarioContext) {
 			unused, err := sc.elementService.CreateElement(sc.ctx, sc.user, model.CreateLibraryElementCommand{
-				FolderID: sc.folder.ID,
-				Name:     "Unused Libray Panel",
+				Name: "Unused Libray Panel",
 				Model: []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
@@ -244,30 +248,31 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			  "description": "Unused description"
 			}
 		`),
-				Kind: int64(model.PanelElement),
+				Kind:      int64(model.PanelElement),
+				FolderUID: &sc.folder.UID,
 			})
 			require.NoError(t, err)
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
+			dashJSON := map[string]any{
+				"panels": []any{
+					map[string]any{
 						"id": int64(1),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 0,
 							"y": 0,
 						},
 					},
-					map[string]interface{}{
+					map[string]any{
 						"id": int64(4),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 6,
 							"y": 0,
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
-						"libraryPanel": map[string]interface{}{
+						"libraryPanel": map[string]any{
 							"uid": unused.UID,
 						},
 						"title":       "Unused Libray Panel",
@@ -280,30 +285,30 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash)
 			err = sc.elementService.ConnectElementsToDashboard(sc.ctx, sc.user, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
-			panelJSON := []interface{}{
-				map[string]interface{}{
+			panelJSON := []any{
+				map[string]any{
 					"id": int64(1),
-					"gridPos": map[string]interface{}{
+					"gridPos": map[string]any{
 						"h": 6,
 						"w": 6,
 						"x": 0,
 						"y": 0,
 					},
 				},
-				map[string]interface{}{
+				map[string]any{
 					"id": int64(2),
-					"gridPos": map[string]interface{}{
+					"gridPos": map[string]any{
 						"h": 6,
 						"w": 6,
 						"x": 6,
 						"y": 0,
 					},
 					"datasource": "${DS_GDEV-TESTDATA}",
-					"libraryPanel": map[string]interface{}{
+					"libraryPanel": map[string]any{
 						"uid": sc.initialResult.Result.UID,
 					},
 					"title": "Text - Library Panel",
@@ -322,14 +327,14 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 
 	scenarioWithLibraryPanel(t, "It should return the correct count of library panels in a folder",
 		func(t *testing.T, sc scenarioContext) {
-			count, err := sc.lps.CountInFolder(context.Background(), sc.user.OrgID, sc.folder.UID, sc.user)
+			count, err := sc.lps.CountInFolders(context.Background(), sc.user.OrgID, []string{sc.folder.UID}, sc.user)
 			require.NoError(t, err)
 			require.Equal(t, int64(1), count)
 		})
 
 	scenarioWithLibraryPanel(t, "It should delete library panels in a folder",
 		func(t *testing.T, sc scenarioContext) {
-			err := sc.lps.DeleteInFolder(context.Background(), sc.user.OrgID, sc.folder.UID, sc.user)
+			err := sc.lps.DeleteInFolders(context.Background(), sc.user.OrgID, []string{sc.folder.UID}, sc.user)
 			require.NoError(t, err)
 
 			_, err = sc.elementService.GetElement(sc.ctx, sc.user,
@@ -343,9 +348,9 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			var missingUID = "jL6MrxCMz"
 			var missingName = "Missing Library Panel"
-			var missingModel = map[string]interface{}{
+			var missingModel = map[string]any{
 				"id": int64(2),
-				"gridPos": map[string]interface{}{
+				"gridPos": map[string]any{
 					"h": int64(6),
 					"w": int64(6),
 					"x": int64(0),
@@ -353,31 +358,31 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				},
 				"description": "",
 				"datasource":  "${DS_GDEV-TESTDATA}",
-				"libraryPanel": map[string]interface{}{
+				"libraryPanel": map[string]any{
 					"uid":  missingUID,
 					"name": missingName,
 				},
 				"title": "Text - Library Panel",
 				"type":  "text",
 			}
-			var libraryElements = map[string]interface{}{
-				missingUID: map[string]interface{}{
+			var libraryElements = map[string]any{
+				missingUID: map[string]any{
 					"model": missingModel,
 				},
 			}
 
-			panels := []interface{}{
-				map[string]interface{}{
+			panels := []any{
+				map[string]any{
 					"id": int64(1),
-					"gridPos": map[string]interface{}{
+					"gridPos": map[string]any{
 						"h": 6,
 						"w": 6,
 						"x": 0,
 						"y": 0,
 					},
 				},
-				map[string]interface{}{
-					"libraryPanel": map[string]interface{}{
+				map[string]any{
+					"libraryPanel": map[string]any{
 						"uid":  missingUID,
 						"name": missingName,
 					},
@@ -389,7 +394,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 
-			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0)
+			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0, "")
 			require.NoError(t, err)
 
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user,
@@ -407,18 +412,18 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 			var existingUID = sc.initialResult.Result.UID
 			var existingName = sc.initialResult.Result.Name
 
-			panels := []interface{}{
-				map[string]interface{}{
+			panels := []any{
+				map[string]any{
 					"id": int64(1),
-					"gridPos": map[string]interface{}{
+					"gridPos": map[string]any{
 						"h": 6,
 						"w": 6,
 						"x": 0,
 						"y": 0,
 					},
 				},
-				map[string]interface{}{
-					"libraryPanel": map[string]interface{}{
+				map[string]any{
+					"libraryPanel": map[string]any{
 						"uid":  sc.initialResult.Result.UID,
 						"name": sc.initialResult.Result.Name,
 					},
@@ -429,14 +434,15 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				model.GetLibraryElementCommand{UID: existingUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
 
-			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.New(), panels, sc.folder.ID)
+			// nolint:staticcheck
+			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.New(), panels, sc.folder.ID, sc.folder.UID)
 			require.NoError(t, err)
 
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user,
 				model.GetLibraryElementCommand{UID: existingUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
 			var expected = getExpected(t, element, existingUID, existingName, sc.initialResult.Result.Model)
-			expected.FolderID = sc.initialResult.Result.FolderID
+			expected.FolderUID = sc.initialResult.Result.FolderUID
 			expected.Description = sc.initialResult.Result.Description
 			expected.Meta.FolderUID = sc.folder.UID
 			expected.Meta.FolderName = sc.folder.Title
@@ -450,16 +456,16 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			var outsideUID = "jL6MrxCMz"
 			var outsideName = "Outside Library Panel"
-			var outsideModel = map[string]interface{}{
+			var outsideModel = map[string]any{
 				"id": int64(5),
-				"gridPos": map[string]interface{}{
+				"gridPos": map[string]any{
 					"h": 6,
 					"w": 6,
 					"x": 0,
 					"y": 19,
 				},
 				"datasource": "${DS_GDEV-TESTDATA}",
-				"libraryPanel": map[string]interface{}{
+				"libraryPanel": map[string]any{
 					"uid":  outsideUID,
 					"name": outsideName,
 				},
@@ -469,16 +475,16 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 
 			var insideUID = "iK7NsyDNz"
 			var insideName = "Inside Library Panel"
-			var insideModel = map[string]interface{}{
+			var insideModel = map[string]any{
 				"id": int64(4),
-				"gridPos": map[string]interface{}{
+				"gridPos": map[string]any{
 					"h": 6,
 					"w": 6,
 					"x": 6,
 					"y": 13,
 				},
 				"datasource": "${DS_GDEV-TESTDATA}",
-				"libraryPanel": map[string]interface{}{
+				"libraryPanel": map[string]any{
 					"uid":  insideUID,
 					"name": insideName,
 				},
@@ -486,34 +492,34 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				"type":  "text",
 			}
 
-			var libraryElements = map[string]interface{}{
-				outsideUID: map[string]interface{}{
+			var libraryElements = map[string]any{
+				outsideUID: map[string]any{
 					"model": outsideModel,
 				},
-				insideUID: map[string]interface{}{
+				insideUID: map[string]any{
 					"model": insideModel,
 				},
 			}
 
-			panels := []interface{}{
-				map[string]interface{}{
+			panels := []any{
+				map[string]any{
 					"id": int64(1),
-					"gridPos": map[string]interface{}{
+					"gridPos": map[string]any{
 						"h": 6,
 						"w": 6,
 						"x": 0,
 						"y": 0,
 					},
 				},
-				map[string]interface{}{
-					"libraryPanel": map[string]interface{}{
+				map[string]any{
+					"libraryPanel": map[string]any{
 						"uid":  outsideUID,
 						"name": outsideName,
 					},
 				},
-				map[string]interface{}{
+				map[string]any{
 					"collapsed": true,
-					"gridPos": map[string]interface{}{
+					"gridPos": map[string]any{
 						"h": 6,
 						"w": 6,
 						"x": 0,
@@ -521,18 +527,18 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 					},
 					"id":   int64(2),
 					"type": "row",
-					"panels": []interface{}{
-						map[string]interface{}{
+					"panels": []any{
+						map[string]any{
 							"id": int64(3),
-							"gridPos": map[string]interface{}{
+							"gridPos": map[string]any{
 								"h": 6,
 								"w": 6,
 								"x": 0,
 								"y": 7,
 							},
 						},
-						map[string]interface{}{
-							"libraryPanel": map[string]interface{}{
+						map[string]any{
+							"libraryPanel": map[string]any{
 								"uid":  insideUID,
 								"name": insideName,
 							},
@@ -545,7 +551,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 			_, err = sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: insideUID, FolderName: dashboards.RootFolderName})
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 
-			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0)
+			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0, "")
 			require.NoError(t, err)
 
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: outsideUID, FolderName: dashboards.RootFolderName})
@@ -567,14 +573,16 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 }
 
 type libraryPanel struct {
-	ID          int64
-	OrgID       int64
+	ID    int64
+	OrgID int64
+	// Deprecated: use FolderUID instead
 	FolderID    int64
+	FolderUID   string
 	UID         string
 	Name        string
 	Type        string
 	Description string
-	Model       map[string]interface{}
+	Model       map[string]any
 	Version     int64
 	Meta        model.LibraryElementDTOMeta
 }
@@ -605,6 +613,7 @@ type libraryElement struct {
 	ID          int64                       `json:"id"`
 	OrgID       int64                       `json:"orgId"`
 	FolderID    int64                       `json:"folderId"`
+	FolderUID   string                      `json:"folderUid"`
 	UID         string                      `json:"uid"`
 	Name        string                      `json:"name"`
 	Kind        int64                       `json:"kind"`
@@ -638,7 +647,6 @@ func toLibraryElement(t *testing.T, res model.LibraryElementDTO) libraryElement 
 	return libraryElement{
 		ID:          res.ID,
 		OrgID:       res.OrgID,
-		FolderID:    res.FolderID,
 		UID:         res.UID,
 		Name:        res.Name,
 		Type:        res.Type,
@@ -666,7 +674,7 @@ func toLibraryElement(t *testing.T, res model.LibraryElementDTO) libraryElement 
 	}
 }
 
-func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name string, lEModel map[string]interface{}) libraryElement {
+func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name string, lEModel map[string]any) libraryElement {
 	marshalled, err := json.Marshal(lEModel)
 	require.NoError(t, err)
 	var libModel libraryElementModel
@@ -704,8 +712,7 @@ func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name str
 	}
 }
 
-func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash *dashboards.Dashboard, folderID int64) *dashboards.Dashboard {
-	dash.FolderID = folderID
+func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash *dashboards.Dashboard) *dashboards.Dashboard {
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   "",
@@ -714,20 +721,20 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 		Overwrite: false,
 	}
 
+	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
-	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	dashPermissionService := acmock.NewMockedPermissionsService()
 	dashPermissionService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore, dashAlertService,
+		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
 		foldertest.NewFakeService(),
+		nil,
 	)
 	require.NoError(t, err)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
@@ -739,15 +746,14 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder {
 	t.Helper()
 
+	features := featuremgmt.WithFeatures()
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
-	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sc.sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, nil, features)
+	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := appcontext.WithUser(context.Background(), sc.user)
@@ -762,8 +768,9 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := model.CreateLibraryElementCommand{
-			FolderID: sc.folder.ID,
-			Name:     "Text - Library Panel",
+			FolderID:  sc.folder.ID, // nolint:staticcheck
+			FolderUID: &sc.folder.UID,
+			Name:      "Text - Library Panel",
 			Model: []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
@@ -777,7 +784,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 		}
 		resp, err := sc.elementService.CreateElement(sc.ctx, sc.user, command)
 		require.NoError(t, err)
-		var model map[string]interface{}
+		var model map[string]any
 		err = json.Unmarshal(resp.Model, &model)
 		require.NoError(t, err)
 
@@ -785,7 +792,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 			Result: libraryPanel{
 				ID:          resp.ID,
 				OrgID:       resp.OrgID,
-				FolderID:    resp.FolderID,
+				FolderUID:   resp.FolderUID,
 				UID:         resp.UID,
 				Name:        resp.Name,
 				Type:        resp.Type,
@@ -815,22 +822,22 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		dashStore := &dashboards.FakeDashboardStore{}
 		dashStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 1}, nil)
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-		dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 		dashPermissionService := acmock.NewMockedPermissionsService()
 		dashService, err := dashboardservice.ProvideDashboardServiceImpl(
-			setting.NewCfg(), dashStore, folderStore, dashAlertService,
+			setting.NewCfg(), dashStore, folderStore,
 			featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
 			foldertest.NewFakeService(),
+			nil,
 		)
 		require.NoError(t, err)
-		guardian.InitAccessControlGuardian(setting.NewCfg(), sqlStore, ac, acmock.NewMockedPermissionsService(), acmock.NewMockedPermissionsService(), dashService)
+		guardian.InitAccessControlGuardian(setting.NewCfg(), ac, dashService)
 
-		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		features := featuremgmt.WithFeatures()
-		folderService := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, nil, features)
+		folderService := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
-		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, featuremgmt.WithFeatures())
+		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, featuremgmt.WithFeatures(), ac)
 		service := LibraryPanelService{
 			Cfg:                   cfg,
 			SQLStore:              sqlStore,
@@ -880,7 +887,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 
 		foldr := createFolder(t, sc, "ScenarioFolder")
 		sc.folder = &folder.Folder{
-			ID:        foldr.ID,
+			ID:        foldr.ID, // nolint:staticcheck
 			UID:       foldr.UID,
 			Title:     foldr.Title,
 			URL:       dashboards.GetFolderURL(foldr.UID, slugify.Slugify(foldr.Title)),

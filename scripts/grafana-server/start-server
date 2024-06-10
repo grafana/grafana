@@ -30,14 +30,27 @@ mkdir $RUNDIR/conf
 mkdir $PROV_DIR
 mkdir $PROV_DIR/datasources
 mkdir $PROV_DIR/dashboards
+mkdir $PROV_DIR/alerting
 
 cp ./scripts/grafana-server/custom.ini $RUNDIR/conf/custom.ini
 cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
+
+echo -e "Copying custom plugins from e2e tests"
+
+mkdir -p "$RUNDIR/data/plugins"
+# when running in a local computer
+if [ -d "./e2e/custom-plugins" ]; then
+  cp -r "./e2e/custom-plugins" "$RUNDIR/data/plugins"
+# when running in CI
+elif [ -d "../e2e/custom-plugins" ]; then
+  cp -r "../e2e/custom-plugins" "$RUNDIR/data/plugins"
+fi
 
 echo -e "Copy provisioning setup from devenv"
 
 cp devenv/datasources.yaml $PROV_DIR/datasources
 cp devenv/dashboards.yaml $PROV_DIR/dashboards
+cp devenv/alert_rules.yaml $PROV_DIR/alerting
 
 cp -r devenv $RUNDIR
 
@@ -53,4 +66,3 @@ $RUNDIR/bin/"$ARCH"grafana-server \
 
 # 2>&1 > $RUNDIR/output.log &
 # cfg:log.level=debug \
-

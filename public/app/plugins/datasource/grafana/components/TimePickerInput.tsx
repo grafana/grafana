@@ -96,7 +96,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   const bgColor = theme.components.input.background;
   const menuShadowColor = theme.v1.palette.black;
   const optionBgHover = theme.colors.background.secondary;
-  const borderRadius = theme.shape.borderRadius(1);
+  const borderRadius = theme.shape.radius.default;
   const borderColor = theme.components.input.borderColor;
 
   return {

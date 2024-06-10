@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { dateTime, LoadingState } from '@grafana/data';
+
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
 import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQueryEditor.test';
@@ -185,7 +187,7 @@ describe('LogsQueryEditor', () => {
     );
   });
 
-  it('should update the intersectTime prop', async () => {
+  it('should update the dashboardTime prop', async () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const query = createMockQuery();
     const onChange = jest.fn();
@@ -200,15 +202,48 @@ describe('LogsQueryEditor', () => {
       />
     );
 
-    const intersectionOption = await screen.findByLabelText('Intersection');
-    await userEvent.click(intersectionOption);
+    const dashboardTimeOption = await screen.findByLabelText('Dashboard');
+    await userEvent.click(dashboardTimeOption);
 
     expect(onChange).toBeCalledWith(
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
-          intersectTime: true,
+          dashboardTime: true,
         }),
       })
     );
+  });
+
+  describe('azure portal link', () => {
+    it('should show the link button', async () => {
+      const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+      const query = createMockQuery();
+      const onChange = jest.fn();
+
+      const date = dateTime(new Date());
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          setError={() => {}}
+          data={{
+            state: LoadingState.Done,
+            timeRange: {
+              from: date,
+              to: date,
+              raw: {
+                from: date,
+                to: date,
+              },
+            },
+            series: [{ refId: query.refId, length: 0, meta: { custom: { azurePortalLink: 'test' } }, fields: [] }],
+          }}
+        />
+      );
+
+      expect(await screen.findByText('View query in Azure Portal')).toBeInTheDocument();
+    });
   });
 });

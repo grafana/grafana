@@ -9,8 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -30,10 +30,9 @@ func ptrInt64(i int64) *int64 {
 }
 
 func TestUserSync_SyncUserHook(t *testing.T) {
-	userProtection := &authinfoservice.OSSUserProtectionImpl{}
+	userProtection := &authinfoimpl.OSSUserProtectionImpl{}
 
-	authFakeNil := &logintest.AuthInfoServiceFake{
-		ExpectedUser:  nil,
+	authFakeNil := &authinfotest.FakeService{
 		ExpectedError: user.ErrUserNotFound,
 		SetAuthInfoFn: func(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 			return nil
@@ -42,8 +41,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			return nil
 		},
 	}
-	authFakeUserID := &logintest.AuthInfoServiceFake{
-		ExpectedUser:  nil,
+	authFakeUserID := &authinfotest.FakeService{
 		ExpectedError: nil,
 		ExpectedUserAuth: &login.UserAuth{
 			AuthModule: "oauth",
@@ -68,7 +66,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 	}}
 
 	userServiceNil := &usertest.FakeUserService{
-		ExpectedUser:  nil,
 		ExpectedError: user.ErrUserNotFound,
 		CreateFn: func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
 			return &user.User{
@@ -349,9 +346,9 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					AuthenticatedBy: "oauth",
 					AuthID:          "2032",
 					ClientParams: authn.ClientParams{
-						SyncUser:            true,
-						AllowSignUp:         true,
-						EnableDisabledUsers: true,
+						SyncUser:    true,
+						AllowSignUp: true,
+						EnableUser:  true,
 						LookUpParams: login.UserLookupParams{
 							UserID: nil,
 							Email:  ptrString("test_create"),
@@ -370,9 +367,9 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				AuthID:          "2032",
 				IsGrafanaAdmin:  ptrBool(true),
 				ClientParams: authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         true,
-					EnableDisabledUsers: true,
+					SyncUser:    true,
+					AllowSignUp: true,
+					EnableUser:  true,
 					LookUpParams: login.UserLookupParams{
 						UserID: nil,
 						Email:  ptrString("test_create"),
@@ -398,8 +395,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					IsDisabled:     false,
 					IsGrafanaAdmin: ptrBool(true),
 					ClientParams: authn.ClientParams{
-						SyncUser:            true,
-						EnableDisabledUsers: true,
+						SyncUser:   true,
+						EnableUser: true,
 						LookUpParams: login.UserLookupParams{
 							UserID: ptrInt64(3),
 							Email:  nil,
@@ -417,8 +414,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				IsDisabled:     false,
 				IsGrafanaAdmin: ptrBool(true),
 				ClientParams: authn.ClientParams{
-					SyncUser:            true,
-					EnableDisabledUsers: true,
+					SyncUser:   true,
+					EnableUser: true,
 					LookUpParams: login.UserLookupParams{
 						UserID: ptrInt64(3),
 						Email:  nil,
@@ -486,16 +483,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 			identity: &authn.Identity{
 				ID:           authn.NamespacedID(authn.NamespaceUser, 1),
 				IsDisabled:   true,
-				ClientParams: authn.ClientParams{EnableDisabledUsers: false},
-			},
-			enableUser: false,
-		},
-		{
-			desc: "should skip if identity is not disabled",
-			identity: &authn.Identity{
-				ID:           authn.NamespacedID(authn.NamespaceUser, 1),
-				IsDisabled:   false,
-				ClientParams: authn.ClientParams{EnableDisabledUsers: true},
+				ClientParams: authn.ClientParams{EnableUser: false},
 			},
 			enableUser: false,
 		},
@@ -504,7 +492,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 			identity: &authn.Identity{
 				ID:           authn.NamespacedID(authn.NamespaceAPIKey, 1),
 				IsDisabled:   true,
-				ClientParams: authn.ClientParams{EnableDisabledUsers: true},
+				ClientParams: authn.ClientParams{EnableUser: true},
 			},
 			enableUser: false,
 		},
@@ -513,7 +501,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 			identity: &authn.Identity{
 				ID:           authn.NamespacedID(authn.NamespaceUser, 1),
 				IsDisabled:   true,
-				ClientParams: authn.ClientParams{EnableDisabledUsers: true},
+				ClientParams: authn.ClientParams{EnableUser: true},
 			},
 			enableUser: true,
 		},
@@ -529,7 +517,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 			}
 
 			s := UserSync{userService: userSvc}
-			err := s.EnableDisabledUserHook(context.Background(), tt.identity, nil)
+			err := s.EnableUserHook(context.Background(), tt.identity, nil)
 			require.NoError(t, err)
 			assert.Equal(t, tt.enableUser, called)
 		})

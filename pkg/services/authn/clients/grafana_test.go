@@ -94,8 +94,8 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			cfg.AuthProxyAutoSignUp = true
-			cfg.AuthProxyHeaderProperty = tt.proxyProperty
+			cfg.AuthProxy.AutoSignUp = true
+			cfg.AuthProxy.HeaderProperty = tt.proxyProperty
 			c := ProvideGrafana(cfg, usertest.NewUserServiceFake())
 
 			identity, err := c.AuthenticateProxy(context.Background(), tt.req, tt.username, tt.additional)
@@ -112,7 +112,7 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncUser, identity.ClientParams.SyncUser)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.AllowSignUp, identity.ClientParams.AllowSignUp)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncTeams, identity.ClientParams.SyncTeams)
-				assert.Equal(t, tt.expectedIdentity.ClientParams.EnableDisabledUsers, identity.ClientParams.EnableDisabledUsers)
+				assert.Equal(t, tt.expectedIdentity.ClientParams.EnableUser, identity.ClientParams.EnableUser)
 
 				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Email, identity.ClientParams.LookUpParams.Email)
 				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Login, identity.ClientParams.LookUpParams.Login)
@@ -171,7 +171,7 @@ func TestGrafana_AuthenticatePassword(t *testing.T) {
 			hashed, _ := util.EncodePassword("password", "salt")
 			userService := &usertest.FakeUserService{
 				ExpectedSignedInUser: tt.expectedSignedInUser,
-				ExpectedUser:         &user.User{Password: hashed, Salt: "salt"},
+				ExpectedUser:         &user.User{Password: user.Password(hashed), Salt: "salt"},
 			}
 
 			if !tt.findUser {

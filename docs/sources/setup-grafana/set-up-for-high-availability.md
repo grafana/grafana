@@ -19,6 +19,12 @@ weight: 900
 
 # Set up Grafana for high availability
 
+{{% admonition type="note" %}}
+To prevent duplicate alerts in Grafana high availability, additional steps are required.
+
+Please refer to [Alerting high availability](#alerting-high-availability) for more information.
+{{% /admonition %}}
+
 Grafana uses an embedded sqlite3 database to store users, dashboards, and other persistent data by default. For high availability, you must use a shared database to store this data. This shared database can be either MySQL or Postgres.
 
 <div class="text-center">
@@ -35,11 +41,9 @@ Once you have a Postgres or MySQL database available, you can configure your mul
 
 ## Alerting high availability
 
-Grafana Alerting provides a [high availability mode]({{< relref "../alerting/fundamentals/high-availability" >}}).
+Grafana Alerting provides a high availability mode. It preserves the semantics of legacy dashboard alerting by executing all alerts on every server and by sending notifications only once per alert. Load distribution between servers is not supported at this time.
 
-It preserves the semantics of legacy dashboard alerting by executing all alerts on every server and by sending notifications only once per alert. Load distribution between servers is not supported at this time.
-
-For instructions on setting up alerting high availability, refer to [Enable alerting high availability]({{< relref "../alerting/set-up/configure-high-availability" >}}).
+For further information and instructions on setting up alerting high availability, refer to [Enable alerting high availability]({{< relref "../alerting/set-up/configure-high-availability" >}}).
 
 **Legacy dashboard alerts**
 

@@ -1,5 +1,9 @@
-import { VisualQueryBinary } from '../../prometheus/querybuilder/shared/LokiAndPromQueryModellerBase';
-import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../../prometheus/querybuilder/shared/types';
+import {
+  VisualQueryBinary,
+  QueryBuilderLabelFilter,
+  QueryBuilderOperation,
+  BINARY_OPERATIONS_KEY,
+} from '@grafana/experimental';
 
 /**
  * Visual query model
@@ -29,7 +33,7 @@ export enum LokiVisualQueryOperationCategory {
   Formats = 'Formats',
   LineFilters = 'Line filters',
   LabelFilters = 'Label filters',
-  BinaryOps = 'Binary operations',
+  BinaryOps = BINARY_OPERATIONS_KEY,
 }
 
 export enum LokiOperationId {
@@ -41,6 +45,8 @@ export enum LokiOperationId {
   LineFormat = 'line_format',
   LabelFormat = 'label_format',
   Decolorize = 'decolorize',
+  Drop = 'drop',
+  Keep = 'keep',
   Rate = 'rate',
   RateCounter = 'rate_counter',
   CountOverTime = 'count_over_time',

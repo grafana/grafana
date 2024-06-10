@@ -28,9 +28,9 @@ func SetPublicDashboardOrgIdOnContext(publicDashboardService publicdashboards.Se
 	}
 }
 
-// SetPublicDashboardFlag Adds public dashboard flag on context
-func SetPublicDashboardFlag(c *contextmodel.ReqContext) {
-	c.IsPublicDashboardView = true
+// SetPublicDashboardAccessToken Adds public dashboard flag on context
+func SetPublicDashboardAccessToken(c *contextmodel.ReqContext) {
+	c.PublicDashboardAccessToken = web.Params(c.Req)[":accessToken"]
 }
 
 // RequiresExistingAccessToken Middleware to enforce that a public dashboards exists before continuing to handler. This
@@ -66,4 +66,23 @@ func CountPublicDashboardRequest() func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
 		metrics.MPublicDashboardRequestCount.Inc()
 	}
+}
+
+// Empty middleware created in order to bind the enterprise one
+type Middleware struct {
+}
+
+var _ publicdashboards.Middleware = (*Middleware)(nil)
+
+func ProvideMiddleware() *Middleware {
+	return &Middleware{}
+}
+func (m *Middleware) HandleApi(c *contextmodel.ReqContext) {
+}
+func (m *Middleware) HandleView(c *contextmodel.ReqContext) {
+}
+func (m *Middleware) HandleAccessView(c *contextmodel.ReqContext) {
+}
+func (m *Middleware) HandleConfirmAccessView(c *contextmodel.ReqContext) {
+
 }

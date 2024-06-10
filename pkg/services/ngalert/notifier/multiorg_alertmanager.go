@@ -3,19 +3,18 @@ package notifier
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strconv"
 	"sync"
 	"time"
 
-	"github.com/prometheus/alertmanager/cluster"
+	alertingCluster "github.com/grafana/alerting/cluster"
 	"github.com/prometheus/client_golang/prometheus"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -29,15 +28,46 @@ var (
 	ErrAlertmanagerNotReady = fmt.Errorf("Alertmanager is not ready yet")
 )
 
+//go:generate mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mock
+type Alertmanager interface {
+	// Configuration
+	ApplyConfig(context.Context, *models.AlertConfiguration) error
+	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
+	SaveAndApplyDefaultConfig(ctx context.Context) error
+	GetStatus() apimodels.GettableStatus
+
+	// Silences
+	CreateSilence(context.Context, *apimodels.PostableSilence) (string, error)
+	DeleteSilence(context.Context, string) error
+	GetSilence(context.Context, string) (apimodels.GettableSilence, error)
+	ListSilences(context.Context, []string) (apimodels.GettableSilences, error)
+
+	// Alerts
+	GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
+	GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
+	PutAlerts(context.Context, apimodels.PostableAlerts) error
+
+	// Receivers
+	GetReceivers(ctx context.Context) ([]apimodels.Receiver, error)
+	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error)
+	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
+
+	// State
+	CleanUp()
+	StopAndWait()
+	Ready() bool
+}
+
 type MultiOrgAlertmanager struct {
 	Crypto    Crypto
 	ProvStore provisioningStore
 
 	alertmanagersMtx sync.RWMutex
-	alertmanagers    map[int64]*Alertmanager
+	alertmanagers    map[int64]Alertmanager
 
-	settings *setting.Cfg
-	logger   log.Logger
+	settings       *setting.Cfg
+	featureManager featuremgmt.FeatureToggles
+	logger         log.Logger
 
 	// clusterPeer represents the clustering peers of Alertmanagers between Grafana instances.
 	peer         alertingNotify.ClusterPeer
@@ -46,6 +76,7 @@ type MultiOrgAlertmanager struct {
 	configStore AlertingStore
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
+	factory     OrgAlertmanagerFactory
 
 	decryptFn alertingNotify.GetDecryptedValueFn
 
@@ -53,28 +84,62 @@ type MultiOrgAlertmanager struct {
 	ns      notifications.Service
 }
 
-func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgStore store.OrgStore,
-	kvStore kvstore.KVStore, provStore provisioningStore, decryptFn alertingNotify.GetDecryptedValueFn,
-	m *metrics.MultiOrgAlertmanager, ns notifications.Service, l log.Logger, s secrets.Service,
+type OrgAlertmanagerFactory func(ctx context.Context, orgID int64) (Alertmanager, error)
+
+type Option func(*MultiOrgAlertmanager)
+
+func WithAlertmanagerOverride(f func(OrgAlertmanagerFactory) OrgAlertmanagerFactory) Option {
+	return func(moa *MultiOrgAlertmanager) {
+		moa.factory = f(moa.factory)
+	}
+}
+
+func NewMultiOrgAlertmanager(
+	cfg *setting.Cfg,
+	configStore AlertingStore,
+	orgStore store.OrgStore,
+	kvStore kvstore.KVStore,
+	provStore provisioningStore,
+	decryptFn alertingNotify.GetDecryptedValueFn,
+	m *metrics.MultiOrgAlertmanager,
+	ns notifications.Service,
+	l log.Logger,
+	s secrets.Service,
+	featureManager featuremgmt.FeatureToggles,
+	opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
 		Crypto:    NewCrypto(s, configStore, l),
 		ProvStore: provStore,
 
-		logger:        l,
-		settings:      cfg,
-		alertmanagers: map[int64]*Alertmanager{},
-		configStore:   configStore,
-		orgStore:      orgStore,
-		kvStore:       kvStore,
-		decryptFn:     decryptFn,
-		metrics:       m,
-		ns:            ns,
-		peer:          &NilPeer{},
+		logger:         l,
+		settings:       cfg,
+		featureManager: featureManager,
+		alertmanagers:  map[int64]Alertmanager{},
+		configStore:    configStore,
+		orgStore:       orgStore,
+		kvStore:        kvStore,
+		decryptFn:      decryptFn,
+		metrics:        m,
+		ns:             ns,
+		peer:           &NilPeer{},
 	}
+
 	if err := moa.setupClustering(cfg); err != nil {
 		return nil, err
 	}
+
+	// Set up the default per tenant Alertmanager factory.
+	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
+		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
+		stateStore := NewFileStore(orgID, kvStore)
+		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting))
+	}
+
+	for _, opt := range opts {
+		opt(moa)
+	}
+
 	return moa, nil
 }
 
@@ -83,7 +148,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	// We set the settlement timeout to be a multiple of the gossip interval,
 	// ensuring that a sufficient number of broadcasts have occurred, thereby
 	// increasing the probability of success when waiting for the cluster to settle.
-	const settleTimeout = cluster.DefaultGossipInterval * 10
+	const settleTimeout = alertingCluster.DefaultGossipInterval * 10
 	// Redis setup.
 	if cfg.UnifiedAlerting.HARedisAddr != "" {
 		redisPeer, err := newRedisPeer(redisConfig{
@@ -106,7 +171,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	}
 	// Memberlist setup.
 	if len(cfg.UnifiedAlerting.HAPeers) > 0 {
-		peer, err := cluster.Create(
+		peer, err := alertingCluster.Create(
 			clusterLogger,
 			moa.metrics.Registerer,
 			cfg.UnifiedAlerting.HAListenAddr,
@@ -115,9 +180,9 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 			true,
 			cfg.UnifiedAlerting.HAPushPullInterval,
 			cfg.UnifiedAlerting.HAGossipInterval,
-			cluster.DefaultTCPTimeout,
-			cluster.DefaultProbeTimeout,
-			cluster.DefaultProbeInterval,
+			alertingCluster.DefaultTCPTimeout,
+			alertingCluster.DefaultProbeTimeout,
+			alertingCluster.DefaultProbeInterval,
 			nil,
 			true,
 			cfg.UnifiedAlerting.HALabel,
@@ -127,9 +192,9 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 			return fmt.Errorf("unable to initialize gossip mesh: %w", err)
 		}
 
-		err = peer.Join(cluster.DefaultReconnectInterval, cluster.DefaultReconnectTimeout)
+		err = peer.Join(alertingCluster.DefaultReconnectInterval, alertingCluster.DefaultReconnectTimeout)
 		if err != nil {
-			moa.logger.Error("msg", "Unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
+			moa.logger.Error("Msg", "Unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
 		}
 		// Attempt to verify the number of peers for 30s every 2s. The risk here is what we send a notification "too soon".
 		// Which should _never_ happen given we share the notification log via the database so the risk of double notification is very low.
@@ -152,14 +217,14 @@ func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
 			return nil
 		case <-time.After(moa.settings.UnifiedAlerting.AlertmanagerConfigPollInterval):
 			if err := moa.LoadAndSyncAlertmanagersForOrgs(ctx); err != nil {
-				moa.logger.Error("error while synchronizing Alertmanager orgs", "error", err)
+				moa.logger.Error("Error while synchronizing Alertmanager orgs", "error", err)
 			}
 		}
 	}
 }
 
 func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Context) error {
-	moa.logger.Debug("synchronizing Alertmanagers for orgs")
+	moa.logger.Debug("Synchronizing Alertmanagers for orgs")
 	// First, load all the organizations from the database.
 	orgIDs, err := moa.orgStore.GetOrgs(ctx)
 	if err != nil {
@@ -170,7 +235,7 @@ func (moa *MultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Con
 	moa.metrics.DiscoveredConfigurations.Set(float64(len(orgIDs)))
 	moa.SyncAlertmanagersForOrgs(ctx, orgIDs)
 
-	moa.logger.Debug("done synchronizing Alertmanagers for orgs")
+	moa.logger.Debug("Done synchronizing Alertmanagers for orgs")
 
 	return nil
 }
@@ -195,13 +260,13 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	orgsFound := make(map[int64]struct{}, len(orgIDs))
 	dbConfigs, err := moa.getLatestConfigs(ctx)
 	if err != nil {
-		moa.logger.Error("failed to load Alertmanager configurations", "error", err)
+		moa.logger.Error("Failed to load Alertmanager configurations", "error", err)
 		return
 	}
 	moa.alertmanagersMtx.Lock()
 	for _, orgID := range orgIDs {
 		if _, isDisabledOrg := moa.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabledOrg {
-			moa.logger.Debug("skipping syncing Alertmanager for disabled org", "org", orgID)
+			moa.logger.Debug("Skipping syncing Alertmanager for disabled org", "org", orgID)
 			continue
 		}
 		orgsFound[orgID] = struct{}{}
@@ -212,10 +277,10 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			// These metrics are not exported by Grafana and are mostly a placeholder.
 			// To export them, we need to translate the metrics from each individual registry and,
 			// then aggregate them on the main registry.
-			m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
-			am, err := newAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, moa.ns, m)
+			am, err := moa.factory(ctx, orgID)
 			if err != nil {
-				moa.logger.Error("unable to create Alertmanager for org", "org", orgID, "error", err)
+				moa.logger.Error("Unable to create Alertmanager for org", "org", orgID, "error", err)
+				continue
 			}
 			moa.alertmanagers[orgID] = am
 			alertmanager = am
@@ -229,7 +294,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			}
 			err := alertmanager.SaveAndApplyDefaultConfig(ctx)
 			if err != nil {
-				moa.logger.Error("failed to apply the default Alertmanager configuration", "org", orgID)
+				moa.logger.Error("Failed to apply the default Alertmanager configuration", "org", orgID)
 				continue
 			}
 			moa.alertmanagers[orgID] = alertmanager
@@ -238,13 +303,13 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 
 		err := alertmanager.ApplyConfig(ctx, dbConfig)
 		if err != nil {
-			moa.logger.Error("failed to apply Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "error", err)
+			moa.logger.Error("Failed to apply Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "error", err)
 			continue
 		}
 		moa.alertmanagers[orgID] = alertmanager
 	}
 
-	amsToStop := map[int64]*Alertmanager{}
+	amsToStop := map[int64]Alertmanager{}
 	for orgId, am := range moa.alertmanagers {
 		if _, exists := orgsFound[orgId]; !exists {
 			amsToStop[orgId] = am
@@ -257,57 +322,26 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 
 	// Now, we can stop the Alertmanagers without having to hold a lock.
 	for orgID, am := range amsToStop {
-		moa.logger.Info("stopping Alertmanager", "org", orgID)
+		moa.logger.Info("Stopping Alertmanager", "org", orgID)
 		am.StopAndWait()
-		moa.logger.Info("stopped Alertmanager", "org", orgID)
-		// Cleanup all the remaining resources from this alertmanager.
-		am.fileStore.CleanUp()
+		moa.logger.Info("Stopped Alertmanager", "org", orgID)
+		// Clean up all the remaining resources from this alertmanager.
+		am.CleanUp()
 	}
 
-	// We look for orphan directories and remove them. Orphan directories can
-	// occur when an organization is deleted and the node running Grafana is
-	// shutdown before the next sync is executed.
 	moa.cleanupOrphanLocalOrgState(ctx, orgsFound)
 }
 
-// cleanupOrphanLocalOrgState will check if there is any organization on
-// disk that is not part of the active organizations. If this is the case
-// it will delete the local state from disk.
+// cleanupOrphanLocalOrgState will remove all orphaned nflog and silence states in kvstore by existing to currently
+// active organizations. The original intention for this was the cleanup deleted orgs, that have had their states
+// saved to the kvstore after deletion on instance shutdown.
 func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
 	activeOrganizations map[int64]struct{}) {
-	dataDir := filepath.Join(moa.settings.DataPath, workingDir)
-	files, err := os.ReadDir(dataDir)
-	if err != nil {
-		moa.logger.Error("failed to list local working directory", "dir", dataDir, "error", err)
-		return
-	}
-	for _, file := range files {
-		if !file.IsDir() {
-			moa.logger.Warn("ignoring unexpected file while scanning local working directory", "filename", filepath.Join(dataDir, file.Name()))
-			continue
-		}
-		orgID, err := strconv.ParseInt(file.Name(), 10, 64)
-		if err != nil {
-			moa.logger.Error("unable to parse orgID from directory name", "name", file.Name(), "error", err)
-			continue
-		}
-		_, exists := activeOrganizations[orgID]
-		if !exists {
-			moa.logger.Info("found orphan organization directory", "orgID", orgID)
-			workingDirPath := filepath.Join(dataDir, strconv.FormatInt(orgID, 10))
-			fileStore := NewFileStore(orgID, moa.kvStore, workingDirPath)
-			// Cleanup all the remaining resources from this alertmanager.
-			fileStore.CleanUp()
-		}
-	}
-	// Remove all orphaned items from kvstore by listing all existing items
-	// in our used namespace and comparing them to the currently active
-	// organizations.
-	storedFiles := []string{notificationLogFilename, silencesFilename}
+	storedFiles := []string{NotificationLogFilename, SilencesFilename}
 	for _, fileName := range storedFiles {
 		keys, err := moa.kvStore.Keys(ctx, kvstore.AllOrganizations, KVNamespace, fileName)
 		if err != nil {
-			moa.logger.Error("failed to fetch items from kvstore", "error", err,
+			moa.logger.Error("Failed to fetch items from kvstore", "error", err,
 				"namespace", KVNamespace, "key", fileName)
 		}
 		for _, key := range keys {
@@ -316,7 +350,7 @@ func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
 			}
 			err = moa.kvStore.Del(ctx, key.OrgId, key.Namespace, key.Key)
 			if err != nil {
-				moa.logger.Error("failed to delete item from kvstore", "error", err,
+				moa.logger.Error("Failed to delete item from kvstore", "error", err,
 					"orgID", key.OrgId, "namespace", KVNamespace, "key", key.Key)
 			}
 		}
@@ -331,11 +365,11 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 		am.StopAndWait()
 	}
 
-	p, ok := moa.peer.(*cluster.Peer)
+	p, ok := moa.peer.(*alertingCluster.Peer)
 	if ok {
 		moa.settleCancel()
 		if err := p.Leave(10 * time.Second); err != nil {
-			moa.logger.Warn("unable to leave the gossip mesh", "error", err)
+			moa.logger.Warn("Unable to leave the gossip mesh", "error", err)
 		}
 	}
 	r, ok := moa.peer.(*redisPeer)
@@ -348,7 +382,7 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 // AlertmanagerFor returns the Alertmanager instance for the organization provided.
 // When the organization does not have an active Alertmanager, it returns a ErrNoAlertmanagerForOrg.
 // When the Alertmanager of the organization is not ready, it returns a ErrAlertmanagerNotReady.
-func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (*Alertmanager, error) {
+func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (Alertmanager, error) {
 	moa.alertmanagersMtx.RLock()
 	defer moa.alertmanagersMtx.RUnlock()
 
@@ -369,7 +403,7 @@ type NilPeer struct{}
 
 func (p *NilPeer) Position() int                   { return 0 }
 func (p *NilPeer) WaitReady(context.Context) error { return nil }
-func (p *NilPeer) AddState(string, cluster.State, prometheus.Registerer) cluster.ClusterChannel {
+func (p *NilPeer) AddState(string, alertingCluster.State, prometheus.Registerer) alertingCluster.ClusterChannel {
 	return &NilChannel{}
 }
 

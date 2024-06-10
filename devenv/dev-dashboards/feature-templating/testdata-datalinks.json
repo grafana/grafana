@@ -346,7 +346,6 @@
     }
   ],
   "schemaVersion": 20,
-  "style": "dark",
   "tags": ["gdev", "templating"],
   "templating": {
     "list": [

@@ -3,6 +3,7 @@ import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
   dataFrameToJSON,
+  getDefaultTimeRange,
   DataSourceInstanceSettings,
   dateTime,
   FieldType,
@@ -10,8 +11,8 @@ import {
   createDataFrame,
   TimeRange,
 } from '@grafana/data';
+import { SQLQuery } from '@grafana/sql';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { SQLQuery } from 'app/features/plugins/sql/types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
@@ -33,6 +34,7 @@ const instanceSettings = {
 } as DataSourceInstanceSettings<MssqlOptions>;
 
 describe('MSSQLDatasource', () => {
+  const defaultRange = getDefaultTimeRange(); // it does not matter what value this has
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
   const ctx = {
@@ -69,7 +71,7 @@ describe('MSSQLDatasource', () => {
     beforeEach(() => {
       fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
-      return ctx.ds.metricFindQuery(query).then((data: MetricFindValue[]) => {
+      return ctx.ds.metricFindQuery(query, { range: defaultRange }).then((data: MetricFindValue[]) => {
         results = data;
       });
     });
@@ -97,7 +99,7 @@ describe('MSSQLDatasource', () => {
 
     it('should return an empty array when metricFindQuery is called', async () => {
       const query = 'select * from atable';
-      const results = await ctx.ds.metricFindQuery(query);
+      const results = await ctx.ds.metricFindQuery(query, { range: defaultRange });
       expect(results.length).toBe(0);
     });
 
@@ -231,7 +233,7 @@ describe('MSSQLDatasource', () => {
     beforeEach(() => {
       fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
-      return ctx.ds.metricFindQuery(query).then((data) => {
+      return ctx.ds.metricFindQuery(query, { range: defaultRange }).then((data) => {
         results = data;
       });
     });
@@ -272,7 +274,7 @@ describe('MSSQLDatasource', () => {
     beforeEach(() => {
       fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
-      return ctx.ds.metricFindQuery(query).then((data) => {
+      return ctx.ds.metricFindQuery(query, { range: defaultRange }).then((data) => {
         results = data;
       });
     });
@@ -311,7 +313,7 @@ describe('MSSQLDatasource', () => {
 
     beforeEach(() => {
       fetchMock.mockImplementation(() => of(createFetchResponse(response)));
-      return ctx.ds.metricFindQuery(query).then((data) => {
+      return ctx.ds.metricFindQuery(query, { range: defaultRange }).then((data) => {
         results = data;
       });
     });

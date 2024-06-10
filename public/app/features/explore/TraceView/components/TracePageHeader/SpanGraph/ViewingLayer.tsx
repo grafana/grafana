@@ -236,6 +236,7 @@ export class UnthemedViewingLayer extends React.PureComponent<ViewingLayerProps,
   };
 
   _handleReframeMouseLeave = () => {
+    this._draggerReframe.resetBounds();
     this.props.updateNextViewRangeTime({ cursor: null });
   };
 

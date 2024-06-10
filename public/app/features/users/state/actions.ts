@@ -1,21 +1,47 @@
 import { debounce } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
+import { FetchDataArgs } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { OrgUser } from 'app/types';
 
-import { ThunkResult } from '../../../types';
+import { AccessControlAction, ThunkResult } from '../../../types';
 
-import { usersLoaded, pageChanged, usersFetchBegin, usersFetchEnd, searchQueryChanged } from './reducers';
+import {
+  usersLoaded,
+  pageChanged,
+  usersFetchBegin,
+  usersFetchEnd,
+  searchQueryChanged,
+  sortChanged,
+  rolesFetchBegin,
+  rolesFetchEnd,
+} from './reducers';
 
 export function loadUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
-      const { perPage, page, searchQuery } = getState().users;
+      dispatch(usersFetchBegin());
+      const { perPage, page, searchQuery, sort } = getState().users;
       const users = await getBackendSrv().get(
         `/api/org/users/search`,
-        accessControlQueryParam({ perpage: perPage, page, query: searchQuery })
+        accessControlQueryParam({ perpage: perPage, page, query: searchQuery, sort })
       );
+
+      if (
+        contextSrv.licensedAccessControlEnabled() &&
+        contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)
+      ) {
+        dispatch(rolesFetchBegin());
+        const orgId = contextSrv.user.orgId;
+        const userIds = users?.orgUsers.map((u: OrgUser) => u.userId);
+        const roles = await getBackendSrv().post(`/api/access-control/users/roles/search`, { userIds, orgId });
+        users.orgUsers.forEach((u: OrgUser) => {
+          u.roles = roles ? roles[u.userId] || [] : [];
+        });
+        dispatch(rolesFetchEnd());
+      }
       dispatch(usersLoaded(users));
     } catch (error) {
       usersFetchEnd();
@@ -41,15 +67,21 @@ export function removeUser(userId: number): ThunkResult<void> {
 
 export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(usersFetchBegin());
     dispatch(pageChanged(page));
+    dispatch(loadUsers());
+  };
+}
+
+export function changeSort({ sortBy }: FetchDataArgs<OrgUser>): ThunkResult<void> {
+  const sort = sortBy.length ? `${sortBy[0].id}-${sortBy[0].desc ? 'desc' : 'asc'}` : undefined;
+  return async (dispatch) => {
+    dispatch(sortChanged(sort));
     dispatch(loadUsers());
   };
 }
 
 export function changeSearchQuery(query: string): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(usersFetchBegin());
     dispatch(searchQueryChanged(query));
     fetchUsersWithDebounce(dispatch);
   };

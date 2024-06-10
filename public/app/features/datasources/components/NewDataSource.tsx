@@ -1,7 +1,7 @@
 import React from 'react';
 import { AnyAction } from 'redux';
 
-import { DataSourcePluginMeta } from '@grafana/data';
+import { DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { LinkButton, FilterInput } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PluginsErrorsInfo } from 'app/features/plugins/components/PluginsErrorsInfo';
@@ -74,8 +74,8 @@ export function NewDataSourceView({
         </LinkButton>
       </div>
 
-      {/* Show any plugin errors while not searching for anything specific */}
-      {!searchQuery && <PluginsErrorsInfo />}
+      {/* Show datasource plugin errors while not searching for anything specific */}
+      {!searchQuery && <PluginsErrorsInfo filterByPluginType={PluginType.datasource} />}
 
       {/* Search results */}
       <div>

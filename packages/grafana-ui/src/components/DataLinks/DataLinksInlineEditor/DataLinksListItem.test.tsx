@@ -84,7 +84,6 @@ describe('DataLinksListItem', () => {
       setupTestContext({ link });
 
       expect(screen.getByText(/data link url not provided/i)).toBeInTheDocument();
-      expect(screen.getByTitle('')).toBeInTheDocument();
     });
   });
 
@@ -109,7 +108,6 @@ describe('DataLinksListItem', () => {
       setupTestContext({ link });
 
       expect(screen.getByText(/data link url not provided/i)).toBeInTheDocument();
-      expect(screen.getByTitle('')).toBeInTheDocument();
     });
   });
 });

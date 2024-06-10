@@ -3,6 +3,9 @@ aliases:
   - /docs/grafana/v1.1/
   - /docs/grafana/v3.1/
   - guides/reference/admin/
+cascade:
+  TEMPO_VERSION: latest
+  PYROSCOPE_VERSION: latest
 description: Guides, installation, and feature documentation
 keywords:
   - grafana
@@ -39,12 +42,16 @@ title: Grafana documentation
         <img src="/static/img/logos/logo-docker.svg">
         <h5>Run Docker image</h5>
     </a>
+    <a href="{{< relref "setup-grafana/installation/kubernetes/" >}}" class="nav-cards__item nav-cards__item--install">
+        <img src="/static/img/logos/logo-kubernetes.svg">
+        <h5>Run on Kubernetes</h5>
+    </a>
     <a href="https://grafana.com/docs/grafana-cloud/" class="nav-cards__item nav-cards__item--install">
         <div class="nav-cards__icon fa fa-cloud">
         </div>
         <h5>Grafana Cloud</h5>
     </a>
-    <a href="https://grafana.com/grafana/nightly?edition=oss" class="nav-cards__item nav-cards__item--install">
+    <a href="https://grafana.com/grafana/download/nightly?edition=oss" class="nav-cards__item nav-cards__item--install">
         <div class="nav-cards__icon fa fa-moon-o">
         </div>
         <h5>Nightly builds</h5>
@@ -74,8 +81,8 @@ title: Grafana documentation
         <h4>Provisioning</h4>
         <p>Learn how to automate your Grafana configuration.</p>
     </a>
-    <a href="{{< relref "whatsnew/whats-new-in-v10-1/" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>What's new in v10.1</h4>
+    <a href="{{< relref "whatsnew/whats-new-in-v11-0/" >}}" class="nav-cards__item nav-cards__item--guide">
+        <h4>What's new in v11.0-preview</h4>
         <p>Explore the features and enhancements in the latest release.</p>
     </a>
 

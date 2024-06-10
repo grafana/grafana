@@ -8,7 +8,7 @@ ARTIFACTS_DIR="./npm-artifacts"
 for file in "$ARTIFACTS_DIR"/*.tgz; do
   echo "🔍 Checking NPM package: $file"
   # get filename then strip everything after package name.
-  dir_name=$(basename "$file" .tgz | sed 's/^@\(.*\)-[0-9]*[.]*[0-9]*[.]*[0-9]*-\([0-9]*[a-zA-Z]*\)/\1/')
+  dir_name=$(basename "$file" .tgz | sed -E 's/@([a-zA-Z0-9-]+)-[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9-]+)?/\1/')
   mkdir -p "./npm-artifacts/$dir_name"
   tar -xzf "$file" -C "./npm-artifacts/$dir_name" --strip-components=1
 
@@ -22,7 +22,7 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
   pushd "./npm-artifacts/$dir_name" || exit
 
   # Check for required files
-	check_files=("package.json" "README.md" "CHANGELOG.md" "LICENSE_APACHE2")
+	check_files=("package.json" "README.md" "CHANGELOG.md")
 	for check_file in "${check_files[@]}"; do
 		if [ ! -f "$check_file" ]; then
 			echo -e "❌ Failed: Missing required file $check_file in package $dir_name.\n"
@@ -30,16 +30,12 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
 		fi
 	done
 
-  # @grafana/toolkit structure is different to the other packages
-  if [[ "$dir_name" == "grafana-toolkit" ]]; then
-    if [ ! -d bin ] || [ ! -f bin/grafana-toolkit.js ]; then
-      echo -e "❌ Failed: Missing 'bin' directory or required files in package $dir_name.\n"
-      exit 1
-    fi
-
-    echo -e "✅ Passed: package checks for $file.\n"
-    popd || exit
-    continue
+  # Check license files
+  if [ -f "LICENSE_APACHE2" ] || [ -f "LICENSE_AGPL" ]; then
+    echo -e "Found required license file in package $dir_name.\n"
+  else
+    echo -e "❌ Failed: Missing required license file in package $dir_name.\n"
+    exit 1
   fi
 
   # Assert commonjs builds

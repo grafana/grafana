@@ -228,6 +228,58 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" > 10001`)
 		})
 
+		t.Run("can render number greater than or equal to condition tags", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: ">=", Value: "10001", Key: "key"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" >= 10001`)
+		})
+		t.Run("can render number less than or equal to condition tags", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "<=", Value: "10001", Key: "key"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" <= 10001`)
+		})
+
+		t.Run("can render boolean equality tags", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "false", Key: "key"}}}
+
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = false`)
+		})
+
+		t.Run("can render boolean inequality tags", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is Not", Value: "true", Key: "key"}}}
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" != true`)
+		})
+
+		t.Run("can correct case of boolean tags", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "False", Key: "key"}}}
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = false`)
+		})
+
+		t.Run("can use strings with Is", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "A string", Key: "key"}}}
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = 'A string'`)
+		})
+
+		t.Run("can use integers with Is", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "123", Key: "key"}}}
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = 123`)
+		})
+
+		t.Run("can use negative integers with Is", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "-123", Key: "key"}}}
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = -123`)
+		})
+
+		t.Run("can use floats with Is", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "1.23", Key: "key"}}}
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = 1.23`)
+		})
+
+		t.Run("can use negative floats with Is", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "Is", Value: "-1.23", Key: "key"}}}
+			require.Equal(t, strings.Join(query.renderTags(), ""), `"key" = -1.23`)
+		})
+
 		t.Run("can render string tags", func(t *testing.T) {
 			query := &Query{Tags: []*Tag{{Operator: "=", Value: "value", Key: "key"}}}
 
@@ -251,5 +303,29 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			require.Equal(t, query.renderMeasurement(), ` FROM "policy"./apa/`)
 		})
+
+		t.Run("can render single quoted tag value when regexed value has been sent", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: ">", Value: `/^12.2$/`, Key: "key"}}}
+
+			require.Equal(t, `"key" > '12.2'`, strings.Join(query.renderTags(), ""))
+		})
+	})
+}
+
+func TestRemoveRegexWrappers(t *testing.T) {
+	t.Run("remove regex wrappers", func(t *testing.T) {
+		wrappedText := `/^someValue$/`
+		expected := `'someValue'`
+		result := removeRegexWrappers(wrappedText, `'`)
+
+		require.Equal(t, expected, result)
+	})
+
+	t.Run("return same value if the value is not wrapped by regex wrappers", func(t *testing.T) {
+		wrappedText := `someValue`
+		expected := `someValue`
+		result := removeRegexWrappers(wrappedText, "")
+
+		require.Equal(t, expected, result)
 	})
 }

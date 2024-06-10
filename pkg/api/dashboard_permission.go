@@ -2,17 +2,19 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -52,23 +54,14 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
 	if rsp != nil {
 		return rsp
 	}
 
-	g, err := guardian.NewByDashboard(c.Req.Context(), dash, c.OrgID, c.SignedInUser)
+	acl, err := hs.getDashboardACL(c.Req.Context(), c.SignedInUser, dash)
 	if err != nil {
-		return response.Err(err)
-	}
-
-	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
-		return dashboardGuardianResponse(err)
-	}
-
-	acl, err := g.GetACLWithoutDuplicates()
-	if err != nil {
-		return response.Error(500, "Failed to get dashboard permissions", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get dashboard permissions", err)
 	}
 
 	filteredACLs := make([]*dashboards.DashboardACLInfoDTO, 0, len(acl))
@@ -77,10 +70,10 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 			continue
 		}
 
-		perm.UserAvatarURL = dtos.GetGravatarUrl(perm.UserEmail)
+		perm.UserAvatarURL = dtos.GetGravatarUrl(hs.Cfg, perm.UserEmail)
 
 		if perm.TeamID > 0 {
-			perm.TeamAvatarURL = dtos.GetGravatarUrlWithDefault(perm.TeamEmail, perm.Team)
+			perm.TeamAvatarURL = dtos.GetGravatarUrlWithDefault(hs.Cfg, perm.TeamEmail, perm.Team)
 		}
 		if perm.Slug != "" {
 			perm.URL = dashboards.GetDashboardFolderURL(perm.IsFolder, perm.UID, perm.Slug)
@@ -131,7 +124,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	if err := validatePermissionsUpdate(apiCmd); err != nil {
-		return response.Error(400, err.Error(), err)
+		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
 
 	dashUID := web.Params(c.Req)[":uid"]
@@ -142,24 +135,15 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, dashID, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
 	if rsp != nil {
 		return rsp
-	}
-
-	g, err := guardian.NewByDashboard(c.Req.Context(), dash, c.OrgID, c.SignedInUser)
-	if err != nil {
-		return response.Err(err)
-	}
-
-	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
-		return dashboardGuardianResponse(err)
 	}
 
 	items := make([]*dashboards.DashboardACL, 0, len(apiCmd.Items))
 	for _, item := range apiCmd.Items {
 		items = append(items, &dashboards.DashboardACL{
-			OrgID:       c.OrgID,
+			OrgID:       c.SignedInUser.GetOrgID(),
 			DashboardID: dashID,
 			UserID:      item.UserID,
 			TeamID:      item.TeamID,
@@ -170,32 +154,101 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 		})
 	}
 
-	hiddenACL, err := g.GetHiddenACL(hs.Cfg)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Error while retrieving hidden permissions", err)
-	}
-	items = append(items, hiddenACL...)
-
-	if okToUpdate, err := g.CheckPermissionBeforeUpdate(dashboards.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
-		if err != nil {
-			if errors.Is(err, guardian.ErrGuardianPermissionExists) || errors.Is(err, guardian.ErrGuardianOverride) {
-				return response.Error(http.StatusBadRequest, err.Error(), err)
-			}
-
-			return response.Error(http.StatusInternalServerError, "Error while checking dashboard permissions", err)
-		}
-
-		return response.Error(http.StatusForbidden, "Cannot remove own admin permission for a folder", nil)
-	}
-
-	old, err := g.GetACL()
+	acl, err := hs.getDashboardACL(c.Req.Context(), c.SignedInUser, dash)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error while checking dashboard permissions", err)
 	}
-	if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgID, dash.UID, false, items, old); err != nil {
+
+	items = append(items, hs.filterHiddenACL(c.SignedInUser, acl)...)
+
+	if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgID, dash.UID, false, items, acl); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update permissions", err)
 	}
+
 	return response.Success("Dashboard permissions updated")
+}
+
+var dashboardPermissionMap = map[string]dashboardaccess.PermissionType{
+	"View":  dashboardaccess.PERMISSION_VIEW,
+	"Edit":  dashboardaccess.PERMISSION_EDIT,
+	"Admin": dashboardaccess.PERMISSION_ADMIN,
+}
+
+func (hs *HTTPServer) getDashboardACL(ctx context.Context, user identity.Requester, dashboard *dashboards.Dashboard) ([]*dashboards.DashboardACLInfoDTO, error) {
+	permissions, err := hs.dashboardPermissionsService.GetPermissions(ctx, user, dashboard.UID)
+	if err != nil {
+		return nil, err
+	}
+
+	acl := make([]*dashboards.DashboardACLInfoDTO, 0, len(permissions))
+	for _, p := range permissions {
+		if !p.IsManaged {
+			continue
+		}
+
+		var role *org.RoleType
+		if p.BuiltInRole != "" {
+			tmp := org.RoleType(p.BuiltInRole)
+			role = &tmp
+		}
+
+		permission := dashboardPermissionMap[hs.dashboardPermissionsService.MapActions(p)]
+
+		metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetDashboardACL).Inc()
+		acl = append(acl, &dashboards.DashboardACLInfoDTO{
+			OrgID:          dashboard.OrgID,
+			DashboardID:    dashboard.ID,
+			FolderID:       dashboard.FolderID, // nolint:staticcheck
+			Created:        p.Created,
+			Updated:        p.Updated,
+			UserID:         p.UserId,
+			UserLogin:      p.UserLogin,
+			UserEmail:      p.UserEmail,
+			TeamID:         p.TeamId,
+			TeamEmail:      p.TeamEmail,
+			Team:           p.Team,
+			Role:           role,
+			Permission:     permission,
+			PermissionName: permission.String(),
+			UID:            dashboard.UID,
+			Title:          dashboard.Title,
+			Slug:           dashboard.Slug,
+			IsFolder:       dashboard.IsFolder,
+			URL:            dashboard.GetURL(),
+			Inherited:      false,
+		})
+	}
+
+	return acl, nil
+}
+
+func (hs *HTTPServer) filterHiddenACL(user identity.Requester, acl []*dashboards.DashboardACLInfoDTO) []*dashboards.DashboardACL {
+	var hiddenACL []*dashboards.DashboardACL
+
+	if user.GetIsGrafanaAdmin() {
+		return hiddenACL
+	}
+
+	for _, item := range acl {
+		if item.Inherited || item.UserLogin == user.GetLogin() {
+			continue
+		}
+
+		if _, hidden := hs.Cfg.HiddenUsers[item.UserLogin]; hidden {
+			hiddenACL = append(hiddenACL, &dashboards.DashboardACL{
+				OrgID:       item.OrgID,
+				DashboardID: item.DashboardID,
+				UserID:      item.UserID,
+				TeamID:      item.TeamID,
+				Role:        item.Role,
+				Permission:  item.Permission,
+				Created:     item.Created,
+				Updated:     item.Updated,
+			})
+		}
+	}
+
+	return hiddenACL
 }
 
 // updateDashboardAccessControl is used for api backward compatibility
@@ -263,11 +316,11 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID in
 func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardACLCommand) error {
 	for _, item := range apiCmd.Items {
 		if item.UserID > 0 && item.TeamID > 0 {
-			return dashboards.ErrPermissionsWithUserAndTeamNotAllowed
+			return dashboardaccess.ErrPermissionsWithUserAndTeamNotAllowed
 		}
 
 		if (item.UserID > 0 || item.TeamID > 0) && item.Role != nil {
-			return dashboards.ErrPermissionsWithRoleNotAllowed
+			return dashboardaccess.ErrPermissionsWithRoleNotAllowed
 		}
 	}
 	return nil

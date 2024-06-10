@@ -16,7 +16,8 @@ import (
 type DSInfo struct {
 	ID                      int64
 	Updated                 time.Time
-	JSONData                map[string]interface{}
+	URL                     string
+	JSONData                map[string]any
 	DecryptedSecureJSONData map[string]string
 }
 
@@ -24,8 +25,8 @@ type DSInfo struct {
 func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.Route,
 	ds DSInfo, cfg *setting.Cfg) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
-
 	data := templateData{
+		URL:            ds.URL,
 		JsonData:       ds.JSONData,
 		SecureJsonData: ds.DecryptedSecureJSONData,
 	}

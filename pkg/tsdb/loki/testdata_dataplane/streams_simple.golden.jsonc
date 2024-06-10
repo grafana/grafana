@@ -119,7 +119,7 @@
 //  Name: 
 //  Dimensions: 4 Fields by 6 Rows
 //  +---------------------------------------+-----------------------------------------+------------------+--------------------------------+
-//  | Name: attributes                      | Name: timestamp                         | Name: body       | Name: id                       |
+//  | Name: labels                          | Name: timestamp                         | Name: body       | Name: id                       |
 //  | Labels:                               | Labels:                                 | Labels:          | Labels:                        |
 //  | Type: []json.RawMessage               | Type: []time.Time                       | Type: []string   | Type: []string                 |
 //  +---------------------------------------+-----------------------------------------+------------------+--------------------------------+
@@ -256,7 +256,7 @@
         },
         "fields": [
           {
-            "name": "attributes",
+            "name": "labels",
             "type": "other",
             "typeInfo": {
               "frame": "json.RawMessage"

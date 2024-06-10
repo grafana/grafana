@@ -1,17 +1,16 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAsyncFn, useInterval } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 
 import { CombinedRuleNamespace } from '../../../types/unified-alerting';
 
-import { trackRuleListNavigation } from './Analytics';
-import { MoreActionsRuleButtons } from './MoreActionsRuleButtons';
+import { LogMessages, logInfo, trackRuleListNavigation } from './Analytics';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from './components/rules/RuleDetails';
@@ -20,11 +19,11 @@ import { RuleListGroupView } from './components/rules/RuleListGroupView';
 import { RuleListStateView } from './components/rules/RuleListStateView';
 import { RuleStats } from './components/rules/RuleStats';
 import RulesFilter from './components/rules/RulesFilter';
+import { AlertingAction, useAlertingAbility } from './hooks/useAbilities';
 import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from './hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
-import { useRulesAccess } from './utils/accessControlHooks';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { getAllRulesSourceNames } from './utils/datasource';
 
@@ -62,10 +61,22 @@ const RuleList = withErrorBoundary(
     );
 
     const promRequests = Object.entries(promRuleRequests);
+    const rulerRequests = Object.entries(rulerRuleRequests);
+
     const allPromLoaded = promRequests.every(
       ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
     );
+    const allRulerLoaded = rulerRequests.every(
+      ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
+    );
+
     const allPromEmpty = promRequests.every(([_, state]) => state.dispatched && state?.result?.length === 0);
+
+    const allRulerEmpty = rulerRequests.every(([_, state]) => {
+      const rulerRules = Object.entries(state?.result ?? {});
+      const noRules = rulerRules.every(([_, result]) => result?.length === 0);
+      return noRules && state.dispatched;
+    });
 
     const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
     // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
@@ -86,20 +97,20 @@ const RuleList = withErrorBoundary(
     useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
 
     // Show splash only when we loaded all of the data sources and none of them has alerts
-    const hasNoAlertRulesCreatedYet = allPromLoaded && allPromEmpty && promRequests.length > 0;
+    const hasNoAlertRulesCreatedYet =
+      allPromLoaded && allPromEmpty && promRequests.length > 0 && allRulerEmpty && allRulerLoaded;
+    const hasAlertRulesCreated = !hasNoAlertRulesCreatedYet;
 
     const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
     const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
 
-    const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
-
     return (
       // We don't want to show the Loading... indicator for the whole page.
       // We show separate indicators for Grafana-managed and Cloud rules
-      <AlertingPageWrapper pageId="alert-list" isLoading={false}>
+      <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
         <RuleListErrors />
         <RulesFilter onFilterCleared={onFilterCleared} />
-        {!hasNoAlertRulesCreatedYet && (
+        {hasAlertRulesCreated && (
           <>
             <div className={styles.break} />
             <div className={styles.buttonsContainer}>
@@ -116,16 +127,11 @@ const RuleList = withErrorBoundary(
                 )}
                 <RuleStats namespaces={filteredNamespaces} />
               </div>
-              {(canCreateGrafanaRules || canCreateCloudRules || canReadProvisioning) && (
-                <Stack direction="row" gap={0.5}>
-                  <MoreActionsRuleButtons />
-                </Stack>
-              )}
             </div>
           </>
         )}
         {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
-        {!hasNoAlertRulesCreatedYet && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+        {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
       </AlertingPageWrapper>
     );
   },
@@ -155,3 +161,27 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export default RuleList;
+
+export function CreateAlertButton() {
+  const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+  const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
+
+  const location = useLocation();
+
+  const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
+
+  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
+
+  if (canCreateGrafanaRules || canCreateCloudRules) {
+    return (
+      <LinkButton
+        href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
+        icon="plus"
+        onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
+      >
+        New alert rule
+      </LinkButton>
+    );
+  }
+  return null;
+}

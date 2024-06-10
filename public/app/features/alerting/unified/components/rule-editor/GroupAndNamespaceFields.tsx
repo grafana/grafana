@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Field, InputControl, useStyles2, VirtualizedSelect } from '@grafana/ui';
+import { Field, useStyles2, VirtualizedSelect } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -56,7 +56,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
         error={errors.namespace?.message}
         invalid={!!errors.namespace?.message}
       >
-        <InputControl
+        <Controller
           render={({ field: { onChange, ref, ...field } }) => (
             <VirtualizedSelect
               {...field}
@@ -81,7 +81,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
         />
       </Field>
       <Field data-testid="group-picker" label="Group" error={errors.group?.message} invalid={!!errors.group?.message}>
-        <InputControl
+        <Controller
           render={({ field: { ref, ...field } }) => (
             <VirtualizedSelect
               {...field}

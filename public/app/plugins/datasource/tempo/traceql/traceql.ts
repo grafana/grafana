@@ -1,6 +1,7 @@
+import type { languages } from 'monaco-editor';
 import { Grammar } from 'prismjs';
 
-export const languageConfiguration = {
+export const languageConfiguration: languages.LanguageConfiguration = {
   // the default separators except `@$`
   wordPattern: /(-?\d*\.\d\w*)|([^`~!#%^&*()\-=+\[{\]}\\|;:'",.<>\/?\s]+)/g,
   brackets: [
@@ -22,19 +23,30 @@ export const languageConfiguration = {
   folding: {},
 };
 
-export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~'];
-export const stringOperators = ['=', '!=', '=~'];
+export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~', '!~'];
+export const keywordOperators = ['=', '!='];
+export const stringOperators = ['=', '!=', '=~', '!~'];
 export const numberOperators = ['=', '!=', '>', '<', '>=', '<='];
 
-export const intrinsics = ['duration', 'kind', 'name', 'status'];
-
+export const intrinsics = [
+  'duration',
+  'kind',
+  'name',
+  'rootName',
+  'rootServiceName',
+  'status',
+  'statusMessage',
+  'traceDuration',
+];
 export const scopes: string[] = ['resource', 'span'];
+
+export const functions = ['avg', 'min', 'max', 'sum', 'count', 'by'];
 
 const keywords = intrinsics.concat(scopes);
 
 const statusValues = ['ok', 'unset', 'error', 'false', 'true'];
 
-export const language = {
+const language: languages.IMonarchLanguage = {
   ignoreCase: false,
   defaultToken: '',
   tokenPostfix: '.traceql',
@@ -42,8 +54,8 @@ export const language = {
   keywords,
   operators,
   statusValues,
+  functions,
 
-  // we include these common regular expressions
   symbols: /[=><!~?:&|+\-*\/^%]+/,
   escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
   digits: /\d+(_+\d+)*/,
@@ -52,24 +64,38 @@ export const language = {
 
   tokenizer: {
     root: [
-      // labels
-      [/[a-z_.][\w./_-]*(?=\s*(=|!=|>|<|>=|<=|=~|!~))/, 'tag'],
-      [/[a-z_.][\w./_-]*/, 'tag'],
+      // comments
+      [/\/\/.*/, 'comment'], // line comment
+      [/\/\*.*\*\//, 'comment'], // block comment
 
       // durations
-      [/[0-9.]+(s|ms|ns|m)/, 'number'],
+      [/[0-9]+(.[0-9]+)?(us|µs|ns|ms|s|m|h)/, 'number'],
 
       // trace ID
       [/^\s*[0-9A-Fa-f]+\s*$/, 'tag'],
 
-      // all keywords have the same color
+      // keywords
       [
-        /[a-zA-Z_.]\w*/,
+        // match only predefined keywords
+        `(?:${keywords.join('|')})`,
         {
           cases: {
-            '@keywords': 'type',
-            '@statusValues': 'type.identifier',
-            '@default': 'identifier',
+            '@keywords': 'keyword',
+            '@default': 'tag', // fallback, but should never happen
+          },
+        },
+      ],
+
+      // functions and predefined values
+      [
+        // Inside (double) quotes, all characters are allowed, with the exception of `\` and `"` that must be escaped (`\\` and `\"`).
+        // Outside quotes, some more characters are prohibited, such as `!` and `=`.
+        /(?:\w|^[^{}()=~!<>&|," ]|"(?:\\"|\\\\|[^\\"])*")+/,
+        {
+          cases: {
+            '@functions': 'predefined',
+            '@statusValues': 'type',
+            '@default': 'tag', // fallback, used for tag names
           },
         },
       ],
@@ -77,15 +103,12 @@ export const language = {
       // strings
       [/"([^"\\]|\\.)*$/, 'string.invalid'], // non-teminated string
       [/'([^'\\]|\\.)*$/, 'string.invalid'], // non-teminated string
-      [/"/, 'string', '@string_double'],
-      [/'/, 'string', '@string_single'],
-
-      // whitespace
-      { include: '@whitespace' },
+      [/([^\w])(")/, [{ token: '' }, { token: 'string', next: '@string_double' }]],
+      [/([^\w])(')/, [{ token: '' }, { token: 'string', next: '@string_single' }]],
+      [/([^\w])(`)/, [{ token: '' }, { token: 'string', next: '@string_back' }]],
 
       // delimiters and operators
-      [/[{}()\[\]]/, '@brackets'],
-      [/[<>](?!@symbols)/, '@brackets'],
+      [/[{}()\[\]]/, 'delimiter.bracket'],
       [
         /@symbols/,
         {
@@ -119,15 +142,16 @@ export const language = {
       [/'/, 'string', '@pop'],
     ],
 
-    clauses: [
-      [/[^(,)]/, 'tag'],
-      [/\)/, 'identifier', '@pop'],
+    string_back: [
+      [/[^\\`]+/, 'string'],
+      [/@escapes/, 'string.escape'],
+      [/\\./, 'string.escape.invalid'],
+      [/`/, 'string', '@pop'],
     ],
-
-    whitespace: [[/[ \t\r\n]+/, 'white']],
   },
 };
 
+// For "TraceQL" tab (Monarch editor for TraceQL)
 export const languageDefinition = {
   id: 'traceql',
   extensions: ['.traceql'],
@@ -139,9 +163,10 @@ export const languageDefinition = {
   },
 };
 
+// For "Search" tab (query builder)
 export const traceqlGrammar: Grammar = {
   comment: {
-    pattern: /#.*/,
+    pattern: /\/\/.*/,
   },
   'span-set': {
     pattern: /\{[^}]*}/,

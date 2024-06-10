@@ -14,17 +14,17 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func addInterval(period string, field *data.Field) error {
 	period = strings.TrimPrefix(period, "+")
-	p, err := intervalv2.ParseIntervalStringToTimeDuration(period)
+	p, err := gtime.ParseIntervalStringToTimeDuration(period)
 	if err != nil {
 		return err
 	}
@@ -40,14 +40,14 @@ func addInterval(period string, field *data.Field) error {
 	return nil
 }
 
-func toString(v interface{}) string {
+func toString(v any) string {
 	if v == nil {
 		return ""
 	}
 	return v.(string)
 }
 
-func createRequest(ctx context.Context, logger log.Logger, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
+func createRequest(ctx context.Context, dsInfo *datasourceInfo, proxyPass string, body io.Reader) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.url)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *datasourceInf
 	}
 	req, err := http.NewRequestWithContext(ctx, method, dsInfo.services[cloudMonitor].url, body)
 	if err != nil {
-		logger.Error("Failed to create request", "error", err)
+		backend.Logger.Error("Failed to create request", "error", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
@@ -70,7 +70,7 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *datasourceInf
 	return req, nil
 }
 
-func doRequestPage(ctx context.Context, logger log.Logger, r *http.Request, dsInfo datasourceInfo, params url.Values, body map[string]interface{}) (cloudMonitoringResponse, error) {
+func doRequestPage(ctx context.Context, r *http.Request, dsInfo datasourceInfo, params url.Values, body map[string]any, logger log.Logger) (cloudMonitoringResponse, error) {
 	if params != nil {
 		r.URL.RawQuery = params.Encode()
 	}
@@ -89,11 +89,11 @@ func doRequestPage(ctx context.Context, logger log.Logger, r *http.Request, dsIn
 
 	defer func() {
 		if err = res.Body.Close(); err != nil {
-			logger.Warn("failed to close response body", "error", err)
+			backend.Logger.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
-	dnext, err := unmarshalResponse(logger, res)
+	dnext, err := unmarshalResponse(res, logger)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
@@ -101,8 +101,8 @@ func doRequestPage(ctx context.Context, logger log.Logger, r *http.Request, dsIn
 	return dnext, nil
 }
 
-func doRequestWithPagination(ctx context.Context, logger log.Logger, r *http.Request, dsInfo datasourceInfo, params url.Values, body map[string]interface{}) (cloudMonitoringResponse, error) {
-	d, err := doRequestPage(ctx, logger, r, dsInfo, params, body)
+func doRequestWithPagination(ctx context.Context, r *http.Request, dsInfo datasourceInfo, params url.Values, body map[string]any, logger log.Logger) (cloudMonitoringResponse, error) {
+	d, err := doRequestPage(ctx, r, dsInfo, params, body, logger)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
@@ -113,7 +113,7 @@ func doRequestWithPagination(ctx context.Context, logger log.Logger, r *http.Req
 		if body != nil {
 			body["pageToken"] = d.NextPageToken
 		}
-		nextPage, err := doRequestPage(ctx, logger, r, dsInfo, params, body)
+		nextPage, err := doRequestPage(ctx, r, dsInfo, params, body, logger)
 		if err != nil {
 			return cloudMonitoringResponse{}, err
 		}
@@ -124,19 +124,20 @@ func doRequestWithPagination(ctx context.Context, logger log.Logger, r *http.Req
 	return d, nil
 }
 
-func traceReq(ctx context.Context, tracer tracing.Tracer, req *backend.QueryDataRequest, dsInfo datasourceInfo, r *http.Request, target string) tracing.Span {
-	ctx, span := tracer.Start(ctx, "cloudMonitoring query")
-	span.SetAttributes("target", target, attribute.Key("target").String(target))
-	span.SetAttributes("from", req.Queries[0].TimeRange.From, attribute.Key("from").String(req.Queries[0].TimeRange.From.String()))
-	span.SetAttributes("until", req.Queries[0].TimeRange.To, attribute.Key("until").String(req.Queries[0].TimeRange.To.String()))
-	span.SetAttributes("datasource_id", dsInfo.id, attribute.Key("datasource_id").Int64(dsInfo.id))
-	span.SetAttributes("org_id", req.PluginContext.OrgID, attribute.Key("org_id").Int64(req.PluginContext.OrgID))
-	tracer.Inject(ctx, r.Header, span)
+func traceReq(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo, r *http.Request, target string) trace.Span {
+	_, span := tracing.DefaultTracer().Start(ctx, "cloudMonitoring query", trace.WithAttributes(
+		attribute.String("target", target),
+		attribute.String("from", req.Queries[0].TimeRange.From.String()),
+		attribute.String("until", req.Queries[0].TimeRange.To.String()),
+		attribute.Int64("datasource_id", dsInfo.id),
+		attribute.Int64("org_id", req.PluginContext.OrgID),
+	))
+	defer span.End()
 	return span
 }
 
-func runTimeSeriesRequest(ctx context.Context, logger log.Logger, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer, projectName string, params url.Values, body map[string]interface{}) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+func runTimeSeriesRequest(ctx context.Context, req *backend.QueryDataRequest,
+	s *Service, dsInfo datasourceInfo, projectName string, params url.Values, body map[string]any, logger log.Logger) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
 	dr := &backend.DataResponse{}
 	projectName, err := s.ensureProject(ctx, dsInfo, projectName)
 	if err != nil {
@@ -147,16 +148,16 @@ func runTimeSeriesRequest(ctx context.Context, logger log.Logger, req *backend.Q
 	if body != nil {
 		timeSeriesMethod += ":query"
 	}
-	r, err := createRequest(ctx, logger, &dsInfo, path.Join("/v3/projects", projectName, timeSeriesMethod), nil)
+	r, err := createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, timeSeriesMethod), nil)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
-	span := traceReq(ctx, tracer, req, dsInfo, r, params.Encode())
+	span := traceReq(ctx, req, dsInfo, r, params.Encode())
 	defer span.End()
 
-	d, err := doRequestWithPagination(ctx, logger, r, dsInfo, params, body)
+	d, err := doRequestWithPagination(ctx, r, dsInfo, params, body, logger)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
@@ -309,7 +310,7 @@ func appendFrames(
 	return frames, nil
 }
 
-func generateLink(projectName string, dataSets []map[string]interface{}, start, end string) (string, error) {
+func generateLink(projectName string, dataSets []map[string]any, start, end string) (string, error) {
 	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
 	if err != nil {
 		return "", err
@@ -319,8 +320,8 @@ func generateLink(projectName string, dataSets []map[string]interface{}, start, 
 	rawQuery.Set("project", projectName)
 	rawQuery.Set("Grafana_deeplink", "true")
 
-	pageState := map[string]interface{}{
-		"xyChart": map[string]interface{}{
+	pageState := map[string]any{
+		"xyChart": map[string]any{
 			"constantLines":     []string{},
 			"dataSets":          dataSets,
 			"timeshiftDuration": "0s",

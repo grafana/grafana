@@ -7,7 +7,7 @@ import { config } from 'app/core/config';
 
 import { DimensionContext } from '../dimensions';
 
-import { BackgroundConfig, Constraint, LineConfig, Placement } from './types';
+import { BackgroundConfig, Constraint, LineConfig, Placement, StandardEditorConfig } from './types';
 
 /**
  * This gets saved in panel json
@@ -42,6 +42,13 @@ export enum ConnectionPath {
   Straight = 'straight',
 }
 
+export enum ConnectionDirection {
+  Forward = 'forward',
+  Reverse = 'reverse',
+  Both = 'both',
+  None = 'none',
+}
+
 export interface CanvasConnection {
   source: ConnectionCoordinates;
   target: ConnectionCoordinates;
@@ -49,6 +56,12 @@ export interface CanvasConnection {
   path: ConnectionPath;
   color?: ColorDimensionConfig;
   size?: ScaleDimensionConfig;
+  lineStyle?: string;
+  vertices?: ConnectionCoordinates[];
+  radius?: ScaleDimensionConfig;
+  direction?: ConnectionDirection;
+  sourceOriginal?: ConnectionCoordinates;
+  targetOriginal?: ConnectionCoordinates;
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 
@@ -72,7 +85,7 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
   /** The default width/height to use when adding  */
   defaultSize?: Placement;
 
-  prepareData?: (ctx: DimensionContext, cfg: TConfig) => TData;
+  prepareData?: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<TConfig>) => TData;
 
   /** Component used to draw */
   display: ComponentType<CanvasElementProps<TConfig, TData>>;
@@ -84,8 +97,18 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
 
   /** If item has an edit mode */
   hasEditMode?: boolean;
+
+  /** Optional config to customize what standard element editor options are available for the item */
+  standardEditorConfig?: StandardEditorConfig;
+
+  /** Custom connection anchor coordinates, like for svg elements such as triangle, cloud, etc */
+  customConnectionAnchors?: Array<{
+    x: number;
+    y: number;
+  }>;
 }
 
 export const defaultBgColor = '#D9D9D9';
 export const defaultTextColor = '#000000';
+export const defaultLightTextColor = '#F0F4FD';
 export const defaultThemeTextColor = config.theme2.colors.text.primary;

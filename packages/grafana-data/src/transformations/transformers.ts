@@ -6,8 +6,10 @@ import { filterFieldsTransformer, filterFramesTransformer } from './transformers
 import { filterFieldsByNameTransformer } from './transformers/filterByName';
 import { filterFramesByRefIdTransformer } from './transformers/filterByRefId';
 import { filterByValueTransformer } from './transformers/filterByValue';
+import { formatStringTransformer } from './transformers/formatString';
 import { formatTimeTransformer } from './transformers/formatTime';
 import { groupByTransformer } from './transformers/groupBy';
+import { groupToNestedTable } from './transformers/groupToNestedTable';
 import { groupingToMatrixTransformer } from './transformers/groupingToMatrix';
 import { histogramTransformer } from './transformers/histogram';
 import { joinByFieldTransformer } from './transformers/joinByField';
@@ -30,6 +32,7 @@ export const standardTransformers = {
   filterFramesTransformer,
   filterFramesByRefIdTransformer,
   filterByValueTransformer,
+  formatStringTransformer,
   formatTimeTransformer,
   orderFieldsTransformer,
   organizeFieldsTransformer,
@@ -51,4 +54,5 @@ export const standardTransformers = {
   convertFieldTypeTransformer,
   groupingToMatrixTransformer,
   limitTransformer,
+  groupToNestedTable,
 };

@@ -16,50 +16,45 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/query"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func setupTestServer(
 	t *testing.T,
 	cfg *setting.Cfg,
-	features *featuremgmt.FeatureManager,
 	service publicdashboards.Service,
-	db db.DB,
 	user *user.SignedInUser,
+	ffEnabled bool,
 ) *web.Mux {
+	t.Helper()
+
 	// build router to register routes
 	rr := routing.NewRouteRegister()
 
-	var permissions []accesscontrol.Permission
-	if user != nil && user.Permissions != nil {
-		for action, scopes := range user.Permissions[user.OrgID] {
-			for _, scope := range scopes {
-				permissions = append(permissions, accesscontrol.Permission{
-					Action: action,
-					Scope:  scope,
-				})
-			}
-		}
-	}
-
-	acService := actest.FakeService{ExpectedPermissions: permissions, ExpectedDisabled: !cfg.RBACEnabled}
 	ac := acimpl.ProvideAccessControl(cfg)
 
 	// build mux
@@ -67,11 +62,21 @@ func setupTestServer(
 
 	// set initial context
 	m.Use(contextProvider(&testContext{user}))
-	m.Use(accesscontrol.LoadPermissionsMiddleware(acService))
 
-	// build api, this will mount the routes at the same time if
-	// featuremgmt.FlagPublicDashboard is enabled
-	ProvideApi(service, rr, ac, features)
+	features := featuremgmt.WithFeatures()
+	if ffEnabled {
+		features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
+	}
+
+	if cfg == nil {
+		cfg = setting.NewCfg()
+		cfg.PublicDashboardsEnabled = true
+	}
+
+	// build api, this will mount the routes at the same time if the feature is enabled
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", publicdashboardModels.FeaturePublicDashboardsEmailSharing).Return(false)
+	ProvideApi(service, rr, ac, features, &Middleware{}, cfg, license)
 
 	// connect routes to mux
 	rr.Register(m.Router)
@@ -116,7 +121,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 
 	// default cache service
 	if cs == nil {
-		cs = datasourceService.ProvideCacheService(localcache.ProvideService(), store)
+		cs = datasourceService.ProvideCacheService(localcache.ProvideService(), store, guardian.ProvideGuardian())
 	}
 
 	// default fakePluginClient
@@ -134,15 +139,17 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	}
 
 	ds := &fakeDatasources.FakeDataSourceService{}
-	pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &pluginFakes.FakePluginStore{
-		PluginList: []plugins.PluginDTO{
-			{
-				JSONData: plugins.JSONData{
-					ID: "mysql",
+	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(),
+		localcache.ProvideService(), &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID: "mysql",
+					},
 				},
 			},
-		},
-	}, ds, pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()))
+		}, &fakeDatasources.FakeCacheService{}, ds,
+		pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider())
 
 	return query.ProvideService(
 		setting.NewCfg(),

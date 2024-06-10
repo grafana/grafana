@@ -67,20 +67,6 @@ describe('Plugins Selectors', () => {
       expect(results.map(({ name }) => name)).toEqual(['Plugin 3', 'Plugin 4']);
     });
 
-    it('should be possible to search for core plugins', () => {
-      const results = selectPlugins({ isCore: true })(store.getState());
-
-      expect(results).toHaveLength(2);
-      expect(results.map(({ name }) => name)).toEqual(['Plugin 1', 'Plugin 2']);
-    });
-
-    it('should be possible to exclude core plugins from the search', () => {
-      const results = selectPlugins({ isCore: false })(store.getState());
-
-      expect(results).toHaveLength(3);
-      expect(results.map(({ name }) => name)).toEqual(['Plugin 3', 'Plugin 4', 'Plugin 5']);
-    });
-
     it('should be possible to only search for installed plugins', () => {
       const results = selectPlugins({ isInstalled: true })(store.getState());
 

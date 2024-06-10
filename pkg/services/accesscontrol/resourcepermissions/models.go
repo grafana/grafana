@@ -2,7 +2,7 @@ package resourcepermissions
 
 import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 type SetResourcePermissionCommand struct {
@@ -29,5 +29,5 @@ type GetResourcePermissionsQuery struct {
 	OnlyManaged          bool
 	InheritedScopes      []string
 	EnforceAccessControl bool
-	User                 *user.SignedInUser
+	User                 identity.Requester
 }

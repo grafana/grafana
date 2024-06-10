@@ -153,7 +153,7 @@ type DatasourceProxyRouteParam struct {
 type DatasourceProxyPOSTcallsParams struct {
 	// in:body
 	// required:true
-	DatasourceProxyParam interface{}
+	DatasourceProxyParam any
 	// in:path
 	// required:true
 	DatasourceProxyRoute string `json:"datasource_proxy_route"`
@@ -166,7 +166,7 @@ type DatasourceProxyPOSTcallsParams struct {
 type DatasourceProxyPOSTByUIDcallsParams struct {
 	// in:body
 	// required:true
-	DatasourceProxyParam interface{}
+	DatasourceProxyParam any
 	// in:path
 	// required:true
 	DatasourceProxyRoute string `json:"datasource_proxy_route"`

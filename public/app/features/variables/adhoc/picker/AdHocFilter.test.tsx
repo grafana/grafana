@@ -84,13 +84,11 @@ function setup() {
       key: 'key1',
       operator: '=',
       value: 'val1',
-      condition: '',
     },
     {
       key: 'key2',
       operator: '=',
       value: 'val2',
-      condition: '',
     },
   ];
   const addFilter = jest.fn();

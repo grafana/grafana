@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -14,14 +13,9 @@ type CleanupServiceImpl struct {
 	store store
 }
 
-func ProvideCleanupService(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *CleanupServiceImpl {
+func ProvideCleanupService(db db.DB, cfg *setting.Cfg) *CleanupServiceImpl {
 	return &CleanupServiceImpl{
-		store: &xormRepositoryImpl{
-			cfg:      cfg,
-			features: features,
-			db:       db,
-			log:      log.New("annotations"),
-		},
+		store: NewXormStore(cfg, log.New("annotations"), db, nil),
 	}
 }
 

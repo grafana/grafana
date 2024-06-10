@@ -205,10 +205,10 @@ describe('AnnotationsSettings', () => {
     await userEvent.clear(nameInput);
     await userEvent.type(nameInput, 'My Prometheus Annotation');
 
-    await userEvent.click(screen.getByText(/testdata/i));
+    await userEvent.click(screen.getByPlaceholderText(/testdata/i));
 
     expect(await screen.findByText(/Prometheus/i)).toBeVisible();
-    expect(screen.queryAllByText(/testdata/i)).toHaveLength(2);
+    expect(screen.queryAllByText(/testdata/i)).toHaveLength(1);
 
     await userEvent.click(screen.getByText(/prometheus/i));
 

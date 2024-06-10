@@ -1,4 +1,11 @@
-import { Centrifuge, State } from 'centrifuge';
+import {
+  Centrifuge,
+  ConnectedContext,
+  ConnectingContext,
+  DisconnectedContext,
+  ServerPublicationContext,
+  State,
+} from 'centrifuge';
 import { BehaviorSubject, Observable, share, startWith } from 'rxjs';
 
 import {
@@ -104,15 +111,15 @@ export class CentrifugeService implements CentrifugeSrv {
   // Internal functions
   //----------------------------------------------------------
 
-  private onConnect = (context: any) => {
+  private onConnect = (context: ConnectedContext) => {
     this.connectionState.next(true);
   };
 
-  private onDisconnect = (context: any) => {
+  private onDisconnect = (context: ConnectingContext | DisconnectedContext) => {
     this.connectionState.next(false);
   };
 
-  private onServerSideMessage = (context: any) => {
+  private onServerSideMessage = (context: ServerPublicationContext) => {
     console.log('Publication from server-side channel', context);
   };
 

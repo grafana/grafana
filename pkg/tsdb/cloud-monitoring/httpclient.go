@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana-google-sdk-go/pkg/tokenprovider"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	infrahttp "github.com/grafana/grafana/pkg/infra/httpclient"
 )
 
 const (
@@ -59,7 +58,7 @@ func getMiddleware(model *datasourceInfo, routePath string) (httpclient.Middlewa
 	return tokenprovider.AuthMiddleware(provider), nil
 }
 
-func newHTTPClient(model *datasourceInfo, opts httpclient.Options, clientProvider infrahttp.Provider, route string) (*http.Client, error) {
+func newHTTPClient(model *datasourceInfo, opts httpclient.Options, clientProvider *httpclient.Provider, route string) (*http.Client, error) {
 	m, err := getMiddleware(model, route)
 	if err != nil {
 		return nil, err

@@ -303,7 +303,7 @@ function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
       flexDirection: 'column',
       width: '100%',
       padding: theme.spacing(2),
-      borderRadius: '2px',
+      borderRadius: theme.shape.radius.default,
       border: `1px dashed ${theme.colors.border.strong}`,
       backgroundColor: isDragActive ? theme.colors.background.secondary : theme.colors.background.primary,
       cursor: 'pointer',

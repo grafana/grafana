@@ -1,12 +1,13 @@
 {
-  "name": "Google Cloud Monitoring",
   "type": "datasource",
+  "name": "Google Cloud Monitoring",
   "id": "stackdriver",
   "category": "cloud",
 
   "metrics": true,
   "alerting": true,
   "annotations": true,
+  "logs": true,
   "backend": true,
   "includes": [
     {
@@ -79,10 +80,10 @@
     "maxDataPoints": true,
     "cacheTimeout": true
   },
-
+  "executable": "gpx_cloudmonitoring",
   "info": {
     "description": "Data source for Google's monitoring service (formerly named Stackdriver)",
-    "version": "1.0.0",
+    "version": "%VERSION%",
     "logos": {
       "small": "img/cloud_monitoring_logo.svg",
       "large": "img/cloud_monitoring_logo.svg"

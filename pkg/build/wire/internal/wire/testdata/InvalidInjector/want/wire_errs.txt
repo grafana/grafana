@@ -1,0 +1,3 @@
+a call to wire.Build indicates that this function is an injector, but injectors must consist of only the wire.Build call and an optional return
+
+a call to wire.Build indicates that this function is an injector, but injectors must consist of only the wire.Build call and an optional return

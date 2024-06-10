@@ -129,8 +129,6 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
 
   const getMatchesMetadata = useCallback(
     (depth: number, services: number) => {
-      const matchedServices: string[] = [];
-      const matchedDepth: number[] = [];
       let metadata = (
         <>
           <span>{`${trace.spans.length} spans`}</span>
@@ -144,13 +142,6 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
       );
 
       if (spanFilterMatches) {
-        spanFilterMatches.forEach((spanID) => {
-          if (trace.processes[spanID]) {
-            matchedServices.push(trace.processes[spanID].serviceName);
-            matchedDepth.push(trace.spans.find((span) => span.spanID === spanID)?.depth || 0);
-          }
-        });
-
         if (spanFilterMatches.size === 0) {
           metadata = (
             <>
@@ -167,6 +158,13 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
               ? `${focusedSpanIndexForSearch + 1}/${spanFilterMatches.size} ${type}`
               : `${spanFilterMatches.size} ${type}`;
 
+          const matchedServices: string[] = [];
+          spanFilterMatches.forEach((spanID) => {
+            if (trace.processes[spanID]) {
+              matchedServices.push(trace.processes[spanID].serviceName);
+            }
+          });
+
           metadata = (
             <>
               <span>{text}</span>
@@ -175,9 +173,7 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
                   <div>
                     Services: {new Set(matchedServices).size}/{services}
                   </div>
-                  <div>
-                    Depth: {new Set(matchedDepth).size}/{depth}
-                  </div>
+                  <div>Depth: {depth}</div>
                 </>
               )}
             </>
@@ -248,6 +244,7 @@ export const getStyles = (theme: GrafanaTheme2, showSpanFilters: boolean) => {
     `,
     matches: css`
       margin-right: ${theme.spacing(2)};
+      text-wrap: nowrap;
     `,
     tooltip: css`
       color: #aaa;

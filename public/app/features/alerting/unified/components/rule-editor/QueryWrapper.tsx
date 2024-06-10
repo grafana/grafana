@@ -12,14 +12,13 @@ import {
   RelativeTimeRange,
   ThresholdsConfig,
 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { DataQuery } from '@grafana/schema';
-import { GraphTresholdsStyleMode, Icon, InlineFormLabel, Input, Tooltip, useStyles2 } from '@grafana/ui';
+import { GraphThresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { msToSingleUnitDuration } from '../../utils/time';
-import { AlertConditionIndicator } from '../expressions/AlertConditionIndicator';
+import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
 
 import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
@@ -46,7 +45,7 @@ interface Props {
   onRunQueries: () => void;
   index: number;
   thresholds: ThresholdsConfig;
-  thresholdsType?: GraphTresholdsStyleMode;
+  thresholdsType?: GraphThresholdsStyleMode;
   onChangeThreshold?: (thresholds: ThresholdsConfig, index: number) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
@@ -119,8 +118,10 @@ export const QueryWrapper = ({
       minInterval: queryOptions.minInterval,
     };
 
+    const isAlertCondition = condition === query.refId;
+
     return (
-      <Stack direction="row" alignItems="baseline" gap={1}>
+      <Stack direction="row" alignItems="center" gap={1}>
         <SelectingDataSourceTooltip />
         <QueryOptions
           onChangeTimeRange={onChangeTimeRange}
@@ -129,17 +130,15 @@ export const QueryWrapper = ({
           onChangeQueryOptions={onChangeQueryOptions}
           index={index}
         />
-
-        <AlertConditionIndicator
-          onSetCondition={() => onSetCondition(query.refId)}
-          enabled={condition === query.refId}
-          error={error}
-        />
+        <ExpressionStatusIndicator onSetCondition={() => onSetCondition(query.refId)} isCondition={isAlertCondition} />
       </Stack>
     );
   }
 
   const showVizualisation = data.state !== LoadingState.NotStarted;
+  // ⚠️ the query editors want the entire array of queries passed as "DataQuery" NOT "AlertQuery"
+  // TypeScript isn't complaining here because the interfaces just happen to be compatible
+  const editorQueries = cloneDeep(queries.map((query) => query.model));
 
   return (
     <Stack direction="column" gap={0.5}>
@@ -159,10 +158,10 @@ export const QueryWrapper = ({
           onRemoveQuery={onRemoveQuery}
           onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
           onRunQuery={onRunQueries}
-          queries={queries}
+          queries={editorQueries}
           renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
           app={CoreApp.UnifiedAlerting}
-          hideDisableQuery={true}
+          hideHideQueryButton={true}
         />
       </div>
       {showVizualisation && (
@@ -205,27 +204,20 @@ export function MaxDataPointsOption({
   };
 
   return (
-    <Stack direction="row" alignItems="baseline" gap={1}>
-      <InlineFormLabel
-        width={8}
-        tooltip={
-          <>
-            The maximum data points per series. Used directly by some data sources and used in calculation of auto
-            interval. With streaming data this value is used for the rolling buffer.
-          </>
-        }
-      >
-        Max data points
-      </InlineFormLabel>
+    <InlineField
+      labelWidth={24}
+      label="Max data points"
+      tooltip="The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer."
+    >
       <Input
         type="number"
-        className="width-6"
-        placeholder={DEFAULT_MAX_DATA_POINTS.toLocaleString()}
+        width={10}
+        placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
         onBlur={onMaxDataPointsBlur}
         defaultValue={value}
       />
-    </Stack>
+    </InlineField>
   );
 }
 
@@ -249,27 +241,25 @@ export function MinIntervalOption({
   };
 
   return (
-    <Stack direction="row" alignItems="baseline" gap={1}>
-      <InlineFormLabel
-        width={8}
-        tooltip={
-          <>
-            A lower limit for the interval. Recommended to be set to write frequency, for example <code>1m</code> if
-            your data is written every minute.
-          </>
-        }
-      >
-        Min interval
-      </InlineFormLabel>
+    <InlineField
+      label="Interval"
+      labelWidth={24}
+      tooltip={
+        <>
+          Interval sent to the data source. Recommended to be set to write frequency, for example <code>1m</code> if
+          your data is written every minute.
+        </>
+      }
+    >
       <Input
         type="text"
-        className="width-6"
+        width={10}
         placeholder={DEFAULT_MIN_INTERVAL}
         spellCheck={false}
         onBlur={onMinIntervalBlur}
         defaultValue={value}
       />
-    </Stack>
+    </InlineField>
   );
 }
 
@@ -278,14 +268,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: AlertingQueryWrapper;
     margin-bottom: ${theme.spacing(1)};
     border: 1px solid ${theme.colors.border.weak};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
 
     button {
       overflow: visible;
     }
-  `,
-  queryOptions: css`
-    margin-bottom: -${theme.spacing(2)};
   `,
   dsTooltip: css`
     display: flex;

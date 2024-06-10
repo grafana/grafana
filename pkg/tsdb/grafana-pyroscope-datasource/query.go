@@ -1,4 +1,4 @@
-package phlare
+package pyroscope
 
 import (
 	"context"
@@ -10,10 +10,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
 	"github.com/xlab/treeprint"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -27,21 +31,29 @@ type dsJsonModel struct {
 }
 
 const (
-	queryTypeProfile = string(dataquery.PhlareQueryTypeProfile)
-	queryTypeMetrics = string(dataquery.PhlareQueryTypeMetrics)
-	queryTypeBoth    = string(dataquery.PhlareQueryTypeBoth)
+	queryTypeProfile = string(dataquery.PyroscopeQueryTypeProfile)
+	queryTypeMetrics = string(dataquery.PyroscopeQueryTypeMetrics)
+	queryTypeBoth    = string(dataquery.PyroscopeQueryTypeBoth)
 )
 
-// query processes single Phlare query transforming the response to data.Frame packaged in DataResponse
-func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+// query processes single Pyroscope query transforming the response to data.Frame packaged in DataResponse
+func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.query", trace.WithAttributes(attribute.String("query_type", query.QueryType)))
+	defer span.End()
+
 	var qm queryModel
 	response := backend.DataResponse{}
 
 	err := json.Unmarshal(query.JSON, &qm)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		response.Error = fmt.Errorf("error unmarshaling query model: %v", err)
 		return response
 	}
+
+	profileTypeId := depointerizer(qm.ProfileTypeId)
+	labelSelector := depointerizer(qm.LabelSelector)
 
 	responseMutex := sync.Mutex{}
 	g, gCtx := errgroup.WithContext(ctx)
@@ -50,6 +62,8 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 			var dsJson dsJsonModel
 			err = json.Unmarshal(pCtx.DataSourceInstanceSettings.JSONData, &dsJson)
 			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				return fmt.Errorf("error unmarshaling datasource json model: %v", err)
 			}
 
@@ -58,21 +72,23 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 				parsedInterval, err = gtime.ParseDuration(dsJson.MinStep)
 				if err != nil {
 					parsedInterval = time.Second * 15
-					logger.Debug("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep)
+					logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
 				}
 			}
-			logger.Debug("Sending SelectSeriesRequest", "queryModel", qm)
+			logger.Debug("Sending SelectSeriesRequest", "queryModel", qm, "function", logEntrypoint())
 			seriesResp, err := d.client.GetSeries(
 				gCtx,
-				qm.ProfileTypeId,
-				qm.LabelSelector,
+				profileTypeId,
+				labelSelector,
 				query.TimeRange.From.UnixMilli(),
 				query.TimeRange.To.UnixMilli(),
 				qm.GroupBy,
 				math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
 			)
 			if err != nil {
-				logger.Error("Querying SelectSeries()", "err", err)
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+				logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
 				return err
 			}
 			// add the frames to the response.
@@ -85,40 +101,66 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
 		g.Go(func() error {
-			logger.Debug("Calling GetProfile", "queryModel", qm)
-			prof, err := d.client.GetProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
-			if err != nil {
-				logger.Error("Error GetProfile()", "err", err)
-				return err
+			var profileResp *ProfileResponse
+			if len(qm.SpanSelector) > 0 {
+				logger.Debug("Calling GetSpanProfile", "queryModel", qm, "function", logEntrypoint())
+				prof, err := d.client.GetSpanProfile(gCtx, profileTypeId, labelSelector, qm.SpanSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+				if err != nil {
+					span.RecordError(err)
+					span.SetStatus(codes.Error, err.Error())
+					logger.Error("Error GetSpanProfile()", "err", err, "function", logEntrypoint())
+					return err
+				}
+				profileResp = prof
+			} else {
+				logger.Debug("Calling GetProfile", "queryModel", qm, "function", logEntrypoint())
+				prof, err := d.client.GetProfile(gCtx, profileTypeId, labelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+				if err != nil {
+					span.RecordError(err)
+					span.SetStatus(codes.Error, err.Error())
+					logger.Error("Error GetProfile()", "err", err, "function", logEntrypoint())
+					return err
+				}
+				profileResp = prof
 			}
-			frame := responseToDataFrames(prof)
+
+			var frame *data.Frame
+			if profileResp != nil {
+				frame = responseToDataFrames(profileResp)
+
+				// If query called with streaming on then return a channel
+				// to subscribe on a client-side and consume updates from a plugin.
+				// Feel free to remove this if you don't need streaming for your datasource.
+				if qm.WithStreaming {
+					channel := live.Channel{
+						Scope:     live.ScopeDatasource,
+						Namespace: pCtx.DataSourceInstanceSettings.UID,
+						Path:      "stream",
+					}
+					frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
+				}
+			} else {
+				// We still send empty data frame to give feedback that query really run, just didn't return any data.
+				frame = getEmptyDataFrame()
+			}
 			responseMutex.Lock()
 			response.Frames = append(response.Frames, frame)
 			responseMutex.Unlock()
 
-			// If query called with streaming on then return a channel
-			// to subscribe on a client-side and consume updates from a plugin.
-			// Feel free to remove this if you don't need streaming for your datasource.
-			if qm.WithStreaming {
-				channel := live.Channel{
-					Scope:     live.ScopeDatasource,
-					Namespace: pCtx.DataSourceInstanceSettings.UID,
-					Path:      "stream",
-				}
-				frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
-			}
 			return nil
 		})
 	}
 
 	if err := g.Wait(); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		response.Error = g.Wait()
 	}
 
 	return response
 }
 
-// responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
+// responseToDataFrames turns Pyroscope response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
 func responseToDataFrames(resp *ProfileResponse) *data.Frame {
@@ -151,7 +193,7 @@ type ProfileTree struct {
 }
 
 // levelsToTree converts flamebearer format into a tree. This is needed to then convert it into nested set format
-// dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Phlare API.
+// dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Pyroscope API.
 func levelsToTree(levels []*Level, names []string) *ProfileTree {
 	if len(levels) == 0 {
 		return nil
@@ -176,7 +218,7 @@ func levelsToTree(levels []*Level, names []string) *ProfileTree {
 
 		// If we still have levels to go, this should not happen. Something is probably wrong with the flamebearer data.
 		if len(parentsStack) == 0 {
-			logger.Error("parentsStack is empty but we are not at the the last level", "currentLevel", currentLevel)
+			logger.Error("ParentsStack is empty but we are not at the last level", "currentLevel", currentLevel, "function", logEntrypoint())
 			break
 		}
 
@@ -220,7 +262,7 @@ func levelsToTree(levels []*Level, names []string) *ProfileTree {
 				// We went out of parents bounds so lets move to next parent. We will evaluate the same item again, but
 				// we will check if it is a child of the next parent item in line.
 				if len(parentsStack) == 0 {
-					logger.Error("parentsStack is empty but there are still items in current level", "currentLevel", currentLevel, "itemIndex", itemIndex)
+					logger.Error("ParentsStack is empty but there are still items in current level", "currentLevel", currentLevel, "itemIndex", itemIndex, "function", logEntrypoint())
 					break
 				}
 				currentParent = parentsStack[:1][0]
@@ -271,6 +313,18 @@ func (pt *ProfileTree) String() string {
 		}
 	}
 	return tree.String()
+}
+
+func getEmptyDataFrame() *data.Frame {
+	var emptyProfileDataFrame = data.NewFrame("response")
+	emptyProfileDataFrame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
+	emptyProfileDataFrame.Fields = data.Fields{
+		data.NewField("level", nil, []int64{}),
+		data.NewField("value", nil, []int64{}),
+		data.NewField("self", nil, []int64{}),
+		data.NewField("label", nil, []string{}),
+	}
+	return emptyProfileDataFrame
 }
 
 type CustomMeta struct {
@@ -398,4 +452,13 @@ func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
 		frames = append(frames, frame)
 	}
 	return frames
+}
+
+func depointerizer[T any](v *T) T {
+	var emptyValue T
+	if v != nil {
+		emptyValue = *v
+	}
+
+	return emptyValue
 }
