@@ -195,9 +195,8 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 		if err := am.checkReadiness(ctx); err != nil {
 			return fmt.Errorf("unable to pass the readiness check: %w", err)
 		}
-		am.log.Debug("Completed readiness check for remote Alertmanager", "url", am.url)
+		am.log.Debug("Completed readiness check for remote Alertmanager, starting state upload", "url", am.url)
 
-		am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
 		if err := am.CompareAndSendState(ctx); err != nil {
 			return fmt.Errorf("unable to upload the state to the remote Alertmanager: %w", err)
 		}
