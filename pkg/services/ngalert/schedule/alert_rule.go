@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -56,11 +57,12 @@ func newRuleFactory(
 	met *metrics.Scheduler,
 	logger log.Logger,
 	tracer tracing.Tracer,
+	recordingWriter writer.Writer,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
 ) ruleFactoryFunc {
 	return func(ctx context.Context, rule *ngmodels.AlertRule) Rule {
-		if rule.IsRecordingRule() {
+		if rule.Type() == ngmodels.RuleTypeRecording {
 			return newRecordingRule(
 				ctx,
 				maxAttempts,
@@ -70,6 +72,7 @@ func newRuleFactory(
 				logger,
 				met,
 				tracer,
+				recordingWriter,
 			)
 		}
 		return newAlertRule(
@@ -214,7 +217,6 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 	logger := a.logger.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
 
-	evalRunning := false
 	var currentFingerprint fingerprint
 	defer a.stopApplied(key)
 	for {
@@ -236,19 +238,14 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 				logger.Debug("Evaluation channel has been closed. Exiting")
 				return nil
 			}
-			if evalRunning {
-				continue
-			}
 
 			func() {
 				orgID := fmt.Sprint(key.OrgID)
 				evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
 				evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
 
-				evalRunning = true
 				evalStart := a.clock.Now()
 				defer func() {
-					evalRunning = false
 					a.evalApplied(key, ctx.scheduledAt)
 					evalDuration.Observe(a.clock.Now().Sub(evalStart).Seconds())
 				}()

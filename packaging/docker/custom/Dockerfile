@@ -32,10 +32,17 @@ RUN mkdir -p "$GF_PATHS_PLUGINS" && \
 USER grafana
 
 RUN if [ $GF_INSTALL_IMAGE_RENDERER_PLUGIN = "true" ]; then \
-      grafana-cli \
-        --pluginsDir "$GF_PATHS_PLUGINS" \
-        --pluginUrl https://github.com/grafana/grafana-image-renderer/releases/latest/download/plugin-linux-x64-glibc-no-chromium.zip \
-        plugins install grafana-image-renderer; \
+      if grep -i -q alpine /etc/issue; then \
+        grafana-cli \
+          --pluginsDir "$GF_PATHS_PLUGINS" \
+          --pluginUrl https://github.com/grafana/grafana-image-renderer/releases/latest/download/plugin-alpine-x64-no-chromium.zip \
+          plugins install grafana-image-renderer; \
+      else \
+        grafana-cli \
+          --pluginsDir "$GF_PATHS_PLUGINS" \
+          --pluginUrl https://github.com/grafana/grafana-image-renderer/releases/latest/download/plugin-linux-x64-glibc-no-chromium.zip \
+          plugins install grafana-image-renderer; \
+      fi \
     fi
 
 ARG GF_INSTALL_PLUGINS=""

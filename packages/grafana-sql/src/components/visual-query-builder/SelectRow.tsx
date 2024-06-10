@@ -239,7 +239,7 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
               />
             </EditorField>
             <Button
-              aria-label="Remove"
+              title="Remove column"
               type="button"
               icon="trash-alt"
               variant="secondary"
@@ -253,9 +253,9 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
         type="button"
         onClick={addColumn}
         variant="secondary"
+        title="Add column"
         size="md"
         icon="plus"
-        aria-label="Add"
         className={styles.addButton}
       />
     </Stack>

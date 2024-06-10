@@ -526,6 +526,9 @@ export const Components = {
   CodeEditor: {
     container: 'data-testid Code editor container',
   },
+  ReactMonacoEditor: {
+    editorLazy: 'data-testid ReactMonacoEditor editorLazy',
+  },
   DashboardImportPage: {
     textarea: 'data-testid-import-dashboard-textarea',
     submit: 'data-testid-load-dashboard',
