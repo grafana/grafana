@@ -411,11 +411,26 @@ By default, Azure AD authentication will map users to organization roles based o
 
 If no application role is found, the user is assigned the role specified by
 [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
-You can disable this default role assignment by setting `role_attribute_strict = true`.
-It denies user access if no role or an invalid role is returned.
+You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned and the `org_mapping` expression evaluates to an empty mapping.
+
+You can use the `org_mapping` configuration option to assign the user to multiple organizations and specify their role based on their Entra ID group membership. For more information, refer to [Org roles mapping example](#org-roles-mapping-example). If the org role mapping (`org_mapping`) is specified and Entra ID returns a valid role, then the user will get the highest of the two roles.
 
 **On every login** the user organization role will be reset to match Entra ID's application role and
 their organization membership will be reset to the default organization.
+
+#### Org roles mapping example
+
+The Entra ID integration uses the external users' groups in the `org_mapping` configuration to map organizations and roles based on their Entra ID group membership.
+
+In this example, the user has been granted the role of a `Viewer` in the `org_foo` organization, and the role of an `Editor` in the `org_bar` and `org_baz` orgs.
+
+The external user is part of the following Entra ID groups: `032cb8e0-240f-4347-9120-6f33013e817a` and `bce1c492-0679-4989-941b-8de5e6789cb9`.
+
+Config:
+
+```ini
+org_mapping = ["032cb8e0-240f-4347-9120-6f33013e817a:org_foo:Viewer", "bce1c492-0679-4989-941b-8de5e6789cb9:org_bar:Editor", "*:org_baz:Editor"]
+```
 
 ## Skip organization role sync
 
