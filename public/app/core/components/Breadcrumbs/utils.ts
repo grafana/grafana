@@ -37,7 +37,7 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
     if (shouldAddCrumb) {
       const activeChild = node.children?.find((child) => child.active);
       if (activeChild) {
-        crumbs.unshift({ text: `${node.text} (${activeChild?.text})`, href: node.url ?? '' });
+        crumbs.unshift({ text: `${node.text} (${activeChild.text})`, href: activeChild.url ?? '' });
       } else {
         crumbs.unshift({ text: node.text, href: node.url ?? '' });
       }
