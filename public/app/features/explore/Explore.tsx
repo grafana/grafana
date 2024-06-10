@@ -234,14 +234,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs Popover Menu.
    */
-  onClickFilterValue = (value: string | number, refId?: string) => {
+  onClickFilterString = (value: string | number, refId?: string) => {
     this.onModifyQueries({ type: 'ADD_STRING_FILTER', options: { value: value.toString() } }, refId);
   };
 
   /**
    * Used by Logs Popover Menu.
    */
-  onClickFilterOutValue = (value: string | number, refId?: string) => {
+  onClickFilterOutString = (value: string | number, refId?: string) => {
     this.onModifyQueries({ type: 'ADD_STRING_FILTER_OUT', options: { value: value.toString() } }, refId);
   };
 
@@ -436,8 +436,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           splitOpenFn={this.onSplitOpen('logs')}
           scrollElement={this.scrollElement}
           isFilterLabelActive={this.isFilterLabelActive}
-          onClickFilterValue={this.onClickFilterValue}
-          onClickFilterOutValue={this.onClickFilterOutValue}
+          onClickFilterString={this.onClickFilterString}
+          onClickFilterOutString={this.onClickFilterOutString}
         />
       </ContentOutlineItem>
     );

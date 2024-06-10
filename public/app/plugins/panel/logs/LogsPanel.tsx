@@ -33,8 +33,8 @@ import {
   isIsFilterLabelActive,
   isOnClickFilterLabel,
   isOnClickFilterOutLabel,
-  isOnClickFilterOutValue,
-  isOnClickFilterValue,
+  isOnClickFilterOutString,
+  isOnClickFilterString,
   Options,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
@@ -48,10 +48,10 @@ interface LogsPanelProps extends PanelProps<Options> {
    * onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
    *
    * Adds a string filter to the query referenced by the provided DataFrame refId. Used by the Logs popover menu.
-   * onClickFilterOutValue?: (value: string, refId?: string) => void;
+   * onClickFilterOutString?: (value: string, refId?: string) => void;
    *
    * Removes a string filter to the query referenced by the provided DataFrame refId. Used by the Logs popover menu.
-   * onClickFilterValue?: (value: string, refId?: string) => void;
+   * onClickFilterString?: (value: string, refId?: string) => void;
    *
    * Determines if a given key => value filter is active in a given query. Used by Log details.
    * isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
@@ -81,8 +81,8 @@ export const LogsPanel = ({
     showLogContextToggle,
     onClickFilterLabel,
     onClickFilterOutLabel,
-    onClickFilterOutValue,
-    onClickFilterValue,
+    onClickFilterOutString,
+    onClickFilterString,
     isFilterLabelActive,
   },
   id,
@@ -306,8 +306,8 @@ export const LogsPanel = ({
             onOpenContext={onOpenContext}
             onClickFilterLabel={isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : undefined}
             onClickFilterOutLabel={isOnClickFilterOutLabel(onClickFilterOutLabel) ? onClickFilterOutLabel : undefined}
-            onClickFilterValue={isOnClickFilterValue(onClickFilterValue) ? onClickFilterValue : undefined}
-            onClickFilterOutValue={isOnClickFilterOutValue(onClickFilterOutValue) ? onClickFilterOutValue : undefined}
+            onClickFilterString={isOnClickFilterString(onClickFilterString) ? onClickFilterString : undefined}
+            onClickFilterOutString={isOnClickFilterOutString(onClickFilterOutString) ? onClickFilterOutString : undefined}
             isFilterLabelActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}

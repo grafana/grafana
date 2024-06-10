@@ -5,7 +5,7 @@ export { Options } from './panelcfg.gen';
 type onClickFilterLabelType = (key: string, value: string, frame?: DataFrame) => void;
 type onClickFilterOutLabelType = (key: string, value: string, frame?: DataFrame) => void;
 type onClickFilterValueType = (value: string, refId?: string) => void;
-type onClickFilterOutValueType = (value: string, refId?: string) => void;
+type onClickFilterOutStringType = (value: string, refId?: string) => void;
 type isFilterLabelActiveType = (key: string, value: string, refId?: string) => Promise<boolean>;
 
 export function isOnClickFilterLabel(callback: unknown): callback is onClickFilterLabelType {
@@ -16,11 +16,11 @@ export function isOnClickFilterOutLabel(callback: unknown): callback is onClickF
   return typeof callback === 'function';
 }
 
-export function isOnClickFilterValue(callback: unknown): callback is onClickFilterValueType {
+export function isOnClickFilterString(callback: unknown): callback is onClickFilterValueType {
   return typeof callback === 'function';
 }
 
-export function isOnClickFilterOutValue(callback: unknown): callback is onClickFilterOutValueType {
+export function isOnClickFilterOutString(callback: unknown): callback is onClickFilterOutStringType {
   return typeof callback === 'function';
 }
 
