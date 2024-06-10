@@ -101,7 +101,7 @@ myOldFunction(name: string) {
 1. Add a deprecation comment `// @deprecated`.
 2. Add info in the comment about _when it is going to be removed_.
 3. Add info in the comment about _what should be used instead_.
-4. In case it's a function or a method, use `deprecationWarning(<file name>, <old name>, <new name>)` to raise attention during runtime.
+4. In case it's a function or a method, use `deprecationWarning(<FILENAME>, <OLD NAME>, <NEW NAME>)` to raise attention during runtime.
 5. Update the [migration guide](https://grafana.com/developers/plugin-tools/migration-guides/) with your instructions.
 
 ### Communicate
