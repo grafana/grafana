@@ -81,19 +81,19 @@ func replaceNumbersInMap(m map[string]any) (map[string]any, error) {
 
 	result := make(map[string]any)
 	for k, v := range m {
-		switch v.(type) {
+		switch v := v.(type) {
 		case json.Number:
-			result[k], err = v.(json.Number).Int64()
+			result[k], err = v.Int64()
 			if err != nil {
 				return nil, err
 			}
 		case []any:
-			result[k], err = replaceNumbersInSlice(v.([]any))
+			result[k], err = replaceNumbersInSlice(v)
 			if err != nil {
 				return nil, err
 			}
 		case map[string]any:
-			result[k], err = replaceNumbersInMap(v.(map[string]any))
+			result[k], err = replaceNumbersInMap(v)
 			if err != nil {
 				return nil, err
 			}
@@ -108,21 +108,21 @@ func replaceNumbersInMap(m map[string]any) (map[string]any, error) {
 func replaceNumbersInSlice(s []any) ([]any, error) {
 	result := make([]any, 0)
 	for _, v := range s {
-		switch v.(type) {
+		switch v := v.(type) {
 		case json.Number:
-			number, err := v.(json.Number).Int64()
+			number, err := v.Int64()
 			if err != nil {
 				return nil, err
 			}
 			result = append(result, number)
 		case []any:
-			inner, err := replaceNumbersInSlice(v.([]any))
+			inner, err := replaceNumbersInSlice(v)
 			if err != nil {
 				return nil, err
 			}
 			result = append(result, inner)
 		case map[string]any:
-			inner, err := replaceNumbersInMap(v.(map[string]any))
+			inner, err := replaceNumbersInMap(v)
 			if err != nil {
 				return nil, err
 			}
