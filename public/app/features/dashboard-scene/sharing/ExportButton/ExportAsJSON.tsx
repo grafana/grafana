@@ -8,7 +8,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneObjectRef } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Stack, Switch, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans } from 'app/core/internationalization';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { DashboardModel } from 'app/features/dashboard/state';
 
@@ -78,12 +78,6 @@ export default function ExportAsJSON({ dashboardRef }: Props) {
     const json = await getExportableDashboardJson();
     return JSON.stringify(json, null, 2);
   }, [isSharingExternally]);
-
-  const exportExternallyTranslation = t(
-    'export.json.export-externally-label',
-    `Export the dashboard to use in another instance`
-  );
-
   return (
     <>
       <p className="export-json-drawer-info-text">
@@ -99,7 +93,9 @@ export default function ExportAsJSON({ dashboardRef }: Props) {
           value={isSharingExternally}
           onChange={onShareExternallyChange}
         />
-        <Label className={styles.switchItemLabel}>{exportExternallyTranslation}</Label>
+        <Label className={styles.switchItemLabel}>
+          <Trans i18nKey="export.json.export-externally-label">Export the dashboard to use in another instance</Trans>
+        </Label>
       </div>
 
       <AutoSizer disableHeight className={styles.codeEditorBox} data-testid={selector.codeEditor}>

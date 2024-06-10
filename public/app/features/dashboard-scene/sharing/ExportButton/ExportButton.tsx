@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Button, ButtonGroup, Dropdown, Icon } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 
@@ -29,7 +30,7 @@ export default function ExportButton({ dashboard }: { dashboard: DashboardScene 
           fill="solid"
           tooltip="Export"
         >
-          Export
+          <Trans i18nKey="export.menu.export-as-json-label">Export</Trans>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />
         </Button>
       </Dropdown>
