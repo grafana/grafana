@@ -1,17 +1,13 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { IconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { IconName } from '../../types/icon';
-import { Button, ButtonVariant } from '../Button';
-import { Input } from '../Input/Input';
-import { Box } from '../Layout/Box/Box';
-import { Stack } from '../Layout/Stack/Stack';
+import { ButtonVariant } from '../Button';
 import { Modal } from '../Modal/Modal';
+
+import { ConfirmContent } from './ConfirmContent';
 
 export interface ConfirmModalProps {
   /** Toggle modal's open/closed state */
@@ -68,89 +64,29 @@ export const ConfirmModal = ({
   onAlternative,
   confirmButtonVariant = 'destructive',
 }: ConfirmModalProps): JSX.Element => {
-  const [disabled, setDisabled] = useState(Boolean(confirmationText));
   const styles = useStyles2(getStyles);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setDisabled(confirmationText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
-  };
-
-  useEffect(() => {
-    // for some reason autoFocus property did no work on this button, but this does
-    if (isOpen) {
-      buttonRef.current?.focus();
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen) {
-      setDisabled(Boolean(confirmationText));
-    }
-  }, [isOpen, confirmationText]);
-
-  const onConfirmClick = async () => {
-    setDisabled(true);
-    try {
-      await onConfirm();
-    } finally {
-      setDisabled(false);
-    }
-  };
-
-  const { handleSubmit } = useForm();
 
   return (
     <Modal className={cx(styles.modal, modalClass)} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
-      <form onSubmit={handleSubmit(onConfirmClick)}>
-        <div className={styles.modalText}>
-          {body}
-          {description ? <div className={styles.modalDescription}>{description}</div> : null}
-          {confirmationText ? (
-            <div className={styles.modalConfirmationInput}>
-              <Stack alignItems="flex-start">
-                <Box>
-                  <Input placeholder={`Type "${confirmationText}" to confirm`} onChange={onConfirmationTextChange} />
-                </Box>
-              </Stack>
-            </div>
-          ) : null}
-        </div>
-        <Modal.ButtonRow>
-          <Button variant={dismissVariant} onClick={onDismiss} fill="outline">
-            {dismissText}
-          </Button>
-          <Button
-            type="submit"
-            variant={confirmButtonVariant}
-            disabled={disabled}
-            ref={buttonRef}
-            data-testid={selectors.pages.ConfirmModal.delete}
-          >
-            {confirmText}
-          </Button>
-          {onAlternative ? (
-            <Button variant="primary" onClick={onAlternative}>
-              {alternativeText}
-            </Button>
-          ) : null}
-        </Modal.ButtonRow>
-      </form>
+      <ConfirmContent
+        body={body}
+        description={description}
+        confirmButtonLabel={confirmText}
+        dismissButtonLabel={dismissText}
+        dismissButtonVariant={dismissVariant}
+        confirmPromptText={confirmationText}
+        alternativeButtonLabel={alternativeText}
+        confirmButtonVariant={confirmButtonVariant}
+        onConfirm={onConfirm}
+        onDismiss={onDismiss}
+        onAlternative={onAlternative}
+      />
     </Modal>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   modal: css({
     width: '500px',
-  }),
-  modalText: css({
-    fontSize: theme.typography.h5.fontSize,
-    color: theme.colors.text.primary,
-  }),
-  modalDescription: css({
-    fontSize: theme.typography.body.fontSize,
-  }),
-  modalConfirmationInput: css({
-    paddingTop: theme.spacing(1),
   }),
 });
