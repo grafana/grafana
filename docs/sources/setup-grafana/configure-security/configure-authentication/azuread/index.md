@@ -413,14 +413,14 @@ If no application role is found, the user is assigned the role specified by
 [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned and the `org_mapping` expression evaluates to an empty mapping.
 
-You can use the `org_mapping` configuration options to assign the user to organizations and specify their role based on their Entra ID groups. For more information, refer to [Org roles mapping example](#org-roles-mapping-example). If the org role mapping (`org_mapping`) is specified and Entra ID returns a valid role, then the user will get the highest of the two roles.
+You can use the `org_mapping` configuration option to assign the user to multiple organizations and specify their role based on their Entra ID group membership. For more information, refer to [Org roles mapping example](#org-roles-mapping-example). If the org role mapping (`org_mapping`) is specified and Entra ID returns a valid role, then the user will get the highest of the two roles.
 
 **On every login** the user organization role will be reset to match Entra ID's application role and
 their organization membership will be reset to the default organization.
 
 #### Org roles mapping example
 
-The Entra ID integration uses the external users' groups in the `org_mapping` configuration to map organizations and roles based on their Entra ID groups.
+The Entra ID integration uses the external users' groups in the `org_mapping` configuration to map organizations and roles based on their Entra ID group membership.
 
 In this example, the user has been granted the role of a `Viewer` in the `org_foo` organization, and the role of an `Editor` in the `org_bar` and `org_baz` orgs.
 
