@@ -33,13 +33,16 @@ type ServerConfig struct {
 	TLSCiphers    []string `toml:"tls_ciphers"`
 	tlsCiphers    []uint16 `toml:"-"`
 
-	RootCACert   string       `toml:"root_ca_cert"`
-	ClientCert   string       `toml:"client_cert"`
-	ClientKey    string       `toml:"client_key"`
-	BindDN       string       `toml:"bind_dn"`
-	BindPassword string       `toml:"bind_password"`
-	Timeout      int          `toml:"timeout"`
-	Attr         AttributeMap `toml:"attributes"`
+	RootCACert      string `toml:"root_ca_cert"`
+	RootCACertValue []string
+	ClientCert      string `toml:"client_cert"`
+	ClientCertValue string
+	ClientKey       string `toml:"client_key"`
+	ClientKeyValue  string
+	BindDN          string       `toml:"bind_dn"`
+	BindPassword    string       `toml:"bind_password"`
+	Timeout         int          `toml:"timeout"`
+	Attr            AttributeMap `toml:"attributes"`
 
 	SearchFilter  string   `toml:"search_filter"`
 	SearchBaseDNs []string `toml:"search_base_dns"`
