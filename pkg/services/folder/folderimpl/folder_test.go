@@ -1153,6 +1153,30 @@ func TestNestedFolderService(t *testing.T) {
 			// require.NotNil(t, f)
 		})
 
+		t.Run("cannot move the k6 folder even when has permissions to move folders", func(t *testing.T) {
+			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceAllScope()}}
+
+			features := featuremgmt.WithFeatures("nestedFolders")
+			folderSvc := setup(t, &dashboards.FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), NewFakeStore(), features, acimpl.ProvideAccessControl(features), dbtest.NewFakeDB())
+			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: accesscontrol.K6FolderUID, NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
+			require.Error(t, err, folder.ErrBadRequest)
+		})
+
+		t.Run("cannot move a k6 subfolder even when has permissions to move folders", func(t *testing.T) {
+			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceAllScope()}}
+
+			childUID := "k6-app-child"
+			folderStore := foldertest.NewFakeFolderStore(t)
+			folderStore.On("GetFolderByUID", mock.Anything, orgID, childUID).Return(&folder.Folder{UID: childUID, ParentUID: accesscontrol.K6FolderUID}, nil)
+
+			features := featuremgmt.WithFeatures("nestedFolders")
+			folderSvc := setup(t, &dashboards.FakeDashboardStore{}, folderStore, NewFakeStore(), features, acimpl.ProvideAccessControl(features), dbtest.NewFakeDB())
+			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: childUID, NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
+			require.Error(t, err, folder.ErrBadRequest)
+		})
+
 		t.Run("move to the root folder without folder creation permissions fails", func(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
