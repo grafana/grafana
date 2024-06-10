@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,6 +15,7 @@ import (
 )
 
 var exampleObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
+var exampleObjNoRV = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: ""}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
 var exampleObjDifferentRV = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "3"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
 var anotherObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "bar", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
 var failingObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta: metav1.ObjectMeta{Name: "object-fail", ResourceVersion: "2"}, Spec: example.PodSpec{}, Status: example.PodStatus{}}
@@ -24,7 +26,7 @@ func TestMode1_Create(t *testing.T) {
 	type testCase struct {
 		input          runtime.Object
 		setupLegacyFn  func(m *mock.Mock, input runtime.Object)
-		setupStorageFn func(m *mock.Mock, input runtime.Object)
+		setupStorageFn func(m *mock.Mock)
 		name           string
 		wantErr        bool
 	}
@@ -36,8 +38,8 @@ func TestMode1_Create(t *testing.T) {
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
 					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil)
 				},
-				setupStorageFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, anotherObj, mock.Anything, mock.Anything).Return(anotherObj, nil)
+				setupStorageFn: func(m *mock.Mock) {
+					m.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObjNoRV, nil)
 				},
 			},
 			{
@@ -63,7 +65,7 @@ func TestMode1_Create(t *testing.T) {
 				tt.setupLegacyFn(m, tt.input)
 			}
 			if tt.setupStorageFn != nil {
-				tt.setupStorageFn(m, tt.input)
+				tt.setupStorageFn(m)
 			}
 
 			dw := NewDualWriter(Mode1, ls, us)
@@ -75,9 +77,9 @@ func TestMode1_Create(t *testing.T) {
 				return
 			}
 
-			us.AssertNotCalled(t, "Create", context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
-
-			assert.Equal(t, obj, exampleObj)
+			acc, err := meta.Accessor(obj)
+			assert.NoError(t, err)
+			assert.Equal(t, acc.GetResourceVersion(), "1")
 			assert.NotEqual(t, obj, anotherObj)
 		})
 	}
