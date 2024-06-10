@@ -29,4 +29,13 @@ func addQueryHistoryMigrations(mg *Migrator) {
 	mg.AddMigration("alter table query_history alter column created_by type to bigint", NewRawSQLMigration("").
 		Mysql("ALTER TABLE query_history MODIFY created_by BIGINT;").
 		Postgres("ALTER TABLE query_history ALTER COLUMN created_by TYPE BIGINT;"))
+
+	queryHistoryDatasourceIndexV1 := Table{
+		Name: "query_history_datasource_index",
+		Columns: []*Column{
+			{Name: "query_history_item_id", Type: DB_BigInt, Nullable: false, IsPrimaryKey: true},
+			{Name: "datasource_uid", Type: DB_NVarchar, Length: 40, Nullable: true},
+		},
+	}
+	mg.AddMigration("create query_history_datasource_index table v1", NewAddTableMigration(queryHistoryDatasourceIndexV1))
 }
