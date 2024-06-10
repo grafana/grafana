@@ -89,7 +89,7 @@ function useProduceNewRuleGroup() {
 }
 
 export function usePauseRuleInGroup() {
-  const [produceNewRuleGroup, updateState] = useProduceNewRuleGroup();
+  const [produceNewRuleGroup, produceNewRuleGroupState] = useProduceNewRuleGroup();
 
   const pauseFn = useCallback(
     async (ruleGroup: RuleGroupIdentifier, rule: RulerGrafanaRuleDTO, pause: boolean) => {
@@ -101,11 +101,11 @@ export function usePauseRuleInGroup() {
     [produceNewRuleGroup]
   );
 
-  return [pauseFn, updateState] as const;
+  return [pauseFn, produceNewRuleGroupState] as const;
 }
 
 export function useDeleteRuleFromGroup() {
-  const [produceNewRuleGroup, updateState] = useProduceNewRuleGroup();
+  const [produceNewRuleGroup, produceNewRuleGroupState] = useProduceNewRuleGroup();
 
   const deleteFn = useCallback(
     async (ruleGroup: RuleGroupIdentifier, rule: RulerRuleDTO) => {
@@ -116,5 +116,5 @@ export function useDeleteRuleFromGroup() {
     [produceNewRuleGroup]
   );
 
-  return [deleteFn, updateState] as const;
+  return [deleteFn, produceNewRuleGroupState] as const;
 }
