@@ -62,7 +62,7 @@ func newRuleFactory(
 	stopAppliedHook stopAppliedFunc,
 ) ruleFactoryFunc {
 	return func(ctx context.Context, rule *ngmodels.AlertRule) Rule {
-		if rule.IsRecordingRule() {
+		if rule.Type() == ngmodels.RuleTypeRecording {
 			return newRecordingRule(
 				ctx,
 				maxAttempts,
