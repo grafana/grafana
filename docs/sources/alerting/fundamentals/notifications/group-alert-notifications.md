@@ -46,9 +46,16 @@ In the notification policy, you can configure how to group multiple alerts into 
 
 {{< figure src="/media/docs/alerting/alerting-notification-policy-diagram-with-labels-v3.png" max-width="750px" alt="A diagram about the components of a notification policy, including labels and groups" >}}
 
+Alert instances are grouped together if they have the same exact label values for the labels configured in the `Group by` option.
+
+For example, given the `Group by` option set to the `team` label:
+
+- `alertname:foo, team=frontend`, and `alertname:bar, team=frontend` are in one group.
+- `alertname:foo, team=backend`, and `alertname:qux, team=backend` are in another group.
+
 ### Group by alert rule or labels
 
-By default, notification policies in Grafana **group alerts by the alert rule**, grouping by the `alertname` and `grafana_folder` labels (since alert names are not unique across folders).
+By default, notification policies in Grafana **group alerts by the alert rule**—they are grouped by the `alertname` and `grafana_folder` labels, since alert names are not unique across folders.
 
 If you want to **group alerts by other labels**, something other than the alert rule, change the `Group by` option to any other combination of labels.
 
