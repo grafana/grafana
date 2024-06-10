@@ -332,6 +332,7 @@ const (
 	GlobalOrgID      = 0
 	NoOrgID          = int64(-1)
 	GeneralFolderUID = "general"
+	K6FolderUID      = "k6-app"
 	RoleGrafanaAdmin = "Grafana Admin"
 
 	// Permission actions
