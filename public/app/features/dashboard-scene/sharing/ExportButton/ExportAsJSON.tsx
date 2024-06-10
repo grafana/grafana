@@ -102,12 +102,11 @@ export default function ExportAsJSON({ dashboardRef }: Props) {
         <Label className={styles.switchItemLabel}>{exportExternallyTranslation}</Label>
       </div>
 
-      <AutoSizer disableHeight className={styles.codeEditorBox}>
+      <AutoSizer disableHeight className={styles.codeEditorBox} data-testid={selector.codeEditor}>
         {({ width }) => {
           if (dashboardJson.value) {
             return (
               <CodeEditor
-                data-testid={selector.codeEditor}
                 value={dashboardJson.value ?? ''}
                 language="json"
                 showMiniMap={false}
@@ -119,7 +118,11 @@ export default function ExportAsJSON({ dashboardRef }: Props) {
           }
 
           if (dashboardJson.loading) {
-            return <div>Loading...</div>;
+            return (
+              <div>
+                <Trans i18nKey="export.json.loading-text">Loading...</Trans>
+              </div>
+            );
           }
 
           return null;

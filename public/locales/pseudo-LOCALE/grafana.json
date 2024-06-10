@@ -636,6 +636,16 @@
       "split-widen": "Ŵįđęŉ päŉę"
     }
   },
+  "export": {
+    "json": {
+      "cancel-button": "Cäŉčęľ",
+      "copy-button": "Cőpy ŧő Cľįpþőäřđ",
+      "export-externally-label": "Ēχpőřŧ ŧĥę đäşĥþőäřđ ŧő ūşę įŉ äŉőŧĥęř įŉşŧäŉčę",
+      "info-text": "Cőpy őř đőŵŉľőäđ ä ĴŜØŃ ƒįľę čőŉŧäįŉįŉģ ŧĥę ĴŜØŃ őƒ yőūř đäşĥþőäřđ.",
+      "loading-text": "Ŀőäđįŉģ...",
+      "save-button": "Ŝävę ŧő ƒįľę"
+    }
+  },
   "folder-picker": {
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
   },

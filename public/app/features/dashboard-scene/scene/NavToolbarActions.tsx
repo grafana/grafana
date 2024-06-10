@@ -23,8 +23,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
-import ShareButton from '../sharing/ShareButton/ShareButton';
 import ExportButton from '../sharing/ExportButton/ExportButton';
+import ShareButton from '../sharing/ShareButton/ShareButton';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';

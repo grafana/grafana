@@ -636,6 +636,16 @@
       "split-widen": "Widen pane"
     }
   },
+  "export": {
+    "json": {
+      "cancel-button": "Cancel",
+      "copy-button": "Copy to Clipboard",
+      "export-externally-label": "Export the dashboard to use in another instance",
+      "info-text": "Copy or download a JSON file containing the JSON of your dashboard.",
+      "loading-text": "Loading...",
+      "save-button": "Save to file"
+    }
+  },
   "folder-picker": {
     "loading": "Loading folders..."
   },
