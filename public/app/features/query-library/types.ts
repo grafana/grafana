@@ -7,7 +7,7 @@ export type QueryTemplate = {
   title: string;
   targets: DataQuery[];
   createdAtTimestamp: number;
-  user: User;
+  user?: User;
 };
 
 export type AddQueryTemplateCommand = {

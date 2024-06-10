@@ -17,7 +17,7 @@ export type DataQuerySpec = {
     title: string;
     vars: object[]; // TODO: Detect variables in #86838
     targets: DataQueryTarget[];
-    user: User;
+    user?: User;
   };
 };
 

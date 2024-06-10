@@ -37,11 +37,6 @@ export const convertAddQueryTemplateCommandToDataQuerySpec = (
         variables: {},
         properties: dataQuery,
       })),
-      user: {
-        uid: contextSrv.user.uid,
-        login: contextSrv.user.login,
-        orgId: contextSrv.user.orgId,
-      },
     },
   };
 };
