@@ -32,7 +32,7 @@ Any change that causes dependent software to behave differently is considered to
 
 Levitate can list exported members of an NPM package or imports used by an NPM package, _but it is most commonly used for comparing different versions of the same package to see changes in the exported members._
 
-A GitHub workflow runs against every pull request and comments a hint in case there are possible breaking changes.
+A GitHub workflow runs against every pull request and comments a hint if there are possible breaking changes.
 It also adds the `breaking change` label to the pull request.
 
 ## What does the CI workflow look like?
@@ -101,7 +101,7 @@ myOldFunction(name: string) {
 1. Add a deprecation comment `// @deprecated`.
 2. Add info in the comment about _when it is going to be removed_.
 3. Add info in the comment about _what should be used instead_.
-4. In case it's a function or a method, use `deprecationWarning(<FILENAME>, <OLD NAME>, <NEW NAME>)` to raise attention during runtime.
+4. If it's a function or a method, use `deprecationWarning(<FILENAME>, <OLD NAME>, <NEW NAME>)` to raise attention during runtime.
 5. Update the [migration guide](https://grafana.com/developers/plugin-tools/migration-guides/) with your instructions.
 
 ### Communicate
