@@ -74,9 +74,7 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		query := req.URL.Query().Get("query")
 		results := &scope.FindScopeNodeChildrenResults{}
 
-		r.log.Info("namespace: %+v", request.NamespaceValue(ctx))
-		r.log.Info("namespace: %+v", request.NamespaceValue(ctx))
-		r.log.Info("namespace: %+v", request.NamespaceValue(ctx))
+		r.log.Info("finding scope node children", "namespace", request.NamespaceValue(ctx), "parent", parent, "query", query)
 
 		raw, err := r.scopeNodeStorage.List(ctx, &internalversion.ListOptions{
 			Limit: 1000,
