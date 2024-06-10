@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,6 +20,7 @@ import (
 
 type findREST struct {
 	scopeNodeStorage *storage
+	log              log.Logger
 }
 
 var (
@@ -71,13 +74,9 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		query := req.URL.Query().Get("query")
 		results := &scope.FindScopeNodeChildrenResults{}
 
-		fmt.Println()
-		fmt.Printf("namespace: %+v\n", request.NamespaceValue(ctx))
-		fmt.Printf("namespace: %+v\n", request.NamespaceValue(ctx))
-		fmt.Printf("namespace: %+v\n", request.NamespaceValue(ctx))
-		fmt.Printf("namespace: %+v\n", request.NamespaceValue(ctx))
-		fmt.Printf("namespace: %+v\n", request.NamespaceValue(ctx))
-		fmt.Println()
+		r.log.Info("namespace: %+v", request.NamespaceValue(ctx))
+		r.log.Info("namespace: %+v", request.NamespaceValue(ctx))
+		r.log.Info("namespace: %+v", request.NamespaceValue(ctx))
 
 		raw, err := r.scopeNodeStorage.List(ctx, &internalversion.ListOptions{
 			Limit: 1000,
