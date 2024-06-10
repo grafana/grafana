@@ -17,7 +17,7 @@ labels:
     - enterprise
     - oss
 title: Templates
-weight: 114
+weight: 115
 refs:
   variables-label-annotation:
     - pattern: /docs/grafana/

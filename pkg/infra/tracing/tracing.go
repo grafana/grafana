@@ -272,6 +272,8 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 		}
 	}
 
+	tp = NewProfilingTracerProvider(tp)
+
 	// Register our TracerProvider as the global so any imported
 	// instrumentation in the future will default to using it
 	// only if tracing is enabled
