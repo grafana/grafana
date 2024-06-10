@@ -217,6 +217,8 @@ type flagDateInfo struct {
 // Load a cached copy of the feature toggle dates
 func readFlagDateInfo(t *testing.T) map[string]flagDateInfo {
 	info := make(map[string]flagDateInfo, 300)
+	// This file is created by running the script in:
+	// https://github.com/grafana/grafana-enterprise/blob/ff-git-log-history/scripts/sidecar/main.go#L9
 	body, err := os.ReadFile("toggles-gitlog.csv")
 	require.NoError(t, err)
 	reader := csv.NewReader(bytes.NewBuffer(body))
