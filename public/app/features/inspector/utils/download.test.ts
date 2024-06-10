@@ -38,10 +38,25 @@ describe('inspector download', () => {
         const filename = call[1];
         const text = await blob.text();
 
+        // By default the BOM character should not be included
+        expect(blob.charCodeAt(0)).not.toEqual(0xfeff);
         expect(text).toEqual(expected);
         expect(filename).toEqual(`${title}-data-${dateTimeFormat(1400000000000)}.csv`);
       }
     );
+
+    it('should include the BOM character when useExcelHeader is true', async () => {
+      downloadDataFrameAsCsv(dataFrameFromJSON(json), 'test', { useExcelHeader: true });
+
+      const call = (saveAs as unknown as jest.Mock).mock.calls[0];
+      const blob = call[0];
+      const filename = call[1];
+      const text = await blob.text();
+
+      expect(blob.charCodeAt(0)).toEqual(0xfeff);
+      expect(text).toEqual('"time","name","value"\r\n100,a,1');
+      expect(filename).toEqual(`${test}-data-${dateTimeFormat(1400000000000)}.csv`);
+    });
   });
 
   describe('downloadAsJson', () => {
