@@ -203,7 +203,8 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
         if (frame.name) {
           if (field.name === TIME_SERIES_VALUE_FIELD_NAME) {
             name = frame.name;
-          } else {
+          } else if (labels.name == null) {
+            // add the name label from frame
             labels = { ...labels, name: frame.name };
           }
         }
@@ -211,7 +212,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
         fields.push({
           ...field,
           name,
-          labels, // add the name label from frame
+          labels,
         });
       }
 

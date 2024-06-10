@@ -477,6 +477,38 @@ describe('align frames', () => {
     `);
   });
 
+  it('add frame.name as field.labels.name only when field.labels.name does not exist', () => {
+    const series1 = toDataFrame({
+      name: 'Frame A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'Metric 1', type: FieldType.number, values: [1, 100], labels: { name: 'bar' } },
+      ],
+    });
+
+    const series2 = toDataFrame({
+      name: 'Frame B',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000] },
+        { name: 'Metric 2', type: FieldType.number, values: [150] },
+      ],
+    });
+
+    const series3 = toDataFrame({
+      name: 'Frame C',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000] },
+        { name: 'Value', type: FieldType.number, values: [150] }, // weird that in this "Value" case it doesnt get moved into field.labels.name
+      ],
+    });
+
+    const out = joinDataFrames({ frames: [series1, series2, series3] })!;
+
+    expect(out.fields[1].labels).toEqual({ name: 'bar' });
+    expect(out.fields[2].labels).toEqual({ name: 'Frame B' });
+    expect(out.fields[3].labels).toEqual({});
+  });
+
   it('supports duplicate times', () => {
     //----------
     // NOTE!!!
