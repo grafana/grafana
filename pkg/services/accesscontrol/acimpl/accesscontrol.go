@@ -98,7 +98,7 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 		)
 	} else {
 		a.metrics.zanzanaCheck.WithLabelValues("success").Inc()
-		a.log.Info("eval: correct result", "grafana_ms", first.duration, "zanzana_ms", second.duration)
+		a.log.Debug("eval: correct result", "grafana_ms", first.duration, "zanzana_ms", second.duration)
 	}
 
 	if a.zService.Cfg.EvaluationResult {
