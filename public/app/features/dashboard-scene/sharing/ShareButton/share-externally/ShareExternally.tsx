@@ -20,6 +20,7 @@ import {
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
 
+import { ShareDrawerConfirmAction } from '../../ShareDrawer/ShareDrawerConfirmAction';
 import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 
 import { EmailSharing } from './EmailShare/EmailSharing';
@@ -60,21 +61,60 @@ const getShareExternallyOptions = () => {
 
 export function ShareExternally() {
   const { dashboard } = useShareDrawerContext();
-  const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
+  const [showRevokeAccess, setShowRevokeAccess] = useState(false);
+
   const styles = useStyles2(getStyles);
+  const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
+  const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
+
+  const onRevokeClick = () => {
+    setShowRevokeAccess(true);
+  };
+
+  const onDeleteClick = async () => {
+    DashboardInteractions.revokePublicDashboardClicked();
+    await deletePublicDashboard({
+      dashboard,
+      uid: publicDashboard!.uid,
+      dashboardUid: dashboard.state.uid!,
+    }).unwrap();
+    setShowRevokeAccess(false);
+  };
 
   if (isLoading) {
     return <Loader />;
   }
 
+  if (showRevokeAccess) {
+    return (
+      <ShareDrawerConfirmAction
+        title={t('public-dashboard.share-externally.revoke-access-button', 'Revoke access')}
+        confirmButtonLabel={t('public-dashboard.share-externally.revoke-access-button', 'Revoke access')}
+        onConfirm={onDeleteClick}
+        onDismiss={() => setShowRevokeAccess(false)}
+        description={t(
+          'public-dashboard.share-externally.revoke-access-description',
+          'Are you sure you want to revoke this access? The dashboard can no longer be shared.'
+        )}
+        isActionLoading={isDeleteLoading}
+      />
+    );
+  }
+
   return (
     <div className={styles.container}>
-      <ShareExternallyRenderer publicDashboard={publicDashboard} />
+      <ShareExternallyRenderer publicDashboard={publicDashboard} onRevokeClick={onRevokeClick} />
     </div>
   );
 }
 
-function ShareExternallyRenderer({ publicDashboard }: { publicDashboard?: PublicDashboard }) {
+function ShareExternallyRenderer({
+  publicDashboard,
+  onRevokeClick,
+}: {
+  publicDashboard?: PublicDashboard;
+  onRevokeClick: () => void;
+}) {
   const options = getShareExternallyOptions();
   const getShareType = useMemo(() => {
     if (publicDashboard && isEmailSharingEnabled()) {
@@ -105,19 +145,17 @@ function ShareExternallyRenderer({ publicDashboard }: { publicDashboard?: Public
       {publicDashboard && (
         <>
           <Divider spacing={0} />
-          <Actions publicDashboard={publicDashboard} />
+          <Actions publicDashboard={publicDashboard} onRevokeClick={onRevokeClick} />
         </>
       )}
     </Stack>
   );
 }
-function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
+function Actions({ publicDashboard, onRevokeClick }: { publicDashboard: PublicDashboard; onRevokeClick: () => void }) {
   const { dashboard } = useShareDrawerContext();
   const [update, { isLoading: isUpdateLoading }] = usePauseOrResumePublicDashboardMutation();
-  const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
   const styles = useStyles2(getStyles);
 
-  const isLoading = isUpdateLoading || isDeleteLoading;
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
   function onCopyURL() {
@@ -134,15 +172,6 @@ function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
         ...publicDashboard!,
         isEnabled: !publicDashboard.isEnabled,
       },
-    });
-  };
-
-  const onDeleteClick = () => {
-    DashboardInteractions.revokePublicDashboardClicked();
-    deletePublicDashboard({
-      dashboard,
-      uid: publicDashboard!.uid,
-      dashboardUid: dashboard.state.uid!,
     });
   };
 
@@ -165,8 +194,8 @@ function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
             icon="trash-alt"
             variant="destructive"
             fill="outline"
-            disabled={isLoading || !hasWritePermissions}
-            onClick={onDeleteClick}
+            disabled={isUpdateLoading || !hasWritePermissions}
+            onClick={onRevokeClick}
           >
             <Trans i18nKey="public-dashboard.share-externally.revoke-access-button">Revoke access</Trans>
           </Button>
@@ -183,7 +212,7 @@ function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
                 : ''
             }
             onClick={onPauseOrResumeClick}
-            disabled={isLoading || !hasWritePermissions}
+            disabled={isUpdateLoading || !hasWritePermissions}
           >
             {publicDashboard.isEnabled ? (
               <Trans i18nKey="public-dashboard.share-externally.pause-access-button">Pause access</Trans>
@@ -193,7 +222,7 @@ function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
           </Button>
         </Stack>
       </div>
-      {isLoading && <Spinner />}
+      {isUpdateLoading && <Spinner />}
     </Stack>
   );
 }
