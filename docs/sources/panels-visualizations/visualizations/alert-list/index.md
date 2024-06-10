@@ -34,6 +34,8 @@ Alert lists allow you to display a list of important alerts that you want to tra
 
 On each dashboard load, this visualization queries the alert list, always providing the most up-to-date results.
 
+{{< docs/play title="Grafana Gauge Visualization" url="https://play.grafana.org/d/bdodlcyou483ke/" >}}
+
 ## Configure an alert list
 
 Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure an alert list visualization:
