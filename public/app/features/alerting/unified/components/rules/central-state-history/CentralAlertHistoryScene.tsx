@@ -24,7 +24,6 @@ import {
 } from '@grafana/schema/dist/esm/index';
 
 import { DataSourceInformation, PANEL_STYLES } from '../../../home/Insights';
-import { InsightsRatingModal } from '../../../insights/RatingModal';
 import { SectionSubheader } from '../../../insights/SectionSubheader';
 
 import { HistoryEventsListObjectRenderer } from './CentralAlertHistory';
@@ -117,7 +116,6 @@ export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
       .setOption('tooltip', { mode: TooltipDisplayMode.Single })
 
       .setNoValue('No events found')
-      .setHeaderActions(<InsightsRatingModal panel={'Events'} />)
       .build(),
   });
 }

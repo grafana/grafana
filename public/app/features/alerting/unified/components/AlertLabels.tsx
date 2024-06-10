@@ -15,13 +15,11 @@ interface Props {
   labels: Record<string, string>;
   commonLabels?: Record<string, string>;
   size?: LabelSize;
-  limit?: number;
 }
 
-export const AlertLabels = ({ labels, commonLabels = {}, size, limit }: Props) => {
+export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
   const styles = useStyles2(getStyles, size);
   const [showCommonLabels, setShowCommonLabels] = useState(false);
-  const [showAllLabels, setShowAllLabels] = useState(false);
 
   const labelsToShow = chain(labels)
     .toPairs()
@@ -31,12 +29,11 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, limit }: Props) =
 
   const commonLabelsCount = Object.keys(commonLabels).length;
   const hasCommonLabels = commonLabelsCount > 0;
-  const labelsToShowLimited = showAllLabels ? labelsToShow : labelsToShow.slice(0, limit);
   const tooltip = t('alert-labels.button.show.tooltip', 'Show common labels');
 
   return (
     <div className={styles.wrapper} role="list" aria-label="Labels">
-      {labelsToShowLimited.map(([label, value]) => (
+      {labelsToShow.map(([label, value]) => (
         <Label key={label + value} size={size} label={label} value={value} color={getLabelColor(label)} />
       ))}
       {!showCommonLabels && hasCommonLabels && (
@@ -60,22 +57,6 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, limit }: Props) =
           size="sm"
         >
           <Trans i18nKey="alert-labels.button.hide"> Hide common labels</Trans>
-        </Button>
-      )}
-      {showAllLabels && Boolean(limit) && (
-        <Button
-          variant="secondary"
-          fill="text"
-          onClick={() => setShowAllLabels(false)}
-          tooltipPlacement="top"
-          size="sm"
-        >
-          <Trans i18nKey="alert-labels.button.show-all"> Show less labels</Trans>
-        </Button>
-      )}
-      {!showAllLabels && limit && labelsToShow.length > limit && (
-        <Button variant="secondary" fill="text" onClick={() => setShowAllLabels(true)} tooltipPlacement="top" size="sm">
-          +{labelsToShow.length - limit} <Trans i18nKey="alert-labels.button.more">more</Trans>
         </Button>
       )}
     </div>

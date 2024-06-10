@@ -40,7 +40,6 @@ import { STATE_HISTORY_POLLING_INTERVAL } from '../state-history/LokiStateHistor
 import { LogRecord } from '../state-history/common';
 import { useRuleHistoryRecords } from '../state-history/useRuleHistoryRecords';
 
-const LIMIT_LABELS = 5;
 const LIMIT_EVENTS = 250;
 
 const HistoryEventsList = ({ timeRange }: { timeRange?: TimeRange }) => {
@@ -49,13 +48,13 @@ const HistoryEventsList = ({ timeRange }: { timeRange?: TimeRange }) => {
   // Filter state
   const [eventsFilter, setEventsFilter] = useState('');
   // form for filter fields
-  const { setValue, register, handleSubmit } = useForm({ defaultValues: { query: '' } }); //  form for search field
+  const { register, handleSubmit, reset } = useForm({ defaultValues: { query: '' } }); //  form for search field
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
   const onFilterCleared = useCallback(() => {
     setEventsFilter('');
-    setValue('query', '');
-  }, [setEventsFilter, setValue]);
+    reset();
+  }, [setEventsFilter, reset]);
 
   const {
     currentData: stateHistory,
@@ -195,7 +194,7 @@ function EventRow({ record }: { record: LogRecord }) {
             {record.line.labels ? <AlertRuleName labels={record.line.labels} ruleUID={record.line.ruleUID} /> : null}
           </div>
           <div className={styles.labelsCol}>
-            <AlertLabels labels={record.line.labels ?? {}} limit={LIMIT_LABELS} />
+            <AlertLabels labels={record.line.labels ?? {}} size="xs" />
           </div>
         </Stack>
       </div>
@@ -349,10 +348,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
       width: '300px',
     }),
     labelsCol: css({
-      width: '500px',
+      display: 'flex',
+      overflow: 'hidden',
+      alignItems: 'center',
+      paddingRight: theme.spacing(2),
+      flex: 1,
     }),
     alertName: css({
       whiteSpace: 'nowrap',
+      cursor: 'pointer',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       display: 'block',
