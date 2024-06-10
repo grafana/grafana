@@ -5,6 +5,7 @@ export type QueryTemplate = {
   title: string;
   targets: DataQuery[];
   createdAtTimestamp: number;
+  createdBy: string;
 };
 
 export type AddQueryTemplateCommand = {

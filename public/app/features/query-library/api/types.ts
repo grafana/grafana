@@ -5,6 +5,10 @@ export type DataQueryTarget = {
   properties: DataQuery;
 };
 
+type DataQueryAnnotationKey = 'grafana.app/createdBy';
+
+type DataQueryAnnotations = Record<DataQueryAnnotationKey, string>;
+
 export type DataQuerySpec = {
   apiVersion: string;
   kind: string;
@@ -12,6 +16,7 @@ export type DataQuerySpec = {
     generateName: string;
     name?: string;
     creationTimestamp?: string;
+    annotations?: DataQueryAnnotations;
   };
   spec: {
     title: string;

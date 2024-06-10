@@ -1,6 +1,7 @@
 package peakq
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -8,11 +9,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apiserver/pkg/storage/names"
 
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -21,8 +25,34 @@ type storage struct {
 	*genericregistry.Store
 }
 
+type peakQCreateStrategy struct {
+	runtime.ObjectTyper
+	names.NameGenerator
+}
+
+func (peakQCreateStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
+	user, _ := appcontext.User(ctx)
+	template := obj.(*peakq.QueryTemplate)
+	template.Annotations = map[string]string{"grafana.app/createdBy": user.Email}
+}
+
+func (peakQCreateStrategy) Canonicalize(obj runtime.Object) {}
+
+func (peakQCreateStrategy) NamespaceScoped() bool {
+	return true
+}
+
+func (peakQCreateStrategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	return field.ErrorList{}
+}
+
+func (peakQCreateStrategy) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string {
+	return nil
+}
+
 func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
 	strategy := grafanaregistry.NewStrategy(scheme)
+	createStrategy := peakQCreateStrategy{scheme, names.SimpleNameGenerator}
 
 	resourceInfo := peakq.QueryTemplateResourceInfo
 	store := &genericregistry.Store{
@@ -50,7 +80,7 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*
 				}, nil
 			},
 		),
-		CreateStrategy: strategy,
+		CreateStrategy: createStrategy,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 	}

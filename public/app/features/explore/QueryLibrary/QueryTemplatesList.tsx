@@ -44,6 +44,7 @@ export function QueryTemplatesList() {
       datasourceRef,
       datasourceType,
       createdAtTimestamp: queryTemplate?.createdAtTimestamp || 0,
+      createdBy: queryTemplate.createdBy || 'Unknown',
       query: queryTemplate.targets[0],
       description: queryTemplate.title,
     };
