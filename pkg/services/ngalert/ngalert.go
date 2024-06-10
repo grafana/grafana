@@ -203,9 +203,40 @@ func (ng *AlertNG) init() error {
 			overrides = append(overrides, override)
 
 		case remotePrimary:
-			ng.Log.Warn("Only remote secondary mode is supported at the moment, falling back to remote secondary")
-			// TODO: Skip setting up clustering with ng.Cfg.UnifiedAlerting.SkipClustering = true
-			fallthrough
+			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
+			m := ng.Metrics.GetRemoteAlertmanagerMetrics()
+			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
+			ng.Cfg.UnifiedAlerting.SkipClustering = true
+			// This function will be used by the MOA to create new Alertmanagers.
+			override := notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+					// Create internal Alertmanager.
+					internalAM, err := factoryFn(ctx, orgID)
+					if err != nil {
+						return nil, err
+					}
+
+					// Create remote Alertmanager.
+					cfg := remote.AlertmanagerConfig{
+						BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
+						DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
+						OrgID:             orgID,
+						PromoteConfig:     true,
+						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+					}
+					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, m)
+					if err != nil {
+						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
+						return internalAM, nil
+					}
+
+					// Use both Alertmanager implementations in the forked Alertmanager.
+					return remote.NewRemotePrimaryForkedAlertmanager(log.New("ngalert.forked-alertmanager.remote-primary"), internalAM, remoteAM), nil
+				}
+			})
+
+			overrides = append(overrides, override)
 
 		case remoteSecondary:
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
