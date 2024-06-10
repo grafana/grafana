@@ -24,7 +24,7 @@ import { renameFieldsTransformer } from './transformers/rename';
 import { renameByRegexTransformer } from './transformers/renameByRegex';
 import { seriesToRowsTransformer } from './transformers/seriesToRows';
 import { sortByTransformer } from './transformers/sortBy';
-import { transposeTransformer } from "./transformers/transpose";
+import { transposeTransformer } from './transformers/transpose';
 
 export const standardTransformers = {
   noopTransformer,

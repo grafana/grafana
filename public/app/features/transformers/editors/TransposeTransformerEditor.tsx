@@ -5,13 +5,15 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import {
-  TransposeTransformerOptions,
-} from '@grafana/data/src/transformations/transformers/transpose';
+import { TransposeTransformerOptions } from '@grafana/data/src/transformations/transformers/transpose';
 
-export const TransposeTransfomerEditor = ({ input, options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
+export const TransposeTransfomerEditor = ({
+  input,
+  options,
+  onChange,
+}: TransformerUIProps<TransposeTransformerOptions>) => {
   return null;
-}
+};
 
 export const transposeTransformerRegistryItem: TransformerRegistryItem<TransposeTransformerOptions> = {
   id: DataTransformerID.transpose,

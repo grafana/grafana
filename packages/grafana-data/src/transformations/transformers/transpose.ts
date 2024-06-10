@@ -1,12 +1,11 @@
 import { map } from 'rxjs/operators';
 
+import { DataFrame, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
-import { DataFrame, FieldType } from '../../types/dataFrame';
 
-export interface TransposeTransformerOptions {
-}
+export interface TransposeTransformerOptions {}
 
 export const transposeTransformer: DataTransformerInfo<TransposeTransformerOptions> = {
   id: DataTransformerID.transpose,
@@ -32,35 +31,33 @@ function transposeDataFrame(data: DataFrame[]): DataFrame[] {
     const fieldType = determineFieldType(frame.fields.map((field) => field.type).slice(1));
 
     const newFields = headers.map((fieldName, index) => {
-      if(index === 0){
+      if (index === 0) {
         return {
           name: fieldName,
           values: rows,
           type: FieldType.string,
-          config: {}
+          config: {},
         };
       }
       return {
         name: fieldName,
-        values: frame.fields.map((field) => field.values[index-1]).slice(1),
+        values: frame.fields.map((field) => field.values[index - 1]).slice(1),
         type: fieldType,
-        config: {}
+        config: {},
       };
     });
     return {
       ...frame,
       fields: newFields,
-      length: newFields.map((field) => field.values.length).reduce((a, b) => Math.max(a, b), 0)
-    }
+      length: newFields.map((field) => field.values.length).reduce((a, b) => Math.max(a, b), 0),
+    };
   });
 }
 
 function determineFieldType(fieldTypes: FieldType[]): FieldType {
   const uniqueFieldTypes = Array.from(new Set(fieldTypes));
-  if(uniqueFieldTypes.length === 1){
+  if (uniqueFieldTypes.length === 1) {
     return uniqueFieldTypes[0];
   }
   return FieldType.string;
 }
-
-

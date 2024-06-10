@@ -24,6 +24,7 @@ import { reduceTransformRegistryItem } from './editors/ReduceTransformerEditor';
 import { renameByRegexTransformRegistryItem } from './editors/RenameByRegexTransformer';
 import { seriesToRowsTransformerRegistryItem } from './editors/SeriesToRowsTransformerEditor';
 import { sortByTransformRegistryItem } from './editors/SortByTransformerEditor';
+import { transposeTransformerRegistryItem } from './editors/TransposeTransformerEditor';
 import { extractFieldsTransformRegistryItem } from './extractFields/ExtractFieldsTransformerEditor';
 import { joinByLabelsTransformRegistryItem } from './joinByLabels/JoinByLabelsTransformerEditor';
 import { fieldLookupTransformRegistryItem } from './lookupGazetteer/FieldLookupTransformerEditor';
@@ -33,7 +34,6 @@ import { regressionTransformerRegistryItem } from './regression/regressionEditor
 import { rowsToFieldsTransformRegistryItem } from './rowsToFields/RowsToFieldsTransformerEditor';
 import { spatialTransformRegistryItem } from './spatial/SpatialTransformerEditor';
 import { timeSeriesTableTransformRegistryItem } from './timeSeriesTable/TimeSeriesTableTransformEditor';
-import { transposeTransformerRegistryItem } from "./editors/TransposeTransformerEditor";
 
 export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
   return [
