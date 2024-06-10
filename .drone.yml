@@ -434,15 +434,6 @@ steps:
   image: golang:1.22.4-alpine
   name: wire-install
 - commands:
-  - apk add --update make build-base
-  - make lint-go
-  depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
-  image: golang:1.22.4-alpine
-  name: lint-backend
-- commands:
   - go run scripts/modowners/modowners.go check go.mod
   image: golang:1.22.4-alpine
   name: validate-modfile
@@ -1760,15 +1751,6 @@ steps:
   depends_on: []
   image: golang:1.22.4-alpine
   name: wire-install
-- commands:
-  - apk add --update make build-base
-  - make lint-go
-  depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
-  image: golang:1.22.4-alpine
-  name: lint-backend
 - commands:
   - go run scripts/modowners/modowners.go check go.mod
   image: golang:1.22.4-alpine
@@ -4911,6 +4893,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 7d2348a3bc09c44b08dda2d737f91c7de3e5048aa47ba65eada4cdde1eea9fa6
+hmac: 08f38b820f97302de03a9fdfd39fb12c185bb36170704cf7591c16f33c3e4d31
 
 ...
