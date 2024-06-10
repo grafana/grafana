@@ -39,7 +39,24 @@ import {
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
 
-interface LogsPanelProps extends PanelProps<Options> {}
+interface LogsPanelProps extends PanelProps<Options> {
+  /**
+   * Adds a key => value filter to the query referenced by the provided DataFrame refId. Used by Log details and Logs table.
+   * onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+   *
+   * Adds a negative key => value filter to the query referenced by the provided DataFrame refId. Used by Log details and Logs table.
+   * onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+   *
+   * Adds a string filter to the query referenced by the provided DataFrame refId. Used by the Logs popover menu.
+   * onClickFilterOutValue?: (value: string, refId?: string) => void;
+   *
+   * Removes a string filter to the query referenced by the provided DataFrame refId. Used by the Logs popover menu.
+   * onClickFilterValue?: (value: string, refId?: string) => void;
+   *
+   * Determines if a given key => value filter is active in a given query. Used by Log details.
+   * isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+   */
+}
 interface LogsPermalinkUrlState {
   logs?: {
     id?: string;
