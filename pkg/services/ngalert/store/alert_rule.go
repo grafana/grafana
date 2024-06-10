@@ -114,7 +114,7 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 		if err != nil {
 			return err
 		}
-		// make sure we keep the case-sensitive comparison.
+		// MySQL by default compares strings without case-sensitivity, make sure we keep the case-sensitive comparison.
 		var groupKey ngmodels.AlertRuleGroupKey
 		// find the rule, which group we fetch
 		for _, rule := range rules {
