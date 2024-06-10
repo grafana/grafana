@@ -3,6 +3,7 @@ package state
 import (
 	"encoding/json"
 	"fmt"
+	"net/http" // LOGZ.IO GRAFANA CHANGE :: DEV-45327: Add switch to account query param
 	"net/url"
 	"path"
 	"strconv"
@@ -139,7 +140,7 @@ func errorAlert(labels, annotations data.Labels, alertState *State, urlStr strin
 	}
 }
 
-func FromStateTransitionToPostableAlerts(firingStates []StateTransition, stateManager *Manager, appURL *url.URL) apimodels.PostableAlerts {
+func FromStateTransitionToPostableAlerts(firingStates []StateTransition, stateManager *Manager, appURL *url.URL, logzHeaders http.Header) apimodels.PostableAlerts { // LOGZ.IO GRAFANA CHANGE :: DEV-45327: Add switch to account query param
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	var sentAlerts []*State
 	ts := time.Now()
@@ -149,6 +150,14 @@ func FromStateTransitionToPostableAlerts(firingStates []StateTransition, stateMa
 			continue
 		}
 		alert := StateToPostableAlert(alertState, appURL)
+		// LOGZ.IO GRAFANA CHANGE :: DEV-45327: Add switch to account query param
+		if logzHeaders != nil {
+			logzAccountId := logzHeaders.Get("Logzio-Account-Id")
+			if logzAccountId != "" {
+				alert.Annotations[ngModels.LogzioAccountIdAnnotation] = logzAccountId
+			}
+		}
+		// LOGZ.IO GRAFANA CHANGE :: End
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *alert)
 		if alertState.StateReason == ngModels.StateReasonMissingSeries { // do not put stale state back to state manager
 			continue

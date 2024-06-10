@@ -505,7 +505,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		processDuration.Observe(sch.clock.Now().Sub(start).Seconds())
 
 		start = sch.clock.Now()
-		alerts := state.FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
+		alerts := state.FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL, e.logzHeaders) // LOGZ.IO GRAFANA CHANGE :: DEV-45327: Add switch to account query param
 		span.AddEvent("results processed", trace.WithAttributes(
 			attribute.Int64("state_transitions", int64(len(processedStates))),
 			attribute.Int64("alerts_to_send", int64(len(alerts.PostableAlerts))),
