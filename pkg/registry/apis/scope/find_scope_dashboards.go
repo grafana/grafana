@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
@@ -62,6 +63,12 @@ func (f *findScopeDashboardsREST) Connect(ctx context.Context, name string, opts
 	if name != "name" {
 		return nil, errors.NewNotFound(schema.GroupResource{}, name)
 	}
+
+	fmt.Printf("namespace: %+v", request.NamespaceValue(ctx))
+	fmt.Printf("namespace: %+v", request.NamespaceValue(ctx))
+	fmt.Printf("namespace: %+v", request.NamespaceValue(ctx))
+	fmt.Printf("namespace: %+v", request.NamespaceValue(ctx))
+	fmt.Printf("namespace: %+v", request.NamespaceValue(ctx))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		raw, err := f.scopeDashboardStorage.List(ctx, &internalversion.ListOptions{})

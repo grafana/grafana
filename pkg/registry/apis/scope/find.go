@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
@@ -69,6 +70,14 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		parent := req.URL.Query().Get("parent")
 		query := req.URL.Query().Get("query")
 		results := &scope.FindScopeNodeChildrenResults{}
+
+		fmt.Println()
+		fmt.Printf("namespace: %+v\n", request.NamespaceValue(ctx))
+		fmt.Printf("namespace: %+v\n", request.NamespaceValue(ctx))
+		fmt.Printf("namespace: %+v\n", request.NamespaceValue(ctx))
+		fmt.Printf("namespace: %+v\n", request.NamespaceValue(ctx))
+		fmt.Printf("namespace: %+v\n", request.NamespaceValue(ctx))
+		fmt.Println()
 
 		raw, err := r.scopeNodeStorage.List(ctx, &internalversion.ListOptions{
 			Limit: 1000,

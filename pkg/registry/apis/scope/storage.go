@@ -149,10 +149,12 @@ func newScopeNodeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsG
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 	}
+
 	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: GetAttrs}
 	if err := store.CompleteWithOptions(options); err != nil {
 		return nil, err
 	}
+
 	return &storage{Store: store}, nil
 }
 
