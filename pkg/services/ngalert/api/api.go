@@ -164,6 +164,8 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		templates:           api.Templates,
 		muteTimings:         api.MuteTimings,
 		alertRules:          api.AlertRules,
+		// XXX: Used to flag recording rules, remove when FT is removed
+		featureManager: api.FeatureManager,
 	}), m)
 
 	api.RegisterHistoryApiEndpoints(NewStateHistoryApi(&HistorySrv{
