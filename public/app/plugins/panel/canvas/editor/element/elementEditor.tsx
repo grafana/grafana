@@ -15,6 +15,7 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 import { getElementTypes } from '../../utils';
 import { optionBuilder } from '../options';
 
+import { DataLinksEditor } from './DataLinksEditor';
 import { PlacementEditor } from './PlacementEditor';
 
 export interface CanvasEditorOptions {
@@ -108,6 +109,15 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
           settings: opts,
         });
       }
+
+      builder.addCustomEditor({
+        category: ['Data links'],
+        id: 'dataLinks',
+        path: 'data.links',
+        name: '',
+        editor: DataLinksEditor,
+        settings: opts,
+      });
 
       const shouldAddBackgroundEditor = opts.element.item.standardEditorConfig?.background ?? true;
       if (shouldAddBackgroundEditor) {

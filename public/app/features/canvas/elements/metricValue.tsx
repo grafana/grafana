@@ -192,7 +192,10 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
       data.color = dimensionContext.getColor(textConfig.color).value();
     }
 
-    data.links = getDataLinks(dimensionContext, elementOptions, data.text);
+    const dataLinks = getDataLinks(dimensionContext, elementOptions, data.text);
+    if (dataLinks.length > 0) {
+      data.links = dataLinks;
+    }
 
     return data;
   },
