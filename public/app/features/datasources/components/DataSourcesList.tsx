@@ -22,7 +22,7 @@ export function DataSourcesList() {
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const hasWriteRights = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
-  const hasExploreRights = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
+  const hasExploreRights = contextSrv.hasAccessToExplore();
 
   return (
     <DataSourcesListView

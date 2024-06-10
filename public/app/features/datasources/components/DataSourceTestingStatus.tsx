@@ -7,7 +7,6 @@ import { TestingStatus, config } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link } from '@grafana/ui';
 
 import { contextSrv } from '../../../core/core';
-import { AccessControlAction } from '../../../types';
 import { trackCreateDashboardClicked } from '../tracking';
 
 export type Props = {
@@ -43,7 +42,7 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
   const theme = useTheme2();
   const hasTitle = Boolean(title);
   const styles = getStyles(theme, hasTitle);
-  const canExploreDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
+  const canExploreDataSources = contextSrv.hasAccessToExplore();
 
   return (
     <div className={styles.content}>
