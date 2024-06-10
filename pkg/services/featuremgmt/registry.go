@@ -1302,6 +1302,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPartnerPluginsSquad,
 		},
+		{
+			Name:        "pinNavItems",
+			Description: "Enables pinning of nav items",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
+		},
 	}
 )
 

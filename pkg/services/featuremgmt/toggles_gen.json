@@ -2250,6 +2250,18 @@
         "stage": "experimental",
         "codeowner": "@grafana/partner-datasources"
       }
+    },
+    {
+      "metadata": {
+        "name": "pinNavItems",
+        "resourceVersion": "1718017263521",
+        "creationTimestamp": "2024-06-10T11:01:03Z"
+      },
+      "spec": {
+        "description": "Enables pinning of nav items",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
     }
   ]
 }

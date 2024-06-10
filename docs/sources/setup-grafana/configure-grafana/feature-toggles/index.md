@@ -189,6 +189,7 @@ Experimental features might be changed or removed without prior notice.
 | `dashboardRestore`                          | Enables deleted dashboard restore feature                                                                                                                                                                                                                                         |
 | `alertingCentralAlertHistory`               | Enables the new central alert history.                                                                                                                                                                                                                                            |
 | `azureMonitorPrometheusExemplars`           | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                                                                                                                                      |
+| `pinNavItems`                               | Enables pinning of nav items                                                                                                                                                                                                                                                      |
 
 ## Development feature toggles
 
