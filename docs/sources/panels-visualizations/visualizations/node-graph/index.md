@@ -25,6 +25,8 @@ Node graphs can visualize directed graphs or networks. They use a directed force
 
 ![Node graph visualization](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')
 
+{{< docs/play title="Node Panel Visualizations in Grafana" url="https://play.grafana.org/d/bdodfbi3d57uoe" >}}
+
 ## Data requirements
 
 A node graph requires a specific shape of the data to be able to display its nodes and edges. This means not every data source or query can be visualized with this graph. If you want to use this as a data source developer see the section about data API.
