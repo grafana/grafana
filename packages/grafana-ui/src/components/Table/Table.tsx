@@ -215,7 +215,7 @@ export const Table = memo((props: Props) => {
 
     if (isCountRowsSet) {
       const footerItemsCountRows: FooterItem[] = [];
-      footerItemsCountRows[0] = headerGroups[0]?.headers[0]?.filteredRows.length.toString() ?? data.length.toString();
+      footerItemsCountRows[0] = rows.length.toString() ?? data.length.toString();
       setFooterItems(footerItemsCountRows);
       return;
     }
