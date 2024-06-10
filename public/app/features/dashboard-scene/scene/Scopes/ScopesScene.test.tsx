@@ -377,8 +377,8 @@ describe('ScopesScene', () => {
       });
     });
 
-    describe('Data requests', () => {
-      it('Enriches data requests', async () => {
+    describe('Enrichers', () => {
+      it('Data requests', async () => {
         await userEvents.click(getBasicInput());
         await userEvents.click(getApplicationsExpand());
         await userEvents.click(getApplicationsSlothPictureFactorySelect());
@@ -408,6 +408,38 @@ describe('ScopesScene', () => {
         await waitFor(() => {
           const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
           expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(
+            mocksScopes.filter(({ metadata: { name } }) => name === 'slothVoteTracker')
+          );
+        });
+      });
+
+      it('Filters requests', async () => {
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getBasicInput());
+        await waitFor(() => {
+          expect(dashboardScene.enrichFiltersRequest().scopes).toEqual(
+            mocksScopes.filter(({ metadata: { name } }) => name === 'slothPictureFactory')
+          );
+        });
+
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsSlothVoteTrackerSelect());
+        await userEvents.click(getBasicInput());
+        await waitFor(() => {
+          expect(dashboardScene.enrichFiltersRequest().scopes).toEqual(
+            mocksScopes.filter(
+              ({ metadata: { name } }) => name === 'slothPictureFactory' || name === 'slothVoteTracker'
+            )
+          );
+        });
+
+        await userEvents.click(getBasicInput());
+        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getBasicInput());
+        await waitFor(() => {
+          expect(dashboardScene.enrichFiltersRequest().scopes).toEqual(
             mocksScopes.filter(({ metadata: { name } }) => name === 'slothVoteTracker')
           );
         });

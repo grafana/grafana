@@ -1,6 +1,15 @@
 import * as H from 'history';
 
-import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
+import {
+  AppEvents,
+  CoreApp,
+  DataQueryRequest,
+  NavIndex,
+  NavModelItem,
+  locationUtil,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
+} from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -844,6 +853,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardUID: this.state.uid,
       panelId,
       panelPluginId: panel?.state.pluginId,
+      scopes: this.state.scopes?.getSelectedScopes(),
+    };
+  }
+
+  public enrichFiltersRequest(): Partial<DataSourceGetTagKeysOptions | DataSourceGetTagValuesOptions> {
+    return {
       scopes: this.state.scopes?.getSelectedScopes(),
     };
   }
