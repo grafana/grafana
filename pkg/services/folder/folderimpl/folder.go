@@ -884,9 +884,9 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	if cmd.UID == accesscontrol.K6FolderUID {
 		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
 	}
-	if f, err := s.getFolderByUID(ctx, cmd.OrgID, cmd.UID); err != nil {
+	if f, err := s.store.Get(ctx, folder.GetFolderQuery{UID: &cmd.UID, OrgID: cmd.OrgID}); err != nil {
 		return nil, err
-	} else if f.ParentUID == accesscontrol.K6FolderUID {
+	} else if f != nil && f.ParentUID == accesscontrol.K6FolderUID {
 		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
 	}
 
