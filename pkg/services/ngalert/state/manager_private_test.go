@@ -276,7 +276,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			if !ok { // skip if nothing to assert
 				continue
 			}
-			expectedTransitionsMap := make(map[string]StateTransition, len(expectedTransitions))
+			expectedTransitionsMap := make(map[data.Fingerprint]StateTransition, len(expectedTransitions))
 			for i := range expectedTransitions {
 				patchState(alertRule, expectedTransitions[i].State)
 				expectedTransitionsMap[expectedTransitions[i].CacheID] = expectedTransitions[i]
@@ -294,7 +294,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				}
 			}
 			if len(expectedTransitionsMap) > 0 {
-				vals := make([]string, 0, len(expectedTransitionsMap))
+				vals := make([]data.Fingerprint, 0, len(expectedTransitionsMap))
 				for _, s := range expectedTransitionsMap {
 					vals = append(vals, s.CacheID)
 				}
@@ -2524,13 +2524,8 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			ngmodels.KeepLastErrState: baseRuleWith(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.KeepLastErrState)),
 		}
 
-		cacheID := func(lbls data.Labels) string {
-			l := ngmodels.InstanceLabels(lbls)
-			_, r, err := l.StringAndHash()
-			if err != nil {
-				panic(err)
-			}
-			return r
+		cacheID := func(lbls data.Labels) data.Fingerprint {
+			return lbls.Fingerprint()
 		}
 
 		type errorTestCase struct {
@@ -3539,14 +3534,11 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 }
 
 func setCacheID(s *State) *State {
-	if s.CacheID != "" {
+	if s.CacheID != 0 {
 		return s
 	}
-	il := ngmodels.InstanceLabels(s.Labels)
-	_, id, err := il.StringAndHash()
-	if err != nil {
-		panic(err)
-	}
-	s.CacheID = id
+
+	s.CacheID = s.Labels.Fingerprint()
+
 	return s
 }
