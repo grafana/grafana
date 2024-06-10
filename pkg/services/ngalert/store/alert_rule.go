@@ -124,7 +124,8 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 			}
 		}
 		result = make([]*ngmodels.AlertRule, 0, len(rules))
-		// now pick only groups that have the same group key (case-sensitive comparison)
+		// MySQL (and potentially other databases) can use case-insensitive comparison.
+		// This code makes sure we return groups that only exactly match the filter.
 		for _, rule := range rules {
 			if rule.GetGroupKey() == groupKey {
 				result = append(result, rule)
@@ -431,8 +432,10 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 					continue
 				}
 			}
+			// MySQL (and potentially other databases) can use case-insensitive comparison.
+			// This code makes sure we return groups that only exactly match the filter.
 			if groupsMap != nil {
-				if _, ok := groupsMap[rule.RuleGroup]; !ok { // compare groups using case-sensitive logic.
+				if _, ok := groupsMap[rule.RuleGroup]; !ok {
 					continue
 				}
 			}
@@ -578,6 +581,8 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "GetAlertRulesForScheduling", "error", err)
 				continue
 			}
+			// MySQL (and potentially other databases) uses case-insensitive comparison.
+			// This code makes sure we return groups that only exactly match the filter
 			if groupsMap != nil {
 				if _, ok := groupsMap[rule.RuleGroup]; !ok { // compare groups using case-sensitive logic.
 					continue
