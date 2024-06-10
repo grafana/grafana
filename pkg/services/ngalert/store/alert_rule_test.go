@@ -393,6 +393,11 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 			rules:      []string{rule1.Title},
 		},
 		{
+			name:       "with a rule group filter, should be case sensitive",
+			ruleGroups: []string{strings.ToUpper(rule1.RuleGroup)},
+			rules:      []string{},
+		},
+		{
 			name:         "with a filter on orgs, it returns rules that do not belong to that org",
 			rules:        []string{rule1.Title},
 			disabledOrgs: []int64{rule2.OrgID},
