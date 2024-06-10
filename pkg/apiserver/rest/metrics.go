@@ -7,7 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type dualWriterMetrics struct {
+type DualWriterMetrics struct {
 	legacy  *prometheus.HistogramVec
 	storage *prometheus.HistogramVec
 	outcome *prometheus.HistogramVec
@@ -37,24 +37,25 @@ var DualWriterOutcome = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 	NativeHistogramBucketFactor: 1.1,
 }, []string{"mode", "name", "method"})
 
-func (m *dualWriterMetrics) init() {
+func (m *DualWriterMetrics) init(reg prometheus.Registerer) {
 	m.legacy = DualWriterLegacyDuration
 	m.storage = DualWriterStorageDuration
 	m.outcome = DualWriterOutcome
+	reg.MustRegister(m.legacy, m.storage, m.outcome)
 }
 
-func (m *dualWriterMetrics) recordLegacyDuration(isError bool, mode string, name string, method string, startFrom time.Time) {
+func (m *DualWriterMetrics) recordLegacyDuration(isError bool, mode string, name string, method string, startFrom time.Time) {
 	duration := time.Since(startFrom).Seconds()
 	m.legacy.WithLabelValues(strconv.FormatBool(isError), mode, name, method).Observe(duration)
 }
 
-func (m *dualWriterMetrics) recordStorageDuration(isError bool, mode string, name string, method string, startFrom time.Time) {
+func (m *DualWriterMetrics) recordStorageDuration(isError bool, mode string, name string, method string, startFrom time.Time) {
 	duration := time.Since(startFrom).Seconds()
 	m.storage.WithLabelValues(strconv.FormatBool(isError), mode, name, method).Observe(duration)
 }
 
 // nolint:unused
-func (m *dualWriterMetrics) recordOutcome(mode string, name string, outcome bool, method string) {
+func (m *DualWriterMetrics) recordOutcome(mode string, name string, outcome bool, method string) {
 	var observeValue float64
 	if outcome {
 		observeValue = 1
