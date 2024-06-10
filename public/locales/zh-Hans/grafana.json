@@ -25,6 +25,28 @@
       "user": "用户"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -460,6 +482,16 @@
   },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
+    "add-to-library-modal": {
+      "auto-star": "",
+      "data-source-name": "",
+      "data-source-type": "",
+      "description": "",
+      "info": "",
+      "query": "",
+      "title": "",
+      "visibility": ""
+    },
     "rich-history": {
       "close-tooltip": "关闭查询历史记录",
       "datasource-a-z": "数据源 A-Z",
@@ -1112,6 +1144,10 @@
     "public": {
       "title": "公共仪表板"
     },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
+    },
     "recorded-queries": {
       "title": "已记录查询"
     },
@@ -1173,10 +1209,6 @@
       "subtitle": "使用 k6 和 Synthetic Monitoring 洞察优化性能。",
       "title": "测试与合成"
     },
-    "trash": {
-      "subtitle": "",
-      "title": ""
-    },
     "upgrading": {
       "title": "统计信息和许可证"
     },
@@ -1232,6 +1264,7 @@
       "new-alert-rule": "新建警报规则",
       "query": "查询",
       "remove": "删除",
+      "replace-library-panel": "",
       "share": "分享",
       "show-legend": "显示图例",
       "unlink-library-panel": "取消链接库面板",
@@ -1440,6 +1473,11 @@
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
   },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "自动刷新已关闭。选择刷新时间间隔",
@@ -1467,6 +1505,31 @@
       "label": "返回到 {{title}}"
     },
     "dismissable-button": "关闭"
+  },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "",
+      "cancel": "",
+      "title": ""
+    },
+    "basicSelector": {
+      "openAdvanced": "",
+      "placeholder": "",
+      "removeAll": ""
+    },
+    "root": {
+      "collapse": "",
+      "expand": ""
+    },
+    "suggestedDashboards": {
+      "loading": "",
+      "search": ""
+    },
+    "tree": {
+      "collapse": "",
+      "expand": "",
+      "search": ""
+    }
   },
   "search": {
     "actions": {
@@ -1626,6 +1689,21 @@
     "empty-state": {
       "button-title": "",
       "title": ""
+    },
+    "table": {
+      "add-silence-button": "",
+      "edit-button": "",
+      "expired-silences": "",
+      "no-matching-silences": "",
+      "noConfig": "",
+      "recreate-button": "",
+      "unsilence-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "",
+      "state": ""
     }
   },
   "snapshot": {

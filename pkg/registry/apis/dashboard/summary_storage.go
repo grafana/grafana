@@ -11,6 +11,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/access"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
 )
 
 var (
@@ -55,11 +56,19 @@ func (s *summaryStorage) List(ctx context.Context, options *internalversion.List
 		return nil, err
 	}
 
+	// translate grafana.app/* label selectors into field requirements
+	requirements, newSelector, err := entity.ReadLabelSelectors(options.LabelSelector)
+	if err != nil {
+		return nil, err
+	}
+
 	query := &access.DashboardQuery{
 		OrgID:         orgId,
 		Limit:         int(options.Limit),
 		MaxBytes:      2 * 1024 * 1024, // 2MB,
 		ContinueToken: options.Continue,
+		Requirements:  requirements,
+		Labels:        newSelector,
 	}
 	return s.access.GetDashboardSummaries(ctx, query)
 }

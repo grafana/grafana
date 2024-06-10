@@ -420,7 +420,7 @@ export const Components = {
     current: () => '[class*="-currentVisualizationItem"]',
   },
   Select: {
-    option: 'Select option',
+    option: 'data-testid Select option',
     input: () => 'input[id*="time-options-input"]',
     singleValue: () => 'div[class*="-singleValue"]',
   },
@@ -525,6 +525,9 @@ export const Components = {
   },
   CodeEditor: {
     container: 'data-testid Code editor container',
+  },
+  ReactMonacoEditor: {
+    editorLazy: 'data-testid ReactMonacoEditor editorLazy',
   },
   DashboardImportPage: {
     textarea: 'data-testid-import-dashboard-textarea',

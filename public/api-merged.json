@@ -2322,6 +2322,16 @@
         ],
         "summary": "Create a migration.",
         "operationId": "createMigration",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CloudMigrationRequest"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/cloudMigrationResponse"
@@ -2494,6 +2504,30 @@
       }
     },
     "/cloudmigration/token": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Fetch the cloud migration token if it exists.",
+        "operationId": "getCloudMigrationToken",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationGetTokenResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "post": {
         "tags": [
           "migrations"
@@ -2503,6 +2537,38 @@
         "responses": {
           "200": {
             "$ref": "#/responses/cloudMigrationCreateTokenResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/token/{uid}": {
+      "delete": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Deletes a cloud migration token.",
+        "operationId": "deleteCloudMigrationToken",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID of a cloud migration token",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/cloudMigrationDeleteTokenResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -4317,8 +4383,46 @@
     },
     "/datasources/uid/{uid}/lbac/teams": {
       "get": {
+        "tags": [
+          "enterprise"
+        ],
         "summary": "Retrieves LBAC rules for a team.",
-        "operationId": "getTeamLBACRulesApiResponse",
+        "operationId": "getTeamLBACRulesApi",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "enterprise"
+        ],
+        "summary": "Updates LBAC rules for a team.",
+        "operationId": "updateTeamLBACRulesApi",
         "parameters": [
           {
             "type": "string",
@@ -11051,6 +11155,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       },
@@ -11067,6 +11177,17 @@
             "name": "name",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Version of mute timing to use for optimistic concurrency. Leave empty to disable validation",
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -12087,6 +12208,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "record": {
+          "$ref": "#/definitions/AlertRuleRecordExport"
+        },
         "title": {
           "type": "string"
         },
@@ -12234,6 +12358,18 @@
         }
       }
     },
+    "AlertRuleRecordExport": {
+      "type": "object",
+      "title": "Record is the provisioned export of models.Record.",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "string"
+        }
+      }
+    },
     "AlertingFileExport": {
       "type": "object",
       "title": "AlertingFileExport is the full provisioned file export.",
@@ -12340,7 +12476,7 @@
           }
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -13166,6 +13302,14 @@
           "items": {
             "$ref": "#/definitions/CloudMigrationResponse"
           }
+        }
+      }
+    },
+    "CloudMigrationRequest": {
+      "type": "object",
+      "properties": {
+        "authToken": {
+          "type": "string"
         }
       }
     },
@@ -14573,7 +14717,9 @@
         }
       }
     },
-    "EvalQueriesResponse": {},
+    "EvalQueriesResponse": {
+      "type": "object"
+    },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
     },
@@ -15037,6 +15183,29 @@
         }
       }
     },
+    "GetAccessTokenResponseDTO": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string"
+        },
+        "firstUsedAt": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lastUsedAt": {
+          "type": "string"
+        }
+      }
+    },
     "GetAnnotationTagsResponse": {
       "type": "object",
       "title": "GetAnnotationTagsResponse is a response struct for FindTagsResult.",
@@ -15475,6 +15644,9 @@
           "items": {
             "$ref": "#/definitions/TimeIntervalItem"
           }
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -17615,6 +17787,9 @@
           "items": {
             "$ref": "#/definitions/TimeIntervalItem"
           }
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -17808,6 +17983,9 @@
         },
         "provenance": {
           "$ref": "#/definitions/Provenance"
+        },
+        "record": {
+          "$ref": "#/definitions/Record"
         },
         "ruleGroup": {
           "type": "string",
@@ -18376,13 +18554,20 @@
     },
     "Record": {
       "type": "object",
-      "title": "Record defines how data produced by a recording rule is written.",
+      "required": [
+        "metric",
+        "from"
+      ],
       "properties": {
         "from": {
-          "type": "string"
+          "description": "Which expression node should be used as the input for the recorded metric.",
+          "type": "string",
+          "example": "A"
         },
         "metric": {
-          "type": "string"
+          "description": "Name of the recorded metric.",
+          "type": "string",
+          "example": "grafana_alerts_ratio"
         }
       }
     },
@@ -18963,7 +19148,7 @@
           "type": "string"
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -19073,10 +19258,6 @@
           "type": "string"
         }
       }
-    },
-    "RuleType": {
-      "type": "string",
-      "title": "RuleType models the type of a rule."
     },
     "SNSConfig": {
       "type": "object",
@@ -19578,6 +19759,20 @@
     "SignatureAlgorithm": {
       "type": "integer",
       "format": "int64"
+    },
+    "SilenceMetadata": {
+      "type": "object",
+      "properties": {
+        "folder_uid": {
+          "type": "string"
+        },
+        "rule_title": {
+          "type": "string"
+        },
+        "rule_uid": {
+          "type": "string"
+        }
+      }
     },
     "SlackAction": {
       "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -21361,9 +21556,9 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/alertGroup"
       }
     },
@@ -21494,6 +21689,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -21549,13 +21745,39 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableAlert"
       }
     },
+    "gettableGrafanaSilence": {
+      "type": "object",
+      "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "example": {
+            "create": false,
+            "read": true,
+            "write": false
+          }
+        },
+        "metadata": {
+          "$ref": "#/definitions/SilenceMetadata"
+        }
+      }
+    },
+    "gettableGrafanaSilences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/gettableGrafanaSilence"
+      }
+    },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -21604,13 +21826,14 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableSilence"
       }
     },
     "integration": {
+      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -21754,6 +21977,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -22122,6 +22346,15 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/CreateAccessTokenResponseDTO"
+      }
+    },
+    "cloudMigrationDeleteTokenResponse": {
+      "description": "(empty)"
+    },
+    "cloudMigrationGetTokenResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/GetAccessTokenResponseDTO"
       }
     },
     "cloudMigrationListResponse": {
