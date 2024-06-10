@@ -45,6 +45,9 @@ module.exports = (env = {}) => {
 
     resolve: {
       alias: {
+        // Packages linked for development need react to be resolved from the same location
+        react: path.resolve('./node_modules/react'),
+
         // Also Grafana packages need to be resolved from the same location so they share
         // the same singletons
         '@grafana/runtime': path.resolve(__dirname, '../../packages/grafana-runtime'),
