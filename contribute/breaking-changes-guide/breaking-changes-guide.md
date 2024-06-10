@@ -41,7 +41,7 @@ It also adds the `breaking change` label to the pull request.
 
 ## What do comments on my PR mean?
 
-![Example Levitate comment on PR](./breaking-changes-comment-screenshot.png)
+![A GitHub comment posted by the github-actions bot that says that grafana-runtime has possible breaking changes. It has links for more info and to check console output.](./breaking-changes-comment-screenshot.png)
 
 Receiving a comment like this does not necessarily mean that you actually introduced breaking
 changes. This is because certain edge cases are still not covered by the tool, but there is a good chance that they may happen, so we call it to your attention.
@@ -51,17 +51,17 @@ By clicking the links in the comment ("more info" or "Check console output") you
 **Removed exported members** (console view):<br />
 This means that some previously exported members won't be available in the newer version of the package, so dependent plugins can break.
 
-![Removed exported members](./breaking-changes-console-screenshot-1.png)
+![A table from the console bot showing the Property, Location, and Diff of the breaking changes.](./breaking-changes-console-screenshot-1.png)
 
 **Changed an existing member** (console view):<br />
 This means that a member was changed in a way that can break dependent plugins.
 
-![Changed an existing member](./breaking-changes-console-screenshot-2.png)
+![A table from the console bot showing how a changed number affects the Property, Location, and Diff of the breaking changes.](./breaking-changes-console-screenshot-2.png)
 
 **No breaking changes** (console view):<br />
 Seeing this suggests that while changes were made, most probably none of them were breaking. You are good to go! 👏
 
-![No breaking changes](./breaking-changes-console-screenshot-3.png)
+![A table from the console bot showing that there were no breaking changes.](./breaking-changes-console-screenshot-3.png)
 
 ## How can I decide if it is really a breaking change?
 
