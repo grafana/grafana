@@ -24,7 +24,7 @@ type cmsClientImpl struct {
 	log    *log.ConcreteLogger
 }
 
-func (c *cmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigration) error {
+func (c *cmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
 	logger := c.log.FromContext(ctx)
 
 	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/validate-key", cm.ClusterSlug, c.domain)
@@ -63,7 +63,7 @@ func (c *cmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	return nil
 }
 
-func (c *cmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigration, request cloudmigration.MigrateDataRequestDTO) (*cloudmigration.MigrateDataResponseDTO, error) {
+func (c *cmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigrationSession, request cloudmigration.MigrateDataRequestDTO) (*cloudmigration.MigrateSnapshotResponseDTO, error) {
 	logger := c.log.FromContext(ctx)
 
 	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/migrate-data", cm.ClusterSlug, c.domain)
@@ -98,7 +98,7 @@ func (c *cmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.Cloud
 		}
 	}()
 
-	var result cloudmigration.MigrateDataResponseDTO
+	var result cloudmigration.MigrateSnapshotResponseDTO
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		logger.Error("unmarshalling response body: %w", err)
 		return nil, fmt.Errorf("unmarshalling migration run response: %w", err)

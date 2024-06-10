@@ -63,4 +63,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 	mg.AddMigration("Add unique index migration_run_uid", NewAddIndexMigration(migrationRunTable, &Index{
 		Cols: []string{"uid"}, Type: UniqueIndex,
 	}))
+
+	// --- async workflow refactor
+	// mg.AddMigration("rename stack to stack slug", )
 }

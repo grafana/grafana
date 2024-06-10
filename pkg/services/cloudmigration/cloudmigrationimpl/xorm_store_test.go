@@ -29,13 +29,13 @@ func Test_GetAllCloudMigrations(t *testing.T) {
 		for _, m := range value {
 			switch m.ID {
 			case 1:
-				require.Equal(t, "11111", m.Stack)
+				require.Equal(t, "11111", m.Slug)
 				require.Equal(t, "12345", m.AuthToken)
 			case 2:
-				require.Equal(t, "22222", m.Stack)
+				require.Equal(t, "22222", m.Slug)
 				require.Equal(t, "6789", m.AuthToken)
 			case 3:
-				require.Equal(t, "33333", m.Stack)
+				require.Equal(t, "33333", m.Slug)
 				require.Equal(t, "777", m.AuthToken)
 			default:
 				require.Fail(t, "ID value not expected: "+strconv.FormatInt(m.ID, 10))
@@ -49,9 +49,9 @@ func Test_CreateMigration(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("creates migrations and reads it from the db", func(t *testing.T) {
-		cm := cloudmigration.CloudMigration{
+		cm := cloudmigration.CloudMigrationSession{
 			AuthToken:   encodeToken("token"),
-			Stack:       "fake_stack",
+			Slug:        "fake_stack",
 			StackID:     1234,
 			RegionSlug:  "fake_slug",
 			ClusterSlug: "fake_cluster_slug",
@@ -66,7 +66,7 @@ func Test_CreateMigration(t *testing.T) {
 		require.Equal(t, mig.ID, getRes.ID)
 		require.Equal(t, mig.UID, getRes.UID)
 		require.Equal(t, cm.AuthToken, getRes.AuthToken)
-		require.Equal(t, cm.Stack, getRes.Stack)
+		require.Equal(t, cm.Slug, getRes.Slug)
 		require.Equal(t, cm.StackID, getRes.StackID)
 		require.Equal(t, cm.RegionSlug, getRes.RegionSlug)
 		require.Equal(t, cm.ClusterSlug, getRes.ClusterSlug)
@@ -111,9 +111,9 @@ func Test_CreateMigrationRun(t *testing.T) {
 
 	t.Run("creates a migration run and retrieves it from db", func(t *testing.T) {
 		result := []byte("OK")
-		cmr := cloudmigration.CloudMigrationRun{
-			CloudMigrationUID: "asdfg",
-			Result:            result,
+		cmr := cloudmigration.SnapshotMigration{
+			SessionUID: "asdfg",
+			Result:     result,
 		}
 
 		createResp, err := s.CreateMigrationRun(ctx, cmr)

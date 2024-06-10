@@ -24,11 +24,11 @@ func (s *NoopServiceImpl) DeleteToken(ctx context.Context, uid string) error {
 	return cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigration) error {
+func (s *NoopServiceImpl) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
 	return cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigration, error) {
+func (s *NoopServiceImpl) GetMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
@@ -44,7 +44,7 @@ func (s *NoopServiceImpl) UpdateMigration(ctx context.Context, uid string, cm cl
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.CloudMigrationRun, error) {
+func (s *NoopServiceImpl) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.SnapshotMigration, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
@@ -52,14 +52,14 @@ func (s *NoopServiceImpl) GetMigrationRunList(ctx context.Context, uid string) (
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) DeleteMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigration, error) {
+func (s *NoopServiceImpl) DeleteMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) CreateMigrationRun(context.Context, cloudmigration.CloudMigrationRun) (string, error) {
+func (s *NoopServiceImpl) CreateMigrationRun(context.Context, cloudmigration.SnapshotMigration) (string, error) {
 	return "", cloudmigration.ErrInternalNotImplementedError
 }
 
-func (s *NoopServiceImpl) RunMigration(context.Context, string) (*cloudmigration.MigrateDataResponseDTO, error) {
+func (s *NoopServiceImpl) RunMigration(context.Context, string) (*cloudmigration.MigrateSnapshotResponseDTO, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }

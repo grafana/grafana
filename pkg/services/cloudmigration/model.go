@@ -18,11 +18,11 @@ var (
 )
 
 // CloudMigration api dtos
-type CloudMigration struct {
+type CloudMigrationSession struct {
 	ID          int64     `json:"id" xorm:"pk autoincr 'id'"`
 	UID         string    `json:"uid" xorm:"uid"`
 	AuthToken   string    `json:"-"`
-	Stack       string    `json:"stack"`
+	Slug        string    `json:"slug" xorm:"stack"`
 	StackID     int       `json:"stackID" xorm:"stack_id"`
 	RegionSlug  string    `json:"regionSlug"`
 	ClusterSlug string    `json:"clusterSlug"`
@@ -30,18 +30,18 @@ type CloudMigration struct {
 	Updated     time.Time `json:"updated"`
 }
 
-type CloudMigrationRun struct {
-	ID                int64     `json:"id" xorm:"pk autoincr 'id'"`
-	UID               string    `json:"uid" xorm:"uid"`
-	CloudMigrationUID string    `json:"migrationUid" xorm:"cloud_migration_uid"`
-	Result            []byte    `json:"result"` //store raw cms response body
-	Created           time.Time `json:"created"`
-	Updated           time.Time `json:"updated"`
-	Finished          time.Time `json:"finished"`
+type SnapshotMigration struct {
+	ID         int64     `json:"id" xorm:"pk autoincr 'id'"`
+	UID        string    `json:"uid" xorm:"uid"`
+	SessionUID string    `json:"sessionUid" xorm:"cloud_migration_uid"`
+	Result     []byte    `json:"result"` //store raw cms response body
+	Created    time.Time `json:"created"`
+	Updated    time.Time `json:"updated"`
+	Finished   time.Time `json:"finished"`
 }
 
-func (r CloudMigrationRun) ToResponse() (*MigrateDataResponseDTO, error) {
-	var result MigrateDataResponseDTO
+func (r SnapshotMigration) ToResponse() (*MigrateSnapshotResponseDTO, error) {
+	var result MigrateSnapshotResponseDTO
 	err := json.Unmarshal(r.Result, &result)
 	if err != nil {
 		return nil, errors.New("could not parse result of run")
@@ -51,7 +51,7 @@ func (r CloudMigrationRun) ToResponse() (*MigrateDataResponseDTO, error) {
 }
 
 type CloudMigrationRunList struct {
-	Runs []MigrateDataResponseListDTO `json:"runs"`
+	Runs []MigrateSnapshotResponseListDTO `json:"runs"`
 }
 
 type CloudMigrationRequest struct {
@@ -60,7 +60,7 @@ type CloudMigrationRequest struct {
 
 type CloudMigrationResponse struct {
 	UID     string    `json:"uid"`
-	Stack   string    `json:"stack"`
+	Slug    string    `json:"slug"`
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
 }
@@ -80,10 +80,10 @@ type Base64EncodedTokenPayload struct {
 	Instance Base64HGInstance
 }
 
-func (p Base64EncodedTokenPayload) ToMigration() CloudMigration {
-	return CloudMigration{
+func (p Base64EncodedTokenPayload) ToMigration() CloudMigrationSession {
+	return CloudMigrationSession{
 		AuthToken:   p.Token,
-		Stack:       p.Instance.Slug,
+		Slug:        p.Instance.Slug,
 		StackID:     p.Instance.StackID,
 		RegionSlug:  p.Instance.RegionSlug,
 		ClusterSlug: p.Instance.ClusterSlug,
@@ -127,16 +127,16 @@ const (
 	ItemStatusError ItemStatus = "ERROR"
 )
 
-type MigrateDataResponseDTO struct {
-	RunUID string                       `json:"uid"`
-	Items  []MigrateDataResponseItemDTO `json:"items"`
+type MigrateSnapshotResponseDTO struct {
+	RunUID string                           `json:"uid"`
+	Items  []MigrateSnapshotResponseItemDTO `json:"items"`
 }
 
-type MigrateDataResponseListDTO struct {
+type MigrateSnapshotResponseListDTO struct {
 	RunUID string `json:"uid"`
 }
 
-type MigrateDataResponseItemDTO struct {
+type MigrateSnapshotResponseItemDTO struct {
 	// required:true
 	Type MigrateDataType `json:"type"`
 	// required:true

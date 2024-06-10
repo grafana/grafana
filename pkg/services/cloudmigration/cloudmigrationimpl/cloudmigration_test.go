@@ -50,7 +50,7 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 	_, err = s.GetToken(context.Background())
 	assert.ErrorIs(t, cloudmigration.ErrTokenNotFound, err)
 
-	cm := cloudmigration.CloudMigration{}
+	cm := cloudmigration.CloudMigrationSession{}
 	err = s.ValidateToken(context.Background(), cm)
 	assert.NoError(t, err)
 }
@@ -69,20 +69,20 @@ func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
 	createResp, err := s.CreateMigration(context.Background(), cmd)
 	require.NoError(t, err)
 	require.NotEmpty(t, createResp.UID)
-	require.NotEmpty(t, createResp.Stack)
+	require.NotEmpty(t, createResp.Slug)
 
 	getMigResp, err := s.GetMigration(context.Background(), createResp.UID)
 	require.NoError(t, err)
 	require.NotNil(t, getMigResp)
 	require.Equal(t, createResp.UID, getMigResp.UID)
-	require.Equal(t, createResp.Stack, getMigResp.Stack)
+	require.Equal(t, createResp.Slug, getMigResp.Slug)
 
 	listResp, err := s.GetMigrationList(context.Background())
 	require.NoError(t, err)
 	require.NotNil(t, listResp)
 	require.Equal(t, 1, len(listResp.Migrations))
 	require.Equal(t, createResp.UID, listResp.Migrations[0].UID)
-	require.Equal(t, createResp.Stack, listResp.Migrations[0].Stack)
+	require.Equal(t, createResp.Slug, listResp.Migrations[0].Slug)
 
 	runResp, err := s.RunMigration(ctxWithSignedInUser(), createResp.UID)
 	require.NoError(t, err)

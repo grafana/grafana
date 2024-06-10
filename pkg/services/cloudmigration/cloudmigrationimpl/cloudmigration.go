@@ -275,7 +275,7 @@ func (s *Service) findAccessPolicyByName(ctx context.Context, regionSlug, access
 	return nil, nil
 }
 
-func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigration) error {
+func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.ValidateToken")
 	defer span.End()
 
@@ -315,7 +315,7 @@ func (s *Service) DeleteToken(ctx context.Context, tokenID string) error {
 	return nil
 }
 
-func (s *Service) GetMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigration, error) {
+func (s *Service) GetMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetMigration")
 	defer span.End()
 	migration, err := s.store.GetMigrationByUID(ctx, uid)
@@ -336,7 +336,7 @@ func (s *Service) GetMigrationList(ctx context.Context) (*cloudmigration.CloudMi
 	for _, v := range values {
 		migrations = append(migrations, cloudmigration.CloudMigrationResponse{
 			UID:     v.UID,
-			Stack:   v.Stack,
+			Slug:    v.Slug,
 			Created: v.Created,
 			Updated: v.Updated,
 		})
@@ -371,7 +371,7 @@ func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudM
 
 	return &cloudmigration.CloudMigrationResponse{
 		UID:     cm.UID,
-		Stack:   token.Instance.Slug,
+		Slug:    token.Instance.Slug,
 		Created: cm.Created,
 		Updated: cm.Updated,
 	}, nil
@@ -382,7 +382,7 @@ func (s *Service) UpdateMigration(ctx context.Context, uid string, request cloud
 	return nil, nil
 }
 
-func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration.MigrateDataResponseDTO, error) {
+func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration.MigrateSnapshotResponseDTO, error) {
 	// Get migration to read the auth token
 	migration, err := s.GetMigration(ctx, uid)
 	if err != nil {
@@ -411,9 +411,9 @@ func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration
 	}
 
 	// save the result of the migration
-	runUID, err := s.createMigrationRun(ctx, cloudmigration.CloudMigrationRun{
-		CloudMigrationUID: migration.UID,
-		Result:            respData,
+	runUID, err := s.createMigrationRun(ctx, cloudmigration.SnapshotMigration{
+		SessionUID: migration.UID,
+		Result:     respData,
 	})
 	if err != nil {
 		response.Error(http.StatusInternalServerError, "migration run save error", err)
@@ -547,7 +547,7 @@ func (s *Service) getDashboards(ctx context.Context) ([]dashboards.Dashboard, er
 	return result, nil
 }
 
-func (s *Service) createMigrationRun(ctx context.Context, cmr cloudmigration.CloudMigrationRun) (string, error) {
+func (s *Service) createMigrationRun(ctx context.Context, cmr cloudmigration.SnapshotMigration) (string, error) {
 	uid, err := s.store.CreateMigrationRun(ctx, cmr)
 	if err != nil {
 		s.log.Error("Failed to save migration run", "err", err)
@@ -556,7 +556,7 @@ func (s *Service) createMigrationRun(ctx context.Context, cmr cloudmigration.Clo
 	return uid, nil
 }
 
-func (s *Service) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.CloudMigrationRun, error) {
+func (s *Service) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.SnapshotMigration, error) {
 	cmr, err := s.store.GetMigrationStatus(ctx, runUID)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving migration status from db: %w", err)
@@ -570,9 +570,9 @@ func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*clou
 		return nil, fmt.Errorf("retrieving migration statuses from db: %w", err)
 	}
 
-	runList := &cloudmigration.CloudMigrationRunList{Runs: []cloudmigration.MigrateDataResponseListDTO{}}
+	runList := &cloudmigration.CloudMigrationRunList{Runs: []cloudmigration.MigrateSnapshotResponseListDTO{}}
 	for _, s := range runs {
-		runList.Runs = append(runList.Runs, cloudmigration.MigrateDataResponseListDTO{
+		runList.Runs = append(runList.Runs, cloudmigration.MigrateSnapshotResponseListDTO{
 			RunUID: s.UID,
 		})
 	}
@@ -580,7 +580,7 @@ func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*clou
 	return runList, nil
 }
 
-func (s *Service) DeleteMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigration, error) {
+func (s *Service) DeleteMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	c, err := s.store.DeleteMigration(ctx, uid)
 	if err != nil {
 		return c, fmt.Errorf("deleting migration from db: %w", err)

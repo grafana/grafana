@@ -14,24 +14,24 @@ func NewInMemoryClient() Client {
 
 type memoryClientImpl struct{}
 
-func (c *memoryClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigration) error {
+func (c *memoryClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
 	// return ErrMigrationNotDeleted
 	return nil
 }
 
 func (c *memoryClientImpl) MigrateData(
 	ctx context.Context,
-	cm cloudmigration.CloudMigration,
+	cm cloudmigration.CloudMigrationSession,
 	request cloudmigration.MigrateDataRequestDTO,
-) (*cloudmigration.MigrateDataResponseDTO, error) {
+) (*cloudmigration.MigrateSnapshotResponseDTO, error) {
 	//return nil, ErrMigrationNotDeleted
 
-	result := cloudmigration.MigrateDataResponseDTO{
-		Items: make([]cloudmigration.MigrateDataResponseItemDTO, len(request.Items)),
+	result := cloudmigration.MigrateSnapshotResponseDTO{
+		Items: make([]cloudmigration.MigrateSnapshotResponseItemDTO, len(request.Items)),
 	}
 
 	for i, v := range request.Items {
-		result.Items[i] = cloudmigration.MigrateDataResponseItemDTO{
+		result.Items[i] = cloudmigration.MigrateSnapshotResponseItemDTO{
 			Type:   v.Type,
 			RefID:  v.RefID,
 			Status: cloudmigration.ItemStatusOK,
