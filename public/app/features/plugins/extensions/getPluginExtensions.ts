@@ -34,14 +34,14 @@ type GetExtensions = ({
   extensionPointId,
   limitPerPlugin,
   registry,
-  secondAppId,
+  openedApps,
   openSplitApp,
 }: {
   context?: object | Record<string | symbol, unknown>;
   extensionPointId: string;
   limitPerPlugin?: number;
   registry: PluginExtensionRegistry;
-  secondAppId?: string;
+  openedApps?: string[];
   openSplitApp: (appId: string) => void;
 }) => { extensions: PluginExtension[] };
 
@@ -54,7 +54,7 @@ export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginEx
     registry = r;
   });
 
-  return (options) => getPluginExtensions({ ...options, registry, secondAppId: undefined, openSplitApp: () => {} });
+  return (options) => getPluginExtensions({ ...options, registry, openedApps: undefined, openSplitApp: () => {} });
 }
 
 // Returns with a list of plugin extensions for the given extension point
@@ -64,7 +64,7 @@ export const getPluginExtensions: GetExtensions = ({
   limitPerPlugin,
   registry,
   openSplitApp,
-  secondAppId,
+  openedApps,
 }) => {
   const frozenContext = context ? getReadOnlyProxy(context) : {};
   const registryItems = registry.extensions[extensionPointId] ?? [];
@@ -88,8 +88,9 @@ export const getPluginExtensions: GetExtensions = ({
 
       // LINK
       if (isPluginExtensionLinkConfig(extensionConfig)) {
-        // Run the configure() function with the current context, and apply the ovverides
-        const overrides = getLinkExtensionOverrides(pluginId, secondAppId === pluginId, extensionConfig, frozenContext);
+        // Run the configure() function with the current context, and apply the overrides
+        const isAppOpened = !!openedApps?.includes(pluginId);
+        const overrides = getLinkExtensionOverrides(pluginId, isAppOpened, extensionConfig, frozenContext);
 
         // configure() returned an `undefined` -> hide the extension
         if (extensionConfig.configure && overrides === undefined) {
@@ -97,7 +98,6 @@ export const getPluginExtensions: GetExtensions = ({
         }
 
         const path = overrides?.path || extensionConfig.path;
-        const isAppOpened = secondAppId === pluginId;
         const openApp = () => openSplitApp(pluginId);
 
         const extension: PluginExtensionLink = {

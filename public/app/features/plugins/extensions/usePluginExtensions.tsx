@@ -23,6 +23,19 @@ export function createPluginExtensionsHook(extensionsRegistry: ReactivePluginExt
   return function usePluginExtensions(options: GetPluginExtensionsOptions): UsePluginExtensionsResult<PluginExtension> {
     const registry = useObservable(observableRegistry);
     const secondAppId = useSelector((state) => state.windowSplit.secondAppId);
+    let mainApp = window.location.pathname.match(/\/a\/([^/]+)/)?.[1];
+    if (!mainApp && window.location.pathname.match(/explore/)) {
+      mainApp = 'explore';
+    }
+    const openedApps = [];
+    if (mainApp) {
+      openedApps.push(mainApp);
+    }
+
+    if (secondAppId) {
+      openedApps.push(secondAppId);
+    }
+
     const dispatch = useDispatch();
     const openSplitApp = useCallback(
       (appId: string) => dispatch(windowSplitSlice.actions.openSplitApp({ secondAppId: appId })),
@@ -49,7 +62,7 @@ export function createPluginExtensionsHook(extensionsRegistry: ReactivePluginExt
       };
     }
 
-    const { extensions } = getPluginExtensions({ ...options, registry, secondAppId, openSplitApp });
+    const { extensions } = getPluginExtensions({ ...options, registry, openedApps, openSplitApp });
 
     cache.extensions[key] = {
       context: options.context,
