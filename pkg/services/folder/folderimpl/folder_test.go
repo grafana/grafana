@@ -1485,6 +1485,58 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		})
 	})
 
+	t.Run("Should not list k6 folders or subfolders", func(t *testing.T) {
+		_, err = nestedFolderStore.Create(context.Background(), folder.CreateFolderCommand{
+			UID:          accesscontrol.K6FolderUID,
+			OrgID:        orgID,
+			SignedInUser: &signedInAdminUser,
+		})
+		require.NoError(t, err)
+
+		k6ChildFolder, err := nestedFolderStore.Create(context.Background(), folder.CreateFolderCommand{
+			UID:          "k6-app-child",
+			ParentUID:    accesscontrol.K6FolderUID,
+			OrgID:        orgID,
+			SignedInUser: &signedInAdminUser,
+		})
+		require.NoError(t, err)
+
+		unrelatedFolder, err := nestedFolderStore.Create(context.Background(), folder.CreateFolderCommand{
+			UID:          "another-folder",
+			OrgID:        orgID,
+			SignedInUser: &signedInAdminUser,
+		})
+		require.NoError(t, err)
+
+		folders, err := serviceWithFlagOn.GetFolders(context.Background(), folder.GetFoldersQuery{
+			OrgID:        orgID,
+			SignedInUser: &signedInAdminUser,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(folders), "should not return k6 folders or subfolders")
+		assert.Equal(t, unrelatedFolder.UID, folders[0].UID)
+
+		// Service accounts should be able to list k6 folders
+		svcAccountUser := user.SignedInUser{UserID: 2, IsServiceAccount: true, OrgID: orgID, Permissions: map[int64]map[string][]string{
+			orgID: {
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll},
+			},
+		}}
+		folders, err = serviceWithFlagOn.GetFolders(context.Background(), folder.GetFoldersQuery{
+			OrgID:        orgID,
+			SignedInUser: &svcAccountUser,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, 3, len(folders), "service accounts should be able to list k6 folders")
+
+		t.Cleanup(func() {
+			//guardian.New = origNewGuardian
+			toDelete := []string{k6ChildFolder.UID, accesscontrol.K6FolderUID, unrelatedFolder.UID}
+			err := serviceWithFlagOn.store.Delete(context.Background(), toDelete, orgID)
+			assert.NoError(t, err)
+		})
+	})
+
 	t.Run("Should get org folders visible", func(t *testing.T) {
 		depth := 3
 
