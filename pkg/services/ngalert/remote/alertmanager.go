@@ -205,6 +205,7 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	}
 
 	if time.Since(am.lastConfigSync) < am.syncInterval {
+		am.log.Debug("Not syncing configuration to remote Alertmanager, last sync was too recent")
 		return nil
 	}
 
