@@ -551,8 +551,13 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			alertRulesSql.NotIn("org_id", disabledOrgs)
 		}
 
+		var groupsMap map[string]struct{}
 		if len(query.RuleGroups) > 0 {
 			alertRulesSql.In("rule_group", query.RuleGroups)
+			groupsMap = make(map[string]struct{}, len(query.RuleGroups))
+			for _, group := range query.RuleGroups {
+				groupsMap[group] = struct{}{}
+			}
 		}
 
 		rule := new(ngmodels.AlertRule)
@@ -572,6 +577,11 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "GetAlertRulesForScheduling", "error", err)
 				continue
+			}
+			if groupsMap != nil {
+				if _, ok := groupsMap[rule.RuleGroup]; !ok { // compare groups using case-sensitive logic.
+					continue
+				}
 			}
 			if st.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingQueryOptimization) {
 				if optimizations, err := OptimizeAlertQueries(rule.Data); err != nil {
