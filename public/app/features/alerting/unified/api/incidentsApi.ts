@@ -12,9 +12,9 @@ const getProxyApiUrl = (path: string) => `/api/plugins/${SupportedPlugin.Inciden
 export const incidentsApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getIncidentsPluginConfig: build.query<IncidentsPluginConfigDto, void>({
-      query: (integration) => ({
+      query: () => ({
         url: getProxyApiUrl('/api/ConfigurationTrackerService.GetConfigurationTracker'),
-        data: integration,
+        data: {},
         method: 'POST',
         showErrorAlert: false,
       }),

@@ -1162,3 +1162,239 @@ div.editor-option label {
     }
   }
 }
+
+.page-header {
+  margin-top: $space-md;
+
+  .btn {
+    float: right;
+    margin-left: $space-md;
+
+    // better align icons
+    .fa {
+      position: relative;
+      top: 1px;
+    }
+  }
+
+  @include media-breakpoint-up(md) {
+    margin-top: 0;
+  }
+}
+
+.page-header__inner {
+  flex-grow: 1;
+  display: flex;
+  padding: $space-lg 0;
+}
+
+.page-header__title {
+  font-size: $font-size-h2;
+  margin-bottom: 1px;
+  padding-top: $spacer;
+}
+
+.page-header__img {
+  position: relative;
+  top: 10px;
+  height: 50px;
+}
+
+.page-header__icon {
+  font-size: 50px;
+  width: 50px;
+  height: 50px;
+  position: relative;
+  color: $text-color-weak;
+
+  &.fa {
+    top: 10px;
+  }
+
+  &.gicon {
+    top: 10px;
+  }
+
+  &.icon-gf {
+    top: 3px;
+  }
+}
+
+.page-header__logo {
+  margin: -1px $spacer -1px 0;
+  color: $text-color-weak;
+}
+
+.page-header__sub-title {
+  color: $text-muted;
+}
+
+.page-header-stamps-type {
+  color: $link-color-disabled;
+  text-transform: uppercase;
+}
+
+.page-header__select-nav {
+  margin-bottom: 10px;
+  max-width: 100%;
+
+  @include media-breakpoint-up(lg) {
+    display: none;
+  }
+}
+
+.page-header__link {
+  color: $text-color;
+  text-decoration: underline;
+}
+
+.page-header__tabs {
+  display: none;
+  @include media-breakpoint-up(lg) {
+    display: block;
+  }
+}
+
+.page-breadcrumbs {
+  display: flex;
+  padding: 10px 0;
+  line-height: 0.5;
+}
+
+.breadcrumb {
+  display: inline-block;
+  box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  border-radius: 5px;
+  counter-reset: flag;
+}
+
+gf-form-switch[disabled] {
+  .gf-form-switch,
+  .gf-form-switch-container {
+    cursor: default;
+    pointer-events: none !important;
+    .gf-form-label {
+      color: $text-color-weak;
+    }
+  }
+}
+
+.gf-form-switch-container {
+  display: flex;
+  cursor: pointer;
+  margin-right: $space-xs;
+}
+
+.gf-form-switch {
+  display: flex;
+  position: relative;
+  width: 56px;
+  height: $input-height;
+  background: $switch-bg;
+  border: 1px solid $input-border-color;
+  border-radius: $input-border-radius;
+  align-items: center;
+  justify-content: center;
+  input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  &--transparent {
+    background: transparent;
+    border: 0;
+    width: 40px;
+  }
+}
+
+.gf-form-switch__slider {
+  background: $switch-slider-off-bg;
+  border-radius: 8px;
+  height: 16px;
+  width: 32px;
+  display: block;
+  position: relative;
+
+  &::before {
+    position: absolute;
+    content: '';
+    height: 12px;
+    width: 12px;
+    left: 2px;
+    top: 2px;
+    background: $switch-slider-color;
+    transition: 0.4s;
+    border-radius: 50%;
+    box-shadow: $switch-slider-shadow;
+  }
+}
+
+input:checked + .gf-form-switch__slider {
+  background: $switch-slider-on-bg;
+}
+
+input:checked + .gf-form-switch__slider::before {
+  transform: translateX(16px);
+}
+
+.gf-form-checkbox {
+  position: relative;
+  display: flex;
+  width: 50px;
+  height: $input-height;
+  background: $switch-bg;
+  border: 1px solid $input-border-color;
+  border-left: none;
+  border-radius: $input-border-radius;
+  align-items: center;
+  justify-content: center;
+
+  input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    appearance: none;
+  }
+
+  &--transparent {
+    background: transparent;
+    border: none;
+    width: 23px;
+    height: auto;
+    position: relative;
+    padding-left: 8px;
+  }
+
+  &--table-cell {
+    width: 20px;
+    background: transparent;
+    height: auto;
+    border: none;
+    position: relative;
+    top: -5px;
+  }
+}
+
+.gf-form-switch__checkbox {
+  height: 16px;
+  width: 16px;
+  border-radius: 3px;
+  border: $checkbox-border;
+  background: $checkbox-bg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+input:checked + .gf-form-switch__checkbox::before {
+  font-family: 'FontAwesome';
+  content: '\f00c';
+  color: $checkbox-color;
+}
+
+input:checked + .gf-form-switch__checkbox {
+  background: $checkbox-checked-bg;
+  border: none;
+}
