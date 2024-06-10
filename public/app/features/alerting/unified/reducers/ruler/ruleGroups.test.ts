@@ -41,7 +41,7 @@ describe('removing a rule', () => {
       rules: [mockRulerGrafanaRule({}, { uid: '1' }), ruleToDelete, mockRulerGrafanaRule({}, { uid: '3' })],
     };
 
-    const action = deleteRuleAction(ruleToDelete);
+    const action = deleteRuleAction({ rule: ruleToDelete });
     const output = ruleGroupReducer(initialGroup, action);
 
     expect(output).toHaveProperty('rules');
@@ -69,7 +69,7 @@ describe('removing a rule', () => {
       ],
     };
 
-    const action = deleteRuleAction(ruleToDelete);
+    const action = deleteRuleAction({ rule: ruleToDelete });
     const output = ruleGroupReducer(initialGroup, action);
 
     expect(output).toHaveProperty('rules');

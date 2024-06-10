@@ -3,50 +3,85 @@ import { useCallback } from 'react';
 
 import { dispatch, getState } from 'app/store/store';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
-import { PostableRuleDTO, RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
-import { addRuleAction, deleteRuleAction, pauseRuleAction, ruleGroupReducer } from '../reducers/ruler/ruleGroups';
+import { deleteRuleAction, pauseRuleAction, ruleGroupReducer } from '../reducers/ruler/ruleGroups';
 import {
   fetchPromAndRulerRulesAction,
   fetchRulesSourceBuildInfoAction,
   getDataSourceRulerConfig,
 } from '../state/actions';
 
-export function useProduceNewRuleGroup() {
-  const [fetchRuleGroup, _fetchRuleGroupState] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
-  const [deleteRuleGroup, _deleteRuleGroupState] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useLazyQuery();
+import { mergeRequestStates } from './mergeRequestStates';
+
+type ProduceNewRuleGroupOptions = {
+  /**
+   * Should we dispatch additional actions to ensure that other (non-RTKQ) caches are cleared?
+   */
+  refetchAllRules?: boolean;
+};
+
+function useProduceNewRuleGroup() {
+  const [fetchRuleGroup, fetchRuleGroupState] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
+  const [deleteRuleGroup, deleteRuleGroupState] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useLazyQuery();
   const [updateRuleGroup, updateRuleGroupState] = alertRuleApi.endpoints.updateRuleGroupForNamespace.useMutation();
 
-  const produceNewRuleGroup = async (ruleGroup: RuleGroupIdentifier, action: Action) => {
-    const { ruleSourceName, group, namespace } = ruleGroup;
+  const produceNewRuleGroup = async (
+    ruleGroup: RuleGroupIdentifier,
+    action: Action,
+    options?: ProduceNewRuleGroupOptions
+  ) => {
+    const { dataSourceName, groupName, namespaceName } = ruleGroup;
 
     // @TODO we should really not work with the redux state (getState) here
-    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: ruleSourceName }));
-    const rulerConfig = getDataSourceRulerConfig(getState, ruleSourceName);
+    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: dataSourceName }));
+    const rulerConfig = getDataSourceRulerConfig(getState, dataSourceName);
 
-    const currentRuleGroup = await fetchRuleGroup({ rulerConfig, namespace, group }).unwrap();
+    const currentRuleGroup = await fetchRuleGroup({
+      rulerConfig,
+      namespace: namespaceName,
+      group: groupName,
+    }).unwrap();
 
     // @TODO convert rule group to postable rule group – TypeScript is not complaining here because
     // the interfaces are compatible but it _should_ complain
     const newRuleGroup = ruleGroupReducer(currentRuleGroup, action);
 
-    // if this was the last rule in the group after applying the action on the reducer we remove the group in its entirety
     const deleteEntireGroup = newRuleGroup.rules.length === 0;
-    if (deleteEntireGroup) {
-      return deleteRuleGroup({
-        rulerConfig,
-        namespace,
-        group,
-      });
+
+    // if we have no more rules in the group, we delete the entire group, otherwise just update the rule group
+    const updateOrDelete = () => {
+      if (deleteEntireGroup) {
+        return [
+          deleteRuleGroup({
+            rulerConfig,
+            namespace: namespaceName,
+            group: groupName,
+          }).unwrap(),
+          mergeRequestStates(fetchRuleGroupState, deleteRuleGroupState),
+        ] as const;
+      }
+
+      return [
+        updateRuleGroup({
+          rulerConfig,
+          namespace: namespaceName,
+          payload: newRuleGroup,
+        }).unwrap(),
+        mergeRequestStates(fetchRuleGroupState, updateRuleGroupState),
+      ] as const;
+    };
+
+    const [updateOrDeleteResult, state] = updateOrDelete();
+
+    if (options?.refetchAllRules) {
+      // refetch rules for this rules source
+      // @TODO remove this when we moved everything to RTKQ – then the endpoint will simply invalidate the tags
+      dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: ruleGroup.dataSourceName }));
     }
 
-    // otherwise assume we just want to update the existing group
-    return updateRuleGroup({
-      rulerConfig,
-      namespace,
-      payload: newRuleGroup,
-    }).unwrap();
+    return [updateOrDeleteResult, state];
   };
 
   // @TODO merge loading state with the fetching state
@@ -61,7 +96,7 @@ export function usePauseRuleInGroup() {
       const uid = rule.grafana_alert.uid;
       const action = pauseRuleAction({ uid, pause });
 
-      await produceNewRuleGroup(ruleGroup, action);
+      return produceNewRuleGroup(ruleGroup, action);
     },
     [produceNewRuleGroup]
   );
@@ -69,31 +104,14 @@ export function usePauseRuleInGroup() {
   return [pauseFn, updateState] as const;
 }
 
-export function useAddRuleInGroup() {
-  const [produceNewRuleGroup, updateState] = useProduceNewRuleGroup();
-
-  const updateFn = useCallback(
-    async (ruleGroup: RuleGroupIdentifier, rule: PostableRuleDTO) => {
-      const action = addRuleAction({ rule });
-      await produceNewRuleGroup(ruleGroup, action);
-    },
-    [produceNewRuleGroup]
-  );
-
-  return [updateFn, updateState] as const;
-}
-
 export function useDeleteRuleFromGroup() {
   const [produceNewRuleGroup, updateState] = useProduceNewRuleGroup();
 
   const deleteFn = useCallback(
     async (ruleGroup: RuleGroupIdentifier, rule: RulerRuleDTO) => {
-      const action = deleteRuleAction(rule);
-      await produceNewRuleGroup(ruleGroup, action);
+      const action = deleteRuleAction({ rule });
 
-      // refetch rules for this rules source
-      // @TODO remove this when we moved everything to RTKQ – then the endpoint will simply invalidate the tags
-      dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: ruleGroup.ruleSourceName }));
+      return produceNewRuleGroup(ruleGroup, action, { refetchAllRules: true });
     },
     [produceNewRuleGroup]
   );

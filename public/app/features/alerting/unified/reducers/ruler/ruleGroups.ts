@@ -13,7 +13,7 @@ export const updateRuleAction = createAction<{ identifier: RuleIdentifier; rule:
   'ruleGroup/rules/update'
 );
 export const pauseRuleAction = createAction<{ uid: string; pause: boolean }>('ruleGroup/rules/pause');
-export const deleteRuleAction = createAction<RulerRuleDTO>('ruleGroup/rules/delete');
+export const deleteRuleAction = createAction<{ rule: RulerRuleDTO }>('ruleGroup/rules/delete');
 
 // group-scoped actions
 const reorderRulesActions = createAction('ruleGroup/rules/reorder');
@@ -32,7 +32,9 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
     .addCase(updateRuleAction, () => {
       throw new Error('not yet implemented');
     })
-    .addCase(deleteRuleAction, (draft, { payload: rule }) => {
+    .addCase(deleteRuleAction, (draft, { payload }) => {
+      const { rule } = payload;
+
       // deleting a Grafana managed rule is by using the UID
       if (isGrafanaRulerRule(rule)) {
         const ruleUID = rule.grafana_alert.uid;
@@ -48,11 +50,12 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
     .addCase(pauseRuleAction, (draft, { payload }) => {
       const { uid, pause } = payload;
 
-      draft.rules.forEach((rule) => {
+      for (const rule of draft.rules) {
         if (isGrafanaRulerRule(rule) && rule.grafana_alert.uid === uid) {
           rule.grafana_alert.is_paused = pause;
+          break;
         }
-      });
+      }
     })
     .addCase(reorderRulesActions, () => {
       throw new Error('not yet implemented');

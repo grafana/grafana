@@ -18,9 +18,9 @@ beforeAll(() => {
 
 it('should be able to pause a rule', async () => {
   const ruleGroupIdentifier: RuleGroupIdentifier = {
-    namespace: grafanaRulerNamespace.uid,
-    group: grafanaRulerGroupName,
-    ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+    namespaceName: grafanaRulerNamespace.uid,
+    groupName: grafanaRulerGroupName,
+    dataSourceName: GRAFANA_RULES_SOURCE_NAME,
   };
 
   expect(grafanaRulerRule).toHaveProperty('grafana_alert.is_paused', false);

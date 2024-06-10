@@ -146,16 +146,13 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
 
 // identifier for where we can find a RuleGroup
 export interface RuleGroupIdentifier {
-  ruleSourceName: string;
-  namespace: string; // ⚠️ use the Grafana folder UID for Grafana-managed rules
-  group: string;
-}
-
-export interface CombinedRuleWithLocation extends CombinedRule {
   dataSourceName: string;
+  /** ⚠️ use the Grafana folder UID for Grafana-managed rules */
   namespaceName: string;
   groupName: string;
 }
+
+export type CombinedRuleWithLocation = CombinedRule & RuleGroupIdentifier;
 
 export interface PromRuleWithLocation {
   rule: AlertingRule;

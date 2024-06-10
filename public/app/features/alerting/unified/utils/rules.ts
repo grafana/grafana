@@ -295,7 +295,9 @@ export const getNumberEvaluationsToStartAlerting = (forDuration: string, current
   }
 };
 
-// extract the rule group location from a combined rule type
+/*
+ * Extracts a rule group identifier from a CombinedRule
+ */
 export function getRuleGroupLocationFromCombinedRule(rule: CombinedRule): RuleGroupIdentifier {
   const ruleSourceName = isGrafanaRulesSource(rule.namespace.rulesSource)
     ? rule.namespace.rulesSource
@@ -306,21 +308,24 @@ export function getRuleGroupLocationFromCombinedRule(rule: CombinedRule): RuleGr
     : rule.namespace.name;
 
   return {
-    ruleSourceName,
-    namespace,
-    group: rule.group.name,
+    dataSourceName: ruleSourceName,
+    namespaceName: namespace,
+    groupName: rule.group.name,
   };
 }
 
+/**
+ * Extracts a rule group identifier from a RuleWithLocation
+ */
 export function getRuleGroupLocationFromRuleWithLocation(rule: RuleWithLocation): RuleGroupIdentifier {
-  const ruleSourceName = rule.ruleSourceName;
+  const dataSourceName = rule.ruleSourceName;
 
-  const namespace = isGrafanaRulerRule(rule.rule) ? rule.rule.grafana_alert.namespace_uid : rule.namespace;
-  const group = rule.group.name;
+  const namespaceName = isGrafanaRulerRule(rule.rule) ? rule.rule.grafana_alert.namespace_uid : rule.namespace;
+  const groupName = rule.group.name;
 
   return {
-    ruleSourceName,
-    namespace,
-    group,
+    dataSourceName,
+    namespaceName,
+    groupName,
   };
 }
