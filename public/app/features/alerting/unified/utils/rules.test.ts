@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import {
   mockCombinedCloudRuleNamespace,
@@ -63,7 +64,11 @@ describe('ruleGroupLocation', () => {
     });
 
     const groupLocation = getRuleGroupLocationFromCombinedRule(rule);
-    expect(groupLocation).toEqual({ ruleSourceName: 'grafana', namespace: 'abc123', group: 'group-1' });
+    expect(groupLocation).toEqual<RuleGroupIdentifier>({
+      dataSourceName: 'grafana',
+      namespaceName: 'abc123',
+      groupName: 'group-1',
+    });
   });
 
   it('should be able to extract rule group location from a data source managed combinedRule', () => {
@@ -74,18 +79,30 @@ describe('ruleGroupLocation', () => {
     });
 
     const groupLocation = getRuleGroupLocationFromCombinedRule(rule);
-    expect(groupLocation).toEqual({ ruleSourceName: 'prometheus-1', namespace: 'abc123', group: 'group-1' });
+    expect(groupLocation).toEqual<RuleGroupIdentifier>({
+      dataSourceName: 'prometheus-1',
+      namespaceName: 'abc123',
+      groupName: 'group-1',
+    });
   });
 
   it('should be able to extract rule group location from a Grafana managed ruleWithLocation', () => {
     const rule = mockRuleWithLocation(mockGrafanaRulerRule({ namespace_uid: 'abc123' }));
     const groupLocation = getRuleGroupLocationFromRuleWithLocation(rule);
-    expect(groupLocation).toEqual({ ruleSourceName: 'grafana', namespace: 'abc123', group: 'group-1' });
+    expect(groupLocation).toEqual<RuleGroupIdentifier>({
+      dataSourceName: 'grafana',
+      namespaceName: 'abc123',
+      groupName: 'group-1',
+    });
   });
 
   it('should be able to extract rule group location from a data source managed ruleWithLocation', () => {
     const rule = mockRuleWithLocation(mockRulerAlertingRule({}), { namespace: 'abc123' });
     const groupLocation = getRuleGroupLocationFromRuleWithLocation(rule);
-    expect(groupLocation).toEqual({ ruleSourceName: 'grafana', namespace: 'abc123', group: 'group-1' });
+    expect(groupLocation).toEqual<RuleGroupIdentifier>({
+      dataSourceName: 'grafana',
+      namespaceName: 'abc123',
+      groupName: 'group-1',
+    });
   });
 });
