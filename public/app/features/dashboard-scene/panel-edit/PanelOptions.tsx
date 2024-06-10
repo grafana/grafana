@@ -62,9 +62,7 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
         data?.series ?? [],
         searchQuery,
         (newConfig) => {
-          panel.setState({
-            fieldConfig: newConfig,
-          });
+          panel.onFieldConfigChange(newConfig);
         }
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
