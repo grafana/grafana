@@ -25,6 +25,11 @@ Node graphs can visualize directed graphs or networks. They use a directed force
 
 ![Node graph visualization](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')
 
+
+The following video provides beginner steps for creating node panel visualizations. You'll learn the data requirements and caveats, special customizations, and much more:
+
+{{< youtube id="VrvsMkRwoKw" >}}
+
 {{< docs/play title="Node Panel Visualizations in Grafana" url="https://play.grafana.org/d/bdodfbi3d57uoe" >}}
 
 ## Data requirements
