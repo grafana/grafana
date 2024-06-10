@@ -65,5 +65,72 @@ func (s *LDAPStrategy) getLDAPConfig() (map[string]any, error) {
 		return nil, err
 	}
 
-	return configMap, nil
+	// json decodes numbers as json.Number type
+	// this iterates over all items in the map and returns a new map
+	// with all json.Number replaced by int64
+	result, err := replaceNumbersInMap(configMap)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func replaceNumbersInMap(m map[string]any) (map[string]any, error) {
+	var err error
+
+	result := make(map[string]any)
+	for k, v := range m {
+		switch v.(type) {
+		case json.Number:
+			result[k], err = v.(json.Number).Int64()
+			if err != nil {
+				return nil, err
+			}
+		case []any:
+			result[k], err = replaceNumbersInSlice(v.([]any))
+			if err != nil {
+				return nil, err
+			}
+		case map[string]any:
+			result[k], err = replaceNumbersInMap(v.(map[string]any))
+			if err != nil {
+				return nil, err
+			}
+		default:
+			result[k] = v
+		}
+	}
+
+	return result, nil
+}
+
+func replaceNumbersInSlice(s []any) ([]any, error) {
+	result := make([]any, 0)
+	for _, v := range s {
+		switch v.(type) {
+		case json.Number:
+			number, err := v.(json.Number).Int64()
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, number)
+		case []any:
+			inner, err := replaceNumbersInSlice(v.([]any))
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, inner)
+		case map[string]any:
+			inner, err := replaceNumbersInMap(v.(map[string]any))
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, inner)
+		default:
+			result = append(result, v)
+		}
+	}
+
+	return result, nil
 }

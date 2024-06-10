@@ -2,7 +2,6 @@ package strategies
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -31,7 +30,7 @@ var (
 			"servers": []interface{}{
 				map[string]interface{}{
 					"Host": "127.0.0.1",
-					"Port": json.Number("3389"),
+					"Port": int64(3389),
 					"attributes": map[string]interface{}{
 						"email":     "mail",
 						"member_of": "memberOf",
@@ -44,16 +43,16 @@ var (
 					"group_mappings": []interface{}{
 						map[string]interface{}{
 							"group_dn": "cn=admin,ou=groups,dc=ldap,dc=goauthentik,dc=io",
-							"org_id":   json.Number("1"),
+							"org_id":   int64(1),
 							"org_role": "Admin",
 						},
 						map[string]interface{}{
 							"group_dn": "cn=editor,ou=groups,dc=ldap,dc=goauthentik,dc=io",
-							"org_id":   json.Number("1"),
+							"org_id":   int64(1),
 							"org_role": "Editor",
 						},
 						map[string]interface{}{"group_dn": "cn=viewer,ou=groups,dc=ldap,dc=goauthentik,dc=io",
-							"org_id":   json.Number("1"),
+							"org_id":   int64(1),
 							"org_role": "Viewer",
 						},
 					},
@@ -61,7 +60,7 @@ var (
 						"DC=ldap,DC=goauthentik,DC=io",
 					},
 					"search_filter": "(cn=%s)", "ssl_skip_verify": true,
-					"timeout": json.Number("10"),
+					"timeout": int64(10),
 				},
 			},
 		},
