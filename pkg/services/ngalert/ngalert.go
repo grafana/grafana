@@ -177,6 +177,7 @@ func (ng *AlertNG) init() error {
 			ng.Log.Debug("Starting Grafana with remote only mode enabled")
 			m := ng.Metrics.GetRemoteAlertmanagerMetrics()
 			m.Info.WithLabelValues(metrics.ModeRemoteOnly).Set(1)
+			ng.Cfg.UnifiedAlerting.SkipClustering = true
 
 			// This function will be used by the MOA to create new Alertmanagers.
 			override := notifier.WithAlertmanagerOverride(func(_ notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
@@ -203,6 +204,7 @@ func (ng *AlertNG) init() error {
 
 		case remotePrimary:
 			ng.Log.Warn("Only remote secondary mode is supported at the moment, falling back to remote secondary")
+			// TODO: Skip setting up clustering with ng.Cfg.UnifiedAlerting.SkipClustering = true
 			fallthrough
 
 		case remoteSecondary:
