@@ -102,7 +102,6 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
 	legacy service.LegacyDataSourceLookup,
-	reg prometheus.Registerer,
 ) (*QueryAPIBuilder, error) {
 	if !(features.IsEnabledGlobally(featuremgmt.FlagQueryService) ||
 		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
