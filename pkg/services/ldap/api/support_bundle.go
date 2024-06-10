@@ -42,6 +42,7 @@ func (s *Service) supportBundleCollector(context.Context) (*supportbundles.Suppo
 		for _, server := range ldapConfig.Servers {
 			server.BindPassword = "********" // censor password on config dump
 			server.ClientKey = "********"    // censor client key on config dump
+			server.ClientKeyValue = "********"
 
 			if !strings.Contains(server.SearchFilter, server.Attr.Username) {
 				bWriter.WriteString(fmt.Sprintf(
