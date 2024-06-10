@@ -7,16 +7,15 @@ import { DataTransformerID } from './ids';
 import { transposeTransformer, TransposeTransformerOptions } from './transpose';
 
 describe('Transpose transformer', () => {
-  const cfg: DataTransformerConfig<TransposeTransformerOptions> = {
-    id: DataTransformerID.transpose,
-    options: {},
-  };
-
   beforeAll(() => {
     mockTransformationsRegistry([transposeTransformer]);
   });
 
   it('should transpose full numeric values and keep numeric type', async () => {
+    const cfgA: DataTransformerConfig<TransposeTransformerOptions> = {
+      id: DataTransformerID.transpose,
+      options: {},
+    };
     const seriesA = toDataFrame({
       name: 'A',
       fields: [
@@ -26,7 +25,7 @@ describe('Transpose transformer', () => {
         { name: 'march', type: FieldType.number, values: [1, 2, 3, 4, 5] },
       ],
     });
-    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+    await expect(transformDataFrame([cfgA], [seriesA])).toEmitValuesWith((received) => {
       const result = received[0];
       expect(result[0].fields).toEqual([
         {
@@ -70,8 +69,12 @@ describe('Transpose transformer', () => {
   });
 
   it('should transpose and use string field type', async () => {
+    const cfgB: DataTransformerConfig<TransposeTransformerOptions> = {
+      id: DataTransformerID.transpose,
+      options: {},
+    };
     const seriesB = toDataFrame({
-      name: 'A',
+      name: 'B',
       fields: [
         { name: 'env', type: FieldType.string, values: ['dev', 'prod', 'staging', 'release', 'beta'] },
         { name: 'january', type: FieldType.number, values: [11, 12, 13, 14, 15] },
@@ -79,7 +82,7 @@ describe('Transpose transformer', () => {
         { name: 'type', type: FieldType.string, values: ['metricA', 'metricB', 'metricC', 'metricD', 'metricE'] },
       ],
     });
-    await expect(transformDataFrame([cfg], [seriesB])).toEmitValuesWith((received) => {
+    await expect(transformDataFrame([cfgB], [seriesB])).toEmitValuesWith((received) => {
       const result = received[0];
       expect(result[0].fields).toEqual([
         {
@@ -91,31 +94,128 @@ describe('Transpose transformer', () => {
         {
           name: 'dev',
           type: FieldType.string,
-          values: [11, 6, 'metricA'],
+          values: ['11', '6', 'metricA'],
           config: {},
         },
         {
           name: 'prod',
           type: FieldType.string,
-          values: [12, 7, 'metricB'],
+          values: ['12', '7', 'metricB'],
           config: {},
         },
         {
           name: 'staging',
           type: FieldType.string,
-          values: [13, 8, 'metricC'],
+          values: ['13', '8', 'metricC'],
           config: {},
         },
         {
           name: 'release',
           type: FieldType.string,
-          values: [14, 9, 'metricD'],
+          values: ['14', '9', 'metricD'],
           config: {},
         },
         {
           name: 'beta',
           type: FieldType.string,
-          values: [15, 10, 'metricE'],
+          values: ['15', '10', 'metricE'],
+          config: {},
+        },
+      ]);
+    });
+  });
+
+  it('should transpose and keep number types and add new headers', async () => {
+    const cfgC: DataTransformerConfig<TransposeTransformerOptions> = {
+      id: DataTransformerID.transpose,
+      options: {
+        addNewFields: true,
+        renameFirstField: 'NewField',
+      },
+    };
+    const seriesC = toDataFrame({
+      name: 'C',
+      fields: [
+        { name: 'A', type: FieldType.number, values: [1, 5] },
+        { name: 'B', type: FieldType.number, values: [2, 6] },
+        { name: 'C', type: FieldType.number, values: [3, 7] },
+        { name: 'D', type: FieldType.number, values: [4, 8] },
+      ],
+    });
+    await expect(transformDataFrame([cfgC], [seriesC])).toEmitValuesWith((received) => {
+      const result = received[0];
+      expect(result[0].fields).toEqual([
+        {
+          name: 'NewField',
+          type: FieldType.string,
+          values: ['A', 'B', 'C', 'D'],
+          config: {},
+        },
+        {
+          name: 'Value1',
+          type: FieldType.number,
+          values: [1, 2, 3, 4],
+          config: {},
+        },
+        {
+          name: 'Value2',
+          type: FieldType.number,
+          values: [5, 6, 7, 8],
+          config: {},
+        },
+      ]);
+    });
+  });
+
+  it('should transpose and handle different types and rename first element', async () => {
+    const cfgD: DataTransformerConfig<TransposeTransformerOptions> = {
+      id: DataTransformerID.transpose,
+      options: {
+        renameFirstField: 'Field1',
+      },
+    };
+    const seriesD = toDataFrame({
+      name: 'D',
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: ['2024-06-10 08:30:00', '2024-06-10 08:31:00', '2024-06-10 08:32:00', '2024-06-10 08:33:00'],
+        },
+        { name: 'value', type: FieldType.number, values: [1, 2, 3, 4] },
+      ],
+    });
+    await expect(transformDataFrame([cfgD], [seriesD])).toEmitValuesWith((received) => {
+      const result = received[0];
+      expect(result[0].fields).toEqual([
+        {
+          name: 'Field1',
+          type: FieldType.string,
+          values: ['value'],
+          config: {},
+        },
+        {
+          name: '2024-06-10 08:30:00',
+          type: FieldType.number,
+          values: [1],
+          config: {},
+        },
+        {
+          name: '2024-06-10 08:31:00',
+          type: FieldType.number,
+          values: [2],
+          config: {},
+        },
+        {
+          name: '2024-06-10 08:32:00',
+          type: FieldType.number,
+          values: [3],
+          config: {},
+        },
+        {
+          name: '2024-06-10 08:33:00',
+          type: FieldType.number,
+          values: [4],
           config: {},
         },
       ]);

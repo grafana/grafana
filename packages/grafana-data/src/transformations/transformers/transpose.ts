@@ -5,13 +5,25 @@ import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 
-export interface TransposeTransformerOptions {}
+export interface TransposeTransformerOptions {
+  /**
+   * Add new field names to dataframe
+   */
+  addNewFields?: boolean;
+  /**
+   * Rename the first field
+   */
+  renameFirstField?: string;
+}
 
 export const transposeTransformer: DataTransformerInfo<TransposeTransformerOptions> = {
   id: DataTransformerID.transpose,
   name: 'Transpose',
   description: 'Transpose the data frame',
-  defaultOptions: {},
+  defaultOptions: {
+    addNewFields: false,
+    renameFirstField: '',
+  },
 
   operator: (options) => (source) =>
     source.pipe(
@@ -19,21 +31,33 @@ export const transposeTransformer: DataTransformerInfo<TransposeTransformerOptio
         if (data.length === 0) {
           return data;
         }
-        return transposeDataFrame(data);
+        return transposeDataFrame(options, data);
       })
     ),
 };
 
-function transposeDataFrame(data: DataFrame[]): DataFrame[] {
+function transposeDataFrame(options: TransposeTransformerOptions, data: DataFrame[]): DataFrame[] {
   return data.map((frame) => {
-    const headers = [frame.fields[0].name].concat(frame.fields[0].values);
-    const rows = frame.fields.map((field) => field.name).slice(1);
-    const fieldType = determineFieldType(frame.fields.map((field) => field.type).slice(1));
+    const headers = options.addNewFields
+      ? ['Field'].concat(Array.from({ length: frame.fields[0].values.length }, (_, i) => `Value${i + 1}`))
+      : [frame.fields[0].name].concat(
+          frame.fields[0].values.map((value) => convertValueToString(frame.fields[0].type, value))
+        );
+    const rows = options.addNewFields
+      ? frame.fields.map((field) => field.name)
+      : frame.fields.map((field) => field.name).slice(1);
+    const fieldType = determineFieldType(
+      options.addNewFields ? frame.fields.map((field) => field.type) : frame.fields.map((field) => field.type).slice(1)
+    );
 
     const newFields = headers.map((fieldName, index) => {
       if (index === 0) {
         return {
-          name: fieldName,
+          name: !options.renameFirstField
+            ? fieldName
+            : options.renameFirstField === ''
+              ? fieldName
+              : options.renameFirstField,
           values: rows,
           type: FieldType.string,
           config: {},
@@ -41,7 +65,21 @@ function transposeDataFrame(data: DataFrame[]): DataFrame[] {
       }
       return {
         name: fieldName,
-        values: frame.fields.map((field) => field.values[index - 1]).slice(1),
+        values: options.addNewFields
+          ? frame.fields.map((field) => {
+              if (fieldType === FieldType.string) {
+                return convertValueToString(field.type, field.values[index - 1]);
+              }
+              return field.values[index - 1];
+            })
+          : frame.fields
+              .map((field) => {
+                if (fieldType === FieldType.string) {
+                  return convertValueToString(field.type, field.values[index - 1]);
+                }
+                return field.values[index - 1];
+              })
+              .slice(1),
         type: fieldType,
         config: {},
       };
@@ -60,4 +98,23 @@ function determineFieldType(fieldTypes: FieldType[]): FieldType {
     return uniqueFieldTypes[0];
   }
   return FieldType.string;
+}
+
+function convertValueToString(originalFieldType: FieldType, value: any): string {
+  switch (originalFieldType) {
+    case FieldType.string:
+      return value;
+    case FieldType.boolean:
+      return value ? 'true' : 'false';
+    case FieldType.number:
+      return value.toString();
+    case FieldType.time:
+      return value.toString();
+    case FieldType.other:
+      return JSON.stringify(value);
+    case FieldType.frame:
+      return value.name;
+    default:
+      return value.toString();
+  }
 }
