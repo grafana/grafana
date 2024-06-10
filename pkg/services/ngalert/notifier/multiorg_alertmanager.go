@@ -143,7 +143,7 @@ func NewMultiOrgAlertmanager(
 	}
 
 	if cfg.UnifiedAlerting.SkipClustering {
-		l.Debug("Skipping setting up clustering for MOA")
+		l.Info("Skipping setting up clustering for MOA")
 	} else {
 		if err := moa.setupClustering(cfg); err != nil {
 			return nil, err
