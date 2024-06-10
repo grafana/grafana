@@ -31,10 +31,21 @@ export function isPluginExtensionLinkConfig(
   return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.link;
 }
 
-export function isPluginExtensionComponentConfig(
+export function isPluginExtensionComponentConfig<Props extends object>(
+  extension: PluginExtensionConfig | undefined | PluginExtensionComponentConfig<Props>
+): extension is PluginExtensionComponentConfig<Props> {
+  return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.component;
+}
+
+export function isPluginCapability(
   extension: PluginExtensionConfig | undefined
 ): extension is PluginExtensionComponentConfig {
-  return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.component;
+  return (
+    typeof extension === 'object' &&
+    'type' in extension &&
+    extension['type'] === PluginExtensionTypes.component &&
+    extension.extensionPointId.startsWith('capabilities/')
+  );
 }
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {

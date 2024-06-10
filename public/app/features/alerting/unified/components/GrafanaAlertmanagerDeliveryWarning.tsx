@@ -5,6 +5,7 @@ import { Alert, useStyles2 } from '@grafana/ui/src';
 
 import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../api/alertmanagerApi';
+import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 interface GrafanaAlertmanagerDeliveryWarningProps {
@@ -13,12 +14,17 @@ interface GrafanaAlertmanagerDeliveryWarningProps {
 
 export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: GrafanaAlertmanagerDeliveryWarningProps) {
   const styles = useStyles2(getStyles);
-  const viewingInternalAM = currentAlertmanager === GRAFANA_RULES_SOURCE_NAME;
+  const externalAlertmanager = currentAlertmanager !== GRAFANA_RULES_SOURCE_NAME;
+
+  const [readConfigurationStatusSupported, readConfigurationStatusAllowed] = useAlertingAbility(
+    AlertingAction.ReadConfigurationStatus
+  );
+  const canReadConfigurationStatus = readConfigurationStatusSupported && readConfigurationStatusAllowed;
 
   const { currentData: amChoiceStatus } = alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(
     undefined,
     {
-      skip: !viewingInternalAM,
+      skip: externalAlertmanager || !canReadConfigurationStatus,
     }
   );
 
@@ -26,7 +32,7 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
     amChoiceStatus?.alertmanagersChoice &&
     [AlertmanagerChoice.External, AlertmanagerChoice.All].includes(amChoiceStatus?.alertmanagersChoice);
 
-  if (!interactsWithExternalAMs || !viewingInternalAM) {
+  if (!interactsWithExternalAMs || externalAlertmanager) {
     return null;
   }
 

@@ -2845,7 +2845,7 @@
             "type": "object"
           },
           "type": {
-            "$ref": "#/components/schemas/RuleType"
+            "type": "string"
           }
         },
         "required": [
@@ -5096,7 +5096,9 @@
         },
         "type": "object"
       },
-      "EvalQueriesResponse": {},
+      "EvalQueriesResponse": {
+        "type": "object"
+      },
       "ExplorePanelsState": {
         "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
       },
@@ -9518,7 +9520,7 @@
             "type": "string"
           },
           "type": {
-            "$ref": "#/components/schemas/RuleType"
+            "type": "string"
           }
         },
         "required": [
@@ -9635,10 +9637,6 @@
           "status"
         ],
         "type": "object"
-      },
-      "RuleType": {
-        "title": "RuleType models the type of a rule.",
-        "type": "string"
       },
       "SNSConfig": {
         "properties": {
@@ -10139,6 +10137,20 @@
       "SignatureAlgorithm": {
         "format": "int64",
         "type": "integer"
+      },
+      "SilenceMetadata": {
+        "properties": {
+          "folder_uid": {
+            "type": "string"
+          },
+          "rule_title": {
+            "type": "string"
+          },
+          "rule_uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
       },
       "SlackAction": {
         "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -11898,6 +11910,7 @@
         "type": "object"
       },
       "alertGroup": {
+        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -12053,6 +12066,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -12108,9 +12122,33 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
+        },
+        "type": "array"
+      },
+      "gettableGrafanaSilence": {
+        "properties": {
+          "accessControl": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "example": {
+              "create": false,
+              "read": true,
+              "write": false
+            },
+            "type": "object"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/SilenceMetadata"
+          }
+        },
+        "type": "object"
+      },
+      "gettableGrafanaSilences": {
+        "items": {
+          "$ref": "#/components/schemas/gettableGrafanaSilence"
         },
         "type": "array"
       },
@@ -12164,7 +12202,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -12315,6 +12352,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12380,6 +12418,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",

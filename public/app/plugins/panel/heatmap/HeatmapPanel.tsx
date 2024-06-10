@@ -210,6 +210,7 @@ export const HeatmapPanel = ({
                       panelData={data}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       maxHeight={options.tooltip.maxHeight}
+                      maxWidth={options.tooltip.maxWidth}
                     />
                   );
                 }}

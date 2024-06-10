@@ -103,6 +103,17 @@ const (
 	KeepLastErrState ExecutionErrorState = "KeepLast"
 )
 
+type RuleType string
+
+const (
+	RuleTypeAlerting  = "alerting"
+	RuleTypeRecording = "recording"
+)
+
+func (r RuleType) String() string {
+	return string(r)
+}
+
 const (
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation = "__dashboardUid__"
@@ -344,7 +355,7 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 }
 
 func (alertRule *AlertRule) GetEvalCondition() Condition {
-	if alertRule.IsRecordingRule() {
+	if alertRule.Type() == RuleTypeRecording {
 		return Condition{
 			Condition: alertRule.Record.From,
 			Data:      alertRule.Data,
@@ -512,7 +523,7 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 	}
 
 	var err error
-	if alertRule.IsRecordingRule() {
+	if alertRule.Type() == RuleTypeRecording {
 		err = validateRecordingRuleFields(alertRule)
 	} else {
 		err = validateAlertRuleFields(alertRule)
@@ -586,8 +597,11 @@ func (alertRule *AlertRule) GetFolderKey() FolderKey {
 	}
 }
 
-func (alertRule *AlertRule) IsRecordingRule() bool {
-	return alertRule.Record != nil
+func (alertRule *AlertRule) Type() RuleType {
+	if alertRule.Record != nil {
+		return RuleTypeRecording
+	}
+	return RuleTypeAlerting
 }
 
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
