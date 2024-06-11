@@ -60,7 +60,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 	}
 
 	startStorage := time.Now()
-	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
+	rsp, err := d.Storage.Create(ctx, createdLegacy, createValidation, options)
 	if err != nil {
 		log.WithValues("name").Error(err, "unable to create object in storage")
 		d.recordStorageDuration(true, mode2Str, options.Kind, method, startStorage)
