@@ -146,7 +146,7 @@ And below is the continuation of the example setting the Group interval timer to
 
 **How it works**
 
-Once the first notification has been sent for a new group of alerts, the Group interval timer starts.
+Once the first notification has been sent for a new group of alerts, the group interval timer starts.
 
 When the Group interval timer elapsed, the system resets the Group interval timer and sends a notification only if there were group changes. This process repeats until there are no more alerts.
 
