@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Button, ClipboardButton, Divider, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
@@ -20,6 +21,7 @@ import {
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
 
+import { getDashboardSceneFor } from '../../../utils/utils';
 import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 
 import { EmailSharing } from './EmailShare/EmailSharing';
@@ -58,8 +60,12 @@ const getShareExternallyOptions = () => {
     : [getAnyOneWithTheLinkShareOption()];
 };
 
-export function ShareExternally() {
-  const { dashboard } = useShareDrawerContext();
+export class ShareExternally extends SceneObjectBase {
+  static Component = ShareExternallyRenderer;
+}
+
+function ShareExternallyRenderer({ model }: SceneComponentProps<ShareExternally>) {
+  const dashboard = getDashboardSceneFor(model);
   const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
   const styles = useStyles2(getStyles);
 
@@ -69,12 +75,12 @@ export function ShareExternally() {
 
   return (
     <div className={styles.container}>
-      <ShareExternallyRenderer publicDashboard={publicDashboard} />
+      <ShareExternallyBase publicDashboard={publicDashboard} />
     </div>
   );
 }
 
-function ShareExternallyRenderer({ publicDashboard }: { publicDashboard?: PublicDashboard }) {
+function ShareExternallyBase({ publicDashboard }: { publicDashboard?: PublicDashboard }) {
   const options = getShareExternallyOptions();
   const getShareType = useMemo(() => {
     if (publicDashboard && isEmailSharingEnabled()) {
