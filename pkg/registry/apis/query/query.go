@@ -195,6 +195,16 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 	req2 := req.Request.DeepCopy()
 	pluginID := req.PluginId
 	pluginUID := req.UID
+	var err error
+
+	ctx, err = b.client.PreprocessRequest(ctx, v0alpha1.DataSourceRef{
+		Type: pluginID,
+		UID:  pluginUID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	client, err := b.client.GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
 		Type: pluginID,
 		UID:  pluginUID,
