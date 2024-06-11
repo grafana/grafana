@@ -886,3 +886,11 @@ func (r *Record) Fingerprint() data.Fingerprint {
 func hasAnyCondition(rule *AlertRuleWithOptionals) bool {
 	return rule.Condition != "" || (rule.Record != nil && rule.Record.From != "")
 }
+
+// Health contains health-tracking info about a rule's current evaluation state.
+type Health struct {
+	Health            string
+	LastError         error
+	EvaluatedAt       time.Time
+	EvaluatedDuration time.Duration
+}

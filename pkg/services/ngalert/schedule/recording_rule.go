@@ -93,8 +93,10 @@ func (r *recordingRule) Status() RuleStatus {
 	}
 }
 
-func (r *recordingRule) Health() string {
-	return "ok"
+func (r *recordingRule) Health() ngmodels.Health {
+	return ngmodels.Health{
+		Health: "ok",
+	}
 }
 
 func (r *recordingRule) Eval(eval *Evaluation) (bool, *Evaluation) {

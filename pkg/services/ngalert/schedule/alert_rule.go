@@ -41,7 +41,7 @@ type Rule interface {
 	// Type gives the type of the rule.
 	Type() ngmodels.RuleType
 	// Health indicates the health of the evaluating rule.
-	Health() string
+	Health() ngmodels.Health
 }
 
 type ruleFactoryFunc func(context.Context, *ngmodels.AlertRule) Rule
@@ -182,8 +182,36 @@ func (a *alertRule) Type() ngmodels.RuleType {
 	return ngmodels.RuleTypeAlerting
 }
 
-func (a *alertRule) Health() string {
-	return "ok"
+func (a *alertRule) Health() ngmodels.Health {
+	states := a.stateManager.GetStatesForRuleUID(a.key.OrgID, a.key.UID)
+	health := ngmodels.Health{
+		Health:      "ok",
+		LastError:   nil,
+		EvaluatedAt: time.Time{},
+	}
+	for _, state := range states {
+		if state.LastEvaluationTime.After(health.EvaluatedAt) {
+			health.EvaluatedAt = state.LastEvaluationTime
+		}
+
+		health.EvaluatedDuration = state.EvaluationDuration
+
+		switch state.State {
+		case eval.Normal:
+		case eval.Pending:
+		case eval.Alerting:
+		case eval.Error:
+			health.Health = "error"
+		case eval.NoData:
+			health.Health = "nodata"
+		}
+
+		if state.Error != nil {
+			health.LastError = state.Error
+			health.Health = "error"
+		}
+	}
+	return health
 }
 
 // eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.
