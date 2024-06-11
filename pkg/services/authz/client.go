@@ -48,7 +48,7 @@ func ProvideAuthZClient(
 	}
 
 	switch authCfg.mode {
-	case ModeChannels:
+	case ModeInProc:
 		client = newLocalLegacyClient(server)
 	case ModeGRPC:
 		address := authCfg.address

@@ -10,15 +10,15 @@ type Mode string
 
 func (s Mode) IsValid() bool {
 	switch s {
-	case ModeGRPC, ModeChannels:
+	case ModeGRPC, ModeInProc:
 		return true
 	}
 	return false
 }
 
 const (
-	ModeGRPC     Mode = "grpc"
-	ModeChannels Mode = "channels"
+	ModeGRPC   Mode = "grpc"
+	ModeInProc Mode = "inproc"
 )
 
 type Cfg struct {
@@ -30,7 +30,7 @@ type Cfg struct {
 func ReadCfg(cfg *setting.Cfg) (*Cfg, error) {
 	section := cfg.SectionWithEnvOverrides("authorization")
 
-	mode := Mode(section.Key("mode").MustString(string(ModeChannels)))
+	mode := Mode(section.Key("mode").MustString(string(ModeInProc)))
 	if !mode.IsValid() {
 		return nil, fmt.Errorf("authorization: invalid server_mode %q", mode)
 	}
