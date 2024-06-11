@@ -14,54 +14,54 @@ To add a new support bundle collector, follow these steps which use the usage st
 
 1. Import the support bundles registry in the service's `ProvideService` function:
 
-	```go
-	type UsageStats struct {
-		...
-	}
+   ```go
+   type UsageStats struct {
+   	...
+   }
 
-	func ProvideService(
-		...
-		bundleRegistry supportbundles.Service, // Bundle registry
-	) (*UsageStats, error)
-	```
+   func ProvideService(
+   	...
+   	bundleRegistry supportbundles.Service, // Bundle registry
+   ) (*UsageStats, error)
+   ```
 
-	After importing the support bundle, run `make gen-go` to wire the registry to the service.
+   After importing the support bundle, run `make gen-go` to wire the registry to the service.
 
 1. Implement the collector. For example:
 
-	```go
-	func (uss *UsageStats) supportBundleCollector() supportbundles.Collector {
-		return supportbundles.Collector{
-			UID:               "usage-stats", // Unique ID for the collector
-			DisplayName:       "Usage statistics", // Display name for the collector in the UI
-			Description:       "Usage statistics of the Grafana instance", // Description for the collector in the UI
-			IncludedByDefault: false, // Indicates whether the collector is included by default in the support bundle and can't be deselected. Usually you want this to be false.
-			Default:           false, // Indicates whether the collector is selected by default in the support bundle. User can still deselect it.
-			// Function that will actually collect the file during the support bundle generation.
-			Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
-				// Add your service's logic to collect the information you need
-				// In this example we collect the usage stats and place them appropriately in JSON
-				// This helps us get information about the usage of the Grafana instance
-				report, err := uss.GetUsageReport(context.Background())
-				if err != nil {
-					return nil, err
-				}
+   ```go
+   func (uss *UsageStats) supportBundleCollector() supportbundles.Collector {
+   	return supportbundles.Collector{
+   		UID:               "usage-stats", // Unique ID for the collector
+   		DisplayName:       "Usage statistics", // Display name for the collector in the UI
+   		Description:       "Usage statistics of the Grafana instance", // Description for the collector in the UI
+   		IncludedByDefault: false, // Indicates whether the collector is included by default in the support bundle and can't be deselected. Usually you want this to be false.
+   		Default:           false, // Indicates whether the collector is selected by default in the support bundle. User can still deselect it.
+   		// Function that will actually collect the file during the support bundle generation.
+   		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
+   			// Add your service's logic to collect the information you need
+   			// In this example we collect the usage stats and place them appropriately in JSON
+   			// This helps us get information about the usage of the Grafana instance
+   			report, err := uss.GetUsageReport(context.Background())
+   			if err != nil {
+   				return nil, err
+   			}
 
-				data, err := json.Marshal(report)
-				if err != nil {
-					return nil, err
-				}
+   			data, err := json.Marshal(report)
+   			if err != nil {
+   				return nil, err
+   			}
 
-				return &supportbundles.SupportItem{
-					// Filename of the file in the archive
-					// Can be any extension (most commonly, .json and .md).
-					Filename:  "usage-stats.json",
-					FileBytes: data, // []byte of the file
-				}, nil
-			},
-		}
-	}
-	```
+   			return &supportbundles.SupportItem{
+   				// Filename of the file in the archive
+   				// Can be any extension (most commonly, .json and .md).
+   				Filename:  "usage-stats.json",
+   				FileBytes: data, // []byte of the file
+   			}, nil
+   		},
+   	}
+   }
+   ```
 
 1. Register the collector in the service's `ProvideService` function. For example:
 

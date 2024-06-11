@@ -4,7 +4,7 @@ We recommend the practices in this documentation when upgrading the various back
 
 ## Protocol buffers (protobufs)
 
-Use the most recent stable version of the [protobuf library](http://github.com/golang/protobuf) in Grafana and the plugin SDK. 
+Use the most recent stable version of the [protobuf library](http://github.com/golang/protobuf) in Grafana and the plugin SDK.
 
 Additionally, you typically want to upgrade your protobuf compiler toolchain and re-compile the protobuf files.
 

@@ -4,7 +4,7 @@ The contribution guidelines for Grafana backend developers contain a lot of info
 
 ## Guidelines everyone should read
 
-We recommend that all contributors read the [backend style guide](/contribute/backend/style-guide.md) to get a sense for how we try to ensure that the Grafana codebase is consistent and accessible. 
+We recommend that all contributors read the [backend style guide](/contribute/backend/style-guide.md) to get a sense for how we try to ensure that the Grafana codebase is consistent and accessible.
 The rest of the backend contributor documentation tends to be more relevant to reviewers and contributors who want to make changes of greater size or quantity.
 
 ## Guidelines specifically for backend developers
