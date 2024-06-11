@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.org/x/exp/slices"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -83,16 +84,18 @@ func New(cfg *setting.Cfg,
 	}
 
 	s := &Service{
-		ac:          ac,
-		store:       NewStore(cfg, sqlStore, features),
-		options:     options,
-		license:     license,
-		permissions: permissions,
-		actions:     actions,
-		sqlStore:    sqlStore,
-		service:     service,
-		teamService: teamService,
-		userService: userService,
+		ac:           ac,
+		features:     features,
+		store:        NewStore(cfg, sqlStore, features),
+		options:      options,
+		license:      license,
+		permissions:  permissions,
+		actions:      actions,
+		sqlStore:     sqlStore,
+		service:      service,
+		teamService:  teamService,
+		userService:  userService,
+		actionSetSvc: actionSetService,
 	}
 
 	s.api = newApi(cfg, ac, router, s)
@@ -108,18 +111,20 @@ func New(cfg *setting.Cfg,
 
 // Service is used to create access control sub system including api / and service for managed resource permission
 type Service struct {
-	ac      accesscontrol.AccessControl
-	service accesscontrol.Service
-	store   Store
-	api     *api
-	license licensing.Licensing
+	ac       accesscontrol.AccessControl
+	features featuremgmt.FeatureToggles
+	service  accesscontrol.Service
+	store    Store
+	api      *api
+	license  licensing.Licensing
 
-	options     Options
-	permissions []string
-	actions     []string
-	sqlStore    db.DB
-	teamService team.Service
-	userService user.Service
+	options      Options
+	permissions  []string
+	actions      []string
+	sqlStore     db.DB
+	teamService  team.Service
+	userService  user.Service
+	actionSetSvc ActionSetService
 }
 
 func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
@@ -132,9 +137,22 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 		}
 	}
 
-	return s.store.GetResourcePermissions(ctx, user.GetOrgID(), GetResourcePermissionsQuery{
+	actions := s.actions
+	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		for _, action := range s.actions {
+			actionSets := s.actionSetSvc.ResolveAction(action)
+			for _, actionSet := range actionSets {
+				if !slices.Contains(actions, actionSet) {
+					actions = append(actions, actionSet)
+				}
+
+			}
+		}
+	}
+
+	resourcePermissions, err := s.store.GetResourcePermissions(ctx, user.GetOrgID(), GetResourcePermissionsQuery{
 		User:                 user,
-		Actions:              s.actions,
+		Actions:              actions,
 		Resource:             s.options.Resource,
 		ResourceID:           resourceID,
 		ResourceAttribute:    s.options.ResourceAttribute,
@@ -142,6 +160,29 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 		OnlyManaged:          s.options.OnlyManaged,
 		EnforceAccessControl: s.license.FeatureEnabled("accesscontrol.enforcement"),
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		for i := range resourcePermissions {
+			actions := resourcePermissions[i].Actions
+			var expandedActions []string
+			for _, action := range actions {
+				if isFolderOrDashboardAction(action) {
+					actionSetActions := s.actionSetSvc.ResolveActionSet(action)
+					if len(actionSetActions) > 0 {
+						expandedActions = append(expandedActions, actionSetActions...)
+						continue
+					}
+				}
+				expandedActions = append(expandedActions, action)
+			}
+			resourcePermissions[i].Actions = expandedActions
+		}
+	}
+
+	return resourcePermissions, nil
 }
 
 func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user accesscontrol.User, resourceID, permission string) (*accesscontrol.ResourcePermission, error) {
