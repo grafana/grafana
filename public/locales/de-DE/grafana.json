@@ -1744,6 +1744,8 @@
       "apply-button": "Zeitbereich anwenden",
       "cancel-button": "Abbrechen",
       "close": "Kalender schließen",
+      "next-month": "",
+      "previous-month": "",
       "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {
