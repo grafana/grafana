@@ -10,6 +10,10 @@
     "author": {
       "name": "Myorg"
     },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
     "screenshots": [],
     "version": "1.0.0",
     "updated": "2024-06-11"
