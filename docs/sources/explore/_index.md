@@ -16,7 +16,7 @@ weight: 90
 
 # Explore
 
-Grafana's dashboard UI is all about building dashboards for visualizations. Explore strips away the dashboard and panel options so that you can focus on the query. It helps you iterate until you have a working query with which to start building a dashboard.
+Grafana's dashboard UI is all about building dashboards for visualizations. Explore is your starting point for exploring data and building queries. It helps you iterate until you have a working query with which to start building a dashboard.
 
 If you just want to explore your data and don't want to create a dashboard, Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time. See also:
 
