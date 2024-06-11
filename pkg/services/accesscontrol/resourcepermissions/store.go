@@ -739,6 +739,10 @@ func managedPermission(action, resource string, resourceID, resourceAttribute st
 
 // ResolveActionPrefix returns all action sets that include at least one action with the specified prefix
 func (s *InMemoryActionSets) ResolveActionPrefix(prefix string) []string {
+	if prefix == "" {
+		return []string{}
+	}
+
 	sets := make([]string, 0, len(s.actionSetToActions))
 
 	for set, actions := range s.actionSetToActions {

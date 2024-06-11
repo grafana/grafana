@@ -462,7 +462,9 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 	}
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		options.ActionSets = s.actionResolver.ResolveActionPrefix(options.Action)
+		options.ActionSets = s.actionResolver.ResolveAction(options.Action)
+		options.ActionSets = append(options.ActionSets,
+			s.actionResolver.ResolveActionPrefix(options.ActionPrefix)...)
 	}
 
 	// Get managed permissions (DB)
@@ -579,7 +581,9 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	}
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		searchOptions.ActionSets = s.actionResolver.ResolveActionPrefix(searchOptions.Action)
+		searchOptions.ActionSets = s.actionResolver.ResolveAction(searchOptions.Action)
+		searchOptions.ActionSets = append(searchOptions.ActionSets,
+			s.actionResolver.ResolveActionPrefix(searchOptions.ActionPrefix)...)
 	}
 
 	// Get permissions from the DB
