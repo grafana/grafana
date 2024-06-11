@@ -30,7 +30,7 @@ In version 8.5, we discontinued the "Use Proxy" option for Grafana news visualiz
 
 You can use the news visualization to provide regular news and updates to your users.
 
-{{< docs/play title="Grafana News Visualization" url="https://play.grafana.org/d/cdodkwspaaa68b/" >}}
+{{< docs/play title="News Panel" url="https://play.grafana.org/d/cdodkwspaaa68b/" >}}
 
 ## Configure a news visualization
 

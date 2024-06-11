@@ -65,7 +65,7 @@ For more information about traces and how to use them, refer to the following do
 
 {{< figure src="/static/img/docs/explore/trace-view-9-4.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
 
-{{< docs/play title="Grafana Traces Visualization" url="https://play.grafana.org/d/edodkfmj0tce8f/" >}}
+{{< docs/play title="Traces Panel" url="https://play.grafana.org/d/edodkfmj0tce8f/" >}}
 
 ## Add a panel with tracing visualizations
 

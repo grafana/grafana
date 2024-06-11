@@ -34,7 +34,7 @@ Alert lists allow you to display a list of important alerts that you want to tra
 
 On each dashboard load, this visualization queries the alert list, always providing the most up-to-date results.
 
-{{< docs/play title="Grafana Alert List Visualization" url="https://play.grafana.org/d/bdodlcyou483ke/" >}}
+{{< docs/play title="Alert List" url="https://play.grafana.org/d/bdodlcyou483ke/" >}}
 
 ## Configure an alert list
 

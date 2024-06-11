@@ -29,7 +29,7 @@ The following video provides beginner steps for creating node panel visualizatio
 
 {{< youtube id="VrvsMkRwoKw" >}}
 
-{{< docs/play title="Node Panel Visualizations in Grafana" url="https://play.grafana.org/d/bdodfbi3d57uoe/" >}}
+{{< docs/play title="Node graph panel" url="https://play.grafana.org/d/bdodfbi3d57uoe/" >}}
 
 ## Data requirements
 
