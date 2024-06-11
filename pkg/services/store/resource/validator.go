@@ -14,8 +14,8 @@ import (
 
 // Verify that all required fields are set, and the user has permission to set the common metadata fields
 type RequestValidator interface {
-	ValidateCreate(ctx context.Context, req *CreateRequest) (utils.GrafanaResourceMetaAccessor, error)
-	ValidateUpdate(ctx context.Context, req *UpdateRequest, current *GetResourceResponse) (utils.GrafanaResourceMetaAccessor, error)
+	ValidateCreate(ctx context.Context, req *CreateRequest) (utils.GrafanaMetaAccessor, error)
+	ValidateUpdate(ctx context.Context, req *UpdateRequest, current *GetResourceResponse) (utils.GrafanaMetaAccessor, error)
 }
 
 type simpleValidator struct {
@@ -38,7 +38,7 @@ type dummyObject struct {
 
 var _ RequestValidator = &simpleValidator{}
 
-func readValue(ctx context.Context, value []byte) (identity.Requester, utils.GrafanaResourceMetaAccessor, error) {
+func readValue(ctx context.Context, value []byte) (identity.Requester, utils.GrafanaMetaAccessor, error) {
 	// TODO -- we just need Identity not a full user!
 	user, err := appcontext.User(ctx)
 	if err != nil {
@@ -56,7 +56,7 @@ func readValue(ctx context.Context, value []byte) (identity.Requester, utils.Gra
 }
 
 // This is the validation that happens for both CREATE and UPDATE
-func (v *simpleValidator) validate(ctx context.Context, user identity.Requester, obj utils.GrafanaResourceMetaAccessor) (utils.GrafanaResourceMetaAccessor, error) {
+func (v *simpleValidator) validate(ctx context.Context, user identity.Requester, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
 	// To avoid confusion, lets not include the resource version in the saved value
 	// This is a little weird, but it means there won't be confusion that the saved value
 	// is likely the previous resource version!
@@ -97,7 +97,7 @@ func (v *simpleValidator) validate(ctx context.Context, user identity.Requester,
 	return obj, nil
 }
 
-func (v *simpleValidator) ValidateCreate(ctx context.Context, req *CreateRequest) (utils.GrafanaResourceMetaAccessor, error) {
+func (v *simpleValidator) ValidateCreate(ctx context.Context, req *CreateRequest) (utils.GrafanaMetaAccessor, error) {
 	user, obj, err := readValue(ctx, req.Value)
 	if err != nil {
 		return nil, err
@@ -132,7 +132,7 @@ func (v *simpleValidator) ValidateCreate(ctx context.Context, req *CreateRequest
 	return v.validate(ctx, user, obj)
 }
 
-func (v *simpleValidator) ValidateUpdate(ctx context.Context, req *UpdateRequest, current *GetResourceResponse) (utils.GrafanaResourceMetaAccessor, error) {
+func (v *simpleValidator) ValidateUpdate(ctx context.Context, req *UpdateRequest, current *GetResourceResponse) (utils.GrafanaMetaAccessor, error) {
 	user, obj, err := readValue(ctx, req.Value)
 	if err != nil {
 		return nil, err
