@@ -1512,6 +1512,31 @@
     },
     "dismissable-button": "Cerrar"
   },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "",
+      "cancel": "",
+      "title": ""
+    },
+    "basicSelector": {
+      "openAdvanced": "",
+      "placeholder": "",
+      "removeAll": ""
+    },
+    "root": {
+      "collapse": "",
+      "expand": ""
+    },
+    "suggestedDashboards": {
+      "loading": "",
+      "search": ""
+    },
+    "tree": {
+      "collapse": "",
+      "expand": "",
+      "search": ""
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "Incluir paneles",
@@ -1719,6 +1744,8 @@
       "apply-button": "Aplicar intervalo de tiempo",
       "cancel-button": "Cancelar",
       "close": "Cerrar calendario",
+      "next-month": "",
+      "previous-month": "",
       "select-time": "Seleccionar un intervalo de tiempo"
     },
     "content": {

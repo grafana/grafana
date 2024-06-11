@@ -1512,6 +1512,31 @@
     },
     "dismissable-button": "Fechar"
   },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "",
+      "cancel": "",
+      "title": ""
+    },
+    "basicSelector": {
+      "openAdvanced": "",
+      "placeholder": "",
+      "removeAll": ""
+    },
+    "root": {
+      "collapse": "",
+      "expand": ""
+    },
+    "suggestedDashboards": {
+      "loading": "",
+      "search": ""
+    },
+    "tree": {
+      "collapse": "",
+      "expand": "",
+      "search": ""
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "Incluir painéis",
@@ -1719,6 +1744,8 @@
       "apply-button": "Aplicar intervalo de tempo",
       "cancel-button": "Cancelar",
       "close": "Fechar calendário",
+      "next-month": "",
+      "previous-month": "",
       "select-time": "Selecionar um intervalo de tempo"
     },
     "content": {

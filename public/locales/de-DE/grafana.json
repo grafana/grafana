@@ -1512,6 +1512,31 @@
     },
     "dismissable-button": "Schließen"
   },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "",
+      "cancel": "",
+      "title": ""
+    },
+    "basicSelector": {
+      "openAdvanced": "",
+      "placeholder": "",
+      "removeAll": ""
+    },
+    "root": {
+      "collapse": "",
+      "expand": ""
+    },
+    "suggestedDashboards": {
+      "loading": "",
+      "search": ""
+    },
+    "tree": {
+      "collapse": "",
+      "expand": "",
+      "search": ""
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "Panels einschließen",
@@ -1719,6 +1744,8 @@
       "apply-button": "Zeitbereich anwenden",
       "cancel-button": "Abbrechen",
       "close": "Kalender schließen",
+      "next-month": "",
+      "previous-month": "",
       "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {

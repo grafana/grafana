@@ -98,6 +98,7 @@ type UnifiedAlertingSettings struct {
 	DefaultRuleEvaluationInterval time.Duration
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
+	SkipClustering                bool
 	StateHistory                  UnifiedAlertingStateHistorySettings
 	RemoteAlertmanager            RemoteAlertmanagerSettings
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
