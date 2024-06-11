@@ -28,6 +28,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
 
       '&:hover': {
         background: theme.colors.action.hover,
+        textDecoration: 'underline',
         '@media (forced-colors: active), (prefers-contrast: more)': {
           border: `1px solid ${theme.colors.primary.border}`,
         },
