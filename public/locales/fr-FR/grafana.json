@@ -1744,6 +1744,8 @@
       "apply-button": "Appliquer la plage de temps",
       "cancel-button": "Annuler",
       "close": "Fermer le calendrier",
+      "next-month": "",
+      "previous-month": "",
       "select-time": "Sélectionner une plage de temps"
     },
     "content": {

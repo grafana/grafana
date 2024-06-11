@@ -1744,6 +1744,8 @@
       "apply-button": "Aplicar intervalo de tempo",
       "cancel-button": "Cancelar",
       "close": "Fechar calendário",
+      "next-month": "",
+      "previous-month": "",
       "select-time": "Selecionar um intervalo de tempo"
     },
     "content": {
