@@ -7,12 +7,12 @@ interface RequestState {
   isLoading: boolean;
 }
 
-interface RequestStateGroup extends RequestState {
+export interface AggregateRequestState extends RequestState {
   requests: RequestState[];
 }
 
 // @TODO what to do with the other props that we get from RTKQ's state such as originalArgs, etc?
-export function mergeRequestStates(...requests: RequestState[]): RequestStateGroup {
+export function mergeRequestStates(...requests: RequestState[]): AggregateRequestState {
   return {
     error: requests.find((s) => s.error),
     isUninitialized: requests.every((s) => s.isUninitialized),

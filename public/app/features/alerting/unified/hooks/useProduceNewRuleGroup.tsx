@@ -1,5 +1,5 @@
 import { Action } from '@reduxjs/toolkit';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { dispatch, getState } from 'app/store/store';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
@@ -13,7 +13,7 @@ import {
   getDataSourceRulerConfig,
 } from '../state/actions';
 
-import { mergeRequestStates } from './mergeRequestStates';
+import { AggregateRequestState, mergeRequestStates } from './mergeRequestStates';
 
 type ProduceNewRuleGroupOptions = {
   /**
@@ -26,6 +26,8 @@ function useProduceNewRuleGroup() {
   const [fetchRuleGroup, fetchRuleGroupState] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
   const [deleteRuleGroup, deleteRuleGroupState] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useLazyQuery();
   const [updateRuleGroup, updateRuleGroupState] = alertRuleApi.endpoints.updateRuleGroupForNamespace.useMutation();
+
+  const [aggregateState, setAggregateState] = useState<AggregateRequestState>(mergeRequestStates(fetchRuleGroupState));
 
   const produceNewRuleGroup = async (
     ruleGroup: RuleGroupIdentifier,
@@ -53,27 +55,23 @@ function useProduceNewRuleGroup() {
     // if we have no more rules in the group, we delete the entire group, otherwise just update the rule group
     const updateOrDelete = () => {
       if (deleteEntireGroup) {
-        return [
-          deleteRuleGroup({
-            rulerConfig,
-            namespace: namespaceName,
-            group: groupName,
-          }).unwrap(),
-          mergeRequestStates(fetchRuleGroupState, deleteRuleGroupState),
-        ] as const;
-      }
+        setAggregateState(mergeRequestStates(fetchRuleGroupState, deleteRuleGroupState));
 
-      return [
-        updateRuleGroup({
+        return deleteRuleGroup({
           rulerConfig,
           namespace: namespaceName,
-          payload: newRuleGroup,
-        }).unwrap(),
-        mergeRequestStates(fetchRuleGroupState, updateRuleGroupState),
-      ] as const;
-    };
+          group: groupName,
+        }).unwrap();
+      }
 
-    const [updateOrDeleteResult, state] = updateOrDelete();
+      setAggregateState(mergeRequestStates(fetchRuleGroupState, updateRuleGroupState));
+
+      return updateRuleGroup({
+        rulerConfig,
+        namespace: namespaceName,
+        payload: newRuleGroup,
+      }).unwrap();
+    };
 
     if (options?.refetchAllRules) {
       // refetch rules for this rules source
@@ -81,11 +79,10 @@ function useProduceNewRuleGroup() {
       dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: ruleGroup.dataSourceName }));
     }
 
-    return [updateOrDeleteResult, state];
+    return updateOrDelete();
   };
 
-  // @TODO merge loading state with the fetching state
-  return [produceNewRuleGroup, updateRuleGroupState] as const;
+  return [produceNewRuleGroup, aggregateState] as const;
 }
 
 export function usePauseRuleInGroup() {
