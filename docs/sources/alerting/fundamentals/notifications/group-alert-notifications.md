@@ -75,7 +75,7 @@ In the notification policy, you can also configure how often notifications are s
 - **[Group interval](#group-interval)**: the time to wait before sending a notification about changes in the alert group.
 - **[Repeat interval](#repeat-interval)**: the time to wait before sending a notification if the group has not changed since the last notification.
 
-These timers introduce delays in delivering notifications, enabling the grouping of incoming alerts into one notification to reduce the number of notifications.
+These timers reduce the number of notifications sent. By delaying the delivery of notifications, incoming alerts can be grouped into just one notification instead of many.
 
 {{< figure src="/media/docs/alerting/alerting-timing-options-flowchart-v2.png" max-width="750px" alt="A basic sequence diagram of the the notification policy timers" caption="A basic sequence diagram of the notification policy timers" >}}
 
