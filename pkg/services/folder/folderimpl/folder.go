@@ -211,7 +211,7 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	switch {
 	case q.UID != nil:
 		if *q.UID == "" {
-			return dashFolder, nil
+			return folder.RootFolder, nil
 		}
 		dashFolder, err = s.getFolderByUID(ctx, q.OrgID, *q.UID)
 		if err != nil {

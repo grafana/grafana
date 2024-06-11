@@ -395,6 +395,22 @@ func TestIntegrationFolderService(t *testing.T) {
 					"For error '%s' expected error '%s', actual '%s'", tc.ActualError, tc.ExpectedError, actualError)
 			}
 		})
+
+		t.Run("Returns root folder", func(t *testing.T) {
+			t.Run("When the folder UID is blank should return the root folder", func(t *testing.T) {
+				emptyString := ""
+				actual, err := service.Get(context.Background(), &folder.GetFolderQuery{
+					UID:          &emptyString,
+					OrgID:        1,
+					SignedInUser: usr,
+				})
+
+				assert.NoError(t, err)
+				assert.Equal(t, folder.RootFolder.ID, actual.ID)
+				assert.Equal(t, folder.RootFolder.UID, actual.UID)
+				assert.Equal(t, folder.RootFolder.Title, actual.Title)
+			})
+		})
 	})
 }
 
