@@ -25,13 +25,10 @@ FROM "resource"
         name), so we're guaranteed to have at most one matching row.
       */}}
       {{ if gt .ResourceVersion 0 }}
-            AND {{ .Ident "rv" }} <= {{ .Arg .ResourceVersion }}
-
+          AND {{ .Ident "rv" }} <= {{ .Arg .ResourceVersion }}
           ORDER BY {{ .Ident "rv" }} DESC
           LIMIT 1
-      {{ end }}
-
-      {{ if .SelectForUpdate }}
-          {{ .SelectFor "UPDATE NOWAIT" }}
+      {{ else }}
+          AND {{ .Ident "is_current" }} = true
       {{ end }}
 ;
