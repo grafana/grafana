@@ -2745,10 +2745,10 @@ services: []
 steps:
 - commands:
   - apk add perl
-  - default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $${TAG} | perl
-    -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/';
+  - v_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`
+  - default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $$v_target;
     fi`
-  - backport=`if [[ -n $$LATEST ]]; then echo $$default_target; fi`
+  - backport=`if [[ -n $$LATEST ]]; then echo $$v_target; fi`
   - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
   - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
     -f backport=$${BACKPORT:-$default_backport} --repo=grafana/grafana release-pr.yml
@@ -2830,10 +2830,10 @@ steps:
   name: publish-storybook
 - commands:
   - apk add perl
-  - default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $${TAG} | perl
-    -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/';
+  - v_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`
+  - default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $$v_target;
     fi`
-  - backport=`if [[ -n $$LATEST ]]; then echo $$default_target; fi`
+  - backport=`if [[ -n $$LATEST ]]; then echo $$v_target; fi`
   - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
   - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
     -f backport=$${BACKPORT:-$default_backport} --repo=grafana/grafana release-pr.yml
@@ -4952,6 +4952,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 2782d23d2ba6266ed676ac5ba717e1c9bdf3fcad101b8a4f06a61ef332866d8f
+hmac: 043028c50d984e1ea98a294c6746df1388cb0b7d7976f82f3dd0004fc493bafc
 
 ...
