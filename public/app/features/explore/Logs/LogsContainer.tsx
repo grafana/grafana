@@ -352,8 +352,6 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             scrollElement={scrollElement}
             isFilterLabelActive={this.logDetailsFilterAvailable() ? this.props.isFilterLabelActive : undefined}
             range={range}
-            onClickFilterValue={this.filterValueAvailable() ? this.props.onClickFilterValue : undefined}
-            onClickFilterOutValue={this.filterOutValueAvailable() ? this.props.onClickFilterOutValue : undefined}
             onPinLineCallback={onPinLineCallback}
             onClickFilterString={this.filterValueAvailable() ? this.props.onClickFilterString : undefined}
             onClickFilterOutString={this.filterOutValueAvailable() ? this.props.onClickFilterOutString : undefined}
