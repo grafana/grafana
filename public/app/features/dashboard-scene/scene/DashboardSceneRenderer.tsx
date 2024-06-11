@@ -23,7 +23,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
-  const isHomePage = !meta.url && !meta.slug && !meta.isNew;
+  const isHomePage = !meta.url && !meta.slug && !meta.isNew && !meta.isSnapshot;
 
   if (editview) {
     return (
@@ -64,6 +64,8 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             </div>
           )}
           <CustomScrollbar
+            // This id is used by the image renderer to scroll through the dashboard
+            divId="page-scrollbar"
             autoHeightMin={'100%'}
             className={styles.scrollbarContainer}
             testId={selectors.pages.Dashboard.DashNav.scrollContainer}

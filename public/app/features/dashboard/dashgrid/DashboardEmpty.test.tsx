@@ -76,6 +76,7 @@ it('creates new visualization when clicked Add visualization', () => {
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', { item: 'add_visualization' });
   expect(locationService.partial).toHaveBeenCalled();
+  expect(locationService.partial).toHaveBeenCalledWith({ editPanel: undefined, firstPanel: true });
   expect(onCreateNewPanel).toHaveBeenCalled();
 });
 

@@ -37,7 +37,7 @@ func (s *LocalSigner) SignIDToken(ctx context.Context, claims *auth.IDClaims) (s
 		return "", err
 	}
 
-	builder := jwt.Signed(signer).Claims(claims)
+	builder := jwt.Signed(signer).Claims(&claims.Rest).Claims(claims.Claims)
 
 	token, err := builder.CompactSerialize()
 	if err != nil {

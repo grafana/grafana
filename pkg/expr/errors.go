@@ -7,6 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+var ErrSeriesMustBeWide = errors.New("input data must be a wide series")
+
 var ConversionError = errutil.BadRequest("sse.readDataError").MustTemplate(
 	"[{{ .Public.refId }}] got error: {{ .Error }}",
 	errutil.WithPublic(
@@ -61,7 +63,7 @@ var DependencyError = errutil.NewBase(
 	depErrStr,
 	errutil.WithPublic(depErrStr))
 
-func makeDependencyError(refID, depRefID string) error {
+func MakeDependencyError(refID, depRefID string) error {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId":    refID,

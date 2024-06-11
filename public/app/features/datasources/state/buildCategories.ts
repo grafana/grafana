@@ -214,6 +214,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       description: 'Catchpoint datasource',
       name: 'Catchpoint',
       imgUrl: 'public/img/plugins/catchpoint.svg',
+    )},
+    getPhantomPlugin({
+      id: 'grafana-azurecosmosdb-datasource',
+      description: 'Azure CosmosDB datasource',
+      name: 'Azure CosmosDB',
+      imgUrl: 'public/img/plugins/azure-cosmosdb.svg',
     }),
   ];
 }

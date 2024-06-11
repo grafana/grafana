@@ -63,7 +63,10 @@ export interface Resource<T = object, K = string> extends TypeMeta<K> {
 }
 
 export interface ResourceForCreate<T = object, K = string> extends Partial<TypeMeta<K>> {
-  metadata: Partial<ObjectMeta>;
+  metadata: Partial<ObjectMeta> & {
+    // When creating a resource, it must set a name or generateName to create a unique one on the server
+    generateName?: string;
+  };
   spec: T;
 }
 
@@ -138,9 +141,10 @@ export interface MetaStatus {
   details?: object;
 }
 
-export interface ResourceServer<T = object, K = string> {
+export interface ResourceClient<T = object, K = string> {
   create(obj: ResourceForCreate<T, K>): Promise<void>;
   get(name: string): Promise<Resource<T, K>>;
+  subresource<S>(name: string, path: string): Promise<S>;
   list(opts?: ListOptions): Promise<ResourceList<T, K>>;
   update(obj: ResourceForCreate<T, K>): Promise<Resource<T, K>>;
   delete(name: string): Promise<MetaStatus>;

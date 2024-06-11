@@ -57,6 +57,8 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&ScopeDashboardBindingList{},
 		&ScopeNode{},
 		&ScopeNodeList{},
+		&FindScopeNodeChildrenResults{},
+		&FindScopeDashboardBindingsResults{},
 	)
 	//metav1.AddToGroupVersion(scheme, gv)
 	return nil

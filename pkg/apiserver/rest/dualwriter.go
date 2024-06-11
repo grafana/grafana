@@ -3,10 +3,13 @@ package rest
 import (
 	"context"
 	"errors"
+	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/klog/v2"
 )
 
 var (
@@ -31,6 +34,8 @@ type Storage interface {
 	rest.CreaterUpdater
 	rest.GracefulDeleter
 	rest.CollectionDeleter
+	// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
+	Compare(storageObj, legacyObj runtime.Object) bool
 }
 
 // LegacyStorage is a storage implementation that writes to the Grafana SQL database.
@@ -38,6 +43,10 @@ type LegacyStorage interface {
 	rest.Storage
 	rest.Scoper
 	rest.SingularNameProvider
+	rest.CreaterUpdater
+	rest.Lister
+	rest.GracefulDeleter
+	rest.CollectionDeleter
 	rest.TableConvertor
 	rest.Getter
 }
@@ -66,31 +75,46 @@ type LegacyStorage interface {
 type DualWriter interface {
 	Storage
 	LegacyStorage
+	Mode() DualWriterMode
 }
 
 type DualWriterMode int
 
-var errDualWriterCreaterMissing = errors.New("legacy storage rest.Creater is missing")
-var errDualWriterListerMissing = errors.New("legacy storage rest.Lister is missing")
-var errDualWriterDeleterMissing = errors.New("legacy storage rest.GracefulDeleter is missing")
-var errDualWriterCollectionDeleterMissing = errors.New("legacy storage rest.CollectionDeleter is missing")
-var errDualWriterUpdaterMissing = errors.New("legacy storage rest.Updater is missing")
-
 const (
-	Mode1 DualWriterMode = iota
+	// Mode0 represents writing to and reading from solely LegacyStorage. This mode is enabled when the
+	// `unifiedStorage` feature flag is not set. All reads and writes are made to LegacyStorage. None are made to Storage.
+	Mode0 DualWriterMode = iota
+	// Mode1 represents writing to and reading from LegacyStorage for all primary functionality while additionally
+	// reading and writing to Storage on a best effort basis for the sake of collecting metrics.
+	Mode1
+	// Mode2 is the dual writing mode that represents writing to LegacyStorage and Storage and reading from LegacyStorage.
 	Mode2
+	// Mode3 represents writing to LegacyStorage and Storage and reading from Storage.
 	Mode3
+	// Mode4 represents writing and reading from Storage.
 	Mode4
 )
 
-var CurrentMode = Mode2
-
-//TODO: make CurrentMode customisable and specific to each entity
-// change DualWriter signature to get the current mode as an argument
-
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(legacy LegacyStorage, storage Storage) DualWriter {
-	return selectDualWriter(CurrentMode, legacy, storage)
+func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage) DualWriter {
+	switch mode {
+	// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
+	// writing to legacy storage without `unifiedStorage` enabled.
+	case Mode1:
+		// read and write only from legacy storage
+		return newDualWriterMode1(legacy, storage)
+	case Mode2:
+		// write to both, read from storage but use legacy as backup
+		return newDualWriterMode2(legacy, storage)
+	case Mode3:
+		// write to both, read from storage only
+		return newDualWriterMode3(legacy, storage)
+	case Mode4:
+		// read and write only from storage
+		return newDualWriterMode4(legacy, storage)
+	default:
+		return newDualWriterMode1(legacy, storage)
+	}
 }
 
 type updateWrapper struct {
@@ -111,21 +135,70 @@ func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object
 	return u.updated, nil
 }
 
-func selectDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage) DualWriter {
-	switch mode {
-	case Mode1:
-		// read and write only from legacy storage
-		return NewDualWriterMode1(legacy, storage)
-	case Mode2:
-		// write to both, read from storage but use legacy as backup
-		return NewDualWriterMode2(legacy, storage)
-	case Mode3:
-		// write to both, read from storage only
-		return NewDualWriterMode3(legacy, storage)
-	case Mode4:
-		// read and write only from storage
-		return NewDualWriterMode4(legacy, storage)
-	default:
-		return NewDualWriterMode1(legacy, storage)
+func SetDualWritingMode(
+	ctx context.Context,
+	kvs *kvstore.NamespacedKVStore,
+	legacy LegacyStorage,
+	storage Storage,
+	entity string,
+	desiredMode DualWriterMode,
+) (DualWriter, error) {
+	toMode := map[string]DualWriterMode{
+		// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
+		// writing to legacy storage without `unifiedStorage` enabled.
+		"1": Mode1,
+		"2": Mode2,
+		"3": Mode3,
+		"4": Mode4,
 	}
+	errDualWriterSetCurrentMode := errors.New("failed to set current dual writing mode")
+
+	// Use entity name as key
+	m, ok, err := kvs.Get(ctx, entity)
+	if err != nil {
+		return nil, errors.New("failed to fetch current dual writing mode")
+	}
+
+	currentMode, valid := toMode[m]
+
+	if !valid && ok {
+		// Only log if "ok" because initially all instances will have mode unset for playlists.
+		klog.Info("invalid dual writing mode for playlists mode:", m)
+	}
+
+	if !valid || !ok {
+		// Default to mode 1
+		currentMode = Mode1
+
+		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
+		if err != nil {
+			return nil, errDualWriterSetCurrentMode
+		}
+	}
+
+	// Desired mode is 2 and current mode is 1
+	if (desiredMode == Mode2) && (currentMode == Mode1) {
+		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 2.
+		// There are none between mode 1 and mode 2
+		currentMode = Mode2
+
+		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
+		if err != nil {
+			return nil, errDualWriterSetCurrentMode
+		}
+	}
+	if (desiredMode == Mode1) && (currentMode == Mode2) {
+		// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 1.
+		// There are none between mode 1 and mode 2
+		currentMode = Mode1
+
+		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
+		if err != nil {
+			return nil, errDualWriterSetCurrentMode
+		}
+	}
+
+	// 	#TODO add support for other combinations of desired and current modes
+
+	return NewDualWriter(currentMode, legacy, storage), nil
 }

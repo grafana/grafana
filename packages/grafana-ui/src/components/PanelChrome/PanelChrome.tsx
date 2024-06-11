@@ -56,6 +56,14 @@ interface BaseProps {
    * callback when opening the panel menu
    */
   onOpenMenu?: () => void;
+  /**
+   * Used for setting panel attention
+   */
+  onFocus?: () => void;
+  /**
+   * Debounce the event handler, if possible
+   */
+  onMouseMove?: () => void;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -121,6 +129,8 @@ export function PanelChrome({
   collapsible = false,
   collapsed,
   onToggleCollapse,
+  onFocus,
+  onMouseMove,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -240,7 +250,9 @@ export function PanelChrome({
       className={cx(styles.container, { [styles.transparentContainer]: isPanelTransparent })}
       style={containerStyles}
       data-testid={testid}
-      tabIndex={0} //eslint-disable-line jsx-a11y/no-noninteractive-tabindex
+      tabIndex={0} // eslint-disable-line jsx-a11y/no-noninteractive-tabindex
+      onFocus={onFocus}
+      onMouseMove={onMouseMove}
       ref={ref}
     >
       <div className={styles.loadingBarContainer}>

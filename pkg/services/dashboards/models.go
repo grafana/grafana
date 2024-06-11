@@ -36,6 +36,7 @@ type Dashboard struct {
 
 	Created time.Time
 	Updated time.Time
+	Deleted time.Time
 
 	UpdatedBy int64
 	CreatedBy int64
@@ -209,6 +210,10 @@ type SaveDashboardCommand struct {
 	UpdatedAt time.Time
 }
 
+type RestoreDeletedDashboardCommand struct {
+	FolderUID string `json:"folderUid" xorm:"folder_uid"`
+}
+
 type DashboardProvisioning struct {
 	ID          int64 `xorm:"pk autoincr 'id'"`
 	DashboardID int64 `xorm:"dashboard_id"`
@@ -307,6 +312,7 @@ type DashboardSearchProjection struct {
 	FolderSlug  string
 	FolderTitle string
 	SortMeta    int64
+	Deleted     *time.Time
 }
 
 const (
@@ -414,6 +420,7 @@ type FindPersistedDashboardsQuery struct {
 	Page       int64
 	Permission dashboardaccess.PermissionType
 	Sort       model.SortOption
+	IsDeleted  bool
 
 	Filters []any
 }

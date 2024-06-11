@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/singleflight"
 
@@ -79,20 +80,22 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 
 		now := time.Now()
 		claims := &auth.IDClaims{
-			Claims: jwt.Claims{
+			Claims: &jwt.Claims{
 				Issuer:   s.cfg.AppURL,
 				Audience: getAudience(id.GetOrgID()),
 				Subject:  getSubject(namespace.String(), identifier),
 				Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
 				IssuedAt: jwt.NewNumericDate(now),
 			},
-			Namespace: s.nsMapper(id.GetOrgID()),
+			Rest: authnlib.IDTokenClaims{
+				Namespace: s.nsMapper(id.GetOrgID()),
+			},
 		}
 
 		if identity.IsNamespace(namespace, identity.NamespaceUser) {
-			claims.Email = id.GetEmail()
-			claims.EmailVerified = id.IsEmailVerified()
-			claims.AuthenticatedBy = id.GetAuthenticatedBy()
+			claims.Rest.Email = id.GetEmail()
+			claims.Rest.EmailVerified = id.IsEmailVerified()
+			claims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
 		}
 
 		token, err := s.signer.SignIDToken(ctx, claims)

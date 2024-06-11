@@ -142,8 +142,12 @@ func NewMultiOrgAlertmanager(
 		peer:           &NilPeer{},
 	}
 
-	if err := moa.setupClustering(cfg); err != nil {
-		return nil, err
+	if cfg.UnifiedAlerting.SkipClustering {
+		l.Info("Skipping setting up clustering for MOA")
+	} else {
+		if err := moa.setupClustering(cfg); err != nil {
+			return nil, err
+		}
 	}
 
 	// Set up the default per tenant Alertmanager factory.
@@ -169,13 +173,15 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	// Redis setup.
 	if cfg.UnifiedAlerting.HARedisAddr != "" {
 		redisPeer, err := newRedisPeer(redisConfig{
-			addr:     cfg.UnifiedAlerting.HARedisAddr,
-			name:     cfg.UnifiedAlerting.HARedisPeerName,
-			prefix:   cfg.UnifiedAlerting.HARedisPrefix,
-			password: cfg.UnifiedAlerting.HARedisPassword,
-			username: cfg.UnifiedAlerting.HARedisUsername,
-			db:       cfg.UnifiedAlerting.HARedisDB,
-			maxConns: cfg.UnifiedAlerting.HARedisMaxConns,
+			addr:       cfg.UnifiedAlerting.HARedisAddr,
+			name:       cfg.UnifiedAlerting.HARedisPeerName,
+			prefix:     cfg.UnifiedAlerting.HARedisPrefix,
+			password:   cfg.UnifiedAlerting.HARedisPassword,
+			username:   cfg.UnifiedAlerting.HARedisUsername,
+			db:         cfg.UnifiedAlerting.HARedisDB,
+			maxConns:   cfg.UnifiedAlerting.HARedisMaxConns,
+			tlsEnabled: cfg.UnifiedAlerting.HARedisTLSEnabled,
+			tls:        cfg.UnifiedAlerting.HARedisTLSConfig,
 		}, clusterLogger, moa.metrics.Registerer, cfg.UnifiedAlerting.HAPushPullInterval)
 		if err != nil {
 			return fmt.Errorf("unable to initialize redis: %w", err)
@@ -209,7 +215,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 			return fmt.Errorf("unable to initialize gossip mesh: %w", err)
 		}
 
-		err = peer.Join(alertingCluster.DefaultReconnectInterval, alertingCluster.DefaultReconnectTimeout)
+		err = peer.Join(alertingCluster.DefaultReconnectInterval, cfg.UnifiedAlerting.HAReconnectTimeout)
 		if err != nil {
 			moa.logger.Error("Msg", "Unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
 		}

@@ -25,6 +25,11 @@ export type UsePluginExtensionsResult<T = PluginExtension> = {
   isLoading: boolean;
 };
 
+export type UsePluginComponentResult<Props = {}> = {
+  component: React.ComponentType<Props> | undefined | null;
+  isLoading: boolean;
+};
+
 let singleton: GetPluginExtensions | undefined;
 
 export function setPluginExtensionGetter(instance: GetPluginExtensions): void {
