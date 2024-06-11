@@ -59,21 +59,12 @@ describe('adHocVariableFiltersEqual', () => {
   });
 
   describe('when filter property is undefined', () => {
-    const warnSpy = jest.spyOn(console, 'warn');
-
-    afterEach(() => {
-      warnSpy.mockClear();
-    });
-
-    beforeEach(() => {
-      warnSpy.mockImplementation(() => {});
-    });
-
     afterAll(() => {
-      warnSpy.mockRestore();
+      jest.clearAllMocks();
     });
 
     it('should compare two adhoc variables where both are missing the filter property and return true', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
       expect(
         adHocVariableFiltersEqual({} as unknown as AdHocVariableModel, {} as unknown as AdHocVariableModel)
       ).toBeTruthy();
@@ -82,6 +73,7 @@ describe('adHocVariableFiltersEqual', () => {
     });
 
     it('should compare two adhoc variables where one has no filter property and return false', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
       expect(
         adHocVariableFiltersEqual(
           {} as unknown as AdHocVariableModel,
