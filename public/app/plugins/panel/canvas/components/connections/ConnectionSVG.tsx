@@ -140,7 +140,7 @@ export const ConnectionSVG = ({
           }
 
           const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
-          console.log('x1, y1, x2, y2', x1, y1, x2, y2);
+          // console.log('x1, y1, x2, y2', x1, y1, x2, y2);
 
           let { xStart, yStart, xEnd, yEnd } = { xStart: x1, yStart: y1, xEnd: x2, yEnd: y2 };
           if (v.sourceOriginal && v.targetOriginal) {

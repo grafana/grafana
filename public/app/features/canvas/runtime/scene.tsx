@@ -432,14 +432,17 @@ export class Scene {
     };
   };
 
+  // TODO: a bit confusing, initMovable(true) does not init movable but destroy selecto
   initMoveable = (destroySelecto = false, allowChanges = true) => {
-    console.log('initMoveable');
     const targetElements = this.generateTargetElements(this.root.elements);
 
     if (destroySelecto && this.selecto) {
       this.selecto.destroy();
     }
 
+    /****************/
+    /* Selecto init */
+    /****************/
     this.selecto = new Selecto({
       // container: this.div,
       container: this.viewportDiv,
@@ -454,6 +457,9 @@ export class Scene {
     const snapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
     const elementSnapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
 
+    /*****************/
+    /* Moveable init */
+    /*****************/
     // this.moveable = new Moveable(this.div!, {
     this.moveable = new Moveable(this.viewportDiv!, {
       draggable: allowChanges && !this.editModeEnabled.getValue(),
@@ -563,7 +569,6 @@ export class Scene {
         e.events.forEach((event) => {
           const targetedElement = this.findElementByTarget(event.target);
           if (targetedElement) {
-            // targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
             targetedElement.setPlacementFromConstraint(undefined, undefined);
 
             // re-add the selected elements to the snappable guidelines
@@ -579,8 +584,8 @@ export class Scene {
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
-          // targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
-          targetedElement.setPlacementFromConstraint(undefined, undefined);
+          const { top, left } = event.lastEvent;
+          targetedElement.setPlacementFromGlobalCoordinates(left, top);
         }
 
         this.moved.next(Date.now());
@@ -609,7 +614,6 @@ export class Scene {
             vertical: VerticalConstraint.Top,
             horizontal: HorizontalConstraint.Left,
           };
-          // targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
           targetedElement.setPlacementFromConstraint(undefined, undefined);
         }
       })
@@ -682,6 +686,9 @@ export class Scene {
         }
       });
 
+    /***********/
+    /* Selecto */
+    /***********/
     let targets: Array<HTMLElement | SVGElement> = [];
     this.selecto!.on('dragStart', (event) => {
       const selectedTarget = event.inputEvent.target;
@@ -756,6 +763,9 @@ export class Scene {
         clearTimeout(event.data.timer);
       });
 
+    /******************/
+    /* infiniteViewer */
+    /******************/
     const infiniteViewer = new InfiniteViewer(this.viewerDiv!, this.viewportDiv!, {
       useAutoZoom: true,
       // margin: 0,
@@ -841,7 +851,6 @@ export class Scene {
   };
 
   render() {
-    console.log('render');
     const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0;
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
@@ -876,7 +885,6 @@ export class Scene {
     //     rangeX={[0, 0]}
     //     rangeY={[0, 0]}
     //     onScroll={e => {
-    //       console.log(e);
     //     }}
     //   >
     //     <div className="viewport">
