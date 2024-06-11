@@ -1,10 +1,16 @@
-# Upgrading Go Version
+# Upgrade Go version
 
-Notes on upgrading Go version.
+When upgrading Go for use in Grafana development, we recommend the following practices.
 
-Example PR: https://github.com/grafana/grafana/pull/79329
+## Example PR
 
-## The main areas that need to change during the upgrade are:
+Refer to the following PR for an example of how to perform a Go upgrade.
+
+- [PR ##79329](https://github.com/grafana/grafana/pull/79329)
+
+## Main areas that need to update
+
+Change at least the following parts of Go and related files:
 
 - [`go.mod`](/go.mod#L3)
 - [`go.work`](/go.work#L1)
@@ -12,9 +18,9 @@ Example PR: https://github.com/grafana/grafana/pull/79329
 - [`Makefile`](/Makefile#L12)
 - [`Dockerfile`](/Dockerfile#L6)
 
-Then, run `go mod tidy` and `go work sync`. Also run `make drone` so changes to `.star` files are reflected and `drone.yml` is updated.
+Then, run `go mod tidy` and `go work sync`. Also, run `make drone` so changes reflect the updates to `.star` and `drone.yml` files.
 
 ### Additional files to change
 
-- Take a look in `.github/workflows` folder for what `go` version is being used there in various workflows.
-- Make sure to create a PR with the corresponding changes in `grafana/grafana-enterprise` repository.
+- Look in the `.github/workflows` folder for what Go version is being used there in various workflows.
+- Make sure to create a PR with the corresponding changes in the `grafana/grafana-enterprise` repository.
