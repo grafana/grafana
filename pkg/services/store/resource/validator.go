@@ -14,8 +14,8 @@ import (
 
 // Verify that all required fields are set, and the user has permission to set the common metadata fields
 type RequestValidator interface {
-	ValidateCreate(ctx context.Context, req *CreateRequest) (utils.GrafanaMetaAccessor, error)
-	ValidateUpdate(ctx context.Context, req *UpdateRequest, current *GetResourceResponse) (utils.GrafanaMetaAccessor, error)
+	ValidateCreate(ctx context.Context, req *CreateRequest) (utils.GrafanaMetaAccessor, *StatusResult)
+	ValidateUpdate(ctx context.Context, req *UpdateRequest, current *GetResourceResponse) (utils.GrafanaMetaAccessor, *StatusResult)
 }
 
 type simpleValidator struct {
@@ -38,129 +38,135 @@ type dummyObject struct {
 
 var _ RequestValidator = &simpleValidator{}
 
-func readValue(ctx context.Context, value []byte) (identity.Requester, utils.GrafanaMetaAccessor, error) {
+func readValue(ctx context.Context, key *Key, value []byte) (identity.Requester, utils.GrafanaMetaAccessor, *StatusResult) {
 	// TODO -- we just need Identity not a full user!
 	user, err := appcontext.User(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, badRequest(fmt.Sprintf("unable to get user // %s", err))
 	}
 
 	dummy := &dummyObject{}
 	err = json.Unmarshal(value, dummy)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, badRequest(fmt.Sprintf("error reading json // %s", err))
 	}
 
 	obj, err := utils.MetaAccessor(dummy)
-	return user, obj, err
+	if err != nil {
+		return user, obj, badRequest(fmt.Sprintf("invalid object // %s", err))
+	}
+
+	if obj.GetName() != key.Name {
+		return user, obj, badRequest("key name does not match the name in the body")
+	}
+	if obj.GetNamespace() != key.Namespace {
+		return user, obj, badRequest("key namespace does not match the namespace in the body")
+	}
+	if obj.GetKind() != key.Resource {
+		return user, obj, badRequest("key resource in the body does not match the key (%s != %s)", obj.GetKind(), key.Resource)
+	}
+	return user, obj, nil
 }
 
 // This is the validation that happens for both CREATE and UPDATE
-func (v *simpleValidator) validate(ctx context.Context, user identity.Requester, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
+func (v *simpleValidator) validate(ctx context.Context, user identity.Requester, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, *StatusResult) {
 	// To avoid confusion, lets not include the resource version in the saved value
 	// This is a little weird, but it means there won't be confusion that the saved value
 	// is likely the previous resource version!
 	if obj.GetResourceVersion() != "" {
-		return obj, fmt.Errorf("do not save the resource version in the value")
+		return obj, badRequest("do not save the resource version in the value")
 	}
 
 	// Make sure all common fields are populated
 	if obj.GetName() == "" {
-		return obj, fmt.Errorf("missing name")
+		return obj, badRequest("missing name")
 	}
 	if obj.GetAPIVersion() == "" {
-		return obj, fmt.Errorf("missing apiversion")
+		return obj, badRequest("missing apiversion")
 	}
 	if obj.GetUID() == "" {
-		return obj, fmt.Errorf("the uid is not configured")
+		return obj, badRequest("the uid is not configured")
 	}
 
 	// Check folder access
 	folder := obj.GetFolder()
 	if folder != "" {
 		if v.folderAccess == nil {
-			return obj, fmt.Errorf("folder access not supported")
+			return obj, badRequest("folder access not supported")
 		} else if !v.folderAccess(ctx, user, folder) {
-			return obj, fmt.Errorf("not allowed to write resource to folder")
+			return obj, badRequest("not allowed to write resource to folder")
 		}
 	}
 
 	// Make sure you can write values to this origin
 	origin, err := obj.GetOriginInfo()
 	if err != nil {
-		return nil, err
+		return nil, badRequest(fmt.Sprintf("error reading origin // %s", err))
 	}
 	if origin != nil && v.originAccess != nil && !v.originAccess(ctx, user, origin.Name) {
-		return obj, fmt.Errorf("not allowed to write values to this origin")
+		return obj, badRequest("not allowed to write values to this origin")
 	}
 
 	return obj, nil
 }
 
-func (v *simpleValidator) ValidateCreate(ctx context.Context, req *CreateRequest) (utils.GrafanaMetaAccessor, error) {
-	user, obj, err := readValue(ctx, req.Value)
-	if err != nil {
-		return nil, err
-	}
-	if obj.GetKind() != req.Key.Resource {
-		return obj, fmt.Errorf("expected resource kind")
+func (v *simpleValidator) ValidateCreate(ctx context.Context, req *CreateRequest) (utils.GrafanaMetaAccessor, *StatusResult) {
+	user, obj, errstatus := readValue(ctx, req.Key, req.Value)
+	if errstatus != nil {
+		return nil, errstatus
 	}
 	if req.Key.ResourceVersion > 0 {
-		return obj, fmt.Errorf("create key must not include a resource version")
+		return obj, badRequest("create key must not include a resource version")
 	}
 
 	// Make sure the created by user is accurate
 	//----------------------------------------
 	val := obj.GetCreatedBy()
 	if val != "" && val != user.GetUID().String() {
-		return obj, fmt.Errorf("created by annotation does not match: metadata.annotations#" + utils.AnnoKeyCreatedBy)
+		return obj, badRequest("created by annotation does not match: metadata.annotations#" + utils.AnnoKeyCreatedBy)
 	}
 
 	// Create can not have updated properties
 	//----------------------------------------
 	if obj.GetUpdatedBy() != "" {
-		return obj, fmt.Errorf("unexpected metadata.annotations#" + utils.AnnoKeyCreatedBy)
+		return obj, badRequest("unexpected metadata.annotations#" + utils.AnnoKeyCreatedBy)
 	}
 	ts, err := obj.GetUpdatedTimestamp()
 	if err != nil {
-		return obj, nil
+		return obj, badRequest(fmt.Sprintf("invalid timestamp: %s", err))
 	}
 	if ts != nil {
-		return obj, fmt.Errorf("unexpected metadata.annotations#" + utils.AnnoKeyUpdatedTimestamp)
+		return obj, badRequest("unexpected metadata.annotations#" + utils.AnnoKeyUpdatedTimestamp)
 	}
 
 	return v.validate(ctx, user, obj)
 }
 
-func (v *simpleValidator) ValidateUpdate(ctx context.Context, req *UpdateRequest, current *GetResourceResponse) (utils.GrafanaMetaAccessor, error) {
-	user, obj, err := readValue(ctx, req.Value)
-	if err != nil {
-		return nil, err
+func (v *simpleValidator) ValidateUpdate(ctx context.Context, req *UpdateRequest, current *GetResourceResponse) (utils.GrafanaMetaAccessor, *StatusResult) {
+	user, obj, errstatus := readValue(ctx, req.Key, req.Value)
+	if errstatus != nil {
+		return nil, errstatus
 	}
-	if obj.GetKind() != req.Key.Resource {
-		return obj, fmt.Errorf("expected resource kind")
-	}
-
 	if req.Key.ResourceVersion > 0 && req.Key.ResourceVersion != current.ResourceVersion {
-		return obj, fmt.Errorf("resource version does not match (optimistic locking)")
+		return obj, badRequest("resource version does not match (optimistic locking)")
 	}
 
-	_, oldobj, err := readValue(ctx, current.Value)
-	if err != nil {
-		return nil, err
+	_, oldobj, errstatus := readValue(ctx, req.Key, current.Value)
+	if errstatus != nil {
+		return nil, errstatus
 	}
 	if obj.GetCreatedBy() != oldobj.GetCreatedBy() {
-		return obj, fmt.Errorf(utils.AnnoKeyCreatedBy + " value has changed")
+		return obj, badRequest(utils.AnnoKeyCreatedBy + " value has changed")
 	}
 	if obj.GetCreationTimestamp() != oldobj.GetCreationTimestamp() {
-		return obj, fmt.Errorf("creation time changed")
+		return obj, badRequest("creation time changed")
 	}
 
 	// Make sure the update user is accurate
 	//----------------------------------------
 	val := obj.GetUpdatedBy()
 	if val != "" && val != user.GetUID().String() {
-		return obj, fmt.Errorf("created by annotation does not match: metadata.annotations#" + utils.AnnoKeyUpdatedBy)
+		return obj, badRequest("created by annotation does not match: metadata.annotations#" + utils.AnnoKeyUpdatedBy)
 	}
 
 	return v.validate(ctx, user, obj)

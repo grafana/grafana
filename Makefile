@@ -376,9 +376,10 @@ protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
 	go install google.golang.org/protobuf/cmd/protoc-gen-go
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
-	buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
-	buf generate pkg/services/store/entity --template pkg/services/store/entity/buf.gen.yaml
+	# buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
+	# buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
+	# buf generate pkg/services/store/entity --template pkg/services/store/entity/buf.gen.yaml
+	buf generate pkg/services/store/resource --template pkg/services/store/resource/buf.gen.yaml
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.

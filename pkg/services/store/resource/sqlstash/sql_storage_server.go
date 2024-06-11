@@ -37,7 +37,7 @@ var (
 // Make sure we implement correct interfaces
 var _ resource.ResourceStoreServer = &sqlResourceServer{}
 
-func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer) (SqlResourceServer, error) {
+func ProvideSQLResourceServer(db db.EntityDBInterface, tracer tracing.Tracer) (SqlResourceServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	server := &sqlResourceServer{
@@ -182,6 +182,13 @@ func (s *sqlResourceServer) GetResource(ctx context.Context, req *resource.GetRe
 		return nil, err
 	}
 
+	if req.Key.Group == "" {
+		return &resource.GetResourceResponse{Status: badRequest("missing group")}, nil
+	}
+	if req.Key.Resource == "" {
+		return &resource.GetResourceResponse{Status: badRequest("missing resource")}, nil
+	}
+
 	fmt.Printf("TODO, GET: %+v", req.Key)
 
 	return nil, ErrNotImplementedYet
@@ -195,9 +202,9 @@ func (s *sqlResourceServer) Create(ctx context.Context, req *resource.CreateRequ
 		return nil, err
 	}
 
-	obj, err := s.validator.ValidateCreate(ctx, req)
-	if err != nil {
-		return nil, err
+	obj, status := s.validator.ValidateCreate(ctx, req)
+	if status != nil {
+		return &resource.CreateResponse{Status: status}, nil
 	}
 
 	fmt.Printf("TODO, CREATE: %v", obj.GetName())
@@ -219,13 +226,15 @@ func (s *sqlResourceServer) Update(ctx context.Context, req *resource.UpdateRequ
 	if err != nil {
 		return nil, err
 	}
-	if old == nil {
-		return nil, fmt.Errorf("could not get the old value")
+	if old.Value == nil {
+		return &resource.UpdateResponse{
+			Status: badRequest("existing value does not exist"),
+		}, nil
 	}
 
-	obj, err := s.validator.ValidateUpdate(ctx, req, old)
-	if err != nil {
-		return nil, err
+	obj, status := s.validator.ValidateUpdate(ctx, req, old)
+	if status != nil {
+		return &resource.UpdateResponse{Status: status}, nil
 	}
 
 	fmt.Printf("TODO, UPDATE: %+v", obj.GetName())
@@ -241,7 +250,7 @@ func (s *sqlResourceServer) Delete(ctx context.Context, req *resource.DeleteRequ
 		return nil, err
 	}
 
-	fmt.Printf("TODO, DELETE: %+v", req.Key)
+	fmt.Printf("TODO, DELETE: %+v // %s", req.Key, ctx.Value("X"))
 
 	return nil, ErrNotImplementedYet
 }

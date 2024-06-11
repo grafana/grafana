@@ -167,28 +167,6 @@ func (r *mockResults[T]) Rows() *sqlmock.Rows {
 	return r.rows
 }
 
-func TestCreateETag(t *testing.T) {
-	t.Parallel()
-
-	v := createETag(nil, nil, nil)
-	require.Equal(t, "d41d8cd98f00b204e9800998ecf8427e", v)
-}
-
-func TestGetCurrentUser(t *testing.T) {
-	t.Parallel()
-
-	ctx := testutil.NewDefaultTestContext(t)
-	username, err := getCurrentUser(ctx)
-	require.NotEmpty(t, username)
-	require.NoError(t, err)
-
-	ctx = ctx.WithUser(nil)
-	username, err = getCurrentUser(ctx)
-	require.Empty(t, username)
-	require.Error(t, err)
-	require.ErrorIs(t, err, ErrUserNotFoundInContext)
-}
-
 func TestPtrOr(t *testing.T) {
 	t.Parallel()
 

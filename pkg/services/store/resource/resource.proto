@@ -4,7 +4,7 @@ package resource;
 option go_package = "github.com/grafana/grafana/pkg/services/store/resource";
 
 
-message ResourceIdentifier {
+message Key {
   // Namespace (tenant)
   string namespace = 2;
   // Resource Group
@@ -115,7 +115,7 @@ message CreateRequest {
   // Requires group+resource to be configuired
   // If name is not set, a unique name will be generated
   // The resourceVersion should not be set
-  ResourceIdentifier key = 1;
+  Key key = 1;
 
   // The resource JSON.  
   bytes value = 2;
@@ -137,7 +137,7 @@ message CreateResponse {
 
 message UpdateRequest {
   // Full key must be set
-  ResourceIdentifier key = 1;
+  Key key = 1;
 
   // The resource JSON.  
   bytes value = 2;
@@ -159,7 +159,7 @@ message UpdateResponse {
 }
 
 message DeleteRequest {
-  ResourceIdentifier key = 1;
+  Key key = 1;
 
   // Preconditions: make sure the uid matches the current saved value
   // +optional
@@ -175,7 +175,7 @@ message DeleteResponse {
 }
 
 message GetResourceRequest {
-  ResourceIdentifier key = 1;
+  Key key = 1;
 }
 
 message GetResourceResponse {
@@ -194,7 +194,7 @@ message GetResourceResponse {
 }
 
 message GetBlobRequest {
-  ResourceIdentifier key = 1;
+  Key key = 1;
 }
 
 message GetBlobResponse {
@@ -235,7 +235,7 @@ message ListOptions {
   int64 limit = 2;
 
   // Namespace+Group+Resource+etc
-  ResourceIdentifier key = 3;
+  Key key = 3;
 
   // Match label
   repeated Requirement labels = 4;
@@ -285,7 +285,7 @@ message WatchRequest {
   int64 since = 1;
 
   // Watch specific entities
-  ResourceIdentifier key = 2;
+  Key key = 2;
 
   // Additional options
   ListOptions options = 3;
@@ -316,7 +316,7 @@ message HistoryRequest {
   int64 limit = 2;
 
   // Resource identifier
-  ResourceIdentifier key = 3;
+  Key key = 3;
 
   // List the deleted values (eg, show trash)
   bool show_deleted = 4;
@@ -340,7 +340,7 @@ message OriginRequest {
   int64 limit = 2;
 
   // Resource identifier
-  ResourceIdentifier key = 3;
+  Key key = 3;
 
   // List the deleted values (eg, show trash)
   string origin = 4;
@@ -348,7 +348,7 @@ message OriginRequest {
 
 message ResourceOriginInfo {
   // The resource
-  ResourceIdentifier key = 1;
+  Key key = 1;
 
   // Size of the full resource body
   int32 resource_size = 2;

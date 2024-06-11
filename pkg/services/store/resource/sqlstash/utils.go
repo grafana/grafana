@@ -2,38 +2,22 @@ package sqlstash
 
 import (
 	"context"
-	"crypto/md5"
 	"database/sql"
-	"encoding/hex"
 	"fmt"
+	"net/http"
 	"text/template"
 
-	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
+	"github.com/grafana/grafana/pkg/services/store/resource"
 )
 
-func createETag(body []byte, meta []byte, status []byte) string {
-	// TODO: can we change this to something more modern like sha256?
-	h := md5.New()
-	_, _ = h.Write(meta)
-	_, _ = h.Write(body)
-	_, _ = h.Write(status)
-	hash := h.Sum(nil)
-
-	return hex.EncodeToString(hash[:])
-}
-
-// getCurrentUser returns a string identifying the user making a request with
-// the given context.
-func getCurrentUser(ctx context.Context) (string, error) {
-	user, err := appcontext.User(ctx)
-	if err != nil || user == nil {
-		return "", fmt.Errorf("%w: %w", ErrUserNotFoundInContext, err)
+func badRequest(msg string) *resource.StatusResult {
+	return &resource.StatusResult{
+		Status:  "Failure",
+		Message: msg,
+		Code:    http.StatusBadRequest,
 	}
-
-	return store.GetUserIDString(user), nil
 }
 
 // ptrOr returns the first non-nil pointer in the list or a new non-nil pointer.

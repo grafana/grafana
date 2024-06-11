@@ -85,7 +85,6 @@ var _ GrafanaMetaAccessor = (*grafanaMetaAccessor)(nil)
 type grafanaMetaAccessor struct {
 	raw interface{} // the original object (it implements metav1.Object)
 	obj metav1.Object
-	typ metav1.Type
 }
 
 // Accessor takes an arbitrary object pointer and returns meta.Interface.
@@ -97,14 +96,7 @@ func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
 	if err != nil {
 		return nil, err
 	}
-	typ, ok := raw.(metav1.Type)
-	if !ok {
-		typ, ok = obj.(metav1.Type)
-		if !ok {
-			typ = nil
-		}
-	}
-	return &grafanaMetaAccessor{raw, obj, typ}, nil
+	return &grafanaMetaAccessor{raw, obj}, nil
 }
 
 func (m *grafanaMetaAccessor) Object() metav1.Object {
@@ -409,17 +401,35 @@ func (m *grafanaMetaAccessor) SetUID(uid types.UID) {
 }
 
 func (m *grafanaMetaAccessor) GetAPIVersion() string {
-	if m.typ == nil {
-		return ""
+	typ, ok := m.raw.(metav1.Type)
+	if ok {
+		return typ.GetAPIVersion()
 	}
-	return m.typ.GetAPIVersion()
+	r := reflect.ValueOf(m.raw)
+	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
+		r = r.Elem()
+	}
+	val := r.FieldByName("APIVersion")
+	if val.IsValid() && val.Kind() == reflect.String {
+		return val.String()
+	}
+	return ""
 }
 
 func (m *grafanaMetaAccessor) GetKind() string {
-	if m.typ == nil {
-		return ""
+	typ, ok := m.raw.(metav1.Type)
+	if ok {
+		return typ.GetKind()
 	}
-	return m.typ.GetKind()
+	r := reflect.ValueOf(m.raw)
+	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
+		r = r.Elem()
+	}
+	kind := r.FieldByName("Kind")
+	if kind.IsValid() && kind.Kind() == reflect.String {
+		return kind.String()
+	}
+	return ""
 }
 
 func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
