@@ -199,24 +199,6 @@ def enterprise_downstream_step(ver_mode):
 
     return step
 
-def lint_backend_step():
-    return {
-        "name": "lint-backend",
-        "image": images["go"],
-        "environment": {
-            # We need CGO because of go-sqlite3
-            "CGO_ENABLED": "1",
-        },
-        "depends_on": [
-            "wire-install",
-        ],
-        "commands": [
-            "apk add --update make build-base",
-            # Don't use Make since it will re-download the linters
-            "make lint-go",
-        ],
-    }
-
 def validate_modfile_step():
     return {
         "name": "validate-modfile",

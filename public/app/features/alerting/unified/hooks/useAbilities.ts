@@ -53,6 +53,7 @@ export enum AlertmanagerAction {
   CreateSilence = 'create-silence',
   ViewSilence = 'view-silence',
   UpdateSilence = 'update-silence',
+  PreviewSilencedInstances = 'preview-silenced-alerts',
 
   // mute timings
   ViewMuteTiming = 'view-mute-timing',
@@ -83,6 +84,7 @@ export enum AlertingAction {
   UpdateAlertRule = 'update-alert-rule',
   DeleteAlertRule = 'delete-alert-rule',
   ExportGrafanaManagedRules = 'export-grafana-managed-rules',
+  ReadConfigurationStatus = 'read-configuration-status',
 
   // external (any compatible alerting data source)
   CreateExternalAlertRule = 'create-external-alert-rule',
@@ -110,6 +112,11 @@ export const useAlertingAbilities = (): Abilities<AlertingAction> => {
     [AlertingAction.UpdateAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleUpdate),
     [AlertingAction.DeleteAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleDelete),
     [AlertingAction.ExportGrafanaManagedRules]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleRead),
+    [AlertingAction.ReadConfigurationStatus]: [
+      AlwaysSupported,
+      ctx.hasPermission(AccessControlAction.AlertingInstanceRead) ||
+        ctx.hasPermission(AccessControlAction.AlertingNotificationsRead),
+    ],
 
     // external
     [AlertingAction.CreateExternalAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleExternalWrite),
@@ -241,6 +248,7 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.CreateSilence]: toAbility(AlwaysSupported, instancePermissions.create),
     [AlertmanagerAction.ViewSilence]: toAbility(AlwaysSupported, instancePermissions.read),
     [AlertmanagerAction.UpdateSilence]: toAbility(AlwaysSupported, instancePermissions.update),
+    [AlertmanagerAction.PreviewSilencedInstances]: toAbility(AlwaysSupported, instancePermissions.read),
     // -- mute timtings --
     [AlertmanagerAction.CreateMuteTiming]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
     [AlertmanagerAction.ViewMuteTiming]: toAbility(AlwaysSupported, notificationsPermissions.read),
