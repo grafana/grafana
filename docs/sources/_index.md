@@ -28,7 +28,7 @@ cards:
   title_class: pt-0 lh-1
   items:
     - title: What's new
-      href: ./whats-new/
+      href: ./whatsnew/
       description: Browse release highlights, deprecations, and breaking changes in Grafana releases.
       height: 24
     - title: Introduction
@@ -53,6 +53,7 @@ cards:
       height: 24
     - title: Explore
       href: ./explore/
+      description: Explore your data using a query instead of creating a dashboard.
       height: 24
     - title: Alerting
       href: ./alerting/
@@ -67,19 +68,18 @@ cards:
       description: Troubleshoot common Grafana issues.
       height: 24
 
+---
+
 {{< docs/hero-simple key="hero" >}}
 
 ---
 
 ## Overview
 
-_Grafana Open Source Software (OSS)_ enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they're stored.
-Grafana OSS provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations.
-The Grafana OSS plugin framework also enables you to connect other data sources like NoSQL/SQL databases, ticketing tools like Jira or ServiceNow, and CI/CD tooling like GitLab.
+__Grafana Open Source Software (OSS)__ enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored. Grafana OSS provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations. The Grafana OSS plugin framework also enables you to connect other data sources like NoSQL/SQL databases, ticketing tools like Jira or ServiceNow, and CI/CD tooling like GitLab.
 
-_Grafana Enterprise_ is a commercial edition of Grafana that includes exclusive data source plugins and additional features not found in the open source version.
-You also get 24x7x365 support and training from the core Grafana team.
-To learn more about these features, refer to [Enterprise features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/#enterprise-features).
+__Grafana Enterprise__ is a commercial edition of Grafana that includes exclusive data source plugins and additional features not found in the open source version. You also get 24x7x365 support and training from the core Grafana team.
+To learn more about these features, refer to [Enterprise features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/#enterprise-features-in-grafana-cloud).
 
 ## Learn
 
