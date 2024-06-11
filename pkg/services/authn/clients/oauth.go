@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -164,17 +163,6 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 
 	if !connector.IsEmailAllowed(userInfo.Email) {
 		return nil, errOAuthEmailNotAllowed.Errorf("provided email is not allowed")
-	}
-
-	// This is required to implement OrgRole mapping for OAuth providers step by step
-	switch c.providerName {
-	case social.GenericOAuthProviderName, social.GitHubProviderName, social.GitlabProviderName,
-		social.OktaProviderName, social.GoogleProviderName, social.AzureADProviderName:
-		// Do nothing, these providers already supports OrgRole mapping
-	default:
-		userInfo.OrgRoles, userInfo.IsGrafanaAdmin, _ = getRoles(c.cfg, func() (org.RoleType, *bool, error) {
-			return userInfo.Role, userInfo.IsGrafanaAdmin, nil
-		})
 	}
 
 	lookupParams := login.UserLookupParams{}
