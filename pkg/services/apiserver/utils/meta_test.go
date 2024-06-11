@@ -126,7 +126,7 @@ func TestMetaAccessor(t *testing.T) {
 	originInfo := &utils.ResourceOriginInfo{
 		Name: "test",
 		Path: "a/b/c",
-		Key:  "kkk",
+		Hash: "kkk",
 	}
 
 	t.Run("fails for non resource objects", func(t *testing.T) {
