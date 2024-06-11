@@ -249,17 +249,27 @@ export const LogsPanel = ({
     [scrollElement]
   );
 
-  const defaultOnClickFilterLabel = useCallback((key: string, value: string) => {
-    onAddAdHocFilter?.({
-      key, value, operator: '='
-    });
-  }, [onAddAdHocFilter]);
+  const defaultOnClickFilterLabel = useCallback(
+    (key: string, value: string) => {
+      onAddAdHocFilter?.({
+        key,
+        value,
+        operator: '=',
+      });
+    },
+    [onAddAdHocFilter]
+  );
 
-  const defaultOnClickFilterOutLabel = useCallback((key: string, value: string) => {
-    onAddAdHocFilter?.({
-      key, value, operator: '!='
-    });
-  }, [onAddAdHocFilter]);
+  const defaultOnClickFilterOutLabel = useCallback(
+    (key: string, value: string) => {
+      onAddAdHocFilter?.({
+        key,
+        value,
+        operator: '!=',
+      });
+    },
+    [onAddAdHocFilter]
+  );
 
   if (!data || logRows.length === 0) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
@@ -316,8 +326,12 @@ export const LogsPanel = ({
             onLogRowHover={onLogRowHover}
             app={CoreApp.Dashboard}
             onOpenContext={onOpenContext}
-            onClickFilterLabel={isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : defaultOnClickFilterLabel}
-            onClickFilterOutLabel={isOnClickFilterOutLabel(onClickFilterOutLabel) ? onClickFilterOutLabel : defaultOnClickFilterOutLabel}
+            onClickFilterLabel={
+              isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : defaultOnClickFilterLabel
+            }
+            onClickFilterOutLabel={
+              isOnClickFilterOutLabel(onClickFilterOutLabel) ? onClickFilterOutLabel : defaultOnClickFilterOutLabel
+            }
             onClickFilterString={isOnClickFilterString(onClickFilterString) ? onClickFilterString : undefined}
             onClickFilterOutString={
               isOnClickFilterOutString(onClickFilterOutString) ? onClickFilterOutString : undefined
