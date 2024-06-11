@@ -2745,7 +2745,7 @@ services: []
 steps:
 - commands:
   - apk add perl
-  - "default_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$'/v\x01.\x02.x'`"
+  - default_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'/v\1.\2.x'`
   - backport=`if [[ -z $$LATEST ]]; then echo $$default_target; fi`
   - curl -L $${GH_CLI_URL} | tar -xvf --strip-components=1 -C /usr
   - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
@@ -2828,7 +2828,7 @@ steps:
   name: publish-storybook
 - commands:
   - apk add perl
-  - "default_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$'/v\x01.\x02.x'`"
+  - default_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'/v\1.\2.x'`
   - backport=`if [[ -z $$LATEST ]]; then echo $$default_target; fi`
   - curl -L $${GH_CLI_URL} | tar -xvf --strip-components=1 -C /usr
   - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
@@ -4948,6 +4948,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: b19b518098ae374cef3bd146b7a593544a9c85becc73e221e67a4c7f8ae08187
+hmac: a9d3926a18b65526e9801f76737f023c819e46853f8857a19770188babf7446d
 
 ...
