@@ -1,12 +1,17 @@
-import { waitFor, renderHook } from 'test/test-utils';
+import { HttpResponse } from 'msw';
+import React from 'react';
+import { render, userEvent } from 'test/test-utils';
+import { byRole, byText } from 'testing-library-selector';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { setupMswServer } from '../mockApi';
-import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '../mocks/alertRuleApi';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { mockCombinedRule, mockCombinedRuleGroup, mockGrafanaRulerRule } from '../mocks';
+import { grafanaRulerGroupName, grafanaRulerNamespace } from '../mocks/alertRuleApi';
+import { setUpdateRulerRuleNamespaceHandler } from '../mocks/server/configure';
+import { stringifyErrorLike } from '../utils/misc';
+import { getRuleGroupLocationFromCombinedRule } from '../utils/rules';
 
 import { usePauseRuleInGroup } from './useProduceNewRuleGroup';
 
@@ -17,32 +22,55 @@ beforeAll(() => {
 });
 
 it('should be able to pause a rule', async () => {
-  const ruleGroupIdentifier: RuleGroupIdentifier = {
-    namespaceName: grafanaRulerNamespace.uid,
-    groupName: grafanaRulerGroupName,
-    dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+  setUpdateRulerRuleNamespaceHandler({ delay: 1000 });
+  render(<TestComponent />);
+
+  expect(await byText(/uninitialized/i).find()).toBeInTheDocument();
+
+  await userEvent.click(byRole('button').get());
+  expect(await byText(/loading/i).find()).toBeInTheDocument();
+  expect(await byText(/success/i).find()).toBeInTheDocument();
+  expect(await byText(/error/i).query()).not.toBeInTheDocument();
+});
+
+it('should be able to handle error', async () => {
+  setUpdateRulerRuleNamespaceHandler({
+    delay: 1000,
+    error: new HttpResponse('oops', { status: 500 }),
+  });
+
+  render(<TestComponent />);
+
+  expect(await byText(/uninitialized/i).find()).toBeInTheDocument();
+
+  await userEvent.click(byRole('button').get());
+  expect(await byText(/loading/i).find()).toBeInTheDocument();
+  expect(await byText(/success/i).query()).not.toBeInTheDocument();
+  expect(await byText(/error: oops/i).find()).toBeInTheDocument();
+});
+
+// this test component will cycle through the loading states
+const TestComponent = () => {
+  const [pauseRule, requestState] = usePauseRuleInGroup();
+
+  const rulerRule = mockGrafanaRulerRule({ namespace_uid: grafanaRulerNamespace.uid });
+  const rule = mockCombinedRule({
+    rulerRule,
+    group: mockCombinedRuleGroup(grafanaRulerGroupName, []),
+  });
+  const ruleGroupID = getRuleGroupLocationFromCombinedRule(rule);
+
+  const onClick = () => {
+    pauseRule(ruleGroupID, rulerRule, true);
   };
 
-  expect(grafanaRulerRule).toHaveProperty('grafana_alert.is_paused', false);
-
-  const { result } = renderHook(() => {
-    const [pauseRule, pauseState] = usePauseRuleInGroup();
-    pauseRule(ruleGroupIdentifier, grafanaRulerRule, true);
-
-    return pauseState;
-  });
-
-  await waitFor(() => {
-    expect(result.current).toHaveProperty('status', 'fulfilled');
-  });
-
-  // a bit hacky to inspect what was passed in to RTKQ – open to ideas
-  expect(result.current).toHaveProperty('originalArgs.payload.rules[0].grafana_alert.is_paused', true);
-
-  // @ts-ignore
-  expect(result.current).toMatchSnapshot({
-    fulfilledTimeStamp: expect.any(Number),
-    startedTimeStamp: expect.any(Number),
-    requestId: expect.any(String),
-  });
-});
+  return (
+    <>
+      <button onClick={() => onClick()} />
+      {requestState.isUninitialized && 'uninitialized'}
+      {requestState.isLoading && 'loading'}
+      {requestState.isSuccess && 'success'}
+      {requestState.isError && `error: ${stringifyErrorLike(requestState.error)}`}
+    </>
+  );
+};

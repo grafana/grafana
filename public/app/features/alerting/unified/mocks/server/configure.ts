@@ -1,3 +1,5 @@
+import { HttpResponse } from 'msw';
+
 import server from 'app/features/alerting/unified/mockApi';
 import { mockFolder } from 'app/features/alerting/unified/mocks';
 import {
@@ -7,6 +9,13 @@ import {
 import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { AlertManagerCortexConfig, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
+
+import { updateRulerRuleNamespaceHandler } from './handlers/alertRules';
+
+export type HandlerOptions = {
+  delay?: number;
+  error?: HttpResponse;
+};
 
 /**
  * Makes the mock server respond in a way that matches the different behaviour associated with
@@ -32,4 +41,11 @@ export const setFolderAccessControl = (accessControl: FolderDTO['accessControl']
  */
 export const setGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => {
   server.use(getGrafanaAlertmanagerConfigHandler(config));
+};
+
+/**
+ * Makes rule namespace update slow down
+ */
+export const setUpdateRulerRuleNamespaceHandler = (options?: HandlerOptions) => {
+  server.use(updateRulerRuleNamespaceHandler(options));
 };

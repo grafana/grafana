@@ -13,8 +13,6 @@ import {
   getDataSourceRulerConfig,
 } from '../state/actions';
 
-import { AggregateRequestState, mergeRequestStates } from './mergeRequestStates';
-
 type ProduceNewRuleGroupOptions = {
   /**
    * Should we dispatch additional actions to ensure that other (non-RTKQ) caches are cleared?
@@ -22,12 +20,24 @@ type ProduceNewRuleGroupOptions = {
   refetchAllRules?: boolean;
 };
 
+// @TODO the manual state tracking here is abysmal but we don't have a better idea that works right now
 function useProduceNewRuleGroup() {
-  const [fetchRuleGroup, fetchRuleGroupState] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
-  const [deleteRuleGroup, deleteRuleGroupState] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useLazyQuery();
-  const [updateRuleGroup, updateRuleGroupState] = alertRuleApi.endpoints.updateRuleGroupForNamespace.useMutation();
+  const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
+  const [updateRuleGroup] = alertRuleApi.endpoints.updateRuleGroupForNamespace.useMutation();
+  const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useLazyQuery();
 
-  const [aggregateState, setAggregateState] = useState<AggregateRequestState>(mergeRequestStates(fetchRuleGroupState));
+  const [isUninitialized, setIsUninitialized] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const [error, setError] = useState<unknown | undefined>();
+
+  const aggregateState = {
+    isUninitialized,
+    isLoading,
+    isSuccess,
+    isError: Boolean(error),
+    error,
+  };
 
   const produceNewRuleGroup = async (
     ruleGroup: RuleGroupIdentifier,
@@ -40,31 +50,37 @@ function useProduceNewRuleGroup() {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: dataSourceName }));
     const rulerConfig = getDataSourceRulerConfig(getState, dataSourceName);
 
+    setIsLoading(true);
+    setIsUninitialized(false);
+
     const currentRuleGroup = await fetchRuleGroup({
       rulerConfig,
       namespace: namespaceName,
       group: groupName,
-    }).unwrap();
+    })
+      .unwrap()
+      .catch((error) => {
+        setError(error);
+        setIsSuccess(false);
+      });
+
+    if (!currentRuleGroup) {
+      return Promise.resolve();
+    }
 
     // @TODO convert rule group to postable rule group – TypeScript is not complaining here because
     // the interfaces are compatible but it _should_ complain
     const newRuleGroup = ruleGroupReducer(currentRuleGroup, action);
 
-    const deleteEntireGroup = newRuleGroup.rules.length === 0;
-
-    // if we have no more rules in the group, we delete the entire group, otherwise just update the rule group
-    const updateOrDelete = () => {
-      if (deleteEntireGroup) {
-        setAggregateState(mergeRequestStates(fetchRuleGroupState, deleteRuleGroupState));
-
+    // if we have no more rules left after reducing, remove the entire group
+    const updateOrDeleteFunction = () => {
+      if (newRuleGroup.rules.length === 0) {
         return deleteRuleGroup({
           rulerConfig,
           namespace: namespaceName,
           group: groupName,
         }).unwrap();
       }
-
-      setAggregateState(mergeRequestStates(fetchRuleGroupState, updateRuleGroupState));
 
       return updateRuleGroup({
         rulerConfig,
@@ -73,13 +89,23 @@ function useProduceNewRuleGroup() {
       }).unwrap();
     };
 
-    if (options?.refetchAllRules) {
-      // refetch rules for this rules source
-      // @TODO remove this when we moved everything to RTKQ – then the endpoint will simply invalidate the tags
-      dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: ruleGroup.dataSourceName }));
-    }
+    updateOrDeleteFunction()
+      .then((result) => {
+        if (options?.refetchAllRules) {
+          // refetch rules for this rules source
+          // @TODO remove this when we moved everything to RTKQ – then the endpoint will simply invalidate the tags
+          dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: ruleGroup.dataSourceName }));
+        }
 
-    return updateOrDelete();
+        return result;
+      })
+      .catch((error) => {
+        setError(error);
+      })
+      .finally(() => {
+        setIsSuccess(true);
+        setIsLoading(false);
+      });
   };
 
   return [produceNewRuleGroup, aggregateState] as const;
