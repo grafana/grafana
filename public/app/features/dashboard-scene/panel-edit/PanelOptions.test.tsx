@@ -116,7 +116,7 @@ describe('PanelOptions', () => {
 
       expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
 
-      const input = screen.getByTestId('panel-edit-panel-title-input');
+      const input = screen.getByTestId(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
       fireEvent.change(input, { target: { value: 'New title' } });
 
       expect(vizManager.state.panel.state.title).toBe('New title');
@@ -127,7 +127,7 @@ describe('PanelOptions', () => {
 
       expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
 
-      const input = screen.getByTestId('panel-edit-panel-title-input');
+      const input = screen.getByTestId(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
       fireEvent.change(input, { target: { value: '' } });
 
       expect(vizManager.state.panel.state.title).toBe('');
