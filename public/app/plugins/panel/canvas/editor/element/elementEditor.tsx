@@ -113,10 +113,9 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       builder.addCustomEditor({
         category: ['Data links'],
         id: 'dataLinks',
-        path: 'data.links',
+        path: 'links',
         name: '',
         editor: DataLinksEditor,
-        settings: opts,
       });
 
       const shouldAddBackgroundEditor = opts.element.item.standardEditorConfig?.background ?? true;

@@ -143,6 +143,14 @@ export function getDataLinks(
 
   const elementConfig = elementOptions.config;
 
+  elementOptions.links?.forEach((link) => {
+    const key = `${link.title}/${link.href}`;
+    if (!linkLookup.has(key)) {
+      links.push(link);
+      linkLookup.add(key);
+    }
+  });
+
   frames?.forEach((frame) => {
     const visibleFields = frame.fields.filter((field) => !Boolean(field.config.custom?.hideFrom?.tooltip));
 

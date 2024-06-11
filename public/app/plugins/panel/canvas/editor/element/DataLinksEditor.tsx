@@ -6,12 +6,10 @@ import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/
 
 type Props = StandardEditorProps<DataLink[]>;
 
-export function DataLinksEditor({ value, onChange, item }: Props) {
+export function DataLinksEditor({ value, onChange }: Props) {
   if (!value) {
     value = [];
   }
-  const itemSettings = item.settings;
-  const element = itemSettings?.element;
 
   const onDataLinksChange = useCallback(
     (links: DataLink[]) => {
@@ -19,8 +17,6 @@ export function DataLinksEditor({ value, onChange, item }: Props) {
     },
     [onChange]
   );
-
-  element.data.links = value;
 
   return (
     <DataLinksInlineEditor
