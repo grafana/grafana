@@ -67,7 +67,6 @@ cards:
       href: ./troubleshooting/
       description: Troubleshoot common Grafana issues.
       height: 24
-
 ---
 
 {{< docs/hero-simple key="hero" >}}
