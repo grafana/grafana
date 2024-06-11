@@ -18,6 +18,7 @@ const (
 	alertmanagerDefaultClusterAddr        = "0.0.0.0:9094"
 	alertmanagerDefaultPeerTimeout        = 15 * time.Second
 	alertmanagerDefaultGossipInterval     = alertingCluster.DefaultGossipInterval
+	alertmanagerDefaultReconnectTimeout   = alertingCluster.DefaultReconnectTimeout
 	alertmanagerDefaultPushPullInterval   = alertingCluster.DefaultPushPullInterval
 	alertmanagerDefaultConfigPollInterval = time.Minute
 	alertmanagerRedisDefaultMaxConns      = 5
@@ -71,6 +72,7 @@ type UnifiedAlertingSettings struct {
 	HAPeers                        []string
 	HAPeerTimeout                  time.Duration
 	HAGossipInterval               time.Duration
+	HAReconnectTimeout             time.Duration
 	HAPushPullInterval             time.Duration
 	HALabel                        string
 	HARedisClusterModeEnabled      bool
@@ -214,6 +216,10 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		return err
 	}
 	uaCfg.HAGossipInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_gossip_interval", (alertmanagerDefaultGossipInterval).String()))
+	if err != nil {
+		return err
+	}
+	uaCfg.HAReconnectTimeout, err = gtime.ParseDuration(valueAsString(ua, "ha_reconnect_timeout", (alertmanagerDefaultReconnectTimeout).String()))
 	if err != nil {
 		return err
 	}
