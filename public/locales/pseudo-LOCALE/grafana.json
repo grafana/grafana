@@ -28,11 +28,9 @@
   "alert-labels": {
     "button": {
       "hide": " Ħįđę čőmmőŉ ľäþęľş",
-      "more": "mőřę",
       "show": {
         "tooltip": "Ŝĥőŵ čőmmőŉ ľäþęľş"
-      },
-      "show-all": " Ŝĥőŵ ľęşş ľäþęľş"
+      }
     }
   },
   "alert-rule-form": {
