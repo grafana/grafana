@@ -3,12 +3,12 @@ package legacy
 import (
 	"context"
 
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	authzv1 "github.com/grafana/grafana/pkg/services/authorization/proto/v1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
