@@ -72,7 +72,7 @@ def release_pr_step(depends_on = []):
         "commands": [
             "apk add perl",
             "default_target=`echo $${{TAG}} | perl -pe 's/{}/v\\1.\\2.x/'`".format(semver_regex),
-            "backport=`if [[ -z $$LATEST ]]; then echo $$default_target; fi`",
+            "backport=`if [[ -n $$LATEST ]]; then echo $$default_target; fi`",
             # Install gh CLI
             "curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr",
             # Run the release-pr workflow
