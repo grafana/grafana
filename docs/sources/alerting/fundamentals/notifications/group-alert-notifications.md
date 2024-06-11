@@ -69,7 +69,7 @@ If you want to receive every alert as a separate notification, you can do so by 
 
 ## Timing options
 
-In the notification policy, you can also configure how often notifications are sent for each [group of alerts](#group-notifications). There are three distinct timers applied to all the resulting groups within the notification policy:
+In the notification policy, you can also configure how often notifications are sent for each [group of alerts](#group-notifications). There are three distinct timers applied to groups within the notification policy:
 
 - **[Group wait](#group-wait)**: the time to wait before sending the first notification for a new group of alerts.
 - **[Group interval](#group-interval)**: the time to wait before sending a notification about changes in the alert group.
