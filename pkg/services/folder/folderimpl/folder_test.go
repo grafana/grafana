@@ -406,9 +406,9 @@ func TestIntegrationFolderService(t *testing.T) {
 				})
 
 				assert.NoError(t, err)
-				assert.Equal(t, folder.RootFolder.ID, actual.ID)
-				assert.Equal(t, folder.RootFolder.UID, actual.UID)
-				assert.Equal(t, folder.RootFolder.Title, actual.Title)
+				assert.Equal(t, folder.GeneralFolder.ID, actual.ID)
+				assert.Equal(t, folder.GeneralFolder.UID, actual.UID)
+				assert.Equal(t, folder.GeneralFolder.Title, actual.Title)
 			})
 		})
 	})
