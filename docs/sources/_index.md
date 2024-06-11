@@ -67,6 +67,10 @@ cards:
       href: ./troubleshooting/
       description: Troubleshoot common Grafana issues.
       height: 24
+    - title: Upgrade
+      href: ./upgrade-guide/
+      description: Upgrade Grafana to stay current with the latest fixes and enhancements.
+      height: 24
 ---
 
 {{< docs/hero-simple key="hero" >}}
