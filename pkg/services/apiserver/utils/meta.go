@@ -85,6 +85,7 @@ var _ GrafanaMetaAccessor = (*grafanaMetaAccessor)(nil)
 type grafanaMetaAccessor struct {
 	raw interface{} // the original object (it implements metav1.Object)
 	obj metav1.Object
+	r   reflect.Value
 }
 
 // Accessor takes an arbitrary object pointer and returns meta.Interface.
@@ -96,7 +97,13 @@ func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &grafanaMetaAccessor{raw, obj}, nil
+
+	// look for Spec.Title or Spec.Name
+	r := reflect.ValueOf(raw)
+	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
+		r = r.Elem()
+	}
+	return &grafanaMetaAccessor{raw, obj, r}, nil
 }
 
 func (m *grafanaMetaAccessor) Object() metav1.Object {
@@ -405,11 +412,7 @@ func (m *grafanaMetaAccessor) GetAPIVersion() string {
 	if ok {
 		return typ.GetAPIVersion()
 	}
-	r := reflect.ValueOf(m.raw)
-	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
-		r = r.Elem()
-	}
-	val := r.FieldByName("APIVersion")
+	val := m.r.FieldByName("APIVersion")
 	if val.IsValid() && val.Kind() == reflect.String {
 		return val.String()
 	}
@@ -421,40 +424,30 @@ func (m *grafanaMetaAccessor) GetKind() string {
 	if ok {
 		return typ.GetKind()
 	}
-	r := reflect.ValueOf(m.raw)
-	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
-		r = r.Elem()
-	}
-	kind := r.FieldByName("Kind")
-	if kind.IsValid() && kind.Kind() == reflect.String {
-		return kind.String()
+	val := m.r.FieldByName("Kind")
+	if val.IsValid() && val.Kind() == reflect.String {
+		return val.String()
 	}
 	return ""
 }
 
 func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 	// look for Spec.Title or Spec.Name
-	r := reflect.ValueOf(m.raw)
-	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
-		r = r.Elem()
-	}
-	if r.Kind() == reflect.Struct {
-		spec := r.FieldByName("Spec")
-		if spec.Kind() == reflect.Struct {
-			title := spec.FieldByName("Title")
-			if title.IsValid() && title.Kind() == reflect.String {
-				return title.String()
-			}
-			name := spec.FieldByName("Name")
-			if name.IsValid() && name.Kind() == reflect.String {
-				return name.String()
-			}
-		}
-
-		title := r.FieldByName("Title")
+	spec := m.r.FieldByName("Spec")
+	if spec.Kind() == reflect.Struct {
+		title := spec.FieldByName("Title")
 		if title.IsValid() && title.Kind() == reflect.String {
 			return title.String()
 		}
+		name := spec.FieldByName("Name")
+		if name.IsValid() && name.Kind() == reflect.String {
+			return name.String()
+		}
+	}
+
+	title := m.r.FieldByName("Title")
+	if title.IsValid() && title.Kind() == reflect.String {
+		return title.String()
 	}
 	return defaultTitle
 }
