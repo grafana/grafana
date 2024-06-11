@@ -1705,22 +1705,31 @@ describe('LokiDatasource', () => {
   describe('getTagKeys', () => {
     it('should pass timeRange and filters to the request', async () => {
       const ds = createLokiDatasource();
-      const filters = [{ key: 'foo', operator: '=', value: 'bar' }];
+      const filters = [
+        { key: 'foo', operator: '=', value: 'bar' },
+        { key: 'foo2', operator: '=', value: 'bar2' },
+      ];
       const spy = jest.spyOn(ds.languageProvider, 'fetchLabels').mockResolvedValue([]);
 
       await ds.getTagKeys({ filters, timeRange: mockTimeRange });
-      expect(spy).toHaveBeenCalledWith({ streamSelector: '{foo=bar}', timeRange: mockTimeRange });
+      expect(spy).toHaveBeenCalledWith({ streamSelector: '{foo="bar",foo2="bar2"}', timeRange: mockTimeRange });
     });
   });
 
   describe('getTagValues', () => {
     it('should pass timeRange and filters to the request', async () => {
       const ds = createLokiDatasource();
-      const filters = [{ key: 'foo', operator: '=', value: 'bar' }];
+      const filters = [
+        { key: 'foo', operator: '=', value: 'bar' },
+        { key: 'foo2', operator: '=', value: 'bar2' },
+      ];
       const spy = jest.spyOn(ds.languageProvider, 'fetchLabelValues').mockResolvedValue([]);
 
       await ds.getTagValues({ key: 'label1', filters, timeRange: mockTimeRange });
-      expect(spy).toHaveBeenCalledWith('label1', { streamSelector: '{foo=bar}', timeRange: mockTimeRange });
+      expect(spy).toHaveBeenCalledWith('label1', {
+        streamSelector: '{foo="bar",foo2="bar2"}',
+        timeRange: mockTimeRange,
+      });
     });
   });
 });
