@@ -399,7 +399,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
 
-	rr := iniFile.Section("unified_alerting.recording_rules")
+	rr := iniFile.Section("recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{
 		URL:               rr.Key("url").MustString(""),
 		BasicAuthUsername: rr.Key("basic_auth_username").MustString(""),
@@ -407,7 +407,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		Timeout:           rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
 	}
 
-	rrHeaders := iniFile.Section("unified_alerting.recording_rules.custom_headers")
+	rrHeaders := iniFile.Section("recording_rules.custom_headers")
 	rrHeadersKeys := rrHeaders.Keys()
 	uaCfgRecordingRules.CustomHeaders = make(map[string]string, len(rrHeadersKeys))
 	for _, key := range rrHeadersKeys {
