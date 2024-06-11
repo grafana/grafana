@@ -41,17 +41,19 @@ type QueryAPIBuilder struct {
 	returnMultiStatus      bool // from feature toggle
 	features               featuremgmt.FeatureToggles
 
-	tracer     tracing.Tracer
-	metrics    *metrics
-	parser     *queryParser
-	client     DataSourceClientSupplier
-	registry   query.DataSourceApiServerRegistry
-	converter  *expr.ResultConverter
-	queryTypes *query.QueryTypeDefinitionList
+	tracer       tracing.Tracer
+	metrics      *metrics
+	parser       *queryParser
+	client       DataSourceClientSupplier
+	dryRunClient *DataSourceClientSupplier
+	registry     query.DataSourceApiServerRegistry
+	converter    *expr.ResultConverter
+	queryTypes   *query.QueryTypeDefinitionList
 }
 
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	client DataSourceClientSupplier,
+	dryRunClient *DataSourceClientSupplier,
 	registry query.DataSourceApiServerRegistry,
 	legacy service.LegacyDataSourceLookup,
 	registerer prometheus.Registerer,
@@ -79,6 +81,7 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 		log:                  log.New("query_apiserver"),
 		returnMultiStatus:    features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryMultiStatus),
 		client:               client,
+		dryRunClient:         dryRunClient,
 		registry:             registry,
 		parser:               newQueryParser(reader, legacy, tracer),
 		metrics:              newMetrics(registerer),
@@ -113,6 +116,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 		&CommonDataSourceClientSupplier{
 			Client: client.NewQueryClientForPluginClient(pluginClient, pCtxProvider),
 		},
+		nil,
 		client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService),
 		legacy, registerer, tracer,
 	)

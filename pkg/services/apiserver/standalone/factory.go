@@ -85,6 +85,7 @@ func (p *DummyAPIFactory) MakeAPIServer(_ context.Context, tracer tracing.Tracer
 			&query.CommonDataSourceClientSupplier{
 				Client: client.NewTestDataClient(),
 			},
+			nil,
 			client.NewTestDataRegistry(),
 			nil,                      // legacy lookup
 			prometheus.NewRegistry(), // ???

@@ -192,9 +192,12 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 	}
 
 	// Add user headers... here or in client.QueryData
+	req2 := req.Request.DeepCopy()
+	pluginID := req.PluginId
+	pluginUID := req.UID
 	client, err := b.client.GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
-		Type: req.PluginId,
-		UID:  req.UID,
+		Type: pluginID,
+		UID:  pluginUID,
 	})
 	if err != nil {
 		return nil, err
@@ -227,7 +230,62 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 			}
 		}
 	}
+
+	if b.dryRunClient != nil {
+		// TODO: exclude datasources that cost per query
+		// TODO: remove log later
+		b.log.Info("running dry run comparison to multi-tenant")
+		go b.queryDataAndCompare(ctx, pluginID, pluginUID, req2, code, rsp)
+	}
+
 	return rsp, err
+}
+
+// queryDataAndCompare runs the query again, this time from the MT service, and compares the results. All of this happens in a go routine and is non-blocking.
+func (b *QueryAPIBuilder) queryDataAndCompare(ctx context.Context, pluginID string, pluginUID string, req *v0alpha1.QueryDataRequest, code int, rsp *backend.QueryDataResponse) {
+	// Add user headers... here or in client.QueryData
+	client, err := (*b.dryRunClient).GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
+		Type: pluginID,
+		UID:  pluginUID,
+	})
+	if err != nil {
+		b.log.Error("unable to get dry run client", "error", err)
+		return
+	}
+	// TODO: figure out context propogation without cancelling when the original request returns
+	code2, rsp2, err := client.QueryData(context.Background(), *req)
+	if err == nil && rsp != nil {
+		for _, q := range req.Queries {
+			if q.ResultAssertions != nil {
+				result, ok := rsp.Responses[q.RefID]
+				if ok && result.Error == nil {
+					err = q.ResultAssertions.Validate(result.Frames)
+					if err != nil {
+						result.Error = err
+						result.ErrorSource = backend.ErrorSourceDownstream
+						rsp.Responses[q.RefID] = result
+					}
+				}
+			}
+		}
+	}
+	if err != nil {
+		b.log.Error("unable to query", "error", err)
+		return
+	}
+
+	b.log.Info("code", "got", code2, "expected", code)
+	if code2 != code {
+		// TODO: increment metrics
+		b.log.Error("codes do not match", "got", code2, "expected", code)
+		return
+	}
+
+	b.log.Info("responses", "got", rsp2.Responses, "expected", rsp.Responses)
+	if rsp2.Responses != nil {
+		// TODO: actually compare the responses
+		// increment metrics
+	}
 }
 
 // buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
