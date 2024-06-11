@@ -290,21 +290,9 @@ func (ng *AlertNG) init() error {
 
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 
-	var recordingWriter writer.Writer
-	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
-		promWriterCfg := writer.PrometheusWriterConfig{
-			URL:               ng.Cfg.UnifiedAlerting.RecordingRules.URL,
-			BasicAuthUsername: ng.Cfg.UnifiedAlerting.RecordingRules.BasicAuthUsername,
-			BasicAuthPassword: ng.Cfg.UnifiedAlerting.RecordingRules.BasicAuthPassword,
-			CustomHeaders:     ng.Cfg.UnifiedAlerting.RecordingRules.CustomHeaders,
-			Timeout:           10 * time.Second,
-		}
-		recordingWriter, err = writer.NewPrometheusWriter(promWriterCfg, log.New("ngalert.writer"))
-		if err != nil {
-			return err
-		}
-	} else {
-		recordingWriter = writer.NoopWriter{}
+	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules)
+	if err != nil {
+		return err
 	}
 
 	schedCfg := schedule.SchedulerCfg{
@@ -598,4 +586,14 @@ func ApplyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 
 func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVStore, decryptFn remote.DecryptFn, m *metrics.RemoteAlertmanager) (*remote.Alertmanager, error) {
 	return remote.NewAlertmanager(cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, m)
+}
+
+func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings) (schedule.RecordingWriter, error) {
+	logger := log.New("ngalert.writer")
+
+	if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+		return writer.NewPrometheusWriter(settings, logger)
+	}
+
+	return writer.NoopWriter{}, nil
 }

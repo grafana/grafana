@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
@@ -70,25 +71,15 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 	return points, nil
 }
 
-type PrometheusWriterConfig struct {
-	URL               string
-	BasicAuthUsername string
-	BasicAuthPassword string
-	CustomHeaders     map[string]string
-	Timeout           time.Duration
-}
-
 type PrometheusWriter struct {
-	cfg    PrometheusWriterConfig
 	logger log.Logger
 }
 
 func NewPrometheusWriter(
-	cfg PrometheusWriterConfig,
+	settings setting.RecordingRuleSettings,
 	l log.Logger,
 ) (*PrometheusWriter, error) {
 	return &PrometheusWriter{
-		cfg:    cfg,
 		logger: l,
 	}, nil
 }

@@ -58,9 +58,10 @@ const (
 	// with intervals that are not exactly divided by this number not to be evaluated
 	SchedulerBaseInterval = 10 * time.Second
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
-	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
-	stateHistoryDefaultEnabled    = true
-	lokiDefaultMaxQueryLength     = 721 * time.Hour // 30d1h, matches the default value in Loki
+	DefaultRuleEvaluationInterval  = SchedulerBaseInterval * 6 // == 60 seconds
+	stateHistoryDefaultEnabled     = true
+	lokiDefaultMaxQueryLength      = 721 * time.Hour // 30d1h, matches the default value in Loki
+	defaultRecordingRequestTimeout = 10 * time.Second
 )
 
 type UnifiedAlertingSettings struct {
@@ -116,6 +117,7 @@ type RecordingRuleSettings struct {
 	BasicAuthUsername string
 	BasicAuthPassword string
 	CustomHeaders     map[string]string
+	Timeout           time.Duration
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -397,17 +399,18 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
 
-	rrWriter := iniFile.Section("unified_alerting.recording_rules.writer")
+	rr := iniFile.Section("unified_alerting.recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{
-		URL:               rrWriter.Key("url").MustString(""),
-		BasicAuthUsername: rrWriter.Key("basic_auth_username").MustString(""),
-		BasicAuthPassword: rrWriter.Key("basic_auth_password").MustString(""),
+		URL:               rr.Key("url").MustString(""),
+		BasicAuthUsername: rr.Key("basic_auth_username").MustString(""),
+		BasicAuthPassword: rr.Key("basic_auth_password").MustString(""),
+		Timeout:           rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
 	}
 
-	rrWriterHeaders := iniFile.Section("unified_alerting.recording_rules.writer.custom_headers")
-	rrWriterHeadersKeys := rrWriterHeaders.Keys()
-	uaCfgRecordingRules.CustomHeaders = make(map[string]string, len(rrWriterHeadersKeys))
-	for _, key := range rrWriterHeadersKeys {
+	rrHeaders := iniFile.Section("unified_alerting.recording_rules.custom_headers")
+	rrHeadersKeys := rrHeaders.Keys()
+	uaCfgRecordingRules.CustomHeaders = make(map[string]string, len(rrHeadersKeys))
+	for _, key := range rrHeadersKeys {
 		uaCfgRecordingRules.CustomHeaders[key.Name()] = key.Value()
 	}
 
