@@ -17,7 +17,6 @@ import * as styles from 'app/features/logs/components/getLogRowStyles';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 
 import { LogsPanel } from './LogsPanel';
-import { isOnClickFilterLabel } from './types';
 
 type LogsPanelProps = ComponentProps<typeof LogsPanel>;
 type LogRowContextModalProps = ComponentProps<typeof LogRowContextModal>;
