@@ -56,9 +56,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#max
     - pattern: /docs/grafana-cloud/
-<<<<<<< HEAD
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#max
-=======
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/#add-a-field-override
   configure-field-overrides:
     - pattern: /docs/grafana/
@@ -75,7 +73,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
->>>>>>> 000b5dd6eab (docs: alerting: clarify which panels support alerts (#88756))
 ---
 
 # Time series
