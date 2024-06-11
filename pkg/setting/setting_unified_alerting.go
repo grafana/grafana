@@ -115,7 +115,7 @@ type RecordingRuleSettings struct {
 	URL               string
 	BasicAuthUsername string
 	BasicAuthPassword string
-	TenantID          string
+	CustomHeaders     map[string]string
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -398,13 +398,19 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.StateHistory = uaCfgStateHistory
 
 	rrWriter := iniFile.Section("unified_alerting.recording_rules.writer")
-	rrWriterProm := iniFile.Section("unified_alerting.recording_rules.writer.prometheus")
 	uaCfgRecordingRules := RecordingRuleSettings{
 		URL:               rrWriter.Key("url").MustString(""),
 		BasicAuthUsername: rrWriter.Key("basic_auth_username").MustString(""),
 		BasicAuthPassword: rrWriter.Key("basic_auth_password").MustString(""),
-		TenantID:          rrWriterProm.Key("tenant_id").MustString(""),
 	}
+
+	rrWriterHeaders := iniFile.Section("unified_alerting.recording_rules.writer.custom_headers")
+	rrWriterHeadersKeys := rrWriterHeaders.Keys()
+	uaCfgRecordingRules.CustomHeaders = make(map[string]string, len(rrWriterHeadersKeys))
+	for _, key := range rrWriterHeadersKeys {
+		uaCfgRecordingRules.CustomHeaders[key.Name()] = key.Value()
+	}
+
 	uaCfg.RecordingRules = uaCfgRecordingRules
 
 	uaCfg.MaxStateSaveConcurrency = ua.Key("max_state_save_concurrency").MustInt(1)

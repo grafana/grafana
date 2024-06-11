@@ -296,7 +296,7 @@ func (ng *AlertNG) init() error {
 			URL:               ng.Cfg.UnifiedAlerting.RecordingRules.URL,
 			BasicAuthUsername: ng.Cfg.UnifiedAlerting.RecordingRules.BasicAuthUsername,
 			BasicAuthPassword: ng.Cfg.UnifiedAlerting.RecordingRules.BasicAuthPassword,
-			TenantID:          ng.Cfg.UnifiedAlerting.RecordingRules.TenantID,
+			CustomHeaders:     ng.Cfg.UnifiedAlerting.RecordingRules.CustomHeaders,
 			Timeout:           10 * time.Second,
 		}
 		recordingWriter, err = writer.NewPrometheusWriter(promWriterCfg, log.New("ngalert.writer"))

@@ -74,7 +74,7 @@ type PrometheusWriterConfig struct {
 	URL               string
 	BasicAuthUsername string
 	BasicAuthPassword string
-	TenantID          string
+	CustomHeaders     map[string]string
 	Timeout           time.Duration
 }
 
