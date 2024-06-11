@@ -11,6 +11,8 @@ jest.mock('./ContentOutlineContext', () => ({
 const scrollIntoViewMock = jest.fn();
 const scrollerMock = document.createElement('div');
 
+const unregisterMock = jest.fn();
+
 const setup = (mergeSingleChild = false) => {
   HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
 
@@ -50,6 +52,7 @@ const setup = (mergeSingleChild = false) => {
             title: 'Item 2-1',
             ref: document.createElement('div'),
             level: 'child',
+            onRemove: () => unregisterMock('item-2-1'),
           },
           {
             id: 'item-2-2',
@@ -62,7 +65,7 @@ const setup = (mergeSingleChild = false) => {
       },
     ],
     register: jest.fn(),
-    unregister: jest.fn(),
+    unregister: unregisterMock,
   });
 
   return render(<ContentOutline scroller={scrollerMock} panelId="content-outline-container-1" />);
@@ -142,5 +145,17 @@ describe('<ContentOutline />', () => {
     const sectionContent = screen.getByTestId('section-wrapper-item-2');
     await userEvent.click(button);
     expect(button.getAttribute('aria-controls')).toBe(sectionContent.id);
+  });
+
+  it('deletes item on delete button click', async () => {
+    setup();
+    const expandSectionChevrons = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
+    // chevron for the second item
+    const button = expandSectionChevrons[1];
+    await userEvent.click(button);
+    const deleteButtons = screen.getAllByTestId('content-outline-item-delete-button');
+    await userEvent.click(deleteButtons[0]);
+
+    expect(unregisterMock).toHaveBeenCalledWith('item-2-1');
   });
 });

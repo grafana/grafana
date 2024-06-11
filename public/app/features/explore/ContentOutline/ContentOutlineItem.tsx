@@ -35,6 +35,13 @@ export interface ContentOutlineItemBaseProps {
    * Client can additionally mark filter actions as highlighted
    */
   highlight?: boolean;
+  onRemove?: (id: string) => void;
+  /**
+   * Child that will always be on top of the list
+   * e.g. pinned log in Logs section
+   */
+  childOnTop?: boolean;
+  expanded?: boolean;
 }
 
 interface ContentOutlineItemProps extends ContentOutlineItemBaseProps {

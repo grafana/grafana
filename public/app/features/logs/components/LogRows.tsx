@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { withTheme2, Themeable2 } from '@grafana/ui';
+import { withTheme2, Themeable2, PopoverContent } from '@grafana/ui';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
@@ -50,6 +50,7 @@ export interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  pinLineButtonTooltipTitle?: PopoverContent;
   onLogRowHover?: (row?: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   getRowContextQuery?: (
@@ -238,6 +239,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   permalinkedRowId={this.props.permalinkedRowId}
                   onPinLine={this.props.onPinLine}
                   onUnpinLine={this.props.onUnpinLine}
+                  pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
                   pinned={this.props.pinnedRowId === row.uid}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
@@ -260,6 +262,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   permalinkedRowId={this.props.permalinkedRowId}
                   onPinLine={this.props.onPinLine}
                   onUnpinLine={this.props.onUnpinLine}
+                  pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
                   pinned={this.props.pinnedRowId === row.uid}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}

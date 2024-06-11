@@ -438,6 +438,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           isFilterLabelActive={this.isFilterLabelActive}
           onClickFilterString={this.onClickFilterString}
           onClickFilterOutString={this.onClickFilterOutString}
+          onPinLineCallback={() => {
+            this.setState({ contentOutlineVisible: true });
+          }}
         />
       </ContentOutlineItem>
     );

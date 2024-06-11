@@ -26,15 +26,15 @@ composableKinds: PanelCfg: {
 			version: [0, 0]
 			schema: {
 				Options: {
-					showLabels:              bool
-					showCommonLabels:        bool
-					showTime:                bool
-					showLogContextToggle:    bool
-					wrapLogMessage:          bool
-					prettifyLogMessage:      bool
-					enableLogDetails:        bool
-					sortOrder:               common.LogsSortOrder
-					dedupStrategy:           common.LogsDedupStrategy
+					showLabels:           bool
+					showCommonLabels:     bool
+					showTime:             bool
+					showLogContextToggle: bool
+					wrapLogMessage:       bool
+					prettifyLogMessage:   bool
+					enableLogDetails:     bool
+					sortOrder:            common.LogsSortOrder
+					dedupStrategy:        common.LogsDedupStrategy
 					// TODO: figure out how to define callbacks
 					onClickFilterLabel?:     _
 					onClickFilterOutLabel?:  _

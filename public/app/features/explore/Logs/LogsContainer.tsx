@@ -60,6 +60,7 @@ interface LogsContainerProps extends PropsFromRedux {
   isFilterLabelActive: (key: string, value: string, refId?: string) => Promise<boolean>;
   onClickFilterString: (value: string, refId?: string) => void;
   onClickFilterOutString: (value: string, refId?: string) => void;
+  onPinLineCallback?: () => void;
 }
 
 type DataSourceInstance =
@@ -282,6 +283,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
       exploreId,
       logsVolume,
       scrollElement,
+      onPinLineCallback,
     } = this.props;
 
     if (!logRows) {
@@ -350,6 +352,7 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
             scrollElement={scrollElement}
             isFilterLabelActive={this.logDetailsFilterAvailable() ? this.props.isFilterLabelActive : undefined}
             range={range}
+            onPinLineCallback={onPinLineCallback}
             onClickFilterString={this.filterValueAvailable() ? this.props.onClickFilterString : undefined}
             onClickFilterOutString={this.filterOutValueAvailable() ? this.props.onClickFilterOutString : undefined}
           />
