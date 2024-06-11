@@ -18,6 +18,7 @@ import {
   ValueLinkConfig,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { TableCellHeight } from '@grafana/schema/dist/esm/common/common.gen';
 import { AdHocFilterItem, Table } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import { LogsFrame } from 'app/features/logs/logsFrame';
@@ -38,10 +39,12 @@ interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   logsFrame: LogsFrame | null;
+  wrapLogsMessage: boolean;
 }
 
 export function LogsTable(props: Props) {
-  const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame } = props;
+  const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame, wrapLogsMessage } =
+    props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
   const timeIndex = logsFrame?.timeField.index;
 
@@ -59,9 +62,7 @@ export function LogsTable(props: Props) {
         theme: config.theme2,
         replaceVariables: (v: string) => v,
         fieldConfig: {
-          defaults: {
-            custom: {},
-          },
+          defaults: {},
           overrides: [],
         },
       });
@@ -88,13 +89,30 @@ export function LogsTable(props: Props) {
           filterable: isFieldFilterable(field, logsFrame?.bodyField.name ?? '', logsFrame?.timeField.name ?? ''),
         };
 
+        // Just on body for now?
+        if (field.name === logsFrame?.bodyField.name) {
+          field.config.custom.cellOptions = {
+            type: 'auto',
+            wrapText: wrapLogsMessage,
+          };
+        }
+
         // If it's a string, then try to guess for a better type for numeric support in viz
         field.type = field.type === FieldType.string ? guessFieldTypeForField(field) ?? FieldType.string : field.type;
       }
 
       return frameWithOverrides;
     },
-    [logsSortOrder, timeZone, splitOpen, range, logsFrame?.bodyField.name, logsFrame?.timeField.name, timeIndex]
+    [
+      logsSortOrder,
+      timeZone,
+      splitOpen,
+      range,
+      logsFrame?.bodyField.name,
+      logsFrame?.timeField.name,
+      timeIndex,
+      wrapLogsMessage,
+    ]
   );
 
   useEffect(() => {
@@ -171,6 +189,7 @@ export function LogsTable(props: Props) {
     <Table
       data={tableFrame}
       width={width}
+      cellHeight={TableCellHeight.Auto}
       onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
       height={props.height}
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
