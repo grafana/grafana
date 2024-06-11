@@ -12,7 +12,7 @@ When developing for ElasticSearch, use `make devenv sources=elastic`. To specify
 
 ## Instrumentation
 
-The ElasticSearch data source has improved instrumentation with better logs, traces, metrics, and dashboards. For more information and links to dashboards, refer to [this document](https://docs.google.com/document/d/1GPvShAsFhJwQ5se0Fswf8B1Ez1rSF-V9U_n-Kx3nGGw/edit).
+The ElasticSearch data source has improved instrumentation with logs, metrics, traces, and dashboards. When debugging issues, it is useful to review the available telemetry signals.
 
 ## Technical debt
 
