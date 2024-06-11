@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -67,6 +68,7 @@ func TestMode2_Create(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
+			p := prometheus.NewRegistry()
 			dw := NewDualWriter(Mode2, ls, us, p)
 
 			obj, err := dw.Create(context.Background(), tt.input, createFn, &metav1.CreateOptions{})
@@ -80,6 +82,8 @@ func TestMode2_Create(t *testing.T) {
 			accessor, err := meta.Accessor(obj)
 			assert.NoError(t, err)
 			assert.Equal(t, accessor.GetResourceVersion(), "")
+
+			unregisterPrometheusCollector(p)
 		})
 	}
 }
@@ -143,6 +147,7 @@ func TestMode2_Get(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
+			p := prometheus.NewRegistry()
 			dw := NewDualWriter(Mode2, ls, us, p)
 
 			obj, err := dw.Get(context.Background(), tt.input, &metav1.GetOptions{})
@@ -154,6 +159,8 @@ func TestMode2_Get(t *testing.T) {
 
 			assert.Equal(t, obj, exampleObj)
 			assert.NotEqual(t, obj, anotherObj)
+
+			unregisterPrometheusCollector(p)
 		})
 	}
 }
@@ -196,6 +203,7 @@ func TestMode2_List(t *testing.T) {
 				tt.setupStorageFn(m)
 			}
 
+			p := prometheus.NewRegistry()
 			dw := NewDualWriter(Mode2, ls, us, p)
 
 			obj, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
@@ -205,6 +213,8 @@ func TestMode2_List(t *testing.T) {
 				return
 			}
 			assert.Equal(t, exampleList, obj)
+
+			unregisterPrometheusCollector(p)
 		})
 	}
 }
@@ -289,6 +299,7 @@ func TestMode2_Delete(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
+			p := prometheus.NewRegistry()
 			dw := NewDualWriter(Mode2, ls, us, p)
 
 			obj, _, err := dw.Delete(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.DeleteOptions{})
@@ -300,6 +311,8 @@ func TestMode2_Delete(t *testing.T) {
 
 			assert.Equal(t, obj, exampleObj)
 			assert.NotEqual(t, obj, anotherObj)
+
+			unregisterPrometheusCollector(p)
 		})
 	}
 }
@@ -361,6 +374,7 @@ func TestMode2_DeleteCollection(t *testing.T) {
 				tt.setupStorageFn(m)
 			}
 
+			p := prometheus.NewRegistry()
 			dw := NewDualWriter(Mode2, ls, us, p)
 
 			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: tt.input}}, &metainternalversion.ListOptions{})
@@ -370,6 +384,8 @@ func TestMode2_DeleteCollection(t *testing.T) {
 				return
 			}
 			assert.Equal(t, exampleList, obj)
+
+			unregisterPrometheusCollector(p)
 		})
 	}
 }
@@ -469,6 +485,7 @@ func TestMode2_Update(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
+			p := prometheus.NewRegistry()
 			dw := NewDualWriter(Mode2, ls, us, p)
 
 			obj, _, err := dw.Update(context.Background(), tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
@@ -480,6 +497,8 @@ func TestMode2_Update(t *testing.T) {
 
 			assert.Equal(t, tt.expectedObj, obj)
 			assert.NotEqual(t, anotherObj, obj)
+
+			unregisterPrometheusCollector(p)
 		})
 	}
 }
