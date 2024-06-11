@@ -158,7 +158,7 @@ It's important to note that an alert instance exits the group after being resolv
 
 Repeat interval acts as a reminder that alerts in the group are still firing.
 
-The Repeat interval timer decides how often notifications are sent (or repeated) if the group has not changed since the last notification.
+The repeat interval timer decides how often notifications are sent (or repeated) if the group has not changed since the last notification.
 
 **How it works**
 
