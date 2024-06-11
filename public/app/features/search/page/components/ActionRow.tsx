@@ -21,21 +21,21 @@ function getLayoutOptions() {
   ];
 }
 
-interface Props {
+interface ActionRowProps {
+  state: SearchState;
+  showStarredFilter?: boolean;
+  showLayout?: boolean;
+  sortPlaceholder?: string;
+
   onLayoutChange: (layout: SearchLayout) => void;
   onSortChange: (value?: string) => void;
   onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
   getTagOptions: () => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
-  sortPlaceholder?: string;
   onDatasourceChange: (ds?: string) => void;
   onPanelTypeChange: (pt?: string) => void;
-  includePanels: boolean;
   onSetIncludePanels: (v: boolean) => void;
-  state: SearchState;
-  showStarredFilter?: boolean;
-  hideLayout?: boolean;
 }
 
 export function getValidQueryLayout(q: SearchState): SearchLayout {
@@ -52,20 +52,20 @@ export function getValidQueryLayout(q: SearchState): SearchLayout {
 }
 
 export const ActionRow = ({
+  state,
+  showStarredFilter,
+  showLayout,
+  sortPlaceholder,
   onLayoutChange,
   onSortChange,
   onStarredFilterChange = () => {},
   onTagFilterChange,
   getTagOptions,
   getSortOptions,
-  sortPlaceholder,
   onDatasourceChange,
   onPanelTypeChange,
   onSetIncludePanels,
-  state,
-  showStarredFilter,
-  hideLayout,
-}: Props) => {
+}: ActionRowProps) => {
   const styles = useStyles2(getStyles);
   const layout = getValidQueryLayout(state);
 
@@ -113,7 +113,7 @@ export const ActionRow = ({
       </Stack>
 
       <Stack gap={2}>
-        {!hideLayout && (
+        {showLayout && (
           <RadioButtonGroup
             options={getLayoutOptions()}
             disabledOptions={disabledOptions}
