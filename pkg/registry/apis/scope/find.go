@@ -91,6 +91,8 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 			return
 		}
 
+		r.log.Info("scope node query result", "length", len(all.Items))
+
 		for _, item := range all.Items {
 			filterAndAppendItem(item, parent, query, results)
 		}
