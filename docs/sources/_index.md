@@ -6,7 +6,7 @@ aliases:
 cascade:
   TEMPO_VERSION: latest
   PYROSCOPE_VERSION: latest
-description: Landing page for Grafana OSS and Enterprise documentation
+description: Find answers to your technical questions and learn how to use Grafana OSS and Enterprise products.
 keywords:
   - grafana
   - get started
