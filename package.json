@@ -94,6 +94,7 @@
     "@testing-library/jest-dom": "6.4.2",
     "@testing-library/react": "15.0.2",
     "@testing-library/user-event": "14.5.2",
+    "@types/add": "^2",
     "@types/angular": "1.8.9",
     "@types/angular-route": "1.7.6",
     "@types/babel__core": "^7",
@@ -258,7 +259,7 @@
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/saga-icons": "workspace:*",
-    "@grafana/scenes": "4.26.3--canary.765.9399849393.0",
+    "@grafana/scenes": "4.29.1--canary.765.9462062093.0",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -290,6 +291,7 @@
     "@visx/shape": "3.5.0",
     "@visx/tooltip": "3.3.0",
     "@welldone-software/why-did-you-render": "8.0.1",
+    "add": "^2.0.6",
     "angular": "1.8.3",
     "angular-bindonce": "0.3.1",
     "angular-route": "1.8.3",
@@ -398,7 +400,8 @@
     "uuid": "9.0.1",
     "visjs-network": "4.25.0",
     "whatwg-fetch": "3.6.20",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz",
+    "yarn": "^1.22.22"
   },
   "resolutions": {
     "underscore": "1.13.6",
