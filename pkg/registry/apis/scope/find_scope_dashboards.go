@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -13,10 +14,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 type findScopeDashboardsREST struct {
 	scopeDashboardStorage *storage
+	log                   log.Logger
 }
 
 var (
@@ -64,25 +67,23 @@ func (f *findScopeDashboardsREST) Connect(ctx context.Context, name string, opts
 		return nil, errors.NewNotFound(schema.GroupResource{}, name)
 	}
 
-	fmt.Printf("namespace: %+v", request.NamespaceValue(ctx))
-	fmt.Printf("namespace: %+v", request.NamespaceValue(ctx))
-	fmt.Printf("namespace: %+v", request.NamespaceValue(ctx))
-	fmt.Printf("namespace: %+v", request.NamespaceValue(ctx))
-	fmt.Printf("namespace: %+v", request.NamespaceValue(ctx))
-
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		raw, err := f.scopeDashboardStorage.List(ctx, &internalversion.ListOptions{})
 		if err != nil {
 			w.WriteHeader(500)
 			return
 		}
+
+		scopes := req.URL.Query()["scope"]
+
 		all, ok := raw.(*scope.ScopeDashboardBindingList)
 		if !ok {
 			w.WriteHeader(500)
 			return
 		}
 
-		scopes := req.URL.Query()["scope"]
+		f.log.Info("finding scope dashboards", "length", len(all.Items), "namespace", request.NamespaceValue(ctx), "scopes", strings.Join(scopes, ""))
+
 		results := &scope.FindScopeDashboardBindingsResults{
 			Message: fmt.Sprintf("Find: %s", scopes),
 			Items:   make([]scope.ScopeDashboardBinding, 0),

@@ -158,7 +158,7 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	// Adds a rest.Connector
 	// NOTE! the server has a hardcoded rewrite filter that fills in a name
 	// so the standard k8s plumbing continues to work
-	storage["scope_dashboard_bindings"] = &findScopeDashboardsREST{scopeDashboardStorage: scopeDashboardStorage}
+	storage["scope_dashboard_bindings"] = &findScopeDashboardsREST{scopeDashboardStorage: scopeDashboardStorage, log: log.New("grafana-apiserver.scopes_dashboard_bindings")}
 
 	apiGroupInfo.VersionedResourcesStorageMap[scope.VERSION] = storage
 	return &apiGroupInfo, nil
