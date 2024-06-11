@@ -3,7 +3,7 @@ import { AddQueryTemplateCommand, QueryTemplate } from '../types';
 import { API_VERSION, QueryTemplateKinds } from './query';
 import { CREATED_BY_KEY, DataQuerySpec, DataQuerySpecResponse, DataQueryTarget } from './types';
 
-const parseCreatedByValue = (value?: string) => {
+export const parseCreatedByValue = (value?: string) => {
   // https://github.com/grafana/grafana/blob/main/pkg/services/store/auth.go#L27
   if (value !== undefined) {
     const vals = value.split(':');
