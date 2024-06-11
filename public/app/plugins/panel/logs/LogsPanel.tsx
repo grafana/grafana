@@ -307,7 +307,9 @@ export const LogsPanel = ({
             onClickFilterLabel={isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : undefined}
             onClickFilterOutLabel={isOnClickFilterOutLabel(onClickFilterOutLabel) ? onClickFilterOutLabel : undefined}
             onClickFilterString={isOnClickFilterString(onClickFilterString) ? onClickFilterString : undefined}
-            onClickFilterOutString={isOnClickFilterOutString(onClickFilterOutString) ? onClickFilterOutString : undefined}
+            onClickFilterOutString={
+              isOnClickFilterOutString(onClickFilterOutString) ? onClickFilterOutString : undefined
+            }
             isFilterLabelActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
