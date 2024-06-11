@@ -12,6 +12,7 @@ import {
   DataQueryResponseData,
   DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
+  dateTime,
   FieldType,
   LoadingState,
   rangeUtil,
@@ -33,7 +34,7 @@ import {
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 
-import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
+import { generateQueryFromAdHocFilters, generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { PrometheusDatasource, PromQuery } from './_importedDependencies/datasources/prometheus/types';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
@@ -169,7 +170,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag }));
   }
 
-  async labelValuesQuery(labelName?: string): Promise<Array<{ text: string }>> {
+  async labelValuesQuery(labelName?: string, query?: string): Promise<Array<{ text: string }>> {
     if (!labelName) {
       return [];
     }
@@ -191,7 +192,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
       // unless the tag has intrinsic scope
       const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
-      options = await this.languageProvider.getOptionsV2(scopeAndTag);
+      options = await this.languageProvider.getOptionsV2(scopeAndTag, query);
     } catch {
       // For V1, the tag name (e.g. `http.status_code`) is enough
       options = await this.languageProvider.getOptionsV1(labelName);
@@ -216,7 +217,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   // Allows to retrieve the list of tag values for ad-hoc filters
   getTagValues(options: DataSourceGetTagValuesOptions<TempoQuery>): Promise<Array<{ text: string }>> {
-    return this.labelValuesQuery(options.key.replace(/^(resource|span)\./, ''));
+    const query = generateQueryFromAdHocFilters(options.filters);
+    return this.labelValuesQuery(options.key.replace(/^(resource|span)\./, ''), query);
   }
 
   init = async () => {
@@ -665,18 +667,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       targets,
     };
 
-    request.range = options.range && {
-      ...options.range,
-      from: this.traceQuery?.timeShiftEnabled
-        ? options.range.from.subtract(
-            rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
-            'milliseconds'
-          )
-        : options.range.from,
-      to: this.traceQuery?.timeShiftEnabled
-        ? options.range.to.add(rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'), 'milliseconds')
-        : options.range.to,
-    };
+    if (this.traceQuery?.timeShiftEnabled) {
+      request.range = options.range && {
+        ...options.range,
+        from: dateTime(options.range.from).subtract(
+          rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
+          'milliseconds'
+        ),
+        to: dateTime(options.range.to).add(
+          rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'),
+          'milliseconds'
+        ),
+      };
+    } else {
+      request.range = { from: dateTime(0), to: dateTime(0), raw: { from: dateTime(0), to: dateTime(0) } };
+    }
 
     return request;
   }

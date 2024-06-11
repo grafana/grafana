@@ -4,7 +4,7 @@ import { find, startsWith } from 'lodash';
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
+import { getAuthType } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
 import {
   AzureDataSourceJsonData,
@@ -44,8 +44,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   providerApiVersion = '2021-04-01';
   locationsApiVersion = '2020-01-01';
   defaultSubscriptionId?: string;
+  basicLogsEnabled?: boolean;
   resourcePath: string;
-  azurePortalUrl: string;
   declare resourceGroup: string;
   declare resourceName: string;
 
@@ -56,10 +56,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     super(instanceSettings);
 
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
+    this.basicLogsEnabled = instanceSettings.jsonData.basicLogsEnabled;
 
-    const cloud = getAzureCloud(instanceSettings);
     this.resourcePath = routeNames.azureMonitor;
-    this.azurePortalUrl = getAzurePortalUrl(cloud);
   }
 
   isConfigured(): boolean {

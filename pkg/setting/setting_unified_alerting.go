@@ -18,6 +18,7 @@ const (
 	alertmanagerDefaultClusterAddr        = "0.0.0.0:9094"
 	alertmanagerDefaultPeerTimeout        = 15 * time.Second
 	alertmanagerDefaultGossipInterval     = alertingCluster.DefaultGossipInterval
+	alertmanagerDefaultReconnectTimeout   = alertingCluster.DefaultReconnectTimeout
 	alertmanagerDefaultPushPullInterval   = alertingCluster.DefaultPushPullInterval
 	alertmanagerDefaultConfigPollInterval = time.Minute
 	alertmanagerRedisDefaultMaxConns      = 5
@@ -71,8 +72,10 @@ type UnifiedAlertingSettings struct {
 	HAPeers                        []string
 	HAPeerTimeout                  time.Duration
 	HAGossipInterval               time.Duration
+	HAReconnectTimeout             time.Duration
 	HAPushPullInterval             time.Duration
 	HALabel                        string
+	HARedisClusterModeEnabled      bool
 	HARedisAddr                    string
 	HARedisPeerName                string
 	HARedisPrefix                  string
@@ -97,6 +100,7 @@ type UnifiedAlertingSettings struct {
 	DefaultRuleEvaluationInterval time.Duration
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
+	SkipClustering                bool
 	StateHistory                  UnifiedAlertingStateHistorySettings
 	RemoteAlertmanager            RemoteAlertmanagerSettings
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
@@ -215,6 +219,10 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if err != nil {
 		return err
 	}
+	uaCfg.HAReconnectTimeout, err = gtime.ParseDuration(valueAsString(ua, "ha_reconnect_timeout", (alertmanagerDefaultReconnectTimeout).String()))
+	if err != nil {
+		return err
+	}
 	uaCfg.HAPushPullInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_push_pull_interval", (alertmanagerDefaultPushPullInterval).String()))
 	if err != nil {
 		return err
@@ -222,6 +230,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.HAListenAddr = ua.Key("ha_listen_address").MustString(alertmanagerDefaultClusterAddr)
 	uaCfg.HAAdvertiseAddr = ua.Key("ha_advertise_address").MustString("")
 	uaCfg.HALabel = ua.Key("ha_label").MustString("")
+	uaCfg.HARedisClusterModeEnabled = ua.Key("ha_redis_cluster_mode_enabled").MustBool(false)
 	uaCfg.HARedisAddr = ua.Key("ha_redis_address").MustString("")
 	uaCfg.HARedisPeerName = ua.Key("ha_redis_peer_name").MustString("")
 	uaCfg.HARedisPrefix = ua.Key("ha_redis_prefix").MustString("")

@@ -288,7 +288,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
         description: '',
         steps: [
           {
-            title: 'Send OnCall demo alert',
+            title: 'Send OnCall demo alert via Alerting integration',
             description: 'In the integration page, click Send demo alert, to review your notification',
             button: {
               type: 'dropDown',

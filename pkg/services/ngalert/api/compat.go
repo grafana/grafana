@@ -32,9 +32,7 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 		Labels:               a.Labels,
 		IsPaused:             a.IsPaused,
 		NotificationSettings: NotificationSettingsFromAlertRuleNotificationSettings(a.NotificationSettings),
-		// Recording Rule fields will be implemented in the future.
-		// For now, no rules can be recording rules. So, we force these to be empty.
-		Record: nil,
+		Record:               ModelRecordFromApiRecord(a.Record),
 	}, nil
 }
 
@@ -58,6 +56,7 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 		Provenance:           definitions.Provenance(provenance), // TODO validate enum conversion?
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
+		Record:               ApiRecordFromModelRecord(rule.Record),
 	}
 }
 
@@ -135,11 +134,11 @@ func ApiAlertRuleGroupFromAlertRuleGroup(d models.AlertRuleGroup) definitions.Al
 	}
 }
 
-// AlertingFileExportFromAlertRuleGroupWithFolderTitle creates an definitions.AlertingFileExport DTO from []models.AlertRuleGroupWithFolderTitle.
-func AlertingFileExportFromAlertRuleGroupWithFolderTitle(groups []models.AlertRuleGroupWithFolderTitle) (definitions.AlertingFileExport, error) {
+// AlertingFileExportFromAlertRuleGroupWithFolderFullpath creates an definitions.AlertingFileExport DTO from []models.AlertRuleGroupWithFolderTitle.
+func AlertingFileExportFromAlertRuleGroupWithFolderFullpath(groups []models.AlertRuleGroupWithFolderFullpath) (definitions.AlertingFileExport, error) {
 	f := definitions.AlertingFileExport{APIVersion: 1}
 	for _, group := range groups {
-		export, err := AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle(group)
+		export, err := AlertRuleGroupExportFromAlertRuleGroupWithFolderFullpath(group)
 		if err != nil {
 			return definitions.AlertingFileExport{}, err
 		}
@@ -148,8 +147,8 @@ func AlertingFileExportFromAlertRuleGroupWithFolderTitle(groups []models.AlertRu
 	return f, nil
 }
 
-// AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle creates a definitions.AlertRuleGroupExport DTO from models.AlertRuleGroup.
-func AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle(d models.AlertRuleGroupWithFolderTitle) (definitions.AlertRuleGroupExport, error) {
+// AlertRuleGroupExportFromAlertRuleGroupWithFolderFullpath creates a definitions.AlertRuleGroupExport DTO from models.AlertRuleGroup.
+func AlertRuleGroupExportFromAlertRuleGroupWithFolderFullpath(d models.AlertRuleGroupWithFolderFullpath) (definitions.AlertRuleGroupExport, error) {
 	rules := make([]definitions.AlertRuleExport, 0, len(d.Rules))
 	for i := range d.Rules {
 		alert, err := AlertRuleExportFromAlertRule(d.Rules[i])
@@ -161,7 +160,7 @@ func AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle(d models.AlertRuleGro
 	return definitions.AlertRuleGroupExport{
 		OrgID:           d.OrgID,
 		Name:            d.Title,
-		Folder:          d.FolderTitle,
+		Folder:          d.FolderFullpath,
 		FolderUID:       d.FolderUID,
 		Interval:        model.Duration(time.Duration(d.Interval) * time.Second),
 		IntervalSeconds: d.Interval,
@@ -192,6 +191,7 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		ExecErrState:         definitions.ExecutionErrorState(rule.ExecErrState),
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings),
+		Record:               AlertRuleRecordExportFromRecord(rule.Record),
 	}
 	if rule.For.Seconds() > 0 {
 		result.ForString = util.Pointer(model.Duration(rule.For).String())
@@ -453,5 +453,35 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 			RepeatInterval:    ns.RepeatInterval,
 			MuteTimeIntervals: ns.MuteTimeIntervals,
 		},
+	}
+}
+
+func AlertRuleRecordExportFromRecord(r *models.Record) *definitions.AlertRuleRecordExport {
+	if r == nil {
+		return nil
+	}
+	return &definitions.AlertRuleRecordExport{
+		Metric: r.Metric,
+		From:   r.From,
+	}
+}
+
+func ModelRecordFromApiRecord(r *definitions.Record) *models.Record {
+	if r == nil {
+		return nil
+	}
+	return &models.Record{
+		Metric: r.Metric,
+		From:   r.From,
+	}
+}
+
+func ApiRecordFromModelRecord(r *models.Record) *definitions.Record {
+	if r == nil {
+		return nil
+	}
+	return &definitions.Record{
+		Metric: r.Metric,
+		From:   r.From,
 	}
 }
