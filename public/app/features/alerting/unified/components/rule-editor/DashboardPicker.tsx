@@ -124,7 +124,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
       >
         <div className={cx(styles.dashboardTitle, styles.rowButtonTitle)}>{dashboard.title}</div>
         <div className={styles.dashboardFolder}>
-          <Icon name="folder" /> {dashboard.folderTitle ?? 'General'}
+          <Icon name="folder" /> {dashboard.folderTitle ?? 'Dashboards'}
         </div>
       </button>
     );
@@ -179,7 +179,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
         <Alert title="Current selection" severity="info" topSpacing={0} bottomSpacing={1} className={styles.modalAlert}>
           <div>
             Dashboard: {dashboardModel.title} ({dashboardModel.uid}) in folder{' '}
-            {dashboardModel.meta?.folderTitle ?? 'General'}
+            {dashboardModel.meta?.folderTitle ?? 'Dashboards'}
           </div>
           {currentPanel && (
             <div>

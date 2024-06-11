@@ -93,7 +93,7 @@ describe('ReadonlyFolderPicker', () => {
     it('then the first folder in all folders should be selected', async () => {
       const { selectors } = await getTestContext({}, FOLDERS);
 
-      expect(await within(selectors.container.get()).findByText('General')).toBeInTheDocument();
+      expect(await within(selectors.container.get()).findByText('Dashboards')).toBeInTheDocument();
     });
 
     describe('and initialFolderId is passed in props and it matches an existing folder', () => {
@@ -130,7 +130,7 @@ describe('ReadonlyFolderPicker', () => {
           undefined
         );
 
-        expect(await within(selectors.container.get()).findByText('General')).toBeInTheDocument();
+        expect(await within(selectors.container.get()).findByText('Dashboards')).toBeInTheDocument();
         expect(getFolderAsOptionSpy).toHaveBeenCalledTimes(1);
         expect(getFolderAsOptionSpy).toHaveBeenCalledWith(50000);
       });
