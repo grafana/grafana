@@ -60,7 +60,7 @@ def retrieve_npm_packages_step():
         "commands": ["./bin/build artifacts npm retrieve --tag ${DRONE_TAG}"],
     }
 
-def release_pr_step():
+def release_pr_step(depends_on=[]):
     version = "$$TAG"
     dry_run = "$$DRY_RUN"
 
@@ -69,7 +69,7 @@ def release_pr_step():
     return {
         "name": "create-release-pr",
         "image": images["curl"],
-        "depends_on": [],
+        "depends_on": depends_on,
         "environment": {
             "GITHUB_TOKEN": from_secret("github_token"),
             "GH_CLI_URL": "https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz"
@@ -168,10 +168,20 @@ def publish_artifacts_pipelines(mode):
         publish_artifacts_step(),
         publish_static_assets_step(),
         publish_storybook_step(),
-        release_pr_step(),
+        release_pr_step(depends_on=["publish-artifacts", "publish-static-assets"]),
     ]
 
     return [
+        pipeline(
+            name = "create-release-pr",
+            trigger = {
+                "event": ["promote"],
+                "target": "release-pr",
+            },
+            steps = [
+                release_pr_step()
+            ],
+        ),
         pipeline(
             name = "publish-artifacts-{}".format(mode),
             trigger = trigger,
