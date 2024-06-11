@@ -33,10 +33,12 @@ describe('Keyboard shortcuts', () => {
       zone: 'Browser',
     });
     e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
+    let expectedRange = `Time range selected: 2024-06-05 10:05:00 to 2024-06-05 10:06:00`;
+    e2e.components.TimePicker.openButton().should('have.attr', 'aria-label', expectedRange);
 
     cy.get('body').type('{ctrl}z');
     e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
-    let expectedRange = `Time range selected: 2024-06-05 10:03:30 to 2024-06-05 10:07:30`;
+    expectedRange = `Time range selected: 2024-06-05 10:03:30 to 2024-06-05 10:07:30`;
     e2e.components.TimePicker.openButton().should('have.attr', 'aria-label', expectedRange);
   });
 
@@ -51,11 +53,13 @@ describe('Keyboard shortcuts', () => {
       zone: 'Browser',
     });
     e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
+    let expectedRange = `Time range selected: 2024-06-05 10:05:00 to 2024-06-05 10:06:00`;
+    e2e.components.TimePicker.openButton().should('have.attr', 'aria-label', expectedRange);
 
     cy.log('Trying one shift-left');
     cy.get('body').type('t{leftarrow}');
     e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
-    let expectedRange = `Time range selected: 2024-06-05 10:04:00 to 2024-06-05 10:05:00`; // 1 min back
+    expectedRange = `Time range selected: 2024-06-05 10:04:00 to 2024-06-05 10:05:00`; // 1 min back
     e2e.components.TimePicker.openButton().should('have.attr', 'aria-label', expectedRange);
 
     cy.log('Trying two shift-lefts');
