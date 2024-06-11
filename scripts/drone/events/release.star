@@ -42,6 +42,7 @@ load(
 )
 
 ver_mode = "release"
+semver_regex = r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'"
 
 def retrieve_npm_packages_step():
     return {
@@ -59,6 +60,37 @@ def retrieve_npm_packages_step():
         "commands": ["./bin/build artifacts npm retrieve --tag ${DRONE_TAG}"],
     }
 
+def release_pr_step():
+    version = "$$TAG"
+    dry_run = "$$DRY_RUN"
+
+    backport = ""
+
+    return {
+        "name": "create-release-pr",
+        "image": images["curl"],
+        "depends_on": [],
+        "environment": {
+            "GITHUB_TOKEN": from_secret("github_token"),
+            "GH_CLI_URL": "https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz"
+        },
+        "commands": [
+            "apk add perl",
+            "default_target=`echo $${{TAG}} | perl -pe 's/{}/v\1.\2.x'`".format(semver_regex),
+            "backport=`if [[ -z $$LATEST ]]; then echo $$default_target; fi`",
+            # Install gh CLI
+            "curl -L $${GH_CLI_URL} | tar -xvf --strip-components=1 -C /usr",
+            # Run the release-pr workflow
+            "gh workflow run " +
+            "-f dry_run=$${DRY_RUN} " +
+            "-f version=$${TAG} " +
+            # If the submitter has set a target branch, then use that, otherwise use the default
+            "-f target=$${TARGET:-$default_target} " +
+            # If the submitter has set a backport branch, then use that, otherwise use the default
+            "-f backport=$${BACKPORT:-$default_backport) " +
+            "--repo=grafana/grafana release-pr.yml",
+        ]
+    }
 def release_npm_packages_step():
     return {
         "name": "release-npm-packages",
@@ -136,6 +168,7 @@ def publish_artifacts_pipelines(mode):
         publish_artifacts_step(),
         publish_static_assets_step(),
         publish_storybook_step(),
+        release_pr_step(),
     ]
 
     return [
