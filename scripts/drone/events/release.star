@@ -71,7 +71,7 @@ def release_pr_step(depends_on = []):
         },
         "commands": [
             "apk add perl",
-            "default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $${{TAG}} | perl -pe 's/{}/v\\1.\\2.x/'`; fi".format(semver_regex),
+            "default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $${{TAG}} | perl -pe 's/{}/v\\1.\\2.x/'; fi`".format(semver_regex),
             "backport=`if [[ -n $$LATEST ]]; then echo $$default_target; fi`",
             # Install gh CLI
             "curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr",

@@ -2746,8 +2746,8 @@ steps:
 - commands:
   - apk add perl
   - default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $${TAG} | perl
-    -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`;
-    fi
+    -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/';
+    fi`
   - backport=`if [[ -n $$LATEST ]]; then echo $$default_target; fi`
   - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
   - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
@@ -2831,8 +2831,8 @@ steps:
 - commands:
   - apk add perl
   - default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $${TAG} | perl
-    -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`;
-    fi
+    -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/';
+    fi`
   - backport=`if [[ -n $$LATEST ]]; then echo $$default_target; fi`
   - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
   - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
@@ -4952,6 +4952,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: f824d4bc8fb27b38859af78250f087173bb842cbb8c1b021379a52109b66f9ad
+hmac: 2782d23d2ba6266ed676ac5ba717e1c9bdf3fcad101b8a4f06a61ef332866d8f
 
 ...
