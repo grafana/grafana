@@ -36,7 +36,7 @@ const (
 func TestSocialGrafanaCom_UserInfo(t *testing.T) {
 	cfg := &setting.Cfg{
 		AutoAssignOrgRole: "Viewer",
-		AutoAssignOrgId:   1,
+		AutoAssignOrgId:   2,
 	}
 	provider := NewGrafanaComProvider(social.NewOAuthInfo(),
 		cfg,
@@ -56,7 +56,7 @@ func TestSocialGrafanaCom_UserInfo(t *testing.T) {
 		ExpectedError error
 	}{
 		{
-			Name:         "should return empty role as userInfo when Skip Org Role Sync Enabled",
+			Name:         "should return empty OrgRoles when skip org role sync is enabled",
 			userInfoResp: userResponse,
 			Cfg:          conf{skipOrgRoleSync: true},
 			want: &social.BasicUserInfo{
@@ -68,7 +68,7 @@ func TestSocialGrafanaCom_UserInfo(t *testing.T) {
 			},
 		},
 		{
-			Name:         "should return role as userInfo when Skip Org Role Sync Disabled",
+			Name:         "should return OrgRoles when skip org role sync is disabled",
 			userInfoResp: userResponse,
 			Cfg:          conf{skipOrgRoleSync: false},
 			want: &social.BasicUserInfo{
@@ -76,7 +76,7 @@ func TestSocialGrafanaCom_UserInfo(t *testing.T) {
 				Name:     "Eric Leijonmarck",
 				Email:    "octocat@github.com",
 				Login:    "octocat",
-				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+				OrgRoles: map[int64]org.RoleType{2: org.RoleAdmin},
 			},
 		},
 	}
