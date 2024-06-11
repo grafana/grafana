@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -9,7 +9,6 @@ import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { initTemplateSrv } from '../test_utils';
 import { keywordOperators, numberOperators, operators, stringOperators } from '../traceql/traceql';
-
 import SearchField from './SearchField';
 
 describe('SearchField', () => {
@@ -86,20 +85,30 @@ describe('SearchField', () => {
     if (select) {
       // Add first value
       await user.click(select);
-      jest.advanceTimersByTime(1000);
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
       const driverVal = await screen.findByText('driver');
-      await user.click(driverVal);
+
+      await act(async () => {
+        await user.click(driverVal);
+      });
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: ['driver'] });
 
       // Add a second value
       await user.click(select);
-      jest.advanceTimersByTime(1000);
+
+      await act(async () => {
+        jest.advanceTimersByTime(1000);
+      });
       const customerVal = await screen.findByText('customer');
+
       await user.click(customerVal);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: ['driver', 'customer'] });
 
       // Remove the first value
       const firstValRemove = await screen.findAllByLabelText('Remove');
+
       await user.click(firstValRemove[0]);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: ['customer'] });
     }
