@@ -114,14 +114,14 @@ func TestMode1_Get(t *testing.T) {
 					m.On("Get", mock.Anything, name, mock.Anything).Return(anotherObj, nil)
 				},
 			},
-			// {
-			// 	name:  "error when getting an object in the legacy store fails",
-			// 	input: "object-fail",
-			// 	setupLegacyFn: func(m *mock.Mock, name string) {
-			// 		m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
-			// 	},
-			// 	wantErr: true,
-			// },
+			{
+				name:  "error when getting an object in the legacy store fails",
+				input: "object-fail",
+				setupLegacyFn: func(m *mock.Mock, name string) {
+					m.On("Get", mock.Anything, name, mock.Anything).Return(nil, errors.New("error"))
+				},
+				wantErr: true,
+			},
 		}
 
 	for _, tt := range tests {
