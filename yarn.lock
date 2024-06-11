@@ -9993,13 +9993,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"add@npm:^2.0.6":
-  version: 2.0.6
-  resolution: "add@npm:2.0.6"
-  checksum: 10/1d2c0780a660edfc161b7784a846865b28dcd8514cc6042c8e283298f379cd3b150412b67a12603a4ac885912f05759f3e2993c27219f85d1face316ffc0b175
-  languageName: node
-  linkType: hard
-
 "address@npm:^1.0.1":
   version: 1.1.2
   resolution: "address@npm:1.1.2"
@@ -16785,7 +16778,6 @@ __metadata:
     "@visx/shape": "npm:3.5.0"
     "@visx/tooltip": "npm:3.3.0"
     "@welldone-software/why-did-you-render": "npm:8.0.1"
-    add: "npm:^2.0.6"
     angular: "npm:1.8.3"
     angular-bindonce: "npm:0.3.1"
     angular-route: "npm:1.8.3"

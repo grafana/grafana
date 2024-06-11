@@ -291,7 +291,6 @@
     "@visx/shape": "3.5.0",
     "@visx/tooltip": "3.3.0",
     "@welldone-software/why-did-you-render": "8.0.1",
-    "add": "^2.0.6",
     "angular": "1.8.3",
     "angular-bindonce": "0.3.1",
     "angular-route": "1.8.3",
