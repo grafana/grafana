@@ -250,6 +250,31 @@ export class GrafanaApp {
         ],
       });
 
+      extensionsRegistry.register({
+        pluginId: 'dashboards',
+        extensionConfigs: [
+          createExtensionLinkConfig<{ query: DataQuery }>({
+            title: 'Add to panel',
+            description: 'Add to panel',
+            extensionPointId: 'plugins/grafana-querylibrary-app/query/actions',
+            icon: 'save',
+            configure: (isAppOpened, context) => {
+              if (!isAppOpened) {
+                return undefined;
+              } else {
+                if (!window.location.search.match(/editPanel=(\d+)/)) {
+                  return undefined;
+                }
+                return {};
+              }
+            },
+            onClick: (_, helpers) => {
+              window.__grafanaSceneContext.state;
+            },
+          }),
+        ],
+      });
+
       if (contextSrv.user.orgRole !== '') {
         // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
         // TODO: remove the following exception once the issue mentioned above is fixed.

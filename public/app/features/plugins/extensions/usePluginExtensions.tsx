@@ -24,8 +24,12 @@ export function createPluginExtensionsHook(extensionsRegistry: ReactivePluginExt
     const registry = useObservable(observableRegistry);
     const secondAppId = useSelector((state) => state.windowSplit.secondAppId);
     let mainApp = window.location.pathname.match(/\/a\/([^/]+)/)?.[1];
-    if (!mainApp && window.location.pathname.match(/explore/)) {
+    if (!mainApp && window.location.pathname.match(/\/explore/)) {
       mainApp = 'explore';
+    }
+
+    if (!mainApp && window.location.pathname.match(/\/d\//)) {
+      mainApp = 'dashboards';
     }
     const openedApps = [];
     if (mainApp) {
