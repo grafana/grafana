@@ -59,10 +59,14 @@ describe('adHocVariableFiltersEqual', () => {
   });
 
   describe('when filter property is undefined', () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = jest.spyOn(console, 'warn');
 
     afterEach(() => {
       warnSpy.mockClear();
+    });
+
+    beforeEach(() => {
+      warnSpy.mockImplementation(() => {});
     });
 
     afterAll(() => {
