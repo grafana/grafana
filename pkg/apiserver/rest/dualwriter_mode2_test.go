@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -15,11 +16,21 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/apis/example"
+	"k8s.io/klog/v2"
 )
 
 var createFn = func(context.Context, runtime.Object) error { return nil }
 
 var exampleOption = &metainternalversion.ListOptions{}
+
+func newTestMode2(t *testing.T, ls LegacyStorage, us Storage) DualWriter {
+	dw := NewDualWriter(Mode2, ls, us)
+	implem, ok := dw.(*DualWriterMode2)
+	require.True(t, ok)
+	implem.Log = klog.New(nil) // discard logs during testing
+
+	return dw
+}
 
 func TestMode2_Create(t *testing.T) {
 	type testCase struct {
@@ -67,7 +78,7 @@ func TestMode2_Create(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode2, ls, us)
+			dw := newTestMode2(t, ls, us)
 
 			obj, err := dw.Create(context.Background(), tt.input, createFn, &metav1.CreateOptions{})
 
@@ -79,7 +90,7 @@ func TestMode2_Create(t *testing.T) {
 			assert.Equal(t, exampleObj, obj)
 			accessor, err := meta.Accessor(obj)
 			assert.NoError(t, err)
-			assert.Equal(t, accessor.GetResourceVersion(), "")
+			assert.Equal(t, "1", accessor.GetResourceVersion())
 		})
 	}
 }
@@ -143,7 +154,7 @@ func TestMode2_Get(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode2, ls, us)
+			dw := newTestMode2(t, ls, us)
 
 			obj, err := dw.Get(context.Background(), tt.input, &metav1.GetOptions{})
 
@@ -196,7 +207,7 @@ func TestMode2_List(t *testing.T) {
 				tt.setupStorageFn(m)
 			}
 
-			dw := NewDualWriter(Mode2, ls, us)
+			dw := newTestMode2(t, ls, us)
 
 			obj, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
 
@@ -289,7 +300,7 @@ func TestMode2_Delete(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode2, ls, us)
+			dw := newTestMode2(t, ls, us)
 
 			obj, _, err := dw.Delete(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 
@@ -361,7 +372,7 @@ func TestMode2_DeleteCollection(t *testing.T) {
 				tt.setupStorageFn(m)
 			}
 
-			dw := NewDualWriter(Mode2, ls, us)
+			dw := newTestMode2(t, ls, us)
 
 			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: tt.input}}, &metainternalversion.ListOptions{})
 
@@ -469,7 +480,7 @@ func TestMode2_Update(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode2, ls, us)
+			dw := newTestMode2(t, ls, us)
 
 			obj, _, err := dw.Update(context.Background(), tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 

@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -347,7 +348,12 @@ func parseList(legacyList []runtime.Object) (metainternalversion.ListOptions, ma
 }
 
 func enrichLegacyObject(originalObj, returnedObj runtime.Object, created bool) (runtime.Object, error) {
-	accessorReturned, err := meta.Accessor(returnedObj)
+	if returnedObj == nil {
+		return nil, errors.New("cannot enrich nil object")
+	}
+	ret := returnedObj.DeepCopyObject()
+
+	accessorReturned, err := meta.Accessor(ret)
 	if err != nil {
 		return nil, err
 	}
@@ -373,10 +379,13 @@ func enrichLegacyObject(originalObj, returnedObj runtime.Object, created bool) (
 	if created {
 		accessorReturned.SetResourceVersion("")
 		accessorReturned.SetUID("")
-		return returnedObj, nil
+
+		return ret, nil
 	}
+
 	// otherwise, we propagate the original RV and UID
 	accessorReturned.SetResourceVersion(accessorOriginal.GetResourceVersion())
 	accessorReturned.SetUID(accessorOriginal.GetUID())
-	return returnedObj, nil
+
+	return ret, nil
 }
