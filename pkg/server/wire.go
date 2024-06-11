@@ -50,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
+	"github.com/grafana/grafana/pkg/services/authorization"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/cloudmigrationimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -379,7 +380,7 @@ var wireBasicSet = wire.NewSet(
 	userimpl.ProvideVerifier,
 	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
-	// authzv1.ProvideAuthZClient,
+	authorization.WireSet,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,

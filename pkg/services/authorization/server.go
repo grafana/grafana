@@ -1,22 +1,20 @@
-package legacy
+package authorization
 
 import (
 	"context"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ authzv1.AuthzServiceServer = (*Server)(nil)
+var _ authzv1.AuthzServiceServer = (*legacyServer)(nil)
 
-type Server struct {
+type legacyServer struct {
 	authzv1.UnimplementedAuthzServiceServer
 
 	acSvc  accesscontrol.Service
@@ -24,13 +22,15 @@ type Server struct {
 	tracer tracing.Tracer
 }
 
-func ProvideAuthZServer(cfg *setting.Cfg, acSvc accesscontrol.Service, features *featuremgmt.FeatureManager,
-	grpcServer grpcserver.Provider, registerer prometheus.Registerer, tracer tracing.Tracer) (*Server, error) {
+func newLegacyServer(
+	acSvc accesscontrol.Service, features *featuremgmt.FeatureManager,
+	grpcServer grpcserver.Provider, tracer tracing.Tracer,
+) (*legacyServer, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
 	}
 
-	s := &Server{
+	s := &legacyServer{
 		acSvc:  acSvc,
 		logger: log.New("authz-grpc-server"),
 		tracer: tracer,
@@ -41,7 +41,7 @@ func ProvideAuthZServer(cfg *setting.Cfg, acSvc accesscontrol.Service, features 
 	return s, nil
 }
 
-func (s *Server) Read(ctx context.Context, req *authzv1.ReadRequest) (*authzv1.ReadResponse, error) {
+func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*authzv1.ReadResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "authz.grpc.Read")
 	defer span.End()
 
