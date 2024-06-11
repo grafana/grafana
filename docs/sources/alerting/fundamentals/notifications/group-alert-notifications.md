@@ -119,7 +119,7 @@ Consider a notification policy that:
 
 **Default**: 5 minutes
 
-If an alert was late to be included in the first notification due to Group wait, it's then included in subsequent notifications after Group interval.
+If an alert was too late to be included in the first notification due to group wait, it is included in subsequent notifications after group interval.
 
 Group interval is the duration to wait before sending notifications about group changes. For instance, a group change may be adding a new firing alert to the group, or resolving an existing alert.
 
