@@ -62,7 +62,6 @@ type DeleteResourcePermissionsCmd struct {
 	ResourceID        string
 }
 
-// TODO check this as well
 func (s *store) DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error {
 	scope := accesscontrol.Scope(cmd.Resource, cmd.ResourceAttribute, cmd.ResourceID)
 
