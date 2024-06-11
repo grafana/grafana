@@ -553,6 +553,7 @@ export const ConnectionSVG = ({
         </defs>
         <line ref={setLineRef} stroke={defaultArrowColor} strokeWidth={2} markerEnd={`url(#${EDITOR_HEAD_ID})`} />
       </svg>
+
       <svg ref={setSVGVertexRef} className={styles.editorSVG}>
         <path
           ref={setVertexPathRef}
@@ -563,6 +564,7 @@ export const ConnectionSVG = ({
         />
         <circle ref={setVertexRef} stroke={defaultArrowColor} r={4} className={styles.vertex} />
       </svg>
+
       {renderConnections()}
     </>
   );

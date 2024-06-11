@@ -26,17 +26,21 @@ const CONNECTION_VERTEX_SNAP_TOLERANCE = (5 / 180) * Math.PI; // Multi-segment s
 
 export class Connections {
   scene: Scene;
+
   connectionAnchorDiv?: HTMLDivElement;
   connectionSVG?: SVGElement;
   connectionLine?: SVGLineElement;
   connectionSVGVertex?: SVGElement;
   connectionVertexPath?: SVGPathElement;
   connectionVertex?: SVGCircleElement;
+
   connectionSource?: ElementState;
   connectionTarget?: ElementState;
+
   isDrawingConnection?: boolean;
   selectedVertexIndex?: number;
   didConnectionLeaveHighlight?: boolean;
+
   state: ConnectionState[] = [];
   readonly selection = new BehaviorSubject<ConnectionState | undefined>(undefined);
 
@@ -137,7 +141,7 @@ export class Connections {
     // const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0);
     // const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0);
 
-    const { top, left, width, height } = element.div!.style;
+    const { top, left, width, height } = element.options.placement!;
 
     if (this.connectionAnchorDiv) {
       this.connectionAnchorDiv.style.display = 'none';
@@ -146,10 +150,10 @@ export class Connections {
       // this.connectionAnchorDiv.style.left = `${relativeLeft / transformScale}px`;
       // this.connectionAnchorDiv.style.height = `${elementBoundingRect.height / transformScale}px`;
       // this.connectionAnchorDiv.style.width = `${elementBoundingRect.width / transformScale}px`;
-      this.connectionAnchorDiv.style.top = top;
-      this.connectionAnchorDiv.style.left = left;
-      this.connectionAnchorDiv.style.height = height;
-      this.connectionAnchorDiv.style.width = width;
+      this.connectionAnchorDiv.style.top = `${top}px` ?? '0';
+      this.connectionAnchorDiv.style.left = `${left}px` ?? '0';
+      this.connectionAnchorDiv.style.height = `${height}px` ?? '0';
+      this.connectionAnchorDiv.style.width = `${width}px` ?? '0';
     }
   };
 
