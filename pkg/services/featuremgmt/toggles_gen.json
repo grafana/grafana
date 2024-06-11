@@ -2262,6 +2262,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform"
       }
+    },
+    {
+      "metadata": {
+        "name": "sqlQuerybuilderFunctionParameters",
+        "resourceVersion": "1718097450488",
+        "creationTimestamp": "2024-06-11T09:17:30Z"
+      },
+      "spec": {
+        "description": "Enables SQL query builder function parameters",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent",
+        "frontend": true
+      }
     }
   ]
 }
