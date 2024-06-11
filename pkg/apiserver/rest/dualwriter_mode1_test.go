@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -24,7 +23,7 @@ var failingObj = &example.Pod{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ObjectMeta
 var exampleList = &example.PodList{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ListMeta: metav1.ListMeta{}, Items: []example.Pod{*exampleObj}}
 var anotherList = &example.PodList{Items: []example.Pod{*anotherObj}}
 
-var p = metrics.ProvideRegistererForTest()
+var p = prometheus.NewRegistry()
 
 func TestMode1_Create(t *testing.T) {
 	type testCase struct {
