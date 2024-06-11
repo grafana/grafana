@@ -1738,6 +1738,8 @@
       "apply-button": "应用时间范围",
       "cancel-button": "取消",
       "close": "关闭日历",
+      "next-month": "",
+      "previous-month": "",
       "select-time": "选择时间范围"
     },
     "content": {
