@@ -125,7 +125,7 @@ Group interval is the duration to wait before sending notifications about group 
 
 **Example**
 
-Here are the related moments in the previous example:
+Here are the related excerpts from the previous example:
 
 | Time               | Incoming alert instance | Notification policy group | Number of instances |                                                                                                         |
 | ------------------ | ----------------------- | ------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------- |
@@ -168,7 +168,7 @@ Repeat interval must not only be greater than or equal to group interval, but al
 
 **Example**
 
-Here are the related moments in the previous example:
+Here are the related excerpts from the previous example:
 
 | Time               | Incoming alert instance | Notification policy group | Number of instances |                                                          |
 | ------------------ | ----------------------- | ------------------------- | ------------------- | -------------------------------------------------------- |
