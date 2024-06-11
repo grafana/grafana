@@ -1,4 +1,4 @@
-import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
+import { cloneDeep, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
 import { from, generate, lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 import { SemVer } from 'semver';
@@ -82,7 +82,7 @@ import {
   isElasticsearchResponseWithHits,
   ElasticsearchHits,
 } from './types';
-import { getScriptValue, isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from './utils';
+import { getScriptValue, isTimeSeriesQuery } from './utils';
 
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
@@ -140,7 +140,7 @@ export class ElasticDatasource
     this.name = instanceSettings.name;
     this.isProxyAccess = instanceSettings.access === 'proxy';
     const settingsData = instanceSettings.jsonData || {};
-
+    // instanceSettings.database is deprecated and should be removed in the future
     this.index = settingsData.index ?? instanceSettings.database ?? '';
     this.timeField = settingsData.timeField;
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
