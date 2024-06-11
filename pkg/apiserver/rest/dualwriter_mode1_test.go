@@ -25,6 +25,8 @@ var exampleList = &example.PodList{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ListM
 var anotherList = &example.PodList{Items: []example.Pod{*anotherObj}}
 
 func newTestMode1(t *testing.T, ls LegacyStorage, us Storage) DualWriter {
+	t.Helper()
+
 	dw := NewDualWriter(Mode1, ls, us)
 	implem, ok := dw.(*DualWriterMode1)
 	require.True(t, ok)
@@ -45,7 +47,7 @@ func TestMode1_Create(t *testing.T) {
 		[]testCase{
 			{
 				name:  "creating an object only in the legacy store",
-				input: exampleObj,
+				input: prepareForCreate(t, exampleObj),
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
 					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil)
 				},
@@ -55,9 +57,9 @@ func TestMode1_Create(t *testing.T) {
 			},
 			{
 				name:  "error when creating object in the legacy store fails",
-				input: failingObj,
+				input: prepareForCreate(t, failingObj),
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, failingObj, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
+					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
 				},
 				wantErr: true,
 			},

@@ -24,12 +24,29 @@ var createFn = func(context.Context, runtime.Object) error { return nil }
 var exampleOption = &metainternalversion.ListOptions{}
 
 func newTestMode2(t *testing.T, ls LegacyStorage, us Storage) DualWriter {
+	t.Helper()
+
 	dw := NewDualWriter(Mode2, ls, us)
 	implem, ok := dw.(*DualWriterMode2)
 	require.True(t, ok)
 	implem.Log = klog.New(nil) // discard logs during testing
 
 	return dw
+}
+
+func prepareForCreate(t *testing.T, obj runtime.Object) runtime.Object {
+	t.Helper()
+
+	obj = obj.DeepCopyObject()
+	acc, err := meta.Accessor(obj)
+	require.NoError(t, err)
+	acc.SetResourceVersion("")
+	acc.SetUID("")
+	if acc.GetAnnotations() == nil {
+		acc.SetAnnotations(map[string]string{})
+	}
+
+	return obj
 }
 
 func TestMode2_Create(t *testing.T) {
@@ -44,7 +61,7 @@ func TestMode2_Create(t *testing.T) {
 		[]testCase{
 			{
 				name:  "creating an object in both the LegacyStorage and Storage",
-				input: exampleObj,
+				input: prepareForCreate(t, exampleObj),
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
 					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil)
 				},
@@ -54,7 +71,7 @@ func TestMode2_Create(t *testing.T) {
 			},
 			{
 				name:  "error when creating object in the legacy store fails",
-				input: failingObj,
+				input: prepareForCreate(t, failingObj),
 				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
 					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
 				},
