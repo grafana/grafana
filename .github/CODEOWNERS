@@ -597,6 +597,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 # Grafana authentication and authorization
 /pkg/login/ @grafana/identity-access-team
 /pkg/services/accesscontrol/ @grafana/identity-access-team
+/pkg/services/authorization/ @grafana/identity-access-team
 /pkg/services/anonymous/ @grafana/identity-access-team
 /pkg/services/auth/ @grafana/identity-access-team
 /pkg/services/authn/ @grafana/identity-access-team
