@@ -40,6 +40,8 @@ type Rule interface {
 	Update(lastVersion RuleVersionAndPauseStatus) bool
 	// Type gives the type of the rule.
 	Type() ngmodels.RuleType
+	// Health indicates the health of the evaluating rule.
+	Health() string
 }
 
 type ruleFactoryFunc func(context.Context, *ngmodels.AlertRule) Rule
@@ -178,6 +180,10 @@ func newAlertRule(
 
 func (a *alertRule) Type() ngmodels.RuleType {
 	return ngmodels.RuleTypeAlerting
+}
+
+func (a *alertRule) Health() string {
+	return "ok"
 }
 
 // eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.

@@ -93,6 +93,10 @@ func (r *recordingRule) Status() RuleStatus {
 	}
 }
 
+func (r *recordingRule) Health() string {
+	return "ok"
+}
+
 func (r *recordingRule) Eval(eval *Evaluation) (bool, *Evaluation) {
 	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
 	var droppedMsg *Evaluation
