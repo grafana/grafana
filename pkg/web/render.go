@@ -21,12 +21,15 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"golang.org/x/sync/singleflight"
 )
 
 // Renderer is a Middleware that injects a template renderer into the macaron context, enabling ctx.HTML calls in the handlers.
 // If MACARON_ENV is set to "development" then templates will be recompiled on every request. For more performance, set the
 // MACARON_ENV environment variable to "production".
 func Renderer(dir, leftDelim, rightDelim string) Middleware {
+	var devEnvGr singleflight.Group
 	fs := os.DirFS(dir)
 	t, err := compileTemplates(fs, leftDelim, rightDelim)
 	if err != nil {
@@ -35,12 +38,16 @@ func Renderer(dir, leftDelim, rightDelim string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			ctx := FromContext(req.Context())
+			ctx.template = t
 			if Env == DEV {
-				if t, err = compileTemplates(fs, leftDelim, rightDelim); err != nil {
+				tt, err, _ := devEnvGr.Do("dev", func() (any, error) {
+					return compileTemplates(fs, leftDelim, rightDelim)
+				})
+				if err != nil {
 					panic("Context.HTML:" + err.Error())
 				}
+				ctx.template = tt.(*template.Template)
 			}
-			ctx.template = t
 			next.ServeHTTP(rw, req)
 		})
 	}

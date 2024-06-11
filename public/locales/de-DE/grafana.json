@@ -25,6 +25,28 @@
       "user": "Nutzer"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -1128,6 +1150,10 @@
     "public": {
       "title": "Öffentliche Dashboards"
     },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
+    },
     "recorded-queries": {
       "title": "Aufgezeichnete Abfragen"
     },
@@ -1189,10 +1215,6 @@
       "subtitle": "Optimieren Sie die Leistung mit Erkenntnissen aus k6 und Synthetic Monitoring",
       "title": "Testen & Synthetics"
     },
-    "trash": {
-      "subtitle": "",
-      "title": ""
-    },
     "upgrading": {
       "title": "Statistiken und Lizenz"
     },
@@ -1248,6 +1270,7 @@
       "new-alert-rule": "Neue Warnregel",
       "query": "Abfrage",
       "remove": "Entfernen",
+      "replace-library-panel": "",
       "share": "Teilen",
       "show-legend": "Legende anzeigen",
       "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben",
@@ -1456,6 +1479,11 @@
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
   },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
@@ -1483,6 +1511,31 @@
       "label": "Zurück zu {{title}}"
     },
     "dismissable-button": "Schließen"
+  },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "",
+      "cancel": "",
+      "title": ""
+    },
+    "basicSelector": {
+      "openAdvanced": "",
+      "placeholder": "",
+      "removeAll": ""
+    },
+    "root": {
+      "collapse": "",
+      "expand": ""
+    },
+    "suggestedDashboards": {
+      "loading": "",
+      "search": ""
+    },
+    "tree": {
+      "collapse": "",
+      "expand": "",
+      "search": ""
+    }
   },
   "search": {
     "actions": {
@@ -1642,6 +1695,21 @@
     "empty-state": {
       "button-title": "",
       "title": ""
+    },
+    "table": {
+      "add-silence-button": "",
+      "edit-button": "",
+      "expired-silences": "",
+      "no-matching-silences": "",
+      "noConfig": "",
+      "recreate-button": "",
+      "unsilence-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "",
+      "state": ""
     }
   },
   "snapshot": {

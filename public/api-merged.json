@@ -11155,6 +11155,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       },
@@ -11171,6 +11177,17 @@
             "name": "name",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Version of mute timing to use for optimistic concurrency. Leave empty to disable validation",
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -12191,6 +12208,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "record": {
+          "$ref": "#/definitions/AlertRuleRecordExport"
+        },
         "title": {
           "type": "string"
         },
@@ -12338,6 +12358,18 @@
         }
       }
     },
+    "AlertRuleRecordExport": {
+      "type": "object",
+      "title": "Record is the provisioned export of models.Record.",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "string"
+        }
+      }
+    },
     "AlertingFileExport": {
       "type": "object",
       "title": "AlertingFileExport is the full provisioned file export.",
@@ -12444,7 +12476,7 @@
           }
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -14685,7 +14717,9 @@
         }
       }
     },
-    "EvalQueriesResponse": {},
+    "EvalQueriesResponse": {
+      "type": "object"
+    },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
     },
@@ -15610,6 +15644,9 @@
           "items": {
             "$ref": "#/definitions/TimeIntervalItem"
           }
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -17750,6 +17787,9 @@
           "items": {
             "$ref": "#/definitions/TimeIntervalItem"
           }
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -17943,6 +17983,9 @@
         },
         "provenance": {
           "$ref": "#/definitions/Provenance"
+        },
+        "record": {
+          "$ref": "#/definitions/Record"
         },
         "ruleGroup": {
           "type": "string",
@@ -18511,13 +18554,20 @@
     },
     "Record": {
       "type": "object",
-      "title": "Record defines how data produced by a recording rule is written.",
+      "required": [
+        "metric",
+        "from"
+      ],
       "properties": {
         "from": {
-          "type": "string"
+          "description": "Which expression node should be used as the input for the recorded metric.",
+          "type": "string",
+          "example": "A"
         },
         "metric": {
-          "type": "string"
+          "description": "Name of the recorded metric.",
+          "type": "string",
+          "example": "grafana_alerts_ratio"
         }
       }
     },
@@ -19098,7 +19148,7 @@
           "type": "string"
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -19208,10 +19258,6 @@
           "type": "string"
         }
       }
-    },
-    "RuleType": {
-      "type": "string",
-      "title": "RuleType models the type of a rule."
     },
     "SNSConfig": {
       "type": "object",
@@ -19713,6 +19759,20 @@
     "SignatureAlgorithm": {
       "type": "integer",
       "format": "int64"
+    },
+    "SilenceMetadata": {
+      "type": "object",
+      "properties": {
+        "folder_uid": {
+          "type": "string"
+        },
+        "rule_title": {
+          "type": "string"
+        },
+        "rule_uid": {
+          "type": "string"
+        }
+      }
     },
     "SlackAction": {
       "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -21496,9 +21556,9 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/alertGroup"
       }
     },
@@ -21629,6 +21689,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -21684,13 +21745,39 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableAlert"
       }
     },
+    "gettableGrafanaSilence": {
+      "type": "object",
+      "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "example": {
+            "create": false,
+            "read": true,
+            "write": false
+          }
+        },
+        "metadata": {
+          "$ref": "#/definitions/SilenceMetadata"
+        }
+      }
+    },
+    "gettableGrafanaSilences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/gettableGrafanaSilence"
+      }
+    },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -21739,13 +21826,14 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableSilence"
       }
     },
     "integration": {
+      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -21889,6 +21977,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",

@@ -174,6 +174,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       minHeight: 0,
       height: '100%',
+      width: '100%',
     }),
     tabContent: css({
       padding: theme.spacing(2),
