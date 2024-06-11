@@ -172,7 +172,13 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 				if isFolderOrDashboardAction(action) {
 					actionSetActions := s.actionSetSvc.ResolveActionSet(action)
 					if len(actionSetActions) > 0 {
-						expandedActions = append(expandedActions, actionSetActions...)
+						for _, actionSetAction := range actionSetActions {
+							// This check is needed for resolving inherited permissions - we don't want to include
+							// actions that are not related to dashboards when expanding folder action sets
+							if slices.Contains(s.actions, actionSetAction) {
+								expandedActions = append(expandedActions, actionSetAction)
+							}
+						}
 						continue
 					}
 				}
