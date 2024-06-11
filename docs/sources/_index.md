@@ -79,7 +79,7 @@ The Grafana OSS plugin framework also enables you to connect other data sources 
 
 _Grafana Enterprise_ is a commercial edition of Grafana that includes exclusive data source plugins and additional features not found in the open source version.
 You also get 24x7x365 support and training from the core Grafana team.
-To learn more about these features, refer to [Enterprise features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/#enterprise-features-in-grafana-cloud).
+To learn more about these features, refer to [Enterprise features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/#enterprise-features).
 
 ## Learn
 
