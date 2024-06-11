@@ -41,8 +41,8 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
     }
 
     try {
-      const location = getRuleGroupLocationFromCombinedRule(rule);
-      await pauseRule(location, rule.rulerRule, newIsPaused);
+      const ruleGroupId = getRuleGroupLocationFromCombinedRule(rule);
+      await pauseRule(ruleGroupId, rule.rulerRule, newIsPaused);
     } catch (error) {
       notifyApp.error(`Failed to ${newIsPaused ? 'pause' : 'resume'} the rule: ${stringifyErrorLike(error)}`);
       return;

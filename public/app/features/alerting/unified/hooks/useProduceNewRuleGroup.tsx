@@ -7,18 +7,7 @@ import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dt
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { deleteRuleAction, pauseRuleAction, ruleGroupReducer } from '../reducers/ruler/ruleGroups';
-import {
-  fetchPromAndRulerRulesAction,
-  fetchRulesSourceBuildInfoAction,
-  getDataSourceRulerConfig,
-} from '../state/actions';
-
-type ProduceNewRuleGroupOptions = {
-  /**
-   * Should we dispatch additional actions to ensure that other (non-RTKQ) caches are cleared?
-   */
-  refetchAllRules?: boolean;
-};
+import { fetchRulesSourceBuildInfoAction, getDataSourceRulerConfig } from '../state/actions';
 
 // @TODO the manual state tracking here is abysmal but we don't have a better idea that works right now
 function useProduceNewRuleGroup() {
@@ -26,32 +15,26 @@ function useProduceNewRuleGroup() {
   const [updateRuleGroup] = alertRuleApi.endpoints.updateRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useLazyQuery();
 
-  const [isUninitialized, setIsUninitialized] = useState<boolean>(true);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const [isLoading, setLoading] = useState<boolean>(false);
+  const [isSuccess, setSuccess] = useState<boolean>(false);
   const [error, setError] = useState<unknown | undefined>();
 
-  const aggregateState = {
-    isUninitialized,
+  const requestState = {
+    isUninitialized: !isLoading && !error && !isSuccess,
     isLoading,
     isSuccess,
     isError: Boolean(error),
     error,
   };
 
-  const produceNewRuleGroup = async (
-    ruleGroup: RuleGroupIdentifier,
-    action: Action,
-    options?: ProduceNewRuleGroupOptions
-  ) => {
+  const produceNewRuleGroup = async (ruleGroup: RuleGroupIdentifier, action: Action) => {
     const { dataSourceName, groupName, namespaceName } = ruleGroup;
 
     // @TODO we should really not work with the redux state (getState) here
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: dataSourceName }));
     const rulerConfig = getDataSourceRulerConfig(getState, dataSourceName);
 
-    setIsLoading(true);
-    setIsUninitialized(false);
+    setLoading(true);
 
     const currentRuleGroup = await fetchRuleGroup({
       rulerConfig,
@@ -61,7 +44,7 @@ function useProduceNewRuleGroup() {
       .unwrap()
       .catch((error) => {
         setError(error);
-        setIsSuccess(false);
+        setSuccess(false);
       });
 
     if (!currentRuleGroup) {
@@ -89,26 +72,15 @@ function useProduceNewRuleGroup() {
       }).unwrap();
     };
 
-    updateOrDeleteFunction()
-      .then((result) => {
-        if (options?.refetchAllRules) {
-          // refetch rules for this rules source
-          // @TODO remove this when we moved everything to RTKQ – then the endpoint will simply invalidate the tags
-          dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: ruleGroup.dataSourceName }));
-        }
-
-        return result;
-      })
-      .catch((error) => {
-        setError(error);
-      })
+    return updateOrDeleteFunction()
+      .catch(setError)
       .finally(() => {
-        setIsSuccess(true);
-        setIsLoading(false);
+        setSuccess(true);
+        setLoading(false);
       });
   };
 
-  return [produceNewRuleGroup, aggregateState] as const;
+  return [produceNewRuleGroup, requestState] as const;
 }
 
 export function usePauseRuleInGroup() {
@@ -134,7 +106,7 @@ export function useDeleteRuleFromGroup() {
     async (ruleGroup: RuleGroupIdentifier, rule: RulerRuleDTO) => {
       const action = deleteRuleAction({ rule });
 
-      return produceNewRuleGroup(ruleGroup, action, { refetchAllRules: true });
+      return produceNewRuleGroup(ruleGroup, action);
     },
     [produceNewRuleGroup]
   );

@@ -2,9 +2,11 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import { ConfirmModal } from '@grafana/ui';
+import { dispatch } from 'app/store/store';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { useDeleteRuleFromGroup } from '../../hooks/useProduceNewRuleGroup';
+import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { getRuleGroupLocationFromCombinedRule } from '../../utils/rules';
 
 type DeleteModalHook = [JSX.Element, (rule: CombinedRule) => void, () => void];
@@ -30,6 +32,10 @@ export const useDeleteModal = (): DeleteModalHook => {
 
       const location = getRuleGroupLocationFromCombinedRule(rule);
       await deleteRuleFromGroup(location, rule.rulerRule);
+
+      // refetch rules for this rules source
+      // @TODO remove this when we moved everything to RTKQ – then the endpoint will simply invalidate the tags
+      dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: location.dataSourceName }));
 
       dismissModal();
 
