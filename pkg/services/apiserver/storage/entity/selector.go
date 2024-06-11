@@ -4,6 +4,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 const FolderAnnoKey = "grafana.app/folder"
@@ -20,6 +22,8 @@ type Requirements struct {
 	ListDeleted bool
 	// ListHistory is a resource name to list the history of
 	ListHistory string
+	// ListOriginPaths needs to include the origin key of a given entity in order for it to be selected.
+	ListOriginPaths []string
 }
 
 func ReadLabelSelectors(selector labels.Selector) (Requirements, labels.Selector, error) {
@@ -45,6 +49,11 @@ func ReadLabelSelectors(selector labels.Selector) (Requirements, labels.Selector
 				return requirements, newSelector, apierrors.NewBadRequest(SortByKey + " label selector only supports in")
 			}
 			requirements.SortBy = r.Values().List()
+		case utils.AnnoKeyOriginPath:
+			if r.Operator() != selection.In {
+				return requirements, newSelector, apierrors.NewBadRequest(SortByKey + " label selector only supports in")
+			}
+			requirements.ListOriginPaths = r.Values().List()
 		case ListDeletedKey:
 			if r.Operator() != selection.Equals {
 				return requirements, newSelector, apierrors.NewBadRequest(ListDeletedKey + " label selector only supports equality")
