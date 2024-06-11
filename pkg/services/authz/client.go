@@ -1,4 +1,4 @@
-package authorization
+package authz
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
