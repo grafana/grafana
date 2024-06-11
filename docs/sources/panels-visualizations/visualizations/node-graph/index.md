@@ -29,6 +29,8 @@ The following video provides beginner steps for creating node panel visualizatio
 
 {{< youtube id="VrvsMkRwoKw" >}}
 
+{{< docs/play title="Node graph panel" url="https://play.grafana.org/d/bdodfbi3d57uoe/" >}}
+
 ## Data requirements
 
 A node graph requires a specific shape of the data to be able to display its nodes and edges. This means not every data source or query can be visualized with this graph. If you want to use this as a data source developer see the section about data API.
