@@ -1,7 +1,8 @@
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { QueryEditorProps } from '@grafana/data';
-import { InlineFormLabel, Input, TagsInput } from '@grafana/ui';
+import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { InlineFormLabel, Input, TagsInput, useStyles2 } from '@grafana/ui';
 
 import { GraphiteDatasource } from '../datasource';
 import { GraphiteQuery, GraphiteOptions } from '../types';
@@ -32,6 +33,7 @@ export const AnnotationEditor = (props: QueryEditorProps<GraphiteDatasource, Gra
     setTags(tagsInput);
     updateValue('tags', tagsInput);
   };
+  const styles = useStyles2(getStyles);
 
   return (
     <div className="gf-form-group">
@@ -45,7 +47,7 @@ export const AnnotationEditor = (props: QueryEditorProps<GraphiteDatasource, Gra
         />
       </div>
 
-      <h5 className="section-heading">Or</h5>
+      <h5 className={styles.heading}>Or</h5>
 
       <div className="gf-form">
         <InlineFormLabel width={12}>Graphite events tags</InlineFormLabel>
@@ -54,3 +56,10 @@ export const AnnotationEditor = (props: QueryEditorProps<GraphiteDatasource, Gra
     </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  heading: css({
+    fontSize: theme.typography.body.fontSize,
+    marginBottom: theme.spacing(1),
+  }),
+});
