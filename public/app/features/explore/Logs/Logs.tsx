@@ -109,8 +109,8 @@ interface Props extends Themeable2 {
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;
-  onClickFilterValue?: (value: string, refId?: string) => void;
-  onClickFilterOutValue?: (value: string, refId?: string) => void;
+  onClickFilterString?: (value: string, refId?: string) => void;
+  onClickFilterOutString?: (value: string, refId?: string) => void;
   loadMoreLogs?(range: AbsoluteTimeRange): void;
 }
 
@@ -943,8 +943,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     scrollIntoView={this.scrollIntoView}
                     isFilterLabelActive={this.props.isFilterLabelActive}
                     containerRendered={!!this.state.logsContainer}
-                    onClickFilterValue={this.props.onClickFilterValue}
-                    onClickFilterOutValue={this.props.onClickFilterOutValue}
+                    onClickFilterString={this.props.onClickFilterString}
+                    onClickFilterOutString={this.props.onClickFilterOutString}
                   />
                 </InfiniteScroll>
               </div>

@@ -1479,11 +1479,6 @@
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
-  "recentlyDeleted": {
-    "filter": {
-      "placeholder": "Search for dashboards"
-    }
-  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
@@ -1744,6 +1739,8 @@
       "apply-button": "Apply time range",
       "cancel-button": "Cancel",
       "close": "Close calendar",
+      "next-month": "Next month",
+      "previous-month": "Previous month",
       "select-time": "Select a time range"
     },
     "content": {
