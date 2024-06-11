@@ -60,19 +60,14 @@ def retrieve_npm_packages_step():
         "commands": ["./bin/build artifacts npm retrieve --tag ${DRONE_TAG}"],
     }
 
-def release_pr_step(depends_on=[]):
-    version = "$$TAG"
-    dry_run = "$$DRY_RUN"
-
-    backport = ""
-
+def release_pr_step(depends_on = []):
     return {
         "name": "create-release-pr",
         "image": images["curl"],
         "depends_on": depends_on,
         "environment": {
             "GITHUB_TOKEN": from_secret("github_token"),
-            "GH_CLI_URL": "https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz"
+            "GH_CLI_URL": "https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz",
         },
         "commands": [
             "apk add perl",
@@ -89,8 +84,9 @@ def release_pr_step(depends_on=[]):
             # If the submitter has set a backport branch, then use that, otherwise use the default
             "-f backport=$${BACKPORT:-$default_backport) " +
             "--repo=grafana/grafana release-pr.yml",
-        ]
+        ],
     }
+
 def release_npm_packages_step():
     return {
         "name": "release-npm-packages",
@@ -168,7 +164,7 @@ def publish_artifacts_pipelines(mode):
         publish_artifacts_step(),
         publish_static_assets_step(),
         publish_storybook_step(),
-        release_pr_step(depends_on=["publish-artifacts", "publish-static-assets"]),
+        release_pr_step(depends_on = ["publish-artifacts", "publish-static-assets"]),
     ]
 
     return [
@@ -179,7 +175,7 @@ def publish_artifacts_pipelines(mode):
                 "target": "release-pr",
             },
             steps = [
-                release_pr_step()
+                release_pr_step(),
             ],
         ),
         pipeline(
