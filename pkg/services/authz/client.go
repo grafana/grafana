@@ -23,7 +23,7 @@ type Client interface {
 }
 
 type LegacyClient struct {
-	clientV1 *authzv1.AuthzServiceClient
+	clientV1 authzv1.AuthzServiceClient
 }
 
 func ProvideAuthZClient(
@@ -80,7 +80,7 @@ func newLocalLegacyClient(server *legacyServer) *LegacyClient {
 	client := authzv1.NewAuthzServiceClient(conn)
 
 	return &LegacyClient{
-		clientV1: &client,
+		clientV1: client,
 	}
 }
 
@@ -94,6 +94,6 @@ func newRemoteLegacyClient(address string) (*LegacyClient, error) {
 	client := authzv1.NewAuthzServiceClient(conn)
 
 	return &LegacyClient{
-		clientV1: &client,
+		clientV1: client,
 	}, nil
 }
