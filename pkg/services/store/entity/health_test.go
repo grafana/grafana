@@ -3,6 +3,7 @@ package entity
 import (
 	"context"
 	"errors"
+	sync "sync"
 	"testing"
 	"time"
 
@@ -120,17 +121,22 @@ func (s *entityStoreStub) FindReferences(ctx context.Context, r *ReferenceReques
 }
 
 type fakeHealthWatchServer struct {
+	mu sync.Mutex
 	grpc.ServerStream
 	healthChecks []*grpc_health_v1.HealthCheckResponse
 	context      context.Context
 }
 
 func (f *fakeHealthWatchServer) Send(resp *grpc_health_v1.HealthCheckResponse) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.healthChecks = append(f.healthChecks, resp)
 	return nil
 }
 
 func (f *fakeHealthWatchServer) RecvMsg(m interface{}) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if len(f.healthChecks) == 0 {
 		return errors.New("no health checks received")
 	}

@@ -466,6 +466,9 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver,
 
 	var rcvs []apimodels.Receiver
 	for _, rcv := range res.Payload {
+		if rcv.Integrations == nil {
+			rcv.Integrations = []*apimodels.Integration{}
+		}
 		rcvs = append(rcvs, *rcv)
 	}
 	return rcvs, nil

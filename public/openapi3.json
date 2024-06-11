@@ -2585,6 +2585,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "record": {
+            "$ref": "#/components/schemas/AlertRuleRecordExport"
+          },
           "title": {
             "type": "string"
           },
@@ -2734,6 +2737,18 @@
         "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
         "type": "object"
       },
+      "AlertRuleRecordExport": {
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          }
+        },
+        "title": "Record is the provisioned export of models.Record.",
+        "type": "object"
+      },
       "AlertingFileExport": {
         "properties": {
           "apiVersion": {
@@ -2830,7 +2845,7 @@
             "type": "object"
           },
           "type": {
-            "$ref": "#/components/schemas/RuleType"
+            "type": "string"
           }
         },
         "required": [
@@ -5081,7 +5096,9 @@
         },
         "type": "object"
       },
-      "EvalQueriesResponse": {},
+      "EvalQueriesResponse": {
+        "type": "object"
+      },
       "ExplorePanelsState": {
         "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
       },
@@ -6005,6 +6022,9 @@
               "$ref": "#/components/schemas/TimeIntervalItem"
             },
             "type": "array"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8145,6 +8165,9 @@
               "$ref": "#/components/schemas/TimeIntervalItem"
             },
             "type": "array"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8327,6 +8350,9 @@
           },
           "provenance": {
             "$ref": "#/components/schemas/Provenance"
+          },
+          "record": {
+            "$ref": "#/components/schemas/Record"
           },
           "ruleGroup": {
             "example": "eval_group_1",
@@ -8908,13 +8934,20 @@
       "Record": {
         "properties": {
           "from": {
+            "description": "Which expression node should be used as the input for the recorded metric.",
+            "example": "A",
             "type": "string"
           },
           "metric": {
+            "description": "Name of the recorded metric.",
+            "example": "grafana_alerts_ratio",
             "type": "string"
           }
         },
-        "title": "Record defines how data produced by a recording rule is written.",
+        "required": [
+          "metric",
+          "from"
+        ],
         "type": "object"
       },
       "RecordingRuleJSON": {
@@ -9487,7 +9520,7 @@
             "type": "string"
           },
           "type": {
-            "$ref": "#/components/schemas/RuleType"
+            "type": "string"
           }
         },
         "required": [
@@ -9604,10 +9637,6 @@
           "status"
         ],
         "type": "object"
-      },
-      "RuleType": {
-        "title": "RuleType models the type of a rule.",
-        "type": "string"
       },
       "SNSConfig": {
         "properties": {
@@ -10108,6 +10137,20 @@
       "SignatureAlgorithm": {
         "format": "int64",
         "type": "integer"
+      },
+      "SilenceMetadata": {
+        "properties": {
+          "folder_uid": {
+            "type": "string"
+          },
+          "rule_title": {
+            "type": "string"
+          },
+          "rule_uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
       },
       "SlackAction": {
         "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -11891,7 +11934,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12024,6 +12066,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -12079,13 +12122,38 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
+      "gettableGrafanaSilence": {
+        "properties": {
+          "accessControl": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "example": {
+              "create": false,
+              "read": true,
+              "write": false
+            },
+            "type": "object"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/SilenceMetadata"
+          }
+        },
+        "type": "object"
+      },
+      "gettableGrafanaSilences": {
+        "items": {
+          "$ref": "#/components/schemas/gettableGrafanaSilence"
+        },
+        "type": "array"
+      },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12134,13 +12202,13 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12284,6 +12352,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -24680,6 +24749,21 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Version of mute timing to use for optimistic concurrency. Leave empty to disable validation",
+            "in": "query",
+            "name": "version",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -24785,6 +24869,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Replace an existing mute timing.",

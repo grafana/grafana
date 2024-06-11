@@ -131,7 +131,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   render() {
     const { extended, variable } = this.props;
-    if (!extended || !extended.dataSource || !extended.VariableQueryEditor) {
+    if (!extended || !extended.dataSource) {
       return null;
     }
 

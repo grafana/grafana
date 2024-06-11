@@ -26,6 +26,7 @@
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
+    "keywords": ["aws", "amazon"],
     "logos": {
       "small": "img/amazon-web-services.png",
       "large": "img/amazon-web-services.png"
