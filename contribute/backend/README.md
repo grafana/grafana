@@ -1,19 +1,16 @@
 # Backend
 
-The contribution guidelines for Grafana backend developers contain a lot of information for anyone who wants to contribute to this open-source project. However, it isn't necessary for you to read all of it, so long as you read what is most relevant to you.
+The contribution guidelines for Grafana backend developers contain a lot of information for anyone who wants to contribute to our open-source project. But you don't necessarily have to read all of it, so long as you read what is most relevant to you.
 
 ## Guidelines everyone should read
 
-First, read the [backend style guide](/contribute/backend/style-guide.md)
-to get a sense for how we work to ensure that the Grafana codebase is
-consistent and accessible. The rest of the backend contributor
-documentation is more relevant to reviewers and contributors looking to
-make larger changes.
+We recommend that all contributors read the [backend style guide](/contribute/backend/style-guide.md) to get a sense for how we try to ensure that the Grafana codebase is consistent and accessible. 
+The rest of the backend contributor documentation tends to be more relevant to reviewers and contributors who want to make changes of greater size or quantity.
 
 ## Guidelines specifically for backend developers
 
-For anyone reviewing code for Grafana's backend, a basic understanding
-of content of the following files is expected:
+For anyone who reviews code for Grafana's backend, get a basic understanding
+of the content of the following files:
 
 - [Currently recommended practices](/contribute/backend/recommended-practices.md)
 - [Services](/contribute/backend/services.md)
@@ -23,8 +20,7 @@ of content of the following files is expected:
 
 ## Guidelines for contributors who make or review large changes to the backend
 
-Reviewers who make or review large changes should additionally make a habit out
-of familiarizing themselves with the entire contents of
+If you want to make or review large changes to the backend, be sure to habitually familiarize yourself with the entire contents of
 [/contribute/backend](/contribute/backend) from time to time.
 
 ## Guidelines for dependency management

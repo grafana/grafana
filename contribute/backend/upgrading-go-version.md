@@ -1,14 +1,14 @@
 # Upgrade Go version
 
-When upgrading Go for use in Grafana development, we recommend the following practices.
+We recommend the practices outlined in this documentation when you upgrade Go for use in Grafana development.
 
 ## Example PR
 
-Refer to the following PR for an example of how to perform a Go upgrade.
+Refer to the following PR for an example of how to perform a Go upgrade:
 
 - [PR ##79329](https://github.com/grafana/grafana/pull/79329)
 
-## Main areas that need to update
+## Main areas to update
 
 Change at least the following parts of Go and related files:
 

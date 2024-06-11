@@ -1,15 +1,14 @@
-# Recommended practices
+# Currently recommended practices
 
 Grafana Labs occasionally identifies patterns that may be useful or harmful so that we can introduce or remove from the codebase. 
-When the complexity or importance of introducing or removing such a pattern is sufficiently high, we document it on this page to provide an addressable _currently recommended practice_. 
-These local practices collect these important patterns in one place, so you can reference them and create a shared understanding of how to write idiomatic code for the Grafana backend.
+When the complexity or importance of introducing or removing such idiomatic patterns is sufficiently high, we document it on this page to provide a reference. Because the relevance of these practices may vary over time, we call them _currently recommended practices_. 
 
 ## Large-scale refactoring
 
 Large-scale refactoring based on a new recommended practice is a
 delicate matter. It's usually better to introduce the new
 way incrementally over multiple releases and over time to balance the
-want to introduce new useful patterns and the need to keep Grafana
+desire to introduce new useful patterns with the need to keep Grafana
 stable. It's also easier to review and revert smaller chunks of changes,
 reducing the risk of complications.
 
@@ -19,9 +18,9 @@ Refer to the following table to identify important categories of refactoring.
 
 | State            | Description                                                                                                                                       |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Proposed         | The practice has been proposed and been positively received by the Grafana team. Follow this discretionary proposal as you choose.
+| Proposed         | This is an optional practice that has been proposed and received positively  by the Grafana team. Follow this proposal as you choose.
 | Ongoing, active  | The practice is actively being worked on. New code should adhere to the practice whenever possible.                                           |
-| Ongoing, passive | There is no immediate active work on refactoring old code. New code should adhere to the practice whenever possible.                          |
+| Ongoing, passive | There's no immediate active work on refactoring old code. New code should adhere to the practice whenever possible.                          |
 | Completed        | The work has been done and there is no, or negligible, legacy code left that needs refactoring. New code must adhere to the practice.              |
 | Abandoned        | The practice doesn't have any active ongoing work and new code doesn't need to comply with the practice described.                                 |
 
@@ -33,47 +32,48 @@ It's easier for contributors to start contributing to Grafana if our
 code is easily understandable. When there isn't a more specific Grafana
 recommended practice, we recommend that you follow the practices as put forth
 by the Go project for development of Go code or the Go compiler itself
-whenever appropriate.
+as appropriate.
 
-A best practice is "[Effective Go](https://golang.org/doc/effective_go.html)", documentation that isn't updated to reflect more recent changes since Go was initially released, but which remains a good source for understanding the general differences between Go and other languages.
+Firstly, best practice is the online book [_Effective Go_](https://golang.org/doc/effective_go.html), which isn't updated to reflect more recent changes since Go was initially released, but which remains a good source for understanding the general differences between Go and other languages.
 
 Secondly, the guidelines for [Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments) for the Go compiler can mostly be applied directly to the Grafana codebase. 
 There are idiosyncrasies in Grafana, such as interfaces living closer to their declarations than to their users for services, and the documentation doesn't enforce public declarations.
 Instead, the documentation prioritizes high coverage aimed at end-users over documenting internals in the backend.
 
-- [Effective Go](https://golang.org/doc/effective_go.html).
+- [_Effective Go_](https://golang.org/doc/effective_go.html).
 - [Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments).
 
 ## 100 - Global state
 
 **State:** Ongoing, passive.
 
-Global state makes testing and debugging software harder, and it's something we want to avoid when possible. Unfortunately, there is quite a lot of global state in Grafana.
+Global state makes testing and debugging software harder, and it's something we want to avoid whenever possible. 
 
-We want to migrate away from this by using
-[Wire](https://github.com/google/wire) and dependency injection to pack.
+Unfortunately, there's quite a lot of global state in Grafana.
+We want to migrate away from this state by using
+[Wire](https://github.com/google/wire) and dependency injection to pack code.
 
-## 101 - Limit the use of the init() function
+## 101 - Limit use of the init() function
 
 **State:** Ongoing, passive.
 
-Only use the init() function to register services or implementations.
+Don't use the `init()` function for any purpose other than registering services or implementations.
 
 ## 102 - Refactor settings
 
 **State:** Ongoing, passive.
 
-We plan to move all settings to from package level vars in the settings package to the [`setting.Cfg`](https://github.com/grafana/grafana/blob/df917663e6f358a076ed3daa9b199412e95c11f4/pkg/setting/setting.go#L210) struct. To access the settings, services and components can inject this `setting.Cfg` struct:
+We plan to move all settings from package-level vars in the settings package to the [`setting.Cfg`](https://github.com/grafana/grafana/blob/df917663e6f358a076ed3daa9b199412e95c11f4/pkg/setting/setting.go#L210) struct. To access the settings, services and components can inject  `setting.Cfg`:
 
 - [`Cfg` struct](https://github.com/grafana/grafana/blob/df917663e6f358a076ed3daa9b199412e95c11f4/pkg/setting/setting.go#L210)
-- [Injection example](https://github.com/grafana/grafana/blob/c9773e55b234b7637ea97b671161cd856a1d3d69/pkg/services/cleanup/cleanup.go#L34)
+- [Injection](https://github.com/grafana/grafana/blob/c9773e55b234b7637ea97b671161cd856a1d3d69/pkg/services/cleanup/cleanup.go#L34)
 
-## 103 - Reduce the use of GoConvey
+## 103 - Reduce use of GoConvey
 
 **State:** Completed.
 
 We encourage you to migrate away from using GoConvey. 
-Instead, we want to use `stdlib` testing with [testify](https://github.com/stretchr/testify), because it's the most common approach in the Go community, and we think it will be easier for new contributors. 
+Instead, we suggest the use of `stdlib` testing with [testify](https://github.com/stretchr/testify), because it's the most common approach in the Go community, and we think it will be easier for new contributors. 
 To learn more about how we want to write tests, refer to the [backend style guide](/contribute/backend/style-guide.md).
 
 ## 104 - Refactor SqlStore
@@ -86,28 +86,26 @@ The `sqlstore` handlers all use a global `xorm` engine variable. Refactor them t
 
 **State:** Ongoing, passive.
 
-Refactor HTTP handlers so that the handler methods are on the `HttpServer` instance or a more detailed handler struct, for example, `AuthHandler`. 
-This ensures they get access to `HttpServer` service dependencies (and its `Cfg` object), so it avoids a global state.
+Refactor HTTP handlers so that the handler methods are on the `HttpServer` instance or a more detailed handler struct. For example, `AuthHandler`. 
+Doing so ensures that the handler methods get access to `HttpServer` service dependencies (and its `Cfg` object), so that global state may be avoided.
 
 ## 106 - Compare dates
 
 **State:** Ongoing, passive.
 
-Store newly introduced date columns in the database as epoch-based
-integers (that is, UNIX timestamps) if they require date comparison.
-This permits you to have a unified approach for comparing dates against all the supported databases instead of handling dates differently for each database. 
+Store newly introduced date columns in the database as epoch-based integers (that is, UNIX timestamps) if they require date comparison.
+This permits you to have a unified approach for comparing dates against all the supported databases instead of needing to handle dates differently for each database. 
 Also, when you compare epoch-based integers you no longer need error-pruning transformations to and from other time zones.
 
 ## 107 - Avoid the simplejson package
 
 **State:** Ongoing, passive
 
-Use of the `simplejson` package (`pkg/components/simplejson`) in place
-of types (that is, Go structs) results in code that is difficult to maintain.
+Don't use the `simplejson` package (`pkg/components/simplejson`) instead of types (that is, Go structs) because this results in code that is difficult to maintain.
 Instead, create types for objects and use the Go standard library's
 [`encoding/json`](https://golang.org/pkg/encoding/json/) package.
 
-## 108 - Make provisionable
+## 108 - Enable provisioning
 
 **State:** Abandoned: Grafana's file-based refactoring is limited to work natively only on on-premise installations of Grafana. We want to enhance the use of the API to enable provisioning for all Grafana instances in the future.
 
@@ -129,25 +127,22 @@ Utility functions and methods normally don't need `context.Context`.
 To follow Go best practices, any function or method that receives a
 `context.Context` argument should receive it as its [first parameter](https://github.com/golang/go/wiki/CodeReviewComments#contexts).
 
-We encourage you to make sure that `context.Context` is passed down
-through all layers of the code.
-When you provide contextual information for the full life cycle of an API request, this allows Grafana to use contextual logging. It also provides contextual information about the
+We encourage you to make sure that `context.Context` is passed down through all layers of your code.
+When you provide contextual information for the full life cycle of an API request, Grafana can use contextual logging. It also provides contextual information about the
 authenticated user, and it creates multiple spans for a distributed trace of service calls, database queries, and so on.
 
-Code should use `context.TODO` whenever it's unclear which Context to use,
+Code should use `context.TODO` whenever it's unclear which `Context` to use,
 or if it isn't yet available because the surrounding function hasn't yet
 been extended to accept a `context.Context` argument. For more details, refer to the documentation:
 - [Services](/contribute/backend/services.md)
 - [Communication](/contribute/backend/communication.md)
 - [Database](/contribute/backend/database.md)
-- [Original design doc](https://docs.google.com/document/d/1ebUhUVXU8FlShezsN-C64T0dOoo-DaC9_r-c8gB2XEU/edit#)
 
 ## 110 - Move API error handling to service layer
 
 **State:** Ongoing, passive.
 
 All errors returned from Grafana's services should carry a status and
-the information necessary to provide a structured end-user facing
-message. Structured messages can be displayed on the frontend and may be [internationalized](../internationalization.md). 
+the information necessary to provide a structured message that faces the end-user. Structured messages can be displayed on the frontend and may be [internationalized](../internationalization.md). 
 
 To learn more, refer to [Errors](/contribute/backend/errors.md).
