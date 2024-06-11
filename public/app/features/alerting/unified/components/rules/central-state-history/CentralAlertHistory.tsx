@@ -209,9 +209,11 @@ function AlertRuleName({ labels, ruleUID }: { labels: Record<string, string>; ru
     return <Text>{alertRuleName}</Text>;
   }
   return (
-    <a href={`/alerting/${GRAFANA_DATASOURCE_NAME}/${ruleUID}/view`} className={styles.alertName}>
-      {alertRuleName}
-    </a>
+    <Tooltip content={alertRuleName ?? ''}>
+      <a href={`/alerting/${GRAFANA_DATASOURCE_NAME}/${ruleUID}/view`} className={styles.alertName}>
+        {alertRuleName}
+      </a>
+    </Tooltip>
   );
 }
 
