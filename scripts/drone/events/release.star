@@ -74,7 +74,7 @@ def release_pr_step(depends_on = []):
             "default_target=`echo $${{TAG}} | perl -pe 's/{}/v\\1.\\2.x/'`".format(semver_regex),
             "backport=`if [[ -z $$LATEST ]]; then echo $$default_target; fi`",
             # Install gh CLI
-            "curl -L $${GH_CLI_URL} | tar -xvf --strip-components=1 -C /usr",
+            "curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr",
             # Run the release-pr workflow
             "gh workflow run " +
             "-f dry_run=$${DRY_RUN} " +
