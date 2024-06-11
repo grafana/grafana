@@ -68,7 +68,7 @@ Examples of labels are `server=server1` or `team=backend`. Each alert rule can h
 
 For example, an alert instance might have the label set `{alertname="High CPU usage",server="server1"}` while another alert instance might have the label set `{alertname="High CPU usage",server="server2"}`. These are two separate alert instances because although their `alertname` labels are the same, their `server` labels are different.
 
-{{< figure src="/static/img/docs/alerting/unified/multi-dimensional-alert.png" >}}
+{{< figure alt="Image shows an example of an alert instance and its labels" src="/static/img/docs/alerting/unified/multi-dimensional-alert.png" >}}
 
 Labels are a fundamental component of alerting:
 
