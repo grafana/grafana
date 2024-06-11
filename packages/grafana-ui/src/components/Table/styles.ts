@@ -19,25 +19,29 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     asCellText?: boolean,
     textShouldWrap?: boolean,
     textWrapped?: boolean,
-    rowStyled?: boolean
+    rowStyled?: boolean,
+    rowExpanded?: boolean,
   ) => {
+
+    console.log(rowExpanded);
+
     return css({
       label: overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow',
       padding: `${cellPadding}px`,
       width: '100%',
       // Cell height need to account for row border
-      height: `${rowHeight - 1}px`,
+      height: rowExpanded ? 'auto !important' : `${rowHeight - 1}px`,
       wordBreak: textWrapped ? 'break-all' : 'inherit',
 
       display: 'flex',
 
       ...(asCellText
         ? {
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            userSelect: 'text',
-            whiteSpace: 'nowrap',
-          }
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          userSelect: 'text',
+          whiteSpace: 'nowrap',
+        }
         : {}),
 
       alignItems: 'center',
@@ -54,7 +58,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       '&:hover': {
         overflow: overflowOnHover && !textWrapped ? 'visible' : undefined,
         width: textShouldWrap || !overflowOnHover ? 'auto' : 'auto !important',
-        height: (textShouldWrap || overflowOnHover) && !textWrapped ? 'auto !important' : `${rowHeight - 1}px`,
+        height: ((textShouldWrap || overflowOnHover) && !textWrapped) ? 'auto !important' : `${rowHeight - 1}px`,
         minHeight: `${rowHeight - 1}px`,
         wordBreak: textShouldWrap ? 'break-word' : undefined,
         whiteSpace: textShouldWrap && overflowOnHover ? 'normal' : 'nowrap',
