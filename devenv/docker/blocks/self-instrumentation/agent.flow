@@ -85,3 +85,51 @@ pyroscope.scrape "default" {
     }
   }
 }
+
+pyroscope.scrape "apiservers" {
+  targets = [
+    {"__address__" = "host.docker.internal:6443", "service_name"="query.grafana.app"},
+    {"__address__" = "host.docker.internal:6444", "service_name"="testdata.datasource.grafana.app"},
+    {"__address__" = "host.docker.internal:6445", "service_name"="cloudconfig.grafana.app"},
+  ]
+  scheme = "https"
+  forward_to = [pyroscope.write.default.receiver]
+
+  tls_config {
+    insecure_skip_verify = true
+  }
+
+  profiling_config {
+    profile.process_cpu {
+      enabled = true
+    }
+
+    profile.godeltaprof_memory {
+      enabled = true
+    }
+
+    profile.memory { // disable memory, use godeltaprof_memory instead
+      enabled = false
+    }
+
+    profile.godeltaprof_mutex {
+      enabled = true
+    }
+
+    profile.mutex { // disable mutex, use godeltaprof_mutex instead
+      enabled = false
+    }
+
+    profile.godeltaprof_block {
+      enabled = true
+    }
+
+    profile.block { // disable block, use godeltaprof_block instead
+      enabled = false
+    }
+
+    profile.goroutine {
+      enabled = true
+    }
+  }
+}

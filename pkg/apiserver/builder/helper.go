@@ -98,6 +98,7 @@ func SetupConfig(
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, pathRewriters)
 		handler = k8stracing.WithTracing(handler, serverConfig.TracerProvider, "KubernetesAPI")
+		handler = filters.WithProfilingLabels(handler)
 
 		return handler
 	}
