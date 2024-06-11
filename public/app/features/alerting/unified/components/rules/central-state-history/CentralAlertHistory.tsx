@@ -36,11 +36,11 @@ import { GRAFANA_DATASOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
-import { STATE_HISTORY_POLLING_INTERVAL } from '../state-history/LokiStateHistory';
 import { LogRecord } from '../state-history/common';
 import { useRuleHistoryRecords } from '../state-history/useRuleHistoryRecords';
 
 const LIMIT_EVENTS = 250;
+const STATE_HISTORY_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 
 const HistoryEventsList = ({ timeRange }: { timeRange?: TimeRange }) => {
   const styles = useStyles2(getStyles);
