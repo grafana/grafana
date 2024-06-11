@@ -62,6 +62,7 @@ type DeleteResourcePermissionsCmd struct {
 	ResourceID        string
 }
 
+// TODO check this as well
 func (s *store) DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error {
 	scope := accesscontrol.Scope(cmd.Resource, cmd.ResourceAttribute, cmd.ResourceID)
 
@@ -707,7 +708,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 }
 
 func (s *store) shouldStoreActionSet(permission string) bool {
-	return (s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "")
+	return (s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "" && isFolderOrDashboardAction(permission))
 }
 
 func deletePermissions(sess *db.Session, ids []int64) error {
