@@ -65,6 +65,10 @@ func (il *InstanceLabels) StringAndHash() (string, string, error) {
 	return string(b), fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
+func (il *InstanceLabels) Fingerprint() data.Fingerprint {
+	return data.Labels(*il).Fingerprint()
+}
+
 // The following is based on SDK code, copied for now
 
 // tupleLables is an alternative representation of Labels (map[string]string) that can be sorted

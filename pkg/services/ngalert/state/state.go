@@ -27,7 +27,7 @@ type State struct {
 
 	// CacheID is a unique, opaque identifier for the state, and is used to find the state
 	// in the state cache. It tends to be derived from the state's labels.
-	CacheID string
+	CacheID data.Fingerprint
 
 	// State represents the current state.
 	State eval.State
