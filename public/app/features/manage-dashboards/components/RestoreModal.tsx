@@ -27,7 +27,7 @@ export const RestoreModal = ({ onConfirm, onDismiss, selectedItems, isLoading, .
             <Trans i18nKey="recentlyDeleted.restoreModal.text">This action will restore the following content:</Trans>
           </Text>
           <DescendantCount selectedItems={selectedItems} />{' '}
-          {/*TODO: clarify whether "3 items: 3 dashboards" makes sense */}
+          {/*TODO: "3 items: 3 dashboards" doesn't make sense => replace by list of dashboards (list up to 5 dashboards) or number (from 6 dashboards) */}
         </>
       }
       confirmText={
