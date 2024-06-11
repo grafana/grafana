@@ -124,7 +124,7 @@ function getCellStyle(
   shouldWrapText = false,
   textWrapped = false,
   rowStyled = false,
-  rowExpanded = false,
+  rowExpanded = false
 ) {
   // Setup color variables
   let textColor: string | undefined = undefined;
