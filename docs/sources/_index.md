@@ -20,9 +20,9 @@ title: Grafana OSS and Enterprise documentation
 hero:
   title: Grafana OSS and Enterprise documentation
   level: 1
-  width: 110
+  width: 100
   image: /media/docs/grafana-cloud/infrastructure/grafanalogo.svg
-  height: 110
+  height: 100
   description: Query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored.
 cards:
   title_class: pt-0 lh-1
