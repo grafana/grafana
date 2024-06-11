@@ -2524,10 +2524,6 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			ngmodels.KeepLastErrState: baseRuleWith(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.KeepLastErrState)),
 		}
 
-		cacheID := func(lbls data.Labels) data.Fingerprint {
-			return lbls.Fingerprint()
-		}
-
 		type errorTestCase struct {
 			desc                string
 			ruleMutators        []ngmodels.AlertRuleMutator
@@ -2582,7 +2578,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Normal,
 								State: &State{
-									CacheID:            cacheID(labels["system + rule"]),
+									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									State:              eval.Error,
 									Error:              datasourceError,
@@ -2743,7 +2739,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Normal,
 								State: &State{
-									CacheID:            cacheID(labels["system + rule"]),
+									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									State:              eval.Error,
 									Error:              datasourceError,
@@ -2876,7 +2872,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Normal,
 								State: &State{
-									CacheID:            cacheID(labels["system + rule"]),
+									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									State:              eval.Error,
 									Error:              datasourceError,
@@ -3023,7 +3019,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Error,
 								State: &State{
-									CacheID:            cacheID(labels["system + rule"]),
+									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									Error:              datasourceError,
 									State:              eval.Normal,
@@ -3143,7 +3139,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Normal,
 								State: &State{
-									CacheID:            cacheID(labels["system + rule"]),
+									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									State:              eval.Error,
 									Error:              datasourceError,
@@ -3239,7 +3235,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Pending,
 								State: &State{
-									CacheID:            cacheID(labels["system + rule"]),
+									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									State:              eval.Error,
 									Error:              datasourceError,
@@ -3325,7 +3321,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Pending,
 								State: &State{
-									CacheID:            cacheID(labels["system + rule"]),
+									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									State:              eval.Error,
 									Error:              datasourceError,
