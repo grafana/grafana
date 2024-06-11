@@ -94,40 +94,6 @@ describe('DashboardScenePageStateManager', () => {
       expect(loader.state.isLoading).toBe(false);
     });
 
-    // it('should initialize url sync', async () => {
-    //   setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
-
-    //   locationService.partial({ from: 'now-5m', to: 'now' });
-
-    //   const loader = new DashboardScenePageStateManager({});
-    //   await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
-    //   const dash = loader.state.dashboard;
-
-    //   expect(dash!.state.$timeRange?.state.from).toEqual('now-5m');
-
-    //   getUrlSyncManager().cleanUp(dash!);
-
-    //   // try loading again (and hitting cache)
-    //   locationService.partial({ from: 'now-10m', to: 'now' });
-
-    //   await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
-    //   const dash2 = loader.state.dashboard;
-
-    //   expect(dash2!.state.$timeRange?.state.from).toEqual('now-10m');
-    // });
-
-    // it('should not initialize url sync for embedded dashboards', async () => {
-    //   setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
-
-    //   locationService.partial({ from: 'now-5m', to: 'now' });
-
-    //   const loader = new DashboardScenePageStateManager({});
-    //   await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Embedded });
-    //   const dash = loader.state.dashboard;
-
-    //   expect(dash!.state.$timeRange?.state.from).toEqual('now-6h');
-    // });
-
     describe('New dashboards', () => {
       it('Should have new empty model with meta.isNew and should not be cached', async () => {
         const loader = new DashboardScenePageStateManager({});

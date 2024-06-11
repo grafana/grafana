@@ -61,7 +61,6 @@ export function useSaveDashboard(isCopy = false) {
 
         if (newUrl !== currentLocation.pathname) {
           setTimeout(() => {
-            // Because the path changes we need to stop and restart url sync
             locationService.push({ pathname: newUrl, search: currentLocation.search });
           });
         }
