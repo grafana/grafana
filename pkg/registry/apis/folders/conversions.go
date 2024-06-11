@@ -32,7 +32,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 		if v.ID > 0 { // nolint:staticcheck
 			meta.SetOriginInfo(&utils.ResourceOriginInfo{
 				Name: "SQL",
-				Path: fmt.Sprintf("%d", v.ID), // nolint:staticcheck
+				Key:  fmt.Sprintf("%d", v.ID), // nolint:staticcheck
 			})
 		}
 		if v.CreatedBy > 0 {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -13,8 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
-
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 type DualWriterMode2 struct {
@@ -317,7 +316,7 @@ func (d *DualWriterMode2) Compare(storageObj, legacyObj runtime.Object) bool {
 
 func parseList(legacyList []runtime.Object) (metainternalversion.ListOptions, map[string]int, error) {
 	options := metainternalversion.ListOptions{}
-	originPaths := []string{}
+	originKeys := []string{}
 	indexMap := map[string]int{}
 
 	for i, obj := range legacyList {
@@ -325,7 +324,7 @@ func parseList(legacyList []runtime.Object) (metainternalversion.ListOptions, ma
 		if err != nil {
 			return options, nil, err
 		}
-		originPaths = append(originPaths, metaAccessor.GetOriginPath())
+		originKeys = append(originKeys, metaAccessor.GetOriginKey())
 
 		accessor, err := meta.Accessor(obj)
 		if err != nil {
@@ -334,11 +333,11 @@ func parseList(legacyList []runtime.Object) (metainternalversion.ListOptions, ma
 		indexMap[accessor.GetName()] = i
 	}
 
-	if len(originPaths) == 0 {
+	if len(originKeys) == 0 {
 		return options, nil, nil
 	}
 
-	r, err := labels.NewRequirement(utils.AnnoKeyOriginPath, selection.In, originPaths)
+	r, err := labels.NewRequirement(utils.AnnoKeyOriginKey, selection.In, originKeys)
 	if err != nil {
 		return options, nil, err
 	}

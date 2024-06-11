@@ -73,7 +73,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 		originTime := time.UnixMilli(rsp.Origin.Time).UTC()
 		grafanaAccessor.SetOriginInfo(&utils.ResourceOriginInfo{
 			Name: rsp.Origin.Source,
-			Path: rsp.Origin.Key, // keep playlist hack working
+			Key:  rsp.Origin.Key,
 			// Path: rsp.Origin.Path,
 			Timestamp: &originTime,
 		})
@@ -136,7 +136,7 @@ func resourceToEntity(res runtime.Object, requestInfo *request.RequestInfo, code
 		Title:           grafanaAccessor.FindTitle(metaAccessor.GetName()),
 		Origin: &entityStore.EntityOriginInfo{
 			Source: grafanaAccessor.GetOriginName(),
-			Key:    grafanaAccessor.GetOriginPath(), // Not really accurate, but keeps hack working
+			Key:    grafanaAccessor.GetOriginKey(),
 			// Path: 	grafanaAccessor.GetOriginPath(),
 		},
 		Labels: metaAccessor.GetLabels(),

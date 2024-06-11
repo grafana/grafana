@@ -99,6 +99,9 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery,
 	if query.Requirements.ListDeleted {
 		return nil, 0, fmt.Errorf("ListDeleted not yet supported")
 	}
+	if len(query.Requirements.ListOriginKeys) > 0 {
+		return nil, 0, fmt.Errorf("ListOriginKeys not yet supported")
+	}
 
 	token, err := readContinueToken(query)
 	if err != nil {
@@ -314,7 +317,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var origin_name sql.NullString
 	var origin_path sql.NullString
 	var origin_ts sql.NullInt64
-	var origin_hash sql.NullString
+	var origin_key sql.NullString
 	var data []byte // the dashboard JSON
 	var version int64
 
@@ -323,7 +326,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		&created, &createdByID, &createdByName,
 		&updated, &updatedByID, &updatedByName,
 		&plugin_id,
-		&origin_name, &origin_path, &origin_hash, &origin_ts,
+		&origin_name, &origin_path, &origin_key, &origin_ts,
 		&version,
 		&row.Title, &data,
 	)
@@ -366,7 +369,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 			meta.SetOriginInfo(&utils.ResourceOriginInfo{
 				Name:      origin_name.String,
 				Path:      originPath,
-				Hash:      origin_hash.String,
+				Key:       origin_key.String,
 				Timestamp: &ts,
 			})
 		} else if plugin_id != "" {
