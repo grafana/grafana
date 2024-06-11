@@ -497,6 +497,12 @@
       "title": "Åđđ qūęřy ŧő Qūęřy Ŀįþřäřy",
       "visibility": "Vįşįþįľįŧy"
     },
+    "logs": {
+      "maximum-pinned-logs": "Mäχįmūm őƒ {{PINNED_LOGS_LIMIT}} pįŉŉęđ ľőģş řęäčĥęđ. Ůŉpįŉ ä ľőģ ŧő äđđ äŉőŧĥęř.",
+      "no-logs-found": "Ńő ľőģş ƒőūŉđ.",
+      "scan-for-older-logs": "Ŝčäŉ ƒőř őľđęř ľőģş",
+      "stop-scan": "Ŝŧőp şčäŉ"
+    },
     "rich-history": {
       "close-tooltip": "Cľőşę qūęřy ĥįşŧőřy",
       "datasource-a-z": "Đäŧä şőūřčę Å-Ż",

@@ -39,12 +39,14 @@ import {
   InlineFieldRow,
   InlineSwitch,
   PanelChrome,
+  PopoverContent,
   RadioButtonGroup,
   SeriesVisibilityChangeMode,
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
 import { mapMouseEventToMode } from '@grafana/ui/src/components/VizLegend/utils';
+import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
@@ -112,6 +114,7 @@ interface Props extends Themeable2 {
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
   loadMoreLogs?(range: AbsoluteTimeRange): void;
+  onPinLineCallback?: () => void;
 }
 
 export type LogsVisualisationType = 'table' | 'logs';
@@ -132,6 +135,7 @@ interface State {
   tableFrame?: DataFrame;
   visualisationType?: LogsVisualisationType;
   logsContainer?: HTMLDivElement;
+  pinLineButtonTooltipTitle?: PopoverContent;
 }
 
 // we need to define the order of these explicitly
@@ -155,6 +159,8 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
   }
   return 'logs';
 };
+
+const PINNED_LOGS_LIMIT = 3;
 
 class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
@@ -183,6 +189,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     tableFrame: undefined,
     visualisationType: this.props.panelState?.logs?.visualisationType ?? getDefaultVisualisationType(),
     logsContainer: undefined,
+    pinLineButtonTooltipTitle: 'Pin to content outline',
   };
 
   constructor(props: Props) {
@@ -652,6 +659,56 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.topLogsRef.current?.scrollIntoView();
   };
 
+  onPinToContentOutlineClick = (row: LogRowModel) => {
+    if (this.getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
+      this.setState({
+        pinLineButtonTooltipTitle: (
+          <span style={{ display: 'flex', textAlign: 'center' }}>
+            ❗️
+            <Trans i18nKey="explore.logs.maximum-pinned-logs">
+              Maximum of {{ PINNED_LOGS_LIMIT }} pinned logs reached. Unpin a log to add another.
+            </Trans>
+          </span>
+        ),
+      });
+      return;
+    }
+
+    // find the Logs parent item
+    const logsParent = this.context?.outlineItems.find((item) => item.panelId === 'Logs' && item.level === 'root');
+
+    //update the parent's expanded state
+    if (logsParent) {
+      this.context?.updateItem(logsParent.id, { expanded: true });
+    }
+
+    this.context?.register({
+      icon: 'gf-logs',
+      title: 'Pinned log',
+      panelId: 'Logs',
+      level: 'child',
+      ref: null,
+      color: LogLevelColor[row.logLevel],
+      childOnTop: true,
+      onClick: () => this.onOpenContext(row, () => {}),
+      onRemove: (id: string) => {
+        this.context?.unregister(id);
+        if (this.getPinnedLogsCount() < PINNED_LOGS_LIMIT) {
+          this.setState({
+            pinLineButtonTooltipTitle: 'Pin to content outline',
+          });
+        }
+      },
+    });
+
+    this.props.onPinLineCallback?.();
+  };
+
+  getPinnedLogsCount = () => {
+    const logsParent = this.context?.outlineItems.find((item) => item.panelId === 'Logs' && item.level === 'root');
+    return logsParent?.children?.filter((child) => child.title === 'Pinned log').length ?? 0;
+  };
+
   render() {
     const {
       width,
@@ -945,6 +1002,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     containerRendered={!!this.state.logsContainer}
                     onClickFilterString={this.props.onClickFilterString}
                     onClickFilterOutString={this.props.onClickFilterOutString}
+                    onPinLine={this.onPinToContentOutlineClick}
+                    pinLineButtonTooltipTitle={this.state.pinLineButtonTooltipTitle}
                   />
                 </InfiniteScroll>
               </div>
@@ -952,9 +1011,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
             {!loading && !hasData && !scanning && (
               <div className={styles.logRows}>
                 <div className={styles.noData}>
-                  No logs found.
+                  <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
                   <Button size="sm" variant="secondary" onClick={this.onClickScan}>
-                    Scan for older logs
+                    <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
                   </Button>
                 </div>
               </div>
@@ -964,7 +1023,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 <div className={styles.noData}>
                   <span>{scanText}</span>
                   <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
-                    Stop scan
+                    <Trans i18nKey="explore.logs.stop-scan">Stop scan</Trans>
                   </Button>
                 </div>
               </div>
