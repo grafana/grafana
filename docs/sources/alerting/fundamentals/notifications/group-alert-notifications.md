@@ -164,7 +164,7 @@ The repeat interval timer decides how often notifications are sent (or repeated)
 
 Repeat interval is evaluated every time the group interval resets. If the alert group has not changed and the time since the last notification was longer than the repeat interval, then a notification is sent as a reminder that the alerts are still firing.
 
-Repeat interval must not only be greater than or equal to Group interval, but also must be a multiple of Group interval. If Repeat interval is not a multiple of Group interval it is coerced into one. For example, if your Group interval is 5 minutes, and your Repeat interval is 9 minutes, the Repeat interval is rounded up to the nearest multiple of 5 which is 10 minutes.
+Repeat interval must not only be greater than or equal to group interval, but also must be a multiple of Group interval. If Repeat interval is not a multiple of group interval it is coerced into one. For example, if your Group interval is 5 minutes, and your Repeat interval is 9 minutes, the Repeat interval is rounded up to the nearest multiple of 5 which is 10 minutes.
 
 **Example**
 
