@@ -46,9 +46,11 @@ type ResourceOriginInfo struct {
 }
 
 // Accessor functions for k8s objects
-type GrafanaResourceMetaAccessor interface {
+type GrafanaMetaAccessor interface {
 	metav1.Object
-	metav1.Type
+
+	GetAPIVersion() string
+	GetKind() string
 
 	GetUpdatedTimestamp() (*time.Time, error)
 	SetUpdatedTimestamp(v *time.Time)
@@ -78,9 +80,9 @@ type GrafanaResourceMetaAccessor interface {
 	FindTitle(defaultTitle string) string
 }
 
-var _ GrafanaResourceMetaAccessor = (*grafanaResourceMetaAccessor)(nil)
+var _ GrafanaMetaAccessor = (*grafanaMetaAccessor)(nil)
 
-type grafanaResourceMetaAccessor struct {
+type grafanaMetaAccessor struct {
 	raw interface{} // the original object (it implements metav1.Object)
 	obj metav1.Object
 	typ metav1.Type
@@ -90,7 +92,7 @@ type grafanaResourceMetaAccessor struct {
 // obj must be a pointer to an API type. An error is returned if the minimum
 // required fields are missing. Fields that are not required return the default
 // value and are a no-op if set.
-func MetaAccessor(raw interface{}) (GrafanaResourceMetaAccessor, error) {
+func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
 	obj, err := meta.Accessor(raw)
 	if err != nil {
 		return nil, err
@@ -98,18 +100,18 @@ func MetaAccessor(raw interface{}) (GrafanaResourceMetaAccessor, error) {
 	typ, ok := raw.(metav1.Type)
 	if !ok {
 		typ, ok = obj.(metav1.Type)
+		if !ok {
+			typ = nil
+		}
 	}
-	if !ok {
-		return nil, fmt.Errorf("expecting the object to be a type")
-	}
-	return &grafanaResourceMetaAccessor{raw, obj, typ}, nil
+	return &grafanaMetaAccessor{raw, obj, typ}, nil
 }
 
-func (m *grafanaResourceMetaAccessor) Object() metav1.Object {
+func (m *grafanaMetaAccessor) Object() metav1.Object {
 	return m.obj
 }
 
-func (m *grafanaResourceMetaAccessor) set(key string, val string) {
+func (m *grafanaMetaAccessor) set(key string, val string) {
 	anno := m.obj.GetAnnotations()
 	if val == "" {
 		if anno != nil {
@@ -124,11 +126,11 @@ func (m *grafanaResourceMetaAccessor) set(key string, val string) {
 	m.obj.SetAnnotations(anno)
 }
 
-func (m *grafanaResourceMetaAccessor) get(key string) string {
+func (m *grafanaMetaAccessor) get(key string) string {
 	return m.obj.GetAnnotations()[key]
 }
 
-func (m *grafanaResourceMetaAccessor) GetUpdatedTimestamp() (*time.Time, error) {
+func (m *grafanaMetaAccessor) GetUpdatedTimestamp() (*time.Time, error) {
 	v, ok := m.obj.GetAnnotations()[AnnoKeyUpdatedTimestamp]
 	if !ok || v == "" {
 		return nil, nil
@@ -141,7 +143,7 @@ func (m *grafanaResourceMetaAccessor) GetUpdatedTimestamp() (*time.Time, error) 
 	return &t, nil
 }
 
-func (m *grafanaResourceMetaAccessor) SetUpdatedTimestampMillis(v int64) {
+func (m *grafanaMetaAccessor) SetUpdatedTimestampMillis(v int64) {
 	if v > 0 {
 		t := time.UnixMilli(v)
 		m.SetUpdatedTimestamp(&t)
@@ -150,7 +152,7 @@ func (m *grafanaResourceMetaAccessor) SetUpdatedTimestampMillis(v int64) {
 	}
 }
 
-func (m *grafanaResourceMetaAccessor) SetUpdatedTimestamp(v *time.Time) {
+func (m *grafanaMetaAccessor) SetUpdatedTimestamp(v *time.Time) {
 	txt := ""
 	if v != nil && v.Unix() != 0 {
 		txt = v.UTC().Format(time.RFC3339)
@@ -158,39 +160,39 @@ func (m *grafanaResourceMetaAccessor) SetUpdatedTimestamp(v *time.Time) {
 	m.set(AnnoKeyUpdatedTimestamp, txt)
 }
 
-func (m *grafanaResourceMetaAccessor) GetCreatedBy() string {
+func (m *grafanaMetaAccessor) GetCreatedBy() string {
 	return m.get(AnnoKeyCreatedBy)
 }
 
-func (m *grafanaResourceMetaAccessor) SetCreatedBy(user string) {
+func (m *grafanaMetaAccessor) SetCreatedBy(user string) {
 	m.set(AnnoKeyCreatedBy, user)
 }
 
-func (m *grafanaResourceMetaAccessor) GetUpdatedBy() string {
+func (m *grafanaMetaAccessor) GetUpdatedBy() string {
 	return m.get(AnnoKeyUpdatedBy)
 }
 
-func (m *grafanaResourceMetaAccessor) SetUpdatedBy(user string) {
+func (m *grafanaMetaAccessor) SetUpdatedBy(user string) {
 	m.set(AnnoKeyUpdatedBy, user)
 }
 
-func (m *grafanaResourceMetaAccessor) GetFolder() string {
+func (m *grafanaMetaAccessor) GetFolder() string {
 	return m.get(AnnoKeyFolder)
 }
 
-func (m *grafanaResourceMetaAccessor) SetFolder(uid string) {
+func (m *grafanaMetaAccessor) SetFolder(uid string) {
 	m.set(AnnoKeyFolder, uid)
 }
 
-func (m *grafanaResourceMetaAccessor) GetSlug() string {
+func (m *grafanaMetaAccessor) GetSlug() string {
 	return m.get(AnnoKeySlug)
 }
 
-func (m *grafanaResourceMetaAccessor) SetSlug(v string) {
+func (m *grafanaMetaAccessor) SetSlug(v string) {
 	m.set(AnnoKeySlug, v)
 }
 
-func (m *grafanaResourceMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
+func (m *grafanaMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
 	anno := m.obj.GetAnnotations()
 	if anno == nil {
 		if info == nil {
@@ -218,7 +220,7 @@ func (m *grafanaResourceMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
 	m.obj.SetAnnotations(anno)
 }
 
-func (m *grafanaResourceMetaAccessor) GetOriginInfo() (*ResourceOriginInfo, error) {
+func (m *grafanaMetaAccessor) GetOriginInfo() (*ResourceOriginInfo, error) {
 	v, ok := m.obj.GetAnnotations()[AnnoKeyOriginName]
 	if !ok {
 		return nil, nil
@@ -232,19 +234,19 @@ func (m *grafanaResourceMetaAccessor) GetOriginInfo() (*ResourceOriginInfo, erro
 	}, err
 }
 
-func (m *grafanaResourceMetaAccessor) GetOriginName() string {
+func (m *grafanaMetaAccessor) GetOriginName() string {
 	return m.get(AnnoKeyOriginName)
 }
 
-func (m *grafanaResourceMetaAccessor) GetOriginPath() string {
+func (m *grafanaMetaAccessor) GetOriginPath() string {
 	return m.get(AnnoKeyOriginPath)
 }
 
-func (m *grafanaResourceMetaAccessor) GetOriginKey() string {
+func (m *grafanaMetaAccessor) GetOriginKey() string {
 	return m.get(AnnoKeyOriginKey)
 }
 
-func (m *grafanaResourceMetaAccessor) GetOriginTimestamp() (*time.Time, error) {
+func (m *grafanaMetaAccessor) GetOriginTimestamp() (*time.Time, error) {
 	v, ok := m.obj.GetAnnotations()[AnnoKeyOriginTimestamp]
 	if !ok || v == "" {
 		return nil, nil
@@ -256,173 +258,171 @@ func (m *grafanaResourceMetaAccessor) GetOriginTimestamp() (*time.Time, error) {
 	return &t, nil
 }
 
-// GetAnnotations implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetAnnotations() map[string]string {
+// GetAnnotations implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetAnnotations() map[string]string {
 	return m.obj.GetAnnotations()
 }
 
-// GetCreationTimestamp implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetCreationTimestamp() metav1.Time {
+// GetCreationTimestamp implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetCreationTimestamp() metav1.Time {
 	return m.obj.GetCreationTimestamp()
 }
 
-// GetDeletionGracePeriodSeconds implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetDeletionGracePeriodSeconds() *int64 {
+// GetDeletionGracePeriodSeconds implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetDeletionGracePeriodSeconds() *int64 {
 	return m.obj.GetDeletionGracePeriodSeconds()
 }
 
-// GetDeletionTimestamp implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetDeletionTimestamp() *metav1.Time {
+// GetDeletionTimestamp implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetDeletionTimestamp() *metav1.Time {
 	return m.obj.GetDeletionTimestamp()
 }
 
-// GetFinalizers implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetFinalizers() []string {
+// GetFinalizers implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetFinalizers() []string {
 	return m.obj.GetFinalizers()
 }
 
-// GetGenerateName implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetGenerateName() string {
+// GetGenerateName implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetGenerateName() string {
 	return m.obj.GetGenerateName()
 }
 
-// GetGeneration implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetGeneration() int64 {
+// GetGeneration implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetGeneration() int64 {
 	return m.obj.GetGeneration()
 }
 
-// GetLabels implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetLabels() map[string]string {
+// GetLabels implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetLabels() map[string]string {
 	return m.obj.GetLabels()
 }
 
-// GetManagedFields implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetManagedFields() []metav1.ManagedFieldsEntry {
+// GetManagedFields implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetManagedFields() []metav1.ManagedFieldsEntry {
 	return m.obj.GetManagedFields()
 }
 
-// GetName implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetName() string {
+// GetName implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetName() string {
 	return m.obj.GetName()
 }
 
-// GetNamespace implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetNamespace() string {
+// GetNamespace implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetNamespace() string {
 	return m.obj.GetNamespace()
 }
 
-// GetOwnerReferences implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetOwnerReferences() []metav1.OwnerReference {
+// GetOwnerReferences implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetOwnerReferences() []metav1.OwnerReference {
 	return m.obj.GetOwnerReferences()
 }
 
-// GetResourceVersion implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetResourceVersion() string {
+// GetResourceVersion implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetResourceVersion() string {
 	return m.obj.GetResourceVersion()
 }
 
-// GetSelfLink implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetSelfLink() string {
+// GetSelfLink implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetSelfLink() string {
 	return m.obj.GetSelfLink()
 }
 
-// GetUID implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) GetUID() types.UID {
+// GetUID implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetUID() types.UID {
 	return m.obj.GetUID()
 }
 
-// SetAnnotations implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetAnnotations(annotations map[string]string) {
+// SetAnnotations implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetAnnotations(annotations map[string]string) {
 	m.obj.SetAnnotations(annotations)
 }
 
-// SetCreationTimestamp implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetCreationTimestamp(timestamp metav1.Time) {
+// SetCreationTimestamp implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetCreationTimestamp(timestamp metav1.Time) {
 	m.obj.SetCreationTimestamp(timestamp)
 }
 
-// SetDeletionGracePeriodSeconds implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetDeletionGracePeriodSeconds(v *int64) {
+// SetDeletionGracePeriodSeconds implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetDeletionGracePeriodSeconds(v *int64) {
 	m.obj.SetDeletionGracePeriodSeconds(v)
 }
 
-// SetDeletionTimestamp implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetDeletionTimestamp(timestamp *metav1.Time) {
+// SetDeletionTimestamp implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetDeletionTimestamp(timestamp *metav1.Time) {
 	m.obj.SetDeletionTimestamp(timestamp)
 }
 
-// SetFinalizers implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetFinalizers(finalizers []string) {
+// SetFinalizers implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetFinalizers(finalizers []string) {
 	m.obj.SetFinalizers(finalizers)
 }
 
-// SetGenerateName implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetGenerateName(name string) {
+// SetGenerateName implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetGenerateName(name string) {
 	m.obj.SetGenerateName(name)
 }
 
-// SetGeneration implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetGeneration(generation int64) {
+// SetGeneration implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetGeneration(generation int64) {
 	m.obj.SetGeneration(generation)
 }
 
-// SetLabels implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetLabels(labels map[string]string) {
+// SetLabels implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetLabels(labels map[string]string) {
 	m.obj.SetLabels(labels)
 }
 
-// SetManagedFields implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetManagedFields(managedFields []metav1.ManagedFieldsEntry) {
+// SetManagedFields implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetManagedFields(managedFields []metav1.ManagedFieldsEntry) {
 	m.obj.SetManagedFields(managedFields)
 }
 
-// SetName implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetName(name string) {
+// SetName implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetName(name string) {
 	m.obj.SetName(name)
 }
 
-// SetNamespace implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetNamespace(namespace string) {
+// SetNamespace implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetNamespace(namespace string) {
 	m.obj.SetNamespace(namespace)
 }
 
-// SetOwnerReferences implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetOwnerReferences(v []metav1.OwnerReference) {
+// SetOwnerReferences implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetOwnerReferences(v []metav1.OwnerReference) {
 	m.obj.SetOwnerReferences(v)
 }
 
-// SetResourceVersion implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetResourceVersion(version string) {
+// SetResourceVersion implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetResourceVersion(version string) {
 	m.obj.SetResourceVersion(version)
 }
 
-// SetSelfLink implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetSelfLink(selfLink string) {
+// SetSelfLink implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetSelfLink(selfLink string) {
 	m.obj.SetSelfLink(selfLink)
 }
 
-// SetUID implements GrafanaResourceMetaAccessor.
-func (m *grafanaResourceMetaAccessor) SetUID(uid types.UID) {
+// SetUID implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetUID(uid types.UID) {
 	m.obj.SetUID(uid)
 }
 
-func (m *grafanaResourceMetaAccessor) GetAPIVersion() string {
+func (m *grafanaMetaAccessor) GetAPIVersion() string {
+	if m.typ == nil {
+		return ""
+	}
 	return m.typ.GetAPIVersion()
 }
 
-func (m *grafanaResourceMetaAccessor) SetAPIVersion(version string) {
-	m.typ.SetAPIVersion(version)
-}
-
-func (m *grafanaResourceMetaAccessor) GetKind() string {
+func (m *grafanaMetaAccessor) GetKind() string {
+	if m.typ == nil {
+		return ""
+	}
 	return m.typ.GetKind()
 }
 
-func (m *grafanaResourceMetaAccessor) SetKind(kind string) {
-	m.typ.SetKind(kind)
-}
-
-func (m *grafanaResourceMetaAccessor) FindTitle(defaultTitle string) string {
+func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 	// look for Spec.Title or Spec.Name
 	r := reflect.ValueOf(m.raw)
 	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
