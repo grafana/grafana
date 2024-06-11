@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, IconButton, Input, useStyles2 } from '@grafana/ui';
@@ -37,19 +37,18 @@ export function ScopesTreeLevel({
   const anyChildExpanded = childNodesArr.some(({ isExpanded }) => isExpanded);
   const anyChildSelected = childNodesArr.some(({ linkId }) => linkId && scopeNames.includes(linkId!));
 
+  const onQueryUpdate = useMemo(() => debounce(onNodeUpdate, 500), [onNodeUpdate]);
+
   return (
     <>
       {showQuery && !anyChildExpanded && (
         <Input
           prefix={<Icon name="filter" />}
           className={styles.searchInput}
-          disabled={!!loadingNodeName}
           placeholder={t('scopes.tree.search', 'Filter')}
           defaultValue={node.query}
           data-testid={`scopes-tree-${nodeId}-search`}
-          onChange={debounce((evt) => {
-            onNodeUpdate(nodePath, true, evt.target.value);
-          }, 500)}
+          onInput={(evt) => onQueryUpdate(nodePath, true, evt.currentTarget.value)}
         />
       )}
 
