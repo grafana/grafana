@@ -7,7 +7,7 @@ import (
 
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -46,7 +46,7 @@ func TestSetDualWritingMode(t *testing.T) {
 
 		kvStore := kvstore.WithNamespace(kvstore.NewFakeKVStore(), 0, "storage.dualwriting."+tt.stackID)
 
-		p := prometheus.NewRegistry()
+		p := metrics.ProvideRegistererForTest()
 		dw, err := SetDualWritingMode(context.Background(), kvStore, ls, us, playlist.GROUPRESOURCE, tt.desiredMode, p)
 		assert.NoError(t, err)
 		assert.Equal(t, tt.expectedMode, dw.Mode())
@@ -56,7 +56,5 @@ func TestSetDualWritingMode(t *testing.T) {
 		assert.True(t, ok)
 		assert.NoError(t, err)
 		assert.Equal(t, val, fmt.Sprint(tt.expectedMode))
-
-		unregisterPrometheusCollector(p)
 	}
 }

@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"strconv"
 	"time"
 
@@ -41,7 +42,17 @@ func (m *dualWriterMetrics) init(reg prometheus.Registerer) {
 	m.legacy = DualWriterLegacyDuration
 	m.storage = DualWriterStorageDuration
 	m.outcome = DualWriterOutcome
-	reg.MustRegister(m.legacy, m.storage, m.outcome)
+	errLegacy := reg.Register(m.legacy)
+	errStorage := reg.Register(m.storage)
+	errOutcome := reg.Register(m.outcome)
+	if errLegacy != nil || errStorage != nil || errOutcome != nil {
+		are := &prometheus.AlreadyRegisteredError{}
+		if errors.As(errLegacy, are) || errors.As(errStorage, are) || errors.As(errOutcome, are) {
+			m.legacy = are.ExistingCollector.(*prometheus.HistogramVec)
+			m.storage = are.ExistingCollector.(*prometheus.HistogramVec)
+			m.outcome = are.ExistingCollector.(*prometheus.HistogramVec)
+		}
+	}
 }
 
 func (m *dualWriterMetrics) recordLegacyDuration(isError bool, mode string, name string, method string, startFrom time.Time) {
