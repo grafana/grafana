@@ -16,9 +16,9 @@ labels:
     - enterprise
     - oss
 menuTitle: Grafana documentation
-title: Grafana OSS and Enterprise documentation
+title: Grafana OSS and Enterprise
 hero:
-  title: Grafana OSS and Enterprise documentation
+  title: Grafana OSS and Enterprise
   level: 1
   width: 100
   image: /media/docs/grafana-cloud/infrastructure/grafanalogo.svg
