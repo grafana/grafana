@@ -14,6 +14,7 @@ func GetUserIDString(user *user.SignedInUser) string {
 	// TODO: the default unauthenticated user is not anonymous and would be
 	// returned as `sys:0:` here. We may want to do something special in that
 	// case
+	// We have frontend code depending on a structure here, please update/run FE tests after changing
 	if user == nil {
 		return ""
 	}

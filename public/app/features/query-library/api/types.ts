@@ -12,12 +12,12 @@ export type DataQuerySpec = {
     generateName: string;
     name?: string;
     creationTimestamp?: string;
+    annotations?: { [key: string]: string };
   };
   spec: {
     title: string;
     vars: object[]; // TODO: Detect variables in #86838
     targets: DataQueryTarget[];
-    user?: User;
   };
 };
 
@@ -27,7 +27,8 @@ export type DataQuerySpecResponse = {
 };
 
 export type User = {
-  uid: string;
-  orgId: number;
+  userId: string;
   login: string;
 };
+
+export const CREATED_BY_KEY = 'grafana.app/createdBy';
