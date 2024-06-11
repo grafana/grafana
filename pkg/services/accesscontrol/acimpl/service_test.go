@@ -738,7 +738,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			withActionSets: true,
 			actionSets: map[string][]string{
 				"dashboards:view": {"dashboards:read"},
-				"dashboards:edit": {"dashboards:read", "dashboards:write"},
+				"dashboards:edit": {"dashboards:read", "dashboards:write", "dashboards:read-advanced"},
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -765,13 +765,14 @@ func TestService_SearchUserPermissions(t *testing.T) {
 		{
 			name: "check action sets are correctly included if an action prefix is specified",
 			searchOption: accesscontrol.SearchOptions{
-				Action:       "dashboards:read",
+				ActionPrefix: "dashboards",
 				NamespacedID: fmt.Sprintf("%s:1", identity.NamespaceUser),
 			},
 			withActionSets: true,
 			actionSets: map[string][]string{
 				"dashboards:view": {"dashboards:read"},
 				"folders:view":    {"dashboards:read", "folders:read"},
+				"dashboards:edit": {"dashboards:read", "dashboards:write"},
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -785,12 +786,15 @@ func TestService_SearchUserPermissions(t *testing.T) {
 				1: {
 					{Action: "dashboards:read", Scope: "dashboards:uid:stored"},
 					{Action: "folders:view", Scope: "folders:uid:stored2"},
+					{Action: "dashboards:edit", Scope: "dashboards:uid:stored3"},
 				},
 			},
 			want: []accesscontrol.Permission{
 				{Action: "dashboards:read", Scope: "dashboards:uid:ram"},
 				{Action: "dashboards:read", Scope: "dashboards:uid:stored"},
 				{Action: "dashboards:read", Scope: "folders:uid:stored2"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:stored3"},
+				{Action: "dashboards:write", Scope: "dashboards:uid:stored3"},
 			},
 		},
 	}

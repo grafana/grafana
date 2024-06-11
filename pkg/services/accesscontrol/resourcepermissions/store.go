@@ -793,12 +793,15 @@ func isFolderOrDashboardAction(action string) bool {
 
 // ExpandActionSets takes a set of permissions that might include some action set permissions, and returns a set of permissions with action sets expanded into underlying permissions
 func (s *InMemoryActionSets) ExpandActionSets(permissions []accesscontrol.Permission) []accesscontrol.Permission {
-	return s.ExpandActionSetsWithFilter(permissions, "")
+	actionMatcher := func(_ string) bool {
+		return true
+	}
+	return s.ExpandActionSetsWithFilter(permissions, actionMatcher)
 }
 
-// ExpandActionSetsWithFilter works like ExpandActionSets, but it also takes an actionFilter parameter. When action sets are expanded into the underlying permissions,
-// only those permissions whose action matches the actionFilter or has actionFilter as a prefix are included.
-func (s *InMemoryActionSets) ExpandActionSetsWithFilter(permissions []accesscontrol.Permission, actionFilter string) []accesscontrol.Permission {
+// ExpandActionSetsWithFilter works like ExpandActionSets, but it also takes a function for action filtering. When action sets are expanded into the underlying permissions,
+// only those permissions whose action is matched by actionMatcher are included.
+func (s *InMemoryActionSets) ExpandActionSetsWithFilter(permissions []accesscontrol.Permission, actionMatcher func(action string) bool) []accesscontrol.Permission {
 	var expandedPermissions []accesscontrol.Permission
 	for _, permission := range permissions {
 		resolvedActions := s.ResolveActionSet(permission.Action)
@@ -807,7 +810,7 @@ func (s *InMemoryActionSets) ExpandActionSetsWithFilter(permissions []accesscont
 			continue
 		}
 		for _, action := range resolvedActions {
-			if actionFilter != "" && !strings.HasPrefix(action, actionFilter) {
+			if !actionMatcher(action) {
 				continue
 			}
 			permission.Action = action

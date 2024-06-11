@@ -422,6 +422,16 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 	return nil
 }
 
+func GetActionFilter(options accesscontrol.SearchOptions) func(action string) bool {
+	return func(action string) bool {
+		if options.ActionPrefix != "" {
+			return strings.HasPrefix(action, options.ActionPrefix)
+		} else {
+			return action == options.Action
+		}
+	}
+}
+
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
@@ -527,12 +537,8 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 	}
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && len(options.ActionSets) > 0 {
-		filter := options.Action
-		if filter == "" {
-			filter = options.ActionPrefix
-		}
 		for id, perms := range res {
-			res[id] = s.actionResolver.ExpandActionSetsWithFilter(perms, filter)
+			res[id] = s.actionResolver.ExpandActionSetsWithFilter(perms, GetActionFilter(options))
 		}
 	}
 
@@ -594,11 +600,7 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	permissions = append(permissions, dbPermissions[userID]...)
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && len(searchOptions.ActionSets) != 0 {
-		filter := searchOptions.Action
-		if filter == "" {
-			filter = searchOptions.ActionPrefix
-		}
-		permissions = s.actionResolver.ExpandActionSetsWithFilter(permissions, filter)
+		permissions = s.actionResolver.ExpandActionSetsWithFilter(permissions, GetActionFilter(searchOptions))
 	}
 
 	key := accesscontrol.GetSearchPermissionCacheKey(&user.SignedInUser{UserID: userID, OrgID: orgID}, searchOptions)

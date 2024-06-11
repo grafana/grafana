@@ -25,7 +25,7 @@ func (f *FakeActionSetSvc) ExpandActionSets(permissions []accesscontrol.Permissi
 	return f.ExpectedPermissions
 }
 
-func (f *FakeActionSetSvc) ExpandActionSetsWithFilter(permissions []accesscontrol.Permission, actionFilter string) []accesscontrol.Permission {
+func (f *FakeActionSetSvc) ExpandActionSetsWithFilter(permissions []accesscontrol.Permission, actionMatcher func(action string) bool) []accesscontrol.Permission {
 	return f.ExpectedPermissions
 }
 
