@@ -1,5 +1,5 @@
 import { Store } from '@reduxjs/toolkit';
-import { render, renderHook, RenderOptions } from '@testing-library/react';
+import { render, RenderOptions } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory, MemoryHistoryBuildOptions } from 'history';
 import React, { Fragment, PropsWithChildren } from 'react';
@@ -99,18 +99,5 @@ const customRender = (
   };
 };
 
-const customRenderHook = (
-  fn: (props: unknown) => unknown,
-  { renderWithRouter = true, ...renderOptions }: ExtendedRenderOptions = {}
-) => {
-  const store = renderOptions.preloadedState ? configureStore(renderOptions?.preloadedState) : undefined;
-  const AllTheProviders = renderOptions.wrapper || getWrapper({ store, renderWithRouter, ...renderOptions });
-
-  return {
-    ...renderHook(fn, { wrapper: AllTheProviders, ...renderOptions }),
-    store,
-  };
-};
-
 export * from '@testing-library/react';
-export { customRender as render, customRenderHook as renderHook, getWrapper, userEvent };
+export { customRender as render, getWrapper, userEvent };
