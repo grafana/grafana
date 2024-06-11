@@ -68,8 +68,8 @@ export interface Props extends Themeable2 {
    * Any overflowing content will be clipped at the table boundary.
    */
   overflowingContent?: boolean;
-  onClickFilterValue?: (value: string, refId?: string) => void;
-  onClickFilterOutValue?: (value: string, refId?: string) => void;
+  onClickFilterString?: (value: string, refId?: string) => void;
+  onClickFilterOutString?: (value: string, refId?: string) => void;
 }
 
 interface State {
@@ -107,7 +107,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     if (!config.featureToggles.logRowsPopoverMenu || this.props.app !== CoreApp.Explore) {
       return false;
     }
-    return Boolean(this.props.onClickFilterOutValue || this.props.onClickFilterValue);
+    return Boolean(this.props.onClickFilterOutString || this.props.onClickFilterString);
   }
 
   handleSelection = (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel): boolean => {
@@ -217,8 +217,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
             row={this.state.selectedRow}
             selection={this.state.selection}
             {...this.state.popoverMenuCoordinates}
-            onClickFilterValue={rest.onClickFilterValue}
-            onClickFilterOutValue={rest.onClickFilterOutValue}
+            onClickFilterString={rest.onClickFilterString}
+            onClickFilterOutString={rest.onClickFilterOutString}
           />
         )}
         <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
