@@ -1,6 +1,6 @@
 import { cloneDeep, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
 import { from, generate, lastValueFrom, Observable, of } from 'rxjs';
-import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
+import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap, find } from 'rxjs/operators';
 import { SemVer } from 'semver';
 
 import {
@@ -82,7 +82,7 @@ import {
   isElasticsearchResponseWithHits,
   ElasticsearchHits,
 } from './types';
-import { getScriptValue, isTimeSeriesQuery } from './utils';
+import { getScriptValue, isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from './utils';
 
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
