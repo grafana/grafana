@@ -16,7 +16,7 @@ grpcServer = true
 
 To configure the authorization server and client, use the "authorization" section of the configuration ini file.
 
-The `address` setting, specifies the address where the authorization server is located (ex: `server.example.org:10000`). 
+The `remote_address` setting, specifies the address where the authorization server is located (ex: `server.example.org:10000`). 
 
 The `mode` setting can be set to either `grpc` or `inproc`. When set to `grpc`, the client will connect to the specified address. When set to `inproc` the client will use inprocgrpc (relying on go channels) to wrap a local instantiation of the server. 
 
@@ -26,7 +26,7 @@ The default configuration does not register the authorization service on the Gra
 
 ```ini
 [authorization]
-address = ""
+remote_address = ""
 listen = false
 mode = "inproc"
 ```
@@ -37,7 +37,7 @@ Here is an example to connect the authorization client to a remote grpc server.
 
 ```ini
 [authorization]
-address = "server.example.org:10000"
+remote_address = "server.example.org:10000"
 mode = "grpc"
 ```
 
@@ -45,7 +45,7 @@ Here is an example to register the authorization service on the Grafana GRPC ser
 
 ```ini
 [authorization]
-address = "localhost:10000"
+remote_address = "localhost:10000"
 listen = true
 mode = "grpc"
 ```

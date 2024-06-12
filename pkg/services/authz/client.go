@@ -51,8 +51,7 @@ func ProvideAuthZClient(
 	case ModeInProc:
 		client = newLocalLegacyClient(server)
 	case ModeGRPC:
-		address := authCfg.address
-		client, err = newRemoteLegacyClient(address)
+		client, err = newRemoteLegacyClient(authCfg.remote_address)
 		if err != nil {
 			return nil, err
 		}
