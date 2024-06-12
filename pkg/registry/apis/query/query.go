@@ -244,7 +244,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 
 	if b.passiveModeClient != nil {
 		// Let's only run the passive mode for prometheus and loki.
-		if pluginID == datasources.DS_PROMETHEUS && pluginID == datasources.DS_LOKI {
+		if pluginID == datasources.DS_PROMETHEUS || pluginID == datasources.DS_LOKI {
 			b.log.Debug("running dry run comparison to multi-tenant")
 			go b.queryDataAndCompare(ctx, pluginID, pluginUID, req2, code, rsp)
 		}
