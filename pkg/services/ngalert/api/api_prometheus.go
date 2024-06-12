@@ -24,7 +24,7 @@ import (
 )
 
 type SchedulerReader interface {
-	Health(key ngmodels.AlertRuleKey) (ngmodels.Health, bool)
+	Status(key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool)
 }
 
 type PrometheusSrv struct {
@@ -447,7 +447,7 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sch Schedul
 
 	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	for _, rule := range rules {
-		health, _ := sch.Health(rule.GetKey())
+		status, _ := sch.Status(rule.GetKey())
 
 		alertingRule := apimodels.AlertingRule{
 			State:       "inactive",
@@ -460,11 +460,11 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sch Schedul
 		newRule := apimodels.Rule{
 			Name:           rule.Title,
 			Labels:         apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
-			Health:         health.Health,
-			LastError:      errorOrEmpty(health.LastError),
+			Health:         status.Health,
+			LastError:      errorOrEmpty(status.LastError),
 			Type:           rule.Type().String(),
-			LastEvaluation: health.EvaluatedAt,
-			EvaluationTime: health.EvaluatedDuration.Seconds(),
+			LastEvaluation: status.EvaluatedAt,
+			EvaluationTime: status.EvaluatedDuration.Seconds(),
 		}
 
 		states := manager.GetStatesForRuleUID(rule.OrgID, rule.UID)

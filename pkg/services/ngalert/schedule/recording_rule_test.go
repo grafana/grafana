@@ -192,8 +192,8 @@ func TestRecordingRule_Integration(t *testing.T) {
 
 			require.Equal(t, "unknown", status.Health)
 			require.Nil(t, status.LastError)
-			require.Zero(t, status.EvaluationTimestamp)
-			require.Zero(t, status.EvaluationDuration)
+			require.Zero(t, status.EvaluatedAt)
+			require.Zero(t, status.EvaluatedDuration)
 		})
 
 		process.Eval(&Evaluation{
@@ -331,8 +331,8 @@ func TestRecordingRule_Integration(t *testing.T) {
 
 			require.Equal(t, "unknown", status.Health)
 			require.Nil(t, status.LastError)
-			require.Zero(t, status.EvaluationTimestamp)
-			require.Zero(t, status.EvaluationDuration)
+			require.Zero(t, status.EvaluatedAt)
+			require.Zero(t, status.EvaluatedDuration)
 		})
 
 		process.Eval(&Evaluation{
@@ -469,8 +469,8 @@ func TestRecordingRule_Integration(t *testing.T) {
 
 			require.Equal(t, "unknown", status.Health)
 			require.Nil(t, status.LastError)
-			require.Zero(t, status.EvaluationTimestamp)
-			require.Zero(t, status.EvaluationDuration)
+			require.Zero(t, status.EvaluatedAt)
+			require.Zero(t, status.EvaluatedDuration)
 		})
 
 		process.Eval(&Evaluation{

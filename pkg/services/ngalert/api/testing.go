@@ -187,9 +187,9 @@ func (f *fakeSchedulerReader) setupStates(reader statesReader) *fakeSchedulerRea
 	return f
 }
 
-func (f *fakeSchedulerReader) Health(key models.AlertRuleKey) (models.Health, bool) {
+func (f *fakeSchedulerReader) Status(key models.AlertRuleKey) (models.RuleStatus, bool) {
 	if f.states == nil {
-		return models.Health{}, false
+		return models.RuleStatus{}, false
 	}
 	return schedule.StatesToHealth(f.states.GetStatesForRuleUID(key.OrgID, key.UID)), true
 }

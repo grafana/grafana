@@ -171,12 +171,12 @@ func (sch *schedule) RuleDefs() ([]*ngmodels.AlertRule, map[ngmodels.FolderKey]s
 	return sch.schedulableAlertRules.all()
 }
 
-// Rule fetches the health of a given scheduled rule, by key.
-func (sch *schedule) Health(key ngmodels.AlertRuleKey) (ngmodels.Health, bool) {
+// Status fetches the health of a given scheduled rule, by key.
+func (sch *schedule) Status(key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool) {
 	if rule, ok := sch.registry.get(key); ok {
-		return rule.Health(), true
+		return rule.Status(), true
 	}
-	return ngmodels.Health{}, false
+	return ngmodels.RuleStatus{}, false
 }
 
 // deleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
