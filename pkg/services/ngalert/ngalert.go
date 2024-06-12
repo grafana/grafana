@@ -234,7 +234,7 @@ func (ng *AlertNG) init() error {
 						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 					}
-					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, m)
+					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 						return internalAM, nil
