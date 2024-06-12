@@ -7,7 +7,6 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
-	"github.com/go-openapi/strfmt"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/types"
 
@@ -102,7 +101,7 @@ func (am *alertmanager) GetReceivers(_ context.Context) ([]apimodels.Receiver, e
 			integrations = append(integrations, &apimodels.Integration{
 				Name:                      &name,
 				SendResolved:              &sendResolved,
-				LastNotifyAttempt:         strfmt.DateTime(integration.LastNotifyAttempt),
+				LastNotifyAttempt:         integration.LastNotifyAttempt,
 				LastNotifyAttemptDuration: integration.LastNotifyAttemptDuration,
 				LastNotifyAttemptError:    integration.LastNotifyAttemptError,
 			})
