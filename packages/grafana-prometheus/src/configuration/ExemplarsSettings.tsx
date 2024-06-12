@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/ExemplarsSettings.tsx
 import { css } from '@emotion/css';
 import React from 'react';
 
@@ -47,9 +48,9 @@ export function ExemplarsSettings({ options, onChange, disabled }: Props) {
           <Button
             variant="secondary"
             data-testid={selectors.components.DataSource.Prometheus.configPage.exemplarsAddButton}
-            className={css`
-              margin-bottom: 10px;
-            `}
+            className={css({
+              marginBottom: '10px',
+            })}
             icon="plus"
             onClick={(event) => {
               event.preventDefault();

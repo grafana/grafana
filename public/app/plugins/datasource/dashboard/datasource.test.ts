@@ -26,6 +26,16 @@ describe('DashboardDatasource', () => {
     expect(rsp?.data[0].fields[0].values).toEqual([1, 2, 3]);
   });
 
+  it('should always set response key', async () => {
+    const { observable } = setup({ refId: 'A', panelId: 1 });
+
+    let rsp: DataQueryResponse | undefined;
+
+    observable.subscribe({ next: (data) => (rsp = data) });
+
+    expect(rsp?.key).toEqual('source-ds-provider');
+  });
+
   it('Can subscribe to panel data + transforms', async () => {
     const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true });
 
@@ -36,7 +46,7 @@ describe('DashboardDatasource', () => {
     expect(rsp?.data[0].fields[1].values).toEqual([3]);
   });
 
-  it('Should activate source provder on observable subscribe and and deactivate when completed (if only activator)', async () => {
+  it('Should activate source provder on observable subscribe and deactivate when completed (if only activator)', async () => {
     const { observable, sourceData } = setup({ refId: 'A', panelId: 1, withTransforms: true });
 
     const test = observable.subscribe({ next: () => {} });

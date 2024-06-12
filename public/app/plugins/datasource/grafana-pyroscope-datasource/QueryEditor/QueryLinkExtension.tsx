@@ -3,7 +3,7 @@ import React from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, QueryEditorProps, TimeRange } from '@grafana/data';
-import { getBackendSrv, getPluginLinkExtensions } from '@grafana/runtime';
+import { getBackendSrv, usePluginLinkExtensions } from '@grafana/runtime';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 
 import { PyroscopeDataSource } from '../datasource';
@@ -64,7 +64,7 @@ export function PyroscopeQueryLinkExtensions(props: Props) {
     datasourceSettings,
   };
 
-  const { extensions } = getPluginLinkExtensions({
+  const { extensions } = usePluginLinkExtensions({
     extensionPointId: EXTENSION_POINT_ID,
     context,
   });

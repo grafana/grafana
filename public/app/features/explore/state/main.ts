@@ -124,8 +124,6 @@ export const changeCorrelationEditorDetails = createAction<CorrelationEditorDeta
   'explore/changeCorrelationEditorDetails'
 );
 
-export const changeShowQueryHistory = createAction<boolean>('explore/changeShowQueryHistory');
-
 export interface NavigateToExploreDependencies {
   timeRange: TimeRange;
   getExploreUrl: (args: GetExploreUrlArguments) => Promise<string | undefined>;
@@ -169,7 +167,6 @@ export const initialExploreState: ExploreState = {
   largerExploreId: undefined,
   maxedExploreId: undefined,
   evenSplitPanes: true,
-  showQueryHistory: false,
   richHistory: [],
 };
 
@@ -320,13 +317,6 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
         isExiting: Boolean(isExiting ?? state.correlationEditorDetails?.isExiting),
         postConfirmAction,
       },
-    };
-  }
-
-  if (changeShowQueryHistory.match(action)) {
-    return {
-      ...state,
-      showQueryHistory: action.payload,
     };
   }
 

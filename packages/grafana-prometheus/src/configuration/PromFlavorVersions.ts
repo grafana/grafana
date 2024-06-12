@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/PromFlavorVersions.ts
 export const PromFlavorVersions: { [index: string]: Array<{ value?: string; label: string }> } = {
   Prometheus: [
     { value: undefined, label: 'Please select' },

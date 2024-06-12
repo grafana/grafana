@@ -18,19 +18,15 @@ import {
   Matcher,
   Identifier,
   Range,
-  formatLokiQuery,
   Logfmt,
   Json,
   OrFilter,
   FilterOp,
 } from '@grafana/lezer-logql';
-import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
-import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
-import { LokiDatasource } from './datasource';
 import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
-import { ErrorId, replaceVariables, returnVariables } from './querybuilder/parsingUtils';
+import { ErrorId } from './querybuilder/parsingUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
 /**
@@ -320,39 +316,3 @@ export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefi
 
   return query;
 };
-
-export function formatLogqlQuery(query: string, datasource: LokiDatasource) {
-  const isInvalid = isQueryWithError(datasource.interpolateString(query, placeHolderScopedVars));
-
-  reportInteraction('grafana_loki_format_query_clicked', {
-    is_invalid: isInvalid,
-    query_type: isLogsQuery(query) ? 'logs' : 'metric',
-  });
-
-  if (isInvalid) {
-    return query;
-  }
-
-  let transformedQuery = replaceVariables(query);
-  const transformationMatches = [];
-  const tree = parser.parse(transformedQuery);
-
-  // Variables are considered errors inside of the parser, so we need to remove them before formatting
-  // We replace all variables with [0s] and keep track of the replaced variables
-  // After formatting we replace [0s] with the original variable
-  if (tree.topNode.firstChild?.firstChild?.type.id === MetricExpr) {
-    const pattern = /\[__V_[0-2]__\w+__V__\]/g;
-    transformationMatches.push(...transformedQuery.matchAll(pattern));
-    transformedQuery = transformedQuery.replace(pattern, '[0s]');
-  }
-
-  let formatted = formatLokiQuery(transformedQuery);
-
-  if (tree.topNode.firstChild?.firstChild?.type.id === MetricExpr) {
-    transformationMatches.forEach((match) => {
-      formatted = formatted.replace('[0s]', match[0]);
-    });
-  }
-
-  return returnVariables(formatted);
-}

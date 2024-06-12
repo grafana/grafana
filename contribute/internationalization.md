@@ -2,22 +2,22 @@
 
 Grafana uses the [i18next](https://www.i18next.com/) framework for managing translating phrases in the Grafana frontend.
 
-## tl;dr
+## TL;DR
 
-**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests translating grafana.json files - they will be rejected. We do accept contributions to mark up phrases for translation.
+**Note:** We don't currently accept contributions for translations. Please don't submit pull requests translating `grafana.json` files - they will be rejected. We do accept contributions to mark up phrases for translation.
 
-- Use `<Trans i18nKey="search-results.panel-link">Go to {{ pageTitle }}</Trans>` in code to add a translatable phrase
-- Translations are stored in JSON files in `public/locales/{locale}/grafana.json`
-- If a particular phrase is not available in the a language then it will fall back to English
-- To update phrases in English, edit the default phrase in the component's source and then run `yarn i18n:extract`.
-- The single source of truth for en-US (fallback language) is in grafana/grafana, the single source of truth for any translated language is Crowdin
+- Use `<Trans i18nKey="search-results.panel-link">Go to {{ pageTitle }}</Trans>` in code to add a translatable phrase.
+- Translations are stored in JSON files in `public/locales/{locale}/grafana.json`.
+- If a particular phrase isn't available in a given language, then it will fall back to English.
+- To update phrases in English, edit the default phrase in the component's source, and then run `make i18n-extract`.
+- The single source of truth for `en-US` (fallback language) is in `grafana/grafana`, and the single source of truth for any translated language is Crowdin.
 - To update phrases in any translated language, edit the phrase in Crowdin. Do not edit the `{locale}/grafana.json`
 
 ## How to add a new translation phrase
 
 ### JSX
 
-1. For JSX children, use the `<Trans />` component from `app/core/internationalization` with the `i18nKey`, ensuring it conforms to the guidelines below, with the default english translation. e.g.
+1. For JSX children, use the `<Trans />` component from `app/core/internationalization` with the `i18nKey`, ensuring it conforms to the following guidelines, with the default English translation. For example:
 
 ```jsx
 import { Trans } from 'app/core/internationalization';
@@ -29,20 +29,20 @@ const SearchTitle = ({ term }) => (
 );
 ```
 
-Prefer using `<Trans />` for JSX children, and `t()` for props and other javascript usage.
+Prefer using `<Trans />` for JSX children, and `t()` for props and other JavaScript usage.
 
-When translating in grafana-ui, use a relative path to import `<Trans />` and `t()` from `src/utils/i18n`.
+When translating in `grafana-ui`, use a relative path to import `<Trans />` and `t()` from `src/utils/i18n`.
 
-Note that our tooling must be able to statically analyse the code to extract the phrase, so the `i18nKey` can not be dynamic. e.g. the following will not work:
+Note that our tooling must be able to statically analyze the code to extract the phrase, so the `i18nKey` can't be dynamic. For example: the following will not work:
 
 ```jsx
 const ErrorMessage = ({ id, message }) => <Trans i18nKey={`errors.${id}`}>There was an error: {{ message }}</Trans>;
 ```
 
-2. Upon reload, the default English phrase will appear on the page.
+2. Upon reload, the default English phrase appears on the page.
 
-3. Before submitting your PR, run the `yarn i18n:extract` command to extract the messages you added into the `public/locales/en-US/grafana.json` file and make them available for translation.
-   **Note:** All other languages will receive their translations when they are ready to be downloaded from Crowdin.
+3. Before submitting your PR, run the `make i18n-extract` command to extract the messages you added into the `public/locales/en-US/grafana.json` file and make them available for translation.
+   **Note:** All other languages receive their translations when they are ready to be downloaded from Crowdin.
 
 ### Plain JS usage
 
@@ -62,37 +62,40 @@ Interpolating phrases is a bit more verbose. Make sure the placeholders in the s
 const placeholder = t('page.greeting', 'Hello {{ username }}', { username });
 ```
 
-While the `t` function can technically be used outside of React functions (e.g, in actions/reducers), aim to keep all UI phrases within the React UI functions.
+While the `t` function can technically be used outside of React functions (for example, in actions or reducers), aim to keep all UI phrases within the React UI functions.
 
 ## How to add a new language
 
-1. Add a new locale in Crowdin
-   1. Grafana OSS Crowdin project
-   2. "dot dot dot" menu in top right
-   3. Target languages, and add the language
-   4. If Crowdin's locale code is different from our IETF language tag (such as Chinese Simplified), add a custom mapping in Project Settings -> Language mapping
-2. Sync the new (empty) language to the repo
-   1. In Grafana's Github Actions, go to [Crowdin Download Action](https://github.com/grafana/grafana/actions/workflows/i18n-crowdin-download.yml)
-   2. Select 'Run workflow', from main
-   3. The workflow will create a PR with the new language files, which can be reviewed and merged
-3. Update `public/app/core/internationalization/constants.ts`
-   1. Add a new constant for the new language
-   2. Add the new constant to the `LOCALES` array
-   3. Create a PR with the changes and merge when you are ready to release the new language (probably wait until we have translations for it)
+1. Add a new locale in Crowdin.
+   1. Go to the Grafana OSS Crowdin project.
+   2. In the top right, select the "dot dot dot" menu.
+   3. Under **Target languages**, add the language.
+   4. If Crowdin's locale code is different from our IETF language tag (such as Chinese Simplified), add a custom mapping in **Project Settings** -> **Language mapping**.
+2. Sync the new (empty) language to the repo.
+   1. In Grafana's Github Actions, go to [Crowdin Download Action](https://github.com/grafana/grafana/actions/workflows/i18n-crowdin-download.yml).
+   2. From main, select **Run workflow**.
+   3. The workflow creates a PR with the new language files, which can be reviewed and merged.
+3. Update `public/app/core/internationalization/constants.ts`.
+   1. Add a new constant for the new language.
+   2. Add the new constant to the `LOCALES` array.
+   3. Create a PR with the changes and merge when you are ready to release the new language (as a general rule, wait until we have translations for it).
+4. In the Grafana Enterprise repo, update `src/public/locales/localeExtensions.ts`.
 
 ## How translations work in Grafana
 
 Grafana uses the [i18next](https://www.i18next.com/) framework for managing translating phrases in the Grafana frontend. It:
 
-- Marks up phrases within our code for extraction
-- Extracts phrases into the default messages catalogue for translating in external systems
-- Manages the user's locale and putting the translated phrases in the UI
+- Marks up phrases within our code for extraction.
+- Extracts phrases into the default messages catalog for translating in external systems.
+- Manages the user's locale and puts the translated phrases in the UI.
 
-Grafana will load the message catalogue JSON before the initial render.
+Grafana loads the message catalog JSON before the initial render.
 
 ### Phrase ID naming convention
 
-We set explicit IDs for phrases to make it easier to identify phrases out of context, and to track where they're used. IDs follow a naming scheme that includes _where_ the phrase is used. The exception is the rare case of single reoccuring words like "Cancel", but default to using a feature/phrase specific phrase.
+We set explicit IDs for phrases to make it easier to identify phrases out of context, and to track where they're used.
+
+IDs follow a naming scheme that includes _where_ the phrase is used. The exception is the rare case of a single reoccurring word like "Cancel", but the default is to use a feature-specific phrase.
 
 Message IDs are made of _up to_ three segments in the format `feature.area.phrase`. For example:
 
@@ -106,11 +109,11 @@ For components used all over the site, use just two segments:
 
 ### I18next context
 
-We rely on a global i18next singleton (that lives inside the i18next) for storing the i18next config/context.
+We rely on a global i18next singleton (that lives inside the i18next) for storing the i18next configuration.
 
 ## Examples
 
-See [i18next](https://www.i18next.com/) and [react-i18next](https://react.i18next.com/) documentation for more details.
+Refer to the [i18next](https://www.i18next.com/) and [react-i18next](https://react.i18next.com/) documentation for more details.
 
 ### Basic usage
 
@@ -122,7 +125,7 @@ import { Trans } from 'app/core/internationalization';
 <Trans i18nKey="page.greeting">Hello user!</Trans>;
 ```
 
-To interpolate variables, include it as an object child. It's weird syntax, but Trans will do it's magic to make it work:
+To interpolate a variable, include it as an object child. It's a weird syntax, but `Trans` will do its magic to make it work:
 
 ```jsx
 import { Trans } from 'app/core/internationalization';
@@ -133,7 +136,7 @@ const userName = user.name;
 <Trans i18nKey="page.greeting">Hello {{ userName }}!</Trans>;
 ```
 
-Variables must be strings (or, must support calling `.toString()`, which we almost never want).
+Variables must be strings (or, must support calling `.toString()`, which we almost never want). For example:
 
 ```jsx
 import { Trans } from 'app/core/internationalization';
@@ -151,7 +154,7 @@ const userName = user.name;
 
 ### React components and HTML tags
 
-Both HTML tags and React components can be included in a phase. The Trans function will handle interpolating it's children properly
+Both HTML tags and React components can be included in a phase. The `Trans` function handles interpolating for its children.
 
 ```js
 import { Trans } from "app/core/internationalization"
@@ -170,23 +173,23 @@ import { Trans } from "app/core/internationalization"
 
 ### Plurals
 
-Plurals require special handling to make sure they can be translating according to the rules of each locale (which may be more complex that you think!). Use either the `<Trans />` component or the `t` function, with the `count` prop to provide a singular form.
+Plurals require special handling to make sure they can be translated according to the rules of each locale (which may be more complex than you think). Use either the `<Trans />` component or the `t` function, with the `count` prop to provide a singular form. For example:
 
 ```js
 import { Trans } from 'app/core/internationalization';
 
 <Trans i18nKey="inbox.heading" count={messages.length}>
-  You got {{ count: messages.length }} message
+  You got {{ count: messages.length }} messages
 </Trans>;
 ```
 
 ```js
 import { t } from 'app/core/internationalization';
 
-const translatedString = t('inbox.heading', 'You got {{count}} message', { count: messages.length });
+const translatedString = t('inbox.heading', 'You got {{count}} messages', { count: messages.length });
 ```
 
-Once extracted with `yarn i18n:extract` you will need to manually edit the [English grafana.json message catalogue](../public/locales/en-US/grafana.json) to correct the plural forms. See the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
+Once extracted with `make i18n-extract` you need to manually edit the [English `grafana.json` message catalog](../public/locales/en-US/grafana.json) to correct the plural forms. Refer to the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
 
 ```json
 {
@@ -199,20 +202,19 @@ Once extracted with `yarn i18n:extract` you will need to manually edit the [Engl
 
 ## Feedback
 
-**Please note:** This is only for proofreaders with permissions to Grafana OSS project on Crowdin.
+**Note:** This is only for proofreaders with permissions to the Grafana OSS project on Crowdin.
 
 To provide feedback on translations, sign into Crowdin and follow these steps:
 
 1. Open the Grafana OSS project in Crowdin.
-2. In the left-hand menu, click on the 'Dashboard' menu item.
-3. A list of available languages appears under the 'Translations' section. Click on the one you want to comment on.
-4. There is a table with the file structure in it:
+1. On the left menu, click **Dashboard**. A list of available languages appears under the **Translations** section. Click the one you want to comment on.
+1. There is a table with the file structure in it:
    <br>
    `grafana/main > public > locales > 'language denomination' > grafana.json`
    <br>
-   Click on the `grafana.json` file.
-5. In the left-hand section, click on the 'Search in file' input and search for the string that you want to comment on. You can search in English, as it is the default language, or in the language the string is translated to.
-6. Once you have found the string, on the right hand side there is a 'Comments' section where you can send the feedback about the translation. Tag @Translated to be sure the team of linguists gets notified.
+   Click the `grafana.json` file.
+1. In the left section, click the **Search in file** input. Search for the string that you want to comment on. You can search in English, as it's the default language, or in the language the string is translated into.
+1. Once you have found the string, on the right hand side there is a **Comments** section where you can send your feedback about the translation. Tag `@Translated` to be sure the team of linguists gets notified.
 
 ## Documentation
 

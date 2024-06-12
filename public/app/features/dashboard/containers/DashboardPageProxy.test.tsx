@@ -78,6 +78,12 @@ jest.mock('react-virtualized-auto-sizer', () => {
     });
 });
 
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: () => ({
+    getDashboardDTO: jest.fn().mockResolvedValue(dashMock),
+  }),
+}));
+
 function setup(props: Partial<DashboardPageProxyProps>) {
   const context = getGrafanaContextMock();
   const store = configureStore({});
@@ -147,7 +153,7 @@ describe('DashboardPageProxy', () => {
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
-            match: { params: {}, isExact: true, path: '/', url: '/' },
+            match: { params: { uid: '' }, isExact: true, path: '/', url: '/' },
           });
         });
 
@@ -176,7 +182,14 @@ describe('DashboardPageProxy', () => {
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
-            match: { params: {}, isExact: true, path: '/', url: '/' },
+            match: {
+              params: {
+                uid: '',
+              },
+              isExact: true,
+              path: '/',
+              url: '/',
+            },
           });
         });
 

@@ -98,7 +98,7 @@ describe('DataSourceDropdown', () => {
       expect(screen.queryAllByText('Configure a new data source')).toHaveLength(2);
     });
 
-    it('only displays the file drop area when the the ff is enabled', async () => {
+    it('only displays the file drop area when the ff is enabled', async () => {
       const defaultValue = config.featureToggles.editPanelCSVDragAndDrop;
       config.featureToggles.editPanelCSVDragAndDrop = true;
       setup({ uploadFile: true });

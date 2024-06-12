@@ -21,6 +21,7 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
+import { DataQuery } from '@grafana/schema';
 import { Button, Field, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
@@ -29,6 +30,7 @@ import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
+import { reportExploreMetrics } from '../interactions';
 import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
 import { getColorByIndex, getTrailFor } from '../utils';
 
@@ -202,6 +204,7 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       return;
     }
 
+    reportExploreMetrics('label_selected', { label: value, cause: 'selector' });
     const variable = this.getVariable();
 
     variable.changeValueTo(value);
@@ -301,6 +304,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
       )
       .setHeaderActions(new SelectLabelAction({ labelName: String(option.value) }))
       .setUnit(unit)
+      .setBehaviors([fixLegendForUnspecifiedLabelValueBehavior])
       .build();
 
     vizPanel.addActivationHandler(() => {
@@ -429,7 +433,9 @@ interface SelectLabelActionState extends SceneObjectState {
 }
 export class SelectLabelAction extends SceneObjectBase<SelectLabelActionState> {
   public onClick = () => {
-    getBreakdownSceneFor(this).onChange(this.state.labelName);
+    const label = this.state.labelName;
+    reportExploreMetrics('label_selected', { label, cause: 'breakdown_panel' });
+    getBreakdownSceneFor(this).onChange(label);
   };
 
   public static Component = ({ model }: SceneComponentProps<AddToFiltersGraphAction>) => {
@@ -451,4 +457,28 @@ function getBreakdownSceneFor(model: SceneObject): BreakdownScene {
   }
 
   throw new Error('Unable to find breakdown scene');
+}
+
+function fixLegendForUnspecifiedLabelValueBehavior(vizPanel: VizPanel) {
+  vizPanel.state.$data?.subscribeToState((newState, prevState) => {
+    const target = newState.data?.request?.targets[0];
+    if (hasLegendFormat(target)) {
+      const { legendFormat } = target;
+      // Assume {{label}}
+      const label = legendFormat.slice(2, -2);
+
+      newState.data?.series.forEach((series) => {
+        if (!series.fields[1].labels?.[label]) {
+          const labels = series.fields[1].labels;
+          if (labels) {
+            labels[label] = `<unspecified ${label}>`;
+          }
+        }
+      });
+    }
+  });
+}
+
+function hasLegendFormat(target: DataQuery | undefined): target is DataQuery & { legendFormat: string } {
+  return target !== undefined && 'legendFormat' in target && typeof target.legendFormat === 'string';
 }

@@ -353,6 +353,15 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				Icon: "library-panel",
 			})
 		}
+
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestore) && hasAccess(ac.EvalPermission(dashboards.ActionDashboardsDelete)) {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text:     "Recently Deleted",
+				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
+				Id:       "dashboards/recentlyDeleted",
+				Url:      s.cfg.AppSubURL + "/dashboard/recentlyDeleted",
+			})
+		}
 	}
 
 	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
@@ -387,14 +396,21 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
 	}
 
-	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
+	if hasAccess(ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingInstanceRead),
+		ac.EvalPermission(ac.ActionAlertingInstancesExternalRead),
+		ac.EvalPermission(ac.ActionAlertingSilencesRead),
+	)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Silences", SubTitle: "Stop notifications from one or more alerting rules", Id: "silences", Url: s.cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
+	}
+
+	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceRead), ac.EvalPermission(ac.ActionAlertingInstancesExternalRead))) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Alert groups", SubTitle: "See grouped alerts from an Alertmanager instance", Id: "groups", Url: s.cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 	}
 
 	if c.SignedInUser.GetOrgRole() == org.RoleAdmin {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Admin", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin",
+			Text: "Settings", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin",
 			Icon: "cog",
 		})
 	}

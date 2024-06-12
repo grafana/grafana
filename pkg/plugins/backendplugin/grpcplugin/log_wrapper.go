@@ -150,6 +150,11 @@ func (lw logWrapper) ResetNamed(name string) hclog.Logger {
 }
 
 // No-op. The wrapped logger implementation cannot update the level on the fly.
+func (lw logWrapper) GetLevel() hclog.Level {
+	return hclog.Trace
+}
+
+// No-op. The wrapped logger implementation cannot update the level on the fly.
 func (lw logWrapper) SetLevel(level hclog.Level) {}
 
 // Return a value that conforms to the stdlib log.Logger interface

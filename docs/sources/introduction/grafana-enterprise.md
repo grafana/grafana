@@ -19,7 +19,7 @@ To learn more about Grafana Enterprise, refer to [our product page](/enterprise)
 
 ## Enterprise features in Grafana Cloud
 
-Many Grafana Enterprise features are also available in [Grafana Cloud](/docs/grafana-cloud) Free, Pro, and Advanced accounts. For details, refer to [the Grafana Cloud features table](/pricing/#featuresTable).
+Many Grafana Enterprise features are also available in [Grafana Cloud](/docs/grafana-cloud) Free, Pro, and Advanced accounts. For details, refer to [Grafana Cloud pricing](/pricing/#featuresTable).
 
 To migrate to Grafana Cloud, refer to [Migrate from Grafana Enterprise to Grafana Cloud](/docs/grafana-cloud/account-management/e2c-guide/).
 
@@ -75,15 +75,15 @@ Grafana Enterprise adds the following features:
 With a Grafana Enterprise license, you also get access to premium data sources, including:
 
 - [AppDynamics](/grafana/plugins/dlopes7-appdynamics-datasource)
+- [Azure CosmosDB](/grafana/plugins/grafana-azurecosmosdb-datasource)
 - [Azure Devops](/grafana/plugins/grafana-azuredevops-datasource)
+- [Catchpoint](/grafana/plugins/grafana-catchpoint-datasource)
 - [Databricks](/grafana/plugins/grafana-databricks-datasource)
 - [DataDog](/grafana/plugins/grafana-datadog-datasource)
-- [Databricks](/grafana/plugins/grafana-databricks-datasource/)
 - [Dynatrace](/grafana/plugins/grafana-dynatrace-datasource)
 - [Gitlab](/grafana/plugins/grafana-gitlab-datasource)
 - [Honeycomb](/grafana/plugins/grafana-honeycomb-datasource)
 - [Jira](/grafana/plugins/grafana-jira-datasource)
-- [k6 Cloud App](/grafana/plugins/grafana-k6-app)
 - [MongoDB](/grafana/plugins/grafana-mongodb-datasource)
 - [New Relic](/grafana/plugins/grafana-newrelic-datasource)
 - [Oracle Database](/grafana/plugins/grafana-oracle-datasource)

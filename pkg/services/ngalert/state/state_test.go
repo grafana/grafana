@@ -475,9 +475,9 @@ func TestNeedsSending(t *testing.T) {
 }
 
 func TestGetLastEvaluationValuesForCondition(t *testing.T) {
-	genState := func(results []Evaluation) *State {
+	genState := func(latestResult *Evaluation) *State {
 		return &State{
-			Results: results,
+			LatestResult: latestResult,
 		}
 	}
 
@@ -487,57 +487,43 @@ func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 	})
 	t.Run("should return value of the condition of the last result", func(t *testing.T) {
 		expected := rand.Float64()
-		evals := []Evaluation{
-			{
-				EvaluationTime:  time.Time{},
-				EvaluationState: 0,
-				Values: map[string]*float64{
-					"A": util.Pointer(rand.Float64()),
-				},
-				Condition: "A",
+		eval := &Evaluation{
+			EvaluationTime:  time.Time{},
+			EvaluationState: 0,
+			Values: map[string]*float64{
+				"B": util.Pointer(rand.Float64()),
+				"A": util.Pointer(expected),
 			},
-			{
-				EvaluationTime:  time.Time{},
-				EvaluationState: 0,
-				Values: map[string]*float64{
-					"B": util.Pointer(rand.Float64()),
-					"A": util.Pointer(expected),
-				},
-				Condition: "A",
-			},
+			Condition: "A",
 		}
-		result := genState(evals).GetLastEvaluationValuesForCondition()
+		result := genState(eval).GetLastEvaluationValuesForCondition()
 		require.Len(t, result, 1)
 		require.Contains(t, result, "A")
 		require.Equal(t, result["A"], expected)
 	})
 	t.Run("should return empty map if there is no value for condition", func(t *testing.T) {
-		evals := []Evaluation{
-			{
-				EvaluationTime:  time.Time{},
-				EvaluationState: 0,
-				Values: map[string]*float64{
-					"C": util.Pointer(rand.Float64()),
-				},
-				Condition: "A",
+		eval := &Evaluation{
+			EvaluationTime:  time.Time{},
+			EvaluationState: 0,
+			Values: map[string]*float64{
+				"C": util.Pointer(rand.Float64()),
 			},
+			Condition: "A",
 		}
-		result := genState(evals).GetLastEvaluationValuesForCondition()
+		result := genState(eval).GetLastEvaluationValuesForCondition()
 		require.NotNil(t, result)
 		require.Len(t, result, 0)
 	})
 	t.Run("should use NaN if value is not defined", func(t *testing.T) {
-		evals := []Evaluation{
-			{
-				EvaluationTime:  time.Time{},
-				EvaluationState: 0,
-				Values: map[string]*float64{
-					"A": nil,
-				},
-				Condition: "A",
+		eval := &Evaluation{
+			EvaluationTime:  time.Time{},
+			EvaluationState: 0,
+			Values: map[string]*float64{
+				"A": nil,
 			},
+			Condition: "A",
 		}
-		result := genState(evals).GetLastEvaluationValuesForCondition()
+		result := genState(eval).GetLastEvaluationValuesForCondition()
 		require.NotNil(t, result)
 		require.Len(t, result, 1)
 		require.Contains(t, result, "A")
@@ -706,8 +692,7 @@ func TestParseFormattedState(t *testing.T) {
 func TestGetRuleExtraLabels(t *testing.T) {
 	logger := log.New()
 
-	rule := ngmodels.AlertRuleGen()()
-	rule.NotificationSettings = nil
+	rule := ngmodels.RuleGen.With(ngmodels.RuleMuts.WithNoNotificationSettings()).GenerateRef()
 	folderTitle := uuid.NewString()
 
 	ns := ngmodels.NotificationSettings{

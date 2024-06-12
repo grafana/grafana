@@ -37,4 +37,30 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 	mg.AddMigration("add stack_id column", NewAddColumnMigration(migrationTable, &stackIDColumn))
 	mg.AddMigration("add region_slug column", NewAddColumnMigration(migrationTable, &regionSlugColumn))
 	mg.AddMigration("add cluster_slug column", NewAddColumnMigration(migrationTable, &clusterSlugColumn))
+
+	// --- adding uid to migration
+	migUidColumn := Column{Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true}
+	mg.AddMigration("add migration uid column", NewAddColumnMigration(migrationTable, &migUidColumn))
+
+	mg.AddMigration("Update uid column values for migration", NewRawSQLMigration("").
+		SQLite("UPDATE cloud_migration SET uid=printf('u%09d',id) WHERE uid IS NULL;").
+		Postgres("UPDATE `cloud_migration` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;").
+		Mysql("UPDATE cloud_migration SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;"))
+
+	mg.AddMigration("Add unique index migration_uid", NewAddIndexMigration(migrationTable, &Index{
+		Cols: []string{"uid"}, Type: UniqueIndex,
+	}))
+
+	// --- adding uid to migration run
+	runUidColumn := Column{Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true}
+	mg.AddMigration("add migration run uid column", NewAddColumnMigration(migrationRunTable, &runUidColumn))
+
+	mg.AddMigration("Update uid column values for migration run", NewRawSQLMigration("").
+		SQLite("UPDATE cloud_migration_run SET uid=printf('u%09d',id) WHERE uid IS NULL;").
+		Postgres("UPDATE `cloud_migration_run` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;").
+		Mysql("UPDATE cloud_migration_run SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;"))
+
+	mg.AddMigration("Add unique index migration_run_uid", NewAddIndexMigration(migrationRunTable, &Index{
+		Cols: []string{"uid"}, Type: UniqueIndex,
+	}))
 }

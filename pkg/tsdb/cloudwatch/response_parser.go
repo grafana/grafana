@@ -35,6 +35,10 @@ func (e *cloudWatchExecutor) parseResponse(ctx context.Context, startTime time.T
 			dataRes.Error = fmt.Errorf("ArithmeticError in query %q: %s", queryRow.RefId, response.ArithmeticErrorMessage)
 		}
 
+		if response.HasPermissionError {
+			dataRes.Error = fmt.Errorf("PermissionError in query %q: %s", queryRow.RefId, response.PermissionErrorMessage)
+		}
+
 		var err error
 		dataRes.Frames, err = buildDataFrames(ctx, startTime, endTime, response, queryRow)
 		if err != nil {
@@ -79,6 +83,9 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 				if *message.Code == "ArithmeticError" {
 					response.AddArithmeticError(message.Value)
 				}
+				if *message.Code == "Forbidden" {
+					response.AddPermissionError(message.Value)
+				}
 			}
 
 			response.AddMetricDataResult(r)
@@ -98,9 +105,11 @@ func parseLabels(cloudwatchLabel string, query *models.CloudWatchQuery) (string,
 
 	splitLabels := strings.Split(cloudwatchLabel, keySeparator)
 	// The first part is the name of the time series, followed by the labels
+	name := splitLabels[0]
 	labelsIndex := 1
 
-	labels := data.Labels{}
+	// set Series to the name of the time series as a fallback
+	labels := data.Labels{"Series": name}
 	for _, dim := range dims {
 		values := query.Dimensions[dim]
 		if isSingleValue(values) {
@@ -111,20 +120,31 @@ func parseLabels(cloudwatchLabel string, query *models.CloudWatchQuery) (string,
 		labels[dim] = splitLabels[labelsIndex]
 		labelsIndex++
 	}
-	return splitLabels[0], labels
+	return name, labels
 }
 
-func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery) data.Labels {
+func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery, addSeriesLabelAsFallback bool) data.Labels {
 	dims := make([]string, 0, len(query.Dimensions))
 	for k := range query.Dimensions {
 		dims = append(dims, k)
 	}
 	sort.Strings(dims)
 	labels := data.Labels{}
+
+	if addSeriesLabelAsFallback {
+		labels["Series"] = cloudwatchLabel
+	}
+
 	for _, dim := range dims {
 		values := query.Dimensions[dim]
 		if len(values) == 1 && values[0] != "*" {
 			labels[dim] = values[0]
+		} else if len(values) == 0 {
+			// Metric Insights metrics might not have a value for a dimension specified in the `GROUP BY` clause for Metric Query type queries. When this happens, CloudWatch returns "Other" in the label for the dimension so `len(values)` would be 0.
+			// We manually add "Other" as the value for the dimension to match what CloudWatch returns in the label.
+			// See the note under `GROUP BY` in https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch-metrics-insights-querylanguage.html
+			labels[dim] = "Other"
+			continue
 		} else {
 			for _, value := range values {
 				if value == cloudwatchLabel || value == "*" {
@@ -195,10 +215,12 @@ func buildDataFrames(ctx context.Context, startTime time.Time, endTime time.Time
 
 		name := label
 		var labels data.Labels
-		if features.IsEnabled(ctx, features.FlagCloudWatchNewLabelParsing) {
+		if query.GetGetMetricDataAPIMode() == models.GMDApiModeSQLExpression {
+			labels = getLabels(label, query, true)
+		} else if features.IsEnabled(ctx, features.FlagCloudWatchNewLabelParsing) {
 			name, labels = parseLabels(label, query)
 		} else {
-			labels = getLabels(label, query)
+			labels = getLabels(label, query, false)
 		}
 		timestamps := []*time.Time{}
 		points := []*float64{}

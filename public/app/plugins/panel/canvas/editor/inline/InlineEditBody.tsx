@@ -35,7 +35,7 @@ export function InlineEditBody() {
   const pane = useMemo(() => {
     const p = activePanel?.panel;
     const state: InstanceState = instanceState;
-    if (!state || !p) {
+    if (!(state && state.scene) || !p) {
       return new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
     }
 
@@ -131,7 +131,7 @@ interface EditorProps<T> {
   data?: DataFrame[];
 }
 
-function getOptionsPaneCategoryDescriptor<T = any>(
+function getOptionsPaneCategoryDescriptor<T extends object>(
   props: EditorProps<T>,
   supplier: PanelOptionsSupplier<T>
 ): OptionsPaneCategoryDescriptor {
@@ -157,7 +157,7 @@ function getOptionsPaneCategoryDescriptor<T = any>(
   const access: NestedValueAccess = {
     getValue: (path) => lodashGet(props.options, path),
     onChange: (path, value) => {
-      props.onChange(setOptionImmutably(props.options as any, path, value));
+      props.onChange(setOptionImmutably<T>(props.options, path, value));
     },
   };
 

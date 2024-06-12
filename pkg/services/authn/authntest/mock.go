@@ -20,6 +20,10 @@ func (m *MockService) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	panic("unimplemented")
 }
 
+func (m *MockService) IsClientEnabled(name string) bool {
+	panic("unimplemented")
+}
+
 func (m *MockService) Login(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error) {
 	panic("unimplemented")
 }
@@ -42,11 +46,15 @@ func (m *MockService) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority
 	panic("unimplemented")
 }
 
+func (m *MockService) RegisterPreLogoutHook(hook authn.PreLogoutHookFn, priority uint) {
+	panic("unimplemented")
+}
+
 func (*MockService) Logout(_ context.Context, _ identity.Requester, _ *usertoken.UserToken) (*authn.Redirect, error) {
 	panic("unimplemented")
 }
 
-func (m *MockService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*authn.Identity, error) {
+func (m *MockService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
 	panic("unimplemented")
 }
 
@@ -85,6 +93,10 @@ func (m MockClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 		return m.AuthenticateFunc(ctx, r)
 	}
 	return nil, nil
+}
+
+func (m MockClient) IsEnabled() bool {
+	return true
 }
 
 func (m MockClient) Test(ctx context.Context, r *authn.Request) bool {

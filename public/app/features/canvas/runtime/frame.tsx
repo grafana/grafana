@@ -1,14 +1,15 @@
 import { cloneDeep } from 'lodash';
 import React from 'react';
 
-import { canvasElementRegistry, CanvasFrameOptions } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
+import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { updateConnectionsForSource } from '../../../plugins/panel/canvas/utils';
 import { CanvasElementItem } from '../element';
-import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+import { CanvasFrameOptions } from '../frame';
+import { canvasElementRegistry } from '../registry';
 
 import { ElementState } from './element';
 import { RootElement } from './root';
@@ -26,7 +27,6 @@ export const frameItemDummy: CanvasElementItem = {
     config: {},
   }),
 
-  // eslint-disable-next-line react/display-name
   display: () => {
     return <div>FRAME!</div>;
   },
@@ -51,12 +51,13 @@ export class FrameState extends ElementState {
       this.options.elements = elements = [];
     }
 
-    for (const c of elements) {
-      if (c.type === 'frame') {
-        this.elements.push(new FrameState(c as CanvasFrameOptions, scene, this));
+    for (const element of elements) {
+      if (element.type === 'frame') {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        this.elements.push(new FrameState(element as CanvasFrameOptions, scene, this));
       } else {
-        const item = canvasElementRegistry.getIfExists(c.type) ?? notFoundItem;
-        this.elements.push(new ElementState(item, c, this));
+        const item = canvasElementRegistry.getIfExists(element.type) ?? notFoundItem;
+        this.elements.push(new ElementState(item, element, this));
       }
     }
   }

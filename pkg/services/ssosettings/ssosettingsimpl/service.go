@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -16,6 +18,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -24,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ ssosettings.Service = (*Service)(nil)
@@ -37,40 +39,49 @@ type Service struct {
 	secrets secrets.Service
 	metrics *metrics
 
-	fbStrategies  []ssosettings.FallbackStrategy
-	providersList []string
-	reloadables   map[string]ssosettings.Reloadable
+	fbStrategies          []ssosettings.FallbackStrategy
+	providersList         []string
+	configurableProviders map[string]bool
+	reloadables           map[string]ssosettings.Reloadable
 }
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
 	secrets secrets.Service, usageStats usagestats.Service, registerer prometheus.Registerer,
-	settingsProvider setting.Provider, licensing licensing.Licensing) *Service {
+	settingsProvider setting.Provider, licensing licensing.Licensing, ldap service.LDAP) *Service {
 	fbStrategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
+		strategies.NewLDAPStrategy(cfg, ldap),
+	}
+
+	configurableProviders := make(map[string]bool)
+	for provider, enabled := range cfg.SSOSettingsConfigurableProviders {
+		configurableProviders[provider] = enabled
 	}
 
 	providersList := ssosettings.AllOAuthProviders
 	if licensing.FeatureEnabled(social.SAMLProviderName) {
 		fbStrategies = append(fbStrategies, strategies.NewSAMLStrategy(settingsProvider))
 
-		if cfg.SSOSettingsConfigurableProviders[social.SAMLProviderName] {
+		if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsSAML) {
 			providersList = append(providersList, social.SAMLProviderName)
+			configurableProviders[social.SAMLProviderName] = true
 		}
 	}
 
 	store := database.ProvideStore(sqlStore)
 
 	svc := &Service{
-		logger:        log.New("ssosettings.service"),
-		cfg:           cfg,
-		store:         store,
-		ac:            ac,
-		fbStrategies:  fbStrategies,
-		secrets:       secrets,
-		metrics:       newMetrics(registerer),
-		providersList: providersList,
-		reloadables:   make(map[string]ssosettings.Reloadable),
+		logger:                log.New("ssosettings.service"),
+		cfg:                   cfg,
+		store:                 store,
+		ac:                    ac,
+		fbStrategies:          fbStrategies,
+		secrets:               secrets,
+		metrics:               newMetrics(registerer),
+		providersList:         providersList,
+		configurableProviders: configurableProviders,
+		reloadables:           make(map[string]ssosettings.Reloadable),
 	}
 
 	usageStats.RegisterMetricsFunc(svc.getUsageStats)
@@ -117,11 +128,7 @@ func (s *Service) GetForProviderWithRedactedSecrets(ctx context.Context, provide
 		return nil, err
 	}
 
-	for k, v := range storeSettings.Settings {
-		if strVal, ok := v.(string); ok {
-			storeSettings.Settings[k] = setting.RedactedValue(k, strVal)
-		}
-	}
+	storeSettings.Settings = removeSecrets(storeSettings.Settings)
 
 	return storeSettings, nil
 }
@@ -160,7 +167,7 @@ func (s *Service) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSet
 		return nil, err
 	}
 
-	configurableSettings := make([]*models.SSOSettings, 0, len(s.cfg.SSOSettingsConfigurableProviders))
+	configurableSettings := make([]*models.SSOSettings, 0, len(s.configurableProviders))
 	for _, provider := range storeSettings {
 		if s.isProviderConfigurable(provider.Provider) {
 			configurableSettings = append(configurableSettings, provider)
@@ -168,11 +175,7 @@ func (s *Service) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSet
 	}
 
 	for _, storeSetting := range configurableSettings {
-		for k, v := range storeSetting.Settings {
-			if strVal, ok := v.(string); ok {
-				storeSetting.Settings[k] = setting.RedactedValue(k, strVal)
-			}
-		}
+		storeSetting.Settings = removeSecrets(storeSetting.Settings)
 	}
 
 	return configurableSettings, nil
@@ -183,14 +186,9 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requ
 		return ssosettings.ErrNotConfigurable
 	}
 
-	social, ok := s.reloadables[settings.Provider]
+	reloadable, ok := s.reloadables[settings.Provider]
 	if !ok {
 		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", settings.Provider)
-	}
-
-	err := social.Validate(ctx, *settings, requester)
-	if err != nil {
-		return err
 	}
 
 	storedSettings, err := s.GetForProvider(ctx, settings.Provider)
@@ -198,9 +196,18 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requ
 		return err
 	}
 
-	secrets := collectSecrets(settings, storedSettings)
+	settingsWithSecrets, err := mergeSecrets(settings.Settings, storedSettings.Settings)
+	if err != nil {
+		return err
+	}
+	settings.Settings = settingsWithSecrets
 
-	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings, storedSettings.Settings)
+	err = reloadable.Validate(ctx, *settings, *storedSettings, requester)
+	if err != nil {
+		return err
+	}
+
+	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings)
 	if err != nil {
 		return err
 	}
@@ -212,9 +219,9 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requ
 
 	// make a copy of current settings for reload operation and apply overrides
 	reloadSettings := *settings
-	reloadSettings.Settings = overrideMaps(storedSettings.Settings, settings.Settings, secrets)
+	reloadSettings.Settings = overrideMaps(storedSettings.Settings, settingsWithSecrets)
 
-	go s.reload(social, settings.Provider, reloadSettings)
+	go s.reload(reloadable, settings.Provider, reloadSettings)
 
 	return nil
 }
@@ -308,17 +315,13 @@ func (s *Service) getFallbackStrategyFor(provider string) (ssosettings.FallbackS
 	return nil, false
 }
 
-func (s *Service) encryptSecrets(ctx context.Context, settings, storedSettings map[string]any) (map[string]any, error) {
+func (s *Service) encryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
 	result := make(map[string]any)
 	for k, v := range settings {
-		if isSecret(k) && v != "" {
+		if IsSecretField(k) && v != "" {
 			strValue, ok := v.(string)
 			if !ok {
 				return result, fmt.Errorf("failed to encrypt %s setting because it is not a string: %v", k, v)
-			}
-
-			if !isNewSecretValue(strValue) {
-				strValue = storedSettings[k].(string)
 			}
 
 			encryptedSecret, err := s.secrets.Encrypt(ctx, []byte(strValue), secrets.WithoutScope())
@@ -405,7 +408,7 @@ func (s *Service) mergeSSOSettings(dbSettings, systemSettings *models.SSOSetting
 
 func (s *Service) decryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
 	for k, v := range settings {
-		if isSecret(k) && v != "" {
+		if IsSecretField(k) && v != "" {
 			strValue, ok := v.(string)
 			if !ok {
 				s.logger.Error("Failed to parse secret value, it is not a string", "key", k)
@@ -431,8 +434,8 @@ func (s *Service) decryptSecrets(ctx context.Context, settings map[string]any) (
 }
 
 func (s *Service) isProviderConfigurable(provider string) bool {
-	_, ok := s.cfg.SSOSettingsConfigurableProviders[provider]
-	return ok
+	enabled, ok := s.configurableProviders[provider]
+	return ok && enabled
 }
 
 // removeSecrets removes all the secrets from the map and replaces them with a redacted password
@@ -440,7 +443,8 @@ func (s *Service) isProviderConfigurable(provider string) bool {
 func removeSecrets(settings map[string]any) map[string]any {
 	result := make(map[string]any)
 	for k, v := range settings {
-		if isSecret(k) {
+		val, ok := v.(string)
+		if ok && val != "" && IsSecretField(k) {
 			result[k] = setting.RedactedPassword
 			continue
 		}
@@ -461,7 +465,9 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 
 	for k, v := range systemSettings {
 		if _, ok := settings[k]; !ok {
-			settings[k] = v
+			if isMergingAllowed(k) {
+				settings[k] = v
+			}
 		} else if isURL(k) && isEmptyString(settings[k]) {
 			// Overwrite all URL settings from the DB containing an empty string with their value
 			// from the system settings. This fixes an issue with empty auth_url, api_url and token_url
@@ -474,20 +480,40 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 	return settings
 }
 
-// collectSecrets collects all the secrets from the request and the currently stored settings
-// and returns a new map
-func collectSecrets(settings *models.SSOSettings, storedSettings *models.SSOSettings) map[string]any {
-	secrets := map[string]any{}
-	for k, v := range settings.Settings {
-		if isSecret(k) {
-			if isNewSecretValue(v.(string)) {
-				secrets[k] = v.(string) // use the new value
-				continue
-			}
-			secrets[k] = storedSettings.Settings[k] // keep the currently stored value
+// isMergingAllowed returns true if the field provided can be merged from the system settings.
+// It won't allow SAML fields that are part of a group of settings to be merged from system settings
+// because the DB settings already contain one valid setting from each group.
+func isMergingAllowed(fieldName string) bool {
+	forbiddenMergePatterns := []string{"certificate", "private_key", "idp_metadata"}
+
+	for _, v := range forbiddenMergePatterns {
+		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
+			return false
 		}
 	}
-	return secrets
+	return true
+}
+
+// mergeSecrets returns a new map with the current value for secrets that have not been updated
+func mergeSecrets(settings map[string]any, storedSettings map[string]any) (map[string]any, error) {
+	settingsWithSecrets := map[string]any{}
+	for k, v := range settings {
+		if IsSecretField(k) {
+			strValue, ok := v.(string)
+			if !ok {
+				return nil, fmt.Errorf("secret value is not a string")
+			}
+
+			if isNewSecretValue(strValue) {
+				settingsWithSecrets[k] = strValue // use the new value
+				continue
+			}
+			settingsWithSecrets[k] = storedSettings[k] // keep the currently stored value
+		} else {
+			settingsWithSecrets[k] = v
+		}
+	}
+	return settingsWithSecrets, nil
 }
 
 func overrideMaps(maps ...map[string]any) map[string]any {
@@ -500,8 +526,9 @@ func overrideMaps(maps ...map[string]any) map[string]any {
 	return result
 }
 
-func isSecret(fieldName string) bool {
-	secretFieldPatterns := []string{"secret"}
+// IsSecretField returns true if the SSO settings field provided is a secret
+func IsSecretField(fieldName string) bool {
+	secretFieldPatterns := []string{"secret", "private", "certificate"}
 
 	for _, v := range secretFieldPatterns {
 		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {

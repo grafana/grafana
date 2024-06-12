@@ -1,10 +1,34 @@
-import { compare, Operation } from 'fast-json-patch';
 // @ts-ignore
 import jsonMap from 'json-source-map';
-import { flow, get, isEqual, sortBy, tail } from 'lodash';
 
-import { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
-import { Dashboard } from '@grafana/schema';
+import type { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
+import { Dashboard, Panel, VariableOption } from '@grafana/schema';
+
+import { jsonDiff } from '../settings/version-history/utils';
+
+export function get(obj: any, keys: string[]) {
+  try {
+    let val = obj;
+    for (const key of keys) {
+      val = val[key];
+    }
+    return val;
+  } catch (err) {
+    return undefined;
+  }
+}
+
+export function deepEqual(a: string | string[], b: string | string[]) {
+  return (
+    typeof a === typeof b &&
+    ((typeof a === 'string' && a === b) ||
+      (Array.isArray(a) && a.length === b.length && a.every((val, i) => val === b[i])))
+  );
+}
+
+export function isEqual(a: VariableOption | undefined, b: VariableOption | undefined) {
+  return a === b || (a && b && a.selected === b.selected && deepEqual(a.text, b.text) && deepEqual(a.value, b.value));
+}
 
 export function getDashboardChanges(
   initial: Dashboard,
@@ -28,11 +52,8 @@ export function getDashboardChanges(
   }
 
   const diff = jsonDiff(initialSaveModel, changedSaveModel);
+  const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
 
-  let diffCount = 0;
-  for (const d of Object.values(diff)) {
-    diffCount += d.length;
-  }
   return {
     changedSaveModel,
     initialSaveModel,
@@ -50,6 +71,31 @@ export function getHasTimeChanged(saveModel: Dashboard, originalSaveModel: Dashb
   return saveModel.time?.from !== originalSaveModel.time?.from || saveModel.time?.to !== originalSaveModel.time?.to;
 }
 
+export function adHocVariableFiltersEqual(a: AdHocVariableModel, b: AdHocVariableModel) {
+  if (a.filters === undefined && b.filters === undefined) {
+    console.warn('Adhoc variable filter property is undefined');
+    return true;
+  }
+
+  if ((a.filters === undefined && b.filters !== undefined) || (b.filters === undefined && a.filters !== undefined)) {
+    console.warn('Adhoc variable filter property is undefined');
+    return false;
+  }
+
+  if (a.filters.length !== b.filters.length) {
+    return false;
+  }
+
+  for (let i = 0; i < a.filters.length; i++) {
+    const aFilter = a.filters[i];
+    const bFilter = b.filters[i];
+    if (aFilter.key !== bFilter.key || aFilter.operator !== bFilter.operator || aFilter.value !== bFilter.value) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Dashboard, saveVariables?: boolean) {
   const originalVariables = originalSaveModel.templating?.list ?? [];
   const variablesToSave = saveModel.templating?.list ?? [];
@@ -63,11 +109,16 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
     }
 
     // Old schema property that never should be in persisted model
-    if (original.current && Object.hasOwn(original.current, 'selected')) {
+    if (original.current) {
       delete original.current.selected;
     }
 
     if (!isEqual(variable.current, original.current)) {
+      hasVariableValueChanges = true;
+    } else if (
+      variable.type === 'adhoc' &&
+      !adHocVariableFiltersEqual(variable as AdHocVariableModel, original as AdHocVariableModel)
+    ) {
       hasVariableValueChanges = true;
     }
 
@@ -76,10 +127,8 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
       if (typed.type === 'adhoc') {
         typed.filters = (original as AdHocVariableModel).filters;
       } else {
-        if (typed.type !== 'groupby') {
-          variable.current = original.current;
-          variable.options = original.options;
-        }
+        variable.current = original.current;
+        variable.options = original.options;
       }
     }
   }
@@ -87,68 +136,15 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
   return hasVariableValueChanges;
 }
 
-export type Diff = {
-  op: 'add' | 'replace' | 'remove' | 'copy' | 'test' | '_get' | 'move';
-  value: unknown;
-  originalValue: unknown;
-  path: string[];
-  startLineNumber: number;
-};
+export function getPanelChanges(saveModel: Panel, originalSaveModel: Panel) {
+  const diff = jsonDiff(originalSaveModel, saveModel);
+  const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
 
-export type Diffs = {
-  [key: string]: Diff[];
-};
-
-export type JSONValue = string | Dashboard;
-
-export const jsonDiff = (lhs: JSONValue, rhs: JSONValue): Diffs => {
-  const diffs = compare(lhs, rhs);
-  const lhsMap = jsonMap.stringify(lhs, null, 2);
-  const rhsMap = jsonMap.stringify(rhs, null, 2);
-
-  const getDiffInformation = (diffs: Operation[]): Diff[] => {
-    return diffs.map((diff) => {
-      let originalValue = undefined;
-      let value = undefined;
-      let startLineNumber = 0;
-
-      const path = tail(diff.path.split('/'));
-
-      if (diff.op === 'replace' && rhsMap.pointers[diff.path]) {
-        originalValue = get(lhs, path);
-        value = diff.value;
-        startLineNumber = rhsMap.pointers[diff.path].value.line;
-      }
-      if (diff.op === 'add' && rhsMap.pointers[diff.path]) {
-        value = diff.value;
-        startLineNumber = rhsMap.pointers[diff.path].value.line;
-      }
-      if (diff.op === 'remove' && lhsMap.pointers[diff.path]) {
-        originalValue = get(lhs, path);
-        startLineNumber = lhsMap.pointers[diff.path].value.line;
-      }
-
-      return {
-        op: diff.op,
-        value,
-        path,
-        originalValue,
-        startLineNumber,
-      };
-    });
+  return {
+    changedSaveModel: saveModel,
+    initialSaveModel: originalSaveModel,
+    diffs: diff,
+    diffCount,
+    hasChanges: diffCount > 0,
   };
-
-  const sortByLineNumber = (diffs: Diff[]) => sortBy(diffs, 'startLineNumber');
-  const groupByPath = (diffs: Diff[]) =>
-    diffs.reduce<Record<string, Diff[]>>((acc, value) => {
-      const groupKey: string = value.path[0];
-      if (!acc[groupKey]) {
-        acc[groupKey] = [];
-      }
-      acc[groupKey].push(value);
-      return acc;
-    }, {});
-
-  //   return 1;
-  return flow([getDiffInformation, sortByLineNumber, groupByPath])(diffs);
-};
+}

@@ -18,6 +18,10 @@ exports[`AlertRule abilities should report no permissions while we are loading d
     false,
     false,
   ],
+  "pause-alert-rule": [
+    false,
+    false,
+  ],
   "silence-alert-rule": [
     false,
     false,
@@ -48,6 +52,10 @@ exports[`AlertRule abilities should report that all actions are supported for a 
     false,
   ],
   "modify-export-rule": [
+    true,
+    false,
+  ],
+  "pause-alert-rule": [
     true,
     false,
   ],
@@ -126,6 +134,10 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
   ],
   "export-notification-policies": [
     false,
+    false,
+  ],
+  "preview-silenced-alerts": [
+    true,
     false,
   ],
   "update-external-configuration": [
@@ -237,6 +249,10 @@ exports[`alertmanager abilities should report everything except exporting for Mi
     false,
     true,
   ],
+  "preview-silenced-alerts": [
+    true,
+    true,
+  ],
   "update-external-configuration": [
     true,
     true,
@@ -343,6 +359,10 @@ exports[`alertmanager abilities should report everything is supported for builti
     true,
   ],
   "export-notification-policies": [
+    true,
+    true,
+  ],
+  "preview-silenced-alerts": [
     true,
     true,
   ],

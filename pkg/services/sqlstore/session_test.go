@@ -12,7 +12,7 @@ import (
 )
 
 func TestRetryingDisabled(t *testing.T) {
-	store := InitTestDB(t)
+	store, _ := InitTestDB(t)
 	require.Equal(t, 0, store.dbCfg.QueryRetries)
 
 	funcToTest := map[string]func(ctx context.Context, callback DBTransactionFunc) error{
@@ -63,7 +63,7 @@ func TestRetryingDisabled(t *testing.T) {
 }
 
 func TestRetryingOnFailures(t *testing.T) {
-	store := InitTestDB(t)
+	store, _ := InitTestDB(t)
 	store.dbCfg.QueryRetries = 5
 
 	funcToTest := map[string]func(ctx context.Context, callback DBTransactionFunc) error{

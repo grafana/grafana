@@ -1,5 +1,5 @@
+import { PromQuery } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { GrafanaAlertStateDecision, GrafanaRuleDefinition, RulerAlertingRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { AlertManagerManualRouting, RuleFormType, RuleFormValues } from '../types/rule-form';
@@ -97,6 +97,7 @@ describe('getContactPointsFromDTO', () => {
       uid: '123',
       title: 'myalert',
       namespace_uid: '123',
+      rule_group: 'my-group',
       condition: 'A',
       no_data_state: GrafanaAlertStateDecision.Alerting,
       exec_err_state: GrafanaAlertStateDecision.Alerting,
@@ -120,6 +121,7 @@ describe('getContactPointsFromDTO', () => {
       uid: '123',
       title: 'myalert',
       namespace_uid: '123',
+      rule_group: 'my-group',
       condition: 'A',
       no_data_state: GrafanaAlertStateDecision.Alerting,
       exec_err_state: GrafanaAlertStateDecision.Alerting,

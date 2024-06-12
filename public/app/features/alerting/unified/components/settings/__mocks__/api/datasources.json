@@ -1,0 +1,62 @@
+[
+  {
+    "id": 183,
+    "uid": "xPVD2XISz",
+    "orgId": 1,
+    "name": "Mimir-based Alertmanager",
+    "type": "alertmanager",
+    "typeName": "Alertmanager",
+    "typeLogoUrl": "public/app/plugins/datasource/prometheus/img/prometheus_logo.svg",
+    "access": "proxy",
+    "url": "http://foo.bar:9090/",
+    "user": "",
+    "database": "",
+    "basicAuth": false,
+    "isDefault": false,
+    "jsonData": {
+      "httpMethod": "POST",
+      "implementation": "mimir"
+    },
+    "readOnly": false
+  },
+  {
+    "id": 183,
+    "uid": "xPVD2XISx",
+    "orgId": 1,
+    "name": "Provisioned Mimir-based Alertmanager",
+    "type": "alertmanager",
+    "typeName": "Alertmanager",
+    "typeLogoUrl": "public/app/plugins/datasource/prometheus/img/prometheus_logo.svg",
+    "access": "proxy",
+    "url": "http://foo.bar:9090/",
+    "user": "",
+    "database": "",
+    "basicAuth": false,
+    "isDefault": false,
+    "jsonData": {
+      "httpMethod": "POST",
+      "implementation": "mimir"
+    },
+    "readOnly": true
+  },
+  {
+    "id": 160,
+    "uid": "iETbvsT4z",
+    "orgId": 1,
+    "name": "Vanilla Alertmanager",
+    "type": "alertmanager",
+    "typeName": "Alertmanager",
+    "typeLogoUrl": "public/app/plugins/datasource/alertmanager/img/logo.svg",
+    "access": "proxy",
+    "url": "http://localhost:9093",
+    "user": "",
+    "database": "",
+    "basicAuth": false,
+    "isDefault": false,
+    "jsonData": {
+      "handleGrafanaManagedAlerts": false,
+      "implementation": "prometheus"
+    },
+    "readOnly": false
+  }
+]

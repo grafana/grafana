@@ -15,6 +15,12 @@ labels:
     - oss
 title: Bar gauge
 weight: 100
+refs:
+  calculation-types:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
 ---
 
 # Bar gauge
@@ -23,7 +29,13 @@ Bar gauges simplify your data by reducing every field to a single value. You cho
 
 This panel can show one or more bar gauges depending on how many series, rows, or columns your query returns.
 
-{{< figure src="/static/img/docs/v66/bar_gauge_cover.png" max-width="1025px" caption="Stat panel" >}}
+{{< figure src="/static/img/docs/v66/bar_gauge_cover.png" max-width="1025px" alt="Bar gauge panel" >}}
+
+{{< docs/play title="Bar Gauge" url="https://play.grafana.org/d/vmie2cmWz/" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Value options
 
@@ -37,7 +49,7 @@ Choose how Grafana displays your data.
 
 Show a calculated value based on all rows.
 
-- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types][].
+- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types).
 - **Fields -** Select the fields display in the panel.
 
 #### All values
@@ -128,7 +140,22 @@ Automatically show y-axis scrollbar when there's a large amount of data.
 This option only applies when bar size is set to manual.
 {{% /admonition %}}
 
-{{% docs/reference %}}
-[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
-[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
-{{% /docs/reference %}}
+## Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

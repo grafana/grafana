@@ -33,8 +33,8 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 		t.Skip("skipping - sqlite not supported for storage server target")
 	}
 
-	testdb := db.InitTestDB(t)
-	cfg := testdb.Cfg
+	_, cfg := db.InitTestDBWithCfg(t)
+	cfg.HTTPPort = "3001"
 	cfg.GRPCServerNetwork = "tcp"
 	cfg.GRPCServerAddress = "localhost:10000"
 	addStorageServerToConfig(t, cfg, dbType)
@@ -52,7 +52,7 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 	time.Sleep(500 * time.Millisecond) // wait for http server to be running
 
 	client := http.Client{}
-	res, err := client.Get("http://localhost:3000/metrics")
+	res, err := client.Get("http://localhost:3001/metrics")
 	require.NoError(t, err)
 	err = res.Body.Close()
 	require.NoError(t, err)

@@ -34,31 +34,64 @@ func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, con
 	}
 
 	if err := fam.internal.ApplyConfig(ctx, config); err != nil {
+		// An error in the internal Alertmanager shouldn't make the whole operation fail.
+		// We're replicating writes in the internal Alertmanager just for comparing and in case we need to roll back.
 		fam.log.Error("Error applying config to the internal Alertmanager", "err", err)
 	}
 	return nil
 }
 
-// TODO: save the new configuration hash in memory.
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
+	if err := fam.remote.SaveAndApplyConfig(ctx, config); err != nil {
+		return err
+	}
+
+	if err := fam.internal.SaveAndApplyConfig(ctx, config); err != nil {
+		// An error in the internal Alertmanager shouldn't make the whole operation fail.
+		// We're replicating writes in the internal Alertmanager just for comparing and in case we need to roll back.
+		fam.log.Error("Error applying config to the internal Alertmanager", "err", err)
+	}
 	return nil
 }
 
-// TODO: save the new configuration hash in memory.
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
+	if err := fam.remote.SaveAndApplyDefaultConfig(ctx); err != nil {
+		return fmt.Errorf("failed to send the default configuration to the remote Alertmanager: %w", err)
+	}
+
+	if err := fam.internal.SaveAndApplyDefaultConfig(ctx); err != nil {
+		// An error in the internal Alertmanager shouldn't make the whole operation fail.
+		// We're replicating writes in the internal Alertmanager just for comparing and in case we need to roll back.
+		fam.log.Error("Error applying the default configuration to the internal Alertmanager", "err", err)
+	}
 	return nil
 }
 
-func (fam *RemotePrimaryForkedAlertmanager) GetStatus() apimodels.GettableStatus {
-	return fam.remote.GetStatus()
+func (fam *RemotePrimaryForkedAlertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
+	return fam.remote.GetStatus(ctx)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
-	return fam.remote.CreateSilence(ctx, silence)
+	uid, err := fam.remote.CreateSilence(ctx, silence)
+	if err != nil {
+		return "", err
+	}
+
+	silence.ID = uid
+	if _, err := fam.internal.CreateSilence(ctx, silence); err != nil {
+		fam.log.Error("Error creating silence in the internal Alertmanager", "err", err, "silence", silence)
+	}
+	return uid, nil
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) DeleteSilence(ctx context.Context, id string) error {
-	return fam.remote.DeleteSilence(ctx, id)
+	if err := fam.remote.DeleteSilence(ctx, id); err != nil {
+		return err
+	}
+	if err := fam.internal.DeleteSilence(ctx, id); err != nil {
+		fam.log.Error("Error deleting silence in the internal Alertmanager", "err", err, "id", id)
+	}
+	return nil
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetSilence(ctx context.Context, id string) (apimodels.GettableSilence, error) {
@@ -86,11 +119,13 @@ func (fam *RemotePrimaryForkedAlertmanager) GetReceivers(ctx context.Context) ([
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
-	return fam.remote.TestReceivers(ctx, c)
+	// TODO: change to remote AM once it's implemented there.
+	return fam.internal.TestReceivers(ctx, c)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	return fam.remote.TestTemplate(ctx, c)
+	// TODO: change to remote AM once it's implemented there.
+	return fam.internal.TestTemplate(ctx, c)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {

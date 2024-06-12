@@ -19,6 +19,7 @@ import {
   ToggleFilterAction,
   DataQueryRequest,
   ScopedVars,
+  AdHocVariableFilter,
 } from '@grafana/data';
 import {
   BackendSrv,
@@ -205,7 +206,7 @@ describe('LokiDatasource', () => {
     it('should report query interaction', async () => {
       await runTest(80, '40', 80, CoreApp.Explore);
       expect(reportInteraction).toHaveBeenCalledWith(
-        'grafana_loki_query_executed',
+        'grafana_explore_loki_query_executed',
         expect.objectContaining({
           query_type: 'logs',
           line_limit: 80,
@@ -219,16 +220,9 @@ describe('LokiDatasource', () => {
       expect(reportInteraction).not.toBeCalled();
     });
 
-    it('should not report query interaction for panel edit query', async () => {
-      await runTest(80, '40', 80, CoreApp.PanelEditor);
-      expect(reportInteraction).toHaveBeenCalledWith(
-        'grafana_loki_query_executed',
-        expect.objectContaining({
-          query_type: 'logs',
-          line_limit: 80,
-          obfuscated_query: '{Identifier=String}',
-        })
-      );
+    it('should not report query interaction for unknown app query', async () => {
+      await runTest(80, '40', 80, CoreApp.Unknown);
+      expect(reportInteraction).not.toBeCalled();
     });
   });
 
@@ -497,9 +491,9 @@ describe('LokiDatasource', () => {
       return { ds };
     };
 
-    it('should return empty array if /series returns empty', async () => {
+    it('should return empty array if label values returns empty', async () => {
       const ds = createLokiDatasource(templateSrvStub);
-      const spy = jest.spyOn(ds.languageProvider, 'fetchSeriesLabels').mockResolvedValue({});
+      const spy = jest.spyOn(ds.languageProvider, 'fetchLabelValues').mockResolvedValue([]);
 
       const result = await ds.metricFindQuery({
         refId: 'test',
@@ -1187,6 +1181,22 @@ describe('LokiDatasource', () => {
             defaultAdHocFilters
           );
         });
+        it('should add the filter after other label filters', () => {
+          assertAdHocFilters(
+            '{bar="baz"} | logfmt | test="value" | line_format "test"',
+            '{bar="baz"} | logfmt | test="value" | job=`grafana` | line_format "test"',
+            ds,
+            defaultAdHocFilters
+          );
+        });
+        it('should add the filter after label_format', () => {
+          assertAdHocFilters(
+            '{bar="baz"} | logfmt | test="value" | label_format process="{{.process}}"',
+            '{bar="baz"} | logfmt | test="value" | label_format process="{{.process}}" | job=`grafana`',
+            ds,
+            defaultAdHocFilters
+          );
+        });
       });
     });
 
@@ -1690,6 +1700,67 @@ describe('LokiDatasource', () => {
       jest.spyOn(ds, 'applyTemplateVariables').mockImplementation((query) => query);
       ds.query({ targets: [query], scopedVars, filters, liveStreaming: true } as DataQueryRequest<LokiQuery>);
       expect(ds.applyTemplateVariables).toHaveBeenCalledWith(expect.objectContaining(query), scopedVars, filters);
+    });
+  });
+
+  describe('getTagKeys', () => {
+    it('should pass timeRange and filters to the request', async () => {
+      const ds = createLokiDatasource();
+      const filters = [
+        { key: 'foo', operator: '=', value: 'bar' },
+        { key: 'foo2', operator: '=', value: 'bar2' },
+      ];
+      const spy = jest.spyOn(ds.languageProvider, 'fetchLabels').mockResolvedValue([]);
+
+      await ds.getTagKeys({ filters, timeRange: mockTimeRange });
+      expect(spy).toHaveBeenCalledWith({ streamSelector: '{foo="bar", foo2="bar2"}', timeRange: mockTimeRange });
+    });
+
+    it('should pass regex filters', async () => {
+      const ds = createLokiDatasource();
+      const filters = [
+        { key: 'foo', operator: '=~', value: 'abc|def' },
+        { key: 'foo2', operator: '=', value: 'bar2' },
+      ];
+      const spy = jest.spyOn(ds.languageProvider, 'fetchLabels').mockResolvedValue([]);
+
+      await ds.getTagKeys({ filters, timeRange: mockTimeRange });
+      expect(spy).toHaveBeenCalledWith({ streamSelector: '{foo=~"abc|def", foo2="bar2"}', timeRange: mockTimeRange });
+    });
+
+    it('should pass empty stream selector when no filters', async () => {
+      const ds = createLokiDatasource();
+      const filters: AdHocVariableFilter[] = [];
+      const spy = jest.spyOn(ds.languageProvider, 'fetchLabels').mockResolvedValue([]);
+
+      await ds.getTagKeys({ filters, timeRange: mockTimeRange });
+      expect(spy).toHaveBeenCalledWith({ streamSelector: '{}', timeRange: mockTimeRange });
+    });
+  });
+
+  describe('getTagValues', () => {
+    it('should pass timeRange and filters to the request', async () => {
+      const ds = createLokiDatasource();
+      const filters = [
+        { key: 'foo', operator: '=', value: 'bar' },
+        { key: 'foo2', operator: '=', value: 'bar2' },
+      ];
+      const spy = jest.spyOn(ds.languageProvider, 'fetchLabelValues').mockResolvedValue([]);
+
+      await ds.getTagValues({ key: 'label1', filters, timeRange: mockTimeRange });
+      expect(spy).toHaveBeenCalledWith('label1', {
+        streamSelector: '{foo="bar", foo2="bar2"}',
+        timeRange: mockTimeRange,
+      });
+    });
+
+    it('should pass empty stream selector when no filters', async () => {
+      const ds = createLokiDatasource();
+      const filters: AdHocVariableFilter[] = [];
+      const spy = jest.spyOn(ds.languageProvider, 'fetchLabelValues').mockResolvedValue([]);
+
+      await ds.getTagValues({ key: 'label1', filters, timeRange: mockTimeRange });
+      expect(spy).toHaveBeenCalledWith('label1', { streamSelector: '{}', timeRange: mockTimeRange });
     });
   });
 });

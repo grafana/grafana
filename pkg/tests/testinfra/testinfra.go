@@ -17,9 +17,11 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -376,6 +378,22 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = unifiedAlertingSection.NewKey("min_interval", o.NGAlertSchedulerBaseInterval.String())
 			require.NoError(t, err)
 		}
+
+		if o.GrafanaComAPIURL != "" {
+			grafanaComSection, err := getOrCreateSection("grafana_com")
+			require.NoError(t, err)
+			_, err = grafanaComSection.NewKey("api_url", o.GrafanaComAPIURL)
+			require.NoError(t, err)
+		}
+
+		if o.DualWriterDesiredModes != nil {
+			unifiedStorageMode, err := getOrCreateSection("unified_storage_mode")
+			require.NoError(t, err)
+			for k, v := range o.DualWriterDesiredModes {
+				_, err = unifiedStorageMode.NewKey(k, fmt.Sprint(v))
+				require.NoError(t, err)
+			}
+		}
 	}
 	logSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
@@ -422,6 +440,8 @@ type GrafanaOpts struct {
 	GRPCServerAddress                     string
 	QueryRetries                          int64
 	APIServerStorageType                  string
+	GrafanaComAPIURL                      string
+	DualWriterDesiredModes                map[string]grafanarest.DualWriterMode
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {
@@ -434,7 +454,9 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	quotaService := quotaimpl.ProvideService(store, cfg)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(store, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(), quotaService, supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 
 	o, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: fmt.Sprintf("test org %d", time.Now().UnixNano())})

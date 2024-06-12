@@ -5,17 +5,18 @@ import {
   DataSourceInstanceSettings,
   DataSourceRef,
   getDefaultRelativeTimeRange,
+  getNextRefId,
   IntervalValues,
   rangeUtil,
   RelativeTimeRange,
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
+import { PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { DataSourceJsonData } from '@grafana/schema';
-import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import {
   getDashboardSceneFor,
@@ -24,7 +25,6 @@ import {
 } from 'app/features/dashboard-scene/utils/utils';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   AlertDataQuery,
@@ -568,12 +568,12 @@ export const panelToRuleFormValues = async (
   }
 
   if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(queries), '-');
+    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefId(queries), '-');
     queries.push(reduceExpression);
 
     const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
       reduceExpression.refId,
-      getNextRefIdChar(queries)
+      getNextRefId(queries)
     );
     queries.push(thresholdExpression);
   }
@@ -638,12 +638,12 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
   }
 
   if (!grafanaQueries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(grafanaQueries), '-');
+    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefId(grafanaQueries), '-');
     grafanaQueries.push(reduceExpression);
 
     const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
       reduceExpression.refId,
-      getNextRefIdChar(grafanaQueries)
+      getNextRefId(grafanaQueries)
     );
     grafanaQueries.push(thresholdExpression);
   }

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -58,7 +59,7 @@ func shouldUseDataplane(frames data.Frames, logger log.Logger, disable bool) (dt
 	return dt, true, nil
 }
 
-func handleDataplaneFrames(ctx context.Context, tracer tracing.Tracer, t data.FrameType, frames data.Frames) (mathexp.Results, error) {
+func handleDataplaneFrames(ctx context.Context, tracer tracing.Tracer, features featuremgmt.FeatureToggles, t data.FrameType, frames data.Frames) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.HandleDataPlaneData")
 	defer span.End()
 	span.SetAttributes(attribute.String("dataplane.type", string(t)))
@@ -69,7 +70,8 @@ func handleDataplaneFrames(ctx context.Context, tracer tracing.Tracer, t data.Fr
 	case data.KindTimeSeries:
 		return handleDataplaneTimeseries(frames)
 	case data.KindNumeric:
-		return handleDataplaneNumeric(frames)
+		sortMetrics := !features.IsEnabled(ctx, featuremgmt.FlagDisableNumericMetricsSortingInExpressions)
+		return handleDataplaneNumeric(frames, sortMetrics)
 	default:
 		return mathexp.Results{}, fmt.Errorf("kind %s (type %s) not supported by server side expressions", t.Kind(), t)
 	}
@@ -105,7 +107,7 @@ func handleDataplaneTimeseries(frames data.Frames) (mathexp.Results, error) {
 	return res, nil
 }
 
-func handleDataplaneNumeric(frames data.Frames) (mathexp.Results, error) {
+func handleDataplaneNumeric(frames data.Frames, sortMetrics bool) (mathexp.Results, error) {
 	dn, err := numeric.CollectionReaderFromFrames(frames)
 	if err != nil {
 		return mathexp.Results{}, err
@@ -121,6 +123,9 @@ func handleDataplaneNumeric(frames data.Frames) (mathexp.Results, error) {
 			noData.Frame = dn.Frames()[0]
 		}
 		return mathexp.Results{Values: mathexp.Values{noData}}, nil
+	}
+	if sortMetrics {
+		numeric.SortNumericMetricRef(nc.Refs)
 	}
 	res := mathexp.Results{}
 	res.Values = make([]mathexp.Value, 0, len(nc.Refs))

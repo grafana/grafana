@@ -183,6 +183,19 @@
         },
         "description": "(empty)"
       },
+      "cloudMigrationDeleteTokenResponse": {
+        "description": "(empty)"
+      },
+      "cloudMigrationGetTokenResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetAccessTokenResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "cloudMigrationListResponse": {
         "content": {
           "application/json": {
@@ -488,12 +501,6 @@
           "application/json": {
             "schema": {
               "properties": {
-                "id": {
-                  "description": "ID Identifier of the deleted dashboard.",
-                  "example": 65,
-                  "format": "int64",
-                  "type": "integer"
-                },
                 "message": {
                   "description": "Message Message of the deleted dashboard.",
                   "example": "Dashboard My Dashboard deleted",
@@ -503,10 +510,15 @@
                   "description": "Title Title of the deleted dashboard.",
                   "example": "My Dashboard",
                   "type": "string"
+                },
+                "uid": {
+                  "description": "UID Identifier of the deleted dashboard.",
+                  "example": "65",
+                  "type": "string"
                 }
               },
               "required": [
-                "id",
+                "uid",
                 "title",
                 "message"
               ],
@@ -1179,7 +1191,7 @@
                   "type": "string"
                 },
                 "settings": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "type": "object"
                 },
                 "source": {
@@ -1459,7 +1471,7 @@
                     "type": "string"
                   },
                   "settings": {
-                    "additionalProperties": false,
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   "source": {
@@ -2482,7 +2494,7 @@
             "type": "string"
           },
           "model": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           },
           "queryType": {
@@ -2529,7 +2541,7 @@
           "condition": {
             "type": "string"
           },
-          "dasboardUid": {
+          "dashboardUid": {
             "type": "string"
           },
           "data": {
@@ -2572,6 +2584,9 @@
           "panelId": {
             "format": "int64",
             "type": "integer"
+          },
+          "record": {
+            "$ref": "#/components/schemas/AlertRuleRecordExport"
           },
           "title": {
             "type": "string"
@@ -2722,6 +2737,18 @@
         "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
         "type": "object"
       },
+      "AlertRuleRecordExport": {
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          }
+        },
+        "title": "Record is the provisioned export of models.Record.",
+        "type": "object"
+      },
       "AlertingFileExport": {
         "properties": {
           "apiVersion": {
@@ -2818,7 +2845,7 @@
             "type": "object"
           },
           "type": {
-            "$ref": "#/components/schemas/RuleType"
+            "type": "string"
           }
         },
         "required": [
@@ -3253,6 +3280,123 @@
         "title": "BasicAuth contains basic HTTP authentication credentials.",
         "type": "object"
       },
+      "CacheConfig": {
+        "description": "Config defines the internal representation of a cache configuration, including fields not set by the API caller",
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dataSourceID": {
+            "description": "Fields that can be set by the API caller - read/write",
+            "format": "int64",
+            "type": "integer"
+          },
+          "dataSourceUID": {
+            "type": "string"
+          },
+          "defaultTTLMs": {
+            "description": "These are returned by the HTTP API, but are managed internally - read-only\nNote: 'created' and 'updated' are special properties managed automatically by xorm, but we are setting them manually",
+            "format": "int64",
+            "type": "integer"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "ttlQueriesMs": {
+            "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+            "format": "int64",
+            "type": "integer"
+          },
+          "ttlResourcesMs": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "useDefaultTTL": {
+            "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "CacheConfigResponse": {
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dataSourceID": {
+            "description": "Fields that can be set by the API caller - read/write",
+            "format": "int64",
+            "type": "integer"
+          },
+          "dataSourceUID": {
+            "type": "string"
+          },
+          "defaultTTLMs": {
+            "description": "These are returned by the HTTP API, but are managed internally - read-only\nNote: 'created' and 'updated' are special properties managed automatically by xorm, but we are setting them manually",
+            "format": "int64",
+            "type": "integer"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "ttlQueriesMs": {
+            "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+            "format": "int64",
+            "type": "integer"
+          },
+          "ttlResourcesMs": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "useDefaultTTL": {
+            "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "CacheConfigSetter": {
+        "description": "ConfigSetter defines the cache parameters that users can configure per datasource\nThis is only intended to be consumed by the SetCache HTTP Handler",
+        "properties": {
+          "dataSourceID": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dataSourceUID": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "ttlQueriesMs": {
+            "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+            "format": "int64",
+            "type": "integer"
+          },
+          "ttlResourcesMs": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "useDefaultTTL": {
+            "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "CalculateDiffTarget": {
         "properties": {
           "dashboardId": {
@@ -3415,7 +3559,15 @@
             },
             "type": "array"
           },
+          "Policies": {
+            "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
+            "items": {
+              "$ref": "#/components/schemas/OID"
+            },
+            "type": "array"
+          },
           "PolicyIdentifiers": {
+            "description": "PolicyIdentifiers contains asn1.ObjectIdentifiers, the components\nof which are limited to int32. If a certificate contains a policy which\ncannot be represented by asn1.ObjectIdentifier, it will not be included in\nPolicyIdentifiers, but will be present in Policies, which contains all parsed\npolicy OIDs.",
             "items": {
               "$ref": "#/components/schemas/ObjectIdentifier"
             },
@@ -3546,11 +3698,10 @@
             "format": "date-time",
             "type": "string"
           },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "stack": {
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           },
           "updated": {
@@ -3564,7 +3715,7 @@
         "properties": {
           "runs": {
             "items": {
-              "$ref": "#/components/schemas/MigrateDataResponseDTO"
+              "$ref": "#/components/schemas/MigrateDataResponseListDTO"
             },
             "type": "array"
           }
@@ -3641,15 +3792,15 @@
       "CookiePreferences": {
         "properties": {
           "analytics": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           },
           "functional": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           },
           "performance": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           }
         },
@@ -3711,7 +3862,7 @@
             "type": "string"
           },
           "target": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Target data query",
             "example": {
               "prop1": "value1",
@@ -3744,7 +3895,7 @@
             "type": "string"
           },
           "target": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Target data query",
             "example": {
               "prop1": "value1",
@@ -4305,9 +4456,6 @@
           },
           "publicDashboardEnabled": {
             "type": "boolean"
-          },
-          "publicDashboardUid": {
-            "type": "string"
           },
           "slug": {
             "type": "string"
@@ -4948,7 +5096,9 @@
         },
         "type": "object"
       },
-      "EvalQueriesResponse": {},
+      "EvalQueriesResponse": {
+        "type": "object"
+      },
       "ExplorePanelsState": {
         "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
       },
@@ -5044,12 +5194,12 @@
       "FieldConfig": {
         "properties": {
           "color": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
             "type": "object"
           },
           "custom": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Panel Specific Values",
             "type": "object"
           },
@@ -5412,6 +5562,29 @@
         },
         "type": "object"
       },
+      "GetAccessTokenResponseDTO": {
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "firstUsedAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "GetAnnotationTagsResponse": {
         "properties": {
           "result": {
@@ -5724,6 +5897,9 @@
           "provenance": {
             "$ref": "#/components/schemas/Provenance"
           },
+          "record": {
+            "$ref": "#/components/schemas/Record"
+          },
           "rule_group": {
             "type": "string"
           },
@@ -5846,6 +6022,9 @@
               "$ref": "#/components/schemas/TimeIntervalItem"
             },
             "type": "array"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -6010,7 +6189,6 @@
       "Hit": {
         "properties": {
           "folderId": {
-            "description": "Deprecated: use FolderUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -6029,6 +6207,9 @@
           },
           "isStarred": {
             "type": "boolean"
+          },
+          "remainingTrashAtAge": {
+            "type": "string"
           },
           "slug": {
             "type": "string"
@@ -6086,7 +6267,7 @@
         "type": "object"
       },
       "IPMask": {
-        "description": "See type IPNet and func ParseCIDR for details.",
+        "description": "See type [IPNet] and func [ParseCIDR] for details.",
         "items": {
           "format": "uint8",
           "type": "integer"
@@ -6714,15 +6895,14 @@
       },
       "MigrateDataResponseDTO": {
         "properties": {
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/MigrateDataResponseItemDTO"
             },
             "type": "array"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -6756,6 +6936,14 @@
           "refId",
           "status"
         ],
+        "type": "object"
+      },
+      "MigrateDataResponseListDTO": {
+        "properties": {
+          "uid": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "MoveFolderCommand": {
@@ -6810,7 +6998,7 @@
         "type": "array"
       },
       "Name": {
-        "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an RDNSequence.",
+        "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an [RDNSequence].",
         "properties": {
           "Country": {
             "items": {
@@ -7046,6 +7234,10 @@
           }
         },
         "title": "OAuth2 is the oauth2 client configuration.",
+        "type": "object"
+      },
+      "OID": {
+        "title": "An OID represents an ASN.1 OBJECT IDENTIFIER.",
         "type": "object"
       },
       "ObjectIdentifier": {
@@ -7299,7 +7491,6 @@
         "type": "object"
       },
       "PagerdutyImage": {
-        "description": "PagerdutyImage is an image",
         "properties": {
           "alt": {
             "type": "string"
@@ -7311,10 +7502,10 @@
             "type": "string"
           }
         },
+        "title": "PagerdutyImage is an image.",
         "type": "object"
       },
       "PagerdutyLink": {
-        "description": "PagerdutyLink is a link",
         "properties": {
           "href": {
             "type": "string"
@@ -7323,6 +7514,7 @@
             "type": "string"
           }
         },
+        "title": "PagerdutyLink is a link.",
         "type": "object"
       },
       "Password": {
@@ -7921,6 +8113,9 @@
           "notification_settings": {
             "$ref": "#/components/schemas/AlertRuleNotificationSettings"
           },
+          "record": {
+            "$ref": "#/components/schemas/Record"
+          },
           "title": {
             "type": "string"
           },
@@ -7970,6 +8165,9 @@
               "$ref": "#/components/schemas/TimeIntervalItem"
             },
             "type": "array"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8152,6 +8350,9 @@
           },
           "provenance": {
             "$ref": "#/components/schemas/Provenance"
+          },
+          "record": {
+            "$ref": "#/components/schemas/Record"
           },
           "ruleGroup": {
             "example": "eval_group_1",
@@ -8336,7 +8537,7 @@
         "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
         "properties": {
           "extra": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           },
           "message": {
@@ -8517,12 +8718,12 @@
         "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).",
         "properties": {
           "color": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
             "type": "object"
           },
           "custom": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Panel Specific Values",
             "type": "object"
           },
@@ -8730,6 +8931,25 @@
         "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
         "type": "object"
       },
+      "Record": {
+        "properties": {
+          "from": {
+            "description": "Which expression node should be used as the input for the recorded metric.",
+            "example": "A",
+            "type": "string"
+          },
+          "metric": {
+            "description": "Name of the recorded metric.",
+            "example": "grafana_alerts_ratio",
+            "type": "string"
+          }
+        },
+        "required": [
+          "metric",
+          "from"
+        ],
+        "type": "object"
+      },
       "RecordingRuleJSON": {
         "description": "RecordingRuleJSON is the external representation of a recording rule",
         "properties": {
@@ -8760,7 +8980,7 @@
           },
           "queries": {
             "items": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "type": "object"
             },
             "type": "array"
@@ -9041,6 +9261,14 @@
         },
         "type": "object"
       },
+      "RestoreDeletedDashboardCommand": {
+        "properties": {
+          "folderUid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "RevokeAuthTokenCmd": {
         "properties": {
           "authTokenId": {
@@ -9292,7 +9520,7 @@
             "type": "string"
           },
           "type": {
-            "$ref": "#/components/schemas/RuleType"
+            "type": "string"
           }
         },
         "required": [
@@ -9409,10 +9637,6 @@
           "status"
         ],
         "type": "object"
-      },
-      "RuleType": {
-        "title": "RuleType models the type of a rule.",
-        "type": "string"
       },
       "SNSConfig": {
         "properties": {
@@ -9843,6 +10067,23 @@
         },
         "type": "object"
       },
+      "SetTeamMembershipsCommand": {
+        "properties": {
+          "admins": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "members": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "SetUserRolesCommand": {
         "properties": {
           "global": {
@@ -9896,6 +10137,20 @@
       "SignatureAlgorithm": {
         "format": "int64",
         "type": "integer"
+      },
+      "SilenceMetadata": {
+        "properties": {
+          "folder_uid": {
+            "type": "string"
+          },
+          "rule_title": {
+            "type": "string"
+          },
+          "rule_uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
       },
       "SlackAction": {
         "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -10841,7 +11096,7 @@
         "type": "object"
       },
       "URL": {
-        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
+        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
         "properties": {
           "ForceQuery": {
             "type": "boolean"
@@ -10884,7 +11139,7 @@
         "description": "Unstructured allows objects that do not have Golang structs registered to be manipulated\ngenerically.",
         "properties": {
           "Object": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Object is a JSON compatible map with string, float, int, bool, []interface{},\nor map[string]interface{} children.",
             "type": "object"
           }
@@ -11479,7 +11734,7 @@
         "type": "object"
       },
       "Userinfo": {
-        "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
+        "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a [URL]. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
         "type": "object"
       },
       "ValidationError": {
@@ -11679,7 +11934,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -11873,7 +12127,33 @@
         },
         "type": "array"
       },
+      "gettableGrafanaSilence": {
+        "properties": {
+          "accessControl": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "example": {
+              "create": false,
+              "read": true,
+              "write": false
+            },
+            "type": "object"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/SilenceMetadata"
+          }
+        },
+        "type": "object"
+      },
+      "gettableGrafanaSilences": {
+        "items": {
+          "$ref": "#/components/schemas/gettableGrafanaSilence"
+        },
+        "type": "array"
+      },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -11922,7 +12202,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -12114,7 +12393,7 @@
         "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
         "properties": {
           "extra": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Extra Additional information about the error",
             "type": "object"
           },
@@ -12139,6 +12418,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -12374,12 +12654,19 @@
     },
     "/access-control/roles": {
       "get": {
-        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
+        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.\n\nThe `delegatable` flag reduces the set of roles to only those for which the signed-in user has permissions to assign.",
         "operationId": "listRoles",
         "parameters": [
           {
             "in": "query",
             "name": "delegatable",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "includeHidden",
             "schema": {
               "type": "boolean"
             }
@@ -14830,7 +15117,7 @@
             }
           },
           "required": true,
-          "x-originalParamName": "body"
+          "x-originalParamName": "Body"
         },
         "responses": {
           "200": {
@@ -14852,18 +15139,51 @@
         ]
       }
     },
-    "/cloudmigration/migration/{id}": {
+    "/cloudmigration/migration/run/{runUID}": {
+      "get": {
+        "operationId": "getCloudMigrationRun",
+        "parameters": [
+          {
+            "description": "RunUID of a migration run",
+            "in": "path",
+            "name": "runUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get the result of a single migration run.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{uid}": {
       "delete": {
         "operationId": "deleteCloudMigration",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -14888,13 +15208,12 @@
         "operationId": "getCloudMigration",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -14918,18 +15237,17 @@
         ]
       }
     },
-    "/cloudmigration/migration/{id}/run": {
+    "/cloudmigration/migration/{uid}/run": {
       "get": {
         "operationId": "getCloudMigrationRunList",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -14957,13 +15275,12 @@
         "operationId": "runCloudMigration",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -14987,34 +15304,12 @@
         ]
       }
     },
-    "/cloudmigration/migration/{id}/run/{runID}": {
+    "/cloudmigration/token": {
       "get": {
-        "operationId": "getCloudMigrationRun",
-        "parameters": [
-          {
-            "description": "ID of an migration",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "description": "Run ID of a migration run",
-            "in": "path",
-            "name": "runID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
+        "operationId": "getCloudMigrationToken",
         "responses": {
           "200": {
-            "$ref": "#/components/responses/cloudMigrationRunResponse"
+            "$ref": "#/components/responses/cloudMigrationGetTokenResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
@@ -15022,17 +15317,18 @@
           "403": {
             "$ref": "#/components/responses/forbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get the result of a single migration run.",
+        "summary": "Fetch the cloud migration token if it exists.",
         "tags": [
           "migrations"
         ]
-      }
-    },
-    "/cloudmigration/token": {
+      },
       "post": {
         "operationId": "createCloudMigrationToken",
         "responses": {
@@ -15050,6 +15346,40 @@
           }
         },
         "summary": "Create gcom access token.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/token/{uid}": {
+      "delete": {
+        "operationId": "deleteCloudMigrationToken",
+        "parameters": [
+          {
+            "description": "UID of a cloud migration token",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/cloudMigrationDeleteTokenResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Deletes a cloud migration token.",
         "tags": [
           "migrations"
         ]
@@ -15901,6 +16231,91 @@
         "summary": "Restore a dashboard to a given dashboard version using UID.",
         "tags": [
           "dashboard_versions"
+        ]
+      }
+    },
+    "/dashboards/uid/{uid}/trash": {
+      "delete": {
+        "description": "Will delete the dashboard given the specified unique identifier (uid).",
+        "operationId": "hardDeleteDashboardByUID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/deleteDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Hard delete dashboard by uid.",
+        "tags": [
+          "dashboards"
+        ]
+      },
+      "patch": {
+        "operationId": "restoreDeletedDashboardByUID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestoreDeletedDashboardCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "Body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/postDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Restore a dashboard to a given dashboard version using UID.",
+        "tags": [
+          "dashboards"
         ]
       }
     },
@@ -16910,6 +17325,82 @@
         ]
       }
     },
+    "/datasources/uid/{uid}/lbac/teams": {
+      "get": {
+        "operationId": "getTeamLBACRulesApi",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Retrieves LBAC rules for a team.",
+        "tags": [
+          "enterprise"
+        ]
+      },
+      "put": {
+        "operationId": "updateTeamLBACRulesApi",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Updates LBAC rules for a team.",
+        "tags": [
+          "enterprise"
+        ]
+      }
+    },
     "/datasources/uid/{uid}/resources/{datasource_proxy_route}": {
       "get": {
         "operationId": "callDatasourceResourceWithUID",
@@ -16954,6 +17445,188 @@
         "summary": "Fetch data source resources.",
         "tags": [
           "datasources"
+        ]
+      }
+    },
+    "/datasources/{dataSourceUID}/cache": {
+      "get": {
+        "description": "get cache config for a single data source",
+        "operationId": "getDataSourceCacheConfig",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataSourceUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheConfigResponse"
+                }
+              }
+            },
+            "description": "CacheConfigResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "enterprise"
+        ]
+      },
+      "post": {
+        "description": "set cache config for a single data source",
+        "operationId": "setDataSourceCacheConfig",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataSourceUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CacheConfigSetter"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheConfigResponse"
+                }
+              }
+            },
+            "description": "CacheConfigResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "enterprise"
+        ]
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/clean": {
+      "post": {
+        "description": "clean cache for a single data source",
+        "operationId": "cleanDataSourceCache",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataSourceUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheConfigResponse"
+                }
+              }
+            },
+            "description": "CacheConfigResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "enterprise"
+        ]
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/disable": {
+      "post": {
+        "description": "disable cache for a single data source",
+        "operationId": "disableDataSourceCache",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataSourceUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheConfigResponse"
+                }
+              }
+            },
+            "description": "CacheConfigResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "enterprise"
+        ]
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/enable": {
+      "post": {
+        "description": "enable cache for a single data source",
+        "operationId": "enableDataSourceCache",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataSourceUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheConfigResponse"
+                }
+              }
+            },
+            "description": "CacheConfigResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "enterprise"
         ]
       }
     },
@@ -20874,6 +21547,14 @@
               ],
               "type": "string"
             }
+          },
+          {
+            "description": "Flag indicating if only soft deleted Dashboards should be returned",
+            "in": "query",
+            "name": "deleted",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -21929,6 +22610,52 @@
           }
         },
         "summary": "Add Team Member.",
+        "tags": [
+          "teams"
+        ]
+      },
+      "put": {
+        "description": "Takes user emails, and updates team members and admins to the provided lists of users.\nAny current team members and admins not in the provided lists will be removed.",
+        "operationId": "setTeamMemberships",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "team_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTeamMembershipsCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Set team memberships.",
         "tags": [
           "teams"
         ]
@@ -24022,6 +24749,21 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Version of mute timing to use for optimistic concurrency. Leave empty to disable validation",
+            "in": "query",
+            "name": "version",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -24127,6 +24869,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericPublicError"
+                }
+              }
+            },
+            "description": "GenericPublicError"
           }
         },
         "summary": "Replace an existing mute timing.",
@@ -24662,7 +25414,7 @@
                     "type": "string"
                   },
                   "settings": {
-                    "additionalProperties": false,
+                    "additionalProperties": {},
                     "type": "object"
                   }
                 },

@@ -1,5 +1,6 @@
 import {
   InterpolateFunction,
+  LinkModel,
   PanelMenuItem,
   PanelPlugin,
   PluginExtensionPanelContext,
@@ -66,12 +67,12 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       });
     }
 
-    if (dashboard.canEditDashboard() && !isRepeat && !isEditingPanel) {
+    if (dashboard.canEditDashboard() && dashboard.state.editable && !isRepeat && !isEditingPanel) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
       items.push({
         text: t('panel.header-menu.edit', `Edit`),
-        iconClassName: 'eye',
+        iconClassName: 'edit',
         shortcut: 'e',
         onClick: () => DashboardInteractions.panelMenuItemClicked('edit'),
         href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
@@ -122,6 +123,14 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
             );
           },
         });
+
+        moreSubMenu.push({
+          text: t('panel.header-menu.replace-library-panel', `Replace library panel`),
+          onClick: () => {
+            DashboardInteractions.panelMenuItemClicked('replaceLibraryPanel');
+            dashboard.onShowAddLibraryPanelDrawer(parent.getRef());
+          },
+        });
       } else {
         moreSubMenu.push({
           text: t('panel.header-menu.create-library-panel', `Create library panel`),
@@ -168,7 +177,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     }
 
     if (config.featureToggles.exploreMetrics) {
-      addDataTrailPanelAction(dashboard, panel, items);
+      await addDataTrailPanelAction(dashboard, panel, items);
     }
 
     if (exploreMenuItem) {
@@ -177,6 +186,8 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
+    // TODO: make sure that this works reliably with the reactive extension registry
+    // (we need to be able to know in advance what extensions should be loaded for this extension point, and make it possible to await for them.)
     const { extensions } = getPluginLinkExtensions({
       extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
       context: createExtensionContext(panel, dashboard),
@@ -329,13 +340,16 @@ export function getPanelLinks(panel: VizPanel) {
 
   const panelLinks = linkSupplier.getLinks(interpolate);
 
-  return panelLinks.map((panelLink) => ({
-    ...panelLink,
-    onClick: (e: any, origin: any) => {
-      DashboardInteractions.panelLinkClicked({ has_multiple_links: panelLinks.length > 1 });
-      panelLink.onClick?.(e, origin);
-    },
-  }));
+  return panelLinks.map((panelLink) => {
+    const updatedLink: LinkModel<VizPanel> = {
+      ...panelLink,
+      onClick: (e, origin) => {
+        DashboardInteractions.panelLinkClicked({ has_multiple_links: panelLinks.length > 1 });
+        panelLink.onClick?.(e, origin);
+      },
+    };
+    return updatedLink;
+  });
 }
 
 function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): PluginExtensionPanelContext {

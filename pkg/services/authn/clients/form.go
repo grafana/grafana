@@ -38,3 +38,7 @@ func (c *Form) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ident
 	}
 	return c.client.AuthenticatePassword(ctx, r, form.Username, form.Password)
 }
+
+func (c *Form) IsEnabled() bool {
+	return true
+}

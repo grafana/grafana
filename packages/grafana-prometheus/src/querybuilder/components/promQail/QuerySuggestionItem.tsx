@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/promQail/QuerySuggestionItem.tsx
 import { cx } from '@emotion/css';
 import React, { FormEvent, useState } from 'react';
 
@@ -242,7 +243,7 @@ export function QuerySuggestionItem(props: Props) {
                         placement="bottom-end"
                         closeButton={true}
                       >
-                        <Button variant="success" size="sm">
+                        <Button fill="outline" variant="secondary" size="sm">
                           No
                         </Button>
                       </Toggletip>

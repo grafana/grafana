@@ -34,7 +34,7 @@ import {
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 
-import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
+import { generateQueryFromAdHocFilters, generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { PrometheusDatasource, PromQuery } from './_importedDependencies/datasources/prometheus/types';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
@@ -170,7 +170,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag }));
   }
 
-  async labelValuesQuery(labelName?: string): Promise<Array<{ text: string }>> {
+  async labelValuesQuery(labelName?: string, query?: string): Promise<Array<{ text: string }>> {
     if (!labelName) {
       return [];
     }
@@ -192,7 +192,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
       // unless the tag has intrinsic scope
       const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
-      options = await this.languageProvider.getOptionsV2(scopeAndTag);
+      options = await this.languageProvider.getOptionsV2(scopeAndTag, query);
     } catch {
       // For V1, the tag name (e.g. `http.status_code`) is enough
       options = await this.languageProvider.getOptionsV1(labelName);
@@ -217,7 +217,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   // Allows to retrieve the list of tag values for ad-hoc filters
   getTagValues(options: DataSourceGetTagValuesOptions<TempoQuery>): Promise<Array<{ text: string }>> {
-    return this.labelValuesQuery(options.key.replace(/^(resource|span)\./, ''));
+    const query = generateQueryFromAdHocFilters(options.filters);
+    return this.labelValuesQuery(options.key.replace(/^(resource|span)\./, ''), query);
   }
 
   init = async () => {
@@ -437,7 +438,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   isTraceQlMetricsQuery(query: string): boolean {
     // Check whether this is a metrics query by checking if it contains a metrics function
     const metricsFnRegex =
-      /\|\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|quantile_over_time)\s*\(/;
+      /\|\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|quantile_over_time|histogram_over_time)\s*\(/;
     return !!query.trim().match(metricsFnRegex);
   }
 
@@ -481,6 +482,17 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               ? this.templateSrv.replace(filter.value ?? '', scopedVars, VariableFormatID.Pipe)
               : filter.value.map((v) => this.templateSrv.replace(v ?? '', scopedVars, VariableFormatID.Pipe));
         }
+
+        return updatedFilter;
+      });
+    }
+
+    if (query.groupBy) {
+      expandedQuery.groupBy = query.groupBy.map((filter) => {
+        const updatedFilter = {
+          ...filter,
+          tag: this.templateSrv.replace(filter.tag ?? '', scopedVars),
+        };
 
         return updatedFilter;
       });
@@ -658,11 +670,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     if (this.traceQuery?.timeShiftEnabled) {
       request.range = options.range && {
         ...options.range,
-        from: options.range.from.subtract(
+        from: dateTime(options.range.from).subtract(
           rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
           'milliseconds'
         ),
-        to: options.range.to.add(rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'), 'milliseconds'),
+        to: dateTime(options.range.to).add(
+          rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'),
+          'milliseconds'
+        ),
       };
     } else {
       request.range = { from: dateTime(0), to: dateTime(0), raw: { from: dateTime(0), to: dateTime(0) } };
@@ -944,8 +959,10 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
   };
 }
 
+// TODO: this is basically the same as prometheus/datasource.ts#prometheusSpecialRegexEscape which is used to escape
+//  template variable values. It would be best to move it to some common place.
 export function getEscapedSpanNames(values: string[]) {
-  return values.map((value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&'));
+  return values.map((value: string) => value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'));
 }
 
 export function getFieldConfig(
@@ -1143,7 +1160,12 @@ function getServiceGraphView(
   if (errorRate.length > 0 && errorRate[0].fields?.length > 2) {
     const errorRateNames = errorRate[0].fields[1]?.values ?? [];
     const errorRateValues = errorRate[0].fields[2]?.values ?? [];
-    let errorRateObj: any = {};
+    let errorRateObj: Record<
+      string,
+      {
+        value: string;
+      }
+    > = {};
     errorRateNames.map((name: string, index: number) => {
       errorRateObj[name] = { value: errorRateValues[index] };
     });
@@ -1188,7 +1210,12 @@ function getServiceGraphView(
   }
 
   if (duration.length > 0) {
-    let durationObj: any = {};
+    let durationObj: Record<
+      string,
+      {
+        value: string;
+      }
+    > = {};
     duration.forEach((d) => {
       if (d.fields.length > 1) {
         const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';

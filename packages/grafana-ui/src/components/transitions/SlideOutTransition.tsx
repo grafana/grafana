@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 
 type Props = {
-  children: React.ReactNode;
+  children: React.ReactElement;
   visible: boolean;
   size: number;
 
@@ -18,15 +18,23 @@ type Props = {
 export function SlideOutTransition(props: Props) {
   const { visible, children, duration = 250, horizontal, size } = props;
   const styles = useStyles2(getStyles, duration, horizontal ? 'width' : 'height', size);
+  const transitionRef = useRef(null);
 
   return (
-    <CSSTransition in={visible} mountOnEnter={true} unmountOnExit={true} timeout={duration} classNames={styles}>
-      {children}
+    <CSSTransition
+      in={visible}
+      mountOnEnter={true}
+      unmountOnExit={true}
+      timeout={duration}
+      classNames={styles}
+      nodeRef={transitionRef}
+    >
+      {React.cloneElement(children, { ref: transitionRef })}
     </CSSTransition>
   );
 }
 
-const getStyles = (_theme: GrafanaTheme2, duration: number, measurement: 'width' | 'height', size: number) => ({
+const getStyles = (theme: GrafanaTheme2, duration: number, measurement: 'width' | 'height', size: number) => ({
   enter: css({
     label: 'enter',
     [`${measurement}`]: 0,
@@ -36,7 +44,12 @@ const getStyles = (_theme: GrafanaTheme2, duration: number, measurement: 'width'
     label: 'enterActive',
     [`${measurement}`]: `${size}px`,
     opacity: 1,
-    transition: `opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out`,
+    [theme.transitions.handleMotion('no-preference')]: {
+      transition: `opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out`,
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      transition: `opacity ${duration}ms ease-out`,
+    },
   }),
   exit: css({
     label: 'exit',
@@ -47,6 +60,11 @@ const getStyles = (_theme: GrafanaTheme2, duration: number, measurement: 'width'
     label: 'exitActive',
     opacity: 0,
     [`${measurement}`]: 0,
-    transition: `opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out`,
+    [theme.transitions.handleMotion('no-preference')]: {
+      transition: `opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out`,
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      transition: `opacity ${duration}ms ease-out`,
+    },
   }),
 });

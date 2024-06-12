@@ -32,7 +32,7 @@ async function getTestContext({ name, interval, items, uid }: Partial<Playlist> 
   const location = {} as Location;
   const history = {} as History;
   const getMock = jest.spyOn(backendSrv, 'get');
-  const putMock = jest.spyOn(backendSrv, 'put');
+  const putMock = jest.spyOn(backendSrv, 'put').mockImplementation(() => Promise.resolve());
 
   getMock.mockResolvedValue({
     name: 'Test Playlist',
