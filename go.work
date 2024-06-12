@@ -6,6 +6,7 @@ use (
 	./pkg/apiserver
 	./pkg/build/wire
 	./pkg/promlib
+	./pkg/storage/api
 	./pkg/util/xorm
 )
 
