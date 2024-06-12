@@ -191,5 +191,5 @@ func (f *fakeSchedulerReader) Status(key models.AlertRuleKey) (models.RuleStatus
 	if f.states == nil {
 		return models.RuleStatus{}, false
 	}
-	return schedule.StatesToHealth(f.states.GetStatesForRuleUID(key.OrgID, key.UID)), true
+	return schedule.StatesToRuleStatus(f.states.GetStatesForRuleUID(key.OrgID, key.UID)), true
 }
