@@ -1,4 +1,4 @@
-# Upgrading dependencies
+# Upgrade dependencies
 
 We recommend the practices in this documentation when upgrading the various backend dependencies of Grafana.
 
