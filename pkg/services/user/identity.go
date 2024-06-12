@@ -12,6 +12,8 @@ const (
 	GlobalOrgID = int64(0)
 )
 
+var _ identity.Requester = &SignedInUser{}
+
 type SignedInUser struct {
 	UserID        int64  `xorm:"user_id"`
 	UserUID       string `xorm:"user_uid"`
