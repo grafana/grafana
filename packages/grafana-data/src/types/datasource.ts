@@ -285,12 +285,12 @@ abstract class DataSourceApi<
   /**
    * Get tag keys for adhoc filters
    */
-  getTagKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<MetricFindValue[]>;
+  getTagKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
 
   /**
    * Get tag values for adhoc filters
    */
-  getTagValues?(options: DataSourceGetTagValuesOptions<TQuery>): Promise<MetricFindValue[]>;
+  getTagValues?(options: DataSourceGetTagValuesOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -375,6 +375,7 @@ export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuer
    */
   timeRange?: TimeRange;
   queries?: TQuery[];
+  scopes?: Scope[] | undefined;
 }
 
 /**
@@ -391,6 +392,7 @@ export interface DataSourceGetTagValuesOptions<TQuery extends DataQuery = DataQu
    */
   timeRange?: TimeRange;
   queries?: TQuery[];
+  scopes?: Scope[] | undefined;
 }
 
 export interface MetadataInspectorProps<
@@ -709,6 +711,11 @@ export interface AnnotationQueryRequest<MoreOptions = {}> {
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
   ts: number;
   query: TQuery;
+}
+
+export interface GetTagResponse {
+  data: MetricFindValue[];
+  error?: DataQueryError;
 }
 
 abstract class LanguageProvider {

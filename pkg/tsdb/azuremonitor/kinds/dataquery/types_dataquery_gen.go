@@ -33,6 +33,7 @@ const (
 	AzureQueryTypeAzureTraces                     AzureQueryType = "Azure Traces"
 	AzureQueryTypeAzureWorkspaces                 AzureQueryType = "Azure Workspaces"
 	AzureQueryTypeGrafanaTemplateVariableFunction AzureQueryType = "Grafana Template Variable Function"
+	AzureQueryTypeTraceql                         AzureQueryType = "traceql"
 )
 
 // Defines values for GrafanaTemplateVariableQueryType.
@@ -241,6 +242,9 @@ type AzureMonitorQuery struct {
 	Hide      *bool   `json:"hide,omitempty"`
 	Namespace *string `json:"namespace,omitempty"`
 
+	// Used only for exemplar queries from Prometheus
+	Query *string `json:"query,omitempty"`
+
 	// Specify the query flavor
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
@@ -248,10 +252,7 @@ type AzureMonitorQuery struct {
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId *string `json:"refId,omitempty"`
-
-	// Azure Monitor query type.
-	// queryType: #AzureQueryType
+	RefId    *string `json:"refId,omitempty"`
 	Region   *string `json:"region,omitempty"`
 	Resource *string `json:"resource,omitempty"`
 

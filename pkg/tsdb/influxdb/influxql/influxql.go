@@ -174,6 +174,11 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 	if err != nil {
 		return backend.DataResponse{}, err
 	}
+
+	if res.StatusCode/100 != 2 {
+		return backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %v", res.Body)}, nil
+	}
+
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			logger.Warn("Failed to close response body", "err", err)

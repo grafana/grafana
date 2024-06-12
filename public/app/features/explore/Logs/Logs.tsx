@@ -42,12 +42,14 @@ import {
   InlineFieldRow,
   InlineSwitch,
   PanelChrome,
+  PopoverContent,
   RadioButtonGroup,
   SeriesVisibilityChangeMode,
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
 import { mapMouseEventToMode } from '@grafana/ui/src/components/VizLegend/utils';
+import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
@@ -112,9 +114,10 @@ interface Props extends Themeable2 {
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;
-  onClickFilterValue?: (value: string, refId?: string) => void;
-  onClickFilterOutValue?: (value: string, refId?: string) => void;
+  onClickFilterString?: (value: string, refId?: string) => void;
+  onClickFilterOutString?: (value: string, refId?: string) => void;
   loadMoreLogs?(range: AbsoluteTimeRange): void;
+  onPinLineCallback?: () => void;
 }
 
 export type LogsVisualisationType = 'table' | 'logs';
@@ -140,6 +143,8 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
   }
   return 'logs';
 };
+
+const PINNED_LOGS_LIMIT = 3;
 
 const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const {
@@ -188,6 +193,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [forceEscape, setForceEscape] = useState<boolean>(false);
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
+  const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<React.Element | string | undefined>(undefined);
   const [visualisationType, setVisualisationType] = useState<LogsVisualisationType | undefined>(
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
@@ -196,7 +202,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const previousLoading = usePrevious(loading);
 
   const logsVolumeEventBus = eventBus.newScopedBus('logsvolume', { onlyLocal: false });
-  const { register, unregisterAllChildren } = useContentOutlineContext() ?? {};
+  const { register, unregister, outlineItems, updateItem, unregisterAllChildren } = useContentOutlineContext() ?? {};
   const flipOrderTimer = useRef<number | undefined>(undefined);
   const cancelFlippingTimer = useRef<number | undefined>(undefined);
   const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(
@@ -636,6 +642,52 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     topLogsRef.current?.scrollIntoView();
   }, [logsContainerRef, topLogsRef]);
 
+  const onPinToContentOutlineClick = (row: LogRowModel) => {
+    if (getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
+      setPinLineButtonTooltipTitle(
+        <span style={{ display: 'flex', textAlign: 'center' }}>
+            ❗️
+            <Trans i18nKey="explore.logs.maximum-pinned-logs">
+              Maximum of {{ PINNED_LOGS_LIMIT }} pinned logs reached. Unpin a log to add another.
+            </Trans>
+          </span>
+      );
+      return;
+    }
+
+    // find the Logs parent item
+    const logsParent = outlineItems.find((item) => item.panelId === 'Logs' && item.level === 'root');
+
+    //update the parent's expanded state
+    if (logsParent && updateItem) {
+      updateItem(logsParent.id, { expanded: true });
+    }
+
+    register?.({
+      icon: 'gf-logs',
+      title: 'Pinned log',
+      panelId: 'Logs',
+      level: 'child',
+      ref: null,
+      color: LogLevelColor[row.logLevel],
+      childOnTop: true,
+      onClick: () => onOpenContext(row, () => {}),
+      onRemove: (id: string) => {
+        unregister?.(id);
+        if (getPinnedLogsCount() < PINNED_LOGS_LIMIT) {
+          setPinLineButtonTooltipTitle('Pin to content outline');
+        }
+      },
+    });
+
+    props.onPinLineCallback?.();
+  };
+
+  const getPinnedLogsCount = () => {
+    const logsParent = this.context?.outlineItems.find((item) => item.panelId === 'Logs' && item.level === 'root');
+    return logsParent?.children?.filter((child) => child.title === 'Pinned log').length ?? 0;
+  };
+
   const hasUnescapedContent = checkUnescapedContent(logRows);
   const filteredLogs = filterRows(logRows, hiddenLogLevels);
   const { dedupedRows, dedupCount } = dedupRows(filteredLogs, dedupStrategy);
@@ -874,8 +926,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   scrollIntoView={scrollIntoView}
                   isFilterLabelActive={props.isFilterLabelActive}
                   containerRendered={!!logsContainerRef}
-                  onClickFilterValue={props.onClickFilterValue}
-                  onClickFilterOutValue={props.onClickFilterOutValue}
+                  onClickFilterString={props.onClickFilterString}
+                  onClickFilterOutString={props.onClickFilterOutString}
+                    onPinLine={onPinToContentOutlineClick}
+                    pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                 />
               </InfiniteScroll>
             </div>
@@ -883,9 +937,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           {!loading && !hasData && !scanning && (
             <div className={styles.logRows}>
               <div className={styles.noData}>
-                No logs found.
+                <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
                 <Button size="sm" variant="secondary" onClick={onClickScan}>
-                  Scan for older logs
+                  <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
                 </Button>
               </div>
             </div>
@@ -895,7 +949,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
               <div className={styles.noData}>
                 <span>{scanText}</span>
                 <Button size="sm" variant="secondary" onClick={onClickStopScan}>
-                  Stop scan
+                  <Trans i18nKey="explore.logs.stop-scan">Stop scan</Trans>
                 </Button>
               </div>
             </div>

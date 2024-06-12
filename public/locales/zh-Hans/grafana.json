@@ -25,6 +25,28 @@
       "user": "用户"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -426,6 +448,16 @@
       "title": "版本"
     }
   },
+  "dashboards": {
+    "settings": {
+      "variables": {
+        "dependencies": {
+          "button": "",
+          "title": ""
+        }
+      }
+    }
+  },
   "data-source-list": {
     "empty-state": {
       "button-title": "",
@@ -469,6 +501,12 @@
       "query": "",
       "title": "",
       "visibility": ""
+    },
+    "logs": {
+      "maximum-pinned-logs": "",
+      "no-logs-found": "",
+      "scan-for-older-logs": "",
+      "stop-scan": ""
     },
     "rich-history": {
       "close-tooltip": "关闭查询历史记录",
@@ -1122,6 +1160,10 @@
     "public": {
       "title": "公共仪表板"
     },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
+    },
     "recorded-queries": {
       "title": "已记录查询"
     },
@@ -1183,10 +1225,6 @@
       "subtitle": "使用 k6 和 Synthetic Monitoring 洞察优化性能。",
       "title": "测试与合成"
     },
-    "trash": {
-      "subtitle": "",
-      "title": ""
-    },
     "upgrading": {
       "title": "统计信息和许可证"
     },
@@ -1242,6 +1280,7 @@
       "new-alert-rule": "新建警报规则",
       "query": "查询",
       "remove": "删除",
+      "replace-library-panel": "",
       "share": "分享",
       "show-legend": "显示图例",
       "unlink-library-panel": "取消链接库面板",
@@ -1478,6 +1517,31 @@
     },
     "dismissable-button": "关闭"
   },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "",
+      "cancel": "",
+      "title": ""
+    },
+    "basicSelector": {
+      "openAdvanced": "",
+      "placeholder": "",
+      "removeAll": ""
+    },
+    "root": {
+      "collapse": "",
+      "expand": ""
+    },
+    "suggestedDashboards": {
+      "loading": "",
+      "search": ""
+    },
+    "tree": {
+      "collapse": "",
+      "expand": "",
+      "search": ""
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "包括面板",
@@ -1636,6 +1700,21 @@
     "empty-state": {
       "button-title": "",
       "title": ""
+    },
+    "table": {
+      "add-silence-button": "",
+      "edit-button": "",
+      "expired-silences": "",
+      "no-matching-silences": "",
+      "noConfig": "",
+      "recreate-button": "",
+      "unsilence-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "",
+      "state": ""
     }
   },
   "snapshot": {
@@ -1670,6 +1749,8 @@
       "apply-button": "应用时间范围",
       "cancel-button": "取消",
       "close": "关闭日历",
+      "next-month": "",
+      "previous-month": "",
       "select-time": "选择时间范围"
     },
     "content": {

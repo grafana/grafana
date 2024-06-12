@@ -226,7 +226,7 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 
 func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries []backend.DataQuery, dsInfo types.DatasourceInfo, fromAlert bool) ([]*AzureLogAnalyticsQuery, error) {
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
-	appInsightsRegExp, err := regexp.Compile("providers/Microsoft.Insights/components")
+	appInsightsRegExp, err := regexp.Compile("(?i)providers/microsoft.insights/components")
 	if err != nil {
 		return nil, fmt.Errorf("failed to compile Application Insights regex")
 	}
@@ -240,8 +240,15 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, azureLogAnalyticsQuery)
 		}
 
-		if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
-			azureAppInsightsQuery, err := buildAppInsightsQuery(ctx, query, dsInfo, appInsightsRegExp)
+		if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) || query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+			if query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+				cfg := backend.GrafanaConfigFromContext(ctx)
+				hasPromExemplarsToggle := cfg.FeatureToggles().IsEnabled("azureMonitorPrometheusExemplars")
+				if !hasPromExemplarsToggle {
+					return nil, fmt.Errorf("query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled")
+				}
+			}
+			azureAppInsightsQuery, err := buildAppInsightsQuery(ctx, query, dsInfo, appInsightsRegExp, e.Logger)
 			if err != nil {
 				return nil, fmt.Errorf("failed to build azure application insights query: %w", err)
 			}
@@ -321,7 +328,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	if query.QueryType == dataquery.AzureQueryTypeAzureTraces && query.ResultFormat == dataquery.ResultFormatTrace {
+	if (query.QueryType == dataquery.AzureQueryTypeAzureTraces || query.QueryType == dataquery.AzureQueryTypeTraceql) && query.ResultFormat == dataquery.ResultFormatTrace {
 		frame.Meta.PreferredVisualization = data.VisTypeTrace
 	}
 

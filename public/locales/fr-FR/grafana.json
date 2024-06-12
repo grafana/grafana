@@ -25,6 +25,28 @@
       "user": "Utilisateur"
     }
   },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
   "annotations": {
     "empty-state": {
       "button-title": "",
@@ -431,6 +453,16 @@
       "title": "Versions"
     }
   },
+  "dashboards": {
+    "settings": {
+      "variables": {
+        "dependencies": {
+          "button": "",
+          "title": ""
+        }
+      }
+    }
+  },
   "data-source-list": {
     "empty-state": {
       "button-title": "",
@@ -474,6 +506,12 @@
       "query": "",
       "title": "",
       "visibility": ""
+    },
+    "logs": {
+      "maximum-pinned-logs": "",
+      "no-logs-found": "",
+      "scan-for-older-logs": "",
+      "stop-scan": ""
     },
     "rich-history": {
       "close-tooltip": "Fermer l'historique des requêtes",
@@ -1128,6 +1166,10 @@
     "public": {
       "title": "Tableaux de bord publics"
     },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
+    },
     "recorded-queries": {
       "title": "Requêtes enregistrées"
     },
@@ -1189,10 +1231,6 @@
       "subtitle": "Optimisez les performances grâce aux analyses de la surveillance synthétique et k6",
       "title": "Tests et synthèses"
     },
-    "trash": {
-      "subtitle": "",
-      "title": ""
-    },
     "upgrading": {
       "title": "Statistiques et licence"
     },
@@ -1248,6 +1286,7 @@
       "new-alert-rule": "Nouvelle règle d'alerte",
       "query": "Requête",
       "remove": "Supprimer",
+      "replace-library-panel": "",
       "share": "Partager",
       "show-legend": "Afficher la légende",
       "unlink-library-panel": "Dissocier le panneau Bibliothèque",
@@ -1484,6 +1523,31 @@
     },
     "dismissable-button": "Fermer"
   },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "",
+      "cancel": "",
+      "title": ""
+    },
+    "basicSelector": {
+      "openAdvanced": "",
+      "placeholder": "",
+      "removeAll": ""
+    },
+    "root": {
+      "collapse": "",
+      "expand": ""
+    },
+    "suggestedDashboards": {
+      "loading": "",
+      "search": ""
+    },
+    "tree": {
+      "collapse": "",
+      "expand": "",
+      "search": ""
+    }
+  },
   "search": {
     "actions": {
       "include-panels": "Inclure des panneaux",
@@ -1642,6 +1706,21 @@
     "empty-state": {
       "button-title": "",
       "title": ""
+    },
+    "table": {
+      "add-silence-button": "",
+      "edit-button": "",
+      "expired-silences": "",
+      "no-matching-silences": "",
+      "noConfig": "",
+      "recreate-button": "",
+      "unsilence-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "",
+      "state": ""
     }
   },
   "snapshot": {
@@ -1676,6 +1755,8 @@
       "apply-button": "Appliquer la plage de temps",
       "cancel-button": "Annuler",
       "close": "Fermer le calendrier",
+      "next-month": "",
+      "previous-month": "",
       "select-time": "Sélectionner une plage de temps"
     },
     "content": {
