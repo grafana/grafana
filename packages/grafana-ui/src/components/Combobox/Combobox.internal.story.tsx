@@ -22,8 +22,11 @@ const meta: Meta<typeof Combobox> = {
       { label: 'Honeydew', value: 'honeydew' },
       { label: 'Iceberg Lettuce', value: 'iceberg-lettuce' },
       { label: 'Jackfruit', value: 'jackfruit' },
+      { label: '1', value: 1 },
+      { label: '2', value: 2 },
+      { label: '3', value: 3 },
     ],
-    value: { label: 'Banana', value: 'banana' },
+    value: 'banana',
   },
 };
 
@@ -34,7 +37,7 @@ export const Basic: StoryFn<typeof Combobox> = (args) => {
       {...args}
       value={value}
       onChange={(val) => {
-        setValue(val);
+        setValue(val.value);
         action('onChange')(val);
       }}
     />

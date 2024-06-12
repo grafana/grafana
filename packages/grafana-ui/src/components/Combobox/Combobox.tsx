@@ -6,25 +6,31 @@ import { SelectableValue } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
 
+type Value = string | number;
+type Option = {
+  label: string;
+  value: Value;
+};
+
 interface ComboboxProps
-  extends Omit<InputProps, 'width' | 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter'> {
-  onChange: (val: SelectableValue) => void;
-  value: SelectableValue;
-  options: SelectableValue[];
+  extends Omit<InputProps, 'width' | 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange'> {
+  onChange: (val: Option) => void;
+  value: Value;
+  options: Option[];
 }
 
-function itemToString(item: SelectableValue | null) {
+function itemToString(item: Option | null) {
   return item?.label || '';
 }
 
 function itemFilter(inputValue: string) {
   const lowerCasedInputValue = inputValue.toLowerCase();
 
-  return (item: SelectableValue) => {
+  return (item: Option) => {
     return (
       !inputValue ||
       item?.label?.toLowerCase().includes(lowerCasedInputValue) ||
-      item?.value?.toLowerCase().includes(lowerCasedInputValue)
+      item?.value?.toString().toLowerCase().includes(lowerCasedInputValue)
     );
   };
 }
@@ -35,7 +41,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   const { getInputProps, getMenuProps, getItemProps, isOpen } = useCombobox({
     items,
     itemToString,
-    selectedItem: value,
+    selectedItem: options.find((option) => option.value === value) || null,
     onInputValueChange: ({ inputValue }) => {
       setItems(options.filter(itemFilter(inputValue)));
     },
