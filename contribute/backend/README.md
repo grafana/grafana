@@ -1,6 +1,7 @@
 # Backend
 
-The contribution guidelines for Grafana backend developers contain a lot of information for anyone who wants to contribute to our open-source project. But you don't necessarily have to read all of it, so long as you read what is most relevant to you.
+The contribution guidelines for Grafana backend developers contain a lot of information for anyone who wants to contribute to our open source project.
+But you don't necessarily have to read all of it, so long as you read what is most relevant to you.
 
 ## Guidelines everyone should read
 
