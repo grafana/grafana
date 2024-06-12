@@ -20,7 +20,7 @@ import (
 )
 
 type ruleStates struct {
-	states map[string]*State
+	states map[data.Fingerprint]*State
 }
 
 type cache struct {
@@ -89,7 +89,7 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 	}
 	var states *ruleStates
 	if states, ok = orgStates[stateCandidate.AlertRuleUID]; !ok {
-		states = &ruleStates{states: make(map[string]*State)}
+		states = &ruleStates{states: make(map[data.Fingerprint]*State)}
 		c.states[stateCandidate.OrgID][stateCandidate.AlertRuleUID] = states
 	}
 	return states.getOrAdd(stateCandidate)
@@ -199,18 +199,14 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 		log.Warn("Evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
 	}
 
-	il := ngModels.InstanceLabels(lbs)
-	id, err := il.StringKey()
-	if err != nil {
-		log.Error("Error getting cacheId for entry", "error", err)
-	}
+	cacheID := lbs.Fingerprint()
 
 	// For new states, we set StartsAt & EndsAt to EvaluatedAt as this is the
 	// expected value for a Normal state during state transition.
 	newState := State{
 		AlertRuleUID:       alertRule.UID,
 		OrgID:              alertRule.OrgID,
-		CacheID:            id,
+		CacheID:            cacheID,
 		Labels:             lbs,
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
@@ -279,12 +275,12 @@ func (c *cache) set(entry *State) {
 		c.states[entry.OrgID] = make(map[string]*ruleStates)
 	}
 	if _, ok := c.states[entry.OrgID][entry.AlertRuleUID]; !ok {
-		c.states[entry.OrgID][entry.AlertRuleUID] = &ruleStates{states: make(map[string]*State)}
+		c.states[entry.OrgID][entry.AlertRuleUID] = &ruleStates{states: make(map[data.Fingerprint]*State)}
 	}
 	c.states[entry.OrgID][entry.AlertRuleUID].states[entry.CacheID] = entry
 }
 
-func (c *cache) get(orgID int64, alertRuleUID, stateId string) *State {
+func (c *cache) get(orgID int64, alertRuleUID string, stateId data.Fingerprint) *State {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	ruleStates, ok := c.states[orgID][alertRuleUID]

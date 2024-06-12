@@ -35,6 +35,18 @@ export function amendTable(prevTable: Table, nextTable: Table): Table {
       }
       // partial replace
       else if (nStart > pStart && nEnd < pEnd) {
+        // partial replace
+        let startIdx = closestIdx(nStart, prevTimes);
+        startIdx = prevTimes[startIdx] < nStart ? startIdx + 1 : startIdx;
+        let endIdx = closestIdx(nEnd, prevTimes);
+        endIdx = prevTimes[endIdx] > nEnd ? endIdx - 1 : endIdx;
+
+        outTable = prevTable.map((_, i) =>
+          prevTable[i]
+            .slice(0, startIdx)
+            .concat(nextTable[i])
+            .concat(prevTable[i].slice(endIdx + 1))
+        ) as Table;
       }
       // append, with overlap
       else if (nStart >= pStart) {

@@ -5,6 +5,7 @@ import Calendar from 'react-calendar';
 import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
+import { t } from '../../../utils/i18n';
 import { Icon } from '../../Icon/Icon';
 import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
 
@@ -24,7 +25,9 @@ export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) 
       tileClassName={styles.title}
       value={value}
       nextLabel={<Icon name="angle-right" />}
+      nextAriaLabel={t('time-picker.calendar.next-month', 'Next month')}
       prevLabel={<Icon name="angle-left" />}
+      prevAriaLabel={t('time-picker.calendar.previous-month', 'Previous month')}
       onChange={onCalendarChange}
       locale="en"
     />
