@@ -152,6 +152,14 @@ describe('PanelOptions', () => {
 
       expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
     });
+
+    it('Can delete rule', async () => {
+      const {} = setup();
+
+      await userEvent.click(screen.getByLabelText('Remove override'));
+
+      expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
+    });
   });
 
   it('gets library panel options when the editing a library panel', async () => {
