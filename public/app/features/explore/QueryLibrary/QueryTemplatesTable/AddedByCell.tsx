@@ -1,11 +1,12 @@
 import React from 'react';
 
 import { Avatar } from '@grafana/ui';
-import { User } from 'app/features/query-library/api/types';
+import { UserDTO } from 'app/types';
 
 import { useQueryLibraryListStyles } from './styles';
+
 type AddedByCellProps = {
-  user?: User;
+  user?: UserDTO;
 };
 export function AddedByCell(props: AddedByCellProps) {
   const styles = useQueryLibraryListStyles();
@@ -13,7 +14,7 @@ export function AddedByCell(props: AddedByCellProps) {
   return (
     <div>
       <span className={styles.logo}>
-        <Avatar src="https://secure.gravatar.com/avatar" alt="unknown" />
+        <Avatar src={props.user?.avatarUrl || 'https://secure.gravatar.com/avatar'} alt="unknown" />
       </span>
       <span className={styles.otherText}>{props.user?.login || 'Unknown'}</span>
     </div>

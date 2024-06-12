@@ -9,14 +9,15 @@ export const parseCreatedByValue = (value?: string) => {
     const vals = value.split(':');
     if (vals.length > 2) {
       return {
-        userId: vals[1],
+        userId: Number(vals[1]),
         login: vals[2],
       };
-    } else if (vals.length > 1) {
+    } else if (vals.length === 2) {
       return {
-        userId: vals[1],
+        userId: Number(vals[1]),
       };
     } else {
+      // assume string is login for display
       return { login: value };
     }
   } else {
