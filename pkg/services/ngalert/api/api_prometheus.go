@@ -447,7 +447,14 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sch Schedul
 
 	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	for _, rule := range rules {
-		status, _ := sch.Status(rule.GetKey())
+		status, ok := sch.Status(rule.GetKey())
+		// Grafana by design return "ok" health and default other fields for unscheduled rules.
+		// This differs from Prometheus.
+		if !ok {
+			status = ngmodels.RuleStatus{
+				Health: "ok",
+			}
+		}
 
 		alertingRule := apimodels.AlertingRule{
 			State:       "inactive",
