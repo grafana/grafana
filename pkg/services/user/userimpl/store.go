@@ -24,7 +24,6 @@ type store interface {
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
 	Delete(context.Context, int64) error
 	LoginConflict(ctx context.Context, login, email string) error
-	CaseInsensitiveLoginConflict(context.Context, string, string) error
 	Update(context.Context, *user.UpdateUserCommand) error
 	UpdateLastSeenAt(context.Context, *user.UpdateUserLastSeenAtCommand) error
 	GetSignedInUser(context.Context, *user.GetSignedInUserQuery) (*user.SignedInUser, error)
@@ -114,22 +113,6 @@ func (ss *sqlStore) notServiceAccountFilter() string {
 		ss.dialect.BooleanStr(false))
 }
 
-func (ss *sqlStore) CaseInsensitiveLoginConflict(ctx context.Context, login, email string) error {
-	users := make([]user.User, 0)
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
-			email, login).Find(&users); err != nil {
-			return err
-		}
-
-		if len(users) > 1 {
-			return &user.ErrCaseInsensitiveLoginConflict{Users: users}
-		}
-		return nil
-	})
-	return err
-}
-
 func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
 	// enforcement of lowercase due to forcement of caseinsensitive login
 	query.LoginOrEmail = strings.ToLower(query.LoginOrEmail)
@@ -202,14 +185,14 @@ func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQu
 }
 
 // LoginConflict returns an error if the provided email or login are already
-// associated with a user. If caseInsensitive is true the search is not case
-// sensitive.
+// associated with a user.
 func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) error {
+	// enforcement of lowercase due to forcement of caseinsensitive login
+	login = strings.ToLower(login)
+	email = strings.ToLower(email)
+
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		users := make([]user.User, 0)
 		where := "email=? OR login=?"
-		login = strings.ToLower(login)
-		email = strings.ToLower(email)
 
 		exists, err := sess.Where(where, email, login).Get(&user.User{})
 		if err != nil {
@@ -218,14 +201,7 @@ func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) erro
 		if exists {
 			return user.ErrUserAlreadyExists
 		}
-		if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
-			email, login).Find(&users); err != nil {
-			return err
-		}
 
-		if len(users) > 1 {
-			return &user.ErrCaseInsensitiveLoginConflict{Users: users}
-		}
 		return nil
 	})
 	return err

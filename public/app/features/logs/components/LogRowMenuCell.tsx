@@ -2,7 +2,7 @@ import React, { FocusEvent, SyntheticEvent, useCallback } from 'react';
 
 import { LogRowContextOptions, LogRowModel, getDefaultTimeRange, locationUtil, urlUtil } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
-import { ClipboardButton, IconButton } from '@grafana/ui';
+import { ClipboardButton, IconButton, PopoverContent } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 
 import { LogRowStyles } from './getLogRowStyles';
@@ -20,10 +20,12 @@ interface Props {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  pinLineButtonTooltipTitle?: PopoverContent;
   pinned?: boolean;
   styles: LogRowStyles;
   mouseIsOver: boolean;
   onBlur: () => void;
+  onPinToContentOutlineClick?: (row: LogRowModel, onOpenContext: (row: LogRowModel) => void) => void;
 }
 
 export const LogRowMenuCell = React.memo(
@@ -33,6 +35,7 @@ export const LogRowMenuCell = React.memo(
     onPermalinkClick,
     onPinLine,
     onUnpinLine,
+    pinLineButtonTooltipTitle,
     pinned,
     row,
     showContextToggle,
@@ -145,7 +148,7 @@ export const LogRowMenuCell = React.memo(
                 size="md"
                 name="gf-pin"
                 onClick={() => onPinLine && onPinLine(row)}
-                tooltip="Pin line"
+                tooltip={pinLineButtonTooltipTitle ?? 'Pin line'}
                 tooltipPlacement="top"
                 aria-label="Pin line"
                 tabIndex={0}

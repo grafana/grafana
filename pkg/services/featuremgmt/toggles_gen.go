@@ -698,4 +698,12 @@ const (
 	// FlagPluginProxyPreserveTrailingSlash
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
+
+	// FlagAzureMonitorPrometheusExemplars
+	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
+	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
+
+	// FlagPinNavItems
+	// Enables pinning of nav items
+	FlagPinNavItems = "pinNavItems"
 )

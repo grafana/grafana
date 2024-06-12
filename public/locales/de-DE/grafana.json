@@ -453,6 +453,16 @@
       "title": "Versionen"
     }
   },
+  "dashboards": {
+    "settings": {
+      "variables": {
+        "dependencies": {
+          "button": "",
+          "title": ""
+        }
+      }
+    }
+  },
   "data-source-list": {
     "empty-state": {
       "button-title": "",
@@ -496,6 +506,12 @@
       "query": "",
       "title": "",
       "visibility": ""
+    },
+    "logs": {
+      "maximum-pinned-logs": "",
+      "no-logs-found": "",
+      "scan-for-older-logs": "",
+      "stop-scan": ""
     },
     "rich-history": {
       "close-tooltip": "Abfrageverlauf schließen",
@@ -1270,6 +1286,7 @@
       "new-alert-rule": "Neue Warnregel",
       "query": "Abfrage",
       "remove": "Entfernen",
+      "replace-library-panel": "",
       "share": "Teilen",
       "show-legend": "Legende anzeigen",
       "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben",
@@ -1478,11 +1495,6 @@
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
   },
-  "recentlyDeleted": {
-    "filter": {
-      "placeholder": ""
-    }
-  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
@@ -1510,6 +1522,31 @@
       "label": "Zurück zu {{title}}"
     },
     "dismissable-button": "Schließen"
+  },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "",
+      "cancel": "",
+      "title": ""
+    },
+    "basicSelector": {
+      "openAdvanced": "",
+      "placeholder": "",
+      "removeAll": ""
+    },
+    "root": {
+      "collapse": "",
+      "expand": ""
+    },
+    "suggestedDashboards": {
+      "loading": "",
+      "search": ""
+    },
+    "tree": {
+      "collapse": "",
+      "expand": "",
+      "search": ""
+    }
   },
   "search": {
     "actions": {
@@ -1669,6 +1706,21 @@
     "empty-state": {
       "button-title": "",
       "title": ""
+    },
+    "table": {
+      "add-silence-button": "",
+      "edit-button": "",
+      "expired-silences": "",
+      "no-matching-silences": "",
+      "noConfig": "",
+      "recreate-button": "",
+      "unsilence-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "",
+      "state": ""
     }
   },
   "snapshot": {
@@ -1703,6 +1755,8 @@
       "apply-button": "Zeitbereich anwenden",
       "cancel-button": "Abbrechen",
       "close": "Kalender schließen",
+      "next-month": "",
+      "previous-month": "",
       "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {
