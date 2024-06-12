@@ -1257,20 +1257,21 @@ def slack_step(channel, template, secret):
         },
     }
 
-def verify_grafanacom_step():
+def verify_grafanacom_step(node_version = 18):
     return {
         "name": "verify-grafanacom",
         "image": images["node"], # JEV: curl also? If I also need a curl image, do I also need a new step? 1 image per step?
         "environment": {
-            "GCOM_TOKEN": from_secret("gcom_token"),
+            # JEV: how would i know this is actually the gcom api key? See scripts/drone/rgm.star:126
+            "GCOM_API_KEY" = from_secret("grafana_api_key"),
         },
         "commands": [
             # Download/install gcom utility
             "curl -L -o /usr/local/bin/gcom https://github.com/grafana/gcom/releases/latest/download/gcom-linux-amd64",
             "chmod +x /usr/local/bin/gcom",
             # Download/install node
-            "curl -sL https://deb.nodesource.com/setup_14.x | bash -",
-            "apt-get install -y nodejs",
+            "curl -sL https://deb.nodesource.com/setup_$node_version.x | bash -",
+            "sudo apt-get install -y nodejs",
             "./drone/verify-grafanacom.sh",
         ],
         "depends_on": ["publish-grafanacom"], # JEV: anything else?
