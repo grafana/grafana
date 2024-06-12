@@ -102,7 +102,7 @@ export function ScopesInput({
   }
 
   return (
-    <Tooltip content={<>{scopesPaths}</>} interactive={true} show={true}>
+    <Tooltip content={<>{scopesPaths}</>} interactive={true}>
       {input}
     </Tooltip>
   );
