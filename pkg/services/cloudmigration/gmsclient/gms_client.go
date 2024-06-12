@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 )
 
-// NewGMSClient returns an implementation of Client that queries CloudMigrationService
+// NewGMSClient returns an implementation of Client that queries GrafanaMigrationService
 func NewGMSClient(domain string) Client {
 	return &gmsClientImpl{
 		domain: domain,
