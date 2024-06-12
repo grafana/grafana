@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/errgroup"
@@ -241,11 +242,12 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		}
 	}
 
-	if b.dryRunClient != nil {
-		// TODO: exclude datasources that cost per query
-		// TODO: remove log later
-		b.log.Info("running dry run comparison to multi-tenant")
-		go b.queryDataAndCompare(ctx, pluginID, pluginUID, req2, code, rsp)
+	if b.passiveModeClient != nil {
+		// Let's only run the passive mode for prometheus and loki.
+		if pluginID == datasources.DS_PROMETHEUS && pluginID == datasources.DS_LOKI {
+			b.log.Debug("running dry run comparison to multi-tenant")
+			go b.queryDataAndCompare(ctx, pluginID, pluginUID, req2, code, rsp)
+		}
 	}
 
 	return rsp, err
@@ -254,11 +256,12 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 // queryDataAndCompare runs the query again, this time from the MT service, and compares the results. All of this happens in a go routine and is non-blocking.
 func (b *QueryAPIBuilder) queryDataAndCompare(ctx context.Context, pluginID string, pluginUID string, req *v0alpha1.QueryDataRequest, code int, rsp *backend.QueryDataResponse) {
 	// Add user headers... here or in client.QueryData
-	client, err := (*b.dryRunClient).GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
+	client, err := (*b.passiveModeClient).GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
 		Type: pluginID,
 		UID:  pluginUID,
 	})
 	if err != nil {
+		b.increaseCompare(compareResultError, pluginID)
 		b.log.Error("unable to get dry run client", "error", err)
 		return
 	}
@@ -280,22 +283,92 @@ func (b *QueryAPIBuilder) queryDataAndCompare(ctx context.Context, pluginID stri
 		}
 	}
 	if err != nil {
+		b.increaseCompare(compareResultError, pluginID)
 		b.log.Error("unable to query", "error", err)
 		return
 	}
 
 	b.log.Info("code", "got", code2, "expected", code)
 	if code2 != code {
-		// TODO: increment metrics
+		b.increaseCompare(compareResultError, pluginID)
 		b.log.Error("codes do not match", "got", code2, "expected", code)
 		return
 	}
 
 	b.log.Info("responses", "got", rsp2.Responses, "expected", rsp.Responses)
 	if rsp2.Responses != nil {
-		// TODO: actually compare the responses
-		// increment metrics
+		b.compareResults(pluginID, rsp, rsp2)
 	}
+}
+
+func (b *QueryAPIBuilder) compareResults(pluginID string, rsp, rsp2 *backend.QueryDataResponse) {
+	// If the length of both responses is different, we know that
+	// something is not right and can straight up return.
+	if len(rsp.Responses) != len(rsp2.Responses) {
+		b.increaseCompare(compareResultDifferent, pluginID)
+		return
+	}
+	for k, v := range rsp.Responses {
+		vv, exists := rsp2.Responses[k]
+		if !exists {
+			b.increaseCompare(compareResultDifferent, pluginID)
+			return
+		}
+		if v.Status.String() != vv.Status.String() {
+			b.increaseCompare(compareResultDifferent, pluginID)
+			return
+		}
+		if len(v.Frames) != len(vv.Frames) {
+			b.increaseCompare(compareResultDifferent, pluginID)
+			return
+		}
+		for i, frame := range v.Frames {
+			frame2 := vv.Frames[i]
+			if frame.RefID != frame2.RefID {
+				b.increaseCompare(compareResultDifferent, pluginID)
+				return
+			}
+			if frame.Name != frame2.Name {
+				b.increaseCompare(compareResultDifferent, pluginID)
+				return
+			}
+			if len(frame.Fields) != len(frame2.Fields) {
+				b.increaseCompare(compareResultDifferent, pluginID)
+				return
+			}
+			for i, field := range frame.Fields {
+				field2 := frame2.Fields[i]
+				if field.Name != field2.Name {
+					b.increaseCompare(compareResultDifferent, pluginID)
+					return
+				}
+				if !field.Labels.Equals(field2.Labels) {
+					b.increaseCompare(compareResultDifferent, pluginID)
+					return
+				}
+				if field.Type().String() != field2.Type().String() {
+					b.increaseCompare(compareResultDifferent, pluginID)
+					return
+				}
+				if field.Len() != field2.Len() {
+					b.increaseCompare(compareResultDifferent, pluginID)
+					return
+				}
+				// I think for now we don't have to go further than that to get a first good impression.
+				// Comparing the content of the field, the real values might be tricky as we don't know
+				// the type and how to compare them. That being said we could later add a switch case with
+				// known numeric types or something.
+			}
+		}
+	}
+	b.increaseCompare(compareResultEqual, pluginID)
+}
+
+func (b *QueryAPIBuilder) increaseCompare(result, dsType string) {
+	b.metrics.dsCompare.With(prometheus.Labels{
+		compareLabelResult:         result,
+		compareLabelDatasourceType: dsType,
+	}).Add(1)
 }
 
 // buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
