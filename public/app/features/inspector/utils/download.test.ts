@@ -39,7 +39,7 @@ describe('inspector download', () => {
         const text = await blob.text();
 
         // By default the BOM character should not be included
-        expect(blob.charCodeAt(0)).not.toEqual(0xfeff);
+        expect(await hasBOM(blob)).toBe(false);
         expect(text).toEqual(expected);
         expect(filename).toEqual(`${title}-data-${dateTimeFormat(1400000000000)}.csv`);
       }
@@ -53,9 +53,9 @@ describe('inspector download', () => {
       const filename = call[1];
       const text = await blob.text();
 
-      expect(blob.charCodeAt(0)).toEqual(0xfeff);
-      expect(text).toEqual('"time","name","value"\r\n100,a,1');
-      expect(filename).toEqual(`${test}-data-${dateTimeFormat(1400000000000)}.csv`);
+      expect(await hasBOM(blob)).toBe(true);
+      expect(text).toEqual('sep=,\r\n"time","name","value"\r\n100,a,1');
+      expect(filename).toEqual(`test-data-${dateTimeFormat(1400000000000)}.csv`);
     });
   });
 
@@ -119,3 +119,19 @@ describe('inspector download', () => {
     });
   });
 });
+
+async function hasBOM(blob: Blob) {
+  const reader = new FileReader();
+  return new Promise<boolean>((resolve, reject) => {
+    reader.onload = (event: ProgressEvent<FileReader>) => {
+      if (event.target?.result instanceof ArrayBuffer) {
+        const arr = new Uint8Array(event.target.result);
+        resolve(arr[0] === 0xef && arr[1] === 0xbb && arr[2] === 0xbf); // Check for UTF-8 BOM
+      } else {
+        reject(new Error('Unexpected FileReader result type'));
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(blob.slice(0, 3)); // Read only the first 3 bytes
+  });
+}
