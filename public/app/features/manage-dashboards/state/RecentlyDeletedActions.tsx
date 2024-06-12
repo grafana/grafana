@@ -1,6 +1,8 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { Button } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data/';
+import { Button, useStyles2 } from '@grafana/ui';
 
 import appEvents from '../../../core/app_events';
 import { Trans } from '../../../core/internationalization';
@@ -12,6 +14,8 @@ import { RestoreModal } from '../components/RestoreModal';
 import { useRecentlyDeletedStateManager } from '../utils/useRecentlyDeletedStateManager';
 
 export function RecentlyDeletedActions() {
+  const styles = useStyles2(getStyles);
+
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
   const [, stateManager] = useRecentlyDeletedStateManager();
@@ -46,8 +50,16 @@ export function RecentlyDeletedActions() {
   };
 
   return (
-    <Button onClick={showRestoreModal} variant="secondary">
-      <Trans i18nKey="recently-deleted.buttons.restore">Restore</Trans>
-    </Button>
+    <div className={styles.row}>
+      <Button onClick={showRestoreModal} variant="secondary">
+        <Trans i18nKey="recently-deleted.buttons.restore">Restore</Trans>
+      </Button>
+    </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  row: css({
+    marginBottom: theme.spacing(2),
+  }),
+});
