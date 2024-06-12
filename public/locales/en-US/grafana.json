@@ -453,6 +453,16 @@
       "title": "Versions"
     }
   },
+  "dashboards": {
+    "settings": {
+      "variables": {
+        "dependencies": {
+          "button": "Show dependencies",
+          "title": "Dependencies"
+        }
+      }
+    }
+  },
   "data-source-list": {
     "empty-state": {
       "button-title": "Add data source",
@@ -496,6 +506,12 @@
       "query": "Query",
       "title": "Add query to Query Library",
       "visibility": "Visibility"
+    },
+    "logs": {
+      "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
+      "no-logs-found": "No logs found.",
+      "scan-for-older-logs": "Scan for older logs",
+      "stop-scan": "Stop scan"
     },
     "rich-history": {
       "close-tooltip": "Close query history",
@@ -1483,9 +1499,6 @@
     "buttons": {
       "restore": "Restore"
     },
-    "filter": {
-      "placeholder": "Search for dashboards"
-    },
     "restore-modal": {
       "restore-button": "Restore",
       "restore-loading": "Restoring...",
@@ -1754,6 +1767,8 @@
       "apply-button": "Apply time range",
       "cancel-button": "Cancel",
       "close": "Close calendar",
+      "next-month": "Next month",
+      "previous-month": "Previous month",
       "select-time": "Select a time range"
     },
     "content": {

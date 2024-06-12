@@ -18,6 +18,7 @@ export interface ContentOutlineContextProps {
   unregister: (id: string) => void;
   unregisterAllChildren: (parentId: string, childType: ITEM_TYPES) => void;
   updateOutlineItems: (newItems: ContentOutlineItemContextProps[]) => void;
+  updateItem: (id: string, properties: Partial<Omit<ContentOutlineItemContextProps, 'id'>>) => void;
 }
 
 interface ContentOutlineContextProviderProps {
@@ -141,8 +142,11 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
           ref = parent.ref;
         }
 
-        const childrenUpdated = [...(parent.children || []), { ...outlineItem, id, ref }];
-        childrenUpdated.sort(sortElementsByDocumentPosition);
+        let childrenUpdated = [{ ...outlineItem, id, ref }, ...(parent.children || [])];
+
+        if (!outlineItem.childOnTop) {
+          childrenUpdated = sortItems(childrenUpdated);
+        }
 
         newItems[parentIndex] = {
           ...parent,
@@ -175,6 +179,20 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
     setOutlineItems(newItems);
   }, []);
 
+  const updateItem = useCallback((id: string, properties: Partial<Omit<ContentOutlineItemContextProps, 'id'>>) => {
+    setOutlineItems((prevItems) =>
+      prevItems.map((item) => {
+        if (item.id === id) {
+          return {
+            ...item,
+            ...properties,
+          };
+        }
+        return item;
+      })
+    );
+  }, []);
+
   const unregisterAllChildren = useCallback((parentId: string, childType: ITEM_TYPES) => {
     setOutlineItems((prevItems) =>
       prevItems.map((item) => {
@@ -190,7 +208,8 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
     setOutlineItems((prevItems) => {
       const newItems = [...prevItems];
       for (const item of newItems) {
-        item.children?.sort(sortElementsByDocumentPosition);
+        const sortedItems = sortItems(item.children || []);
+        item.children = sortedItems;
       }
       return newItems;
     });
@@ -198,14 +217,14 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
 
   return (
     <ContentOutlineContext.Provider
-      value={{ outlineItems, register, unregister, updateOutlineItems, unregisterAllChildren }}
+      value={{ outlineItems, register, unregister, updateOutlineItems, unregisterAllChildren, updateItem }}
     >
       {children}
     </ContentOutlineContext.Provider>
   );
 }
 
-export function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps, b: ContentOutlineItemContextProps) {
+function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps, b: ContentOutlineItemContextProps) {
   if (a.ref && b.ref) {
     const diff = a.ref.compareDocumentPosition(b.ref);
     if (diff === Node.DOCUMENT_POSITION_PRECEDING) {
@@ -215,6 +234,22 @@ export function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps
     }
   }
   return 0;
+}
+
+function sortItems(outlineItems: ContentOutlineItemContextProps[]): ContentOutlineItemContextProps[] {
+  const [skipSort, sortable] = outlineItems.reduce<
+    [ContentOutlineItemContextProps[], ContentOutlineItemContextProps[]]
+  >(
+    (acc, item) => {
+      item.childOnTop ? acc[0].push(item) : acc[1].push(item);
+      return acc;
+    },
+    [[], []]
+  );
+
+  sortable.sort(sortElementsByDocumentPosition);
+
+  return [...skipSort, ...sortable];
 }
 
 export function useContentOutlineContext() {

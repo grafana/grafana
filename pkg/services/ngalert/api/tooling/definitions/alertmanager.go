@@ -473,7 +473,6 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 	}
 }
 
-// swagger:model postableSilence
 type PostableSilence = amv2.PostableSilence
 
 // swagger:model postSilencesOKBody
@@ -485,7 +484,6 @@ type PostSilencesOKBody struct { // vendored from "github.com/prometheus/alertma
 // swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
 
-// swagger:model gettableSilence
 type GettableSilence = amv2.GettableSilence
 
 // swagger:model gettableGrafanaSilence
@@ -540,16 +538,13 @@ type GettableGrafanaSilences []*GettableGrafanaSilence
 // swagger:model gettableAlerts
 type GettableAlerts = amv2.GettableAlerts
 
-// swagger:model gettableAlert
 type GettableAlert = amv2.GettableAlert
 
 // swagger:model alertGroups
 type AlertGroups = amv2.AlertGroups
 
-// swagger:model alertGroup
 type AlertGroup = amv2.AlertGroup
 
-// swagger:model receiver
 type Receiver = amv2.Receiver
 
 // swagger:response receiversResponse
@@ -558,7 +553,6 @@ type ReceiversResponse struct {
 	Body []amv2.Receiver
 }
 
-// swagger:model integration
 type Integration = amv2.Integration
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups

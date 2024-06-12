@@ -453,6 +453,16 @@
       "title": "Vęřşįőŉş"
     }
   },
+  "dashboards": {
+    "settings": {
+      "variables": {
+        "dependencies": {
+          "button": "Ŝĥőŵ đępęŉđęŉčįęş",
+          "title": "Đępęŉđęŉčįęş"
+        }
+      }
+    }
+  },
   "data-source-list": {
     "empty-state": {
       "button-title": "Åđđ đäŧä şőūřčę",
@@ -496,6 +506,12 @@
       "query": "Qūęřy",
       "title": "Åđđ qūęřy ŧő Qūęřy Ŀįþřäřy",
       "visibility": "Vįşįþįľįŧy"
+    },
+    "logs": {
+      "maximum-pinned-logs": "Mäχįmūm őƒ {{PINNED_LOGS_LIMIT}} pįŉŉęđ ľőģş řęäčĥęđ. Ůŉpįŉ ä ľőģ ŧő äđđ äŉőŧĥęř.",
+      "no-logs-found": "Ńő ľőģş ƒőūŉđ.",
+      "scan-for-older-logs": "Ŝčäŉ ƒőř őľđęř ľőģş",
+      "stop-scan": "Ŝŧőp şčäŉ"
     },
     "rich-history": {
       "close-tooltip": "Cľőşę qūęřy ĥįşŧőřy",
@@ -1483,13 +1499,10 @@
     "buttons": {
       "restore": "Ŗęşŧőřę"
     },
-    "filter": {
-      "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş"
-    },
     "restore-modal": {
       "restore-button": "Ŗęşŧőřę",
       "restore-loading": "Ŗęşŧőřįŉģ...",
-      "text_one": "Ŧĥįş äčŧįőŉ ŵįľľ řęşŧőřę {{numberOfDashboards}} đäşĥþőäřđş.",
+      "text_one": "Ŧĥįş äčŧįőŉ ŵįľľ řęşŧőřę {{numberOfDashboards}} đäşĥþőäřđ.",
       "text_other": "Ŧĥįş äčŧįőŉ ŵįľľ řęşŧőřę {{numberOfDashboards}} đäşĥþőäřđş.",
       "title": "Ŗęşŧőřę Đäşĥþőäřđş"
     }
@@ -1754,6 +1767,8 @@
       "apply-button": "Åppľy ŧįmę řäŉģę",
       "cancel-button": "Cäŉčęľ",
       "close": "Cľőşę čäľęŉđäř",
+      "next-month": "Ńęχŧ mőŉŧĥ",
+      "previous-month": "Přęvįőūş mőŉŧĥ",
       "select-time": "Ŝęľęčŧ ä ŧįmę řäŉģę"
     },
     "content": {
