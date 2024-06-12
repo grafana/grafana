@@ -737,6 +737,31 @@ func managedPermission(action, resource string, resourceID, resourceAttribute st
 	}
 }
 
+// ResolveActionPrefix returns all action sets that include at least one action with the specified prefix
+func (s *InMemoryActionSets) ResolveActionPrefix(prefix string) []string {
+	if prefix == "" {
+		return []string{}
+	}
+
+	sets := make([]string, 0, len(s.actionSetToActions))
+
+	for set, actions := range s.actionSetToActions {
+		// Only use action sets for folders and dashboards for now
+		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
+		if !isFolderOrDashboardAction(set) {
+			continue
+		}
+		for _, action := range actions {
+			if strings.HasPrefix(action, prefix) {
+				sets = append(sets, set)
+				break
+			}
+		}
+	}
+
+	return sets
+}
+
 func (s *InMemoryActionSets) ResolveAction(action string) []string {
 	actionSets := s.actionToActionSets[action]
 	sets := make([]string, 0, len(actionSets))
@@ -766,7 +791,17 @@ func isFolderOrDashboardAction(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) || strings.HasPrefix(action, dashboards.ScopeFoldersRoot)
 }
 
+// ExpandActionSets takes a set of permissions that might include some action set permissions, and returns a set of permissions with action sets expanded into underlying permissions
 func (s *InMemoryActionSets) ExpandActionSets(permissions []accesscontrol.Permission) []accesscontrol.Permission {
+	actionMatcher := func(_ string) bool {
+		return true
+	}
+	return s.ExpandActionSetsWithFilter(permissions, actionMatcher)
+}
+
+// ExpandActionSetsWithFilter works like ExpandActionSets, but it also takes a function for action filtering. When action sets are expanded into the underlying permissions,
+// only those permissions whose action is matched by actionMatcher are included.
+func (s *InMemoryActionSets) ExpandActionSetsWithFilter(permissions []accesscontrol.Permission, actionMatcher func(action string) bool) []accesscontrol.Permission {
 	var expandedPermissions []accesscontrol.Permission
 	for _, permission := range permissions {
 		resolvedActions := s.ResolveActionSet(permission.Action)
@@ -775,6 +810,9 @@ func (s *InMemoryActionSets) ExpandActionSets(permissions []accesscontrol.Permis
 			continue
 		}
 		for _, action := range resolvedActions {
+			if !actionMatcher(action) {
+				continue
+			}
 			permission.Action = action
 			expandedPermissions = append(expandedPermissions, permission)
 		}
