@@ -43,6 +43,7 @@ type GetExtensions = ({
   registry: PluginExtensionRegistry;
   openedApps?: string[];
   openSplitApp: (appId: string) => void;
+  closeSplitApp: (appId: string) => void;
 }) => { extensions: PluginExtension[] };
 
 let registry: PluginExtensionRegistry = { id: '', extensions: {} };
@@ -54,7 +55,15 @@ export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginEx
     registry = r;
   });
 
-  return (options) => getPluginExtensions({ ...options, registry, openedApps: undefined, openSplitApp: () => {} });
+  return (options) =>
+    // TODO: figure out how to pass the split controls here
+    getPluginExtensions({
+      ...options,
+      registry,
+      openedApps: undefined,
+      closeSplitApp: () => {},
+      openSplitApp: () => {},
+    });
 }
 
 // Returns with a list of plugin extensions for the given extension point
@@ -64,6 +73,7 @@ export const getPluginExtensions: GetExtensions = ({
   limitPerPlugin,
   registry,
   openSplitApp,
+  closeSplitApp,
   openedApps,
 }) => {
   const frozenContext = context ? getReadOnlyProxy(context) : {};
@@ -99,12 +109,23 @@ export const getPluginExtensions: GetExtensions = ({
 
         const path = overrides?.path || extensionConfig.path;
         const openApp = () => openSplitApp(pluginId);
+        const closeApp = () => {
+          // Don't allow closing other apps from the app extension only it's own and only if it's the second app. The
+          // second app requirement is probably temporary as we don't have a way to "promote" the secondary app to
+          // main app.
+          if (openedApps && openedApps.length === 2 && openedApps[1] === pluginId) {
+            closeSplitApp(pluginId);
+          }
+        };
 
         const extension: PluginExtensionLink = {
           id: generateExtensionId(pluginId, extensionConfig),
           type: PluginExtensionTypes.link,
           pluginId: pluginId,
-          onClick: getLinkExtensionOnClick({ pluginId, isAppOpened, openApp, config: extensionConfig }, frozenContext),
+          onClick: getLinkExtensionOnClick(
+            { pluginId, isAppOpened, openApp, closeApp, config: extensionConfig },
+            frozenContext
+          ),
 
           // Configurable properties
           icon: overrides?.icon || extensionConfig.icon,
@@ -208,6 +229,7 @@ function getLinkExtensionOnClick(
     config: PluginExtensionLinkConfig;
     isAppOpened: boolean;
     openApp: () => void;
+    closeApp: () => void;
   },
   context?: object
 ): ((event?: React.MouseEvent, context?: object) => void) | undefined {
@@ -228,7 +250,13 @@ function getLinkExtensionOnClick(
 
       const result = onClick(
         event,
-        getEventHelpers(options.pluginId, options.isAppOpened, options.openApp, onClickContext || context)
+        getEventHelpers(
+          options.pluginId,
+          options.isAppOpened,
+          options.openApp,
+          options.closeApp,
+          onClickContext || context
+        )
       );
 
       if (isPromise(result)) {

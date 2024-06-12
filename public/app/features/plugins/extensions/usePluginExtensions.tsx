@@ -46,6 +46,11 @@ export function createPluginExtensionsHook(extensionsRegistry: ReactivePluginExt
       [dispatch]
     );
 
+    const closeSplitApp = useCallback(
+      (appId: string) => dispatch(windowSplitSlice.actions.closeSplitApp({ secondAppId: appId })),
+      [dispatch]
+    );
+
     if (!registry) {
       return { extensions: [], isLoading: false };
     }
@@ -66,7 +71,7 @@ export function createPluginExtensionsHook(extensionsRegistry: ReactivePluginExt
       };
     }
 
-    const { extensions } = getPluginExtensions({ ...options, registry, openedApps, openSplitApp });
+    const { extensions } = getPluginExtensions({ ...options, registry, openedApps, openSplitApp, closeSplitApp });
 
     cache.extensions[key] = {
       context: options.context,

@@ -114,6 +114,7 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
 
   isAppOpened: boolean;
   openSplitApp: () => void;
+  closeSplitApp: () => void;
 };
 
 // Extension Points & Contexts

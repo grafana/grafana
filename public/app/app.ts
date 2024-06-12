@@ -77,6 +77,8 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
+import { PanelDataQueriesTab } from './features/dashboard-scene/panel-edit/PanelDataPane/PanelDataQueriesTab';
+import { DashboardScene } from './features/dashboard-scene/scene/DashboardScene';
 import { setQueriesAction } from './features/explore/state/query';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
@@ -269,7 +271,9 @@ export class GrafanaApp {
               }
             },
             onClick: (_, helpers) => {
-              window.__grafanaSceneContext.state;
+              const queriesTab: PanelDataQueriesTab = (window.__grafanaSceneContext as DashboardScene).state.editPanel
+                ?.state.dataPane?.state.tabs?.[0] as PanelDataQueriesTab;
+              queriesTab.onQueriesChange([helpers.context!.query]);
             },
           }),
         ],

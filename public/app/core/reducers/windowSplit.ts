@@ -19,8 +19,12 @@ export default createSlice({
     openSplitApp: (state, action: PayloadAction<OpenSplitAction>) => {
       return { ...state, secondAppId: action.payload.secondAppId };
     },
-    closeSplitApp: (state) => {
-      return { ...state, secondAppId: undefined };
+
+    closeSplitApp: (state, action: PayloadAction<OpenSplitAction>) => {
+      if (state.secondAppId === action.payload.secondAppId) {
+        return { ...state, secondAppId: undefined };
+      }
+      return state;
     },
   },
 });

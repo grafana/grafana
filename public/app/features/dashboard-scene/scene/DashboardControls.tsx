@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PluginExtensionLink } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { UsePluginExtensionsResult, usePluginLinkExtensions } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneObject,
@@ -13,7 +14,8 @@ import {
   SceneDebugger,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Box, Stack, useStyles2 } from '@grafana/ui';
+import { Box, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/ui/src/utils/i18n';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -70,6 +72,23 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <c.Component model={c} key={c.state.key} />
         ))}
         <Box grow={1} />
+        <ExtensionsProvider>
+          {(result) =>
+            result.extensions.map((e) => {
+              return (
+                <ToolbarButton
+                  key={e.id}
+                  aria-label={e.title}
+                  variant={'default'}
+                  onClick={e.onClick}
+                  icon={e.icon}
+                  tooltip={e.title}
+                  narrow
+                />
+              );
+            })
+          }
+        </ExtensionsProvider>
         {!editPanel && <DashboardLinksControls links={links} uid={dashboard.state.uid} />}
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Stack>
@@ -82,6 +101,19 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
   );
+}
+
+type ExtensionsProviderProps = {
+  children: (extensions: UsePluginExtensionsResult<PluginExtensionLink>) => ReactNode;
+};
+function ExtensionsProvider(props: ExtensionsProviderProps) {
+  const extensions = usePluginLinkExtensions({
+    extensionPointId: 'grafana/dashboard/toolbar',
+    context: {},
+    limitPerPlugin: 3,
+  });
+
+  return props.children(extensions);
 }
 
 function getStyles(theme: GrafanaTheme2) {

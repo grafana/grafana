@@ -56,6 +56,7 @@ export function getEventHelpers(
   // TODO: Right now these 2 are just pass through maybe it could be organized but differently
   isAppOpened: boolean,
   openApp: () => void,
+  closeApp: () => void,
 
   context?: Readonly<object>
 ): PluginExtensionEventHelpers {
@@ -69,7 +70,7 @@ export function getEventHelpers(
     );
   };
 
-  return { openModal, context, isAppOpened, openSplitApp: openApp };
+  return { openModal, context, isAppOpened, openSplitApp: openApp, closeSplitApp: closeApp };
 }
 
 type ModalWrapperProps = {
