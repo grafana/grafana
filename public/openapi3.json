@@ -230,7 +230,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/MigrateSnapshotResponseDTO"
+              "$ref": "#/components/schemas/MigrateDataResponseDTO"
             }
           }
         },
@@ -6996,59 +6996,6 @@
         },
         "type": "object"
       },
-      "MigrateSnapshotResponseDTO": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/MigrateSnapshotResponseItemDTO"
-            },
-            "type": "array"
-          },
-          "uid": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "MigrateSnapshotResponseItemDTO": {
-        "properties": {
-          "error": {
-            "type": "string"
-          },
-          "refId": {
-            "type": "string"
-          },
-          "status": {
-            "enum": [
-              "OK",
-              "ERROR"
-            ],
-            "type": "string"
-          },
-          "type": {
-            "enum": [
-              "DASHBOARD",
-              "DATASOURCE",
-              "FOLDER"
-            ],
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "refId",
-          "status"
-        ],
-        "type": "object"
-      },
-      "MigrateSnapshotResponseListDTO": {
-        "properties": {
-          "uid": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "MoveFolderCommand": {
         "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
         "properties": {
@@ -10409,7 +10356,7 @@
         "properties": {
           "runs": {
             "items": {
-              "$ref": "#/components/schemas/MigrateSnapshotResponseListDTO"
+              "$ref": "#/components/schemas/MigrateDataResponseListDTO"
             },
             "type": "array"
           }

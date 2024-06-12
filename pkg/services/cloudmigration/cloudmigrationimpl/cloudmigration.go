@@ -406,7 +406,7 @@ func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration
 	}
 
 	// save the result of the migration
-	runUID, err := s.createMigrationRun(ctx, cloudmigration.Snapshot{
+	runUID, err := s.createMigrationRun(ctx, cloudmigration.CloudMigrationSnapshot{
 		SessionUID: migration.UID,
 		Result:     respData,
 	})
@@ -542,7 +542,7 @@ func (s *Service) getDashboards(ctx context.Context) ([]dashboards.Dashboard, er
 	return result, nil
 }
 
-func (s *Service) createMigrationRun(ctx context.Context, cmr cloudmigration.Snapshot) (string, error) {
+func (s *Service) createMigrationRun(ctx context.Context, cmr cloudmigration.CloudMigrationSnapshot) (string, error) {
 	uid, err := s.store.CreateMigrationRun(ctx, cmr)
 	if err != nil {
 		s.log.Error("Failed to save migration run", "err", err)
@@ -551,7 +551,7 @@ func (s *Service) createMigrationRun(ctx context.Context, cmr cloudmigration.Sna
 	return uid, nil
 }
 
-func (s *Service) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.Snapshot, error) {
+func (s *Service) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.CloudMigrationSnapshot, error) {
 	cmr, err := s.store.GetMigrationStatus(ctx, runUID)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving migration status from db: %w", err)

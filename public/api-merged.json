@@ -16596,59 +16596,6 @@
         }
       }
     },
-    "MigrateSnapshotResponseDTO": {
-      "type": "object",
-      "properties": {
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MigrateSnapshotResponseItemDTO"
-          }
-        },
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
-    "MigrateSnapshotResponseItemDTO": {
-      "type": "object",
-      "required": [
-        "type",
-        "refId",
-        "status"
-      ],
-      "properties": {
-        "error": {
-          "type": "string"
-        },
-        "refId": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "OK",
-            "ERROR"
-          ]
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "DASHBOARD",
-            "DATASOURCE",
-            "FOLDER"
-          ]
-        }
-      }
-    },
-    "MigrateSnapshotResponseListDTO": {
-      "type": "object",
-      "properties": {
-        "uid": {
-          "type": "string"
-        }
-      }
-    },
     "MoveFolderCommand": {
       "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
       "type": "object",
@@ -20012,7 +19959,7 @@
         "runs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/MigrateSnapshotResponseListDTO"
+            "$ref": "#/definitions/MigrateDataResponseListDTO"
           }
         }
       }
@@ -22471,7 +22418,7 @@
     "cloudMigrationRunResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/MigrateSnapshotResponseDTO"
+        "$ref": "#/definitions/MigrateDataResponseDTO"
       }
     },
     "cloudMigrationSessionListResponse": {

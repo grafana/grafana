@@ -5,7 +5,7 @@ import (
 )
 
 func addCloudMigrationsMigrations(mg *Migrator) {
-	migrationTable := Table{
+	migrationSessionTable := Table{
 		Name: "cloud_migration_session",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
@@ -15,7 +15,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
 	}
-	migrationRunTable := Table{
+	migrationSnapshotTable := Table{
 		Name: "cloud_migration_snapshot",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
@@ -27,40 +27,40 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		},
 	}
 
-	mg.AddMigration("create cloud_migration_session table v1", NewAddTableMigration(migrationTable))
-	mg.AddMigration("create cloud_migration_snapshot table v1", NewAddTableMigration(migrationRunTable))
+	mg.AddMigration("create cloud_migration_session table v1", NewAddTableMigration(migrationSessionTable))
+	mg.AddMigration("create cloud_migration_snapshot table v1", NewAddTableMigration(migrationSnapshotTable))
 
 	stackIDColumn := Column{Name: "stack_id", Type: DB_BigInt, Nullable: false}
 	regionSlugColumn := Column{Name: "region_slug", Type: DB_Text, Nullable: false}
 	clusterSlugColumn := Column{Name: "cluster_slug", Type: DB_Text, Nullable: false}
 
-	mg.AddMigration("add stack_id column", NewAddColumnMigration(migrationTable, &stackIDColumn))
-	mg.AddMigration("add region_slug column", NewAddColumnMigration(migrationTable, &regionSlugColumn))
-	mg.AddMigration("add cluster_slug column", NewAddColumnMigration(migrationTable, &clusterSlugColumn))
+	mg.AddMigration("add stack_id column", NewAddColumnMigration(migrationSessionTable, &stackIDColumn))
+	mg.AddMigration("add region_slug column", NewAddColumnMigration(migrationSessionTable, &regionSlugColumn))
+	mg.AddMigration("add cluster_slug column", NewAddColumnMigration(migrationSessionTable, &clusterSlugColumn))
 
-	// --- adding uid to migration
-	migUidColumn := Column{Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true}
-	mg.AddMigration("add migration uid column", NewAddColumnMigration(migrationTable, &migUidColumn))
+	// --- adding uid to session
+	sessUidColumn := Column{Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true}
+	mg.AddMigration("add session uid column", NewAddColumnMigration(migrationSessionTable, &sessUidColumn))
 
-	mg.AddMigration("Update uid column values for migration", NewRawSQLMigration("").
+	mg.AddMigration("Update uid column values for cloud_migration_session", NewRawSQLMigration("").
 		SQLite("UPDATE cloud_migration_session SET uid=printf('u%09d',id) WHERE uid IS NULL;").
 		Postgres("UPDATE `cloud_migration_session` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;").
 		Mysql("UPDATE cloud_migration_session SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;"))
 
-	mg.AddMigration("Add unique index migration_uid", NewAddIndexMigration(migrationTable, &Index{
+	mg.AddMigration("Add unique index migration_uid", NewAddIndexMigration(migrationSessionTable, &Index{
 		Cols: []string{"uid"}, Type: UniqueIndex,
 	}))
 
-	// --- adding uid to migration run
-	runUidColumn := Column{Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true}
-	mg.AddMigration("add migration run uid column", NewAddColumnMigration(migrationRunTable, &runUidColumn))
+	// --- adding uid to snapshot
+	snapshotUidColumn := Column{Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true}
+	mg.AddMigration("add snapshot uid column", NewAddColumnMigration(migrationSnapshotTable, &snapshotUidColumn))
 
-	mg.AddMigration("Update uid column values for migration run", NewRawSQLMigration("").
+	mg.AddMigration("Update uid column values for cloud_migration_snapshot", NewRawSQLMigration("").
 		SQLite("UPDATE cloud_migration_snapshot SET uid=printf('u%09d',id) WHERE uid IS NULL;").
 		Postgres("UPDATE `cloud_migration_snapshot` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;").
 		Mysql("UPDATE cloud_migration_snapshot SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;"))
 
-	mg.AddMigration("Add unique index migration_run_uid", NewAddIndexMigration(migrationRunTable, &Index{
+	mg.AddMigration("Add unique index migration_run_uid", NewAddIndexMigration(migrationSnapshotTable, &Index{
 		Cols: []string{"uid"}, Type: UniqueIndex,
 	}))
 }

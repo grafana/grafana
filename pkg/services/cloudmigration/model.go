@@ -23,24 +23,24 @@ type CloudMigrationSession struct {
 	UID         string    `json:"uid" xorm:"uid"`
 	AuthToken   string    `json:"-"`
 	Slug        string    `json:"slug"`
-	StackID     int       `json:"stackID"`
+	StackID     int       `json:"stackID" xorm:"stack_id"`
 	RegionSlug  string    `json:"regionSlug"`
 	ClusterSlug string    `json:"clusterSlug"`
 	Created     time.Time `json:"created"`
 	Updated     time.Time `json:"updated"`
 }
 
-type Snapshot struct {
+type CloudMigrationSnapshot struct {
 	ID         int64     `json:"id" xorm:"pk autoincr 'id'"`
 	UID        string    `json:"uid" xorm:"uid"`
-	SessionUID string    `json:"sessionUid"`
+	SessionUID string    `json:"sessionUid" xorm:"session_uid"`
 	Result     []byte    `json:"result"` //store raw gms response body
 	Created    time.Time `json:"created"`
 	Updated    time.Time `json:"updated"`
 	Finished   time.Time `json:"finished"`
 }
 
-func (r Snapshot) ToResponse() (*MigrateDataResponseDTO, error) {
+func (r CloudMigrationSnapshot) ToResponse() (*MigrateDataResponseDTO, error) {
 	var result MigrateDataResponseDTO
 	err := json.Unmarshal(r.Result, &result)
 	if err != nil {

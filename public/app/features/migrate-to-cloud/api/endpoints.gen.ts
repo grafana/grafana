@@ -1,8 +1,24 @@
 import { baseAPI as api } from './baseAPI';
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
+    getSessionList: build.query<GetSessionListApiResponse, GetSessionListApiArg>({
+      query: () => ({ url: `/cloudmigration/migration` }),
+    }),
+    createSession: build.mutation<CreateSessionApiResponse, CreateSessionApiArg>({
+      query: (queryArg) => ({
+        url: `/cloudmigration/migration`,
+        method: 'POST',
+        body: queryArg.cloudMigrationSessionRequest,
+      }),
+    }),
     getCloudMigrationRun: build.query<GetCloudMigrationRunApiResponse, GetCloudMigrationRunApiArg>({
       query: (queryArg) => ({ url: `/cloudmigration/migration/run/${queryArg.runUid}` }),
+    }),
+    deleteSession: build.mutation<DeleteSessionApiResponse, DeleteSessionApiArg>({
+      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}`, method: 'DELETE' }),
+    }),
+    getSession: build.query<GetSessionApiResponse, GetSessionApiArg>({
+      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}` }),
     }),
     getCloudMigrationRunList: build.query<GetCloudMigrationRunListApiResponse, GetCloudMigrationRunListApiArg>({
       query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}/run` }),
@@ -20,17 +36,33 @@ const injectedRtkApi = api.injectEndpoints({
   overrideExisting: false,
 });
 export { injectedRtkApi as generatedAPI };
-export type GetCloudMigrationRunApiResponse = /** status 200 (empty) */ MigrateSnapshotResponseDto;
+export type GetSessionListApiResponse = /** status 200 (empty) */ CloudMigrationSessionListResponse;
+export type GetSessionListApiArg = void;
+export type CreateSessionApiResponse = /** status 200 (empty) */ CloudMigrationSessionResponse;
+export type CreateSessionApiArg = {
+  cloudMigrationSessionRequest: CloudMigrationSessionRequest;
+};
+export type GetCloudMigrationRunApiResponse = /** status 200 (empty) */ MigrateDataResponseDto;
 export type GetCloudMigrationRunApiArg = {
   /** RunUID of a migration run */
   runUid: string;
+};
+export type DeleteSessionApiResponse = unknown;
+export type DeleteSessionApiArg = {
+  /** UID of a migration session */
+  uid: string;
+};
+export type GetSessionApiResponse = /** status 200 (empty) */ CloudMigrationSessionResponse;
+export type GetSessionApiArg = {
+  /** UID of a migration session */
+  uid: string;
 };
 export type GetCloudMigrationRunListApiResponse = /** status 200 (empty) */ SnapshotList;
 export type GetCloudMigrationRunListApiArg = {
   /** UID of a migration */
   uid: string;
 };
-export type RunCloudMigrationApiResponse = /** status 200 (empty) */ MigrateSnapshotResponseDto;
+export type RunCloudMigrationApiResponse = /** status 200 (empty) */ MigrateDataResponseDto;
 export type RunCloudMigrationApiArg = {
   /** UID of a migration */
   uid: string;
@@ -41,15 +73,14 @@ export type GetDashboardByUidApiResponse = /** status 200 (empty) */ DashboardFu
 export type GetDashboardByUidApiArg = {
   uid: string;
 };
-export type MigrateSnapshotResponseItemDto = {
-  error?: string;
-  refId: string;
-  status: 'OK' | 'ERROR';
-  type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER';
-};
-export type MigrateSnapshotResponseDto = {
-  items?: MigrateSnapshotResponseItemDto[];
+export type CloudMigrationSessionResponse = {
+  created?: string;
+  slug?: string;
   uid?: string;
+  updated?: string;
+};
+export type CloudMigrationSessionListResponse = {
+  sessions?: CloudMigrationSessionResponse[];
 };
 export type ErrorResponseBody = {
   /** Error An optional detailed description of the actual error. Only included if running in developer mode. */
@@ -61,11 +92,24 @@ export type ErrorResponseBody = {
     For example, a 412 Precondition Failed error may include additional information of why that error happened. */
   status?: string;
 };
-export type MigrateSnapshotResponseListDto = {
+export type CloudMigrationSessionRequest = {
+  authToken?: string;
+};
+export type MigrateDataResponseItemDto = {
+  error?: string;
+  refId: string;
+  status: 'OK' | 'ERROR';
+  type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER';
+};
+export type MigrateDataResponseDto = {
+  items?: MigrateDataResponseItemDto[];
+  uid?: string;
+};
+export type MigrateDataResponseListDto = {
   uid?: string;
 };
 export type SnapshotList = {
-  runs?: MigrateSnapshotResponseListDto[];
+  runs?: MigrateDataResponseListDto[];
 };
 export type CreateAccessTokenResponseDto = {
   token?: string;
@@ -114,7 +158,11 @@ export type DashboardFullWithMeta = {
   meta?: DashboardMeta;
 };
 export const {
+  useGetSessionListQuery,
+  useCreateSessionMutation,
   useGetCloudMigrationRunQuery,
+  useDeleteSessionMutation,
+  useGetSessionQuery,
   useGetCloudMigrationRunListQuery,
   useRunCloudMigrationMutation,
   useCreateCloudMigrationTokenMutation,

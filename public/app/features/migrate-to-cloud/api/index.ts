@@ -21,12 +21,12 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
     },
 
     // Get one Cloud Config
-    getCloudMigration: {
+    getSession: {
       providesTags: ['cloud-migration-config'],
     },
 
     // Delete one Cloud Config
-    deleteCloudMigration: {
+    deleteSession: {
       invalidatesTags: ['cloud-migration-config'],
     },
 

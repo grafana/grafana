@@ -12,7 +12,7 @@ type store interface {
 	GetAllCloudMigrationSessions(ctx context.Context) ([]*cloudmigration.CloudMigrationSession, error)
 	DeleteMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error)
 
-	CreateMigrationRun(ctx context.Context, cmr cloudmigration.Snapshot) (string, error)
-	GetMigrationStatus(ctx context.Context, cmrUID string) (*cloudmigration.Snapshot, error)
-	GetMigrationStatusList(ctx context.Context, migrationUID string) ([]*cloudmigration.Snapshot, error)
+	CreateMigrationRun(ctx context.Context, cmr cloudmigration.CloudMigrationSnapshot) (string, error)
+	GetMigrationStatus(ctx context.Context, cmrUID string) (*cloudmigration.CloudMigrationSnapshot, error)
+	GetMigrationStatusList(ctx context.Context, migrationUID string) ([]*cloudmigration.CloudMigrationSnapshot, error)
 }

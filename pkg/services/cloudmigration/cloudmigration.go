@@ -21,6 +21,6 @@ type Service interface {
 	GetSessionList(context.Context) (*CloudMigrationSessionListResponse, error)
 
 	RunMigration(ctx context.Context, migUID string) (*MigrateDataResponseDTO, error)
-	GetMigrationStatus(ctx context.Context, runUID string) (*Snapshot, error)
+	GetMigrationStatus(ctx context.Context, runUID string) (*CloudMigrationSnapshot, error)
 	GetMigrationRunList(ctx context.Context, migUID string) (*SnapshotList, error)
 }

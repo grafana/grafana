@@ -111,7 +111,7 @@ func Test_CreateMigrationRun(t *testing.T) {
 
 	t.Run("creates a session run and retrieves it from db", func(t *testing.T) {
 		result := []byte("OK")
-		cmr := cloudmigration.Snapshot{
+		cmr := cloudmigration.CloudMigrationSnapshot{
 			SessionUID: "asdfg",
 			Result:     result,
 		}

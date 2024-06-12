@@ -99,11 +99,11 @@ func fakeMigrateDataResponseDTO() cloudmigration.MigrateDataResponseDTO {
 	}
 }
 
-func (m FakeServiceImpl) CreateMigrationRun(ctx context.Context, run cloudmigration.Snapshot) (string, error) {
+func (m FakeServiceImpl) CreateMigrationRun(ctx context.Context, run cloudmigration.CloudMigrationSnapshot) (string, error) {
 	panic("implement me")
 }
 
-func (m FakeServiceImpl) GetMigrationStatus(_ context.Context, _ string) (*cloudmigration.Snapshot, error) {
+func (m FakeServiceImpl) GetMigrationStatus(_ context.Context, _ string) (*cloudmigration.CloudMigrationSnapshot, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
@@ -111,7 +111,7 @@ func (m FakeServiceImpl) GetMigrationStatus(_ context.Context, _ string) (*cloud
 	if err != nil {
 		return nil, err
 	}
-	return &cloudmigration.Snapshot{
+	return &cloudmigration.CloudMigrationSnapshot{
 		ID:         0,
 		UID:        "fake_uid",
 		SessionUID: "fake_mig_uid",
