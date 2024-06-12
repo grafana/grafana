@@ -10,8 +10,7 @@ The rest of the backend contributor documentation tends to be more relevant to r
 
 ## Guidelines specifically for backend developers
 
-For anyone who reviews code for Grafana's backend, get a basic understanding
-of the content of the following files:
+For anyone who reviews code for the Grafana backend, get a basic understanding of the content of the following files:
 
 - [Currently recommended practices](/contribute/backend/recommended-practices.md)
 - [Services](/contribute/backend/services.md)
