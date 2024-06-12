@@ -55,6 +55,6 @@ export function ConfirmModal({ isOpen, onCancel, onDiscard, onCopy }: ConfirmMod
 
 const getStyles = (theme: GrafanaTheme2) => ({
   titleText: css({
-    paddingLeft: theme.spacing(1),
+    paddingLeft: theme.spacing(2),
   }),
 });
