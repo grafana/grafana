@@ -137,7 +137,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/store/entity/authz"
+	grpcauthz "github.com/grafana/grafana/pkg/services/store/entity/authz"
 	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
@@ -335,7 +335,7 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
-	authz.ProvideAuthorizer,
+	grpcauthz.ProvideAuthorizer,
 	dbimpl.ProvideEntityDB,
 	wire.Bind(new(entityDB.EntityDBInterface), new(*dbimpl.EntityDB)),
 	sqlstash.ProvideSQLEntityServer,
@@ -386,8 +386,6 @@ var wireBasicSet = wire.NewSet(
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
-	// GRPC authorization server
-	authzv1.ProvideAuthZServer,
 )
 
 var wireSet = wire.NewSet(
