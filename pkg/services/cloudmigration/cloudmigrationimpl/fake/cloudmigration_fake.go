@@ -82,7 +82,7 @@ func (m FakeServiceImpl) GetSessionList(_ context.Context) (*cloudmigration.Clou
 	}, nil
 }
 
-func (m FakeServiceImpl) RunMigration(_ context.Context, _ string) (*cloudmigration.MigrateSnapshotResponseDTO, error) {
+func (m FakeServiceImpl) RunMigration(_ context.Context, _ string) (*cloudmigration.MigrateDataResponseDTO, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
@@ -90,10 +90,10 @@ func (m FakeServiceImpl) RunMigration(_ context.Context, _ string) (*cloudmigrat
 	return &r, nil
 }
 
-func fakeMigrateDataResponseDTO() cloudmigration.MigrateSnapshotResponseDTO {
-	return cloudmigration.MigrateSnapshotResponseDTO{
+func fakeMigrateDataResponseDTO() cloudmigration.MigrateDataResponseDTO {
+	return cloudmigration.MigrateDataResponseDTO{
 		RunUID: "fake_uid",
-		Items: []cloudmigration.MigrateSnapshotResponseItemDTO{
+		Items: []cloudmigration.MigrateDataResponseItemDTO{
 			{Type: "type", RefID: "make_refid", Status: "ok", Error: "none"},
 		},
 	}
@@ -127,7 +127,7 @@ func (m FakeServiceImpl) GetMigrationRunList(_ context.Context, _ string) (*clou
 		return nil, fmt.Errorf("mock error")
 	}
 	return &cloudmigration.SnapshotList{
-		Runs: []cloudmigration.MigrateSnapshotResponseListDTO{
+		Runs: []cloudmigration.MigrateDataResponseListDTO{
 			{RunUID: "fake_run_uid_1"},
 			{RunUID: "fake_run_uid_2"},
 		},

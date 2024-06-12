@@ -307,7 +307,7 @@ type RunCloudMigrationRequest struct {
 // swagger:response cloudMigrationRunResponse
 type CloudMigrationRunResponse struct {
 	// in: body
-	Body cloudmigration.MigrateSnapshotResponseDTO
+	Body cloudmigration.MigrateDataResponseDTO
 }
 
 // swagger:route GET /cloudmigration/migration/run/{runUID} migrations getCloudMigrationRun

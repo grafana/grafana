@@ -20,7 +20,7 @@ type Service interface {
 	DeleteSession(ctx context.Context, migUID string) (*CloudMigrationSession, error)
 	GetSessionList(context.Context) (*CloudMigrationSessionListResponse, error)
 
-	RunMigration(ctx context.Context, migUID string) (*MigrateSnapshotResponseDTO, error)
+	RunMigration(ctx context.Context, migUID string) (*MigrateDataResponseDTO, error)
 	GetMigrationStatus(ctx context.Context, runUID string) (*Snapshot, error)
 	GetMigrationRunList(ctx context.Context, migUID string) (*SnapshotList, error)
 }

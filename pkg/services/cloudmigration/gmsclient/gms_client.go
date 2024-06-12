@@ -64,7 +64,7 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	return nil
 }
 
-func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigrationSession, request cloudmigration.MigrateDataRequestDTO) (*cloudmigration.MigrateSnapshotResponseDTO, error) {
+func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigrationSession, request cloudmigration.MigrateDataRequestDTO) (*cloudmigration.MigrateDataResponseDTO, error) {
 	logger := c.log.FromContext(ctx)
 
 	// TODO update service url to gms
@@ -100,7 +100,7 @@ func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.Cloud
 		}
 	}()
 
-	var result cloudmigration.MigrateSnapshotResponseDTO
+	var result cloudmigration.MigrateDataResponseDTO
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		logger.Error("unmarshalling response body: %w", err)
 		return nil, fmt.Errorf("unmarshalling migration run response: %w", err)

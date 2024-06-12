@@ -23,15 +23,15 @@ func (c *memoryClientImpl) MigrateData(
 	ctx context.Context,
 	cm cloudmigration.CloudMigrationSession,
 	request cloudmigration.MigrateDataRequestDTO,
-) (*cloudmigration.MigrateSnapshotResponseDTO, error) {
+) (*cloudmigration.MigrateDataResponseDTO, error) {
 	//return nil, ErrMigrationNotDeleted
 
-	result := cloudmigration.MigrateSnapshotResponseDTO{
-		Items: make([]cloudmigration.MigrateSnapshotResponseItemDTO, len(request.Items)),
+	result := cloudmigration.MigrateDataResponseDTO{
+		Items: make([]cloudmigration.MigrateDataResponseItemDTO, len(request.Items)),
 	}
 
 	for i, v := range request.Items {
-		result.Items[i] = cloudmigration.MigrateSnapshotResponseItemDTO{
+		result.Items[i] = cloudmigration.MigrateDataResponseItemDTO{
 			Type:   v.Type,
 			RefID:  v.RefID,
 			Status: cloudmigration.ItemStatusOK,

@@ -40,8 +40,8 @@ type Snapshot struct {
 	Finished   time.Time `json:"finished"`
 }
 
-func (r Snapshot) ToResponse() (*MigrateSnapshotResponseDTO, error) {
-	var result MigrateSnapshotResponseDTO
+func (r Snapshot) ToResponse() (*MigrateDataResponseDTO, error) {
+	var result MigrateDataResponseDTO
 	err := json.Unmarshal(r.Result, &result)
 	if err != nil {
 		return nil, errors.New("could not parse result of run")
@@ -51,7 +51,7 @@ func (r Snapshot) ToResponse() (*MigrateSnapshotResponseDTO, error) {
 }
 
 type SnapshotList struct {
-	Runs []MigrateSnapshotResponseListDTO `json:"runs"`
+	Runs []MigrateDataResponseListDTO `json:"runs"`
 }
 
 type CloudMigrationSessionRequest struct {
@@ -140,16 +140,16 @@ const (
 	ItemStatusError ItemStatus = "ERROR"
 )
 
-type MigrateSnapshotResponseDTO struct {
-	RunUID string                           `json:"uid"`
-	Items  []MigrateSnapshotResponseItemDTO `json:"items"`
+type MigrateDataResponseDTO struct {
+	RunUID string                       `json:"uid"`
+	Items  []MigrateDataResponseItemDTO `json:"items"`
 }
 
-type MigrateSnapshotResponseListDTO struct {
+type MigrateDataResponseListDTO struct {
 	RunUID string `json:"uid"`
 }
 
-type MigrateSnapshotResponseItemDTO struct {
+type MigrateDataResponseItemDTO struct {
 	// required:true
 	Type MigrateDataType `json:"type"`
 	// required:true

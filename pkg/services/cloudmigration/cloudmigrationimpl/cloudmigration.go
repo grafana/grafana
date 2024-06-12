@@ -377,7 +377,7 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 	}, nil
 }
 
-func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration.MigrateSnapshotResponseDTO, error) {
+func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration.MigrateDataResponseDTO, error) {
 	// Get migration to read the auth token
 	migration, err := s.GetSession(ctx, uid)
 	if err != nil {
@@ -565,9 +565,9 @@ func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*clou
 		return nil, fmt.Errorf("retrieving migration statuses from db: %w", err)
 	}
 
-	runList := &cloudmigration.SnapshotList{Runs: []cloudmigration.MigrateSnapshotResponseListDTO{}}
+	runList := &cloudmigration.SnapshotList{Runs: []cloudmigration.MigrateDataResponseListDTO{}}
 	for _, s := range runs {
-		runList.Runs = append(runList.Runs, cloudmigration.MigrateSnapshotResponseListDTO{
+		runList.Runs = append(runList.Runs, cloudmigration.MigrateDataResponseListDTO{
 			RunUID: s.UID,
 		})
 	}
