@@ -23,7 +23,7 @@ type legacyServer struct {
 }
 
 func newLegacyServer(
-	acSvc accesscontrol.Service, features *featuremgmt.FeatureManager,
+	acSvc accesscontrol.Service, features featuremgmt.FeatureToggles,
 	grpcServer grpcserver.Provider, tracer tracing.Tracer,
 ) (*legacyServer, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
