@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -42,15 +43,16 @@ var (
 // Make sure we implement correct interfaces
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 
-func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer /*, cfg *setting.Cfg */) (SqlEntityServer, error) {
+func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer, authorizer authz.Client /*, cfg *setting.Cfg */) (SqlEntityServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	entityServer := &sqlEntityServer{
-		db:     db,
-		log:    log.New("sql-entity-server"),
-		ctx:    ctx,
-		cancel: cancel,
-		tracer: tracer,
+		authorizer: authorizer,
+		db:         db,
+		log:        log.New("sql-entity-server"),
+		ctx:        ctx,
+		cancel:     cancel,
+		tracer:     tracer,
 	}
 
 	if err := prometheus.Register(NewStorageMetrics()); err != nil {
@@ -68,6 +70,7 @@ type SqlEntityServer interface {
 }
 
 type sqlEntityServer struct {
+	authorizer  authz.Client
 	log         log.Logger
 	db          db.EntityDBInterface // needed to keep xorm engine in scope
 	sess        *session.SessionDB

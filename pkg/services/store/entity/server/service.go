@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -116,7 +117,12 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	store, err := sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
+	authzClient, err := authz.ProvideRemoteAuthZClient(s.cfg, s.features)
+	if err != nil {
+		return err
+	}
+
+	store, err := sqlstash.ProvideSQLEntityServer(eDB, s.tracing, authzClient)
 	if err != nil {
 		return err
 	}
