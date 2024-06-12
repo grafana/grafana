@@ -1260,7 +1260,7 @@ def slack_step(channel, template, secret):
 def verify_grafanacom_step():
     return {
         "name": "verify-grafanacom",
-        "image": "appropriate-image", # JEV: node/curl?
+        "image": images["node"], # JEV: curl also? If I also need a curl image, do I also need a new step? 1 image per step?
         "environment": {
             "GCOM_TOKEN": from_secret("gcom_token"),
         },
@@ -1271,7 +1271,7 @@ def verify_grafanacom_step():
             # Download/install node
             "curl -sL https://deb.nodesource.com/setup_14.x | bash -",
             "apt-get install -y nodejs",
-            "./drone/verify_grafanacom.sh",
+            "./drone/verify-grafanacom.sh",
         ],
         "depends_on": ["publish-grafanacom"], # JEV: anything else?
     }

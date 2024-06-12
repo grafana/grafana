@@ -14,6 +14,7 @@ urls=$(node -e "
   console.log(downloadUrls.join('\n'));
 ")
 
+
 # Check the status of each download URL
 for url in $urls; do
   status_code=$(curl -s -o /dev/null -w "%{http_code}" "$url")
