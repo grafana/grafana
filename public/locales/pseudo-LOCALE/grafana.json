@@ -453,6 +453,16 @@
       "title": "Vęřşįőŉş"
     }
   },
+  "dashboards": {
+    "settings": {
+      "variables": {
+        "dependencies": {
+          "button": "Ŝĥőŵ đępęŉđęŉčįęş",
+          "title": "Đępęŉđęŉčįęş"
+        }
+      }
+    }
+  },
   "data-source-list": {
     "empty-state": {
       "button-title": "Åđđ đäŧä şőūřčę",

@@ -1,14 +1,15 @@
 import React, { useMemo } from 'react';
 
-import { TypedVariableModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
+import { NetworkGraphModal } from 'app/features/variables/inspect/NetworkGraphModal';
 
-import { NetworkGraphModal } from './NetworkGraphModal';
 import { createDependencyEdges, createDependencyNodes, filterNodesWithDependencies } from './utils';
 
 interface Props {
-  variables: TypedVariableModel[];
+  variables: Array<SceneVariable<SceneVariableState>>;
 }
 
 export const VariablesDependenciesButton = ({ variables }: Props) => {
@@ -22,7 +23,7 @@ export const VariablesDependenciesButton = ({ variables }: Props) => {
   return (
     <NetworkGraphModal
       show={false}
-      title="Dependencies"
+      title={t('dashboards.settings.variables.dependencies.title', 'Dependencies')}
       nodes={filterNodesWithDependencies(nodes, edges)}
       edges={edges}
     >
@@ -36,7 +37,7 @@ export const VariablesDependenciesButton = ({ variables }: Props) => {
             icon="channel-add"
             variant="secondary"
           >
-            Show dependencies
+            <Trans i18nKey={'dashboards.settings.variables.dependencies.button'}>Show dependencies</Trans>
           </Button>
         );
       }}
