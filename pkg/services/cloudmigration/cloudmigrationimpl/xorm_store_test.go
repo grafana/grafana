@@ -22,8 +22,8 @@ func Test_GetAllCloudMigrations(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
-	t.Run("get all cloud_migrations", func(t *testing.T) {
-		value, err := s.GetAllCloudMigrations(ctx)
+	t.Run("get all cloud_migration_session entries", func(t *testing.T) {
+		value, err := s.GetAllCloudMigrationSessions(ctx)
 		require.NoError(t, err)
 		require.Equal(t, 3, len(value))
 		for _, m := range value {
@@ -56,12 +56,12 @@ func Test_CreateMigration(t *testing.T) {
 			RegionSlug:  "fake_slug",
 			ClusterSlug: "fake_cluster_slug",
 		}
-		mig, err := s.CreateMigration(ctx, cm)
+		mig, err := s.CreateMigrationSession(ctx, cm)
 		require.NoError(t, err)
 		require.NotEmpty(t, mig.ID)
 		require.NotEmpty(t, mig.UID)
 
-		getRes, err := s.GetMigrationByUID(ctx, mig.UID)
+		getRes, err := s.GetMigrationSessionByUID(ctx, mig.UID)
 		require.NoError(t, err)
 		require.Equal(t, mig.ID, getRes.ID)
 		require.Equal(t, mig.UID, getRes.UID)
@@ -76,15 +76,15 @@ func Test_CreateMigration(t *testing.T) {
 func Test_GetMigrationByUID(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
-	t.Run("find migration by uid", func(t *testing.T) {
+	t.Run("find session by uid", func(t *testing.T) {
 		uid := "qwerty"
-		mig, err := s.GetMigrationByUID(ctx, uid)
+		mig, err := s.GetMigrationSessionByUID(ctx, uid)
 		require.NoError(t, err)
 		require.Equal(t, uid, mig.UID)
 	})
 
-	t.Run("returns error if migration is not found by uid", func(t *testing.T) {
-		_, err := s.GetMigrationByUID(ctx, "fake_uid_1234")
+	t.Run("returns error if session is not found by uid", func(t *testing.T) {
+		_, err := s.GetMigrationSessionByUID(ctx, "fake_uid_1234")
 		require.ErrorIs(t, cloudmigration.ErrMigrationNotFound, err)
 	})
 }
@@ -93,14 +93,14 @@ func Test_DeleteMigration(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
-	t.Run("deletes a migration from the db", func(t *testing.T) {
+	t.Run("deletes a session from the db", func(t *testing.T) {
 		uid := "qwerty"
-		delResp, err := s.DeleteMigration(ctx, uid)
+		delResp, err := s.DeleteMigrationSessionByUID(ctx, uid)
 		require.NoError(t, err)
 		require.Equal(t, uid, delResp.UID)
 
 		// now we try to find it, should return an error
-		_, err = s.GetMigrationByUID(ctx, uid)
+		_, err = s.GetMigrationSessionByUID(ctx, uid)
 		require.ErrorIs(t, cloudmigration.ErrMigrationNotFound, err)
 	})
 }
@@ -109,7 +109,7 @@ func Test_CreateMigrationRun(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
-	t.Run("creates a migration run and retrieves it from db", func(t *testing.T) {
+	t.Run("creates a session run and retrieves it from db", func(t *testing.T) {
 		result := []byte("OK")
 		cmr := cloudmigration.Snapshot{
 			SessionUID: "asdfg",
@@ -173,7 +173,7 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	// insert cloud migration test data
 	_, err := testDB.GetSqlxSession().Exec(ctx, `
  			INSERT INTO
- 			    cloud_migration (id, uid, auth_token, stack, stack_id, region_slug, cluster_slug, created, updated)
+ 			    cloud_migration_session (id, uid, auth_token, slug, stack_id, region_slug, cluster_slug, created, updated)
  			VALUES
  			    (1,'qwerty', ?, '11111', 11111, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
   				(2,'asdfgh', ?, '22222', 22222, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
@@ -188,7 +188,7 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	// insert cloud migration run test data
 	_, err = testDB.GetSqlxSession().Exec(ctx, `
  			INSERT INTO
- 			    cloud_migration_run (cloud_migration_uid, uid, result, created, updated, finished)
+ 			    cloud_migration_snapshot (session_uid, uid, result, created, updated, finished)
  			VALUES
  			    ('qwerty', 'poiuy', ?, '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000'),
   				('qwerty', 'lkjhg', ?, '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000'),

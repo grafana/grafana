@@ -70,10 +70,6 @@ func (m FakeServiceImpl) DeleteSession(_ context.Context, _ string) (*cloudmigra
 	return &cloudmigration.CloudMigrationSession{UID: "fake"}, nil
 }
 
-func (m FakeServiceImpl) UpdateMigration(ctx context.Context, uid string, request cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
-	panic("implement me")
-}
-
 func (m FakeServiceImpl) GetSessionList(_ context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")

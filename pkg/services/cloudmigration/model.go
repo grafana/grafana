@@ -11,9 +11,9 @@ import (
 var (
 	ErrInternalNotImplementedError = errutil.Internal("cloudmigrations.notImplemented").Errorf("Internal server error")
 	ErrFeatureDisabledError        = errutil.Internal("cloudmigrations.disabled").Errorf("Cloud migrations are disabled on this instance")
-	ErrMigrationNotFound           = errutil.NotFound("cloudmigrations.migrationNotFound").Errorf("Migration not found")
+	ErrMigrationNotFound           = errutil.NotFound("cloudmigrations.sessionNotFound").Errorf("Session not found")
 	ErrMigrationRunNotFound        = errutil.NotFound("cloudmigrations.migrationRunNotFound").Errorf("Migration run not found")
-	ErrMigrationNotDeleted         = errutil.Internal("cloudmigrations.migrationNotDeleted").Errorf("Migration not deleted")
+	ErrMigrationNotDeleted         = errutil.Internal("cloudmigrations.sessionNotDeleted").Errorf("Session not deleted")
 	ErrTokenNotFound               = errutil.NotFound("cloudmigrations.tokenNotFound").Errorf("Token not found")
 )
 

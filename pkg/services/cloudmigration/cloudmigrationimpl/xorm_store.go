@@ -20,7 +20,7 @@ type sqlStore struct {
 	secretsService secrets.Service
 }
 
-func (ss *sqlStore) GetMigrationByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
+func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	var cm cloudmigration.CloudMigrationSession
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exist, err := sess.Where("uid=?", uid).Get(&cm)
@@ -56,7 +56,7 @@ func (ss *sqlStore) CreateMigrationRun(ctx context.Context, cmr cloudmigration.S
 	return cmr.UID, nil
 }
 
-func (ss *sqlStore) CreateMigration(ctx context.Context, migration cloudmigration.CloudMigrationSession) (*cloudmigration.CloudMigrationSession, error) {
+func (ss *sqlStore) CreateMigrationSession(ctx context.Context, migration cloudmigration.CloudMigrationSession) (*cloudmigration.CloudMigrationSession, error) {
 	if err := ss.encryptToken(ctx, &migration); err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (ss *sqlStore) CreateMigration(ctx context.Context, migration cloudmigratio
 	return &migration, nil
 }
 
-func (ss *sqlStore) GetAllCloudMigrations(ctx context.Context) ([]*cloudmigration.CloudMigrationSession, error) {
+func (ss *sqlStore) GetAllCloudMigrationSessions(ctx context.Context) ([]*cloudmigration.CloudMigrationSession, error) {
 	var migrations = make([]*cloudmigration.CloudMigrationSession, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error { return sess.Find(&migrations) })
 	if err != nil {
@@ -95,7 +95,7 @@ func (ss *sqlStore) GetAllCloudMigrations(ctx context.Context) ([]*cloudmigratio
 	return migrations, nil
 }
 
-func (ss *sqlStore) DeleteMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
+func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	var c cloudmigration.CloudMigrationSession
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exist, err := sess.Where("uid=?", uid).Get(&c)

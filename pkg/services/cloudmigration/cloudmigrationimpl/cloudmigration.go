@@ -318,7 +318,7 @@ func (s *Service) DeleteToken(ctx context.Context, tokenID string) error {
 func (s *Service) GetSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetMigration")
 	defer span.End()
-	migration, err := s.store.GetMigrationByUID(ctx, uid)
+	migration, err := s.store.GetMigrationSessionByUID(ctx, uid)
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +327,7 @@ func (s *Service) GetSession(ctx context.Context, uid string) (*cloudmigration.C
 }
 
 func (s *Service) GetSessionList(ctx context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
-	values, err := s.store.GetAllCloudMigrations(ctx)
+	values, err := s.store.GetAllCloudMigrationSessions(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -364,7 +364,7 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 		return nil, fmt.Errorf("token validation: %w", err)
 	}
 
-	cm, err := s.store.CreateMigration(ctx, migration)
+	cm, err := s.store.CreateMigrationSession(ctx, migration)
 	if err != nil {
 		return nil, fmt.Errorf("error creating migration: %w", err)
 	}
@@ -375,11 +375,6 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 		Created: cm.Created,
 		Updated: cm.Updated,
 	}, nil
-}
-
-func (s *Service) UpdateMigration(ctx context.Context, uid string, request cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
-	// TODO: Implement method
-	return nil, nil
 }
 
 func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration.MigrateSnapshotResponseDTO, error) {
@@ -581,7 +576,7 @@ func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*clou
 }
 
 func (s *Service) DeleteSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
-	c, err := s.store.DeleteMigration(ctx, uid)
+	c, err := s.store.DeleteMigrationSessionByUID(ctx, uid)
 	if err != nil {
 		return c, fmt.Errorf("deleting migration from db: %w", err)
 	}

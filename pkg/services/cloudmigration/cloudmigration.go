@@ -18,7 +18,6 @@ type Service interface {
 	CreateSession(ctx context.Context, req CloudMigrationSessionRequest) (*CloudMigrationSessionResponse, error)
 	GetSession(ctx context.Context, migUID string) (*CloudMigrationSession, error)
 	DeleteSession(ctx context.Context, migUID string) (*CloudMigrationSession, error)
-	UpdateMigration(ctx context.Context, migUID string, request CloudMigrationSessionRequest) (*CloudMigrationSessionResponse, error)
 	GetSessionList(context.Context) (*CloudMigrationSessionListResponse, error)
 
 	RunMigration(ctx context.Context, migUID string) (*MigrateSnapshotResponseDTO, error)

@@ -40,10 +40,6 @@ func (s *NoopServiceImpl) CreateSession(ctx context.Context, cm cloudmigration.C
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) UpdateMigration(ctx context.Context, uid string, cm cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
-	return nil, cloudmigration.ErrFeatureDisabledError
-}
-
 func (s *NoopServiceImpl) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.Snapshot, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
