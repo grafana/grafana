@@ -14,25 +14,20 @@ import { useRecentlyDeletedStateManager } from '../utils/useRecentlyDeletedState
 export function RecentlyDeletedActions() {
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
-  const [_, stateManager] = useRecentlyDeletedStateManager();
-  const isSearching = stateManager.hasSearchFilters();
+  const [, stateManager] = useRecentlyDeletedStateManager();
 
   const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
 
   const onActionComplete = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
-    if (isSearching) {
-      stateManager.doSearchWithDebounce();
-    }
+    stateManager.doSearchWithDebounce();
   };
 
   const onRestore = async () => {
     const promises = Object.entries(selectedItems.dashboard)
       .filter(([_, selected]) => selected)
-      .map(async ([uid]) => {
-        return await restoreDashboard({ dashboardUID: uid });
-      });
+      .map(([uid]) => restoreDashboard({ dashboardUID: uid }));
     await Promise.all(promises);
     onActionComplete();
   };
