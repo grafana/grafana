@@ -101,7 +101,7 @@ The longer the group wait, the more time other alerts have to be included in the
 
 Consider a notification policy that:
 
-- Matches all alert instances with the `team` label—matching labels equals to `team=~".*"`.
+- Matches all alert instances with the `team` label—matching labels equals to `team=~.+`.
 - Groups notifications by the `team` label—one group for each distinct `team`.
 - Sets the Group wait timer to `30s`.
 
