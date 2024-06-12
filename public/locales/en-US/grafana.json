@@ -1479,20 +1479,18 @@
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
-  "recentlyDeleted": {
+  "recently-deleted": {
     "buttons": {
       "restore": "Restore"
     },
     "filter": {
       "placeholder": "Search for dashboards"
     },
-    "restoreModal": {
-      "confirmText": {
-        "ongoing": "Restoring...",
-        "success": "Restore"
-      },
-      "text_one": "This action will restore {{count}} dashboard.",
-      "text_other": "This action will restore {{count}} dashboards.",
+    "restore-modal": {
+      "restore-button": "Restore",
+      "restore-loading": "Restoring...",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
+      "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
     }
   },

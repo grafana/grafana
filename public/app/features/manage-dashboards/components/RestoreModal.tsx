@@ -23,7 +23,7 @@ export const RestoreModal = ({ onConfirm, onDismiss, selectedItems, isLoading, .
     <ConfirmModal
       body={
         <Text element="p">
-          <Trans i18nKey="recentlyDeleted.restoreModal.text" count={numberOfDashboards}>
+          <Trans i18nKey="recently-deleted.restore-modal.text" count={numberOfDashboards}>
             This action will restore {{ numberOfDashboards }} dashboards.
           </Trans>
         </Text>
@@ -31,13 +31,13 @@ export const RestoreModal = ({ onConfirm, onDismiss, selectedItems, isLoading, .
       }
       confirmText={
         isLoading
-          ? t('recentlyDeleted.restoreModal.confirmText.ongoing', 'Restoring...')
-          : t('recentlyDeleted.restoreModal.confirmText.success', 'Restore')
+          ? t('recently-deleted.restore-modal.restore-loading', 'Restoring...')
+          : t('recently-deleted.restore-modal.restore-button', 'Restore')
       }
       confirmButtonVariant="primary"
       onDismiss={onDismiss}
       onConfirm={onRestore}
-      title={t('recentlyDeleted.restoreModal.title', 'Restore Dashboards')}
+      title={t('recently-deleted.restore-modal.title', 'Restore Dashboards')}
       {...props}
     />
   );

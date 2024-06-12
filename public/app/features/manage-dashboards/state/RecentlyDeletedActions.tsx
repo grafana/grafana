@@ -52,7 +52,7 @@ export function RecentlyDeletedActions() {
 
   return (
     <Button onClick={showRestoreModal} variant="secondary">
-      <Trans i18nKey="recentlyDeleted.buttons.restore">Restore</Trans>
+      <Trans i18nKey="recently-deleted.buttons.restore">Restore</Trans>
     </Button>
   );
 }
