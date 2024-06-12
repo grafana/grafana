@@ -14,7 +14,6 @@ import (
 
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 )
 
 type renderREST struct {
@@ -74,23 +73,12 @@ func renderPOSTHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var qT peakq.QueryTemplate
-	
 	err = json.NewDecoder(req.Body).Decode(&qT.Spec)
 	if err != nil {
 		_, _ = w.Write([]byte("ERROR: " + err.Error()))
 		w.WriteHeader(500)
 		return
 	}
-
-	user, _ := appcontext.User(req.Context())
-	fmt.Println("wat", user.UserID)
-	/*qT.Spec.User = template.User{
-		Uid: user.UserUID,
-		OrgId: user.OrgID,
-		Email: user.Email,
-		Login: user.Login,
-	}*/
-
 	results, err := template.RenderTemplate(qT.Spec, input)
 	if err != nil {
 		_, _ = w.Write([]byte("ERROR: " + err.Error()))
