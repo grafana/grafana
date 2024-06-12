@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { RadioButtonGroup, Select, DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
@@ -185,7 +186,7 @@ function PanelFrameTitle({ vizManager }: { vizManager: VizPanelManager }) {
 
   return (
     <Input
-      data-testid="panel-edit-panel-title-input"
+      data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
       value={title}
       onChange={(e) => vizManager.setPanelTitle(e.currentTarget.value)}
     />
