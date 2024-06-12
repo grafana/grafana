@@ -1533,13 +1533,13 @@
       },
       "title": "Select scopes"
     },
-    "root": {
-      "collapse": "Collapse scope filters",
-      "expand": "Expand scope filters"
-    },
     "suggestedDashboards": {
       "loading": "Loading dashboards",
-      "search": "Filter"
+      "search": "Filter",
+      "toggle": {
+        "collapse": "Collapse scope filters",
+        "expand": "Expand scope filters"
+      }
     },
     "tree": {
       "collapse": "Collapse",

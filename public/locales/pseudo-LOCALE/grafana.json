@@ -1533,13 +1533,13 @@
       },
       "title": "Ŝęľęčŧ şčőpęş"
     },
-    "root": {
-      "collapse": "Cőľľäpşę şčőpę ƒįľŧęřş",
-      "expand": "Ēχpäŉđ şčőpę ƒįľŧęřş"
-    },
     "suggestedDashboards": {
       "loading": "Ŀőäđįŉģ đäşĥþőäřđş",
-      "search": "Fįľŧęř"
+      "search": "Fįľŧęř",
+      "toggle": {
+        "collapse": "Cőľľäpşę şčőpę ƒįľŧęřş",
+        "expand": "Ēχpäŉđ şčőpę ƒįľŧęřş"
+      }
     },
     "tree": {
       "collapse": "Cőľľäpşę",
