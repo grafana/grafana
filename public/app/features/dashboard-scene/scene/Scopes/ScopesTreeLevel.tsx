@@ -7,13 +7,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, IconButton, Input, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { NodesMap } from './types';
+import { NodesMap, TreeScope } from './types';
 
 export interface ScopesTreeLevelProps {
   nodes: NodesMap;
   nodePath: string[];
   loadingNodeName: string | undefined;
-  scopeNames: string[];
+  scopes: TreeScope[];
   onNodeUpdate: (path: string[], isExpanded: boolean, query: string) => void;
   onNodeSelectToggle: (path: string[]) => void;
 }
@@ -22,7 +22,7 @@ export function ScopesTreeLevel({
   nodes,
   nodePath,
   loadingNodeName,
-  scopeNames,
+  scopes,
   onNodeUpdate,
   onNodeSelectToggle,
 }: ScopesTreeLevelProps) {
@@ -34,6 +34,7 @@ export function ScopesTreeLevel({
   const childNodesArr = Object.values(childNodes);
   const isNodeLoading = loadingNodeName === nodeId;
 
+  const scopeNames = scopes.map(({ scopeName }) => scopeName);
   const anyChildExpanded = childNodesArr.some(({ isExpanded }) => isExpanded);
   const anyChildSelected = childNodesArr.some(({ linkId }) => linkId && scopeNames.includes(linkId!));
 
@@ -108,7 +109,7 @@ export function ScopesTreeLevel({
                       nodes={node.nodes}
                       nodePath={childNodePath}
                       loadingNodeName={loadingNodeName}
-                      scopeNames={scopeNames}
+                      scopes={scopes}
                       onNodeUpdate={onNodeUpdate}
                       onNodeSelectToggle={onNodeSelectToggle}
                     />

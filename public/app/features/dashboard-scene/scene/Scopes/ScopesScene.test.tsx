@@ -12,7 +12,7 @@ import {
   fetchDashboardsSpy,
   fetchNodesSpy,
   fetchScopeSpy,
-  fetchScopesSpy,
+  fetchSelectedScopesSpy,
   getApplicationsClustersExpand,
   getApplicationsClustersSelect,
   getApplicationsExpand,
@@ -104,7 +104,7 @@ describe('ScopesScene', () => {
 
       fetchNodesSpy.mockClear();
       fetchScopeSpy.mockClear();
-      fetchScopesSpy.mockClear();
+      fetchSelectedScopesSpy.mockClear();
       fetchDashboardsSpy.mockClear();
 
       dashboardScene = buildTestScene();
@@ -134,7 +134,12 @@ describe('ScopesScene', () => {
       });
 
       it('Selects the proper scopes', async () => {
-        await act(async () => filtersScene.updateScopes(['slothPictureFactory', 'slothVoteTracker']));
+        await act(async () =>
+          filtersScene.updateScopes([
+            { scopeName: 'slothPictureFactory', path: [] },
+            { scopeName: 'slothVoteTracker', path: [] },
+          ])
+        );
         await userEvents.click(getFiltersInput());
         await userEvents.click(getApplicationsExpand());
         expect(getApplicationsSlothVoteTrackerSelect()).toBeChecked();
@@ -203,7 +208,7 @@ describe('ScopesScene', () => {
         await userEvents.click(getFiltersInput());
         await userEvents.click(getClustersSelect());
         await userEvents.click(getFiltersApply());
-        await waitFor(() => expect(fetchScopesSpy).toHaveBeenCalled());
+        await waitFor(() => expect(fetchSelectedScopesSpy).toHaveBeenCalled());
         expect(filtersScene.getSelectedScopes()).toEqual(
           mocksScopes.filter(({ metadata: { name } }) => name === 'indexHelperCluster')
         );
@@ -213,7 +218,7 @@ describe('ScopesScene', () => {
         await userEvents.click(getFiltersInput());
         await userEvents.click(getClustersSelect());
         await userEvents.click(getFiltersCancel());
-        await waitFor(() => expect(fetchScopesSpy).not.toHaveBeenCalled());
+        await waitFor(() => expect(fetchSelectedScopesSpy).not.toHaveBeenCalled());
         expect(filtersScene.getSelectedScopes()).toEqual([]);
       });
 

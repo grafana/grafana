@@ -225,7 +225,7 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
 
 export const fetchNodesSpy = jest.spyOn(api, 'fetchNodes');
 export const fetchScopeSpy = jest.spyOn(api, 'fetchScope');
-export const fetchScopesSpy = jest.spyOn(api, 'fetchScopes');
+export const fetchSelectedScopesSpy = jest.spyOn(api, 'fetchSelectedScopes');
 export const fetchDashboardsSpy = jest.spyOn(api, 'fetchDashboards');
 
 const selectors = {
