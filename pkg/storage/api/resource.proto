@@ -1,0 +1,415 @@
+syntax = "proto3";
+package api;
+
+option go_package = "github.com/grafana/grafana/pkg/storage/api";
+
+message ResourceKey {
+  // Namespace (tenant)
+  string namespace = 2;
+  // Resource Group
+  string group = 1;
+  // The resource type
+  string resource = 3;
+  // Resource identifier (unique within namespace+group+resource)
+  string name = 4;
+  // The resource version
+  int64 resource_version = 5;
+}
+
+enum ResourceOperation {
+  UNKNOWN = 0;
+  CREATED = 1;
+  UPDATED = 2;
+  DELETED = 3;
+  BOOKMARK = 4;
+}
+
+message ResourceWrapper {
+  // The resource version
+  int64 resource_version = 1;
+
+  // Full kubernetes json bytes (although the resource version may not be accurate)
+  bytes value = 2;
+
+  // Operation
+  ResourceOperation operation = 3;
+
+  // The resource has an attached blob
+  bool has_blob = 4;
+}
+
+// The history and trash commands need access to commit messages
+message ResourceMeta {
+  // The resource version
+  int64 resource_version = 1;
+
+  // The optional commit message
+  ResourceOperation operation = 2;
+
+  // Size of the full resource body
+  int32 size = 3;
+
+  // Hash for the resource
+  string hash = 4;
+
+  // The optional commit message
+  string message = 5;
+
+  // The kubernetes metadata section (not the full resource)
+  // https://github.com/kubernetes/kubernetes/blob/v1.30.1/staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/types.go#L111
+  bytes object_meta = 6;
+
+  // The resource has an attached blob
+  bool has_blob = 7;
+}
+
+// Basic blob metadata
+message BlobInfo {
+  // Content Length
+  int64 size = 1;
+
+  // MD5 digest of the body
+  string ETag = 2;
+
+  // Content type header
+  string content_type = 3;
+}
+
+// Status structure is copied from:
+// https://github.com/kubernetes/apimachinery/blob/v0.30.1/pkg/apis/meta/v1/generated.proto#L979
+message StatusResult {
+  // Status of the operation.
+  // One of: "Success" or "Failure".
+  // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+  // +optional
+  string status = 1;
+  // A human-readable description of the status of this operation.
+  // +optional
+  string message = 2;
+  // A machine-readable description of why this operation is in the
+  // "Failure" status. If this value is empty there
+  // is no information available. A Reason clarifies an HTTP status
+  // code but does not override it.
+  // +optional
+  string reason = 3;
+  // Suggested HTTP return code for this status, 0 if not set.
+  // +optional
+  int32 code = 4;
+}
+
+// TODO? support PresignedUrls for upload? 
+message CreateBlob {
+  // Content type header
+  string content_type = 1;
+
+  // Raw value to write
+  bytes value = 2;
+}
+
+// ----------------------------------
+// CRUD Objects
+// ----------------------------------
+
+message CreateRequest {
+  // Requires group+resource to be configuired
+  // If name is not set, a unique name will be generated
+  // The resourceVersion should not be set
+  ResourceKey key = 1;
+
+  // The resource JSON.  
+  bytes value = 2;
+
+  // Optional commit message
+  string message = 3;
+
+  // Optionally include a large binary object
+  CreateBlob blob = 4;
+}
+
+message CreateResponse {
+  // Status code
+  StatusResult status = 1;
+
+  // The updated resource version
+  int64 resource_version = 2;
+}
+
+message UpdateRequest {
+  // Full key must be set
+  ResourceKey key = 1;
+
+  // The resource JSON.  
+  bytes value = 2;
+
+  // Optional commit message
+  // +optional
+  string message = 3;
+
+  // Optionally link a resource object
+  CreateBlob blob = 4;
+}
+
+message UpdateResponse {
+  // Status code
+  StatusResult status = 1;
+
+  // The updated resource version
+  int64 resource_version = 2;
+}
+
+message DeleteRequest {
+  ResourceKey key = 1;
+
+  // Preconditions: make sure the uid matches the current saved value
+  // +optional
+  string uid = 2;
+}
+
+message DeleteResponse {
+  // Status code
+  StatusResult status = 1;
+
+  // The new resource version
+  int64 resource_version = 2;
+}
+
+message GetResourceRequest {
+  ResourceKey key = 1;
+}
+
+message GetResourceResponse {
+  // Status code
+  StatusResult status = 1;
+
+  // The new resource version
+  int64 resource_version = 2;
+
+  // The properties
+  bytes value = 3;
+
+  // A Signed URL that will let you fetch the blob
+  // If this value starts with # you must read the bytes using the GetResourceBlob request
+  string blob_url = 4;
+}
+
+message GetBlobRequest {
+  ResourceKey key = 1;
+}
+
+message GetBlobResponse {
+  // Status code
+  StatusResult status = 1;
+
+  // Headers 
+  BlobInfo info = 2;
+
+  // The raw object value
+  bytes value = 3;
+}
+
+// ----------------------------------
+// List Request/Response
+// ----------------------------------
+
+// The label filtering requirements:
+// https://github.com/kubernetes/kubernetes/blob/v1.30.1/staging/src/k8s.io/apimachinery/pkg/labels/selector.go#L141
+message Requirement {
+	string key = 1;
+  string operator = 2; // See https://github.com/kubernetes/kubernetes/blob/v1.30.1/staging/src/k8s.io/apimachinery/pkg/selection/operator.go#L21
+	repeated string values = 3; // typically one value, but depends on the operator
+}
+
+message Sort {
+  enum Order {
+    ASC = 0;
+    DESC = 1;
+  }
+	string field = 1;
+  Order order = 2;
+}
+
+message ListOptions {
+  // Maximum number of items to return
+  // NOTE responses will also be limited by the response payload size
+  int64 limit = 2;
+
+  // Namespace+Group+Resource+etc
+  ResourceKey key = 3;
+
+  // Match label
+  repeated Requirement labels = 4;
+
+  // Match fields (not yet supported)
+  repeated Requirement fields = 5;
+
+  // Limit results to items in a specific folder (not a query for everything under that folder!)
+  string folder = 6;
+}
+
+message ListRequest {
+  // Starting from the requested page (other query parameters must match!)
+  string next_page_token = 1;
+
+  // Filtering
+  ListOptions options = 2;
+
+  // Sorting instructions `field ASC/DESC`
+  repeated Sort sort = 3;
+}
+
+message ListResponse {
+  repeated ResourceWrapper items = 1;
+
+  // When more results exist, pass this in the next request
+  string next_page_token = 2;
+
+  // ResourceVersion of the list response
+  int64 resource_version = 3;
+
+  // remainingItemCount is the number of subsequent items in the list which are not included in this
+	// list response. If the list request contained label or field selectors, then the number of
+	// remaining items is unknown and the field will be left unset and omitted during serialization.
+	// If the list is complete (either because it is not chunking or because this is the last chunk),
+	// then there are no more remaining items and this field will be left unset and omitted during
+	// serialization.
+  //
+	// The intended use of the remainingItemCount is *estimating* the size of a collection. Clients
+	// should not rely on the remainingItemCount to be set or to be exact.
+	// +optional
+	int64 remaining_item_count = 4; // 0 won't be set either (no next page token)
+}
+
+message WatchRequest {
+  // ResourceVersion of last changes. Empty will default to full history
+  int64 since = 1;
+
+  // Watch specific entities
+  ResourceKey key = 2;
+
+  // Additional options
+  ListOptions options = 3;
+
+  // Return initial events
+  bool send_initial_events = 4;
+
+  // When done with initial events, send a bookmark event
+  bool allow_watch_bookmarks = 5;
+}
+
+message WatchResponse {
+  // Timestamp the event was sent
+  int64 timestamp = 1;
+
+  // Entity that was created, updated, or deleted
+  ResourceWrapper resource = 2;
+
+  // previous version of the entity (in update+delete events)
+  ResourceWrapper previous = 3;
+}
+
+message HistoryRequest {
+  // Starting from the requested page (other query parameters must match!)
+  string next_page_token = 1;
+
+  // Maximum number of items to return
+  int64 limit = 2;
+
+  // Resource identifier
+  ResourceKey key = 3;
+
+  // List the deleted values (eg, show trash)
+  bool show_deleted = 4;
+}
+
+message HistoryResponse {
+  repeated ResourceMeta items = 1;
+
+  // More results exist... pass this in the next request
+  string next_page_token = 2;
+
+  // ResourceVersion of the list response
+  int64 resource_version = 3;
+}
+
+message OriginRequest {
+  // Starting from the requested page (other query parameters must match!)
+  string next_page_token = 1;
+
+  // Maximum number of items to return
+  int64 limit = 2;
+
+  // Resource identifier
+  ResourceKey key = 3;
+
+  // List the deleted values (eg, show trash)
+  string origin = 4;
+}
+
+message ResourceOriginInfo {
+  // The resource
+  ResourceKey key = 1;
+
+  // Size of the full resource body
+  int32 resource_size = 2;
+
+  // Hash for the resource
+  string resource_hash = 3;
+
+  // The origin name
+  string origin = 4;
+
+  // Path on the origin
+  string path = 5;
+
+  // Verification hash from the origin
+  string hash = 6;
+
+  // Change time from the origin
+  int64 timestamp = 7;
+}
+
+message OriginResponse {
+  repeated ResourceOriginInfo items = 1;
+
+  // More results exist... pass this in the next request
+  string next_page_token = 2;
+
+  // ResourceVersion of the list response
+  int64 resource_version = 3;
+}
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3;  // Used only by the Watch method.
+  }
+  ServingStatus status = 1;
+}
+
+// The entity store provides a basic CRUD+watch for any resource
+service ResourceStore {
+  rpc GetResource(GetResourceRequest) returns (GetResourceResponse);
+  rpc Create(CreateRequest) returns (CreateResponse);
+  rpc Update(UpdateRequest) returns (UpdateResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+  rpc List(ListRequest) returns (ListResponse);
+  rpc Watch(WatchRequest) returns (stream WatchResponse);
+
+  // Get the raw blob bytes and metadata
+  rpc GetBlob(GetBlobRequest) returns (GetBlobResponse);
+
+  // Show resource history (and trash)
+  rpc History(HistoryRequest) returns (HistoryResponse);
+
+  // Used for efficient provisioning
+  rpc Origin(OriginRequest) returns (OriginResponse);
+
+  // Check if the service is healthy
+  rpc IsHealthy(HealthCheckRequest) returns (HealthCheckResponse);
+}
