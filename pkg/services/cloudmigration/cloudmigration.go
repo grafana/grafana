@@ -15,13 +15,13 @@ type Service interface {
 	ValidateToken(ctx context.Context, mig CloudMigrationSession) error
 	DeleteToken(ctx context.Context, uid string) error
 
-	CreateMigration(ctx context.Context, req CloudMigrationRequest) (*CloudMigrationResponse, error)
+	CreateMigration(ctx context.Context, req CloudMigrationSessionRequest) (*CloudMigrationSessionResponse, error)
 	GetMigration(ctx context.Context, migUID string) (*CloudMigrationSession, error)
 	DeleteMigration(ctx context.Context, migUID string) (*CloudMigrationSession, error)
-	UpdateMigration(ctx context.Context, migUID string, request CloudMigrationRequest) (*CloudMigrationResponse, error)
-	GetMigrationList(context.Context) (*CloudMigrationListResponse, error)
+	UpdateMigration(ctx context.Context, migUID string, request CloudMigrationSessionRequest) (*CloudMigrationSessionResponse, error)
+	GetMigrationList(context.Context) (*CloudMigrationSessionListResponse, error)
 
 	RunMigration(ctx context.Context, migUID string) (*MigrateSnapshotResponseDTO, error)
-	GetMigrationStatus(ctx context.Context, runUID string) (*SnapshotMigration, error)
-	GetMigrationRunList(ctx context.Context, migUID string) (*CloudMigrationRunList, error)
+	GetMigrationStatus(ctx context.Context, runUID string) (*Snapshot, error)
+	GetMigrationRunList(ctx context.Context, migUID string) (*SnapshotList, error)
 }

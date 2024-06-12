@@ -22,25 +22,25 @@ type CloudMigrationSession struct {
 	ID          int64     `json:"id" xorm:"pk autoincr 'id'"`
 	UID         string    `json:"uid" xorm:"uid"`
 	AuthToken   string    `json:"-"`
-	Slug        string    `json:"slug" xorm:"stack"`
-	StackID     int       `json:"stackID" xorm:"stack_id"`
+	Slug        string    `json:"slug"`
+	StackID     int       `json:"stackID"`
 	RegionSlug  string    `json:"regionSlug"`
 	ClusterSlug string    `json:"clusterSlug"`
 	Created     time.Time `json:"created"`
 	Updated     time.Time `json:"updated"`
 }
 
-type SnapshotMigration struct {
+type Snapshot struct {
 	ID         int64     `json:"id" xorm:"pk autoincr 'id'"`
 	UID        string    `json:"uid" xorm:"uid"`
-	SessionUID string    `json:"sessionUid" xorm:"cloud_migration_uid"`
+	SessionUID string    `json:"sessionUid"`
 	Result     []byte    `json:"result"` //store raw cms response body
 	Created    time.Time `json:"created"`
 	Updated    time.Time `json:"updated"`
 	Finished   time.Time `json:"finished"`
 }
 
-func (r SnapshotMigration) ToResponse() (*MigrateSnapshotResponseDTO, error) {
+func (r Snapshot) ToResponse() (*MigrateSnapshotResponseDTO, error) {
 	var result MigrateSnapshotResponseDTO
 	err := json.Unmarshal(r.Result, &result)
 	if err != nil {
@@ -50,23 +50,23 @@ func (r SnapshotMigration) ToResponse() (*MigrateSnapshotResponseDTO, error) {
 	return &result, nil
 }
 
-type CloudMigrationRunList struct {
+type SnapshotList struct {
 	Runs []MigrateSnapshotResponseListDTO `json:"runs"`
 }
 
-type CloudMigrationRequest struct {
+type CloudMigrationSessionRequest struct {
 	AuthToken string `json:"authToken"`
 }
 
-type CloudMigrationResponse struct {
+type CloudMigrationSessionResponse struct {
 	UID     string    `json:"uid"`
 	Slug    string    `json:"slug"`
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
 }
 
-type CloudMigrationListResponse struct {
-	Migrations []CloudMigrationResponse `json:"migrations"`
+type CloudMigrationSessionListResponse struct {
+	Sessions []CloudMigrationSessionResponse `json:"sessions"`
 }
 
 // access token
@@ -97,7 +97,7 @@ type Base64HGInstance struct {
 	ClusterSlug string
 }
 
-// dtos for cms api
+// DTOs for GMS API
 
 // swagger:enum MigrateDataType
 type MigrateDataType string

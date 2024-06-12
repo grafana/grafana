@@ -210,7 +210,7 @@ func (cma *CloudMigrationAPI) CreateMigration(c *contextmodel.ReqContext) respon
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.CreateMigration")
 	defer span.End()
 
-	cmd := cloudmigration.CloudMigrationRequest{}
+	cmd := cloudmigration.CloudMigrationSessionRequest{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.ErrOrFallback(http.StatusBadRequest, "bad request data", err)
 	}
@@ -373,26 +373,26 @@ type CloudMigrationRunResponse struct {
 // swagger:response cloudMigrationListResponse
 type CloudMigrationListResponse struct {
 	// in: body
-	Body cloudmigration.CloudMigrationListResponse
+	Body cloudmigration.CloudMigrationSessionListResponse
 }
 
 // swagger:parameters createMigration
 type CreateMigration struct {
 	// in:body
 	// required:true
-	Body cloudmigration.CloudMigrationRequest
+	Body cloudmigration.CloudMigrationSessionRequest
 }
 
 // swagger:response cloudMigrationResponse
 type CloudMigrationResponse struct {
 	// in: body
-	Body cloudmigration.CloudMigrationResponse
+	Body cloudmigration.CloudMigrationSessionResponse
 }
 
 // swagger:response cloudMigrationRunListResponse
 type CloudMigrationRunListResponse struct {
 	// in: body
-	Body cloudmigration.CloudMigrationRunList
+	Body cloudmigration.SnapshotList
 }
 
 // swagger:parameters getCloudMigrationToken

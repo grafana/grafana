@@ -326,25 +326,25 @@ func (s *Service) GetMigration(ctx context.Context, uid string) (*cloudmigration
 	return migration, nil
 }
 
-func (s *Service) GetMigrationList(ctx context.Context) (*cloudmigration.CloudMigrationListResponse, error) {
+func (s *Service) GetMigrationList(ctx context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
 	values, err := s.store.GetAllCloudMigrations(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	migrations := make([]cloudmigration.CloudMigrationResponse, 0)
+	migrations := make([]cloudmigration.CloudMigrationSessionResponse, 0)
 	for _, v := range values {
-		migrations = append(migrations, cloudmigration.CloudMigrationResponse{
+		migrations = append(migrations, cloudmigration.CloudMigrationSessionResponse{
 			UID:     v.UID,
 			Slug:    v.Slug,
 			Created: v.Created,
 			Updated: v.Updated,
 		})
 	}
-	return &cloudmigration.CloudMigrationListResponse{Migrations: migrations}, nil
+	return &cloudmigration.CloudMigrationSessionListResponse{Sessions: migrations}, nil
 }
 
-func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
+func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.createMigration")
 	defer span.End()
 
@@ -369,7 +369,7 @@ func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudM
 		return nil, fmt.Errorf("error creating migration: %w", err)
 	}
 
-	return &cloudmigration.CloudMigrationResponse{
+	return &cloudmigration.CloudMigrationSessionResponse{
 		UID:     cm.UID,
 		Slug:    token.Instance.Slug,
 		Created: cm.Created,
@@ -377,7 +377,7 @@ func (s *Service) CreateMigration(ctx context.Context, cmd cloudmigration.CloudM
 	}, nil
 }
 
-func (s *Service) UpdateMigration(ctx context.Context, uid string, request cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
+func (s *Service) UpdateMigration(ctx context.Context, uid string, request cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
 	// TODO: Implement method
 	return nil, nil
 }
@@ -411,7 +411,7 @@ func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration
 	}
 
 	// save the result of the migration
-	runUID, err := s.createMigrationRun(ctx, cloudmigration.SnapshotMigration{
+	runUID, err := s.createMigrationRun(ctx, cloudmigration.Snapshot{
 		SessionUID: migration.UID,
 		Result:     respData,
 	})
@@ -547,7 +547,7 @@ func (s *Service) getDashboards(ctx context.Context) ([]dashboards.Dashboard, er
 	return result, nil
 }
 
-func (s *Service) createMigrationRun(ctx context.Context, cmr cloudmigration.SnapshotMigration) (string, error) {
+func (s *Service) createMigrationRun(ctx context.Context, cmr cloudmigration.Snapshot) (string, error) {
 	uid, err := s.store.CreateMigrationRun(ctx, cmr)
 	if err != nil {
 		s.log.Error("Failed to save migration run", "err", err)
@@ -556,7 +556,7 @@ func (s *Service) createMigrationRun(ctx context.Context, cmr cloudmigration.Sna
 	return uid, nil
 }
 
-func (s *Service) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.SnapshotMigration, error) {
+func (s *Service) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.Snapshot, error) {
 	cmr, err := s.store.GetMigrationStatus(ctx, runUID)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving migration status from db: %w", err)
@@ -564,13 +564,13 @@ func (s *Service) GetMigrationStatus(ctx context.Context, runUID string) (*cloud
 	return cmr, nil
 }
 
-func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*cloudmigration.CloudMigrationRunList, error) {
+func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*cloudmigration.SnapshotList, error) {
 	runs, err := s.store.GetMigrationStatusList(ctx, migUID)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving migration statuses from db: %w", err)
 	}
 
-	runList := &cloudmigration.CloudMigrationRunList{Runs: []cloudmigration.MigrateSnapshotResponseListDTO{}}
+	runList := &cloudmigration.SnapshotList{Runs: []cloudmigration.MigrateSnapshotResponseListDTO{}}
 	for _, s := range runs {
 		runList.Runs = append(runList.Runs, cloudmigration.MigrateSnapshotResponseListDTO{
 			RunUID: s.UID,

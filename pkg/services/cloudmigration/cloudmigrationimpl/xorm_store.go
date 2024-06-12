@@ -40,7 +40,7 @@ func (ss *sqlStore) GetMigrationByUID(ctx context.Context, uid string) (*cloudmi
 	return &cm, err
 }
 
-func (ss *sqlStore) CreateMigrationRun(ctx context.Context, cmr cloudmigration.SnapshotMigration) (string, error) {
+func (ss *sqlStore) CreateMigrationRun(ctx context.Context, cmr cloudmigration.Snapshot) (string, error) {
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		cmr.Created = time.Now()
 		cmr.Updated = time.Now()
@@ -118,8 +118,8 @@ func (ss *sqlStore) DeleteMigration(ctx context.Context, uid string) (*cloudmigr
 	return &c, err
 }
 
-func (ss *sqlStore) GetMigrationStatus(ctx context.Context, cmrUID string) (*cloudmigration.SnapshotMigration, error) {
-	var c cloudmigration.SnapshotMigration
+func (ss *sqlStore) GetMigrationStatus(ctx context.Context, cmrUID string) (*cloudmigration.Snapshot, error) {
+	var c cloudmigration.Snapshot
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exist, err := sess.Where("uid=?", cmrUID).Get(&c)
 		if err != nil {
@@ -133,10 +133,10 @@ func (ss *sqlStore) GetMigrationStatus(ctx context.Context, cmrUID string) (*clo
 	return &c, err
 }
 
-func (ss *sqlStore) GetMigrationStatusList(ctx context.Context, migrationUID string) ([]*cloudmigration.SnapshotMigration, error) {
-	var runs = make([]*cloudmigration.SnapshotMigration, 0)
+func (ss *sqlStore) GetMigrationStatusList(ctx context.Context, migrationUID string) ([]*cloudmigration.Snapshot, error) {
+	var runs = make([]*cloudmigration.Snapshot, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Find(&runs, &cloudmigration.SnapshotMigration{
+		return sess.Find(&runs, &cloudmigration.Snapshot{
 			SessionUID: migrationUID,
 		})
 	})

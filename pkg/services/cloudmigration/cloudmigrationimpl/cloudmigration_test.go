@@ -62,7 +62,7 @@ func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, createTokenResp.Token)
 
-	cmd := cloudmigration.CloudMigrationRequest{
+	cmd := cloudmigration.CloudMigrationSessionRequest{
 		AuthToken: createTokenResp.Token,
 	}
 
@@ -80,9 +80,9 @@ func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
 	listResp, err := s.GetMigrationList(context.Background())
 	require.NoError(t, err)
 	require.NotNil(t, listResp)
-	require.Equal(t, 1, len(listResp.Migrations))
-	require.Equal(t, createResp.UID, listResp.Migrations[0].UID)
-	require.Equal(t, createResp.Slug, listResp.Migrations[0].Slug)
+	require.Equal(t, 1, len(listResp.Sessions))
+	require.Equal(t, createResp.UID, listResp.Sessions[0].UID)
+	require.Equal(t, createResp.Slug, listResp.Sessions[0].Slug)
 
 	runResp, err := s.RunMigration(ctxWithSignedInUser(), createResp.UID)
 	require.NoError(t, err)

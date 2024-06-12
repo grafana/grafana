@@ -44,11 +44,11 @@ func (m FakeServiceImpl) DeleteToken(_ context.Context, _ string) error {
 	return nil
 }
 
-func (m FakeServiceImpl) CreateMigration(_ context.Context, _ cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
+func (m FakeServiceImpl) CreateMigration(_ context.Context, _ cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
-	return &cloudmigration.CloudMigrationResponse{
+	return &cloudmigration.CloudMigrationSessionResponse{
 		UID:     "fake_uid",
 		Slug:    "fake_stack",
 		Created: fixedDate,
@@ -70,16 +70,16 @@ func (m FakeServiceImpl) DeleteMigration(_ context.Context, _ string) (*cloudmig
 	return &cloudmigration.CloudMigrationSession{UID: "fake"}, nil
 }
 
-func (m FakeServiceImpl) UpdateMigration(ctx context.Context, uid string, request cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
+func (m FakeServiceImpl) UpdateMigration(ctx context.Context, uid string, request cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
 	panic("implement me")
 }
 
-func (m FakeServiceImpl) GetMigrationList(_ context.Context) (*cloudmigration.CloudMigrationListResponse, error) {
+func (m FakeServiceImpl) GetMigrationList(_ context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
-	return &cloudmigration.CloudMigrationListResponse{
-		Migrations: []cloudmigration.CloudMigrationResponse{
+	return &cloudmigration.CloudMigrationSessionListResponse{
+		Sessions: []cloudmigration.CloudMigrationSessionResponse{
 			{UID: "mock_uid_1", Slug: "mock_stack_1", Created: fixedDate, Updated: fixedDate},
 			{UID: "mock_uid_2", Slug: "mock_stack_2", Created: fixedDate, Updated: fixedDate},
 		},
@@ -103,11 +103,11 @@ func fakeMigrateDataResponseDTO() cloudmigration.MigrateSnapshotResponseDTO {
 	}
 }
 
-func (m FakeServiceImpl) CreateMigrationRun(ctx context.Context, run cloudmigration.SnapshotMigration) (string, error) {
+func (m FakeServiceImpl) CreateMigrationRun(ctx context.Context, run cloudmigration.Snapshot) (string, error) {
 	panic("implement me")
 }
 
-func (m FakeServiceImpl) GetMigrationStatus(_ context.Context, _ string) (*cloudmigration.SnapshotMigration, error) {
+func (m FakeServiceImpl) GetMigrationStatus(_ context.Context, _ string) (*cloudmigration.Snapshot, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
@@ -115,7 +115,7 @@ func (m FakeServiceImpl) GetMigrationStatus(_ context.Context, _ string) (*cloud
 	if err != nil {
 		return nil, err
 	}
-	return &cloudmigration.SnapshotMigration{
+	return &cloudmigration.Snapshot{
 		ID:         0,
 		UID:        "fake_uid",
 		SessionUID: "fake_mig_uid",
@@ -126,11 +126,11 @@ func (m FakeServiceImpl) GetMigrationStatus(_ context.Context, _ string) (*cloud
 	}, nil
 }
 
-func (m FakeServiceImpl) GetMigrationRunList(_ context.Context, _ string) (*cloudmigration.CloudMigrationRunList, error) {
+func (m FakeServiceImpl) GetMigrationRunList(_ context.Context, _ string) (*cloudmigration.SnapshotList, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
-	return &cloudmigration.CloudMigrationRunList{
+	return &cloudmigration.SnapshotList{
 		Runs: []cloudmigration.MigrateSnapshotResponseListDTO{
 			{RunUID: "fake_run_uid_1"},
 			{RunUID: "fake_run_uid_2"},
