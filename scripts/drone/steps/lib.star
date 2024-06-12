@@ -1257,9 +1257,9 @@ def slack_step(channel, template, secret):
         },
     }
 
-def verify_release_for_download():
+def verify_grafanacom_step():
     return {
-        "name": "verify-release-for-download",
+        "name": "verify-grafanacom",
         "image": "appropriate-image", # JEV: node/curl?
         "environment": {
             "GCOM_TOKEN": from_secret("gcom_token"),
@@ -1273,5 +1273,5 @@ def verify_release_for_download():
             "apt-get install -y nodejs",
             "./drone/verify_release.sh",
         ],
-        "depends_on": [], # JEV: anything?
+        "depends_on": ["publish-grafanacom"], # JEV: anything else?
     }
