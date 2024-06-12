@@ -586,7 +586,7 @@ steps:
   image: alpine:3.19.1
   name: grafana-server
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
+  - ./bin/build e2e-tests --port 3001 --suite scenes/dashboards-suite
   depends_on:
   - grafana-server
   environment:
@@ -594,7 +594,7 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
+  - ./bin/build e2e-tests --port 3001 --suite scenes/smoke-tests-suite
   depends_on:
   - grafana-server
   environment:
@@ -602,7 +602,7 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite panels-suite
+  - ./bin/build e2e-tests --port 3001 --suite scenes/panels-suite
   depends_on:
   - grafana-server
   environment:
@@ -610,7 +610,7 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite various-suite
+  - ./bin/build e2e-tests --port 3001 --suite scenes/various-suite
   depends_on:
   - grafana-server
   environment:
@@ -1901,7 +1901,7 @@ steps:
   image: alpine:3.19.1
   name: grafana-server
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
+  - ./bin/build e2e-tests --port 3001 --suite scenes/dashboards-suite
   depends_on:
   - grafana-server
   environment:
@@ -1909,7 +1909,7 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
+  - ./bin/build e2e-tests --port 3001 --suite scenes/smoke-tests-suite
   depends_on:
   - grafana-server
   environment:
@@ -1917,7 +1917,7 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite panels-suite
+  - ./bin/build e2e-tests --port 3001 --suite scenes/panels-suite
   depends_on:
   - grafana-server
   environment:
@@ -1925,7 +1925,7 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite various-suite
+  - ./bin/build e2e-tests --port 3001 --suite scenes/various-suite
   depends_on:
   - grafana-server
   environment:
