@@ -93,11 +93,11 @@ Doing so ensures that the handler methods get access to `HttpServer` service dep
 
 **State:** Ongoing, passive.
 
-Store newly introduced date columns in the database as epoch-based integers (that is, UNIX timestamps) if they require date comparison.
+Store newly introduced date columns in the database as epoch-based integers (that is, Unix timestamps) if they require date comparison.
 This permits you to have a unified approach for comparing dates against all the supported databases instead of needing to handle dates differently for each database.
 Also, when you compare epoch-based integers you no longer need error-pruning transformations to and from other time zones.
 
-## 107 - Avoid the simplejson package
+## 107 - Avoid the `simplejson` package
 
 **State:** Ongoing, passive
 
@@ -107,9 +107,11 @@ Instead, create types for objects and use the Go standard library's
 
 ## 108 - Enable provisioning
 
-**State:** Abandoned: Grafana's file-based refactoring is limited to work natively only on on-premise installations of Grafana. We want to enhance the use of the API to enable provisioning for all Grafana instances in the future.
+**State:** Abandoned: The file-based refactoring of Grafana is limited to work natively only on on-premise installations of Grafana.
+We want to enhance the use of the API to enable provisioning for all Grafana instances in the future.
 
-All new features that require state should be able to configure Grafana using config files. For example:
+All new features that require state should be able to configure Grafana using configuration files.
+For example:
 
 - [Data sources](https://github.com/grafana/grafana/tree/main/pkg/services/provisioning/datasources)
 - [Alert notifiers](https://github.com/grafana/grafana/tree/main/pkg/services/provisioning/notifiers)
@@ -117,7 +119,7 @@ All new features that require state should be able to configure Grafana using co
 
 Today it's only possible to provision data sources and dashboards, but we want to support it throughout Grafana in the future.
 
-### 109 - Use context.Context "everywhere"
+### 109 - Use `context.Context`
 
 **State:** Completed.
 
@@ -143,7 +145,7 @@ been extended to accept a `context.Context` argument. For more details, refer to
 
 **State:** Ongoing, passive.
 
-All errors returned from Grafana's services should carry a status and
+All errors returned from services in Grafana should carry a status and
 the information necessary to provide a structured message that faces the end-user. Structured messages can be displayed on the frontend and may be [internationalized](../internationalization.md).
 
 To learn more, refer to [Errors](/contribute/backend/errors.md).
