@@ -453,6 +453,16 @@
       "title": "Versions"
     }
   },
+  "dashboards": {
+    "settings": {
+      "variables": {
+        "dependencies": {
+          "button": "Show dependencies",
+          "title": "Dependencies"
+        }
+      }
+    }
+  },
   "data-source-list": {
     "empty-state": {
       "button-title": "Add data source",
@@ -496,6 +506,12 @@
       "query": "Query",
       "title": "Add query to Query Library",
       "visibility": "Visibility"
+    },
+    "logs": {
+      "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
+      "no-logs-found": "No logs found.",
+      "scan-for-older-logs": "Scan for older logs",
+      "stop-scan": "Stop scan"
     },
     "rich-history": {
       "close-tooltip": "Close query history",
@@ -1270,6 +1286,7 @@
       "new-alert-rule": "New alert rule",
       "query": "Query",
       "remove": "Remove",
+      "replace-library-panel": "Replace library panel",
       "share": "Share",
       "show-legend": "Show legend",
       "unlink-library-panel": "Unlink library panel",
@@ -1478,11 +1495,6 @@
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
-  "recentlyDeleted": {
-    "filter": {
-      "placeholder": "Search for dashboards"
-    }
-  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
@@ -1510,6 +1522,31 @@
       "label": "Back to {{title}}"
     },
     "dismissable-button": "Close"
+  },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "title": "Select scopes"
+    },
+    "basicSelector": {
+      "openAdvanced": "Open advanced scope selector <1></1>",
+      "placeholder": "Select scopes...",
+      "removeAll": "Remove all scopes"
+    },
+    "root": {
+      "collapse": "Collapse scope filters",
+      "expand": "Expand scope filters"
+    },
+    "suggestedDashboards": {
+      "loading": "Loading dashboards",
+      "search": "Filter"
+    },
+    "tree": {
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "search": "Filter"
+    }
   },
   "search": {
     "actions": {
@@ -1669,6 +1706,21 @@
     "empty-state": {
       "button-title": "Create silence",
       "title": "You haven't created any silences yet"
+    },
+    "table": {
+      "add-silence-button": "Add Silence",
+      "edit-button": "Edit",
+      "expired-silences": "Expired silences are automatically deleted after 5 days.",
+      "no-matching-silences": "No matching silences found;",
+      "noConfig": "Create a new contact point to create a configuration using the default values or contact your administrator to set up the Alertmanager.",
+      "recreate-button": "Recreate",
+      "unsilence-button": "Unsilence"
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "Alert name",
+      "state": "State"
     }
   },
   "snapshot": {
@@ -1703,6 +1755,8 @@
       "apply-button": "Apply time range",
       "cancel-button": "Cancel",
       "close": "Close calendar",
+      "next-month": "Next month",
+      "previous-month": "Previous month",
       "select-time": "Select a time range"
     },
     "content": {

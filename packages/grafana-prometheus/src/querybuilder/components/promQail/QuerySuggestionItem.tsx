@@ -243,7 +243,7 @@ export function QuerySuggestionItem(props: Props) {
                         placement="bottom-end"
                         closeButton={true}
                       >
-                        <Button variant="success" size="sm">
+                        <Button fill="outline" variant="secondary" size="sm">
                           No
                         </Button>
                       </Toggletip>

@@ -1,8 +1,10 @@
+import { css } from '@emotion/css';
 import React, { ComponentType, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
 import { LoadingState, VariableOption, VariableWithMultiSupport, VariableWithOptions } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { ClickOutsideWrapper } from '@grafana/ui';
 import { StoreState, ThunkDispatch } from 'app/types';
 
@@ -111,9 +113,10 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     render() {
       const { variable, picker } = this.props;
       const showOptions = picker.id === variable.id;
+      const styles = getStyles();
 
       return (
-        <div className="variable-link-wrapper">
+        <div className={styles.variableLinkWrapper} data-testid={selectors.components.Variables.variableLinkWrapper}>
           {showOptions ? this.renderOptions(picker) : this.renderLink(variable)}
         </div>
       );
@@ -170,3 +173,10 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
 
   return OptionsPicker;
 };
+
+const getStyles = () => ({
+  variableLinkWrapper: css({
+    display: 'inline-block',
+    position: 'relative',
+  }),
+});
