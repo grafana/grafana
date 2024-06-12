@@ -8,7 +8,9 @@ const meta: Meta<typeof SimpleSelect> = {
   title: 'Forms/SimpleSelect',
   component: SimpleSelect,
   args: {
-    placeholder: 'Select an option',
+    loading: undefined,
+    invalid: undefined,
+    placeholder: 'Select an option...',
     options: [
       { label: 'Apple', value: 'apple' },
       { label: 'Banana', value: 'banana' },

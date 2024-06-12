@@ -3,13 +3,14 @@ import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
-import { Input } from '../Input/Input';
+import { Icon } from '../Icon/Icon';
+import { Input, Props as InputProps } from '../Input/Input';
 
-interface SimpleSelectProps {
+interface SimpleSelectProps
+  extends Omit<InputProps, 'width' | 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter'> {
   onChange: (val: SelectableValue) => void;
   value: SelectableValue;
   options: SelectableValue[];
-  placeholder: string;
 }
 
 function itemToString(item: SelectableValue | null) {
@@ -28,7 +29,7 @@ function itemFilter(inputValue: string) {
   };
 }
 
-export const SimpleSelect = ({ options, onChange, value, placeholder }: SimpleSelectProps) => {
+export const SimpleSelect = ({ options, onChange, value, ...restProps }: SimpleSelectProps) => {
   const [items, setItems] = useState(options);
 
   const { getInputProps, getMenuProps, getItemProps, isOpen } = useCombobox({
@@ -42,7 +43,7 @@ export const SimpleSelect = ({ options, onChange, value, placeholder }: SimpleSe
   });
   return (
     <div>
-      <Input placeholder={placeholder} {...getInputProps()} />
+      <Input suffix={<Icon name={isOpen ? 'angle-up' : 'angle-down'} />} {...restProps} {...getInputProps()} />
       <ul {...getMenuProps()}>
         {isOpen &&
           items.map((item, index) => {
