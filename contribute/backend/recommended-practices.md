@@ -145,7 +145,7 @@ been extended to accept a `context.Context` argument. For more details, refer to
 
 **State:** Ongoing, passive.
 
-All errors returned from Grafana's services should carry a status and
+All errors returned from services in Grafana should carry a status and
 the information necessary to provide a structured message that faces the end-user. Structured messages can be displayed on the frontend and may be [internationalized](../internationalization.md).
 
 To learn more, refer to [Errors](/contribute/backend/errors.md).
