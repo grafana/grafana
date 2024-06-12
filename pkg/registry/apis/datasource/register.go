@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
@@ -212,7 +212,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	storage[conn.StoragePath()] = &connectionAccess{
 		datasources:  b.datasources,
 		resourceInfo: conn,
-		tableConverter: utils.NewTableConverter(
+		tableConverter: gapiutil.NewTableConverter(
 			conn.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},

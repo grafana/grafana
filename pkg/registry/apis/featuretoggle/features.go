@@ -12,7 +12,7 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -37,7 +37,7 @@ func NewFeaturesStorage() *featuresStorage {
 	resourceInfo := v0alpha1.FeatureResourceInfo
 	return &featuresStorage{
 		resource: &resourceInfo,
-		tableConverter: utils.NewTableConverter(
+		tableConverter: gapiutil.NewTableConverter(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
