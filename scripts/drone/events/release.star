@@ -298,4 +298,5 @@ def verify_release_for_download():
             "apt-get install -y nodejs",
             "./drone/verify_release.sh",
         ],
+        "depends_on": [], # JEV: anything?
     }
