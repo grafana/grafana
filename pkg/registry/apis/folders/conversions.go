@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
@@ -45,6 +46,6 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	if v.ParentUID != "" {
 		meta.SetFolder(v.ParentUID)
 	}
-	f.UID = utils.CalculateClusterWideMigrationUID(f)
+	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f
 }

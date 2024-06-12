@@ -7,6 +7,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -49,8 +51,7 @@ type ResourceOriginInfo struct {
 type GrafanaMetaAccessor interface {
 	metav1.Object
 
-	GetAPIVersion() string
-	GetKind() string
+	GetGroupVersionKind() schema.GroupVersionKind
 
 	GetUpdatedTimestamp() (*time.Time, error)
 	SetUpdatedTimestamp(v *time.Time)
@@ -407,28 +408,37 @@ func (m *grafanaMetaAccessor) SetUID(uid types.UID) {
 	m.obj.SetUID(uid)
 }
 
-func (m *grafanaMetaAccessor) GetAPIVersion() string {
-	typ, ok := m.raw.(metav1.Type)
+func (m *grafanaMetaAccessor) GetGroupVersionKind() schema.GroupVersionKind {
+	obj, ok := m.raw.(runtime.Object)
 	if ok {
-		return typ.GetAPIVersion()
+		return obj.GetObjectKind().GroupVersionKind()
 	}
-	val := m.r.FieldByName("APIVersion")
-	if val.IsValid() && val.Kind() == reflect.String {
-		return val.String()
-	}
-	return ""
-}
 
-func (m *grafanaMetaAccessor) GetKind() string {
+	gvk := schema.GroupVersionKind{}
+	apiVersion := ""
+
 	typ, ok := m.raw.(metav1.Type)
 	if ok {
-		return typ.GetKind()
+		apiVersion = typ.GetAPIVersion()
+		gvk.Kind = typ.GetKind()
+	} else {
+		val := m.r.FieldByName("APIVersion")
+		if val.IsValid() && val.Kind() == reflect.String {
+			apiVersion = val.String()
+		}
+		val = m.r.FieldByName("Kind")
+		if val.IsValid() && val.Kind() == reflect.String {
+			gvk.Kind = val.String()
+		}
 	}
-	val := m.r.FieldByName("Kind")
-	if val.IsValid() && val.Kind() == reflect.String {
-		return val.String()
+	if apiVersion != "" {
+		gv, err := schema.ParseGroupVersion(apiVersion)
+		if err == nil {
+			gvk.Group = gv.Group
+			gvk.Version = gv.Version
+		}
 	}
-	return ""
+	return gvk
 }
 
 func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {

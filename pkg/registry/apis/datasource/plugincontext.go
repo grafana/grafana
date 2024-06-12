@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
@@ -135,7 +136,7 @@ func asConnection(ds *datasources.DataSource, ns string) (*v0alpha1.DataSourceCo
 		},
 		Title: ds.Name,
 	}
-	v.UID = utils.CalculateClusterWideMigrationUID(v) // indicates if the value changed on the server
+	v.UID = gapiutil.CalculateClusterWideUID(v) // indicates if the value changed on the server
 	meta, err := utils.MetaAccessor(v)
 	if err != nil {
 		meta.SetUpdatedTimestamp(&ds.Updated)
