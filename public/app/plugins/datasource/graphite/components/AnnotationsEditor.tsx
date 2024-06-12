@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
-import { InlineFormLabel, Input, TagsInput } from '@grafana/ui';
+import { Box, InlineField, Input, TagsInput } from '@grafana/ui';
 
 import { GraphiteDatasource } from '../datasource';
 import { GraphiteQuery, GraphiteOptions } from '../types';
@@ -34,23 +34,21 @@ export const AnnotationEditor = (props: QueryEditorProps<GraphiteDatasource, Gra
   };
 
   return (
-    <div className="gf-form-group">
-      <div className="gf-form">
-        <InlineFormLabel width={12}>Graphite Query</InlineFormLabel>
+    <Box marginBottom={5}>
+      <InlineField label="Graphite Query" labelWidth={24} grow>
         <Input
           value={target}
           onChange={(e) => setTarget(e.currentTarget.value || '')}
           onBlur={() => updateValue('target', target)}
           placeholder="Example: statsd.application.counters.*.count"
         />
-      </div>
+      </InlineField>
 
       <h5 className="section-heading">Or</h5>
 
-      <div className="gf-form">
-        <InlineFormLabel width={12}>Graphite events tags</InlineFormLabel>
+      <InlineField label="Graphite events tags" labelWidth={24}>
         <TagsInput id="tags-input" width={50} tags={tags} onChange={onTagsChange} placeholder="Example: event_tag" />
-      </div>
-    </div>
+      </InlineField>
+    </Box>
   );
 };
