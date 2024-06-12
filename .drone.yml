@@ -2628,6 +2628,47 @@ volumes:
 clone:
   retries: 3
 depends_on: []
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: create-release-pr
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - apk add perl
+  - v_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`
+  - default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $$v_target;
+    fi`
+  - backport=`if [[ -n $$LATEST ]]; then echo $$v_target; fi`
+  - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
+  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
+    -f backport=$${BACKPORT:-$default_backport} --repo=grafana/grafana release-pr.yml
+  depends_on: []
+  environment:
+    GH_CLI_URL: https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: byrnedo/alpine-curl:0.1.8
+  name: create-release-pr
+trigger:
+  event:
+  - promote
+  target: release-pr
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
 environment:
   EDITION: oss
 image_pull_secrets:
@@ -2684,6 +2725,24 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-storybook
+- commands:
+  - apk add perl
+  - v_target=`echo $${TAG} | perl -pe 's/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/v\1.\2.x/'`
+  - default_target=`if [[ -n $$LATEST ]]; then echo 'main'; else echo $$v_target;
+    fi`
+  - backport=`if [[ -n $$LATEST ]]; then echo $$v_target; fi`
+  - curl -L $${GH_CLI_URL} | tar -xz --strip-components=1 -C /usr
+  - gh workflow run -f dry_run=$${DRY_RUN} -f version=$${TAG} -f target=$${TARGET:-$default_target}
+    -f backport=$${BACKPORT:-$default_backport} --repo=grafana/grafana release-pr.yml
+  depends_on:
+  - publish-artifacts
+  - publish-static-assets
+  environment:
+    GH_CLI_URL: https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: byrnedo/alpine-curl:0.1.8
+  name: create-release-pr
 trigger:
   event:
   - promote
@@ -4686,6 +4745,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 2b7963a4e07d91f641600f41964d657cf6583c5f9be79c8229ad367db21101e9
+hmac: 28419dc1b390a1aa64df1c72b31446d36f6b6c6b8605349a38d2ddc77d407032
 
 ...
