@@ -193,7 +193,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [forceEscape, setForceEscape] = useState<boolean>(false);
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
-  const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<React.Element | string | undefined>(undefined);
+  const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>('');
   const [visualisationType, setVisualisationType] = useState<LogsVisualisationType | undefined>(
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
@@ -646,17 +646,17 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     if (getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
       setPinLineButtonTooltipTitle(
         <span style={{ display: 'flex', textAlign: 'center' }}>
-            ❗️
-            <Trans i18nKey="explore.logs.maximum-pinned-logs">
-              Maximum of {{ PINNED_LOGS_LIMIT }} pinned logs reached. Unpin a log to add another.
-            </Trans>
-          </span>
+          ❗️
+          <Trans i18nKey="explore.logs.maximum-pinned-logs">
+            Maximum of {{ PINNED_LOGS_LIMIT }} pinned logs reached. Unpin a log to add another.
+          </Trans>
+        </span>
       );
       return;
     }
 
     // find the Logs parent item
-    const logsParent = outlineItems.find((item) => item.panelId === 'Logs' && item.level === 'root');
+    const logsParent = outlineItems?.find((item) => item.panelId === 'Logs' && item.level === 'root');
 
     //update the parent's expanded state
     if (logsParent && updateItem) {
@@ -684,7 +684,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   };
 
   const getPinnedLogsCount = () => {
-    const logsParent = this.context?.outlineItems.find((item) => item.panelId === 'Logs' && item.level === 'root');
+    const logsParent = outlineItems?.find((item) => item.panelId === 'Logs' && item.level === 'root');
     return logsParent?.children?.filter((child) => child.title === 'Pinned log').length ?? 0;
   };
 
@@ -928,8 +928,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   containerRendered={!!logsContainerRef}
                   onClickFilterString={props.onClickFilterString}
                   onClickFilterOutString={props.onClickFilterOutString}
-                    onPinLine={onPinToContentOutlineClick}
-                    pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                  onPinLine={onPinToContentOutlineClick}
+                  pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                 />
               </InfiniteScroll>
             </div>
