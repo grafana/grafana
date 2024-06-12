@@ -5,7 +5,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, IconButton, Input, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { NodesMap } from './types';
 
@@ -45,11 +45,17 @@ export function ScopesTreeLevel({
         <Input
           prefix={<Icon name="filter" />}
           className={styles.searchInput}
-          placeholder={t('scopes.tree.search', 'Filter')}
+          placeholder={t('scopes.tree.search', 'Search')}
           defaultValue={node.query}
           data-testid={`scopes-tree-${nodeId}-search`}
           onInput={(evt) => onQueryUpdate(nodePath, true, evt.currentTarget.value)}
         />
+      )}
+
+      {!anyChildExpanded && !node.query && (
+        <h6 className={styles.headline}>
+          <Trans i18nKey="scopes.tree.headline">Recommended</Trans>
+        </h6>
       )}
 
       <div role="tree">
@@ -119,6 +125,10 @@ export function ScopesTreeLevel({
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     searchInput: css({
+      margin: theme.spacing(1, 0),
+    }),
+    headline: css({
+      color: theme.colors.text.secondary,
       margin: theme.spacing(1, 0),
     }),
     loader: css({
