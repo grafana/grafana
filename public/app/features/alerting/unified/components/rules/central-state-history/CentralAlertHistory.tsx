@@ -31,7 +31,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
-import { GRAFANA_DATASOURCE_NAME } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { hashLabelsOrAnnotations } from '../../../utils/rule-id';
 import { AlertLabels } from '../../AlertLabels';
@@ -208,7 +208,10 @@ function AlertRuleName({ labels, ruleUID }: { labels: Record<string, string>; ru
   }
   return (
     <Tooltip content={alertRuleName ?? ''}>
-      <a href={`/alerting/${GRAFANA_DATASOURCE_NAME}/${ruleUID}/view`} className={styles.alertName}>
+      <a
+        href={`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view?returnTo=${encodeURIComponent('/alerting/history')}`}
+        className={styles.alertName}
+      >
         {alertRuleName}
       </a>
     </Tooltip>
@@ -304,13 +307,13 @@ const Timestamp = ({ time }: TimestampProps) => {
 
 export default withErrorBoundary(HistoryEventsList, { style: 'page' });
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css({
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
+      padding: theme.spacing(1, 1, 1, 0),
       flexWrap: 'nowrap',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
 
@@ -322,8 +325,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
     collapseToggle: css({
       background: 'none',
       border: 'none',
-      marginTop: `-${theme.spacing(1)}`,
-      marginBottom: `-${theme.spacing(1)}`,
+      marginTop: theme.spacing(-1),
+      marginBottom: theme.spacing(-1),
 
       svg: {
         marginBottom: 0,
