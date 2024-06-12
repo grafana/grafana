@@ -564,7 +564,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "pending -> alerting -> normal -> pending resolves and resets ResolvedAt at t4", // TODO: should it reset ResolvedAt?
+			desc:      "pending -> alerting -> normal -> pending resolves and resets ResolvedAt at t4",
 			alertRule: baseRuleWith(m.WithForNTimes(1)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -590,7 +590,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
-					ResolvedAt:         time.Time{},
+					ResolvedAt:         t3,
 					LastSentAt:         t3,
 				},
 			},
