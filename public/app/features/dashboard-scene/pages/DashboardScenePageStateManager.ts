@@ -19,6 +19,8 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { updateNavModel } from './utils';
+import { emit } from 'process';
+import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
@@ -189,6 +191,15 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       this.setState({ dashboard: dashboard, isLoading: false });
       const measure = stopMeasure(LOAD_SCENE_MEASUREMENT);
       trackDashboardSceneLoaded(dashboard, measure?.duration);
+
+      if (options.route !== DashboardRoutes.New) {
+        emitDashboardViewEvent({
+          meta: dashboard.state.meta,
+          uid: dashboard.state.uid,
+          title: dashboard.state.title,
+          id: dashboard.state.id,
+        });
+      }
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }
