@@ -63,8 +63,30 @@ describe('getLogLevelFromKey()', () => {
   it('returns correct log level when level is capitalized', () => {
     expect(getLogLevelFromKey('INFO')).toBe(LogLevel.info);
   });
-  it('returns unknown log level when level is integer', () => {
-    expect(getLogLevelFromKey(1)).toBe(LogLevel.unknown);
+  describe('Numeric log levels', () => {
+    it('returns critical', () => {
+      expect(getLogLevelFromKey(0)).toBe(LogLevel.critical);
+      expect(getLogLevelFromKey('0')).toBe(LogLevel.critical);
+      expect(getLogLevelFromKey('1')).toBe(LogLevel.critical);
+      expect(getLogLevelFromKey('2')).toBe(LogLevel.critical);
+    });
+    it('returns error', () => {
+      expect(getLogLevelFromKey('3')).toBe(LogLevel.error);
+    });
+    it('returns warning', () => {
+      expect(getLogLevelFromKey('4')).toBe(LogLevel.warning);
+    });
+    it('returns info', () => {
+      expect(getLogLevelFromKey('5')).toBe(LogLevel.info);
+      expect(getLogLevelFromKey('6')).toBe(LogLevel.info);
+    });
+    it('returns debug', () => {
+      expect(getLogLevelFromKey('7')).toBe(LogLevel.debug);
+    });
+    it('returns unknown log level when level is an unexpected integer', () => {
+      expect(getLogLevelFromKey('8')).toBe(LogLevel.unknown);
+      expect(getLogLevelFromKey(8)).toBe(LogLevel.unknown);
+    });
   });
 });
 
