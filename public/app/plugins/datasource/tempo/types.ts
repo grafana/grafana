@@ -21,7 +21,7 @@ export interface TempoJsonData extends DataSourceJsonData {
     spanStartTimeShift?: string;
     spanEndTimeShift?: string;
   };
-  streamingEnablement?: {
+  streamingEnabled?: {
     search?: boolean;
   };
 }

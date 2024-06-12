@@ -111,7 +111,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   spanBar?: SpanBarOptions;
   languageProvider: TempoLanguageProvider;
 
-  streamingEnablement?: {
+  streamingEnabled?: {
     search?: boolean;
   };
 
@@ -129,7 +129,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.search = instanceSettings.jsonData.search;
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
     this.traceQuery = instanceSettings.jsonData.traceQuery;
-    this.streamingEnablement = instanceSettings.jsonData.streamingEnablement;
+    this.streamingEnabled = instanceSettings.jsonData.streamingEnabled;
 
     this.languageProvider = new TempoLanguageProvider(this);
 
@@ -319,7 +319,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               app: options.app ?? '',
               grafana_version: config.buildInfo.version,
               query: queryValue ?? '',
-              streaming: this.streamingEnablement,
+              streaming: this.streamingEnabled,
             });
             subQueries.push(this.handleTraceQlQuery(options, targets, queryValue));
           }
@@ -353,10 +353,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
             query: queryValueFromFilters ?? '',
-            streaming: this.streamingEnablement,
+            streaming: this.streamingEnabled,
           });
 
-          if (this.streamingEnablement?.search && config.liveEnabled) {
+          if (this.streamingEnabled?.search && config.liveEnabled) {
             subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValueFromFilters));
           } else {
             subQueries.push(
@@ -617,7 +617,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     },
     queryValue: string
   ): Observable<DataQueryResponse> => {
-    if (this.streamingEnablement?.search && config.liveEnabled) {
+    if (this.streamingEnabled?.search && config.liveEnabled) {
       return this.handleStreamingSearch(options, targets.traceql, queryValue);
     } else {
       return this._request('/api/search', {
@@ -743,7 +743,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         )
     );
 
-    if (this.streamingEnablement?.search) {
+    if (this.streamingEnabled?.search) {
       const now = new Date();
       const from = new Date(now);
       from.setMinutes(from.getMinutes() - 15);
