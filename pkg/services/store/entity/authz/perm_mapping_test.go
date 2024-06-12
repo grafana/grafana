@@ -57,7 +57,7 @@ func Test_toRBAC(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotAction, gotScope := toRBAC(tt.kind, tt.uid, tt.folder, tt.method)
+			gotAction, gotScope := ToRBAC(tt.kind, tt.uid, tt.folder, tt.method)
 			require.Equal(t, tt.wantAction, gotAction)
 			require.Equal(t, tt.wantScope, gotScope)
 		})

@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
-	mtauthz "github.com/grafana/grafana/pkg/services/store/entity/authz"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -42,7 +41,7 @@ type gPRCServerService struct {
 	enabled bool
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, authorizer mtauthz.Authorizer, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
 	s := &gPRCServerService{
 		cfg:     cfg,
 		logger:  log.New("grpc-server"),

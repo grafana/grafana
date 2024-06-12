@@ -7,10 +7,12 @@ import (
 )
 
 func toAction(kind, method string) string {
-	return kind + ":" + strings.ToLower(strings.TrimPrefix(method, "/entity.EntityStore/"))
+	return kind + ":" + method
 }
 
-func toRBAC(kind, uid, folder, method string) (action string, scope authzlib.Resource) {
+func ToRBAC(kind, uid, folder, method string) (action string, scope authzlib.Resource) {
+	method = strings.ToLower(strings.TrimPrefix(method, "/entity.EntityStore/"))
+
 	action = toAction(kind, method)
 
 	if folder != "" {
@@ -21,7 +23,7 @@ func toRBAC(kind, uid, folder, method string) (action string, scope authzlib.Res
 		}
 	} else {
 		// No scope for create outside of folder
-		if method == "/entity.EntityStore/Create" {
+		if method == "create" {
 			return
 		}
 

@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/store/entity/authz"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/grpc"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
@@ -53,7 +52,6 @@ type service struct {
 	tracing *tracing.TracingService
 
 	authenticator interceptors.Authenticator
-	authorizer    authz.Authorizer
 
 	log log.Logger
 }
@@ -75,7 +73,6 @@ func ProvideService(
 	}
 
 	authn := grpc.ProvideAuthenticator(cfg)
-	authz := authz.ProvideAuthorizer(cfg)
 
 	s := &service{
 		config:        newConfig(cfg),
@@ -83,7 +80,6 @@ func ProvideService(
 		features:      features,
 		stopCh:        make(chan struct{}),
 		authenticator: authn,
-		authorizer:    authz,
 		tracing:       tracing,
 		log:           log,
 	}
@@ -125,7 +121,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, s.authenticator, s.authorizer, s.tracing, prometheus.DefaultRegisterer)
+	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, s.authenticator, s.tracing, prometheus.DefaultRegisterer)
 	if err != nil {
 		return err
 	}
