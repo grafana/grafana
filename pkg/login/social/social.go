@@ -24,6 +24,7 @@ const (
 	GrafanaNetProviderName = "grafananet"
 	OktaProviderName       = "okta"
 	SAMLProviderName       = "saml"
+	LDAPProviderName       = "ldap"
 )
 
 var (
