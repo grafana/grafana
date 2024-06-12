@@ -2299,11 +2299,11 @@
         "tags": [
           "migrations"
         ],
-        "summary": "Get a list of all cloud migrations.",
-        "operationId": "getMigrationList",
+        "summary": "Get a list of all cloud migration sessions that have been created.",
+        "operationId": "getSessionList",
         "responses": {
           "200": {
-            "$ref": "#/responses/cloudMigrationListResponse"
+            "$ref": "#/responses/cloudMigrationSessionListResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -2320,21 +2320,21 @@
         "tags": [
           "migrations"
         ],
-        "summary": "Create a migration.",
-        "operationId": "createMigration",
+        "summary": "Create a migration session.",
+        "operationId": "createSession",
         "parameters": [
           {
             "name": "Body",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CloudMigrationRequest"
+              "$ref": "#/definitions/CloudMigrationSessionRequest"
             }
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/cloudMigrationResponse"
+            "$ref": "#/responses/cloudMigrationSessionResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -2382,16 +2382,15 @@
     },
     "/cloudmigration/migration/{uid}": {
       "get": {
-        "description": "It returns migrations that has been created.",
         "tags": [
           "migrations"
         ],
-        "summary": "Get a cloud migration.",
-        "operationId": "getCloudMigration",
+        "summary": "Get a cloud migration session by its uid.",
+        "operationId": "getSession",
         "parameters": [
           {
             "type": "string",
-            "description": "UID of a migration",
+            "description": "UID of a migration session",
             "name": "uid",
             "in": "path",
             "required": true
@@ -2399,7 +2398,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/cloudMigrationResponse"
+            "$ref": "#/responses/cloudMigrationSessionResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -2416,12 +2415,12 @@
         "tags": [
           "migrations"
         ],
-        "summary": "Delete a migration.",
-        "operationId": "deleteCloudMigration",
+        "summary": "Delete a migration session by its uid.",
+        "operationId": "deleteSession",
         "parameters": [
           {
             "type": "string",
-            "description": "UID of a migration",
+            "description": "UID of a migration session",
             "name": "uid",
             "in": "path",
             "required": true
@@ -13305,14 +13304,6 @@
         }
       }
     },
-    "CloudMigrationRequest": {
-      "type": "object",
-      "properties": {
-        "authToken": {
-          "type": "string"
-        }
-      }
-    },
     "CloudMigrationResponse": {
       "type": "object",
       "properties": {
@@ -13340,6 +13331,44 @@
           "items": {
             "$ref": "#/definitions/MigrateDataResponseListDTO"
           }
+        }
+      }
+    },
+    "CloudMigrationSessionListResponse": {
+      "type": "object",
+      "properties": {
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CloudMigrationSessionResponse"
+          }
+        }
+      }
+    },
+    "CloudMigrationSessionRequest": {
+      "type": "object",
+      "properties": {
+        "authToken": {
+          "type": "string"
+        }
+      }
+    },
+    "CloudMigrationSessionResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -16560,6 +16589,59 @@
       }
     },
     "MigrateDataResponseListDTO": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "MigrateSnapshotResponseDTO": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateSnapshotResponseItemDTO"
+          }
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "MigrateSnapshotResponseItemDTO": {
+      "type": "object",
+      "required": [
+        "type",
+        "refId",
+        "status"
+      ],
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "refId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "ERROR"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "DASHBOARD",
+            "DATASOURCE",
+            "FOLDER"
+          ]
+        }
+      }
+    },
+    "MigrateSnapshotResponseListDTO": {
       "type": "object",
       "properties": {
         "uid": {
@@ -19924,6 +20006,17 @@
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
     },
+    "SnapshotList": {
+      "type": "object",
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateSnapshotResponseListDTO"
+          }
+        }
+      }
+    },
     "Span": {
       "type": "object",
       "title": "A Span defines a continuous sequence of buckets.",
@@ -22372,13 +22465,25 @@
     "cloudMigrationRunListResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/CloudMigrationRunList"
+        "$ref": "#/definitions/SnapshotList"
       }
     },
     "cloudMigrationRunResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/MigrateDataResponseDTO"
+        "$ref": "#/definitions/MigrateSnapshotResponseDTO"
+      }
+    },
+    "cloudMigrationSessionListResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationSessionListResponse"
+      }
+    },
+    "cloudMigrationSessionResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationSessionResponse"
       }
     },
     "conflictError": {
