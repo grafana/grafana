@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash';
 import React from 'react';
-import { from, Subscription } from 'rxjs';
+import { finalize, from, Subscription } from 'rxjs';
 
 import { Scope } from '@grafana/data';
 import {
@@ -109,13 +109,19 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     if (isExpanded || isDifferentQuery) {
       this.setState({ loadingNodeName: name });
 
-      this.nodesFetchingSub = from(fetchNodes(name, query)).subscribe((childNodes) => {
-        currentNode.nodes = childNodes;
+      this.nodesFetchingSub = from(fetchNodes(name, query))
+        .pipe(
+          finalize(() => {
+            this.setState({ loadingNodeName: undefined });
+          })
+        )
+        .subscribe((childNodes) => {
+          currentNode.nodes = childNodes;
 
-        this.setState({ nodes, loadingNodeName: undefined });
+          this.setState({ nodes });
 
-        this.nodesFetchingSub?.unsubscribe();
-      });
+          this.nodesFetchingSub?.unsubscribe();
+        });
     }
   }
 

@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import React, { useMemo } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Checkbox, Icon, IconButton, Input, Spinner, useStyles2 } from '@grafana/ui';
+import { Checkbox, Icon, IconButton, Input, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { NodesMap } from './types';
@@ -54,7 +55,7 @@ export function ScopesTreeLevel({
       )}
 
       <div role="tree">
-        {isNodeLoading && <Spinner className={styles.loader} />}
+        {isNodeLoading && <Skeleton count={5} className={styles.loader} />}
 
         {!isNodeLoading &&
           childNodesArr.map((childNode) => {
@@ -124,7 +125,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: theme.spacing(1, 0),
     }),
     loader: css({
-      padding: theme.spacing(1, 0),
+      margin: theme.spacing(0.5, 0),
     }),
     itemTitle: css({
       alignItems: 'center',
