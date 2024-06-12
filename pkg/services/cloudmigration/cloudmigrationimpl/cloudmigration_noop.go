@@ -28,15 +28,15 @@ func (s *NoopServiceImpl) ValidateToken(ctx context.Context, cm cloudmigration.C
 	return cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
+func (s *NoopServiceImpl) GetSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetMigrationList(ctx context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
+func (s *NoopServiceImpl) GetSessionList(ctx context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) CreateMigration(ctx context.Context, cm cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
+func (s *NoopServiceImpl) CreateSession(ctx context.Context, cm cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
@@ -52,7 +52,7 @@ func (s *NoopServiceImpl) GetMigrationRunList(ctx context.Context, uid string) (
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) DeleteMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
+func (s *NoopServiceImpl) DeleteSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 

@@ -75,6 +75,19 @@ type CreateAccessTokenResponse struct {
 	Token string
 }
 
+type CreateAccessTokenResponseDTO struct {
+	Token string `json:"token"`
+}
+
+type GetAccessTokenResponseDTO struct {
+	ID          string `json:"id"`
+	DisplayName string `json:"displayName"`
+	ExpiresAt   string `json:"expiresAt"`
+	FirstUsedAt string `json:"firstUsedAt"`
+	LastUsedAt  string `json:"lastUsedAt"`
+	CreatedAt   string `json:"createdAt"`
+}
+
 type Base64EncodedTokenPayload struct {
 	Token    string
 	Instance Base64HGInstance

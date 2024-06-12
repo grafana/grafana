@@ -44,7 +44,7 @@ func (m FakeServiceImpl) DeleteToken(_ context.Context, _ string) error {
 	return nil
 }
 
-func (m FakeServiceImpl) CreateMigration(_ context.Context, _ cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
+func (m FakeServiceImpl) CreateSession(_ context.Context, _ cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
@@ -56,14 +56,14 @@ func (m FakeServiceImpl) CreateMigration(_ context.Context, _ cloudmigration.Clo
 	}, nil
 }
 
-func (m FakeServiceImpl) GetMigration(_ context.Context, _ string) (*cloudmigration.CloudMigrationSession, error) {
+func (m FakeServiceImpl) GetSession(_ context.Context, _ string) (*cloudmigration.CloudMigrationSession, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
 	return &cloudmigration.CloudMigrationSession{UID: "fake"}, nil
 }
 
-func (m FakeServiceImpl) DeleteMigration(_ context.Context, _ string) (*cloudmigration.CloudMigrationSession, error) {
+func (m FakeServiceImpl) DeleteSession(_ context.Context, _ string) (*cloudmigration.CloudMigrationSession, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
@@ -74,7 +74,7 @@ func (m FakeServiceImpl) UpdateMigration(ctx context.Context, uid string, reques
 	panic("implement me")
 }
 
-func (m FakeServiceImpl) GetMigrationList(_ context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
+func (m FakeServiceImpl) GetSessionList(_ context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
