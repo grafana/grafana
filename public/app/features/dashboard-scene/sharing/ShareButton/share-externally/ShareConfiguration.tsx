@@ -27,7 +27,7 @@ export default function ShareConfiguration() {
   );
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
-  const disableForm = isLoading || !publicDashboard?.isEnabled || !hasWritePermissions;
+  const disableForm = isLoading || !hasWritePermissions;
   const timeRangeState = sceneGraph.getTimeRange(dashboard);
   const timeRange = timeRangeState.useState();
 

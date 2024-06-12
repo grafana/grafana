@@ -161,7 +161,6 @@ function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
             variant="primary"
             fill="outline"
             icon="link"
-            disabled={!publicDashboard.isEnabled}
             getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
             onClipboardCopy={onCopyURL}
           >
