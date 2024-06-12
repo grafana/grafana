@@ -30,7 +30,6 @@ import { EmailSharing } from './EmailShare/EmailSharing';
 import { PublicSharing } from './PublicShare/PublicSharing';
 import ShareAlerts from './ShareAlerts';
 import ShareTypeSelect from './ShareTypeSelect';
-import { isEmailSharingEnabled, PublicDashboardShareType } from './utils';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
 
