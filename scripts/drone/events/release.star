@@ -281,3 +281,6 @@ def verify_release_pipeline(
         trigger = trigger,
         steps = [step],
     )
+
+def verify_release_for_download():
+    
