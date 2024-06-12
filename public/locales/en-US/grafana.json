@@ -1491,8 +1491,9 @@
         "ongoing": "Restoring...",
         "success": "Restore"
       },
-      "text": "This action will restore the following content:",
-      "title": "Restore"
+      "text_one": "This action will restore {{count}} dashboard.",
+      "text_other": "This action will restore {{count}} dashboards.",
+      "title": "Restore Dashboards"
     }
   },
   "refresh-picker": {

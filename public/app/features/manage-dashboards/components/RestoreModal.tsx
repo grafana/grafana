@@ -3,7 +3,6 @@ import React from 'react';
 import { ConfirmModal, Text } from '@grafana/ui';
 
 import { Trans, t } from '../../../core/internationalization';
-import { DescendantCount } from '../../browse-dashboards/components/BrowseActions/DescendantCount';
 import { DashboardTreeSelection } from '../../browse-dashboards/types';
 
 interface Props {
@@ -15,6 +14,7 @@ interface Props {
 }
 
 export const RestoreModal = ({ onConfirm, onDismiss, selectedItems, isLoading, ...props }: Props) => {
+  const numberOfDashboards = selectedItems ? Object.keys(selectedItems.dashboard).length : 0;
   const onRestore = async () => {
     await onConfirm();
     onDismiss();
@@ -22,13 +22,12 @@ export const RestoreModal = ({ onConfirm, onDismiss, selectedItems, isLoading, .
   return (
     <ConfirmModal
       body={
-        <>
-          <Text element="p">
-            <Trans i18nKey="recentlyDeleted.restoreModal.text">This action will restore the following content:</Trans>
-          </Text>
-          <DescendantCount selectedItems={selectedItems} />{' '}
-          {/*TODO: "3 items: 3 dashboards" doesn't make sense => replace by list of dashboards (list up to 5 dashboards) or number (from 6 dashboards) */}
-        </>
+        <Text element="p">
+          <Trans i18nKey="recentlyDeleted.restoreModal.text" count={numberOfDashboards}>
+            This action will restore {{ numberOfDashboards }} dashboards.
+          </Trans>
+        </Text>
+        // TODO: replace by list of dashboards (list up to 5 dashboards) or number (from 6 dashboards)?
       }
       confirmText={
         isLoading
@@ -38,7 +37,7 @@ export const RestoreModal = ({ onConfirm, onDismiss, selectedItems, isLoading, .
       confirmButtonVariant="primary"
       onDismiss={onDismiss}
       onConfirm={onRestore}
-      title={t('recentlyDeleted.restoreModal.title', 'Restore')}
+      title={t('recentlyDeleted.restoreModal.title', 'Restore Dashboards')}
       {...props}
     />
   );
