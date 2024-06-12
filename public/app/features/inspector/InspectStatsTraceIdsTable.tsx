@@ -18,7 +18,7 @@ export const InspectStatsTraceIdsTable = ({ name, traceIds }: Props) => {
 
   return (
     <div className={styles.wrapper}>
-      <div className="section-heading">{name}</div>
+      <div className={styles.heading}>{name}</div>
       <table className="filter-table width-30">
         <tbody>
           {traceIds.map((traceId, index) => {
@@ -35,10 +35,14 @@ export const InspectStatsTraceIdsTable = ({ name, traceIds }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    padding-bottom: ${theme.spacing(2)};
-  `,
-  cell: css`
-    text-align: right;
-  `,
+  heading: css({
+    fontSize: theme.typography.body.fontSize,
+    marginBottom: theme.spacing(1),
+  }),
+  wrapper: css({
+    paddingBottom: theme.spacing(2),
+  }),
+  cell: css({
+    textAlign: 'right',
+  }),
 });
