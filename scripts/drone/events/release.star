@@ -283,4 +283,10 @@ def verify_release_pipeline(
     )
 
 def verify_release_for_download():
-    
+    return {
+        "name": "verify-release-for-download",
+        "image": "appropriate-image",
+        "environment": {
+            "GCOM_TOKEN": from_secret("gcom_token"),
+        },
+    }
