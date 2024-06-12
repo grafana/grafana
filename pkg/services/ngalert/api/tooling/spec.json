@@ -4040,7 +4040,7 @@
           }
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -7037,7 +7037,7 @@
           "type": "string"
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -7147,10 +7147,6 @@
           "type": "string"
         }
       }
-    },
-    "RuleType": {
-      "type": "string",
-      "title": "RuleType models the type of a rule."
     },
     "SNSConfig": {
       "type": "object",

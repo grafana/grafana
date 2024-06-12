@@ -2845,7 +2845,7 @@
             "type": "object"
           },
           "type": {
-            "$ref": "#/components/schemas/RuleType"
+            "type": "string"
           }
         },
         "required": [
@@ -9520,7 +9520,7 @@
             "type": "string"
           },
           "type": {
-            "$ref": "#/components/schemas/RuleType"
+            "type": "string"
           }
         },
         "required": [
@@ -9637,10 +9637,6 @@
           "status"
         ],
         "type": "object"
-      },
-      "RuleType": {
-        "title": "RuleType models the type of a rule.",
-        "type": "string"
       },
       "SNSConfig": {
         "properties": {
@@ -12126,7 +12122,6 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -12145,53 +12140,10 @@
             },
             "type": "object"
           },
-          "comment": {
-            "description": "comment",
-            "type": "string"
-          },
-          "createdBy": {
-            "description": "created by",
-            "type": "string"
-          },
-          "endsAt": {
-            "description": "ends at",
-            "format": "date-time",
-            "type": "string"
-          },
-          "id": {
-            "description": "id",
-            "type": "string"
-          },
-          "matchers": {
-            "$ref": "#/components/schemas/matchers"
-          },
           "metadata": {
             "$ref": "#/components/schemas/SilenceMetadata"
-          },
-          "startsAt": {
-            "description": "starts at",
-            "format": "date-time",
-            "type": "string"
-          },
-          "status": {
-            "$ref": "#/components/schemas/silenceStatus"
-          },
-          "updatedAt": {
-            "description": "updated at",
-            "format": "date-time",
-            "type": "string"
           }
         },
-        "required": [
-          "comment",
-          "createdBy",
-          "endsAt",
-          "matchers",
-          "startsAt",
-          "id",
-          "status",
-          "updatedAt"
-        ],
         "type": "object"
       },
       "gettableGrafanaSilences": {
