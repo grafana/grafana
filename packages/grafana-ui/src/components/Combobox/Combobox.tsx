@@ -6,7 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
 
-interface SimpleSelectProps
+interface ComboboxProps
   extends Omit<InputProps, 'width' | 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter'> {
   onChange: (val: SelectableValue) => void;
   value: SelectableValue;
@@ -29,7 +29,7 @@ function itemFilter(inputValue: string) {
   };
 }
 
-export const SimpleSelect = ({ options, onChange, value, ...restProps }: SimpleSelectProps) => {
+export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxProps) => {
   const [items, setItems] = useState(options);
 
   const { getInputProps, getMenuProps, getItemProps, isOpen } = useCombobox({

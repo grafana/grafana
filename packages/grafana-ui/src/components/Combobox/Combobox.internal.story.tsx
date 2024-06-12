@@ -2,11 +2,11 @@ import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 import React, { useState } from 'react';
 
-import { SimpleSelect } from './SimpleSelect';
+import { Combobox } from './Combobox';
 
-const meta: Meta<typeof SimpleSelect> = {
-  title: 'Forms/SimpleSelect',
-  component: SimpleSelect,
+const meta: Meta<typeof Combobox> = {
+  title: 'Forms/Combobox',
+  component: Combobox,
   args: {
     loading: undefined,
     invalid: undefined,
@@ -27,10 +27,10 @@ const meta: Meta<typeof SimpleSelect> = {
   },
 };
 
-export const Basic: StoryFn<typeof SimpleSelect> = (args) => {
+export const Basic: StoryFn<typeof Combobox> = (args) => {
   const [value, setValue] = useState(args.value);
   return (
-    <SimpleSelect
+    <Combobox
       {...args}
       value={value}
       onChange={(val) => {
