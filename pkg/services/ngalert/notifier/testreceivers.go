@@ -95,27 +95,21 @@ func (am *alertmanager) GetReceivers(_ context.Context) ([]apimodels.Receiver, e
 	apiReceivers := make([]apimodels.Receiver, 0, len(am.Base.GetReceivers()))
 	for _, rcv := range am.Base.GetReceivers() {
 		// Build integrations slice for each receiver.
-		integrations := make([]*models.Integration, 0, len(rcv.Integrations()))
-		for _, integration := range rcv.Integrations() {
-			name := integration.Name()
-			sendResolved := integration.SendResolved()
-			ts, d, err := integration.GetReport()
+		integrations := make([]*models.Integration, 0, len(rcv.Integrations))
+		for _, integration := range rcv.Integrations {
+			name := integration.Name
+			sendResolved := integration.SendResolved
 			integrations = append(integrations, &apimodels.Integration{
 				Name:                      &name,
 				SendResolved:              &sendResolved,
-				LastNotifyAttempt:         strfmt.DateTime(ts),
-				LastNotifyAttemptDuration: d.String(),
-				LastNotifyAttemptError: func() string {
-					if err != nil {
-						return err.Error()
-					}
-					return ""
-				}(),
+				LastNotifyAttempt:         strfmt.DateTime(integration.LastNotifyAttempt),
+				LastNotifyAttemptDuration: integration.LastNotifyAttemptDuration,
+				LastNotifyAttemptError:    integration.LastNotifyAttemptError,
 			})
 		}
 
-		active := rcv.Active()
-		name := rcv.Name()
+		active := rcv.Active
+		name := rcv.Name
 		apiReceivers = append(apiReceivers, apimodels.Receiver{
 			Active:       &active,
 			Integrations: integrations,
