@@ -453,6 +453,16 @@
       "title": "Versiones"
     }
   },
+  "dashboards": {
+    "settings": {
+      "variables": {
+        "dependencies": {
+          "button": "",
+          "title": ""
+        }
+      }
+    }
+  },
   "data-source-list": {
     "empty-state": {
       "button-title": "",
@@ -496,6 +506,12 @@
       "query": "",
       "title": "",
       "visibility": ""
+    },
+    "logs": {
+      "maximum-pinned-logs": "",
+      "no-logs-found": "",
+      "scan-for-older-logs": "",
+      "stop-scan": ""
     },
     "rich-history": {
       "close-tooltip": "Cerrar el historial de consultas",
@@ -1478,11 +1494,6 @@
       "toggle-edit-mode": "Alternar el modo de edición de texto"
     },
     "query-editor-not-exported": "El complemento de la fuente de datos no exporta ningún componente del editor de consultas"
-  },
-  "recentlyDeleted": {
-    "filter": {
-      "placeholder": ""
-    }
   },
   "refresh-picker": {
     "aria-label": {
