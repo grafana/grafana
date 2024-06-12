@@ -6,17 +6,20 @@ import { sceneGraph } from '@grafana/scenes';
 import { FieldSet, Icon, Label, Spinner, Stack, Text, TimeRangeInput, Tooltip } from '@grafana/ui';
 import { Switch } from '@grafana/ui/src/components/Switch/Switch';
 import { contextSrv } from 'app/core/core';
+import { Trans, t } from 'app/core/internationalization';
 import { publicDashboardApi, useUpdatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { ConfigPublicDashboardForm } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
+
+import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
 type FormInput = Omit<ConfigPublicDashboardForm, 'isPaused'>;
 
-export default function ShareConfiguration({ dashboard }: { dashboard: DashboardScene }) {
+export default function ShareConfiguration() {
+  const { dashboard } = useShareDrawerContext();
   const [update, { isLoading }] = useUpdatePublicDashboardMutation();
 
   const { data: publicDashboard } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
@@ -24,7 +27,7 @@ export default function ShareConfiguration({ dashboard }: { dashboard: Dashboard
   );
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
-  const disableForm = isLoading || !publicDashboard?.isEnabled || !hasWritePermissions;
+  const disableForm = isLoading || !hasWritePermissions;
   const timeRangeState = sceneGraph.getTimeRange(dashboard);
   const timeRange = timeRangeState.useState();
 
@@ -55,7 +58,9 @@ export default function ShareConfiguration({ dashboard }: { dashboard: Dashboard
 
   return (
     <Stack direction="column" gap={2}>
-      <Text element="p">Settings</Text>
+      <Text element="p">
+        <Trans i18nKey="public-dashboard.configuration.settings-label">Settings</Trans>
+      </Text>
       <Stack justifyContent="space-between">
         <form onSubmit={handleSubmit(onUpdate)}>
           <FieldSet disabled={disableForm}>
@@ -72,13 +77,15 @@ export default function ShareConfiguration({ dashboard }: { dashboard: Dashboard
                         });
                         onChange('isTimeSelectionEnabled', e.currentTarget.checked);
                       }}
-                      label="Enable time range"
+                      label={t('public-dashboard.configuration.enable-time-range-label', 'Enable time range')}
                     />
                   )}
                   control={control}
                   name="isTimeSelectionEnabled"
                 />
-                <Label description="Allow people to change time range">Enable time range</Label>
+                <Label description="Allow people to change time range">
+                  <Trans i18nKey="public-dashboard.configuration.enable-time-range-label">Enable time range</Trans>
+                </Label>
               </Stack>
               <Stack gap={1}>
                 <Controller
@@ -92,21 +99,24 @@ export default function ShareConfiguration({ dashboard }: { dashboard: Dashboard
                         });
                         onChange('isAnnotationsEnabled', e.currentTarget.checked);
                       }}
-                      label="Display annotations"
+                      label={t('public-dashboard.configuration.display-annotations-label', 'Display annotations')}
                     />
                   )}
                   control={control}
                   name="isAnnotationsEnabled"
                 />
                 <Label style={{ flex: 1 }} description="Present annotations on this Dashboard">
-                  Display annotations
+                  <Trans i18nKey="public-dashboard.configuration.display-annotations-label">Display annotations</Trans>
                 </Label>
               </Stack>
               <Stack gap={1} alignItems="center">
                 <TimeRangeInput value={timeRange.value} showIcon disabled onChange={() => {}} />
                 <Tooltip
                   placement="right"
-                  content="The shared dashboard uses the default time range settings of the dashboard"
+                  content={t(
+                    'public-dashboard.configuration.time-range-tooltip',
+                    'The shared dashboard uses the default time range settings of the dashboard'
+                  )}
                 >
                   <Icon name="info-circle" size="sm" />
                 </Tooltip>

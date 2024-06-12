@@ -5,6 +5,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert } from '@grafana/ui';
 
+import { Trans } from '../../../../../core/internationalization';
 import { ShareSnapshotTab } from '../../ShareSnapshotTab';
 
 import { CreateSnapshot } from './CreateSnapshot';
@@ -37,8 +38,10 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
         <>
           {deleteSnapshotResult.value && (
             <Alert severity="info" title={''}>
-              The snapshot has been deleted. It may take up to an hour to clear from browser and CDN caches if already
-              accessed.
+              <Trans i18nKey="snapshot.share.deleted-alert">
+                The snapshot has been deleted. It may take up to an hour to clear from browser and CDN caches if already
+                accessed.
+              </Trans>
             </Alert>
           )}
           <CreateSnapshot onCreateClick={createSnapshot} isLoading={snapshotResult.loading} model={model} />

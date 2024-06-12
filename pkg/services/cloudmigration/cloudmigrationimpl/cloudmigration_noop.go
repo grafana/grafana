@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
+	"github.com/grafana/grafana/pkg/services/gcom"
 )
 
 // NoopServiceImpl Define the Service Implementation.
@@ -11,9 +12,18 @@ type NoopServiceImpl struct{}
 
 var _ cloudmigration.Service = (*NoopServiceImpl)(nil)
 
+func (s *NoopServiceImpl) GetToken(ctx context.Context) (gcom.TokenView, error) {
+	return gcom.TokenView{}, cloudmigration.ErrFeatureDisabledError
+}
+
 func (s *NoopServiceImpl) CreateToken(ctx context.Context) (cloudmigration.CreateAccessTokenResponse, error) {
 	return cloudmigration.CreateAccessTokenResponse{}, cloudmigration.ErrFeatureDisabledError
 }
+
+func (s *NoopServiceImpl) DeleteToken(ctx context.Context, uid string) error {
+	return cloudmigration.ErrFeatureDisabledError
+}
+
 func (s *NoopServiceImpl) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigration) error {
 	return cloudmigration.ErrFeatureDisabledError
 }

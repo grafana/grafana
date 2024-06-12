@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Dropdown, Field, Icon, Menu, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { IconButton } from '@grafana/ui/';
+import { t } from 'app/core/internationalization';
 import {
   useReshareAccessToRecipientMutation,
   useDeleteRecipientMutation,
@@ -16,19 +17,15 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard.EmailSharingConfiguration;
 
-const RecipientMenu = ({
-  onDelete,
-  onReshare,
-  disabled,
-}: {
-  onDelete: () => void;
-  onReshare: () => void;
-  disabled: boolean;
-}) => {
+const RecipientMenu = ({ onDelete, onReshare }: { onDelete: () => void; onReshare: () => void }) => {
   return (
     <Menu>
-      <Menu.Item disabled={disabled} label="Resend invite" onClick={onReshare} />
-      <Menu.Item disabled={disabled} label="Remove access" destructive onClick={onDelete} />
+      <Menu.Item label={t('public-dashboard.email-sharing.resend-invite-label', 'Resend invite')} onClick={onReshare} />
+      <Menu.Item
+        label={t('public-dashboard.email-sharing.revoke-access-label', 'Revoke access')}
+        destructive
+        onClick={onDelete}
+      />
     </Menu>
   );
 };
@@ -69,7 +66,7 @@ const EmailList = ({
                 <div className={styles.icon}>
                   <Icon name="user" />
                 </div>
-                <Text>{recipient.recipient} (guest)</Text>
+                <Text>{recipient.recipient}</Text>
               </Stack>
             </td>
             <td>{isLoading && <Spinner />}</td>
@@ -79,7 +76,6 @@ const EmailList = ({
                   <RecipientMenu
                     onDelete={() => onDeleteEmail(recipient.uid, recipient.recipient)}
                     onReshare={() => onReshare(recipient.uid)}
-                    disabled={!publicDashboard.isEnabled}
                   />
                 }
               >
@@ -100,8 +96,11 @@ export const EmailListConfiguration = ({ dashboard }: { dashboard: DashboardScen
   );
   return (
     <Field
-      label="People with access"
-      description="Only people you've directly invited can access this dashboard"
+      label={t('public-dashboard.email-sharing.recipient-list-title', 'People with access')}
+      description={t(
+        'public-dashboard.email-sharing.recipient-list-description',
+        "Only people you've directly invited can access this dashboard"
+      )}
       className={styles.listField}
     >
       {!!publicDashboard?.recipients?.length ? (
@@ -124,7 +123,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: 0,
   }),
   listContainer: css({
-    maxHeight: '200px',
+    maxHeight: '140px',
     overflowY: 'auto',
   }),
   table: css({

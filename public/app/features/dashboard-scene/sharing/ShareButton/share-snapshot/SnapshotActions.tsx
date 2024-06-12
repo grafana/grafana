@@ -14,13 +14,13 @@ export const SnapshotActions = ({ url, onDeleteClick, onNewSnapshotClick, isLoad
     <Stack justifyContent="space-between" gap={2}>
       <Stack justifyContent="flex-start" gap={2}>
         <ClipboardButton icon="link" variant="primary" fill="outline" getText={() => url}>
-          Copy link
+          <Trans i18nKey="snapshot.share.copy-link-button">Copy link</Trans>
         </ClipboardButton>
         <Button icon="trash-alt" variant="destructive" fill="outline" onClick={onDeleteClick}>
-          <Trans i18nKey="share-modal.snapshot.delete-button">Delete snapshot</Trans>
+          <Trans i18nKey="snapshot.share.delete-button">Delete snapshot</Trans>
         </Button>
         <Button variant="secondary" fill="solid" onClick={onNewSnapshotClick}>
-          New snapshot
+          <Trans i18nKey="snapshot.share.new-snapshot-button">New snapshot</Trans>
         </Button>
       </Stack>
       {isLoading && <Spinner />}

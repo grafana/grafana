@@ -1,119 +1,126 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import { css } from '@emotion/css';
+import React, { useMemo, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config, featureEnabled } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
-import { Button, ClipboardButton, Divider, Spinner, Stack } from '@grafana/ui';
+import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
+import { Button, ClipboardButton, Divider, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 import {
   useDeletePublicDashboardMutation,
   useGetPublicDashboardQuery,
-  useUpdatePublicDashboardMutation,
+  usePauseOrResumePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { NoUpsertPermissionsAlert } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/NoUpsertPermissionsAlert';
 import { Loader } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import {
   generatePublicDashboardUrl,
+  isEmailSharingEnabled,
   PublicDashboard,
   PublicDashboardShareType,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
+
+import { getDashboardSceneFor } from '../../../utils/utils';
+import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 
 import { EmailSharing } from './EmailShare/EmailSharing';
 import { PublicSharing } from './PublicShare/PublicSharing';
 import ShareAlerts from './ShareAlerts';
 import ShareTypeSelect from './ShareTypeSelect';
 
-export interface ShareExternallyDrawerState extends SceneObjectState {
-  shareType: SelectableValue<PublicDashboardShareType>;
-  options: Array<SelectableValue<PublicDashboardShareType>>;
-  dashboardRef: SceneObjectRef<DashboardScene>;
-}
-
-const hasEmailSharingEnabled =
-  !!config.featureToggles.publicDashboardsEmailSharing && featureEnabled('publicDashboardsEmailSharing');
-
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
-export class ShareExternally extends SceneObjectBase<ShareExternallyDrawerState> {
-  static Component = ShareExternallyDrawerRenderer;
 
-  constructor(state: Omit<ShareExternallyDrawerState, 'shareType' | 'options'>) {
-    const options = [{ label: 'Anyone with the link', value: PublicDashboardShareType.PUBLIC, icon: 'globe' }];
-    if (hasEmailSharingEnabled) {
-      options.unshift({ label: 'Only specific people', value: PublicDashboardShareType.EMAIL, icon: 'users-alt' });
-    }
-
-    super({
-      ...state,
-      options,
-      shareType: options[0],
-    });
-  }
-
-  onChangeShareType = (type: SelectableValue<PublicDashboardShareType>) => {
-    this.setState({ shareType: type });
+export const getAnyOneWithTheLinkShareOption = () => {
+  return {
+    label: t('public-dashboard.share-externally.public-share-type-option-label', 'Anyone with the link'),
+    description: t(
+      'public-dashboard.share-externally.public-share-type-option-description',
+      'Anyone with the link can access'
+    ),
+    value: PublicDashboardShareType.PUBLIC,
+    icon: 'globe',
   };
+};
+
+const getOnlySpecificPeopleShareOption = () => ({
+  label: t('public-dashboard.share-externally.email-share-type-option-label', 'Only specific people'),
+  description: t(
+    'public-dashboard.share-externally.email-share-type-option-description',
+    'Only people with access can open with the link'
+  ),
+  value: PublicDashboardShareType.EMAIL,
+  icon: 'users-alt',
+});
+
+const getShareExternallyOptions = () => {
+  return isEmailSharingEnabled()
+    ? [getOnlySpecificPeopleShareOption(), getAnyOneWithTheLinkShareOption()]
+    : [getAnyOneWithTheLinkShareOption()];
+};
+
+export class ShareExternally extends SceneObjectBase {
+  static Component = ShareExternallyRenderer;
 }
 
-function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExternally>) {
-  const { dashboardRef, shareType, options } = model.useState();
-  const dashboard = dashboardRef.resolve();
+function ShareExternallyRenderer({ model }: SceneComponentProps<ShareExternally>) {
+  const dashboard = getDashboardSceneFor(model);
   const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
-
-  useEffect(() => {
-    if (publicDashboard) {
-      const opt = options.find((opt) => opt.value === publicDashboard?.share)!;
-      model.onChangeShareType(opt);
-    }
-  }, [publicDashboard, options, model]);
-
-  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
-
-  const onCancel = useCallback(() => {
-    dashboard.closeModal();
-  }, [dashboard]);
-
-  const Config = useMemo(() => {
-    if (shareType.value === PublicDashboardShareType.EMAIL && hasEmailSharingEnabled) {
-      return <EmailSharing dashboard={dashboard} onCancel={onCancel} />;
-    }
-    if (shareType.value === PublicDashboardShareType.PUBLIC) {
-      return <PublicSharing dashboard={dashboard} onCancel={onCancel} />;
-    }
-    return <></>;
-  }, [shareType, dashboard, onCancel]);
+  const styles = useStyles2(getStyles);
 
   if (isLoading) {
     return <Loader />;
   }
 
   return (
+    <div className={styles.container}>
+      <ShareExternallyBase publicDashboard={publicDashboard} />
+    </div>
+  );
+}
+
+function ShareExternallyBase({ publicDashboard }: { publicDashboard?: PublicDashboard }) {
+  const options = getShareExternallyOptions();
+  const getShareType = useMemo(() => {
+    if (publicDashboard && isEmailSharingEnabled()) {
+      const opt = options.find((opt) => opt.value === publicDashboard?.share)!;
+      return opt ?? options[0];
+    }
+
+    return options[0];
+  }, [publicDashboard, options]);
+
+  const [shareType, setShareType] = useState<SelectableValue<PublicDashboardShareType>>(getShareType);
+
+  const Config = useMemo(() => {
+    if (shareType.value === PublicDashboardShareType.EMAIL && isEmailSharingEnabled()) {
+      return <EmailSharing />;
+    }
+
+    return <PublicSharing />;
+  }, [shareType]);
+
+  return (
     <Stack direction="column" gap={2} data-testid={selectors.container}>
-      <ShareAlerts dashboard={dashboard} />
-      <ShareTypeSelect
-        dashboard={dashboard}
-        setShareType={model.onChangeShareType}
-        value={shareType}
-        options={options}
-      />
-      {!hasWritePermissions && <NoUpsertPermissionsAlert mode={publicDashboard ? 'edit' : 'create'} />}
+      <ShareAlerts publicDashboard={publicDashboard} />
+      <ShareTypeSelect setShareType={setShareType} value={shareType} options={options} />
+
       {Config}
       {publicDashboard && (
         <>
           <Divider spacing={0} />
-          <Actions dashboard={dashboard} publicDashboard={publicDashboard} />
+          <Actions publicDashboard={publicDashboard} />
         </>
       )}
     </Stack>
   );
 }
-
-function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; publicDashboard: PublicDashboard }) {
-  const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
+function Actions({ publicDashboard }: { publicDashboard: PublicDashboard }) {
+  const { dashboard } = useShareDrawerContext();
+  const [update, { isLoading: isUpdateLoading }] = usePauseOrResumePublicDashboardMutation();
   const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
+  const styles = useStyles2(getStyles);
 
   const isLoading = isUpdateLoading || isDeleteLoading;
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
@@ -146,41 +153,60 @@ function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; pu
 
   return (
     <Stack alignItems="center" direction={{ xs: 'column', sm: 'row' }}>
-      <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
-        <ClipboardButton
-          data-testid={selectors.copyUrlButton}
-          variant="primary"
-          fill="outline"
-          icon="link"
-          disabled={!publicDashboard.isEnabled}
-          getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
-          onClipboardCopy={onCopyURL}
-        >
-          {publicDashboard.share === PublicDashboardShareType.PUBLIC ? 'Copy public link' : 'Copy link'}
-        </ClipboardButton>
-        <Button
-          icon="trash-alt"
-          variant="destructive"
-          fill="outline"
-          disabled={isLoading || !hasWritePermissions}
-          onClick={onDeleteClick}
-        >
-          {publicDashboard.share === PublicDashboardShareType.PUBLIC ? 'Revoke public URL' : 'Remove access'}
-        </Button>
-        <Button
-          icon={publicDashboard.isEnabled ? 'pause' : 'play'}
-          variant="secondary"
-          fill="outline"
-          tooltip={
-            publicDashboard.isEnabled ? 'Pausing will temporarily disable access to this dashboard for all users' : ''
-          }
-          onClick={onPauseOrResumeClick}
-          disabled={isLoading || !hasWritePermissions}
-        >
-          {publicDashboard.isEnabled ? 'Pause access' : 'Resume'}
-        </Button>
-      </Stack>
+      <div className={styles.actionsContainer}>
+        <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
+          <ClipboardButton
+            data-testid={selectors.copyUrlButton}
+            variant="primary"
+            fill="outline"
+            icon="link"
+            getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
+            onClipboardCopy={onCopyURL}
+          >
+            <Trans i18nKey="public-dashboard.share-externally.copy-link-button">Copy external link</Trans>
+          </ClipboardButton>
+          <Button
+            icon="trash-alt"
+            variant="destructive"
+            fill="outline"
+            disabled={isLoading || !hasWritePermissions}
+            onClick={onDeleteClick}
+          >
+            <Trans i18nKey="public-dashboard.share-externally.revoke-access-button">Revoke access</Trans>
+          </Button>
+          <Button
+            icon={publicDashboard.isEnabled ? 'pause' : 'play'}
+            variant="secondary"
+            fill="outline"
+            tooltip={
+              publicDashboard.isEnabled
+                ? t(
+                    'public-dashboard.share-externally.pause-access-tooltip',
+                    'Pausing will temporarily disable access to this dashboard for all users'
+                  )
+                : ''
+            }
+            onClick={onPauseOrResumeClick}
+            disabled={isLoading || !hasWritePermissions}
+          >
+            {publicDashboard.isEnabled ? (
+              <Trans i18nKey="public-dashboard.share-externally.pause-access-button">Pause access</Trans>
+            ) : (
+              <Trans i18nKey="public-dashboard.share-externally.resume-access-button">Resume access</Trans>
+            )}
+          </Button>
+        </Stack>
+      </div>
       {isLoading && <Spinner />}
     </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    paddingBottom: theme.spacing(2),
+  }),
+  actionsContainer: css({
+    width: '100%',
+  }),
+});

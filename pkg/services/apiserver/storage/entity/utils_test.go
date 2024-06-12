@@ -5,14 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
-	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/endpoints/request"
+
+	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 func TestResourceToEntity(t *testing.T) {
@@ -180,7 +181,6 @@ func TestEntityToResource(t *testing.T) {
 			expectedResourceVersion:   "1",
 			expectedUid:               "test-guid",
 			expectedAnnotations: map[string]string{
-				"grafana.app/action":           "CREATED",
 				"grafana.app/createdBy":        "test-created-by",
 				"grafana.app/folder":           "test-folder",
 				"grafana.app/slug":             "test-slug",

@@ -23,11 +23,13 @@ export function CreateSnapshot({ model, onCreateClick, isLoading }: Props) {
       <Alert severity="info" title={''}>
         <Stack justifyContent="space-between" gap={2} alignItems="center">
           <Text>
-            A Grafana dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and
-            panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.
+            <Trans i18nKey="snapshot.share.info-alert">
+              A Grafana dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and
+              panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.
+            </Trans>
           </Text>
           <Button variant="secondary" onClick={() => window.open(SNAPSHOT_URL, '_blank')} type="button">
-            Learn more
+            <Trans i18nKey="snapshot.share.learn-more-button">Learn more</Trans>
           </Button>
         </Stack>
       </Alert>
@@ -55,7 +57,7 @@ export function CreateSnapshot({ model, onCreateClick, isLoading }: Props) {
             </Button>
           )}
           <Button variant="primary" disabled={isLoading} onClick={() => onCreateClick()}>
-            <Trans i18nKey="share-modal.snapshot.local-button">Publish snapshot</Trans>
+            <Trans i18nKey="snapshot.share.local-button">Publish snapshot</Trans>
           </Button>
           <Button
             variant="secondary"
@@ -64,12 +66,12 @@ export function CreateSnapshot({ model, onCreateClick, isLoading }: Props) {
               dashboardRef?.resolve().closeModal();
             }}
           >
-            <Trans i18nKey="share-modal.snapshot.cancel-button">Cancel</Trans>
+            <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
           </Button>
           {isLoading && <Spinner />}
         </Stack>
         <TextLink icon="external-link-alt" href="/dashboard/snapshots">
-          View all snapshots
+          {t('snapshot.share.view-all-button', 'View all snapshots')}
         </TextLink>
       </Stack>
     </div>

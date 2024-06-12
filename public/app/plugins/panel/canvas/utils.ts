@@ -4,15 +4,13 @@ import { AppEvents, Field, getFieldDisplayName, LinkModel, PluginState, Selectab
 import appEvents from 'app/core/app_events';
 import { hasAlphaPanels, config } from 'app/core/config';
 import {
-  defaultElementItems,
-  advancedElementItems,
-  CanvasElementItem,
-  canvasElementRegistry,
-  CanvasElementOptions,
   CanvasConnection,
+  CanvasElementItem,
+  CanvasElementOptions,
   ConnectionDirection,
-} from 'app/features/canvas';
+} from 'app/features/canvas/element';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
+import { advancedElementItems, canvasElementRegistry, defaultElementItems } from 'app/features/canvas/registry';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';

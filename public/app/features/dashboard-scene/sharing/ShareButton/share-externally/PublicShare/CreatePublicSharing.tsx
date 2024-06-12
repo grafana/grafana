@@ -3,24 +3,19 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Checkbox, FieldSet, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, FieldSet, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { PublicDashboardShareType } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
 
-const PUBLIC_DASHBOARD_URL = 'https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/';
-export default function CreatePublicSharing({
-  dashboard,
-  onCancel,
-  hasError,
-}: {
-  dashboard: DashboardScene;
-  onCancel: () => void;
-  hasError: boolean;
-}) {
+import { PublicDashboardAlert } from '../../../../../dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/PublicDashboardAlert';
+import { useShareDrawerContext } from '../../../ShareDrawer/ShareDrawerContext';
+
+export default function CreatePublicSharing({ hasError }: { hasError: boolean }) {
+  const { dashboard } = useShareDrawerContext();
   const styles = useStyles2(getStyles);
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
@@ -41,32 +36,24 @@ export default function CreatePublicSharing({
 
   return (
     <>
-      {hasWritePermissions && (
-        <Alert
-          title=""
-          severity="warning"
-          buttonContent={<span>Learn more</span>}
-          onRemove={() => window.open(PUBLIC_DASHBOARD_URL, '_blank')}
-          bottomSpacing={0}
-        >
-          Sharing this dashboard externally makes it entirely accessible to anyone with the link. Currently, this
-          feature is limited to some data sources.
-        </Alert>
-      )}
+      {hasWritePermissions && <PublicDashboardAlert />}
       <form onSubmit={handleSubmit(onCreate)}>
         <FieldSet disabled={disableInputs}>
           <div className={styles.checkbox}>
             <Checkbox
               {...register('publicAcknowledgment', { required: true })}
-              label="I understand that this entire dashboard will be public.*"
+              label={t(
+                'public-dashboard.public-sharing.public-ack',
+                'I understand that this entire dashboard will be public.*'
+              )}
             />
           </div>
           <Stack direction="row" gap={1} alignItems="center">
             <Button type="submit" disabled={!isValid}>
-              Accept
+              <Trans i18nKey="public-dashboard.public-sharing.accept-button">Accept</Trans>
             </Button>
-            <Button variant="secondary" onClick={onCancel}>
-              Cancel
+            <Button variant="secondary" onClick={() => dashboard.closeModal()}>
+              <Trans i18nKey="public-dashboard.public-sharing.cancel-button">Cancel</Trans>
             </Button>
             {isLoading && <Spinner />}
           </Stack>
