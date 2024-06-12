@@ -50,11 +50,18 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
     .addCase(pauseRuleAction, (draft, { payload }) => {
       const { uid, pause } = payload;
 
+      let match = false;
+
       for (const rule of draft.rules) {
         if (isGrafanaRulerRule(rule) && rule.grafana_alert.uid === uid) {
+          match = true;
           rule.grafana_alert.is_paused = pause;
           break;
         }
+      }
+
+      if (!match) {
+        throw new Error(`No rule with UID ${uid} found in group ${draft.name}`);
       }
     })
     .addCase(reorderRulesActions, () => {

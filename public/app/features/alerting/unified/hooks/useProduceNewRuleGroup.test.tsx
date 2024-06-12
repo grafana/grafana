@@ -1,15 +1,17 @@
 import { HttpResponse } from 'msw';
 import React from 'react';
-import { render, userEvent } from 'test/test-utils';
+import { render, userEvent, screen } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../mockApi';
 import { mockCombinedRule, mockCombinedRuleGroup, mockGrafanaRulerRule } from '../mocks';
-import { grafanaRulerGroupName, grafanaRulerNamespace } from '../mocks/alertRuleApi';
+import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '../mocks/alertRuleApi';
 import { setUpdateRulerRuleNamespaceHandler } from '../mocks/server/configure';
+import { serializeRequest, waitForServerRequest } from '../mocks/server/events';
 import { stringifyErrorLike } from '../utils/misc';
 import { getRuleGroupLocationFromCombinedRule } from '../utils/rules';
 
@@ -22,15 +24,32 @@ beforeAll(() => {
 });
 
 it('should be able to pause a rule', async () => {
-  setUpdateRulerRuleNamespaceHandler({ delay: 1000 });
-  render(<TestComponent />);
+  const handler = setUpdateRulerRuleNamespaceHandler({ delay: 1000 });
 
-  expect(await byText(/uninitialized/i).find()).toBeInTheDocument();
+  render(<TestComponent />);
+  expect(byText(/uninitialized/i).get()).toBeInTheDocument();
 
   await userEvent.click(byRole('button').get());
   expect(await byText(/loading/i).find()).toBeInTheDocument();
+
+  const request = await waitForServerRequest(handler);
+  expect(await serializeRequest(request)).toMatchSnapshot();
+
   expect(await byText(/success/i).find()).toBeInTheDocument();
-  expect(await byText(/error/i).query()).not.toBeInTheDocument();
+  expect(byText(/error/i).query()).not.toBeInTheDocument();
+});
+
+it('should throw if the rule is not found in the group', async () => {
+  setUpdateRulerRuleNamespaceHandler();
+  render(
+    <TestComponent
+      rulerRule={mockGrafanaRulerRule({ uid: 'does-not-exist', namespace_uid: grafanaRulerNamespace.uid })}
+    />
+  );
+  expect(byText(/uninitialized/i).get()).toBeInTheDocument();
+
+  await userEvent.click(byRole('button').get());
+  expect(await byText(/error: No rule with UID/i).find()).toBeInTheDocument();
 });
 
 it('should be able to handle error', async () => {
@@ -50,10 +69,10 @@ it('should be able to handle error', async () => {
 });
 
 // this test component will cycle through the loading states
-const TestComponent = () => {
+const TestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
   const [pauseRule, requestState] = usePauseRuleInGroup();
 
-  const rulerRule = mockGrafanaRulerRule({ namespace_uid: grafanaRulerNamespace.uid });
+  const rulerRule = options.rulerRule ?? grafanaRulerRule;
   const rule = mockCombinedRule({
     rulerRule,
     group: mockCombinedRuleGroup(grafanaRulerGroupName, []),

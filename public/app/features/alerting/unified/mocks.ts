@@ -214,7 +214,7 @@ export const mockGrafanaRulerRule = (partial: Partial<GrafanaRuleDefinition> = {
     annotations: {},
     labels: {},
     grafana_alert: {
-      uid: '',
+      uid: 'mock-rule-uid-123',
       title: 'my rule',
       namespace_uid: 'NAMESPACE_UID',
       rule_group: 'my-group',

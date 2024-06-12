@@ -47,5 +47,8 @@ export const setGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) =
  * Makes rule namespace update slow down
  */
 export const setUpdateRulerRuleNamespaceHandler = (options?: HandlerOptions) => {
-  server.use(updateRulerRuleNamespaceHandler(options));
+  const handler = updateRulerRuleNamespaceHandler(options);
+  server.use(handler);
+
+  return handler;
 };

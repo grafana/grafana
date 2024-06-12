@@ -16,14 +16,17 @@ function useProduceNewRuleGroup() {
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useLazyQuery();
 
   const [isLoading, setLoading] = useState<boolean>(false);
-  const [isSuccess, setSuccess] = useState<boolean>(false);
+  const [isUninitialized, setUninitialized] = useState<boolean>(true);
   const [error, setError] = useState<unknown | undefined>();
 
+  const isError = Boolean(error);
+  const isSuccess = !isUninitialized && !isLoading && !isError;
+
   const requestState = {
-    isUninitialized: !isLoading && !error && !isSuccess,
+    isUninitialized,
     isLoading,
     isSuccess,
-    isError: Boolean(error),
+    isError,
     error,
   };
 
@@ -34,50 +37,45 @@ function useProduceNewRuleGroup() {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: dataSourceName }));
     const rulerConfig = getDataSourceRulerConfig(getState, dataSourceName);
 
+    setUninitialized(false);
     setLoading(true);
 
-    const currentRuleGroup = await fetchRuleGroup({
-      rulerConfig,
-      namespace: namespaceName,
-      group: groupName,
-    })
-      .unwrap()
-      .catch((error) => {
-        setError(error);
-        setSuccess(false);
-      });
-
-    if (!currentRuleGroup) {
-      return Promise.resolve();
-    }
-
-    // @TODO convert rule group to postable rule group – TypeScript is not complaining here because
-    // the interfaces are compatible but it _should_ complain
-    const newRuleGroup = ruleGroupReducer(currentRuleGroup, action);
-
-    // if we have no more rules left after reducing, remove the entire group
-    const updateOrDeleteFunction = () => {
-      if (newRuleGroup.rules.length === 0) {
-        return deleteRuleGroup({
-          rulerConfig,
-          namespace: namespaceName,
-          group: groupName,
-        }).unwrap();
-      }
-
-      return updateRuleGroup({
+    try {
+      const currentRuleGroup = await fetchRuleGroup({
         rulerConfig,
         namespace: namespaceName,
-        payload: newRuleGroup,
+        group: groupName,
       }).unwrap();
-    };
 
-    return updateOrDeleteFunction()
-      .catch(setError)
-      .finally(() => {
-        setSuccess(true);
-        setLoading(false);
-      });
+      // @TODO convert rule group to postable rule group – TypeScript is not complaining here because
+      // the interfaces are compatible but it _should_ complain
+      const newRuleGroup = ruleGroupReducer(currentRuleGroup, action);
+
+      // if we have no more rules left after reducing, remove the entire group
+      const updateOrDeleteFunction = () => {
+        if (newRuleGroup.rules.length === 0) {
+          return deleteRuleGroup({
+            rulerConfig,
+            namespace: namespaceName,
+            group: groupName,
+          }).unwrap();
+        }
+
+        return updateRuleGroup({
+          rulerConfig,
+          namespace: namespaceName,
+          payload: newRuleGroup,
+        }).unwrap();
+      };
+
+      const result = await updateOrDeleteFunction();
+      return result;
+    } catch (error) {
+      setError(error);
+      return;
+    } finally {
+      setLoading(false);
+    }
   };
 
   return [produceNewRuleGroup, requestState] as const;

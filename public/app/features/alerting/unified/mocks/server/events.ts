@@ -21,3 +21,14 @@ export function waitForServerRequest(handler: HttpHandler) {
     });
   });
 }
+
+export async function serializeRequest(request: Request) {
+  const { method, url, headers } = request;
+
+  return {
+    method,
+    url,
+    body: await request.json(),
+    headers: Array.from(headers.entries()),
+  };
+}
