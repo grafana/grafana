@@ -43,7 +43,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   });
   return (
     <div>
-      <Input suffix={<Icon name={isOpen ? 'angle-up' : 'angle-down'} />} {...restProps} {...getInputProps()} />
+      <Input suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />} {...restProps} {...getInputProps()} />
       <ul {...getMenuProps()}>
         {isOpen &&
           items.map((item, index) => {
