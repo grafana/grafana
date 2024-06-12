@@ -1255,3 +1255,22 @@ def slack_step(channel, template, secret):
             "template": template,
         },
     }
+
+def verify_release_for_download():
+    return {
+        "name": "verify-release-for-download",
+        "image": "appropriate-image", # JEV: node/curl?
+        "environment": {
+            "GCOM_TOKEN": from_secret("gcom_token"),
+        },
+        "commands": [
+            # Download/install gcom utility
+            "curl -L -o /usr/local/bin/gcom https://github.com/grafana/gcom/releases/latest/download/gcom-linux-amd64",
+            "chmod +x /usr/local/bin/gcom",
+            # Download/install node
+            "curl -sL https://deb.nodesource.com/setup_14.x | bash -",
+            "apt-get install -y nodejs",
+            "./drone/verify_release.sh",
+        ],
+        "depends_on": [], # JEV: anything?
+    }
