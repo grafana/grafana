@@ -107,7 +107,8 @@ Instead, create types for objects and use the Go standard library's
 
 ## 108 - Enable provisioning
 
-**State:** Abandoned: Grafana's file-based refactoring is limited to work natively only on on-premise installations of Grafana. We want to enhance the use of the API to enable provisioning for all Grafana instances in the future.
+**State:** Abandoned: The file-based refactoring of Grafana is limited to work natively only on on-premise installations of Grafana.
+We want to enhance the use of the API to enable provisioning for all Grafana instances in the future.
 
 All new features that require state should be able to configure Grafana using config files. For example:
 
