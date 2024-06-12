@@ -1,4 +1,4 @@
-package cmsclient
+package gmsclient
 
 import (
 	"bytes"
@@ -11,25 +11,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 )
 
-// NewCMSClient returns an implementation of Client that queries CloudMigrationService
-func NewCMSClient(domain string) Client {
-	return &cmsClientImpl{
+// NewGMSClient returns an implementation of Client that queries CloudMigrationService
+func NewGMSClient(domain string) Client {
+	return &gmsClientImpl{
 		domain: domain,
 		log:    log.New(logPrefix),
 	}
 }
 
-type cmsClientImpl struct {
+type gmsClientImpl struct {
 	domain string
 	log    *log.ConcreteLogger
 }
 
-func (c *cmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
+func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
 	logger := c.log.FromContext(ctx)
 
+	// TODO update service url to gms
 	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/validate-key", cm.ClusterSlug, c.domain)
 
-	// validation is an empty POST to CMS with the authorization header included
+	// validation is an empty POST to GMS with the authorization header included
 	req, err := http.NewRequest("POST", path, bytes.NewReader(nil))
 	if err != nil {
 		logger.Error("error creating http request for token validation", "err", err.Error())
@@ -63,9 +64,10 @@ func (c *cmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	return nil
 }
 
-func (c *cmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigrationSession, request cloudmigration.MigrateDataRequestDTO) (*cloudmigration.MigrateSnapshotResponseDTO, error) {
+func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigrationSession, request cloudmigration.MigrateDataRequestDTO) (*cloudmigration.MigrateSnapshotResponseDTO, error) {
 	logger := c.log.FromContext(ctx)
 
+	// TODO update service url to gms
 	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/migrate-data", cm.ClusterSlug, c.domain)
 
 	body, err := json.Marshal(request)
@@ -73,7 +75,7 @@ func (c *cmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.Cloud
 		return nil, fmt.Errorf("error marshaling request: %w", err)
 	}
 
-	// Send the request to cms with the associated auth token
+	// Send the request to GMS with the associated auth token
 	req, err := http.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	if err != nil {
 		c.log.Error("error creating http request for cloud migration run", "err", err.Error())

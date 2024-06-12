@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
-	"github.com/grafana/grafana/pkg/services/cloudmigration/cmsclient"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -38,7 +38,7 @@ type Service struct {
 	cfg *setting.Cfg
 
 	features  featuremgmt.FeatureToggles
-	cmsClient cmsclient.Client
+	gmsClient gmsclient.Client
 
 	dsService        datasources.DataSourceService
 	gcomService      gcom.Service
@@ -95,16 +95,16 @@ func ProvideService(
 	s.api = api.RegisterApi(routeRegister, s, tracer)
 
 	if !cfg.CloudMigration.IsDeveloperMode {
-		// get CMS path from the config
+		// get GMS path from the config
 		domain, err := s.parseCloudMigrationConfig()
 		if err != nil {
 			return nil, fmt.Errorf("config parse error: %w", err)
 		}
-		s.cmsClient = cmsclient.NewCMSClient(domain)
+		s.gmsClient = gmsclient.NewGMSClient(domain)
 
 		s.gcomService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken})
 	} else {
-		s.cmsClient = cmsclient.NewInMemoryClient()
+		s.gmsClient = gmsclient.NewInMemoryClient()
 		s.gcomService = &gcomStub{policies: map[string]gcom.AccessPolicy{}, token: nil}
 		s.cfg.StackID = "12345"
 	}
@@ -242,7 +242,7 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 		Instance: cloudmigration.Base64HGInstance{
 			StackID:     instance.ID,
 			RegionSlug:  instance.RegionSlug,
-			ClusterSlug: instance.ClusterSlug, // This should be used for routing to CMS
+			ClusterSlug: instance.ClusterSlug, // This should be used for routing to GMS
 			Slug:        instance.Slug,
 		},
 	})
@@ -279,7 +279,7 @@ func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigr
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.ValidateToken")
 	defer span.End()
 
-	if err := s.cmsClient.ValidateKey(ctx, cm); err != nil {
+	if err := s.gmsClient.ValidateKey(ctx, cm); err != nil {
 		return fmt.Errorf("validating key: %w", err)
 	}
 
@@ -359,7 +359,7 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 	}
 
 	migration := token.ToMigration()
-	// validate token against cms before saving
+	// validate token against GMS before saving
 	if err := s.ValidateToken(ctx, migration); err != nil {
 		return nil, fmt.Errorf("token validation: %w", err)
 	}
@@ -391,8 +391,8 @@ func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration
 		return nil, fmt.Errorf("migration data get error: %w", err)
 	}
 
-	// Call the cms service
-	resp, err := s.cmsClient.MigrateData(ctx, *migration, *request)
+	// Call the gms service
+	resp, err := s.gmsClient.MigrateData(ctx, *migration, *request)
 	if err != nil {
 		s.log.Error("error migrating data: %w", err)
 		return nil, fmt.Errorf("migrate data error: %w", err)

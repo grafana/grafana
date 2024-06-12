@@ -1,4 +1,4 @@
-package cmsclient
+package gmsclient
 
 import (
 	"context"

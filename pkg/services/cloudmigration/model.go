@@ -34,7 +34,7 @@ type Snapshot struct {
 	ID         int64     `json:"id" xorm:"pk autoincr 'id'"`
 	UID        string    `json:"uid" xorm:"uid"`
 	SessionUID string    `json:"sessionUid"`
-	Result     []byte    `json:"result"` //store raw cms response body
+	Result     []byte    `json:"result"` //store raw gms response body
 	Created    time.Time `json:"created"`
 	Updated    time.Time `json:"updated"`
 	Finished   time.Time `json:"finished"`

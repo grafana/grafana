@@ -11,7 +11,7 @@ type Service interface {
 	GetToken(ctx context.Context) (gcom.TokenView, error)
 	// CreateToken Creates a cloud migration token.
 	CreateToken(ctx context.Context) (CreateAccessTokenResponse, error)
-	// ValidateToken Sends a request to CMS to test the token.
+	// ValidateToken Sends a request to GMS to test the token.
 	ValidateToken(ctx context.Context, mig CloudMigrationSession) error
 	DeleteToken(ctx context.Context, uid string) error
 

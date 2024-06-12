@@ -1,4 +1,4 @@
-package cmsclient
+package gmsclient
 
 import (
 	"context"
@@ -12,6 +12,6 @@ type Client interface {
 	MigrateData(context.Context, cloudmigration.CloudMigrationSession, cloudmigration.MigrateDataRequestDTO) (*cloudmigration.MigrateSnapshotResponseDTO, error)
 }
 
-const logPrefix = "cloudmigration.cmsclient"
+const logPrefix = "cloudmigration.gmsclient"
 
 var ErrMigrationNotDeleted = errutil.Internal("cloudmigrations.developerModeEnabled", errutil.WithPublicMessage("Developer mode enabled"))
