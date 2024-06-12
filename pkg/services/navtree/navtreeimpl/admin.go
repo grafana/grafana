@@ -21,60 +21,9 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
 	authConfigUIAvailable := s.license.FeatureEnabled(social.SAMLProviderName) || s.cfg.LDAPAuthEnabled
 
-	// FIXME: If plugin admin is disabled or externally managed, server admins still need to access the page, this is why
-	// while we don't have a permissions for listing plugins the legacy check has to stay as a default
-	if pluginaccesscontrol.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text:     "Plugins",
-			Id:       "plugins",
-			SubTitle: "Extend the Grafana experience with plugins",
-			Icon:     "plug",
-			Url:      s.cfg.AppSubURL + "/plugins",
-		})
-	}
-
-	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionOrgUsersRead), ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll))) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text: "Users", SubTitle: "Manage users in Grafana", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
-		})
-	}
-
-	if hasAccess(ac.TeamsAccessEvaluator) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text:     "Teams",
-			Id:       "teams",
-			SubTitle: "Groups of users that have common dashboard and permission needs",
-			Icon:     "users-alt",
-			Url:      s.cfg.AppSubURL + "/org/teams",
-		})
-	}
-
-	if enableServiceAccount(s, c) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text:     "Service accounts",
-			Id:       "serviceaccounts",
-			SubTitle: "Use service accounts to run automated workloads in Grafana",
-			Icon:     "gf-service-account",
-			Url:      s.cfg.AppSubURL + "/org/serviceaccounts",
-		})
-	}
-
-	disabled, err := s.apiKeyService.IsDisabled(ctx, c.SignedInUser.GetOrgID())
-	if err != nil {
-		return nil, err
-	}
-	if hasAccess(ac.ApiKeyAccessEvaluator) && !disabled {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text:     "API keys",
-			Id:       "apikeys",
-			SubTitle: "Manage and create API keys that are used to interact with Grafana HTTP APIs",
-			Icon:     "key-skeleton-alt",
-			Url:      s.cfg.AppSubURL + "/org/apikeys",
-		})
-	}
-
+	generalNodeLinks := []*navtree.NavLink{}
 	if hasAccess(ac.OrgPreferencesAccessEvaluator) {
-		configNodes = append(configNodes, &navtree.NavLink{
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Default preferences",
 			Id:       "org-settings",
 			SubTitle: "Manage preferences across an organization",
@@ -82,32 +31,18 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/org",
 		})
 	}
-
-	if authConfigUIAvailable && hasAccess(ssoutils.EvalAuthenticationSettings(s.cfg)) ||
-		(hasAccess(ssoutils.OauthSettingsEvaluator(s.cfg)) && s.features.IsEnabled(ctx, featuremgmt.FlagSsoSettingsApi)) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text:     "Authentication",
-			Id:       "authentication",
-			SubTitle: "Manage your auth settings and configure single sign-on",
-			Icon:     "signin",
-			Url:      s.cfg.AppSubURL + "/admin/authentication",
-		})
-	}
-
 	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) {
-		configNodes = append(configNodes, &navtree.NavLink{
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text: "Settings", SubTitle: "View the settings defined in your Grafana config", Id: "server-settings", Url: s.cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
 		})
 	}
-
 	if hasGlobalAccess(orgsAccessEvaluator) {
-		configNodes = append(configNodes, &navtree.NavLink{
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text: "Organizations", SubTitle: "Isolated instances of Grafana running on the same server", Id: "global-orgs", Url: s.cfg.AppSubURL + "/admin/orgs", Icon: "building",
 		})
 	}
-
 	if s.features.IsEnabled(ctx, featuremgmt.FlagFeatureToggleAdminPage) && hasAccess(ac.EvalPermission(ac.ActionFeatureManagementRead)) {
-		configNodes = append(configNodes, &navtree.NavLink{
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Feature Toggles",
 			SubTitle: "View and edit feature toggles",
 			Id:       "feature-toggles",
@@ -115,9 +50,51 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Icon:     "toggle-on",
 		})
 	}
+	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) && s.features.IsEnabled(ctx, featuremgmt.FlagStorage) {
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
+			Text:     "Storage",
+			Id:       "storage",
+			SubTitle: "Manage file storage",
+			Icon:     "cube",
+			Url:      s.cfg.AppSubURL + "/admin/storage",
+		})
+	}
+	if s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) && c.SignedInUser.HasRole(org.RoleAdmin) {
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
+			Text:     "Migrate to Grafana Cloud",
+			Id:       "migrate-to-cloud",
+			SubTitle: "Copy configuration from your self-managed installation to a cloud stack",
+			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
+		})
+	}
 
+	generalNode := &navtree.NavLink{
+		Text:     "General",
+		SubTitle: "Manage default preferences and settings across Grafana",
+		Id:       navtree.NavIDCfgGeneral,
+		Url:      "/admin/general",
+		Icon:     "shield",
+		Children: generalNodeLinks,
+	}
+
+	if len(generalNode.Children) > 0 {
+		configNodes = append(configNodes, generalNode)
+	}
+
+	pluginsNodeLinks := []*navtree.NavLink{}
+	// FIXME: If plugin admin is disabled or externally managed, server admins still need to access the page, this is why
+	// while we don't have a permissions for listing plugins the legacy check has to stay as a default
+	if pluginaccesscontrol.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
+		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
+			Text:     "Plugins",
+			Id:       "plugins",
+			SubTitle: "Extend the Grafana experience with plugins",
+			Icon:     "plug",
+			Url:      s.cfg.AppSubURL + "/plugins",
+		})
+	}
 	if s.features.IsEnabled(ctx, featuremgmt.FlagCorrelations) && hasAccess(correlations.ConfigurationPageAccess) {
-		configNodes = append(configNodes, &navtree.NavLink{
+		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
 			Text:     "Correlations",
 			Icon:     "gf-glue",
 			SubTitle: "Add and configure correlations",
@@ -126,25 +103,80 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) && s.features.IsEnabled(ctx, featuremgmt.FlagStorage) {
-		storage := &navtree.NavLink{
-			Text:     "Storage",
-			Id:       "storage",
-			SubTitle: "Manage file storage",
-			Icon:     "cube",
-			Url:      s.cfg.AppSubURL + "/admin/storage",
-		}
-		configNodes = append(configNodes, storage)
+	pluginsNode := &navtree.NavLink{
+		Text:     "Plugins and data",
+		SubTitle: "Install plugins and define the relationships between data",
+		Id:       navtree.NavIDCfgPlugins,
+		Url:      "/admin/plugins",
+		Icon:     "shield",
+		Children: pluginsNodeLinks,
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagOnPremToCloudMigrations) && c.SignedInUser.HasRole(org.RoleAdmin) {
-		migrateToCloud := &navtree.NavLink{
-			Text:     "Migrate to Grafana Cloud",
-			Id:       "migrate-to-cloud",
-			SubTitle: "Copy configuration from your self-managed installation to a cloud stack",
-			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
-		}
-		configNodes = append(configNodes, migrateToCloud)
+	if len(pluginsNode.Children) > 0 {
+		configNodes = append(configNodes, pluginsNode)
+	}
+
+	accessNodeLinks := []*navtree.NavLink{}
+	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionOrgUsersRead), ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll))) {
+		accessNodeLinks = append(accessNodeLinks, &navtree.NavLink{
+			Text: "Users", SubTitle: "Manage users in Grafana", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
+		})
+	}
+	if hasAccess(ac.TeamsAccessEvaluator) {
+		accessNodeLinks = append(accessNodeLinks, &navtree.NavLink{
+			Text:     "Teams",
+			Id:       "teams",
+			SubTitle: "Groups of users that have common dashboard and permission needs",
+			Icon:     "users-alt",
+			Url:      s.cfg.AppSubURL + "/org/teams",
+		})
+	}
+	if enableServiceAccount(s, c) {
+		accessNodeLinks = append(accessNodeLinks, &navtree.NavLink{
+			Text:     "Service accounts",
+			Id:       "serviceaccounts",
+			SubTitle: "Use service accounts to run automated workloads in Grafana",
+			Icon:     "gf-service-account",
+			Url:      s.cfg.AppSubURL + "/org/serviceaccounts",
+		})
+	}
+	disabled, err := s.apiKeyService.IsDisabled(ctx, c.SignedInUser.GetOrgID())
+	if err != nil {
+		return nil, err
+	}
+	if hasAccess(ac.ApiKeyAccessEvaluator) && !disabled {
+		accessNodeLinks = append(accessNodeLinks, &navtree.NavLink{
+			Text:     "API keys",
+			Id:       "apikeys",
+			SubTitle: "Manage and create API keys that are used to interact with Grafana HTTP APIs",
+			Icon:     "key-skeleton-alt",
+			Url:      s.cfg.AppSubURL + "/org/apikeys",
+		})
+	}
+
+	usersNode := &navtree.NavLink{
+		Text:     "Users and access",
+		SubTitle: "Configure access for individual users, teams, and service accounts",
+		Id:       navtree.NavIDCfgAccess,
+		Url:      "/admin/access",
+		Icon:     "shield",
+		Children: accessNodeLinks,
+	}
+
+	if len(usersNode.Children) > 0 {
+		configNodes = append(configNodes, usersNode)
+	}
+
+	if authConfigUIAvailable && hasAccess(ssoutils.EvalAuthenticationSettings(s.cfg)) ||
+		(hasAccess(ssoutils.OauthSettingsEvaluator(s.cfg)) && s.features.IsEnabled(ctx, featuremgmt.FlagSsoSettingsApi)) {
+		configNodes = append(configNodes, &navtree.NavLink{
+			Text:      "Authentication",
+			Id:        "authentication",
+			SubTitle:  "Manage your auth settings and configure single sign-on",
+			Icon:      "signin",
+			IsSection: true,
+			Url:       s.cfg.AppSubURL + "/admin/authentication",
+		})
 	}
 
 	configNode := &navtree.NavLink{

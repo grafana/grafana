@@ -105,9 +105,11 @@ func parseLabels(cloudwatchLabel string, query *models.CloudWatchQuery) (string,
 
 	splitLabels := strings.Split(cloudwatchLabel, keySeparator)
 	// The first part is the name of the time series, followed by the labels
+	name := splitLabels[0]
 	labelsIndex := 1
 
-	labels := data.Labels{}
+	// set Series to the name of the time series as a fallback
+	labels := data.Labels{"Series": name}
 	for _, dim := range dims {
 		values := query.Dimensions[dim]
 		if isSingleValue(values) {
@@ -118,7 +120,7 @@ func parseLabels(cloudwatchLabel string, query *models.CloudWatchQuery) (string,
 		labels[dim] = splitLabels[labelsIndex]
 		labelsIndex++
 	}
-	return splitLabels[0], labels
+	return name, labels
 }
 
 func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery, addSeriesLabelAsFallback bool) data.Labels {

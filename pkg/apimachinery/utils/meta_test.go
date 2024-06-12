@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type TestResource struct {
@@ -161,11 +161,19 @@ func TestMetaAccessor(t *testing.T) {
 			"grafana.app/originKey":  "kkk",
 			"grafana.app/folder":     "folderUID",
 		}, res.GetAnnotations())
+
+		meta.SetNamespace("aaa")
+		require.Equal(t, "aaa", res.GetNamespace())
+		require.Equal(t, "aaa", meta.GetNamespace())
 	})
 
 	t.Run("find titles", func(t *testing.T) {
 		// with a k8s object that has Spec.Title
 		obj := &TestResource{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "TestKIND",
+				APIVersion: "aaa/v1alpha2",
+			},
 			Spec: Spec{
 				Title: "HELLO",
 			},
@@ -187,6 +195,9 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, "HELLO", meta.FindTitle(""))
 		obj.Spec.Title = ""
 		require.Equal(t, "", meta.FindTitle("xxx"))
+
+		gvk := meta.GetGroupVersionKind()
+		require.Equal(t, "aaa/v1alpha2, Kind=TestKIND", gvk.String())
 
 		// with a k8s object without Spec.Title
 		obj2 := &TestResource2{}
