@@ -776,7 +776,7 @@ func TestRuleRoutine(t *testing.T) {
 		sch.stateManager.ResolvedRetention = 4 * time.Second
 		sch.stateManager.ResendDelay = 2 * time.Second
 		sch.stateManager.Put([]*state.State{
-			stateForRule(t, rule, sch.clock.Now(), eval.Alerting), // Add existing Alerting state so evals will resolve.
+			stateForRule(rule, sch.clock.Now(), eval.Alerting), // Add existing Alerting state so evals will resolve.
 		})
 
 		ruleStore.PutRule(context.Background(), rule)
@@ -825,11 +825,11 @@ func ruleFactoryFromScheduler(sch *schedule) ruleFactory {
 	return newRuleFactory(sch.appURL, sch.disableGrafanaFolder, sch.maxAttempts, sch.alertsSender, sch.stateManager, sch.evaluatorFactory, &sch.schedulableAlertRules, sch.clock, sch.featureToggles, sch.metrics, sch.log, sch.tracer, sch.recordingWriter, sch.evalAppliedFunc, sch.stopAppliedFunc)
 }
 
-func stateForRule(t *testing.T, rule *models.AlertRule, ts time.Time, evalState eval.State) *state.State {
+func stateForRule(rule *models.AlertRule, ts time.Time, evalState eval.State) *state.State {
 	s := &state.State{
 		OrgID:              rule.OrgID,
 		AlertRuleUID:       rule.UID,
-		CacheID:            "",
+		CacheID:            0,
 		State:              evalState,
 		Annotations:        make(map[string]string),
 		Labels:             make(map[string]string),
@@ -849,8 +849,7 @@ func stateForRule(t *testing.T, rule *models.AlertRule, ts time.Time, evalState 
 	}
 	il := models.InstanceLabels(s.Labels)
 	s.Labels = data.Labels(il)
-	id, err := il.StringKey()
-	require.NoError(t, err)
+	id := il.Fingerprint()
 	s.CacheID = id
 
 	return s
