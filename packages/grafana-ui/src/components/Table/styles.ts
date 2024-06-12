@@ -22,8 +22,6 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     rowStyled?: boolean,
     rowExpanded?: boolean
   ) => {
-    console.log(rowExpanded);
-
     return css({
       label: overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow',
       padding: `${cellPadding}px`,
