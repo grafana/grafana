@@ -99,24 +99,24 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     const name = path[path.length - 1];
     const currentNode = currentLevel[name];
 
-    if (isExpanded || currentNode.query !== query) {
+    const isDifferentQuery = currentNode.query !== query;
+
+    currentNode.isExpanded = isExpanded;
+    currentNode.query = query;
+
+    this.setState({ nodes, loadingNodeName: undefined });
+
+    if (isExpanded || isDifferentQuery) {
       this.setState({ loadingNodeName: name });
 
       this.nodesFetchingSub = from(fetchNodes(name, query)).subscribe((childNodes) => {
         currentNode.nodes = childNodes;
-        currentNode.isExpanded = isExpanded;
-        currentNode.query = query;
 
         this.setState({ nodes, loadingNodeName: undefined });
 
         this.nodesFetchingSub?.unsubscribe();
       });
     }
-
-    currentNode.isExpanded = isExpanded;
-    currentNode.query = query;
-
-    this.setState({ nodes, loadingNodeName: undefined });
   }
 
   public toggleNodeSelect(path: string[]) {
