@@ -1,8 +1,6 @@
 package user
 
 import (
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -231,33 +229,12 @@ type CompleteEmailVerifyCommand struct {
 	Code string
 }
 
-type ErrCaseInsensitiveLoginConflict struct {
-	Users []User
-}
-
 type UserDisplayDTO struct {
 	ID        int64  `json:"id,omitempty"`
 	UID       string `json:"uid,omitempty"`
 	Name      string `json:"name,omitempty"`
 	Login     string `json:"login,omitempty"`
 	AvatarURL string `json:"avatarUrl"`
-}
-
-func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
-	return ErrCaseInsensitive
-}
-
-func (e *ErrCaseInsensitiveLoginConflict) Error() string {
-	n := len(e.Users)
-
-	userStrings := make([]string, 0, n)
-	for _, v := range e.Users {
-		userStrings = append(userStrings, fmt.Sprintf("%s (email:%s, id:%d)", v.Login, v.Email, v.ID))
-	}
-
-	return fmt.Sprintf(
-		"Found a conflict in user login information. %d users already exist with either the same login or email: [%s].",
-		n, strings.Join(userStrings, ", "))
 }
 
 type Filter interface {
