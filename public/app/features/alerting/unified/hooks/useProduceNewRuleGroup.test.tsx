@@ -1,6 +1,6 @@
 import { HttpResponse } from 'msw';
 import React from 'react';
-import { render, userEvent, screen } from 'test/test-utils';
+import { render, userEvent } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { setBackendSrv } from '@grafana/runtime';
@@ -33,7 +33,10 @@ it('should be able to pause a rule', async () => {
   expect(await byText(/loading/i).find()).toBeInTheDocument();
 
   const request = await waitForServerRequest(handler);
-  expect(await serializeRequest(request)).toMatchSnapshot();
+  const serializedRequest = await serializeRequest(request);
+
+  expect(serializedRequest.body).toHaveProperty('rules[0].grafana_alert.is_paused', true);
+  expect(serializedRequest).toMatchSnapshot();
 
   expect(await byText(/success/i).find()).toBeInTheDocument();
   expect(byText(/error/i).query()).not.toBeInTheDocument();
