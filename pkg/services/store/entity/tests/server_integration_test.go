@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
@@ -122,7 +121,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 	testCtx := createTestContext(t)
 	ctx := appcontext.WithUser(testCtx.ctx, testCtx.user)
 
-	fakeUser := store.GetUserIDString(testCtx.user)
+	fakeUser := testCtx.user.GetUID().String()
 	firstVersion := int64(0)
 	group := "test.grafana.app"
 	resource := "jsonobjs"
