@@ -64,13 +64,26 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	return nil
 }
 
-func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigrationSession, request cloudmigration.MigrateDataRequestDTO) (*cloudmigration.MigrateDataResponseDTO, error) {
+func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigrationSession, request cloudmigration.MigrateDataRequest) (*cloudmigration.MigrateDataResponse, error) {
 	logger := c.log.FromContext(ctx)
 
 	// TODO update service url to gms
 	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/migrate-data", cm.ClusterSlug, c.domain)
 
-	body, err := json.Marshal(request)
+	items := make([]MigrateDataRequestItemDTO, len(request.Items))
+	for i := 0; i < len(request.Items); i++ {
+		item := request.Items[i]
+		items[i] = MigrateDataRequestItemDTO{
+			Type:  MigrateDataType(item.Type),
+			RefID: item.RefID,
+			Name:  item.Name,
+			Data:  item.Data,
+		}
+	}
+	r := MigrateDataRequestDTO{
+		Items: items,
+	}
+	body, err := json.Marshal(r)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling request: %w", err)
 	}
@@ -100,11 +113,24 @@ func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.Cloud
 		}
 	}()
 
-	var result cloudmigration.MigrateDataResponseDTO
+	var result MigrateDataResponseDTO
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		logger.Error("unmarshalling response body: %w", err)
 		return nil, fmt.Errorf("unmarshalling migration run response: %w", err)
 	}
 
-	return &result, nil
+	respItems := make([]cloudmigration.MigrateDataResponseItem, len(result.Items))
+	for i := 0; i < len(result.Items); i++ {
+		item := result.Items[i]
+		respItems[i] = cloudmigration.MigrateDataResponseItem{
+			Type:   cloudmigration.MigrateDataType(item.Type),
+			RefID:  item.RefID,
+			Status: cloudmigration.ItemStatus(item.Status),
+			Error:  item.Error,
+		}
+	}
+	return &cloudmigration.MigrateDataResponse{
+		RunUID: result.RunUID,
+		Items:  respItems,
+	}, nil
 }

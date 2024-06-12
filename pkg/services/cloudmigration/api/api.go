@@ -81,7 +81,7 @@ func (cma *CloudMigrationAPI) GetToken(c *contextmodel.ReqContext) response.Resp
 		return response.ErrOrFallback(http.StatusInternalServerError, "fetching cloud migration access token", err)
 	}
 
-	return response.JSON(http.StatusOK, cloudmigration.GetAccessTokenResponseDTO{
+	return response.JSON(http.StatusOK, GetAccessTokenResponseDTO{
 		ID:          token.ID,
 		DisplayName: token.DisplayName,
 		ExpiresAt:   token.ExpiresAt,
@@ -89,16 +89,6 @@ func (cma *CloudMigrationAPI) GetToken(c *contextmodel.ReqContext) response.Resp
 		LastUsedAt:  token.LastUsedAt,
 		CreatedAt:   token.CreatedAt,
 	})
-}
-
-// swagger:parameters getCloudMigrationToken
-type GetCloudMigrationToken struct {
-}
-
-// swagger:response cloudMigrationGetTokenResponse
-type CloudMigrationGetTokenResponse struct {
-	// in: body
-	Body cloudmigration.GetAccessTokenResponseDTO
 }
 
 // swagger:route POST /cloudmigration/token migrations createCloudMigrationToken
@@ -122,13 +112,7 @@ func (cma *CloudMigrationAPI) CreateToken(c *contextmodel.ReqContext) response.R
 		return response.ErrOrFallback(http.StatusInternalServerError, "creating gcom access token", err)
 	}
 
-	return response.JSON(http.StatusOK, cloudmigration.CreateAccessTokenResponseDTO(resp))
-}
-
-// swagger:response cloudMigrationCreateTokenResponse
-type CloudMigrationCreateTokenResponse struct {
-	// in: body
-	Body cloudmigration.CreateAccessTokenResponseDTO
+	return response.JSON(http.StatusOK, CreateAccessTokenResponseDTO(resp))
 }
 
 // swagger:route DELETE /cloudmigration/token/{uid} migrations deleteCloudMigrationToken
@@ -159,18 +143,6 @@ func (cma *CloudMigrationAPI) DeleteToken(c *contextmodel.ReqContext) response.R
 	return response.Empty(http.StatusNoContent)
 }
 
-// swagger:parameters deleteCloudMigrationToken
-type DeleteCloudMigrationToken struct {
-	// UID of a cloud migration token
-	//
-	// in: path
-	UID string `json:"uid"`
-}
-
-// swagger:response cloudMigrationDeleteTokenResponse
-type CloudMigrationDeleteTokenResponse struct {
-}
-
 // swagger:route GET /cloudmigration/migration migrations getSessionList
 //
 // Get a list of all cloud migration sessions that have been created.
@@ -184,18 +156,24 @@ func (cma *CloudMigrationAPI) GetSessionList(c *contextmodel.ReqContext) respons
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetSessionList")
 	defer span.End()
 
-	sessions, err := cma.cloudMigrationService.GetSessionList(ctx)
+	sl, err := cma.cloudMigrationService.GetSessionList(ctx)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "session list error", err)
 	}
 
-	return response.JSON(http.StatusOK, sessions)
-}
-
-// swagger:response cloudMigrationSessionListResponse
-type CloudMigrationSessionListResponse struct {
-	// in: body
-	Body cloudmigration.CloudMigrationSessionListResponse
+	slDTOs := make([]CloudMigrationSessionResponseDTO, len(sl.Sessions))
+	for i := 0; i < len(slDTOs); i++ {
+		s := sl.Sessions[i]
+		slDTOs[i] = CloudMigrationSessionResponseDTO{
+			UID:     s.UID,
+			Slug:    s.Slug,
+			Created: s.Created,
+			Updated: s.Updated,
+		}
+	}
+	return response.JSON(http.StatusOK, CloudMigrationSessionListResponseDTO{
+		Sessions: slDTOs,
+	})
 }
 
 // swagger:route GET /cloudmigration/migration/{uid} migrations getSession
@@ -216,25 +194,17 @@ func (cma *CloudMigrationAPI) GetSession(c *contextmodel.ReqContext) response.Re
 		return response.Error(http.StatusBadRequest, "invalid session uid", err)
 	}
 
-	session, err := cma.cloudMigrationService.GetSession(ctx, uid)
+	s, err := cma.cloudMigrationService.GetSession(ctx, uid)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusNotFound, "session not found", err)
 	}
-	return response.JSON(http.StatusOK, session)
-}
 
-// swagger:parameters getSession
-type GetCloudMigrationSessionRequest struct {
-	// UID of a migration session
-	//
-	// in: path
-	UID string `json:"uid"`
-}
-
-// swagger:response cloudMigrationSessionResponse
-type CloudMigrationSessionResponse struct {
-	// in: body
-	Body cloudmigration.CloudMigrationSessionResponse
+	return response.JSON(http.StatusOK, CloudMigrationSessionResponseDTO{
+		UID:     s.UID,
+		Slug:    s.Slug,
+		Created: s.Created,
+		Updated: s.Updated,
+	})
 }
 
 // swagger:route POST /cloudmigration/migration migrations createSession
@@ -250,22 +220,23 @@ func (cma *CloudMigrationAPI) CreateSession(c *contextmodel.ReqContext) response
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.CreateSession")
 	defer span.End()
 
-	cmd := cloudmigration.CloudMigrationSessionRequest{}
+	cmd := CloudMigrationSessionRequestDTO{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.ErrOrFallback(http.StatusBadRequest, "bad request data", err)
 	}
-	session, err := cma.cloudMigrationService.CreateSession(ctx, cmd)
+	s, err := cma.cloudMigrationService.CreateSession(ctx, cloudmigration.CloudMigrationSessionRequest{
+		AuthToken: cmd.AuthToken,
+	})
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "session creation error", err)
 	}
-	return response.JSON(http.StatusOK, session)
-}
 
-// swagger:parameters createSession
-type CreateSession struct {
-	// in:body
-	// required:true
-	Body cloudmigration.CloudMigrationSessionRequest
+	return response.JSON(http.StatusOK, CloudMigrationSessionResponseDTO{
+		UID:     s.UID,
+		Slug:    s.Slug,
+		Created: s.Created,
+		Updated: s.Updated,
+	})
 }
 
 // swagger:route POST /cloudmigration/migration/{uid}/run migrations runCloudMigration
@@ -293,21 +264,21 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 		return response.ErrOrFallback(http.StatusInternalServerError, "migration run error", err)
 	}
 
-	return response.JSON(http.StatusOK, result)
-}
+	items := make([]MigrateDataResponseItemDTO, len(result.Items))
+	for i := 0; i < len(result.Items); i++ {
+		item := result.Items[i]
+		items[i] = MigrateDataResponseItemDTO{
+			Type:   MigrateDataType(item.Type),
+			RefID:  item.RefID,
+			Status: ItemStatus(item.Status),
+			Error:  item.Error,
+		}
+	}
 
-// swagger:parameters runCloudMigration
-type RunCloudMigrationRequest struct {
-	// UID of a migration
-	//
-	// in: path
-	UID string `json:"uid"`
-}
-
-// swagger:response cloudMigrationRunResponse
-type CloudMigrationRunResponse struct {
-	// in: body
-	Body cloudmigration.MigrateDataResponseDTO
+	return response.JSON(http.StatusOK, MigrateDataResponseDTO{
+		RunUID: result.RunUID,
+		Items:  items,
+	})
 }
 
 // swagger:route GET /cloudmigration/migration/run/{runUID} migrations getCloudMigrationRun
@@ -333,21 +304,27 @@ func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) respon
 		return response.ErrOrFallback(http.StatusInternalServerError, "migration status error", err)
 	}
 
-	runResponse, err := migrationStatus.ToResponse()
+	result, err := migrationStatus.GetResult()
 	if err != nil {
 		cma.log.Error("could not return migration run", "err", err)
 		return response.Error(http.StatusInternalServerError, "migration run get error", err)
 	}
 
-	return response.JSON(http.StatusOK, runResponse)
-}
+	items := make([]MigrateDataResponseItemDTO, len(result.Items))
+	for i := 0; i < len(result.Items); i++ {
+		item := result.Items[i]
+		items[i] = MigrateDataResponseItemDTO{
+			Type:   MigrateDataType(item.Type),
+			RefID:  item.RefID,
+			Status: ItemStatus(item.Status),
+			Error:  item.Error,
+		}
+	}
 
-// swagger:parameters getCloudMigrationRun
-type GetMigrationRunParams struct {
-	// RunUID of a migration run
-	//
-	// in: path
-	RunUID string `json:"runUID"`
+	return response.JSON(http.StatusOK, MigrateDataResponseDTO{
+		RunUID: result.RunUID,
+		Items:  items,
+	})
 }
 
 // swagger:route GET /cloudmigration/migration/{uid}/run migrations getCloudMigrationRunList
@@ -373,21 +350,13 @@ func (cma *CloudMigrationAPI) GetMigrationRunList(c *contextmodel.ReqContext) re
 		return response.ErrOrFallback(http.StatusInternalServerError, "list migration status error", err)
 	}
 
-	return response.JSON(http.StatusOK, runList)
-}
-
-// swagger:parameters getCloudMigrationRunList
-type GetCloudMigrationRunList struct {
-	// UID of a migration
-	//
-	// in: path
-	UID string `json:"uid"`
-}
-
-// swagger:response cloudMigrationRunListResponse
-type CloudMigrationRunListResponse struct {
-	// in: body
-	Body cloudmigration.SnapshotList
+	runs := make([]MigrateDataResponseListDTO, len(runList.Runs))
+	for i := 0; i < len(runList.Runs); i++ {
+		runs[i] = MigrateDataResponseListDTO{runList.Runs[i].RunUID}
+	}
+	return response.JSON(http.StatusOK, SnapshotListDTO{
+		Runs: runs,
+	})
 }
 
 // swagger:route DELETE /cloudmigration/migration/{uid} migrations deleteSession
@@ -413,12 +382,4 @@ func (cma *CloudMigrationAPI) DeleteSession(c *contextmodel.ReqContext) response
 		return response.ErrOrFallback(http.StatusInternalServerError, "session delete error", err)
 	}
 	return response.Empty(http.StatusOK)
-}
-
-// swagger:parameters deleteSession
-type DeleteMigrationSessionRequest struct {
-	// UID of a migration session
-	//
-	// in: path
-	UID string `json:"uid"`
 }

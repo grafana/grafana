@@ -377,7 +377,7 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 	}, nil
 }
 
-func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration.MigrateDataResponseDTO, error) {
+func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration.MigrateDataResponse, error) {
 	// Get migration to read the auth token
 	migration, err := s.GetSession(ctx, uid)
 	if err != nil {
@@ -419,8 +419,8 @@ func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration
 	return resp, nil
 }
 
-func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.MigrateDataRequestDTO, error) {
-	var migrationDataSlice []cloudmigration.MigrateDataRequestItemDTO
+func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.MigrateDataRequest, error) {
+	var migrationDataSlice []cloudmigration.MigrateDataRequestItem
 	// Data sources
 	dataSources, err := s.getDataSources(ctx)
 	if err != nil {
@@ -428,7 +428,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.Mig
 		return nil, err
 	}
 	for _, ds := range dataSources {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.DatasourceDataType,
 			RefID: ds.UID,
 			Name:  ds.Name,
@@ -445,7 +445,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.Mig
 
 	for _, dashboard := range dashboards {
 		dashboard.Data.Del("id")
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.DashboardDataType,
 			RefID: dashboard.UID,
 			Name:  dashboard.Title,
@@ -461,14 +461,14 @@ func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.Mig
 	}
 
 	for _, f := range folders {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItemDTO{
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.FolderDataType,
 			RefID: f.UID,
 			Name:  f.Title,
 			Data:  f,
 		})
 	}
-	migrationData := &cloudmigration.MigrateDataRequestDTO{
+	migrationData := &cloudmigration.MigrateDataRequest{
 		Items: migrationDataSlice,
 	}
 
@@ -565,9 +565,9 @@ func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*clou
 		return nil, fmt.Errorf("retrieving migration statuses from db: %w", err)
 	}
 
-	runList := &cloudmigration.SnapshotList{Runs: []cloudmigration.MigrateDataResponseListDTO{}}
+	runList := &cloudmigration.SnapshotList{Runs: []cloudmigration.MigrateDataResponseList{}}
 	for _, s := range runs {
-		runList.Runs = append(runList.Runs, cloudmigration.MigrateDataResponseListDTO{
+		runList.Runs = append(runList.Runs, cloudmigration.MigrateDataResponseList{
 			RunUID: s.UID,
 		})
 	}

@@ -56,6 +56,6 @@ func (s *NoopServiceImpl) CreateMigrationRun(context.Context, cloudmigration.Clo
 	return "", cloudmigration.ErrInternalNotImplementedError
 }
 
-func (s *NoopServiceImpl) RunMigration(context.Context, string) (*cloudmigration.MigrateDataResponseDTO, error) {
+func (s *NoopServiceImpl) RunMigration(context.Context, string) (*cloudmigration.MigrateDataResponse, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }

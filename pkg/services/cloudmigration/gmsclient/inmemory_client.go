@@ -22,16 +22,14 @@ func (c *memoryClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cl
 func (c *memoryClientImpl) MigrateData(
 	ctx context.Context,
 	cm cloudmigration.CloudMigrationSession,
-	request cloudmigration.MigrateDataRequestDTO,
-) (*cloudmigration.MigrateDataResponseDTO, error) {
-	//return nil, ErrMigrationNotDeleted
-
-	result := cloudmigration.MigrateDataResponseDTO{
-		Items: make([]cloudmigration.MigrateDataResponseItemDTO, len(request.Items)),
+	request cloudmigration.MigrateDataRequest,
+) (*cloudmigration.MigrateDataResponse, error) {
+	result := cloudmigration.MigrateDataResponse{
+		Items: make([]cloudmigration.MigrateDataResponseItem, len(request.Items)),
 	}
 
 	for i, v := range request.Items {
-		result.Items[i] = cloudmigration.MigrateDataResponseItemDTO{
+		result.Items[i] = cloudmigration.MigrateDataResponseItem{
 			Type:   v.Type,
 			RefID:  v.RefID,
 			Status: cloudmigration.ItemStatusOK,

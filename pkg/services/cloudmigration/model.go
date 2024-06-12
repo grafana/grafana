@@ -17,31 +17,31 @@ var (
 	ErrTokenNotFound               = errutil.NotFound("cloudmigrations.tokenNotFound").Errorf("Token not found")
 )
 
-// CloudMigration api dtos
+// CloudMigration domain structs
 type CloudMigrationSession struct {
-	ID          int64     `json:"id" xorm:"pk autoincr 'id'"`
-	UID         string    `json:"uid" xorm:"uid"`
-	AuthToken   string    `json:"-"`
-	Slug        string    `json:"slug"`
-	StackID     int       `json:"stackID" xorm:"stack_id"`
-	RegionSlug  string    `json:"regionSlug"`
-	ClusterSlug string    `json:"clusterSlug"`
-	Created     time.Time `json:"created"`
-	Updated     time.Time `json:"updated"`
+	ID          int64  `xorm:"pk autoincr 'id'"`
+	UID         string `xorm:"uid"`
+	AuthToken   string
+	Slug        string
+	StackID     int `xorm:"stack_id"`
+	RegionSlug  string
+	ClusterSlug string
+	Created     time.Time
+	Updated     time.Time
 }
 
 type CloudMigrationSnapshot struct {
-	ID         int64     `json:"id" xorm:"pk autoincr 'id'"`
-	UID        string    `json:"uid" xorm:"uid"`
-	SessionUID string    `json:"sessionUid" xorm:"session_uid"`
-	Result     []byte    `json:"result"` //store raw gms response body
-	Created    time.Time `json:"created"`
-	Updated    time.Time `json:"updated"`
-	Finished   time.Time `json:"finished"`
+	ID         int64  `xorm:"pk autoincr 'id'"`
+	UID        string `xorm:"uid"`
+	SessionUID string `xorm:"session_uid"`
+	Result     []byte //store raw gms response body
+	Created    time.Time
+	Updated    time.Time
+	Finished   time.Time
 }
 
-func (r CloudMigrationSnapshot) ToResponse() (*MigrateDataResponseDTO, error) {
-	var result MigrateDataResponseDTO
+func (r CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
+	var result MigrateDataResponse
 	err := json.Unmarshal(r.Result, &result)
 	if err != nil {
 		return nil, errors.New("could not parse result of run")
@@ -51,41 +51,28 @@ func (r CloudMigrationSnapshot) ToResponse() (*MigrateDataResponseDTO, error) {
 }
 
 type SnapshotList struct {
-	Runs []MigrateDataResponseListDTO `json:"runs"`
+	Runs []MigrateDataResponseList
 }
 
 type CloudMigrationSessionRequest struct {
-	AuthToken string `json:"authToken"`
+	AuthToken string
 }
 
 type CloudMigrationSessionResponse struct {
-	UID     string    `json:"uid"`
-	Slug    string    `json:"slug"`
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
+	UID     string
+	Slug    string
+	Created time.Time
+	Updated time.Time
 }
 
 type CloudMigrationSessionListResponse struct {
-	Sessions []CloudMigrationSessionResponse `json:"sessions"`
+	Sessions []CloudMigrationSessionResponse
 }
 
 // access token
 
 type CreateAccessTokenResponse struct {
 	Token string
-}
-
-type CreateAccessTokenResponseDTO struct {
-	Token string `json:"token"`
-}
-
-type GetAccessTokenResponseDTO struct {
-	ID          string `json:"id"`
-	DisplayName string `json:"displayName"`
-	ExpiresAt   string `json:"expiresAt"`
-	FirstUsedAt string `json:"firstUsedAt"`
-	LastUsedAt  string `json:"lastUsedAt"`
-	CreatedAt   string `json:"createdAt"`
 }
 
 type Base64EncodedTokenPayload struct {
@@ -110,9 +97,8 @@ type Base64HGInstance struct {
 	ClusterSlug string
 }
 
-// DTOs for GMS API
+// GMS domain structs
 
-// swagger:enum MigrateDataType
 type MigrateDataType string
 
 const (
@@ -121,18 +107,17 @@ const (
 	FolderDataType     MigrateDataType = "FOLDER"
 )
 
-type MigrateDataRequestDTO struct {
-	Items []MigrateDataRequestItemDTO `json:"items"`
+type MigrateDataRequest struct {
+	Items []MigrateDataRequestItem
 }
 
-type MigrateDataRequestItemDTO struct {
-	Type  MigrateDataType `json:"type"`
-	RefID string          `json:"refId"`
-	Name  string          `json:"name"`
-	Data  interface{}     `json:"data"`
+type MigrateDataRequestItem struct {
+	Type  MigrateDataType
+	RefID string
+	Name  string
+	Data  interface{}
 }
 
-// swagger:enum ItemStatus
 type ItemStatus string
 
 const (
@@ -140,21 +125,18 @@ const (
 	ItemStatusError ItemStatus = "ERROR"
 )
 
-type MigrateDataResponseDTO struct {
-	RunUID string                       `json:"uid"`
-	Items  []MigrateDataResponseItemDTO `json:"items"`
+type MigrateDataResponse struct {
+	RunUID string
+	Items  []MigrateDataResponseItem
 }
 
-type MigrateDataResponseListDTO struct {
-	RunUID string `json:"uid"`
+type MigrateDataResponseList struct {
+	RunUID string
 }
 
-type MigrateDataResponseItemDTO struct {
-	// required:true
-	Type MigrateDataType `json:"type"`
-	// required:true
-	RefID string `json:"refId"`
-	// required:true
-	Status ItemStatus `json:"status"`
-	Error  string     `json:"error,omitempty"`
+type MigrateDataResponseItem struct {
+	Type   MigrateDataType
+	RefID  string
+	Status ItemStatus
+	Error  string
 }
