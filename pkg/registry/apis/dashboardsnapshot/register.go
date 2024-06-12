@@ -27,7 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -138,7 +138,7 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 		namespacer: b.namespacer,
 		options:    b.options,
 	}
-	legacyStore.tableConverter = utils.NewTableConverter(
+	legacyStore.tableConverter = gapiutil.NewTableConverter(
 		resourceInfo.GroupResource(),
 		[]metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},

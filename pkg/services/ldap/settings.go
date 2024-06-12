@@ -17,7 +17,7 @@ const defaultTimeout = 10
 
 // Config holds list of connections to LDAP
 type Config struct {
-	Servers []*ServerConfig `toml:"servers"`
+	Servers []*ServerConfig `toml:"servers" json:"servers"`
 }
 
 // ServerConfig holds connection data to LDAP
@@ -25,51 +25,54 @@ type ServerConfig struct {
 	Host string `toml:"host"`
 	Port int    `toml:"port"`
 
-	UseSSL        bool     `toml:"use_ssl"`
-	StartTLS      bool     `toml:"start_tls"`
-	SkipVerifySSL bool     `toml:"ssl_skip_verify"`
-	MinTLSVersion string   `toml:"min_tls_version"`
-	minTLSVersion uint16   `toml:"-"`
-	TLSCiphers    []string `toml:"tls_ciphers"`
-	tlsCiphers    []uint16 `toml:"-"`
+	UseSSL        bool     `toml:"use_ssl" json:"use_ssl,omitempty"`
+	StartTLS      bool     `toml:"start_tls" json:"start_tls,omitempty"`
+	SkipVerifySSL bool     `toml:"ssl_skip_verify" json:"ssl_skip_verify,omitempty"`
+	MinTLSVersion string   `toml:"min_tls_version" json:"min_tls_version,omitempty"`
+	minTLSVersion uint16   `toml:"-" json:"-"`
+	TLSCiphers    []string `toml:"tls_ciphers" json:"tls_ciphers,omitempty"`
+	tlsCiphers    []uint16 `toml:"-" json:"-"`
 
-	RootCACert   string       `toml:"root_ca_cert"`
-	ClientCert   string       `toml:"client_cert"`
-	ClientKey    string       `toml:"client_key"`
-	BindDN       string       `toml:"bind_dn"`
-	BindPassword string       `toml:"bind_password"`
-	Timeout      int          `toml:"timeout"`
-	Attr         AttributeMap `toml:"attributes"`
+	RootCACert      string       `toml:"root_ca_cert" json:"root_ca_cert,omitempty"`
+	RootCACertValue []string     `json:"root_ca_cert_value,omitempty"`
+	ClientCert      string       `toml:"client_cert" json:"client_cert,omitempty"`
+	ClientCertValue string       `json:"client_cert_value,omitempty"`
+	ClientKey       string       `toml:"client_key" json:"client_key,omitempty"`
+	ClientKeyValue  string       `json:"client_key_value,omitempty"`
+	BindDN          string       `toml:"bind_dn" json:"bind_dn,omitempty"`
+	BindPassword    string       `toml:"bind_password" json:"bind_password,omitempty"`
+	Timeout         int          `toml:"timeout" json:"timeout,omitempty"`
+	Attr            AttributeMap `toml:"attributes" json:"attributes,omitempty"`
 
-	SearchFilter  string   `toml:"search_filter"`
-	SearchBaseDNs []string `toml:"search_base_dns"`
+	SearchFilter  string   `toml:"search_filter" json:"search_filter,omitempty"`
+	SearchBaseDNs []string `toml:"search_base_dns" json:"search_base_dns,omitempty"`
 
-	GroupSearchFilter              string   `toml:"group_search_filter"`
-	GroupSearchFilterUserAttribute string   `toml:"group_search_filter_user_attribute"`
-	GroupSearchBaseDNs             []string `toml:"group_search_base_dns"`
+	GroupSearchFilter              string   `toml:"group_search_filter" json:"group_search_filter,omitempty"`
+	GroupSearchFilterUserAttribute string   `toml:"group_search_filter_user_attribute" json:"group_search_filter_user_attribute,omitempty"`
+	GroupSearchBaseDNs             []string `toml:"group_search_base_dns" json:"group_search_base_dns,omitempty"`
 
-	Groups []*GroupToOrgRole `toml:"group_mappings"`
+	Groups []*GroupToOrgRole `toml:"group_mappings" json:"group_mappings,omitempty"`
 }
 
 // AttributeMap is a struct representation for LDAP "attributes" setting
 type AttributeMap struct {
-	Username string `toml:"username"`
-	Name     string `toml:"name"`
-	Surname  string `toml:"surname"`
-	Email    string `toml:"email"`
-	MemberOf string `toml:"member_of"`
+	Username string `toml:"username" json:"username,omitempty"`
+	Name     string `toml:"name" json:"name,omitempty"`
+	Surname  string `toml:"surname" json:"surname,omitempty"`
+	Email    string `toml:"email" json:"email,omitempty"`
+	MemberOf string `toml:"member_of" json:"member_of,omitempty"`
 }
 
 // GroupToOrgRole is a struct representation of LDAP
 // config "group_mappings" setting
 type GroupToOrgRole struct {
-	GroupDN string `toml:"group_dn"`
-	OrgId   int64  `toml:"org_id"`
+	GroupDN string `toml:"group_dn" json:"group_dn"`
+	OrgId   int64  `toml:"org_id" json:"org_id"`
 
 	// This pointer specifies if setting was set (for backwards compatibility)
-	IsGrafanaAdmin *bool `toml:"grafana_admin"`
+	IsGrafanaAdmin *bool `toml:"grafana_admin" json:"grafana_admin,omitempty"`
 
-	OrgRole org.RoleType `toml:"org_role"`
+	OrgRole org.RoleType `toml:"org_role" json:"org_role,omitempty"`
 }
 
 // logger for all LDAP stuff
