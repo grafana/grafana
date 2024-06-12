@@ -118,12 +118,6 @@ export function getDataTrailsApp() {
 function getInitialTrail() {
   const newTrail = newMetricsTrail();
 
-  // Set the initial state of the newTrail based on the URL,
-  // In case we are initializing from an externally created URL or a page reload
-  //  getUrlSyncManager().initSync(newTrail);
-  // Remove the URL sync for now. It will be restored on the trail if it is activated.
-  //  getUrlSyncManager().cleanUp(newTrail);
-
   // If one of the recent trails is a match to the newTrail derived from the current URL,
   // let's restore that trail so that a page refresh doesn't create a new trail.
   const recentMatchingTrail = getTrailStore().findMatchingRecentTrail(newTrail)?.resolve();
