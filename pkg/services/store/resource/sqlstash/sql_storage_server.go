@@ -72,7 +72,7 @@ type sqlResourceServer struct {
 	cancel      context.CancelFunc
 	stream      chan *resource.WatchResponse
 	tracer      trace.Tracer
-	validator   resource.RequestValidator
+	validator   resource.EventValidator
 
 	once    sync.Once
 	initErr error
@@ -138,7 +138,9 @@ func (s *sqlResourceServer) init() error {
 
 	s.sess = sess
 	s.dialect = migrator.NewDialect(engine.DriverName())
-	s.validator = resource.NewSimpleValidator()
+	s.validator = resource.NewEventValidator(resource.EventValidatorOptions{
+		// use snowflake IDs
+	})
 
 	// set up the broadcaster
 	s.broadcaster, err = sqlstash.NewBroadcaster(s.ctx, func(stream chan *resource.WatchResponse) error {
@@ -198,16 +200,25 @@ func (s *sqlResourceServer) Create(ctx context.Context, req *resource.CreateRequ
 	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
 	defer span.End()
 
+	if req.Key.ResourceVersion > 0 {
+		return &resource.CreateResponse{
+			Status: badRequest("can not update a specific resource version"),
+		}, nil
+	}
+
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
 
-	obj, status := s.validator.ValidateCreate(ctx, req)
-	if status != nil {
-		return &resource.CreateResponse{Status: status}, nil
+	event, err := s.validator.PrepareCreate(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if event.Status != nil {
+		return &resource.CreateResponse{Status: event.Status}, nil
 	}
 
-	fmt.Printf("TODO, CREATE: %v", obj.GetName())
+	fmt.Printf("TODO, CREATE: %v", event)
 
 	return nil, ErrNotImplementedYet
 }
@@ -216,28 +227,42 @@ func (s *sqlResourceServer) Update(ctx context.Context, req *resource.UpdateRequ
 	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
 	defer span.End()
 
+	if req.Key.ResourceVersion < 0 {
+		return &resource.UpdateResponse{
+			Status: badRequest("update must include the previous version"),
+		}, nil
+	}
+
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
 
-	old, err := s.GetResource(ctx, &resource.GetResourceRequest{
-		Key: req.Key,
+	latest, err := s.GetResource(ctx, &resource.GetResourceRequest{
+		Key: req.Key.WithoutResourceVersion(),
 	})
 	if err != nil {
 		return nil, err
 	}
-	if old.Value == nil {
+	if latest.Value == nil {
 		return &resource.UpdateResponse{
 			Status: badRequest("existing value does not exist"),
 		}, nil
 	}
-
-	obj, status := s.validator.ValidateUpdate(ctx, req, old)
-	if status != nil {
-		return &resource.UpdateResponse{Status: status}, nil
+	if latest.ResourceVersion != req.Key.ResourceVersion {
+		return &resource.UpdateResponse{
+			Status: badRequest("not the latest resource version"),
+		}, nil
 	}
 
-	fmt.Printf("TODO, UPDATE: %+v", obj.GetName())
+	event, err := s.validator.PrepareUpdate(ctx, req, latest.Value)
+	if err != nil {
+		return nil, err
+	}
+	if event.Status != nil {
+		return &resource.UpdateResponse{Status: event.Status}, nil
+	}
+
+	fmt.Printf("TODO, UPDATE: %v", event)
 
 	return nil, ErrNotImplementedYet
 }
