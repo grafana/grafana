@@ -27,8 +27,8 @@ export type DataQuerySpecResponse = {
 };
 
 export type User = {
-  userId: string;
-  login: string;
+  userId?: string;
+  login?: string;
 };
 
 export const CREATED_BY_KEY = 'grafana.app/createdBy';

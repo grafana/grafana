@@ -5,12 +5,20 @@ import { CREATED_BY_KEY, DataQuerySpec, DataQuerySpecResponse, DataQueryTarget }
 
 export const parseCreatedByValue = (value?: string) => {
   // https://github.com/grafana/grafana/blob/main/pkg/services/store/auth.go#L27
-  if (value !== undefined) {
+  if (value !== undefined && value !== '') {
     const vals = value.split(':');
-    return {
-      userId: vals[1],
-      login: vals[2],
-    };
+    if (vals.length > 2) {
+      return {
+        userId: vals[1],
+        login: vals[2],
+      };
+    } else if (vals.length > 1) {
+      return {
+        userId: vals[1],
+      };
+    } else {
+      return { login: value };
+    }
   } else {
     return undefined;
   }
