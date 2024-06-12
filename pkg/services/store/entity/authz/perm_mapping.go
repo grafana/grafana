@@ -1,9 +1,14 @@
 package authz
 
 import (
-	"strings"
-
 	authzlib "github.com/grafana/authlib/authz"
+)
+
+const (
+	EntityCreate = "create"
+	EntityRead   = "read"
+	EntityWrite  = "write"
+	EntityDelete = "delete"
 )
 
 func toAction(kind, method string) string {
@@ -11,8 +16,7 @@ func toAction(kind, method string) string {
 }
 
 func ToRBAC(kind, uid, folder, method string) (action string, scope authzlib.Resource) {
-	method = strings.ToLower(strings.TrimPrefix(method, "/entity.EntityStore/"))
-
+	// method = strings.ToLower(strings.TrimPrefix(method, "/entity.EntityStore/"))
 	action = toAction(kind, method)
 
 	if folder != "" {
@@ -23,7 +27,7 @@ func ToRBAC(kind, uid, folder, method string) (action string, scope authzlib.Res
 		}
 	} else {
 		// No scope for create outside of folder
-		if method == "create" {
+		if method == EntityCreate {
 			return
 		}
 

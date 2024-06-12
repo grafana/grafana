@@ -99,9 +99,10 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 	}
 
 	return appcontext.WithUser(ctx, &user.SignedInUser{
-		Login:  claims.Rest.Email,
-		UserID: userID,
-		OrgID:  orgID,
+		NamespacedID: id,
+		Login:        claims.Rest.Email,
+		UserID:       userID,
+		OrgID:        orgID,
 	}), nil
 }
 

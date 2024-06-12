@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -24,8 +25,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	entityAuthz "github.com/grafana/grafana/pkg/services/store/entity/authz"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const entityTable = "entity"
@@ -43,11 +46,12 @@ var (
 // Make sure we implement correct interfaces
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 
-func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer, authorizer authz.Client /*, cfg *setting.Cfg */) (SqlEntityServer, error) {
+func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer, authorizer authz.Client, cfg *setting.Cfg) (SqlEntityServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	entityServer := &sqlEntityServer{
 		authorizer: authorizer,
+		cfg:        cfg,
 		db:         db,
 		log:        log.New("sql-entity-server"),
 		ctx:        ctx,
@@ -71,6 +75,7 @@ type SqlEntityServer interface {
 
 type sqlEntityServer struct {
 	authorizer  authz.Client
+	cfg         *setting.Cfg
 	log         log.Logger
 	db          db.EntityDBInterface // needed to keep xorm engine in scope
 	sess        *session.SessionDB
@@ -275,10 +280,30 @@ func oldReadEntity(rows *sql.Rows, r FieldSelectRequest) (*entity.Entity, error)
 	return raw, nil
 }
 
+// TODO move to some utility somewhere
+// TODO check this is the correct way to parse the stack id
+func StackID(stackID string, orgID int64) (int64, error) {
+	if stackID == "" {
+		return orgID, nil
+	}
+	stackIDSplit := strings.Split(stackID, ":")
+	if len(stackIDSplit) != 2 {
+		return 0, fmt.Errorf("invalid stack id: %s", stackID)
+	}
+	return strconv.ParseInt(stackIDSplit[1], 10, 64)
+}
+
 func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Read")
 	defer span.End()
 	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "read"}))
+
+	user := appcontext.MustUser(ctx)
+	stackID, err := StackID(s.cfg.StackID, user.OrgID)
+	if err != nil {
+		ctxLogger.Error("error parsing stack id", "error", err)
+		return nil, err
+	}
 
 	if err := s.Init(); err != nil {
 		ctxLogger.Error("init error", "error", err)
@@ -289,6 +314,25 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 	if err != nil {
 		ctxLogger.Error("read error", "error", err)
 	}
+
+	// Check access
+	action, scope := entityAuthz.ToRBAC(res.Resource, res.Key, res.Folder, entityAuthz.EntityRead)
+	req := authz.HasAccessRequest{
+		StackID: stackID,
+		Subject: user.NamespacedID.String(),
+		Action:  action,
+		Object:  scope,
+	}
+	hasAccess, err := s.authorizer.HasAccess(ctx, &req)
+	if err != nil || !hasAccess {
+		ctxLogger.Error("access denied",
+			"user", user.NamespacedID.String(),
+			"action", action,
+			"object", scope,
+			"error", err)
+		return nil, ErrNotFound
+	}
+
 	return res, err
 }
 

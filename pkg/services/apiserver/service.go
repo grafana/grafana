@@ -35,6 +35,7 @@ import (
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	entitystorage "github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/authz"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -110,7 +111,8 @@ type service struct {
 
 	tracing *tracing.TracingService
 
-	authorizer *authorizer.GrafanaAuthorizer
+	authorizer  *authorizer.GrafanaAuthorizer
+	authzClient authz.Client
 }
 
 func ProvideService(
@@ -120,17 +122,19 @@ func ProvideService(
 	orgService org.Service,
 	tracing *tracing.TracingService,
 	db db.DB,
+	authzClient authz.Client,
 ) (*service, error) {
 	s := &service{
-		cfg:        cfg,
-		features:   features,
-		rr:         rr,
-		startedCh:  make(chan struct{}),
-		stopCh:     make(chan struct{}),
-		builders:   []builder.APIGroupBuilder{},
-		authorizer: authorizer.NewGrafanaAuthorizer(cfg, orgService),
-		tracing:    tracing,
-		db:         db, // For Unified storage
+		authzClient: authzClient,
+		cfg:         cfg,
+		features:    features,
+		rr:          rr,
+		startedCh:   make(chan struct{}),
+		stopCh:      make(chan struct{}),
+		builders:    []builder.APIGroupBuilder{},
+		authorizer:  authorizer.NewGrafanaAuthorizer(cfg, orgService),
+		tracing:     tracing,
+		db:          db, // For Unified storage
 	}
 
 	// This will be used when running as a dskit service
@@ -259,12 +263,12 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
+		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB, s.tracing, s.authzClient, s.cfg)
 		if err != nil {
 			return err
 		}
 
-		store := entity.NewEntityStoreClientLocal(storeServer)
+		store := entity.NewEntityStoreClientLocal(s.cfg, storeServer)
 
 		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 

@@ -7,12 +7,13 @@ import (
 	"google.golang.org/grpc"
 
 	grpcUtils "github.com/grafana/grafana/pkg/services/store/entity/grpc"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewEntityStoreClientLocal(server EntityStoreServer) EntityStoreClient {
+func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer) EntityStoreClient {
 	channel := &inprocgrpc.Channel{}
 
-	auth := &grpcUtils.Authenticator{}
+	auth := grpcUtils.ProvideAuthenticator(cfg)
 
 	channel.RegisterService(
 		grpchan.InterceptServer(
