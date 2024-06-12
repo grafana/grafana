@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
