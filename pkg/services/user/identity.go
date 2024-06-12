@@ -5,8 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 const (
@@ -18,7 +17,7 @@ type SignedInUser struct {
 	UserUID       string `xorm:"user_uid"`
 	OrgID         int64  `xorm:"org_id"`
 	OrgName       string
-	OrgRole       roletype.RoleType
+	OrgRole       identity.RoleType
 	Login         string
 	Name          string
 	Email         string
@@ -57,7 +56,7 @@ func (u *SignedInUser) NameOrFallback() string {
 	return u.Email
 }
 
-func (u *SignedInUser) HasRole(role roletype.RoleType) bool {
+func (u *SignedInUser) HasRole(role identity.RoleType) bool {
 	if u.IsGrafanaAdmin {
 		return true
 	}
@@ -97,7 +96,7 @@ func (u *SignedInUser) GetCacheKey() string {
 		// e.g. anonymous and render key.
 		orgRole := u.GetOrgRole()
 		if orgRole == "" {
-			orgRole = roletype.RoleNone
+			orgRole = identity.RoleNone
 		}
 
 		id = string(orgRole)
@@ -161,7 +160,7 @@ func (u *SignedInUser) GetTeams() []int64 {
 }
 
 // GetOrgRole returns the role of the active entity in the active organization
-func (u *SignedInUser) GetOrgRole() roletype.RoleType {
+func (u *SignedInUser) GetOrgRole() identity.RoleType {
 	return u.OrgRole
 }
 
@@ -172,7 +171,7 @@ func (u *SignedInUser) GetID() identity.NamespaceID {
 }
 
 // GetNamespacedID returns the namespace and ID of the active entity
-// The namespace is one of the constants defined in pkg/services/auth/identity
+// The namespace is one of the constants defined in pkg/apimachinery/identity
 func (u *SignedInUser) GetNamespacedID() (identity.Namespace, string) {
 	switch {
 	case u.ApiKeyID != 0:

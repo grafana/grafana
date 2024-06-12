@@ -7,7 +7,7 @@ import (
 	k8suser "k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -57,7 +57,7 @@ func User(ctx context.Context) (*user.SignedInUser, error) {
 					OrgID:          orgId,
 					Name:           k8sUserInfo.GetName(),
 					Login:          k8sUserInfo.GetName(),
-					OrgRole:        roletype.RoleAdmin,
+					OrgRole:        identity.RoleAdmin,
 					IsGrafanaAdmin: true,
 					Permissions: map[int64]map[string][]string{
 						orgId: {
