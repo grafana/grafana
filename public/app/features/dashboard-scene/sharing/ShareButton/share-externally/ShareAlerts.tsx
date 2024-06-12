@@ -11,6 +11,7 @@ import {
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { AccessControlAction } from 'app/types';
 
+import { NoUpsertPermissionsAlert } from '../../../../dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/NoUpsertPermissionsAlert';
 import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 import { useUnsupportedDatasources } from '../../public-dashboards/hooks';
 
@@ -23,6 +24,7 @@ export default function ShareAlerts({ publicDashboard }: { publicDashboard?: Pub
   return (
     <>
       {hasWritePermissions && hasTemplateVariables && <UnsupportedTemplateVariablesAlert showDescription={false} />}
+      {!hasWritePermissions && <NoUpsertPermissionsAlert mode={publicDashboard ? 'edit' : 'create'} />}
       {hasWritePermissions && !!unsupportedDataSources?.length && (
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
       )}

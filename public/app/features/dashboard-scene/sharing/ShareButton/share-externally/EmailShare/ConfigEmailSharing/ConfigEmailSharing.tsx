@@ -51,7 +51,7 @@ export const ConfigEmailSharing = () => {
   return (
     <div>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FieldSet disabled={!hasWritePermissions || !publicDashboard?.isEnabled || isError}>
+        <FieldSet disabled={!hasWritePermissions || isError}>
           <Field
             label={
               <Stack gap={1} alignItems="center">

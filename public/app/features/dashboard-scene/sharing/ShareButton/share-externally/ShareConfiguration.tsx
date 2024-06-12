@@ -27,7 +27,7 @@ export default function ShareConfiguration() {
   );
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
-  const disableForm = isLoading || !publicDashboard?.isEnabled || !hasWritePermissions;
+  const disableForm = isLoading || !hasWritePermissions;
   const timeRangeState = sceneGraph.getTimeRange(dashboard);
   const timeRange = timeRangeState.useState();
 
@@ -59,7 +59,7 @@ export default function ShareConfiguration() {
   return (
     <Stack direction="column" gap={2}>
       <Text element="p">
-        <Trans i18nKey="public-dashboard.share-configuration.settings-label">Settings</Trans>
+        <Trans i18nKey="public-dashboard.configuration.settings-label">Settings</Trans>
       </Text>
       <Stack justifyContent="space-between">
         <form onSubmit={handleSubmit(onUpdate)}>
@@ -77,16 +77,14 @@ export default function ShareConfiguration() {
                         });
                         onChange('isTimeSelectionEnabled', e.currentTarget.checked);
                       }}
-                      label={t('public-dashboard.share-configuration.enable-time-range-label', 'Enable time range')}
+                      label={t('public-dashboard.configuration.enable-time-range-label', 'Enable time range')}
                     />
                   )}
                   control={control}
                   name="isTimeSelectionEnabled"
                 />
                 <Label description="Allow people to change time range">
-                  <Trans i18nKey="public-dashboard.share-configuration.enable-time-range-label">
-                    Enable time range
-                  </Trans>
+                  <Trans i18nKey="public-dashboard.configuration.enable-time-range-label">Enable time range</Trans>
                 </Label>
               </Stack>
               <Stack gap={1}>
@@ -101,16 +99,14 @@ export default function ShareConfiguration() {
                         });
                         onChange('isAnnotationsEnabled', e.currentTarget.checked);
                       }}
-                      label={t('public-dashboard.share-configuration.display-annotations-label', 'Display annotations')}
+                      label={t('public-dashboard.configuration.display-annotations-label', 'Display annotations')}
                     />
                   )}
                   control={control}
                   name="isAnnotationsEnabled"
                 />
                 <Label style={{ flex: 1 }} description="Present annotations on this Dashboard">
-                  <Trans i18nKey="public-dashboard.share-configuration.display-annotations-label">
-                    Display annotations
-                  </Trans>
+                  <Trans i18nKey="public-dashboard.configuration.display-annotations-label">Display annotations</Trans>
                 </Label>
               </Stack>
               <Stack gap={1} alignItems="center">
@@ -118,7 +114,7 @@ export default function ShareConfiguration() {
                 <Tooltip
                   placement="right"
                   content={t(
-                    'public-dashboard.share-configuration.time-range-tooltip',
+                    'public-dashboard.configuration.time-range-tooltip',
                     'The shared dashboard uses the default time range settings of the dashboard'
                   )}
                 >

@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Button, ClipboardButton, Divider, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
@@ -11,15 +12,17 @@ import {
   useGetPublicDashboardQuery,
   usePauseOrResumePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { NoUpsertPermissionsAlert } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/NoUpsertPermissionsAlert';
 import { Loader } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import {
   generatePublicDashboardUrl,
+  isEmailSharingEnabled,
   PublicDashboard,
+  PublicDashboardShareType,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
 
+import { getDashboardSceneFor } from '../../../utils/utils';
 import { ShareDrawerConfirmAction } from '../../ShareDrawer/ShareDrawerConfirmAction';
 import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 
@@ -59,11 +62,16 @@ const getShareExternallyOptions = () => {
     : [getAnyOneWithTheLinkShareOption()];
 };
 
-export function ShareExternally() {
-  const { dashboard } = useShareDrawerContext();
+export class ShareExternally extends SceneObjectBase {
+  static Component = ShareExternallyRenderer;
+}
+
+function ShareExternallyRenderer({ model }: SceneComponentProps<ShareExternally>) {
   const [showRevokeAccess, setShowRevokeAccess] = useState(false);
 
   const styles = useStyles2(getStyles);
+  const dashboard = getDashboardSceneFor(model);
+
   const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
   const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
 
@@ -103,12 +111,12 @@ export function ShareExternally() {
 
   return (
     <div className={styles.container}>
-      <ShareExternallyRenderer publicDashboard={publicDashboard} onRevokeClick={onRevokeClick} />
+      <ShareExternallyBase publicDashboard={publicDashboard} onRevokeClick={onRevokeClick} />
     </div>
   );
 }
 
-function ShareExternallyRenderer({
+function ShareExternallyBase({
   publicDashboard,
   onRevokeClick,
 }: {
@@ -126,7 +134,6 @@ function ShareExternallyRenderer({
   }, [publicDashboard, options]);
 
   const [shareType, setShareType] = useState<SelectableValue<PublicDashboardShareType>>(getShareType);
-  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
   const Config = useMemo(() => {
     if (shareType.value === PublicDashboardShareType.EMAIL && isEmailSharingEnabled()) {
@@ -140,7 +147,6 @@ function ShareExternallyRenderer({
     <Stack direction="column" gap={2} data-testid={selectors.container}>
       <ShareAlerts publicDashboard={publicDashboard} />
       <ShareTypeSelect setShareType={setShareType} value={shareType} options={options} />
-      {!hasWritePermissions && <NoUpsertPermissionsAlert mode={publicDashboard ? 'edit' : 'create'} />}
       {Config}
       {publicDashboard && (
         <>
@@ -184,7 +190,6 @@ function Actions({ publicDashboard, onRevokeClick }: { publicDashboard: PublicDa
             variant="primary"
             fill="outline"
             icon="link"
-            disabled={!publicDashboard.isEnabled}
             getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
             onClipboardCopy={onCopyURL}
           >

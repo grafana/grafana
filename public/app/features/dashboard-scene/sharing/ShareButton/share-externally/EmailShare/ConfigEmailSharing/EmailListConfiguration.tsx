@@ -17,19 +17,15 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard.EmailSharingConfiguration;
 
-const RecipientMenu = ({
-  onDelete,
-  onReshare,
-  disabled,
-}: {
-  onDelete: () => void;
-  onReshare: () => void;
-  disabled: boolean;
-}) => {
+const RecipientMenu = ({ onDelete, onReshare }: { onDelete: () => void; onReshare: () => void }) => {
   return (
     <Menu>
-      <Menu.Item disabled={disabled} label="Resend invite" onClick={onReshare} />
-      <Menu.Item disabled={disabled} label="Revoke access" destructive onClick={onDelete} />
+      <Menu.Item label={t('public-dashboard.email-sharing.resend-invite-label', 'Resend invite')} onClick={onReshare} />
+      <Menu.Item
+        label={t('public-dashboard.email-sharing.revoke-access-label', 'Revoke access')}
+        destructive
+        onClick={onDelete}
+      />
     </Menu>
   );
 };
@@ -80,7 +76,6 @@ const EmailList = ({
                   <RecipientMenu
                     onDelete={() => onDeleteEmail(recipient.uid, recipient.recipient)}
                     onReshare={() => onReshare(recipient.uid)}
-                    disabled={!publicDashboard.isEnabled}
                   />
                 }
               >

@@ -1,6 +1,13 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
 
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+  VizPanel,
+} from '@grafana/scenes';
 import { Drawer } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -11,7 +18,7 @@ import { ShareDrawerContext } from './ShareDrawerContext';
 export interface ShareDrawerState extends SceneObjectState {
   title: string;
   panelRef?: SceneObjectRef<VizPanel>;
-  body: ReactNode;
+  body: SceneObject;
 }
 
 export class ShareDrawer extends SceneObjectBase<ShareDrawerState> implements ModalSceneObjectLike {
@@ -29,7 +36,7 @@ function ShareDrawerRenderer({ model }: SceneComponentProps<ShareDrawer>) {
 
   return (
     <Drawer title={title} onClose={model.onDismiss} size="md">
-      <ShareDrawerContext.Provider value={{ dashboard }}>{body}</ShareDrawerContext.Provider>
+      <ShareDrawerContext.Provider value={{ dashboard }}>{<body.Component model={body} />}</ShareDrawerContext.Provider>
     </Drawer>
   );
 }
