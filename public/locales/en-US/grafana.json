@@ -1368,6 +1368,16 @@
       "revoke-public-URL-button-title": "Revoke public URL",
       "settings-title": "Settings"
     },
+    "configuration": {
+      "display-annotations-label": "Display annotations",
+      "enable-time-range-label": "Enable time range",
+      "settings-label": "Settings",
+      "success-pause": "Your dashboard access has been paused",
+      "success-resume": "Your dashboard access has been resumed",
+      "success-update": "Settings have been successfully updated",
+      "success-update-old": "Public dashboard updated!",
+      "time-range-tooltip": "The shared dashboard uses the default time range settings of the dashboard"
+    },
     "create-page": {
       "generate-public-url-button": "Generate public URL",
       "unsupported-features-desc": "Currently, we don’t support template variables or frontend data sources",
@@ -1399,8 +1409,12 @@
       "recipient-required-email-text": "Email is required",
       "resend-button": "Resend",
       "resend-button-title": "Resend",
+      "resend-invite-label": "Resend invite",
+      "revoke-access-label": "Revoke access",
       "revoke-button": "Revoke",
-      "revoke-button-title": "Revoke"
+      "revoke-button-title": "Revoke",
+      "success-creation": "Your dashboard is ready for external sharing",
+      "success-share-type-change": "Dashboard access restricted: Only specific people can now access with the link"
     },
     "modal-alerts": {
       "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} public dashboards",
@@ -1417,7 +1431,9 @@
       "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link.",
       "cancel-button": "Cancel",
       "learn-more-button": "Learn more",
-      "public-ack": "I understand that this entire dashboard will be public.*"
+      "public-ack": "I understand that this entire dashboard will be public.*",
+      "success-creation": "Your dashboard is now publicly accessible",
+      "success-share-type-change": "Dashboard access updated: Anyone with the link can now access"
     },
     "settings-bar-header": {
       "collapse-settings-tooltip": "Collapse settings",
@@ -1438,13 +1454,13 @@
       "time-range-picker-enabled-text": "Time range picker = enabled",
       "time-range-text": "Time range = "
     },
+    "share": {
+      "success-delete": "Your dashboard is no longer shareable",
+      "success-delete-old": "Public dashboard deleted!"
+    },
     "share-configuration": {
       "access-label": "can access",
-      "display-annotations-label": "Display annotations",
-      "enable-time-range-label": "Enable time range",
-      "settings-label": "Settings",
-      "share-type-label": "Link access",
-      "time-range-tooltip": "The shared dashboard uses the default time range settings of the dashboard"
+      "share-type-label": "Link access"
     },
     "share-externally": {
       "copy-link-button": "Copy external link",
@@ -1456,6 +1472,9 @@
       "public-share-type-option-label": "Anyone with the link",
       "resume-access-button": "Resume access",
       "revoke-access-button": "Revoke access"
+    },
+    "sharing": {
+      "success-creation": "Dashboard is public!"
     }
   },
   "public-dashboard-list": {

@@ -28,8 +28,17 @@ const RecipientMenu = ({
 }) => {
   return (
     <Menu>
-      <Menu.Item disabled={disabled} label="Resend invite" onClick={onReshare} />
-      <Menu.Item disabled={disabled} label="Revoke access" destructive onClick={onDelete} />
+      <Menu.Item
+        disabled={disabled}
+        label={t('public-dashboard.email-sharing.resend-invite-label', 'Resend invite')}
+        onClick={onReshare}
+      />
+      <Menu.Item
+        disabled={disabled}
+        label={t('public-dashboard.email-sharing.revoke-access-label', 'Revoke access')}
+        destructive
+        onClick={onDelete}
+      />
     </Menu>
   );
 };
