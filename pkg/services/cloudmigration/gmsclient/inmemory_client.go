@@ -15,7 +15,6 @@ func NewInMemoryClient() Client {
 type memoryClientImpl struct{}
 
 func (c *memoryClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
-	// return ErrMigrationNotDeleted
 	return nil
 }
 

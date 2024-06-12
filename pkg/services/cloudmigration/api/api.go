@@ -161,19 +161,7 @@ func (cma *CloudMigrationAPI) GetSessionList(c *contextmodel.ReqContext) respons
 		return response.ErrOrFallback(http.StatusInternalServerError, "session list error", err)
 	}
 
-	slDTOs := make([]CloudMigrationSessionResponseDTO, len(sl.Sessions))
-	for i := 0; i < len(slDTOs); i++ {
-		s := sl.Sessions[i]
-		slDTOs[i] = CloudMigrationSessionResponseDTO{
-			UID:     s.UID,
-			Slug:    s.Slug,
-			Created: s.Created,
-			Updated: s.Updated,
-		}
-	}
-	return response.JSON(http.StatusOK, CloudMigrationSessionListResponseDTO{
-		Sessions: slDTOs,
-	})
+	return response.JSON(http.StatusOK, convertSessionListToDTO(*sl))
 }
 
 // swagger:route GET /cloudmigration/migration/{uid} migrations getSession
@@ -264,21 +252,7 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 		return response.ErrOrFallback(http.StatusInternalServerError, "migration run error", err)
 	}
 
-	items := make([]MigrateDataResponseItemDTO, len(result.Items))
-	for i := 0; i < len(result.Items); i++ {
-		item := result.Items[i]
-		items[i] = MigrateDataResponseItemDTO{
-			Type:   MigrateDataType(item.Type),
-			RefID:  item.RefID,
-			Status: ItemStatus(item.Status),
-			Error:  item.Error,
-		}
-	}
-
-	return response.JSON(http.StatusOK, MigrateDataResponseDTO{
-		RunUID: result.RunUID,
-		Items:  items,
-	})
+	return response.JSON(http.StatusOK, convertMigrateDataResponseToDTO(*result))
 }
 
 // swagger:route GET /cloudmigration/migration/run/{runUID} migrations getCloudMigrationRun
@@ -310,21 +284,7 @@ func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusInternalServerError, "migration run get error", err)
 	}
 
-	items := make([]MigrateDataResponseItemDTO, len(result.Items))
-	for i := 0; i < len(result.Items); i++ {
-		item := result.Items[i]
-		items[i] = MigrateDataResponseItemDTO{
-			Type:   MigrateDataType(item.Type),
-			RefID:  item.RefID,
-			Status: ItemStatus(item.Status),
-			Error:  item.Error,
-		}
-	}
-
-	return response.JSON(http.StatusOK, MigrateDataResponseDTO{
-		RunUID: result.RunUID,
-		Items:  items,
-	})
+	return response.JSON(http.StatusOK, convertMigrateDataResponseToDTO(*result))
 }
 
 // swagger:route GET /cloudmigration/migration/{uid}/run migrations getCloudMigrationRunList

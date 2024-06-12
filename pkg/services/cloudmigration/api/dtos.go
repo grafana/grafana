@@ -2,6 +2,8 @@ package api
 
 import (
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/cloudmigration"
 )
 
 // swagger:parameters getCloudMigrationToken
@@ -158,4 +160,39 @@ type DeleteMigrationSessionRequest struct {
 	//
 	// in: path
 	UID string `json:"uid"`
+}
+
+// utility funcs for converting to/from DTO
+
+func convertSessionListToDTO(sl cloudmigration.CloudMigrationSessionListResponse) CloudMigrationSessionListResponseDTO {
+	slDTOs := make([]CloudMigrationSessionResponseDTO, len(sl.Sessions))
+	for i := 0; i < len(slDTOs); i++ {
+		s := sl.Sessions[i]
+		slDTOs[i] = CloudMigrationSessionResponseDTO{
+			UID:     s.UID,
+			Slug:    s.Slug,
+			Created: s.Created,
+			Updated: s.Updated,
+		}
+	}
+	return CloudMigrationSessionListResponseDTO{
+		Sessions: slDTOs,
+	}
+}
+
+func convertMigrateDataResponseToDTO(r cloudmigration.MigrateDataResponse) MigrateDataResponseDTO {
+	items := make([]MigrateDataResponseItemDTO, len(r.Items))
+	for i := 0; i < len(r.Items); i++ {
+		item := r.Items[i]
+		items[i] = MigrateDataResponseItemDTO{
+			Type:   MigrateDataType(item.Type),
+			RefID:  item.RefID,
+			Status: ItemStatus(item.Status),
+			Error:  item.Error,
+		}
+	}
+	return MigrateDataResponseDTO{
+		RunUID: r.RunUID,
+		Items:  items,
+	}
 }

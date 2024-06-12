@@ -70,20 +70,8 @@ func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.Cloud
 	// TODO update service url to gms
 	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/migrate-data", cm.ClusterSlug, c.domain)
 
-	items := make([]MigrateDataRequestItemDTO, len(request.Items))
-	for i := 0; i < len(request.Items); i++ {
-		item := request.Items[i]
-		items[i] = MigrateDataRequestItemDTO{
-			Type:  MigrateDataType(item.Type),
-			RefID: item.RefID,
-			Name:  item.Name,
-			Data:  item.Data,
-		}
-	}
-	r := MigrateDataRequestDTO{
-		Items: items,
-	}
-	body, err := json.Marshal(r)
+	reqDTO := convertRequestToDTO(request)
+	body, err := json.Marshal(reqDTO)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling request: %w", err)
 	}
@@ -113,24 +101,46 @@ func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.Cloud
 		}
 	}()
 
-	var result MigrateDataResponseDTO
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	var respDTO MigrateDataResponseDTO
+	if err := json.NewDecoder(resp.Body).Decode(&respDTO); err != nil {
 		logger.Error("unmarshalling response body: %w", err)
 		return nil, fmt.Errorf("unmarshalling migration run response: %w", err)
 	}
 
-	respItems := make([]cloudmigration.MigrateDataResponseItem, len(result.Items))
+	result := convertResponseFromDTO(respDTO)
+	return &result, nil
+}
+
+func convertRequestToDTO(request cloudmigration.MigrateDataRequest) MigrateDataRequestDTO {
+	items := make([]MigrateDataRequestItemDTO, len(request.Items))
+	for i := 0; i < len(request.Items); i++ {
+		item := request.Items[i]
+		items[i] = MigrateDataRequestItemDTO{
+			Type:  MigrateDataType(item.Type),
+			RefID: item.RefID,
+			Name:  item.Name,
+			Data:  item.Data,
+		}
+	}
+	r := MigrateDataRequestDTO{
+		Items: items,
+	}
+	return r
+}
+
+func convertResponseFromDTO(result MigrateDataResponseDTO) cloudmigration.MigrateDataResponse {
+	items := make([]cloudmigration.MigrateDataResponseItem, len(result.Items))
 	for i := 0; i < len(result.Items); i++ {
 		item := result.Items[i]
-		respItems[i] = cloudmigration.MigrateDataResponseItem{
+		items[i] = cloudmigration.MigrateDataResponseItem{
 			Type:   cloudmigration.MigrateDataType(item.Type),
 			RefID:  item.RefID,
 			Status: cloudmigration.ItemStatus(item.Status),
 			Error:  item.Error,
 		}
 	}
-	return &cloudmigration.MigrateDataResponse{
+	return cloudmigration.MigrateDataResponse{
 		RunUID: result.RunUID,
-		Items:  respItems,
-	}, nil
+		Items:  items,
+	}
 }
