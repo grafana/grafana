@@ -116,7 +116,7 @@ describe('PanelOptions', () => {
 
       expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
 
-      const input = screen.getByTestId('panel-edit-panel-title-input');
+      const input = screen.getByTestId(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
       fireEvent.change(input, { target: { value: 'New title' } });
 
       expect(vizManager.state.panel.state.title).toBe('New title');
@@ -127,7 +127,7 @@ describe('PanelOptions', () => {
 
       expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
 
-      const input = screen.getByTestId('panel-edit-panel-title-input');
+      const input = screen.getByTestId(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
       fireEvent.change(input, { target: { value: '' } });
 
       expect(vizManager.state.panel.state.title).toBe('');
@@ -149,6 +149,14 @@ describe('PanelOptions', () => {
       const {} = setup();
 
       await userEvent.click(screen.getByLabelText('Remove label'));
+
+      expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
+    });
+
+    it('Can delete rule', async () => {
+      const {} = setup();
+
+      await userEvent.click(screen.getByLabelText('Remove override'));
 
       expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
     });
