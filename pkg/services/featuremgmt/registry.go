@@ -1283,14 +1283,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "authZGRPCServer",
-			Description:       "Enables the gRPC server for authorization",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-		},
-		{
 			Name:         "alertingCentralAlertHistory",
 			Description:  "Enables the new central alert history.",
 			Stage:        FeatureStageExperimental,
@@ -1315,6 +1307,14 @@ var (
 			Description: "Enables pinning of nav items",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendPlatformSquad,
+		},
+		{
+			Name:              "authZGRPCServer",
+			Description:       "Enables the gRPC server for authorization",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
 		},
 	}
 )

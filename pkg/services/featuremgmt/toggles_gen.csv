@@ -170,8 +170,8 @@ dashboardRestore,experimental,@grafana/grafana-frontend-platform,false,false,fal
 datasourceProxyDisableRBAC,GA,@grafana/identity-access-team,false,false,false
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
-authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
 pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,false,false
 azureMonitorPrometheusExemplars,experimental,@grafana/partner-datasources,false,false,false
 pinNavItems,experimental,@grafana/grafana-frontend-platform,false,false,false
+authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false

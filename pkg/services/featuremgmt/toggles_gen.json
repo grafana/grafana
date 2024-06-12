@@ -296,8 +296,8 @@
     {
       "metadata": {
         "name": "authZGRPCServer",
-        "resourceVersion": "1717776106346",
-        "creationTimestamp": "2024-06-07T16:01:46Z"
+        "resourceVersion": "1718093439898",
+        "creationTimestamp": "2024-06-11T08:10:39Z"
       },
       "spec": {
         "description": "Enables the gRPC server for authorization",
@@ -1681,6 +1681,19 @@
         "name": "pinNavItems",
         "resourceVersion": "1718017263521",
         "creationTimestamp": "2024-06-10T11:01:03Z"
+      },
+      "spec": {
+        "description": "Enables pinning of nav items",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pinNavItems",
+        "resourceVersion": "1718017263521",
+        "creationTimestamp": "2024-06-10T11:01:03Z",
+        "deletionTimestamp": "2024-06-12T08:28:14Z"
       },
       "spec": {
         "description": "Enables pinning of nav items",
