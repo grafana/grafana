@@ -5,6 +5,7 @@ import { default as localStorageStore } from 'app/core/store';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import {
   DASHBOARD_FROM_LS_KEY,
   removeDashboardToFetchFromLocalStorage,
@@ -19,8 +20,6 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { updateNavModel } from './utils';
-import { emit } from 'process';
-import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
