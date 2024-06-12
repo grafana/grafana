@@ -12,10 +12,10 @@ import {
   useGetPublicDashboardQuery,
   usePauseOrResumePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { NoUpsertPermissionsAlert } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/NoUpsertPermissionsAlert';
 import { Loader } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import {
   generatePublicDashboardUrl,
+  isEmailSharingEnabled,
   PublicDashboard,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -28,7 +28,7 @@ import { EmailSharing } from './EmailShare/EmailSharing';
 import { PublicSharing } from './PublicShare/PublicSharing';
 import ShareAlerts from './ShareAlerts';
 import ShareTypeSelect from './ShareTypeSelect';
-import { isEmailSharingEnabled, PublicDashboardShareType } from './utils';
+import { PublicDashboardShareType } from './utils';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
 
@@ -92,7 +92,6 @@ function ShareExternallyBase({ publicDashboard }: { publicDashboard?: PublicDash
   }, [publicDashboard, options]);
 
   const [shareType, setShareType] = useState<SelectableValue<PublicDashboardShareType>>(getShareType);
-  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
   const Config = useMemo(() => {
     if (shareType.value === PublicDashboardShareType.EMAIL && isEmailSharingEnabled()) {
@@ -106,7 +105,7 @@ function ShareExternallyBase({ publicDashboard }: { publicDashboard?: PublicDash
     <Stack direction="column" gap={2} data-testid={selectors.container}>
       <ShareAlerts publicDashboard={publicDashboard} />
       <ShareTypeSelect setShareType={setShareType} value={shareType} options={options} />
-      {!hasWritePermissions && <NoUpsertPermissionsAlert mode={publicDashboard ? 'edit' : 'create'} />}
+
       {Config}
       {publicDashboard && (
         <>
