@@ -16,6 +16,7 @@ load(
     "mysql_integration_tests_steps",
     "postgres_integration_tests_steps",
     "publish_grafanacom_step",
+    "verify_grafanacom_step",
     "publish_linux_packages_step",
     "redis_integration_tests_steps",
     "remote_alertmanager_integration_tests_steps",
@@ -163,6 +164,8 @@ def publish_packages_pipeline():
         publish_linux_packages_step(package_manager = "deb"),
         publish_linux_packages_step(package_manager = "rpm"),
         publish_grafanacom_step(ver_mode = "release"),
+        # JEV: also for enterprise
+        verify_grafanacom_step(),
     ]
 
     deps = [

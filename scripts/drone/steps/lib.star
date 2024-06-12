@@ -1271,7 +1271,7 @@ def verify_grafanacom_step():
             # Download/install node
             "curl -sL https://deb.nodesource.com/setup_14.x | bash -",
             "apt-get install -y nodejs",
-            "./drone/verify_release.sh",
+            "./drone/verify_grafanacom.sh",
         ],
         "depends_on": ["publish-grafanacom"], # JEV: anything else?
     }
