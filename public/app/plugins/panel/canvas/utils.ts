@@ -1,6 +1,16 @@
 import { isNumber, isString } from 'lodash';
 
-import { AppEvents, Field, getFieldDisplayName, LinkModel, PluginState, SelectableValue } from '@grafana/data';
+import {
+  AppEvents,
+  DataLink,
+  Field,
+  FieldType,
+  getFieldDisplayName,
+  getLinksSupplier,
+  LinkModel,
+  PluginState,
+  SelectableValue,
+} from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { hasAlphaPanels, config } from 'app/core/config';
 import {
@@ -16,6 +26,7 @@ import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
 import { DimensionContext } from 'app/features/dimensions';
 
+import { interpolateVariables } from './editor/element/utils';
 import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
@@ -143,13 +154,30 @@ export function getDataLinks(
 
   const elementConfig = elementOptions.config;
 
+  const getDefaultField = (link: DataLink) => {
+    return {
+      name: 'New field',
+      type: FieldType.string,
+      config: { links: [link] },
+      values: [],
+    };
+  };
+
   elementOptions.links?.forEach((link) => {
-    const key = `${link.title}/${link.href}`;
-    if (!linkLookup.has(key)) {
-      links.push(link);
-      linkLookup.add(key);
+    if (frames) {
+      elementOptions.getLinks = getLinksSupplier(frames[0], getDefaultField(link), {}, interpolateVariables);
     }
   });
+
+  if (elementOptions.getLinks) {
+    elementOptions.getLinks({}).forEach((link) => {
+      const key = `${link.title}/${link.href}`;
+      if (!linkLookup.has(key)) {
+        links.push(link);
+        linkLookup.add(key);
+      }
+    });
+  }
 
   frames?.forEach((frame) => {
     const visibleFields = frame.fields.filter((field) => !Boolean(field.config.custom?.hideFrom?.tooltip));
