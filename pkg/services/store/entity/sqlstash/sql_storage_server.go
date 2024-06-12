@@ -316,6 +316,7 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 	}
 
 	// Check access
+	// TODO (gamab): solve the multi-scope case (ex: dashboards read can be acquired through both folder and dash)
 	action, scope := entityAuthz.ToRBAC(res.Resource, res.Key, res.Folder, entityAuthz.EntityRead)
 	req := authz.HasAccessRequest{
 		StackID: stackID,

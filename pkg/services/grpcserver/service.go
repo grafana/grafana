@@ -77,7 +77,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 			interceptors.TracingUnaryInterceptor(tracer),
 			interceptors.LoggingUnaryInterceptor(s.cfg, s.logger), // needs to be registered after tracing interceptor to get trace id
 			grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
-			// mtauthz.AuthZUnaryInterceptor(authorizer), // TODO: decide where authz should be done (in the service or in the interceptor)
+			// mtauthz.AuthZUnaryInterceptor(authorizer), // TODO (gamab): decide where authz should be done (in the service or in the interceptor)
 		),
 		grpc.ChainStreamInterceptor(
 			middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
