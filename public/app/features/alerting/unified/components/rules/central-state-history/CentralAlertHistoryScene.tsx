@@ -80,7 +80,7 @@ function getEventsSceneObject(ashDs: DataSourceInformation) {
   });
 }
 
-export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
+function getSceneQuery(datasource: DataSourceInformation) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
@@ -92,13 +92,16 @@ export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
       },
     ],
   });
+  return query;
+}
 
+export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
   return new SceneFlexItem({
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle('Events')
       .setDescription('Alert events during the period of time.')
-      .setData(query)
+      .setData(getSceneQuery(datasource))
       .setColor({ mode: 'continuous-BlPu' })
       .setCustomFieldConfig('fillOpacity', 100)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)

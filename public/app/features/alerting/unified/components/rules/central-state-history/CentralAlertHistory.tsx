@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { hash } from 'immutable';
 import React, { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMeasure } from 'react-use';
@@ -34,13 +33,13 @@ import {
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { GRAFANA_DATASOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
+import { hashLabelsOrAnnotations } from '../../../utils/rule-id';
 import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
 import { LogRecord } from '../state-history/common';
 import { useRuleHistoryRecords } from '../state-history/useRuleHistoryRecords';
 
 const LIMIT_EVENTS = 250;
-const STATE_HISTORY_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 
 const HistoryEventsList = ({ timeRange }: { timeRange?: TimeRange }) => {
   const styles = useStyles2(getStyles);
@@ -57,7 +56,7 @@ const HistoryEventsList = ({ timeRange }: { timeRange?: TimeRange }) => {
   }, [setEventsFilter, reset]);
 
   const {
-    currentData: stateHistory,
+    data: stateHistory,
     isLoading,
     isError,
     error,
@@ -70,7 +69,6 @@ const HistoryEventsList = ({ timeRange }: { timeRange?: TimeRange }) => {
     {
       refetchOnFocus: true,
       refetchOnReconnect: true,
-      pollingInterval: STATE_HISTORY_POLLING_INTERVAL,
     }
   );
 
@@ -112,7 +110,7 @@ function HistoryLogEvents({ logRecords }: HistoryLogEventsProps) {
   return (
     <ul>
       {logRecords.map((record) => {
-        return <EventRow key={record.timestamp + hash(record.line.labels ?? {})} record={record} />;
+        return <EventRow key={record.timestamp + hashLabelsOrAnnotations(record.line.labels ?? {})} record={record} />;
       })}
     </ul>
   );
