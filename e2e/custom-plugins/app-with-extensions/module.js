@@ -1,7 +1,7 @@
 define(['react', '@grafana/data', '@grafana/ui', '@grafana/runtime', '@emotion/css', 'rxjs'], (e, t, n, r, o, i) =>
   (() => {
     'use strict';
-    let a = {
+    var a = {
         89: (e) => {
           e.exports = o;
         },
@@ -23,34 +23,30 @@ define(['react', '@grafana/data', '@grafana/ui', '@grafana/runtime', '@emotion/c
       },
       l = {};
     function s(e) {
-      let t = l[e];
-      if (void 0 !== t) {
-        return t.exports;
-      }
-      let n = (l[e] = { exports: {} });
+      var t = l[e];
+      if (void 0 !== t) return t.exports;
+      var n = (l[e] = { exports: {} });
       return a[e](n, n.exports, s), n.exports;
     }
     (s.n = (e) => {
-      let t = e && e.__esModule ? () => e.default : () => e;
+      var t = e && e.__esModule ? () => e.default : () => e;
       return s.d(t, { a: t }), t;
     }),
       (s.d = (e, t) => {
-        for (let n in t) {
-          s.o(t, n) && !s.o(e, n) && Object.defineProperty(e, n, { enumerable: !0, get: t[n] });
-        }
+        for (var n in t) s.o(t, n) && !s.o(e, n) && Object.defineProperty(e, n, { enumerable: !0, get: t[n] });
       }),
       (s.o = (e, t) => Object.prototype.hasOwnProperty.call(e, t)),
       (s.r = (e) => {
-        'undefined' !== typeof Symbol &&
+        'undefined' != typeof Symbol &&
           Symbol.toStringTag &&
           Object.defineProperty(e, Symbol.toStringTag, { value: 'Module' }),
           Object.defineProperty(e, '__esModule', { value: !0 });
       });
-    let c = {};
+    var c = {};
     return (
       (() => {
         s.r(c), s.d(c, { plugin: () => E });
-        let e = s(959),
+        var e = s(959),
           t = s.n(e),
           n = s(781);
         const r = 'ape-modal-body',
@@ -60,7 +56,7 @@ define(['react', '@grafana/data', '@grafana/ui', '@grafana/runtime', '@emotion/c
             return e.createElement('div', { 'data-testid': o, className: 'page-container' }, 'Hello Grafana!');
           }
         }
-        let a = s(7),
+        var a = s(7),
           l = s(531),
           u = s(89),
           d = s(269);
@@ -75,10 +71,10 @@ define(['react', '@grafana/data', '@grafana/ui', '@grafana/runtime', '@emotion/c
         }
         function f(e) {
           return function () {
-            let t = this,
+            var t = this,
               n = arguments;
             return new Promise(function (r, o) {
-              let i = e.apply(t, n);
+              var i = e.apply(t, n);
               function a(e) {
                 p(i, r, o, a, l, 'next', e);
               }
@@ -108,9 +104,9 @@ define(['react', '@grafana/data', '@grafana/ui', '@grafana/runtime', '@emotion/c
             function (e, t) {
               return v.apply(this, arguments);
             });
-        let v;
+        var v;
         const b = (function () {
-            let e = f(function* (e, t) {
+            var e = f(function* (e, t) {
               const n = (0, l.getBackendSrv)().fetch({ url: `/api/plugins/${e}/settings`, method: 'POST', data: t });
               return (0, d.lastValueFrom)(n);
             });
@@ -222,11 +218,11 @@ define(['react', '@grafana/data', '@grafana/ui', '@grafana/runtime', '@emotion/c
             extensionPointId: n.PluginExtensionPoints.DashboardPanelMenu,
             path: `/a/${y.id}/`,
             configure: (e) => {
-              let t;
+              var t;
               if (
                 'Link Extensions (path)' ===
                 (null == e || null === (t = e.dashboard) || void 0 === t ? void 0 : t.title)
-              ) {
+              )
                 switch (null == e ? void 0 : e.pluginId) {
                   case 'timeseries':
                     return {};
@@ -235,7 +231,6 @@ define(['react', '@grafana/data', '@grafana/ui', '@grafana/runtime', '@emotion/c
                   default:
                     return;
                 }
-              }
             },
           })
           .configureExtensionLink({
@@ -243,13 +238,11 @@ define(['react', '@grafana/data', '@grafana/ui', '@grafana/runtime', '@emotion/c
             description: 'This link will only be visible on time series and pie charts',
             extensionPointId: n.PluginExtensionPoints.DashboardPanelMenu,
             onClick: (e, { openModal: n, context: r }) => {
-              let o;
+              var o;
               const i = null !== (o = null == r ? void 0 : r.targets) && void 0 !== o ? o : [],
                 a = null == r ? void 0 : r.title;
-              if (!x(r)) {
-                return;
-              }
-              if (i.length > 1) {
+              if (!x(r)) return;
+              if (i.length > 1)
                 return n({
                   title: `Select query from "${a}"`,
                   body: (e) =>
@@ -261,9 +254,9 @@ define(['react', '@grafana/data', '@grafana/ui', '@grafana/runtime', '@emotion/c
                           Object.getOwnPropertyDescriptors
                             ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t))
                             : (function (e, t) {
-                                let n = Object.keys(e);
+                                var n = Object.keys(e);
                                 if (Object.getOwnPropertySymbols) {
-                                  let r = Object.getOwnPropertySymbols(e);
+                                  var r = Object.getOwnPropertySymbols(e);
                                   n.push.apply(n, r);
                                 }
                                 return n;
@@ -274,10 +267,10 @@ define(['react', '@grafana/data', '@grafana/ui', '@grafana/runtime', '@emotion/c
                         );
                       })(
                         (function (e) {
-                          for (let t = 1; t < arguments.length; t++) {
+                          for (var t = 1; t < arguments.length; t++) {
                             var n = null != arguments[t] ? arguments[t] : {},
                               r = Object.keys(n);
-                            'function' === typeof Object.getOwnPropertySymbols &&
+                            'function' == typeof Object.getOwnPropertySymbols &&
                               (r = r.concat(
                                 Object.getOwnPropertySymbols(n).filter(function (e) {
                                   return Object.getOwnPropertyDescriptor(n, e).enumerable;
@@ -293,17 +286,16 @@ define(['react', '@grafana/data', '@grafana/ui', '@grafana/runtime', '@emotion/c
                       )
                     ),
                 });
-              }
               const [l] = i;
               h(l);
             },
             configure: (e) => {
-              let t;
+              var t;
               if (
                 'Link Extensions (onClick)' ===
                   (null == e || null === (t = e.dashboard) || void 0 === t ? void 0 : t.title) &&
                 x(e)
-              ) {
+              )
                 switch (null == e ? void 0 : e.pluginId) {
                   case 'timeseries':
                     return {};
@@ -312,11 +304,10 @@ define(['react', '@grafana/data', '@grafana/ui', '@grafana/runtime', '@emotion/c
                   default:
                     return;
                 }
-              }
             },
           });
         function x(e) {
-          let t;
+          var t;
           return (null !== (t = null == e ? void 0 : e.targets) && void 0 !== t ? t : []).length > 0;
         }
       })(),

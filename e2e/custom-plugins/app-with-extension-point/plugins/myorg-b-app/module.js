@@ -1,7 +1,7 @@
 define(['react', '@grafana/data'], (e, t) =>
   (() => {
     'use strict';
-    let r = {
+    var r = {
         781: (e) => {
           e.exports = t;
         },
@@ -11,34 +11,30 @@ define(['react', '@grafana/data'], (e, t) =>
       },
       o = {};
     function n(e) {
-      let t = o[e];
-      if (void 0 !== t) {
-        return t.exports;
-      }
-      let a = (o[e] = { exports: {} });
+      var t = o[e];
+      if (void 0 !== t) return t.exports;
+      var a = (o[e] = { exports: {} });
       return r[e](a, a.exports, n), a.exports;
     }
     (n.n = (e) => {
-      let t = e && e.__esModule ? () => e.default : () => e;
+      var t = e && e.__esModule ? () => e.default : () => e;
       return n.d(t, { a: t }), t;
     }),
       (n.d = (e, t) => {
-        for (let r in t) {
-          n.o(t, r) && !n.o(e, r) && Object.defineProperty(e, r, { enumerable: !0, get: t[r] });
-        }
+        for (var r in t) n.o(t, r) && !n.o(e, r) && Object.defineProperty(e, r, { enumerable: !0, get: t[r] });
       }),
       (n.o = (e, t) => Object.prototype.hasOwnProperty.call(e, t)),
       (n.r = (e) => {
-        'undefined' !== typeof Symbol &&
+        'undefined' != typeof Symbol &&
           Symbol.toStringTag &&
           Object.defineProperty(e, Symbol.toStringTag, { value: 'Module' }),
           Object.defineProperty(e, '__esModule', { value: !0 });
       });
-    let a = {};
+    var a = {};
     return (
       (() => {
         n.r(a), n.d(a, { plugin: () => p });
-        let e = n(959),
+        var e = n(959),
           t = n.n(e),
           r = n(781);
         class o extends e.PureComponent {

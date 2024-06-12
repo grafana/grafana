@@ -1,7 +1,7 @@
 define(['@grafana/data', 'react', '@grafana/ui', '@grafana/runtime'], (e, t, n, a) =>
   (() => {
     'use strict';
-    let o = {
+    var o = {
         781: (t) => {
           t.exports = e;
         },
@@ -17,46 +17,38 @@ define(['@grafana/data', 'react', '@grafana/ui', '@grafana/runtime'], (e, t, n, 
       },
       r = {};
     function i(e) {
-      let t = r[e];
-      if (void 0 !== t) {
-        return t.exports;
-      }
-      let n = (r[e] = { exports: {} });
+      var t = r[e];
+      if (void 0 !== t) return t.exports;
+      var n = (r[e] = { exports: {} });
       return o[e](n, n.exports, i), n.exports;
     }
     (i.n = (e) => {
-      let t = e && e.__esModule ? () => e.default : () => e;
+      var t = e && e.__esModule ? () => e.default : () => e;
       return i.d(t, { a: t }), t;
     }),
       (i.d = (e, t) => {
-        for (let n in t) {
-          i.o(t, n) && !i.o(e, n) && Object.defineProperty(e, n, { enumerable: !0, get: t[n] });
-        }
+        for (var n in t) i.o(t, n) && !i.o(e, n) && Object.defineProperty(e, n, { enumerable: !0, get: t[n] });
       }),
       (i.g = (function () {
-        if ('object' === typeof globalThis) {
-          return globalThis;
-        }
+        if ('object' == typeof globalThis) return globalThis;
         try {
           return this || new Function('return this')();
         } catch (e) {
-          if ('object' === typeof window) {
-            return window;
-          }
+          if ('object' == typeof window) return window;
         }
       })()),
       (i.o = (e, t) => Object.prototype.hasOwnProperty.call(e, t)),
       (i.r = (e) => {
-        'undefined' !== typeof Symbol &&
+        'undefined' != typeof Symbol &&
           Symbol.toStringTag &&
           Object.defineProperty(e, Symbol.toStringTag, { value: 'Module' }),
           Object.defineProperty(e, '__esModule', { value: !0 });
       });
-    let l = {};
+    var l = {};
     return (
       (() => {
         i.r(l), i.d(l, { plugin: () => p });
-        let e = i(781),
+        var e = i(781),
           t = i(959),
           n = i.n(t),
           a = i(7),
@@ -121,7 +113,7 @@ define(['@grafana/data', 'react', '@grafana/ui', '@grafana/runtime'], (e, t, n, 
                 ),
               [l]
             ));
-          let l;
+          var l;
           const [c, u] = (0, t.useState)();
           return 0 === i.length
             ? n().createElement(a.Button, null, 'Run default action')
@@ -148,12 +140,8 @@ define(['@grafana/data', 'react', '@grafana/ui', '@grafana/runtime'], (e, t, n, 
                     onChange: (e) => {
                       const t = e.value;
                       if ((0, o.isPluginExtensionLink)(t)) {
-                        if (t.path) {
-                          return u(t);
-                        }
-                        if (t.onClick) {
-                          return t.onClick();
-                        }
+                        if (t.path) return u(t);
+                        if (t.onClick) return t.onClick();
                       }
                     },
                   })
