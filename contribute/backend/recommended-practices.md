@@ -97,7 +97,7 @@ Store newly introduced date columns in the database as epoch-based integers (tha
 This permits you to have a unified approach for comparing dates against all the supported databases instead of needing to handle dates differently for each database.
 Also, when you compare epoch-based integers you no longer need error-pruning transformations to and from other time zones.
 
-## 107 - Avoid the simplejson package
+## 107 - Avoid the `simplejson` package
 
 **State:** Ongoing, passive
 
