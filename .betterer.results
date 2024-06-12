@@ -7998,12 +7998,6 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
-    "public/app/plugins/datasource/alertmanager/ConfigEditor.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/ConfigEditor.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
@@ -8035,14 +8029,6 @@ exports[`no gf-form usage`] = {
     "public/app/plugins/datasource/grafana-pyroscope-datasource/ConfigEditor.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/plugins/datasource/graphite/components/AnnotationsEditor.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/plugins/datasource/graphite/configuration/MappingsConfiguration.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "public/app/plugins/datasource/influxdb/components/editor/annotation/AnnotationEditor.tsx:5381": [
