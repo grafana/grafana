@@ -840,6 +840,11 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 		CurrentStateSince: currentStateSince,
 		CurrentStateEnd:   currentStateSince.Add(time.Duration(rand.Intn(100) + 200)),
 		LastEvalTime:      time.Now().Add(-time.Duration(rand.Intn(100) + 50)),
+		LastSentAt:        time.Now().Add(-time.Duration(rand.Intn(100) + 50)),
+	}
+
+	if instance.CurrentState == InstanceStateNormal && rand.Intn(2) == 1 {
+		instance.ResolvedAt = time.Now().Add(-time.Duration(rand.Intn(100) + 50))
 	}
 
 	for _, mutator := range mutators {
