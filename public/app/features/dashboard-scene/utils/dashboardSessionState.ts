@@ -17,10 +17,6 @@ export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene)
     preservedQueryParams.forEach((value, key) => {
       if (!currentQueryParams.has(key)) {
         currentQueryParams.append(key, value);
-      } else {
-        // if (!currentQueryParams.getAll(key).includes(value)) {
-        //   currentQueryParams.append(key, value);
-        // }
       }
     });
 
