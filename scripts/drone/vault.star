@@ -39,6 +39,7 @@ def vault_secret(name, path, key):
         },
     }
 
+# JEV: add gcom secret
 def secrets():
     return [
         vault_secret(gcp_grafanauploads, "infra/data/ci/grafana-release-eng/grafanauploads", "credentials.json"),
