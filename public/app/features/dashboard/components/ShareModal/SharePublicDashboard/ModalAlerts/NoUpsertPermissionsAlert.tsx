@@ -8,7 +8,7 @@ const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
 export const NoUpsertPermissionsAlert = ({ mode }: { mode: 'create' | 'edit' }) => (
   <Alert
-    severity="info"
+    severity="warning"
     title={t(
       'public-dashboard.modal-alerts.no-upsert-perm-alert-title',
       'You don’t have permission to {{ mode }} a public dashboard',
