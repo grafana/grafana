@@ -13,8 +13,13 @@ import (
 func WithProfilingLabels(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
-		namespace := request.NamespaceValue(ctx)
-		info, err := grafanarequest.ParseNamespace(namespace)
+		reqInfo, exists := request.RequestInfoFrom(ctx)
+		if !exists || reqInfo.Namespace == "" {
+			handler.ServeHTTP(w, req)
+			return
+		}
+
+		info, err := grafanarequest.ParseNamespace(reqInfo.Namespace)
 		if err != nil || info.StackID == "" {
 			handler.ServeHTTP(w, req)
 			return

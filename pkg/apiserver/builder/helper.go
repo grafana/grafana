@@ -94,11 +94,11 @@ func SetupConfig(
 
 		// Needs to run last in request chain to function as expected, hence we register it first.
 		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+		handler = filters.WithProfilingLabels(handler)
 		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, pathRewriters)
 		handler = k8stracing.WithTracing(handler, serverConfig.TracerProvider, "KubernetesAPI")
-		handler = filters.WithProfilingLabels(handler)
 
 		return handler
 	}

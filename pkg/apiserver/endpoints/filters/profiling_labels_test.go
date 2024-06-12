@@ -33,7 +33,7 @@ func TestWithProfilingLabels(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}))
 
-		ctx := request.WithNamespace(context.Background(), "stack-123")
+		ctx := request.WithRequestInfo(context.Background(), &request.RequestInfo{Namespace: "stack-123"})
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://", nil)
 		require.NoError(t, err)
 
