@@ -12,6 +12,14 @@ The `mode` setting can be set to either `grpc` or `inproc`. When set to `grpc`, 
 
 The `listen` setting determines whether the authorization server should listen for incoming requests. When set to `true`, the authorization service will be registered to the Grafana grpc server.
 
+The default configuration does not open the authorization server port for listening and binds the client to it `inproc`:
+```ini
+[authorization]
+address = ""
+listen = false
+mode = "inproc"
+```
+
 ### Example
 
 Here is an example to connect the authorization client to a remote grpc server.
@@ -20,13 +28,13 @@ Here is an example to connect the authorization client to a remote grpc server.
 [authorization]
 address = "server.example.org:10000"
 mode = "grpc"
-listen = false
 ```
 
-Here is an example to use inprocgrpc to run the authorization server in "embedded" mode.
+Here is an example to run the authorization server locally and connect the client to it through grpc
 
 ```ini
 [authorization]
-mode = "inproc"
-listen = false
+address = "localhost:10000"
+listen = true
+mode = "grpc"
 ```
