@@ -324,6 +324,63 @@ describe('LogsPanel', () => {
       expect(jest.mocked(styles.getLogRowStyles).mock.calls.length).toBeGreaterThan(3);
     });
   });
+
+  describe('Filters', () => {
+    const series = [
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['logline text'],
+            labels: {
+              app: 'common_app',
+            },
+          },
+        ],
+      }),
+    ];
+
+    it('allow to filter for a value or filter out a value', async () => {
+      const filterForMock = jest.fn();
+      const filterOutMock = jest.fn();
+      const isFilterLabelActiveMock = jest.fn();
+      setup({
+        data: {
+          series,
+        },
+        options: {
+          showLabels: false,
+          showTime: false,
+          wrapLogMessage: false,
+          showCommonLabels: false,
+          prettifyLogMessage: false,
+          sortOrder: LogsSortOrder.Descending,
+          dedupStrategy: LogsDedupStrategy.none,
+          enableLogDetails: true,
+          onClickFilterLabel: filterForMock,
+          onClickFilterOutLabel: filterOutMock,
+          isFilterLabelActive: isFilterLabelActiveMock,
+        },
+      });
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('logline text'));
+      await userEvent.click(screen.getByLabelText('Filter for value in query A'));
+      expect(filterForMock).toHaveBeenCalledTimes(1);
+      await userEvent.click(screen.getByLabelText('Filter out value in query A'));
+      expect(filterOutMock).toHaveBeenCalledTimes(1);
+
+      expect(isFilterLabelActiveMock).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
 const setup = (propsOverrides?: {}) => {

@@ -220,8 +220,8 @@ describe('Popover menu', () => {
         logsSortOrder={LogsSortOrder.Descending}
         enableLogDetails={true}
         displayedFields={[]}
-        onClickFilterOutValue={() => {}}
-        onClickFilterValue={() => {}}
+        onClickFilterOutString={() => {}}
+        onClickFilterString={() => {}}
         app={app}
       />
     );

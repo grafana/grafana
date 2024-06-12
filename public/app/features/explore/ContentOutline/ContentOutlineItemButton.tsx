@@ -3,7 +3,7 @@ import { ButtonHTMLAttributes, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { IconName, isIconName, GrafanaTheme2 } from '@grafana/data';
-import { Icon, Tooltip, useTheme2 } from '@grafana/ui';
+import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
 import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 
 type CommonProps = {
@@ -21,6 +21,7 @@ type CommonProps = {
   sectionId?: string;
   toggleCollapsed?: () => void;
   color?: string;
+  onRemove?: () => void;
 };
 
 export type ContentOutlineItemButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
@@ -40,6 +41,7 @@ export function ContentOutlineItemButton({
   sectionId,
   toggleCollapsed,
   color,
+  onRemove,
   ...rest
 }: ContentOutlineItemButtonProps) {
   const theme = useTheme2();
@@ -84,6 +86,15 @@ export function ContentOutlineItemButton({
           </span>
         )}
       </button>
+      {onRemove && (
+        <Button
+          variant="destructive"
+          className={styles.deleteButton}
+          icon="times"
+          onClick={() => onRemove()}
+          data-testid="content-outline-item-delete-button"
+        />
+      )}
     </div>
   );
 
@@ -118,20 +129,20 @@ const getStyles = (theme: GrafanaTheme2, color?: string) => {
       display: 'flex',
       alignItems: 'center',
       flexGrow: 1,
-      gap: theme.spacing(1),
-      overflow: 'hidden',
+      gap: theme.spacing(0.25),
       width: '100%',
+      overflow: 'hidden',
     }),
     button: css({
       label: 'content-outline-item-button',
       display: 'flex',
       alignItems: 'center',
       height: theme.spacing(theme.components.height.md),
-      padding: theme.spacing(0, 1),
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
       color: theme.colors.text.secondary,
       width: '100%',
       background: 'transparent',
+      overflow: 'hidden',
       border: 'none',
     }),
     collapseButton: css({
@@ -144,6 +155,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string) => {
       color: theme.colors.text.secondary,
       background: 'transparent',
       border: 'none',
+      overflow: 'hidden',
 
       '&:hover': {
         color: theme.colors.text.primary,
@@ -154,6 +166,8 @@ const getStyles = (theme: GrafanaTheme2, color?: string) => {
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
+      fontSize: theme.typography.bodySmall.fontSize,
+      marginLeft: theme.spacing(0.5),
     }),
     active: css({
       backgroundColor: theme.colors.background.secondary,
@@ -193,6 +207,12 @@ const getStyles = (theme: GrafanaTheme2, color?: string) => {
         width: theme.spacing(0.5),
         left: '2px',
       },
+    }),
+    deleteButton: css({
+      width: theme.spacing(1),
+      height: theme.spacing(1),
+      padding: theme.spacing(0.75, 0.75),
+      marginRight: theme.spacing(0.5),
     }),
   };
 };

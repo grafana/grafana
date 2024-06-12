@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
-import { withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
+import { withTheme2, Themeable2, Icon, Tooltip, PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, escapeUnescapedString } from '../utils';
 
@@ -61,6 +61,7 @@ interface Props extends Themeable2 {
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  pinLineButtonTooltipTitle?: PopoverContent;
   pinned?: boolean;
   containerRendered?: boolean;
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
@@ -306,6 +307,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               styles={styles}
               onPinLine={this.props.onPinLine}
               onUnpinLine={this.props.onUnpinLine}
+              pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
               pinned={this.props.pinned}
               mouseIsOver={this.state.mouseIsOver}
               onBlur={this.onMouseLeave}

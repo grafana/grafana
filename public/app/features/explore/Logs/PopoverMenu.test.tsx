@@ -14,9 +14,9 @@ test('Does not render if the filter functions are not defined', () => {
 });
 
 test('Renders copy and line contains filter', async () => {
-  const onClickFilterValue = jest.fn();
+  const onClickFilterString = jest.fn();
   render(
-    <PopoverMenu selection="test" x={0} y={0} row={row} close={() => {}} onClickFilterValue={onClickFilterValue} />
+    <PopoverMenu selection="test" x={0} y={0} row={row} close={() => {}} onClickFilterString={onClickFilterString} />
   );
 
   expect(screen.getByText('Copy selection')).toBeInTheDocument();
@@ -24,12 +24,12 @@ test('Renders copy and line contains filter', async () => {
 
   await userEvent.click(screen.getByText('Add as line contains filter'));
 
-  expect(onClickFilterValue).toHaveBeenCalledTimes(1);
-  expect(onClickFilterValue).toHaveBeenCalledWith('test', row.dataFrame.refId);
+  expect(onClickFilterString).toHaveBeenCalledTimes(1);
+  expect(onClickFilterString).toHaveBeenCalledWith('test', row.dataFrame.refId);
 });
 
 test('Renders copy and line does not contain filter', async () => {
-  const onClickFilterOutValue = jest.fn();
+  const onClickFilterOutString = jest.fn();
   render(
     <PopoverMenu
       selection="test"
@@ -37,7 +37,7 @@ test('Renders copy and line does not contain filter', async () => {
       y={0}
       row={row}
       close={() => {}}
-      onClickFilterOutValue={onClickFilterOutValue}
+      onClickFilterOutString={onClickFilterOutString}
     />
   );
 
@@ -46,8 +46,8 @@ test('Renders copy and line does not contain filter', async () => {
 
   await userEvent.click(screen.getByText('Add as line does not contain filter'));
 
-  expect(onClickFilterOutValue).toHaveBeenCalledTimes(1);
-  expect(onClickFilterOutValue).toHaveBeenCalledWith('test', row.dataFrame.refId);
+  expect(onClickFilterOutString).toHaveBeenCalledTimes(1);
+  expect(onClickFilterOutString).toHaveBeenCalledWith('test', row.dataFrame.refId);
 });
 
 test('Renders copy, line contains filter, and line does not contain filter', () => {
@@ -58,8 +58,8 @@ test('Renders copy, line contains filter, and line does not contain filter', () 
       y={0}
       row={row}
       close={() => {}}
-      onClickFilterValue={() => {}}
-      onClickFilterOutValue={() => {}}
+      onClickFilterString={() => {}}
+      onClickFilterOutString={() => {}}
     />
   );
 
@@ -77,8 +77,8 @@ test('Can be dismissed with escape', async () => {
       y={0}
       row={row}
       close={close}
-      onClickFilterValue={() => {}}
-      onClickFilterOutValue={() => {}}
+      onClickFilterString={() => {}}
+      onClickFilterOutString={() => {}}
     />
   );
 
