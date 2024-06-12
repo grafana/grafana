@@ -1,4 +1,5 @@
 import { isEqual } from 'lodash';
+import { finalize, from, Subscription } from 'rxjs';
 
 import { Scope } from '@grafana/data';
 import {
@@ -32,6 +33,8 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scopes'] });
 
+  private nodesFetchingSub: Subscription | undefined;
+
   get scopesParent(): ScopesScene {
     return sceneGraph.getAncestor(this, ScopesScene);
   }
@@ -60,6 +63,10 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
     this.addActivationHandler(() => {
       this.fetchBaseNodes();
+
+      return () => {
+        this.nodesFetchingSub?.unsubscribe();
+      };
     });
   }
 
@@ -79,6 +86,8 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public async updateNode(path: string[], isExpanded: boolean, query: string) {
+    this.nodesFetchingSub?.unsubscribe();
+
     let nodes = { ...this.state.nodes };
     let currentLevel: NodesMap = nodes;
 
@@ -89,16 +98,30 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     const name = path[path.length - 1];
     const currentNode = currentLevel[name];
 
-    if (isExpanded || currentNode.query !== query) {
-      this.setState({ loadingNodeName: name });
-
-      currentNode.nodes = await fetchNodes(name, query);
-    }
+    const isDifferentQuery = currentNode.query !== query;
 
     currentNode.isExpanded = isExpanded;
     currentNode.query = query;
 
     this.setState({ nodes, loadingNodeName: undefined });
+
+    if (isExpanded || isDifferentQuery) {
+      this.setState({ loadingNodeName: name });
+
+      this.nodesFetchingSub = from(fetchNodes(name, query))
+        .pipe(
+          finalize(() => {
+            this.setState({ loadingNodeName: undefined });
+          })
+        )
+        .subscribe((childNodes) => {
+          currentNode.nodes = childNodes;
+
+          this.setState({ nodes });
+
+          this.nodesFetchingSub?.unsubscribe();
+        });
+    }
   }
 
   public toggleNodeSelect(path: string[]) {
