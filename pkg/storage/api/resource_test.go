@@ -1,16 +1,16 @@
-package resource_test
+package api_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/store/resource"
+	"github.com/grafana/grafana/pkg/storage/api"
 )
 
 func TestResourceModels(t *testing.T) {
 	t.Run("key namespaced path", func(t *testing.T) {
-		key := &resource.Key{}
+		key := &api.ResourceKey{}
 		require.Equal(t, "__cluster__", key.NamespacedPath())
 
 		key.Namespace = "ns"
