@@ -93,7 +93,7 @@ Doing so ensures that the handler methods get access to `HttpServer` service dep
 
 **State:** Ongoing, passive.
 
-Store newly introduced date columns in the database as epoch-based integers (that is, UNIX timestamps) if they require date comparison.
+Store newly introduced date columns in the database as epoch-based integers (that is, Unix timestamps) if they require date comparison.
 This permits you to have a unified approach for comparing dates against all the supported databases instead of needing to handle dates differently for each database.
 Also, when you compare epoch-based integers you no longer need error-pruning transformations to and from other time zones.
 
