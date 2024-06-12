@@ -151,7 +151,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 
 	orgAdminNode, err := s.getAdminNode(c)
 
-	if orgAdminNode != nil {
+	if orgAdminNode != nil && len(orgAdminNode.Children) > 0 {
 		treeRoot.AddSection(orgAdminNode)
 	} else if err != nil {
 		return nil, err
