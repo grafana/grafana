@@ -31,7 +31,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
-import { GRAFANA_DATASOURCE_NAME } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { hashLabelsOrAnnotations } from '../../../utils/rule-id';
 import { AlertLabels } from '../../AlertLabels';
@@ -208,7 +208,10 @@ function AlertRuleName({ labels, ruleUID }: { labels: Record<string, string>; ru
   }
   return (
     <Tooltip content={alertRuleName ?? ''}>
-      <a href={`/alerting/${GRAFANA_DATASOURCE_NAME}/${ruleUID}/view`} className={styles.alertName}>
+      <a
+        href={`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view?returnTo=${encodeURIComponent('/alerting/history')}`}
+        className={styles.alertName}
+      >
         {alertRuleName}
       </a>
     </Tooltip>
