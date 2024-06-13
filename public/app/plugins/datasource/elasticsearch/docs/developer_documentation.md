@@ -16,6 +16,8 @@ The ElasticSearch data source has improved instrumentation with logs, metrics, t
 
 ## Technical debt
 
+Here is a list of our current technical debt.
+
 ### Database field
 
 Previously, users stored ElasticSearch indices in the `database` field, which has since been deprecated. It is now stored in `jsonData` (implemented in https://github.com/grafana/grafana/pull/62808), though we continue to support both fields. Eventually, support for the `database` field will need to be removed.
