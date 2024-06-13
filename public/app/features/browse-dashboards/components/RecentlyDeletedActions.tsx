@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import { Button, useStyles2 } from '@grafana/ui';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
 import appEvents from '../../../core/app_events';
 import { Trans } from '../../../core/internationalization';
@@ -10,6 +11,7 @@ import { useDispatch } from '../../../types';
 import { ShowModalReactEvent } from '../../../types/events';
 import { useRestoreDashboardMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
 import { clearFolders, setAllSelection, useActionSelectionState } from '../../browse-dashboards/state';
+import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
 import { RestoreModal } from '../components/RestoreModal';
 
 export function RecentlyDeletedActions() {
@@ -45,10 +47,19 @@ export function RecentlyDeletedActions() {
 
     await Promise.all(promises);
 
-    const parentUIDs = selectedDashboards
-      .map((uid) => resultsView.find((v) => v.uid === uid)?.location)
-      .filter((uid, index, self) => self.indexOf(uid) === index);
-    dispatch(clearFolders(parentUIDs));
+    const parentUIDs = new Set<string | undefined>();
+    for (const uid of selectedDashboards) {
+      const foundItem = resultsView.find((v) => v.uid === uid);
+      if (!foundItem) {
+        continue;
+      }
+
+      // Search API returns items with no parent with a location of 'general', so we
+      // need to convert that back to undefined
+      const folderUID = foundItem.location === GENERAL_FOLDER_UID ? undefined : foundItem.location;
+      parentUIDs.add(folderUID);
+    }
+    dispatch(clearFolders(Array.from(parentUIDs)));
 
     onActionComplete();
   };

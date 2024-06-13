@@ -1,6 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
 import { isSharedWithMe } from '../components/utils';
@@ -202,12 +201,11 @@ export function setAllSelection(
   }
 }
 
-type UIDLike = string | undefined;
-export function clearFolders(state: BrowseDashboardsState, action: PayloadAction<UIDLike | UIDLike[]>) {
+export function clearFolders(state: BrowseDashboardsState, action: PayloadAction<Array<string | undefined>>) {
   const folderUIDs = Array.isArray(action.payload) ? action.payload : [action.payload];
 
   for (const folderUID of folderUIDs) {
-    if (!folderUID || folderUID === GENERAL_FOLDER_UID) {
+    if (!folderUID) {
       state.rootItems = undefined;
     } else {
       state.childrenByParentUID[folderUID] = undefined;
