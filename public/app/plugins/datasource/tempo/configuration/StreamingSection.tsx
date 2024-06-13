@@ -7,6 +7,7 @@ import {
 } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { InlineFieldRow, InlineField, InlineSwitch, Alert } from '@grafana/ui';
+
 import { FeatureName, featuresToTempoVersion } from '../datasource';
 
 interface StreamingOptions extends DataSourceJsonData {
