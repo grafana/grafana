@@ -1270,9 +1270,6 @@ def verify_grafanacom_step(node_version = 18):
             # Download/install gcom utility
             "curl -L -o /usr/local/bin/gcom https://github.com/grafana/gcom/releases/latest/download/gcom-linux-amd64",
             "chmod +x /usr/local/bin/gcom",
-            # Download/install node
-            "curl -sL https://deb.nodesource.com/setup_$node_version.x | bash -",
-            "sudo apt-get install -y nodejs",
             "./drone/verify-grafanacom.sh",
         ],
         "depends_on": ["publish-grafanacom"], # JEV: anything else?
