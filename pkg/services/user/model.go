@@ -3,7 +3,7 @@ package user
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
 

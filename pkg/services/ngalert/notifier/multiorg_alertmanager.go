@@ -10,7 +10,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	alertingCluster "github.com/grafana/alerting/cluster"
-	"github.com/grafana/grafana/pkg/util/errutil"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
