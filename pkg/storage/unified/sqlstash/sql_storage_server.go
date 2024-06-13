@@ -2,7 +2,6 @@ package sqlstash
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -23,12 +22,7 @@ import (
 
 // Package-level errors.
 var (
-	ErrNotFound                  = errors.New("entity not found")
-	ErrOptimisticLockingFailed   = errors.New("optimistic locking failed")
-	ErrUserNotFoundInContext     = errors.New("user not found in context")
-	ErrNextPageTokenNotSupported = errors.New("nextPageToken not yet supported")
-	ErrLimitNotSupported         = errors.New("limit not yet supported")
-	ErrNotImplementedYet         = errors.New("not implemented yet")
+	ErrNotImplementedYet = errors.New("not implemented yet")
 )
 
 // Make sure we implement both store and search
@@ -38,12 +32,22 @@ var _ resource.ResourceSearchServer = &sqlResourceServer{}
 func ProvideSQLResourceServer(db db.EntityDBInterface, tracer tracing.Tracer) (SqlResourceServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
+	var err error
 	server := &sqlResourceServer{
 		db:     db,
 		log:    log.New("sql-resource-server"),
 		ctx:    ctx,
 		cancel: cancel,
 		tracer: tracer,
+	}
+	server.writer, err = resource.NewResourceWriter(resource.WriterOptions{
+		NodeID:   123, // for snowflake ID generation
+		Tracer:   tracer,
+		Reader:   server.Read,
+		Appender: server.append,
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	if err := prometheus.Register(sqlstash.NewStorageMetrics()); err != nil {
@@ -55,6 +59,7 @@ func ProvideSQLResourceServer(db db.EntityDBInterface, tracer tracing.Tracer) (S
 
 type SqlResourceServer interface {
 	resource.ResourceStoreServer
+	resource.ResourceSearchServer
 
 	Init() error
 	Stop()
@@ -70,7 +75,9 @@ type sqlResourceServer struct {
 	cancel      context.CancelFunc
 	stream      chan *resource.WatchResponse
 	tracer      trace.Tracer
-	writer      resource.ResourceWriter
+
+	// Wrapper around all write events
+	writer resource.ResourceWriter
 
 	once    sync.Once
 	initErr error
@@ -184,6 +191,8 @@ func (s *sqlResourceServer) append(ctx context.Context, event *resource.WriteEve
 	_, span := s.tracer.Start(ctx, "storage_server.WriteEvent")
 	defer span.End()
 
+	// TODO... actually write write the event!
+
 	return 0, ErrNotImplementedYet
 }
 
@@ -244,42 +253,21 @@ func (s *sqlResourceServer) Delete(ctx context.Context, req *resource.DeleteRequ
 }
 
 func (s *sqlResourceServer) List(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "storage_server.List")
+	_, span := s.tracer.Start(ctx, "storage_server.List")
 	defer span.End()
 
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
 
-	var rv int64
-	err := s.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-		req := sqlResourceVersionGetRequest{
-			SQLTemplate:            sqltemplate.New(s.sqlDialect),
-			Group:                  req.Options.Key.Group,
-			Resource:               req.Options.Key.Resource,
-			returnsResourceVersion: new(returnsResourceVersion),
-		}
-		res, err := queryRow(ctx, tx, sqlResourceVersionGet, req)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return err
-		}
-		if res != nil {
-			rv = res.ResourceVersion
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Printf("TODO, LIST: %+v // %d", req.Options.Key, rv)
+	fmt.Printf("TODO, LIST: %+v", req.Options.Key)
 
 	return nil, ErrNotImplementedYet
 }
 
 // Get the raw blob bytes and metadata
 func (s *sqlResourceServer) GetBlob(ctx context.Context, req *resource.GetBlobRequest) (*resource.GetBlobResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "storage_server.List")
+	_, span := s.tracer.Start(ctx, "storage_server.List")
 	defer span.End()
 
 	if err := s.Init(); err != nil {
@@ -293,7 +281,7 @@ func (s *sqlResourceServer) GetBlob(ctx context.Context, req *resource.GetBlobRe
 
 // Show resource history (and trash)
 func (s *sqlResourceServer) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "storage_server.History")
+	_, span := s.tracer.Start(ctx, "storage_server.History")
 	defer span.End()
 
 	if err := s.Init(); err != nil {
@@ -307,7 +295,7 @@ func (s *sqlResourceServer) History(ctx context.Context, req *resource.HistoryRe
 
 // Used for efficient provisioning
 func (s *sqlResourceServer) Origin(ctx context.Context, req *resource.OriginRequest) (*resource.OriginResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "storage_server.History")
+	_, span := s.tracer.Start(ctx, "storage_server.History")
 	defer span.End()
 
 	if err := s.Init(); err != nil {

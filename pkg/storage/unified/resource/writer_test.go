@@ -13,18 +13,18 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestWriter(t *testing.T) {
 	tracer := noop.NewTracerProvider().Tracer("testing")
-	testUserA := &user.SignedInUser{
-		UserID:  123,
-		UserUID: "u123",
-		OrgRole: identity.RoleAdmin,
+	testUserA := &identity.StaticRequester{
+		Namespace:      identity.NamespaceUser,
+		UserID:         123,
+		UserUID:        "u123",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true, // can do anything
 	}
-	ctx := appcontext.WithUser(context.Background(), testUserA)
+	ctx := identity.WithRequester(context.Background(), testUserA)
 
 	store := NewMemoryStore()
 	writer, err := NewResourceWriter(WriterOptions{
