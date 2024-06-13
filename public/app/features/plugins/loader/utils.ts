@@ -1,5 +1,7 @@
 import { config } from '@grafana/runtime';
 
+import { sandboxPluginDependencies } from '../sandbox/plugin_dependencies';
+
 import { SHARED_DEPENDENCY_PREFIX } from './constants';
 import { SystemJS } from './systemjs';
 
@@ -11,15 +13,16 @@ export function buildImportMap(importMap: Record<string, System.Module>) {
     // expose dependency to loaders
     addPreload(module_name, importMap[key]);
 
+    sandboxPluginDependencies.set(key, importMap[key]);
+
     acc[key] = module_name;
     return acc;
   }, {});
 }
 
-// TODO: Figure out dynamic fe sandbox dependencies... maybe we can use define here instead?
 function addPreload(id: string, preload: (() => Promise<System.Module>) | System.Module) {
   if (SystemJS.has(id)) {
-    return false;
+    return;
   }
 
   let resolvedId;
@@ -30,7 +33,7 @@ function addPreload(id: string, preload: (() => Promise<System.Module>) | System
   }
 
   if (resolvedId && SystemJS.has(resolvedId)) {
-    return false;
+    return;
   }
 
   const moduleId = resolvedId || id;
@@ -43,12 +46,9 @@ function addPreload(id: string, preload: (() => Promise<System.Module>) | System
         },
       };
     });
-    return true;
+  } else {
+    SystemJS.set(moduleId, preload);
   }
-
-  SystemJS.set(moduleId, preload);
-
-  return true;
 }
 
 export function isHostedOnCDN(path: string) {
