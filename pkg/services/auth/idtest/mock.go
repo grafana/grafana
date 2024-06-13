@@ -3,8 +3,8 @@ package idtest
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 var _ auth.IDService = (*MockService)(nil)

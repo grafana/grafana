@@ -309,6 +309,21 @@
     },
     {
       "metadata": {
+        "name": "authZGRPCServer",
+        "resourceVersion": "1718093439898",
+        "creationTimestamp": "2024-06-11T08:10:39Z",
+        "deletionTimestamp": "2024-06-13T11:41:02Z"
+      },
+      "spec": {
+        "description": "Enables the gRPC server for authorization",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "autoMigrateGraphPanel",
         "resourceVersion": "1717578796182",
         "creationTimestamp": "2024-02-08T22:00:48Z"
@@ -1694,6 +1709,19 @@
         "resourceVersion": "1718017263521",
         "creationTimestamp": "2024-06-10T11:01:03Z",
         "deletionTimestamp": "2024-06-12T08:28:14Z"
+      },
+      "spec": {
+        "description": "Enables pinning of nav items",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pinNavItems",
+        "resourceVersion": "1718017263521",
+        "creationTimestamp": "2024-06-10T11:01:03Z",
+        "deletionTimestamp": "2024-06-13T11:41:02Z"
       },
       "spec": {
         "description": "Enables pinning of nav items",

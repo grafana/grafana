@@ -92,7 +92,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
   const xGroupsCount = vizSeries[0]?.length ?? 0;
   const seriesCount = vizSeries[0]?.fields.length ?? 0;
-  const totalSeries = info.series[0].fields.length - 1;
+  const totalSeries = Math.max(0, (info.series[0]?.fields.length ?? 0) - 1);
 
   let { builder, prepData } = useMemo(
     () => {
