@@ -359,7 +359,7 @@ func (ng *AlertNG) init() error {
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
 	// If any are set, override the config accordingly.
 	ApplyStateHistoryFeatureToggles(&ng.Cfg.UnifiedAlerting.StateHistory, ng.FeatureToggles, ng.Log)
-	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log)
+	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log, ng.tracer)
 	if err != nil {
 		return err
 	}
@@ -523,7 +523,7 @@ type Historian interface {
 	state.Historian
 }
 
-func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore, met *metrics.Historian, l log.Logger) (Historian, error) {
+func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore, met *metrics.Historian, l log.Logger, tracer tracing.Tracer) (Historian, error) {
 	if !cfg.Enabled {
 		met.Info.WithLabelValues("noop").Set(0)
 		return historian.NewNopHistorian(), nil
@@ -538,7 +538,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	if backend == historian.BackendTypeMultiple {
 		primaryCfg := cfg
 		primaryCfg.Backend = cfg.MultiPrimary
-		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l)
+		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l, tracer)
 		if err != nil {
 			return nil, fmt.Errorf("multi-backend target \"%s\" was misconfigured: %w", cfg.MultiPrimary, err)
 		}
@@ -547,7 +547,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		for _, b := range cfg.MultiSecondaries {
 			secCfg := cfg
 			secCfg.Backend = b
-			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l)
+			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l, tracer)
 			if err != nil {
 				return nil, fmt.Errorf("multi-backend target \"%s\" was miconfigured: %w", b, err)
 			}
@@ -569,7 +569,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		}
 		req := historian.NewRequester()
 		lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")
-		backend := historian.NewRemoteLokiBackend(lokiBackendLogger, lcfg, req, met)
+		backend := historian.NewRemoteLokiBackend(lokiBackendLogger, lcfg, req, met, tracer)
 
 		testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 		defer cancelFunc()
