@@ -193,11 +193,12 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 	}
 
 	// Add user headers... here or in client.QueryData
-	req2 := req.Request.DeepCopy()
+	comparisonReq := req
+	comparisonReq.Request = req.Request.DeepCopy()
 	pluginID := req.PluginId
 	pluginUID := req.UID
-	var err error
 
+	var err error
 	ctx, err = b.client.PreprocessRequest(ctx, v0alpha1.DataSourceRef{
 		Type: pluginID,
 		UID:  pluginUID,
@@ -206,31 +207,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return nil, err
 	}
 
-	client, err := b.client.GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
-		Type: pluginID,
-		UID:  pluginUID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	code, rsp, err := client.QueryData(ctx, *req.Request)
-	if err == nil && rsp != nil {
-		for _, q := range req.Request.Queries {
-			if q.ResultAssertions != nil {
-				result, ok := rsp.Responses[q.RefID]
-				if ok && result.Error == nil {
-					err = q.ResultAssertions.Validate(result.Frames)
-					if err != nil {
-						result.Error = err
-						result.ErrorSource = backend.ErrorSourceDownstream
-						rsp.Responses[q.RefID] = result
-					}
-				}
-			}
-		}
-	}
-
+	code, rsp, dur, err := b.peformQuery(ctx, b.client, req, pluginID, pluginUID)
 	// Create a response object with the error when missing (happens for client errors like 404)
 	if rsp == nil && err != nil {
 		rsp = &backend.QueryDataResponse{Responses: make(backend.Responses)}
@@ -243,32 +220,31 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 	}
 
 	if b.passiveModeClient != nil {
-		// Let's only run the passive mode for prometheus and loki.
-		if pluginID == datasources.DS_PROMETHEUS || pluginID == datasources.DS_LOKI {
-			b.log.Debug("running dry run comparison to multi-tenant")
-			go b.queryDataAndCompare(ctx, pluginID, pluginUID, req2, code, rsp)
+		// Only compare Loki & Prometheus requests. We do not want to compare all requests
+		// as some datasources have costs attached to queries.
+		if pluginID == datasources.DS_PROMETHEUS || pluginID == datasources.DS_LOKI || pluginID == datasources.DS_TESTDATA {
+			b.log.Debug("running passive mode comparison to multi-tenant")
+			go b.queryDataAndCompare(ctx, pluginID, pluginUID, comparisonReq, code, rsp, dur)
 		}
 	}
 
 	return rsp, err
 }
 
-// queryDataAndCompare runs the query again, this time from the MT service, and compares the results. All of this happens in a go routine and is non-blocking.
-func (b *QueryAPIBuilder) queryDataAndCompare(ctx context.Context, pluginID string, pluginUID string, req *v0alpha1.QueryDataRequest, code int, rsp *backend.QueryDataResponse) {
-	// Add user headers... here or in client.QueryData
-	client, err := (*b.passiveModeClient).GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
+func (b *QueryAPIBuilder) peformQuery(ctx context.Context, client DataSourceClientSupplier, req datasourceRequest, pluginID, pluginUID string) (int, *backend.QueryDataResponse, time.Duration, error) {
+	cli, err := client.GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
 		Type: pluginID,
 		UID:  pluginUID,
 	})
 	if err != nil {
-		b.increaseCompare(compareResultError, pluginID)
-		b.log.Error("unable to get dry run client", "error", err)
-		return
+		return 0, nil, 0, err
 	}
-	// TODO: figure out context propogation without cancelling when the original request returns
-	code2, rsp2, err := client.QueryData(context.Background(), *req)
+
+	startTime := time.Now()
+	code, rsp, err := cli.QueryData(ctx, *req.Request)
+	elapsedTime := time.Since(startTime)
 	if err == nil && rsp != nil {
-		for _, q := range req.Queries {
+		for _, q := range req.Request.Queries {
 			if q.ResultAssertions != nil {
 				result, ok := rsp.Responses[q.RefID]
 				if ok && result.Error == nil {
@@ -282,34 +258,43 @@ func (b *QueryAPIBuilder) queryDataAndCompare(ctx context.Context, pluginID stri
 			}
 		}
 	}
+
+	return code, rsp, elapsedTime, err
+}
+
+// queryDataAndCompare runs the query again, this time from the MT service, and compares the results. All of this happens in a go routine and is non-blocking.
+func (b *QueryAPIBuilder) queryDataAndCompare(ctx context.Context, pluginID string, pluginUID string, req datasourceRequest, stCode int, stRsp *backend.QueryDataResponse, stDuration time.Duration) {
+	mtCode, mtRsp, elapsedTime, err := b.peformQuery(ctx, (*b.passiveModeClient), req, pluginID, pluginUID)
 	if err != nil {
 		b.increaseCompare(compareResultError, pluginID)
 		b.log.Error("unable to query", "error", err)
 		return
 	}
 
-	b.log.Info("code", "got", code2, "expected", code)
-	if code2 != code {
+	b.log.Debug("code", "mt", mtCode, "st", stCode)
+	if mtCode != stCode {
 		b.increaseCompare(compareResultError, pluginID)
-		b.log.Error("codes do not match", "got", code2, "expected", code)
+		b.log.Error("codes do not match", "got", mtCode, "expected", stCode)
 		return
 	}
 
-	b.log.Info("responses", "got", rsp2.Responses, "expected", rsp.Responses)
-	if rsp2.Responses != nil {
-		b.compareResults(pluginID, rsp, rsp2)
+	b.log.Debug("responses", "mt", mtRsp.Responses, "st", stRsp.Responses)
+	if mtRsp.Responses != nil {
+		b.compareResults(pluginID, stRsp, mtRsp)
+		// only compare duration if there is a response. Errors will usually be faster.
+		b.reportDurationDiff(pluginID, stDuration, elapsedTime)
 	}
 }
 
-func (b *QueryAPIBuilder) compareResults(pluginID string, rsp, rsp2 *backend.QueryDataResponse) {
+func (b *QueryAPIBuilder) compareResults(pluginID string, stRsp, mtRsp *backend.QueryDataResponse) {
 	// If the length of both responses is different, we know that
 	// something is not right and can straight up return.
-	if len(rsp.Responses) != len(rsp2.Responses) {
+	if len(stRsp.Responses) != len(mtRsp.Responses) {
 		b.increaseCompare(compareResultDifferent, pluginID)
 		return
 	}
-	for k, v := range rsp.Responses {
-		vv, exists := rsp2.Responses[k]
+	for k, v := range stRsp.Responses {
+		vv, exists := mtRsp.Responses[k]
 		if !exists {
 			b.increaseCompare(compareResultDifferent, pluginID)
 			return
@@ -354,10 +339,8 @@ func (b *QueryAPIBuilder) compareResults(pluginID string, rsp, rsp2 *backend.Que
 					b.increaseCompare(compareResultDifferent, pluginID)
 					return
 				}
-				// I think for now we don't have to go further than that to get a first good impression.
-				// Comparing the content of the field, the real values might be tricky as we don't know
-				// the type and how to compare them. That being said we could later add a switch case with
-				// known numeric types or something.
+				// This will give a first good impression - comparing the content of the field / real values
+				// might be tricky as we don't know the type and how to compare them.
 			}
 		}
 	}
@@ -369,6 +352,11 @@ func (b *QueryAPIBuilder) increaseCompare(result, dsType string) {
 		compareLabelResult:         result,
 		compareLabelDatasourceType: dsType,
 	}).Add(1)
+}
+
+func (b *QueryAPIBuilder) reportDurationDiff(dsType string, stDuration, mtDuration time.Duration) {
+	durationDifference := mtDuration - stDuration
+	b.metrics.queryDurationDiff.With(prometheus.Labels{compareLabelDatasourceType: dsType}).Observe(durationDifference.Seconds())
 }
 
 // buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.

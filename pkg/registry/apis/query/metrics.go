@@ -17,8 +17,9 @@ const (
 )
 
 type metrics struct {
-	dsRequests *prometheus.CounterVec
-	dsCompare  *prometheus.CounterVec
+	dsRequests        *prometheus.CounterVec
+	dsCompare         *prometheus.CounterVec
+	queryDurationDiff *prometheus.HistogramVec
 
 	// older metric
 	expressionsQuerySummary *prometheus.SummaryVec
@@ -36,8 +37,16 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubSystem,
 			Name:      "ds_compare_results_total",
-			Help:      "Results that got compared using passive mode for the query service",
+			Help:      "Comparison results in passive mode from the query service",
 		}, []string{compareLabelResult, compareLabelDatasourceType}),
+		queryDurationDiff: prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "query_duration_difference_seconds",
+				Help:    "Difference in duration between single and multi-tenant queries in seconds",
+				Buckets: prometheus.DefBuckets,
+			},
+			[]string{"datasource_type"},
+		),
 		expressionsQuerySummary: prometheus.NewSummaryVec(
 			prometheus.SummaryOpts{
 				Namespace:  metricsNamespace,
@@ -53,6 +62,8 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 	if reg != nil {
 		reg.MustRegister(
 			m.dsRequests,
+			m.dsCompare,
+			m.queryDurationDiff,
 			m.expressionsQuerySummary,
 		)
 	}

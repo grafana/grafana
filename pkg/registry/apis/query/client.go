@@ -11,7 +11,7 @@ type DataSourceClientSupplier interface {
 	// Get a client for a given datasource
 	// NOTE: authorization headers are not yet added and the client may be shared across multiple users
 	GetDataSourceClient(ctx context.Context, ref data.DataSourceRef) (data.QueryDataClient, error)
-	// used to prevent duplicate requests on depedent services in dry run mode
+	// Can be called before GetDataSourceClient to prevent duplicate requests on depedent services in passive mode
 	PreprocessRequest(ctx context.Context, ref data.DataSourceRef) (context.Context, error)
 }
 
