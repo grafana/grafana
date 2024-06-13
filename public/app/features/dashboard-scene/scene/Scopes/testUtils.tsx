@@ -229,29 +229,21 @@ export const fetchScopesSpy = jest.spyOn(api, 'fetchScopes');
 export const fetchDashboardsSpy = jest.spyOn(api, 'fetchDashboards');
 
 const selectors = {
-  root: {
-    expand: 'scopes-root-expand',
-  },
   tree: {
     search: (nodeId: string) => `scopes-tree-${nodeId}-search`,
     select: (nodeId: string) => `scopes-tree-${nodeId}-checkbox`,
     expand: (nodeId: string) => `scopes-tree-${nodeId}-expand`,
     title: (nodeId: string) => `scopes-tree-${nodeId}-title`,
   },
-  basicSelector: {
-    container: 'scopes-basic-container',
-    innerContainer: 'scopes-basic-inner-container',
-    loading: 'scopes-basic-loading',
-    openAdvanced: 'scopes-basic-open-advanced',
-    input: 'scopes-basic-input',
-  },
-  advancedSelector: {
-    container: 'scopes-advanced-container',
-    loading: 'scopes-advanced-loading',
-    apply: 'scopes-advanced-apply',
-    cancel: 'scopes-advanced-cancel',
+  filters: {
+    input: 'scopes-filters-input',
+    container: 'scopes-filters-container',
+    loading: 'scopes-filters-loading',
+    apply: 'scopes-filters-apply',
+    cancel: 'scopes-filters-cancel',
   },
   dashboards: {
+    expand: 'scopes-dashboards-expand',
     container: 'scopes-dashboards-container',
     search: 'scopes-dashboards-search',
     loading: 'scopes-dashboards-loading',
@@ -259,18 +251,13 @@ const selectors = {
   },
 };
 
-export const queryRootExpand = () => screen.queryByTestId(selectors.root.expand);
-export const getRootExpand = () => screen.getByTestId(selectors.root.expand);
+export const getFiltersInput = () => screen.getByTestId<HTMLInputElement>(selectors.filters.input);
+export const queryFiltersApply = () => screen.queryByTestId(selectors.filters.apply);
+export const getFiltersApply = () => screen.getByTestId(selectors.filters.apply);
+export const getFiltersCancel = () => screen.getByTestId(selectors.filters.cancel);
 
-export const queryBasicInnerContainer = () => screen.queryByTestId(selectors.basicSelector.innerContainer);
-export const getBasicInnerContainer = () => screen.getByTestId(selectors.basicSelector.innerContainer);
-export const getBasicInput = () => screen.getByTestId<HTMLInputElement>(selectors.basicSelector.input);
-export const getBasicOpenAdvanced = () => screen.getByTestId(selectors.basicSelector.openAdvanced);
-
-export const queryAdvancedApply = () => screen.queryByTestId(selectors.advancedSelector.apply);
-export const getAdvancedApply = () => screen.getByTestId(selectors.advancedSelector.apply);
-export const getAdvancedCancel = () => screen.getByTestId(selectors.advancedSelector.cancel);
-
+export const queryDashboardsExpand = () => screen.queryByTestId(selectors.dashboards.expand);
+export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
 export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
 export const getDashboardsSearch = () => screen.getByTestId(selectors.dashboards.search);
