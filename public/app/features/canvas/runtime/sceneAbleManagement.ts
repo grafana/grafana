@@ -6,9 +6,8 @@ import {
   CONNECTION_VERTEX_ID,
   CONNECTION_VERTEX_ADD_ID,
 } from 'app/plugins/panel/canvas/components/connections/Connections';
+import { VerticalConstraint, HorizontalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { getParent } from 'app/plugins/panel/canvas/utils';
-
-import { VerticalConstraint, HorizontalConstraint } from '../types';
 
 import { dimensionViewable, constraintViewable, settingsViewable } from './ables';
 import { ElementState } from './element';
