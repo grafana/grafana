@@ -27,9 +27,9 @@ refs:
 
 # Stat
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This visualization replaces the Singlestat visualization, which was deprecated in Grafana 7.0 and removed in Grafana 8.0.
-{{% /admonition %}}
+{{< /admonition >}}
 
 A stat visualization displays your data in single values of interest&mdash;such as the latest or current value of a series&mdash;with an optional graph sparkline. A graph sparkline, which is only available in stat visualizations, is a small time-series graph shown in the background of each value in the visualization.
 
@@ -157,9 +157,9 @@ Set whether wide layout is enabled or not. Wide layout is enabled by default.
 - **On -** Wide layout is enabled.
 - **Off -** Wide layout is disabled.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This option is only applicable when **Text mode** is set to **Value and name**. When wide layout is enabled, the value and name are displayed side-by-side with the value on the right, if the panel is wide enough. When wide layout is disabled, the value is always rendered underneath the name.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Color mode
 
@@ -188,19 +188,17 @@ Choose an alignment mode.
 
 Set whether percent change is displayed or not. Disabled by default.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This option is not applicable when the **Show** setting, under **Value options**, is set to **All values**.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Percent change color mode
 
-- **Standard** -- Green if the percent change is positive, red if the percent change is negative.
-- **Inverted** -- Red if the percent change is positive, green if the percent change is negative.
-- **Same as Value** -- Use the same color as the value.
+This option is only displayed when **Show percent change** is enabled. Choose from:
 
-{{% admonition type="note" %}}
-This option only appears when **Show percent change** is enabled.
-{{% /admonition %}}
+- **Standard -** Green if the percent change is positive, red if the percent change is negative.
+- **Inverted -** Red if the percent change is positive, green if the percent change is negative.
+- **Same as Value -** Use the same color as the value.
 
 ## Text size
 
