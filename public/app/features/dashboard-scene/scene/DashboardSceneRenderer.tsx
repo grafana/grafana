@@ -9,14 +9,15 @@ import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
-import { KioskMode, useSelector } from 'app/types';
+import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty, scopes, meta, kioskMode } = model.useState();
+  const { controls, overlay, editview, editPanel, isEmpty, scopes, meta } = model.useState();
   const { isExpanded: isScopesExpanded } = scopes?.useState() ?? {};
+  const { hideLinksControls, hideTimeControls, hideVariableControls } = controls?.useState() ?? {};
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
@@ -24,6 +25,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
   const isHomePage = !meta.url && !meta.slug && !meta.isNew && !meta.isSnapshot;
+  const isDashboardControlsHidden = !controls || (hideLinksControls && hideTimeControls && hideVariableControls);
 
   if (editview) {
     return (
@@ -37,7 +39,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const emptyState = <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />;
 
   const withPanels = (
-    <div className={cx(styles.body, kioskMode === KioskMode.Full && styles.bodyInKioskMode)}>
+    <div className={cx(styles.body)}>
       <bodyToRender.Component model={bodyToRender} />
     </div>
   );
@@ -49,14 +51,15 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         <div
           className={cx(
             styles.pageContainer,
-            controls && !scopes && styles.pageContainerWithControls,
+            !isDashboardControlsHidden && !scopes && styles.pageContainerWithControls,
+            isDashboardControlsHidden && !scopes && styles.pageContainerWithoutControls,
             scopes && styles.pageContainerWithScopes,
             scopes && isScopesExpanded && styles.pageContainerWithScopesExpanded
           )}
         >
           {scopes && <scopes.Component model={scopes} />}
           <NavToolbarActions dashboard={model} />
-          {!isHomePage && kioskMode !== KioskMode.Full && controls && (
+          {!isHomePage && !isDashboardControlsHidden && (
             <div
               className={cx(styles.controlsWrapper, scopes && !isScopesExpanded && styles.controlsWrapperWithScopes)}
             >
@@ -97,6 +100,9 @@ function getStyles(theme: GrafanaTheme2) {
         "controls"
         "panels"`,
       gridTemplateRows: 'auto 1fr',
+    }),
+    pageContainerWithoutControls: css({
+      marginTop: theme.spacing(2),
     }),
     pageContainerWithScopes: css({
       gridTemplateAreas: `

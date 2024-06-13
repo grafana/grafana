@@ -18,6 +18,7 @@ import { Box, Stack, useStyles2 } from '@grafana/ui';
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardControlsUrlSync } from './DashboardControlsUrlSync';
 import { DashboardLinksControls } from './DashboardLinksControls';
 
 interface DashboardControlsState extends SceneObjectState {
@@ -25,6 +26,8 @@ interface DashboardControlsState extends SceneObjectState {
   timePicker: SceneTimePicker;
   refreshPicker: SceneRefreshPicker;
   hideTimeControls?: boolean;
+  hideVariableControls?: boolean;
+  hideLinksControls?: boolean;
 }
 export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   static Component = DashboardControlsRenderer;
@@ -32,6 +35,8 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
     onAnyVariableChanged: this._onAnyVariableChanged.bind(this),
   });
+
+  protected _urlSync = new DashboardControlsUrlSync(this);
 
   public constructor(state: Partial<DashboardControlsState>) {
     super({
@@ -54,11 +59,19 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 }
 
 function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardControls>) {
-  const { variableControls, refreshPicker, timePicker, hideTimeControls } = model.useState();
+  const { variableControls, refreshPicker, timePicker, hideTimeControls, hideVariableControls, hideLinksControls } =
+    model.useState();
   const dashboard = getDashboardSceneFor(model);
   const { links, meta, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const showDebugger = location.search.includes('scene-debugger');
+  const hideLinks = hideLinksControls || links.length === 0;
+  const hideVariables = hideVariableControls || variableControls.length === 0;
+  const hideTimePicker = hideTimeControls || (!timePicker && !refreshPicker);
+
+  if (hideVariables && hideLinks && hideTimePicker) {
+    return null;
+  }
 
   return (
     <div
@@ -66,14 +79,12 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       className={cx(styles.controls, meta.isEmbedded && styles.embedded)}
     >
       <Stack grow={1} wrap={'wrap'}>
-        {variableControls.map((c) => (
-          <c.Component model={c} key={c.state.key} />
-        ))}
+        {!hideVariables && variableControls.map((c) => <c.Component model={c} key={c.state.key} />)}
         <Box grow={1} />
-        {!editPanel && <DashboardLinksControls links={links} uid={dashboard.state.uid} />}
+        {!hideLinks && !editPanel && <DashboardLinksControls links={links} uid={dashboard.state.uid} />}
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
       </Stack>
-      {!hideTimeControls && (
+      {!hideTimePicker && (
         <Stack justifyContent={'flex-end'}>
           <timePicker.Component model={timePicker} />
           <refreshPicker.Component model={refreshPicker} />
