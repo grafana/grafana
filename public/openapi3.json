@@ -220,7 +220,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/SnapshotList"
+              "$ref": "#/components/schemas/SnapshotListDTO"
             }
           }
         },
@@ -240,7 +240,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/CloudMigrationSessionListResponse"
+              "$ref": "#/components/schemas/CloudMigrationSessionListResponseDTO"
             }
           }
         },
@@ -250,7 +250,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/CloudMigrationSessionResponse"
+              "$ref": "#/components/schemas/CloudMigrationSessionResponseDTO"
             }
           }
         },
@@ -3734,18 +3734,18 @@
         },
         "type": "object"
       },
-      "CloudMigrationSessionListResponse": {
+      "CloudMigrationSessionListResponseDTO": {
         "properties": {
           "sessions": {
             "items": {
-              "$ref": "#/components/schemas/CloudMigrationSessionResponse"
+              "$ref": "#/components/schemas/CloudMigrationSessionResponseDTO"
             },
             "type": "array"
           }
         },
         "type": "object"
       },
-      "CloudMigrationSessionRequest": {
+      "CloudMigrationSessionRequestDTO": {
         "properties": {
           "authToken": {
             "type": "string"
@@ -3753,7 +3753,7 @@
         },
         "type": "object"
       },
-      "CloudMigrationSessionResponse": {
+      "CloudMigrationSessionResponseDTO": {
         "properties": {
           "created": {
             "format": "date-time",
@@ -10352,7 +10352,7 @@
       "SmtpNotEnabled": {
         "$ref": "#/components/schemas/ResponseDetails"
       },
-      "SnapshotList": {
+      "SnapshotListDTO": {
         "properties": {
           "runs": {
             "items": {
@@ -15173,7 +15173,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CloudMigrationSessionRequest"
+                "$ref": "#/components/schemas/CloudMigrationSessionRequestDTO"
               }
             }
           },

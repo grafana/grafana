@@ -121,8 +121,19 @@ type MigrateDataResponseItemDTO struct {
 // swagger:enum MigrateDataType
 type MigrateDataType string
 
+const (
+	DashboardDataType  MigrateDataType = "DASHBOARD"
+	DatasourceDataType MigrateDataType = "DATASOURCE"
+	FolderDataType     MigrateDataType = "FOLDER"
+)
+
 // swagger:enum ItemStatus
 type ItemStatus string
+
+const (
+	ItemStatusOK    ItemStatus = "OK"
+	ItemStatusError ItemStatus = "ERROR"
+)
 
 // swagger:parameters getCloudMigrationRun
 type GetMigrationRunParams struct {

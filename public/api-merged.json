@@ -2328,7 +2328,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CloudMigrationSessionRequest"
+              "$ref": "#/definitions/CloudMigrationSessionRequestDTO"
             }
           }
         ],
@@ -13334,18 +13334,18 @@
         }
       }
     },
-    "CloudMigrationSessionListResponse": {
+    "CloudMigrationSessionListResponseDTO": {
       "type": "object",
       "properties": {
         "sessions": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/CloudMigrationSessionResponse"
+            "$ref": "#/definitions/CloudMigrationSessionResponseDTO"
           }
         }
       }
     },
-    "CloudMigrationSessionRequest": {
+    "CloudMigrationSessionRequestDTO": {
       "type": "object",
       "properties": {
         "authToken": {
@@ -13353,7 +13353,7 @@
         }
       }
     },
-    "CloudMigrationSessionResponse": {
+    "CloudMigrationSessionResponseDTO": {
       "type": "object",
       "properties": {
         "created": {
@@ -19953,7 +19953,7 @@
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
     },
-    "SnapshotList": {
+    "SnapshotListDTO": {
       "type": "object",
       "properties": {
         "runs": {
@@ -22412,7 +22412,7 @@
     "cloudMigrationRunListResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/SnapshotList"
+        "$ref": "#/definitions/SnapshotListDTO"
       }
     },
     "cloudMigrationRunResponse": {
@@ -22424,13 +22424,13 @@
     "cloudMigrationSessionListResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/CloudMigrationSessionListResponse"
+        "$ref": "#/definitions/CloudMigrationSessionListResponseDTO"
       }
     },
     "cloudMigrationSessionResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/CloudMigrationSessionResponse"
+        "$ref": "#/definitions/CloudMigrationSessionResponseDTO"
       }
     },
     "conflictError": {

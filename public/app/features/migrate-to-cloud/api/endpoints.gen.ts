@@ -8,7 +8,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/cloudmigration/migration`,
         method: 'POST',
-        body: queryArg.cloudMigrationSessionRequest,
+        body: queryArg.cloudMigrationSessionRequestDto,
       }),
     }),
     getCloudMigrationRun: build.query<GetCloudMigrationRunApiResponse, GetCloudMigrationRunApiArg>({
@@ -36,11 +36,11 @@ const injectedRtkApi = api.injectEndpoints({
   overrideExisting: false,
 });
 export { injectedRtkApi as generatedAPI };
-export type GetSessionListApiResponse = /** status 200 (empty) */ CloudMigrationSessionListResponse;
+export type GetSessionListApiResponse = /** status 200 (empty) */ CloudMigrationSessionListResponseDto;
 export type GetSessionListApiArg = void;
-export type CreateSessionApiResponse = /** status 200 (empty) */ CloudMigrationSessionResponse;
+export type CreateSessionApiResponse = /** status 200 (empty) */ CloudMigrationSessionResponseDto;
 export type CreateSessionApiArg = {
-  cloudMigrationSessionRequest: CloudMigrationSessionRequest;
+  cloudMigrationSessionRequestDto: CloudMigrationSessionRequestDto;
 };
 export type GetCloudMigrationRunApiResponse = /** status 200 (empty) */ MigrateDataResponseDto;
 export type GetCloudMigrationRunApiArg = {
@@ -52,12 +52,12 @@ export type DeleteSessionApiArg = {
   /** UID of a migration session */
   uid: string;
 };
-export type GetSessionApiResponse = /** status 200 (empty) */ CloudMigrationSessionResponse;
+export type GetSessionApiResponse = /** status 200 (empty) */ CloudMigrationSessionResponseDto;
 export type GetSessionApiArg = {
   /** UID of a migration session */
   uid: string;
 };
-export type GetCloudMigrationRunListApiResponse = /** status 200 (empty) */ SnapshotList;
+export type GetCloudMigrationRunListApiResponse = /** status 200 (empty) */ SnapshotListDto;
 export type GetCloudMigrationRunListApiArg = {
   /** UID of a migration */
   uid: string;
@@ -73,14 +73,14 @@ export type GetDashboardByUidApiResponse = /** status 200 (empty) */ DashboardFu
 export type GetDashboardByUidApiArg = {
   uid: string;
 };
-export type CloudMigrationSessionResponse = {
+export type CloudMigrationSessionResponseDto = {
   created?: string;
   slug?: string;
   uid?: string;
   updated?: string;
 };
-export type CloudMigrationSessionListResponse = {
-  sessions?: CloudMigrationSessionResponse[];
+export type CloudMigrationSessionListResponseDto = {
+  sessions?: CloudMigrationSessionResponseDto[];
 };
 export type ErrorResponseBody = {
   /** Error An optional detailed description of the actual error. Only included if running in developer mode. */
@@ -92,7 +92,7 @@ export type ErrorResponseBody = {
     For example, a 412 Precondition Failed error may include additional information of why that error happened. */
   status?: string;
 };
-export type CloudMigrationSessionRequest = {
+export type CloudMigrationSessionRequestDto = {
   authToken?: string;
 };
 export type MigrateDataResponseItemDto = {
@@ -108,7 +108,7 @@ export type MigrateDataResponseDto = {
 export type MigrateDataResponseListDto = {
   uid?: string;
 };
-export type SnapshotList = {
+export type SnapshotListDto = {
   runs?: MigrateDataResponseListDto[];
 };
 export type CreateAccessTokenResponseDto = {
