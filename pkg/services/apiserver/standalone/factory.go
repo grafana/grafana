@@ -5,13 +5,13 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/prometheus/client_golang/prometheus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -87,7 +87,7 @@ func (p *DummyAPIFactory) MakeAPIServer(_ context.Context, tracer tracing.Tracer
 			},
 			client.NewTestDataRegistry(),
 			nil, // legacy lookup
-			prometheus.DefaultRegisterer,
+			metrics.ProvideRegisterer(),
 			tracer,
 		)
 
