@@ -2,7 +2,7 @@ import $ from 'jquery';
 import _, { isFunction } from 'lodash'; // eslint-disable-line lodash/import-scope
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
-import { AppEvents, dateMath, UrlQueryValue } from '@grafana/data';
+import { AppEvents, dateMath, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -35,15 +35,20 @@ export class DashboardLoaderSrv {
     };
   }
 
-  loadDashboard(type: UrlQueryValue, slug: string | undefined, uid: string | undefined): Promise<DashboardDTO> {
+  loadDashboard(
+    type: UrlQueryValue,
+    slug: string | undefined,
+    uid: string | undefined,
+    queryParams?: UrlQueryMap | undefined
+  ): Promise<DashboardDTO> {
     const stateManager = getDashboardScenePageStateManager();
     let promise;
 
     if (type === 'script' && slug) {
-      promise = this._loadScriptedDashboard(slug);
+      promise = this._loadScriptedDashboard(slug, queryParams);
     } else if (type === 'snapshot' && slug) {
       promise = getDashboardSnapshotSrv()
-        .getSnapshot(slug)
+        .getSnapshot(slug, queryParams)
         .catch(() => {
           return this._dashboardLoadFailed('Snapshot not found', true);
         });
@@ -51,7 +56,7 @@ export class DashboardLoaderSrv {
       promise = this._loadFromDatasource(slug); // explore dashboards as code
     } else if (type === 'public' && uid) {
       promise = backendSrv
-        .getPublicDashboardByUid(uid)
+        .getPublicDashboardByUid(uid, queryParams)
         .then((result) => {
           return result;
         })
@@ -77,13 +82,16 @@ export class DashboardLoaderSrv {
           };
         });
     } else if (uid) {
-      const cachedDashboard = stateManager.getFromCache(uid);
-      if (cachedDashboard) {
-        return Promise.resolve(cachedDashboard);
+      // Don't load dashboard from cache if we're passing any query parameters
+      if (Object.keys(queryParams ?? {}).length === 0) {
+        const cachedDashboard = stateManager.getFromCache(uid);
+        if (cachedDashboard) {
+          return Promise.resolve(cachedDashboard);
+        }
       }
 
       promise = getDashboardAPI()
-        .getDashboardDTO(uid)
+        .getDashboardDTO(uid, queryParams)
         .then((result) => {
           if (result.meta.isFolder) {
             appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
@@ -111,11 +119,11 @@ export class DashboardLoaderSrv {
     return promise;
   }
 
-  _loadScriptedDashboard(file: string) {
+  _loadScriptedDashboard(file: string, queryParams?: UrlQueryMap | undefined) {
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
     return getBackendSrv()
-      .get(url)
+      .get(url, queryParams)
       .then(this._executeScript.bind(this))
       .then(
         (result: any) => {

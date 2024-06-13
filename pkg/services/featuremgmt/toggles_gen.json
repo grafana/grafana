@@ -2065,6 +2065,20 @@
     },
     {
       "metadata": {
+        "name": "scopeDashboards",
+        "resourceVersion": "1718277048844",
+        "creationTimestamp": "2024-06-13T11:10:48Z"
+      },
+      "spec": {
+        "description": "Enables the passing of scopes to dashboards fetching in Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "scopeFilters",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-03-05T15:41:19Z"

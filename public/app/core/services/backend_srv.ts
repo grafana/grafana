@@ -15,7 +15,7 @@ import {
 } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AppEvents, DataQueryErrorType, deprecationWarning } from '@grafana/data';
+import { AppEvents, DataQueryErrorType, deprecationWarning, UrlQueryMap } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
@@ -531,8 +531,8 @@ export class BackendSrv implements BackendService {
     });
   }
 
-  getPublicDashboardByUid(uid: string) {
-    return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`);
+  getPublicDashboardByUid(uid: string, queryParams?: UrlQueryMap | undefined) {
+    return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`, queryParams);
   }
 
   getFolderByUid(uid: string, options: FolderRequestOptions = {}) {

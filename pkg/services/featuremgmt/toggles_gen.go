@@ -726,4 +726,8 @@ const (
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
+
+	// FlagScopeDashboards
+	// Enables the passing of scopes to dashboards fetching in Grafana
+	FlagScopeDashboards = "scopeDashboards"
 )

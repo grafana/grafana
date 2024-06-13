@@ -73,20 +73,25 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     urlFolderUid,
     keepDashboardFromExploreInLocalStorage,
   }: LoadDashboardOptions): Promise<DashboardDTO | null> {
-    const model = localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
-
-    if (model) {
-      if (!keepDashboardFromExploreInLocalStorage) {
-        removeDashboardToFetchFromLocalStorage();
-      }
-      return model;
-    }
+    const scopes = this.getScopes() ?? [];
 
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
-    const cachedDashboard = this.getFromCache(cacheKey);
 
-    if (cachedDashboard) {
-      return cachedDashboard;
+    if (scopes.length === 0) {
+      const model = localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
+
+      if (model) {
+        if (!keepDashboardFromExploreInLocalStorage) {
+          removeDashboardToFetchFromLocalStorage();
+        }
+        return model;
+      }
+
+      const cachedDashboard = this.getFromCache(cacheKey);
+
+      if (cachedDashboard) {
+        return cachedDashboard;
+      }
     }
 
     let rsp: DashboardDTO;
@@ -98,7 +103,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
           break;
         case DashboardRoutes.Home:
-          rsp = await getBackendSrv().get('/api/dashboards/home');
+          rsp = await getBackendSrv().get('/api/dashboards/home', { scopes });
 
           if (rsp.redirectUri) {
             return rsp;
@@ -112,10 +117,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
           break;
         case DashboardRoutes.Public: {
-          return await dashboardLoaderSrv.loadDashboard('public', '', uid);
+          return await dashboardLoaderSrv.loadDashboard('public', '', uid, { scopes });
         }
         default:
-          rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+          rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid, { scopes });
 
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
@@ -166,7 +171,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   private async loadSnapshotScene(slug: string): Promise<DashboardScene> {
-    const rsp = await dashboardLoaderSrv.loadDashboard('snapshot', slug, '');
+    const queryParams = { scopes: this.getScopes() };
+
+    const rsp = await dashboardLoaderSrv.loadDashboard('snapshot', slug, '', queryParams);
 
     if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
@@ -216,14 +223,16 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         options.keepDashboardFromExploreInLocalStorage === false
     );
 
+    const hasScopes = this.getScopes()?.length ?? 0 > 0;
+
     this.setState({ isLoading: true });
 
     const rsp = await this.fetchDashboard(options);
 
     const fromCache = this.cache[options.uid];
 
-    // When coming from Explore, skip returnning scene from cache
-    if (!comingFromExplore) {
+    // When coming from Explore and when loading the dashboard with scopes, skip returnning scene from cache
+    if (!comingFromExplore && !hasScopes) {
       if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
         return fromCache;
       }
@@ -233,7 +242,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       const scene = transformSaveModelToScene(rsp);
 
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
-      if (options.uid && !comingFromExplore) {
+      if (options.uid && !comingFromExplore && !hasScopes) {
         this.cache[options.uid] = scene;
       }
 
@@ -247,6 +256,18 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
 
     throw new Error('Dashboard not found');
+  }
+
+  private getScopes(): string[] | undefined {
+    if (!config.featureToggles.scopeFilters || !config.featureToggles.scopeDashboards) {
+      return undefined;
+    }
+
+    const queryParams = locationService.getSearchObject();
+    const rawScopes = queryParams['scopes'] ?? [];
+    const scopes = Array.isArray(rawScopes) ? rawScopes : [rawScopes];
+
+    return scopes.map(String);
   }
 
   public getFromCache(cacheKey: string) {
