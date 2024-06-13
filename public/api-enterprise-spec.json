@@ -3116,18 +3116,18 @@
         }
       }
     },
-    "CloudMigrationListResponse": {
+    "CloudMigrationSessionListResponseDTO": {
       "type": "object",
       "properties": {
-        "migrations": {
+        "sessions": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/CloudMigrationResponse"
+            "$ref": "#/definitions/CloudMigrationSessionResponseDTO"
           }
         }
       }
     },
-    "CloudMigrationRequest": {
+    "CloudMigrationSessionRequestDTO": {
       "type": "object",
       "properties": {
         "authToken": {
@@ -3135,14 +3135,14 @@
         }
       }
     },
-    "CloudMigrationResponse": {
+    "CloudMigrationSessionResponseDTO": {
       "type": "object",
       "properties": {
         "created": {
           "type": "string",
           "format": "date-time"
         },
-        "stack": {
+        "slug": {
           "type": "string"
         },
         "uid": {
@@ -3151,17 +3151,6 @@
         "updated": {
           "type": "string",
           "format": "date-time"
-        }
-      }
-    },
-    "CloudMigrationRunList": {
-      "type": "object",
-      "properties": {
-        "runs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MigrateDataResponseListDTO"
-          }
         }
       }
     },
@@ -7048,6 +7037,17 @@
       "type": "integer",
       "format": "int64"
     },
+    "SnapshotListDTO": {
+      "type": "object",
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseListDTO"
+          }
+        }
+      }
+    },
     "State": {
       "type": "string"
     },
@@ -8342,28 +8342,28 @@
         "$ref": "#/definitions/GetAccessTokenResponseDTO"
       }
     },
-    "cloudMigrationListResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/CloudMigrationListResponse"
-      }
-    },
-    "cloudMigrationResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/CloudMigrationResponse"
-      }
-    },
     "cloudMigrationRunListResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/CloudMigrationRunList"
+        "$ref": "#/definitions/SnapshotListDTO"
       }
     },
     "cloudMigrationRunResponse": {
       "description": "",
       "schema": {
         "$ref": "#/definitions/MigrateDataResponseDTO"
+      }
+    },
+    "cloudMigrationSessionListResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationSessionListResponseDTO"
+      }
+    },
+    "cloudMigrationSessionResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationSessionResponseDTO"
       }
     },
     "conflictError": {

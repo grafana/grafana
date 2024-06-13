@@ -50,7 +50,7 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 	_, err = s.GetToken(context.Background())
 	assert.ErrorIs(t, cloudmigration.ErrTokenNotFound, err)
 
-	cm := cloudmigration.CloudMigration{}
+	cm := cloudmigration.CloudMigrationSession{}
 	err = s.ValidateToken(context.Background(), cm)
 	assert.NoError(t, err)
 }
@@ -62,27 +62,27 @@ func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, createTokenResp.Token)
 
-	cmd := cloudmigration.CloudMigrationRequest{
+	cmd := cloudmigration.CloudMigrationSessionRequest{
 		AuthToken: createTokenResp.Token,
 	}
 
-	createResp, err := s.CreateMigration(context.Background(), cmd)
+	createResp, err := s.CreateSession(context.Background(), cmd)
 	require.NoError(t, err)
 	require.NotEmpty(t, createResp.UID)
-	require.NotEmpty(t, createResp.Stack)
+	require.NotEmpty(t, createResp.Slug)
 
-	getMigResp, err := s.GetMigration(context.Background(), createResp.UID)
+	getMigResp, err := s.GetSession(context.Background(), createResp.UID)
 	require.NoError(t, err)
 	require.NotNil(t, getMigResp)
 	require.Equal(t, createResp.UID, getMigResp.UID)
-	require.Equal(t, createResp.Stack, getMigResp.Stack)
+	require.Equal(t, createResp.Slug, getMigResp.Slug)
 
-	listResp, err := s.GetMigrationList(context.Background())
+	listResp, err := s.GetSessionList(context.Background())
 	require.NoError(t, err)
 	require.NotNil(t, listResp)
-	require.Equal(t, 1, len(listResp.Migrations))
-	require.Equal(t, createResp.UID, listResp.Migrations[0].UID)
-	require.Equal(t, createResp.Stack, listResp.Migrations[0].Stack)
+	require.Equal(t, 1, len(listResp.Sessions))
+	require.Equal(t, createResp.UID, listResp.Sessions[0].UID)
+	require.Equal(t, createResp.Slug, listResp.Sessions[0].Slug)
 
 	runResp, err := s.RunMigration(ctxWithSignedInUser(), createResp.UID)
 	require.NoError(t, err)
@@ -104,7 +104,7 @@ func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
 	require.Equal(t, 1, len(listRunResp.Runs))
 	require.Equal(t, runResp.RunUID, listRunResp.Runs[0].RunUID)
 
-	delMigResp, err := s.DeleteMigration(context.Background(), createResp.UID)
+	delMigResp, err := s.DeleteSession(context.Background(), createResp.UID)
 	require.NoError(t, err)
 	require.NotNil(t, createResp.UID, delMigResp.UID)
 }

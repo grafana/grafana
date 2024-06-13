@@ -5,10 +5,10 @@ import { Alert, Box, Button, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import {
-  useDeleteCloudMigrationMutation,
+  useDeleteSessionMutation,
   useGetCloudMigrationRunListQuery,
   useGetCloudMigrationRunQuery,
-  useGetMigrationListQuery,
+  useGetSessionListQuery,
   useRunCloudMigrationMutation,
 } from '../api';
 
@@ -33,8 +33,8 @@ import { ResourcesTable } from './ResourcesTable';
  */
 
 function useGetLatestMigrationDestination() {
-  const result = useGetMigrationListQuery();
-  const latestMigration = result.data?.migrations?.at(-1);
+  const result = useGetSessionListQuery();
+  const latestMigration = result.data?.sessions?.at(-1);
 
   return {
     ...result,
@@ -68,7 +68,7 @@ export const Page = () => {
   const migrationDestination = useGetLatestMigrationDestination();
   const lastMigrationRun = useGetLatestMigrationRun(migrationDestination.data?.uid);
   const [performRunMigration, runMigrationResult] = useRunCloudMigrationMutation();
-  const [performDisconnect, disconnectResult] = useDeleteCloudMigrationMutation();
+  const [performDisconnect, disconnectResult] = useDeleteSessionMutation();
 
   // isBusy is not a loading state, but indicates that the system is doing *something*
   // and all buttons should be disabled
@@ -136,7 +136,7 @@ export const Page = () => {
           </Alert>
         )}
 
-        {migrationMeta.stack && (
+        {migrationMeta.slug && (
           <Box
             borderColor="weak"
             borderStyle="solid"
@@ -150,7 +150,7 @@ export const Page = () => {
               title={t('migrate-to-cloud.summary.target-stack-title', 'Uploading to')}
               value={
                 <>
-                  {migrationMeta.stack}{' '}
+                  {migrationMeta.slug}{' '}
                   <Button
                     disabled={isBusy}
                     onClick={() => setDisconnectModalOpen(true)}
