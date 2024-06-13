@@ -198,5 +198,5 @@ export interface FeatureToggles {
   failWrongDSUID?: boolean;
   databaseReadReplica?: boolean;
   zanzana?: boolean;
-  scopeDashboards?: boolean;
+  passScopeToDashboardApi?: boolean;
 }

@@ -1680,6 +1680,20 @@
     },
     {
       "metadata": {
+        "name": "passScopeToDashboardApi",
+        "resourceVersion": "1718290335877",
+        "creationTimestamp": "2024-06-13T14:52:15Z"
+      },
+      "spec": {
+        "description": "Enables the passing of scopes to dashboards fetching in Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "pdfTables",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-11-06T13:39:22Z"
@@ -2061,20 +2075,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "scopeDashboards",
-        "resourceVersion": "1718277048844",
-        "creationTimestamp": "2024-06-13T11:10:48Z"
-      },
-      "spec": {
-        "description": "Enables the passing of scopes to dashboards fetching in Grafana",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
       }
     },
     {

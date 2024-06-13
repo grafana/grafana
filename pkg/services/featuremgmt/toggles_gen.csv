@@ -179,4 +179,4 @@ ssoSettingsLDAP,experimental,@grafana/identity-access-team,false,false,false
 failWrongDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
 databaseReadReplica,experimental,@grafana/grafana-backend-services-squad,false,false,false
 zanzana,experimental,@grafana/identity-access-team,false,false,false
-scopeDashboards,experimental,@grafana/dashboards-squad,false,false,false
+passScopeToDashboardApi,experimental,@grafana/dashboards-squad,false,false,false
