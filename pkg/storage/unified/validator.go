@@ -1,56 +1,33 @@
-package resource
+package unified
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"sync/atomic"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/bwmarrin/snowflake"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
-
-type WriteEvent struct {
-	EventID    int64
-	Key        *Key // the request key
-	Requester  identity.Requester
-	Operation  ResourceOperation
-	PreviousRV int64 // only for Update+Delete
-	Value      []byte
-
-	Object    utils.GrafanaMetaAccessor
-	OldObject utils.GrafanaMetaAccessor
-
-	// Change metadata
-	FolderChanged bool
-
-	// The status will be populated for any error
-	Status *StatusResult
-	Error  error
-}
-
-func (e *WriteEvent) BadRequest(err error, message string, a ...any) *WriteEvent {
-	e.Error = err
-	e.Status = &StatusResult{
-		Status:  "Failure",
-		Message: fmt.Sprintf(message, a...),
-		Code:    http.StatusBadRequest,
-	}
-	return e
-}
 
 // Verify that all required fields are set, and the user has permission to set the common metadata fields
 type EventValidator interface {
 	PrepareCreate(ctx context.Context, req *CreateRequest) (*WriteEvent, error)
-	PrepareUpdate(ctx context.Context, req *UpdateRequest, current []byte) (*WriteEvent, error)
+	PrepareUpdate(ctx context.Context, req *UpdateRequest, current *GetResourceResponse) (*WriteEvent, error)
+	PrepareDelete(ctx context.Context, req *DeleteRequest, current *GetResourceResponse) (*WriteEvent, error)
 }
 
 type EventValidatorOptions struct {
-	// Get the next EventID
+	// When running in a cluster, each node should have a different ID
+	// This is used for snowflake generation and log identification
+	NodeID int64
+
+	// Get the next EventID.  When not set, this will be a snowflake ID
 	NextEventID func() int64
 
 	// Check if a user has access to write folders
@@ -67,9 +44,16 @@ type eventValidator struct {
 
 func NewEventValidator(opts EventValidatorOptions) EventValidator {
 	if opts.NextEventID == nil {
-		counter := atomic.Int64{}
-		opts.NextEventID = func() int64 {
-			return counter.Add(1)
+		rvGenerationNode, err := snowflake.NewNode(opts.NodeID)
+		if err == nil {
+			opts.NextEventID = func() int64 {
+				return rvGenerationNode.Generate().Int64()
+			}
+		} else {
+			counter := atomic.Int64{}
+			opts.NextEventID = func() int64 {
+				return counter.Add(1)
+			}
 		}
 	}
 	return &eventValidator{opts}
@@ -82,14 +66,14 @@ type dummyObject struct {
 
 var _ EventValidator = &eventValidator{}
 
-func (v *eventValidator) newEvent(ctx context.Context, key *Key, value, oldValue []byte) *WriteEvent {
+func (v *eventValidator) newEvent(ctx context.Context, key *ResourceKey, value, oldValue []byte) *WriteEvent {
 	var err error
 	event := &WriteEvent{
 		EventID: v.opts.NextEventID(),
 		Key:     key,
 		Value:   value,
 	}
-	event.Requester, err = appcontext.User(ctx)
+	event.Requester, err = identity.GetRequester(ctx)
 	if err != nil {
 		return event.BadRequest(err, "unable to get user")
 	}
@@ -110,8 +94,15 @@ func (v *eventValidator) newEvent(ctx context.Context, key *Key, value, oldValue
 	if obj.GetGenerateName() != "" {
 		return event.BadRequest(nil, "can not save value with generate name")
 	}
-	if obj.GetKind() == "" {
+	gvk := obj.GetGroupVersionKind()
+	if gvk.Kind == "" {
 		return event.BadRequest(nil, "expecting resources with a kind in the body")
+	}
+	if gvk.Version == "" {
+		return event.BadRequest(nil, "expecting resources with an apiVersion")
+	}
+	if gvk.Group != "" && gvk.Group != key.Group {
+		return event.BadRequest(nil, "group in key does not match group in the body (%s != %s)", key.Group, gvk.Group)
 	}
 	if obj.GetName() != key.Name {
 		return event.BadRequest(nil, "key name does not match the name in the body")
@@ -201,9 +192,13 @@ func (v *eventValidator) PrepareCreate(ctx context.Context, req *CreateRequest) 
 	return event, nil
 }
 
-func (v *eventValidator) PrepareUpdate(ctx context.Context, req *UpdateRequest, current []byte) (*WriteEvent, error) {
-	event := v.newEvent(ctx, req.Key, req.Value, current)
+func (v *eventValidator) PrepareUpdate(ctx context.Context, req *UpdateRequest, current *GetResourceResponse) (*WriteEvent, error) {
+	event := v.newEvent(ctx, req.Key, req.Value, current.Value)
 	event.Operation = ResourceOperation_UPDATED
+	event.PreviousRV = current.ResourceVersion
+	if current.Value == nil {
+		return event.BadRequest(nil, "current value does not exist"), nil
+	}
 	if event.Status != nil {
 		return event, nil
 	}
@@ -212,8 +207,50 @@ func (v *eventValidator) PrepareUpdate(ctx context.Context, req *UpdateRequest, 
 	//----------------------------------------
 	val := event.Object.GetUpdatedBy()
 	if val != "" && val != event.Requester.GetUID().String() {
-		return event.BadRequest(nil, "created by annotation does not match: metadata.annotations#"+utils.AnnoKeyUpdatedBy), nil
+		return event.BadRequest(nil, "updated by annotation does not match: metadata.annotations#"+utils.AnnoKeyUpdatedBy), nil
 	}
 
+	return event, nil
+}
+
+func (v *eventValidator) PrepareDelete(ctx context.Context, req *DeleteRequest, current *GetResourceResponse) (*WriteEvent, error) {
+	now := metav1.NewTime(time.Now())
+	var err error
+	event := &WriteEvent{
+		EventID:    v.opts.NextEventID(),
+		Key:        req.Key,
+		Operation:  ResourceOperation_DELETED,
+		PreviousRV: current.ResourceVersion,
+	}
+	if event.PreviousRV != req.Key.ResourceVersion {
+		return event.BadRequest(err, "deletion request does not match current revision (%d != %d)", req.Key.ResourceVersion, event.PreviousRV), nil
+	}
+	event.Requester, err = identity.GetRequester(ctx)
+	if err != nil {
+		return event.BadRequest(err, "unable to get user"), nil
+	}
+	marker := &DeletedMarker{}
+	err = json.Unmarshal(current.Value, marker)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read previous object, %w", err)
+	}
+	event.Object, err = utils.MetaAccessor(marker)
+	if err != nil {
+		return event.BadRequest(err, "unable to read marker object"), nil
+	}
+	event.Object.SetDeletionTimestamp(&now)
+	event.Object.SetUpdatedTimestamp(&now.Time)
+	event.Object.SetManagedFields(nil)
+	event.Object.SetFinalizers(nil)
+	event.Object.SetUpdatedBy(event.Requester.GetUID().String())
+	marker.TypeMeta = metav1.TypeMeta{
+		Kind:       "DeletedMarker",
+		APIVersion: "storage.grafana.app/v0alpha1", // ?? or can we stick this in common?
+	}
+	marker.Annotations["RestoreResourceVersion"] = fmt.Sprintf("%d", event.PreviousRV)
+	event.Value, err = json.Marshal(marker)
+	if err != nil {
+		return nil, fmt.Errorf("unable creating deletion marker, %w", err)
+	}
 	return event, nil
 }

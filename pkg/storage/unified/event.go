@@ -1,11 +1,12 @@
-package api
+package unified
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 type WriteEvent struct {
@@ -14,7 +15,10 @@ type WriteEvent struct {
 	Requester  identity.Requester
 	Operation  ResourceOperation
 	PreviousRV int64 // only for Update+Delete
-	Value      []byte
+
+	// The raw JSON payload
+	// NOTE, this is never mutated, only parsed and validated
+	Value json.RawMessage
 
 	Object    utils.GrafanaMetaAccessor
 	OldObject utils.GrafanaMetaAccessor

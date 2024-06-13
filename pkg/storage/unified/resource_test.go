@@ -1,16 +1,16 @@
-package api_test
+package unified_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/storage/api"
+	"github.com/grafana/grafana/pkg/storage/unified"
 )
 
 func TestResourceModels(t *testing.T) {
 	t.Run("key namespaced path", func(t *testing.T) {
-		key := &api.ResourceKey{}
+		key := &unified.ResourceKey{}
 		require.Equal(t, "__cluster__", key.NamespacedPath())
 
 		key.Namespace = "ns"

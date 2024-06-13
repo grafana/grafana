@@ -1,7 +1,7 @@
 syntax = "proto3";
-package api;
+package unified;
 
-option go_package = "github.com/grafana/grafana/pkg/storage/api";
+option go_package = "github.com/grafana/grafana/pkg/storage/unified";
 
 message ResourceKey {
   // Namespace (tenant)
@@ -65,14 +65,17 @@ message ResourceMeta {
 
 // Basic blob metadata
 message BlobInfo {
-  // Content Length
-  int64 size = 1;
+  // System identifier
+  string path = 1;
 
-  // MD5 digest of the body
-  string ETag = 2;
+  // Content Length
+  int64 size = 2;
 
   // Content type header
   string content_type = 3;
+
+  // Content hash used for an etag
+  string hash = 4;
 }
 
 // Status structure is copied from:
@@ -97,8 +100,18 @@ message StatusResult {
   int32 code = 4;
 }
 
-// TODO? support PresignedUrls for upload? 
-message CreateBlob {
+message LinkBlob {
+  enum Action {
+    UNKNOWN = 0;
+    // Upload raw bytes
+    UPLOAD = 1;
+    // Keep the existing blob (valid for updates)
+    KEEP = 2;
+    // Do not keep the existing version (same as not sending LinkBlob, only valid for updates)
+    REMOVE = 3;
+    // TODO... support presigned uploads
+  }
+
   // Content type header
   string content_type = 1;
 
@@ -123,7 +136,7 @@ message CreateRequest {
   string message = 3;
 
   // Optionally include a large binary object
-  CreateBlob blob = 4;
+  LinkBlob blob = 4;
 }
 
 message CreateResponse {
@@ -146,7 +159,7 @@ message UpdateRequest {
   string message = 3;
 
   // Optionally link a resource object
-  CreateBlob blob = 4;
+  LinkBlob blob = 4;
 }
 
 message UpdateResponse {
@@ -175,6 +188,9 @@ message DeleteResponse {
 
 message GetResourceRequest {
   ResourceKey key = 1;
+
+  // Do not include any blob details
+  bool ignore_blob = 2;
 }
 
 message GetResourceResponse {
@@ -200,7 +216,7 @@ message GetBlobResponse {
   // Status code
   StatusResult status = 1;
 
-  // Headers 
+  // Headers
   BlobInfo info = 2;
 
   // The raw object value

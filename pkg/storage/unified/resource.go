@@ -1,8 +1,12 @@
-package api
+package unified
 
 import (
 	"bytes"
 	"fmt"
+	"strconv"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // NamespacedPath is a path that can be used to isolate tenant data
@@ -47,4 +51,21 @@ func (x *ResourceKey) WithoutResourceVersion() *ResourceKey {
 		Resource:  x.Resource,
 		Name:      x.Name,
 	}
+}
+
+func ResourceKeyFor(gr schema.GroupResource, obj metav1.Object) (*ResourceKey, error) {
+	key := &ResourceKey{
+		Group:     gr.Group,
+		Resource:  gr.Resource,
+		Namespace: obj.GetNamespace(),
+		Name:      obj.GetName(),
+	}
+	rv := obj.GetResourceVersion()
+	if rv != "" {
+		var err error
+		key.ResourceVersion, err = strconv.ParseInt(rv, 10, 64)
+		return key, err
+	}
+	return key, nil
+
 }

@@ -4,7 +4,7 @@
 // - protoc             (unknown)
 // source: resource.proto
 
-package api
+package unified
 
 import (
 	context "context"
@@ -19,16 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	ResourceStore_GetResource_FullMethodName = "/api.ResourceStore/GetResource"
-	ResourceStore_Create_FullMethodName      = "/api.ResourceStore/Create"
-	ResourceStore_Update_FullMethodName      = "/api.ResourceStore/Update"
-	ResourceStore_Delete_FullMethodName      = "/api.ResourceStore/Delete"
-	ResourceStore_List_FullMethodName        = "/api.ResourceStore/List"
-	ResourceStore_Watch_FullMethodName       = "/api.ResourceStore/Watch"
-	ResourceStore_GetBlob_FullMethodName     = "/api.ResourceStore/GetBlob"
-	ResourceStore_History_FullMethodName     = "/api.ResourceStore/History"
-	ResourceStore_Origin_FullMethodName      = "/api.ResourceStore/Origin"
-	ResourceStore_IsHealthy_FullMethodName   = "/api.ResourceStore/IsHealthy"
+	ResourceStore_GetResource_FullMethodName = "/unified.ResourceStore/GetResource"
+	ResourceStore_Create_FullMethodName      = "/unified.ResourceStore/Create"
+	ResourceStore_Update_FullMethodName      = "/unified.ResourceStore/Update"
+	ResourceStore_Delete_FullMethodName      = "/unified.ResourceStore/Delete"
+	ResourceStore_List_FullMethodName        = "/unified.ResourceStore/List"
+	ResourceStore_Watch_FullMethodName       = "/unified.ResourceStore/Watch"
+	ResourceStore_GetBlob_FullMethodName     = "/unified.ResourceStore/GetBlob"
+	ResourceStore_History_FullMethodName     = "/unified.ResourceStore/History"
+	ResourceStore_Origin_FullMethodName      = "/unified.ResourceStore/Origin"
+	ResourceStore_IsHealthy_FullMethodName   = "/unified.ResourceStore/IsHealthy"
 )
 
 // ResourceStoreClient is the client API for ResourceStore service.
@@ -439,7 +439,7 @@ func _ResourceStore_IsHealthy_Handler(srv interface{}, ctx context.Context, dec 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ResourceStore_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "api.ResourceStore",
+	ServiceName: "unified.ResourceStore",
 	HandlerType: (*ResourceStoreServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

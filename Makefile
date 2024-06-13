@@ -379,7 +379,7 @@ protobuf: ## Compile protobuf definitions
 	# buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
 	# buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
 	# buf generate pkg/services/store/entity --template pkg/services/store/entity/buf.gen.yaml
-	buf generate pkg/storage/api --template pkg/storage/api/buf.gen.yaml
+	buf generate pkg/storage/unified --template pkg/storage/unified/buf.gen.yaml
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.

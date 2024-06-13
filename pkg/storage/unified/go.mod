@@ -1,8 +1,10 @@
-module github.com/grafana/grafana/pkg/storage/api
+module github.com/grafana/grafana/pkg/storage/unified
 
 go 1.21.10
 
-require (
+require (	
+	github.com/bwmarrin/snowflake v0.3.0
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240409140820-518d3341d58f
 	github.com/fullstorydev/grpchan v1.1.1
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/stretchr/testify v1.9.0
