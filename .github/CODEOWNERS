@@ -156,8 +156,6 @@
 
 /pkg/infra/kvstore/ @grafana/grafana-backend-group
 /pkg/infra/fs/ @grafana/grafana-backend-group
-/pkg/infra/x/ @grafana/grafana-backend-group
-
 
 # devenv
 # Backend code, developers environment
