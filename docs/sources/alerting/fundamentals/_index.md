@@ -107,7 +107,7 @@ In the alert rule, you can configure the contact point to receive the alert noti
 
 [Notification policies](ref:notification-policies) provide a flexible method to handle alert notifications by routing alerts to contact points via label matching.
 
-Each notification policy consists of a set of label matchers (0 or more) that specify which alert instances (identified by their labels) they handle. Notification policies are defined as a tree structure, where the root of the notification policy tree is the **Default notification policy**, which ensures all alerts are handled.
+Each notification policy consists of a set of label matchers (0 or more) that specify which alert instances (identified by their labels) they handle. Notification policies are defined in a tree structure, where the root of the notification policy tree is the **Default notification policy**, which ensures all alert instances are handled.
 
 {{< figure src="/media/docs/alerting/notification-routing.png" max-width="750px" caption="Notification policy routing" >}}
 
