@@ -42,7 +42,7 @@ type GetExtensions = ({
   limitPerPlugin?: number;
   registry: PluginExtensionRegistry;
   openedApps?: string[];
-  openSplitApp: (appId: string) => void;
+  openSplitApp: (appId: string, context: unknown) => void;
   closeSplitApp: (appId: string) => void;
 }) => { extensions: PluginExtension[] };
 
@@ -108,7 +108,7 @@ export const getPluginExtensions: GetExtensions = ({
         }
 
         const path = overrides?.path || extensionConfig.path;
-        const openApp = () => openSplitApp(pluginId);
+        const openApp = (context?: unknown) => openSplitApp(pluginId, context);
         const closeApp = () => {
           // Don't allow closing other apps from the app extension only it's own and only if it's the second app. The
           // second app requirement is probably temporary as we don't have a way to "promote" the secondary app to

@@ -128,7 +128,7 @@ function WindowSplitWrapper(props: { routes: React.ReactNode }) {
   return (
     <SplitPaneWrapper
       splitOrientation="vertical"
-      paneSize={0.5}
+      paneSize={0.25}
       minSize={200}
       maxSize={200 * -1}
       primary="second"

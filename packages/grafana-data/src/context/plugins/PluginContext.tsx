@@ -5,6 +5,7 @@ import { PluginMeta } from '../../types/plugin';
 
 export interface PluginContextType {
   meta: PluginMeta;
+  initialContext: unknown | undefined;
 }
 
 export interface DataSourcePluginContextType extends PluginContextType {

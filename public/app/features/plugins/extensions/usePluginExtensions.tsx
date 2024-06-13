@@ -42,7 +42,8 @@ export function createPluginExtensionsHook(extensionsRegistry: ReactivePluginExt
 
     const dispatch = useDispatch();
     const openSplitApp = useCallback(
-      (appId: string) => dispatch(windowSplitSlice.actions.openSplitApp({ secondAppId: appId })),
+      (appId: string, context: unknown) =>
+        dispatch(windowSplitSlice.actions.openSplitApp({ secondAppId: appId, context })),
       [dispatch]
     );
 

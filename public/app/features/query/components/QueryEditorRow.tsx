@@ -17,13 +17,22 @@ import {
   LoadingState,
   PanelData,
   PanelEvents,
+  PluginExtensionLink,
   QueryResultMetaNotice,
   TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
+import {
+  AngularComponent,
+  getAngularLoader,
+  getDataSourceSrv,
+  reportInteraction,
+  UsePluginExtensionsResult,
+  usePluginLinkExtensions,
+} from '@grafana/runtime';
+import { Badge, ErrorBoundaryAlert, ToolbarButton } from '@grafana/ui';
+import { IconButton } from '@grafana/ui/';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -451,49 +460,70 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
 
     return (
-      <>
-        {hasEditorHelp && (
-          <QueryOperationToggleAction
-            title={t('query-operation.header.datasource-help', 'Show data source help')}
-            icon="question-circle"
-            onClick={this.onToggleHelp}
-            active={showingHelp}
-          />
-        )}
-        {hasTextEditMode && (
-          <QueryOperationAction
-            title={t('query-operation.header.toggle-edit-mode', 'Toggle text edit mode')}
-            icon="pen"
-            onClick={(e) => {
-              this.onToggleEditMode(e, props);
-            }}
-          />
-        )}
-        {this.renderExtraActions()}
-        <QueryOperationAction
-          title={t('query-operation.header.duplicate-query', 'Duplicate query')}
-          icon="copy"
-          onClick={this.onCopyQuery}
-        />
-        {!hideHideQueryButton ? (
-          <QueryOperationToggleAction
-            dataTestId={selectors.components.QueryEditorRow.actionButton('Hide response')}
-            title={
-              query.hide
-                ? t('query-operation.header.show-response', 'Show response')
-                : t('query-operation.header.hide-response', 'Hide response')
-            }
-            icon={isHidden ? 'eye-slash' : 'eye'}
-            active={isHidden}
-            onClick={this.onHideQuery}
-          />
-        ) : null}
-        <QueryOperationAction
-          title={t('query-operation.header.remove-query', 'Remove query')}
-          icon="trash-alt"
-          onClick={this.onRemoveQuery}
-        />
-      </>
+      <ExtensionsProvider>
+        {(extensions) => {
+          return (
+            <>
+              {extensions.extensions.map((extension) => {
+                return (
+                  <IconButton
+                    key={extension.id}
+                    name={extension.icon!}
+                    tooltip={extension.title}
+                    onClick={(e) => {
+                      extension.onClick?.(e, {
+                        query,
+                      });
+                    }}
+                    type="button"
+                  />
+                );
+              })}
+              {hasEditorHelp && (
+                <QueryOperationToggleAction
+                  title={t('query-operation.header.datasource-help', 'Show data source help')}
+                  icon="question-circle"
+                  onClick={this.onToggleHelp}
+                  active={showingHelp}
+                />
+              )}
+              {hasTextEditMode && (
+                <QueryOperationAction
+                  title={t('query-operation.header.toggle-edit-mode', 'Toggle text edit mode')}
+                  icon="pen"
+                  onClick={(e) => {
+                    this.onToggleEditMode(e, props);
+                  }}
+                />
+              )}
+              {this.renderExtraActions()}
+              <QueryOperationAction
+                title={t('query-operation.header.duplicate-query', 'Duplicate query')}
+                icon="copy"
+                onClick={this.onCopyQuery}
+              />
+              {!hideHideQueryButton ? (
+                <QueryOperationToggleAction
+                  dataTestId={selectors.components.QueryEditorRow.actionButton('Hide response')}
+                  title={
+                    query.hide
+                      ? t('query-operation.header.show-response', 'Show response')
+                      : t('query-operation.header.hide-response', 'Hide response')
+                  }
+                  icon={isHidden ? 'eye-slash' : 'eye'}
+                  active={isHidden}
+                  onClick={this.onHideQuery}
+                />
+              ) : null}
+              <QueryOperationAction
+                title={t('query-operation.header.remove-query', 'Remove query')}
+                icon="trash-alt"
+                onClick={this.onRemoveQuery}
+              />
+            </>
+          );
+        }}
+      </ExtensionsProvider>
     );
   };
 
@@ -565,6 +595,19 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       </div>
     );
   }
+}
+
+type ExtensionsProviderProps = {
+  children: (extensions: UsePluginExtensionsResult<PluginExtensionLink>) => ReactNode;
+};
+function ExtensionsProvider(props: ExtensionsProviderProps) {
+  const extensions = usePluginLinkExtensions({
+    extensionPointId: 'grafana/query-editor-row/actions',
+    context: {},
+    limitPerPlugin: 3,
+  });
+
+  return props.children(extensions);
 }
 
 function notifyAngularQueryEditorsOfData<TQuery extends DataQuery>(

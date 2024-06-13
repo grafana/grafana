@@ -113,7 +113,7 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
   openModal: (options: PluginExtensionOpenModalOptions) => void;
 
   isAppOpened: boolean;
-  openSplitApp: () => void;
+  openSplitApp: (context?: unknown) => void;
   closeSplitApp: () => void;
 };
 
