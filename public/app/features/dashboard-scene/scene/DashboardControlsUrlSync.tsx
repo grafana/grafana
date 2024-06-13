@@ -19,7 +19,7 @@ export class DashboardControlsUrlSync implements SceneObjectUrlSyncHandler {
 
   updateFromUrl(values: SceneObjectUrlValues) {
     const update: Partial<(typeof DashboardControls.prototype)['state']> = {};
-    console.log('values', values);
+
     if (values['_dash.hideTimePicker'] === 'true' || values['_dash.hideTimePicker'] === '') {
       update.hideTimeControls = true;
     }

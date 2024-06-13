@@ -17,7 +17,6 @@ import { NavToolbarActions } from './NavToolbarActions';
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const { controls, overlay, editview, editPanel, isEmpty, scopes, meta } = model.useState();
   const { isExpanded: isScopesExpanded } = scopes?.useState() ?? {};
-  const { hideLinksControls, hideTimeControls, hideVariableControls } = controls?.useState() ?? {};
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
@@ -25,7 +24,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
   const isHomePage = !meta.url && !meta.slug && !meta.isNew && !meta.isSnapshot;
-  const isDashboardControlsHidden = !controls || (hideLinksControls && hideTimeControls && hideVariableControls);
+  const isDashboardControlsHidden = !controls?.hasControls();
 
   if (editview) {
     return (
@@ -39,7 +38,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const emptyState = <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />;
 
   const withPanels = (
-    <div className={cx(styles.body)}>
+    <div className={cx(styles.body, isDashboardControlsHidden && styles.bodyWithoutControls)}>
       <bodyToRender.Component model={bodyToRender} />
     </div>
   );
@@ -52,14 +51,13 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           className={cx(
             styles.pageContainer,
             !isDashboardControlsHidden && !scopes && styles.pageContainerWithControls,
-            isDashboardControlsHidden && !scopes && styles.pageContainerWithoutControls,
             scopes && styles.pageContainerWithScopes,
             scopes && isScopesExpanded && styles.pageContainerWithScopesExpanded
           )}
         >
           {scopes && <scopes.Component model={scopes} />}
           <NavToolbarActions dashboard={model} />
-          {!isHomePage && !isDashboardControlsHidden && (
+          {!isHomePage && controls && !isDashboardControlsHidden && (
             <div
               className={cx(styles.controlsWrapper, scopes && !isScopesExpanded && styles.controlsWrapperWithScopes)}
             >
@@ -101,9 +99,6 @@ function getStyles(theme: GrafanaTheme2) {
         "panels"`,
       gridTemplateRows: 'auto 1fr',
     }),
-    pageContainerWithoutControls: css({
-      marginTop: theme.spacing(2),
-    }),
     pageContainerWithScopes: css({
       gridTemplateAreas: `
         "scopes controls"
@@ -125,6 +120,9 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 0,
       gridArea: 'controls',
       padding: theme.spacing(2),
+      ':empty': {
+        display: 'none',
+      },
     }),
     controlsWrapperWithScopes: css({
       padding: theme.spacing(2, 2, 2, 0),
@@ -145,10 +143,11 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       display: 'flex',
       gap: '8px',
-      marginBottom: theme.spacing(2),
+      paddingBottom: theme.spacing(2),
+      boxSizing: 'border-box',
     }),
-    bodyInKioskMode: css({
-      margin: `${theme.spacing(2)} 0`,
+    bodyWithoutControls: css({
+      paddingTop: theme.spacing(2),
     }),
   };
 }
