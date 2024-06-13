@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -37,10 +38,17 @@ var DualWriterOutcome = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 	NativeHistogramBucketFactor: 1.1,
 }, []string{"mode", "name", "method"})
 
-func (m *dualWriterMetrics) init() {
+func (m *dualWriterMetrics) init(log logr.Logger) {
 	m.legacy = DualWriterLegacyDuration
 	m.storage = DualWriterStorageDuration
 	m.outcome = DualWriterOutcome
+	reg := prometheus.DefaultRegisterer
+	errLegacy := reg.Register(m.legacy)
+	errStorage := reg.Register(m.storage)
+	errOutcome := reg.Register(m.outcome)
+	if errLegacy != nil || errStorage != nil || errOutcome != nil {
+		log.Info("cloud migration metrics already registered")
+	}
 }
 
 func (m *dualWriterMetrics) recordLegacyDuration(isError bool, mode string, name string, method string, startFrom time.Time) {

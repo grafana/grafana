@@ -30,8 +30,9 @@ const mode2Str = "2"
 // Mode 2 represents writing to LegacyStorage and Storage and reading from LegacyStorage.
 func newDualWriterMode2(legacy LegacyStorage, storage Storage) *DualWriterMode2 {
 	metrics := &dualWriterMetrics{}
-	metrics.init()
-	return &DualWriterMode2{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode2"), dualWriterMetrics: metrics}
+	log := klog.NewKlogr().WithName("DualWriterMode2")
+	metrics.init(log)
+	return &DualWriterMode2{Legacy: legacy, Storage: storage, Log: log, dualWriterMetrics: metrics}
 }
 
 // Mode returns the mode of the dual writer.

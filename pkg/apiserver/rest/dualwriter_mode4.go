@@ -21,8 +21,9 @@ type DualWriterMode4 struct {
 // Mode 4 represents writing and reading from Storage.
 func newDualWriterMode4(legacy LegacyStorage, storage Storage) *DualWriterMode4 {
 	metrics := &dualWriterMetrics{}
-	metrics.init()
-	return &DualWriterMode4{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode4"), dualWriterMetrics: metrics}
+	log := klog.NewKlogr().WithName("DualWriterMode3")
+	metrics.init(log)
+	return &DualWriterMode4{Legacy: legacy, Storage: storage, Log: log, dualWriterMetrics: metrics}
 }
 
 // Mode returns the mode of the dual writer.
