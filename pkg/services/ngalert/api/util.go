@@ -114,6 +114,11 @@ func (p *AlertingProxy) withReq(
 	for h, v := range headers {
 		req.Header.Add(h, v)
 	}
+	for h, vs := range ctx.Req.Header {
+		for _, v := range vs {
+			req.Header.Add(h, v)
+		}
+	}
 	// this response will be populated by the response from the datasource
 	resp := response.CreateNormalResponse(make(http.Header), nil, 0)
 	proxyContext := p.createProxyContext(ctx, req, resp)
