@@ -70,6 +70,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaSharingSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "lokiExperimentalStreaming",
@@ -890,6 +891,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "dashboardSceneSolo",
@@ -897,6 +899,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "dashboardScene",
@@ -904,6 +907,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "panelFilterVariable",
@@ -1094,6 +1098,7 @@ var (
 			Description: "New implementation for the dashboard-to-PDF rendering",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "tlsMemcached",
