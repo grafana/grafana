@@ -1487,7 +1487,8 @@
       "public-share-type-option-description": "Anyone with the link can access",
       "public-share-type-option-label": "Anyone with the link",
       "resume-access-button": "Resume access",
-      "revoke-access-button": "Revoke access"
+      "revoke-access-button": "Revoke access",
+      "revoke-access-description": "Are you sure you want to revoke this access? The dashboard can no longer be shared."
     },
     "sharing": {
       "success-creation": "Dashboard is public!"
@@ -1553,6 +1554,18 @@
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
+  "recently-deleted": {
+    "buttons": {
+      "restore": "Restore"
+    },
+    "restore-modal": {
+      "restore-button": "Restore",
+      "restore-loading": "Restoring...",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
+      "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
+      "title": "Restore Dashboards"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
@@ -1582,23 +1595,22 @@
     "dismissable-button": "Close"
   },
   "scopes": {
-    "advancedSelector": {
+    "filters": {
       "apply": "Apply",
       "cancel": "Cancel",
+      "input": {
+        "placeholder": "Select scopes...",
+        "removeAll": "Remove all scopes"
+      },
       "title": "Select scopes"
-    },
-    "basicSelector": {
-      "openAdvanced": "Open advanced scope selector <1></1>",
-      "placeholder": "Select scopes...",
-      "removeAll": "Remove all scopes"
-    },
-    "root": {
-      "collapse": "Collapse scope filters",
-      "expand": "Expand scope filters"
     },
     "suggestedDashboards": {
       "loading": "Loading dashboards",
-      "search": "Filter"
+      "search": "Filter",
+      "toggle": {
+        "collapse": "Collapse scope filters",
+        "expand": "Expand scope filters"
+      }
     },
     "tree": {
       "collapse": "Collapse",
@@ -1641,6 +1653,11 @@
       "message": "No services accounts found",
       "more-info": "Remember, you can provide specific permissions for API access to other applications",
       "title": "You haven't created any service accounts yet"
+    }
+  },
+  "share-drawer": {
+    "confirm-action": {
+      "back-arrow-button": "Back button"
     }
   },
   "share-modal": {

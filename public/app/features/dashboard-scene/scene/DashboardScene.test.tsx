@@ -753,6 +753,20 @@ describe('DashboardScene', () => {
         expect(gridItem.state.body!.state.key).toBe('panel-7');
       });
 
+      it('Should maintain size of duplicated panel', () => {
+        const gItem = (scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem;
+        gItem.setState({ height: 1 });
+        const vizPanel = gItem.state.body;
+        scene.duplicatePanel(vizPanel as VizPanel);
+
+        const body = scene.state.body as SceneGridLayout;
+        const newGridItem = body.state.children[5] as DashboardGridItem;
+
+        expect(body.state.children.length).toBe(6);
+        expect(newGridItem.state.body!.state.key).toBe('panel-7');
+        expect(newGridItem.state.height).toBe(1);
+      });
+
       it('Should duplicate a library panel', () => {
         const libraryPanel = ((scene.state.body as SceneGridLayout).state.children[4] as DashboardGridItem).state.body;
         const vizPanel = (libraryPanel as LibraryVizPanel).state.panel;
