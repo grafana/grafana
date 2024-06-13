@@ -1,8 +1,8 @@
 import { uniq } from 'lodash';
 import React, { useEffect, useState } from 'react';
 
+import { getBackendSrv } from '@grafana/runtime/src/services/backendSrv';
 import { EmptyState, Spinner } from '@grafana/ui';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { useAllQueryTemplatesQuery } from 'app/features/query-library';
 import { User } from 'app/features/query-library/api/types';
 import { QueryTemplate } from 'app/features/query-library/types';
@@ -18,9 +18,9 @@ const getQueryTemplateRows = async (data: QueryTemplate[]): Promise<QueryTemplat
   const userData = Promise.all(
     userQtList.map((user) => {
       if (user.userId) {
-        return backendSrv.get(`api/users/${user.userId}`);
+        return getBackendSrv().get(`api/users/${user.userId}`);
       } else if (user.login) {
-        return backendSrv.get(`api/users/lookup/${user.login}`);
+        return getBackendSrv().get(`api/users/lookup/${user.login}`);
       } else {
         // should never happen
         return Promise.resolve();

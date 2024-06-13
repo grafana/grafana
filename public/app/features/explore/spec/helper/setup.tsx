@@ -83,7 +83,7 @@ export function setupExplore(options?: SetupOptions): {
       }
       return of({ data });
     }),
-    get: jest.fn(),
+    get: jest.fn().mockResolvedValue({}),
     patch: jest.fn().mockRejectedValue(undefined),
     post: jest.fn(),
     put: jest.fn().mockRejectedValue(undefined),
