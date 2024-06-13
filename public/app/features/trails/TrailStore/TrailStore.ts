@@ -1,5 +1,6 @@
 import { debounce, isEqual } from 'lodash';
 
+import { urlUtil } from '@grafana/data';
 import { getUrlSyncManager, SceneObject, SceneObjectRef, SceneObjectUrlValues, sceneUtils } from '@grafana/scenes';
 import { dispatch } from 'app/store/store';
 
@@ -107,8 +108,8 @@ export class TrailStore {
   }
 
   private _loadFromUrl(node: SceneObject, urlValues: SceneObjectUrlValues) {
-    node.urlSync?.updateFromUrl(urlValues);
-    node.forEachChild((child) => this._loadFromUrl(child, urlValues));
+    const urlState = urlUtil.renderUrl('', urlValues);
+    sceneUtils.syncStateFromSearchParams(node, new URLSearchParams(urlState));
   }
 
   // Recent Trails
