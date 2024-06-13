@@ -95,7 +95,7 @@ A rule using the PromQL expression above creates as many alert instances as the 
 
 {{< figure src="/static/img/docs/alerting/unified/multi-dimensional-alert.png" caption="Multiple alert instances from a single alert rule" >}}
 
-[Alert rules are frequently evaluated](ref:alert-rule-evaluation) and the state of their alert instances is updated accordingly. Only alert instances that are in a firing or resolved state are sent for notifications.
+[Alert rules are frequently evaluated](ref:alert-rule-evaluation) and the state of their alert instances is updated accordingly. Only alert instances that are in a firing or resolved state are sent in notifications.
 
 ### Contact points
 
