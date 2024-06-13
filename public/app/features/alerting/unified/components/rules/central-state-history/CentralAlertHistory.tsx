@@ -135,7 +135,7 @@ interface SearchFieldInputProps {
 }
 const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProps>(
   ({ showClearFilterSuffix, onClearFilterClick, ...rest }: SearchFieldInputProps, ref) => {
-    const placeholder = t('central-alert-history.filter.placeholder', 'Filter events in the list by labels');
+    const placeholder = t('central-alert-history.filter.placeholder', 'Filter events in the list with labels');
     return (
       <Field
         label={
