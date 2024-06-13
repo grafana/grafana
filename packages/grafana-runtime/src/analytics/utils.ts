@@ -1,4 +1,5 @@
 import { isObject } from 'lodash';
+
 import { config } from '../config';
 import { locationService } from '../services';
 import { getEchoSrv, EchoEventType } from '../services/EchoSrv';
