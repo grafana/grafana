@@ -26,8 +26,8 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
   }
 
   goToUrlForTrail(trail: DataTrail) {
-    this.setState({ trail });
     locationService.push(getUrlForTrail(trail));
+    this.setState({ trail });
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrailsApp>) => {

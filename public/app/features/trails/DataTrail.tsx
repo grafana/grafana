@@ -93,12 +93,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       );
     }
 
-    // Disconnects the current step history state from the current state, to prevent changes affecting history state
-    const currentState = this.state.history.state.steps[this.state.history.state.currentStep]?.trailState;
-    if (currentState) {
-      this.restoreFromHistoryStep(currentState);
-    }
-
     // Save the current trail as a recent if the browser closes or reloads
     const saveRecentTrail = () => getTrailStore().setRecentTrail(this);
     window.addEventListener('unload', saveRecentTrail);
