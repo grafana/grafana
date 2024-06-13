@@ -146,7 +146,6 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 				if !slices.Contains(actions, actionSet) {
 					actions = append(actions, actionSet)
 				}
-
 			}
 		}
 	}
