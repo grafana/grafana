@@ -306,6 +306,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				decryptFn,
 				test.autogenFn,
 				m,
+				tracing.InitializeTracerForTest(),
 			)
 			require.NoError(t, err)
 
