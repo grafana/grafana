@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -119,7 +120,7 @@ func (c *ResultConverter) Convert(ctx context.Context,
 	}, nil
 }
 
-func getResponseFrame(resp *backend.QueryDataResponse, refID string) (data.Frames, error) {
+func getResponseFrame(logger *log.ConcreteLogger, resp *backend.QueryDataResponse, refID string) (data.Frames, error) {
 	response, ok := resp.Responses[refID]
 	if !ok {
 		// This indicates that the RefID of the request was not included to the response, i.e. some problem in the data source plugin
