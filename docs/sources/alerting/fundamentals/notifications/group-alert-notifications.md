@@ -65,7 +65,7 @@ If you want to group all alerts handled by the notification policy in a single g
 
 ### Disable grouping
 
-If you want to receive every alert as a separate notification, you can do so by grouping by a special label called `...`.
+If you want to receive every alert as a separate notification, you can do so by grouping by a special label called `...`, ensuring that other labels are not present.
 
 ## Timing options
 
