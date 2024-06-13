@@ -80,9 +80,9 @@ func ProvideAuthZClient(
 
 	switch authCfg.mode {
 	case ModeInProc:
-		client = newLocalLegacyClient(tracer, server)
+		client = newInProcLegacyClient(tracer, server)
 	case ModeGRPC:
-		client, err = newRemoteLegacyClient(tracer, authCfg.remoteAddress)
+		client, err = newGrpcLegacyClient(tracer, authCfg.remoteAddress)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +91,9 @@ func ProvideAuthZClient(
 	return client, err
 }
 
-func ProvideRemoteAuthZClient(
+// ProvideStandaloneAuthZClient provides a standalone AuthZ client, without registering the AuthZ service.
+// You need to provide a remote address in the configuration
+func ProvideStandaloneAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 ) (Client, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
@@ -103,10 +105,10 @@ func ProvideRemoteAuthZClient(
 		return nil, err
 	}
 
-	return newRemoteLegacyClient(tracer, authCfg.remoteAddress)
+	return newGrpcLegacyClient(tracer, authCfg.remoteAddress)
 }
 
-func newLocalLegacyClient(tracer tracing.Tracer, server *legacyServer) *LegacyClient {
+func newInProcLegacyClient(tracer tracing.Tracer, server *legacyServer) *LegacyClient {
 	channel := &inprocgrpc.Channel{}
 
 	// TODO (gamab): change this once it's clear how to authenticate the client
@@ -122,8 +124,8 @@ func newLocalLegacyClient(tracer tracing.Tracer, server *legacyServer) *LegacyCl
 	channel.RegisterService(
 		grpchan.InterceptServer(
 			&authzv1.AuthzService_ServiceDesc,
-			grpcAuth.UnaryServerInterceptor(noAuth),  // TODO (gamab): add auth
-			grpcAuth.StreamServerInterceptor(noAuth), // TODO (gamab): add auth
+			grpcAuth.UnaryServerInterceptor(noAuth),
+			grpcAuth.StreamServerInterceptor(noAuth),
 		),
 		server,
 	)
@@ -139,7 +141,7 @@ func newLocalLegacyClient(tracer tracing.Tracer, server *legacyServer) *LegacyCl
 	}
 }
 
-func newRemoteLegacyClient(tracer tracing.Tracer, address string) (*LegacyClient, error) {
+func newGrpcLegacyClient(tracer tracing.Tracer, address string) (*LegacyClient, error) {
 	// Create a connection to the gRPC server
 	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
