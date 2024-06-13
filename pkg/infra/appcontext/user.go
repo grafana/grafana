@@ -7,7 +7,7 @@ import (
 	k8suser "k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -19,7 +19,8 @@ type ctxUserKey struct{}
 
 // WithUser adds the supplied SignedInUser to the context.
 func WithUser(ctx context.Context, usr *user.SignedInUser) context.Context {
-	return context.WithValue(ctx, ctxUserKey{}, usr)
+	ctx = context.WithValue(ctx, ctxUserKey{}, usr)
+	return identity.WithRequester(ctx, usr)
 }
 
 // User extracts the SignedInUser from the supplied context.
@@ -57,7 +58,7 @@ func User(ctx context.Context) (*user.SignedInUser, error) {
 					OrgID:          orgId,
 					Name:           k8sUserInfo.GetName(),
 					Login:          k8sUserInfo.GetName(),
-					OrgRole:        roletype.RoleAdmin,
+					OrgRole:        identity.RoleAdmin,
 					IsGrafanaAdmin: true,
 					Permissions: map[int64]map[string][]string{
 						orgId: {
