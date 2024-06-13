@@ -80,18 +80,6 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
       >
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
         {level === MAX_DEPTH && <div className={styles.itemConnector} />}
-        <div className={styles.collapseButtonWrapper}>
-          {showExpandButton && (
-            <IconButton
-              aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
-              className={styles.collapseButton}
-              onClick={() => setSectionExpanded(!sectionExpanded)}
-              name={sectionExpanded ? 'angle-down' : 'angle-right'}
-              size="md"
-              variant="secondary"
-            />
-          )}
-        </div>
         <div className={styles.collapsibleSectionWrapper}>
           <MegaMenuItemText
             isActive={isActive}
@@ -112,6 +100,18 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
               <Text truncate>{link.text}</Text>
             </div>
           </MegaMenuItemText>
+        </div>
+        <div className={styles.collapseButtonWrapper}>
+          {showExpandButton && (
+            <IconButton
+              aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
+              className={styles.collapseButton}
+              onClick={() => setSectionExpanded(!sectionExpanded)}
+              name={sectionExpanded ? 'angle-down' : 'angle-right'}
+              size="md"
+              variant="secondary"
+            />
+          )}
         </div>
       </div>
       {showExpandButton && sectionExpanded && (

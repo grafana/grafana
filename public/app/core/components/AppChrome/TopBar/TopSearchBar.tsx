@@ -1,15 +1,21 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import React from 'react';
-import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
-import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Components } from '@grafana/e2e-selectors';
+import { Dropdown, Icon, IconButton, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { useSelector } from 'app/types';
 
 import { Branding } from '../../Branding/Branding';
+import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
+import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
+import { MENU_WIDTH } from '../MegaMenu/MegaMenu';
 import { enrichHelpItem } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsContainer';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
@@ -21,27 +27,70 @@ import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { TopSearchBarSection } from './TopSearchBarSection';
 
-export const TopSearchBar = React.memo(function TopSearchBar() {
+interface Props {
+  onToggleMegaMenu(): void;
+  sectionNav: NavModelItem;
+  pageNav?: NavModelItem;
+  isMenuDocked?: boolean;
+}
+
+export const TopSearchBar = React.memo(function TopSearchBar({
+  onToggleMegaMenu,
+  sectionNav,
+  pageNav,
+  isMenuDocked,
+}: Props) {
   const styles = useStyles2(getStyles);
   const navIndex = useSelector((state) => state.navIndex);
-  const location = useLocation();
-
   const helpNode = cloneDeep(navIndex['help']);
+  const { chrome } = useGrafana();
   const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode) : undefined;
   const profileNode = navIndex['profile'];
+  const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
+  const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
 
-  let homeUrl = config.appSubUrl || '/';
-  if (!config.bootData.user.isSignedIn && !config.anonymousEnabled) {
-    homeUrl = textUtil.sanitizeUrl(locationUtil.getUrlForPartial(location, { forceLogin: 'true' }));
-  }
+  const onCloseDockedMenu = () => {
+    chrome.setMegaMenuDocked(false);
+    chrome.setMegaMenuOpen(false);
+  };
 
   return (
     <div className={styles.layout}>
       <TopSearchBarSection>
-        <a className={styles.logo} href={homeUrl} title="Go to home">
-          <Branding.MenuLogo className={styles.img} />
-        </a>
+        {!isMenuDocked && (
+          <>
+            <button
+              className={styles.logoButton}
+              title="Open main menu"
+              onClick={onToggleMegaMenu}
+              data-testid={Components.NavBar.Toggle.button}
+            >
+              <Branding.MenuLogo className={styles.img} />
+              <Icon name="angle-down" />
+            </button>
+          </>
+        )}
+        {isMenuDocked && (
+          <div className={styles.dockedLogo}>
+            <Stack grow={1} gap={2}>
+              <Branding.MenuLogo className={styles.img} />
+              Grafana
+            </Stack>
+            <IconButton
+              id="dock-menu-button"
+              tooltip={
+                isMenuDocked
+                  ? t('navigation.megamenu.undock', 'Undock menu')
+                  : t('navigation.megamenu.dock', 'Dock menu')
+              }
+              name="web-section-alt"
+              onClick={onCloseDockedMenu}
+              variant="secondary"
+            />
+          </div>
+        )}
         <OrganizationSwitcher />
+        <Breadcrumbs isMenuDocked={isMenuDocked} breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
       </TopSearchBarSection>
 
       <TopSearchBarSection>
@@ -83,7 +132,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: '1.5fr minmax(240px, 1fr) 1.5fr', // search should not be smaller than 240px
+      gridTemplateColumns: '1fr minmax(240px, min-content) min-content', // search should not be smaller than 240px
       display: 'grid',
 
       justifyContent: 'flex-start',
@@ -93,8 +142,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: theme.spacing(3),
     width: theme.spacing(3),
   }),
-  logo: css({
+  logoButton: css({
     display: 'flex',
+    boxShadow: 'none',
+    background: 'none',
+    border: 'none',
+    color: theme.colors.text.secondary,
+    alignItems: 'center',
+  }),
+  dockedLogo: css({
+    width: MENU_WIDTH - 16,
+    alignItems: 'center',
+    //fontWeight: theme.typography.fontWeightMedium,
+    display: 'flex',
+    gap: theme.spacing(1),
+    borderRight: `1px solid ${theme.colors.border.weak}`,
+    paddingRight: theme.spacing(0.5),
   }),
   profileButton: css({
     padding: theme.spacing(0, 0.25),
@@ -103,6 +166,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
       height: '24px',
       marginRight: 0,
       width: '24px',
+    },
+  }),
+  breadcrumbsWrapper: css({
+    display: 'flex',
+    overflow: 'hidden',
+    [theme.breakpoints.down('sm')]: {
+      minWidth: '50%',
     },
   }),
 });

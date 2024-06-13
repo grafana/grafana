@@ -14,7 +14,6 @@ import { KioskMode } from 'app/types';
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { MegaMenu } from './MegaMenu/MegaMenu';
-import { NavToolbar } from './NavToolbar/NavToolbar';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { TopSearchBar } from './TopBar/TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
@@ -87,8 +86,13 @@ export function AppChrome({ children }: Props) {
             Skip to main content
           </LinkButton>
           <header className={cx(styles.topNav)}>
-            {!searchBarHidden && <TopSearchBar />}
-            <NavToolbar
+            <TopSearchBar
+              sectionNav={state.sectionNav.node}
+              pageNav={state.pageNav}
+              onToggleMegaMenu={handleMegaMenu}
+              isMenuDocked={state.megaMenuDocked}
+            />
+            {/* <NavToolbar
               searchBarHidden={searchBarHidden}
               sectionNav={state.sectionNav.node}
               pageNav={state.pageNav}
@@ -96,7 +100,7 @@ export function AppChrome({ children }: Props) {
               onToggleSearchBar={chrome.onToggleSearchBar}
               onToggleMegaMenu={handleMegaMenu}
               onToggleKioskMode={chrome.onToggleKioskMode}
-            />
+            /> */}
           </header>
         </>
       )}
@@ -124,7 +128,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
+      paddingTop: TOP_BAR_LEVEL_HEIGHT,
       flexGrow: 1,
       height: '100%',
     }),

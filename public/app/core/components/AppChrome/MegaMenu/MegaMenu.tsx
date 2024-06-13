@@ -13,7 +13,7 @@ import { useSelector } from 'app/types';
 import { MegaMenuItem } from './MegaMenuItem';
 import { enrichWithInteractionTracking, getActiveItem } from './utils';
 
-export const MENU_WIDTH = '300px';
+export const MENU_WIDTH = 300;
 
 export interface Props extends DOMAttributes {
   onClose: () => void;
@@ -63,7 +63,7 @@ export const MegaMenu = React.memo(
             <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
               {navItems.map((link, index) => (
                 <Stack key={link.text} direction={index === 0 ? 'row-reverse' : 'row'} alignItems="center">
-                  {index === 0 && (
+                  {index === 0 && !state.megaMenuDocked && (
                     <IconButton
                       id="dock-menu-button"
                       className={styles.dockMenuButton}
@@ -117,7 +117,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     listStyleType: 'none',
-    padding: theme.spacing(1, 1, 2, 1),
+    padding: theme.spacing(1, 1, 2, 1.5),
     [theme.breakpoints.up('md')]: {
       width: MENU_WIDTH,
     },

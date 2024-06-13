@@ -15,7 +15,7 @@ import {
   ToolbarButtonRow,
   useStyles2,
 } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { NavToolbar } from 'app/core/components/AppChrome/NavToolbar/NavToolbar';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
@@ -35,13 +35,6 @@ import { LibraryVizPanel } from './LibraryVizPanel';
 interface Props {
   dashboard: DashboardScene;
 }
-
-export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const actions = <ToolbarActions dashboard={dashboard} />;
-  return <AppChromeUpdate actions={actions} />;
-});
-
-NavToolbarActions.displayName = 'NavToolbarActions';
 
 /**
  * This part is split into a separate component to help test this
@@ -589,7 +582,11 @@ export function ToolbarActions({ dashboard }: Props) {
     lastGroup = action.group;
   }
 
-  return <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>;
+  return (
+    <NavToolbar>
+      <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>
+    </NavToolbar>
+  );
 }
 
 function addDynamicActions(

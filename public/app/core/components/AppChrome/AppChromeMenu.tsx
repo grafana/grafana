@@ -76,8 +76,6 @@ export function AppChromeMenu({}: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
-  const topPosition = searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2;
-
   return {
     backdrop: css({
       backdropFilter: 'blur(1px)',
@@ -90,7 +88,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       zIndex: theme.zIndex.modalBackdrop,
 
       [theme.breakpoints.up('md')]: {
-        top: topPosition,
+        top: TOP_BAR_LEVEL_HEIGHT,
       },
     }),
     menu: css({
@@ -110,7 +108,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       [theme.breakpoints.up('md')]: {
         right: 'unset',
         borderRight: `1px solid ${theme.colors.border.weak}`,
-        top: topPosition,
+        top: TOP_BAR_LEVEL_HEIGHT,
       },
     }),
     wrapper: css({

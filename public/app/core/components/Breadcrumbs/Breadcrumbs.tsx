@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,13 +10,14 @@ import { Breadcrumb } from './types';
 export interface Props {
   breadcrumbs: Breadcrumb[];
   className?: string;
+  isMenuDocked?: boolean;
 }
 
-export function Breadcrumbs({ breadcrumbs, className }: Props) {
+export function Breadcrumbs({ breadcrumbs, className, isMenuDocked }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
-    <nav aria-label="Breadcrumbs" className={className}>
+    <nav aria-label="Breadcrumbs" className={cx(className, isMenuDocked && styles.isDocked)}>
       <ol className={styles.breadcrumbs}>
         {breadcrumbs.map((breadcrumb, index) => (
           <BreadcrumbItem
@@ -51,6 +52,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       flexWrap: 'nowrap',
       overflow: 'hidden',
+    }),
+    isDocked: css({
+      paddingLeft: theme.spacing(3),
     }),
   };
 };
