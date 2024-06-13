@@ -177,7 +177,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
-  reportingStaticContext?: string | Record<string, string> ;
+  reportingStaticContext?: string | Record<string, string>;
 
   /**
    * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
@@ -222,13 +222,13 @@ export class GrafanaBootConfig implements GrafanaConfig {
       this.angularSupportEnabled = false;
     }
 
-    if (this.reportingStaticContext && typeof this.reportingStaticContext === "string") {
-      // parse string of key=value, key=value pairs into an object      
+    if (this.reportingStaticContext && typeof this.reportingStaticContext === 'string') {
+      // parse string of key=value, key=value pairs into an object
       const result: Record<string, string> = {};
       const pairs = this.reportingStaticContext.split(',');
-      pairs.forEach(pair => {
+      pairs.forEach((pair) => {
         // Split each pair by the equals sign
-        const [key, value] = pair.split('=').map(str => str.trim());
+        const [key, value] = pair.split('=').map((str) => str.trim());
         if (key && value) {
           result[`_static_context_${key}`] = value;
         }
