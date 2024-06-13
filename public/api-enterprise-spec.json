@@ -3127,6 +3127,14 @@
         }
       }
     },
+    "CloudMigrationRequest": {
+      "type": "object",
+      "properties": {
+        "authToken": {
+          "type": "string"
+        }
+      }
+    },
     "CloudMigrationResponse": {
       "type": "object",
       "properties": {
@@ -4628,6 +4636,29 @@
       "title": "Frames is a slice of Frame pointers.",
       "items": {
         "$ref": "#/definitions/Frame"
+      }
+    },
+    "GetAccessTokenResponseDTO": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string"
+        },
+        "firstUsedAt": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lastUsedAt": {
+          "type": "string"
+        }
       }
     },
     "GetAnnotationTagsResponse": {
@@ -6610,6 +6641,32 @@
         }
       }
     },
+    "SearchDTO": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "basicRole": {
+          "type": "string"
+        },
+        "onlyRoles": {
+          "type": "boolean"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        }
+      }
+    },
     "SearchDeviceQueryResult": {
       "type": "object",
       "properties": {
@@ -8274,6 +8331,15 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/CreateAccessTokenResponseDTO"
+      }
+    },
+    "cloudMigrationDeleteTokenResponse": {
+      "description": ""
+    },
+    "cloudMigrationGetTokenResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/GetAccessTokenResponseDTO"
       }
     },
     "cloudMigrationListResponse": {
