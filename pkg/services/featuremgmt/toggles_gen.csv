@@ -174,3 +174,4 @@ alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,tru
 pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,false,false
 azureMonitorPrometheusExemplars,experimental,@grafana/partner-datasources,false,false,false
 pinNavItems,experimental,@grafana/grafana-frontend-platform,false,false,false
+authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
