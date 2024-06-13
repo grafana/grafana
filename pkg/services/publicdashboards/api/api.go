@@ -297,7 +297,7 @@ func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(err)
 	}
 
-	return response.JSON(http.StatusOK, nil)
+	return response.Empty(http.StatusOK)
 }
 
 // Copied from pkg/api/metrics.go
