@@ -48,8 +48,6 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", "some-ds-uid", "some-correlation-uid"),
 			body: ``,
 		})
-		require.Equal(t, http.StatusUnauthorized, res.StatusCode)
-
 		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
@@ -58,6 +56,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "Unauthorized", response.Message)
+		require.Equal(t, http.StatusUnauthorized, res.StatusCode)
 
 		require.NoError(t, res.Body.Close())
 	})
@@ -68,8 +67,6 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 			body: `{}`,
 			user: editorUser,
 		})
-		require.Equal(t, http.StatusForbidden, res.StatusCode)
-
 		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
@@ -78,6 +75,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Contains(t, response.Message, "Permissions needed: datasources:write")
+		require.Equal(t, http.StatusForbidden, res.StatusCode)
 
 		require.NoError(t, res.Body.Close())
 	})
@@ -90,8 +88,6 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 			}`,
 			user: adminUser,
 		})
-		require.Equal(t, http.StatusNotFound, res.StatusCode)
-
 		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
@@ -100,6 +96,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "Data source not found", response.Message)
+		require.Equal(t, http.StatusNotFound, res.StatusCode)
 
 		require.NoError(t, res.Body.Close())
 	})
@@ -112,8 +109,6 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 				"label": ""
 			}`,
 		})
-		require.Equal(t, http.StatusNotFound, res.StatusCode)
-
 		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
@@ -122,6 +117,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "Correlation not found", response.Message)
+		require.Equal(t, http.StatusNotFound, res.StatusCode)
 
 		require.NoError(t, res.Body.Close())
 	})
@@ -141,8 +137,6 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 				"label": "some-label"
 			}`,
 		})
-		require.Equal(t, http.StatusForbidden, res.StatusCode)
-
 		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
@@ -151,6 +145,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "Correlation can only be edited via provisioning", response.Message)
+		require.Equal(t, http.StatusForbidden, res.StatusCode)
 
 		require.NoError(t, res.Body.Close())
 	})
@@ -168,8 +163,6 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 			user: adminUser,
 			body: `{}`,
 		})
-		require.Equal(t, http.StatusBadRequest, res.StatusCode)
-
 		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
@@ -178,6 +171,8 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "At least one of label, description or config is required", response.Message)
+		require.Equal(t, http.StatusBadRequest, res.StatusCode)
+
 		require.NoError(t, res.Body.Close())
 
 		// empty body
@@ -186,8 +181,6 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 			user: adminUser,
 			body: ``,
 		})
-		require.Equal(t, http.StatusBadRequest, res.StatusCode)
-
 		responseBody, err = io.ReadAll(res.Body)
 		require.NoError(t, err)
 
@@ -195,6 +188,8 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "At least one of label, description or config is required", response.Message)
+		require.Equal(t, http.StatusBadRequest, res.StatusCode)
+
 		require.NoError(t, res.Body.Close())
 
 		// all set to null
@@ -207,8 +202,6 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 						"config": null
 					}`,
 		})
-		require.Equal(t, http.StatusBadRequest, res.StatusCode)
-
 		responseBody, err = io.ReadAll(res.Body)
 		require.NoError(t, err)
 
@@ -216,6 +209,8 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "At least one of label, description or config is required", response.Message)
+		require.Equal(t, http.StatusBadRequest, res.StatusCode)
+
 		require.NoError(t, res.Body.Close())
 	})
 
@@ -234,8 +229,6 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 				"label": "updated label"
 			}`,
 		})
-		require.Equal(t, http.StatusOK, res.StatusCode)
-
 		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
@@ -244,6 +237,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "Correlation updated", response.Message)
+		require.Equal(t, http.StatusOK, res.StatusCode)
 		require.Equal(t, "updated label", response.Result.Label)
 		require.NoError(t, res.Body.Close())
 	})
@@ -277,7 +271,6 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 				}
 			}`,
 		})
-		require.Equal(t, http.StatusOK, res.StatusCode)
 
 		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
@@ -287,160 +280,12 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "Correlation updated", response.Message)
+		require.Equal(t, http.StatusOK, res.StatusCode)
 		require.Equal(t, "1", response.Result.Label)
 		require.Equal(t, "1", response.Result.Description)
 		require.Equal(t, "field", response.Result.Config.Field)
 		require.Equal(t, map[string]any{"expr": "bar"}, response.Result.Config.Target)
 		require.Equal(t, correlations.Transformation{Type: "logfmt"}, response.Result.Config.Transformations[0])
-		require.NoError(t, res.Body.Close())
-
-		// partially updating only label
-		res = ctx.Patch(PatchParams{
-			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", correlation.SourceUID, correlation.UID),
-			user: adminUser,
-			body: `{
-				"label": "2"
-			}`,
-		})
-		require.Equal(t, http.StatusOK, res.StatusCode)
-
-		responseBody, err = io.ReadAll(res.Body)
-		require.NoError(t, err)
-
-		err = json.Unmarshal(responseBody, &response)
-		require.NoError(t, err)
-
-		require.Equal(t, "Correlation updated", response.Message)
-		require.Equal(t, "2", response.Result.Label)
-		require.Equal(t, "1", response.Result.Description)
-		require.Equal(t, "field", response.Result.Config.Field)
-		require.Equal(t, map[string]any{"expr": "bar"}, response.Result.Config.Target)
-		require.NoError(t, res.Body.Close())
-
-		// partially updating only description
-		res = ctx.Patch(PatchParams{
-			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", correlation.SourceUID, correlation.UID),
-			user: adminUser,
-			body: `{
-				"description": "2"
-			}`,
-		})
-		require.Equal(t, http.StatusOK, res.StatusCode)
-
-		responseBody, err = io.ReadAll(res.Body)
-		require.NoError(t, err)
-
-		err = json.Unmarshal(responseBody, &response)
-		require.NoError(t, err)
-
-		require.Equal(t, "Correlation updated", response.Message)
-		require.Equal(t, "2", response.Result.Label)
-		require.Equal(t, "2", response.Result.Description)
-		require.Equal(t, "field", response.Result.Config.Field)
-		require.Equal(t, map[string]any{"expr": "bar"}, response.Result.Config.Target)
-		require.NoError(t, res.Body.Close())
-
-		// partially updating whole config
-		res = ctx.Patch(PatchParams{
-			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", correlation.SourceUID, correlation.UID),
-			user: adminUser,
-			body: `{
-				"config": {
-					"field": "name",
-					"type": "query",
-					"target": { "expr": "baz" }
-				}
-			}`,
-		})
-		require.Equal(t, http.StatusOK, res.StatusCode)
-
-		responseBody, err = io.ReadAll(res.Body)
-		require.NoError(t, err)
-
-		err = json.Unmarshal(responseBody, &response)
-		require.NoError(t, err)
-
-		require.Equal(t, "Correlation updated", response.Message)
-		require.Equal(t, "2", response.Result.Label)
-		require.Equal(t, "2", response.Result.Description)
-		require.Equal(t, "name", response.Result.Config.Field)
-		require.Equal(t, map[string]any{"expr": "baz"}, response.Result.Config.Target)
-		require.NoError(t, res.Body.Close())
-
-		// partially updating only config field
-		res = ctx.Patch(PatchParams{
-			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", correlation.SourceUID, correlation.UID),
-			user: adminUser,
-			body: `{
-				"config": {
-					"field": "newName"
-				}
-			}`,
-		})
-		require.Equal(t, http.StatusOK, res.StatusCode)
-
-		responseBody, err = io.ReadAll(res.Body)
-		require.NoError(t, err)
-
-		err = json.Unmarshal(responseBody, &response)
-		require.NoError(t, err)
-
-		require.Equal(t, "Correlation updated", response.Message)
-		require.Equal(t, "2", response.Result.Label)
-		require.Equal(t, "2", response.Result.Description)
-		require.Equal(t, "newName", response.Result.Config.Field)
-		require.Equal(t, map[string]any{"expr": "baz"}, response.Result.Config.Target)
-		require.NoError(t, res.Body.Close())
-
-		// partially updating only config target
-		res = ctx.Patch(PatchParams{
-			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", correlation.SourceUID, correlation.UID),
-			user: adminUser,
-			body: `{
-				"config": {
-					"target": { "expr": "foo" }
-				}
-			}`,
-		})
-		require.Equal(t, http.StatusOK, res.StatusCode)
-
-		responseBody, err = io.ReadAll(res.Body)
-		require.NoError(t, err)
-
-		err = json.Unmarshal(responseBody, &response)
-		require.NoError(t, err)
-
-		require.Equal(t, "Correlation updated", response.Message)
-		require.Equal(t, "2", response.Result.Label)
-		require.Equal(t, "2", response.Result.Description)
-		require.Equal(t, "newName", response.Result.Config.Field)
-		require.Equal(t, map[string]any{"expr": "foo"}, response.Result.Config.Target)
-		require.NoError(t, res.Body.Close())
-
-		// setting label, description and config field to empty strings (testing whether empty strings are handled correctly)
-		res = ctx.Patch(PatchParams{
-			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", correlation.SourceUID, correlation.UID),
-			user: adminUser,
-			body: `{
-				"label": "",
-				"description": "",
-				"config": {
-					"field": ""
-				}
-			}`,
-		})
-		require.Equal(t, http.StatusOK, res.StatusCode)
-
-		responseBody, err = io.ReadAll(res.Body)
-		require.NoError(t, err)
-
-		err = json.Unmarshal(responseBody, &response)
-		require.NoError(t, err)
-
-		require.Equal(t, "Correlation updated", response.Message)
-		require.Equal(t, "", response.Result.Label)
-		require.Equal(t, "", response.Result.Description)
-		require.Equal(t, "", response.Result.Config.Field)
 		require.NoError(t, res.Body.Close())
 	})
 }

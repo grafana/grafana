@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config, featureEnabled } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { useStyles2, TabsBar, Tab } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { isEmailSharingEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { Page } from '../../core/components/Page/Page';
 import { AccessControlAction } from '../../types';
@@ -47,10 +47,6 @@ export default function UserListPage() {
 
   const hasAccessToAdminUsers = contextSrv.hasPermission(AccessControlAction.UsersRead);
   const hasAccessToOrgUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
-  const hasEmailSharingEnabled =
-    isPublicDashboardsEnabled() &&
-    Boolean(config.featureToggles.publicDashboardsEmailSharing) &&
-    featureEnabled('publicDashboardsEmailSharing');
 
   const [view, setView] = useState(() => {
     if (hasAccessToAdminUsers) {
@@ -87,10 +83,10 @@ export default function UserListPage() {
               data-testid={selectors.tabs.anonUserDevices}
             />
           )}
-          {hasEmailSharingEnabled && <PublicDashboardsTab view={view} setView={setView} />}
+          {isEmailSharingEnabled() && <PublicDashboardsTab view={view} setView={setView} />}
         </TabsBar>
       ) : (
-        hasEmailSharingEnabled && (
+        isEmailSharingEnabled() && (
           <TabsBar className={styles.tabsMargin}>
             <Tab
               label="Users"
