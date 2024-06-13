@@ -140,5 +140,6 @@ func WrapContext(ctx context.Context) (context.Context, error) {
 		"grafana-userid", strconv.FormatInt(user.UserID, 10),
 		"grafana-orgid", strconv.FormatInt(user.OrgID, 10),
 		"grafana-login", user.Login,
+		// "grafana-namespace", // TODO (gamab)
 	)), nil
 }

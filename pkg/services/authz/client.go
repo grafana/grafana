@@ -21,11 +21,29 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	MethodCreate = "create"
+	MethodRead   = "read"
+	MethodUpdate = "update"
+	MethodDelete = "delete"
+)
+
+func ToRbacAction(method string, object authzlib.Resource) string {
+	return object.Kind + ":" + method
+}
+
 type HasAccessRequest struct {
+	// StackID is the ID of the stack the request is made in, can be seamlessly replaced by OrgID on prem.
 	StackID int64
+	// Subject is the namespaced ID of the user we want to check access for.
 	Subject string
-	Action  string
-	Object  authzlib.Resource
+	// Method is the action we want to check access for (create, read, update, delete)
+	Method string
+	// Object is the resource we want to check access on.
+	Object authzlib.Resource
+	// Parent is the parent resource of the object we want to check access on.
+	// (Note: This is the future contextual tuple that will be added to the check request.)
+	Parent authzlib.Resource
 }
 
 type Client interface {
@@ -62,7 +80,7 @@ func ProvideAuthZClient(
 
 	switch authCfg.mode {
 	case ModeInProc:
-		client = newLocalLegacyClient(cfg, tracer, server)
+		client = newLocalLegacyClient(tracer, server)
 	case ModeGRPC:
 		client, err = newRemoteLegacyClient(tracer, authCfg.remoteAddress)
 		if err != nil {
@@ -88,7 +106,7 @@ func ProvideRemoteAuthZClient(
 	return newRemoteLegacyClient(tracer, authCfg.remoteAddress)
 }
 
-func newLocalLegacyClient(cfg *setting.Cfg, tracer tracing.Tracer, server *legacyServer) *LegacyClient {
+func newLocalLegacyClient(tracer tracing.Tracer, server *legacyServer) *LegacyClient {
 	channel := &inprocgrpc.Channel{}
 
 	// TODO (gamab): change this once it's clear how to authenticate the client
@@ -150,11 +168,11 @@ func (c *LegacyClient) HasAccess(ctx context.Context, req *HasAccessRequest) (bo
 
 	readReq := &authzv1.ReadRequest{
 		StackId: req.StackID,
-		Action:  req.Action,
+		Action:  ToRbacAction(req.Method, req.Object),
 		Subject: req.Subject,
 	}
 
-	// TODO add token to system?
+	// TODO (gamab) add access token and id token if we make the call for the user
 
 	resp, err := c.clientV1.Read(ctx, readReq)
 	if err != nil {
@@ -166,10 +184,17 @@ func (c *LegacyClient) HasAccess(ctx context.Context, req *HasAccessRequest) (bo
 		objs = append(objs, o.Object)
 	}
 
-	// TODO: Add caching
+	// TODO (gamab): Add caching
 
-	// Probably needs a mapping in case their are multiple kinds
-	checker := compileChecker(objs, req.Object.Kind)
+	// FIXME: id based checks are not supported
+	req.Object.Attr = "uid"
+	req.Parent.Attr = "uid"
 
-	return checker(req.Object), nil
+	if req.Parent.ID == "" {
+		checker := compileChecker(objs, req.Object.Kind)
+		return checker(req.Object), nil
+	}
+
+	checker := compileChecker(objs, req.Object.Kind, req.Parent.Kind)
+	return checker(req.Object, req.Parent), nil
 }

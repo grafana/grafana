@@ -14,10 +14,12 @@ import (
 	"sync"
 	"time"
 
+	authzlib "github.com/grafana/authlib/authz"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	foldersapi "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -25,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	entityAuthz "github.com/grafana/grafana/pkg/services/store/entity/authz"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
 	"github.com/grafana/grafana/pkg/setting"
@@ -316,20 +317,17 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 	}
 
 	// Check access
-	// TODO (gamab): solve the multi-scope case (ex: dashboards read can be acquired through both folder and dash)
-	action, scope := entityAuthz.ToRBAC(res.Resource, res.Key, res.Folder, entityAuthz.EntityRead)
-	req := authz.HasAccessRequest{
+	if hasAccess, err := s.authorizer.HasAccess(ctx, &authz.HasAccessRequest{
 		StackID: stackID,
 		Subject: user.NamespacedID.String(),
-		Action:  action,
-		Object:  scope,
-	}
-	hasAccess, err := s.authorizer.HasAccess(ctx, &req)
-	if err != nil || !hasAccess {
+		Method:  authz.MethodRead,
+		Object:  authzlib.Resource{Kind: res.Resource, ID: res.Key},
+		Parent:  authzlib.Resource{Kind: foldersapi.RESOURCE, ID: res.Folder}, // Assuming parents are always folders
+	}); err != nil || !hasAccess {
 		ctxLogger.Error("access denied",
 			"user", user.NamespacedID.String(),
-			"action", action,
-			"object", scope,
+			"method", authz.MethodRead,
+			"key", res.Key,
 			"error", err)
 		return nil, ErrNotFound
 	}
