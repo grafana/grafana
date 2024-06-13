@@ -46,7 +46,7 @@ export interface HistogramProps extends Themeable2 {
   structureRev?: number; // a number that will change when the frames[] structure changes
   legend: VizLegendOptions;
   rawSeries?: DataFrame[];
-  children?: (builder: UPlotConfigBuilder, frame: DataFrame) => React.ReactNode;
+  children?: (builder: UPlotConfigBuilder, frame: DataFrame, xMinOnlyFrame: DataFrame) => React.ReactNode;
 }
 
 export function getBucketSize(frame: DataFrame) {
@@ -283,6 +283,7 @@ interface State {
   alignedData: AlignedData;
   alignedFrame: DataFrame;
   config?: UPlotConfigBuilder;
+  xMinOnlyFrame: DataFrame;
 }
 
 export class Histogram extends React.Component<HistogramProps, State> {
@@ -296,11 +297,13 @@ export class Histogram extends React.Component<HistogramProps, State> {
 
     const config = withConfig ? prepConfig(alignedFrame, this.props.theme) : this.state.config!;
     const alignedData = preparePlotData(config, xMinOnlyFrame(alignedFrame));
+    const xMinOnly = xMinOnlyFrame(alignedFrame);
 
     return {
       alignedFrame,
       alignedData,
       config,
+      xMinOnlyFrame: xMinOnly,
     };
   }
 
@@ -347,7 +350,7 @@ export class Histogram extends React.Component<HistogramProps, State> {
       <VizLayout width={width} height={height} legend={this.renderLegend(config)}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={this.state.config!} data={this.state.alignedData} width={vizWidth} height={vizHeight}>
-            {children ? children(config, alignedFrame) : null}
+            {children ? children(config, alignedFrame, this.state.xMinOnlyFrame) : null}
           </UPlotChart>
         )}
       </VizLayout>
