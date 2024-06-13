@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var ErrValidation = fmt.Errorf("invalid object specification")

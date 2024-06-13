@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"

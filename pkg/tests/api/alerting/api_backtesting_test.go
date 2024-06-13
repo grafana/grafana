@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -93,7 +93,7 @@ func TestBacktesting(t *testing.T) {
 
 	t.Run("if user does not have permissions", func(t *testing.T) {
 		testUserId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-			DefaultOrgRole: string(roletype.RoleNone),
+			DefaultOrgRole: string(identity.RoleNone),
 			Password:       "test",
 			Login:          "test",
 			OrgID:          1,

@@ -3,8 +3,8 @@ package accesscontrol
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (

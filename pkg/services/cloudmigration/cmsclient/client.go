@@ -3,8 +3,8 @@ package cmsclient
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type Client interface {

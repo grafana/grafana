@@ -6,8 +6,9 @@ import (
 	"golang.org/x/exp/maps"
 
 	alertingModels "github.com/grafana/alerting/models"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )

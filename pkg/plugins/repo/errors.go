@@ -3,7 +3,7 @@ package repo
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 type ErrResponse4xx struct {

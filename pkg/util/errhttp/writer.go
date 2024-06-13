@@ -9,8 +9,8 @@ import (
 
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var ErrNonGrafanaError = errutil.Internal("core.MalformedError")

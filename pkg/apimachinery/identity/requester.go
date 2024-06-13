@@ -3,15 +3,13 @@ package identity
 import (
 	"fmt"
 	"strconv"
-
-	"github.com/grafana/grafana/pkg/models/roletype"
 )
 
 type Requester interface {
 	// GetID returns namespaced id for the entity
 	GetID() NamespaceID
 	// GetNamespacedID returns the namespace and ID of the active entity.
-	// The namespace is one of the constants defined in pkg/services/auth/identity.
+	// The namespace is one of the constants defined in pkg/apimachinery/identity.
 	// Deprecated: use GetID instead
 	GetNamespacedID() (namespace Namespace, identifier string)
 	// GetUID returns namespaced uid for the entity
@@ -32,7 +30,7 @@ type Requester interface {
 	// GetOrgID returns the ID of the active organization
 	GetOrgID() int64
 	// GetOrgRole returns the role of the active entity in the active organization.
-	GetOrgRole() roletype.RoleType
+	GetOrgRole() RoleType
 	// GetPermissions returns the permissions of the active entity.
 	GetPermissions() map[string][]string
 	// GetGlobalPermissions returns the permissions of the active entity that are available across all organizations.
@@ -56,7 +54,7 @@ type Requester interface {
 	// Legacy
 
 	// HasRole returns true if the active entity has the given role in the active organization.
-	HasRole(role roletype.RoleType) bool
+	HasRole(role RoleType) bool
 	// GetCacheKey returns a unique key for the entity.
 	// Add an extra prefix to avoid collisions with other caches
 	GetCacheKey() string

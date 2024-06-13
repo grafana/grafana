@@ -5,7 +5,7 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 type IDService interface {

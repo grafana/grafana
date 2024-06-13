@@ -1,6 +1,6 @@
 package models
 
-import "github.com/grafana/grafana/pkg/util/errutil"
+import "github.com/grafana/grafana/pkg/apimachinery/errutil"
 
 var (
 	ErrInternalServerError = errutil.Internal("publicdashboards.internalServerError", errutil.WithPublicMessage("Internal server error"))

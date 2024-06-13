@@ -104,6 +104,8 @@
 /pkg/server/ @grafana/grafana-backend-group
 /pkg/apiserver @grafana/grafana-app-platform-squad
 /pkg/apimachinery @grafana/grafana-app-platform-squad
+/pkg/apimachinery/identity/ @grafana/identity-access-team
+/pkg/apimachinery/errutil/ @grafana/grafana-backend-group
 /pkg/promlib @grafana/observability-metrics
 /pkg/services/annotations/ @grafana/grafana-search-and-storage
 /pkg/services/apikey/ @grafana/identity-access-team

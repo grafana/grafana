@@ -28,8 +28,8 @@ import (
 
 	"github.com/go-kit/log/level"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
