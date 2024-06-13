@@ -11,6 +11,7 @@ load(
 images = {
     "git": "alpine/git:2.40.1",
     "go": "golang:{}-alpine".format(golang_version),
+    # JEV: where is this version coming from? what does it default to?
     "node": "node:{}-alpine".format(nodejs_version),
     "node_deb": "node:{}-bookworm".format(nodejs_version[:2]),
     "cloudsdk": "google/cloud-sdk:431.0.0",

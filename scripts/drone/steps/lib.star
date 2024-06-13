@@ -1257,7 +1257,7 @@ def slack_step(channel, template, secret):
         },
     }
 
-def verify_grafanacom_step(node_version = 18):
+def verify_grafanacom_step():
     return {
         "name": "verify-grafanacom",
         "image": images["node"], # JEV: curl also? If I also need a curl image, do I also need a new step? 1 image per step?
