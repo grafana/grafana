@@ -88,7 +88,7 @@ The `team=security` policy is not a match and **Continue matching siblings** was
 
 {{< /collapse >}}
 
-This routing and tree structure make it easy to organize and handle alerts for dedicated teams, while also narrowing down specific cases within the team by applying additional labels.
+This routing and tree structure makes it convenient to organize and handle alerts for dedicated teams, while also narrowing down specific cases within the team by applying additional labels.
 
 ## Inheritance
 
