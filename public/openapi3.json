@@ -21000,6 +21000,46 @@
         ]
       }
     },
+    "/reports/render/csvs": {
+      "get": {
+        "operationId": "renderReportCSVs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dashboardID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "title",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/contentResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Download a CSV report.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      }
+    },
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
