@@ -374,9 +374,9 @@ describe('LogsPanel', () => {
       expect(await screen.findByRole('row')).toBeInTheDocument();
 
       await userEvent.click(screen.getByText('logline text'));
-      await userEvent.click(screen.getByLabelText('Filter for value in query A'));
+      await userEvent.click(screen.getByLabelText('Filter for value'));
       expect(filterForMock).toHaveBeenCalledTimes(1);
-      await userEvent.click(screen.getByLabelText('Filter out value in query A'));
+      await userEvent.click(screen.getByLabelText('Filter out value'));
       expect(filterOutMock).toHaveBeenCalledTimes(1);
 
       expect(isFilterLabelActiveMock).toHaveBeenCalledTimes(1);
