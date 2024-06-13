@@ -60,7 +60,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
   const [transformations, setTransformations] = useState<DataLinkTransformationConfig[]>([]);
   const [transformationIdxToEdit, setTransformationIdxToEdit] = useState<number | undefined>(undefined);
   const correlationDetails = useSelector(selectCorrelationDetails);
-  const id = useId();
+  const id = useId().replace(/:/g, '_');
 
   // only fire once on mount to allow save button to enable / disable when unmounted
   useEffect(() => {

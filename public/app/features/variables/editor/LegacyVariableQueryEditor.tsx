@@ -23,7 +23,7 @@ export const LegacyVariableQueryEditor = ({ onChange, query }: VariableQueryEdit
     [onChange]
   );
 
-  const id = useId();
+  const id = useId().replace(/:/g, '_');
 
   return (
     <TextArea

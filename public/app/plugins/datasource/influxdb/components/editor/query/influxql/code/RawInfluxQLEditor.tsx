@@ -18,8 +18,8 @@ type Props = {
 export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.Element => {
   const [currentQuery, setCurrentQuery] = useShadowedState(query.query);
   const [currentAlias, setCurrentAlias] = useShadowedState(query.alias);
-  const aliasElementId = useId();
-  const selectElementId = useId();
+  const aliasElementId = useId().replace(/:/g, '_');
+  const selectElementId = useId().replace(/:/g, '_');
 
   const resultFormat = query.resultFormat ?? DEFAULT_RESULT_FORMAT;
 

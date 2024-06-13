@@ -20,7 +20,7 @@ export function VariableCheckboxField({
   ariaLabel,
   testId,
 }: PropsWithChildren<VariableCheckboxFieldProps>): ReactElement {
-  const uniqueId = useId();
+  const uniqueId = useId().replace(/:/g, '_');
 
   return (
     <Checkbox

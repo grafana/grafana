@@ -34,7 +34,7 @@ export const testIds = {
 export const lokiQueryEditorExplainKey = 'LokiQueryEditorExplainDefault';
 
 export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
-  const id = useId();
+  const id = useId().replace(/:/g, '_');
   const { onChange, onRunQuery, onAddQuery, data, app, queries, datasource, range: timeRange } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);

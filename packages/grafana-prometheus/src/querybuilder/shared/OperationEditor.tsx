@@ -48,7 +48,7 @@ export function OperationEditor({
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
   const shouldFlash = useFlash(flash);
-  const id = useId();
+  const id = useId().replace(/:/g, '_');
 
   if (!def) {
     return <span>Operation {operation.id} not found</span>;

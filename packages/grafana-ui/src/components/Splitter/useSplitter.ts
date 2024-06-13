@@ -297,7 +297,7 @@ export function useSplitter(options: UseSplitterOptions) {
   const styles = useStyles2(getStyles, direction);
   const dragStyles = useStyles2(getDragStyles, dragPosition);
   const dragHandleStyle = direction === 'column' ? dragStyles.dragHandleHorizontal : dragStyles.dragHandleVertical;
-  const id = useId();
+  const id = useId().replace(/:/g, '_');
 
   return {
     containerProps: {

@@ -64,8 +64,8 @@ export const TimeRangeContent = (props: Props) => {
   const [to, setTo] = useState<InputState>(toValue);
   const [isOpen, setOpen] = useState(false);
 
-  const fromFieldId = useId();
-  const toFieldId = useId();
+  const fromFieldId = useId().replace(/:/g, '_');
+  const toFieldId = useId().replace(/:/g, '_');
 
   // Synchronize internal state with external value
   useEffect(() => {

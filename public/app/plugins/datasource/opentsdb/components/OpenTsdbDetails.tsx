@@ -24,7 +24,7 @@ interface Props {
 export const OpenTsdbDetails = (props: Props) => {
   const { onChange, value } = props;
 
-  const idSuffix = useId();
+  const idSuffix = useId().replace(/:/g, '_');
 
   return (
     <>

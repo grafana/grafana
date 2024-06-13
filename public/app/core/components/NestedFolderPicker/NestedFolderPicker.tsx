@@ -76,7 +76,7 @@ export function NestedFolderPicker({
   const [autoFocusButton, setAutoFocusButton] = useState(false);
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [foldersOpenState, setFoldersOpenState] = useState<Record<string, boolean>>({});
-  const overlayId = useId();
+  const overlayId = useId().replace(/:/g, '_');
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
 

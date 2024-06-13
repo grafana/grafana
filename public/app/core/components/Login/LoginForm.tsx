@@ -21,8 +21,8 @@ interface Props {
 
 export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, loginHint }: Props) => {
   const styles = useStyles2(getStyles);
-  const usernameId = useId();
-  const passwordId = useId();
+  const usernameId = useId().replace(/:/g, '_');
+  const passwordId = useId().replace(/:/g, '_');
   const {
     handleSubmit,
     register,

@@ -33,9 +33,9 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
   const dispatch = useDispatch();
   const description = useDescription(metric);
 
-  const sizeFieldId = useId();
-  const unitFieldId = useId();
-  const modeFieldId = useId();
+  const sizeFieldId = useId().replace(/:/g, '_');
+  const unitFieldId = useId().replace(/:/g, '_');
+  const modeFieldId = useId().replace(/:/g, '_');
 
   const rateAggUnitOptions = [
     { value: 'second', label: 'Second' },

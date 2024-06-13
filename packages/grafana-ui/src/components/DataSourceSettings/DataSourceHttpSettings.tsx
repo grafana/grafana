@@ -153,7 +153,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
 
   const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });
 
-  const fromFieldId = useId();
+  const fromFieldId = useId().replace(/:/g, '_');
 
   const urlInput = (
     <Input

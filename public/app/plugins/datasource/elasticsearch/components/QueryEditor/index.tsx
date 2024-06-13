@@ -90,7 +90,7 @@ export const ElasticSearchQueryField = ({ value, onChange }: { value?: string; o
 const QueryEditorForm = ({ value }: Props) => {
   const dispatch = useDispatch();
   const nextId = useNextId();
-  const inputId = useId();
+  const inputId = useId().replace(/:/g, '_');
   const styles = useStyles2(getStyles);
 
   const isTimeSeries = isTimeSeriesQuery(value);

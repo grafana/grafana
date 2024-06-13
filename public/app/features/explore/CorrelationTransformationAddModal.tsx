@@ -84,7 +84,7 @@ export const CorrelationTransformationAddModal = ({
       }
     }, [fieldList, transformationToEdit]),
   });
-  const id = useId();
+  const id = useId().replace(/:/g, '_');
 
   useEffect(() => {
     const subscription = watch((formValues) => {

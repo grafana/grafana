@@ -35,7 +35,7 @@ export const DynamicConfigValueEditor = ({
   const styles = useStyles2(getStyles);
   const item = registry?.getIfExists(property.id);
 
-  const componentId = useId();
+  const componentId = useId().replace(/:/g, '_');
 
   if (!item) {
     return null;

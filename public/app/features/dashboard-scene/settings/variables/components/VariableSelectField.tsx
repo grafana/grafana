@@ -24,7 +24,7 @@ export function VariableSelectField({
   width,
 }: PropsWithChildren<VariableSelectFieldProps<any>>) {
   const styles = useStyles2(getStyles);
-  const uniqueId = useId();
+  const uniqueId = useId().replace(/:/g, '_');
   const inputId = `variable-select-input-${name}-${uniqueId}`;
 
   return (

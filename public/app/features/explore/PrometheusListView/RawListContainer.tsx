@@ -112,7 +112,7 @@ const RawListContainer = (props: RawListContainerProps) => {
     return 1.5 * singleLineHeight + (Object.keys(item).length - valueLabels.length) * additionalLineHeight;
   };
 
-  const switchId = `isExpandedView ${useId()}`;
+  const switchId = `isExpandedView ${useId().replace(/:/g, '_')}`;
 
   return (
     <section>

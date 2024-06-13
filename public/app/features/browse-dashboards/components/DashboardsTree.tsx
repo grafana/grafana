@@ -49,7 +49,7 @@ export function DashboardsTree({
   requestLoadMore,
   canSelect = false,
 }: DashboardsTreeProps) {
-  const treeID = useId();
+  const treeID = useId().replace(/:/g, '_');
 
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const listRef = useRef<List | null>(null);

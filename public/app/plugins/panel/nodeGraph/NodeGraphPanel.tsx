@@ -11,7 +11,7 @@ import { getNodeGraphDataFrames } from './utils';
 
 export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<NodeGraphOptions>) => {
   const getLinks = useLinks(data.timeRange);
-  const panelId = useId();
+  const panelId = useId().replace(/:/g, '_');
 
   if (!data || !data.series.length) {
     return (

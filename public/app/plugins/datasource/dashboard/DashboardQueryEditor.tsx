@@ -133,7 +133,7 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
   );
 
   const styles = useStyles2(getStyles);
-  const selectId = useId();
+  const selectId = useId().replace(/:/g, '_');
 
   if (!dashboard) {
     return null;

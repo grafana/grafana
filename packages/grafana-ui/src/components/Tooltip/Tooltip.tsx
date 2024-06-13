@@ -64,7 +64,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
       middleware,
       whileElementsMounted: autoUpdate,
     });
-    const tooltipId = useId();
+    const tooltipId = useId().replace(/:/g, '_');
 
     const hover = useHover(context, {
       delay: {

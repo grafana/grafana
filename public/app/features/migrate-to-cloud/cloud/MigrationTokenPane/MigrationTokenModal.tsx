@@ -36,7 +36,7 @@ export const MigrationTokenModal = ({ isOpen, hideModal, migrationToken }: Props
 };
 
 function TokenSuccessContent({ migrationToken }: { migrationToken: string }) {
-  const inputId = useId();
+  const inputId = useId().replace(/:/g, '_');
   return (
     <Field
       description={t(

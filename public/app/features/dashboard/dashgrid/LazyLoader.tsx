@@ -10,7 +10,7 @@ export interface Props {
 }
 
 export function LazyLoader({ children, width, height, onLoad, onChange }: Props) {
-  const id = useId();
+  const id = useId().replace(/:/g, '_');
   const [loaded, setLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);

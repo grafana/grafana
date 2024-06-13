@@ -21,7 +21,7 @@ interface FormData {
 }
 
 export const ConnectModal = ({ isOpen, isLoading, isError, hideModal, onConfirm }: Props) => {
-  const tokenId = useId();
+  const tokenId = useId().replace(/:/g, '_');
   const styles = useStyles2(getStyles);
 
   const {

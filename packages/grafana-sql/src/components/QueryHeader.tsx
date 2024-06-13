@@ -48,7 +48,7 @@ export function QueryHeader({
   const [showConfirm, setShowConfirm] = useState(false);
   const toRawSql = db.toRawSql;
 
-  const htmlId = useId();
+  const htmlId = useId().replace(/:/g, '_');
 
   const onEditorModeChange = useCallback(
     (newEditorMode: EditorMode) => {

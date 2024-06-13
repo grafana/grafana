@@ -33,7 +33,7 @@ export function VariableTextAreaField({
   testId,
 }: PropsWithChildren<VariableTextAreaFieldProps>): ReactElement {
   const styles = useStyles2(getStyles);
-  const id = useId();
+  const id = useId().replace(/:/g, '_');
 
   return (
     <Field label={name} description={description} htmlFor={id}>

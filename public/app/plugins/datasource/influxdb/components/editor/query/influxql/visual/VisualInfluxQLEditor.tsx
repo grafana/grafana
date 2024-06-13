@@ -43,7 +43,7 @@ type Props = {
 };
 
 export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
-  const uniqueId = useId();
+  const uniqueId = useId().replace(/:/g, '_');
   const formatAsId = `influxdb-qe-format-as-${uniqueId}`;
   const orderByTimeId = `influxdb-qe-order-by${uniqueId}`;
 

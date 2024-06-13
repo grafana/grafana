@@ -120,7 +120,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     data;
   const { item, isOpen, level, parentUID } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
-  const labelId = useId();
+  const labelId = useId().replace(/:/g, '_');
   const rootCollection = useSelector(rootItemsSelector);
   const childrenCollections = useSelector(childrenByParentUIDSelector);
   const children = (item.uid ? childrenCollections[item.uid] : rootCollection)?.items ?? [];
