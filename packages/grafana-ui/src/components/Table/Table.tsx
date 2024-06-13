@@ -1,4 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useHistory, useLocation } from 'react-router-dom';
 import {
   useAbsoluteLayout,
   useExpanded,
@@ -59,6 +60,11 @@ export const Table = memo((props: Props) => {
     initialRowIndex = undefined,
     fieldConfig,
   } = props;
+
+  const history = useHistory();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const tablePage = params.get('tablePage');
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
@@ -258,12 +264,21 @@ export const Table = memo((props: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
+  useEffect(() => {
+    if (tablePage) {
+      gotoPage(Number(tablePage) - 1);
+    }
+  }, [tablePage, gotoPage]);
+
   useResetVariableListSizeCache(extendedState, listRef, data, hasUniqueId);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
 
+  // Use gotoPage for URL read
   const onNavigate = useCallback(
     (toPage: number) => {
       gotoPage(toPage - 1);
+      params.set('tablePage', toPage.toString());
+      history.replace({ pathname: location.pathname, search: params.toString() });
     },
     [gotoPage]
   );
