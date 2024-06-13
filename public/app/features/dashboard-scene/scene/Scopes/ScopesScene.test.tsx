@@ -9,7 +9,7 @@ import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { ScopesScene } from './ScopesScene';
 import {
   buildTestScene,
-  fetchDashboardsSpy,
+  fetchSuggestedDashboardsSpy,
   fetchNodesSpy,
   fetchScopeSpy,
   fetchSelectedScopesSpy,
@@ -105,7 +105,7 @@ describe('ScopesScene', () => {
       fetchNodesSpy.mockClear();
       fetchScopeSpy.mockClear();
       fetchSelectedScopesSpy.mockClear();
-      fetchDashboardsSpy.mockClear();
+      fetchSuggestedDashboardsSpy.mockClear();
 
       dashboardScene = buildTestScene();
       scopesScene = dashboardScene.state.scopes!;
@@ -241,7 +241,7 @@ describe('ScopesScene', () => {
         await userEvents.click(getApplicationsExpand());
         await userEvents.click(getApplicationsSlothPictureFactorySelect());
         await userEvents.click(getFiltersApply());
-        await waitFor(() => expect(fetchDashboardsSpy).not.toHaveBeenCalled());
+        await waitFor(() => expect(fetchSuggestedDashboardsSpy).not.toHaveBeenCalled());
       });
 
       it('Fetches dashboards list when the list is expanded', async () => {
@@ -250,7 +250,7 @@ describe('ScopesScene', () => {
         await userEvents.click(getApplicationsExpand());
         await userEvents.click(getApplicationsSlothPictureFactorySelect());
         await userEvents.click(getFiltersApply());
-        await waitFor(() => expect(fetchDashboardsSpy).toHaveBeenCalled());
+        await waitFor(() => expect(fetchSuggestedDashboardsSpy).toHaveBeenCalled());
       });
 
       it('Fetches dashboards list when the list is expanded after scope selection', async () => {
@@ -259,7 +259,7 @@ describe('ScopesScene', () => {
         await userEvents.click(getApplicationsSlothPictureFactorySelect());
         await userEvents.click(getFiltersApply());
         await userEvents.click(getDashboardsExpand());
-        await waitFor(() => expect(fetchDashboardsSpy).toHaveBeenCalled());
+        await waitFor(() => expect(fetchSuggestedDashboardsSpy).toHaveBeenCalled());
       });
 
       it('Shows dashboards for multiple scopes', async () => {
