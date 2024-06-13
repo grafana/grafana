@@ -1,4 +1,4 @@
-package cmsclient
+package gmsclient
 
 import (
 	"context"
@@ -14,24 +14,21 @@ func NewInMemoryClient() Client {
 
 type memoryClientImpl struct{}
 
-func (c *memoryClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigration) error {
-	// return ErrMigrationNotDeleted
+func (c *memoryClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
 	return nil
 }
 
 func (c *memoryClientImpl) MigrateData(
 	ctx context.Context,
-	cm cloudmigration.CloudMigration,
-	request cloudmigration.MigrateDataRequestDTO,
-) (*cloudmigration.MigrateDataResponseDTO, error) {
-	//return nil, ErrMigrationNotDeleted
-
-	result := cloudmigration.MigrateDataResponseDTO{
-		Items: make([]cloudmigration.MigrateDataResponseItemDTO, len(request.Items)),
+	cm cloudmigration.CloudMigrationSession,
+	request cloudmigration.MigrateDataRequest,
+) (*cloudmigration.MigrateDataResponse, error) {
+	result := cloudmigration.MigrateDataResponse{
+		Items: make([]cloudmigration.MigrateDataResponseItem, len(request.Items)),
 	}
 
 	for i, v := range request.Items {
-		result.Items[i] = cloudmigration.MigrateDataResponseItemDTO{
+		result.Items[i] = cloudmigration.MigrateDataResponseItem{
 			Type:   v.Type,
 			RefID:  v.RefID,
 			Status: cloudmigration.ItemStatusOK,
