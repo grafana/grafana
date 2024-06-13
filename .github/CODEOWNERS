@@ -79,7 +79,7 @@
 /pkg/components/apikeygen/ @grafana/identity-access-team
 /pkg/components/satokengen/ @grafana/identity-access-team
 /pkg/components/dashdiffs/ @grafana/grafana-app-platform-squad
-/pkg/components/imguploader/ @grafana/grafana-backend-group
+/pkg/components/imguploader/ @grafana/alerting-backend
 /pkg/components/loki/ @grafana/grafana-backend-group
 /pkg/components/null/ @grafana/grafana-backend-group
 /pkg/components/simplejson/ @grafana/grafana-backend-group

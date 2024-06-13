@@ -16,19 +16,19 @@ import (
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
 	"k8s.io/client-go/tools/cache"
 
-	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
 type RESTOptionsGetter struct {
 	cfg   *setting.Cfg
-	store entityStore.EntityStoreClient
+	store resource.ResourceStoreClient
 	Codec runtime.Codec
 }
 
-func NewRESTOptionsGetter(cfg *setting.Cfg, store entityStore.EntityStoreClient, codec runtime.Codec) *RESTOptionsGetter {
+func NewRESTOptionsGetter(cfg *setting.Cfg, store resource.ResourceStoreClient, codec runtime.Codec) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
 		cfg:   cfg,
 		store: store,
@@ -38,7 +38,7 @@ func NewRESTOptionsGetter(cfg *setting.Cfg, store entityStore.EntityStoreClient,
 
 func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
 	// build connection string to uniquely identify the storage backend
-	connectionInfo, err := json.Marshal(f.cfg.SectionWithEnvOverrides("entity_api").KeysHash())
+	connectionInfo, err := json.Marshal(f.cfg.SectionWithEnvOverrides("resource_store").KeysHash())
 	if err != nil {
 		return generic.RESTOptions{}, err
 	}

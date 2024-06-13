@@ -385,8 +385,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// Unlike ResourceStore, this service does not have strict read after write guarantees
 // Clients can use this service directly
+// NOTE: This is read only, and no read afer write guarantees
 type ResourceSearchClient interface {
 	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error)
 	// Get the raw blob bytes and metadata
@@ -461,8 +461,8 @@ func (c *resourceSearchClient) IsHealthy(ctx context.Context, in *HealthCheckReq
 // All implementations should embed UnimplementedResourceSearchServer
 // for forward compatibility
 //
-// Unlike ResourceStore, this service does not have strict read after write guarantees
 // Clients can use this service directly
+// NOTE: This is read only, and no read afer write guarantees
 type ResourceSearchServer interface {
 	Read(context.Context, *ReadRequest) (*ReadResponse, error)
 	// Get the raw blob bytes and metadata

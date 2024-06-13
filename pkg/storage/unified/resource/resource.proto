@@ -203,9 +203,12 @@ message ReadResponse {
   // The properties
   bytes value = 3;
 
+  // The the commit message
+  string message = 4;
+
   // A Signed URL that will let you fetch the blob
   // If this value starts with # you must read the bytes using the GetResourceBlob request
-  string blob_url = 4;
+  string blob_url = 5;
 }
 
 message GetBlobRequest {
@@ -245,32 +248,41 @@ message Sort {
 }
 
 message ListOptions {
-  // Maximum number of items to return
-  // NOTE responses will also be limited by the response payload size
-  int64 limit = 2;
-
   // Namespace+Group+Resource+etc
-  ResourceKey key = 3;
+  // This must *not* include the resource version
+  ResourceKey key = 1;
 
   // Match label
-  repeated Requirement labels = 4;
+  repeated Requirement labels = 2;
 
   // Match fields (not yet supported)
-  repeated Requirement fields = 5;
+  repeated Requirement fields = 3;
+}
 
-  // Limit results to items in a specific folder (not a query for everything under that folder!)
-  string folder = 6;
+enum ResourceVersionMatch {
+  NotOlderThan = 0;
+  Exact = 1;
 }
 
 message ListRequest {
   // Starting from the requested page (other query parameters must match!)
   string next_page_token = 1;
 
+  // The resource version
+  int64 resource_version = 2;
+  
+  // List options
+  ResourceVersionMatch version_match = 3;
+
+  // Maximum number of items to return
+  // NOTE responses will also be limited by the response payload size
+  int64 limit = 4;
+
   // Filtering
-  ListOptions options = 2;
+  ListOptions options = 5;
 
   // Sorting instructions `field ASC/DESC`
-  repeated Sort sort = 3;
+  repeated Sort sort = 6;
 }
 
 message ListResponse {
@@ -298,9 +310,6 @@ message ListResponse {
 message WatchRequest {
   // ResourceVersion of last changes. Empty will default to full history
   int64 since = 1;
-
-  // Watch specific entities
-  ResourceKey key = 2;
 
   // Additional options
   ListOptions options = 3;

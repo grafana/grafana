@@ -6,6 +6,7 @@
 package apistore
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -21,7 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
@@ -29,15 +29,17 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/klog/v2"
 
-	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+const SortByKey = "grafana.app/sortBy"
 
 var _ storage.Interface = (*Storage)(nil)
 
 // Storage implements storage.Interface and stores resources in unified storage
 type Storage struct {
 	config       *storagebackend.ConfigForResource
-	store        entityStore.EntityStoreClient
+	store        resource.ResourceStoreClient
 	gr           schema.GroupResource
 	codec        runtime.Codec
 	keyFunc      func(obj runtime.Object) (string, error)
@@ -51,7 +53,7 @@ type Storage struct {
 func NewStorage(
 	config *storagebackend.ConfigForResource,
 	gr schema.GroupResource,
-	store entityStore.EntityStoreClient,
+	store resource.ResourceStoreClient,
 	codec runtime.Codec,
 	keyFunc func(obj runtime.Object) (string, error),
 	newFunc func() runtime.Object,
@@ -70,41 +72,85 @@ func NewStorage(
 	}, nil, nil
 }
 
+func errorWrap(err error, status *resource.StatusResult) error {
+	if err != nil {
+		return err
+	}
+	if status != nil {
+		return &apierrors.StatusError{metav1.Status{
+			Status:  metav1.StatusFailure,
+			Code:    status.Code,
+			Reason:  metav1.StatusReason(status.Reason),
+			Message: status.Message,
+		}}
+	}
+	return nil
+}
+
+func getKey(ctx context.Context) (*resource.ResourceKey, error) {
+	requestInfo, ok := request.RequestInfoFrom(ctx)
+	if !ok {
+		return nil, apierrors.NewInternalError(fmt.Errorf("could not get request info"))
+	}
+	key := &resource.ResourceKey{
+		Group:     requestInfo.APIGroup,
+		Resource:  requestInfo.Resource,
+		Namespace: requestInfo.Namespace,
+		Name:      requestInfo.Name,
+	}
+	if key.Group == "" {
+		return nil, apierrors.NewInternalError(fmt.Errorf("missing group in request"))
+	}
+	if key.Resource == "" {
+		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
+	}
+	return key, nil
+}
+
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
-func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
-	}
-
-	if err := s.Versioner().PrepareObjectForStorage(obj); err != nil {
-		return err
-	}
-
-	e, err := resourceToEntity(obj, requestInfo, s.codec)
+func (s *Storage) Create(ctx context.Context, _ string, obj runtime.Object, out runtime.Object, ttl uint64) error {
+	key, err := getKey(ctx)
 	if err != nil {
 		return err
 	}
 
-	req := &entityStore.CreateEntityRequest{
-		Entity: e,
-	}
-
-	rsp, err := s.store.Create(ctx, req)
+	err = s.Versioner().PrepareObjectForStorage(obj)
 	if err != nil {
 		return err
 	}
-	if rsp.Status != entityStore.CreateEntityResponse_CREATED {
-		return fmt.Errorf("this was not a create operation... (%s)", rsp.Status.String())
-	}
 
-	err = entityToResource(rsp.Entity, out, s.codec)
+	var buf bytes.Buffer
+	err = s.codec.Encode(obj, &buf)
 	if err != nil {
-		return apierrors.NewInternalError(err)
+		return err
 	}
 
+	cmd := &resource.CreateRequest{
+		Key:   key,
+		Value: buf.Bytes(),
+	}
+
+	// TODO?? blob from context?
+
+	rsp, err := s.store.Create(ctx, cmd)
+	err = errorWrap(err, rsp.Status)
+	if err != nil {
+		return err
+	}
+
+	if rsp.Status != nil {
+		return fmt.Errorf("error in status %+v", rsp.Status)
+	}
+
+	// Copy the output bits
+	out = obj
+	after, err := meta.Accessor(out)
+	if err != nil {
+		return err
+	}
+	after.SetResourceVersion(strconv.FormatInt(rsp.ResourceVersion, 10))
 	return nil
 }
 
@@ -113,38 +159,34 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 // If 'cachedExistingObject' is non-nil, it can be used as a suggestion about the
 // current version of the object to avoid read operation from storage to get it.
 // However, the implementations have to retry in case suggestion is stale.
-func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, preconditions *storage.Preconditions, validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object) error {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
-	}
-
-	k := &entityStore.Key{
-		Group:       requestInfo.APIGroup,
-		Resource:    requestInfo.Resource,
-		Namespace:   requestInfo.Namespace,
-		Name:        requestInfo.Name,
-		Subresource: requestInfo.Subresource,
-	}
-
-	previousVersion := int64(0)
-	if preconditions != nil && preconditions.ResourceVersion != nil {
-		previousVersion, _ = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
-	}
-
-	rsp, err := s.store.Delete(ctx, &entityStore.DeleteEntityRequest{
-		Key:             k.String(),
-		PreviousVersion: previousVersion,
-	})
+func (s *Storage) Delete(ctx context.Context, _ string, out runtime.Object, preconditions *storage.Preconditions, validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object) error {
+	key, err := getKey(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = entityToResource(rsp.Entity, out, s.codec)
-	if err != nil {
-		return apierrors.NewInternalError(err)
+	if validateDeletion != nil {
+		return fmt.Errorf("not supported (validate deletion)")
 	}
 
+	cmd := &resource.DeleteRequest{Key: key}
+	if preconditions != nil {
+		if preconditions.ResourceVersion != nil {
+			key.ResourceVersion, err = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
+			if err != nil {
+				return err
+			}
+		}
+		if preconditions.UID != nil {
+			cmd.Uid = string(*preconditions.UID)
+		}
+	}
+
+	rsp, err := s.store.Delete(ctx, cmd)
+	err = errorWrap(err, rsp.Status)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -155,121 +197,38 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 // (e.g. reconnecting without missing any updates).
 // If resource version is "0", this interface will get current object at given key
 // and send it in an "ADDED" event, before watch starts.
-func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return nil, apierrors.NewInternalError(fmt.Errorf("could not get request info"))
-	}
-
-	k := &entityStore.Key{
-		Group:       requestInfo.APIGroup,
-		Resource:    requestInfo.Resource,
-		Namespace:   requestInfo.Namespace,
-		Name:        requestInfo.Name,
-		Subresource: requestInfo.Subresource,
-	}
-
-	if opts.Predicate.Field != nil {
-		// check for metadata.name field selector
-		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.name"); ok && k.Name == "" {
-			// just watch the specific key if we have a name field selector
-			k.Name = v
-		}
-
-		// check for metadata.namespace field selector
-		if v, ok := opts.Predicate.Field.RequiresExactMatch("metadata.namespace"); ok && k.Namespace == "" {
-			// just watch the specific namespace if we have a namespace field selector
-			k.Namespace = v
-		}
-	}
-
-	// translate grafana.app/* label selectors into field requirements
-	requirements, newSelector, err := ReadLabelSelectors(opts.Predicate.Label)
+func (s *Storage) Watch(ctx context.Context, _ string, opts storage.ListOptions) (watch.Interface, error) {
+	listopts, _, err := toListRequest(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
-
-	// Update the selector to remove the unneeded requirements
-	opts.Predicate.Label = newSelector
-
-	// if we got a listHistory label selector, watch the specified resource
-	if requirements.ListHistory != "" {
-		if k.Name != "" && k.Name != requirements.ListHistory {
-			return nil, apierrors.NewBadRequest("name field selector does not match listHistory")
-		}
-		k.Name = requirements.ListHistory
+	if listopts == nil {
+		return watch.NewEmptyWatch(), nil
+	}
+	if len(listopts.Sort) > 0 {
+		return nil, apierrors.NewBadRequest("sorting not supported in watch")
 	}
 
-	req := &entityStore.EntityWatchRequest{
-		Action: entityStore.EntityWatchRequest_START,
-		Key: []string{
-			k.String(),
-		},
-		Labels:              map[string]string{},
-		WithBody:            true,
-		WithStatus:          true,
+	cmd := &resource.WatchRequest{
+		Since:               listopts.ResourceVersion,
+		Options:             listopts.Options,
 		SendInitialEvents:   false,
 		AllowWatchBookmarks: opts.Predicate.AllowWatchBookmarks,
 	}
-
-	if opts.ResourceVersion != "" {
-		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
-		if err != nil {
-			return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
-		}
-
-		req.Since = rv
+	if opts.SendInitialEvents != nil {
+		cmd.SendInitialEvents = *opts.SendInitialEvents
 	}
 
-	if opts.SendInitialEvents == nil && req.Since == 0 {
-		req.SendInitialEvents = true
-	} else if opts.SendInitialEvents != nil {
-		req.SendInitialEvents = *opts.SendInitialEvents
-	}
-
-	if requirements.Folder != nil {
-		req.Folder = *requirements.Folder
-	}
-
-	// translate "equals" label selectors to storage label conditions
-	labelRequirements, selectable := opts.Predicate.Label.Requirements()
-	if !selectable {
-		return nil, apierrors.NewBadRequest("label selector is not selectable")
-	}
-
-	for _, r := range labelRequirements {
-		if r.Operator() == selection.Equals {
-			req.Labels[r.Key()] = r.Values().List()[0]
-		}
-	}
-
-	client, err := s.store.Watch(ctx)
+	client, err := s.store.Watch(ctx, cmd)
 	if err != nil {
 		// if the context was canceled, just return a new empty watch
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
 			return watch.NewEmptyWatch(), nil
 		}
-
-		return nil, err
-	}
-
-	err = client.Send(req)
-	if err != nil {
-		err2 := client.CloseSend()
-		if err2 != nil {
-			klog.Errorf("watch close failed: %s\n", err2)
-		}
-
-		// if the context was canceled, just return a new empty watch
-		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
-			return watch.NewEmptyWatch(), nil
-		}
-
 		return nil, err
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
-
 	decoder := &Decoder{
 		client:  client,
 		newFunc: s.newFunc,
@@ -277,9 +236,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		codec:   s.codec,
 	}
 
-	w := watch.NewStreamWatcher(decoder, reporter)
-
-	return w, nil
+	return watch.NewStreamWatcher(decoder, reporter), nil
 }
 
 // Get unmarshals object found at key into objPtr. On a not found error, will either
@@ -287,53 +244,84 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // Treats empty responses and nil response nodes exactly like a not found error.
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
-func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
-	}
-
-	k := &entityStore.Key{
-		Group:       requestInfo.APIGroup,
-		Resource:    requestInfo.Resource,
-		Namespace:   requestInfo.Namespace,
-		Name:        requestInfo.Name,
-		Subresource: requestInfo.Subresource,
-	}
-
-	resourceVersion := int64(0)
-	var err error
-	if opts.ResourceVersion != "" {
-		resourceVersion, err = strconv.ParseInt(opts.ResourceVersion, 10, 64)
-		if err != nil {
-			return apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
-		}
-	}
-
-	rsp, err := s.store.Read(ctx, &entityStore.ReadEntityRequest{
-		Key:             k.String(),
-		WithBody:        true,
-		WithStatus:      true,
-		ResourceVersion: resourceVersion,
-	})
+func (s *Storage) Get(ctx context.Context, _ string, opts storage.GetOptions, objPtr runtime.Object) error {
+	key, err := getKey(ctx)
 	if err != nil {
 		return err
 	}
 
-	if rsp.Key == "" {
-		if opts.IgnoreNotFound {
-			return nil
+	rsp, err := s.store.Read(ctx, &resource.ReadRequest{Key: key, IgnoreBlob: true})
+	err = errorWrap(err, rsp.Status)
+	if err != nil {
+		return err
+	}
+
+	_, _, err = s.codec.Decode(rsp.Value, &schema.GroupVersionKind{}, objPtr)
+	if err != nil {
+		return err
+	}
+	obj, err := meta.Accessor(objPtr)
+	if err != nil {
+		return err
+	}
+	obj.SetResourceVersion(strconv.FormatInt(rsp.ResourceVersion, 10))
+	return nil
+}
+
+func toListRequest(ctx context.Context, opts storage.ListOptions) (*resource.ListRequest, storage.SelectionPredicate, error) {
+	predicate := opts.Predicate
+	key, err := getKey(ctx)
+	if err != nil {
+		return nil, predicate, err
+	}
+	req := &resource.ListRequest{
+		Limit: opts.Predicate.Limit,
+		Options: &resource.ListOptions{
+			Key: key,
+		},
+	}
+
+	if opts.Predicate.Label != nil && !opts.Predicate.Label.Empty() {
+		requirements, selectable := opts.Predicate.Label.Requirements()
+		if !selectable {
+			return nil, predicate, nil // not selectable
 		}
 
-		return apierrors.NewNotFound(s.gr, k.Name)
+		for _, r := range requirements {
+			v := r.Key()
+			if v == SortByKey {
+
+				// TODO! Must update the predicate!
+				continue
+			}
+
+			req.Options.Labels = append(req.Options.Labels, &resource.Requirement{
+				Key:      v,
+				Operator: string(r.Operator()),
+				Values:   r.Values().List(),
+			})
+		}
 	}
 
-	err = entityToResource(rsp, objPtr, s.codec)
-	if err != nil {
-		return apierrors.NewInternalError(err)
+	if opts.ResourceVersion != "" {
+		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
+		if err != nil {
+			return nil, predicate, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+		}
+		req.ResourceVersion = rv
+	}
+	switch opts.ResourceVersionMatch {
+	case metav1.ResourceVersionMatchNotOlderThan:
+		req.VersionMatch = resource.ResourceVersionMatch_NotOlderThan
+	case metav1.ResourceVersionMatchExact:
+		req.VersionMatch = resource.ResourceVersionMatch_Exact
+	default:
+		return nil, predicate, apierrors.NewBadRequest(
+			fmt.Sprintf("unsupported version match: %v", opts.ResourceVersionMatch),
+		)
 	}
 
-	return nil
+	return req, predicate, nil
 }
 
 // GetList unmarshalls objects found at key into a *List api object (an object
@@ -342,18 +330,15 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 // is true, 'key' is used as a prefix.
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
-func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
+func (s *Storage) GetList(ctx context.Context, _ string, opts storage.ListOptions, listObj runtime.Object) error {
+	req, predicate, err := toListRequest(ctx, opts)
+	if err != nil {
+		return err
 	}
 
-	k := &entityStore.Key{
-		Group:       requestInfo.APIGroup,
-		Resource:    requestInfo.Resource,
-		Namespace:   requestInfo.Namespace,
-		Name:        requestInfo.Name,
-		Subresource: requestInfo.Subresource,
+	rsp, err := s.store.List(ctx, req)
+	if err != nil {
+		return err
 	}
 
 	listPtr, err := meta.GetItemsPtr(listObj)
@@ -365,117 +350,21 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
-	// translate grafana.app/* label selectors into field requirements
-	requirements, newSelector, err := ReadLabelSelectors(opts.Predicate.Label)
-	if err != nil {
-		return err
-	}
+	for _, item := range rsp.Items {
+		tmp := s.newFunc()
 
-	// Update the selector to remove the unneeded requirements
-	opts.Predicate.Label = newSelector
-
-	if requirements.ListHistory != "" {
-		k.Name = requirements.ListHistory
-
-		req := &entityStore.EntityHistoryRequest{
-			Key:           k.String(),
-			WithBody:      true,
-			WithStatus:    true,
-			NextPageToken: opts.Predicate.Continue,
-			Limit:         opts.Predicate.Limit,
-			Sort:          requirements.SortBy,
-		}
-
-		rsp, err := s.store.History(ctx, req)
-		if err != nil {
-			return apierrors.NewInternalError(err)
-		}
-
-		for _, r := range rsp.Versions {
-			res := s.newFunc()
-
-			err := entityToResource(r, res, s.codec)
-			if err != nil {
-				return apierrors.NewInternalError(err)
-			}
-
-			// apply any predicates not handled in storage
-			matches, err := opts.Predicate.Matches(res)
-			if err != nil {
-				return apierrors.NewInternalError(err)
-			}
-			if !matches {
-				continue
-			}
-
-			v.Set(reflect.Append(v, reflect.ValueOf(res).Elem()))
-		}
-
-		listAccessor, err := meta.ListAccessor(listObj)
+		tmp, _, err = s.codec.Decode(item.Value, nil, tmp)
 		if err != nil {
 			return err
 		}
-
-		if rsp.NextPageToken != "" {
-			listAccessor.SetContinue(rsp.NextPageToken)
-		}
-
-		listAccessor.SetResourceVersion(strconv.FormatInt(rsp.ResourceVersion, 10))
-
-		return nil
-	}
-
-	req := &entityStore.EntityListRequest{
-		Key: []string{
-			k.String(),
-		},
-		WithBody:      true,
-		WithStatus:    true,
-		NextPageToken: opts.Predicate.Continue,
-		Limit:         opts.Predicate.Limit,
-		Labels:        map[string]string{},
-	}
-
-	if requirements.Folder != nil {
-		req.Folder = *requirements.Folder
-	}
-	if len(requirements.SortBy) > 0 {
-		req.Sort = requirements.SortBy
-	}
-	if len(requirements.ListOriginKeys) > 0 {
-		req.OriginKeys = requirements.ListOriginKeys
-	}
-	if requirements.ListDeleted {
-		req.Deleted = true
-	}
-
-	// translate "equals" label selectors to storage label conditions
-	labelRequirements, selectable := opts.Predicate.Label.Requirements()
-	if !selectable {
-		return apierrors.NewBadRequest("label selector is not selectable")
-	}
-
-	for _, r := range labelRequirements {
-		if r.Operator() == selection.Equals {
-			req.Labels[r.Key()] = r.Values().List()[0]
-		}
-	}
-
-	rsp, err := s.store.List(ctx, req)
-	if err != nil {
-		return apierrors.NewInternalError(err)
-	}
-
-	for _, r := range rsp.Results {
-		res := s.newFunc()
-
-		err := entityToResource(r, res, s.codec)
+		obj, err := meta.Accessor(tmp)
 		if err != nil {
-			return apierrors.NewInternalError(err)
+			return err
 		}
+		obj.SetResourceVersion(strconv.FormatInt(item.ResourceVersion, 10))
 
 		// apply any predicates not handled in storage
-		matches, err := opts.Predicate.Matches(res)
+		matches, err := predicate.Matches(tmp)
 		if err != nil {
 			return apierrors.NewInternalError(err)
 		}
@@ -483,20 +372,20 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 			continue
 		}
 
-		v.Set(reflect.Append(v, reflect.ValueOf(res).Elem()))
+		v.Set(reflect.Append(v, reflect.ValueOf(tmp).Elem()))
 	}
 
 	listAccessor, err := meta.ListAccessor(listObj)
 	if err != nil {
 		return err
 	}
-
 	if rsp.NextPageToken != "" {
 		listAccessor.SetContinue(rsp.NextPageToken)
 	}
-
+	if rsp.RemainingItemCount > 0 {
+		listAccessor.SetRemainingItemCount(&rsp.RemainingItemCount)
+	}
 	listAccessor.SetResourceVersion(strconv.FormatInt(rsp.ResourceVersion, 10))
-
 	return nil
 }
 
@@ -515,33 +404,26 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 // However, the implementations have to retry in case suggestion is stale.
 func (s *Storage) GuaranteedUpdate(
 	ctx context.Context,
-	key string,
+	_ string,
 	destination runtime.Object,
 	ignoreNotFound bool,
 	preconditions *storage.Preconditions,
 	tryUpdate storage.UpdateFunc,
 	cachedExistingObject runtime.Object,
 ) error {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
+	key, err := getKey(ctx)
+	if err != nil {
+		return err
 	}
 
-	k := &entityStore.Key{
-		Group:       requestInfo.APIGroup,
-		Resource:    requestInfo.Resource,
-		Namespace:   requestInfo.Namespace,
-		Name:        requestInfo.Name,
-		Subresource: requestInfo.Subresource,
-	}
-
-	getErr := s.Get(ctx, k.String(), storage.GetOptions{}, destination)
-	if getErr != nil {
-		if ignoreNotFound && apierrors.IsNotFound(getErr) {
+	// Get the current version
+	err = s.Get(ctx, "<ignored>", storage.GetOptions{}, destination)
+	if err != nil {
+		if ignoreNotFound && apierrors.IsNotFound(err) {
 			// destination is already set to zero value
 			// we'll create the resource
 		} else {
-			return getErr
+			return err
 		}
 	}
 
@@ -549,9 +431,25 @@ func (s *Storage) GuaranteedUpdate(
 	if err != nil {
 		return err
 	}
+
+	// Early optimistic locking failure
 	previousVersion, _ := strconv.ParseInt(accessor.GetResourceVersion(), 10, 64)
-	if preconditions != nil && preconditions.ResourceVersion != nil {
-		previousVersion, _ = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
+	if preconditions != nil {
+		if preconditions.ResourceVersion != nil {
+			rv, err := strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
+			if err != nil {
+				return err
+			}
+			if rv != previousVersion {
+				return fmt.Errorf("optimistic locking mismatch (previousVersion mismatch)")
+			}
+		}
+
+		if preconditions.UID != nil {
+			if accessor.GetUID() != *preconditions.UID {
+				return fmt.Errorf("optimistic locking mismatch (UID mismatch)")
+			}
+		}
 	}
 
 	res := &storage.ResponseMeta{}
@@ -564,54 +462,30 @@ func (s *Storage) GuaranteedUpdate(
 				return statusErr
 			}
 		}
-
-		return apierrors.NewInternalError(fmt.Errorf("could not successfully update object. key=%s, err=%s", k.String(), err.Error()))
+		return apierrors.NewInternalError(
+			fmt.Errorf("could not successfully update object. key=%s, err=%s", key.String(), err.Error()),
+		)
 	}
 
-	e, err := resourceToEntity(updatedObj, requestInfo, s.codec)
+	accessor, err = meta.Accessor(updatedObj)
+	if err != nil {
+		return apierrors.NewInternalError(err)
+	}
+
+	var buf bytes.Buffer
+	err = s.codec.Encode(updatedObj, &buf)
 	if err != nil {
 		return err
 	}
 
-	// if we have a non-nil getErr, then we've ignored a not found error
-	if getErr != nil {
-		// object does not exist, create it
-		req := &entityStore.CreateEntityRequest{
-			Entity: e,
-		}
-
-		rsp, err := s.store.Create(ctx, req)
-		if err != nil {
-			return err
-		}
-
-		err = entityToResource(rsp.Entity, destination, s.codec)
-		if err != nil {
-			return apierrors.NewInternalError(err)
-		}
-
-		return nil
-	}
-
-	// update the existing object
-	req := &entityStore.UpdateEntityRequest{
-		Entity:          e,
-		PreviousVersion: previousVersion,
-	}
-
+	req := &resource.UpdateRequest{Key: key, Value: buf.Bytes()}
+	// TODO... message
 	rsp, err := s.store.Update(ctx, req)
+	err = errorWrap(err, rsp.Status)
 	if err != nil {
-		return err // continue???
+		return err
 	}
-
-	if rsp.Status == entityStore.UpdateEntityResponse_UNCHANGED {
-		return nil // destination is already set
-	}
-
-	err = entityToResource(rsp.Entity, destination, s.codec)
-	if err != nil {
-		return apierrors.NewInternalError(err)
-	}
+	accessor.SetResourceVersion(strconv.FormatInt(rsp.ResourceVersion, 10))
 
 	return nil
 }
@@ -630,10 +504,22 @@ func (s *Storage) RequestWatchProgress(ctx context.Context) error {
 }
 
 type Decoder struct {
-	client  entityStore.EntityStore_WatchClient
+	client  resource.ResourceStore_WatchClient
 	newFunc func() runtime.Object
 	opts    storage.ListOptions
 	codec   runtime.Codec
+}
+
+func (d *Decoder) toObject(w *resource.ResourceWrapper) (runtime.Object, error) {
+	obj, _, err := d.codec.Decode(w.Value, nil, d.newFunc())
+	if err == nil {
+		accessor, err := meta.Accessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		accessor.SetResourceVersion(strconv.FormatInt(w.ResourceVersion, 10))
+	}
+	return obj, err
 }
 
 func (d *Decoder) Decode() (action watch.EventType, object runtime.Object, err error) {
@@ -659,14 +545,14 @@ decode:
 			return watch.Error, nil, err
 		}
 
-		if resp.Entity == nil {
+		if resp.Resource == nil {
 			klog.Errorf("client: received nil entity\n")
 			continue decode
 		}
 
-		obj := d.newFunc()
+		if resp.Resource.Operation == resource.ResourceOperation_BOOKMARK {
+			obj := d.newFunc()
 
-		if resp.Entity.Action == entityStore.Entity_BOOKMARK {
 			// here k8s expects an empty object with just resource version and k8s.io/initial-events-end annotation
 			accessor, err := meta.Accessor(obj)
 			if err != nil {
@@ -674,20 +560,20 @@ decode:
 				return watch.Error, nil, err
 			}
 
-			accessor.SetResourceVersion(fmt.Sprintf("%d", resp.Entity.ResourceVersion))
+			accessor.SetResourceVersion(strconv.FormatInt(resp.Resource.ResourceVersion, 10))
 			accessor.SetAnnotations(map[string]string{"k8s.io/initial-events-end": "true"})
 			return watch.Bookmark, obj, nil
 		}
 
-		err = entityToResource(resp.Entity, obj, d.codec)
+		obj, err := d.toObject(resp.Resource)
 		if err != nil {
 			klog.Errorf("error decoding entity: %s", err)
 			return watch.Error, nil, err
 		}
 
 		var watchAction watch.EventType
-		switch resp.Entity.Action {
-		case entityStore.Entity_CREATED:
+		switch resp.Resource.Operation {
+		case resource.ResourceOperation_CREATED:
 			// apply any predicates not handled in storage
 			matches, err := d.opts.Predicate.Matches(obj)
 			if err != nil {
@@ -697,9 +583,9 @@ decode:
 			if !matches {
 				continue decode
 			}
-
 			watchAction = watch.Added
-		case entityStore.Entity_UPDATED:
+
+		case resource.ResourceOperation_UPDATED:
 			watchAction = watch.Modified
 
 			// apply any predicates not handled in storage
@@ -710,10 +596,10 @@ decode:
 			}
 
 			// if we have a previous object, check if it matches
+			var prevObj runtime.Object
 			prevMatches := false
-			prevObj := d.newFunc()
 			if resp.Previous != nil {
-				err = entityToResource(resp.Previous, prevObj, d.codec)
+				prevObj, err := d.toObject(resp.Previous)
 				if err != nil {
 					klog.Errorf("error decoding entity: %s", err)
 					return watch.Error, nil, err
@@ -743,23 +629,17 @@ decode:
 					klog.Errorf("error getting object accessor: %s", err)
 					return watch.Error, nil, err
 				}
-
-				accessor.SetResourceVersion(fmt.Sprintf("%d", resp.Entity.ResourceVersion))
+				accessor.SetResourceVersion(strconv.FormatInt(resp.Previous.ResourceVersion, 10))
 			} else if !prevMatches {
 				// if the object didn't previously match, send an Added event
 				watchAction = watch.Added
 			}
-		case entityStore.Entity_DELETED:
+
+		case resource.ResourceOperation_DELETED:
 			watchAction = watch.Deleted
 
 			// if we have a previous object, return that in the deleted event
 			if resp.Previous != nil {
-				err = entityToResource(resp.Previous, obj, d.codec)
-				if err != nil {
-					klog.Errorf("error decoding entity: %s", err)
-					return watch.Error, nil, err
-				}
-
 				// here k8s expects the previous object but with the new resource version
 				accessor, err := meta.Accessor(obj)
 				if err != nil {
@@ -767,7 +647,7 @@ decode:
 					return watch.Error, nil, err
 				}
 
-				accessor.SetResourceVersion(fmt.Sprintf("%d", resp.Entity.ResourceVersion))
+				accessor.SetResourceVersion(strconv.FormatInt(resp.Previous.ResourceVersion, 10))
 			}
 
 			// apply any predicates not handled in storage
