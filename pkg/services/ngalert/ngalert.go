@@ -200,7 +200,7 @@ func (ng *AlertNG) init() error {
 						PromoteConfig:     true,
 						SyncInterval:      ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 					}
-					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m)
+					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager", "err", err)
 						return nil, err
@@ -234,7 +234,7 @@ func (ng *AlertNG) init() error {
 						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 					}
-					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m)
+					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 						return internalAM, nil
@@ -270,7 +270,7 @@ func (ng *AlertNG) init() error {
 						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 						SyncInterval:      ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 					}
-					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m)
+					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 						return internalAM, nil
@@ -627,8 +627,8 @@ func ApplyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 	}
 }
 
-func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVStore, decryptFn remote.DecryptFn, autogenFn remote.AutogenFn, m *metrics.RemoteAlertmanager) (*remote.Alertmanager, error) {
-	return remote.NewAlertmanager(cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, autogenFn, m)
+func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVStore, decryptFn remote.DecryptFn, autogenFn remote.AutogenFn, m *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*remote.Alertmanager, error) {
+	return remote.NewAlertmanager(cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, autogenFn, m, tracer)
 }
 
 func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings) (schedule.RecordingWriter, error) {
