@@ -1,4 +1,4 @@
-package cmsclient
+package gmsclient
 
 import (
 	"bytes"
@@ -11,25 +11,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 )
 
-// NewCMSClient returns an implementation of Client that queries CloudMigrationService
-func NewCMSClient(domain string) Client {
-	return &cmsClientImpl{
+// NewGMSClient returns an implementation of Client that queries GrafanaMigrationService
+func NewGMSClient(domain string) Client {
+	return &gmsClientImpl{
 		domain: domain,
 		log:    log.New(logPrefix),
 	}
 }
 
-type cmsClientImpl struct {
+type gmsClientImpl struct {
 	domain string
 	log    *log.ConcreteLogger
 }
 
-func (c *cmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigration) error {
+func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
 	logger := c.log.FromContext(ctx)
 
+	// TODO update service url to gms
 	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/validate-key", cm.ClusterSlug, c.domain)
 
-	// validation is an empty POST to CMS with the authorization header included
+	// validation is an empty POST to GMS with the authorization header included
 	req, err := http.NewRequest("POST", path, bytes.NewReader(nil))
 	if err != nil {
 		logger.Error("error creating http request for token validation", "err", err.Error())
@@ -63,17 +64,19 @@ func (c *cmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	return nil
 }
 
-func (c *cmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigration, request cloudmigration.MigrateDataRequestDTO) (*cloudmigration.MigrateDataResponseDTO, error) {
+func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigrationSession, request cloudmigration.MigrateDataRequest) (*cloudmigration.MigrateDataResponse, error) {
 	logger := c.log.FromContext(ctx)
 
+	// TODO update service url to gms
 	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/migrate-data", cm.ClusterSlug, c.domain)
 
-	body, err := json.Marshal(request)
+	reqDTO := convertRequestToDTO(request)
+	body, err := json.Marshal(reqDTO)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling request: %w", err)
 	}
 
-	// Send the request to cms with the associated auth token
+	// Send the request to GMS with the associated auth token
 	req, err := http.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	if err != nil {
 		c.log.Error("error creating http request for cloud migration run", "err", err.Error())
@@ -98,11 +101,46 @@ func (c *cmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.Cloud
 		}
 	}()
 
-	var result cloudmigration.MigrateDataResponseDTO
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	var respDTO MigrateDataResponseDTO
+	if err := json.NewDecoder(resp.Body).Decode(&respDTO); err != nil {
 		logger.Error("unmarshalling response body: %w", err)
 		return nil, fmt.Errorf("unmarshalling migration run response: %w", err)
 	}
 
+	result := convertResponseFromDTO(respDTO)
 	return &result, nil
+}
+
+func convertRequestToDTO(request cloudmigration.MigrateDataRequest) MigrateDataRequestDTO {
+	items := make([]MigrateDataRequestItemDTO, len(request.Items))
+	for i := 0; i < len(request.Items); i++ {
+		item := request.Items[i]
+		items[i] = MigrateDataRequestItemDTO{
+			Type:  MigrateDataType(item.Type),
+			RefID: item.RefID,
+			Name:  item.Name,
+			Data:  item.Data,
+		}
+	}
+	r := MigrateDataRequestDTO{
+		Items: items,
+	}
+	return r
+}
+
+func convertResponseFromDTO(result MigrateDataResponseDTO) cloudmigration.MigrateDataResponse {
+	items := make([]cloudmigration.MigrateDataResponseItem, len(result.Items))
+	for i := 0; i < len(result.Items); i++ {
+		item := result.Items[i]
+		items[i] = cloudmigration.MigrateDataResponseItem{
+			Type:   cloudmigration.MigrateDataType(item.Type),
+			RefID:  item.RefID,
+			Status: cloudmigration.ItemStatus(item.Status),
+			Error:  item.Error,
+		}
+	}
+	return cloudmigration.MigrateDataResponse{
+		RunUID: result.RunUID,
+		Items:  items,
+	}
 }
