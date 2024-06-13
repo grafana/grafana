@@ -183,8 +183,7 @@ func (a *alertRule) Type() ngmodels.RuleType {
 }
 
 func (a *alertRule) Status() ngmodels.RuleStatus {
-	states := a.stateManager.GetStatesForRuleUID(a.key.OrgID, a.key.UID)
-	return StatesToRuleStatus(states)
+	return a.stateManager.GetStatusForRuleUID(a.key.OrgID, a.key.UID)
 }
 
 // eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.
@@ -527,35 +526,4 @@ func SchedulerUserFor(orgID int64) *user.SignedInUser {
 			},
 		},
 	}
-}
-
-func StatesToRuleStatus(states []*state.State) ngmodels.RuleStatus {
-	status := ngmodels.RuleStatus{
-		Health:      "ok",
-		LastError:   nil,
-		EvaluatedAt: time.Time{},
-	}
-	for _, state := range states {
-		if state.LastEvaluationTime.After(status.EvaluatedAt) {
-			status.EvaluatedAt = state.LastEvaluationTime
-		}
-
-		status.EvaluatedDuration = state.EvaluationDuration
-
-		switch state.State {
-		case eval.Normal:
-		case eval.Pending:
-		case eval.Alerting:
-		case eval.Error:
-			status.Health = "error"
-		case eval.NoData:
-			status.Health = "nodata"
-		}
-
-		if state.Error != nil {
-			status.LastError = state.Error
-			status.Health = "error"
-		}
-	}
-	return status
 }

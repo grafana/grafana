@@ -13,7 +13,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -191,5 +190,5 @@ func (f *fakeSchedulerReader) Status(key models.AlertRuleKey) (models.RuleStatus
 	if f.states == nil {
 		return models.RuleStatus{}, false
 	}
-	return schedule.StatesToRuleStatus(f.states.GetStatesForRuleUID(key.OrgID, key.UID)), true
+	return state.StatesToRuleStatus(f.states.GetStatesForRuleUID(key.OrgID, key.UID)), true
 }
