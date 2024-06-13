@@ -77,9 +77,14 @@ export class TrailStore {
     });
 
     const currentStep = t.currentStep ?? trail.state.history.state.steps.length - 1;
+
     trail.state.history.setState({ currentStep });
-    // The state change listeners aren't activated yet, so maually change to the current step state
-    trail.setState(trail.state.history.state.steps[currentStep].trailState);
+
+    trail.setState(
+      sceneUtils.cloneSceneObjectState(trail.state.history.state.steps[currentStep].trailState, {
+        history: trail.state.history,
+      })
+    );
 
     return trail;
   }

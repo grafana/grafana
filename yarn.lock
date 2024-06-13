@@ -3524,15 +3524,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^5.0.0":
-  version: 5.0.0
-  resolution: "@grafana/scenes@npm:5.0.0"
+"@grafana/scenes@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "@grafana/scenes@npm:5.0.1"
   dependencies:
     "@grafana/e2e-selectors": "npm:^11.0.0"
     "@leeoniya/ufuzzy": "npm:^1.0.14"
     react-grid-layout: "npm:1.3.4"
-    react-use: "npm:17.4.0"
-    react-virtualized-auto-sizer: "npm:1.0.7"
+    react-use: "npm:17.5.0"
+    react-virtualized-auto-sizer: "npm:1.0.24"
     uuid: "npm:^9.0.0"
   peerDependencies:
     "@grafana/data": ^10.4.1
@@ -3541,7 +3541,7 @@ __metadata:
     "@grafana/ui": ^10.4.1
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/a2ade76856cf9c5bef81e9501b7ab594a84afb285d3a7c68847bae48f631c56f634a5f01acf3a01c9af7dc7525be315921f9345651827c0411d4f5c7499d6f09
+  checksum: 10/848fc1f54064b7ddfd2cf5cbd63184720d73da3e3d6f73daecee6e0f049527c9122c413e2e3cad392325f5873e6598fe4651641645fc946af7bb95c984b504f1
   languageName: node
   linkType: hard
 
@@ -16983,7 +16983,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:^5.0.0"
+    "@grafana/scenes": "npm:^5.0.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
@@ -22114,7 +22114,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nano-css@npm:^5.3.1, nano-css@npm:^5.6.1":
+"nano-css@npm:^5.6.1":
   version: 5.6.1
   resolution: "nano-css@npm:5.6.1"
   dependencies:
@@ -25702,31 +25702,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-use@npm:17.4.0":
-  version: 17.4.0
-  resolution: "react-use@npm:17.4.0"
-  dependencies:
-    "@types/js-cookie": "npm:^2.2.6"
-    "@xobotyi/scrollbar-width": "npm:^1.9.5"
-    copy-to-clipboard: "npm:^3.3.1"
-    fast-deep-equal: "npm:^3.1.3"
-    fast-shallow-equal: "npm:^1.0.0"
-    js-cookie: "npm:^2.2.1"
-    nano-css: "npm:^5.3.1"
-    react-universal-interface: "npm:^0.6.2"
-    resize-observer-polyfill: "npm:^1.5.1"
-    screenfull: "npm:^5.1.0"
-    set-harmonic-interval: "npm:^1.0.1"
-    throttle-debounce: "npm:^3.0.1"
-    ts-easing: "npm:^0.2.0"
-    tslib: "npm:^2.1.0"
-  peerDependencies:
-    react: ^16.8.0  || ^17.0.0 || ^18.0.0
-    react-dom: ^16.8.0  || ^17.0.0 || ^18.0.0
-  checksum: 10/98566c4817b00251107824743ea9dff41f167b548bd5f249f6eb9e2ec09388a2de1e89988e4432cead3f8aa83cf706e0255db8a20c0615768c670751973d2761
-  languageName: node
-  linkType: hard
-
 "react-use@npm:17.5.0, react-use@npm:^17.4.2":
   version: 17.5.0
   resolution: "react-use@npm:17.5.0"
@@ -25770,16 +25745,6 @@ __metadata:
     react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
     react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
   checksum: 10/02101a340bdbe3e40c49dbc52e524eb7ca18832690e91f045a25675600d7adc0a63e800a4ace6a014132adcdcce0e12a8137971de408427a5a3112d7c87c9f3e
-  languageName: node
-  linkType: hard
-
-"react-virtualized-auto-sizer@npm:1.0.7":
-  version: 1.0.7
-  resolution: "react-virtualized-auto-sizer@npm:1.0.7"
-  peerDependencies:
-    react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0-rc
-    react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0-rc
-  checksum: 10/a16d8ac11a0efa20d44f36a5cf3854027895b806363a409f2ddc07ff92bfc92aaf5b8eee21f3e1b153cee2273db5e5383b6334d4b530d934ed08808ecfb45b9f
   languageName: node
   linkType: hard
 

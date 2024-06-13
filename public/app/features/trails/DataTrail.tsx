@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { AdHocVariableFilter, GrafanaTheme2, VariableHide, urlUtil } from '@grafana/data';
+import { AdHocVariableFilter, GrafanaTheme2, PageLayoutType, VariableHide, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -25,6 +25,7 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
@@ -35,6 +36,7 @@ import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
 import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
+import { getMetricName } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -201,24 +203,26 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history, settings } = model.useState();
+    const { controls, topScene, history, settings, metric } = model.useState();
     const styles = useStyles2(getStyles);
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     return (
-      <div className={styles.container}>
-        {showHeaderForFirstTimeUsers && <MetricsHeader />}
-        <history.Component model={history} />
-        {controls && (
-          <div className={styles.controls}>
-            {controls.map((control) => (
-              <control.Component key={control.state.key} model={control} />
-            ))}
-            <settings.Component model={settings} />
-          </div>
-        )}
-        <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
-      </div>
+      <Page navId="explore/metrics" pageNav={{ text: getMetricName(metric) }} layout={PageLayoutType.Custom}>
+        <div className={styles.container}>
+          {showHeaderForFirstTimeUsers && <MetricsHeader />}
+          <history.Component model={history} />
+          {controls && (
+            <div className={styles.controls}>
+              {controls.map((control) => (
+                <control.Component key={control.state.key} model={control} />
+              ))}
+              <settings.Component model={settings} />
+            </div>
+          )}
+          <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+        </div>
+      </Page>
     );
   };
 }
@@ -262,6 +266,8 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       minHeight: '100%',
       flexDirection: 'column',
+      background: theme.isLight ? theme.colors.background.primary : theme.colors.background.canvas,
+      padding: theme.spacing(2, 3, 2, 3),
     }),
     body: css({
       flexGrow: 1,

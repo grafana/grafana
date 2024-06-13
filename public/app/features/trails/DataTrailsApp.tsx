@@ -1,11 +1,9 @@
-import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 import { Route, Switch } from 'react-router-dom';
 
-import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, UrlSyncContextProvider } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrail } from './DataTrail';
@@ -13,7 +11,7 @@ import { DataTrailsHome } from './DataTrailsHome';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { HOME_ROUTE, TRAILS_ROUTE } from './shared';
-import { getMetricName, getUrlForTrail, newMetricsTrail } from './utils';
+import { getUrlForTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsAppState extends SceneObjectState {
   trail: DataTrail;
@@ -32,7 +30,6 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
 
   static Component = ({ model }: SceneComponentProps<DataTrailsApp>) => {
     const { trail, home } = model.useState();
-    const styles = useStyles2(getStyles);
 
     return (
       <Switch>
@@ -50,21 +47,7 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
             </Page>
           )}
         />
-        <Route
-          exact={true}
-          path={TRAILS_ROUTE}
-          render={() => (
-            <Page
-              navId="explore/metrics"
-              pageNav={{ text: getMetricName(trail.state.metric) }}
-              layout={PageLayoutType.Custom}
-            >
-              <div className={styles.customPage}>
-                <DataTrailView trail={trail} />
-              </div>
-            </Page>
-          )}
-        />
+        <Route exact={true} path={TRAILS_ROUTE} render={() => <DataTrailView trail={trail} />} />
       </Switch>
     );
   };
@@ -124,16 +107,4 @@ function getInitialTrail() {
 
   // If there is a matching trail, initialize with that. Otherwise, use the new trail.
   return recentMatchingTrail || newTrail;
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    customPage: css({
-      padding: theme.spacing(2, 3, 2, 3),
-      background: theme.isLight ? theme.colors.background.primary : theme.colors.background.canvas,
-      flexGrow: 1,
-      display: 'flex',
-      flexDirection: 'column',
-    }),
-  };
 }
