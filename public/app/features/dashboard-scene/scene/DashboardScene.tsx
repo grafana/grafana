@@ -594,8 +594,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       newGridItem = new DashboardGridItem({
         x: gridItem.state.x,
         y: gridItem.state.y,
-        height: NEW_PANEL_HEIGHT,
-        width: NEW_PANEL_WIDTH,
+        height: gridItem.state.height,
+        width: gridItem.state.width,
         body: new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) }),
       });
     }
