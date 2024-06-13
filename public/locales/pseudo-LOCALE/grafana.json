@@ -1594,23 +1594,22 @@
     "dismissable-button": "Cľőşę"
   },
   "scopes": {
-    "advancedSelector": {
+    "filters": {
       "apply": "Åppľy",
       "cancel": "Cäŉčęľ",
+      "input": {
+        "placeholder": "Ŝęľęčŧ şčőpęş...",
+        "removeAll": "Ŗęmővę äľľ şčőpęş"
+      },
       "title": "Ŝęľęčŧ şčőpęş"
-    },
-    "basicSelector": {
-      "openAdvanced": "Øpęŉ äđväŉčęđ şčőpę şęľęčŧőř <1></1>",
-      "placeholder": "Ŝęľęčŧ şčőpęş...",
-      "removeAll": "Ŗęmővę äľľ şčőpęş"
-    },
-    "root": {
-      "collapse": "Cőľľäpşę şčőpę ƒįľŧęřş",
-      "expand": "Ēχpäŉđ şčőpę ƒįľŧęřş"
     },
     "suggestedDashboards": {
       "loading": "Ŀőäđįŉģ đäşĥþőäřđş",
-      "search": "Fįľŧęř"
+      "search": "Fįľŧęř",
+      "toggle": {
+        "collapse": "Cőľľäpşę şčőpę ƒįľŧęřş",
+        "expand": "Ēχpäŉđ şčőpę ƒįľŧęřş"
+      }
     },
     "tree": {
       "collapse": "Cőľľäpşę",
