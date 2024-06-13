@@ -39,7 +39,7 @@ export const ConnectModal = ({ isOpen, isLoading, isError, hideModal, onConfirm 
 
   const onConfirmConnect: SubmitHandler<FormData> = (formData) => {
     onConfirm({
-      cloudMigrationSessionRequest: {
+      cloudMigrationSessionRequestDto: {
         authToken: formData.token,
       },
     }).then((resp) => {
