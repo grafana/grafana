@@ -256,7 +256,7 @@ export function PanelChrome({
     <section
       className={cx(styles.container, { [styles.transparentContainer]: isPanelTransparent })}
       style={containerStyles}
-      aria-labelledby={panelTitleId}
+      aria-labelledby={!!title ? panelTitleId : undefined}
       data-testid={testid}
       tabIndex={0} // eslint-disable-line jsx-a11y/no-noninteractive-tabindex
       onFocus={onFocus}
