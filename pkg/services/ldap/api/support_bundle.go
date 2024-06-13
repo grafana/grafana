@@ -73,12 +73,12 @@ func (s *Service) supportBundleCollector(context.Context) (*supportbundles.Suppo
 
 	bWriter.WriteString("```ini\n")
 
-	bWriter.WriteString(fmt.Sprintf("enabled = %v\n", s.cfg.LDAPAuthEnabled))
-	bWriter.WriteString(fmt.Sprintf("config_file = %s\n", s.cfg.LDAPConfigFilePath))
-	bWriter.WriteString(fmt.Sprintf("allow_sign_up = %v\n", s.cfg.LDAPAllowSignup))
-	bWriter.WriteString(fmt.Sprintf("sync_cron = %s\n", s.cfg.LDAPSyncCron))
-	bWriter.WriteString(fmt.Sprintf("active_sync_enabled = %v\n", s.cfg.LDAPActiveSyncEnabled))
-	bWriter.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.cfg.LDAPSkipOrgRoleSync))
+	bWriter.WriteString(fmt.Sprintf("enabled = %v\n", s.cfg.Enabled))
+	bWriter.WriteString(fmt.Sprintf("config_file = %s\n", s.cfg.ConfigFilePath))
+	bWriter.WriteString(fmt.Sprintf("allow_sign_up = %v\n", s.cfg.AllowSignUp))
+	bWriter.WriteString(fmt.Sprintf("sync_cron = %s\n", s.cfg.SyncCron))
+	bWriter.WriteString(fmt.Sprintf("active_sync_enabled = %v\n", s.cfg.ActiveSyncEnabled))
+	bWriter.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.cfg.SkipOrgRoleSync))
 
 	bWriter.WriteString("```\n\n")
 

@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var defaultLogin = &login.LoginUserQuery{
@@ -31,8 +30,9 @@ func TestServer_Login_UserBind_Fail(t *testing.T) {
 		}
 	}
 
-	cfg := setting.NewCfg()
-	cfg.LDAPAuthEnabled = true
+	cfg := &Config{
+		Enabled: true,
+	}
 	server := &Server{
 		cfg: cfg,
 		Config: &ServerConfig{
@@ -105,8 +105,9 @@ func TestServer_Login_ValidCredentials(t *testing.T) {
 		return nil
 	}
 
-	cfg := setting.NewCfg()
-	cfg.LDAPAuthEnabled = true
+	cfg := &Config{
+		Enabled: true,
+	}
 
 	server := &Server{
 		cfg: cfg,
@@ -142,8 +143,9 @@ func TestServer_Login_UnauthenticatedBind(t *testing.T) {
 		return nil
 	}
 
-	cfg := setting.NewCfg()
-	cfg.LDAPAuthEnabled = true
+	cfg := &Config{
+		Enabled: true,
+	}
 
 	server := &Server{
 		cfg: cfg,
@@ -189,8 +191,9 @@ func TestServer_Login_AuthenticatedBind(t *testing.T) {
 		return nil
 	}
 
-	cfg := setting.NewCfg()
-	cfg.LDAPAuthEnabled = true
+	cfg := &Config{
+		Enabled: true,
+	}
 
 	server := &Server{
 		cfg: cfg,
@@ -232,8 +235,9 @@ func TestServer_Login_UserWildcardBind(t *testing.T) {
 		return nil
 	}
 
-	cfg := setting.NewCfg()
-	cfg.LDAPAuthEnabled = true
+	cfg := &Config{
+		Enabled: true,
+	}
 
 	server := &Server{
 		cfg: cfg,
