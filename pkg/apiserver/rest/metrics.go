@@ -1,11 +1,11 @@
 package rest
 
 import (
-	"errors"
 	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/klog/v2"
 )
 
 type dualWriterMetrics struct {
@@ -39,6 +39,7 @@ var DualWriterOutcome = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 }, []string{"mode", "name", "method"})
 
 func (m *dualWriterMetrics) init(reg prometheus.Registerer) {
+	log := klog.NewKlogr()
 	m.legacy = DualWriterLegacyDuration
 	m.storage = DualWriterStorageDuration
 	m.outcome = DualWriterOutcome
@@ -46,12 +47,7 @@ func (m *dualWriterMetrics) init(reg prometheus.Registerer) {
 	errStorage := reg.Register(m.storage)
 	errOutcome := reg.Register(m.outcome)
 	if errLegacy != nil || errStorage != nil || errOutcome != nil {
-		are := &prometheus.AlreadyRegisteredError{}
-		if errors.As(errLegacy, are) || errors.As(errStorage, are) || errors.As(errOutcome, are) {
-			m.legacy = are.ExistingCollector.(*prometheus.HistogramVec)
-			m.storage = are.ExistingCollector.(*prometheus.HistogramVec)
-			m.outcome = are.ExistingCollector.(*prometheus.HistogramVec)
-		}
+		log.Info("cloud migration metrics already registered")
 	}
 }
 
