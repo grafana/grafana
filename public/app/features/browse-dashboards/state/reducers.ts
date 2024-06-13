@@ -206,8 +206,6 @@ type UIDLike = string | undefined;
 export function clearFolders(state: BrowseDashboardsState, action: PayloadAction<UIDLike | UIDLike[]>) {
   const folderUIDs = Array.isArray(action.payload) ? action.payload : [action.payload];
 
-  console.log('clearing folder', folderUIDs);
-
   for (const folderUID of folderUIDs) {
     if (!folderUID || folderUID === GENERAL_FOLDER_UID) {
       state.rootItems = undefined;
