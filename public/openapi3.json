@@ -196,26 +196,6 @@
         },
         "description": "(empty)"
       },
-      "cloudMigrationListResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/CloudMigrationListResponse"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "cloudMigrationResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/CloudMigrationResponse"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "cloudMigrationRunListResponse": {
         "content": {
           "application/json": {
@@ -3689,47 +3669,6 @@
           },
           "oldPassword": {
             "$ref": "#/components/schemas/Password"
-          }
-        },
-        "type": "object"
-      },
-      "CloudMigrationListResponse": {
-        "properties": {
-          "migrations": {
-            "items": {
-              "$ref": "#/components/schemas/CloudMigrationResponse"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
-      "CloudMigrationResponse": {
-        "properties": {
-          "created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "stack": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          },
-          "updated": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "CloudMigrationRunList": {
-        "properties": {
-          "runs": {
-            "items": {
-              "$ref": "#/components/schemas/MigrateDataResponseListDTO"
-            },
-            "type": "array"
           }
         },
         "type": "object"
@@ -9775,6 +9714,32 @@
           "userId": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "SearchDTO": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "basicRole": {
+            "type": "string"
+          },
+          "onlyRoles": {
+            "type": "boolean"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
           }
         },
         "type": "object"

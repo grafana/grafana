@@ -3,7 +3,6 @@ package gmsclient
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 )
 
@@ -13,5 +12,3 @@ type Client interface {
 }
 
 const logPrefix = "cloudmigration.gmsclient"
-
-var ErrMigrationNotDeleted = errutil.Internal("cloudmigrations.developerModeEnabled", errutil.WithPublicMessage("Developer mode enabled"))

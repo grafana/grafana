@@ -13293,47 +13293,6 @@
         }
       }
     },
-    "CloudMigrationListResponse": {
-      "type": "object",
-      "properties": {
-        "migrations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CloudMigrationResponse"
-          }
-        }
-      }
-    },
-    "CloudMigrationResponse": {
-      "type": "object",
-      "properties": {
-        "created": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "stack": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "updated": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "CloudMigrationRunList": {
-      "type": "object",
-      "properties": {
-        "runs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MigrateDataResponseListDTO"
-          }
-        }
-      }
-    },
     "CloudMigrationSessionListResponseDTO": {
       "type": "object",
       "properties": {
@@ -19379,6 +19338,32 @@
         }
       }
     },
+    "SearchDTO": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "basicRole": {
+          "type": "string"
+        },
+        "onlyRoles": {
+          "type": "boolean"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        }
+      }
+    },
     "SearchDeviceQueryResult": {
       "type": "object",
       "properties": {
@@ -22395,18 +22380,6 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/GetAccessTokenResponseDTO"
-      }
-    },
-    "cloudMigrationListResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/CloudMigrationListResponse"
-      }
-    },
-    "cloudMigrationResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/CloudMigrationResponse"
       }
     },
     "cloudMigrationRunListResponse": {
