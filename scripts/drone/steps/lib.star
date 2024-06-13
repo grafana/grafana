@@ -1261,6 +1261,7 @@ def verify_grafanacom_step(node_version = 18):
     return {
         "name": "verify-grafanacom",
         "image": images["node"], # JEV: curl also? If I also need a curl image, do I also need a new step? 1 image per step?
+        # JEV: do i even need a node env here, since i download it in the commands?
         "environment": {
             # JEV: how would i know this is actually the gcom api key? See scripts/drone/rgm.star:126
             "GCOM_API_KEY" = from_secret("grafana_api_key"),
