@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 
+	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -34,7 +34,7 @@ func newStorage(scheme *runtime.Scheme) (*storage, error) {
 		DeleteStrategy:            strategy,
 	}
 
-	store.TableConvertor = utils.NewTableConverter(
+	store.TableConvertor = gapiutil.NewTableConverter(
 		store.DefaultQualifiedResource,
 		[]metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
