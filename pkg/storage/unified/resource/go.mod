@@ -13,6 +13,7 @@ require (
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.1
 	k8s.io/apimachinery v0.29.3
+	github.com/hack-pad/hackpadfs v0.2.1
 )
 
 require (

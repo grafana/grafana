@@ -13,7 +13,8 @@ type WriteEvent struct {
 	Key        *ResourceKey // the request key
 	Requester  identity.Requester
 	Operation  ResourceOperation
-	PreviousRV int64 // only for Update+Delete
+	PreviousRV int64  // only for Update+Delete
+	Message    string // commit message
 
 	// The raw JSON payload
 	// NOTE, this is never mutated, only parsed and validated

@@ -10,6 +10,7 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/prometheus/client_golang/prometheus"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"go.opentelemetry.io/otel/trace"
@@ -69,7 +70,8 @@ func NewResourceWriter(opts WriterOptions) (ResourceWriter, error) {
 	if opts.NextEventID == nil {
 		eventNode, err := snowflake.NewNode(opts.NodeID)
 		if err != nil {
-			return nil, fmt.Errorf("error initializing snowflake id generator :: %w", err)
+			return nil, apierrors.NewInternalError(
+				fmt.Errorf("error initializing snowflake id generator :: %w", err))
 		}
 		opts.NextEventID = func() int64 {
 			return eventNode.Generate().Int64()
@@ -112,45 +114,48 @@ func (s *writeServer) newEvent(ctx context.Context, key *ResourceKey, value, old
 
 	obj, err := utils.MetaAccessor(dummy)
 	if err != nil {
-		return nil, fmt.Errorf("invalid object in json")
+		return nil, apierrors.NewBadRequest("invalid object in json")
 	}
 	if obj.GetUID() == "" {
-		return nil, fmt.Errorf("the UID must be set")
+		return nil, apierrors.NewBadRequest("the UID must be set")
 	}
 	if obj.GetGenerateName() != "" {
-		return nil, fmt.Errorf("can not save value with generate name")
+		return nil, apierrors.NewBadRequest("can not save value with generate name")
 	}
 	gvk := obj.GetGroupVersionKind()
 	if gvk.Kind == "" {
-		return nil, fmt.Errorf("expecting resources with a kind in the body")
+		return nil, apierrors.NewBadRequest("expecting resources with a kind in the body")
 	}
 	if gvk.Version == "" {
-		return nil, fmt.Errorf("expecting resources with an apiVersion")
+		return nil, apierrors.NewBadRequest("expecting resources with an apiVersion")
 	}
 	if gvk.Group != "" && gvk.Group != key.Group {
-		return nil, fmt.Errorf("group in key does not match group in the body (%s != %s)", key.Group, gvk.Group)
+		return nil, apierrors.NewBadRequest(
+			fmt.Sprintf("group in key does not match group in the body (%s != %s)", key.Group, gvk.Group),
+		)
 	}
 	if obj.GetName() != key.Name {
-		return nil, fmt.Errorf("key name does not match the name in the body")
+		return nil, apierrors.NewBadRequest("key name does not match the name in the body")
 	}
 	if obj.GetNamespace() != key.Namespace {
-		return nil, fmt.Errorf("key namespace does not match the namespace in the body")
+		return nil, apierrors.NewBadRequest("key namespace does not match the namespace in the body")
 	}
 	folder := obj.GetFolder()
 	if folder != "" {
 		if s.opts.FolderAccess == nil {
-			return nil, fmt.Errorf("folders are not supported")
+			return nil, apierrors.NewBadRequest("folders are not supported")
 		} else if !s.opts.FolderAccess(ctx, event.Requester, folder) {
-			return nil, fmt.Errorf("unable to add resource to folder") // 403?
+			return nil, apierrors.NewBadRequest("unable to add resource to folder") // 403?
 		}
 	}
 	origin, err := obj.GetOriginInfo()
 	if err != nil {
-		return nil, fmt.Errorf("invalid origin info")
+		return nil, apierrors.NewBadRequest("invalid origin info")
 	}
 	if origin != nil && s.opts.OriginAccess != nil {
 		if !s.opts.OriginAccess(ctx, event.Requester, origin.Name) {
-			return nil, fmt.Errorf("not allowed to write resource to origin (%s)", origin.Name)
+			return nil, apierrors.NewBadRequest(
+				fmt.Sprintf("not allowed to write resource to origin (%s)", origin.Name))
 		}
 	}
 	event.Object = obj
@@ -160,22 +165,25 @@ func (s *writeServer) newEvent(ctx context.Context, key *ResourceKey, value, old
 		dummy := &dummyObject{}
 		err = json.Unmarshal(oldValue, dummy)
 		if err != nil {
-			return nil, fmt.Errorf("error reading old json value")
+			return nil, apierrors.NewBadRequest("error reading old json value")
 		}
 		old, err := utils.MetaAccessor(dummy)
 		if err != nil {
-			return nil, fmt.Errorf("invalid object inside old json")
+			return nil, apierrors.NewBadRequest("invalid object inside old json")
 		}
 		if key.Name != old.GetName() {
-			return nil, fmt.Errorf("the old value has a different name (%s != %s)", key.Name, old.GetName())
+			return nil, apierrors.NewBadRequest(
+				fmt.Sprintf("the old value has a different name (%s != %s)", key.Name, old.GetName()))
 		}
 
 		// Can not change creation timestamps+user
 		if obj.GetCreatedBy() != old.GetCreatedBy() {
-			return nil, fmt.Errorf("can not change the created by metadata (%s != %s)", obj.GetCreatedBy(), old.GetCreatedBy())
+			return nil, apierrors.NewBadRequest(
+				fmt.Sprintf("can not change the created by metadata (%s != %s)", obj.GetCreatedBy(), old.GetCreatedBy()))
 		}
 		if obj.GetCreationTimestamp() != old.GetCreationTimestamp() {
-			return nil, fmt.Errorf("can not change the CreationTimestamp metadata (%v != %v)", obj.GetCreationTimestamp(), old.GetCreationTimestamp())
+			return nil, apierrors.NewBadRequest(
+				fmt.Sprintf("can not change the CreationTimestamp metadata (%v != %v)", obj.GetCreationTimestamp(), old.GetCreationTimestamp()))
 		}
 
 		oldFolder := obj.GetFolder()
@@ -194,7 +202,7 @@ func (s *writeServer) Create(ctx context.Context, req *CreateRequest) (*CreateRe
 	defer span.End()
 
 	if req.Key.ResourceVersion > 0 {
-		return nil, fmt.Errorf("can not update a specific resource version")
+		return nil, apierrors.NewBadRequest("can not update a specific resource version")
 	}
 
 	event, err := s.newEvent(ctx, req.Key, req.Value, nil)
@@ -203,27 +211,28 @@ func (s *writeServer) Create(ctx context.Context, req *CreateRequest) (*CreateRe
 	}
 	event.Operation = ResourceOperation_CREATED
 	event.Blob = req.Blob
+	event.Message = req.Message
 
 	rsp := &CreateResponse{}
 	// Make sure the created by user is accurate
 	//----------------------------------------
 	val := event.Object.GetCreatedBy()
 	if val != "" && val != event.Requester.GetUID().String() {
-		return nil, fmt.Errorf("created by annotation does not match: metadata.annotations#" + utils.AnnoKeyCreatedBy)
+		return nil, apierrors.NewBadRequest("created by annotation does not match: metadata.annotations#" + utils.AnnoKeyCreatedBy)
 	}
 
 	// Create can not have updated properties
 	//----------------------------------------
 	if event.Object.GetUpdatedBy() != "" {
-		return nil, fmt.Errorf("unexpected metadata.annotations#" + utils.AnnoKeyCreatedBy)
+		return nil, apierrors.NewBadRequest("unexpected metadata.annotations#" + utils.AnnoKeyCreatedBy)
 	}
 
 	ts, err := event.Object.GetUpdatedTimestamp()
 	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("invalid timestamp: %s", err))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid timestamp: %s", err))
 	}
 	if ts != nil {
-		return nil, fmt.Errorf("unexpected metadata.annotations#" + utils.AnnoKeyUpdatedTimestamp)
+		return nil, apierrors.NewBadRequest("unexpected metadata.annotations#" + utils.AnnoKeyUpdatedTimestamp)
 	}
 
 	// Append and set the resource version
@@ -238,7 +247,7 @@ func (s *writeServer) Update(ctx context.Context, req *UpdateRequest) (*UpdateRe
 
 	rsp := &UpdateResponse{}
 	if req.Key.ResourceVersion < 0 {
-		return nil, fmt.Errorf("update must include the previous version")
+		return nil, apierrors.NewBadRequest("update must include the previous version")
 	}
 
 	latest, err := s.opts.Reader(ctx, &ReadRequest{
@@ -248,7 +257,7 @@ func (s *writeServer) Update(ctx context.Context, req *UpdateRequest) (*UpdateRe
 		return nil, err
 	}
 	if latest.Value == nil {
-		return nil, fmt.Errorf("current value does not exist")
+		return nil, apierrors.NewBadRequest("current value does not exist")
 	}
 
 	event, err := s.newEvent(ctx, req.Key, req.Value, latest.Value)
@@ -257,12 +266,13 @@ func (s *writeServer) Update(ctx context.Context, req *UpdateRequest) (*UpdateRe
 	}
 	event.Operation = ResourceOperation_UPDATED
 	event.PreviousRV = latest.ResourceVersion
+	event.Message = req.Message
 
 	// Make sure the update user is accurate
 	//----------------------------------------
 	val := event.Object.GetUpdatedBy()
 	if val != "" && val != event.Requester.GetUID().String() {
-		return nil, fmt.Errorf("updated by annotation does not match: metadata.annotations#" + utils.AnnoKeyUpdatedBy)
+		return nil, apierrors.NewBadRequest("updated by annotation does not match: metadata.annotations#" + utils.AnnoKeyUpdatedBy)
 	}
 
 	rsp.ResourceVersion, err = s.opts.Appender(ctx, event)
@@ -276,7 +286,7 @@ func (s *writeServer) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRe
 
 	rsp := &DeleteResponse{}
 	if req.Key.ResourceVersion < 0 {
-		return nil, fmt.Errorf("update must include the previous version")
+		return nil, apierrors.NewBadRequest("update must include the previous version")
 	}
 
 	latest, err := s.opts.Reader(ctx, &ReadRequest{
@@ -286,7 +296,7 @@ func (s *writeServer) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRe
 		return nil, err
 	}
 	if latest.ResourceVersion != req.Key.ResourceVersion {
-		return nil, fmt.Errorf("deletion request does not match current revision (%d != %d)", req.Key.ResourceVersion, latest.ResourceVersion)
+		return nil, ErrOptimisticLockingFailed
 	}
 
 	now := metav1.NewTime(time.Now())
@@ -298,12 +308,13 @@ func (s *writeServer) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRe
 	}
 	event.Requester, err = identity.GetRequester(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get user")
+		return nil, apierrors.NewBadRequest("unable to get user")
 	}
 	marker := &DeletedMarker{}
 	err = json.Unmarshal(latest.Value, marker)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read previous object, %w", err)
+		return nil, apierrors.NewBadRequest(
+			fmt.Sprintf("unable to read previous object, %v", err))
 	}
 	event.Object, err = utils.MetaAccessor(marker)
 	if err != nil {
@@ -321,7 +332,8 @@ func (s *writeServer) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRe
 	marker.Annotations["RestoreResourceVersion"] = fmt.Sprintf("%d", event.PreviousRV)
 	event.Value, err = json.Marshal(marker)
 	if err != nil {
-		return nil, fmt.Errorf("unable creating deletion marker, %w", err)
+		return nil, apierrors.NewBadRequest(
+			fmt.Sprintf("unable creating deletion marker, %v", err))
 	}
 
 	rsp.ResourceVersion, err = s.opts.Appender(ctx, event)

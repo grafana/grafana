@@ -4,11 +4,14 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/hack-pad/hackpadfs"
+	hackos "github.com/hack-pad/hackpadfs/os"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -16,7 +19,6 @@ import (
 )
 
 func TestWriter(t *testing.T) {
-	tracer := noop.NewTracerProvider().Tracer("testing")
 	testUserA := &identity.StaticRequester{
 		Namespace:      identity.NamespaceUser,
 		UserID:         123,
@@ -26,11 +28,17 @@ func TestWriter(t *testing.T) {
 	}
 	ctx := identity.WithRequester(context.Background(), testUserA)
 
-	store := NewMemoryStore()
-	writer, err := NewResourceWriter(WriterOptions{
-		Tracer:   tracer,
-		Reader:   store.Read,
-		Appender: store.WriteEvent,
+	var root hackpadfs.FS
+	if false {
+		tmp, err := os.MkdirTemp("", "xxx-*")
+		require.NoError(t, err)
+
+		root, err = hackos.NewFS().Sub(tmp[1:])
+		require.NoError(t, err)
+		fmt.Printf("ROOT: %s\n\n", tmp)
+	}
+	store, err := NewFSStore(FileSystemStoreOptions{
+		Root: root,
 	})
 	require.NoError(t, err)
 
@@ -42,7 +50,7 @@ func TestWriter(t *testing.T) {
 			Namespace: "default",
 			Name:      "fdgsv37qslr0ga",
 		}
-		created, err := writer.Create(ctx, &CreateRequest{
+		created, err := store.Create(ctx, &CreateRequest{
 			Value: raw,
 			Key:   key,
 		})
@@ -69,7 +77,7 @@ func TestWriter(t *testing.T) {
 		require.NoError(t, err)
 
 		key.ResourceVersion = created.ResourceVersion
-		updated, err := writer.Update(ctx, &UpdateRequest{Key: key, Value: raw})
+		updated, err := store.Update(ctx, &UpdateRequest{Key: key, Value: raw})
 		require.NoError(t, err)
 		require.True(t, updated.ResourceVersion > created.ResourceVersion)
 
@@ -80,15 +88,15 @@ func TestWriter(t *testing.T) {
 		require.Equal(t, updated.ResourceVersion, found.ResourceVersion)
 
 		key.ResourceVersion = updated.ResourceVersion
-		deleted, err := writer.Delete(ctx, &DeleteRequest{Key: key})
+		deleted, err := store.Delete(ctx, &DeleteRequest{Key: key})
 		require.NoError(t, err)
 		require.True(t, deleted.ResourceVersion > updated.ResourceVersion)
 
 		// We should get not found when trying to read the latest value
 		key.ResourceVersion = 0
-		found, _ = store.Read(ctx, &ReadRequest{Key: key})
-		require.Equal(t, int32(404), found.Status.Code)
-		require.Nil(t, found.Value)
+		found, err = store.Read(ctx, &ReadRequest{Key: key})
+		require.Error(t, err)
+		require.Nil(t, found)
 	})
 }
 
