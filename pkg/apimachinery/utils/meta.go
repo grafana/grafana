@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -52,6 +53,8 @@ type GrafanaMetaAccessor interface {
 	metav1.Object
 
 	GetGroupVersionKind() schema.GroupVersionKind
+	GetResourceVersionInt64() (int64, error)
+	SetResourceVersionInt64(int64)
 
 	GetUpdatedTimestamp() (*time.Time, error)
 	SetUpdatedTimestamp(v *time.Time)
@@ -101,7 +104,7 @@ func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
 		return nil, err
 	}
 
-	// look for Spec.Title or Spec.Name
+	// reflection to find title and other non object properties
 	r := reflect.ValueOf(raw)
 	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
 		r = r.Elem()
@@ -109,8 +112,16 @@ func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
 	return &grafanaMetaAccessor{raw, obj, r}, nil
 }
 
-func (m *grafanaMetaAccessor) Object() metav1.Object {
-	return m.obj
+func (m *grafanaMetaAccessor) GetResourceVersionInt64() (int64, error) {
+	v := m.obj.GetResourceVersion()
+	if v == "" {
+		return 0, nil
+	}
+	return strconv.ParseInt(v, 10, 64)
+}
+
+func (m *grafanaMetaAccessor) SetResourceVersionInt64(rv int64) {
+	m.obj.SetResourceVersion(strconv.FormatInt(rv, 10))
 }
 
 func (m *grafanaMetaAccessor) SetAnnotation(key string, val string) {
