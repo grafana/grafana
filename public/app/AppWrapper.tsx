@@ -6,6 +6,7 @@ import { CompatRouter, CompatRoute } from 'react-router-dom-v5-compat';
 
 import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer } from '@grafana/ui';
+import { IconButton } from '@grafana/ui/';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
@@ -20,11 +21,12 @@ import { GrafanaContext } from './core/context/GrafanaContext';
 import { ModalsContextProvider } from './core/context/ModalsContextProvider';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
+import windowSplit from './core/reducers/windowSplit';
 import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import AppRootPage from './features/plugins/components/AppRootPage';
-import { useSelector } from './types';
+import { useDispatch, useSelector } from './types';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -121,6 +123,8 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
 function WindowSplitWrapper(props: { routes: React.ReactNode }) {
   const secondAppId = useSelector((state) => state.windowSplit.secondAppId);
+  const dispatch = useDispatch();
+
   return (
     <SplitPaneWrapper
       splitOrientation="vertical"
@@ -157,7 +161,26 @@ function WindowSplitWrapper(props: { routes: React.ReactNode }) {
           <CompatRouter>
             <ModalsContextProvider>
               <GlobalStyles />
-              <div style={{ display: 'flex', height: '100%', paddingTop: TOP_BAR_LEVEL_HEIGHT * 2, flexGrow: 1 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  height: '100%',
+                  paddingTop: TOP_BAR_LEVEL_HEIGHT,
+                  flexGrow: 1,
+                  flexDirection: 'column',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <IconButton
+                    size={'lg'}
+                    style={{ margin: '8px' }}
+                    name={'times'}
+                    aria-label={'close'}
+                    onClick={() => {
+                      dispatch(windowSplit.actions.closeSplitApp({ secondAppId }));
+                    }}
+                  />
+                </div>
                 <AppRootPage pluginId={secondAppId} />
               </div>
             </ModalsContextProvider>
