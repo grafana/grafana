@@ -94,7 +94,7 @@ func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashbo
 
 func (d *dashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*dashboards.DashboardProvisioning, error) {
 	var data dashboards.DashboardProvisioning
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Where("dashboard_id = ?", dashboardID).Get(&data)
 		return err
 	})
@@ -107,7 +107,7 @@ func (d *dashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, da
 
 func (d *dashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*dashboards.DashboardProvisioning, error) {
 	var provisionedDashboard dashboards.DashboardProvisioning
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		var dashboard dashboards.Dashboard
 		exists, err := sess.Where("org_id = ? AND uid = ?", orgID, dashboardUID).Get(&dashboard)
 		if err != nil {
@@ -130,7 +130,7 @@ func (d *dashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, o
 
 func (d *dashboardStore) GetProvisionedDashboardData(ctx context.Context, name string) ([]*dashboards.DashboardProvisioning, error) {
 	var result []*dashboards.DashboardProvisioning
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Where("name = ?", name).Find(&result)
 	})
 	return result, err
