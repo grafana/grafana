@@ -374,9 +374,9 @@ describe('LogsPanel', () => {
       expect(await screen.findByRole('row')).toBeInTheDocument();
 
       await userEvent.click(screen.getByText('logline text'));
-      await userEvent.click(screen.getByLabelText('Filter for value in query A'));
+      await userEvent.click(screen.getByLabelText('Filter for value'));
       expect(filterForMock).toHaveBeenCalledTimes(1);
-      await userEvent.click(screen.getByLabelText('Filter out value in query A'));
+      await userEvent.click(screen.getByLabelText('Filter out value'));
       expect(filterOutMock).toHaveBeenCalledTimes(1);
 
       expect(isFilterLabelActiveMock).toHaveBeenCalledTimes(1);
@@ -399,8 +399,8 @@ describe('LogsPanel', () => {
 
         await userEvent.click(screen.getByText('logline text'));
 
-        expect(screen.queryByLabelText('Filter for value in query A')).not.toBeInTheDocument();
-        expect(screen.queryByLabelText('Filter out value in query A')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('Filter for value')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('Filter out value')).not.toBeInTheDocument();
       });
       it('shows the controls if onAddAdHocFilter is defined', async () => {
         jest.spyOn(grafanaUI, 'usePanelContext').mockReturnValue({
@@ -421,8 +421,8 @@ describe('LogsPanel', () => {
 
         expect(await screen.findByText('common_app')).toBeInTheDocument();
 
-        expect(screen.getByLabelText('Filter for value in query A')).toBeInTheDocument();
-        expect(screen.getByLabelText('Filter out value in query A')).toBeInTheDocument();
+        expect(screen.getByLabelText('Filter for value')).toBeInTheDocument();
+        expect(screen.getByLabelText('Filter out value')).toBeInTheDocument();
       });
     });
   });
