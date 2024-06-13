@@ -7,13 +7,10 @@ import (
 
 	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
-
-type PrometheusWriter struct {
-	logger log.Logger
-}
 
 // Metric represents a Prometheus time series metric.
 type Metric struct {
@@ -26,27 +23,6 @@ type Point struct {
 	Name   string
 	Labels map[string]string
 	Metric Metric
-}
-
-func NewPrometheusWriter(l log.Logger) *PrometheusWriter {
-	return &PrometheusWriter{
-		logger: l,
-	}
-}
-
-// Write writes the given frames to the Prometheus remote write endpoint.
-// TODO: stub implementation, does not make any remote write calls.
-func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, extraLabels map[string]string) error {
-	l := w.logger.FromContext(ctx)
-
-	points, err := PointsFromFrames(name, t, frames, extraLabels)
-	if err != nil {
-		return err
-	}
-
-	// TODO: placeholder for actual remote write call
-	l.Debug("writing points", "points", points)
-	return nil
 }
 
 func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels map[string]string) ([]Point, error) {
@@ -93,4 +69,32 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 	}
 
 	return points, nil
+}
+
+type PrometheusWriter struct {
+	logger log.Logger
+}
+
+func NewPrometheusWriter(
+	settings setting.RecordingRuleSettings,
+	l log.Logger,
+) (*PrometheusWriter, error) {
+	return &PrometheusWriter{
+		logger: l,
+	}, nil
+}
+
+// Write writes the given frames to the Prometheus remote write endpoint.
+// TODO: stub implementation, does not make any remote write calls.
+func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, extraLabels map[string]string) error {
+	l := w.logger.FromContext(ctx)
+
+	points, err := PointsFromFrames(name, t, frames, extraLabels)
+	if err != nil {
+		return err
+	}
+
+	// TODO: placeholder for actual remote write call
+	l.Debug("writing points", "points", points)
+	return nil
 }
