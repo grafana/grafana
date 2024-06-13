@@ -20,7 +20,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -103,7 +103,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		service:    b.service,
 		namespacer: b.namespacer,
 	}
-	legacyStore.tableConverter = utils.NewTableConverter(
+	legacyStore.tableConverter = gapiutil.NewTableConverter(
 		resource.GroupResource(),
 		[]metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},

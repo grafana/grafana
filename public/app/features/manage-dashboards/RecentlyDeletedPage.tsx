@@ -1,9 +1,7 @@
 import React, { memo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { FilterInput } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { t } from 'app/core/internationalization';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service';
 
@@ -12,6 +10,7 @@ import { SearchView } from '../browse-dashboards/components/SearchView';
 import { getFolderPermissions } from '../browse-dashboards/permissions';
 import { setAllSelection } from '../browse-dashboards/state';
 
+import { RecentlyDeletedActions } from './state/RecentlyDeletedActions';
 import { useRecentlyDeletedStateManager } from './utils/useRecentlyDeletedStateManager';
 
 const RecentlyDeletedPage = memo(() => {
@@ -37,19 +36,11 @@ const RecentlyDeletedPage = memo(() => {
   return (
     <Page navId="dashboards/recentlyDeleted">
       <Page.Contents>
-        <FilterInput
-          placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}
-          value={searchState.query}
-          escapeRegex={false}
-          onChange={(e) => stateManager.onQueryChange(e)}
-        />
         <ActionRow
-          showStarredFilter={false}
           state={searchState}
           getTagOptions={stateManager.getTagOptions}
           getSortOptions={getGrafanaSearcher().getSortOptions}
           sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
-          includePanels={false}
           onLayoutChange={stateManager.onLayoutChange}
           onSortChange={stateManager.onSortChange}
           onTagFilterChange={stateManager.onTagFilterChange}
@@ -57,6 +48,7 @@ const RecentlyDeletedPage = memo(() => {
           onPanelTypeChange={stateManager.onPanelTypeChange}
           onSetIncludePanels={stateManager.onSetIncludePanels}
         />
+        <RecentlyDeletedActions />
         <AutoSizer>
           {({ width, height }) => (
             <SearchView

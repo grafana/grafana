@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -35,6 +36,11 @@ func TestUserFromContext(t *testing.T) {
 		actual, err := appcontext.User(ctx)
 		require.NoError(t, err)
 		require.Equal(t, expected.UserID, actual.UserID)
+
+		// The requester is also in context
+		requester, err := identity.GetRequester(ctx)
+		require.NoError(t, err)
+		require.Equal(t, expected.GetUID(), requester.GetUID())
 	})
 
 	t.Run("should return user set by gRPC context", func(t *testing.T) {
