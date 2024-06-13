@@ -44,7 +44,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       <Menu.Item
         testId={newShareButtonSelector.shareInternally}
         label={t('share-dashboard.menu.share-internally-title', 'Share internally')}
-        description="Copy link"
+        description={t('share-dashboard.menu.share-internally-description', 'Advanced settings')}
         icon="building"
         onClick={buildUrl}
       />

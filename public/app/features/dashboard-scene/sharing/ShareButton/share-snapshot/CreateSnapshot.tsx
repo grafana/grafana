@@ -1,7 +1,21 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Alert, Divider, Field, Input, RadioButtonGroup, Spinner, Stack, TextLink, Text, Button } from '@grafana/ui';
+import {
+  Alert,
+  Divider,
+  Field,
+  RadioButtonGroup,
+  Spinner,
+  Stack,
+  TextLink,
+  Text,
+  Button,
+  useStyles2,
+} from '@grafana/ui';
+import { Input } from '@grafana/ui/src/components/Input/Input';
 import { t } from '@grafana/ui/src/utils/i18n';
 import { Trans } from 'app/core/internationalization';
 
@@ -17,6 +31,11 @@ interface Props extends SceneComponentProps<ShareSnapshot> {
 }
 export function CreateSnapshot({ model, onCreateClick, isLoading }: Props) {
   const { snapshotName, selectedExpireOption, dashboardRef, snapshotSharingOptions } = model.useState();
+  const styles = useStyles2(getStyles);
+
+  const onCancelClick = () => {
+    dashboardRef.resolve().closeModal();
+  };
 
   return (
     <div>
@@ -33,14 +52,14 @@ export function CreateSnapshot({ model, onCreateClick, isLoading }: Props) {
           </Button>
         </Stack>
       </Alert>
-      <Field label={t('share-modal.snapshot.name', `Snapshot name`)}>
+      <Field label={t('snapshot.share.name-label', 'Snapshot name*')}>
         <Input
           id="snapshot-name-input"
           defaultValue={snapshotName}
           onBlur={(e) => model.onSnasphotNameChange(e.target.value)}
         />
       </Field>
-      <Field label="Expiration Date">
+      <Field label={t('snapshot.share.expiration-label', 'Expires in')}>
         <RadioButtonGroup<number>
           id="expire-select-input"
           options={getExpireOptions()}
@@ -49,27 +68,23 @@ export function CreateSnapshot({ model, onCreateClick, isLoading }: Props) {
         />
       </Field>
       <Divider />
-      <Stack justifyContent="space-between" gap={2}>
-        <Stack justifyContent="flex-start" gap={2}>
-          {snapshotSharingOptions?.externalEnabled && (
-            <Button variant="secondary" disabled={isLoading} onClick={() => onCreateClick(true)}>
-              {snapshotSharingOptions?.externalSnapshotName}
+      <Stack justifyContent="space-between" direction={{ xs: 'column', xl: 'row' }}>
+        <div className={styles.actionsContainer}>
+          <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
+            {snapshotSharingOptions?.externalEnabled && (
+              <Button variant="secondary" disabled={isLoading} onClick={() => onCreateClick(true)}>
+                {snapshotSharingOptions?.externalSnapshotName}
+              </Button>
+            )}
+            <Button variant="primary" disabled={isLoading} onClick={() => onCreateClick()}>
+              <Trans i18nKey="snapshot.share.local-button">Publish snapshot</Trans>
             </Button>
-          )}
-          <Button variant="primary" disabled={isLoading} onClick={() => onCreateClick()}>
-            <Trans i18nKey="snapshot.share.local-button">Publish snapshot</Trans>
-          </Button>
-          <Button
-            variant="secondary"
-            fill="outline"
-            onClick={() => {
-              dashboardRef?.resolve().closeModal();
-            }}
-          >
-            <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
-          </Button>
-          {isLoading && <Spinner />}
-        </Stack>
+            <Button variant="secondary" fill="outline" onClick={onCancelClick}>
+              <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
+            </Button>
+            {isLoading && <Spinner />}
+          </Stack>
+        </div>
         <TextLink icon="external-link-alt" href="/dashboard/snapshots">
           {t('snapshot.share.view-all-button', 'View all snapshots')}
         </TextLink>
@@ -77,3 +92,11 @@ export function CreateSnapshot({ model, onCreateClick, isLoading }: Props) {
     </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  actionsContainer: css({
+    [theme.breakpoints.down('sm')]: {
+      width: '100%',
+    },
+  }),
+});

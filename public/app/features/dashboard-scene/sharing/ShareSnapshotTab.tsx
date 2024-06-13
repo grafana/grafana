@@ -128,7 +128,9 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
 
     try {
       const response = await getDashboardSnapshotSrv().create(cmdData);
-      dispatch(notifyApp(createSuccessNotification('Your snapshot has been created')));
+      dispatch(
+        notifyApp(createSuccessNotification(t('snapshot.share.success-creation', 'Your snapshot has been created')))
+      );
       return response;
     } finally {
       if (external) {
@@ -147,7 +149,9 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
 
   public onSnapshotDelete = async (url: string) => {
     const response = await getBackendSrv().get(url);
-    dispatch(notifyApp(createSuccessNotification('Your snapshot has been deleted')));
+    dispatch(
+      notifyApp(createSuccessNotification(t('snapshot.share.success-delete', 'Your snapshot has been deleted')))
+    );
     return response;
   };
 }

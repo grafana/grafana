@@ -4,8 +4,9 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
-import { Trans } from '../../../../../core/internationalization';
+import { ShareDrawerConfirmAction } from '../../ShareDrawer/ShareDrawerConfirmAction';
 import { ShareSnapshotTab } from '../../ShareSnapshotTab';
 
 import { CreateSnapshot } from './CreateSnapshot';
@@ -18,6 +19,8 @@ export class ShareSnapshot extends ShareSnapshotTab {
 }
 
 function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showDeletedAlert, setShowDeletedAlert] = useState(false);
   const [step, setStep] = useState(1);
 
   const [snapshotResult, createSnapshot] = useAsyncFn(async (external = false) => {
@@ -29,15 +32,33 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
   const [deleteSnapshotResult, deleteSnapshot] = useAsyncFn(async (url: string) => {
     const response = await model.onSnapshotDelete(url);
     setStep(1);
+    setShowDeleteConfirmation(false);
+    setShowDeletedAlert(true);
     return response;
   });
+
+  if (showDeleteConfirmation) {
+    return (
+      <ShareDrawerConfirmAction
+        title={t('snapshot.share.delete-title', 'Delete snapshot')}
+        confirmButtonLabel={t('snapshot.share.delete-button', 'Delete snapshot')}
+        onConfirm={() => deleteSnapshot(snapshotResult.value?.deleteUrl!)}
+        onDismiss={() => setShowDeleteConfirmation(false)}
+        description={t(
+          'snapshot.share.delete-description',
+          'Are you sure you want to delete this snapshot? It won’t be longer exist.'
+        )}
+        isActionLoading={deleteSnapshotResult.loading}
+      />
+    );
+  }
 
   return (
     <div data-testid={selectors.container}>
       {step === 1 && (
         <>
-          {deleteSnapshotResult.value && (
-            <Alert severity="info" title={''}>
+          {showDeletedAlert && (
+            <Alert severity="info" title={''} onRemove={() => setShowDeletedAlert(false)}>
               <Trans i18nKey="snapshot.share.deleted-alert">
                 The snapshot has been deleted. It may take up to an hour to clear from browser and CDN caches if already
                 accessed.
@@ -50,8 +71,7 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
       {step === 2 && (
         <SnapshotActions
           url={snapshotResult.value!.url}
-          isLoading={deleteSnapshotResult.loading}
-          onDeleteClick={() => deleteSnapshot(snapshotResult.value?.deleteUrl!)}
+          onDeleteClick={() => setShowDeleteConfirmation(true)}
           onNewSnapshotClick={() => setStep(1)}
         />
       )}
