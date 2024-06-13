@@ -117,7 +117,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	authzClient, err := authz.ProvideRemoteAuthZClient(s.cfg, s.features, s.tracing)
+	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing)
 	if err != nil {
 		return err
 	}
