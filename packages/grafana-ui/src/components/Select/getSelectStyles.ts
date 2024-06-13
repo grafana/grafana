@@ -59,7 +59,6 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     optionFocused: css({
       label: 'grafana-select-option-focused',
       background: theme.colors.action.focus,
-      '& span': { textDecoration: 'underline' },
       '@media (forced-colors: active), (prefers-contrast: more)': {
         border: `1px solid ${theme.colors.primary.border}`,
       },
