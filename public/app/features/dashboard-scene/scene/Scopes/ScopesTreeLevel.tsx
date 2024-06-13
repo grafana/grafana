@@ -10,7 +10,6 @@ import { t } from 'app/core/internationalization';
 import { NodesMap } from './types';
 
 export interface ScopesTreeLevelProps {
-  showQuery: boolean;
   nodes: NodesMap;
   nodePath: string[];
   loadingNodeName: string | undefined;
@@ -20,7 +19,6 @@ export interface ScopesTreeLevelProps {
 }
 
 export function ScopesTreeLevel({
-  showQuery,
   nodes,
   nodePath,
   loadingNodeName,
@@ -43,7 +41,7 @@ export function ScopesTreeLevel({
 
   return (
     <>
-      {showQuery && !anyChildExpanded && (
+      {!anyChildExpanded && (
         <Input
           prefix={<Icon name="filter" />}
           className={styles.searchInput}
@@ -101,7 +99,6 @@ export function ScopesTreeLevel({
                 <div className={styles.itemChildren}>
                   {childNode.isExpanded && (
                     <ScopesTreeLevel
-                      showQuery={showQuery}
                       nodes={node.nodes}
                       nodePath={childNodePath}
                       loadingNodeName={loadingNodeName}

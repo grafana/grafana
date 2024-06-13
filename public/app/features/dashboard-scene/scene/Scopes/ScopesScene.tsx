@@ -94,10 +94,10 @@ export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>)
             className={cx(!isExpanded && styles.iconNotExpanded)}
             aria-label={
               isExpanded
-                ? t('scopes.root.collapse', 'Collapse scope filters')
-                : t('scopes.root.expand', 'Expand scope filters')
+                ? t('scopes.suggestedDashboards.toggle.collapse', 'Collapse scope filters')
+                : t('scopes.suggestedDashboards.toggle..expand', 'Expand scope filters')
             }
-            data-testid="scopes-root-expand"
+            data-testid="scopes-dashboards-expand"
             onClick={() => model.toggleIsExpanded()}
           />
         )}
