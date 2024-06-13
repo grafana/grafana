@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -52,6 +53,8 @@ type GrafanaMetaAccessor interface {
 	metav1.Object
 
 	GetGroupVersionKind() schema.GroupVersionKind
+	GetResourceVersionInt64() (int64, error)
+	SetResourceVersionInt64(int64)
 
 	GetUpdatedTimestamp() (*time.Time, error)
 	SetUpdatedTimestamp(v *time.Time)
@@ -62,6 +65,8 @@ type GrafanaMetaAccessor interface {
 	SetUpdatedBy(user string)
 	GetFolder() string
 	SetFolder(uid string)
+	SetAnnotation(key string, val string)
+
 	GetSlug() string
 	SetSlug(v string)
 
@@ -99,7 +104,7 @@ func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
 		return nil, err
 	}
 
-	// look for Spec.Title or Spec.Name
+	// reflection to find title and other non object properties
 	r := reflect.ValueOf(raw)
 	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
 		r = r.Elem()
@@ -107,11 +112,19 @@ func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
 	return &grafanaMetaAccessor{raw, obj, r}, nil
 }
 
-func (m *grafanaMetaAccessor) Object() metav1.Object {
-	return m.obj
+func (m *grafanaMetaAccessor) GetResourceVersionInt64() (int64, error) {
+	v := m.obj.GetResourceVersion()
+	if v == "" {
+		return 0, nil
+	}
+	return strconv.ParseInt(v, 10, 64)
 }
 
-func (m *grafanaMetaAccessor) set(key string, val string) {
+func (m *grafanaMetaAccessor) SetResourceVersionInt64(rv int64) {
+	m.obj.SetResourceVersion(strconv.FormatInt(rv, 10))
+}
+
+func (m *grafanaMetaAccessor) SetAnnotation(key string, val string) {
 	anno := m.obj.GetAnnotations()
 	if val == "" {
 		if anno != nil {
@@ -148,7 +161,7 @@ func (m *grafanaMetaAccessor) SetUpdatedTimestampMillis(v int64) {
 		t := time.UnixMilli(v)
 		m.SetUpdatedTimestamp(&t)
 	} else {
-		m.set(AnnoKeyUpdatedTimestamp, "") // will clear the annotation
+		m.SetAnnotation(AnnoKeyUpdatedTimestamp, "") // will clear the annotation
 	}
 }
 
@@ -157,7 +170,7 @@ func (m *grafanaMetaAccessor) SetUpdatedTimestamp(v *time.Time) {
 	if v != nil && v.Unix() != 0 {
 		txt = v.UTC().Format(time.RFC3339)
 	}
-	m.set(AnnoKeyUpdatedTimestamp, txt)
+	m.SetAnnotation(AnnoKeyUpdatedTimestamp, txt)
 }
 
 func (m *grafanaMetaAccessor) GetCreatedBy() string {
@@ -165,7 +178,7 @@ func (m *grafanaMetaAccessor) GetCreatedBy() string {
 }
 
 func (m *grafanaMetaAccessor) SetCreatedBy(user string) {
-	m.set(AnnoKeyCreatedBy, user)
+	m.SetAnnotation(AnnoKeyCreatedBy, user)
 }
 
 func (m *grafanaMetaAccessor) GetUpdatedBy() string {
@@ -173,7 +186,7 @@ func (m *grafanaMetaAccessor) GetUpdatedBy() string {
 }
 
 func (m *grafanaMetaAccessor) SetUpdatedBy(user string) {
-	m.set(AnnoKeyUpdatedBy, user)
+	m.SetAnnotation(AnnoKeyUpdatedBy, user)
 }
 
 func (m *grafanaMetaAccessor) GetFolder() string {
@@ -181,7 +194,7 @@ func (m *grafanaMetaAccessor) GetFolder() string {
 }
 
 func (m *grafanaMetaAccessor) SetFolder(uid string) {
-	m.set(AnnoKeyFolder, uid)
+	m.SetAnnotation(AnnoKeyFolder, uid)
 }
 
 func (m *grafanaMetaAccessor) GetSlug() string {
@@ -189,7 +202,7 @@ func (m *grafanaMetaAccessor) GetSlug() string {
 }
 
 func (m *grafanaMetaAccessor) SetSlug(v string) {
-	m.set(AnnoKeySlug, v)
+	m.SetAnnotation(AnnoKeySlug, v)
 }
 
 func (m *grafanaMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
