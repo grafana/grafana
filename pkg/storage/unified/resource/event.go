@@ -1,9 +1,8 @@
 package resource
 
 import (
+	context "context"
 	"encoding/json"
-	"fmt"
-	"net/http"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -20,23 +19,16 @@ type WriteEvent struct {
 	// NOTE, this is never mutated, only parsed and validated
 	Value json.RawMessage
 
+	// Access the raw metadata values
 	Object    utils.GrafanaMetaAccessor
 	OldObject utils.GrafanaMetaAccessor
 
-	// Change metadata
+	// Optionally link to a
+	Blob *LinkBlob
+
+	// Change metadata (useful?)
 	FolderChanged bool
-
-	// The status will be populated for any error
-	Status *StatusResult
-	Error  error
 }
 
-func (e *WriteEvent) BadRequest(err error, message string, a ...any) *WriteEvent {
-	e.Error = err
-	e.Status = &StatusResult{
-		Status:  "Failure",
-		Message: fmt.Sprintf(message, a...),
-		Code:    http.StatusBadRequest,
-	}
-	return e
-}
+// A function to write events
+type EventAppender = func(context.Context, *WriteEvent) (int64, error)

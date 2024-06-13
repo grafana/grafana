@@ -186,14 +186,14 @@ message DeleteResponse {
   int64 resource_version = 2;
 }
 
-message GetResourceRequest {
+message ReadRequest {
   ResourceKey key = 1;
 
   // Do not include any blob details
   bool ignore_blob = 2;
 }
 
-message GetResourceResponse {
+message ReadResponse {
   // Status code
   StatusResult status = 1;
 
@@ -408,14 +408,24 @@ message HealthCheckResponse {
   ServingStatus status = 1;
 }
 
-// The entity store provides a basic CRUD+watch for any resource
+// This provides the CRUD+List+Watch support needed for a k8s apiserver
+// The semantics and behaviors of this service are constrained by kubernetes
+// This does not understand the resource schemas, only deals with json bytes 
+// Clients should not use this interface directly; it is for use in API Servers
 service ResourceStore {
-  rpc GetResource(GetResourceRequest) returns (GetResourceResponse);
+  rpc Read(ReadRequest) returns (ReadResponse);
   rpc Create(CreateRequest) returns (CreateResponse);
   rpc Update(UpdateRequest) returns (UpdateResponse);
   rpc Delete(DeleteRequest) returns (DeleteResponse);
   rpc List(ListRequest) returns (ListResponse);
   rpc Watch(WatchRequest) returns (stream WatchResponse);
+  rpc IsHealthy(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// Unlike ResourceStore, this service does not have strict read after write guarantees
+// Clients can use this service directly
+service ResourceSearch {
+  rpc Read(ReadRequest) returns (ReadResponse); // Duplicated -- for client read only usage
 
   // Get the raw blob bytes and metadata
   rpc GetBlob(GetBlobRequest) returns (GetBlobResponse);

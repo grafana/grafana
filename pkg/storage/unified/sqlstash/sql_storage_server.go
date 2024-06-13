@@ -21,9 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-const resoruceTable = "resource"
-const resourceVersionTable = "resource_version"
-
 // Package-level errors.
 var (
 	ErrNotFound                  = errors.New("entity not found")
@@ -34,8 +31,9 @@ var (
 	ErrNotImplementedYet         = errors.New("not implemented yet")
 )
 
-// Make sure we implement correct interfaces
+// Make sure we implement both store and search
 var _ resource.ResourceStoreServer = &sqlResourceServer{}
+var _ resource.ResourceSearchServer = &sqlResourceServer{}
 
 func ProvideSQLResourceServer(db db.EntityDBInterface, tracer tracing.Tracer) (SqlResourceServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -72,7 +70,7 @@ type sqlResourceServer struct {
 	cancel      context.CancelFunc
 	stream      chan *resource.WatchResponse
 	tracer      trace.Tracer
-	validator   resource.EventValidator
+	writer      resource.ResourceWriter
 
 	once    sync.Once
 	initErr error
@@ -138,9 +136,15 @@ func (s *sqlResourceServer) init() error {
 
 	s.sess = sess
 	s.dialect = migrator.NewDialect(engine.DriverName())
-	s.validator = resource.NewEventValidator(resource.EventValidatorOptions{
-		// use snowflake IDs
+	s.writer, err = resource.NewResourceWriter(resource.WriterOptions{
+		NodeID:   10,
+		Tracer:   s.tracer,
+		Reader:   s.Read,
+		Appender: s.append,
 	})
+	if err != nil {
+		return err
+	}
 
 	// set up the broadcaster
 	s.broadcaster, err = sqlstash.NewBroadcaster(s.ctx, func(stream chan *resource.WatchResponse) error {
@@ -176,8 +180,15 @@ func (s *sqlResourceServer) Stop() {
 	s.cancel()
 }
 
-func (s *sqlResourceServer) GetResource(ctx context.Context, req *resource.GetResourceRequest) (*resource.GetResourceResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "storage_server.GetResource")
+func (s *sqlResourceServer) append(ctx context.Context, event *resource.WriteEvent) (int64, error) {
+	_, span := s.tracer.Start(ctx, "storage_server.WriteEvent")
+	defer span.End()
+
+	return 0, ErrNotImplementedYet
+}
+
+func (s *sqlResourceServer) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+	_, span := s.tracer.Start(ctx, "storage_server.GetResource")
 	defer span.End()
 
 	if err := s.Init(); err != nil {
@@ -185,10 +196,10 @@ func (s *sqlResourceServer) GetResource(ctx context.Context, req *resource.GetRe
 	}
 
 	if req.Key.Group == "" {
-		return &resource.GetResourceResponse{Status: badRequest("missing group")}, nil
+		return &resource.ReadResponse{Status: badRequest("missing group")}, nil
 	}
 	if req.Key.Resource == "" {
-		return &resource.GetResourceResponse{Status: badRequest("missing resource")}, nil
+		return &resource.ReadResponse{Status: badRequest("missing resource")}, nil
 	}
 
 	fmt.Printf("TODO, GET: %+v", req.Key)
@@ -197,96 +208,39 @@ func (s *sqlResourceServer) GetResource(ctx context.Context, req *resource.GetRe
 }
 
 func (s *sqlResourceServer) Create(ctx context.Context, req *resource.CreateRequest) (*resource.CreateResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
-	defer span.End()
-
-	if req.Key.ResourceVersion > 0 {
-		return &resource.CreateResponse{
-			Status: badRequest("can not update a specific resource version"),
-		}, nil
-	}
-
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
-
-	event, err := s.validator.PrepareCreate(ctx, req)
+	rsp, err := s.writer.Create(ctx, req)
 	if err != nil {
-		return nil, err
+		s.log.Info("create", "error", err)
+		rsp.Status = &resource.StatusResult{
+			Status:  "Failure",
+			Message: err.Error(),
+		}
 	}
-	if event.Status != nil {
-		return &resource.CreateResponse{Status: event.Status}, nil
-	}
-
-	fmt.Printf("TODO, CREATE: %v", event)
-
-	return nil, ErrNotImplementedYet
+	return rsp, nil
 }
 
 func (s *sqlResourceServer) Update(ctx context.Context, req *resource.UpdateRequest) (*resource.UpdateResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
-	defer span.End()
-
-	if req.Key.ResourceVersion < 0 {
-		return &resource.UpdateResponse{
-			Status: badRequest("update must include the previous version"),
-		}, nil
-	}
-
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
-
-	latest, err := s.GetResource(ctx, &resource.GetResourceRequest{
-		Key: req.Key.WithoutResourceVersion(),
-	})
+	rsp, err := s.writer.Update(ctx, req)
 	if err != nil {
-		return nil, err
+		s.log.Info("create", "error", err)
+		rsp.Status = &resource.StatusResult{
+			Status:  "Failure",
+			Message: err.Error(),
+		}
 	}
-	event, err := s.validator.PrepareUpdate(ctx, req, latest)
-	if err != nil {
-		return nil, err
-	}
-	if event.Status != nil {
-		return &resource.UpdateResponse{Status: event.Status}, nil
-	}
-
-	fmt.Printf("TODO, UPDATE: %v", event)
-
-	return nil, ErrNotImplementedYet
+	return rsp, nil
 }
 
 func (s *sqlResourceServer) Delete(ctx context.Context, req *resource.DeleteRequest) (*resource.DeleteResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
-	defer span.End()
-
-	if req.Key.ResourceVersion < 0 {
-		return &resource.DeleteResponse{
-			Status: badRequest("update must include the previous version"),
-		}, nil
-	}
-
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
-
-	latest, err := s.GetResource(ctx, &resource.GetResourceRequest{
-		Key: req.Key.WithoutResourceVersion(),
-	})
+	rsp, err := s.writer.Delete(ctx, req)
 	if err != nil {
-		return nil, err
+		s.log.Info("create", "error", err)
+		rsp.Status = &resource.StatusResult{
+			Status:  "Failure",
+			Message: err.Error(),
+		}
 	}
-	event, err := s.validator.PrepareDelete(ctx, req, latest)
-	if err != nil {
-		return nil, err
-	}
-	if event.Status != nil {
-		return &resource.DeleteResponse{Status: event.Status}, nil
-	}
-
-	fmt.Printf("TODO, DELETE: %+v ", req.Key)
-
-	return nil, ErrNotImplementedYet
+	return rsp, nil
 }
 
 func (s *sqlResourceServer) List(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
