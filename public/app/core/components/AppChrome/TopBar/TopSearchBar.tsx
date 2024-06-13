@@ -149,6 +149,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 'none',
     color: theme.colors.text.secondary,
     alignItems: 'center',
+    paddingLeft: 0,
   }),
   dockedLogo: css({
     width: MENU_WIDTH - 16,

@@ -6,7 +6,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { UnlinkModal } from '../scene/UnlinkModal';
 import { getDashboardSceneFor, getLibraryPanel } from '../utils/utils';
 
@@ -15,7 +14,6 @@ import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
-  const dashboard = getDashboardSceneFor(model);
   const { optionsPane } = model.useState();
   const styles = useStyles2(getStyles);
 
@@ -32,7 +30,6 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 
   return (
     <>
-      <NavToolbarActions dashboard={dashboard} />
       <div {...containerProps} data-testid={selectors.components.PanelEditor.General.content}>
         <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
           <VizAndDataPane model={model} />

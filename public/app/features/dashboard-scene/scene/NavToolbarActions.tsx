@@ -39,7 +39,7 @@ interface Props {
 /**
  * This part is split into a separate component to help test this
  */
-export function ToolbarActions({ dashboard }: Props) {
+export function NavToolbarActions({ dashboard }: Props) {
   const {
     isEditing,
     viewPanelScene,

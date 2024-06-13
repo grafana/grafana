@@ -240,7 +240,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     drawer: css({
       '.main-view &': {
-        top: 80,
+        top: 40,
       },
 
       '.main-view--search-bar-hidden &': {
