@@ -53,11 +53,6 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 	// use the configs for testing because they have all fields supported by integrations
 	for integrationType, cfg := range notify.AllKnownConfigsForTesting {
 		t.Run(integrationType, func(t *testing.T) {
-			if integrationType == "sns" {
-				// TODO: Add code for SNS in grafana/grafana.
-				// Related grafana/alerting PR: https://github.com/grafana/alerting/pull/173
-				t.Skip("sns not supported yet")
-			}
 			recCfg := &notify.APIReceiver{
 				ConfigReceiver: notify.ConfigReceiver{Name: "test-receiver"},
 				GrafanaIntegrations: notify.GrafanaIntegrations{

@@ -1,6 +1,15 @@
 import * as H from 'history';
 
-import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
+import {
+  AppEvents,
+  CoreApp,
+  DataQueryRequest,
+  NavIndex,
+  NavModelItem,
+  locationUtil,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
+} from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -10,6 +19,7 @@ import {
   SceneGridRow,
   SceneObject,
   SceneObjectBase,
+  SceneObjectRef,
   SceneObjectState,
   sceneUtils,
   SceneVariable,
@@ -65,7 +75,7 @@ import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
-import { ScopesScene } from './ScopesScene';
+import { ScopesScene } from './Scopes/ScopesScene';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
@@ -510,14 +520,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     });
   }
 
-  public createLibraryPanel(gridItemToReplace: DashboardGridItem, libPanel: LibraryPanel) {
+  public createLibraryPanel(panelToReplace: VizPanel, libPanel: LibraryPanel) {
     const layout = this.state.body;
 
     if (!(layout instanceof SceneGridLayout)) {
       throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
     }
 
-    const panelKey = gridItemToReplace?.state.body.state.key;
+    const panelKey = panelToReplace.state.key;
 
     const body = new LibraryVizPanel({
       title: libPanel.model?.title ?? 'Panel',
@@ -526,35 +536,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       panelKey: panelKey ?? getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(this)),
     });
 
-    const newGridItem = gridItemToReplace.clone({ body });
+    const gridItem = panelToReplace.parent;
 
-    if (!(newGridItem instanceof DashboardGridItem)) {
-      throw new Error('Could not build library viz panel griditem');
+    if (!(gridItem instanceof DashboardGridItem)) {
+      throw new Error("Trying to replace a panel that doesn't have a parent grid item");
     }
 
-    const key = gridItemToReplace?.state.key;
-
-    if (gridItemToReplace.parent instanceof SceneGridRow) {
-      const children = gridItemToReplace.parent.state.children.map((rowChild) => {
-        if (rowChild.state.key === key) {
-          return newGridItem;
-        }
-        return rowChild;
-      });
-
-      gridItemToReplace.parent.setState({ children });
-      layout.forceRender();
-    } else {
-      // Find the grid item in the layout and replace it
-      const children = layout.state.children.map((child) => {
-        if (child.state.key === key) {
-          return newGridItem;
-        }
-        return child;
-      });
-
-      layout.setState({ children });
-    }
+    gridItem.setState({ body });
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
@@ -606,8 +594,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       newGridItem = new DashboardGridItem({
         x: gridItem.state.x,
         y: gridItem.state.y,
-        height: NEW_PANEL_HEIGHT,
-        width: NEW_PANEL_WIDTH,
+        height: gridItem.state.height,
+        width: gridItem.state.width,
         body: new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) }),
       });
     }
@@ -812,9 +800,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.partial({ editview: 'settings' });
   };
 
-  public onShowAddLibraryPanelDrawer() {
+  public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<LibraryVizPanel>) {
     this.setState({
-      overlay: new AddLibraryPanelDrawer({}),
+      overlay: new AddLibraryPanelDrawer({ panelToReplaceRef }),
     });
   }
 
@@ -865,6 +853,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardUID: this.state.uid,
       panelId,
       panelPluginId: panel?.state.pluginId,
+      scopes: this.state.scopes?.getSelectedScopes(),
+    };
+  }
+
+  public enrichFiltersRequest(): Partial<DataSourceGetTagKeysOptions | DataSourceGetTagValuesOptions> {
+    return {
       scopes: this.state.scopes?.getSelectedScopes(),
     };
   }
