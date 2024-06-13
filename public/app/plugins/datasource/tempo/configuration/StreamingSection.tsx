@@ -25,8 +25,8 @@ export const StreamingSection = ({ options, onOptionsChange }: Props) => {
       isCollapsible={false}
     >
       <Alert severity="info" title="Streaming and on-premise Tempo instances">
-        If your Tempo instance is on-premise and behind a load balancer or proxy that does not supporting gRPC or HTTP2, streaming
-        will probably not work and should be disabled.
+        If your Tempo instance is on-premise and behind a load balancer or proxy that does not supporting gRPC or HTTP2,
+        streaming will probably not work and should be disabled.
       </Alert>
       <InlineFieldRow>
         <InlineField
