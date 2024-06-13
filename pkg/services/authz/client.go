@@ -1,6 +1,8 @@
 package authz
 
 import (
+	"context"
+
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
@@ -25,6 +27,7 @@ type LegacyClient struct {
 	clientV1 authzv1.AuthzServiceClient
 }
 
+// ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
 func ProvideAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, acSvc accesscontrol.Service,
 	grpcServer grpcserver.Provider, tracer tracing.Tracer,
@@ -48,9 +51,9 @@ func ProvideAuthZClient(
 
 	switch authCfg.mode {
 	case ModeInProc:
-		client = newLocalLegacyClient(server)
+		client = newInProcLegacyClient(server)
 	case ModeGRPC:
-		client, err = newRemoteLegacyClient(authCfg.remoteAddress)
+		client, err = newGrpcLegacyClient(authCfg.remoteAddress)
 		if err != nil {
 			return nil, err
 		}
@@ -59,16 +62,41 @@ func ProvideAuthZClient(
 	return client, err
 }
 
-func newLocalLegacyClient(server *legacyServer) *LegacyClient {
+// ProvideStandaloneAuthZClient provides a standalone AuthZ client, without registering the AuthZ service.
+// You need to provide a remote address in the configuration
+func ProvideStandaloneAuthZClient(
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
+) (Client, error) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
+		return nil, nil
+	}
+
+	authCfg, err := ReadCfg(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return newGrpcLegacyClient(authCfg.remoteAddress)
+}
+
+func newInProcLegacyClient(server *legacyServer) *LegacyClient {
 	channel := &inprocgrpc.Channel{}
 
-	auth := &grpcUtils.Authenticator{}
+	// TODO (gamab): change this once it's clear how to authenticate the client
+	// Choices are:
+	// - noAuth given it's in proc and we don't need the user
+	// - access_token verif only as it's consistent with when it's remote (we check the service is allowed to call the authz service)
+	// - access_token and id_token ? the id_token being only necessary when the user is trying to access the service straight away
+	// auth := grpcUtils.ProvideAuthenticator(cfg)
+	noAuth := func(ctx context.Context) (context.Context, error) {
+		return ctx, nil
+	}
 
 	channel.RegisterService(
 		grpchan.InterceptServer(
 			&authzv1.AuthzService_ServiceDesc,
-			grpcAuth.UnaryServerInterceptor(auth.Authenticate),
-			grpcAuth.StreamServerInterceptor(auth.Authenticate),
+			grpcAuth.UnaryServerInterceptor(noAuth),
+			grpcAuth.StreamServerInterceptor(noAuth),
 		),
 		server,
 	)
@@ -82,7 +110,7 @@ func newLocalLegacyClient(server *legacyServer) *LegacyClient {
 	}
 }
 
-func newRemoteLegacyClient(address string) (*LegacyClient, error) {
+func newGrpcLegacyClient(address string) (*LegacyClient, error) {
 	// Create a connection to the gRPC server
 	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
