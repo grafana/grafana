@@ -4,21 +4,20 @@ import { API_VERSION, QueryTemplateKinds } from './query';
 import { CREATED_BY_KEY, DataQuerySpec, DataQuerySpecResponse, DataQueryTarget } from './types';
 
 export const parseCreatedByValue = (value?: string) => {
-  // https://github.com/grafana/grafana/blob/main/pkg/services/store/auth.go#L27
+  // https://github.com/grafana/grafana/blob/main/pkg/services/user/identity.go#L194
   if (value !== undefined && value !== '') {
     const vals = value.split(':');
-    if (vals.length > 2) {
-      return {
-        userId: Number(vals[1]),
-        login: vals[2],
-      };
-    } else if (vals.length === 2) {
-      return {
-        userId: Number(vals[1]),
-      };
+    if (vals.length >= 2) {
+      if (vals[0] === 'anonymous' || vals[0] === 'render' || vals[0] === '') {
+        return undefined;
+      } else {
+        return {
+          userId: Number(vals[1]),
+          login: vals[2],
+        };
+      }
     } else {
-      // assume string is login for display
-      return { login: value };
+      return undefined;
     }
   } else {
     return undefined;

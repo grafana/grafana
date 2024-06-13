@@ -3,12 +3,14 @@ import { parseCreatedByValue } from './mappers';
 describe('mappers', () => {
   describe('parseCreatedByValue', () => {
     it.each`
-      value             | expected
-      ${''}             | ${undefined}
-      ${'anon'}         | ${{ login: 'anon' }}
-      ${'key:1'}        | ${{ userId: '1' }}
-      ${'user:1:admin'} | ${{ userId: '1', login: 'admin' }}
-      ${'sys:1:admin'}  | ${{ userId: '1', login: 'admin' }}
+      value                        | expected
+      ${''}                        | ${undefined}
+      ${'api-key:1'}               | ${{ userId: 1 }}
+      ${'service-account:1:admin'} | ${{ userId: 1, login: 'admin' }}
+      ${'user:1:admin'}            | ${{ userId: 1, login: 'admin' }}
+      ${'anonymous:0'}             | ${undefined}
+      ${'render:0'}                | ${undefined}
+      ${':0'}                      | ${undefined}
     `("parsing '$value' should be '$expected'", ({ value, expected }) => {
       expect(parseCreatedByValue(value)).toEqual(expected);
     });
