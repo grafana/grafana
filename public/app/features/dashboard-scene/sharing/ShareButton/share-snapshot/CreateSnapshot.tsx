@@ -38,7 +38,7 @@ export function CreateSnapshot({ model, onCreateClick, isLoading }: Props) {
   };
 
   return (
-    <div>
+    <div className={styles.container}>
       <Alert severity="info" title={''}>
         <Stack justifyContent="space-between" gap={2} alignItems="center">
           <Text>
@@ -69,22 +69,20 @@ export function CreateSnapshot({ model, onCreateClick, isLoading }: Props) {
       </Field>
       <Divider />
       <Stack justifyContent="space-between" direction={{ xs: 'column', xl: 'row' }}>
-        <div className={styles.actionsContainer}>
-          <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
-            {snapshotSharingOptions?.externalEnabled && (
-              <Button variant="secondary" disabled={isLoading} onClick={() => onCreateClick(true)}>
-                {snapshotSharingOptions?.externalSnapshotName}
-              </Button>
-            )}
-            <Button variant="primary" disabled={isLoading} onClick={() => onCreateClick()}>
-              <Trans i18nKey="snapshot.share.local-button">Publish snapshot</Trans>
+        <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
+          {snapshotSharingOptions?.externalEnabled && (
+            <Button variant="secondary" disabled={isLoading} onClick={() => onCreateClick(true)}>
+              {snapshotSharingOptions?.externalSnapshotName}
             </Button>
-            <Button variant="secondary" fill="outline" onClick={onCancelClick}>
-              <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
-            </Button>
-            {isLoading && <Spinner />}
-          </Stack>
-        </div>
+          )}
+          <Button variant="primary" disabled={isLoading} onClick={() => onCreateClick()}>
+            <Trans i18nKey="snapshot.share.local-button">Publish snapshot</Trans>
+          </Button>
+          <Button variant="secondary" fill="outline" onClick={onCancelClick}>
+            <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
+          </Button>
+          {isLoading && <Spinner />}
+        </Stack>
         <TextLink icon="external-link-alt" href="/dashboard/snapshots">
           {t('snapshot.share.view-all-button', 'View all snapshots')}
         </TextLink>
@@ -94,9 +92,7 @@ export function CreateSnapshot({ model, onCreateClick, isLoading }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  actionsContainer: css({
-    [theme.breakpoints.down('sm')]: {
-      width: '100%',
-    },
+  container: css({
+    paddingBottom: theme.spacing(2),
   }),
 });
