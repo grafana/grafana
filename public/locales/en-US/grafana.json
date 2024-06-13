@@ -1553,6 +1553,18 @@
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
+  "recently-deleted": {
+    "buttons": {
+      "restore": "Restore"
+    },
+    "restore-modal": {
+      "restore-button": "Restore",
+      "restore-loading": "Restoring...",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
+      "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
+      "title": "Restore Dashboards"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
