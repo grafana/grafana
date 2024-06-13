@@ -53,6 +53,9 @@ type GrafanaMetaAccessor interface {
 	metav1.Object
 
 	GetGroupVersionKind() schema.GroupVersionKind
+
+	// Helper to get resource versions as int64, however this is not required
+	// See: https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions
 	GetResourceVersionInt64() (int64, error)
 	SetResourceVersionInt64(int64)
 
