@@ -707,7 +707,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 }
 
 func (s *store) shouldStoreActionSet(permission string) bool {
-	return (s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "")
+	return (s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "" && isFolderOrDashboardAction(permission))
 }
 
 func deletePermissions(sess *db.Session, ids []int64) error {
