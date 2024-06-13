@@ -1487,7 +1487,8 @@
       "public-share-type-option-description": "Anyone with the link can access",
       "public-share-type-option-label": "Anyone with the link",
       "resume-access-button": "Resume access",
-      "revoke-access-button": "Revoke access"
+      "revoke-access-button": "Revoke access",
+      "revoke-access-description": "Are you sure you want to revoke this access? The dashboard can no longer be shared."
     },
     "sharing": {
       "success-creation": "Dashboard is public!"
@@ -1652,6 +1653,11 @@
       "message": "No services accounts found",
       "more-info": "Remember, you can provide specific permissions for API access to other applications",
       "title": "You haven't created any service accounts yet"
+    }
+  },
+  "share-drawer": {
+    "confirm-action": {
+      "back-arrow-button": "Back button"
     }
   },
   "share-modal": {

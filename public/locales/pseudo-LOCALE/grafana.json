@@ -1487,7 +1487,8 @@
       "public-share-type-option-description": "Åŉyőŉę ŵįŧĥ ŧĥę ľįŉĸ čäŉ äččęşş",
       "public-share-type-option-label": "Åŉyőŉę ŵįŧĥ ŧĥę ľįŉĸ",
       "resume-access-button": "Ŗęşūmę äččęşş",
-      "revoke-access-button": "Ŗęvőĸę äččęşş"
+      "revoke-access-button": "Ŗęvőĸę äččęşş",
+      "revoke-access-description": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęvőĸę ŧĥįş äččęşş? Ŧĥę đäşĥþőäřđ čäŉ ŉő ľőŉģęř þę şĥäřęđ."
     },
     "sharing": {
       "success-creation": "Đäşĥþőäřđ įş pūþľįč!"
@@ -1652,6 +1653,11 @@
       "message": "Ńő şęřvįčęş äččőūŉŧş ƒőūŉđ",
       "more-info": "Ŗęmęmþęř, yőū čäŉ přővįđę şpęčįƒįč pęřmįşşįőŉş ƒőř ÅPĨ äččęşş ŧő őŧĥęř äppľįčäŧįőŉş",
       "title": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy şęřvįčę äččőūŉŧş yęŧ"
+    }
+  },
+  "share-drawer": {
+    "confirm-action": {
+      "back-arrow-button": "ßäčĸ þūŧŧőŉ"
     }
   },
   "share-modal": {
