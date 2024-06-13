@@ -412,7 +412,7 @@ func (a *State) NeedsSending(resendDelay time.Duration, resolvedRetention time.D
 
 	// For normal states, we should only be sending if this is a resolved notification or a re-send of the resolved
 	// notification within the resolvedRetention period.
-	if a.State == eval.Normal && !a.RecentlyResolved(resolvedRetention) {
+	if a.State == eval.Normal && (a.ResolvedAt.IsZero() || a.LastEvaluationTime.Sub(a.ResolvedAt) > resolvedRetention) {
 		return false
 	}
 
@@ -420,12 +420,6 @@ func (a *State) NeedsSending(resendDelay time.Duration, resolvedRetention time.D
 	// This can include normal->normal transitions that were resolved in recent past evaluations.
 	nextSent := a.LastSentAt.Add(resendDelay)
 	return nextSent.Before(a.LastEvaluationTime) || nextSent.Equal(a.LastEvaluationTime)
-}
-
-// RecentlyResolved returns true if the state has been resolved within the resolvedRetention period. Will return false
-// if the state is not resolved or if the state was resolved outside the resolvedRetention period.
-func (a *State) RecentlyResolved(resolvedRetention time.Duration) bool {
-	return !a.ResolvedAt.IsZero() && a.LastEvaluationTime.Sub(a.ResolvedAt) <= resolvedRetention
 }
 
 func (a *State) Equals(b *State) bool {
