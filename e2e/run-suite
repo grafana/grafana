@@ -107,7 +107,6 @@ case "$1" in
       ;;
 
     *)
-        env[SCENES]=true
         cypressConfig[specPattern]=./e2e/"${args[0]}"/$testFilesForSingleSuite
         cypressConfig[video]=${args[1]}
         ;;

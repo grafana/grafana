@@ -67,7 +67,7 @@ var (
 		{
 			Name:         "publicDashboardsScene",
 			Description:  "Enables public dashboard rendering using scenes",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaSharingSquad,
 		},
@@ -887,21 +887,21 @@ var (
 		{
 			Name:         "dashboardSceneForViewers",
 			Description:  "Enables dashboard rendering using Scenes for viewer roles",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:         "dashboardSceneSolo",
 			Description:  "Enables rendering dashboards using scenes for solo panels",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:         "dashboardScene",
 			Description:  "Enables dashboard rendering using scenes for all roles",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 		},
@@ -1092,7 +1092,7 @@ var (
 		{
 			Name:        "newPDFRendering",
 			Description: "New implementation for the dashboard-to-PDF rendering",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
 		},
 		{
