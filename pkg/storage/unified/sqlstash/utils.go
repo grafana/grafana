@@ -9,11 +9,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
-	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func badRequest(msg string) *unified.StatusResult {
-	return &unified.StatusResult{
+func badRequest(msg string) *resource.StatusResult {
+	return &resource.StatusResult{
 		Status:  "Failure",
 		Message: msg,
 		Code:    http.StatusBadRequest,

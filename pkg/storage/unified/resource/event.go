@@ -1,4 +1,4 @@
-package unified
+package resource
 
 import (
 	"encoding/json"

@@ -1,4 +1,4 @@
-module github.com/grafana/grafana/pkg/storage/unified
+module github.com/grafana/grafana/pkg/storage/unified/resource
 
 go 1.21.10
 

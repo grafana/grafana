@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
-	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const resoruceTable = "resource"
@@ -35,7 +35,7 @@ var (
 )
 
 // Make sure we implement correct interfaces
-var _ unified.ResourceStoreServer = &sqlResourceServer{}
+var _ resource.ResourceStoreServer = &sqlResourceServer{}
 
 func ProvideSQLResourceServer(db db.EntityDBInterface, tracer tracing.Tracer) (SqlResourceServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -56,7 +56,7 @@ func ProvideSQLResourceServer(db db.EntityDBInterface, tracer tracing.Tracer) (S
 }
 
 type SqlResourceServer interface {
-	unified.ResourceStoreServer
+	resource.ResourceStoreServer
 
 	Init() error
 	Stop()
@@ -67,12 +67,12 @@ type sqlResourceServer struct {
 	db          db.EntityDBInterface // needed to keep xorm engine in scope
 	sess        *session.SessionDB
 	dialect     migrator.Dialect
-	broadcaster sqlstash.Broadcaster[*unified.WatchResponse]
+	broadcaster sqlstash.Broadcaster[*resource.WatchResponse]
 	ctx         context.Context // TODO: remove
 	cancel      context.CancelFunc
-	stream      chan *unified.WatchResponse
+	stream      chan *resource.WatchResponse
 	tracer      trace.Tracer
-	validator   unified.EventValidator
+	validator   resource.EventValidator
 
 	once    sync.Once
 	initErr error
@@ -138,12 +138,12 @@ func (s *sqlResourceServer) init() error {
 
 	s.sess = sess
 	s.dialect = migrator.NewDialect(engine.DriverName())
-	s.validator = unified.NewEventValidator(unified.EventValidatorOptions{
+	s.validator = resource.NewEventValidator(resource.EventValidatorOptions{
 		// use snowflake IDs
 	})
 
 	// set up the broadcaster
-	s.broadcaster, err = sqlstash.NewBroadcaster(s.ctx, func(stream chan *unified.WatchResponse) error {
+	s.broadcaster, err = sqlstash.NewBroadcaster(s.ctx, func(stream chan *resource.WatchResponse) error {
 		s.stream = stream
 
 		// start the poller
@@ -158,7 +158,7 @@ func (s *sqlResourceServer) init() error {
 	return nil
 }
 
-func (s *sqlResourceServer) IsHealthy(ctx context.Context, r *unified.HealthCheckRequest) (*unified.HealthCheckResponse, error) {
+func (s *sqlResourceServer) IsHealthy(ctx context.Context, r *resource.HealthCheckRequest) (*resource.HealthCheckResponse, error) {
 	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "isHealthy"}))
 	if err := s.Init(); err != nil {
 		ctxLogger.Error("init error", "error", err)
@@ -169,14 +169,14 @@ func (s *sqlResourceServer) IsHealthy(ctx context.Context, r *unified.HealthChec
 		return nil, err
 	}
 	// TODO: check the status of the watcher implementation as well
-	return &unified.HealthCheckResponse{Status: unified.HealthCheckResponse_SERVING}, nil
+	return &resource.HealthCheckResponse{Status: resource.HealthCheckResponse_SERVING}, nil
 }
 
 func (s *sqlResourceServer) Stop() {
 	s.cancel()
 }
 
-func (s *sqlResourceServer) GetResource(ctx context.Context, req *unified.GetResourceRequest) (*unified.GetResourceResponse, error) {
+func (s *sqlResourceServer) GetResource(ctx context.Context, req *resource.GetResourceRequest) (*resource.GetResourceResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.GetResource")
 	defer span.End()
 
@@ -185,10 +185,10 @@ func (s *sqlResourceServer) GetResource(ctx context.Context, req *unified.GetRes
 	}
 
 	if req.Key.Group == "" {
-		return &unified.GetResourceResponse{Status: badRequest("missing group")}, nil
+		return &resource.GetResourceResponse{Status: badRequest("missing group")}, nil
 	}
 	if req.Key.Resource == "" {
-		return &unified.GetResourceResponse{Status: badRequest("missing resource")}, nil
+		return &resource.GetResourceResponse{Status: badRequest("missing resource")}, nil
 	}
 
 	fmt.Printf("TODO, GET: %+v", req.Key)
@@ -196,12 +196,12 @@ func (s *sqlResourceServer) GetResource(ctx context.Context, req *unified.GetRes
 	return nil, ErrNotImplementedYet
 }
 
-func (s *sqlResourceServer) Create(ctx context.Context, req *unified.CreateRequest) (*unified.CreateResponse, error) {
+func (s *sqlResourceServer) Create(ctx context.Context, req *resource.CreateRequest) (*resource.CreateResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
 	defer span.End()
 
 	if req.Key.ResourceVersion > 0 {
-		return &unified.CreateResponse{
+		return &resource.CreateResponse{
 			Status: badRequest("can not update a specific resource version"),
 		}, nil
 	}
@@ -215,7 +215,7 @@ func (s *sqlResourceServer) Create(ctx context.Context, req *unified.CreateReque
 		return nil, err
 	}
 	if event.Status != nil {
-		return &unified.CreateResponse{Status: event.Status}, nil
+		return &resource.CreateResponse{Status: event.Status}, nil
 	}
 
 	fmt.Printf("TODO, CREATE: %v", event)
@@ -223,12 +223,12 @@ func (s *sqlResourceServer) Create(ctx context.Context, req *unified.CreateReque
 	return nil, ErrNotImplementedYet
 }
 
-func (s *sqlResourceServer) Update(ctx context.Context, req *unified.UpdateRequest) (*unified.UpdateResponse, error) {
+func (s *sqlResourceServer) Update(ctx context.Context, req *resource.UpdateRequest) (*resource.UpdateResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
 	defer span.End()
 
 	if req.Key.ResourceVersion < 0 {
-		return &unified.UpdateResponse{
+		return &resource.UpdateResponse{
 			Status: badRequest("update must include the previous version"),
 		}, nil
 	}
@@ -237,7 +237,7 @@ func (s *sqlResourceServer) Update(ctx context.Context, req *unified.UpdateReque
 		return nil, err
 	}
 
-	latest, err := s.GetResource(ctx, &unified.GetResourceRequest{
+	latest, err := s.GetResource(ctx, &resource.GetResourceRequest{
 		Key: req.Key.WithoutResourceVersion(),
 	})
 	if err != nil {
@@ -248,7 +248,7 @@ func (s *sqlResourceServer) Update(ctx context.Context, req *unified.UpdateReque
 		return nil, err
 	}
 	if event.Status != nil {
-		return &unified.UpdateResponse{Status: event.Status}, nil
+		return &resource.UpdateResponse{Status: event.Status}, nil
 	}
 
 	fmt.Printf("TODO, UPDATE: %v", event)
@@ -256,12 +256,12 @@ func (s *sqlResourceServer) Update(ctx context.Context, req *unified.UpdateReque
 	return nil, ErrNotImplementedYet
 }
 
-func (s *sqlResourceServer) Delete(ctx context.Context, req *unified.DeleteRequest) (*unified.DeleteResponse, error) {
+func (s *sqlResourceServer) Delete(ctx context.Context, req *resource.DeleteRequest) (*resource.DeleteResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
 	defer span.End()
 
 	if req.Key.ResourceVersion < 0 {
-		return &unified.DeleteResponse{
+		return &resource.DeleteResponse{
 			Status: badRequest("update must include the previous version"),
 		}, nil
 	}
@@ -270,7 +270,7 @@ func (s *sqlResourceServer) Delete(ctx context.Context, req *unified.DeleteReque
 		return nil, err
 	}
 
-	latest, err := s.GetResource(ctx, &unified.GetResourceRequest{
+	latest, err := s.GetResource(ctx, &resource.GetResourceRequest{
 		Key: req.Key.WithoutResourceVersion(),
 	})
 	if err != nil {
@@ -281,7 +281,7 @@ func (s *sqlResourceServer) Delete(ctx context.Context, req *unified.DeleteReque
 		return nil, err
 	}
 	if event.Status != nil {
-		return &unified.DeleteResponse{Status: event.Status}, nil
+		return &resource.DeleteResponse{Status: event.Status}, nil
 	}
 
 	fmt.Printf("TODO, DELETE: %+v ", req.Key)
@@ -289,7 +289,7 @@ func (s *sqlResourceServer) Delete(ctx context.Context, req *unified.DeleteReque
 	return nil, ErrNotImplementedYet
 }
 
-func (s *sqlResourceServer) List(ctx context.Context, req *unified.ListRequest) (*unified.ListResponse, error) {
+func (s *sqlResourceServer) List(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.List")
 	defer span.End()
 
@@ -324,7 +324,7 @@ func (s *sqlResourceServer) List(ctx context.Context, req *unified.ListRequest) 
 }
 
 // Get the raw blob bytes and metadata
-func (s *sqlResourceServer) GetBlob(ctx context.Context, req *unified.GetBlobRequest) (*unified.GetBlobResponse, error) {
+func (s *sqlResourceServer) GetBlob(ctx context.Context, req *resource.GetBlobRequest) (*resource.GetBlobResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.List")
 	defer span.End()
 
@@ -338,7 +338,7 @@ func (s *sqlResourceServer) GetBlob(ctx context.Context, req *unified.GetBlobReq
 }
 
 // Show resource history (and trash)
-func (s *sqlResourceServer) History(ctx context.Context, req *unified.HistoryRequest) (*unified.HistoryResponse, error) {
+func (s *sqlResourceServer) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.History")
 	defer span.End()
 
@@ -352,7 +352,7 @@ func (s *sqlResourceServer) History(ctx context.Context, req *unified.HistoryReq
 }
 
 // Used for efficient provisioning
-func (s *sqlResourceServer) Origin(ctx context.Context, req *unified.OriginRequest) (*unified.OriginResponse, error) {
+func (s *sqlResourceServer) Origin(ctx context.Context, req *resource.OriginRequest) (*resource.OriginResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.History")
 	defer span.End()
 
