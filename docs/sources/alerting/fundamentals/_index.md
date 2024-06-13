@@ -61,7 +61,9 @@ Whether you’re just starting out or you're a more experienced user of Grafana 
 
 The following diagram gives you an overview of Grafana Alerting and introduces you to some of the fundamental features that are the principles of how Grafana Alerting works.
 
-{{< figure src="/media/docs/alerting/alerting-configure-notifications.svg" max-width="750px" alt="How Alerting works" caption="How Alerting works" >}}
+<br/>
+
+{{< figure src="/media/docs/alerting/alerting-configure-notifications-v2.png" max-width="750px" alt="How Alerting works" caption="How Alerting works" >}}
 
 ## How it works at a glance
 
