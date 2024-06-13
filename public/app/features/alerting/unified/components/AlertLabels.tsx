@@ -56,7 +56,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
           tooltipPlacement="top"
           size="sm"
         >
-          <Trans i18nKey="alert-labels.button.hide"> Hide common labels</Trans>
+          <Trans i18nKey="alert-labels.button.hide">Hide common labels</Trans>
         </Button>
       )}
     </div>

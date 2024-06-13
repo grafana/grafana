@@ -27,7 +27,7 @@
   },
   "alert-labels": {
     "button": {
-      "hide": " Ħįđę čőmmőŉ ľäþęľş",
+      "hide": "Ħįđę čőmmőŉ ľäþęľş",
       "show": {
         "tooltip": "Ŝĥőŵ čőmmőŉ ľäþęľş"
       }
@@ -150,10 +150,10 @@
     "error": "Ŝőmęŧĥįŉģ ŵęŉŧ ŵřőŉģ ľőäđįŉģ ŧĥę äľęřŧ şŧäŧę ĥįşŧőřy",
     "filter": {
       "button": {
-        "clear": " Cľęäř"
+        "clear": "Cľęäř"
       },
       "label": "Fįľŧęř ęvęŉŧş",
-      "placeholder": "Fįľŧęř ęvęŉŧş įŉ ŧĥę ľįşŧ þy ľäþęľş"
+      "placeholder": "Fįľŧęř ęvęŉŧş įŉ ŧĥę ľįşŧ ŵįŧĥ ľäþęľş"
     }
   },
   "clipboard-button": {

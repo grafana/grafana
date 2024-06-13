@@ -30,13 +30,13 @@ import { HistoryEventsListObjectRenderer } from './CentralAlertHistory';
 
 export const CentralAlertHistoryScene = () => {
   const dataSourceSrv = getDataSourceSrv();
-  const ashDs: DataSourceInformation = {
+  const alertStateHistoryDatasource: DataSourceInformation = {
     type: 'loki',
     uid: 'grafanacloud-alert-state-history',
     settings: undefined,
   };
 
-  ashDs.settings = dataSourceSrv.getInstanceSettings(ashDs.uid);
+  alertStateHistoryDatasource.settings = dataSourceSrv.getInstanceSettings(alertStateHistoryDatasource.uid);
 
   const scene = new EmbeddedScene({
     controls: [new SceneControlsSpacer(), new SceneTimePicker({}), new SceneRefreshPicker({})],
@@ -45,7 +45,7 @@ export const CentralAlertHistoryScene = () => {
       children: [
         new SceneFlexItem({
           ySizing: 'content',
-          body: getEventsSceneObject(ashDs),
+          body: getEventsSceneObject(alertStateHistoryDatasource),
         }),
         new SceneFlexItem({
           body: new SceneReactObject({
