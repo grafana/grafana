@@ -1,5 +1,5 @@
 import { useCombobox } from 'downshift';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
@@ -35,11 +35,12 @@ function itemFilter(inputValue: string) {
 
 export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxProps) => {
   const [items, setItems] = useState(options);
+  const selectedItem = useMemo(() => options.find((option) => option.value === value) || null, [options, value]);
 
   const { getInputProps, getMenuProps, getItemProps, isOpen } = useCombobox({
     items,
     itemToString,
-    selectedItem: options.find((option) => option.value === value) || null,
+    selectedItem,
     onInputValueChange: ({ inputValue }) => {
       setItems(options.filter(itemFilter(inputValue)));
     },
