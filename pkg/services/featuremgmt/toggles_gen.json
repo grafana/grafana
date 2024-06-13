@@ -2264,6 +2264,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform"
       }
+    },
+    {
+      "metadata": {
+        "name": "authZGRPCServer",
+        "resourceVersion": "1718093439898",
+        "creationTimestamp": "2024-06-11T08:10:39Z"
+      },
+      "spec": {
+        "description": "Enables the gRPC server for authorization",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
     }
   ]
 }
