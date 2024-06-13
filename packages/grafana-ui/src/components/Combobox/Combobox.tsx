@@ -1,8 +1,6 @@
 import { useCombobox } from 'downshift';
 import React, { useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
 
