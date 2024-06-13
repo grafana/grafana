@@ -657,6 +657,18 @@
     },
     {
       "metadata": {
+        "name": "databaseReadReplica",
+        "resourceVersion": "1718308641844",
+        "creationTimestamp": "2024-06-13T19:57:21Z"
+      },
+      "spec": {
+        "description": "Use a read replica for some database queries.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "dataplaneFrontendFallback",
         "resourceVersion": "1717578796182",
         "creationTimestamp": "2023-04-07T21:13:19Z"

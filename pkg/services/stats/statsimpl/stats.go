@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,14 +17,13 @@ import (
 const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
 
-func ProvideService(cfg *setting.Cfg, db db.DB, repl *sqlstore.ReplStore) stats.Service {
-	return &sqlStatsService{cfg: cfg, db: db, repl: repl}
+func ProvideService(cfg *setting.Cfg, db db.DatabaseWithRepl) stats.Service {
+	return &sqlStatsService{cfg: cfg, db: db}
 }
 
 type sqlStatsService struct {
-	db   db.DB
-	repl *sqlstore.ReplStore
-	cfg  *setting.Cfg
+	db  db.DatabaseWithRepl
+	cfg *setting.Cfg
 }
 
 func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *stats.GetAlertNotifierUsageStatsQuery) (result []*stats.NotifierUsageStats, err error) {
@@ -64,9 +62,9 @@ func notServiceAccount(dialect migrator.Dialect) string {
 }
 
 func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetSystemStatsQuery) (result *stats.SystemStats, err error) {
-	if ss.repl != nil {
-		dialect := ss.repl.GetDialect()
-		err = ss.repl.WithDbSession(ctx, func(dbSession *db.Session) error {
+	if ss.db.ReadReplica != nil {
+		dialect := ss.db.ReadReplica.GetDialect()
+		err = ss.db.ReadReplica.WithDbSession(ctx, func(dbSession *db.Session) error {
 			sb := &db.SQLBuilder{}
 			sb.Write("SELECT ")
 			sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `) AS users,`)
@@ -215,9 +213,9 @@ func (ss *sqlStatsService) roleCounterSQL(ctx context.Context) string {
 }
 
 func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAdminStatsQuery) (result *stats.AdminStats, err error) {
-	if ss.repl != nil {
-		err = ss.repl.WithDbSession(ctx, func(dbSession *db.Session) error {
-			dialect := ss.repl.GetDialect()
+	if ss.db.ReadReplica != nil {
+		err = ss.db.ReadReplica.WithDbSession(ctx, func(dbSession *db.Session) error {
+			dialect := ss.db.ReadReplica.GetDialect()
 			now := time.Now()
 			activeEndDate := now.Add(-activeUserTimeLimit)
 			dailyActiveEndDate := now.Add(-dailyActiveUserTimeLimit)

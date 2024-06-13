@@ -195,4 +195,5 @@ export interface FeatureToggles {
   authZGRPCServer?: boolean;
   openSearchBackendFlowEnabled?: boolean;
   ssoSettingsLDAP?: boolean;
+  databaseReadReplica?: boolean;
 }

@@ -32,9 +32,9 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db, cfg := db.InitTestDBWithCfg(t)
-	statsService := &sqlStatsService{db: db}
-	populateDB(t, db, cfg)
+	store, cfg := db.InitTestDBWithCfg(t)
+	statsService := &sqlStatsService{db: db.DatabaseWithRepl{DB: store}}
+	populateDB(t, store, cfg)
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {
 		query := stats.GetSystemStatsQuery{}
@@ -49,7 +49,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(0), result.APIKeys)
 		assert.Equal(t, int64(2), result.Correlations)
 		assert.NotNil(t, result.DatabaseCreatedTime)
-		assert.Equal(t, db.GetDialect().DriverName(), result.DatabaseDriver)
+		assert.Equal(t, store.GetDialect().DriverName(), result.DatabaseDriver)
 	})
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
@@ -157,8 +157,8 @@ func TestIntegration_GetAdminStats(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db, cfg := db.InitTestDBWithCfg(t)
-	statsService := ProvideService(cfg, db, nil)
+	store, cfg := db.InitTestDBWithCfg(t)
+	statsService := ProvideService(cfg, db.DatabaseWithRepl{DB: store})
 
 	query := stats.GetAdminStatsQuery{}
 	_, err := statsService.GetAdminStats(context.Background(), &query)
