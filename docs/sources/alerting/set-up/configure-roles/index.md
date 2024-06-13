@@ -52,7 +52,7 @@ Details on the adding folder permissions as well as roles and the access that pr
 | ------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | Admin  | -                 | Write access to alert rules in all folders.                                                                                          |
 | Editor | -                 | Write access to alert rules in all folders.                                                                                          |
-| Viewer | Admin             | Read access to alert rules in all folders. Write access to alert rules **only** in the folders where the Admin permission is added.  |
+| Viewer | Admin             | Read access to alert rules in all folders. Write access to alert rules including silences and mute timings for those alert rules **only** in the folders where the Admin permission is added.  |
 | Viewer | Editor            | Read access to alert rules in all folders. Write access to alert rules **only** in the folders where the Editor permission is added. |
 | Viewer | Viewer            | Read access to alert rules in all folders.                                                                                           |
 
