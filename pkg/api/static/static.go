@@ -29,7 +29,10 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var Root string
+var (
+	Root string
+	rePrefix = regexp.MustCompile(`^(?:/\\|/+)`)
+)
 
 func init() {
 	var err error
@@ -165,7 +168,6 @@ func staticHandler(ctx *web.Context, log log.Logger, opt StaticOptions) bool {
 				path = fmt.Sprintf("/%s", path)
 			} else {
 				// A string starting with // or /\ is interpreted by browsers as a URL, and not a server relative path
-				rePrefix := regexp.MustCompile(`^(?:/\\|/+)`)
 				path = rePrefix.ReplaceAllString(path, "/")
 			}
 			http.Redirect(ctx.Resp, ctx.Req, path, http.StatusFound)

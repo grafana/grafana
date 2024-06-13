@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+var validFileName = regexp.MustCompile(`^\w+\.csv$`)
+
 func (s *Service) handleCsvContentScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
@@ -95,8 +97,6 @@ func (s *Service) handleCsvFileScenario(ctx context.Context, req *backend.QueryD
 var embeddedCsvFiles embed.FS
 
 func (s *Service) loadCsvFile(fileName string) (*data.Frame, error) {
-	validFileName := regexp.MustCompile(`^\w+\.csv$`)
-
 	if !validFileName.MatchString(fileName) {
 		return nil, fmt.Errorf("invalid csv file name: %q", fileName)
 	}

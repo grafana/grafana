@@ -27,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var jwtRegexp = regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
+
 type SocialBase struct {
 	*oauth2.Config
 	info          *social.OAuthInfo
@@ -199,7 +201,6 @@ func (s *SocialBase) retrieveRawIDToken(idToken any) ([]byte, error) {
 		return nil, fmt.Errorf("id_token is not a string: %v", idToken)
 	}
 
-	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
 	matched := jwtRegexp.FindStringSubmatch(tokenString)
 	if matched == nil {
 		return nil, fmt.Errorf("id_token is not in JWT format: %s", tokenString)
