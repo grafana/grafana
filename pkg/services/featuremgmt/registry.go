@@ -717,8 +717,9 @@ var (
 			Name:         "transformationsVariableSupport",
 			Description:  "Allows using variables in transformations",
 			FrontendOnly: true,
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaDatavizSquad,
+			Expression:   "true", // Enabled by default
 		},
 		{
 			Name:            "kubernetesPlaylists",
