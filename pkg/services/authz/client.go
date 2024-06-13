@@ -4,7 +4,6 @@ import (
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
-	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -27,8 +26,8 @@ type LegacyClient struct {
 }
 
 func ProvideAuthZClient(
-	cfg *setting.Cfg, acSvc accesscontrol.Service, features *featuremgmt.FeatureManager,
-	grpcServer grpcserver.Provider, registerer prometheus.Registerer, tracer tracing.Tracer,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, acSvc accesscontrol.Service,
+	grpcServer grpcserver.Provider, tracer tracing.Tracer,
 ) (Client, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
@@ -39,7 +38,7 @@ func ProvideAuthZClient(
 		return nil, err
 	}
 
-	client := &LegacyClient{}
+	var client *LegacyClient
 
 	// Register the server
 	server, err := newLegacyServer(acSvc, features, grpcServer, tracer, authCfg)
