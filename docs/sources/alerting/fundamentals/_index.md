@@ -109,7 +109,7 @@ In the alert rule, you can configure the contact point to receive the alert noti
 
 Each notification policy consists of a set of label matchers (0 or more) that specify which alert instances (identified by their labels) they handle. Notification policies are defined in a tree structure, where the root of the notification policy tree is the **Default notification policy**, which ensures all alert instances are handled.
 
-{{< figure src="/media/docs/alerting/notification-routing.png" max-width="750px" caption="Notification policy routing" >}}
+{{< figure src="/media/docs/alerting/notification-routing.png" max-width="750px" alt="A diagram displaying how the notification policy tree routes alerts" caption="Notification policy routing" >}}
 
 Each notification policy is responsible for deciding the contact point and when to send the notification. Additionally, it can [group multiple firing alert instances into a single notification](ref:group-alert-notifications) to reduce alert noise.
 
