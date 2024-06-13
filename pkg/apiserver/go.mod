@@ -5,7 +5,7 @@ go 1.21.10
 require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gorilla/mux v1.8.1
-	github.com/grafana/grafana-plugin-sdk-go v0.234.0
+	github.com/grafana/grafana-plugin-sdk-go v0.235.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240409140820-518d3341d58f
 	github.com/prometheus/client_golang v1.19.0
 	github.com/stretchr/testify v1.9.0
@@ -60,6 +60,8 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20240416155748-26353dc0451f // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/grafana/otel-profiling-go v0.5.1 // indirect
+	github.com/grafana/pyroscope-go/godeltaprof v0.1.7 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0 // indirect
