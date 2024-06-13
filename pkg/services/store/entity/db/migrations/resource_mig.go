@@ -65,7 +65,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 			{Name: "hash", Type: migrator.DB_NVarchar, Length: 32, Nullable: false},
 
 			// Path to linked blob (or null).  This blob may be saved in SQL, or in an object store
-			{Name: "blob_path", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true},
+			{Name: "blob_path_hash", Type: migrator.DB_NVarchar, Length: 60, Nullable: true},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"rv"}, Type: migrator.UniqueIndex},
@@ -115,14 +115,15 @@ func initResourceTables(mg *migrator.Migrator) string {
 	tables = append(tables, migrator.Table{
 		Name: "resource_blob", // even things that failed?
 		Columns: []*migrator.Column{
-			{Name: "path", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false, IsPrimaryKey: true},
-			{Name: "body", Type: migrator.DB_Blob, Nullable: false},
+			{Name: "path_hash", Type: migrator.DB_NVarchar, Length: 60, Nullable: false, IsPrimaryKey: true},
+			{Name: "path", Type: migrator.DB_Text, Nullable: false},
+			{Name: "body", Type: migrator.DB_Blob, Nullable: true},
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
 			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "content_type", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"path"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"path_hash"}, Type: migrator.UniqueIndex},
 		},
 	})
 
