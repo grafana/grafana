@@ -106,7 +106,7 @@ func (c TracedClient) Do(r *http.Request) (*http.Response, error) {
 		span.RecordError(err)
 	} else {
 		span.SetAttributes(attribute.Int("http.status_code", resp.StatusCode))
-		if resp.StatusCode >= 400 || resp.StatusCode < 600 {
+		if resp.StatusCode >= 400 && resp.StatusCode < 600 {
 			span.RecordError(fmt.Errorf("request failed with status code: %d", resp.StatusCode))
 		}
 	}
