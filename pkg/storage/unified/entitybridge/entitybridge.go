@@ -1,4 +1,4 @@
-package sqlstash
+package entitybridge
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 
 // Creates a ResourceServer using the existing entity tables
 // NOTE: most of the field values are ignored
-func ProvideEnityStoreResources(db db.EntityDBInterface, tracer tracing.Tracer) (resource.ResourceServer, error) {
+func ProvideEntityStoreResources(db db.EntityDBInterface, tracer tracing.Tracer) (resource.ResourceServer, error) {
 	entity, err := sqlstash.ProvideSQLEntityServer(db, tracer)
 	if err != nil {
 		return nil, err

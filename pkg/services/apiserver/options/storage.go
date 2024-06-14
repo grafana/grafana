@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"net"
 
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/spf13/pflag"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
+
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 type StorageType string
@@ -18,6 +19,7 @@ const (
 	StorageTypeLegacy      StorageType = "legacy"
 	StorageTypeUnified     StorageType = "unified"
 	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
+	StorageTypeUnifiedExp  StorageType = "unified-exp"
 )
 
 type StorageOptions struct {
@@ -43,10 +45,10 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 func (o *StorageOptions) Validate() []error {
 	errs := []error{}
 	switch o.StorageType {
-	case StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc:
+	case StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc, StorageTypeUnifiedExp:
 		// no-op
 	default:
-		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s, %s", StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc))
+		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s, %s, %s", StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc, StorageTypeUnifiedExp))
 	}
 
 	if _, _, err := net.SplitHostPort(o.Address); err != nil {

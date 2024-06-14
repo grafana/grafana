@@ -106,11 +106,6 @@ func (s *sqlEntityServer) init() error {
 		return errors.New("missing db")
 	}
 
-	err := s.db.Init()
-	if err != nil {
-		return err
-	}
-
 	sqlDB, err := s.db.GetDB()
 	if err != nil {
 		return err

@@ -44,6 +44,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/entitybridge"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var (
@@ -252,6 +255,25 @@ func (s *service) start(ctx context.Context) error {
 		if err := o.RecommendedOptions.Etcd.ApplyTo(&serverConfig.Config); err != nil {
 			return err
 		}
+
+	case grafanaapiserveroptions.StorageTypeUnifiedExp:
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
+			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
+		}
+
+		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features, s.tracing)
+		if err != nil {
+			return err
+		}
+
+		storeServer, err := entitybridge.ProvideEntityStoreResources(eDB, s.tracing)
+		if err != nil {
+			return err
+		}
+
+		store := resource.NewResourceStoreClientLocal(storeServer)
+
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
 	case grafanaapiserveroptions.StorageTypeUnified:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
