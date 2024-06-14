@@ -9,6 +9,7 @@ import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { initTemplateSrv } from '../test_utils';
 import { keywordOperators, numberOperators, operators, stringOperators } from '../traceql/traceql';
+
 import SearchField from './SearchField';
 
 describe('SearchField', () => {
