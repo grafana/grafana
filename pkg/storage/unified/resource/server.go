@@ -442,6 +442,15 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 		return nil, err
 	}
 
+	if req.Key.Group == "" {
+		status, _ := errToStatus(apierrors.NewBadRequest("missing group"))
+		return &ReadResponse{Status: status}, nil
+	}
+	if req.Key.Resource == "" {
+		status, _ := errToStatus(apierrors.NewBadRequest("missing resource"))
+		return &ReadResponse{Status: status}, nil
+	}
+
 	rsp, err := s.store.Read(ctx, req)
 	if err != nil {
 		if rsp == nil {

@@ -1,4 +1,4 @@
-package sqlstash
+package sqlnext
 
 import (
 	"context"
@@ -151,13 +151,6 @@ func (s *sqlResourceStore) WriteEvent(ctx context.Context, event *resource.Write
 func (s *sqlResourceStore) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
 	_, span := s.tracer.Start(ctx, "storage_server.GetResource")
 	defer span.End()
-
-	if req.Key.Group == "" {
-		return &resource.ReadResponse{Status: badRequest("missing group")}, nil
-	}
-	if req.Key.Resource == "" {
-		return &resource.ReadResponse{Status: badRequest("missing resource")}, nil
-	}
 
 	fmt.Printf("TODO, GET: %+v", req.Key)
 

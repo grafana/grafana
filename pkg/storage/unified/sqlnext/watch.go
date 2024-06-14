@@ -1,4 +1,4 @@
-package sqlstash
+package sqlnext
 
 import (
 	"context"
