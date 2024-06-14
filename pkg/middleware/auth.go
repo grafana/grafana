@@ -127,7 +127,13 @@ func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, fea
 
 			if normalizeIncludePath(u.Path) == path {
 				useRBAC := features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && i.RequiresRBACAction()
-				if useRBAC && !hasAccess(ac.EvalPermission(i.Action)) {
+				eval := ac.EvalPermission(i.Action)
+				if i.Action == pluginaccesscontrol.ActionAppAccess {
+					// We technically don't really need to check again given we already checked this upper in the middleware tree
+					// but better safe than sorry
+					eval = ac.EvalPermission(i.Action, pluginaccesscontrol.ScopeProvider.GetResourceScope(pluginID))
+				}
+				if useRBAC && !hasAccess(eval) {
 					logger.Debug("Plugin include is covered by RBAC, user doesn't have access", "plugin", pluginID, "include", i.Name)
 					permitted = false
 					break
