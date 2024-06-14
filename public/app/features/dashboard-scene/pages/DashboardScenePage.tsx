@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
+import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -78,10 +79,10 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
   }
 
   return (
-    <>
+    <UrlSyncContextProvider scene={dashboard}>
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
-    </>
+    </UrlSyncContextProvider>
   );
 }
 

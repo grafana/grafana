@@ -349,6 +349,7 @@ describe('TrailStore', () => {
 
     describe('And time range is changed to now-15m to now', () => {
       let trail: DataTrail;
+
       beforeEach(() => {
         localStorage.clear();
         localStorage.setItem(RECENT_TRAILS_KEY, JSON.stringify([{ history, currentStep: 1 }]));
@@ -357,6 +358,7 @@ describe('TrailStore', () => {
         trail = store.recent[0].resolve();
         const urlState = getUrlSyncManager().getUrlState(trail);
         locationService.partial(urlState);
+
         trail.activate();
         trail.state.history.activate();
         trail.state.$timeRange?.setState({ from: 'now-15m' });

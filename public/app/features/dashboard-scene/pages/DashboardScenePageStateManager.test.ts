@@ -1,7 +1,6 @@
 import { advanceBy } from 'jest-date-mock';
 
-import { BackendSrv, locationService, setBackendSrv } from '@grafana/runtime';
-import { getUrlSyncManager } from '@grafana/scenes';
+import { BackendSrv, setBackendSrv } from '@grafana/runtime';
 import store from 'app/core/store';
 import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
 import { DashboardRoutes } from 'app/types';
@@ -93,40 +92,6 @@ describe('DashboardScenePageStateManager', () => {
 
       expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
       expect(loader.state.isLoading).toBe(false);
-    });
-
-    it('should initialize url sync', async () => {
-      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
-
-      locationService.partial({ from: 'now-5m', to: 'now' });
-
-      const loader = new DashboardScenePageStateManager({});
-      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
-      const dash = loader.state.dashboard;
-
-      expect(dash!.state.$timeRange?.state.from).toEqual('now-5m');
-
-      getUrlSyncManager().cleanUp(dash!);
-
-      // try loading again (and hitting cache)
-      locationService.partial({ from: 'now-10m', to: 'now' });
-
-      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
-      const dash2 = loader.state.dashboard;
-
-      expect(dash2!.state.$timeRange?.state.from).toEqual('now-10m');
-    });
-
-    it('should not initialize url sync for embedded dashboards', async () => {
-      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
-
-      locationService.partial({ from: 'now-5m', to: 'now' });
-
-      const loader = new DashboardScenePageStateManager({});
-      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Embedded });
-      const dash = loader.state.dashboard;
-
-      expect(dash!.state.$timeRange?.state.from).toEqual('now-6h');
     });
 
     describe('New dashboards', () => {

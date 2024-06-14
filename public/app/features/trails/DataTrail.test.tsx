@@ -71,7 +71,7 @@ describe('DataTrail', () => {
       });
 
       it('should sync state with url', () => {
-        expect(locationService.getSearchObject().metric).toBe('metric_bucket');
+        expect(trail.getUrlState().metric).toBe('metric_bucket');
       });
 
       it('should add history step', () => {
@@ -102,10 +102,6 @@ describe('DataTrail', () => {
       describe('And when changing the time range `from` to "now-1h"', () => {
         beforeEach(() => {
           trail.state.$timeRange?.setState({ from: 'now-1h' });
-        });
-
-        it('should sync state with url', () => {
-          expect(locationService.getSearchObject().from).toBe('now-1h');
         });
 
         it('should add history step', () => {
@@ -152,10 +148,6 @@ describe('DataTrail', () => {
           describe('And then when changing the time range `from` to "now-15m"', () => {
             beforeEach(() => {
               trail.state.$timeRange?.setState({ from: 'now-15m' });
-            });
-
-            it('should sync state with url', () => {
-              expect(locationService.getSearchObject().from).toBe('now-15m');
             });
 
             it('should add history step', () => {
@@ -224,10 +216,6 @@ describe('DataTrail', () => {
           getFilterVar().setState({ filters: [{ key: 'zone', operator: '=', value: 'a' }] });
         });
 
-        it('should sync state with url', () => {
-          expect(decodeURIComponent(locationService.getSearchObject()['var-filters']?.toString()!)).toBe('zone|=|a');
-        });
-
         it('should add history step', () => {
           expect(trail.state.history.state.steps[2].type).toBe('filters');
         });
@@ -274,12 +262,6 @@ describe('DataTrail', () => {
           describe('And when changing the filter to zone=b', () => {
             beforeEach(() => {
               getFilterVar().setState({ filters: [{ key: 'zone', operator: '=', value: 'b' }] });
-            });
-
-            it('should sync state with url', () => {
-              expect(decodeURIComponent(locationService.getSearchObject()['var-filters']?.toString()!)).toBe(
-                'zone|=|b'
-              );
             });
 
             it('should add history step', () => {

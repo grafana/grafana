@@ -5,8 +5,8 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
-import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { config, locationService } from '@grafana/runtime';
+import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
@@ -103,9 +103,8 @@ describe('NavToolbarActions', () => {
     });
 
     it('Should show correct buttons when in settings menu', async () => {
-      const { dashboard } = setup();
+      setup();
 
-      dashboard.startUrlSync();
       await userEvent.click(await screen.findByText('Edit'));
       await userEvent.click(await screen.findByText('Settings'));
 
@@ -118,6 +117,7 @@ describe('NavToolbarActions', () => {
 
     it('Should show correct buttons when editing a new panel', async () => {
       const { dashboard } = setup();
+
       await act(() => {
         dashboard.onEnterEditMode();
         const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
@@ -205,9 +205,13 @@ function setup() {
 
   const context = getGrafanaContextMock();
 
+  locationService.push('/');
+
   render(
     <TestProvider grafanaContext={context}>
-      <ToolbarActions dashboard={dashboard} />
+      <UrlSyncContextProvider scene={dashboard}>
+        <ToolbarActions dashboard={dashboard} />
+      </UrlSyncContextProvider>
     </TestProvider>
   );
 

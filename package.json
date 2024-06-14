@@ -94,6 +94,7 @@
     "@testing-library/jest-dom": "6.4.2",
     "@testing-library/react": "15.0.2",
     "@testing-library/user-event": "14.5.2",
+    "@types/add": "^2",
     "@types/angular": "1.8.9",
     "@types/angular-route": "1.7.6",
     "@types/babel__core": "^7",
@@ -258,7 +259,7 @@
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/saga-icons": "workspace:*",
-    "@grafana/scenes": "4.29.0",
+    "@grafana/scenes": "^5.0.2",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -398,7 +399,8 @@
     "uuid": "9.0.1",
     "visjs-network": "4.25.0",
     "whatwg-fetch": "3.6.20",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz",
+    "yarn": "^1.22.22"
   },
   "resolutions": {
     "underscore": "1.13.6",
