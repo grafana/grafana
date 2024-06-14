@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -56,6 +57,7 @@ func RegisterAPIService(
 	contextProvider PluginContextWrapper,
 	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
+	reg prometheus.Registerer,
 ) (*DataSourceAPIBuilder, error) {
 	// This requires devmode!
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
@@ -205,6 +207,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	_ generic.RESTOptionsGetter,
 	_ grafanarest.DualWriterMode,
+	_ prometheus.Registerer,
 ) (*genericapiserver.APIGroupInfo, error) {
 	storage := map[string]rest.Storage{}
 
