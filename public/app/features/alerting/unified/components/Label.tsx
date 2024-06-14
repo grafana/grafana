@@ -33,11 +33,9 @@ const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
             )}
           </Stack>
         </div>
-        {value && (
-          <div className={styles.value} title={value.toString()}>
-            {value}
-          </div>
-        )}
+        <div className={styles.value} title={value?.toString()}>
+          {value ?? '-'}
+        </div>
       </Stack>
     </div>
   );
