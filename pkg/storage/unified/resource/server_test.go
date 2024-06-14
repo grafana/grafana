@@ -97,11 +97,12 @@ func TestWriter(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, deleted.ResourceVersion > updated.ResourceVersion)
 
-		// We should get not found when trying to read the latest value
+		// We should get not found status when trying to read the latest value
 		key.ResourceVersion = 0
 		found, err = server.Read(ctx, &ReadRequest{Key: key})
-		require.Error(t, err)
-		require.Nil(t, found)
+		require.NoError(t, err)
+		require.NotNil(t, found.Status)
+		require.Equal(t, int32(404), found.Status.Code)
 	})
 }
 

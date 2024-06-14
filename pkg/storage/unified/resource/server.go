@@ -32,8 +32,8 @@ var (
 // ResourceServer implements all services
 type ResourceServer interface {
 	ResourceStoreServer
-	// ResourceSearchServer
-	// DiagnosticsServer
+	ResourceSearchServer
+	DiagnosticsServer
 
 	// Called once for initialization
 	Init() error
@@ -108,10 +108,10 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		return nil, fmt.Errorf("missing AppendingStore implementation")
 	}
 	if opts.Search == nil {
-		return nil, fmt.Errorf("missing ResourceSearchServer implementation")
+		opts.Search = &NoopServer{}
 	}
 	if opts.Diagnostics == nil {
-		return nil, fmt.Errorf("missing Diagnostics implementation")
+		opts.Search = &NoopServer{}
 	}
 
 	return &server{
@@ -318,10 +318,22 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 // Convert golang errors to status result errors that can be returned to a client
 func errToStatus(err error) (*StatusResult, error) {
 	if err != nil {
+		apistatus, ok := err.(apierrors.APIStatus)
+		if ok {
+			s := apistatus.Status()
+			return &StatusResult{
+				Status:  s.Status,
+				Message: s.Message,
+				Reason:  string(s.Reason),
+				Code:    s.Code,
+			}, nil
+		}
+
 		// TODO... better conversion!!!
 		return &StatusResult{
 			Status:  "Failure",
 			Message: err.Error(),
+			Code:    500,
 		}, nil
 	}
 	return nil, err
@@ -466,4 +478,38 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 		return err
 	}
 	return s.Watch(req, srv)
+}
+
+// GetBlob implements ResourceServer.
+func (s *server) GetBlob(ctx context.Context, req *GetBlobRequest) (*GetBlobResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+	rsp, err := s.search.GetBlob(ctx, req)
+	rsp.Status, err = errToStatus(err)
+	return rsp, err
+}
+
+// History implements ResourceServer.
+func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+	return s.search.History(ctx, req)
+}
+
+// IsHealthy implements ResourceServer.
+func (s *server) IsHealthy(ctx context.Context, req *HealthCheckRequest) (*HealthCheckResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+	return s.diagnostics.IsHealthy(ctx, req)
+}
+
+// Origin implements ResourceServer.
+func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+	return s.search.Origin(ctx, req)
 }
