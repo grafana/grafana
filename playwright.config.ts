@@ -77,6 +77,6 @@ export default defineConfig<PluginOptions>({
       use: {
         ...devices['Desktop Chrome'],
       },
-    }
+    },
   ],
 });
