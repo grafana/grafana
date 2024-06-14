@@ -20,7 +20,7 @@ weight: -43
 
 # What’s new in Grafana v11.1
 
-Welcome to Grafana 11.1! This release contains some major improvements: most notably,
+Welcome to Grafana 11.1! This release contains some major improvements: most notably...
 
 <!--{{< youtube id=" " >}}-->
 
