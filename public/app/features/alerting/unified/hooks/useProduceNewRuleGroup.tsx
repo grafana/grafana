@@ -3,11 +3,13 @@ import { useCallback, useState } from 'react';
 
 import { dispatch, getState } from 'app/store/store';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
-import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { RulerGrafanaRuleDTO, RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { alertRuleApi } from '../api/alertRuleApi';
+import { AlertGroupUpdated, alertRuleApi } from '../api/alertRuleApi';
 import { deleteRuleAction, pauseRuleAction, ruleGroupReducer } from '../reducers/ruler/ruleGroups';
 import { fetchRulesSourceBuildInfoAction, getDataSourceRulerConfig } from '../state/actions';
+
+type ProduceResult = RulerRuleGroupDTO | AlertGroupUpdated;
 
 // @TODO the manual state tracking here is abysmal but we don't have a better idea that works right now
 function useProduceNewRuleGroup() {
@@ -17,6 +19,7 @@ function useProduceNewRuleGroup() {
 
   const [isLoading, setLoading] = useState<boolean>(false);
   const [isUninitialized, setUninitialized] = useState<boolean>(true);
+  const [result, setResult] = useState<ProduceResult | undefined>();
   const [error, setError] = useState<unknown | undefined>();
 
   const isError = Boolean(error);
@@ -27,6 +30,7 @@ function useProduceNewRuleGroup() {
     isLoading,
     isSuccess,
     isError,
+    result,
     error,
   };
 
@@ -69,10 +73,12 @@ function useProduceNewRuleGroup() {
       };
 
       const result = await updateOrDeleteFunction();
+      setResult(result);
+
       return result;
     } catch (error) {
       setError(error);
-      return;
+      throw error;
     } finally {
       setLoading(false);
     }

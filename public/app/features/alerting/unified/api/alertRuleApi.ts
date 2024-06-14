@@ -75,7 +75,7 @@ interface ExportRulesParams {
   ruleUid?: string;
 }
 
-export interface AlertRuleUpdated {
+export interface AlertGroupUpdated {
   message: string;
   /**
    * UIDs of rules updated from this request
@@ -301,7 +301,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       keepUnusedDataFor: 0,
     }),
     updateRuleGroupForNamespace: build.mutation<
-      AlertRuleUpdated,
+      AlertGroupUpdated,
       { rulerConfig: RulerDataSourceConfig; namespace: string; payload: PostableRulerRuleGroupDTO }
     >({
       query: ({ payload, namespace, rulerConfig }) => {

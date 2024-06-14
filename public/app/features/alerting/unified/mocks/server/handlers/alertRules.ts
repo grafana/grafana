@@ -7,7 +7,7 @@ import {
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from '../../../../../../types/unified-alerting-dto';
-import { AlertRuleUpdated } from '../../../api/alertRuleApi';
+import { AlertGroupUpdated } from '../../../api/alertRuleApi';
 import { grafanaRulerRule, namespaceByUid, namespaces } from '../../alertRuleApi';
 import { HandlerOptions } from '../configure';
 
@@ -55,7 +55,7 @@ export const updateRulerRuleNamespaceHandler = (options?: HandlerOptions) =>
       return new HttpResponse(null, { status: 403 });
     }
 
-    return HttpResponse.json<AlertRuleUpdated>({
+    return HttpResponse.json<AlertGroupUpdated>({
       message: 'updated',
       updated: [],
     });

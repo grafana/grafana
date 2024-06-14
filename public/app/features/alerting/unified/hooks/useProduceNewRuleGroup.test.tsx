@@ -39,6 +39,7 @@ it('should be able to pause a rule', async () => {
   expect(serializedRequest).toMatchSnapshot();
 
   expect(await byText(/success/i).find()).toBeInTheDocument();
+  expect(await byText(/result/i).find()).toBeInTheDocument();
   expect(byText(/error/i).query()).not.toBeInTheDocument();
 });
 
@@ -67,7 +68,7 @@ it('should be able to handle error', async () => {
 
   await userEvent.click(byRole('button').get());
   expect(await byText(/loading/i).find()).toBeInTheDocument();
-  expect(await byText(/success/i).query()).not.toBeInTheDocument();
+  expect(byText(/success/i).query()).not.toBeInTheDocument();
   expect(await byText(/error: oops/i).find()).toBeInTheDocument();
 });
 
@@ -82,8 +83,9 @@ const TestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
   });
   const ruleGroupID = getRuleGroupLocationFromCombinedRule(rule);
 
-  const onClick = () => {
-    pauseRule(ruleGroupID, rulerRule, true);
+  const onClick = async () => {
+    // always handle your errors!
+    pauseRule(ruleGroupID, rulerRule, true).catch(() => {});
   };
 
   return (
@@ -92,6 +94,7 @@ const TestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
       {requestState.isUninitialized && 'uninitialized'}
       {requestState.isLoading && 'loading'}
       {requestState.isSuccess && 'success'}
+      {requestState.result && 'result'}
       {requestState.isError && `error: ${stringifyErrorLike(requestState.error)}`}
     </>
   );
