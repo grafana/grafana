@@ -1,41 +1,49 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps } from '@grafana/scenes';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   Alert,
+  Button,
   Divider,
   Field,
   RadioButtonGroup,
   Spinner,
   Stack,
-  TextLink,
   Text,
-  Button,
+  TextLink,
   useStyles2,
 } from '@grafana/ui';
 import { Input } from '@grafana/ui/src/components/Input/Input';
 import { t } from '@grafana/ui/src/utils/i18n';
 import { Trans } from 'app/core/internationalization';
 
+import { SnapshotSharingOptions } from '../../../../dashboard/services/SnapshotSrv';
 import { getExpireOptions } from '../../ShareSnapshotTab';
-
-import { ShareSnapshot } from './ShareSnapshot';
 
 const SNAPSHOT_URL = 'https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#publish-a-snapshot';
 
-interface Props extends SceneComponentProps<ShareSnapshot> {
-  onCreateClick: (isExternal?: boolean) => void;
+interface Props {
   isLoading: boolean;
+  name: string;
+  selectedExpireOption: SelectableValue<number>;
+  sharingOptions?: SnapshotSharingOptions;
+  onCancelClick: () => void;
+  onCreateClick: (isExternal?: boolean) => void;
+  onNameChange: (v: string) => void;
+  onExpireChange: (v: number) => void;
 }
-export function CreateSnapshot({ model, onCreateClick, isLoading }: Props) {
-  const { snapshotName, selectedExpireOption, dashboardRef, snapshotSharingOptions } = model.useState();
+export function CreateSnapshot({
+  name,
+  onNameChange,
+  onExpireChange,
+  selectedExpireOption,
+  sharingOptions,
+  onCancelClick,
+  onCreateClick,
+  isLoading,
+}: Props) {
   const styles = useStyles2(getStyles);
-
-  const onCancelClick = () => {
-    dashboardRef.resolve().closeModal();
-  };
 
   return (
     <div className={styles.container}>
@@ -53,31 +61,27 @@ export function CreateSnapshot({ model, onCreateClick, isLoading }: Props) {
         </Stack>
       </Alert>
       <Field label={t('snapshot.share.name-label', 'Snapshot name*')}>
-        <Input
-          id="snapshot-name-input"
-          defaultValue={snapshotName}
-          onBlur={(e) => model.onSnasphotNameChange(e.target.value)}
-        />
+        <Input id="snapshot-name-input" defaultValue={name} onBlur={(e) => onNameChange(e.target.value)} />
       </Field>
       <Field label={t('snapshot.share.expiration-label', 'Expires in')}>
         <RadioButtonGroup<number>
           id="expire-select-input"
           options={getExpireOptions()}
           value={selectedExpireOption?.value}
-          onChange={model.onExpireChange}
+          onChange={onExpireChange}
         />
       </Field>
       <Divider />
       <Stack justifyContent="space-between" direction={{ xs: 'column', xl: 'row' }}>
         <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
-          {snapshotSharingOptions?.externalEnabled && (
-            <Button variant="secondary" disabled={isLoading} onClick={() => onCreateClick(true)}>
-              {snapshotSharingOptions?.externalSnapshotName}
-            </Button>
-          )}
           <Button variant="primary" disabled={isLoading} onClick={() => onCreateClick()}>
             <Trans i18nKey="snapshot.share.local-button">Publish snapshot</Trans>
           </Button>
+          {sharingOptions?.externalEnabled && (
+            <Button variant="secondary" disabled={isLoading} onClick={() => onCreateClick(true)}>
+              {sharingOptions?.externalSnapshotName}
+            </Button>
+          )}
           <Button variant="secondary" fill="outline" onClick={onCancelClick}>
             <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
           </Button>

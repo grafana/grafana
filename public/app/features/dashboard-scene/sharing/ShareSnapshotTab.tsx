@@ -49,8 +49,8 @@ const getDefaultExpireOption = () => {
 
 export interface ShareSnapshotTabState extends SceneShareTabState {
   panelRef?: SceneObjectRef<VizPanel>;
-  snapshotName?: string;
-  selectedExpireOption?: SelectableValue<number>;
+  snapshotName: string;
+  selectedExpireOption: SelectableValue<number>;
 
   snapshotSharingOptions?: SnapshotSharingOptions;
 }
@@ -59,7 +59,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
   public tabId = shareDashboardType.snapshot;
   static Component = ShareSnapshotTabRenderer;
 
-  public constructor(state: ShareSnapshotTabState) {
+  public constructor(state: Omit<ShareSnapshotTabState, 'snapshotName' | 'selectedExpireOption'>) {
     super({
       ...state,
       snapshotName: state.dashboardRef.resolve().state.title,

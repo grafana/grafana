@@ -1817,7 +1817,7 @@
       "cancel-button": "Cancel",
       "copy-link-button": "Copy link",
       "delete-button": "Delete snapshot",
-      "delete-description": "Are you sure you want to delete this snapshot? It won’t be longer exist.",
+      "delete-description": "Are you sure you want to delete this snapshot?",
       "delete-title": "Delete snapshot",
       "deleted-alert": "The snapshot has been deleted. It may take up to an hour to clear from browser and CDN caches if already accessed.",
       "expiration-label": "Expires in",

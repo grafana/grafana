@@ -23,12 +23,13 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
   const [showDeletedAlert, setShowDeletedAlert] = useState(false);
   const [step, setStep] = useState(1);
 
+  const { snapshotName, snapshotSharingOptions, selectedExpireOption, dashboardRef } = model.useState();
+
   const [snapshotResult, createSnapshot] = useAsyncFn(async (external = false) => {
     const response = await model.onSnapshotCreate(external);
     setStep(2);
     return response;
   });
-
   const [deleteSnapshotResult, deleteSnapshot] = useAsyncFn(async (url: string) => {
     const response = await model.onSnapshotDelete(url);
     setStep(1);
@@ -37,6 +38,10 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
     return response;
   });
 
+  const onCancelClick = () => {
+    dashboardRef.resolve().closeModal();
+  };
+
   if (showDeleteConfirmation) {
     return (
       <ShareDrawerConfirmAction
@@ -44,10 +49,7 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
         confirmButtonLabel={t('snapshot.share.delete-button', 'Delete snapshot')}
         onConfirm={() => deleteSnapshot(snapshotResult.value?.deleteUrl!)}
         onDismiss={() => setShowDeleteConfirmation(false)}
-        description={t(
-          'snapshot.share.delete-description',
-          'Are you sure you want to delete this snapshot? It won’t be longer exist.'
-        )}
+        description={t('snapshot.share.delete-description', 'Are you sure you want to delete this snapshot?')}
         isActionLoading={deleteSnapshotResult.loading}
       />
     );
@@ -65,7 +67,16 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
               </Trans>
             </Alert>
           )}
-          <CreateSnapshot onCreateClick={createSnapshot} isLoading={snapshotResult.loading} model={model} />
+          <CreateSnapshot
+            name={snapshotName ?? ''}
+            selectedExpireOption={selectedExpireOption}
+            sharingOptions={snapshotSharingOptions}
+            onNameChange={model.onSnasphotNameChange}
+            onCancelClick={onCancelClick}
+            onExpireChange={model.onExpireChange}
+            onCreateClick={createSnapshot}
+            isLoading={snapshotResult.loading}
+          />
         </>
       )}
       {step === 2 && (
