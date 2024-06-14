@@ -44,22 +44,18 @@ export const HistogramTooltip = ({
   const xMinField = series.fields[0];
   const xMaxField = series.fields[1];
 
-  const xMinVal = formattedValueToString(
-    !xMinField.config.unit && xMaxField.config.unit
-      ? xMaxField.display!(xMinField.values[dataIdxs[0]!])
-      : xMinField.display!(xMinField.values[dataIdxs[0]!])
-  );
-  const xMaxVal = formattedValueToString(
-    !xMaxField.config.unit && xMinField.config.unit
-      ? xMinField.display!(xMaxField.values[dataIdxs[1]!])
-      : xMaxField.display!(xMaxField.values[dataIdxs[1]!])
-  );
+  // use the formatter from other bucket bound if none is defined
+  const { display: xMinDisp } = xMinField.config.unit != null ? xMinField : xMaxField;
+  const { display: xMaxDisp } = xMaxField.config.unit != null ? xMaxField : xMinField;
+
+  const xMinVal = formattedValueToString(xMinDisp!(xMinField.values[dataIdxs[0]!]));
+  const xMaxVal = formattedValueToString(xMaxDisp!(xMaxField.values[dataIdxs[1]!]));
 
   const headerItem: VizTooltipItem | null = xMinField.config.custom?.hideFrom?.tooltip
     ? null
     : {
-        label: `Bucket ${xMinVal} - ${xMaxVal}`,
-        value: '',
+        label: 'Bucket',
+        value: `${xMinVal} - ${xMaxVal}`,
       };
 
   const contentItems = useMemo(

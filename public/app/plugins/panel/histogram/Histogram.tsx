@@ -296,8 +296,8 @@ export class Histogram extends React.Component<HistogramProps, State> {
     const { alignedFrame } = props;
 
     const config = withConfig ? prepConfig(alignedFrame, this.props.theme) : this.state.config!;
-    const alignedData = preparePlotData(config, xMinOnlyFrame(alignedFrame));
     const xMinOnly = xMinOnlyFrame(alignedFrame);
+    const alignedData = preparePlotData(config, xMinOnly);
 
     return {
       alignedFrame,
