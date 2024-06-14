@@ -83,12 +83,6 @@ func NewResourceWriter(opts WriterOptions) (ResourceWriter, error) {
 	}, nil
 }
 
-// Internal object with just Type+ObjectMeta
-type dummyObject struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-}
-
 type writeServer struct {
 	log  *slog.Logger
 	opts WriterOptions
@@ -106,7 +100,7 @@ func (s *writeServer) newEvent(ctx context.Context, key *ResourceKey, value, old
 		return nil, ErrUserNotFoundInContext
 	}
 
-	dummy := &dummyObject{}
+	dummy := &metav1.PartialObjectMetadata{}
 	err = json.Unmarshal(value, dummy)
 	if err != nil {
 		return nil, ErrUnableToReadResourceJSON
@@ -162,7 +156,7 @@ func (s *writeServer) newEvent(ctx context.Context, key *ResourceKey, value, old
 
 	// This is an update
 	if oldValue != nil {
-		dummy := &dummyObject{}
+		dummy := &metav1.PartialObjectMetadata{}
 		err = json.Unmarshal(oldValue, dummy)
 		if err != nil {
 			return nil, apierrors.NewBadRequest("error reading old json value")

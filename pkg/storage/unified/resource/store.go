@@ -98,6 +98,20 @@ func (f *fsStore) append(ctx context.Context, event *WriteEvent) (int64, error) 
 	return event.EventID, err
 }
 
+func (f *fsStore) Create(ctx context.Context, req *CreateRequest) (*CreateResponse, error) {
+	return f.writer.Create(ctx, req)
+}
+
+// Update implements ResourceStoreServer.
+func (f *fsStore) Update(ctx context.Context, req *UpdateRequest) (*UpdateResponse, error) {
+	return f.writer.Update(ctx, req)
+}
+
+// Delete implements ResourceStoreServer.
+func (f *fsStore) Delete(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
+	return f.writer.Delete(ctx, req)
+}
+
 // Read implements ResourceStoreServer.
 func (f *fsStore) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
 	rv := req.Key.ResourceVersion
@@ -153,20 +167,6 @@ func (f *fsStore) open(p string) (*fsEvent, error) {
 	evt := &fsEvent{}
 	err = json.Unmarshal(raw, evt)
 	return evt, err
-}
-
-func (f *fsStore) Create(ctx context.Context, req *CreateRequest) (*CreateResponse, error) {
-	return f.writer.Create(ctx, req)
-}
-
-// Update implements ResourceStoreServer.
-func (f *fsStore) Update(ctx context.Context, req *UpdateRequest) (*UpdateResponse, error) {
-	return f.writer.Update(ctx, req)
-}
-
-// Delete implements ResourceStoreServer.
-func (f *fsStore) Delete(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
-	return f.writer.Delete(ctx, req)
 }
 
 // IsHealthy implements ResourceStoreServer.
