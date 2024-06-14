@@ -207,7 +207,15 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return nil, err
 	}
 
-	code, rsp, dur, err := b.peformQuery(ctx, b.client, req, pluginID, pluginUID)
+	client, err := b.client.GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
+		Type: pluginID,
+		UID:  pluginUID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	code, rsp, dur, err := b.peformQuery(ctx, client, req, pluginID, pluginUID)
 	// Create a response object with the error when missing (happens for client errors like 404)
 	if rsp == nil && err != nil {
 		rsp = &backend.QueryDataResponse{Responses: make(backend.Responses)}
@@ -231,17 +239,9 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 	return rsp, err
 }
 
-func (b *QueryAPIBuilder) peformQuery(ctx context.Context, client DataSourceClientSupplier, req datasourceRequest, pluginID, pluginUID string) (int, *backend.QueryDataResponse, time.Duration, error) {
-	cli, err := client.GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
-		Type: pluginID,
-		UID:  pluginUID,
-	})
-	if err != nil {
-		return 0, nil, 0, err
-	}
-
+func (b *QueryAPIBuilder) peformQuery(ctx context.Context, client v0alpha1.QueryDataClient, req datasourceRequest, pluginID, pluginUID string) (int, *backend.QueryDataResponse, time.Duration, error) {
 	startTime := time.Now()
-	code, rsp, err := cli.QueryData(ctx, *req.Request)
+	code, rsp, err := client.QueryData(ctx, *req.Request)
 	elapsedTime := time.Since(startTime)
 	if err == nil && rsp != nil {
 		for _, q := range req.Request.Queries {
@@ -264,7 +264,17 @@ func (b *QueryAPIBuilder) peformQuery(ctx context.Context, client DataSourceClie
 
 // queryDataAndCompare runs the query again, this time from the MT service, and compares the results. All of this happens in a go routine and is non-blocking.
 func (b *QueryAPIBuilder) queryDataAndCompare(ctx context.Context, pluginID string, pluginUID string, req datasourceRequest, stCode int, stRsp *backend.QueryDataResponse, stDuration time.Duration) {
-	mtCode, mtRsp, elapsedTime, err := b.peformQuery(ctx, (*b.passiveModeClient), req, pluginID, pluginUID)
+	client, err := (*b.passiveModeClient).GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
+		Type: pluginID,
+		UID:  pluginUID,
+	})
+	if err != nil {
+		b.log.Error("unable to query", "error", err)
+		return
+	}
+
+	// the original query will likely complete before this query. Do not use the same context so the query can complete.
+	mtCode, mtRsp, elapsedTime, err := b.peformQuery(context.Background(), client, req, pluginID, pluginUID)
 	if err != nil {
 		b.increaseCompare(compareResultError, pluginID)
 		b.log.Error("unable to query", "error", err)
