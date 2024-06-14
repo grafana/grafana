@@ -66,11 +66,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
-  heatmap-panel:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
   configuration-file:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
@@ -188,7 +183,6 @@ ${buildTransformationDocsContent(transformationDocsContent)}
 [Table panel]: ref:table-panel
 [Calculation types]: ref:calculation-types
 [sparkline cell type]: ref:sparkline-cell-type
-[Heatmap panel]: ref:heatmap-panel
 [configuration file]: ref:configuration-file
 [Time series panel]: ref:time-series-panel
 [feature toggle]: ref:feature-toggle

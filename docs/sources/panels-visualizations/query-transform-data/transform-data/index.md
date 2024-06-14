@@ -52,11 +52,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
-  heatmap-panel:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
   configuration-file:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
@@ -1428,11 +1423,6 @@ For each generated **Trend** field value, a calculation function can be selected
 {{< figure src="/static/img/docs/transformations/timeseries-table-select-stat.png" class="docs-image--no-shadow" max-width= "1100px" alt="A select box showing available statistics that can be calculated." >}}
 
 > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify the Grafana [configuration file][] to use it.
-
-### Transpose
-
-Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
-If you have multiple types it will default to string type.
 
 ### Regression analysis
 
