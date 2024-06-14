@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -95,25 +96,28 @@ const (
 	Mode4
 )
 
+// TODO: make this function private as there should only be one public way of setting the dual writing mode
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage) DualWriter {
+func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage, reg prometheus.Registerer) DualWriter {
+	metrics := &dualWriterMetrics{}
+	metrics.init(reg)
 	switch mode {
 	// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
 	// writing to legacy storage without `unifiedStorage` enabled.
 	case Mode1:
 		// read and write only from legacy storage
-		return newDualWriterMode1(legacy, storage)
+		return newDualWriterMode1(legacy, storage, metrics)
 	case Mode2:
 		// write to both, read from storage but use legacy as backup
-		return newDualWriterMode2(legacy, storage)
+		return newDualWriterMode2(legacy, storage, metrics)
 	case Mode3:
 		// write to both, read from storage only
-		return newDualWriterMode3(legacy, storage)
+		return newDualWriterMode3(legacy, storage, metrics)
 	case Mode4:
 		// read and write only from storage
-		return newDualWriterMode4(legacy, storage)
+		return newDualWriterMode4(legacy, storage, metrics)
 	default:
-		return newDualWriterMode1(legacy, storage)
+		return newDualWriterMode1(legacy, storage, metrics)
 	}
 }
 
@@ -142,6 +146,7 @@ func SetDualWritingMode(
 	storage Storage,
 	entity string,
 	desiredMode DualWriterMode,
+	reg prometheus.Registerer,
 ) (DualWriter, error) {
 	toMode := map[string]DualWriterMode{
 		// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
@@ -200,5 +205,5 @@ func SetDualWritingMode(
 
 	// 	#TODO add support for other combinations of desired and current modes
 
-	return NewDualWriter(currentMode, legacy, storage), nil
+	return NewDualWriter(currentMode, legacy, storage, reg), nil
 }
