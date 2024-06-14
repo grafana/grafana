@@ -187,7 +187,6 @@ ${buildTransformationDocsContent(transformationDocsContent)}
 [Time series panel]: ref:time-series-panel
 [feature toggle]: ref:feature-toggle
 [dashboard variable]: ref:dashboard-variable
-[Data frames]: https://grafana.com/developers/plugin-tools/introduction/data-frames/
 `;
 
 function buildTransformationDocsContent(transformationDocsContent: TransformationDocsContentType) {
