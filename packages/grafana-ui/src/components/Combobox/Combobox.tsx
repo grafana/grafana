@@ -1,5 +1,5 @@
 import { useCombobox } from 'downshift';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
