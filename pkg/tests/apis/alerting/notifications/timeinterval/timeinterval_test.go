@@ -138,7 +138,6 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 
 			if tc.canCreate {
 				t.Run("should be able to create time interval", func(t *testing.T) {
-
 					actual, err := client.Create(ctx, expected, v1.CreateOptions{})
 					require.NoErrorf(t, err, "Payload %s", string(d))
 					require.Equal(t, expected.Spec, actual.Spec)
@@ -220,7 +219,6 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 			}
 			if !tc.canUpdate {
 				t.Run("should be forbidden to update time interval", func(t *testing.T) {
-
 					_, err := client.Update(ctx, updatedExpected, v1.UpdateOptions{})
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 
