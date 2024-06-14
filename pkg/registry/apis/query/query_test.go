@@ -70,8 +70,8 @@ func TestPerformComparison(t *testing.T) {
 			},
 		}))
 	})
-
 }
+
 func TestCompareResults(t *testing.T) {
 	r := prometheus.NewRegistry()
 	b := QueryAPIBuilder{
