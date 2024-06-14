@@ -25,7 +25,7 @@ func (c *Cfg) readZanzanaSettings() {
 	validModes := []ZanzanaMode{ZanzanaModeEmbedded, ZanzanaModeClient}
 
 	if slices.Contains(validModes, s.Mode) {
-		c.Logger.Warn("Invalid zanzana mode. It can be any of %v but got %s", validModes, s.Mode)
+		c.Logger.Warn("Invalid zanzana mode", "expected", validModes, "got", s.Mode)
 		s.Mode = "embedded"
 	}
 
