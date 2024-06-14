@@ -51,8 +51,6 @@ type SQLStore struct {
 	tracer                       tracing.Tracer
 	recursiveQueriesAreSupported *bool
 	recursiveQueriesMu           sync.Mutex
-
-	ReadReplica *SQLStore
 }
 
 func ProvideService(cfg *setting.Cfg,
@@ -88,16 +86,6 @@ func ProvideService(cfg *setting.Cfg,
 	// TODO: deprecate/remove these metrics
 	if err := prometheus.Register(newSQLStoreMetrics(db)); err != nil {
 		s.log.Warn("Failed to register sqlstore metrics", "error", err)
-	}
-
-	// Check for the FlagDatabaseReadReplica feature flag, and if found configure the read replica.
-	if features.IsEnabledGlobally(featuremgmt.FlagDatabaseReadReplica) {
-		ReadReplica, err := provideReadOnlyService(cfg, features, bus, tracer)
-		if err != nil {
-			return nil, err
-		} else {
-			s.ReadReplica = ReadReplica
-		}
 	}
 
 	return s, nil

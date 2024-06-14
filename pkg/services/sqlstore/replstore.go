@@ -11,15 +11,52 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// ReplStore is a wrapper around a main SQLStore and a read-only SQLStore. The
+// main SQLStore is anonymous, so the ReplStore may be used directly as a
+// SQLStore.
+type ReplStore struct {
+	*SQLStore
+	repl *SQLStore
+}
+
+// DB returns the main SQLStore.
+func (rs ReplStore) DB() *SQLStore {
+	return rs.SQLStore
+}
+
+// ReadReplica returns the read-only SQLStore. If no read replica is configured,
+// it returns the main SQLStore.
+func (rs ReplStore) ReadReplica() *SQLStore {
+	if rs.repl == nil {
+		return rs.SQLStore
+	}
+	return rs.repl
+}
+
 // provideReadOnlyService creates a new *SQLStore intended for use as a ReadReplica of the main SQLStore.
-func provideReadOnlyService(cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
-	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+func ProvideServiceWithReadReplica(cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator,
+	bus bus.Bus, tracer tracing.Tracer) (*ReplStore, error) {
+
+	// start with an initialized SQLStore
+	ss, err := ProvideService(cfg, features, migrations, bus, tracer)
+	if err != nil {
+		return nil, err
+	}
+	replStore := &ReplStore{ss, nil}
+
+	// FeatureToggle fallback: If the FlagDatabaseReadReplica feature flag is not enabled, return a single SQLStore.
+	if !features.IsEnabledGlobally(featuremgmt.FlagDatabaseReadReplica) {
+		return replStore, nil
+	}
+
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
@@ -38,7 +75,9 @@ func provideReadOnlyService(cfg *setting.Cfg,
 	if err := prometheus.Register(sqlstats.NewStatsCollector("grafana", db)); err != nil {
 		s.log.Warn("Failed to register sqlstore stats collector", "error", err)
 	}
-	return s, nil
+
+	replStore.repl = s
+	return replStore, nil
 }
 
 // newReadOnlySQLStore creates a new *SQLStore intended for use with a
@@ -133,4 +172,13 @@ func NewRODatabaseConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) 
 	}
 
 	return dbCfg, nil
+}
+
+func ProvideServiceWithReadReplicaForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*ReplStore, error) {
+	ss, err := initTestDB(t, cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+	if err != nil {
+		return nil, err
+	}
+	rs, err := newReadOnlySQLStore(cfg, features, ss.bus, ss.tracer)
+	return &ReplStore{ss, rs}, err
 }

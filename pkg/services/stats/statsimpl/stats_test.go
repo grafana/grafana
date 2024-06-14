@@ -33,7 +33,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	store, cfg := db.InitTestDBWithCfg(t)
-	statsService := &sqlStatsService{db: db.DatabaseWithRepl{DB: store}}
+	statsService := &sqlStatsService{db: store}
 	populateDB(t, store, cfg)
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {
@@ -158,7 +158,7 @@ func TestIntegration_GetAdminStats(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	store, cfg := db.InitTestDBWithCfg(t)
-	statsService := ProvideService(cfg, db.DatabaseWithRepl{DB: store})
+	statsService := ProvideService(cfg, store)
 
 	query := stats.GetAdminStatsQuery{}
 	_, err := statsService.GetAdminStats(context.Background(), &query)
