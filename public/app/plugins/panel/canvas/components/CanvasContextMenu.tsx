@@ -8,6 +8,7 @@ import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
+import { findElementByTarget } from 'app/features/canvas/runtime/sceneElementManagement';
 
 import { CanvasPanel } from '../CanvasPanel';
 import { AnchorPoint, LayerActionID } from '../types';
@@ -97,7 +98,7 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
           closeContextMenu();
         };
 
-        const element = scene.findElementByTarget(selectedElements[0]);
+        const element = findElementByTarget(selectedElements[0], scene.root.elements);
         return (
           element &&
           element.item.hasEditMode && (

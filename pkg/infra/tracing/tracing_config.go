@@ -21,6 +21,8 @@ type TracingConfig struct {
 
 	ServiceName    string
 	ServiceVersion string
+
+	ProfilingIntegration bool
 }
 
 func ProvideTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
