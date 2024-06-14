@@ -19,6 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var (
+	testReadReplStore *SQLStore
+)
+
 // ReplStore is a wrapper around a main SQLStore and a read-only SQLStore. The
 // main SQLStore is anonymous, so the ReplStore may be used directly as a
 // SQLStore.
@@ -43,21 +47,18 @@ func (rs ReplStore) ReadReplica() *SQLStore {
 	return rs.repl
 }
 
-// provideReadOnlyService creates a new *SQLStore intended for use as a ReadReplica of the main SQLStore.
-func ProvideServiceWithReadReplica(cfg *setting.Cfg,
+// ProvideServiceWithReadReplica creates a new *SQLStore connection intended for
+// use as a ReadReplica of the main SQLStore. The primary SQLStore must already
+// be initialized.
+func ProvideServiceWithReadReplica(primary *SQLStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator,
 	bus bus.Bus, tracer tracing.Tracer) (*ReplStore, error) {
-
-	// start with an initialized SQLStore
-	ss, err := ProvideService(cfg, features, migrations, bus, tracer)
-	if err != nil {
-		return nil, err
-	}
-	replStore := &ReplStore{ss, nil}
+	// start with the initialized SQLStore
+	replStore := &ReplStore{primary, nil}
 
 	// FeatureToggle fallback: If the FlagDatabaseReadReplica feature flag is not enabled, return a single SQLStore.
 	if !features.IsEnabledGlobally(featuremgmt.FlagDatabaseReadReplica) {
-		ss.log.Debug("ReadReplica feature flag not enabled, using main SQLStore")
+		primary.log.Debug("ReadReplica feature flag not enabled, using main SQLStore")
 		return replStore, nil
 	}
 
@@ -146,12 +147,12 @@ func (ss *SQLStore) initReadOnlyEngine(engine *xorm.Engine) error {
 	engine.SetConnMaxLifetime(time.Second * time.Duration(ss.dbCfg.ConnMaxLifetime))
 
 	// configure sql logging
-	debugSQL := ss.cfg.Raw.Section("database").Key("log_queries").MustBool(false)
+	debugSQL := ss.cfg.Raw.Section("database_replica").Key("log_queries").MustBool(false)
 	if !debugSQL {
 		engine.SetLogger(&xorm.DiscardLogger{})
 	} else {
 		// add stack to database calls to be able to see what repository initiated queries. Top 7 items from the stack as they are likely in the xorm library.
-		engine.SetLogger(NewXormLogger(log.LvlInfo, log.WithSuffix(log.New("sqlstore.xorm"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth))))
+		engine.SetLogger(NewXormLogger(log.LvlInfo, log.WithSuffix(log.New("replsstore.xorm"), log.CallerContextKey, log.StackCaller(log.DefaultCallerDepth))))
 		engine.ShowSQL(true)
 		engine.ShowExecTime(true)
 	}
@@ -178,28 +179,20 @@ func NewRODatabaseConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) 
 	return dbCfg, nil
 }
 
-func ProvideServiceWithReadReplicaForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*ReplStore, error) {
-	ss, err := initTestDB(t, cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
-	if err != nil {
-		return nil, err
-	}
-	rs, err := newReadOnlySQLStore(cfg, features, ss.bus, ss.tracer)
-	return &ReplStore{ss, rs}, err
+// ProvideServiceWithReadReplicaForTests wraps the SQLStore in a ReplStore, with the main sqlstore as both the primary and read replica.
+// TODO: eventually this should be replaced with a more robust test setup which in
+func ProvideServiceWithReadReplicaForTests(testDB *SQLStore, t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*ReplStore, error) {
+	return &ReplStore{testDB, testDB}, nil
 }
 
-// InitTestDB initializes the test DB.
+// InitTestReplDB initializes a test DB and returns it wrapped in a ReplStore with the main SQLStore as both the primary and read replica.
 func InitTestReplDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*ReplStore, *setting.Cfg) {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
 	cfg := getCfgForTesting(opts...)
-
 	ss, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql repl store: %s", err)
 	}
-	rs, err := newReadOnlySQLStore(cfg, features, ss.bus, ss.tracer)
-	if err != nil {
-		t.Fatalf("failed to initialize sql repl store: %s", err)
-	}
-	return &ReplStore{ss, rs}, cfg
+	return &ReplStore{ss, ss}, cfg
 }
