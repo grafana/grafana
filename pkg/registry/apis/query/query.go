@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
@@ -193,10 +195,18 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 	}
 
 	// Add user headers... here or in client.QueryData
-	comparisonReq := req
-	comparisonReq.Request = req.Request.DeepCopy()
 	pluginID := req.PluginId
 	pluginUID := req.UID
+	comparisonReq := datasourceRequest{
+		PluginId: pluginID,
+		UID:      pluginUID,
+		Request: &v0alpha1.QueryDataRequest{
+			TimeRange: req.Request.TimeRange,
+			Queries:   req.Request.Queries,
+			Debug:     req.Request.Debug,
+		},
+		Headers: req.Headers, // TODO: fix this - this currently isn't used
+	}
 
 	var err error
 	ctx, err = b.client.PreprocessRequest(ctx, v0alpha1.DataSourceRef{
@@ -227,13 +237,9 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		}
 	}
 
-	if b.passiveModeClient != nil {
-		// Only compare Loki & Prometheus requests. We do not want to compare all requests
-		// as some datasources have costs attached to queries.
-		if pluginID == datasources.DS_PROMETHEUS || pluginID == datasources.DS_LOKI {
-			b.log.Debug("running passive mode comparison to multi-tenant")
-			go b.queryDataAndCompare(ctx, pluginID, pluginUID, comparisonReq, code, rsp, dur)
-		}
+	if b.peformComparison(req) {
+		b.log.Debug("running passive mode comparison to multi-tenant")
+		go b.queryDataAndCompare(ctx, pluginID, pluginUID, comparisonReq, code, rsp, dur)
 	}
 
 	return rsp, err
@@ -262,6 +268,27 @@ func (b *QueryAPIBuilder) peformQuery(ctx context.Context, client v0alpha1.Query
 	return code, rsp, elapsedTime, err
 }
 
+// peformComparison determines if a comparison check should be made
+func (b *QueryAPIBuilder) peformComparison(req datasourceRequest) bool {
+	// not in passive mode
+	if b.passiveModeClient == nil {
+		return false
+	}
+
+	// do not compare relative requests - they will always be different since they
+	// are served at different times
+	_, err := strconv.ParseInt(req.Request.TimeRange.From, 10, 64)
+	_, err2 := strconv.ParseInt(req.Request.TimeRange.To, 10, 64)
+	if (err != nil) && (err2 != nil) {
+		b.log.Debug("relative query - not running comparison")
+		return false
+	}
+
+	// Only compare Loki & Prometheus requests. We do not want to compare all requests
+	// as some datasources have costs attached to queries.
+	return req.PluginId == datasources.DS_PROMETHEUS || req.PluginId == datasources.DS_LOKI
+}
+
 // queryDataAndCompare runs the query again, this time from the MT service, and compares the results. All of this happens in a go routine and is non-blocking.
 func (b *QueryAPIBuilder) queryDataAndCompare(ctx context.Context, pluginID string, pluginUID string, req datasourceRequest, stCode int, stRsp *backend.QueryDataResponse, stDuration time.Duration) {
 	client, err := (*b.passiveModeClient).GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
@@ -281,14 +308,12 @@ func (b *QueryAPIBuilder) queryDataAndCompare(ctx context.Context, pluginID stri
 		return
 	}
 
-	b.log.Debug("code", "mt", mtCode, "st", stCode)
 	if mtCode != stCode {
 		b.increaseCompare(compareResultError, pluginID)
 		b.log.Error("codes do not match", "got", mtCode, "expected", stCode)
 		return
 	}
 
-	b.log.Debug("responses", "mt", mtRsp.Responses, "st", stRsp.Responses)
 	if mtRsp.Responses != nil {
 		b.compareResults(pluginID, stRsp, mtRsp)
 		// only compare duration if there is a response. Errors will usually be faster.
@@ -296,58 +321,72 @@ func (b *QueryAPIBuilder) queryDataAndCompare(ctx context.Context, pluginID stri
 	}
 }
 
-func (b *QueryAPIBuilder) compareResults(pluginID string, stRsp, mtRsp *backend.QueryDataResponse) {
+func (b *QueryAPIBuilder) compareResults(pluginID string, stRsp, mtRsp *backend.QueryDataResponse) bool {
 	// If the length of both responses is different, we know that
 	// something is not right and can straight up return.
 	if len(stRsp.Responses) != len(mtRsp.Responses) {
+		b.log.Debug("response sizes are different", "expected", len(stRsp.Responses), "got", len(mtRsp.Responses))
 		b.increaseCompare(compareResultDifferent, pluginID)
-		return
+		return false
 	}
 	for k, v := range stRsp.Responses {
 		vv, exists := mtRsp.Responses[k]
 		if !exists {
+			b.log.Debug("key missing", "expected", k, "got", nil)
 			b.increaseCompare(compareResultDifferent, pluginID)
-			return
+			return false
 		}
 		if v.Status.String() != vv.Status.String() {
+			b.log.Debug("status different", "expected", v.Status, "got", vv.Status)
 			b.increaseCompare(compareResultDifferent, pluginID)
-			return
+			return false
 		}
 		if len(v.Frames) != len(vv.Frames) {
+			b.log.Debug("frame length different", "expected", len(v.Frames), "got", len(vv.Frames))
 			b.increaseCompare(compareResultDifferent, pluginID)
-			return
+			return false
 		}
 		for i, frame := range v.Frames {
 			frame2 := vv.Frames[i]
 			if frame.RefID != frame2.RefID {
+				b.log.Debug("refID different", "expected", frame.RefID, "got", frame2.RefID)
 				b.increaseCompare(compareResultDifferent, pluginID)
-				return
+				return false
 			}
 			if frame.Name != frame2.Name {
+				b.log.Debug("frame name different", "expected", frame.Name, "got", frame2.Name)
 				b.increaseCompare(compareResultDifferent, pluginID)
-				return
+				return false
 			}
 			if len(frame.Fields) != len(frame2.Fields) {
+				b.log.Debug("field length different", "expected", len(frame.Fields), "got", len(frame2.Fields))
 				b.increaseCompare(compareResultDifferent, pluginID)
-				return
+				return false
 			}
+
+			sort.Sort(byName(frame.Fields))
+			sort.Sort(byName(frame2.Fields))
 			for i, field := range frame.Fields {
 				field2 := frame2.Fields[i]
 				if field.Name != field2.Name {
+					b.log.Debug("field name different", "expected", field, "got", field2)
 					b.increaseCompare(compareResultDifferent, pluginID)
-					return
+					return false
 				}
 				if !field.Labels.Equals(field2.Labels) {
+					b.log.Debug("field labels different", "expected", field.Labels, "got", field2.Labels)
 					b.increaseCompare(compareResultDifferent, pluginID)
-					return
+					return false
 				}
 				if field.Type().String() != field2.Type().String() {
+					b.log.Debug("field type different", "expected", field.Type().String(), "got", field2.Type().String())
 					b.increaseCompare(compareResultDifferent, pluginID)
-					return
+					return false
 				}
 				if field.Len() != field2.Len() {
+					b.log.Debug("field length different", "expected", field.Len(), "got", field2.Len())
 					b.increaseCompare(compareResultDifferent, pluginID)
-					return
+					return false
 				}
 				// This will give a first good impression - comparing the content of the field / real values
 				// might be tricky as we don't know the type and how to compare them.
@@ -355,7 +394,14 @@ func (b *QueryAPIBuilder) compareResults(pluginID string, stRsp, mtRsp *backend.
 		}
 	}
 	b.increaseCompare(compareResultEqual, pluginID)
+	return true
 }
+
+type byName []*data.Field
+
+func (a byName) Len() int           { return len(a) }
+func (a byName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byName) Less(i, j int) bool { return a[i].Name < a[j].Name }
 
 func (b *QueryAPIBuilder) increaseCompare(result, dsType string) {
 	b.metrics.dsCompare.With(prometheus.Labels{
