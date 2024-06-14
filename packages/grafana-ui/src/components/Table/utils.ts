@@ -141,7 +141,7 @@ export function getColumns(
       id: fieldIndex.toString(),
       field: field,
       Header: fieldTableOptions.hideHeader ? '' : getFieldDisplayName(field, data),
-      accessor: (_row, i) => field.values[i],
+      accessor: (_row, i) => (field.display ? field.display(field.values[i]).text : field.values[i]),
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
@@ -259,6 +259,8 @@ export function rowToFieldValue(row: any, field?: Field): string {
   }
 
   const fieldValue = field.values[row.index];
+
+  console.log('fieldValue', fieldValue);
   const displayValue = field.display ? field.display(fieldValue) : fieldValue;
   const value = field.display ? formattedValueToString(displayValue) : displayValue;
 
