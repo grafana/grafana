@@ -33,6 +33,8 @@ This feature is automatically available in Grafana 10 (and newer) and Grafana Cl
 
 To use the TraceQL query editor in self-hosted Grafana 9.3.2 and older, you need to [enable the `traceqlEditor` feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
 
+To enable streaming on Grafana Cloud using an on-prem Grafana Enterprise Traces instance, the gateway (ngnix) should allow gRPC connections.
+
 ## Write TraceQL queries using the query editor
 
 The Tempo data source’s TraceQL query editor helps you query and display traces from Tempo in **Explore**.
