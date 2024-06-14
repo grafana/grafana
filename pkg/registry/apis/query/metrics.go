@@ -25,8 +25,8 @@ type metrics struct {
 	expressionsQuerySummary *prometheus.SummaryVec
 }
 
-func newMetrics(reg prometheus.Registerer) *metrics {
-	m := &metrics{
+func newQueryMetrics(reg prometheus.Registerer) *queryMetrics {
+	m := &queryMetrics{
 		dsRequests: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubSystem,
