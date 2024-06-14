@@ -20,15 +20,23 @@ type SQLCommand struct {
 	query       string
 	varsToQuery []string
 	refID       string
+	limit       int64
+	engine      sql.Engine
 }
 
 // NewSQLCommand creates a new SQLCommand.
-func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
+func NewSQLCommand(refID, rawSQL string, engine ...sql.Engine) (*SQLCommand, error) {
 	if rawSQL == "" {
 		return nil, errutil.BadRequest("sql-missing-query",
 			errutil.WithPublicMessage("missing SQL query"))
 	}
-	tables, err := sql.TablesList(rawSQL)
+
+	eng := DefaultEngine()
+	if len(engine) > 0 {
+		eng = engine[0]
+	}
+
+	tables, err := sql.TablesList(rawSQL, eng)
 	if err != nil {
 		logger.Warn("invalid sql query", "sql", rawSQL, "error", err)
 		return nil, errutil.BadRequest("sql-invalid-sql",
@@ -45,6 +53,7 @@ func NewSQLCommand(refID, rawSQL string) (*SQLCommand, error) {
 		query:       rawSQL,
 		varsToQuery: tables,
 		refID:       refID,
+		engine:      eng,
 	}, nil
 }
 
@@ -92,13 +101,15 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		allFrames = append(allFrames, frames...)
 	}
 
+	truncated := truncateFrames(allFrames, gr.limit)
+
 	rsp := mathexp.Results{}
 
-	duckDB := duck.NewInMemoryDB()
+	// duckDB := duck.NewInMemoryDB()
 	var frame = &data.Frame{}
 
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
-	err := duckDB.QueryFramesInto(gr.refID, gr.query, allFrames, frame)
+	err := gr.engine.QueryFramesInto(gr.refID, gr.query, allFrames, frame)
 	if err != nil {
 		logger.Error("Failed to query frames", "error", err.Error())
 		rsp.Error = err
@@ -114,6 +125,17 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		}
 	}
 
+	if truncated {
+		if frame.Meta == nil {
+			frame.Meta = &data.FrameMeta{}
+		}
+		notice := data.Notice{
+			Severity: data.NoticeSeverityWarning,
+			Text:     fmt.Sprintf("SQL expression results exceeded limit. Rows truncated to %d", gr.limit),
+		}
+		frame.Meta.Notices = append(frame.Meta.Notices, notice)
+	}
+
 	rsp.Values = mathexp.Values{
 		mathexp.TableData{Frame: frame},
 	}
@@ -123,4 +145,24 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 func (gr *SQLCommand) Type() string {
 	return TypeSQL.String()
+}
+
+func truncateFrames(frames []*data.Frame, limit int64) bool {
+	truncated := false
+	for _, frame := range frames {
+		if frame != nil {
+			if int64(frame.Rows()) > limit {
+				truncated = true
+				for i := int64(frame.Rows()) - 1; i >= limit; i-- {
+					frame.DeleteRow(int(i))
+				}
+			}
+		}
+	}
+	return truncated
+}
+
+func DefaultEngine() sql.Engine {
+	db := duck.NewInMemoryDB()
+	return &db
 }
