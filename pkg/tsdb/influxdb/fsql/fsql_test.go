@@ -119,13 +119,12 @@ func mustQueryJSON(t *testing.T, refID, sql string) []byte {
 	return b
 }
 
-func freeport() (port int, addr string) {
+func freeport() string {
 	l, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("127.0.0.1")})
 	if err != nil {
-		return 0, "err"
+		return "err"
 	}
 	defer l.Close()
 	a := l.Addr().(*net.TCPAddr)
-	port = a.Port
-	return port, a.String()
+	return a.String()
 }
