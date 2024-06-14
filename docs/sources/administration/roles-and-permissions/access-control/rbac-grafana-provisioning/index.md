@@ -91,7 +91,8 @@ roles:
     # <bool> force deletion revoking all grants of the role.
     force: true
   - uid: 'basic_editor'
-    version: 2
+    # <bool> always apply the specified changes to the role, regardless of the role version in the data base
+    overrideRole: true
     global: true
     # <list> list of roles to copy permissions from.
     from:

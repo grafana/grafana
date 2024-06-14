@@ -5,6 +5,7 @@ import (
 )
 
 func addCloudMigrationsMigrations(mg *Migrator) {
+	// v1 - synchronous workflow
 	migrationTable := Table{
 		Name: "cloud_migration",
 		Columns: []*Column{
@@ -63,4 +64,60 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 	mg.AddMigration("Add unique index migration_run_uid", NewAddIndexMigration(migrationRunTable, &Index{
 		Cols: []string{"uid"}, Type: UniqueIndex,
 	}))
+
+	// v2 - asynchronous workflow refactor
+	sessionTable := Table{
+		Name: "cloud_migration_session",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true},
+			{Name: "auth_token", Type: DB_Text, Nullable: true}, // encrypted
+			{Name: "slug", Type: DB_Text},
+			{Name: "stack_id", Type: DB_BigInt, Nullable: false},
+			{Name: "region_slug", Type: DB_Text, Nullable: false},
+			{Name: "cluster_slug", Type: DB_Text, Nullable: false},
+			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"uid"}, Type: UniqueIndex},
+		},
+	}
+	migrationSnapshotTable := Table{
+		Name: "cloud_migration_snapshot",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true},
+			{Name: "session_uid", Type: DB_NVarchar, Length: 40, Nullable: true}, // get from the cloud service
+			{Name: "result", Type: DB_Text, Nullable: false},
+			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
+			{Name: "finished", Type: DB_DateTime, Nullable: true},
+		},
+		Indices: []*Index{
+			{Cols: []string{"uid"}, Type: UniqueIndex},
+		},
+	}
+
+	addTableReplaceMigrations(mg, migrationTable, sessionTable, 2, map[string]string{
+		"id":           "id",
+		"uid":          "uid",
+		"auth_token":   "auth_token",
+		"slug":         "stack",
+		"stack_id":     "stack_id",
+		"region_slug":  "region_slug",
+		"cluster_slug": "cluster_slug",
+		"created":      "created",
+		"updated":      "updated",
+	})
+
+	addTableReplaceMigrations(mg, migrationRunTable, migrationSnapshotTable, 2, map[string]string{
+		"id":          "id",
+		"uid":         "uid",
+		"session_uid": "cloud_migration_uid",
+		"result":      "result",
+		"created":     "created",
+		"updated":     "updated",
+		"finished":    "finished",
+	})
 }
