@@ -4,6 +4,7 @@ import path, { dirname } from 'path';
 import { PluginOptions } from '@grafana/plugin-e2e';
 
 const testDirRoot = 'e2e/plugin-e2e/';
+const e2eDirRoot = 'e2e/';
 
 export default defineConfig<PluginOptions>({
   fullyParallel: true,
@@ -70,5 +71,12 @@ export default defineConfig<PluginOptions>({
       },
       dependencies: ['authenticate'],
     },
+    {
+      name: 'e2e-authentication',
+      testDir: path.join(e2eDirRoot, '/authentication'),
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+    }
   ],
 });

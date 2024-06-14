@@ -798,6 +798,11 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+- commands:
+  - yarn playwright install --with-deps chromium
+  - yarn playwright --project=e2e-authentication
+  image: node:20-bookworm
+  name: playwright-e2e-authentication
 trigger:
   event:
   - pull_request
