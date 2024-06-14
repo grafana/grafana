@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
@@ -181,4 +182,21 @@ func ProvideServiceWithReadReplicaForTests(t sqlutil.ITestDB, cfg *setting.Cfg, 
 	}
 	rs, err := newReadOnlySQLStore(cfg, features, ss.bus, ss.tracer)
 	return &ReplStore{ss, rs}, err
+}
+
+// InitTestDB initializes the test DB.
+func InitTestReplDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*ReplStore, *setting.Cfg) {
+	t.Helper()
+	features := getFeaturesForTesting(opts...)
+	cfg := getCfgForTesting(opts...)
+
+	ss, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features), opts...)
+	if err != nil {
+		t.Fatalf("failed to initialize sql store: %s", err)
+	}
+	rs, err := newReadOnlySQLStore(cfg, features, ss.bus, ss.tracer)
+	if err != nil {
+		t.Fatalf("failed to initialize sql repl store: %s", err)
+	}
+	return &ReplStore{ss, rs}, cfg
 }
