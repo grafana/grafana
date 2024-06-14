@@ -7803,6 +7803,7 @@
     },
     "/reports/render/csvs": {
       "get": {
+        "description": "Available to all users and with a valid license.",
         "produces": [
           "application/zip"
         ],
@@ -7814,8 +7815,11 @@
         "operationId": "renderReportCSVs",
         "parameters": [
           {
-            "type": "string",
-            "name": "dashboardID",
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ReportDashboard"
+            },
+            "name": "dashboards",
             "in": "query"
           },
           {
@@ -7827,6 +7831,9 @@
         "responses": {
           "200": {
             "$ref": "#/responses/contentResponse"
+          },
+          "204": {
+            "$ref": "#/responses/noContentResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -7854,8 +7861,11 @@
         "operationId": "renderReportPDFs",
         "parameters": [
           {
-            "type": "string",
-            "name": "dashboardID",
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ReportDashboard"
+            },
+            "name": "dashboards",
             "in": "query"
           },
           {
@@ -8107,49 +8117,6 @@
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/reports/{id}/csv": {
-      "get": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
-        "produces": [
-          "application/zip"
-        ],
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
-        "summary": "Download a CSV report.",
-        "operationId": "downloadReportCSV",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/contentResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
