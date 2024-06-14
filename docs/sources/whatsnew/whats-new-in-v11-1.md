@@ -70,8 +70,6 @@ To use the new XY chart visualization, you must first enable the `autoMigrateXYC
 
 ## Alerting
 
-<!-- TO DO - Confirm with Alerting folks that everything available in OSS is also available in Enterprise except for Rule specific silences with permissions and Rule specific silences with RBAC-->
-
 ### Re-designed settings page for Alerting
 
 <!-- Gilles De Mey -->
