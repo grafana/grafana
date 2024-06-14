@@ -1487,7 +1487,8 @@
       "public-share-type-option-description": "",
       "public-share-type-option-label": "",
       "resume-access-button": "",
-      "revoke-access-button": ""
+      "revoke-access-button": "",
+      "revoke-access-description": ""
     },
     "sharing": {
       "success-creation": ""
@@ -1594,23 +1595,22 @@
     "dismissable-button": "Schließen"
   },
   "scopes": {
-    "advancedSelector": {
+    "filters": {
       "apply": "",
       "cancel": "",
+      "input": {
+        "placeholder": "",
+        "removeAll": ""
+      },
       "title": ""
-    },
-    "basicSelector": {
-      "openAdvanced": "",
-      "placeholder": "",
-      "removeAll": ""
-    },
-    "root": {
-      "collapse": "",
-      "expand": ""
     },
     "suggestedDashboards": {
       "loading": "",
-      "search": ""
+      "search": "",
+      "toggle": {
+        "collapse": "",
+        "expand": ""
+      }
     },
     "tree": {
       "collapse": "",
@@ -1653,6 +1653,11 @@
       "message": "",
       "more-info": "",
       "title": ""
+    }
+  },
+  "share-drawer": {
+    "confirm-action": {
+      "back-arrow-button": ""
     }
   },
   "share-modal": {
