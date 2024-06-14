@@ -178,7 +178,6 @@ func (esa *ExtSvcAccountsService) SaveExternalService(ctx context.Context, cmd *
 				})
 			}
 		}
-
 	}
 	saID, err := esa.ManageExtSvcAccount(ctx, &sa.ManageExtSvcAccountCmd{
 		ExtSvcSlug:  slug,
