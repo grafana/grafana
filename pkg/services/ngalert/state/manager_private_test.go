@@ -254,7 +254,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 
 			ApplyNoDataAndErrorToAllStates: applyNoDataErrorToAllStates,
 		}
-		st := NewManager(cfg, NewNoopPersister())
+		st := NewManager(cfg, NewNoopPersister(), NewNoopSender())
 
 		tss := make([]time.Time, 0, len(resultsAtTime))
 		for ts, results := range resultsAtTime {

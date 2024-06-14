@@ -384,7 +384,7 @@ func (ng *AlertNG) init() error {
 		ticker := clock.New().Ticker(ng.Cfg.UnifiedAlerting.StatePeriodicSaveInterval)
 		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
 	}
-	stateManager := state.NewManager(cfg, statePersister)
+	stateManager := state.NewManager(cfg, statePersister, alertsRouter)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title

@@ -8,6 +8,10 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -19,9 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // Rule represents a single piece of work that is executed periodically by the ruler.
@@ -323,7 +324,7 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
 				defer cancelFunc()
 				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, key), key, ngmodels.StateReasonRuleDeleted)
-				a.notify(grafanaCtx, key, states)
+				a.sendExpire(grafanaCtx, key, states)
 			}
 			logger.Debug("Stopping alert rule routine")
 			return nil
@@ -337,7 +338,6 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 	evalAttemptFailures := a.metrics.EvalAttemptFailures.WithLabelValues(orgID)
 	evalTotalFailures := a.metrics.EvalFailures.WithLabelValues(orgID)
 	processDuration := a.metrics.ProcessDuration.WithLabelValues(orgID)
-	sendDuration := a.metrics.SendDuration.WithLabelValues(orgID)
 
 	logger := a.logger.FromContext(ctx).New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
 	start := a.clock.Now()
@@ -408,7 +408,7 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 		))
 	}
 	start = a.clock.Now()
-	processedStates := a.stateManager.ProcessEvalResults(
+	_ = a.stateManager.ProcessEvalResults(
 		ctx,
 		e.scheduledAt,
 		e.rule,
@@ -416,22 +416,11 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 		state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !a.disableGrafanaFolder),
 	)
 	processDuration.Observe(a.clock.Now().Sub(start).Seconds())
-
-	start = a.clock.Now()
-	alerts := state.FromStateTransitionToPostableAlerts(processedStates, a.stateManager, a.appURL)
-	span.AddEvent("results processed", trace.WithAttributes(
-		attribute.Int64("state_transitions", int64(len(processedStates))),
-		attribute.Int64("alerts_to_send", int64(len(alerts.PostableAlerts))),
-	))
-	if len(alerts.PostableAlerts) > 0 {
-		a.sender.Send(ctx, key, alerts)
-	}
-	sendDuration.Observe(a.clock.Now().Sub(start).Seconds())
-
 	return nil
 }
 
-func (a *alertRule) notify(ctx context.Context, key ngmodels.AlertRuleKey, states []state.StateTransition) {
+// sendExpire sends alerts to expire all previously firing alerts in the provided state transitions.
+func (a *alertRule) sendExpire(ctx context.Context, key ngmodels.AlertRuleKey, states []state.StateTransition) {
 	expiredAlerts := state.FromAlertsStateToStoppedAlert(states, a.appURL, a.clock)
 	if len(expiredAlerts.PostableAlerts) > 0 {
 		a.sender.Send(ctx, key, expiredAlerts)
@@ -445,7 +434,7 @@ func (a *alertRule) resetState(ctx context.Context, key ngmodels.AlertRuleKey, i
 		reason = ngmodels.StateReasonPaused
 	}
 	states := a.stateManager.ResetStateByRuleUID(ctx, rule, reason)
-	a.notify(ctx, key, states)
+	a.sendExpire(ctx, key, states)
 }
 
 // evalApplied is only used on tests.

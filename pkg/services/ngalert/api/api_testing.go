@@ -104,7 +104,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		Tracer:        srv.tracer,
 		Log:           log.New("ngalert.state.manager"),
 	}
-	manager := state.NewManager(cfg, state.NewNoopPersister())
+	manager := state.NewManager(cfg, state.NewNoopPersister(), state.NewNoopSender())
 	includeFolder := !srv.cfg.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel)
 	transitions := manager.ProcessEvalResults(
 		c.Req.Context(),

@@ -208,7 +208,7 @@ func TestWarmStateCache(t *testing.T) {
 		Tracer:        tracing.InitializeTracerForTest(),
 		Log:           log.New("ngalert.state.manager"),
 	}
-	st := state.NewManager(cfg, state.NewNoopPersister())
+	st := state.NewManager(cfg, state.NewNoopPersister(), state.NewNoopSender())
 	st.Warm(ctx, dbstore)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
@@ -246,7 +246,7 @@ func TestDashboardAnnotations(t *testing.T) {
 		Tracer:        tracing.InitializeTracerForTest(),
 		Log:           log.New("ngalert.state.manager"),
 	}
-	st := state.NewManager(cfg, state.NewNoopPersister())
+	st := state.NewManager(cfg, state.NewNoopPersister(), state.NewNoopSender())
 
 	const mainOrgID int64 = 1
 
@@ -1290,7 +1290,7 @@ func TestProcessEvalResults(t *testing.T) {
 				Tracer:        tracing.InitializeTracerForTest(),
 				Log:           log.New("ngalert.state.manager"),
 			}
-			st := state.NewManager(cfg, state.NewNoopPersister())
+			st := state.NewManager(cfg, state.NewNoopPersister(), state.NewNoopSender())
 
 			evals := make([]time.Time, 0, len(tc.evalResults))
 			for evalTime := range tc.evalResults {
@@ -1392,7 +1392,7 @@ func TestProcessEvalResults(t *testing.T) {
 			MaxStateSaveConcurrency: 1,
 		}
 		statePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.persist"), cfg)
-		st := state.NewManager(cfg, statePersister)
+		st := state.NewManager(cfg, statePersister, state.NewNoopSender())
 		rule := models.RuleGen.GenerateRef()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
@@ -1541,7 +1541,7 @@ func TestStaleResultsHandler(t *testing.T) {
 			Tracer:        tracing.InitializeTracerForTest(),
 			Log:           log.New("ngalert.state.manager"),
 		}
-		st := state.NewManager(cfg, state.NewNoopPersister())
+		st := state.NewManager(cfg, state.NewNoopPersister(), state.NewNoopSender())
 		st.Warm(ctx, dbstore)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
@@ -1621,7 +1621,7 @@ func TestStaleResults(t *testing.T) {
 		Tracer:        tracing.InitializeTracerForTest(),
 		Log:           log.New("ngalert.state.manager"),
 	}
-	st := state.NewManager(cfg, state.NewNoopPersister())
+	st := state.NewManager(cfg, state.NewNoopPersister(), state.NewNoopSender())
 
 	gen := models.RuleGen
 	rule := gen.With(gen.WithFor(0)).GenerateRef()
@@ -1795,7 +1795,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 				Tracer:        tracing.InitializeTracerForTest(),
 				Log:           log.New("ngalert.state.manager"),
 			}
-			st := state.NewManager(cfg, state.NewNoopPersister())
+			st := state.NewManager(cfg, state.NewNoopPersister(), state.NewNoopSender())
 			st.Warm(ctx, dbstore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := dbstore.ListAlertInstances(ctx, q)
@@ -1936,7 +1936,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 				Tracer:        tracing.InitializeTracerForTest(),
 				Log:           log.New("ngalert.state.manager"),
 			}
-			st := state.NewManager(cfg, state.NewNoopPersister())
+			st := state.NewManager(cfg, state.NewNoopPersister(), state.NewNoopSender())
 			st.Warm(ctx, dbstore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := dbstore.ListAlertInstances(ctx, q)

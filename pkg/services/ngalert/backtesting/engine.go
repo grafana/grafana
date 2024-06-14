@@ -58,7 +58,7 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracin
 				Tracer:        tracer,
 				Log:           log.New("ngalert.state.manager"),
 			}
-			return state.NewManager(cfg, state.NewNoopPersister())
+			return state.NewManager(cfg, state.NewNoopPersister(), state.NewNoopSender())
 		},
 	}
 }
