@@ -1,9 +1,13 @@
 package rest
 
 import (
+	"bytes"
 	"context"
+	"crypto/md5"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/prometheus/client_golang/prometheus"
@@ -35,8 +39,6 @@ type Storage interface {
 	rest.CreaterUpdater
 	rest.GracefulDeleter
 	rest.CollectionDeleter
-	// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
-	Compare(storageObj, legacyObj runtime.Object) bool
 }
 
 // LegacyStorage is a storage implementation that writes to the Grafana SQL database.
@@ -206,4 +208,76 @@ func SetDualWritingMode(
 	// 	#TODO add support for other combinations of desired and current modes
 
 	return NewDualWriter(currentMode, legacy, storage, reg), nil
+}
+
+var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructuredConverter)
+
+// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
+func Compare(storageObj, legacyObj runtime.Object) bool {
+	return bytes.Equal(hashUnstructuredObjToCompare(storageObj), hashUnstructuredObjToCompare(legacyObj))
+}
+
+func hashUnstructuredObjToCompare(obj runtime.Object) []byte {
+	cpy := obj.DeepCopyObject()
+	unstObj, err := defaultConverter.ToUnstructured(cpy)
+	if err != nil {
+		return nil
+	}
+	// we don't want to compare meta fields
+	delete(unstObj, "meta")
+	ordered := sortedUnstructeredMap(unstObj)
+	h := md5.New()
+	if err := json.NewEncoder(h).Encode(ordered); err != nil {
+		return nil
+	}
+	return h.Sum(nil)
+}
+
+type kv struct {
+	Key   string
+	Value any
+}
+
+func sortedUnstructeredMap(obj map[string]any) []kv {
+	ret := make([]kv, 0, len(obj))
+
+	for k, v := range obj {
+		item := kv{
+			Key: k,
+		}
+
+		switch t := v.(type) {
+		case map[string]any:
+			item.Value = sortedUnstructeredMap(t)
+		case []any:
+			item.Value = sortedUnstructuredSlice(t)
+		default:
+			item.Value = v
+		}
+
+		ret = append(ret, item)
+	}
+
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].Key < ret[j].Key
+	})
+
+	return ret
+}
+
+func sortedUnstructuredSlice(sl []any) []any {
+	ret := make([]any, len(sl))
+	for i, v := range sl {
+		switch vv := v.(type) {
+		case map[string]any:
+			ret[i] = sortedUnstructeredMap(vv)
+		case []any:
+			ret[i] = sortedUnstructuredSlice(vv)
+		default:
+			ret[i] = v
+		}
+
+	}
+
+	return ret
 }

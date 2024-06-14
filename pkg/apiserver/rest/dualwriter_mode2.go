@@ -307,7 +307,7 @@ func (d *DualWriterMode2) ConvertToTable(ctx context.Context, object runtime.Obj
 }
 
 func (d *DualWriterMode2) Compare(storageObj, legacyObj runtime.Object) bool {
-	return d.Storage.Compare(storageObj, legacyObj)
+	return Compare(storageObj, legacyObj)
 }
 
 func parseList(legacyList []runtime.Object) (metainternalversion.ListOptions, map[string]int, error) {

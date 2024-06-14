@@ -85,5 +85,5 @@ func (d *DualWriterMode4) ConvertToTable(ctx context.Context, object runtime.Obj
 }
 
 func (d *DualWriterMode4) Compare(storageObj, legacyObj runtime.Object) bool {
-	return d.Storage.Compare(storageObj, legacyObj)
+	return Compare(storageObj, legacyObj)
 }
