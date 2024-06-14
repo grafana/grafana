@@ -16,7 +16,8 @@ import React, { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
+import { EmptyState, Icon, LoadingBar, styleMixins, useStyles2 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
 import { t } from 'app/core/internationalization';
 
 import { KBarResults } from './KBarResults';
@@ -151,7 +152,8 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
     positioner: css({
       zIndex: theme.zIndex.portal,
       marginTop: '0px',
-      paddingTop: '4px !important',
+      justifyContent: 'flex-end !important',
+      padding: '0 187px 0 0 !important',
       '&::before': {
         content: '""',
         position: 'fixed',
@@ -164,7 +166,7 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       },
     }),
     animator: css({
-      maxWidth: theme.breakpoints.values.md,
+      maxWidth: theme.breakpoints.values.lg,
       width: '100%',
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
@@ -185,8 +187,11 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       gap: theme.spacing(1),
-      padding: theme.spacing(1, 2),
+      padding: theme.spacing(0.5),
+      borderRadius: theme.shape.radius.default,
       position: 'relative',
+      margin: theme.spacing(1),
+      ...styleMixins.getFocusStyles(theme),
     }),
     search: css({
       fontSize: theme.typography.fontSize,
