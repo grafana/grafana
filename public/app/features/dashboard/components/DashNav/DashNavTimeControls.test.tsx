@@ -66,4 +66,20 @@ describe('DashNavTimeControls', () => {
     );
     expect(container.queryByLabelText(/Refresh dashboard/i)).toBeInTheDocument();
   });
+
+  it('should render RefreshPicker in dashboard when timepicker is disabled', () => {
+    dashboardModel.timepicker = { hidden: true }
+    const container = render(
+      <DashNavTimeControls dashboard={dashboardModel} onChangeTimeZone={jest.fn()} key="time-controls" />
+    );
+    expect(container.queryByLabelText(/Refresh dashboard/i)).toBeInTheDocument();
+  });
+
+  it('should not render TimePickerWithHistory in dashboard when timepicker is disabled', () => {
+    dashboardModel.timepicker = { hidden: true }
+    const container = render(
+      <DashNavTimeControls dashboard={dashboardModel} onChangeTimeZone={jest.fn()} key="time-controls" />
+    );
+    expect(container.queryByLabelText(/Time range selected/i)).toBeFalsy();
+  });
 });
