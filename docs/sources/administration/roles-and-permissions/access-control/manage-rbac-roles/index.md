@@ -270,13 +270,14 @@ You cannot modify the `No Basic Role` permissions.
 
 1. Refer to the following table to add attributes and values.
 
-   | Attribute             | Description                                                                                                                               |
-   | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-   | `name`                | The name of the basic role you want to update. You can specify a `uid` instead of a role name. The role `name` or the `uid` are required. |
-   | `orgId`               | Identifies the organization to which the role belongs. `global` can be used instead to specify it's a global role.                        |
-   | `version`             | Identifies the version of the role, which prevents overwriting newer changes.                                                             |
-   | `from`                | List of roles from which to copy permissions.                                                                                             |
-   | `permissions > state` | The state of the permission. You can set it to `absent` to ensure it exclusion from the copy list.                                        |
+   | Attribute             | Description                                                                                                                                               |
+   | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `name`                | The name of the basic role you want to update. You can specify a `uid` instead of a role name. The role `name` or the `uid` are required.                 |
+   | `orgId`               | Identifies the organization to which the role belongs. `global` can be used instead to specify it's a global role.                                        |
+   | `version`             | Identifies the version of the role, which prevents overwriting newer changes.                                                                             |
+   | `overrideRole`        | If set to true, role will be updated regardless of its version in the database. There is no need to specify `version` if `overrideRole` is set to `true`. |
+   | `from`                | List of roles from which to copy permissions.                                                                                                             |
+   | `permissions > state` | The state of the permission. You can set it to `absent` to ensure it exclusion from the copy list.                                                        |
 
 1. Reload the provisioning configuration file.
 
