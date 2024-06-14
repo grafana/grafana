@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -18,10 +18,16 @@ export function RecentlyDeletedActions() {
   const styles = useStyles2(getStyles);
 
   const dispatch = useDispatch();
-  const selectedItems = useActionSelectionState();
+  const selectedItemsState = useActionSelectionState();
   const [, stateManager] = useRecentlyDeletedStateManager();
 
   const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
+
+  const selectedDashboards = useMemo(() => {
+    return Object.entries(selectedItemsState.dashboard)
+      .filter(([_, selected]) => selected)
+      .map(([uid]) => uid);
+  }, [selectedItemsState.dashboard]);
 
   const onActionComplete = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
@@ -30,21 +36,18 @@ export function RecentlyDeletedActions() {
   };
 
   const onRestore = async () => {
-    const promises = Object.entries(selectedItems.dashboard)
-      .filter(([_, selected]) => selected)
-      .map(([uid]) => restoreDashboard({ dashboardUID: uid }));
+    const promises = selectedDashboards.map((uid) => restoreDashboard({ dashboardUID: uid }));
+
     await Promise.all(promises);
     onActionComplete();
   };
 
   const showRestoreModal = () => {
-    //TODO: Modal doesn't open
     appEvents.publish(
       new ShowModalReactEvent({
         component: RestoreModal,
         props: {
-          //TODO: review the following
-          selectedItems,
+          selectedDashboards,
           onConfirm: onRestore,
           isLoading: isRestoreLoading,
         },
@@ -53,11 +56,13 @@ export function RecentlyDeletedActions() {
   };
 
   const showDeleteModal = () => {
+    //TODO: Modal doesn't open
     appEvents.publish(
       new ShowModalReactEvent({
         component: PermanentlyDeleteModal,
         props: {
-          selectedItems,
+          //TODO: review the following
+          selectedDashboards,
           onConfirm: onRestore,
           isLoading: isRestoreLoading,
         },
