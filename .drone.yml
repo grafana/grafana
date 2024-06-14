@@ -800,9 +800,14 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - yarn playwright install --with-deps chromium
-  - yarn playwright --project=e2e-authentication
+  - yarn playwright test --project=e2e-authentication
   image: node:20-bookworm
   name: playwright-e2e-authentication
+  depends_on:
+    - yarn-install
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 trigger:
   event:
   - pull_request
