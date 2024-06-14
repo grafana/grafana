@@ -22,7 +22,7 @@ export enum QueryTemplateKinds {
  *
  * @alpha
  */
-export const BASE_URL = `/apis/${API_VERSION}/namespaces/ephemeral1511182188258gelicia/querytemplates/`;
+export const BASE_URL = `/apis/${API_VERSION}/namespaces/default/querytemplates/`;
 
 /**
  * TODO: similar code is duplicated in many places. To be unified in #86960
