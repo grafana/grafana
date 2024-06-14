@@ -191,9 +191,11 @@ function getUrlStateForComparison(trail: DataTrail) {
   const urlState = getUrlSyncManager().getUrlState(trail);
   // Make a few corrections
 
-  // Omit some URL parameters that are not useful for state comparison
+  // Omit some URL parameters that are not useful for state comparison,
+  // as they can change in the URL without creating new steps
   delete urlState.actionView;
   delete urlState.layout;
+  delete urlState.metricSearch;
 
   // Populate defaults
   if (urlState['var-groupby'] === '') {
