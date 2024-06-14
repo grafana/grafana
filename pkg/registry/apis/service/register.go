@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ builder.APIGroupBuilder = (*ServiceAPIBuilder)(nil)
@@ -27,7 +26,7 @@ func NewServiceAPIBuilder() *ServiceAPIBuilder {
 	return &ServiceAPIBuilder{}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, registerer prometheus.Registerer) *ServiceAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *ServiceAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
 		return nil // skip registration unless opting into aggregator mode
 	}
@@ -80,7 +79,6 @@ func (b *ServiceAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
 	_ grafanarest.DualWriterMode,
-	_ prometheus.Registerer,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(service.GROUP, scheme, metav1.ParameterCodec, codecs)
 

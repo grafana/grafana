@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -30,7 +29,6 @@ type APIGroupBuilder interface {
 		codecs serializer.CodecFactory,
 		optsGetter generic.RESTOptionsGetter,
 		desiredMode grafanarest.DualWriterMode,
-		reg prometheus.Registerer,
 	) (*genericapiserver.APIGroupInfo, error)
 
 	// Get OpenAPI definitions

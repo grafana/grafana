@@ -15,7 +15,7 @@ type MetricsOptions struct {
 	MetricsRegisterer prometheus.Registerer
 }
 
-func NewMetricsOptions(logger log.Logger) *MetricsOptions {
+func NewMetrcicsOptions(logger log.Logger) *MetricsOptions {
 	return &MetricsOptions{
 		logger: logger,
 	}

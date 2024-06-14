@@ -9,15 +9,15 @@ const (
 	metricsNamespace = "grafana"
 )
 
-type queryMetrics struct {
+type metrics struct {
 	dsRequests *prometheus.CounterVec
 
 	// older metric
 	expressionsQuerySummary *prometheus.SummaryVec
 }
 
-func newQueryMetrics(reg prometheus.Registerer) *queryMetrics {
-	m := &queryMetrics{
+func newMetrics(reg prometheus.Registerer) *metrics {
+	m := &metrics{
 		dsRequests: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubSystem,

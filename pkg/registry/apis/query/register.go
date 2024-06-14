@@ -42,7 +42,7 @@ type QueryAPIBuilder struct {
 	features               featuremgmt.FeatureToggles
 
 	tracer     tracing.Tracer
-	metrics    *queryMetrics
+	metrics    *metrics
 	parser     *queryParser
 	client     DataSourceClientSupplier
 	registry   query.DataSourceApiServerRegistry
@@ -81,7 +81,7 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 		client:               client,
 		registry:             registry,
 		parser:               newQueryParser(reader, legacy, tracer),
-		metrics:              newQueryMetrics(registerer),
+		metrics:              newMetrics(registerer),
 		tracer:               tracer,
 		features:             features,
 		queryTypes:           queryTypes,
@@ -151,7 +151,6 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 	_ grafanarest.DualWriterMode,
-	_ prometheus.Registerer,
 ) (*genericapiserver.APIGroupInfo, error) {
 	gv := query.SchemeGroupVersion
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(gv.Group, scheme, metav1.ParameterCodec, codecs)

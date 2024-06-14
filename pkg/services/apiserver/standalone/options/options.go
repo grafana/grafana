@@ -25,7 +25,7 @@ func New(logger log.Logger, codec runtime.Codec) *Options {
 		ExtraOptions:       options.NewExtraOptions(),
 		RecommendedOptions: options.NewRecommendedOptions(codec),
 		TracingOptions:     NewTracingOptions(logger),
-		MetricsOptions:     NewMetricsOptions(logger),
+		MetricsOptions:     NewMetrcicsOptions(logger),
 		ServerRunOptions:   genericoptions.NewServerRunOptions(),
 		StorageOptions:     options.NewStorageOptions(),
 	}

@@ -23,7 +23,6 @@ import (
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ builder.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
@@ -40,14 +39,12 @@ func RegisterAPIService(p playlistsvc.Service,
 	apiregistration builder.APIRegistrar,
 	cfg *setting.Cfg,
 	kvStore kvstore.KVStore,
-	registerer prometheus.Registerer,
 ) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
 		service:    p,
 		namespacer: request.GetNamespaceMapper(cfg),
 		gv:         playlist.PlaylistResourceInfo.GroupVersion(),
 		kvStore:    kvstore.WithNamespace(kvStore, 0, "storage.dualwriting"),
-		// register:  newMetrics(registerer),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -97,7 +94,6 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 	desiredMode grafanarest.DualWriterMode,
-	reg prometheus.Registerer,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(playlist.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
@@ -137,7 +133,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 			return nil, err
 		}
 
-		dualWriter, err := grafanarest.SetDualWritingMode(context.Background(), b.kvStore, legacyStore, store, playlist.GROUPRESOURCE, desiredMode, reg)
+		dualWriter, err := grafanarest.SetDualWritingMode(context.Background(), b.kvStore, legacyStore, store, playlist.GROUPRESOURCE, desiredMode)
 		if err != nil {
 			return nil, err
 		}
