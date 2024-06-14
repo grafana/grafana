@@ -10,7 +10,7 @@ const getEnvConfig = () => {
     ? readFileSync(`./conf/custom.ini`, {
         encoding: 'utf-8',
       })
-    : {};
+    : '';
 
   const defaults = parse(defaultSettings);
   const custom = parse(customSettings);
