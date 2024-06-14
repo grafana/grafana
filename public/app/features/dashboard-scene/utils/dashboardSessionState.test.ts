@@ -1,5 +1,5 @@
 import { config, locationService } from '@grafana/runtime';
-import { CustomVariable } from '@grafana/scenes';
+import { CustomVariable, getUrlSyncManager } from '@grafana/scenes';
 import { DashboardDataDTO } from 'app/types';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -50,7 +50,8 @@ describe('dashboardSessionState', () => {
       restoreDashboardStateFromLocalStorage(scene);
       const variable = scene.state.$variables!.getByName('customVar') as CustomVariable;
       const timeRange = scene.state.$timeRange;
-      scene.startUrlSync();
+
+      getUrlSyncManager().initSync(scene);
 
       expect(variable!.state!.value).toEqual(['b']);
       expect(variable!.state!.text).toEqual(['b']);
@@ -63,11 +64,12 @@ describe('dashboardSessionState', () => {
         PRESERVED_SCENE_STATE_KEY,
         '?var-customVar=b&var-nonApplicableVar=b&from=now-5m&to=now&timezone=browser'
       );
+
       const scene = buildTestScene();
 
       restoreDashboardStateFromLocalStorage(scene);
 
-      expect(locationService.getSearch().toString()).toBe('var-customVar=b&from=now-5m&to=now&timezone=browser');
+      expect(locationService.getLocation().search).toBe('?var-customVar=b&from=now-5m&to=now&timezone=browser');
     });
 
     // handles case when user navigates back to a dashboard with the same state, i.e. using back button
@@ -79,7 +81,7 @@ describe('dashboardSessionState', () => {
 
       restoreDashboardStateFromLocalStorage(scene);
 
-      expect(locationService.getSearch().toString()).toBe('var-customVar=b&from=now-6h&to=now&timezone=browser');
+      expect(locationService.getLocation().search).toBe('?var-customVar=b&from=now-6h&to=now&timezone=browser');
     });
   });
 });
@@ -116,6 +118,7 @@ function buildTestScene() {
     version: 24,
     weekStart: '',
   };
+
   const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
 
   // Removing data layers to avoid mocking built-in Grafana data source

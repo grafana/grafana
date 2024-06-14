@@ -196,31 +196,11 @@
         },
         "description": "(empty)"
       },
-      "cloudMigrationListResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/CloudMigrationListResponse"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "cloudMigrationResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/CloudMigrationResponse"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
       "cloudMigrationRunListResponse": {
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/CloudMigrationRunList"
+              "$ref": "#/components/schemas/SnapshotListDTO"
             }
           }
         },
@@ -231,6 +211,26 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/MigrateDataResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationSessionListResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CloudMigrationSessionListResponseDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "cloudMigrationSessionResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CloudMigrationSessionResponseDTO"
             }
           }
         },
@@ -3683,18 +3683,18 @@
         },
         "type": "object"
       },
-      "CloudMigrationListResponse": {
+      "CloudMigrationSessionListResponseDTO": {
         "properties": {
-          "migrations": {
+          "sessions": {
             "items": {
-              "$ref": "#/components/schemas/CloudMigrationResponse"
+              "$ref": "#/components/schemas/CloudMigrationSessionResponseDTO"
             },
             "type": "array"
           }
         },
         "type": "object"
       },
-      "CloudMigrationRequest": {
+      "CloudMigrationSessionRequestDTO": {
         "properties": {
           "authToken": {
             "type": "string"
@@ -3702,13 +3702,13 @@
         },
         "type": "object"
       },
-      "CloudMigrationResponse": {
+      "CloudMigrationSessionResponseDTO": {
         "properties": {
           "created": {
             "format": "date-time",
             "type": "string"
           },
-          "stack": {
+          "slug": {
             "type": "string"
           },
           "uid": {
@@ -3717,17 +3717,6 @@
           "updated": {
             "format": "date-time",
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "CloudMigrationRunList": {
-        "properties": {
-          "runs": {
-            "items": {
-              "$ref": "#/components/schemas/MigrateDataResponseListDTO"
-            },
-            "type": "array"
           }
         },
         "type": "object"
@@ -9739,6 +9728,32 @@
         },
         "type": "object"
       },
+      "SearchDTO": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "basicRole": {
+            "type": "string"
+          },
+          "onlyRoles": {
+            "type": "boolean"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "SearchDeviceQueryResult": {
         "properties": {
           "devices": {
@@ -10312,6 +10327,17 @@
       "SmtpNotEnabled": {
         "$ref": "#/components/schemas/ResponseDetails"
       },
+      "SnapshotListDTO": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/MigrateDataResponseListDTO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "Span": {
         "properties": {
           "Length": {
@@ -10329,6 +10355,7 @@
         "type": "object"
       },
       "State": {
+        "description": "+enum",
         "type": "string"
       },
       "Status": {
@@ -11088,6 +11115,7 @@
         "type": "array"
       },
       "Type": {
+        "description": "+enum",
         "type": "string"
       },
       "TypeMeta": {
@@ -15096,10 +15124,10 @@
     },
     "/cloudmigration/migration": {
       "get": {
-        "operationId": "getMigrationList",
+        "operationId": "getSessionList",
         "responses": {
           "200": {
-            "$ref": "#/components/responses/cloudMigrationListResponse"
+            "$ref": "#/components/responses/cloudMigrationSessionListResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
@@ -15111,18 +15139,18 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get a list of all cloud migrations.",
+        "summary": "Get a list of all cloud migration sessions that have been created.",
         "tags": [
           "migrations"
         ]
       },
       "post": {
-        "operationId": "createMigration",
+        "operationId": "createSession",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CloudMigrationRequest"
+                "$ref": "#/components/schemas/CloudMigrationSessionRequestDTO"
               }
             }
           },
@@ -15131,7 +15159,7 @@
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/cloudMigrationResponse"
+            "$ref": "#/components/responses/cloudMigrationSessionResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
@@ -15143,7 +15171,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Create a migration.",
+        "summary": "Create a migration session.",
         "tags": [
           "migrations"
         ]
@@ -15185,10 +15213,10 @@
     },
     "/cloudmigration/migration/{uid}": {
       "delete": {
-        "operationId": "deleteCloudMigration",
+        "operationId": "deleteSession",
         "parameters": [
           {
-            "description": "UID of a migration",
+            "description": "UID of a migration session",
             "in": "path",
             "name": "uid",
             "required": true,
@@ -15208,17 +15236,16 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Delete a migration.",
+        "summary": "Delete a migration session by its uid.",
         "tags": [
           "migrations"
         ]
       },
       "get": {
-        "description": "It returns migrations that has been created.",
-        "operationId": "getCloudMigration",
+        "operationId": "getSession",
         "parameters": [
           {
-            "description": "UID of a migration",
+            "description": "UID of a migration session",
             "in": "path",
             "name": "uid",
             "required": true,
@@ -15229,7 +15256,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/cloudMigrationResponse"
+            "$ref": "#/components/responses/cloudMigrationSessionResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
@@ -15241,7 +15268,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get a cloud migration.",
+        "summary": "Get a cloud migration session by its uid.",
         "tags": [
           "migrations"
         ]
