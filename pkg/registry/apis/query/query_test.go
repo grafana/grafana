@@ -77,7 +77,7 @@ func TestCompareResults(t *testing.T) {
 	b := QueryAPIBuilder{
 		log:     log.New(),
 		tracer:  tracing.InitializeTracerForTest(),
-		metrics: newMetrics(r),
+		metrics: newQueryMetrics(r),
 	}
 
 	prometheusResp := backend.QueryDataResponse{
