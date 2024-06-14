@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { contextSrv } from 'app/core/core';
 import { EmailSharingPricingAlert } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/EmailSharingPricingAlert';
 import { UnsupportedDataSourcesAlert } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/UnsupportedDataSourcesAlert';
