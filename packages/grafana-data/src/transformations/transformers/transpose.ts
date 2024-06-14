@@ -100,21 +100,29 @@ function determineFieldType(fieldTypes: FieldType[]): FieldType {
   return FieldType.string;
 }
 
-function convertValueToString(originalFieldType: FieldType, value: any): string {
-  switch (originalFieldType) {
-    case FieldType.string:
+function convertValueToString(originalFieldType: FieldType, value: unknown): string {
+  switch (typeof value) {
+    case 'string':
       return value;
-    case FieldType.boolean:
+    case 'boolean':
       return value ? 'true' : 'false';
-    case FieldType.number:
+    case 'number':
       return value.toString();
-    case FieldType.time:
-      return value.toString();
-    case FieldType.other:
-      return JSON.stringify(value);
-    case FieldType.frame:
-      return value.name;
+    case 'object':
+      if (Array.isArray(value)) {
+        return JSON.stringify(value);
+      } else if (value instanceof Date) {
+        return value.toString();
+      } else if (value === null) {
+        return 'null';
+      } else if (originalFieldType === FieldType.frame) {
+        return JSON.stringify(value);
+      } else if (originalFieldType === FieldType.enum) {
+        return value.toString();
+      } else {
+        return JSON.stringify(value);
+      }
     default:
-      return value.toString();
+      return '';
   }
 }
