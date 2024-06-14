@@ -498,7 +498,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			api := PrometheusSrv{
 				log:     log.NewNopLogger(),
 				manager: fakeAIM,
-				sch:     fakeSch,
+				status:  fakeSch,
 				store:   ruleStore,
 				authz:   &fakeRuleAccessControlService{},
 			}
@@ -560,7 +560,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		api := PrometheusSrv{
 			log:     log.NewNopLogger(),
 			manager: fakeAIM,
-			sch:     newFakeSchedulerReader(t).setupStates(fakeAIM),
+			status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
 			store:   ruleStore,
 			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
 		}
@@ -676,7 +676,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			api := PrometheusSrv{
 				log:     log.NewNopLogger(),
 				manager: fakeAIM,
-				sch:     newFakeSchedulerReader(t).setupStates(fakeAIM),
+				status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
 				store:   ruleStore,
 				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
 			}
@@ -1399,7 +1399,7 @@ func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, Promet
 	api := PrometheusSrv{
 		log:     log.NewNopLogger(),
 		manager: fakeAIM,
-		sch:     fakeSch,
+		status:  fakeSch,
 		store:   fakeStore,
 		authz:   fakeAuthz,
 	}

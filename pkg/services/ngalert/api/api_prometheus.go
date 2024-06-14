@@ -23,14 +23,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type SchedulerReader interface {
+type StatusReader interface {
 	Status(key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool)
 }
 
 type PrometheusSrv struct {
 	log     log.Logger
 	manager state.AlertInstanceManager
-	sch     SchedulerReader
+	status  StatusReader
 	store   RuleStore
 	authz   RuleAccessControlService
 }
@@ -226,7 +226,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		namespaces[namespaceUID] = folder.Fullpath
 	}
 
-	ruleResponse = PrepareRuleGroupStatuses(srv.log, srv.manager, srv.sch, srv.store, RuleGroupStatusesOptions{
+	ruleResponse = PrepareRuleGroupStatuses(srv.log, srv.manager, srv.status, srv.store, RuleGroupStatusesOptions{
 		Ctx:        c.Req.Context(),
 		OrgID:      c.OrgID,
 		Query:      c.Req.Form,
@@ -239,7 +239,14 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
 
-func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, sch SchedulerReader, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
+<<<<<<< HEAD
+func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
+=======
+// TODO: Refactor this function to reduce the cylomatic complexity
+//
+//nolint:gocyclo
+func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
+>>>>>>> 8e7bedd172b (rename to StatusReader)
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -350,7 +357,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 			continue
 		}
 
-		ruleGroup, totals := toRuleGroup(log, manager, sch, groupKey, folder, rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
+		ruleGroup, totals := toRuleGroup(log, manager, status, groupKey, folder, rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
@@ -436,7 +443,7 @@ func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	return true
 }
 
-func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sch SchedulerReader, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, limitAlerts int64, withStates map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (*apimodels.RuleGroup, map[string]int64) {
+func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusReader, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, limitAlerts int64, withStates map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -447,7 +454,7 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sch Schedul
 
 	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	for _, rule := range rules {
-		status, ok := sch.Status(rule.GetKey())
+		status, ok := sr.Status(rule.GetKey())
 		// Grafana by design return "ok" health and default other fields for unscheduled rules.
 		// This differs from Prometheus.
 		if !ok {
