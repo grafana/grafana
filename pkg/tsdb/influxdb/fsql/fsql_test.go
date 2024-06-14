@@ -26,10 +26,7 @@ type FSQLTestSuite struct {
 }
 
 func (suite *FSQLTestSuite) SetupTest() {
-	addr := freeport()
-	if addr == "err" {
-		suite.T().Fatal()
-	}
+	addr := freeport(suite.T())
 
 	suite.addr = addr
 
@@ -119,10 +116,10 @@ func mustQueryJSON(t *testing.T, refID, sql string) []byte {
 	return b
 }
 
-func freeport() string {
+func freeport(t *testing.T) string {
 	l, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("127.0.0.1")})
 	if err != nil {
-		return "err"
+		t.Fatal(err)
 	}
 	defer l.Close()
 	a := l.Addr().(*net.TCPAddr)
