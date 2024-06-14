@@ -475,6 +475,8 @@ type Cfg struct {
 	// RBAC single organization. This configuration option is subject to change.
 	RBACSingleOrganization bool
 
+	Zanzana ZanzanaSettings
+
 	// GRPC Server.
 	GRPCServerNetwork        string
 	GRPCServerAddress        string
@@ -1113,6 +1115,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	readOAuth2ServerSettings(cfg)
 
 	readAccessControlSettings(iniFile, cfg)
+
+	cfg.readZanzanaSettings()
+
 	if err := cfg.readRenderingSettings(iniFile); err != nil {
 		return err
 	}

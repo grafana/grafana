@@ -7,12 +7,14 @@ const (
 	Core                  string = "core"
 	GrafanaAPIServer      string = "grafana-apiserver"
 	StorageServer         string = "storage-server"
+	ZanzanaServer         string = "zanzana-server"
 	InstrumentationServer string = "instrumentation-server"
 )
 
 var dependencyMap = map[string][]string{
 	GrafanaAPIServer: {InstrumentationServer},
 	StorageServer:    {InstrumentationServer},
+	ZanzanaServer:    {InstrumentationServer},
 	Core:             {},
 	All:              {Core},
 }
