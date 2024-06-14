@@ -10,6 +10,7 @@ import { useDispatch } from '../../../types';
 import { ShowModalReactEvent } from '../../../types/events';
 import { useRestoreDashboardMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
 import { setAllSelection, useActionSelectionState } from '../../browse-dashboards/state';
+import { PermanentlyDeleteModal } from '../components/PermanentlyDeleteModal';
 import { RestoreModal } from '../components/RestoreModal';
 import { useRecentlyDeletedStateManager } from '../utils/useRecentlyDeletedStateManager';
 
@@ -37,10 +38,12 @@ export function RecentlyDeletedActions() {
   };
 
   const showRestoreModal = () => {
+    //TODO: Modal doesn't open
     appEvents.publish(
       new ShowModalReactEvent({
         component: RestoreModal,
         props: {
+          //TODO: review the following
           selectedItems,
           onConfirm: onRestore,
           isLoading: isRestoreLoading,
@@ -52,7 +55,7 @@ export function RecentlyDeletedActions() {
   const showDeleteModal = () => {
     appEvents.publish(
       new ShowModalReactEvent({
-        component: RestoreModal,
+        component: PermanentlyDeleteModal,
         props: {
           selectedItems,
           onConfirm: onRestore,
