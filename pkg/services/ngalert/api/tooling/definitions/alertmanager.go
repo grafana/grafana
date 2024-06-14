@@ -15,6 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/alerting/definition"
+	alertingmodels "github.com/grafana/alerting/models"
 )
 
 // swagger:route POST /alertmanager/grafana/config/api/v1/alerts alertmanager RoutePostGrafanaAlertingConfig
@@ -545,15 +546,15 @@ type AlertGroups = amv2.AlertGroups
 
 type AlertGroup = amv2.AlertGroup
 
-type Receiver = amv2.Receiver
+type Receiver = alertingmodels.Receiver
 
 // swagger:response receiversResponse
 type ReceiversResponse struct {
 	// in:body
-	Body []amv2.Receiver
+	Body []alertingmodels.Receiver
 }
 
-type Integration = amv2.Integration
+type Integration = alertingmodels.Integration
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
