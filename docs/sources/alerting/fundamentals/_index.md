@@ -111,7 +111,7 @@ Notification policies routes alerts to contact points via label matching. Each n
 
 {{< figure src="/media/docs/alerting/notification-routing.png" max-width="750px" alt="A diagram displaying how the notification policy tree routes alerts" caption="Notification policy routing" >}}
 
-Each notification policy is responsible for deciding the contact point and when to send the notification. Additionally, it can [group multiple firing alert instances into a single notification](ref:group-alert-notifications) to reduce alert noise.
+Each notification policy decides where to send the alert (contact point) and when to send the notification (timing options). Additionally, it can [group multiple firing alert instances into a single notification](ref:group-alert-notifications) to reduce alert noise.
 
 {{< figure src="/media/docs/alerting/alerting-notification-policy-diagram-v5.png" max-width="750px" alt="A diagram of the notification policy component" >}}
 
