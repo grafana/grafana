@@ -74,7 +74,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 			{Cols: []string{"operation"}, Type: migrator.IndexType},
 			{Cols: []string{"namespace"}, Type: migrator.IndexType},
 			{Cols: []string{"group", "resource", "name"}, Type: migrator.IndexType},
-			{Cols: []string{"blob_path"}, Type: migrator.IndexType},
+			{Cols: []string{"blob_path_hash"}, Type: migrator.IndexType},
 		},
 	})
 
