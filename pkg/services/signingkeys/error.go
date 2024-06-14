@@ -1,6 +1,6 @@
 package signingkeys
 
-import "github.com/grafana/grafana/pkg/util/errutil"
+import "github.com/grafana/grafana/pkg/apimachinery/errutil"
 
 var (
 	ErrSigningKeyNotFound      = errutil.NotFound("signingkeys.keyNotFound")

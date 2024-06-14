@@ -17,9 +17,9 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
@@ -175,18 +175,6 @@ func (s *SocialBase) extractOrgs(rawJSON []byte) ([]string, error) {
 	}
 
 	return util.SearchJSONForStringSliceAttr(s.info.OrgAttributePath, rawJSON)
-}
-
-// defaultRole returns the default role for the user based on the autoAssignOrgRole setting
-// if legacy is enabled "" is returned indicating the previous role assignment is used.
-func (s *SocialBase) defaultRole() org.RoleType {
-	if s.cfg.AutoAssignOrgRole != "" {
-		s.log.Debug("No role found, returning default.")
-		return org.RoleType(s.cfg.AutoAssignOrgRole)
-	}
-
-	// should never happen
-	return org.RoleViewer
 }
 
 func (s *SocialBase) isGroupMember(groups []string) bool {

@@ -277,7 +277,7 @@ export function updateDataSource(dataSource: DataSourceSettings) {
 
       dispatch(testDataSourceFailed(formattedError));
 
-      return Promise.reject(dataSource);
+      return Promise.reject(err);
     }
 
     await getDatasourceSrv().reload();

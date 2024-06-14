@@ -18,6 +18,7 @@ const (
 	alertmanagerDefaultClusterAddr        = "0.0.0.0:9094"
 	alertmanagerDefaultPeerTimeout        = 15 * time.Second
 	alertmanagerDefaultGossipInterval     = alertingCluster.DefaultGossipInterval
+	alertmanagerDefaultReconnectTimeout   = alertingCluster.DefaultReconnectTimeout
 	alertmanagerDefaultPushPullInterval   = alertingCluster.DefaultPushPullInterval
 	alertmanagerDefaultConfigPollInterval = time.Minute
 	alertmanagerRedisDefaultMaxConns      = 5
@@ -58,9 +59,10 @@ const (
 	// with intervals that are not exactly divided by this number not to be evaluated
 	SchedulerBaseInterval = 10 * time.Second
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
-	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
-	stateHistoryDefaultEnabled    = true
-	lokiDefaultMaxQueryLength     = 721 * time.Hour // 30d1h, matches the default value in Loki
+	DefaultRuleEvaluationInterval  = SchedulerBaseInterval * 6 // == 60 seconds
+	stateHistoryDefaultEnabled     = true
+	lokiDefaultMaxQueryLength      = 721 * time.Hour // 30d1h, matches the default value in Loki
+	defaultRecordingRequestTimeout = 10 * time.Second
 )
 
 type UnifiedAlertingSettings struct {
@@ -71,6 +73,7 @@ type UnifiedAlertingSettings struct {
 	HAPeers                        []string
 	HAPeerTimeout                  time.Duration
 	HAGossipInterval               time.Duration
+	HAReconnectTimeout             time.Duration
 	HAPushPullInterval             time.Duration
 	HALabel                        string
 	HARedisClusterModeEnabled      bool
@@ -98,8 +101,11 @@ type UnifiedAlertingSettings struct {
 	DefaultRuleEvaluationInterval time.Duration
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
+	SkipClustering                bool
 	StateHistory                  UnifiedAlertingStateHistorySettings
 	RemoteAlertmanager            RemoteAlertmanagerSettings
+	RecordingRules                RecordingRuleSettings
+
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency   int
 	StatePeriodicSaveInterval time.Duration
@@ -107,6 +113,14 @@ type UnifiedAlertingSettings struct {
 
 	// Retention period for Alertmanager notification log entries.
 	NotificationLogRetention time.Duration
+}
+
+type RecordingRuleSettings struct {
+	URL               string
+	BasicAuthUsername string
+	BasicAuthPassword string
+	CustomHeaders     map[string]string
+	Timeout           time.Duration
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -213,6 +227,10 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		return err
 	}
 	uaCfg.HAGossipInterval, err = gtime.ParseDuration(valueAsString(ua, "ha_gossip_interval", (alertmanagerDefaultGossipInterval).String()))
+	if err != nil {
+		return err
+	}
+	uaCfg.HAReconnectTimeout, err = gtime.ParseDuration(valueAsString(ua, "ha_reconnect_timeout", (alertmanagerDefaultReconnectTimeout).String()))
 	if err != nil {
 		return err
 	}
@@ -387,6 +405,23 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		ExternalLabels:        stateHistoryLabels.KeysHash(),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
+
+	rr := iniFile.Section("recording_rules")
+	uaCfgRecordingRules := RecordingRuleSettings{
+		URL:               rr.Key("url").MustString(""),
+		BasicAuthUsername: rr.Key("basic_auth_username").MustString(""),
+		BasicAuthPassword: rr.Key("basic_auth_password").MustString(""),
+		Timeout:           rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
+	}
+
+	rrHeaders := iniFile.Section("recording_rules.custom_headers")
+	rrHeadersKeys := rrHeaders.Keys()
+	uaCfgRecordingRules.CustomHeaders = make(map[string]string, len(rrHeadersKeys))
+	for _, key := range rrHeadersKeys {
+		uaCfgRecordingRules.CustomHeaders[key.Name()] = key.Value()
+	}
+
+	uaCfg.RecordingRules = uaCfgRecordingRules
 
 	uaCfg.MaxStateSaveConcurrency = ua.Key("max_state_save_concurrency").MustInt(1)
 
