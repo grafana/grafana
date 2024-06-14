@@ -34,12 +34,7 @@ type ResourceServer interface {
 	ResourceStoreServer
 	ResourceSearchServer
 	DiagnosticsServer
-
-	// Called once for initialization
-	Init() error
-
-	// Stop
-	Stop()
+	LifecycleHooks
 }
 
 type AppendingStore interface {
@@ -55,9 +50,7 @@ type AppendingStore interface {
 	List(context.Context, *ListRequest) (*ListResponse, error)
 
 	// Watch for events
-	// TODO... this should be converted to a go style function
-	// that returns a channel (??) rather than the raw grpc server management
-	Watch(*WatchRequest, ResourceStore_WatchServer) error
+	Watch(context.Context, *WatchRequest) (chan *WatchResponse, error)
 }
 
 type ResourceServerOptions struct {
@@ -275,10 +268,6 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		return nil, err
 	}
 
-	if req.Key.ResourceVersion > 0 {
-		return nil, apierrors.NewBadRequest("can not update a specific resource version")
-	}
-
 	event, err := s.newEvent(ctx, req.Key, req.Value, nil)
 	if err != nil {
 		return nil, err
@@ -348,7 +337,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	}
 
 	rsp := &UpdateResponse{}
-	if req.Key.ResourceVersion < 0 {
+	if req.ResourceVersion < 0 {
 		rsp.Status, _ = errToStatus(apierrors.NewBadRequest("update must include the previous version"))
 		return rsp, nil
 	}
@@ -392,7 +381,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	}
 
 	rsp := &DeleteResponse{}
-	if req.Key.ResourceVersion < 0 {
+	if req.ResourceVersion < 0 {
 		return nil, apierrors.NewBadRequest("update must include the previous version")
 	}
 
@@ -402,7 +391,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	if err != nil {
 		return nil, err
 	}
-	if latest.ResourceVersion != req.Key.ResourceVersion {
+	if latest.ResourceVersion != req.ResourceVersion {
 		return nil, ErrOptimisticLockingFailed
 	}
 
@@ -477,7 +466,16 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	if err := s.Init(); err != nil {
 		return err
 	}
-	return s.Watch(req, srv)
+
+	// TODO??? can we move any of the common processing here?
+	stream, err := s.store.Watch(srv.Context(), req)
+	if err != nil {
+		return err
+	}
+	for event := range stream {
+		srv.Send(event)
+	}
+	return nil
 }
 
 // GetBlob implements ResourceServer.

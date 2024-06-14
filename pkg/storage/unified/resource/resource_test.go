@@ -24,8 +24,5 @@ func TestResourceModels(t *testing.T) {
 
 		key.Name = "nnnn"
 		require.Equal(t, "ns/ggg/rrr/nnnn", key.NamespacedPath())
-
-		key.ResourceVersion = 1234
-		require.Equal(t, "ns/ggg/rrr/nnnn/00000000000000001234", key.NamespacedPath())
 	})
 }

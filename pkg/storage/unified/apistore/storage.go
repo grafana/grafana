@@ -197,7 +197,7 @@ func (s *Storage) Delete(ctx context.Context, _ string, out runtime.Object, prec
 	cmd := &resource.DeleteRequest{Key: key}
 	if preconditions != nil {
 		if preconditions.ResourceVersion != nil {
-			key.ResourceVersion, err = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
+			cmd.ResourceVersion, err = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
 			if err != nil {
 				return err
 			}
@@ -278,7 +278,7 @@ func (s *Storage) Get(ctx context.Context, _ string, opts storage.GetOptions, ob
 		return err
 	}
 
-	rsp, err := s.store.Read(ctx, &resource.ReadRequest{Key: key, IgnoreBlob: true})
+	rsp, err := s.store.Read(ctx, &resource.ReadRequest{Key: key})
 	if err != nil {
 		return err
 	}

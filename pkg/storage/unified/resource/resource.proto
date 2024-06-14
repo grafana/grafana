@@ -12,8 +12,6 @@ message ResourceKey {
   string resource = 3;
   // Resource identifier (unique within namespace+group+resource)
   string name = 4;
-  // The resource version
-  int64 resource_version = 5;
 }
 
 enum ResourceOperation {
@@ -128,7 +126,7 @@ message CreateRequest {
   // If name is not set, a unique name will be generated
   // The resourceVersion should not be set
   ResourceKey key = 1;
-
+  
   // The resource JSON.  
   bytes value = 2;
 
@@ -151,15 +149,18 @@ message UpdateRequest {
   // Full key must be set
   ResourceKey key = 1;
 
+  // The current resource version
+  int64 resource_version = 2;
+
   // The resource JSON.  
-  bytes value = 2;
+  bytes value = 3;
 
   // Optional commit message
   // +optional
-  string message = 3;
+  string message = 4;
 
   // Optionally link a resource object
-  LinkBlob blob = 4;
+  LinkBlob blob = 5;
 }
 
 message UpdateResponse {
@@ -173,9 +174,12 @@ message UpdateResponse {
 message DeleteRequest {
   ResourceKey key = 1;
 
+  // The current resource version
+  int64 resource_version = 2;
+
   // Preconditions: make sure the uid matches the current saved value
   // +optional
-  string uid = 2;
+  string uid = 3;
 }
 
 message DeleteResponse {
@@ -189,8 +193,11 @@ message DeleteResponse {
 message ReadRequest {
   ResourceKey key = 1;
 
-  // Do not include any blob details
-  bool ignore_blob = 2;
+  // Optionally pick an explicit resource version
+  int64 resource_version = 3;
+
+  // Include a signed blob_url (if exists)
+  bool include_blob_url = 2;
 }
 
 message ReadResponse {
@@ -213,6 +220,9 @@ message ReadResponse {
 
 message GetBlobRequest {
   ResourceKey key = 1;
+
+  // The new resource version
+  int64 resource_version = 2;
 }
 
 message GetBlobResponse {

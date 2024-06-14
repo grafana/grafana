@@ -81,24 +81,23 @@ func TestWriter(t *testing.T) {
 		raw, err = json.Marshal(tmp)
 		require.NoError(t, err)
 
-		key.ResourceVersion = created.ResourceVersion
-		updated, err := server.Update(ctx, &UpdateRequest{Key: key, Value: raw})
+		updated, err := server.Update(ctx, &UpdateRequest{
+			Key:             key,
+			Value:           raw,
+			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
 		require.True(t, updated.ResourceVersion > created.ResourceVersion)
 
 		// We should still get the latest
-		key.ResourceVersion = 0
 		found, err = server.Read(ctx, &ReadRequest{Key: key})
 		require.NoError(t, err)
 		require.Equal(t, updated.ResourceVersion, found.ResourceVersion)
 
-		key.ResourceVersion = updated.ResourceVersion
-		deleted, err := server.Delete(ctx, &DeleteRequest{Key: key})
+		deleted, err := server.Delete(ctx, &DeleteRequest{Key: key, ResourceVersion: updated.ResourceVersion})
 		require.NoError(t, err)
 		require.True(t, deleted.ResourceVersion > updated.ResourceVersion)
 
 		// We should get not found status when trying to read the latest value
-		key.ResourceVersion = 0
 		found, err = server.Read(ctx, &ReadRequest{Key: key})
 		require.NoError(t, err)
 		require.NotNil(t, found.Status)

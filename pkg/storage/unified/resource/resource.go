@@ -2,8 +2,6 @@ package resource
 
 import (
 	"bytes"
-	"fmt"
-	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -35,11 +33,6 @@ func (x *ResourceKey) NamespacedPath() string {
 	}
 	buffer.WriteString("/")
 	buffer.WriteString(x.Name)
-
-	if x.ResourceVersion > 0 {
-		buffer.WriteString("/")
-		buffer.WriteString(fmt.Sprintf("%.20d", x.ResourceVersion))
-	}
 	return buffer.String()
 }
 
@@ -53,19 +46,11 @@ func (x *ResourceKey) WithoutResourceVersion() *ResourceKey {
 	}
 }
 
-func ResourceKeyFor(gr schema.GroupResource, obj metav1.Object) (*ResourceKey, error) {
-	key := &ResourceKey{
+func ResourceKeyFor(gr schema.GroupResource, obj metav1.Object) *ResourceKey {
+	return &ResourceKey{
 		Group:     gr.Group,
 		Resource:  gr.Resource,
 		Namespace: obj.GetNamespace(),
 		Name:      obj.GetName(),
 	}
-	rv := obj.GetResourceVersion()
-	if rv != "" {
-		var err error
-		key.ResourceVersion, err = strconv.ParseInt(rv, 10, 64)
-		return key, err
-	}
-	return key, nil
-
 }

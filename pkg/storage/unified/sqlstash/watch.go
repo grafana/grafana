@@ -1,14 +1,15 @@
 package sqlstash
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func (s *sqlResourceStore) Watch(*resource.WatchRequest, resource.ResourceStore_WatchServer) error {
-	return ErrNotImplementedYet
+func (s *sqlResourceStore) Watch(context.Context, *resource.WatchRequest) (chan *resource.WatchResponse, error) {
+	return nil, ErrNotImplementedYet
 }
 
 func (s *sqlResourceStore) poller(stream chan *resource.WatchResponse) {

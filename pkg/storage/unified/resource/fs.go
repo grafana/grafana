@@ -64,7 +64,6 @@ func (f *fsStore) WriteEvent(ctx context.Context, event *WriteEvent) (int64, err
 		// Blob...
 	}
 	// For this case, we will treat them the same
-	event.Key.ResourceVersion = 0
 	dir := event.Key.NamespacedPath()
 	err := hackpadfs.MkdirAll(f.root, dir, 0750)
 	if err != nil {
@@ -87,8 +86,7 @@ func (f *fsStore) WriteEvent(ctx context.Context, event *WriteEvent) (int64, err
 
 // Read implements ResourceStoreServer.
 func (f *fsStore) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
-	rv := req.Key.ResourceVersion
-	req.Key.ResourceVersion = 0
+	rv := req.ResourceVersion
 
 	fname := "--x--"
 	dir := req.Key.NamespacedPath()
@@ -148,6 +146,6 @@ func (f *fsStore) List(ctx context.Context, req *ListRequest) (*ListResponse, er
 }
 
 // Watch implements AppendingStore.
-func (f *fsStore) Watch(*WatchRequest, ResourceStore_WatchServer) error {
+func (f *fsStore) Watch(context.Context, *WatchRequest) (chan *WatchResponse, error) {
 	panic("unimplemented")
 }

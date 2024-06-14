@@ -2,7 +2,11 @@ package resource
 
 import "context"
 
-var _ ResourceServer = &NoopServer{}
+var (
+	_ ResourceSearchServer = &NoopServer{}
+	_ DiagnosticsServer    = &NoopServer{}
+	_ LifecycleHooks       = &NoopServer{}
+)
 
 type NoopServer struct{}
 
@@ -28,29 +32,9 @@ func (n *NoopServer) Read(context.Context, *ReadRequest) (*ReadResponse, error) 
 	return nil, ErrNotImplementedYet
 }
 
-// Create implements ResourceServer.
-func (n *NoopServer) Create(context.Context, *CreateRequest) (*CreateResponse, error) {
-	return nil, ErrNotImplementedYet
-}
-
-// Update implements ResourceServer.
-func (n *NoopServer) Update(context.Context, *UpdateRequest) (*UpdateResponse, error) {
-	return nil, ErrNotImplementedYet
-}
-
-// Delete implements ResourceServer.
-func (n *NoopServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
-	return nil, ErrNotImplementedYet
-}
-
 // List implements ResourceServer.
 func (n *NoopServer) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, ErrNotImplementedYet
-}
-
-// Watch implements ResourceServer.
-func (n *NoopServer) Watch(*WatchRequest, ResourceStore_WatchServer) error {
-	return ErrNotImplementedYet
 }
 
 // GetBlob implements ResourceServer.
