@@ -2,14 +2,7 @@ import { render } from '@testing-library/react';
 import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  SceneDataLayerControls,
-  SceneVariableSet,
-  TestVariable,
-  TextBoxVariable,
-  VariableValueSelectors,
-  sceneGraph,
-} from '@grafana/scenes';
+import { SceneDataLayerControls, SceneVariableSet, TextBoxVariable, VariableValueSelectors } from '@grafana/scenes';
 
 import { DashboardControls, DashboardControlsState } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
