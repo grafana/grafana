@@ -101,7 +101,7 @@ A rule using the PromQL expression above creates as many alert instances as the 
 
 [Contact points](ref:contact-points) determine the notification message and where notifications are sent. For example, you might have a contact point that sends notifications to an email address, to Slack, to an incident management system (IRM) such as Grafana OnCall or Pagerduty, or to a webhook.
 
-In the alert rule, you can configure the contact point to receive the alert notifications or use notification policies instead.
+In the alert rule, you can choose a contact point to receive the alert notifications or use notification policies instead.
 
 ### Notification policies
 
