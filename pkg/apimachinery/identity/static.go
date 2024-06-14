@@ -4,7 +4,8 @@ import "fmt"
 
 var _ Requester = &StaticRequester{}
 
-// StaticRequester is helpful for tests
+// StaticRequester allows creating requester values explicitly.
+// It is helpful in tests!
 // This is mostly copied from:
 // https://github.com/grafana/grafana/blob/v11.0.0/pkg/services/user/identity.go#L16
 type StaticRequester struct {
@@ -22,8 +23,6 @@ type StaticRequester struct {
 	AuthID          string
 	AuthenticatedBy string
 	IsGrafanaAdmin  bool
-	IsAnonymous     bool
-	IsDisabled      bool
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string
 	IDToken     string
