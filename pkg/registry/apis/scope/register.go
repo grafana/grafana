@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ builder.APIGroupBuilder = (*ScopeAPIBuilder)(nil)
@@ -30,7 +31,7 @@ func NewScopeAPIBuilder() *ScopeAPIBuilder {
 	return &ScopeAPIBuilder{}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *ScopeAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, reg prometheus.Registerer) *ScopeAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
@@ -121,6 +122,7 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
 	_ grafanarest.DualWriterMode, // dual write desired mode (not relevant)
+	_ prometheus.Registerer, // prometheus registerer
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(scope.GROUP, scheme, metav1.ParameterCodec, codecs)
 
@@ -151,7 +153,12 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	// Adds a rest.Connector
 	// NOTE! the server has a hardcoded rewrite filter that fills in a name
 	// so the standard k8s plumbing continues to work
-	storage["find"] = &findREST{scopeNodeStorage: scopeNodeStorage}
+	storage["scope_node_children"] = &findREST{scopeNodeStorage: scopeNodeStorage}
+
+	// Adds a rest.Connector
+	// NOTE! the server has a hardcoded rewrite filter that fills in a name
+	// so the standard k8s plumbing continues to work
+	storage["scope_dashboard_bindings"] = &findScopeDashboardsREST{scopeDashboardStorage: scopeDashboardStorage}
 
 	apiGroupInfo.VersionedResourcesStorageMap[scope.VERSION] = storage
 	return &apiGroupInfo, nil
@@ -174,7 +181,7 @@ func (b *ScopeAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 
 	// Add query parameters to the rest.Connector
-	sub := oas.Paths.Paths[root+"namespaces/{namespace}/find/{name}"]
+	sub := oas.Paths.Paths[root+"namespaces/{namespace}/scope_node_children/{name}"]
 	if sub != nil && sub.Get != nil {
 		sub.Parameters = []*spec3.Parameter{
 			{
@@ -198,8 +205,35 @@ func (b *ScopeAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 				},
 			},
 		}
-		delete(oas.Paths.Paths, root+"namespaces/{namespace}/find/{name}")
-		oas.Paths.Paths[root+"namespaces/{namespace}/find"] = sub
+		delete(oas.Paths.Paths, root+"namespaces/{namespace}/scope_node_children/{name}")
+		oas.Paths.Paths[root+"namespaces/{namespace}/find/scope_node_children"] = sub
+	}
+
+	findDashboardPath := oas.Paths.Paths[root+"namespaces/{namespace}/scope_dashboard_bindings/{name}"]
+	if findDashboardPath != nil && sub.Get != nil {
+		sub.Parameters = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "namespace",
+					In:          "path",
+					Description: "object name and auth scope, such as for teams and projects",
+					Example:     "default",
+					Required:    true,
+				},
+			},
+		}
+		findDashboardPath.Get.Description = "find scope dashboard bindings that match any of the given scopes."
+		findDashboardPath.Get.Parameters = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "scope",
+					In:          "query",
+					Description: "A scope name (id) to match against, this parameter may be repeated",
+				},
+			},
+		}
+		delete(oas.Paths.Paths, root+"namespaces/{namespace}/scope_dashboard_bindings/{name}")
+		oas.Paths.Paths[root+"namespaces/{namespace}/find/scope_dashboard_bindings"] = findDashboardPath
 	}
 
 	// The root API discovery list

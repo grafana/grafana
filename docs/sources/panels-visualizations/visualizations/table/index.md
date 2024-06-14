@@ -118,11 +118,19 @@ By default, Grafana automatically chooses display settings. You can override the
 If you set these in the Field tab, then the type will apply to all fields, including the time field. Many options will work best if you set them in the Override tab so that they can be restricted to one or more fields.
 {{% /admonition %}}
 
+### Auto
+
+The **Auto** cell type automatically displays values, with sensible defaults applied.
+
+Toggle the **Wrap text** switch to wrap text in the cell with the longest content or the matched field, if you've set a field override.
+
 ### Color text
 
 If thresholds are set, then the field text is displayed in the appropriate threshold color.
 
 {{< figure src="/static/img/docs/tables/color-text.png" max-width="500px" caption="Color text" class="docs-image--no-shadow" >}}
+
+Toggle the **Wrap text** switch to wrap text in the cell with the longest content or the matched field, if you've set a field override.
 
 ### Color background (gradient or solid)
 
@@ -133,6 +141,8 @@ If thresholds are set, then the field background is displayed in the appropriate
 Toggle the **Apply to entire row** switch, to apply the background color that's configured for the cell to the whole row.
 
 {{< figure src="/static/img/docs/tables/colored-rows.png" max-width="500px" alt="Colored row background" class="docs-image--no-shadow" >}}
+
+Toggle the **Wrap text** switch to wrap text in the cell with the longest content or the matched, if field you've set a field override.
 
 ### Gauge
 

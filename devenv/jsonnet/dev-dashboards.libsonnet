@@ -17,6 +17,7 @@
     "bar_gauge_demo": (import '../dev-dashboards/panel-bargauge/bar_gauge_demo.json'),
     "barchart-autosizing": (import '../dev-dashboards/panel-barchart/barchart-autosizing.json'),
     "barchart-label-rotation-skipping": (import '../dev-dashboards/panel-barchart/barchart-label-rotation-skipping.json'),
+    "barchart-series-toggle": (import '../dev-dashboards/panel-barchart/barchart-series-toggle.json'),
     "barchart-thresholds-mappings": (import '../dev-dashboards/panel-barchart/barchart-thresholds-mappings.json'),
     "barchart-tooltips-legends": (import '../dev-dashboards/panel-barchart/barchart-tooltips-legends.json'),
     "candlestick": (import '../dev-dashboards/panel-candlestick/candlestick.json'),
