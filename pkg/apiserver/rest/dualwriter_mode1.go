@@ -54,13 +54,12 @@ func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, c
 		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage create timeout"))
 		defer cancel()
 
-		objStorage, errEnrichObj := enrichLegacyObject(original, createdCopy, true)
-		if errEnrichObj != nil {
+		if err := enrichLegacyObject(original, createdCopy, true); err != nil {
 			cancel()
 		}
 
 		startStorage := time.Now()
-		_, errObjectSt := d.Storage.Create(ctx, objStorage, createValidation, options)
+		_, errObjectSt := d.Storage.Create(ctx, createdCopy, createValidation, options)
 		d.recordStorageDuration(errObjectSt != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
@@ -202,8 +201,7 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 
 		// if the object is found, create a new updateWrapper with the object found
 		if foundObj != nil {
-			resCopy, err := enrichLegacyObject(foundObj, resCopy, false)
-			if err != nil {
+			if err := enrichLegacyObject(foundObj, resCopy, false); err != nil {
 				log.Error(err, "could not enrich object")
 				cancel()
 			}
