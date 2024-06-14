@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const SortByKey = "grafana.app/sortBy"
@@ -135,6 +136,16 @@ func (s *Storage) Create(ctx context.Context, _ string, obj runtime.Object, out 
 		return err
 	}
 	meta.SetOriginInfo(origin)
+
+	// Set a unique name
+	if meta.GetGenerateName() != "" {
+		if key.Name != "" {
+			return apierrors.NewBadRequest("both generate name and name are set")
+		}
+		key.Name = util.GenerateShortUID()
+		meta.SetName(key.Name)
+		meta.SetGenerateName("")
+	}
 
 	var buf bytes.Buffer
 	err = s.codec.Encode(obj, &buf)

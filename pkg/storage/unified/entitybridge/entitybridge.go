@@ -3,18 +3,53 @@ package entitybridge
 import (
 	"context"
 	"fmt"
+	"os"
 
+	"github.com/hack-pad/hackpadfs"
+	hackos "github.com/hack-pad/hackpadfs/os"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // Creates a ResourceServer using the existing entity tables
 // NOTE: most of the field values are ignored
-func ProvideEntityStoreResources(db db.EntityDBInterface, tracer tracing.Tracer) (resource.ResourceServer, error) {
-	entity, err := sqlstash.ProvideSQLEntityServer(db, tracer)
+func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceServer, error) {
+	if true {
+		var root hackpadfs.FS
+		if false {
+			tmp, err := os.MkdirTemp("", "xxx-*")
+			if err != nil {
+				return nil, err
+			}
+
+			root, err = hackos.NewFS().Sub(tmp[1:])
+			if err != nil {
+				return nil, err
+			}
+
+			fmt.Printf("ROOT: %s\n", tmp)
+		}
+
+		return resource.NewResourceServer(resource.ResourceServerOptions{
+			Store: resource.NewFileSystemStore(resource.FileSystemOptions{
+				Root: root,
+			}),
+		})
+	}
+
+	eDB, err := dbimpl.ProvideEntityDB(db, cfg, features, tracer)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := sqlstash.ProvideSQLEntityServer(eDB, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +57,6 @@ func ProvideEntityStoreResources(db db.EntityDBInterface, tracer tracing.Tracer)
 	store := &entityBridge{
 		entity: entity,
 	}
-
 	return resource.NewResourceServer(resource.ResourceServerOptions{
 		Tracer:      tracer,
 		Store:       store,

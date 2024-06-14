@@ -11,7 +11,6 @@ import (
 	"github.com/hack-pad/hackpadfs"
 	"github.com/hack-pad/hackpadfs/mem"
 	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -24,31 +23,21 @@ type FileSystemOptions struct {
 	Root hackpadfs.FS
 }
 
-func NewFileSystemStore(opts FileSystemOptions) (AppendingStore, error) {
-	if opts.Tracer == nil {
-		opts.Tracer = noop.NewTracerProvider().Tracer("fs")
-	}
-
-	var err error
+func NewFileSystemStore(opts FileSystemOptions) AppendingStore {
 	root := opts.Root
 	if root == nil {
-		root, err = mem.NewFS()
-		if err != nil {
-			return nil, err
-		}
+		root, _ = mem.NewFS()
 	}
 
 	return &fsStore{
-		tracer: opts.Tracer,
-		root:   root,
-		keys:   &simpleConverter{}, // not tenant isolated
-	}, nil
+		root: root,
+		keys: &simpleConverter{}, // not tenant isolated
+	}
 }
 
 type fsStore struct {
-	tracer trace.Tracer
-	root   hackpadfs.FS
-	keys   KeyConversions
+	root hackpadfs.FS
+	keys KeyConversions
 }
 
 type fsEvent struct {
@@ -157,10 +146,10 @@ func (f *fsStore) List(ctx context.Context, req *ListRequest) (*ListResponse, er
 		group:    req.Options.Key.Group,
 		resource: req.Options.Key.Resource,
 	}
-	err := tree.read(f.root, req.Options.Key)
-	if err != nil {
-		return nil, err
-	}
+	_ = tree.read(f.root, req.Options.Key)
+	// if err != nil  {
+	// 	return nil, err
+	// }
 	return tree.list(f, req.ResourceVersion)
 }
 

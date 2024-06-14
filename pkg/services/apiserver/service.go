@@ -261,19 +261,14 @@ func (s *service) start(ctx context.Context) error {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
-		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features, s.tracing)
+		resourceServer, err := entitybridge.ProvideResourceServer(s.db, s.cfg, s.features, s.tracing)
 		if err != nil {
 			return err
 		}
 
-		storeServer, err := entitybridge.ProvideEntityStoreResources(eDB, s.tracing)
-		if err != nil {
-			return err
-		}
-
-		store := resource.NewResourceStoreClientLocal(storeServer)
-
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
+		store := resource.NewResourceStoreClientLocal(resourceServer)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(s.cfg, store,
+			o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
 	case grafanaapiserveroptions.StorageTypeUnified:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {

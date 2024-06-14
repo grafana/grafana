@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func TestWriter(t *testing.T) {
+func TestSimpleServer(t *testing.T) {
 	testUserA := &identity.StaticRequester{
 		Namespace:      identity.NamespaceUser,
 		UserID:         123,
@@ -37,13 +37,11 @@ func TestWriter(t *testing.T) {
 		require.NoError(t, err)
 		fmt.Printf("ROOT: %s\n\n", tmp)
 	}
-	tmp, err := NewFileSystemStore(FileSystemOptions{
-		Root: root,
-	})
-	require.NoError(t, err)
 
 	server, err := NewResourceServer(ResourceServerOptions{
-		Store: tmp,
+		Store: NewFileSystemStore(FileSystemOptions{
+			Root: root,
+		}),
 	})
 	require.NoError(t, err)
 
@@ -55,6 +53,17 @@ func TestWriter(t *testing.T) {
 			Namespace: "default",
 			Name:      "fdgsv37qslr0ga",
 		}
+
+		// Should be empty when we start
+		all, err := server.List(ctx, &ListRequest{Options: &ListOptions{
+			Key: &ResourceKey{
+				Group:    key.Group,
+				Resource: key.Resource,
+			},
+		}})
+		require.NoError(t, err)
+		require.Len(t, all.Items, 0)
+
 		created, err := server.Create(ctx, &CreateRequest{
 			Value: raw,
 			Key:   key,
@@ -93,7 +102,7 @@ func TestWriter(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, updated.ResourceVersion, found.ResourceVersion)
 
-		all, err := server.List(ctx, &ListRequest{Options: &ListOptions{
+		all, err = server.List(ctx, &ListRequest{Options: &ListOptions{
 			Key: &ResourceKey{
 				Group:    key.Group,
 				Resource: key.Resource,

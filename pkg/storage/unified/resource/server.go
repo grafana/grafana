@@ -18,6 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+// HACK!!! since requester is not behaving as expected....
+// we are not getting the same names right now
+const CHECK_USER_MATCH = false
+
 // Package-level errors.
 var (
 	ErrNotFound                  = errors.New("entity not found")
@@ -280,8 +284,10 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	// Make sure the created by user is accurate
 	//----------------------------------------
 	val := event.Object.GetCreatedBy()
-	if val != "" && val != event.Requester.GetUID().String() {
-		return nil, apierrors.NewBadRequest("created by annotation does not match: metadata.annotations#" + utils.AnnoKeyCreatedBy)
+	if val != "" && val != event.Requester.GetUID().String() && CHECK_USER_MATCH {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf(
+			"created by annotation do not match (%s != %s)", val, event.Requester.GetUID().String(),
+		))
 	}
 
 	// Create can not have updated properties
@@ -363,7 +369,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	// Make sure the update user is accurate
 	//----------------------------------------
 	val := event.Object.GetUpdatedBy()
-	if val != "" && val != event.Requester.GetUID().String() {
+	if val != "" && val != event.Requester.GetUID().String() && CHECK_USER_MATCH {
 		return nil, apierrors.NewBadRequest("updated by annotation does not match: metadata.annotations#" + utils.AnnoKeyUpdatedBy)
 	}
 

@@ -23,6 +23,11 @@ const (
 )
 
 func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
+	rrr, _ := identity.GetRequester(ctx)
+	if rrr != nil {
+		return ctx, nil
+	}
+
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("no metadata found")
@@ -46,15 +51,15 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 
 	login := md.Get(keyLogin)[0]
 	if login == "" {
-		return nil, fmt.Errorf("no login found in context")
+		return nil, fmt.Errorf("no login found in grpc context")
 	}
 	userID, err := strconv.ParseInt(md.Get(keyUserID)[0], 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("invalid user id: %w", err)
+		return nil, fmt.Errorf("invalid grpc user id: %w", err)
 	}
 	orgID, err := strconv.ParseInt(md.Get(keyOrgID)[0], 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("invalid org id: %w", err)
+		return nil, fmt.Errorf("invalid grpc org id: %w", err)
 	}
 
 	return identity.WithRequester(ctx, &identity.StaticRequester{
