@@ -48,7 +48,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	features := featuremgmt.WithFeatures()
 	tagService := tagimpl.ProvideService(sql)
 
-	repo := ProvideService(sql, cfg, features, tagService)
+	repo := ProvideService(sql, cfg, features, tagService, tracing.InitializeTracerForTest())
 
 	dashboard1 := testutil.CreateDashboard(t, sql, cfg, features, dashboards.SaveDashboardCommand{
 		UserID:   1,
@@ -317,7 +317,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AnnotationMaximumTagsLength = 60
 
-			repo := ProvideService(sql, cfg, tc.features, tagimpl.ProvideService(sql))
+			repo := ProvideService(sql, cfg, tc.features, tagimpl.ProvideService(sql), tracing.InitializeTracerForTest())
 
 			usr.Permissions = map[int64]map[string][]string{1: tc.permissions}
 			testutil.SetupRBACPermission(t, sql, role, usr)

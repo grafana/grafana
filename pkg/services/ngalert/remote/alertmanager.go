@@ -25,6 +25,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -100,7 +101,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -118,7 +119,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		URL:           u,
 		PromoteConfig: cfg.PromoteConfig,
 	}
-	mc, err := remoteClient.New(mcCfg, metrics)
+	mc, err := remoteClient.New(mcCfg, metrics, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +130,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		Password: cfg.BasicAuthPassword,
 		Logger:   logger,
 	}
-	amc, err := remoteClient.NewAlertmanager(amcCfg, metrics)
+	amc, err := remoteClient.NewAlertmanager(amcCfg, metrics, tracer)
 	if err != nil {
 		return nil, err
 	}

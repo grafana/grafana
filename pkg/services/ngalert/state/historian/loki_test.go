@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -514,7 +515,7 @@ func createTestLokiBackend(req client.Requester, met *metrics.Historian) *Remote
 		ExternalLabels: map[string]string{"externalLabelKey": "externalLabelValue"},
 	}
 	lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")
-	return NewRemoteLokiBackend(lokiBackendLogger, cfg, req, met)
+	return NewRemoteLokiBackend(lokiBackendLogger, cfg, req, met, tracing.InitializeTracerForTest())
 }
 
 func singleFromNormal(st *state.State) []state.StateTransition {
