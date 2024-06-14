@@ -360,9 +360,11 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 	})
 	t.Run("should update if version matches", func(t *testing.T) {
 		updated := created.DeepCopy()
+		updated.Spec.TimeIntervals = v0alpha1.IntervalGenerator{}.GenerateMany(2)
 		actualUpdated, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
 		require.NoError(t, err)
-		require.EqualValues(t, updated, actualUpdated)
+		require.EqualValues(t, updated.Spec, actualUpdated.Spec)
+		require.NotEqual(t, updated.ResourceVersion, actualUpdated.ResourceVersion)
 	})
 	t.Run("should update if version is empty", func(t *testing.T) {
 		updated := created.DeepCopy()
