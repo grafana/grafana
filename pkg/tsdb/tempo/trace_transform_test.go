@@ -136,10 +136,11 @@ func rootSpan(frame *BetterFrame) Row {
 }
 
 func fieldNames(frame *data.Frame) []string {
-	var names []string
-	for _, f := range frame.Fields {
-		names = append(names, f.Name)
+	names := make([]string, len(frame.Fields))
+	for i, f := range frame.Fields {
+		names[i] = f.Name
 	}
+
 	return names
 }
 

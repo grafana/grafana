@@ -141,9 +141,9 @@ func errorAlert(labels, annotations data.Labels, alertState *State, urlStr strin
 
 func FromStateTransitionToPostableAlerts(firingStates []StateTransition, stateManager *Manager, appURL *url.URL) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
-	var sentAlerts []*State
 	ts := time.Now()
 
+	sentAlerts := make([]*State, 0, len(firingStates))
 	for _, alertState := range firingStates {
 		if !alertState.NeedsSending(stateManager.ResendDelay) {
 			continue

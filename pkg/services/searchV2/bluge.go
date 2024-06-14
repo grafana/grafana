@@ -191,7 +191,9 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 	dashURL := fmt.Sprintf("/d/%s/%s", dash.uid, slugify.Slugify(dash.summary.Name))
 
-	var docs []*bluge.Document
+	// pre-allocating a little bit more than necessary, possibly
+	docs := make([]*bluge.Document, 0, len(dash.summary.Nested))
+
 	for _, panel := range dash.summary.Nested {
 		if panel.Fields["type"] == "row" {
 			continue // skip rows
@@ -239,7 +241,7 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 }
 
 // Names need to be indexed a few ways to support key features
-func newSearchDocument(uid string, name string, descr string, url string) *bluge.Document {
+func newSearchDocument(uid, name, descr, url string) *bluge.Document {
 	doc := bluge.NewDocument(uid)
 
 	if name != "" {

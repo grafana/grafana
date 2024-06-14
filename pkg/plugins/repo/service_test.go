@@ -197,9 +197,8 @@ type versionArg struct {
 }
 
 func createPluginVersions(versions ...versionArg) []Version {
-	var vs []Version
-
-	for _, version := range versions {
+	vs := make([]Version, len(versions))
+	for i, version := range versions {
 		ver := Version{
 			Version: version.version,
 		}
@@ -211,7 +210,8 @@ func createPluginVersions(versions ...versionArg) []Version {
 				}
 			}
 		}
-		vs = append(vs, ver)
+
+		vs[i] = ver
 	}
 
 	return vs

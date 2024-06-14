@@ -46,156 +46,164 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIRe
 	// This is needed to keep the API models clean and convert from database model
 	j.RegisterExtension(&contactPointsExtension{})
 
-	var integration []*notify.GrafanaIntegrationConfig
+	contactPointsLength := len(cp.Alertmanager) + len(cp.Dingding) + len(cp.Discord) + len(cp.Email) +
+		len(cp.Googlechat) + len(cp.Kafka) + len(cp.Line) + len(cp.Opsgenie) +
+		len(cp.Pagerduty) + len(cp.OnCall) + len(cp.Pushover) + len(cp.Sensugo) +
+		len(cp.Sns) + len(cp.Slack) + len(cp.Teams) + len(cp.Telegram) +
+		len(cp.Threema) + len(cp.Victorops) + len(cp.Webhook) + len(cp.Wecom) +
+		len(cp.Webex)
+
+	integration := make([]*notify.GrafanaIntegrationConfig, 0, contactPointsLength)
 
 	var errs []error
 	for _, i := range cp.Alertmanager {
 		el, err := marshallIntegration(j, "prometheus-alertmanager", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Dingding {
 		el, err := marshallIntegration(j, "dingding", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Discord {
 		el, err := marshallIntegration(j, "discord", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Email {
 		el, err := marshallIntegration(j, "email", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Googlechat {
 		el, err := marshallIntegration(j, "googlechat", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Kafka {
 		el, err := marshallIntegration(j, "kafka", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Line {
 		el, err := marshallIntegration(j, "line", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Opsgenie {
 		el, err := marshallIntegration(j, "opsgenie", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Pagerduty {
 		el, err := marshallIntegration(j, "pagerduty", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.OnCall {
 		el, err := marshallIntegration(j, "oncall", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Pushover {
 		el, err := marshallIntegration(j, "pushover", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Sensugo {
 		el, err := marshallIntegration(j, "sensugo", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Sns {
 		el, err := marshallIntegration(j, "sns", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Slack {
 		el, err := marshallIntegration(j, "slack", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Teams {
 		el, err := marshallIntegration(j, "teams", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Telegram {
 		el, err := marshallIntegration(j, "telegram", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Threema {
 		el, err := marshallIntegration(j, "threema", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Victorops {
 		el, err := marshallIntegration(j, "victorops", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Webhook {
 		el, err := marshallIntegration(j, "webhook", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Wecom {
 		el, err := marshallIntegration(j, "wecom", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
 	for _, i := range cp.Webex {
 		el, err := marshallIntegration(j, "webex", i, i.DisableResolveMessage)
-		integration = append(integration, el)
 		if err != nil {
 			errs = append(errs, err)
 		}
+		integration = append(integration, el)
 	}
+
 	if len(errs) > 0 {
 		return notify.APIReceiver{}, errors.Join(errs...)
 	}

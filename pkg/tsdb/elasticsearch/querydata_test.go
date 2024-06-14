@@ -84,15 +84,16 @@ func newFlowTestQueries(allJsonBytes []byte) ([]backend.DataQuery, error) {
 		return nil, fmt.Errorf("error unmarshaling query-json: %w", err)
 	}
 
-	var queries []backend.DataQuery
-
-	for _, jsonBytes := range jsonBytesArray {
+	queries := make([]backend.DataQuery, len(jsonBytesArray))
+	for i, jsonBytes := range jsonBytesArray {
 		// we need to extract some fields from the json-array
 		var jsonInfo queryDataTestQueryJSON
+
 		err = json.Unmarshal(jsonBytes, &jsonInfo)
 		if err != nil {
 			return nil, err
 		}
+
 		// we setup the DataQuery, with values loaded from the json
 		query := backend.DataQuery{
 			RefID:         jsonInfo.RefID,
@@ -101,7 +102,8 @@ func newFlowTestQueries(allJsonBytes []byte) ([]backend.DataQuery, error) {
 			TimeRange:     timeRange,
 			JSON:          jsonBytes,
 		}
-		queries = append(queries, query)
+
+		queries[i] = query
 	}
 	return queries, nil
 }

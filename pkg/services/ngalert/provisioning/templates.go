@@ -31,17 +31,19 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 		return nil, err
 	}
 
-	var templates []definitions.NotificationTemplate
+	templates := make([]definitions.NotificationTemplate, 0, len(revision.cfg.TemplateFiles))
 	for name, tmpl := range revision.cfg.TemplateFiles {
 		tmpl := definitions.NotificationTemplate{
 			Name:     name,
 			Template: tmpl,
 		}
+
 		provenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
 		if err != nil {
 			return nil, err
 		}
 		tmpl.Provenance = definitions.Provenance(provenance)
+
 		templates = append(templates, tmpl)
 	}
 

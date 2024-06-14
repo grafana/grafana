@@ -93,6 +93,8 @@ func TestDefaultStaticDetectorsInspector(t *testing.T) {
 		plugin *plugins.Plugin
 		exp    bool
 	}
+
+	//nolint:prealloc // just a test, and it'd require too much refactoring to preallocate
 	var tcs []tc
 
 	// Angular imports

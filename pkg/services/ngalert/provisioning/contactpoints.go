@@ -88,13 +88,14 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 		}
 	}
 
-	var contactPoints []apimodels.EmbeddedContactPoint
-	for _, gr := range grafanaReceivers {
+	contactPoints := make([]apimodels.EmbeddedContactPoint, len(grafanaReceivers))
+	for i, gr := range grafanaReceivers {
 		contactPoint, err := GettableGrafanaReceiverToEmbeddedContactPoint(gr)
 		if err != nil {
 			return nil, err
 		}
-		contactPoints = append(contactPoints, contactPoint)
+
+		contactPoints[i] = contactPoint
 	}
 
 	sort.SliceStable(contactPoints, func(i, j int) bool {

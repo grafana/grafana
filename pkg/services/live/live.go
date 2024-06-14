@@ -332,12 +332,14 @@ func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
 	redisShardConfigs := []centrifuge.RedisShardConfig{
 		{Address: redisAddress, Password: redisPassword},
 	}
-	var redisShards []*centrifuge.RedisShard
+
+	redisShards := make([]*centrifuge.RedisShard, 0, len(redisShardConfigs))
 	for _, redisConf := range redisShardConfigs {
 		redisShard, err := centrifuge.NewRedisShard(node, redisConf)
 		if err != nil {
 			return fmt.Errorf("error connecting to Live Redis: %v", err)
 		}
+
 		redisShards = append(redisShards, redisShard)
 	}
 
@@ -348,6 +350,7 @@ func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
 	if err != nil {
 		return fmt.Errorf("error creating Live Redis broker: %v", err)
 	}
+
 	node.SetBroker(broker)
 
 	presenceManager, err := centrifuge.NewRedisPresenceManager(node, centrifuge.RedisPresenceManagerConfig{
@@ -357,7 +360,9 @@ func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
 	if err != nil {
 		return fmt.Errorf("error creating Live Redis presence manager: %v", err)
 	}
+
 	node.SetPresenceManager(presenceManager)
+
 	return nil
 }
 
