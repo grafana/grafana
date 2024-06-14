@@ -343,7 +343,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	}
 
 	latest, err := s.store.Read(ctx, &ReadRequest{
-		Key: req.Key.WithoutResourceVersion(),
+		Key: req.Key,
 	})
 	if err != nil {
 		return nil, err
@@ -386,7 +386,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	}
 
 	latest, err := s.store.Read(ctx, &ReadRequest{
-		Key: req.Key.WithoutResourceVersion(),
+		Key: req.Key,
 	})
 	if err != nil {
 		return nil, err

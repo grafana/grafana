@@ -93,6 +93,16 @@ func TestWriter(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, updated.ResourceVersion, found.ResourceVersion)
 
+		all, err := server.List(ctx, &ListRequest{Options: &ListOptions{
+			Key: &ResourceKey{
+				Group:    key.Group,
+				Resource: key.Resource,
+			},
+		}})
+		require.NoError(t, err)
+		require.Len(t, all.Items, 1)
+		require.Equal(t, updated.ResourceVersion, all.Items[0].ResourceVersion)
+
 		deleted, err := server.Delete(ctx, &DeleteRequest{Key: key, ResourceVersion: updated.ResourceVersion})
 		require.NoError(t, err)
 		require.True(t, deleted.ResourceVersion > updated.ResourceVersion)
