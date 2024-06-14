@@ -259,8 +259,6 @@ export function rowToFieldValue(row: any, field?: Field): string {
   }
 
   const fieldValue = field.values[row.index];
-
-  console.log('fieldValue', fieldValue);
   const displayValue = field.display ? field.display(fieldValue) : fieldValue;
   const value = field.display ? formattedValueToString(displayValue) : displayValue;
 
