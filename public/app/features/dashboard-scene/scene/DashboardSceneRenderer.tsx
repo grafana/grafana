@@ -24,7 +24,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
   const isHomePage = !meta.url && !meta.slug && !meta.isNew && !meta.isSnapshot;
-  const isDashboardControlsHidden = !controls?.hasControls();
+  const hasControls = controls?.hasControls();
 
   if (editview) {
     return (
@@ -38,7 +38,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const emptyState = <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />;
 
   const withPanels = (
-    <div className={cx(styles.body, isDashboardControlsHidden && styles.bodyWithoutControls)}>
+    <div className={cx(styles.body, !hasControls && styles.bodyWithoutControls)}>
       <bodyToRender.Component model={bodyToRender} />
     </div>
   );
@@ -50,14 +50,14 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         <div
           className={cx(
             styles.pageContainer,
-            !isDashboardControlsHidden && !scopes && styles.pageContainerWithControls,
+            hasControls && !scopes && styles.pageContainerWithControls,
             scopes && styles.pageContainerWithScopes,
             scopes && isScopesExpanded && styles.pageContainerWithScopesExpanded
           )}
         >
           {scopes && <scopes.Component model={scopes} />}
           <NavToolbarActions dashboard={model} />
-          {!isHomePage && controls && !isDashboardControlsHidden && (
+          {!isHomePage && controls && hasControls && (
             <div
               className={cx(styles.controlsWrapper, scopes && !isScopesExpanded && styles.controlsWrapperWithScopes)}
             >
