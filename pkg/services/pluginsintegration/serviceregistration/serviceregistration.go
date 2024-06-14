@@ -16,7 +16,6 @@ import (
 
 type Service struct {
 	featureEnabled bool
-	features       featuremgmt.FeatureToggles
 	log            log.Logger
 	reg            extsvcauth.ExternalServiceRegistry
 	settingsSvc    pluginsettings.Service
@@ -25,7 +24,6 @@ type Service struct {
 func ProvideService(features featuremgmt.FeatureToggles, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
 	s := &Service{
 		featureEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
-		features:       features,
 		log:            log.New("plugins.external.registration"),
 		reg:            reg,
 		settingsSvc:    settingsSvc,
