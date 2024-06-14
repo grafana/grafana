@@ -439,5 +439,10 @@
     "prettier@3.3.3": {
       "unplugged": true
     }
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }
