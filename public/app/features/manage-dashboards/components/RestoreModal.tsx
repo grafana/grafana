@@ -3,22 +3,23 @@ import React from 'react';
 import { ConfirmModal, Text } from '@grafana/ui';
 
 import { Trans, t } from '../../../core/internationalization';
-import { DashboardTreeSelection } from '../../browse-dashboards/types';
 
 interface Props {
   isOpen: boolean;
   onConfirm: () => Promise<void>;
   onDismiss: () => void;
-  selectedItems: DashboardTreeSelection;
+  selectedDashboards: string[];
   isLoading: boolean;
 }
 
-export const RestoreModal = ({ onConfirm, onDismiss, selectedItems, isLoading, ...props }: Props) => {
-  const numberOfDashboards = selectedItems ? Object.keys(selectedItems.dashboard).length : 0;
+export const RestoreModal = ({ onConfirm, onDismiss, selectedDashboards, isLoading, ...props }: Props) => {
+  const numberOfDashboards = selectedDashboards.length;
+
   const onRestore = async () => {
     await onConfirm();
     onDismiss();
   };
+
   return (
     <ConfirmModal
       body={
