@@ -22,7 +22,7 @@ type FSQLTestSuite struct {
 	suite.Suite
 	db     *sql.DB
 	server flight.Server
-	port   string
+	addr   string
 }
 
 func (suite *FSQLTestSuite) SetupTest() {
