@@ -7,11 +7,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func (s *sqlResourceServer) Watch(*resource.WatchRequest, resource.ResourceStore_WatchServer) error {
+func (s *sqlResourceStore) Watch(*resource.WatchRequest, resource.ResourceStore_WatchServer) error {
 	return ErrNotImplementedYet
 }
 
-func (s *sqlResourceServer) poller(stream chan *resource.WatchResponse) {
+func (s *sqlResourceStore) poller(stream chan *resource.WatchResponse) {
 	var err error
 
 	since := int64(0)
@@ -34,7 +34,7 @@ func (s *sqlResourceServer) poller(stream chan *resource.WatchResponse) {
 	}
 }
 
-func (s *sqlResourceServer) poll(since int64, out chan *resource.WatchResponse) (int64, error) {
+func (s *sqlResourceStore) poll(since int64, out chan *resource.WatchResponse) (int64, error) {
 	ctx, span := s.tracer.Start(s.ctx, "storage_server.poll")
 	defer span.End()
 	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "poll"}))

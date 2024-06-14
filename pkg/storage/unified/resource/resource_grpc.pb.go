@@ -19,13 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	ResourceStore_Read_FullMethodName      = "/resource.ResourceStore/Read"
-	ResourceStore_Create_FullMethodName    = "/resource.ResourceStore/Create"
-	ResourceStore_Update_FullMethodName    = "/resource.ResourceStore/Update"
-	ResourceStore_Delete_FullMethodName    = "/resource.ResourceStore/Delete"
-	ResourceStore_List_FullMethodName      = "/resource.ResourceStore/List"
-	ResourceStore_Watch_FullMethodName     = "/resource.ResourceStore/Watch"
-	ResourceStore_IsHealthy_FullMethodName = "/resource.ResourceStore/IsHealthy"
+	ResourceStore_Read_FullMethodName   = "/resource.ResourceStore/Read"
+	ResourceStore_Create_FullMethodName = "/resource.ResourceStore/Create"
+	ResourceStore_Update_FullMethodName = "/resource.ResourceStore/Update"
+	ResourceStore_Delete_FullMethodName = "/resource.ResourceStore/Delete"
+	ResourceStore_List_FullMethodName   = "/resource.ResourceStore/List"
+	ResourceStore_Watch_FullMethodName  = "/resource.ResourceStore/Watch"
 )
 
 // ResourceStoreClient is the client API for ResourceStore service.
@@ -43,7 +42,6 @@ type ResourceStoreClient interface {
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 	Watch(ctx context.Context, in *WatchRequest, opts ...grpc.CallOption) (ResourceStore_WatchClient, error)
-	IsHealthy(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
 type resourceStoreClient struct {
@@ -137,16 +135,6 @@ func (x *resourceStoreWatchClient) Recv() (*WatchResponse, error) {
 	return m, nil
 }
 
-func (c *resourceStoreClient) IsHealthy(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(HealthCheckResponse)
-	err := c.cc.Invoke(ctx, ResourceStore_IsHealthy_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ResourceStoreServer is the server API for ResourceStore service.
 // All implementations should embed UnimplementedResourceStoreServer
 // for forward compatibility
@@ -162,7 +150,6 @@ type ResourceStoreServer interface {
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	List(context.Context, *ListRequest) (*ListResponse, error)
 	Watch(*WatchRequest, ResourceStore_WatchServer) error
-	IsHealthy(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 }
 
 // UnimplementedResourceStoreServer should be embedded to have forward compatible implementations.
@@ -186,9 +173,6 @@ func (UnimplementedResourceStoreServer) List(context.Context, *ListRequest) (*Li
 }
 func (UnimplementedResourceStoreServer) Watch(*WatchRequest, ResourceStore_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
-}
-func (UnimplementedResourceStoreServer) IsHealthy(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method IsHealthy not implemented")
 }
 
 // UnsafeResourceStoreServer may be embedded to opt out of forward compatibility for this service.
@@ -313,24 +297,6 @@ func (x *resourceStoreWatchServer) Send(m *WatchResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _ResourceStore_IsHealthy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HealthCheckRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ResourceStoreServer).IsHealthy(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ResourceStore_IsHealthy_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResourceStoreServer).IsHealthy(ctx, req.(*HealthCheckRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // ResourceStore_ServiceDesc is the grpc.ServiceDesc for ResourceStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -358,10 +324,6 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "List",
 			Handler:    _ResourceStore_List_Handler,
 		},
-		{
-			MethodName: "IsHealthy",
-			Handler:    _ResourceStore_IsHealthy_Handler,
-		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -374,11 +336,10 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ResourceSearch_Read_FullMethodName      = "/resource.ResourceSearch/Read"
-	ResourceSearch_GetBlob_FullMethodName   = "/resource.ResourceSearch/GetBlob"
-	ResourceSearch_History_FullMethodName   = "/resource.ResourceSearch/History"
-	ResourceSearch_Origin_FullMethodName    = "/resource.ResourceSearch/Origin"
-	ResourceSearch_IsHealthy_FullMethodName = "/resource.ResourceSearch/IsHealthy"
+	ResourceSearch_Read_FullMethodName    = "/resource.ResourceSearch/Read"
+	ResourceSearch_GetBlob_FullMethodName = "/resource.ResourceSearch/GetBlob"
+	ResourceSearch_History_FullMethodName = "/resource.ResourceSearch/History"
+	ResourceSearch_Origin_FullMethodName  = "/resource.ResourceSearch/Origin"
 )
 
 // ResourceSearchClient is the client API for ResourceSearch service.
@@ -395,8 +356,6 @@ type ResourceSearchClient interface {
 	History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error)
 	// Used for efficient provisioning
 	Origin(ctx context.Context, in *OriginRequest, opts ...grpc.CallOption) (*OriginResponse, error)
-	// Check if the service is healthy
-	IsHealthy(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
 type resourceSearchClient struct {
@@ -447,16 +406,6 @@ func (c *resourceSearchClient) Origin(ctx context.Context, in *OriginRequest, op
 	return out, nil
 }
 
-func (c *resourceSearchClient) IsHealthy(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(HealthCheckResponse)
-	err := c.cc.Invoke(ctx, ResourceSearch_IsHealthy_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ResourceSearchServer is the server API for ResourceSearch service.
 // All implementations should embed UnimplementedResourceSearchServer
 // for forward compatibility
@@ -471,8 +420,6 @@ type ResourceSearchServer interface {
 	History(context.Context, *HistoryRequest) (*HistoryResponse, error)
 	// Used for efficient provisioning
 	Origin(context.Context, *OriginRequest) (*OriginResponse, error)
-	// Check if the service is healthy
-	IsHealthy(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 }
 
 // UnimplementedResourceSearchServer should be embedded to have forward compatible implementations.
@@ -490,9 +437,6 @@ func (UnimplementedResourceSearchServer) History(context.Context, *HistoryReques
 }
 func (UnimplementedResourceSearchServer) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Origin not implemented")
-}
-func (UnimplementedResourceSearchServer) IsHealthy(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method IsHealthy not implemented")
 }
 
 // UnsafeResourceSearchServer may be embedded to opt out of forward compatibility for this service.
@@ -578,24 +522,6 @@ func _ResourceSearch_Origin_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ResourceSearch_IsHealthy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HealthCheckRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ResourceSearchServer).IsHealthy(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ResourceSearch_IsHealthy_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResourceSearchServer).IsHealthy(ctx, req.(*HealthCheckRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // ResourceSearch_ServiceDesc is the grpc.ServiceDesc for ResourceSearch service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -619,9 +545,102 @@ var ResourceSearch_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Origin",
 			Handler:    _ResourceSearch_Origin_Handler,
 		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "resource.proto",
+}
+
+const (
+	Diagnostics_IsHealthy_FullMethodName = "/resource.Diagnostics/IsHealthy"
+)
+
+// DiagnosticsClient is the client API for Diagnostics service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Clients can use this service directly
+// NOTE: This is read only, and no read afer write guarantees
+type DiagnosticsClient interface {
+	// Check if the service is healthy
+	IsHealthy(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
+}
+
+type diagnosticsClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewDiagnosticsClient(cc grpc.ClientConnInterface) DiagnosticsClient {
+	return &diagnosticsClient{cc}
+}
+
+func (c *diagnosticsClient) IsHealthy(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HealthCheckResponse)
+	err := c.cc.Invoke(ctx, Diagnostics_IsHealthy_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// DiagnosticsServer is the server API for Diagnostics service.
+// All implementations should embed UnimplementedDiagnosticsServer
+// for forward compatibility
+//
+// Clients can use this service directly
+// NOTE: This is read only, and no read afer write guarantees
+type DiagnosticsServer interface {
+	// Check if the service is healthy
+	IsHealthy(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
+}
+
+// UnimplementedDiagnosticsServer should be embedded to have forward compatible implementations.
+type UnimplementedDiagnosticsServer struct {
+}
+
+func (UnimplementedDiagnosticsServer) IsHealthy(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsHealthy not implemented")
+}
+
+// UnsafeDiagnosticsServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to DiagnosticsServer will
+// result in compilation errors.
+type UnsafeDiagnosticsServer interface {
+	mustEmbedUnimplementedDiagnosticsServer()
+}
+
+func RegisterDiagnosticsServer(s grpc.ServiceRegistrar, srv DiagnosticsServer) {
+	s.RegisterService(&Diagnostics_ServiceDesc, srv)
+}
+
+func _Diagnostics_IsHealthy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthCheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DiagnosticsServer).IsHealthy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Diagnostics_IsHealthy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DiagnosticsServer).IsHealthy(ctx, req.(*HealthCheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Diagnostics_ServiceDesc is the grpc.ServiceDesc for Diagnostics service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Diagnostics_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "resource.Diagnostics",
+	HandlerType: (*DiagnosticsServer)(nil),
+	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "IsHealthy",
-			Handler:    _ResourceSearch_IsHealthy_Handler,
+			Handler:    _Diagnostics_IsHealthy_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

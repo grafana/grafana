@@ -428,13 +428,12 @@ service ResourceStore {
   rpc Delete(DeleteRequest) returns (DeleteResponse);
   rpc List(ListRequest) returns (ListResponse);
   rpc Watch(WatchRequest) returns (stream WatchResponse);
-  rpc IsHealthy(HealthCheckRequest) returns (HealthCheckResponse);
 }
 
 // Clients can use this service directly
 // NOTE: This is read only, and no read afer write guarantees
 service ResourceSearch {
-  // rpc Search(...) ...
+  // TODO: rpc Search(...) ... eventually a typed response
 
   rpc Read(ReadRequest) returns (ReadResponse); // Duplicated -- for client read only usage
 
@@ -446,7 +445,11 @@ service ResourceSearch {
 
   // Used for efficient provisioning
   rpc Origin(OriginRequest) returns (OriginResponse);
+}
 
+// Clients can use this service directly
+// NOTE: This is read only, and no read afer write guarantees
+service Diagnostics {
   // Check if the service is healthy
   rpc IsHealthy(HealthCheckRequest) returns (HealthCheckResponse);
 }

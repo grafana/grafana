@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -25,47 +24,31 @@ var (
 	ErrNotImplementedYet = errors.New("not implemented yet")
 )
 
-// Make sure we implement both store and search
-var _ resource.ResourceStoreServer = &sqlResourceServer{}
-var _ resource.ResourceSearchServer = &sqlResourceServer{}
-
-func ProvideSQLResourceServer(db db.EntityDBInterface, tracer tracing.Tracer) (SqlResourceServer, error) {
+func ProvideSQLResourceServer(db db.EntityDBInterface, tracer tracing.Tracer) (resource.ResourceServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	var err error
-	server := &sqlResourceServer{
+	store := &sqlResourceStore{
 		db:     db,
 		log:    log.New("sql-resource-server"),
 		ctx:    ctx,
 		cancel: cancel,
 		tracer: tracer,
 	}
-	server.writer, err = resource.NewResourceWriter(resource.WriterOptions{
-		NodeID:   123, // for snowflake ID generation
-		Tracer:   tracer,
-		Reader:   server.Read,
-		Appender: server.append,
-	})
-	if err != nil {
+
+	if err := prometheus.Register(sqlstash.NewStorageMetrics()); err != nil {
 		return nil, err
 	}
 
-	if err := prometheus.Register(sqlstash.NewStorageMetrics()); err != nil {
-		server.log.Warn("error registering storage server metrics", "error", err)
-	}
-
-	return server, nil
+	return resource.NewResourceServer(resource.ResourceServerOptions{
+		Tracer:      tracer,
+		Store:       store,
+		NodeID:      234, // from config?  used for snowflake ID
+		Diagnostics: store,
+		Lifecycle:   store,
+	})
 }
 
-type SqlResourceServer interface {
-	resource.ResourceStoreServer
-	resource.ResourceSearchServer
-
-	Init() error
-	Stop()
-}
-
-type sqlResourceServer struct {
+type sqlResourceStore struct {
 	log         log.Logger
 	db          db.EntityDBInterface // needed to keep xorm engine in scope
 	sess        *session.SessionDB
@@ -76,29 +59,11 @@ type sqlResourceServer struct {
 	stream      chan *resource.WatchResponse
 	tracer      trace.Tracer
 
-	// Wrapper around all write events
-	writer resource.ResourceWriter
-
-	once    sync.Once
-	initErr error
-
 	sqlDB      db.DB
 	sqlDialect sqltemplate.Dialect
 }
 
-func (s *sqlResourceServer) Init() error {
-	s.once.Do(func() {
-		s.initErr = s.init()
-	})
-
-	if s.initErr != nil {
-		return fmt.Errorf("initialize Entity Server: %w", s.initErr)
-	}
-
-	return s.initErr
-}
-
-func (s *sqlResourceServer) init() error {
+func (s *sqlResourceStore) Init() error {
 	if s.sess != nil {
 		return nil
 	}
@@ -143,15 +108,6 @@ func (s *sqlResourceServer) init() error {
 
 	s.sess = sess
 	s.dialect = migrator.NewDialect(engine.DriverName())
-	s.writer, err = resource.NewResourceWriter(resource.WriterOptions{
-		NodeID:   10,
-		Tracer:   s.tracer,
-		Reader:   s.Read,
-		Appender: s.append,
-	})
-	if err != nil {
-		return err
-	}
 
 	// set up the broadcaster
 	s.broadcaster, err = sqlstash.NewBroadcaster(s.ctx, func(stream chan *resource.WatchResponse) error {
@@ -169,12 +125,8 @@ func (s *sqlResourceServer) init() error {
 	return nil
 }
 
-func (s *sqlResourceServer) IsHealthy(ctx context.Context, r *resource.HealthCheckRequest) (*resource.HealthCheckResponse, error) {
-	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "isHealthy"}))
-	if err := s.Init(); err != nil {
-		ctxLogger.Error("init error", "error", err)
-		return nil, err
-	}
+func (s *sqlResourceStore) IsHealthy(ctx context.Context, r *resource.HealthCheckRequest) (*resource.HealthCheckResponse, error) {
+	// ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "isHealthy"}))
 
 	if err := s.sqlDB.PingContext(ctx); err != nil {
 		return nil, err
@@ -183,11 +135,11 @@ func (s *sqlResourceServer) IsHealthy(ctx context.Context, r *resource.HealthChe
 	return &resource.HealthCheckResponse{Status: resource.HealthCheckResponse_SERVING}, nil
 }
 
-func (s *sqlResourceServer) Stop() {
+func (s *sqlResourceStore) Stop() {
 	s.cancel()
 }
 
-func (s *sqlResourceServer) append(ctx context.Context, event *resource.WriteEvent) (int64, error) {
+func (s *sqlResourceStore) WriteEvent(ctx context.Context, event *resource.WriteEvent) (int64, error) {
 	_, span := s.tracer.Start(ctx, "storage_server.WriteEvent")
 	defer span.End()
 
@@ -196,13 +148,9 @@ func (s *sqlResourceServer) append(ctx context.Context, event *resource.WriteEve
 	return 0, ErrNotImplementedYet
 }
 
-func (s *sqlResourceServer) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
+func (s *sqlResourceStore) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
 	_, span := s.tracer.Start(ctx, "storage_server.GetResource")
 	defer span.End()
-
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
 
 	if req.Key.Group == "" {
 		return &resource.ReadResponse{Status: badRequest("missing group")}, nil
@@ -216,49 +164,9 @@ func (s *sqlResourceServer) Read(ctx context.Context, req *resource.ReadRequest)
 	return nil, ErrNotImplementedYet
 }
 
-func (s *sqlResourceServer) Create(ctx context.Context, req *resource.CreateRequest) (*resource.CreateResponse, error) {
-	rsp, err := s.writer.Create(ctx, req)
-	if err != nil {
-		s.log.Info("create", "error", err)
-		rsp.Status = &resource.StatusResult{
-			Status:  "Failure",
-			Message: err.Error(),
-		}
-	}
-	return rsp, nil
-}
-
-func (s *sqlResourceServer) Update(ctx context.Context, req *resource.UpdateRequest) (*resource.UpdateResponse, error) {
-	rsp, err := s.writer.Update(ctx, req)
-	if err != nil {
-		s.log.Info("create", "error", err)
-		rsp.Status = &resource.StatusResult{
-			Status:  "Failure",
-			Message: err.Error(),
-		}
-	}
-	return rsp, nil
-}
-
-func (s *sqlResourceServer) Delete(ctx context.Context, req *resource.DeleteRequest) (*resource.DeleteResponse, error) {
-	rsp, err := s.writer.Delete(ctx, req)
-	if err != nil {
-		s.log.Info("create", "error", err)
-		rsp.Status = &resource.StatusResult{
-			Status:  "Failure",
-			Message: err.Error(),
-		}
-	}
-	return rsp, nil
-}
-
-func (s *sqlResourceServer) List(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
+func (s *sqlResourceStore) List(ctx context.Context, req *resource.ListRequest) (*resource.ListResponse, error) {
 	_, span := s.tracer.Start(ctx, "storage_server.List")
 	defer span.End()
-
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
 
 	fmt.Printf("TODO, LIST: %+v", req.Options.Key)
 
@@ -266,13 +174,9 @@ func (s *sqlResourceServer) List(ctx context.Context, req *resource.ListRequest)
 }
 
 // Get the raw blob bytes and metadata
-func (s *sqlResourceServer) GetBlob(ctx context.Context, req *resource.GetBlobRequest) (*resource.GetBlobResponse, error) {
+func (s *sqlResourceStore) GetBlob(ctx context.Context, req *resource.GetBlobRequest) (*resource.GetBlobResponse, error) {
 	_, span := s.tracer.Start(ctx, "storage_server.List")
 	defer span.End()
-
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
 
 	fmt.Printf("TODO, GET BLOB: %+v", req.Key)
 
@@ -280,13 +184,9 @@ func (s *sqlResourceServer) GetBlob(ctx context.Context, req *resource.GetBlobRe
 }
 
 // Show resource history (and trash)
-func (s *sqlResourceServer) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
+func (s *sqlResourceStore) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
 	_, span := s.tracer.Start(ctx, "storage_server.History")
 	defer span.End()
-
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
 
 	fmt.Printf("TODO, GET History: %+v", req.Key)
 
@@ -294,13 +194,9 @@ func (s *sqlResourceServer) History(ctx context.Context, req *resource.HistoryRe
 }
 
 // Used for efficient provisioning
-func (s *sqlResourceServer) Origin(ctx context.Context, req *resource.OriginRequest) (*resource.OriginResponse, error) {
+func (s *sqlResourceStore) Origin(ctx context.Context, req *resource.OriginRequest) (*resource.OriginResponse, error) {
 	_, span := s.tracer.Start(ctx, "storage_server.History")
 	defer span.End()
-
-	if err := s.Init(); err != nil {
-		return nil, err
-	}
 
 	fmt.Printf("TODO, GET History: %+v", req.Key)
 
