@@ -360,12 +360,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     (node: HTMLDivElement) => {
       logsContainerRef.current = node;
 
-      // This can be just a function passed down to LogRows but:
-      // - LogRow.componentDidMount calls scrollIntoView but it's called before the logsContainerRef is set
+      // In theory this should be just a function passed down to LogRows but:
+      // - LogRow.componentDidMount which calls scrollIntoView is called BEFORE the logsContainerRef is set
+      // - the if check below if (logsContainerRef.current) was falsy and scrolling doesn't happen
+      // - and LogRow.scrollToLogRow marks the line as scrolled anyway (and won't perform scrolling when the ref is set)
       // - see more details in https://github.com/facebook/react/issues/29897
-      // - without setting scrollIntoView (or other hack to ensure the ref is set), the code to scroll will
-      //   not be executed (see LogRow.scrollToLogRow which marks the line as scrolled even when scrollIntoView
-      //   below did't scroll because if (logsContainerRef.current) was falsy
       // We can change it once LogRow is converted into a functional component
       setScrollIntoView(() => (element: HTMLElement) => {
         if (config.featureToggles.logsInfiniteScrolling) {
