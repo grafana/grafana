@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -78,36 +80,39 @@ func TimeRequest(ctx context.Context, operation string, coll instrument.Collecto
 type TracedClient struct {
 	client Requester
 	tracer tracing.Tracer
+	name   string
 }
 
-func NewTracedClient(client Requester, tracer tracing.Tracer) *TracedClient {
+func NewTracedClient(client Requester, tracer tracing.Tracer, name string) *TracedClient {
 	return &TracedClient{
 		client: client,
 		tracer: tracer,
+		name:   name,
 	}
 }
 
 // Do executes the request.
 func (c TracedClient) Do(r *http.Request) (*http.Response, error) {
-	url := r.URL.Path
-	method := r.Method
-	name := fmt.Sprintf("HTTP %s %s", method, url)
-	ctx, span := c.tracer.Start(r.Context(), name, trace.WithAttributes(
-		attribute.String("http.method", method),
-		attribute.String("http.url", url),
-	))
+	ctx, span := c.tracer.Start(r.Context(), c.name, trace.WithSpanKind(trace.SpanKindClient))
 	defer span.End()
+
+	span.SetAttributes(semconv.HTTPURL(r.URL.String()))
+	span.SetAttributes(semconv.HTTPMethod(r.Method))
 
 	c.tracer.Inject(ctx, r.Header, span)
 
 	r = r.WithContext(ctx)
 	resp, err := c.client.Do(r)
 	if err != nil {
+		span.SetStatus(codes.Error, "request failed")
 		span.RecordError(err)
 	} else {
-		span.SetAttributes(attribute.Int("http.status_code", resp.StatusCode))
+		if resp.ContentLength > 0 {
+			span.SetAttributes(attribute.Int64("http.content_length", resp.ContentLength))
+		}
+		span.SetAttributes(semconv.HTTPStatusCode(resp.StatusCode))
 		if resp.StatusCode >= 400 && resp.StatusCode < 600 {
-			span.RecordError(fmt.Errorf("request failed with status code: %d", resp.StatusCode))
+			span.RecordError(fmt.Errorf("error with HTTP status code %d", resp.StatusCode))
 		}
 	}
 

@@ -41,7 +41,7 @@ func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanage
 	}}
 
 	tc := client.NewTimedClient(c, metrics.RequestLatency)
-	trc := client.NewTracedClient(tc, tracer)
+	trc := client.NewTracedClient(tc, tracer, "remote.alertmanager.client")
 	apiEndpoint := *cfg.URL
 
 	// Next, make sure you set the right path.

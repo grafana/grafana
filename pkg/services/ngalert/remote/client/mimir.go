@@ -80,7 +80,7 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer
 		Transport: rt,
 	}
 	tc := client.NewTimedClient(c, metrics.RequestLatency)
-	trc := client.NewTracedClient(tc, tracer)
+	trc := client.NewTracedClient(tc, tracer, "remote.alertmanager.client")
 
 	return &Mimir{
 		endpoint:      cfg.URL,

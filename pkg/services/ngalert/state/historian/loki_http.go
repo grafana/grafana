@@ -106,7 +106,7 @@ const (
 
 func NewLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger, tracer tracing.Tracer) *HttpLokiClient {
 	tc := client.NewTimedClient(req, metrics.WriteDuration)
-	trc := client.NewTracedClient(tc, tracer)
+	trc := client.NewTracedClient(tc, tracer, "ngalert.historian.client")
 	return &HttpLokiClient{
 		client:  trc,
 		encoder: cfg.Encoder,
