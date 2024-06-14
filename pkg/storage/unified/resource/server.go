@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -91,6 +92,9 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	if opts.NextEventID == nil {
+		if opts.NodeID == 0 {
+			opts.NodeID = rand.Int63n(1024)
+		}
 		eventNode, err := snowflake.NewNode(opts.NodeID)
 		if err != nil {
 			return nil, apierrors.NewInternalError(
