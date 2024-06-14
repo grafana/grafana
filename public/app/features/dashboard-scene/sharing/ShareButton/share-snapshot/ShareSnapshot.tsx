@@ -62,8 +62,8 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
           {showDeletedAlert && (
             <Alert severity="info" title={''} onRemove={() => setShowDeletedAlert(false)}>
               <Trans i18nKey="snapshot.share.deleted-alert">
-                The snapshot has been deleted. It may take up to an hour to clear from browser and CDN caches if already
-                accessed.
+                Your snapshot has been deleted. It might take up to an hour before the snapshot is cleared from any CDN
+                caches.
               </Trans>
             </Alert>
           )}
