@@ -11,7 +11,7 @@ import { fetchRulesSourceBuildInfoAction, getDataSourceRulerConfig } from '../st
 
 type ProduceResult = RulerRuleGroupDTO | AlertGroupUpdated;
 
-// @TODO the manual state tracking here is abysmal but we don't have a better idea that works right now
+// @TODO the manual state tracking here is not great, but I don't have a better idea that works /shrug
 function useProduceNewRuleGroup() {
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
   const [updateRuleGroup] = alertRuleApi.endpoints.updateRuleGroupForNamespace.useMutation();
