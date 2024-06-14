@@ -28,7 +28,7 @@ const SLO_API_PATH = `/api/plugins/${SupportedPlugin.Slo}/resources/v1`;
 export const sloApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getSlos: build.query<{ slos: Slo[] }, void>({
-      query: () => ({ url: `${SLO_API_PATH}/slo` }),
+      query: () => ({ url: `${SLO_API_PATH}/slo`, showErrorAlert: false }),
       providesTags: ['GrafanaSlo'],
     }),
   }),
