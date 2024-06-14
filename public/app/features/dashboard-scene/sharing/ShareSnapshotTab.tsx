@@ -5,7 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
-import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup } from '@grafana/ui';
+import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { t, Trans } from 'app/core/internationalization';
@@ -246,7 +246,7 @@ function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSnapshotTa
 
       {/* When snapshot has been created - show link and allow copy/deletion */}
       {snapshotResult.value && (
-        <>
+        <Stack direction="column" gap={0}>
           <Field label={t('share-modal.snapshot.url-label', 'Snapshot URL')}>
             <Input
               data-testid={selectors.CopyUrlInput}
@@ -266,7 +266,7 @@ function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSnapshotTa
             />
           </Field>
 
-          <div className="pull-right" style={{ padding: '5px' }}>
+          <div style={{ alignSelf: 'flex-end', padding: '5px' }}>
             <Trans i18nKey="share-modal.snapshot.mistake-message">Did you make a mistake? </Trans>&nbsp;
             <Button
               fill="outline"
@@ -279,7 +279,7 @@ function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSnapshotTa
               <Trans i18nKey="share-modal.snapshot.delete-button">Delete snapshot.</Trans>
             </Button>
           </div>
-        </>
+        </Stack>
       )}
     </>
   );
