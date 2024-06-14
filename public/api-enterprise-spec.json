@@ -1570,10 +1570,7 @@
         "operationId": "renderReportCSVs",
         "parameters": [
           {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/ReportDashboard"
-            },
+            "type": "string",
             "name": "dashboards",
             "in": "query"
           },
@@ -1616,10 +1613,7 @@
         "operationId": "renderReportPDFs",
         "parameters": [
           {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/ReportDashboard"
-            },
+            "type": "string",
             "name": "dashboards",
             "in": "query"
           },
@@ -9318,6 +9312,12 @@
             "$ref": "#/definitions/RoleDTO"
           }
         }
+      }
+    },
+    "noContentResponse": {
+      "description": "",
+      "schema": {
+        "type": "object"
       }
     },
     "notFoundError": {
