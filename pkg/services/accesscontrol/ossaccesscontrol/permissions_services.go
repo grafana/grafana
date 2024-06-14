@@ -7,11 +7,11 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -326,7 +326,7 @@ func (e DatasourcePermissionsService) SetBuiltInRolePermission(ctx context.Conte
 // if an OSS/unlicensed instance is upgraded to Enterprise/licensed.
 // https://github.com/grafana/identity-access-team/issues/672
 func (e DatasourcePermissionsService) SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
-	var dbCommands []resourcepermissions.SetResourcePermissionsCommand
+	dbCommands := make([]resourcepermissions.SetResourcePermissionsCommand, 0, len(commands))
 	for _, cmd := range commands {
 		// Only set query permissions for built-in roles; do not set permissions for data sources with * as UID, as this would grant wildcard permissions
 		if cmd.Permission != "Query" || cmd.BuiltinRole == "" || resourceID == "*" {

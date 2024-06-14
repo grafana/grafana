@@ -381,11 +381,13 @@ func TestFSPathSeparatorFiles(t *testing.T) {
 }
 
 func fileList(manifest *PluginManifest) []string {
-	var keys []string
+	keys := make([]string, 0, len(manifest.Files))
 	for k := range manifest.Files {
 		keys = append(keys, k)
 	}
+
 	sort.Strings(keys)
+
 	return keys
 }
 

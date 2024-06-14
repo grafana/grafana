@@ -13,9 +13,9 @@ import (
 
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -787,7 +787,8 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 	if len(rules) == 0 {
 		return 0, nil
 	}
-	var updates []ngmodels.UpdateRule
+
+	updates := make([]ngmodels.UpdateRule, 0, len(rules))
 	for _, rule := range rules {
 		r := ngmodels.CopyRule(rule)
 		for idx := range r.NotificationSettings {
@@ -795,6 +796,7 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 				r.NotificationSettings[idx].Receiver = newReceiver
 			}
 		}
+
 		updates = append(updates, ngmodels.UpdateRule{
 			Existing: rule,
 			New:      *r,
