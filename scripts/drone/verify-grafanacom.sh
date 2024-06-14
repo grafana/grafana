@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version="${TAG}" # JEV: is this accessable here?
+version="$TAG" # JEV: is this the best way to pass this in?
 
 # Make a request to the GCOM API to retrieve the artifacts for the specified version
 artifacts=$(gcom /downloads/grafana/versions/$version)
