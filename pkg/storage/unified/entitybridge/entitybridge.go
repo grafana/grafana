@@ -143,6 +143,9 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event *resource.WriteEven
 			return 0, err
 		}
 		return rsp.Entity.ResourceVersion, err
+
+	case resource.ResourceOperation_UNKNOWN:
+	case resource.ResourceOperation_DELETED:
 	}
 
 	return 0, fmt.Errorf("unsupported operation: %s", event.Operation.String())

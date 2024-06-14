@@ -163,6 +163,11 @@ func (s *server) Stop() {
 }
 
 func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue []byte) (*WriteEvent, error) {
+	if key.Name == "" {
+		return nil, apierrors.NewBadRequest("empty name")
+	}
+	// TODO -- make sure it is alphanumeric+
+
 	var err error
 	event := &WriteEvent{
 		EventID: s.nextEventID(),

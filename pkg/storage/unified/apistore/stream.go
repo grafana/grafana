@@ -60,7 +60,7 @@ decode:
 
 		// Error event
 		if evt.Type == resource.WatchEvent_ERROR {
-			err = fmt.Errorf(string(evt.Message))
+			err = fmt.Errorf(evt.Message)
 			klog.Errorf("client: error receiving result: %s", err)
 			return watch.Error, nil, err
 		}

@@ -197,6 +197,7 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
 }
 
+// nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
 	defer close(s.startedCh)
 
