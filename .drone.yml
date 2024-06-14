@@ -803,6 +803,7 @@ steps:
   - yarn playwright test --project=e2e-authentication
   image: node:20-bookworm
   name: playwright-e2e-authentication
+  network_mode: host
   depends_on:
     - yarn-install
   volumes:
