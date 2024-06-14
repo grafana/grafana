@@ -48,7 +48,7 @@ A long standing feature request for the table visualization is to allow wrapping
 
 #### Stat visualization percent change color mode options
 
-Sometimes less is more! The **Standard** behavior for percent change in the [stat visualization](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/stat/#show-percent-change) is to color positive percent changes green and negative percent changes red. Depending on your use case however, you may want to customize how percent change color is set. We've added the options to have percent change color mode **Inverted** (with positive red and negative green) or match the **Same as value**.
+Sometimes less is more! The **Standard** behavior for percent change in the [stat visualization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/stat/#show-percent-change) is to color positive percent changes green and negative percent changes red. Depending on your use case however, you may want to customize how percent change color is set. We've added the options to have percent change color mode **Inverted** (with positive red and negative green) or match the **Same as value**.
 
 ![Stat percent change color options](/media/docs/grafana/gif-grafana-11-1-stat-percent-change-color-options.gif)
 
@@ -64,9 +64,9 @@ XY charts provide a way to visualize arbitrary x and y values in a graph so that
 
 ![An xy chart showing height weight distribution](/media/docs/grafana/panels-visualizations/screenshot-xy-charts-v11.0.png)
 
-Over the past several months we’ve introduced multiple enhancements to the visualizations like auto mode, which now handles most scenarios that previously required manual configuration. Additionally, we've added better control over point styling and further improved performance. We’re excited to include XY chart as a first class citizen in the core Grafana visualization library. To learn more about the panel, refer to [the documentation](https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visualizations/xy-chart/).
+Over the past several months we’ve introduced multiple enhancements to the visualizations like auto mode, which now handles most scenarios that previously required manual configuration. Additionally, we've added better control over point styling and further improved performance. We’re excited to include XY chart as a first class citizen in the core Grafana visualization library. To learn more about the panel, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/xy-chart/).
 
-To use the new XY chart visualization, you must first enable the `autoMigrateXYChartPanel` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
+To use the new XY chart visualization, you must first enable the `autoMigrateXYChartPanel` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
 ## Alerting
 
@@ -158,7 +158,7 @@ The GeoMap panel can now be used with a keyboard! Focus the map area, move aroun
 
 ### Panel shortcut keyboard support
 
-We have [panel shortcuts](https://grafana.com/docs/grafana/latest/dashboards/use-dashboards/#keyboard-shortcuts), which previously only worked on whichever panel you hovered over. It now also takes into account the keyboard focus.
+We have [panel shortcuts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#keyboard-shortcuts), which previously only worked on whichever panel you hovered over. It now also takes into account the keyboard focus.
 
 {{< video-embed src="/media/docs/grafana/2024-06-10-Keyboard-Improvements-Enablement-Video.mp4" >}}
 
