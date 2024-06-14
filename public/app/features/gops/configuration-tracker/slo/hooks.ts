@@ -15,6 +15,6 @@ export function useSloChecks() {
   return {
     isLoading,
     hasSlo: Boolean(data?.slos.length),
-    hasSloWithAlert: data?.slos.some((slo) => slo.alerting),
+    hasSloWithAlert: Boolean(data?.slos?.some((slo) => slo.alerting)),
   };
 }
