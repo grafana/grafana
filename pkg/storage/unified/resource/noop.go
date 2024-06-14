@@ -3,51 +3,53 @@ package resource
 import "context"
 
 var (
-	_ ResourceSearchServer = &NoopServer{}
-	_ DiagnosticsServer    = &NoopServer{}
-	_ LifecycleHooks       = &NoopServer{}
+	_ ResourceSearchServer = &noopService{}
+	_ DiagnosticsServer    = &noopService{}
+	_ LifecycleHooks       = &noopService{}
 )
 
-type NoopServer struct{}
+// noopService is a helper implementation to simplify tests
+// It does nothing except return errors when asked to do anything real
+type noopService struct{}
 
 // Init implements ResourceServer.
-func (n *NoopServer) Init() error {
+func (n *noopService) Init() error {
 	return nil
 }
 
 // Stop implements ResourceServer.
-func (n *NoopServer) Stop() {
+func (n *noopService) Stop() {
 	// nothing
 }
 
 // IsHealthy implements ResourceServer.
-func (n *NoopServer) IsHealthy(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
+func (n *noopService) IsHealthy(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
 	return &HealthCheckResponse{
 		Status: HealthCheckResponse_SERVING,
 	}, nil
 }
 
 // Read implements ResourceServer.
-func (n *NoopServer) Read(context.Context, *ReadRequest) (*ReadResponse, error) {
+func (n *noopService) Read(context.Context, *ReadRequest) (*ReadResponse, error) {
 	return nil, ErrNotImplementedYet
 }
 
 // List implements ResourceServer.
-func (n *NoopServer) List(context.Context, *ListRequest) (*ListResponse, error) {
+func (n *noopService) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, ErrNotImplementedYet
 }
 
 // GetBlob implements ResourceServer.
-func (n *NoopServer) GetBlob(context.Context, *GetBlobRequest) (*GetBlobResponse, error) {
+func (n *noopService) GetBlob(context.Context, *GetBlobRequest) (*GetBlobResponse, error) {
 	return nil, ErrNotImplementedYet
 }
 
 // History implements ResourceServer.
-func (n *NoopServer) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
+func (n *noopService) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
 	return nil, ErrNotImplementedYet
 }
 
 // Origin implements ResourceServer.
-func (n *NoopServer) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
+func (n *noopService) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
 	return nil, ErrNotImplementedYet
 }

@@ -119,7 +119,7 @@ func (c *resourceStoreClient) Watch(ctx context.Context, in *WatchRequest, opts 
 }
 
 type ResourceStore_WatchClient interface {
-	Recv() (*WatchResponse, error)
+	Recv() (*WatchEvent, error)
 	grpc.ClientStream
 }
 
@@ -127,8 +127,8 @@ type resourceStoreWatchClient struct {
 	grpc.ClientStream
 }
 
-func (x *resourceStoreWatchClient) Recv() (*WatchResponse, error) {
-	m := new(WatchResponse)
+func (x *resourceStoreWatchClient) Recv() (*WatchEvent, error) {
+	m := new(WatchEvent)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -285,7 +285,7 @@ func _ResourceStore_Watch_Handler(srv interface{}, stream grpc.ServerStream) err
 }
 
 type ResourceStore_WatchServer interface {
-	Send(*WatchResponse) error
+	Send(*WatchEvent) error
 	grpc.ServerStream
 }
 
@@ -293,7 +293,7 @@ type resourceStoreWatchServer struct {
 	grpc.ServerStream
 }
 
-func (x *resourceStoreWatchServer) Send(m *WatchResponse) error {
+func (x *resourceStoreWatchServer) Send(m *WatchEvent) error {
 	return x.ServerStream.SendMsg(m)
 }
 

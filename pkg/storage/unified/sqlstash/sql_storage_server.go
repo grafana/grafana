@@ -53,10 +53,10 @@ type sqlResourceStore struct {
 	db          db.EntityDBInterface // needed to keep xorm engine in scope
 	sess        *session.SessionDB
 	dialect     migrator.Dialect
-	broadcaster sqlstash.Broadcaster[*resource.WatchResponse]
+	broadcaster sqlstash.Broadcaster[*resource.WatchEvent]
 	ctx         context.Context // TODO: remove
 	cancel      context.CancelFunc
-	stream      chan *resource.WatchResponse
+	stream      chan *resource.WatchEvent
 	tracer      trace.Tracer
 
 	sqlDB      db.DB
@@ -110,7 +110,7 @@ func (s *sqlResourceStore) Init() error {
 	s.dialect = migrator.NewDialect(engine.DriverName())
 
 	// set up the broadcaster
-	s.broadcaster, err = sqlstash.NewBroadcaster(s.ctx, func(stream chan *resource.WatchResponse) error {
+	s.broadcaster, err = sqlstash.NewBroadcaster(s.ctx, func(stream chan *resource.WatchEvent) error {
 		s.stream = stream
 
 		// start the poller

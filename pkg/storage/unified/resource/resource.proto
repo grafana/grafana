@@ -19,7 +19,6 @@ enum ResourceOperation {
   CREATED = 1;
   UPDATED = 2;
   DELETED = 3;
-  BOOKMARK = 4;
 }
 
 message ResourceWrapper {
@@ -331,15 +330,35 @@ message WatchRequest {
   bool allow_watch_bookmarks = 5;
 }
 
-message WatchResponse {
+message WatchEvent {
+  enum Type {
+    UNKNOWN = 0;
+    ADDED = 1;
+    MODIFIED = 2;
+    DELETED = 3;
+    BOOKMARK = 4;  
+    ERROR = 5;  
+  }
+
+  message Resource {
+    int64 version = 1;
+    bytes value = 2;
+  }
+
   // Timestamp the event was sent
   int64 timestamp = 1;
 
-  // Entity that was created, updated, or deleted
-  ResourceWrapper resource = 2;
+  // Timestamp the event was sent
+  Type type = 2;
 
-  // previous version of the entity (in update+delete events)
-  ResourceWrapper previous = 3;
+  // Resource version for the object
+  Resource resource = 3;
+
+  // Previous resource version (for update+delete)
+  Resource previous = 4;
+
+  // The commit message that triggered this change
+  string message = 5;
 }
 
 message HistoryRequest {
@@ -437,7 +456,7 @@ service ResourceStore {
   rpc Update(UpdateRequest) returns (UpdateResponse);
   rpc Delete(DeleteRequest) returns (DeleteResponse);
   rpc List(ListRequest) returns (ListResponse);
-  rpc Watch(WatchRequest) returns (stream WatchResponse);
+  rpc Watch(WatchRequest) returns (stream WatchEvent);
 }
 
 // Clients can use this service directly

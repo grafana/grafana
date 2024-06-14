@@ -50,7 +50,7 @@ type AppendingStore interface {
 	List(context.Context, *ListRequest) (*ListResponse, error)
 
 	// Watch for events
-	Watch(context.Context, *WatchRequest) (chan *WatchResponse, error)
+	Watch(context.Context, *WatchRequest) (chan *WatchEvent, error)
 }
 
 type ResourceServerOptions struct {
@@ -101,10 +101,10 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		return nil, fmt.Errorf("missing AppendingStore implementation")
 	}
 	if opts.Search == nil {
-		opts.Search = &NoopServer{}
+		opts.Search = &noopService{}
 	}
 	if opts.Diagnostics == nil {
-		opts.Search = &NoopServer{}
+		opts.Search = &noopService{}
 	}
 
 	return &server{

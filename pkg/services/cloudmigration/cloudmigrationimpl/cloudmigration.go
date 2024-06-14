@@ -9,6 +9,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -25,9 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // Service Define the cloudmigration.Service Implementation.
@@ -77,7 +78,7 @@ func ProvideService(
 	folderService folder.Service,
 ) (cloudmigration.Service, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
-		return &NoopServiceImpl{}, nil
+		return &noopServiceImpl{}, nil
 	}
 
 	s := &Service{

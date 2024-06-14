@@ -146,6 +146,6 @@ func (f *fsStore) List(ctx context.Context, req *ListRequest) (*ListResponse, er
 }
 
 // Watch implements AppendingStore.
-func (f *fsStore) Watch(context.Context, *WatchRequest) (chan *WatchResponse, error) {
+func (f *fsStore) Watch(context.Context, *WatchRequest) (chan *WatchEvent, error) {
 	panic("unimplemented")
 }

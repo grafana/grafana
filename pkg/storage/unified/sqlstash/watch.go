@@ -8,11 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func (s *sqlResourceStore) Watch(context.Context, *resource.WatchRequest) (chan *resource.WatchResponse, error) {
+func (s *sqlResourceStore) Watch(context.Context, *resource.WatchRequest) (chan *resource.WatchEvent, error) {
 	return nil, ErrNotImplementedYet
 }
 
-func (s *sqlResourceStore) poller(stream chan *resource.WatchResponse) {
+func (s *sqlResourceStore) poller(stream chan *resource.WatchEvent) {
 	var err error
 
 	since := int64(0)
@@ -35,7 +35,7 @@ func (s *sqlResourceStore) poller(stream chan *resource.WatchResponse) {
 	}
 }
 
-func (s *sqlResourceStore) poll(since int64, out chan *resource.WatchResponse) (int64, error) {
+func (s *sqlResourceStore) poll(since int64, out chan *resource.WatchEvent) (int64, error) {
 	ctx, span := s.tracer.Start(s.ctx, "storage_server.poll")
 	defer span.End()
 	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "poll"}))
@@ -44,7 +44,7 @@ func (s *sqlResourceStore) poll(since int64, out chan *resource.WatchResponse) (
 		err := func() error {
 			if false {
 				// TODO
-				out <- &resource.WatchResponse{}
+				out <- &resource.WatchEvent{}
 			}
 
 			// TODO, copy from entity store
