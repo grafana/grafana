@@ -97,7 +97,9 @@ func (z *Zanzana) start(ctx context.Context) error {
 	}
 
 	openfgav1.RegisterOpenFGAServiceServer(z.handle.GetServer(), srv)
-	grpcserver.ProvideReflectionService(z.cfg, z.handle)
+	if _, err := grpcserver.ProvideReflectionService(z.cfg, z.handle); err != nil {
+		return fmt.Errorf("failed to register reflection for zanzana: %w", err)
+	}
 
 	return nil
 }
