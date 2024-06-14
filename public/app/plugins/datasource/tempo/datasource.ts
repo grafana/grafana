@@ -261,6 +261,25 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
   }
 
+  /**
+   * Check if streaming for search queries is enabled (and available).
+   *
+   * We need to check:
+   * - the `traceQLStreaming` feature toggle, to disable streaming if customer support turned off the toggle in the past, which usually means that streaming does not work properly for the customer
+   * - the recently created Tempo data source plugin toggle, to disable streaming if the user disabled it in the data source configuration
+   * - whether streaming is actually available based on the Tempo version, just as a sanity check
+   *
+   * @return true if streaming for search queries is enabled, false otherwise
+   */
+  isStreamingSearchEnabled() {
+    return (
+      config.featureToggles.traceQLStreaming &&
+      this.isFeatureAvailable(FeatureName.streaming) &&
+      config.liveEnabled &&
+      this.streamingEnabled?.search
+    );
+  }
+
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
     const subQueries: Array<Observable<DataQueryResponse>> = [];
     const filteredTargets = options.targets.filter((target) => !target.hide);
@@ -356,7 +375,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             streaming: this.streamingEnabled,
           });
 
-          if (this.streamingEnabled?.search && config.liveEnabled) {
+          if (this.isStreamingSearchEnabled()) {
             subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValueFromFilters));
           } else {
             subQueries.push(
@@ -617,7 +636,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     },
     queryValue: string
   ): Observable<DataQueryResponse> => {
-    if (this.streamingEnabled?.search && config.liveEnabled) {
+    if (this.isStreamingSearchEnabled()) {
       return this.handleStreamingSearch(options, targets.traceql, queryValue);
     } else {
       return this._request('/api/search', {
