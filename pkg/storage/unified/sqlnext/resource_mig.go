@@ -1,4 +1,4 @@
-package migrations
+package sqlnext
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-func initResourceTables(mg *migrator.Migrator) string {
+func InitResourceTables(mg *migrator.Migrator) string {
 	marker := "Initialize resource tables (v0)" // changing this key wipe+rewrite everything
 	mg.AddMigration(marker, &migrator.RawSQLMigration{})
 
