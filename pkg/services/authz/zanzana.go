@@ -22,23 +22,23 @@ import (
 func ProvideZanzana(cfg *setting.Cfg) (openfgav1.OpenFGAServiceClient, error) {
 	srv, err := zanzana.New(zanzana.NewStore())
 	if err != nil {
-		return nil, fmt.Errorf("failed to start zanana: %w", err)
+		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
 	var client openfgav1.OpenFGAServiceClient
 
-	// FIXME(kalleep): add config for connecting to remote zanana instance
+	// FIXME(kalleep): add config for connecting to remote zanzana instance
 	switch cfg.Zanzana.Mode {
 	case setting.ZanzanaModeClient:
 		panic("unimplemented")
 	case setting.ZanzanaModeEmbedded:
-		// run zanana embedded in grafana
+		// run zanzana embedded in grafana
 		channel := &inprocgrpc.Channel{}
 		openfgav1.RegisterOpenFGAServiceServer(channel, srv)
 		client = openfgav1.NewOpenFGAServiceClient(channel)
 
 	default:
-		return nil, fmt.Errorf("unsupported zanana mode: %s", cfg.Zanzana.Mode)
+		return nil, fmt.Errorf("unsupported zanzana mode: %s", cfg.Zanzana.Mode)
 	}
 
 	return client, nil
@@ -50,7 +50,7 @@ type Service interface {
 
 var _ Service = (*Zanzana)(nil)
 
-// ProvideZanzanaService is used to register zanana as a module so we can run it seperatly from grafana.
+// ProvideZanzanaService is used to register zanzana as a module so we can run it seperatly from grafana.
 func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Zanzana, error) {
 	s := &Zanzana{
 		cfg:      cfg,
@@ -76,7 +76,7 @@ type Zanzana struct {
 func (z *Zanzana) start(ctx context.Context) error {
 	srv, err := zanzana.New(zanzana.NewStore())
 	if err != nil {
-		return fmt.Errorf("failed to start zanana: %w", err)
+		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
 	tracingCfg, err := tracing.ProvideTracingConfig(z.cfg)
