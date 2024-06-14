@@ -30,6 +30,44 @@ For even more detail about all the changes in this release, refer to the [change
 
 For Grafana v11.0, we've also provided a list of [breaking changes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v11.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0/).-->
 
+## Dashboards and visualizations
+
+### Visualization ease of use improvements
+
+<!-- Drew Slobodnjak, Kyle Cunningham -->
+
+_Generally available in all editions of Grafana_
+
+We’ve made a number of small improvements to the data visualization experience in Grafana.
+
+#### Table cell text wrapping
+
+A long standing feature request for the table visualization is to allow wrapping of text within cells. In Grafana 11.1 we've added this long requested capability! By default, the column with the longest text is selected for wrapping or you can configure this manually using field overrides.
+
+![Text wrapping in the table visualization](/media/docs/grafana/gif-grafana-11-1-text-wrapping.gif)
+
+#### Stat visualization percent change color mode options
+
+Sometimes less is more! The **Standard** behavior for percent change in the [stat visualization](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/stat/#show-percent-change) is to color positive percent changes green and negative percent changes red. Depending on your use case however, you may want to customize how percent change color is set. We've added the options to have percent change color mode **Inverted** (with positive red and negative green) or match the **Same as value**.
+
+![Stat percent change color options](/media/docs/grafana/gif-grafana-11-1-stat-percent-change-color-options.gif)
+
+### XY Chart is GA
+
+<!-- Leon Sorokin -->
+
+_Generally available in all editions of Grafana_
+
+We’re promoting XY chart out of public preview and into general availability.
+
+XY charts provide a way to visualize arbitrary x and y values in a graph so that you can easily show the relationship between two variables. XY charts are typically used to create scatter plots. You can also use them to create bubble charts where field values determine the size of each bubble:
+
+![An xy chart showing height weight distribution](/media/docs/grafana/panels-visualizations/screenshot-xy-charts-v11.0.png)
+
+Over the past several months we’ve introduced multiple enhancements to the visualizations like auto mode, which now handles most scenarios that previously required manual configuration. Additionally, we've added better control over point styling and further improved performance. We’re excited to include XY chart as a first class citizen in the core Grafana visualization library. To learn more about the panel, refer to [the documentation](https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visualizations/xy-chart/).
+
+To use the new XY chart visualization, you must first enable the `autoMigrateXYChartPanel` [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
+
 ## Alerting
 
 <!-- TO DO - Confirm with Alerting folks that everything available in OSS is also available in Enterprise except for Rule specific silences with permissions and Rule specific silences with RBAC-->
