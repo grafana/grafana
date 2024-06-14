@@ -1207,7 +1207,12 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
   }
 
   if (queryStreamUpdatedAction.match(action)) {
-    return processQueryResponse(state, action);
+    const absoluteRange: AbsoluteTimeRange = { from: state.range.from.valueOf(), to: state.range.to.valueOf() };
+
+    return {
+      ...processQueryResponse(state, action),
+      rangeForResults: absoluteRange,
+    };
   }
 
   if (queriesImportedAction.match(action)) {

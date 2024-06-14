@@ -151,6 +151,8 @@ export interface ExploreItemState {
    */
   range: TimeRange;
 
+  rangeForResults: AbsoluteTimeRange;
+
   absoluteRange: AbsoluteTimeRange;
   /**
    * True if scanning for more results is active.

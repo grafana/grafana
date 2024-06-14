@@ -74,7 +74,14 @@ export function useStateSync(params: ExploreQueryParams) {
     prevParams.current = params;
 
     if (isURLOutOfSync && initState.current === 'done') {
+      console.log('Syncing from URL.');
       syncFromURL(urlState, panesState, dispatch);
     }
   }, [dispatch, panesState, orgId, location, params, warning]);
+  useEffect(() => console.log('dispatch'), [dispatch]);
+  useEffect(() => console.log('panesState'), [panesState]);
+  useEffect(() => console.log('orgId'), [orgId]);
+  useEffect(() => console.log('location'), [location]);
+  useEffect(() => console.log('params'), [params]);
+  useEffect(() => console.log('warning'), [warning]);
 }

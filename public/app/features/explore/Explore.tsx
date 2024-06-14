@@ -359,7 +359,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, queryResponse, showFlameGraph } = this.props;
+    const { graphResult, rangeForResults, absoluteRange, timeZone, queryResponse, showFlameGraph } = this.props;
 
     return (
       <ContentOutlineItem panelId="Graph" title="Graph" icon="graph-bar">
@@ -367,7 +367,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           data={graphResult!}
           height={showFlameGraph ? 180 : 400}
           width={width}
-          absoluteRange={absoluteRange}
+          absoluteRange={rangeForResults || absoluteRange}
           timeZone={timeZone}
           onChangeTime={this.onUpdateTimeRange}
           annotations={queryResponse.annotations}
@@ -675,6 +675,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showTrace,
     showCustom,
     absoluteRange,
+    rangeForResults,
     queryResponse,
     showNodeGraph,
     showFlameGraph,
@@ -696,6 +697,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     graphResult,
     logsResult: logsResult ?? undefined,
     absoluteRange,
+    rangeForResults,
     queryResponse,
     syncedTimes,
     timeZone,
