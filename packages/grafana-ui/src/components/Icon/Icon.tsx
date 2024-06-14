@@ -6,6 +6,7 @@ import { GrafanaTheme2, isIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
+import { spin } from '../../utils/keyframes';
 
 import { getIconRoot, getIconSubDir, getSvgSize } from './utils';
 
@@ -33,6 +34,11 @@ const getIconStyles = (theme: GrafanaTheme2) => {
     orange: css({
       fill: theme.v1.palette.orange,
     }),
+    spin: css({
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${spin} 2s infinite linear`,
+      },
+    }),
   };
 };
 
@@ -58,7 +64,9 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
       styles.icon,
       className,
       type === 'mono' ? { [styles.orange]: name === 'favorite' } : '',
-      iconName === 'spinner' && 'fa-spin'
+      {
+        [styles.spin]: iconName === 'spinner',
+      }
     );
 
     return (
