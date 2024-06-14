@@ -559,13 +559,13 @@ func (s *Service) GetMigrationStatus(ctx context.Context, runUID string) (*cloud
 	return cmr, nil
 }
 
-func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*cloudmigration.SnapshotList, error) {
+func (s *Service) GetMigrationRunList(ctx context.Context, migUID string) (*cloudmigration.CloudMigrationRunList, error) {
 	runs, err := s.store.GetMigrationStatusList(ctx, migUID)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving migration statuses from db: %w", err)
 	}
 
-	runList := &cloudmigration.SnapshotList{Runs: []cloudmigration.MigrateDataResponseList{}}
+	runList := &cloudmigration.CloudMigrationRunList{Runs: []cloudmigration.MigrateDataResponseList{}}
 	for _, s := range runs {
 		runList.Runs = append(runList.Runs, cloudmigration.MigrateDataResponseList{
 			RunUID: s.UID,

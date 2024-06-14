@@ -122,11 +122,11 @@ func (m FakeServiceImpl) GetMigrationStatus(_ context.Context, _ string) (*cloud
 	}, nil
 }
 
-func (m FakeServiceImpl) GetMigrationRunList(_ context.Context, _ string) (*cloudmigration.SnapshotList, error) {
+func (m FakeServiceImpl) GetMigrationRunList(_ context.Context, _ string) (*cloudmigration.CloudMigrationRunList, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
-	return &cloudmigration.SnapshotList{
+	return &cloudmigration.CloudMigrationRunList{
 		Runs: []cloudmigration.MigrateDataResponseList{
 			{RunUID: "fake_run_uid_1"},
 			{RunUID: "fake_run_uid_2"},

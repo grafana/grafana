@@ -5,7 +5,7 @@ import (
 )
 
 func addCloudMigrationsMigrations(mg *Migrator) {
-	// v1 - synchronous workflow
+	// --- v1 - synchronous workflow
 	migrationTable := Table{
 		Name: "cloud_migration",
 		Columns: []*Column{
@@ -65,7 +65,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		Cols: []string{"uid"}, Type: UniqueIndex,
 	}))
 
-	// v2 - asynchronous workflow refactor
+	// --- v2 - asynchronous workflow refactor
 	sessionTable := Table{
 		Name: "cloud_migration_session",
 		Columns: []*Column{
@@ -121,4 +121,10 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		"finished":    "finished",
 	})
 
+	// --- add new columns to snapshots table
+	uploadUrlColumn := Column{Name: "upload_url", Type: DB_Text, Nullable: true}
+	mg.AddMigration("add snapshot upload_url column", NewAddColumnMigration(migrationSnapshotTable, &uploadUrlColumn))
+
+	statusColumn := Column{Name: "status", Type: DB_Text, Nullable: false}
+	mg.AddMigration("add snapshot status column", NewAddColumnMigration(migrationSnapshotTable, &statusColumn))
 }

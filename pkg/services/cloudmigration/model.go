@@ -31,13 +31,16 @@ type CloudMigrationSession struct {
 }
 
 type CloudMigrationSnapshot struct {
-	ID         int64  `xorm:"pk autoincr 'id'"`
-	UID        string `xorm:"uid"`
-	SessionUID string `xorm:"session_uid"`
-	Result     []byte //store raw gms response body
-	Created    time.Time
-	Updated    time.Time
-	Finished   time.Time
+	ID            int64  `xorm:"pk autoincr 'id'"`
+	UID           string `xorm:"uid"`
+	SessionUID    string `xorm:"session_uid"`
+	EncryptionKey string `xorm:"-"` // stored in the unified secrets table
+	UploadURL     string `xorm:"upload_url"`
+	Status        string `xorm:"status"`
+	Result        []byte //store raw gms response body
+	Created       time.Time
+	Updated       time.Time
+	Finished      time.Time
 }
 
 func (r CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
@@ -50,7 +53,7 @@ func (r CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
 	return &result, nil
 }
 
-type SnapshotList struct {
+type CloudMigrationRunList struct {
 	Runs []MigrateDataResponseList
 }
 

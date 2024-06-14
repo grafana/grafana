@@ -154,10 +154,10 @@ type GetCloudMigrationRunList struct {
 // swagger:response cloudMigrationRunListResponse
 type CloudMigrationRunListResponse struct {
 	// in: body
-	Body SnapshotListDTO
+	Body CloudMigrationRunListDTO
 }
 
-type SnapshotListDTO struct {
+type CloudMigrationRunListDTO struct {
 	Runs []MigrateDataResponseListDTO `json:"runs"`
 }
 
@@ -206,4 +206,44 @@ func convertMigrateDataResponseToDTO(r cloudmigration.MigrateDataResponse) Migra
 		RunUID: r.RunUID,
 		Items:  items,
 	}
+}
+
+// Base snapshot without results
+type SnapshotDTO struct {
+	SnapshotUID string    `json:"uid"`
+	Status      string    `json:"status"`
+	SessionUID  string    `json:"sessionUid"`
+	Created     time.Time `json:"created"`
+	Finished    time.Time `json:"finished"`
+}
+
+// swagger:response createSnapshotResponse
+type CreateSnapshotResponse struct {
+	// in: body
+	Body CreateSnapshotResponseDTO
+}
+
+type CreateSnapshotResponseDTO struct {
+	SnapshotUID string `json:"snapshotUID"`
+}
+
+// swagger:response getSnapshotResponse
+type GetSnapshotResponse struct {
+	// in: body
+	Body GetSnapshotResponseDTO
+}
+
+type GetSnapshotResponseDTO struct {
+	SnapshotDTO
+	Results []MigrateDataResponseItemDTO `json:"results"`
+}
+
+// swagger:response snapshotListResponse
+type SnapshotListResponse struct {
+	// in: body
+	Body SnapshotListResponseDTO
+}
+
+type SnapshotListResponseDTO struct {
+	Snapshots []SnapshotDTO `json:"snapshots"`
 }
