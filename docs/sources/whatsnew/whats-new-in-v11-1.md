@@ -145,3 +145,27 @@ Manage silences through Role-Based Access Control (RBAC). In addition to the Gra
 - Users with the **alert.silences:create permission**, scoped within a folder, are able to create silences for rules contained within that folder and its subfolders
 - Users with the **alert.silences:read permission**, scoped within a folder, are able to read silences for rules contained within that folder and its subfolders, and general silences
 - Users with the **alert.silences:write permission**, scoped within a folder, are able to expire and recreate silences for rules contained within that folder and its subfolders
+
+## Recent accessibility improvements
+
+<!-- #grafana-frontend-platform,Tobias Skarhed -->
+
+_Generally available in all editions of Grafana_
+
+### GeoMap keyboard support
+
+The GeoMap panel can now be used with a keyboard! Focus the map area, move around with the arrows keys and zoom in and out using + and -.
+
+### Panel shortcut keyboard support
+
+We have [panel shortcuts](https://grafana.com/docs/grafana/latest/dashboards/use-dashboards/#keyboard-shortcuts), which previously only worked on whichever panel you hovered over. It now also takes into account the keyboard focus.
+
+{{< video-embed src="/media/docs/grafana/2024-06-10-Keyboard-Improvements-Enablement-Video.mp4" >}}
+
+### Heading improvements
+
+The majority of screen reader users [find things on a web page using headings](https://webaim.org/projects/screenreadersurvey10/#finding). Recently, we have added missing headings and corrected heading levels in some places, most notably panel titles.
+
+### Reduced motion support
+
+Users who are affected by a lot of animations on a web site have the possibility to configure [reduced motion settings](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion). Grafana now supports this, either by making animations simpler or removing them altogether. We have [implemented a rule](https://github.com/grafana/grafana/tree/main/packages/grafana-eslint-rules#no-unreduced-motion), which prohibits unhandled transitions and animations, ensuring that we can continously support reduced motion.
