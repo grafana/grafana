@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/setting"
@@ -103,10 +104,11 @@ const (
 	NeqRegEx Operator = "!~"
 )
 
-func NewLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger) *HttpLokiClient {
+func NewLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger, tracer tracing.Tracer) *HttpLokiClient {
 	tc := client.NewTimedClient(req, metrics.WriteDuration)
+	trc := client.NewTracedClient(tc, tracer, "ngalert.historian.client")
 	return &HttpLokiClient{
-		client:  tc,
+		client:  trc,
 		encoder: cfg.Encoder,
 		cfg:     cfg,
 		metrics: metrics,
