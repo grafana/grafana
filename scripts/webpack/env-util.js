@@ -13,7 +13,7 @@ const getEnvConfig = () => {
     : {};
 
   const defaults = parse(defaultSettings);
-  const custom = parse(defaultSettings);
+  const custom = parse(customSettings);
 
   const merged = { ...defaults.frontend_dev, ...custom.frontend_dev };
   // Take all frontend keys from the ini file and prefix with `frontend_dev_`,
