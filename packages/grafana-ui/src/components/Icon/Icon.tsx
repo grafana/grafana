@@ -1,4 +1,4 @@
-import { css, cx, keyframes } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -6,6 +6,7 @@ import { GrafanaTheme2, isIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
+import { spin } from '../../utils/keyframes';
 
 import { getIconRoot, getIconSubDir, getSvgSize } from './utils';
 
@@ -18,15 +19,6 @@ export interface IconProps extends Omit<React.SVGProps<SVGElement>, 'onLoad' | '
    */
   title?: string;
 }
-
-const spin = keyframes({
-  '0%': {
-    transform: 'rotate(0deg)',
-  },
-  '100%': {
-    transform: 'rotate(359deg)',
-  },
-});
 
 const getIconStyles = (theme: GrafanaTheme2) => {
   return {

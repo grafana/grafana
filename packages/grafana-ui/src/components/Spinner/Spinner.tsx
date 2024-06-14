@@ -1,4 +1,4 @@
-import { cx, css, keyframes } from '@emotion/css';
+import { cx, css } from '@emotion/css';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -7,6 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { IconSize, isIconSize } from '../../types';
 import { t } from '../../utils/i18n';
+import { spin } from '../../utils/keyframes';
 import { Icon } from '../Icon/Icon';
 import { getIconRoot, getIconSubDir } from '../Icon/utils';
 
@@ -91,15 +92,6 @@ export const Spinner = ({
     </div>
   );
 };
-
-const spin = keyframes({
-  '0%': {
-    transform: 'rotate(0deg)',
-  },
-  '100%': {
-    transform: 'rotate(359deg)',
-  },
-});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   inline: css({
