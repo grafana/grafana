@@ -658,13 +658,13 @@ func TestEnrichReturnedObject(t *testing.T) {
 
 	for _, tt := range testCase {
 		t.Run(tt.name, func(t *testing.T) {
-			returned, err := enrichLegacyObject(tt.inputOriginal, tt.inputReturned, tt.isCreated)
+			err := enrichLegacyObject(tt.inputOriginal, tt.inputReturned, tt.isCreated)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
-			accessorReturned, err := meta.Accessor(returned)
+			accessorReturned, err := meta.Accessor(tt.inputReturned)
 			assert.NoError(t, err)
 
 			accessorExpected, err := meta.Accessor(tt.expectedObject)
