@@ -24,8 +24,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestConcurrentUsersMetrics(t *testing.T) {
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	statsService := statsimpl.ProvideService(&setting.Cfg{}, db.DatabaseWithRepl{sqlStore, nil})
+	sqlStore, cfg := db.InitTestReplDBWithCfg(t)
+	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore)
 	s := createService(t, cfg, sqlStore, statsService)
 
 	createConcurrentTokens(t, sqlStore)
@@ -42,8 +42,8 @@ func TestConcurrentUsersMetrics(t *testing.T) {
 }
 
 func TestConcurrentUsersStats(t *testing.T) {
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	statsService := statsimpl.ProvideService(&setting.Cfg{}, db.DatabaseWithRepl{sqlStore, nil})
+	sqlStore, cfg := db.InitTestReplDBWithCfg(t)
+	statsService := statsimpl.ProvideService(&setting.Cfg{}, sqlStore)
 	s := createService(t, cfg, sqlStore, statsService)
 
 	createConcurrentTokens(t, sqlStore)

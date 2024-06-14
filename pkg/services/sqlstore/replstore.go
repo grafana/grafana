@@ -36,8 +36,10 @@ func (rs ReplStore) DB() *SQLStore {
 // it returns the main SQLStore.
 func (rs ReplStore) ReadReplica() *SQLStore {
 	if rs.repl == nil {
+		rs.log.Debug("ReadReplica not configured, using main SQLStore")
 		return rs.SQLStore
 	}
+	rs.log.Debug("Using ReadReplica")
 	return rs.repl
 }
 
@@ -55,6 +57,7 @@ func ProvideServiceWithReadReplica(cfg *setting.Cfg,
 
 	// FeatureToggle fallback: If the FlagDatabaseReadReplica feature flag is not enabled, return a single SQLStore.
 	if !features.IsEnabledGlobally(featuremgmt.FlagDatabaseReadReplica) {
+		ss.log.Debug("ReadReplica feature flag not enabled, using main SQLStore")
 		return replStore, nil
 	}
 
@@ -73,7 +76,7 @@ func ProvideServiceWithReadReplica(cfg *setting.Cfg,
 	db := s.engine.DB().DB
 
 	// register the go_sql_stats_connections_* metrics
-	if err := prometheus.Register(sqlstats.NewStatsCollector("grafana", db)); err != nil {
+	if err := prometheus.Register(sqlstats.NewStatsCollector("grafana_repl", db)); err != nil {
 		s.log.Warn("Failed to register sqlstore stats collector", "error", err)
 	}
 
@@ -88,7 +91,7 @@ func ProvideServiceWithReadReplica(cfg *setting.Cfg,
 func newReadOnlySQLStore(cfg *setting.Cfg, features featuremgmt.FeatureToggles, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
 	s := &SQLStore{
 		cfg:    cfg,
-		log:    log.New("sqlstore"),
+		log:    log.New("replstore"),
 		bus:    bus,
 		tracer: tracer,
 	}
@@ -107,7 +110,7 @@ func newReadOnlySQLStore(cfg *setting.Cfg, features featuremgmt.FeatureToggles, 
 // initReadOnlyEngine initializes ss.engine for read-only operations. The database must be a fully-populated read replica.
 func (ss *SQLStore) initReadOnlyEngine(engine *xorm.Engine) error {
 	if ss.engine != nil {
-		ss.log.Debug("Already connected to database")
+		ss.log.Debug("Already connected to database replica")
 		return nil
 	}
 
@@ -125,7 +128,7 @@ func (ss *SQLStore) initReadOnlyEngine(engine *xorm.Engine) error {
 		var err error
 		engine, err = xorm.NewEngine(ss.dbCfg.Type, ss.dbCfg.ConnectionString)
 		if err != nil {
-			ss.log.Error("failed to connect to database", "error", err)
+			ss.log.Error("failed to connect to database replica", "error", err)
 			return err
 		}
 		// Only for MySQL or MariaDB, verify we can connect with the current connection string's system var for transaction isolation.
@@ -192,7 +195,7 @@ func InitTestReplDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*ReplStore, *sett
 
 	ss, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features), opts...)
 	if err != nil {
-		t.Fatalf("failed to initialize sql store: %s", err)
+		t.Fatalf("failed to initialize sql repl store: %s", err)
 	}
 	rs, err := newReadOnlySQLStore(cfg, features, ss.bus, ss.tracer)
 	if err != nil {
