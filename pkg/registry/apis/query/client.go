@@ -12,7 +12,7 @@ type DataSourceClientSupplier interface {
 	// NOTE: authorization headers are not yet added and the client may be shared across multiple users
 	GetDataSourceClient(ctx context.Context, ref data.DataSourceRef) (data.QueryDataClient, error)
 	// Can be called before GetDataSourceClient to prevent duplicate requests on depedent services in passive mode
-	PreprocessRequest(ctx context.Context, ref data.DataSourceRef) (context.Context, error)
+	PreprocessRequest(ctx context.Context) (context.Context, error)
 }
 
 type CommonDataSourceClientSupplier struct {
@@ -23,6 +23,6 @@ func (s *CommonDataSourceClientSupplier) GetDataSourceClient(ctx context.Context
 	return s.Client, nil
 }
 
-func (s *CommonDataSourceClientSupplier) PreprocessRequest(ctx context.Context, ref data.DataSourceRef) (context.Context, error) {
+func (s *CommonDataSourceClientSupplier) PreprocessRequest(ctx context.Context) (context.Context, error) {
 	return ctx, nil
 }

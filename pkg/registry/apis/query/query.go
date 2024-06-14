@@ -209,10 +209,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 	}
 
 	var err error
-	ctx, err = b.client.PreprocessRequest(ctx, v0alpha1.DataSourceRef{
-		Type: pluginID,
-		UID:  pluginUID,
-	})
+	ctx, err = b.client.PreprocessRequest(ctx)
 	if err != nil {
 		return nil, err
 	}
