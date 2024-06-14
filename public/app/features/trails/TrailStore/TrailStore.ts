@@ -1,5 +1,6 @@
 import { debounce, isEqual } from 'lodash';
 
+import { urlUtil } from '@grafana/data';
 import { getUrlSyncManager, SceneObject, SceneObjectRef, SceneObjectUrlValues, sceneUtils } from '@grafana/scenes';
 import { dispatch } from 'app/store/store';
 
@@ -77,9 +78,14 @@ export class TrailStore {
     });
 
     const currentStep = t.currentStep ?? trail.state.history.state.steps.length - 1;
+
     trail.state.history.setState({ currentStep });
-    // The state change listeners aren't activated yet, so maually change to the current step state
-    trail.setState(trail.state.history.state.steps[currentStep].trailState);
+
+    trail.setState(
+      sceneUtils.cloneSceneObjectState(trail.state.history.state.steps[currentStep].trailState, {
+        history: trail.state.history,
+      })
+    );
 
     return trail;
   }
@@ -102,8 +108,8 @@ export class TrailStore {
   }
 
   private _loadFromUrl(node: SceneObject, urlValues: SceneObjectUrlValues) {
-    node.urlSync?.updateFromUrl(urlValues);
-    node.forEachChild((child) => this._loadFromUrl(child, urlValues));
+    const urlState = urlUtil.renderUrl('', urlValues);
+    sceneUtils.syncStateFromSearchParams(node, new URLSearchParams(urlState));
   }
 
   // Recent Trails
@@ -138,14 +144,6 @@ export class TrailStore {
 
     this._recent.unshift(recentTrail.getRef());
     this._save();
-  }
-
-  findMatchingRecentTrail(trail: DataTrail) {
-    const matchUrlState = getUrlStateForComparison(trail);
-    return this._recent.find((t) => {
-      const urlState = getUrlStateForComparison(t.resolve());
-      return isEqual(matchUrlState, urlState);
-    });
   }
 
   // Bookmarked Trails
@@ -193,9 +191,11 @@ function getUrlStateForComparison(trail: DataTrail) {
   const urlState = getUrlSyncManager().getUrlState(trail);
   // Make a few corrections
 
-  // Omit some URL parameters that are not useful for state comparison
+  // Omit some URL parameters that are not useful for state comparison,
+  // as they can change in the URL without creating new steps
   delete urlState.actionView;
   delete urlState.layout;
+  delete urlState.metricSearch;
 
   // Populate defaults
   if (urlState['var-groupby'] === '') {

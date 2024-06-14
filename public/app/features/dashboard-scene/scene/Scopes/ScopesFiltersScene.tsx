@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import React from 'react';
+import { finalize, from, Subscription } from 'rxjs';
 
-import { Scope } from '@grafana/data';
+import { GrafanaTheme2, Scope } from '@grafana/data';
 import {
   SceneComponentProps,
   sceneGraph,
@@ -11,10 +13,11 @@ import {
   SceneObjectUrlValues,
   SceneObjectWithUrlSync,
 } from '@grafana/scenes';
+import { Button, Drawer, IconButton, Input, Spinner, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
-import { ScopesFiltersAdvancedSelector } from './ScopesFiltersAdvancedSelector';
-import { ScopesFiltersBasicSelector } from './ScopesFiltersBasicSelector';
 import { ScopesScene } from './ScopesScene';
+import { ScopesTreeLevel } from './ScopesTreeLevel';
 import { fetchNodes, fetchScope, fetchScopes } from './api';
 import { NodesMap } from './types';
 
@@ -24,14 +27,15 @@ export interface ScopesFiltersSceneState extends SceneObjectState {
   scopes: Scope[];
   dirtyScopeNames: string[];
   isLoadingScopes: boolean;
-  isBasicOpened: boolean;
-  isAdvancedOpened: boolean;
+  isOpened: boolean;
 }
 
 export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState> implements SceneObjectWithUrlSync {
   static Component = ScopesFiltersSceneRenderer;
 
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scopes'] });
+
+  private nodesFetchingSub: Subscription | undefined;
 
   get scopesParent(): ScopesScene {
     return sceneGraph.getAncestor(this, ScopesScene);
@@ -55,12 +59,15 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       scopes: [],
       dirtyScopeNames: [],
       isLoadingScopes: false,
-      isBasicOpened: false,
-      isAdvancedOpened: false,
+      isOpened: false,
     });
 
     this.addActivationHandler(() => {
       this.fetchBaseNodes();
+
+      return () => {
+        this.nodesFetchingSub?.unsubscribe();
+      };
     });
   }
 
@@ -80,6 +87,8 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public async updateNode(path: string[], isExpanded: boolean, query: string) {
+    this.nodesFetchingSub?.unsubscribe();
+
     let nodes = { ...this.state.nodes };
     let currentLevel: NodesMap = nodes;
 
@@ -90,16 +99,30 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     const name = path[path.length - 1];
     const currentNode = currentLevel[name];
 
-    if (isExpanded || currentNode.query !== query) {
-      this.setState({ loadingNodeName: name });
-
-      currentNode.nodes = await fetchNodes(name, query);
-    }
+    const isDifferentQuery = currentNode.query !== query;
 
     currentNode.isExpanded = isExpanded;
     currentNode.query = query;
 
     this.setState({ nodes, loadingNodeName: undefined });
+
+    if (isExpanded || isDifferentQuery) {
+      this.setState({ loadingNodeName: name });
+
+      this.nodesFetchingSub = from(fetchNodes(name, query))
+        .pipe(
+          finalize(() => {
+            this.setState({ loadingNodeName: undefined });
+          })
+        )
+        .subscribe((childNodes) => {
+          currentNode.nodes = childNodes;
+
+          this.setState({ nodes });
+
+          this.nodesFetchingSub?.unsubscribe();
+        });
+    }
   }
 
   public toggleNodeSelect(path: string[]) {
@@ -130,24 +153,14 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     }
   }
 
-  public openBasicSelector() {
+  public open() {
     if (!this.scopesParent.state.isViewing) {
-      this.setState({ isBasicOpened: true, isAdvancedOpened: false });
+      this.setState({ isOpened: true });
     }
   }
 
-  public closeBasicSelector() {
-    this.setState({ isBasicOpened: false });
-  }
-
-  public openAdvancedSelector() {
-    if (!this.scopesParent.state.isViewing) {
-      this.setState({ isBasicOpened: false, isAdvancedOpened: true });
-    }
-  }
-
-  public closeAdvancedSelector() {
-    this.setState({ isAdvancedOpened: false });
+  public close() {
+    this.setState({ isOpened: false });
   }
 
   public getSelectedScopes(): Scope[] {
@@ -173,7 +186,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public enterViewMode() {
-    this.setState({ isBasicOpened: false, isAdvancedOpened: false });
+    this.setState({ isOpened: false });
   }
 
   private getScopeNames(): string[] {
@@ -182,10 +195,88 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 }
 
 export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<ScopesFiltersScene>) {
+  const styles = useStyles2(getStyles);
+  const { nodes, loadingNodeName, dirtyScopeNames, isLoadingScopes, isOpened, scopes } = model.useState();
+  const { isViewing } = model.scopesParent.useState();
+
+  const scopesTitles = scopes.map(({ spec: { title } }) => title).join(', ');
+
   return (
     <>
-      <ScopesFiltersBasicSelector model={model} />
-      <ScopesFiltersAdvancedSelector model={model} />
+      <Input
+        readOnly
+        placeholder={t('scopes.filters.input.placeholder', 'Select scopes...')}
+        loading={isLoadingScopes}
+        value={scopesTitles}
+        aria-label={t('scopes.filters.input.placeholder', 'Select scopes...')}
+        data-testid="scopes-filters-input"
+        suffix={
+          scopes.length > 0 && !isViewing ? (
+            <IconButton
+              aria-label={t('scopes.filters.input.removeAll', 'Remove all scopes')}
+              name="times"
+              onClick={() => model.removeAllScopes()}
+            />
+          ) : undefined
+        }
+        onClick={() => model.open()}
+      />
+
+      {isOpened && (
+        <Drawer
+          title={t('scopes.filters.title', 'Select scopes')}
+          size="sm"
+          onClose={() => {
+            model.close();
+            model.resetDirtyScopeNames();
+          }}
+        >
+          {isLoadingScopes ? (
+            <Spinner data-testid="scopes-filters-loading" />
+          ) : (
+            <ScopesTreeLevel
+              nodes={nodes}
+              nodePath={['']}
+              loadingNodeName={loadingNodeName}
+              scopeNames={dirtyScopeNames}
+              onNodeUpdate={(path, isExpanded, query) => model.updateNode(path, isExpanded, query)}
+              onNodeSelectToggle={(path) => model.toggleNodeSelect(path)}
+            />
+          )}
+          <div className={styles.buttonGroup}>
+            <Button
+              variant="primary"
+              data-testid="scopes-filters-apply"
+              onClick={() => {
+                model.close();
+                model.updateScopes();
+              }}
+            >
+              <Trans i18nKey="scopes.filters.apply">Apply</Trans>
+            </Button>
+            <Button
+              variant="secondary"
+              data-testid="scopes-filters-cancel"
+              onClick={() => {
+                model.close();
+                model.resetDirtyScopeNames();
+              }}
+            >
+              <Trans i18nKey="scopes.filters.cancel">Cancel</Trans>
+            </Button>
+          </div>
+        </Drawer>
+      )}
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    buttonGroup: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      marginTop: theme.spacing(8),
+    }),
+  };
+};

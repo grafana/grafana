@@ -16,13 +16,13 @@ labels:
     - enterprise
     - oss
 menuTitle: Grafana documentation
-title: Grafana OSS and Enterprise documentation
+title: Grafana OSS and Enterprise
 hero:
-  title: Grafana OSS and Enterprise documentation
+  title: Grafana OSS and Enterprise
   level: 1
-  width: 110
+  width: 100
   image: /media/docs/grafana-cloud/infrastructure/grafanalogo.svg
-  height: 110
+  height: 100
   description: Query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored.
 cards:
   title_class: pt-0 lh-1
@@ -79,7 +79,7 @@ cards:
 
 ## Overview
 
-_Grafana Open Source Software (OSS)_ enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they're stored. Grafana OSS provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations. The Grafana OSS plugin framework also enables you to connect other data sources like NoSQL/SQL databases, ticketing tools like Jira or ServiceNow, and CI/CD tooling like GitLab.
+_Grafana Open Source Software (OSS)_ enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they're stored. Grafana data source plugins enable you to query data sources including time series databases like Prometheus and CloudWatch, logging tools like Loki and Elasticsearch, NoSQL/SQL databases like Postgres, CI/CD tooling like GitHub, and many more. Grafana OSS provides you with tools to display that data on live dashboards with insightful graphs and visualizations.
 
 _Grafana Enterprise_ is a commercial edition of Grafana that includes exclusive data source plugins and additional features not found in the open source version. You also get 24x7x365 support and training from the core Grafana team.
 To learn more about these features, refer to [Enterprise features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/#enterprise-features-in-grafana-cloud).
