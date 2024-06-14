@@ -4,10 +4,10 @@ use (
 	.
 	./pkg/apimachinery
 	./pkg/apiserver
+	./pkg/build
 	./pkg/build/wire
 	./pkg/promlib
 	./pkg/util/xorm
-  ./pkg/build
 )
 
 // when we release xorm we would like to release it like github.com/grafana/grafana/pkg/util/xorm
