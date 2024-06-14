@@ -183,10 +183,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         restoreDashboardStateFromLocalStorage(dashboard);
       }
 
-      if (!(config.publicDashboardAccessToken && dashboard.state.controls?.state.hideTimeControls)) {
-        dashboard.startUrlSync();
-      }
-
       this.setState({ dashboard: dashboard, isLoading: false });
       const measure = stopMeasure(LOAD_SCENE_MEASUREMENT);
       trackDashboardSceneLoaded(dashboard, measure?.duration);
