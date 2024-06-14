@@ -224,12 +224,6 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 			password))
 	}
 
-	dsAuth := req.Header.Get("X-DS-Authorization")
-	if len(dsAuth) > 0 {
-		req.Header.Del("X-DS-Authorization")
-		req.Header.Set("Authorization", dsAuth)
-	}
-
 	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
 
 	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies(), []string{proxy.cfg.LoginCookieName})

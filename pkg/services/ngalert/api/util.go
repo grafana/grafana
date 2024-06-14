@@ -114,6 +114,11 @@ func (p *AlertingProxy) withReq(
 	for h, v := range headers {
 		req.Header.Add(h, v)
 	}
+	dsAuthHeader, dsAuthHeaderValue := ctx.GetDsAuthorization()
+	if dsAuthHeaderValue != "" {
+		req.Header.Add(dsAuthHeader, dsAuthHeaderValue)
+	}
+
 	// this response will be populated by the response from the datasource
 	resp := response.CreateNormalResponse(make(http.Header), nil, 0)
 	proxyContext := p.createProxyContext(ctx, req, resp)
