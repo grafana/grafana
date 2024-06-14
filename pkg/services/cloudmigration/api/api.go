@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -378,9 +379,10 @@ func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) respons
 	if err := util.ValidateUID(uid); err != nil {
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid migration uid", err)
 	}
-	// todo
 
-	return response.JSON(http.StatusOK, nil)
+	return response.JSON(http.StatusOK, CreateSnapshotResponseDTO{
+		SnapshotUID: util.GenerateShortUID(),
+	})
 }
 
 // swagger:route GET /cloudmigration/migration/{uid}/snapshot/{snapshotUid} migrations getSnapshot
@@ -405,8 +407,16 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
 	}
 
-	// todo
-	return response.JSON(http.StatusOK, nil)
+	return response.JSON(http.StatusOK, GetSnapshotResponseDTO{
+		SnapshotDTO: SnapshotDTO{
+			SnapshotUID: util.GenerateShortUID(),
+			Status:      "blah",
+			SessionUID:  migUid,
+			Created:     time.Now(),
+			Finished:    time.Now(),
+		},
+		Results: []MigrateDataResponseItemDTO{},
+	})
 }
 
 // swagger:route GET /cloudmigration/migration/{uid}/snapshot migrations getShapshotList
@@ -428,9 +438,17 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid migration uid", err)
 	}
 
-	// todo
-
-	return response.JSON(http.StatusOK, nil)
+	return response.JSON(http.StatusOK, SnapshotListResponseDTO{
+		Snapshots: []SnapshotDTO{
+			{
+				SnapshotUID: util.GenerateShortUID(),
+				Status:      "blah",
+				SessionUID:  uid,
+				Created:     time.Now(),
+				Finished:    time.Now(),
+			},
+		},
+	})
 }
 
 // swagger:route POST /cloudmigration/migration/{uid}/snapshot/{snapshotUid} migrations uploadSnapshot
