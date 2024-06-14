@@ -26,12 +26,12 @@ type FSQLTestSuite struct {
 }
 
 func (suite *FSQLTestSuite) SetupTest() {
-	_, addr := freeport()
+	addr := freeport()
 	if addr == "err" {
 		suite.T().Fatal()
 	}
 
-	suite.port = addr
+	suite.addr = addr
 
 	db, err := example.CreateDB()
 	require.NoError(suite.T(), err)
@@ -41,7 +41,7 @@ func (suite *FSQLTestSuite) SetupTest() {
 	sqliteServer.Alloc = memory.NewCheckedAllocator(memory.DefaultAllocator)
 	server := flight.NewServerWithMiddleware(nil)
 	server.RegisterFlightService(flightsql.NewFlightServer(sqliteServer))
-	err = server.Init(suite.port)
+	err = server.Init(suite.addr)
 	require.NoError(suite.T(), err)
 	go func() {
 		err := server.Serve()
@@ -68,7 +68,7 @@ func (suite *FSQLTestSuite) TestIntegration_QueryData() {
 			&models.DatasourceInfo{
 				HTTPClient:   nil,
 				Token:        "secret",
-				URL:          "http://" + suite.port,
+				URL:          "http://" + suite.addr,
 				DbName:       "influxdb",
 				Version:      "test",
 				HTTPMode:     "proxy",
