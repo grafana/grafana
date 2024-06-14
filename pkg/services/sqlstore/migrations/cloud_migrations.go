@@ -120,5 +120,4 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		"updated":     "updated",
 		"finished":    "finished",
 	})
-
 }
