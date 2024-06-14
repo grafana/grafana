@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -19,6 +19,15 @@ export interface IconProps extends Omit<React.SVGProps<SVGElement>, 'onLoad' | '
   title?: string;
 }
 
+const spin = keyframes({
+  '0%': {
+    transform: 'rotate(0deg)',
+  },
+  '100%': {
+    transform: 'rotate(359deg)',
+  },
+});
+
 const getIconStyles = (theme: GrafanaTheme2) => {
   return {
     icon: css({
@@ -32,6 +41,11 @@ const getIconStyles = (theme: GrafanaTheme2) => {
     }),
     orange: css({
       fill: theme.v1.palette.orange,
+    }),
+    spin: css({
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${spin} 2s infinite linear`,
+      },
     }),
   };
 };
@@ -58,7 +72,9 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
       styles.icon,
       className,
       type === 'mono' ? { [styles.orange]: name === 'favorite' } : '',
-      iconName === 'spinner' && 'fa-spin'
+      {
+        [styles.spin]: iconName === 'spinner',
+      }
     );
 
     return (
