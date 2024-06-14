@@ -14,15 +14,19 @@ import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/co
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardUrl } from '../utils/urlBuilders';
 
+import { updateShareLinkConfigurationFromStorage } from './ShareButton/utils';
 import { SceneShareTabState } from './types';
 export interface ShareLinkTabState extends SceneShareTabState, ShareOptions {
   panelRef?: SceneObjectRef<VizPanel>;
 }
 
-interface ShareOptions {
+export interface ShareLinkConfiguration {
   useLockedTime: boolean;
   useShortUrl: boolean;
   selectedTheme: string;
+}
+
+interface ShareOptions extends ShareLinkConfiguration {
   shareUrl: string;
   imageUrl: string;
 }
@@ -32,12 +36,12 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
   static Component = ShareLinkTabRenderer;
 
-  constructor(state: Omit<ShareLinkTabState, keyof ShareOptions>) {
+  constructor(state: Partial<ShareLinkConfiguration> & ShareLinkTabState) {
     super({
       ...state,
-      useLockedTime: true,
-      useShortUrl: false,
-      selectedTheme: 'current',
+      useLockedTime: state.useLockedTime ?? true,
+      useShortUrl: state.useShortUrl ?? false,
+      selectedTheme: state.selectedTheme ?? 'current',
       shareUrl: '',
       imageUrl: '',
     });
@@ -89,17 +93,22 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
   }
 
   onToggleLockedTime = () => {
-    this.setState({ useLockedTime: !this.state.useLockedTime });
+    const useLockedTime = !this.state.useLockedTime;
+    updateShareLinkConfigurationFromStorage({ ...this.state, useLockedTime });
+    this.setState({ useLockedTime });
     this.buildUrl();
   };
 
   onUrlShorten = () => {
-    this.setState({ useShortUrl: !this.state.useShortUrl });
+    const useShortUrl = !this.state.useShortUrl;
+    this.setState({ useShortUrl });
+    updateShareLinkConfigurationFromStorage({ ...this.state, useShortUrl });
     this.buildUrl();
   };
 
   onThemeChange = (value: string) => {
     this.setState({ selectedTheme: value });
+    updateShareLinkConfigurationFromStorage({ ...this.state, selectedTheme: value });
     this.buildUrl();
   };
 
