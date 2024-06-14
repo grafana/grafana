@@ -13,16 +13,17 @@ import {
   SceneDebugger,
   VariableDependencyConfig,
   sceneGraph,
+  SceneObjectUrlSyncConfig,
+  SceneObjectUrlValues,
 } from '@grafana/scenes';
 import { Box, Stack, useStyles2 } from '@grafana/ui';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardControlsUrlSync } from './DashboardControlsUrlSync';
 import { DashboardLinksControls } from './DashboardLinksControls';
 
-interface DashboardControlsState extends SceneObjectState {
+export interface DashboardControlsState extends SceneObjectState {
   variableControls: SceneObject[];
   timePicker: SceneTimePicker;
   refreshPicker: SceneRefreshPicker;
@@ -30,6 +31,7 @@ interface DashboardControlsState extends SceneObjectState {
   hideVariableControls?: boolean;
   hideLinksControls?: boolean;
 }
+
 export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   static Component = DashboardControlsRenderer;
 
@@ -37,7 +39,29 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     onAnyVariableChanged: this._onAnyVariableChanged.bind(this),
   });
 
-  protected _urlSync = new DashboardControlsUrlSync(this);
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, {
+    keys: ['_dash.hideTimePicker', '_dash.hideVariables', '_dash.hideLinks'],
+  });
+
+  getUrlState() {
+    return {
+      '_dash.hideTimePicker': this.state.hideTimeControls ? 'true' : undefined,
+      '_dash.hideVariables': this.state.hideVariableControls ? 'true' : undefined,
+      '_dash.hideLinks': this.state.hideLinksControls ? 'true' : undefined,
+    };
+  }
+
+  updateFromUrl(values: SceneObjectUrlValues) {
+    const update: Partial<(typeof DashboardControls.prototype)['state']> = {};
+
+    update.hideTimeControls = values['_dash.hideTimePicker'] === 'true' || values['_dash.hideTimePicker'] === '';
+    update.hideVariableControls = values['_dash.hideVariables'] === 'true' || values['_dash.hideVariables'] === '';
+    update.hideLinksControls = values['_dash.hideLinks'] === 'true' || values['_dash.hideLinks'] === '';
+
+    if (Object.entries(update).some(([k, v]) => v !== this.state[k])) {
+      this.setState(update);
+    }
+  }
 
   public constructor(state: Partial<DashboardControlsState>) {
     super({
@@ -66,7 +90,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     const hasLinks = getDashboardSceneFor(this).state.links?.length > 0;
     const hideLinks = this.state.hideLinksControls || !hasLinks;
     const hideVariables = this.state.hideVariableControls || (!hasAnnotations && !hasVariables);
-    const hideTimePicker = this.state.hideTimeControls || (!this.state.timePicker && !this.state.refreshPicker);
+    const hideTimePicker = this.state.hideTimeControls;
 
     return !(hideVariables && hideLinks && hideTimePicker);
   }
