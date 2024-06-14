@@ -1378,6 +1378,16 @@
       "revoke-public-URL-button-title": "注销公共网址",
       "settings-title": "设置"
     },
+    "configuration": {
+      "display-annotations-label": "",
+      "enable-time-range-label": "",
+      "settings-label": "",
+      "success-pause": "",
+      "success-resume": "",
+      "success-update": "",
+      "success-update-old": "",
+      "time-range-tooltip": ""
+    },
     "create-page": {
       "generate-public-url-button": "生成公共网址",
       "unsupported-features-desc": "目前，我们不支持模板变量或前端数据源",
@@ -1389,15 +1399,32 @@
       "revoke-title": "注销公共网址"
     },
     "email-sharing": {
+      "accept-button": "",
+      "alert-text": "",
+      "bill-ack": "",
+      "cancel-button": "",
       "input-invalid-email-text": "无效电子邮箱",
       "input-required-email-text": "电子邮箱是必填项",
       "invite-button": "邀请",
       "invite-field-desc": "通过电子邮件邀请人员",
       "invite-field-label": "邀请",
+      "learn-more-button": "",
+      "recipient-email-placeholder": "",
+      "recipient-invalid-email-text": "",
+      "recipient-invitation-button": "",
+      "recipient-invitation-description": "",
+      "recipient-invitation-tooltip": "",
+      "recipient-list-description": "",
+      "recipient-list-title": "",
+      "recipient-required-email-text": "",
       "resend-button": "重新发送",
       "resend-button-title": "重新发送",
+      "resend-invite-label": "",
+      "revoke-access-label": "",
       "revoke-button": "注销",
-      "revoke-button-title": "注销"
+      "revoke-button-title": "注销",
+      "success-creation": "",
+      "success-share-type-change": ""
     },
     "modal-alerts": {
       "no-upsert-perm-alert-desc": "请联系您的管理员以获得{{mode}}公共仪表板的权限",
@@ -1408,6 +1435,15 @@
       "unsupported-data-source-alert-title": "不受支持的数据源",
       "unsupported-template-variable-alert-desc": "此公共仪表板可能无法工作，因为其使用了模板变量",
       "unsupported-template-variable-alert-title": "模板变量不受支持"
+    },
+    "public-sharing": {
+      "accept-button": "",
+      "alert-text": "",
+      "cancel-button": "",
+      "learn-more-button": "",
+      "public-ack": "",
+      "success-creation": "",
+      "success-share-type-change": ""
     },
     "settings-bar-header": {
       "collapse-settings-tooltip": "折叠设置",
@@ -1427,6 +1463,29 @@
       "time-range-picker-disabled-text": "时间范围选择器 = 已禁用",
       "time-range-picker-enabled-text": "时间范围选择器 = 已启用",
       "time-range-text": "时间范围 = "
+    },
+    "share": {
+      "success-delete": "",
+      "success-delete-old": ""
+    },
+    "share-configuration": {
+      "access-label": "",
+      "share-type-label": ""
+    },
+    "share-externally": {
+      "copy-link-button": "",
+      "email-share-type-option-description": "",
+      "email-share-type-option-label": "",
+      "pause-access-button": "",
+      "pause-access-tooltip": "",
+      "public-share-type-option-description": "",
+      "public-share-type-option-label": "",
+      "resume-access-button": "",
+      "revoke-access-button": "",
+      "revoke-access-description": ""
+    },
+    "sharing": {
+      "success-creation": ""
     }
   },
   "public-dashboard-list": {
@@ -1489,6 +1548,17 @@
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
   },
+  "recently-deleted": {
+    "buttons": {
+      "restore": ""
+    },
+    "restore-modal": {
+      "restore-button": "",
+      "restore-loading": "",
+      "title": "",
+      "text_other": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "自动刷新已关闭。选择刷新时间间隔",
@@ -1518,23 +1588,22 @@
     "dismissable-button": "关闭"
   },
   "scopes": {
-    "advancedSelector": {
+    "filters": {
       "apply": "",
       "cancel": "",
+      "input": {
+        "placeholder": "",
+        "removeAll": ""
+      },
       "title": ""
-    },
-    "basicSelector": {
-      "openAdvanced": "",
-      "placeholder": "",
-      "removeAll": ""
-    },
-    "root": {
-      "collapse": "",
-      "expand": ""
     },
     "suggestedDashboards": {
       "loading": "",
-      "search": ""
+      "search": "",
+      "toggle": {
+        "collapse": "",
+        "expand": ""
+      }
     },
     "tree": {
       "collapse": "",
@@ -1577,6 +1646,11 @@
       "message": "",
       "more-info": "",
       "title": ""
+    }
+  },
+  "share-drawer": {
+    "confirm-action": {
+      "back-arrow-button": ""
     }
   },
   "share-modal": {
