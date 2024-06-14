@@ -118,7 +118,7 @@ Pause and resume alert rule evaluation directly from the Alert rules list and de
 
 <!-- William Wernert -->
 
-_Generally available in all editions of Grafana_
+_Generally available in Grafana Enterprise and Cloud_
 
 Fetching a rule group no longer requires the **datasources:query** permission for every data source used by the rules within that group. Now, the only requirements are **alert.rules:read** and **folders:read** for the folder the group is contained in.
 
