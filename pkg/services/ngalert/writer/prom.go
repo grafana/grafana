@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
 
@@ -88,7 +89,7 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 }
 
 type httpClientProvider interface {
-	GetTransport(options ...httpclient.Options) (http.RoundTripper, error)
+	New(options ...httpclient.Options) (*http.Client, error)
 }
 
 type PrometheusWriter struct {
@@ -99,6 +100,7 @@ type PrometheusWriter struct {
 func NewPrometheusWriter(
 	settings setting.RecordingRuleSettings,
 	httpClientProvider httpClientProvider,
+	tracer tracing.Tracer,
 	l log.Logger,
 ) (*PrometheusWriter, error) {
 	if err := validateSettings(settings); err != nil {
@@ -110,9 +112,14 @@ func NewPrometheusWriter(
 		headers.Add(k, v)
 	}
 
-	rt, err := httpClientProvider.GetTransport(httpclient.Options{
-		BasicAuth: createAuthOpts(settings.BasicAuthUsername, settings.BasicAuthPassword),
-		Header:    headers,
+	middlewares := []httpclient.Middleware{
+		httpclient.TracingMiddleware(tracer),
+	}
+
+	cl, err := httpClientProvider.New(httpclient.Options{
+		Middlewares: middlewares,
+		BasicAuth:   createAuthOpts(settings.BasicAuthUsername, settings.BasicAuthPassword),
+		Header:      headers,
 	})
 	if err != nil {
 		return nil, err
@@ -122,7 +129,7 @@ func NewPrometheusWriter(
 		promremote.UserAgent("grafana-recording-rule"),
 		promremote.WriteURLOption(settings.URL),
 		promremote.HTTPClientTimeoutOption(settings.Timeout),
-		promremote.HTTPClientOption(&http.Client{Transport: rt}),
+		promremote.HTTPClientOption(cl),
 	)
 
 	client, err := promremote.NewClient(clientCfg)
