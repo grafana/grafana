@@ -104,8 +104,6 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	truncated := truncateFrames(allFrames, gr.limit)
 
 	rsp := mathexp.Results{}
-
-	// duckDB := duck.NewInMemoryDB()
 	var frame = &data.Frame{}
 
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
