@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 
 import { Playlist, PlaylistMode } from './types';
@@ -52,28 +52,30 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
         <Field label="Mode">
           <RadioButtonGroup value={mode} options={modes} onChange={setMode} />
         </Field>
-        <Field label="Display dashboard controls" description="Customize dashboard elements visibility">
-          <Stack direction="row">
-            <Checkbox
-              label="Time and refresh"
-              name="displayTimePicker"
-              value={displayTimePicker}
-              onChange={(e) => setDisplayTimePicker(e.currentTarget.checked)}
-            />
-            <Checkbox
-              label="Variables"
-              name="displayVariableControls"
-              value={displayVariables}
-              onChange={(e) => setDisplayVariables(e.currentTarget.checked)}
-            />
-            <Checkbox
-              label="Dashboard links"
-              name="displayLinks"
-              value={displayLinks}
-              onChange={(e) => setDisplayLinks(e.currentTarget.checked)}
-            />
-          </Stack>
-        </Field>
+        {config.featureToggles.dashboardScene && (
+          <Field label="Display dashboard controls" description="Customize dashboard elements visibility">
+            <Stack direction="row">
+              <Checkbox
+                label="Time and refresh"
+                name="displayTimePicker"
+                value={displayTimePicker}
+                onChange={(e) => setDisplayTimePicker(e.currentTarget.checked)}
+              />
+              <Checkbox
+                label="Variables"
+                name="displayVariableControls"
+                value={displayVariables}
+                onChange={(e) => setDisplayVariables(e.currentTarget.checked)}
+              />
+              <Checkbox
+                label="Dashboard links"
+                name="displayLinks"
+                value={displayLinks}
+                onChange={(e) => setDisplayLinks(e.currentTarget.checked)}
+              />
+            </Stack>
+          </Field>
+        )}
         <Field>
           <Checkbox
             label="Autofit"
