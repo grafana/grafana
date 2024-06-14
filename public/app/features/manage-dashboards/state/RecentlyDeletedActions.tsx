@@ -49,10 +49,26 @@ export function RecentlyDeletedActions() {
     );
   };
 
+  const showDeleteModal = () => {
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: RestoreModal,
+        props: {
+          selectedItems,
+          onConfirm: onRestore,
+          isLoading: isRestoreLoading,
+        },
+      })
+    );
+  };
+
   return (
     <div className={styles.row}>
       <Button onClick={showRestoreModal} variant="secondary">
         <Trans i18nKey="recently-deleted.buttons.restore">Restore</Trans>
+      </Button>
+      <Button onClick={showDeleteModal} variant="destructive">
+        <Trans i18nKey="recently-deleted.buttons.delete">Delete permanently</Trans>
       </Button>
     </div>
   );
@@ -60,6 +76,9 @@ export function RecentlyDeletedActions() {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   row: css({
+    display: 'flex',
+    flexDirection: 'row',
+    gap: theme.spacing(1),
     marginBottom: theme.spacing(2),
   }),
 });
