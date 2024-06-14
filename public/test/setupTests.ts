@@ -11,7 +11,7 @@ const config = getEnvConfig() as Record<string, string>;
 
 import { matchers } from './matchers';
 
-if (config.foo || process.env.CI) {
+if (config.frontend_dev_fail_tests_on_console || process.env.CI) {
   failOnConsole({
     shouldFailOnLog: true,
     shouldFailOnDebug: true,
