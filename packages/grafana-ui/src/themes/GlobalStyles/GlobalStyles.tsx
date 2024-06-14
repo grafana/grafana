@@ -2,6 +2,7 @@ import { Global } from '@emotion/react';
 
 import { useTheme2 } from '../ThemeContext';
 
+import { getAccessibilityStyles } from './accessibility';
 import { getAgularPanelStyles } from './angularPanelStyles';
 import { getCardStyles } from './card';
 import { getCodeStyles } from './code';
@@ -23,6 +24,7 @@ export function GlobalStyles() {
   return (
     <Global
       styles={[
+        getAccessibilityStyles(theme),
         getCodeStyles(theme),
         getElementStyles(theme),
         getExtraStyles(theme),

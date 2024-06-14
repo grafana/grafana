@@ -99,30 +99,30 @@ export class UserOrgs extends PureComponent<Props, State> {
 
 const getOrgRowStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    removeButton: css`
-      margin-right: 0.6rem;
-      text-decoration: underline;
-      color: ${theme.v1.palette.blue95};
-    `,
-    label: css`
-      font-weight: 500;
-    `,
-    disabledTooltip: css`
-      display: flex;
-    `,
-    tooltipItem: css`
-      margin-left: 5px;
-    `,
-    tooltipItemLink: css`
-      color: ${theme.v1.palette.blue95};
-    `,
-    rolePickerWrapper: css`
-      display: flex;
-    `,
-    rolePicker: css`
-      flex: auto;
-      margin-right: ${theme.spacing(1)};
-    `,
+    removeButton: css({
+      marginRight: '0.6rem',
+      textDecoration: 'underline',
+      color: theme.v1.palette.blue95,
+    }),
+    label: css({
+      fontWeight: 500,
+    }),
+    disabledTooltip: css({
+      display: 'flex',
+    }),
+    tooltipItem: css({
+      marginLeft: '5px',
+    }),
+    tooltipItemLink: css({
+      color: theme.v1.palette.blue95,
+    }),
+    rolePickerWrapper: css({
+      display: 'flex',
+    }),
+    rolePicker: css({
+      flex: 'auto',
+      marginRight: theme.spacing(1),
+    }),
   };
 });
 
@@ -222,33 +222,29 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
               <td className="width-25">{org.role}</td>
             )}
             <td colSpan={1}>
-              <div className="pull-right">
-                {canChangeRole && (
-                  <ChangeOrgButton
-                    lockMessage={lockMessage}
-                    isExternalUser={isExternalUser}
-                    onChangeRoleClick={this.onChangeRoleClick}
-                    onCancelClick={this.onCancelClick}
-                    onOrgRoleSave={this.onOrgRoleSave}
-                  />
-                )}
-              </div>
+              {canChangeRole && (
+                <ChangeOrgButton
+                  lockMessage={lockMessage}
+                  isExternalUser={isExternalUser}
+                  onChangeRoleClick={this.onChangeRoleClick}
+                  onCancelClick={this.onCancelClick}
+                  onOrgRoleSave={this.onOrgRoleSave}
+                />
+              )}
             </td>
           </>
         )}
         <td colSpan={1}>
-          <div className="pull-right">
-            {canRemoveFromOrg && (
-              <ConfirmButton
-                confirmText="Confirm removal"
-                confirmVariant="destructive"
-                onCancel={this.onCancelClick}
-                onConfirm={this.onOrgRemove}
-              >
-                Remove from organization
-              </ConfirmButton>
-            )}
-          </div>
+          {canRemoveFromOrg && (
+            <ConfirmButton
+              confirmText="Confirm removal"
+              confirmVariant="destructive"
+              onCancel={this.onCancelClick}
+              onConfirm={this.onOrgRemove}
+            >
+              Remove from organization
+            </ConfirmButton>
+          )}
         </td>
       </tr>
     );
@@ -258,15 +254,15 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
 const OrgRow = withTheme2(UnThemedOrgRow);
 
 const getAddToOrgModalStyles = stylesFactory(() => ({
-  modal: css`
-    width: 500px;
-  `,
-  buttonRow: css`
-    text-align: center;
-  `,
-  modalContent: css`
-    overflow: visible;
-  `,
+  modal: css({
+    width: '500px',
+  }),
+  buttonRow: css({
+    textAlign: 'center',
+  }),
+  modalContent: css({
+    overflow: 'visible',
+  }),
 }));
 
 interface AddToOrgModalProps {
@@ -408,20 +404,20 @@ interface ChangeOrgButtonProps {
 }
 
 const getChangeOrgButtonTheme = (theme: GrafanaTheme2) => ({
-  disabledTooltip: css`
-    display: flex;
-  `,
-  tooltipItemLink: css`
-    color: ${theme.v1.palette.blue95};
-  `,
-  lockMessageClass: css`
-    font-style: italic;
-    margin-left: 1.8rem;
-    margin-right: 0.6rem;
-  `,
-  icon: css`
-    line-height: 2;
-  `,
+  disabledTooltip: css({
+    display: 'flex',
+  }),
+  tooltipItemLink: css({
+    color: theme.v1.palette.blue95,
+  }),
+  lockMessageClass: css({
+    fontStyle: 'italic',
+    marginLeft: '1.8rem',
+    marginRight: '0.6rem',
+  }),
+  icon: css({
+    lineHeight: 2,
+  }),
 });
 
 export function ChangeOrgButton({
@@ -511,15 +507,15 @@ export const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) =
 };
 
 const getTooltipStyles = (theme: GrafanaTheme2) => ({
-  disabledTooltip: css`
-    display: flex;
-  `,
-  tooltipItemLink: css`
-    color: ${theme.v1.palette.blue95};
-  `,
-  lockMessageClass: css`
-    font-style: italic;
-    margin-left: 1.8rem;
-    margin-right: 0.6rem;
-  `,
+  disabledTooltip: css({
+    display: 'flex',
+  }),
+  tooltipItemLink: css({
+    color: theme.v1.palette.blue95,
+  }),
+  lockMessageClass: css({
+    fontStyle: 'italic',
+    marginLeft: '1.8rem',
+    marginRight: '0.6rem',
+  }),
 });
