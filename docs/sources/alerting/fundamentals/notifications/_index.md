@@ -70,7 +70,7 @@ Start defining your [contact points](ref:contact-points) to specify how to recei
 
 <br/>
 
-{{< figure src="/media/docs/alerting/alerting-configure-notifications-v2.svg" max-width="750px" alt="Configure alerts to send notifications to a contact point or via notification policies" caption="Configure alerts to send notifications to a contact point or via notification policies" >}}
+{{< figure src="/media/docs/alerting/alerting-configure-notifications-v2.png" max-width="750px" alt="Configure alert rules to forward firing alerts directly to a contact point or through notification policies" caption="Configure alert rules to forward firing alerts directly to a contact point or through notification policies" >}}
 
 ## How it works at a glance
 
