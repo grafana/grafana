@@ -18,7 +18,6 @@ import (
 
 	"github.com/grafana/alerting/receivers"
 	alertingLine "github.com/grafana/alerting/receivers/line"
-	alertingPagerduty "github.com/grafana/alerting/receivers/pagerduty"
 	alertingPushover "github.com/grafana/alerting/receivers/pushover"
 	alertingSlack "github.com/grafana/alerting/receivers/slack"
 	alertingTelegram "github.com/grafana/alerting/receivers/telegram"
@@ -913,19 +912,17 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	mockChannel.responses["slack_recvX"] = `{"ok": true}`
 
 	// Overriding some URLs to send to the mock channel.
-	os, opa, ot, opu, ogb, ol, oth := alertingSlack.APIURL, alertingPagerduty.APIURL,
+	os, ot, opu, ogb, ol, oth := alertingSlack.APIURL,
 		alertingTelegram.APIURL, alertingPushover.APIURL, receivers.GetBoundary,
 		alertingLine.APIURL, alertingThreema.APIURL
 	originalTemplate := alertingTemplates.DefaultTemplateString
 	t.Cleanup(func() {
-		alertingSlack.APIURL, alertingPagerduty.APIURL,
-			alertingTelegram.APIURL, alertingPushover.APIURL, receivers.GetBoundary,
-			alertingLine.APIURL, alertingThreema.APIURL = os, opa, ot, opu, ogb, ol, oth
+		alertingSlack.APIURL, alertingTelegram.APIURL, alertingPushover.APIURL, receivers.GetBoundary,
+			alertingLine.APIURL, alertingThreema.APIURL = os, ot, opu, ogb, ol, oth
 		alertingTemplates.DefaultTemplateString = originalTemplate
 	})
 	alertingTemplates.DefaultTemplateString = alertingTemplates.TemplateForTestsString
 	alertingSlack.APIURL = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
-	alertingPagerduty.APIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
 	alertingTelegram.APIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s/%%s", mockChannel.server.Addr)
 	alertingPushover.APIURL = fmt.Sprintf("http://%s/pushover_recv/pushover_test", mockChannel.server.Addr)
 	alertingLine.APIURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
@@ -1034,33 +1031,29 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	err := json.Unmarshal([]byte(b), &receivers)
 	require.NoError(t, err)
 	for _, rcv := range receivers {
-		t.Run("Receiver "+*rcv.Name, func(t *testing.T) {
+		t.Run("Receiver "+rcv.Name, func(t *testing.T) {
 			var expActive bool
-			if _, ok := expInactiveReceivers[*rcv.Name]; !ok {
+			if _, ok := expInactiveReceivers[rcv.Name]; !ok {
 				expActive = true
 			}
 			var expErr bool
-			if _, ok := expNotificationErrors[*rcv.Name]; ok {
+			if _, ok := expNotificationErrors[rcv.Name]; ok {
 				expErr = true
 			}
 
-			require.NotNil(t, rcv.Name)
-			require.NotNil(t, rcv.Active)
 			require.NotEmpty(t, rcv.Integrations)
 			if expActive {
-				require.True(t, *rcv.Active)
+				require.True(t, rcv.Active)
 			}
 
 			// We don't have test alerts for the default notifier, continue iterating.
-			if *rcv.Name == "grafana-default-email" {
+			if rcv.Name == "grafana-default-email" {
 				return
 			}
 
 			for _, integration := range rcv.Integrations {
 				require.NotNil(t, integration.Name)
-				t.Run("Integration "+*integration.Name, func(t *testing.T) {
-					require.NotNil(t, integration.SendResolved)
-
+				t.Run("Integration "+integration.Name, func(t *testing.T) {
 					// If the receiver is not active, no attempts to send notifications should be registered.
 					if expActive {
 						// Prometheus' durations get rounded down, so we might end up with "0s" if we have values smaller than 1ms.
@@ -1073,7 +1066,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 					// Check whether we're expecting an error on this integration.
 					if expErr {
 						for _, integration := range rcv.Integrations {
-							require.Equal(t, expNotificationErrors[*rcv.Name], integration.LastNotifyAttemptError)
+							require.Equal(t, expNotificationErrors[rcv.Name], integration.LastNotifyAttemptError)
 						}
 					} else {
 						require.Equal(t, "", integration.LastNotifyAttemptError)
@@ -1248,7 +1241,7 @@ func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.
 	nc.receivedNotifications[key] = append(nc.receivedNotifications[key], body)
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
-	fmt.Fprint(res, nc.responses[paths[0]])
+	_, _ = fmt.Fprint(res, nc.responses[paths[0]])
 }
 
 func (nc *mockNotificationChannel) totalNotifications() int {
@@ -1902,7 +1895,8 @@ const alertmanagerConfig = `
               "class": "testclass",
               "component": "Integration Test",
               "group": "testgroup",
-              "summary": "Integration Test {{ template \"pagerduty.default.description\" . }}"
+              "summary": "Integration Test {{ template \"pagerduty.default.description\" . }}",
+			  "url": "http://CHANNEL_ADDR/pagerduty_recvX/pagerduty_testX"
             },
             "secureSettings": {
               "integrationKey": "pagerduty_recv/pagerduty_test"
@@ -2127,7 +2121,6 @@ var expAlertmanagerConfigFromAPI = `
 		}
       ]
     },
-    "templates": null,
     "receivers": [
       {
         "name": "email_recv",
@@ -2467,7 +2460,8 @@ var expAlertmanagerConfigFromAPI = `
               "component": "Integration Test",
               "group": "testgroup",
               "severity": "warning",
-              "summary": "Integration Test {{ template \"pagerduty.default.description\" . }}"
+              "summary": "Integration Test {{ template \"pagerduty.default.description\" . }}",
+              "url": "http://CHANNEL_ADDR/pagerduty_recvX/pagerduty_testX"
             },
             "secureFields": {
               "integrationKey": true
@@ -2794,7 +2788,7 @@ var expNonEmailNotifications = map[string][]string{
 		}`,
 	},
 	"line_recv/line_test": {
-		`message=%5BFIRING%3A1%5D+LineAlert+%28default%29%0Ahttp%3A%2Flocalhost%3A3000%2Falerting%2Flist%0A%0A%2A%2AFiring%2A%2A%0A%0AValue%3A+A%3D1%0ALabels%3A%0A+-+alertname+%3D+LineAlert%0A+-+grafana_folder+%3D+default%0AAnnotations%3A%0ASource%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fgrafana%2FUID_LineAlert%2Fview%3ForgId%3D1%0ASilence%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matcher%3Dalertname%253DLineAlert%26matcher%3Dgrafana_folder%253Ddefault%26orgId%3D1%0A`,
+		`message=%5BFIRING%3A1%5D+LineAlert+%28default%29%0A%2A%2AFiring%2A%2A%0A%0AValue%3A+A%3D1%0ALabels%3A%0A+-+alertname+%3D+LineAlert%0A+-+grafana_folder+%3D+default%0AAnnotations%3A%0ASource%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fgrafana%2FUID_LineAlert%2Fview%3ForgId%3D1%0ASilence%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matcher%3Dalertname%253DLineAlert%26matcher%3Dgrafana_folder%253Ddefault%26orgId%3D1%0A`,
 	},
 	"threema_recv/threema_test": {
 		`from=%2A1234567&secret=myapisecret&text=%E2%9A%A0%EF%B8%8F+%5BFIRING%3A1%5D+ThreemaAlert+%28default%29%0A%0A%2AMessage%3A%2A%0A%2A%2AFiring%2A%2A%0A%0AValue%3A+A%3D1%0ALabels%3A%0A+-+alertname+%3D+ThreemaAlert%0A+-+grafana_folder+%3D+default%0AAnnotations%3A%0ASource%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fgrafana%2FUID_ThreemaAlert%2Fview%3ForgId%3D1%0ASilence%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matcher%3Dalertname%253DThreemaAlert%26matcher%3Dgrafana_folder%253Ddefault%26orgId%3D1%0A%0A%2AURL%3A%2A+http%3A%2Flocalhost%3A3000%2Falerting%2Flist%0A&to=abcdefgh`,

@@ -17,8 +17,6 @@ There are 2 main tables, the `entity` table stores a "current" view of the objec
 The minimum config settings required are:
 
 ```ini
-; dev mode is required
-app_mode = development
 ; need to specify target here for override to work later
 target = all
 

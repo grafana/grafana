@@ -7,9 +7,9 @@ import (
 	"errors"
 	"slices"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -63,7 +63,7 @@ func NewReceiverService(
 	}
 }
 
-func (rs *ReceiverService) shouldDecrypt(ctx context.Context, user identity.Requester, name string, reqDecrypt bool) (bool, error) {
+func (rs *ReceiverService) shouldDecrypt(ctx context.Context, user identity.Requester, reqDecrypt bool) (bool, error) {
 	// TODO: migrate to new permission
 	eval := accesscontrol.EvalAny(
 		accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversReadSecrets),
@@ -108,7 +108,7 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	receivers := cfg.AlertmanagerConfig.Receivers
 	for _, r := range receivers {
 		if r.Name == q.Name {
-			decrypt, err := rs.shouldDecrypt(ctx, user, q.Name, q.Decrypt)
+			decrypt, err := rs.shouldDecrypt(ctx, user, q.Decrypt)
 			if err != nil {
 				return definitions.GettableApiReceiver{}, err
 			}
@@ -157,7 +157,7 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 			continue
 		}
 
-		decrypt, err := rs.shouldDecrypt(ctx, user, r.Name, q.Decrypt)
+		decrypt, err := rs.shouldDecrypt(ctx, user, q.Decrypt)
 		if err != nil {
 			return nil, err
 		}

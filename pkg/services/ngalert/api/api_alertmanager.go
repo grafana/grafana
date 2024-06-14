@@ -28,10 +28,11 @@ const (
 )
 
 type AlertmanagerSrv struct {
-	log    log.Logger
-	ac     accesscontrol.AccessControl
-	mam    *notifier.MultiOrgAlertmanager
-	crypto notifier.Crypto
+	log        log.Logger
+	ac         accesscontrol.AccessControl
+	mam        *notifier.MultiOrgAlertmanager
+	crypto     notifier.Crypto
+	silenceSvc SilenceService
 }
 
 type UnknownReceiverError struct {
@@ -48,7 +49,12 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 		return errResp
 	}
 
-	status := am.GetStatus()
+	status, err := am.GetStatus(c.Req.Context())
+	if err != nil {
+		srv.log.Error("Unable to get status for the alertmanager", "error", err)
+		return ErrResp(http.StatusInternalServerError, err, "failed to get status for the Alertmanager")
+	}
+
 	if !c.SignedInUser.HasRole(org.RoleAdmin) {
 		notifier.RemoveAutogenConfigIfExists(status.Config.Route)
 	}

@@ -1,4 +1,10 @@
-import { BOOKMARKED_TRAILS_KEY, RECENT_TRAILS_KEY } from '../shared';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { AdHocFiltersVariable, getUrlSyncManager, sceneGraph } from '@grafana/scenes';
+import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+
+import { MockDataSourceSrv, mockDataSource } from '../../alerting/unified/mocks';
+import { DataTrail } from '../DataTrail';
+import { BOOKMARKED_TRAILS_KEY, RECENT_TRAILS_KEY, VAR_FILTERS } from '../shared';
 
 import { SerializedTrail, getTrailStore } from './TrailStore';
 
@@ -21,6 +27,17 @@ describe('TrailStore', () => {
     global.localStorage = localStorageMock as unknown as Storage;
 
     jest.useFakeTimers();
+
+    // Having the mock service set up is required for activating the loaded trails
+    setDataSourceSrv(
+      new MockDataSourceSrv({
+        prom: mockDataSource({
+          name: 'Prometheus',
+          type: DataSourceType.Prometheus,
+          uid: 'ds',
+        }),
+      })
+    );
   });
 
   describe('Empty store', () => {
@@ -35,7 +52,7 @@ describe('TrailStore', () => {
     });
   });
 
-  describe('Initialize store with one recent trail', () => {
+  describe('Initialize store with one recent trail with final current step', () => {
     const history: SerializedTrail['history'] = [
       {
         urlValues: {
@@ -134,7 +151,7 @@ describe('TrailStore', () => {
       ['metric', 'different_metric'],
       ['from', 'now-1y'],
       ['to', 'now-30m'],
-      ['var-ds', '1234'],
+      ['var-ds', 'ds'],
       ['var-groupby', 'job'],
       ['var-filters', 'cluster|=|dev-eu-west-2'],
     ])(`new recent trails with a different '%p' value should insert new entry`, (key, differentValue) => {
@@ -253,6 +270,128 @@ describe('TrailStore', () => {
       expect(trail.state.history.state.currentStep).toBe(1);
     });
 
+    function getFilterVar(trail: DataTrail) {
+      const variable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
+      if (variable instanceof AdHocFiltersVariable) {
+        return variable;
+      }
+      throw new Error('getFilterVar failed');
+    }
+
+    function getStepFilterVar(trail: DataTrail, step: number) {
+      const variable = trail.state.history.state.steps[step].trailState.$variables?.getByName(VAR_FILTERS);
+      if (variable instanceof AdHocFiltersVariable) {
+        return variable;
+      }
+      throw new Error(`getStepFilterVar failed for step ${step}`);
+    }
+
+    it('Recent trail filter should be empty at current step 1', () => {
+      const store = getTrailStore();
+      const trail = store.recent[0].resolve();
+
+      expect(getStepFilterVar(trail, 1).state.filters.length).toBe(0);
+      expect(trail.state.history.state.currentStep).toBe(1);
+      expect(trail.state.history.state.steps.length).toBe(3);
+    });
+
+    describe('And filter is added zone=a', () => {
+      let trail: DataTrail;
+      beforeEach(() => {
+        localStorage.clear();
+        localStorage.setItem(RECENT_TRAILS_KEY, JSON.stringify([{ history, currentStep: 1 }]));
+        getTrailStore().load();
+        const store = getTrailStore();
+        trail = store.recent[0].resolve();
+        const urlState = getUrlSyncManager().getUrlState(trail);
+        locationService.partial(urlState);
+        trail.activate();
+        trail.state.history.activate();
+        getFilterVar(trail).setState({ filters: [{ key: 'zone', operator: '=', value: 'a' }] });
+      });
+
+      it('This should create step 3', () => {
+        expect(trail.state.history.state.steps.length).toBe(4);
+        expect(trail.state.history.state.currentStep).toBe(3);
+      });
+
+      it('Filter of trail should be zone=a', () => {
+        expect(getFilterVar(trail).state.filters[0].key).toBe('zone');
+        expect(getFilterVar(trail).state.filters[0].value).toBe('a');
+      });
+
+      it('Filter of step 3 should be zone=a', () => {
+        expect(getStepFilterVar(trail, 3).state.filters[0].key).toBe('zone');
+        expect(getStepFilterVar(trail, 3).state.filters[0].value).toBe('a');
+      });
+
+      it('Filter of step 1 should be empty', () => {
+        expect(getStepFilterVar(trail, 1).state.filters.length).toBe(0);
+      });
+
+      describe('When returning to step 1', () => {
+        beforeEach(() => {
+          trail.state.history.goBackToStep(1);
+        });
+
+        it('Filter of trail should be empty', () => {
+          expect(getFilterVar(trail).state.filters.length).toBe(0);
+        });
+      });
+    });
+
+    it('Time range `from` should be now-1h', () => {
+      const store = getTrailStore();
+      const trail = store.recent[0].resolve();
+
+      expect(trail.state.$timeRange?.state.from).toBe('now-1h');
+    });
+
+    describe('And time range is changed to now-15m to now', () => {
+      let trail: DataTrail;
+
+      beforeEach(() => {
+        localStorage.clear();
+        localStorage.setItem(RECENT_TRAILS_KEY, JSON.stringify([{ history, currentStep: 1 }]));
+        getTrailStore().load();
+        const store = getTrailStore();
+        trail = store.recent[0].resolve();
+        const urlState = getUrlSyncManager().getUrlState(trail);
+        locationService.partial(urlState);
+
+        trail.activate();
+        trail.state.history.activate();
+        trail.state.$timeRange?.setState({ from: 'now-15m' });
+      });
+
+      it('This should create step 3', () => {
+        expect(trail.state.history.state.steps.length).toBe(4);
+        expect(trail.state.history.state.currentStep).toBe(3);
+      });
+
+      it('Time range `from` should be now-15m', () => {
+        expect(trail.state.$timeRange?.state.from).toBe('now-15m');
+      });
+
+      it('Time range `from` of step 2 should be now-15m', () => {
+        expect(trail.state.history.state.steps[3].trailState.$timeRange?.state.from).toBe('now-15m');
+      });
+
+      it('Time range `from` of step 1 should be now-1h', () => {
+        expect(trail.state.history.state.steps[1].trailState.$timeRange?.state.from).toBe('now-1h');
+      });
+
+      describe('When returning to step 1', () => {
+        beforeEach(() => {
+          trail.state.history.goBackToStep(1);
+        });
+
+        it('Time range `from` should be now-1h', () => {
+          expect(trail.state.$timeRange?.state.from).toBe('now-1h');
+        });
+      });
+    });
+
     it('should have no bookmarked trails', () => {
       const store = getTrailStore();
       expect(store.bookmarks.length).toBe(0);
@@ -309,7 +448,7 @@ describe('TrailStore', () => {
       ['metric', 'different_metric'],
       ['from', 'now-1y'],
       ['to', 'now-30m'],
-      ['var-ds', '1234'],
+      ['var-ds', 'different'],
       ['var-groupby', 'job'],
       ['var-filters', 'cluster|=|dev-eu-west-2'],
     ])(`new recent trails with a different '%p' value should insert new entry`, (key, differentValue) => {

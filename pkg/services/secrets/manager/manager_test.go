@@ -11,6 +11,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
@@ -192,7 +193,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		encProvider := encryptionprovider.Provider{}
 		usageStats := &usagestats.UsageStatsMock{}
 
-		encryptionService, err := encryptionservice.ProvideEncryptionService(encProvider, usageStats, cfg)
+		encryptionService, err := encryptionservice.ProvideEncryptionService(tracing.InitializeTracerForTest(), encProvider, usageStats, cfg)
 		require.NoError(t, err)
 
 		features := featuremgmt.WithFeatures()
@@ -201,6 +202,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		secretStore := database.ProvideSecretsStore(testDB)
 
 		secretsService, err := ProvideSecretsService(
+			tracing.InitializeTracerForTest(),
 			secretStore,
 			&kms,
 			encryptionService,
@@ -219,6 +221,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		// secret service tries to find a DEK in a cache first before calling provider's decrypt
 		// to bypass the cache, we set up one more secrets service to test decrypting
 		svcDecrypt, err := ProvideSecretsService(
+			tracing.InitializeTracerForTest(),
 			secretStore,
 			&kms,
 			encryptionService,

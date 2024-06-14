@@ -1,15 +1,13 @@
 import { createShortLink, createAndCopyShortLink } from './shortLinks';
 
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => {
     return {
       post: () => {
         return Promise.resolve({ url: 'www.short.com' });
       },
     };
-  },
-  config: {
-    appSubUrl: '',
   },
 }));
 

@@ -8,11 +8,9 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
@@ -37,14 +35,14 @@ type OrgRecord struct {
 	Login string `json:"login"`
 }
 
-func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGrafanaCom {
+func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGrafanaCom {
 	// Override necessary settings
 	info.AuthUrl = cfg.GrafanaComURL + "/oauth2/authorize"
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
 	info.AuthStyle = "inheader"
 
 	provider := &SocialGrafanaCom{
-		SocialBase:           newSocialBase(social.GrafanaComProviderName, info, features, cfg),
+		SocialBase:           newSocialBase(social.GrafanaComProviderName, orgRoleMapper, info, features, cfg),
 		url:                  cfg.GrafanaComURL,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 	}
@@ -56,7 +54,7 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings
 	return provider
 }
 
-func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
+func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOSettings, _ ssoModels.SSOSettings, requester identity.Requester) error {
 	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
@@ -87,7 +85,7 @@ func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSet
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(social.GrafanaComProviderName, newInfo)
+	s.updateInfo(ctx, social.GrafanaComProviderName, newInfo)
 
 	s.url = s.cfg.GrafanaComURL
 	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
@@ -140,17 +138,15 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
-	// on login we do not want to display the role from the external provider
-	var role roletype.RoleType
-	if !s.info.SkipOrgRoleSync {
-		role = org.RoleType(data.Role)
-	}
 	userInfo := &social.BasicUserInfo{
 		Id:    fmt.Sprintf("%d", data.Id),
 		Name:  data.Name,
 		Login: data.Login,
 		Email: data.Email,
-		Role:  role,
+	}
+
+	if !s.info.SkipOrgRoleSync {
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(&MappingConfiguration{strictRoleMapping: false}, nil, identity.RoleType(data.Role))
 	}
 
 	if !s.isOrganizationMember(data.Orgs) {

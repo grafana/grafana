@@ -2,9 +2,10 @@ import React from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { SelectableValue } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
-import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup } from '@grafana/ui';
+import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { getDashboardSnapshotSrv, SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
@@ -13,6 +14,8 @@ import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serializ
 import { DashboardInteractions } from '../utils/interactions';
 
 import { SceneShareTabState } from './types';
+
+const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
 
 const getExpireOptions = () => {
   const DEFAULT_EXPIRE_OPTION: SelectableValue<number> = {
@@ -214,7 +217,12 @@ function ShareSnapshoTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab
                 {snapshotSharingOptions?.externalSnapshotName}
               </Button>
             )}
-            <Button variant="primary" disabled={snapshotResult.loading} onClick={() => createSnapshot()}>
+            <Button
+              variant="primary"
+              disabled={snapshotResult.loading}
+              onClick={() => createSnapshot()}
+              data-testid={selectors.PublishSnapshot}
+            >
               <Trans i18nKey="share-modal.snapshot.local-button">Publish Snapshot</Trans>
             </Button>
           </Modal.ButtonRow>
@@ -223,21 +231,27 @@ function ShareSnapshoTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab
 
       {/* When snapshot has been created - show link and allow copy/deletion */}
       {snapshotResult.value && (
-        <>
+        <Stack direction="column" gap={0}>
           <Field label={t('share-modal.snapshot.url-label', 'Snapshot URL')}>
             <Input
+              data-testid={selectors.CopyUrlInput}
               id="snapshot-url-input"
               value={snapshotResult.value.url}
               readOnly
               addonAfter={
-                <ClipboardButton icon="copy" variant="primary" getText={() => snapshotResult.value!.url}>
+                <ClipboardButton
+                  data-testid={selectors.CopyUrlButton}
+                  icon="copy"
+                  variant="primary"
+                  getText={() => snapshotResult.value!.url}
+                >
                   <Trans i18nKey="share-modal.snapshot.copy-link-button">Copy</Trans>
                 </ClipboardButton>
               }
             />
           </Field>
 
-          <div className="pull-right" style={{ padding: '5px' }}>
+          <div style={{ alignSelf: 'flex-end', padding: '5px' }}>
             <Trans i18nKey="share-modal.snapshot.mistake-message">Did you make a mistake? </Trans>&nbsp;
             <Button
               fill="outline"
@@ -250,7 +264,7 @@ function ShareSnapshoTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab
               <Trans i18nKey="share-modal.snapshot.delete-button">Delete snapshot.</Trans>
             </Button>
           </div>
-        </>
+        </Stack>
       )}
     </>
   );

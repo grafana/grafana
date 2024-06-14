@@ -15,6 +15,18 @@ type ScopeAttributeResolver interface {
 	Resolve(ctx context.Context, orgID int64, scope string) ([]string, error)
 }
 
+type ActionResolver interface {
+	// ExpandActionSets takes a set of permissions that might include some action set permissions, and returns a set of permissions with action sets expanded into underlying permissions
+	ExpandActionSets(permissions []Permission) []Permission
+	// ExpandActionSetsWithFilter works like ExpandActionSets, but it also takes a function for action filtering. When action sets are expanded into the underlying permissions,
+	// only those permissions whose action is matched by actionMatcher are included.
+	ExpandActionSetsWithFilter(permissions []Permission, actionMatcher func(action string) bool) []Permission
+	// ResolveAction returns all action sets that include the given action
+	ResolveAction(action string) []string
+	// ResolveActionPrefix returns all action sets that include at least one action with the specified prefix
+	ResolveActionPrefix(prefix string) []string
+}
+
 // ScopeAttributeResolverFunc is an adapter to allow functions to implement ScopeAttributeResolver interface
 type ScopeAttributeResolverFunc func(ctx context.Context, orgID int64, scope string) ([]string, error)
 

@@ -330,20 +330,20 @@ export class LogContextProvider {
       await this.datasource.languageProvider.start(timeRange);
       allLabels = this.datasource.languageProvider.getLabelKeys();
     } else {
-      // If we have parser, we use fetchSeriesLabels to fetch actual labels for selected stream
+      // If we have parser, we use fetchLabels to fetch actual labels for selected stream
       const stream = getStreamSelectorsFromQuery(query.expr);
       // We are using stream[0] as log query can always have just 1 stream selector
-      const series = await this.datasource.languageProvider.fetchSeriesLabels(stream[0], { timeRange });
-      allLabels = Object.keys(series);
+      allLabels = await this.datasource.languageProvider.fetchLabels({ streamSelector: stream[0], timeRange });
     }
 
     const contextFilters: ContextFilter[] = [];
     Object.entries(rowLabels).forEach(([label, value]) => {
+      const labelType = getLabelTypeFromFrame(label, row.dataFrame, row.rowIndex);
       const filter: ContextFilter = {
         label,
         value: value,
         enabled: allLabels.includes(label),
-        nonIndexed: getLabelTypeFromFrame(label, row.dataFrame, row.rowIndex) !== LabelType.Indexed,
+        nonIndexed: labelType !== null && labelType !== LabelType.Indexed,
       };
 
       contextFilters.push(filter);

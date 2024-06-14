@@ -123,8 +123,10 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 		// We care about the status of the internal Alertmanager.
 		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
 		status := apimodels.GettableStatus{}
-		internal.EXPECT().GetStatus().Return(status).Once()
-		require.Equal(tt, status, forked.GetStatus())
+		internal.EXPECT().GetStatus(ctx).Return(status, nil).Once()
+		got, err := forked.GetStatus(ctx)
+		require.NoError(tt, err)
+		require.Equal(tt, status, got)
 	})
 
 	t.Run("CreateSilence", func(tt *testing.T) {
@@ -427,11 +429,23 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 	})
 
 	t.Run("GetStatus", func(tt *testing.T) {
-		// We care about the status of the remote Alertmanager.
-		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		status := apimodels.GettableStatus{}
-		remote.EXPECT().GetStatus().Return(status).Once()
-		require.Equal(tt, status, forked.GetStatus())
+		{
+			// We care about the status of the remote Alertmanager.
+			_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+			status := apimodels.GettableStatus{}
+			remote.EXPECT().GetStatus(ctx).Return(status, nil).Once()
+			got, err := forked.GetStatus(ctx)
+			require.NoError(tt, err)
+			require.Equal(tt, status, got)
+		}
+
+		{
+			// If there's an error in the remote Alertmanager, it should be returned.
+			_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+			remote.EXPECT().GetStatus(ctx).Return(apimodels.GettableStatus{}, expErr).Once()
+			_, err := forked.GetStatus(ctx)
+			require.ErrorIs(tt, expErr, err)
+		}
 	})
 
 	t.Run("CreateSilence", func(tt *testing.T) {
@@ -612,28 +626,30 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 
 	t.Run("TestReceivers", func(tt *testing.T) {
 		// TestReceivers should be called only in the remote Alertmanager.
-		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, nil).Once()
+		// TODO: change to remote AM once it's implemented there.
+		internal, _, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, nil).Once()
 		_, err := forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
 		require.NoError(tt, err)
 
 		// If there's an error in the remote Alertmanager, it should be returned.
-		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, expErr).Once()
+		internal, _, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, expErr).Once()
 		_, err = forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
 		require.ErrorIs(tt, expErr, err)
 	})
 
 	t.Run("TestTemplate", func(tt *testing.T) {
-		// TestTemplate should be called only in the remote Alertmanager.
-		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, nil).Once()
+		// TestTemplate should be called only in the internal Alertmanager.
+		// TODO: change to remote AM once it's implemented there.
+		internal, _, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, nil).Once()
 		_, err := forked.TestTemplate(ctx, apimodels.TestTemplatesConfigBodyParams{})
 		require.NoError(tt, err)
 
-		// If there's an error in the remote Alertmanager, it should be returned.
-		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, expErr).Once()
+		// If there's an error in the internal Alertmanager, it should be returned.
+		internal, _, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, expErr).Once()
 		_, err = forked.TestTemplate(ctx, apimodels.TestTemplatesConfigBodyParams{})
 		require.ErrorIs(tt, expErr, err)
 	})

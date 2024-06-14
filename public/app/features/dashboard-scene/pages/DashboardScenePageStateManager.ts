@@ -16,6 +16,7 @@ import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { updateNavModel } from './utils';
 
@@ -177,8 +178,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         return;
       }
 
-      if (!(config.publicDashboardAccessToken && dashboard.state.controls?.state.hideTimeControls)) {
-        dashboard.startUrlSync();
+      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
+        restoreDashboardStateFromLocalStorage(dashboard);
       }
 
       this.setState({ dashboard: dashboard, isLoading: false });

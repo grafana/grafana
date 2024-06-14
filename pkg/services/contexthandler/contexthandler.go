@@ -10,9 +10,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -158,7 +158,7 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 			return
 		}
 
-		if _, ok := h.Cfg.IDResponseHeaderNamespaces[namespace]; !ok {
+		if _, ok := h.Cfg.IDResponseHeaderNamespaces[namespace.String()]; !ok {
 			return
 		}
 

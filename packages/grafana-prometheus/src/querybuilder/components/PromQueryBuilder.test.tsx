@@ -195,17 +195,6 @@ describe('PromQueryBuilder', () => {
     await waitFor(() => expect(screen.getByText('hint: add rate')).toBeInTheDocument());
   });
 
-  it('shows hints for counter metrics', async () => {
-    const { container } = setup({
-      metric: 'histogram_metric_sum',
-      labels: [],
-      operations: [],
-    });
-    await openMetricSelect(container);
-    await userEvent.click(screen.getByText('histogram_metric_sum'));
-    await waitFor(() => expect(screen.getByText('hint: add rate')).toBeInTheDocument());
-  });
-
   it('shows multiple hints', async () => {
     const data: PanelData = {
       series: [],

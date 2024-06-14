@@ -10,10 +10,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
+import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
 import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
+import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
@@ -171,7 +173,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/alerts-and-incidents',
-      component: () => <NavLandingPage navId="alerts-and-incidents" />,
+      component: () => {
+        return (
+          <NavLandingPage
+            navId="alerts-and-incidents"
+            header={(!isOpenSourceEdition() && isAdmin()) || isLocalDevEnv() ? <ConfigureIRM /> : undefined}
+          />
+        );
+      },
     },
     {
       path: '/testing-and-synthetics',
@@ -424,6 +433,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/dashboard/snapshots',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
+      ),
+    },
+    config.featureToggles.dashboardRestore && {
+      path: '/dashboard/recentlyDeleted',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsDelete]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
       ),
     },
     {

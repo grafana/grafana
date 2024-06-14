@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -120,7 +120,7 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 		return nil
 	}
 
-	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+	usr, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
 		UserID: userID,
 		OrgID:  r.OrgID,
 	})
@@ -158,6 +158,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 		return nil
 	}
 
+	goCtx := context.WithoutCancel(ctx)
 	go func(userID int64) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -165,7 +166,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 			}
 		}()
 
-		if err := s.userService.UpdateLastSeenAt(context.Background(),
+		if err := s.userService.UpdateLastSeenAt(goCtx,
 			&user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: r.OrgID}); err != nil &&
 			!errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
@@ -364,7 +365,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 	var err error
 
 	// If not found, try to find the user by email address
-	if usr == nil && params.Email != nil && *params.Email != "" {
+	if params.Email != nil && *params.Email != "" {
 		usr, err = s.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: *params.Email})
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
@@ -389,7 +390,8 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
 func syncUserToIdentity(usr *user.User, id *authn.Identity) {
-	id.ID = authn.NewNamespaceIDUnchecked(authn.NamespaceUser, usr.ID)
+	id.ID = authn.NewNamespaceID(authn.NamespaceUser, usr.ID)
+	id.UID = authn.NewNamespaceIDString(authn.NamespaceUser, usr.UID)
 	id.Login = usr.Login
 	id.Email = usr.Email
 	id.Name = usr.Name
@@ -399,6 +401,14 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 
 // syncSignedInUserToIdentity syncs a user to an identity.
 func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity) {
+	var ns authn.Namespace
+	if identity.ID.IsNamespace(authn.NamespaceServiceAccount) {
+		ns = authn.NamespaceServiceAccount
+	} else {
+		ns = authn.NamespaceUser
+	}
+	identity.UID = authn.NewNamespaceIDString(ns, usr.UserUID)
+
 	identity.Name = usr.Name
 	identity.Login = usr.Login
 	identity.Email = usr.Email

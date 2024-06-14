@@ -7,15 +7,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
+func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 	queryReader, err := util.NewURLQueryReader(c.Req.URL)
 	if err != nil {
 		c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error", err)
@@ -45,6 +45,20 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		scale = hs.Cfg.RendererDefaultImageScale
 	}
 
+	theme := c.QueryStrings("theme")
+	var themeModel models.Theme
+	if len(theme) > 0 {
+		themeStr := theme[0]
+		_, err := models.ParseTheme(themeStr)
+		if err != nil {
+			c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error: theme can only be light or dark", err)
+			return
+		}
+		themeModel = models.Theme(themeStr)
+	} else {
+		themeModel = models.ThemeDark
+	}
+
 	headers := http.Header{}
 	acceptLanguageHeader := c.Req.Header.Values("Accept-Language")
 	if len(acceptLanguageHeader) > 0 {
@@ -58,24 +72,30 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 
 	encoding := queryReader.Get("encoding", "")
 
-	result, err := hs.RenderService.Render(c.Req.Context(), rendering.RenderPNG, rendering.Opts{
-		TimeoutOpts: rendering.TimeoutOpts{
-			Timeout: time.Duration(timeout) * time.Second,
-		},
-		AuthOpts: rendering.AuthOpts{
-			OrgID:   c.SignedInUser.GetOrgID(),
-			UserID:  userID,
-			OrgRole: c.SignedInUser.GetOrgRole(),
+	renderType := rendering.RenderPNG
+	if encoding == "pdf" {
+		renderType = rendering.RenderPDF
+	}
+
+	result, err := hs.RenderService.Render(c.Req.Context(), renderType, rendering.Opts{
+		CommonOpts: rendering.CommonOpts{
+			TimeoutOpts: rendering.TimeoutOpts{
+				Timeout: time.Duration(timeout) * time.Second,
+			},
+			AuthOpts: rendering.AuthOpts{
+				OrgID:   c.SignedInUser.GetOrgID(),
+				UserID:  userID,
+				OrgRole: c.SignedInUser.GetOrgRole(),
+			},
+			Path:            web.Params(c.Req)["*"] + queryParams,
+			Timezone:        queryReader.Get("tz", ""),
+			ConcurrentLimit: hs.Cfg.RendererConcurrentRequestLimit,
+			Headers:         headers,
 		},
 		Width:             width,
 		Height:            height,
-		Path:              web.Params(c.Req)["*"] + queryParams,
-		Timezone:          queryReader.Get("tz", ""),
-		Encoding:          encoding,
-		ConcurrentLimit:   hs.Cfg.RendererConcurrentRequestLimit,
 		DeviceScaleFactor: scale,
-		Headers:           headers,
-		Theme:             models.ThemeDark,
+		Theme:             themeModel,
 	}, nil)
 	if err != nil {
 		if errors.Is(err, rendering.ErrTimeout) {

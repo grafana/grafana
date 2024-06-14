@@ -175,7 +175,8 @@ describe('Variables - Query - Add variable', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().should('have.length', 1);
+    e2e.components.Select.option().should('have.length', 2);
     e2e.components.Select.option().contains('All');
+    e2e.components.Select.option().contains('C');
   });
 });

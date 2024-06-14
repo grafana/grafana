@@ -21,11 +21,34 @@ menuTitle: Use dashboards
 title: Use dashboards
 description: Learn about the features of a Grafana dashboard
 weight: 1
+refs:
+  dashboard-analytics:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/assess-dashboard-usage/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/assess-dashboard-usage/
+  generative-ai-features:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
+  dashboard-settings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/modify-dashboard-settings/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/modify-dashboard-settings/
+  repeating-rows:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows
 ---
 
 # Use dashboards
 
 This topic provides an overview of dashboard features and shortcuts, and describes how to use dashboard search.
+
+{{< youtube id="vTiIkdDwT-0" >}}
 
 ## Dashboard feature overview
 
@@ -36,12 +59,12 @@ The following image and descriptions highlight all dashboard features.
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-annotated-9-5-0.png" width="700px" alt="An annotated image of a dashboard" >}}
 
 - (1) **Grafana home**: Click **Home** in the breadcrumb to be redirected to the home page configured in the Grafana instance.
-- (2) **Dashboard title**: When you click the dashboard title, you can search for dashboards contained in the current folder. You can create your own dashboard titles or have Grafana create them for you using [generative AI features][].
+- (2) **Dashboard title**: When you click the dashboard title, you can search for dashboards contained in the current folder. You can create your own dashboard titles or have Grafana create them for you using [generative AI features](ref:generative-ai-features).
 - (3) **Share dashboard or panel**: Use this option to share the current dashboard or panel using a link or snapshot. You can also export the dashboard definition from the share modal.
 - (4) **Add**: Use this option to add a panel, dashboard row, or library panel to the current dashboard.
 - (5) **Save dashboard**: Click to save changes to your dashboard.
-- (6) **Dashboard insights**: Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics][].
-- (7) **Dashboard settings**: Use this option to change dashboard name, folder, and tags and manage variables and annotation queries. Learn more about [dashboard settings][].
+- (6) **Dashboard insights**: Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics](ref:dashboard-analytics).
+- (7) **Dashboard settings**: Use this option to change dashboard name, folder, and tags and manage variables and annotation queries. Learn more about [dashboard settings](ref:dashboard-settings).
 - (8) **Time picker dropdown**: Click to select relative time range options and set custom absolute time ranges.
   - You can change the **Timezone** and **fiscal year** settings from the time range controls by clicking the **Change time settings** button.
   - Time settings are saved on a per-dashboard basis.
@@ -53,12 +76,12 @@ The following image and descriptions highlight all dashboard features.
   - Library panels can be shared among many dashboards.
   - To move a panel, drag the panel header to another location.
   - To resize a panel, click and drag the lower right corner of the panel.
-  - Use [generative AI features][] to create panel titles and descriptions.
+  - Use [generative AI features](ref:generative-ai-features) to create panel titles and descriptions.
 - (14) **Graph legend**: Change series colors, y-axis and series visibility directly from the legend.
 - (15) **Dashboard row**: A dashboard row is a logical divider within a dashboard that groups panels together.
   - Rows can be collapsed or expanded allowing you to hide parts of the dashboard.
   - Panels inside a collapsed row do not issue queries.
-  - Use [repeating rows][] to dynamically create rows based on a template variable.
+  - Use [repeating rows](ref:repeating-rows) to dynamically create rows based on a template variable.
 
 ## Keyboard shortcuts
 
@@ -223,17 +246,3 @@ You can control the time range of a dashboard by providing the following query p
 - `from`: Defines the lower limit of the time range, specified in `ms`, `epoch`, or [relative time](#relative-time-range)
 - `to`: Defines the upper limit of the time range, specified in `ms`, `epoch`, or [relative time](#relative-time-range)
 - `time` and `time.window`: Defines a time range from `time-time.window/2` to `time+time.window/2`. Both parameters should be specified in `ms`. For example `?time=1500000000000&time.window=10000` results in 10s time range from 1499999995000 to 1500000005000
-
-{{% docs/reference %}}
-[dashboard analytics]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/assess-dashboard-usage"
-[dashboard analytics]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/assess-dashboard-usage"
-
-[dashboard settings]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/modify-dashboard-settings"
-[dashboard settings]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/modify-dashboard-settings"
-
-[repeating rows]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
-[repeating rows]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
-
-[generative AI features]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
-[generative AI features]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
-{{% /docs/reference %}}

@@ -14,8 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
@@ -36,8 +36,9 @@ type Store interface {
 }
 
 type SqlStore struct {
-	db     db.DB
-	logger log.Logger
+	db       db.DB
+	logger   log.Logger
+	features featuremgmt.FeatureToggles
 }
 
 func CreateStore(db db.DB, logger log.Logger) *SqlStore {
@@ -59,9 +60,15 @@ func (ss *SqlStore) GetDataSource(ctx context.Context, query *datasources.GetDat
 	})
 }
 
-func (ss *SqlStore) getDataSource(ctx context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) (*datasources.DataSource, error) {
+func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) (*datasources.DataSource, error) {
 	if query.OrgID == 0 || (query.ID == 0 && len(query.Name) == 0 && len(query.UID) == 0) {
 		return nil, datasources.ErrDataSourceIdentifierNotSet
+	}
+
+	if len(query.UID) > 0 {
+		if err := util.ValidateUID(query.UID); err != nil {
+			logDeprecatedInvalidDsUid(ss.logger, query.UID, query.Name, "read", fmt.Errorf("invalid UID"))
+		}
 	}
 
 	datasource := &datasources.DataSource{Name: query.Name, OrgID: query.OrgID, ID: query.ID, UID: query.UID}
@@ -154,12 +161,6 @@ func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 			}
 
 			cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
-
-			// Remove associated AccessControl permissions
-			if _, errDeletingPerms := sess.Exec("DELETE FROM permission WHERE scope=?",
-				ac.Scope(datasources.ScopeProvider.GetResourceScope(ds.UID))); errDeletingPerms != nil {
-				return errDeletingPerms
-			}
 		}
 
 		if cmd.UpdateSecretFn != nil {
@@ -250,7 +251,10 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			}
 			cmd.UID = uid
 		} else if err := util.ValidateUID(cmd.UID); err != nil {
-			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, err)
+			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "create", err)
+			if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagAutofixDSUID) {
+				return fmt.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
+			}
 		}
 
 		ds = &datasources.DataSource{
@@ -273,6 +277,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			ReadOnly:        cmd.ReadOnly,
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
+			APIVersion:      cmd.APIVersion,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -321,6 +326,15 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			cmd.JsonData = simplejson.New()
 		}
 
+		if cmd.UID != "" {
+			if err := util.ValidateUID(cmd.UID); err != nil {
+				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "update", err)
+				if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagAutofixDSUID) {
+					cmd.UID = util.AutofixUID(cmd.UID)
+				}
+			}
+		}
+
 		ds = &datasources.DataSource{
 			ID:              cmd.ID,
 			OrgID:           cmd.OrgID,
@@ -341,6 +355,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			Version:         cmd.Version + 1,
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
+			APIVersion:      cmd.APIVersion,
 		}
 
 		sess.UseBool("is_default")
@@ -358,6 +373,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		// Make sure secure json data is zeroed out if empty. We do this as we want to migrate secrets from
 		// secure json data to the unified secrets table.
 		sess.MustCols("secure_json_data")
+		sess.MustCols("api_version")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {
@@ -387,12 +403,6 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			}
 		}
 
-		if cmd.UID != "" {
-			if err := util.ValidateUID(cmd.UID); err != nil {
-				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, err)
-			}
-		}
-
 		return err
 	})
 }
@@ -416,11 +426,10 @@ func generateNewDatasourceUid(sess *db.Session, orgId int64) (string, error) {
 
 var generateNewUid func() string = util.GenerateShortUID
 
-func logDeprecatedInvalidDsUid(logger log.Logger, uid string, name string, err error) {
+func logDeprecatedInvalidDsUid(logger log.Logger, uid string, name string, action string, err error) {
 	logger.Warn(
-		"Invalid datasource uid. The use of invalid uids is deprecated and this operation will fail in a future "+
-			"version of Grafana. A valid uid is a combination of a-z, A-Z, 0-9 (alphanumeric), - (dash) and _ "+
-			"(underscore) characters, maximum length 40",
-		"uid", uid, "name", name, "error", err,
+		"Invalid datasource uid. A valid uid is a combination of a-z, A-Z, 0-9 (alphanumeric), - (dash) and _ "+
+			"(underscore) characters, maximum length 40. Invalid characters will be replaced by dashes.",
+		"uid", uid, "action", action, "name", name, "error", err,
 	)
 }

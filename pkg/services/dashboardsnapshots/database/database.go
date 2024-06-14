@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -137,8 +137,8 @@ func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, q
 
 		namespace, id := query.SignedInUser.GetNamespacedID()
 		var userID int64
-		switch namespace {
-		case identity.NamespaceServiceAccount, identity.NamespaceUser:
+
+		if namespace == identity.NamespaceServiceAccount || namespace == identity.NamespaceUser {
 			var err error
 			userID, err = identity.IntIdentifier(namespace, id)
 			if err != nil {

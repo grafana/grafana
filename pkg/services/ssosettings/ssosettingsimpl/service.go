@@ -11,13 +11,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -47,9 +48,10 @@ type Service struct {
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
 	secrets secrets.Service, usageStats usagestats.Service, registerer prometheus.Registerer,
-	settingsProvider setting.Provider, licensing licensing.Licensing) *Service {
+	settingsProvider setting.Provider, licensing licensing.Licensing, ldap service.LDAP) *Service {
 	fbStrategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
+		strategies.NewLDAPStrategy(cfg, ldap),
 	}
 
 	configurableProviders := make(map[string]bool)
@@ -126,11 +128,7 @@ func (s *Service) GetForProviderWithRedactedSecrets(ctx context.Context, provide
 		return nil, err
 	}
 
-	for k, v := range storeSettings.Settings {
-		if strVal, ok := v.(string); ok {
-			storeSettings.Settings[k] = setting.RedactedValue(k, strVal)
-		}
-	}
+	storeSettings.Settings = removeSecrets(storeSettings.Settings)
 
 	return storeSettings, nil
 }
@@ -177,11 +175,7 @@ func (s *Service) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSet
 	}
 
 	for _, storeSetting := range configurableSettings {
-		for k, v := range storeSetting.Settings {
-			if strVal, ok := v.(string); ok {
-				storeSetting.Settings[k] = setting.RedactedValue(k, strVal)
-			}
-		}
+		storeSetting.Settings = removeSecrets(storeSetting.Settings)
 	}
 
 	return configurableSettings, nil
@@ -208,7 +202,7 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requ
 	}
 	settings.Settings = settingsWithSecrets
 
-	err = reloadable.Validate(ctx, *settings, requester)
+	err = reloadable.Validate(ctx, *settings, *storedSettings, requester)
 	if err != nil {
 		return err
 	}
@@ -449,7 +443,8 @@ func (s *Service) isProviderConfigurable(provider string) bool {
 func removeSecrets(settings map[string]any) map[string]any {
 	result := make(map[string]any)
 	for k, v := range settings {
-		if IsSecretField(k) {
+		val, ok := v.(string)
+		if ok && val != "" && IsSecretField(k) {
 			result[k] = setting.RedactedPassword
 			continue
 		}

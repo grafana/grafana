@@ -3,8 +3,8 @@ package authntest
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
@@ -45,6 +45,8 @@ func (f *FakeService) IsClientEnabled(name string) bool {
 }
 
 func (f *FakeService) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint) {}
+
+func (f *FakeService) RegisterPreLogoutHook(hook authn.PreLogoutHookFn, priority uint) {}
 
 func (f *FakeService) Login(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error) {
 	if f.ExpectedIdentities != nil {

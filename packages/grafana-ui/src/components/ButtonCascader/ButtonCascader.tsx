@@ -1,5 +1,5 @@
-import { css } from '@emotion/css';
-import RCCascader from 'rc-cascader';
+import { css, cx } from '@emotion/css';
+import RCCascader, { BaseOptionType } from 'rc-cascader';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,6 +9,7 @@ import { IconName } from '../../types/icon';
 import { Button, ButtonProps } from '../Button';
 import { CascaderOption } from '../Cascader/Cascader';
 import { onChangeCascader, onLoadDataCascader } from '../Cascader/optionMappings';
+import { getCascaderStyles } from '../Cascader/styles';
 import { Icon } from '../Icon/Icon';
 
 export interface ButtonCascaderProps {
@@ -17,7 +18,7 @@ export interface ButtonCascaderProps {
   icon?: IconName;
   disabled?: boolean;
   value?: string[];
-  fieldNames?: { label: string; value: string; children: string };
+  fieldNames?: { label: keyof BaseOptionType; value: keyof BaseOptionType; children: keyof BaseOptionType };
   loadData?: (selectedOptions: CascaderOption[]) => void;
   onChange?: (value: string[], selectedOptions: CascaderOption[]) => void;
   onPopupVisibleChange?: (visible: boolean) => void;
@@ -30,6 +31,7 @@ export interface ButtonCascaderProps {
 export const ButtonCascader = (props: ButtonCascaderProps) => {
   const { onChange, className, loadData, icon, buttonProps, hideDownIcon, variant, disabled, ...rest } = props;
   const styles = useStyles2(getStyles);
+  const cascaderStyles = useStyles2(getCascaderStyles);
 
   // Weird way to do this bit it goes around a styling issue in Button where even null/undefined child triggers
   // styling change which messes up the look if there is only single icon content.
@@ -42,7 +44,7 @@ export const ButtonCascader = (props: ButtonCascaderProps) => {
     <RCCascader
       onChange={onChangeCascader(onChange)}
       loadData={onLoadDataCascader(loadData)}
-      dropdownClassName={styles.popup}
+      dropdownClassName={cx(cascaderStyles.dropdown, styles.popup)}
       {...rest}
       expandIcon={null}
     >

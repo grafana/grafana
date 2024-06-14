@@ -11,11 +11,11 @@ export function BrowseFilters() {
     <div>
       <ActionRow
         showStarredFilter
+        showLayout
         state={searchState}
         getTagOptions={stateManager.getTagOptions}
         getSortOptions={getGrafanaSearcher().getSortOptions}
         sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
-        includePanels={searchState.includePanels ?? false}
         onLayoutChange={stateManager.onLayoutChange}
         onStarredFilterChange={stateManager.onStarredFilterChange}
         onSortChange={stateManager.onSortChange}

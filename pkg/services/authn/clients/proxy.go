@@ -12,13 +12,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -124,7 +124,7 @@ func (c *Proxy) retrieveIDFromCache(ctx context.Context, cacheKey string, r *aut
 	}
 
 	return &authn.Identity{
-		ID:    authn.NewNamespaceIDUnchecked(authn.NamespaceUser, uid),
+		ID:    authn.NewNamespaceID(authn.NamespaceUser, uid),
 		OrgID: r.OrgID,
 		// FIXME: This does not match the actual auth module used, but should not have any impact
 		// Maybe caching the auth module used with the user ID would be a good idea
