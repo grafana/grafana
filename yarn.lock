@@ -700,18 +700,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-syntax-typescript@npm:^7.24.1":
-  version: 7.24.1
-  resolution: "@babel/plugin-syntax-typescript@npm:7.24.1"
-  dependencies:
-    "@babel/helper-plugin-utils": "npm:^7.24.0"
-  peerDependencies:
-    "@babel/core": ^7.0.0-0
-  checksum: 10/bf4bd70788d5456b5f75572e47a2e31435c7c4e43609bd4dffd2cc0c7a6cf90aabcf6cd389e351854de9a64412a07d30effef5373251fe8f6a4c9db0c0163bda
-  languageName: node
-  linkType: hard
-
-"@babel/plugin-syntax-typescript@npm:^7.7.2":
+"@babel/plugin-syntax-typescript@npm:^7.24.1, @babel/plugin-syntax-typescript@npm:^7.7.2":
   version: 7.24.7
   resolution: "@babel/plugin-syntax-typescript@npm:7.24.7"
   dependencies:
@@ -3536,8 +3525,8 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:^5.0.2":
-  version: 5.0.2
-  resolution: "@grafana/scenes@npm:5.0.2"
+  version: 5.0.3
+  resolution: "@grafana/scenes@npm:5.0.3"
   dependencies:
     "@grafana/e2e-selectors": "npm:^11.0.0"
     "@leeoniya/ufuzzy": "npm:^1.0.14"
@@ -3552,7 +3541,7 @@ __metadata:
     "@grafana/ui": ^10.4.1
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/a7bb83c5d0aca6e47ce8fb50ff5952da1dc1ea1b209148cbc7795bc480606df09012ff13a309510fcb4fa75e94af26700aa53bb0fadeb77d8215d23288b46b47
+  checksum: 10/d99e88ba26f6df34fa595656be20cdaee8e9e59a8928e80691bea5cd9646ef6534c9929f38a5fcca1b09891a2609d4ee8e96f898799c5ec73b1993abe09b094a
   languageName: node
   linkType: hard
 
@@ -5699,7 +5688,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@radix-ui/react-portal@npm:1.0.4":
+"@radix-ui/react-portal@npm:1.0.4, @radix-ui/react-portal@npm:^1.0.1":
   version: 1.0.4
   resolution: "@radix-ui/react-portal@npm:1.0.4"
   dependencies:
@@ -5716,26 +5705,6 @@ __metadata:
     "@types/react-dom":
       optional: true
   checksum: 10/c4cf35e2f26a89703189d0eef3ceeeb706ae0832e98e558730a5e929ca7c72c7cb510413a24eca94c7732f8d659a1e81942bec7b90540cb73ce9e4885d040b64
-  languageName: node
-  linkType: hard
-
-"@radix-ui/react-portal@npm:^1.0.1":
-  version: 1.0.3
-  resolution: "@radix-ui/react-portal@npm:1.0.3"
-  dependencies:
-    "@babel/runtime": "npm:^7.13.10"
-    "@radix-ui/react-primitive": "npm:1.0.3"
-  peerDependencies:
-    "@types/react": "*"
-    "@types/react-dom": "*"
-    react: ^16.8 || ^17.0 || ^18.0
-    react-dom: ^16.8 || ^17.0 || ^18.0
-  peerDependenciesMeta:
-    "@types/react":
-      optional: true
-    "@types/react-dom":
-      optional: true
-  checksum: 10/d352bcd6ad65eb43c9e0d72d0755c2aae85e03fb287770866262be3a2d5302b2885aee3cd99f2bbf62ecd14fcb1460703f1dcdc40351f77ad887b931c6f0012a
   languageName: node
   linkType: hard
 
