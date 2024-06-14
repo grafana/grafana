@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"net"
 	"testing"
 
 	"github.com/apache/arrow/go/v15/arrow/flight"
@@ -21,9 +22,17 @@ type FSQLTestSuite struct {
 	suite.Suite
 	db     *sql.DB
 	server flight.Server
+	port   string
 }
 
 func (suite *FSQLTestSuite) SetupTest() {
+	_, addr := freeport()
+	if addr == "err" {
+		suite.T().Fatal()
+	}
+
+	suite.port = addr
+
 	db, err := example.CreateDB()
 	require.NoError(suite.T(), err)
 
@@ -32,7 +41,7 @@ func (suite *FSQLTestSuite) SetupTest() {
 	sqliteServer.Alloc = memory.NewCheckedAllocator(memory.DefaultAllocator)
 	server := flight.NewServerWithMiddleware(nil)
 	server.RegisterFlightService(flightsql.NewFlightServer(sqliteServer))
-	err = server.Init("localhost:12345")
+	err = server.Init(suite.port)
 	require.NoError(suite.T(), err)
 	go func() {
 		err := server.Serve()
@@ -59,7 +68,7 @@ func (suite *FSQLTestSuite) TestIntegration_QueryData() {
 			&models.DatasourceInfo{
 				HTTPClient:   nil,
 				Token:        "secret",
-				URL:          "http://localhost:12345",
+				URL:          "http://" + suite.port,
 				DbName:       "influxdb",
 				Version:      "test",
 				HTTPMode:     "proxy",
@@ -108,4 +117,15 @@ func mustQueryJSON(t *testing.T, refID, sql string) []byte {
 		panic(err)
 	}
 	return b
+}
+
+func freeport() (port int, addr string) {
+	l, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("127.0.0.1")})
+	if err != nil {
+		return 0, "err"
+	}
+	defer l.Close()
+	a := l.Addr().(*net.TCPAddr)
+	port = a.Port
+	return port, a.String()
 }
