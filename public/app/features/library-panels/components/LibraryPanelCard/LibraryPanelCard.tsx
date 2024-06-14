@@ -80,11 +80,12 @@ function FolderLink({ libraryPanel }: FolderLinkProps): ReactElement | null {
     return null;
   }
 
+  // LibraryPanels API returns folder-less library panels with an empty string folder UID
   if (!libraryPanel.meta.folderUid) {
     return (
       <span className={styles.metaContainer}>
         <Icon name={'folder'} size="sm" />
-        <span>{libraryPanel.meta.folderName}</span>
+        <span>Dashboards</span>
       </span>
     );
   }
