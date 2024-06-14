@@ -1832,3 +1832,17 @@ $easing: cubic-bezier(0, 0, 0.265, 1);
     }
   }
 }
+
+.pull-right {
+  float: right;
+}
+.pull-left {
+  float: left;
+}
+
+/* makes the font 33% larger relative to the icon container */
+.#{$fa-css-prefix}-lg {
+  font-size: calc(4em / 3);
+  line-height: calc(3em / 4);
+  vertical-align: -15%;
+}
