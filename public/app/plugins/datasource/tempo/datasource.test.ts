@@ -66,6 +66,7 @@ describe('Tempo data source', () => {
   beforeEach(() => (console.error = consoleErrorMock));
 
   describe('runs correctly', () => {
+    config.featureToggles.traceQLStreaming = true;
     jest.spyOn(TempoDatasource.prototype, 'isFeatureAvailable').mockImplementation(() => true);
     const handleStreamingSearch = jest.spyOn(TempoDatasource.prototype, 'handleStreamingSearch');
     const request = jest.spyOn(TempoDatasource.prototype, '_request');
