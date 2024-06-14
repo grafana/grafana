@@ -197,6 +197,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [visualisationType, setVisualisationType] = useState<LogsVisualisationType | undefined>(
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
+  const [scrollIntoView, setScrollIntoView] = useState<((element: HTMLElement) => void) | undefined>(undefined);
   const logsContainerRef = useRef<HTMLDivElement | undefined>(undefined);
   const dispatch = useDispatch();
   const previousLoading = usePrevious(loading);
@@ -355,9 +356,41 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [props.eventBus]
   );
 
-  const onLogsContainerRef = useCallback((node: HTMLDivElement) => {
-    logsContainerRef.current = node;
-  }, []);
+  const onLogsContainerRef = useCallback(
+    (node: HTMLDivElement) => {
+      logsContainerRef.current = node;
+
+      // This can be just a function passed down to LogRows but:
+      // - LogRow.componentDidMount calls scrollIntoView but it's called before the logsContainerRef is set
+      // - see more details in https://github.com/facebook/react/issues/29897
+      // - without setting scrollIntoView (or other hack to ensure the ref is set), the code to scroll will
+      //   not be executed (see LogRow.scrollToLogRow which marks the line as scrolled even when scrollIntoView
+      //   below did't scroll because if (logsContainerRef.current) was falsy
+      // We can change it once LogRow is converted into a functional component
+      setScrollIntoView(() => (element: HTMLElement) => {
+        if (config.featureToggles.logsInfiniteScrolling) {
+          if (logsContainerRef.current) {
+            topLogsRef.current?.scrollIntoView();
+            logsContainerRef.current.scroll({
+              behavior: 'smooth',
+              top: logsContainerRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+            });
+          }
+
+          return;
+        }
+        const { scrollElement } = props;
+
+        if (scrollElement) {
+          scrollElement.scroll({
+            behavior: 'smooth',
+            top: scrollElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+          });
+        }
+      });
+    },
+    [props]
+  );
 
   const onChangeLogsSortOrder = () => {
     setIsFlipping(true);
@@ -604,31 +637,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       logRowLevel: row.logLevel,
     });
   };
-
-  const scrollIntoView = useCallback(
-    (element: HTMLElement) => {
-      if (config.featureToggles.logsInfiniteScrolling) {
-        if (logsContainerRef.current) {
-          topLogsRef.current?.scrollIntoView();
-          logsContainerRef.current.scroll({
-            behavior: 'smooth',
-            top: logsContainerRef.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
-          });
-        }
-
-        return;
-      }
-      const { scrollElement } = props;
-
-      if (scrollElement) {
-        scrollElement.scroll({
-          behavior: 'smooth',
-          top: scrollElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
-        });
-      }
-    },
-    [logsContainerRef, props]
-  );
 
   const scrollToTopLogs = useCallback(() => {
     if (config.featureToggles.logsInfiniteScrolling) {
