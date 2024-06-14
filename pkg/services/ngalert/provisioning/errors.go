@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var ErrValidation = fmt.Errorf("invalid object specification")
@@ -20,6 +20,8 @@ var (
 		"Resource with provenance status '{{ .Public.CurrentProvenance }}' cannot be managed via API that handles resources with provenance status '{{ .Public.TargetProvenance }}'",
 		errutil.WithPublic("Resource with provenance status '{{ .Public.CurrentProvenance }}' cannot be managed via API that handles resources with provenance status '{{ .Public.TargetProvenance }}'. You must use appropriate API to manage this resource"),
 	)
+
+	ErrVersionConflict = errutil.Conflict("alerting.notifications.conflict")
 
 	ErrTimeIntervalNotFound = errutil.NotFound("alerting.notifications.time-intervals.notFound")
 	ErrTimeIntervalExists   = errutil.BadRequest("alerting.notifications.time-intervals.nameExists", errutil.WithPublicMessage("Time interval with this name already exists. Use a different name or update existing one."))

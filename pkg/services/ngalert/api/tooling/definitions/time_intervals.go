@@ -39,6 +39,7 @@ type GetIntervalsByNameResponse struct {
 // swagger:model
 type PostableTimeIntervals struct {
 	Name          string             `json:"name" hcl:"name"`
+	Version       string             `json:"version,omitempty"`
 	TimeIntervals []TimeIntervalItem `json:"time_intervals" hcl:"intervals,block"`
 }
 
@@ -60,5 +61,6 @@ type TimeIntervalTimeRange struct {
 type GettableTimeIntervals struct {
 	Name          string             `json:"name" hcl:"name"`
 	TimeIntervals []TimeIntervalItem `json:"time_intervals" hcl:"intervals,block"`
+	Version       string             `json:"version,omitempty"`
 	Provenance    Provenance         `json:"provenance,omitempty"`
 }
