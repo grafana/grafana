@@ -146,14 +146,6 @@ export class TrailStore {
     this._save();
   }
 
-  findMatchingRecentTrail(trail: DataTrail) {
-    const matchUrlState = getUrlStateForComparison(trail);
-    return this._recent.find((t) => {
-      const urlState = getUrlStateForComparison(t.resolve());
-      return isEqual(matchUrlState, urlState);
-    });
-  }
-
   // Bookmarked Trails
   get bookmarks() {
     return this._bookmarks;
