@@ -2,7 +2,13 @@ import { delay, http, HttpResponse } from 'msw';
 import { SetupServerApi } from 'msw/lib/node';
 
 import { setDataSourceSrv } from '@grafana/runtime';
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertManagerCortexConfig,
+  AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+  AlertmanagerReceiver,
+  Receiver,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { mockDataSource, MockDataSourceSrv } from '../../../mocks';
 import * as config from '../../../utils/config';
@@ -70,7 +76,7 @@ export function setupVanillaAlertmanagerServer(server: SetupServerApi) {
 
   server.use(
     createVanillaAlertmanagerConfigurationHandler(EXTERNAL_VANILLA_ALERTMANAGER_UID),
-    ...createAlertmanagerConfigurationHandlers(PROVISIONED_MIMIR_ALERTMANAGER_UID)
+    ...createAlertmanagerConfigurationHandlers()
   );
 
   return server;
@@ -82,11 +88,33 @@ const createExternalAlertmanagersHandler = () => {
   return http.get('/api/v1/ngalert/alertmanagers', () => HttpResponse.json(alertmanagers));
 };
 
-const createAlertmanagerConfigurationHandlers = (name = 'grafana') => {
+const createAlertmanagerConfigurationHandlers = () => {
+  // Dirty check to type guard against us having a non-Grafana managed receiver
+  const contactPointIsAMReceiver = (receiver: Receiver): receiver is AlertmanagerReceiver => {
+    return !receiver.grafana_managed_receiver_configs;
+  };
+
   return [
-    http.get(`/api/alertmanager/${name}/config/api/v1/alerts`, () => HttpResponse.json(internalAlertmanagerConfig)),
-    http.post(`/api/alertmanager/${name}/config/api/v1/alerts`, async () => {
+    http.get(`/api/alertmanager/:name/config/api/v1/alerts`, () => HttpResponse.json(internalAlertmanagerConfig)),
+    http.post<never, AlertManagerCortexConfig>(`/api/alertmanager/:name/config/api/v1/alerts`, async ({ request }) => {
       await delay(1000); // simulate some time
+
+      // Specifically mock and check for the case of an invalid telegram config,
+      // and return a 400 error in this case
+      // This is to test against us accidentally sending a `{label, value}` object instead of a string
+      const body = await request.json();
+      const invalidConfig = body.alertmanager_config.receivers?.some((receiver) => {
+        if (!contactPointIsAMReceiver(receiver)) {
+          return false;
+        }
+
+        return (receiver.telegram_configs || []).some((config) => typeof config.parse_mode === 'object');
+      });
+
+      if (invalidConfig) {
+        return HttpResponse.json({ message: 'bad request data' }, { status: 400 });
+      }
+
       return HttpResponse.json({ message: 'configuration created' });
     }),
   ];

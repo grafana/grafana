@@ -10,7 +10,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
-	identity "github.com/grafana/grafana/pkg/services/auth/identity"
+	identity "github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 // MockChannelLocalPublisher is a mock of ChannelLocalPublisher interface.

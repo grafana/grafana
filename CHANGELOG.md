@@ -350,6 +350,23 @@ The deprecated `email` field to send a report via `/api/reports/email` endpoint 
 - **Grafana UI:** Add code variant to Text component. [#82318](https://github.com/grafana/grafana/issues/82318), [@tskarhed](https://github.com/tskarhed)
 
 <!-- 11.0.0-preview END -->
+<!-- 10.4.4 START -->
+
+# 10.4.4 (2024-06-13)
+
+### Bug fixes
+
+- **BrowseDashboards:** Prepend subpath to New Browse Dashboard actions. [#89129](https://github.com/grafana/grafana/issues/89129), [@joshhunt](https://github.com/joshhunt)
+- **Alerting:** Fix rule storage to filter by group names using case-sensitive comparison. [#89061](https://github.com/grafana/grafana/issues/89061), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Fix editing Grafana folder via alert rule editor. [#88907](https://github.com/grafana/grafana/issues/88907), [@gillesdemey](https://github.com/gillesdemey)
+- **AzureMonitor:** Fix bug detecting app insights queries. [#88786](https://github.com/grafana/grafana/issues/88786), [@aangelisc](https://github.com/aangelisc)
+- **AuthN:** Fix signout redirect url. [#88749](https://github.com/grafana/grafana/issues/88749), [@kalleep](https://github.com/kalleep)
+- **SSE:** Fix threshold unmarshal to avoid panic. [#88650](https://github.com/grafana/grafana/issues/88650), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Fix typo in JSON response for rule export. [#88094](https://github.com/grafana/grafana/issues/88094), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **CloudMonitoring:** Fix query type selection issue. [#88023](https://github.com/grafana/grafana/issues/88023), [@aangelisc](https://github.com/aangelisc)
+- **Provisioning:** Add override option to role provisioning. (Enterprise)
+
+<!-- 10.4.4 END -->
 <!-- 10.4.3 START -->
 
 # 10.4.3 (2024-05-13)
