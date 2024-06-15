@@ -127,4 +127,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 
 	statusColumn := Column{Name: "status", Type: DB_Text, Nullable: false}
 	mg.AddMigration("add snapshot status column", NewAddColumnMigration(migrationSnapshotTable, &statusColumn))
+
+	localDirColumn := Column{Name: "local_directory", Type: DB_Text, Nullable: true}
+	mg.AddMigration("add snapshot local_directory column", NewAddColumnMigration(migrationSnapshotTable, &localDirColumn))
 }

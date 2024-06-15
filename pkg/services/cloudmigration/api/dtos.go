@@ -210,12 +210,26 @@ func convertMigrateDataResponseToDTO(r cloudmigration.MigrateDataResponse) Migra
 
 // Base snapshot without results
 type SnapshotDTO struct {
-	SnapshotUID string    `json:"uid"`
-	Status      string    `json:"status"`
-	SessionUID  string    `json:"sessionUid"`
-	Created     time.Time `json:"created"`
-	Finished    time.Time `json:"finished"`
+	SnapshotUID string         `json:"uid"`
+	Status      SnapshotStatus `json:"status"`
+	SessionUID  string         `json:"sessionUid"`
+	Created     time.Time      `json:"created"`
+	Finished    time.Time      `json:"finished"`
 }
+
+// swagger:enum SnapshotStatus
+type SnapshotStatus string
+
+const (
+	SnapshotStatusInitializing      SnapshotStatus = "INITIALIZING"
+	SnapshotStatusCreating          SnapshotStatus = "CREATING"
+	SnapshotStatusPendingUpload     SnapshotStatus = "PENDING_UPLOAD"
+	SnapshotStatusUploading         SnapshotStatus = "UPLOADING"
+	SnapshotStatusPendingProcessing SnapshotStatus = "PENDING_PROCESSING"
+	SnapshotStatusProcessing        SnapshotStatus = "PROCESSING"
+	SnapshotStatusFinished          SnapshotStatus = "FINISHED"
+	SnapshotStatusUnknown           SnapshotStatus = "UNKNOWN"
+)
 
 // swagger:response createSnapshotResponse
 type CreateSnapshotResponse struct {

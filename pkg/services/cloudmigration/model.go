@@ -34,14 +34,28 @@ type CloudMigrationSnapshot struct {
 	ID            int64  `xorm:"pk autoincr 'id'"`
 	UID           string `xorm:"uid"`
 	SessionUID    string `xorm:"session_uid"`
+	Status        SnapshotStatus
 	EncryptionKey string `xorm:"-"` // stored in the unified secrets table
 	UploadURL     string `xorm:"upload_url"`
-	Status        string `xorm:"status"`
+	LocalDir      string `xorm:"local_directory"`
 	Result        []byte //store raw gms response body
 	Created       time.Time
 	Updated       time.Time
 	Finished      time.Time
 }
+
+type SnapshotStatus int
+
+const (
+	SnapshotStatusInitializing = iota
+	SnapshotStatusCreating
+	SnapshotStatusPendingUpload
+	SnapshotStatusUploading
+	SnapshotStatusPendingProcessing
+	SnapshotStatusProcessing
+	SnapshotStatusFinished
+	SnapshotStatusUnknown
+)
 
 func (r CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
 	var result MigrateDataResponse
