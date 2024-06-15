@@ -5,33 +5,56 @@ import React, { useCallback } from 'react';
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorField } from '@grafana/experimental';
-import { Button, Select, useStyles2, Stack, InlineLabel, Input } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Button, Select, Stack, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorExpressionType, QueryEditorFunctionExpression } from '../../expressions';
-import { SQLExpression, QueryFormat } from '../../types';
+import { DB, QueryFormat, SQLExpression, SQLQuery } from '../../types';
 import { createFunctionField } from '../../utils/sql.utils';
+import { useSqlChange } from '../../utils/useSqlChange';
+
+import { SelectColumn } from './SelectColumn';
+import { SelectFunctionParameters } from './SelectFunctionParameters';
 
 interface SelectRowProps {
-  sql: SQLExpression;
-  format: QueryFormat | undefined;
-  onSqlChange: (sql: SQLExpression) => void;
-  columns?: Array<SelectableValue<string>>;
-  functions?: Array<SelectableValue<string>>;
+  query: SQLQuery;
+  onQueryChange: (sql: SQLQuery) => void;
+  db: DB;
+  columns: Array<SelectableValue<string>>;
 }
 
-const asteriskValue = { label: '*', value: '*' };
-
-export function SelectRow({ sql, format, columns, onSqlChange, functions }: SelectRowProps) {
+export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps) {
   const styles = useStyles2(getStyles);
-  const columnsWithAsterisk = [asteriskValue, ...(columns || [])];
+  const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
   const timeSeriesAliasOpts: Array<SelectableValue<string>> = [];
 
   // Add necessary alias options for time series format
   // when that format has been selected
-  if (format === QueryFormat.Timeseries) {
+  if (query.format === QueryFormat.Timeseries) {
     timeSeriesAliasOpts.push({ label: 'time', value: 'time' });
     timeSeriesAliasOpts.push({ label: 'value', value: 'value' });
   }
+
+  const onColumnChange = useCallback(
+    (item: QueryEditorFunctionExpression, index: number) => (column?: string) => {
+      let modifiedItem = { ...item };
+      if (!item.parameters?.length) {
+        modifiedItem.parameters = [{ type: QueryEditorExpressionType.FunctionParameter, name: column } as const];
+      } else {
+        modifiedItem.parameters = item.parameters.map((p) =>
+          p.type === QueryEditorExpressionType.FunctionParameter ? { ...p, name: column } : p
+        );
+      }
+
+      const newSql: SQLExpression = {
+        ...query.sql,
+        columns: query.sql?.columns?.map((c, i) => (i === index ? modifiedItem : c)),
+      };
+
+      onSqlChange(newSql);
+    },
+    [onSqlChange, query.sql]
+  );
 
   const onAggregationChange = useCallback(
     (item: QueryEditorFunctionExpression, index: number) => (aggregation: SelectableValue<string>) => {
@@ -43,13 +66,13 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
         ],
       };
       const newSql: SQLExpression = {
-        ...sql,
-        columns: sql.columns?.map((c, i) => (i === index ? newItem : c)),
+        ...query.sql,
+        columns: query.sql?.columns?.map((c, i) => (i === index ? newItem : c)),
       };
 
       onSqlChange(newSql);
     },
-    [onSqlChange, sql]
+    [onSqlChange, query.sql]
   );
 
   const onAliasChange = useCallback(
@@ -63,131 +86,50 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
       }
 
       const newSql: SQLExpression = {
-        ...sql,
-        columns: sql.columns?.map((c, i) => (i === index ? newItem : c)),
+        ...query.sql,
+        columns: query.sql?.columns?.map((c, i) => (i === index ? newItem : c)),
       };
 
       onSqlChange(newSql);
     },
-    [onSqlChange, sql]
+    [onSqlChange, query.sql]
   );
 
   const removeColumn = useCallback(
     (index: number) => () => {
-      const clone = [...sql.columns!];
+      const clone = [...(query.sql?.columns || [])];
       clone.splice(index, 1);
       const newSql: SQLExpression = {
-        ...sql,
+        ...query.sql,
         columns: clone,
       };
       onSqlChange(newSql);
     },
-    [onSqlChange, sql]
+    [onSqlChange, query.sql]
   );
 
   const addColumn = useCallback(() => {
-    const newSql: SQLExpression = { ...sql, columns: [...sql.columns!, createFunctionField()] };
+    const newSql: SQLExpression = { ...query.sql, columns: [...(query.sql?.columns || []), createFunctionField()] };
     onSqlChange(newSql);
-  }, [onSqlChange, sql]);
-
-  const addParameter = useCallback(
-    (index: number) => () => {
-      const item = sql.columns![index];
-
-      item.parameters = item.parameters
-        ? [...item.parameters, { type: QueryEditorExpressionType.FunctionParameter, name: '' }]
-        : [];
-
-      const newSql: SQLExpression = {
-        ...sql,
-        columns: sql.columns?.map((c, i) => (i === index ? item : c)),
-      };
-
-      onSqlChange(newSql);
-    },
-    [onSqlChange, sql]
-  );
-
-  const removeParameter = useCallback(
-    (columnIndex: number, index: number) => () => {
-      const item = sql.columns![columnIndex];
-      item.parameters = item.parameters?.filter((_, i) => i !== index);
-
-      const newSql: SQLExpression = {
-        ...sql,
-        columns: sql.columns?.map((c, i) => (i === columnIndex ? item : c)),
-      };
-
-      onSqlChange(newSql);
-    },
-    [onSqlChange, sql]
-  );
-
-  const onParameterChange = useCallback(
-    (columnIndex: number, index: number) => (s: string) => {
-      const item = sql.columns![columnIndex];
-      if (!item.parameters) {
-        item.parameters = [];
-      }
-      if (item.parameters[index] === undefined) {
-        item.parameters[index] = { type: QueryEditorExpressionType.FunctionParameter, name: s };
-      } else {
-        item.parameters = item.parameters.map((p, i) => (i === index ? { ...p, name: s } : p));
-      }
-
-      const newSql: SQLExpression = {
-        ...sql,
-        columns: sql.columns?.map((c, i) => (i === columnIndex ? item : c)),
-      };
-
-      onSqlChange(newSql);
-    },
-    [onSqlChange, sql]
-  );
-
-  function renderParameters(item: QueryEditorFunctionExpression, columnIndex: number) {
-    if (!item.parameters || item.parameters.length <= 1) {
-      return null;
-    }
-
-    const paramComponents = item.parameters.map((param, index) => {
-      // Skip the first parameter as it is the column name
-      if (index === 0) {
-        return null;
-      }
-
-      return (
-        <Stack key={index} gap={2}>
-          <InlineLabel className={styles.label}>,</InlineLabel>
-          <Input
-            onChange={(e) => onParameterChange(columnIndex, index)(e.currentTarget.value)}
-            value={param.name}
-            aria-label={`Parameter ${index} for column ${columnIndex}`}
-            data-testid={selectors.components.SQLQueryEditor.selectInputParameter}
-            addonAfter={
-              <Button
-                aria-label="Remove parameter"
-                tooltip="Remove parameter"
-                type="button"
-                icon="times"
-                variant="secondary"
-                size="md"
-                onClick={removeParameter(columnIndex, index)}
-              />
-            }
-          />
-        </Stack>
-      );
-    });
-    return paramComponents;
-  }
+  }, [onSqlChange, query.sql]);
 
   return (
     <Stack gap={2} wrap="wrap" direction="column">
-      {sql.columns?.map((item, index) => (
+      {query.sql?.columns?.map((item, index) => (
         <div key={index}>
           <Stack gap={2} alignItems="end">
-            <EditorField label="Aggregation / Macros" optional width={25}>
+            {!config.featureToggles.sqlQuerybuilderFunctionParameters && (
+              <SelectColumn
+                columns={columns}
+                onParameterChange={(v) => onColumnChange(item, index)(v)}
+                value={getColumnValue(item)}
+              />
+            )}
+            <EditorField
+              label={config.featureToggles.sqlQuerybuilderFunctionParameters ? 'Aggregation / Macro' : 'Aggregation'}
+              optional
+              width={25}
+            >
               <Select
                 value={item.name ? toOption(item.name) : null}
                 inputId={`select-aggregation-${index}-${uniqueId()}`}
@@ -195,37 +137,20 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
                 isClearable
                 menuShouldPortal
                 allowCustomValue
-                options={functions}
+                options={db.functions().map((f) => toOption(f.name))}
                 onChange={onAggregationChange(item, index)}
               />
             </EditorField>
-            {item.name !== undefined && <InlineLabel className={styles.label}>(</InlineLabel>}
-            <EditorField label="Column" width={25}>
-              <Select
-                value={getColumnValue(item)}
-                data-testid={selectors.components.SQLQueryEditor.selectColumn}
-                options={columnsWithAsterisk}
-                inputId={`select-column-${index}-${uniqueId()}`}
-                menuShouldPortal
-                allowCustomValue
-                onChange={(s) => onParameterChange(index, 0)(s.value!)}
+            {config.featureToggles.sqlQuerybuilderFunctionParameters && (
+              <SelectFunctionParameters
+                currentColumnIndex={index}
+                columns={columns}
+                onSqlChange={onSqlChange}
+                query={query}
+                db={db}
               />
-            </EditorField>
-            {item.name !== undefined && (
-              <>
-                {renderParameters(item, index)}
-                <Button
-                  type="button"
-                  onClick={addParameter(index)}
-                  variant="secondary"
-                  size="md"
-                  icon="plus"
-                  tooltip="Add parameter"
-                  aria-label="Add parameter"
-                />
-                <InlineLabel className={styles.label}>)</InlineLabel>
-              </>
             )}
+
             <EditorField label="Alias" optional width={15}>
               <Select
                 value={item.alias ? toOption(item.alias) : null}

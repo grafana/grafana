@@ -5,28 +5,47 @@ import React from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { QueryEditorExpressionType } from '../../expressions';
-import { QueryFormat, SQLExpression } from '../../types';
+import { SQLQuery } from '../../types';
 
 import { SelectRow } from './SelectRow';
 
+// Mock featureToggle sqlQuerybuilderFunctionParameters
+jest.mock('@grafana/runtime', () => ({
+  config: {
+    featureToggles: {
+      sqlQuerybuilderFunctionParameters: true,
+    },
+  },
+}));
+
 describe('SelectRow', () => {
-  const sql = Object.freeze<SQLExpression>({
-    columns: [
-      {
-        name: '$__timeGroup',
-        parameters: [
-          { name: 'createdAt', type: QueryEditorExpressionType.FunctionParameter },
-          { name: '$__interval', type: QueryEditorExpressionType.FunctionParameter },
-        ],
-        alias: 'time',
-        type: QueryEditorExpressionType.Function,
-      },
-    ],
+  const query = Object.freeze<SQLQuery>({
+    refId: 'A',
+    sql: {
+      columns: [
+        {
+          name: '$__timeGroup',
+          parameters: [
+            { name: 'createdAt', type: QueryEditorExpressionType.FunctionParameter },
+            { name: '$__interval', type: QueryEditorExpressionType.FunctionParameter },
+          ],
+          alias: 'time',
+          type: QueryEditorExpressionType.Function,
+        },
+      ],
+    },
   });
 
   it('should show query passed as a prop', () => {
-    const onSqlChange = jest.fn();
-    render(<SelectRow format={QueryFormat.Timeseries} onSqlChange={onSqlChange} sql={sql} />);
+    const onQueryChange = jest.fn();
+    render(
+      <SelectRow
+        onQueryChange={onQueryChange}
+        query={query}
+        columns={[]}
+        db={{ functions: () => [], toRawSql: jest.fn() } as any}
+      />
+    );
 
     expect(screen.getByTestId(selectors.components.SQLQueryEditor.selectAggregation)).toHaveTextContent('$__timeGroup');
     expect(screen.getByTestId(selectors.components.SQLQueryEditor.selectAlias)).toHaveTextContent('time');
@@ -36,30 +55,48 @@ describe('SelectRow', () => {
 
   describe('should handle multiple columns manipulations', () => {
     it('adding column', () => {
-      const onSqlChange = jest.fn();
-      render(<SelectRow format={QueryFormat.Timeseries} onSqlChange={onSqlChange} sql={sql} />);
-      screen.getByRole('button', { name: 'Add' }).click();
-      expect(onSqlChange).toHaveBeenCalledWith({
-        columns: [
-          sql.columns![0],
-          {
-            name: undefined,
-            parameters: [],
-            type: QueryEditorExpressionType.Function,
-          },
-        ],
+      const onQueryChange = jest.fn();
+      render(
+        <SelectRow
+          onQueryChange={onQueryChange}
+          query={query}
+          columns={[]}
+          db={{ functions: () => [], toRawSql: jest.fn() } as any}
+        />
+      );
+      screen.getByRole('button', { name: 'Add column' }).click();
+      expect(onQueryChange).toHaveBeenCalledWith({
+        ...query,
+        sql: {
+          columns: [
+            ...query.sql?.columns!,
+            {
+              name: undefined,
+              parameters: [],
+              type: QueryEditorExpressionType.Function,
+            },
+          ],
+        },
       });
     });
 
     it('show multiple columns when new column added', () => {
-      const onSqlChange = jest.fn();
+      const onQueryChange = jest.fn();
       render(
         <SelectRow
-          format={QueryFormat.Timeseries}
-          onSqlChange={onSqlChange}
-          sql={{
-            ...sql,
-            columns: [...sql.columns!, { name: undefined, parameters: [], type: QueryEditorExpressionType.Function }],
+          columns={[]}
+          onQueryChange={onQueryChange}
+          db={{ functions: () => [], toRawSql: jest.fn() } as any}
+          query={{
+            ...query,
+            sql: {
+              ...query.sql,
+
+              columns: [
+                ...query.sql?.columns!,
+                { name: undefined, parameters: [], type: QueryEditorExpressionType.Function },
+              ],
+            },
           }}
         />
       );
@@ -84,83 +121,93 @@ describe('SelectRow', () => {
     });
 
     it('removing column', () => {
-      const onSqlChange = jest.fn();
+      const onQueryChange = jest.fn();
       render(
         <SelectRow
-          format={QueryFormat.Timeseries}
-          onSqlChange={onSqlChange}
-          sql={{
-            columns: [
-              sql.columns![0],
-              {
-                name: undefined,
-                parameters: [],
-                type: QueryEditorExpressionType.Function,
-              },
-            ],
+          columns={[]}
+          db={{ functions: () => [], toRawSql: jest.fn() } as any}
+          onQueryChange={onQueryChange}
+          query={{
+            ...query,
+            sql: {
+              columns: [
+                ...query.sql?.columns!,
+                {
+                  name: undefined,
+                  parameters: [],
+                  type: QueryEditorExpressionType.Function,
+                },
+              ],
+            },
           }}
         />
       );
-      screen.getAllByRole('button', { name: 'Remove' })[1].click();
-      expect(onSqlChange).toHaveBeenCalledWith({
-        columns: [sql.columns![0]],
-      });
+      screen.getAllByRole('button', { name: 'Remove column' })[1].click();
+      expect(onQueryChange).toHaveBeenCalledWith(query);
     });
 
     it('modifying second column aggregation', async () => {
-      const onSqlChange = jest.fn();
-      const multipleColumns = Object.freeze<SQLExpression>({
-        columns: [
-          sql.columns![0],
-          {
-            name: '',
-            parameters: [{ name: 'gaugeValue', type: QueryEditorExpressionType.FunctionParameter }],
-            type: QueryEditorExpressionType.Function,
-          },
-        ],
+      const onQueryChange = jest.fn();
+      const multipleColumns = Object.freeze<SQLQuery>({
+        ...query,
+        sql: {
+          columns: [
+            ...query.sql?.columns!,
+            {
+              name: '',
+              parameters: [{ name: 'gaugeValue', type: QueryEditorExpressionType.FunctionParameter }],
+              type: QueryEditorExpressionType.Function,
+            },
+          ],
+        },
       });
       render(
         <SelectRow
-          format={QueryFormat.Timeseries}
-          functions={[{ label: 'AVG', value: 'AVG' }]}
-          onSqlChange={onSqlChange}
-          sql={multipleColumns}
+          columns={[]}
+          db={{ functions: () => [{ name: 'AVG' }], toRawSql: jest.fn() } as any}
+          onQueryChange={onQueryChange}
+          query={multipleColumns}
         />
       );
       await userEvent.click(screen.getAllByTestId(selectors.components.SQLQueryEditor.selectAggregation)[1]);
       await userEvent.click(screen.getByText('AVG'));
 
-      expect(onSqlChange).toHaveBeenCalledWith({
-        columns: [
-          sql.columns![0],
-          {
-            name: 'AVG',
-            parameters: [{ name: 'gaugeValue', type: QueryEditorExpressionType.FunctionParameter }],
-            type: QueryEditorExpressionType.Function,
-          },
-        ],
+      expect(onQueryChange).toHaveBeenCalledWith({
+        ...query,
+        sql: {
+          columns: [
+            ...query.sql?.columns!,
+            {
+              name: 'AVG',
+              parameters: [{ name: 'gaugeValue', type: QueryEditorExpressionType.FunctionParameter }],
+              type: QueryEditorExpressionType.Function,
+            },
+          ],
+        },
       });
     });
 
     it('modifying second column name with custom value', async () => {
-      const onSqlChange = jest.fn();
-      const multipleColumns = Object.freeze<SQLExpression>({
-        columns: [
-          sql.columns![0],
-          {
-            name: '',
-            parameters: [{ name: undefined, type: QueryEditorExpressionType.FunctionParameter }],
-            type: QueryEditorExpressionType.Function,
-          },
-        ],
+      const onQueryChange = jest.fn();
+      const multipleColumns = Object.freeze<SQLQuery>({
+        ...query,
+        sql: {
+          columns: [
+            ...query.sql?.columns!,
+            {
+              name: '',
+              parameters: [{ name: undefined, type: QueryEditorExpressionType.FunctionParameter }],
+              type: QueryEditorExpressionType.Function,
+            },
+          ],
+        },
       });
       render(
         <SelectRow
-          format={QueryFormat.Timeseries}
-          functions={[{ label: 'AVG', value: 'AVG' }]}
+          db={{ functions: () => [{ name: 'AVG' }], toRawSql: jest.fn() } as any}
           columns={[{ label: 'newColumn', value: 'newColumn' }]}
-          onSqlChange={onSqlChange}
-          sql={multipleColumns}
+          onQueryChange={onQueryChange}
+          query={multipleColumns}
         />
       );
       await userEvent.click(screen.getAllByTestId(selectors.components.SQLQueryEditor.selectColumn)[1]);
@@ -169,90 +216,110 @@ describe('SelectRow', () => {
         'newColumn2{enter}'
       );
 
-      expect(onSqlChange).toHaveBeenCalledWith({
-        columns: [
-          sql.columns![0],
-          {
-            name: '',
-            parameters: [{ name: 'newColumn2', type: QueryEditorExpressionType.FunctionParameter }],
-            type: QueryEditorExpressionType.Function,
-          },
-        ],
+      expect(onQueryChange).toHaveBeenCalledWith({
+        ...query,
+        sql: {
+          columns: [
+            ...query.sql?.columns!,
+            {
+              name: '',
+              parameters: [{ name: 'newColumn2', type: QueryEditorExpressionType.FunctionParameter }],
+              type: QueryEditorExpressionType.Function,
+            },
+          ],
+        },
       });
     });
 
     it('handles second parameter', async () => {
-      const onSqlChange = jest.fn();
-      const multipleColumns = Object.freeze<SQLExpression>({
-        columns: [
-          sql.columns![0],
-          {
-            name: '$__timeGroup',
-            parameters: [{ name: 'gaugeValue', type: QueryEditorExpressionType.FunctionParameter }],
-            type: QueryEditorExpressionType.Function,
-          },
-        ],
+      const onQueryChange = jest.fn();
+      const multipleColumns = Object.freeze<SQLQuery>({
+        ...query,
+        sql: {
+          columns: [
+            ...query.sql?.columns!,
+            {
+              name: '$__timeGroup',
+              parameters: [{ name: 'gaugeValue', type: QueryEditorExpressionType.FunctionParameter }],
+              type: QueryEditorExpressionType.Function,
+            },
+          ],
+        },
       });
       render(
         <SelectRow
-          format={QueryFormat.Timeseries}
-          functions={[{ label: '$__timeGroup', value: '$__timeGroup' }]}
+          db={
+            {
+              toRawSql: jest.fn(),
+              functions: () => [],
+            } as any
+          }
           columns={[{ label: 'gaugeValue', value: 'gaugeValue' }]}
-          onSqlChange={onSqlChange}
-          sql={multipleColumns}
+          onQueryChange={onQueryChange}
+          query={multipleColumns}
         />
       );
 
       await userEvent.click(screen.getAllByRole('button', { name: 'Add parameter' })[1]);
 
-      expect(onSqlChange).toHaveBeenCalledWith({
-        columns: [
-          sql.columns![0],
-          {
-            name: '$__timeGroup',
-            parameters: [
-              { name: 'gaugeValue', type: QueryEditorExpressionType.FunctionParameter },
-              { name: '', type: QueryEditorExpressionType.FunctionParameter },
-            ],
-            type: QueryEditorExpressionType.Function,
-          },
-        ],
+      expect(onQueryChange).toHaveBeenCalledWith({
+        ...query,
+        sql: {
+          columns: [
+            ...query.sql?.columns!,
+            {
+              name: '$__timeGroup',
+              parameters: [
+                { name: 'gaugeValue', type: QueryEditorExpressionType.FunctionParameter },
+                { name: '', type: QueryEditorExpressionType.FunctionParameter },
+              ],
+              type: QueryEditorExpressionType.Function,
+            },
+          ],
+        },
       });
     });
 
     it('handles second parameter removal', () => {
-      const onSqlChange = jest.fn();
+      const onQueryChange = jest.fn();
       render(
         <SelectRow
-          format={QueryFormat.Timeseries}
-          onSqlChange={onSqlChange}
-          sql={{
-            columns: [
-              sql.columns![0],
-              {
-                name: '$__timeGroup',
-                parameters: [
-                  { name: 'gaugeValue', type: QueryEditorExpressionType.FunctionParameter },
-                  { name: 'null', type: QueryEditorExpressionType.FunctionParameter },
-                ],
-                type: QueryEditorExpressionType.Function,
-              },
-            ],
+          onQueryChange={onQueryChange}
+          db={{ functions: () => [], toRawSql: jest.fn() } as any}
+          columns={[]}
+          query={{
+            ...query,
+            sql: {
+              columns: [
+                ...query.sql?.columns!,
+                {
+                  name: '$__timeGroup',
+                  parameters: [
+                    { name: 'gaugeValue', type: QueryEditorExpressionType.FunctionParameter },
+                    { name: 'null', type: QueryEditorExpressionType.FunctionParameter },
+                  ],
+                  type: QueryEditorExpressionType.Function,
+                },
+              ],
+            },
           }}
         />
       );
 
       screen.getAllByRole('button', { name: 'Remove parameter' })[1].click();
 
-      expect(onSqlChange).toHaveBeenCalledWith({
-        columns: [
-          sql.columns![0],
-          {
-            name: '$__timeGroup',
-            parameters: [{ name: 'gaugeValue', type: QueryEditorExpressionType.FunctionParameter }],
-            type: QueryEditorExpressionType.Function,
-          },
-        ],
+      expect(onQueryChange).toHaveBeenCalledWith({
+        ...query,
+        sql: {
+          columns: [
+            ...query.sql?.columns!,
+            {
+              name: '$__timeGroup',
+              parameters: [{ name: 'gaugeValue', type: QueryEditorExpressionType.FunctionParameter }],
+              type: QueryEditorExpressionType.Function,
+            },
+          ],
+        },
       });
     });
   });
