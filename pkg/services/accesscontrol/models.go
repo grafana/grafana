@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -332,6 +332,7 @@ const (
 	GlobalOrgID      = 0
 	NoOrgID          = int64(-1)
 	GeneralFolderUID = "general"
+	K6FolderUID      = "k6-app"
 	RoleGrafanaAdmin = "Grafana Admin"
 
 	// Permission actions

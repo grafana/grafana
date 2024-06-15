@@ -25,6 +25,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ builder.APIGroupBuilder = (*TestingAPIBuilder)(nil)
@@ -41,7 +42,7 @@ func NewTestingAPIBuilder() *TestingAPIBuilder {
 	}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *TestingAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, reg prometheus.Registerer) *TestingAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
@@ -92,6 +93,7 @@ func (b *TestingAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	_ generic.RESTOptionsGetter,
 	_ grafanarest.DualWriterMode,
+	_ prometheus.Registerer,
 ) (*genericapiserver.APIGroupInfo, error) {
 	b.codecs = codecs
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(b.gv.Group, scheme, metav1.ParameterCodec, codecs)

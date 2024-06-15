@@ -710,4 +710,8 @@ const (
 	// FlagPinNavItems
 	// Enables pinning of nav items
 	FlagPinNavItems = "pinNavItems"
+
+	// FlagAuthZGRPCServer
+	// Enables the gRPC server for authorization
+	FlagAuthZGRPCServer = "authZGRPCServer"
 )

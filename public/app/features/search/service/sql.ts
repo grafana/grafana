@@ -35,7 +35,7 @@ export class SQLSearcher implements GrafanaSearcher {
   locationInfo: Record<string, LocationInfoEXT> = {
     general: {
       kind: 'folder',
-      name: 'General',
+      name: 'Dashboards',
       url: '/dashboards',
     },
   }; // share location info with everyone

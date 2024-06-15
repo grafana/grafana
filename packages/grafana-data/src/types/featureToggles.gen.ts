@@ -194,4 +194,5 @@ export interface FeatureToggles {
   sqlQuerybuilderFunctionParameters?: boolean;
   azureMonitorPrometheusExemplars?: boolean;
   pinNavItems?: boolean;
+  authZGRPCServer?: boolean;
 }

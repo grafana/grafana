@@ -12,9 +12,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
@@ -90,7 +90,7 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 	start := time.Now()
 
 	tsField := data.NewField("Time", nil, make([]time.Time, length))
-	valueFields := make(map[string]*data.Field)
+	valueFields := make(map[data.Fingerprint]*data.Field)
 
 	err = evaluator.Eval(ruleCtx, from, time.Duration(rule.IntervalSeconds)*time.Second, length, func(idx int, currentTime time.Time, results eval.Results) error {
 		if idx >= length {
