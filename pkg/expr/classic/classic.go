@@ -79,8 +79,7 @@ func (cmd *ConditionsCmd) Execute(ctx context.Context, t time.Time, vars mathexp
 	// matches contains the list of matches for all conditions
 	matches := make([]EvalMatch, 0)
 	for i, cond := range cmd.Conditions {
-		// Avoid cascading operations when the previous condition is already firing
-		// and the operator is LogicOr, see #87483
+		// Avoid operate subsequent conditions for LogicOr when it is already firing, see #87483
 		if isFiring && cond.Operator == ConditionOperatorLogicOr {
 			break
 		}
