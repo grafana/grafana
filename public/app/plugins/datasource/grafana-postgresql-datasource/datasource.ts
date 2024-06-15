@@ -3,7 +3,16 @@ import { v4 as uuidv4 } from 'uuid';
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { LanguageDefinition } from '@grafana/experimental';
 import { TemplateSrv, config } from '@grafana/runtime';
-import { COMMON_FNS, DB, FuncParameter, MACRO_FUNCTIONS, SQLQuery, SQLSelectableValue, SqlDatasource, formatSQL } from '@grafana/sql';
+import {
+  COMMON_FNS,
+  DB,
+  FuncParameter,
+  MACRO_FUNCTIONS,
+  SQLQuery,
+  SQLSelectableValue,
+  SqlDatasource,
+  formatSQL,
+} from '@grafana/sql';
 
 import { PostgresQueryModel } from './PostgresQueryModel';
 import { getSchema, getTimescaleDBVersion, getVersion, showTables } from './postgresMetaQuery';
@@ -92,10 +101,7 @@ export class PostgresDatasource extends SqlDatasource {
         options: (query) => this.fetchFields(query),
       };
 
-      return [
-        ...MACRO_FUNCTIONS(columnParam),
-        ...COMMON_FNS.map((fn) => ({ ...fn, parameters: [columnParam] })),
-      ];
+      return [...MACRO_FUNCTIONS(columnParam), ...COMMON_FNS.map((fn) => ({ ...fn, parameters: [columnParam] }))];
     } else {
       return COMMON_FNS;
     }

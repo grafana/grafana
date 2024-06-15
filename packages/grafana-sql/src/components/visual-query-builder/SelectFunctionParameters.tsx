@@ -69,7 +69,6 @@ export function SelectFunctionParameters({ query, onSqlChange, currentColumnInde
         if (item.parameters[item.parameters.length - 1]?.name === '') {
           item.parameters = item.parameters.filter((p) => p.name !== '');
         }
-
       } else if (s == null) {
         item.parameters = item.parameters.filter((_, i) => i !== index);
       } else {

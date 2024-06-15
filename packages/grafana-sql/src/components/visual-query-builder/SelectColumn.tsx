@@ -21,7 +21,7 @@ export function SelectColumn({ columns, onParameterChange, value }: Props) {
         data-testid={selectors.components.SQLQueryEditor.selectColumn}
         inputId={selectInputId}
         menuShouldPortal
-        options={[{label: '*', value: '*'}, ...columns]}
+        options={[{ label: '*', value: '*' }, ...columns]}
         allowCustomValue
         onChange={(s) => onParameterChange(s.value)}
       />
