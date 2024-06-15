@@ -136,7 +136,7 @@ These functions are available for **Reduce** and **Classic condition** expressio
 
 An alert condition is the query or expression that determines whether the alert fires or not depending on the value it yields. There can be only one condition which determines the triggering of the alert.
 
-After you have defined your queries and/or expressions, choose one of them as the alert rule condition. By default, the last expression added is used as the alert condition.
+After you have defined your queries [and/or/logi-or]({{< relref "../alert-rule-evaluation/#condition-operator" >}}) expressions, choose one of them as the alert rule condition. By default, the last expression added is used as the alert condition.
 
 When the queried data satisfies the defined condition, Grafana triggers the associated alert, which can be configured to send notifications through various channels like email, Slack, or PagerDuty.
 
