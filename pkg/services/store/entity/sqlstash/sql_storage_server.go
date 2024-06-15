@@ -63,6 +63,9 @@ func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer /*, c
 type SqlEntityServer interface {
 	entity.EntityStoreServer
 
+	// FIXME: accpet a context.Context in the lifecycle methods, and Stop should
+	// also return an error.
+
 	Init() error
 	Stop()
 }
@@ -75,7 +78,6 @@ type sqlEntityServer struct {
 	broadcaster Broadcaster[*entity.EntityWatchResponse]
 	ctx         context.Context // TODO: remove
 	cancel      context.CancelFunc
-	stream      chan *entity.EntityWatchResponse
 	tracer      trace.Tracer
 
 	once    sync.Once
@@ -139,9 +141,7 @@ func (s *sqlEntityServer) init() error {
 	s.dialect = migrator.NewDialect(engine.DriverName())
 
 	// set up the broadcaster
-	s.broadcaster, err = NewBroadcaster(s.ctx, func(stream chan *entity.EntityWatchResponse) error {
-		s.stream = stream
-
+	s.broadcaster, err = NewBroadcaster(s.ctx, func(stream chan<- *entity.EntityWatchResponse) error {
 		// start the poller
 		go s.poller(stream)
 
@@ -994,13 +994,18 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 	return lastRv, nil
 }
 
-func (s *sqlEntityServer) poller(stream chan *entity.EntityWatchResponse) {
+func (s *sqlEntityServer) poller(stream chan<- *entity.EntityWatchResponse) {
 	var err error
 
+	// FIXME: we need a way to state startup of server from a (Group, Resource)
+	// standpoint, and consider that new (Group, Resource) may be added to
+	// `kind_version`, so we should probably also poll for changes in there
 	since := int64(0)
+
 	interval := 1 * time.Second
 
 	t := time.NewTicker(interval)
+	defer close(stream)
 	defer t.Stop()
 
 	for {
@@ -1017,7 +1022,7 @@ func (s *sqlEntityServer) poller(stream chan *entity.EntityWatchResponse) {
 	}
 }
 
-func (s *sqlEntityServer) poll(since int64, out chan *entity.EntityWatchResponse) (int64, error) {
+func (s *sqlEntityServer) poll(since int64, out chan<- *entity.EntityWatchResponse) (int64, error) {
 	ctx, span := s.tracer.Start(s.ctx, "storage_server.poll")
 	defer span.End()
 	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "poll"}))
@@ -1182,26 +1187,25 @@ func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntitySto
 	if err != nil {
 		return err
 	}
+	defer s.broadcaster.Unsubscribe(evts)
 
 	stop := make(chan struct{})
 	since := r.Since
 
 	go func() {
+		defer close(stop)
 		for {
 			r, err := w.Recv()
 			if errors.Is(err, io.EOF) {
 				s.log.Debug("watch client closed stream")
-				stop <- struct{}{}
 				return
 			}
 			if err != nil {
 				s.log.Error("error receiving message", "err", err)
-				stop <- struct{}{}
 				return
 			}
 			if r.Action == entity.EntityWatchRequest_STOP {
 				s.log.Debug("watch stop requested")
-				stop <- struct{}{}
 				return
 			}
 			// handle any other message types
@@ -1211,7 +1215,6 @@ func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntitySto
 
 	for {
 		select {
-		// stop signal
 		case <-stop:
 			s.log.Debug("watch stopped")
 			return nil
