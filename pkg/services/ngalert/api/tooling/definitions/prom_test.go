@@ -96,6 +96,46 @@ func TestSortAlertsByImportance(t *testing.T) {
 			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"a": "b"}},
 			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"c": "d"}},
 		},
+	}, {
+		name: "active alerts with same importance and active time are ordered by labels (same keys, different values)",
+		input: []Alert{
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"a": "b"}},
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"a": "a"}},
+		},
+		expected: []Alert{
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"a": "a"}},
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"a": "b"}},
+		},
+	}, {
+		name: "active alerts with same importance and active time are ordered by labels (more keys with different values)",
+		input: []Alert{
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"a": "a", "b": "c"}},
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"a": "a", "b": "b"}},
+		},
+		expected: []Alert{
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"a": "a", "b": "b"}},
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"a": "a", "b": "c"}},
+		},
+	}, {
+		name: "active alerts with same importance and active time are ordered by labels (same labels, unordered)",
+		input: []Alert{
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"label_b": "2", "label_a": "1"}},
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"label_b": "1", "label_a": "2"}},
+		},
+		expected: []Alert{
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"label_a": "1", "label_b": "2"}},
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"label_a": "2", "label_b": "1"}},
+		},
+	}, {
+		name: "active alerts with same importance and active time, the one without labels is ordered first",
+		input: []Alert{
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{}},
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"label_a": "1"}},
+		},
+		expected: []Alert{
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{}},
+			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"label_a": "1"}},
+		},
 	}}
 
 	for _, tt := range tc {

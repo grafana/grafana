@@ -300,28 +300,27 @@ func (by AlertsBy) TopK(alerts []Alert, k int) []Alert {
 // is more important than "normal". If two alerts have the same importance
 // then the ordering is based on their ActiveAt time and their labels.
 func AlertsByImportance(a1, a2 *Alert) bool {
-	// labelsForComparison concatenates each key/value pair into a string and
-	// sorts them.
-	labelsForComparison := func(m map[string]string) []string {
-		s := make([]string, 0, len(m))
-		for k, v := range m {
-			s = append(s, k+v)
-		}
-		sort.Strings(s)
-		return s
-	}
-
 	// compareLabels returns true if labels1 are less than labels2. This happens
 	// when labels1 has fewer labels than labels2, or if the next label from
 	// labels1 is lexicographically less than the next label from labels2.
-	compareLabels := func(labels1, labels2 []string) bool {
+	compareLabels := func(labels1, labels2 map[string]string) bool {
 		if len(labels1) == len(labels2) {
-			for i := range labels1 {
-				if labels1[i] != labels2[i] {
-					return labels1[i] < labels2[i]
+			keys1 := sortedKeys(labels1)
+			keys2 := sortedKeys(labels2)
+
+			// Go through the sorted keys and compare the values
+			for i := 0; i < len(keys1) && i < len(keys2); i++ {
+				if keys1[i] != keys2[i] {
+					return keys1[i] < keys2[i]
+				}
+
+				// Keys are the same, compare the values
+				if labels1[keys1[i]] != labels2[keys2[i]] {
+					return labels1[keys1[i]] < labels2[keys2[i]]
 				}
 			}
 		}
+
 		return len(labels1) < len(labels2)
 	}
 
@@ -345,12 +344,20 @@ func AlertsByImportance(a1, a2 *Alert) bool {
 			return true
 		}
 		// Both alerts are active since the same time so compare their labels
-		labels1 := labelsForComparison(a1.Labels)
-		labels2 := labelsForComparison(a2.Labels)
-		return compareLabels(labels1, labels2)
+		return compareLabels(a1.Labels, a2.Labels)
 	}
 
 	return importance1 < importance2
+}
+
+func sortedKeys(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	return keys
 }
 
 type AlertsSorter struct {
