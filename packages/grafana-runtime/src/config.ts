@@ -200,6 +200,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
     // LOGZ.IO GRAFANA CHANGE :: Add logzio presets to grafana config
     if (Object.keys(logzioConfigs).length > 0) {
       merge(this, defaults, options, logzioConfigs);
+    } else {
+      merge(this, defaults, options);
     }
     // LOGZ.IO GRAFANA CHANGE :: end
 
