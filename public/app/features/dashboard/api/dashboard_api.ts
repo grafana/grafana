@@ -1,4 +1,3 @@
-import { UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import { ResourceClient } from 'app/features/apiserver/types';
@@ -6,6 +5,8 @@ import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDash
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
+
+import { getScopesFromUrl } from '../utils/getScopesFromUrl';
 
 export interface DashboardAPI {
   /** Get a dashboard with the access control metadata */
@@ -35,7 +36,10 @@ class LegacyDashboardAPI implements DashboardAPI {
     return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
   }
 
-  getDashboardDTO(uid: string, queryParams?: UrlQueryMap | undefined): Promise<DashboardDTO> {
+  getDashboardDTO(uid: string): Promise<DashboardDTO> {
+    const scopes = getScopesFromUrl();
+    const queryParams = (scopes?.length ?? 0) > 0 ? { scopes } : undefined;
+
     return getBackendSrv().get<DashboardDTO>(`/api/dashboards/uid/${uid}`, queryParams);
   }
 }

@@ -73,25 +73,20 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     urlFolderUid,
     keepDashboardFromExploreInLocalStorage,
   }: LoadDashboardOptions): Promise<DashboardDTO | null> {
-    const scopes = this.getScopes() ?? [];
+    const model = localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
+
+    if (model) {
+      if (!keepDashboardFromExploreInLocalStorage) {
+        removeDashboardToFetchFromLocalStorage();
+      }
+      return model;
+    }
 
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
+    const cachedDashboard = this.getFromCache(cacheKey);
 
-    if (scopes.length === 0) {
-      const model = localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
-
-      if (model) {
-        if (!keepDashboardFromExploreInLocalStorage) {
-          removeDashboardToFetchFromLocalStorage();
-        }
-        return model;
-      }
-
-      const cachedDashboard = this.getFromCache(cacheKey);
-
-      if (cachedDashboard) {
-        return cachedDashboard;
-      }
+    if (cachedDashboard) {
+      return cachedDashboard;
     }
 
     let rsp: DashboardDTO;
@@ -221,16 +216,14 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         options.keepDashboardFromExploreInLocalStorage === false
     );
 
-    const hasScopes = this.getScopes()?.length ?? 0 > 0;
-
     this.setState({ isLoading: true });
 
     const rsp = await this.fetchDashboard(options);
 
     const fromCache = this.cache[options.uid];
 
-    // When coming from Explore and when loading the dashboard with scopes, skip returnning scene from cache
-    if (!comingFromExplore && !hasScopes) {
+    // When coming from Explore, skip returnning scene from cache
+    if (!comingFromExplore) {
       if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
         return fromCache;
       }
@@ -240,7 +233,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       const scene = transformSaveModelToScene(rsp);
 
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
-      if (options.uid && !comingFromExplore && !hasScopes) {
+      if (options.uid && !comingFromExplore) {
         this.cache[options.uid] = scene;
       }
 
@@ -254,18 +247,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
 
     throw new Error('Dashboard not found');
-  }
-
-  private getScopes(): string[] | undefined {
-    if (!config.featureToggles.scopeFilters || !config.featureToggles.passScopeToDashboardApi) {
-      return undefined;
-    }
-
-    const queryParams = locationService.getSearchObject();
-    const rawScopes = queryParams['scopes'] ?? [];
-    const scopes = Array.isArray(rawScopes) ? rawScopes : [rawScopes];
-
-    return scopes.map(String);
   }
 
   public getFromCache(cacheKey: string) {
