@@ -25,14 +25,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // TODO: this is a temporary hack to make rest.Connecter work with resource level routes
 var pathRewriters = []filters.PathRewriter{
 	{
-		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/v0alpha1/namespaces/.*/find$)`),
+		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/v0alpha1/namespaces/.*/)find/(.*)$`),
 		ReplaceFunc: func(matches []string) string {
-			return matches[1] + "/name" // connector requires a name
+			return matches[1] + matches[2] + "/name" // connector requires a name
 		},
 	},
 	{
@@ -128,6 +129,7 @@ func InstallAPIs(
 	optsGetter generic.RESTOptionsGetter,
 	builders []APIGroupBuilder,
 	storageOpts *options.StorageOptions,
+	reg prometheus.Registerer,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
@@ -136,7 +138,7 @@ func InstallAPIs(
 
 	for _, b := range builders {
 		mode := b.GetDesiredDualWriterMode(dualWriteEnabled, storageOpts.DualWriterDesiredModes)
-		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, mode)
+		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, mode, reg)
 		if err != nil {
 			return err
 		}

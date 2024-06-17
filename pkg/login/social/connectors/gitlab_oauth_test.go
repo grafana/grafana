@@ -15,10 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
@@ -45,13 +46,12 @@ const (
 func TestSocialGitlab_UserInfo(t *testing.T) {
 	var nilPointer *bool
 
-	provider := NewGitLabProvider(&social.OAuthInfo{SkipOrgRoleSync: false}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-
 	type conf struct {
 		AllowAssignGrafanaAdmin bool
 		RoleAttributeStrict     bool
 		AutoAssignOrgRole       org.RoleType
 		SkipOrgRoleSync         bool
+		OrgMapping              []string
 	}
 
 	tests := []struct {
@@ -63,7 +63,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 		RoleAttributePath    string
 		ExpectedLogin        string
 		ExpectedEmail        string
-		ExpectedRole         org.RoleType
+		ExpectedRoles        map[int64]org.RoleType
 		ExpectedGrafanaAdmin *bool
 		ExpectedError        error
 	}{
@@ -81,7 +81,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			RoleAttributePath:    gitlabAttrPath,
 			ExpectedLogin:        "root",
 			ExpectedEmail:        "root@example.org",
-			ExpectedRole:         "Admin",
+			ExpectedRoles:        map[int64]org.RoleType{1: "Admin"},
 			ExpectedGrafanaAdmin: trueBoolPtr(),
 		},
 		{ // Edge case, user in Viewer Group, Server Admin disabled but attribute path contains a condition for Server Admin => User has the Admin role
@@ -98,7 +98,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			RoleAttributePath:    gitlabAttrPath,
 			ExpectedLogin:        "root",
 			ExpectedEmail:        "root@example.org",
-			ExpectedRole:         "Admin",
+			ExpectedRoles:        map[int64]org.RoleType{1: "Admin"},
 			ExpectedGrafanaAdmin: nil,
 		},
 		{
@@ -109,7 +109,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			RoleAttributePath:    gitlabAttrPath,
 			ExpectedLogin:        "gitlab-editor",
 			ExpectedEmail:        "gitlab-editor@example.org",
-			ExpectedRole:         "Editor",
+			ExpectedRoles:        map[int64]org.RoleType{1: "Editor"},
 			ExpectedGrafanaAdmin: falseBoolPtr(),
 			GroupHeaders:         map[string]string{
 				// All headers omitted to test that the provider does not make a second request
@@ -123,7 +123,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			RoleAttributePath:    gitlabAttrPath,
 			ExpectedLogin:        "gitlab-editor",
 			ExpectedEmail:        "gitlab-editor@example.org",
-			ExpectedRole:         "",
+			ExpectedRoles:        nil,
 			ExpectedGrafanaAdmin: nilPointer,
 		},
 		{ // Fallback to autoAssignOrgRole
@@ -134,7 +134,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			RoleAttributePath: gitlabAttrPath,
 			ExpectedLogin:     "gitlab-editor",
 			ExpectedEmail:     "gitlab-editor@example.org",
-			ExpectedRole:      "Admin",
+			ExpectedRoles:     map[int64]org.RoleType{1: "Admin"},
 		},
 		{
 			Name:              "Strict mode prevents fallback to default",
@@ -146,13 +146,13 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 		},
 		{ // Edge case, no match, no strict mode and no fallback => User has the Viewer role (hard coded)
 			Name:              "Fallback with no default will create a user with a default role",
-			Cfg:               conf{},
+			Cfg:               conf{AutoAssignOrgRole: org.RoleViewer},
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[]",
 			RoleAttributePath: gitlabAttrPath,
 			ExpectedLogin:     "gitlab-editor",
 			ExpectedEmail:     "gitlab-editor@example.org",
-			ExpectedRole:      "Viewer",
+			ExpectedRoles:     map[int64]org.RoleType{1: "Viewer"},
 		},
 		{ // Edge case, no attribute path with strict mode => Error
 			Name:              "Strict mode with no attribute path",
@@ -160,49 +160,88 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{editorGroup}, ",") + "]",
 			RoleAttributePath: "",
-			ExpectedError:     errRoleAttributePathNotSet,
+			ExpectedError:     errRoleAttributeStrictViolation,
+		},
+		{
+			Name:           "Should map role when only org mapping is set",
+			Cfg:            conf{OrgMapping: []string{"editors:Org4:Editor", "*:Org5:Viewer"}},
+			UserRespBody:   editorUserRespBody,
+			GroupsRespBody: "[" + strings.Join([]string{editorGroup}, ",") + "]",
+			ExpectedLogin:  "gitlab-editor",
+			ExpectedEmail:  "gitlab-editor@example.org",
+			ExpectedRoles:  map[int64]org.RoleType{4: "Editor", 5: "Viewer"},
+		},
+		{
+			Name:           "Should map role when only org mapping is set and role attribute strict is enabled",
+			Cfg:            conf{OrgMapping: []string{"editors:Org4:Editor", "*:Org5:Viewer"}, RoleAttributeStrict: true},
+			UserRespBody:   editorUserRespBody,
+			GroupsRespBody: "[" + strings.Join([]string{editorGroup}, ",") + "]",
+			ExpectedLogin:  "gitlab-editor",
+			ExpectedEmail:  "gitlab-editor@example.org",
+			ExpectedRoles:  map[int64]org.RoleType{4: "Editor", 5: "Viewer"},
+		},
+		{
+			Name:           "Should return error when neither role attribute path nor org mapping evaluates to a role and role attribute strict is enabled",
+			Cfg:            conf{RoleAttributeStrict: true, OrgMapping: []string{"other:Org4:Editor"}},
+			UserRespBody:   editorUserRespBody,
+			GroupsRespBody: "[" + strings.Join([]string{editorGroup}, ",") + "]",
+			ExpectedError:  errRoleAttributeStrictViolation,
+		},
+		{
+			Name:           "should return error when neither role attribute path nor org mapping is set and role attribute strict is enabled",
+			Cfg:            conf{RoleAttributeStrict: true},
+			UserRespBody:   editorUserRespBody,
+			GroupsRespBody: "[" + strings.Join([]string{editorGroup}, ",") + "]",
+			ExpectedError:  errRoleAttributeStrictViolation,
 		},
 	}
 
-	for _, test := range tests {
-		provider.info.RoleAttributePath = test.RoleAttributePath
-		provider.info.AllowAssignGrafanaAdmin = test.Cfg.AllowAssignGrafanaAdmin
-		provider.cfg.AutoAssignOrgRole = string(test.Cfg.AutoAssignOrgRole)
-		provider.info.RoleAttributeStrict = test.Cfg.RoleAttributeStrict
-		provider.info.SkipOrgRoleSync = test.Cfg.SkipOrgRoleSync
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AutoAssignOrgRole = string(tt.Cfg.AutoAssignOrgRole)
 
-		t.Run(test.Name, func(t *testing.T) {
+			orgMapper := ProvideOrgRoleMapper(cfg, &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}})
+			provider := NewGitLabProvider(&social.OAuthInfo{
+				RoleAttributePath:       tt.RoleAttributePath,
+				RoleAttributeStrict:     tt.Cfg.RoleAttributeStrict,
+				AllowAssignGrafanaAdmin: tt.Cfg.AllowAssignGrafanaAdmin,
+				SkipOrgRoleSync:         tt.Cfg.SkipOrgRoleSync,
+				OrgMapping:              tt.Cfg.OrgMapping,
+				// OrgAttributePath:        "",
+			}, cfg, orgMapper, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
 				w.Header().Set("Content-Type", "application/json")
 				switch r.RequestURI {
 				case userURI:
 					w.WriteHeader(http.StatusOK)
-					_, err := w.Write([]byte(test.UserRespBody))
+					_, err := w.Write([]byte(tt.UserRespBody))
 					require.NoError(t, err)
 				case groupsURI:
 					w.WriteHeader(http.StatusOK)
-					for k, v := range test.GroupHeaders {
+					for k, v := range tt.GroupHeaders {
 						w.Header().Set(k, v)
 					}
-					_, err := w.Write([]byte(test.GroupsRespBody))
+					_, err := w.Write([]byte(tt.GroupsRespBody))
 					require.NoError(t, err)
 				default:
+					w.WriteHeader(http.StatusOK)
 					require.Fail(t, "unexpected request URI: "+r.RequestURI)
 				}
 			}))
 			provider.info.ApiUrl = ts.URL + apiURI
 			actualResult, err := provider.UserInfo(context.Background(), ts.Client(), &oauth2.Token{})
-			if test.ExpectedError != nil {
-				require.ErrorIs(t, err, test.ExpectedError)
+			if tt.ExpectedError != nil {
+				require.ErrorIs(t, err, tt.ExpectedError)
 				return
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, test.ExpectedEmail, actualResult.Email)
-			require.Equal(t, test.ExpectedLogin, actualResult.Login)
-			require.Equal(t, test.ExpectedRole, actualResult.Role)
-			require.Equal(t, test.ExpectedGrafanaAdmin, actualResult.IsGrafanaAdmin)
+			require.Equal(t, tt.ExpectedEmail, actualResult.Email)
+			require.Equal(t, tt.ExpectedLogin, actualResult.Login)
+			require.Equal(t, tt.ExpectedRoles, actualResult.OrgRoles)
+			require.Equal(t, tt.ExpectedGrafanaAdmin, actualResult.IsGrafanaAdmin)
 		})
 	}
 }
@@ -267,14 +306,12 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 				},
 			},
 			wantUser: &userData{
-				ID:             "12345678",
-				Login:          "johndoe",
-				Email:          "johndoe@example.com",
-				Name:           "John Doe",
-				Groups:         []string{"admins", "editors", "viewers"},
-				EmailVerified:  true,
-				Role:           "Viewer",
-				IsGrafanaAdmin: nil,
+				ID:            "12345678",
+				Login:         "johndoe",
+				Email:         "johndoe@example.com",
+				Name:          "John Doe",
+				Groups:        []string{"admins", "editors", "viewers"},
+				EmailVerified: true,
 			},
 		},
 		{
@@ -334,14 +371,12 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 				},
 			},
 			wantUser: &userData{
-				ID:             "12345678",
-				Login:          "johndoe",
-				Email:          "johndoe@example.com",
-				Name:           "John Doe",
-				Groups:         []string{"admins"},
-				EmailVerified:  true,
-				Role:           "Viewer",
-				IsGrafanaAdmin: nil,
+				ID:            "12345678",
+				Login:         "johndoe",
+				Email:         "johndoe@example.com",
+				Name:          "John Doe",
+				Groups:        []string{"admins"},
+				EmailVerified: true,
 			},
 		},
 	}
