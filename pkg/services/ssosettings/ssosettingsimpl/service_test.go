@@ -480,6 +480,9 @@ func TestService_List(t *testing.T) {
 					"grafana_com": {
 						"enabled": false,
 					},
+					"ldap": {
+						"enabled": false,
+					},
 				}
 			},
 			want: []*models.SSOSettings{
@@ -526,6 +529,11 @@ func TestService_List(t *testing.T) {
 				},
 				{
 					Provider: "grafana_com",
+					Settings: map[string]any{"enabled": false},
+					Source:   models.System,
+				},
+				{
+					Provider: "ldap",
 					Settings: map[string]any{"enabled": false},
 					Source:   models.System,
 				},
@@ -1554,6 +1562,7 @@ func Test_ProviderService(t *testing.T) {
 				"grafana_com",
 				"azuread",
 				"okta",
+				"ldap",
 			},
 			strategiesLength: 2,
 		},
@@ -1568,6 +1577,7 @@ func Test_ProviderService(t *testing.T) {
 				"grafana_com",
 				"azuread",
 				"okta",
+				"ldap",
 			},
 			strategiesLength: 3,
 		},
@@ -1583,6 +1593,7 @@ func Test_ProviderService(t *testing.T) {
 				"grafana_com",
 				"azuread",
 				"okta",
+				"ldap",
 				"saml",
 			},
 			strategiesLength: 3,
