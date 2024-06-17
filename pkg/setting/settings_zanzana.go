@@ -7,8 +7,8 @@ import (
 type ZanzanaMode string
 
 const (
-	ZanzanaModeClient   = "client"
-	ZanzanaModeEmbedded = "embedded"
+	ZanzanaModeClient   ZanzanaMode = "client"
+	ZanzanaModeEmbedded ZanzanaMode = "embedded"
 )
 
 type ZanzanaSettings struct {
@@ -26,10 +26,12 @@ func (c *Cfg) readZanzanaSettings() {
 
 	validModes := []ZanzanaMode{ZanzanaModeEmbedded, ZanzanaModeClient}
 
-	if slices.Contains(validModes, s.Mode) {
+	if !slices.Contains(validModes, s.Mode) {
 		c.Logger.Warn("Invalid zanzana mode", "expected", validModes, "got", s.Mode)
 		s.Mode = "embedded"
 	}
+
+	s.Addr = sec.Key("address").MustString("")
 
 	c.Zanzana = s
 }
