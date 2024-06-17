@@ -1,11 +1,13 @@
+import { css } from '@emotion/css';
 import { useCombobox } from 'downshift';
 import React, { useMemo, useRef, useState } from 'react';
 import { useVirtual } from 'react-virtual';
 
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
 
-type Value = string | number;
+export type Value = string | number;
 type Option = {
   label: string;
   value: Value;
@@ -43,6 +45,8 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   const selectedItem = useMemo(() => options.find((option) => option.value === value) || null, [options, value]);
   const listRef = useRef(null);
 
+  const styles = useStyles2(getStyles);
+
   const rowVirtualizer = useVirtual({
     size: items.length,
     parentRef: listRef,
@@ -68,7 +72,7 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   return (
     <div>
       <Input suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />} {...restProps} {...getInputProps()} />
-      <ul {...getMenuProps({ ref: listRef })}>
+      <ul className={styles.ulMenu} {...getMenuProps({ ref: listRef })}>
         {isOpen && (
           <>
             <li key="total-size" style={{ height: rowVirtualizer.totalSize }} />
@@ -77,11 +81,8 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
                 <li
                   key={items[virtualRow.index].value}
                   {...getItemProps({ item: items[virtualRow.index], index: virtualRow.index })}
+                  className={styles.menuItem}
                   style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
                     height: virtualRow.size,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
@@ -96,3 +97,18 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
     </div>
   );
 };
+
+const getStyles = () => ({
+  ulMenu: css({
+    position: 'absolute',
+    maxHeight: 100,
+    overflowY: 'scroll',
+    width: 400,
+  }),
+  menuItem: css({
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+  }),
+});

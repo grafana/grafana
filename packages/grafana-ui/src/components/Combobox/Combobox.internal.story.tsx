@@ -1,8 +1,11 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
+import { Meta, StoryFn, StoryObj } from '@storybook/react';
+import { Chance } from 'chance';
 import React, { useState } from 'react';
 
-import { Combobox } from './Combobox';
+import { Combobox, Value } from './Combobox';
+
+const chance = new Chance();
 
 const meta: Meta<typeof Combobox> = {
   title: 'Forms/Combobox',
@@ -28,13 +31,44 @@ const meta: Meta<typeof Combobox> = {
     ],
     value: 'banana',
   },
+
+  render: (args) => <BasicWithState {...args} />,
 };
 
-export const Basic: StoryFn<typeof Combobox> = (args) => {
+const BasicWithState: StoryFn<typeof Combobox> = (args) => {
   const [value, setValue] = useState(args.value);
   return (
     <Combobox
       {...args}
+      value={value}
+      onChange={(val) => {
+        setValue(val.value);
+        action('onChange')(val);
+      }}
+    />
+  );
+};
+
+type Story = StoryObj<typeof Combobox>;
+
+export const Basic: Story = {};
+
+function generateOptions(amount: number) {
+  return Array.from({ length: amount }, () => ({
+    label: chance.name(),
+    value: chance.guid(),
+  }));
+}
+
+const manyOptions = generateOptions(1e5);
+manyOptions.push({ label: 'Banana', value: 'banana' });
+
+export const ManyOptions: StoryFn<typeof Combobox> = (args) => {
+  const [value, setValue] = useState<Value>(manyOptions[5].value);
+  return (
+    <Combobox
+      {...args}
+      options={manyOptions}
       value={value}
       onChange={(val) => {
         setValue(val.value);
