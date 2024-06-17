@@ -95,7 +95,7 @@ func TestGetUserFromLDAPAPIEndpoint_UserNotFound(t *testing.T) {
 			ExpectedClient: &LDAPMock{
 				UserSearchResult: nil,
 			},
-			ExpectedConfig: &ldap.Config{},
+			ExpectedConfig: &ldap.ServersConfig{},
 		}
 	})
 
@@ -160,7 +160,7 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 				UserSearchResult: userSearchResult,
 				UserSearchConfig: userSearchConfig,
 			},
-			ExpectedConfig: &ldap.Config{},
+			ExpectedConfig: &ldap.ServersConfig{},
 		}
 	})
 
@@ -229,7 +229,7 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 				UserSearchResult: userSearchResult,
 				UserSearchConfig: userSearchConfig,
 			},
-			ExpectedConfig: &ldap.Config{},
+			ExpectedConfig: &ldap.ServersConfig{},
 		}
 	})
 
@@ -314,7 +314,7 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 				UserSearchResult: userSearchResult,
 				UserSearchConfig: userSearchConfig,
 			},
-			ExpectedConfig: &ldap.Config{},
+			ExpectedConfig: &ldap.ServersConfig{},
 		}
 	})
 
@@ -368,7 +368,7 @@ func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
 	_, server := setupAPITest(t, func(a *Service) {
 		a.ldapService = &service.LDAPFakeService{
 			ExpectedClient: &LDAPMock{},
-			ExpectedConfig: &ldap.Config{},
+			ExpectedConfig: &ldap.ServersConfig{},
 		}
 	})
 
@@ -407,7 +407,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 			ExpectedClient: &LDAPMock{UserSearchResult: &login.ExternalUserInfo{
 				Login: "ldap-daniel",
 			}},
-			ExpectedConfig: &ldap.Config{},
+			ExpectedConfig: &ldap.ServersConfig{},
 		}
 	})
 
@@ -442,7 +442,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 		a.userService = userServiceMock
 		a.ldapService = &service.LDAPFakeService{
 			ExpectedClient: &LDAPMock{},
-			ExpectedConfig: &ldap.Config{},
+			ExpectedConfig: &ldap.ServersConfig{},
 		}
 	})
 
@@ -475,10 +475,10 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 
 	_, server := setupAPITest(t, func(a *Service) {
 		a.userService = userServiceMock
-		a.cfg.AdminUser = "ldap-daniel"
+		a.adminUser = "ldap-daniel"
 		a.ldapService = &service.LDAPFakeService{
 			ExpectedClient: &LDAPMock{UserSearchError: multildap.ErrDidNotFindUser},
-			ExpectedConfig: &ldap.Config{},
+			ExpectedConfig: &ldap.ServersConfig{},
 		}
 	})
 
@@ -511,7 +511,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 		a.authInfoService = &authinfotest.FakeService{ExpectedExternalUser: &login.ExternalUserInfo{IsDisabled: true, UserId: 34}}
 		a.ldapService = &service.LDAPFakeService{
 			ExpectedClient: &LDAPMock{UserSearchError: multildap.ErrDidNotFindUser},
-			ExpectedConfig: &ldap.Config{},
+			ExpectedConfig: &ldap.ServersConfig{},
 		}
 	})
 
@@ -641,12 +641,12 @@ search_base_dns = ["dc=grafana,dc=org"]`)
 		t.Run(tt.desc, func(t *testing.T) {
 			_, server := setupAPITest(t, func(a *Service) {
 				a.userService = &usertest.FakeUserService{ExpectedUser: &user.User{Login: "ldap-daniel", ID: 1}}
-				a.cfg.LDAPConfigFilePath = ldapConfigFile
+				a.cfg.ConfigFilePath = ldapConfigFile
 				a.ldapService = &service.LDAPFakeService{
 					ExpectedClient: &LDAPMock{UserSearchResult: &login.ExternalUserInfo{
 						Login: "ldap-daniel",
 					}},
-					ExpectedConfig: &ldap.Config{},
+					ExpectedConfig: &ldap.ServersConfig{},
 				}
 			})
 			// Add minimal setup to pass handler

@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -55,7 +54,7 @@ func TestNew(t *testing.T) {
 	result := New(&ServerConfig{
 		Attr:          AttributeMap{},
 		SearchBaseDNs: []string{"BaseDNHere"},
-	}, &setting.Cfg{})
+	}, &Config{})
 
 	assert.Implements(t, (*IServer)(nil), result)
 }
@@ -68,7 +67,7 @@ func TestServer_Dial(t *testing.T) {
 			ClientCert: "./testdata/parsable.cert",
 			ClientKey:  "./testdata/parsable.pem",
 		}
-		server := New(serverConfig, &setting.Cfg{})
+		server := New(serverConfig, &Config{})
 
 		err := server.Dial()
 		require.Error(t, err)
@@ -79,7 +78,7 @@ func TestServer_Dial(t *testing.T) {
 		serverConfig := &ServerConfig{
 			RootCACert: "./testdata/invalid.cert",
 		}
-		server := New(serverConfig, &setting.Cfg{})
+		server := New(serverConfig, &Config{})
 
 		err := server.Dial()
 		require.Error(t, err)
@@ -90,7 +89,7 @@ func TestServer_Dial(t *testing.T) {
 		serverConfig := &ServerConfig{
 			RootCACert: "./testdata/nofile.cert",
 		}
-		server := New(serverConfig, &setting.Cfg{})
+		server := New(serverConfig, &Config{})
 
 		err := server.Dial()
 		require.Error(t, err)
@@ -102,7 +101,7 @@ func TestServer_Dial(t *testing.T) {
 			ClientCert: "./testdata/invalid.cert",
 			ClientKey:  "./testdata/invalid.pem",
 		}
-		server := New(serverConfig, &setting.Cfg{})
+		server := New(serverConfig, &Config{})
 
 		err := server.Dial()
 		require.Error(t, err)
@@ -114,7 +113,7 @@ func TestServer_Dial(t *testing.T) {
 			ClientCert: "./testdata/nofile.cert",
 			ClientKey:  "./testdata/parsable.pem",
 		}
-		server := New(serverConfig, &setting.Cfg{})
+		server := New(serverConfig, &Config{})
 
 		err := server.Dial()
 		require.Error(t, err)
@@ -128,7 +127,7 @@ func TestServer_Dial(t *testing.T) {
 			ClientCertValue: validCert,
 			ClientKeyValue:  validKey,
 		}
-		server := New(serverConfig, &setting.Cfg{})
+		server := New(serverConfig, &Config{})
 
 		err := server.Dial()
 		require.Error(t, err)
@@ -139,7 +138,7 @@ func TestServer_Dial(t *testing.T) {
 		serverConfig := &ServerConfig{
 			RootCACertValue: []string{"invalid-certificate"},
 		}
-		server := New(serverConfig, &setting.Cfg{})
+		server := New(serverConfig, &Config{})
 
 		err := server.Dial()
 		require.Error(t, err)
@@ -150,7 +149,7 @@ func TestServer_Dial(t *testing.T) {
 		serverConfig := &ServerConfig{
 			RootCACertValue: []string{"aW52YWxpZC1jZXJ0aWZpY2F0ZQ=="},
 		}
-		server := New(serverConfig, &setting.Cfg{})
+		server := New(serverConfig, &Config{})
 
 		err := server.Dial()
 		require.Error(t, err)
@@ -162,7 +161,7 @@ func TestServer_Dial(t *testing.T) {
 			ClientCertValue: "invalid-certificate",
 			ClientKeyValue:  validKey,
 		}
-		server := New(serverConfig, &setting.Cfg{})
+		server := New(serverConfig, &Config{})
 
 		err := server.Dial()
 		require.Error(t, err)
@@ -174,7 +173,7 @@ func TestServer_Dial(t *testing.T) {
 			ClientCertValue: validCert,
 			ClientKeyValue:  "aW52YWxpZC1rZXk=",
 		}
-		server := New(serverConfig, &setting.Cfg{})
+		server := New(serverConfig, &Config{})
 
 		err := server.Dial()
 		require.Error(t, err)
@@ -226,8 +225,9 @@ func TestServer_Users(t *testing.T) {
 		conn.setSearchResult(&result)
 
 		// Set up attribute map without surname and email
-		cfg := setting.NewCfg()
-		cfg.LDAPAuthEnabled = true
+		cfg := &Config{
+			Enabled: true,
+		}
 
 		server := &Server{
 			cfg: cfg,
@@ -323,7 +323,7 @@ func TestServer_Users(t *testing.T) {
 		})
 
 		server := &Server{
-			cfg: setting.NewCfg(),
+			cfg: &Config{},
 			Config: &ServerConfig{
 				Attr: AttributeMap{
 					Username: "username",
@@ -370,8 +370,9 @@ func TestServer_Users(t *testing.T) {
 			}
 		})
 
-		cfg := setting.NewCfg()
-		cfg.LDAPAuthEnabled = true
+		cfg := &Config{
+			Enabled: true,
+		}
 
 		server := &Server{
 			cfg: cfg,
@@ -464,8 +465,9 @@ func TestServer_Users(t *testing.T) {
 		})
 
 		isGrafanaAdmin := true
-		cfg := setting.NewCfg()
-		cfg.LDAPAuthEnabled = true
+		cfg := &Config{
+			Enabled: true,
+		}
 
 		server := &Server{
 			cfg: cfg,
@@ -506,7 +508,7 @@ func TestServer_Users(t *testing.T) {
 			require.True(t, res[0].IsDisabled)
 		})
 		t.Run("skip org role sync", func(t *testing.T) {
-			server.cfg.LDAPSkipOrgRoleSync = true
+			server.cfg.SkipOrgRoleSync = true
 
 			res, err := server.Users([]string{"groot"})
 			require.NoError(t, err)
@@ -517,7 +519,7 @@ func TestServer_Users(t *testing.T) {
 			require.False(t, res[0].IsDisabled)
 		})
 		t.Run("sync org role", func(t *testing.T) {
-			server.cfg.LDAPSkipOrgRoleSync = false
+			server.cfg.SkipOrgRoleSync = false
 			res, err := server.Users([]string{"groot"})
 			require.NoError(t, err)
 			require.Len(t, res, 1)

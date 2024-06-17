@@ -15,8 +15,18 @@ import (
 
 const defaultTimeout = 10
 
-// Config holds list of connections to LDAP
+// Config holds parameters from the .ini config file
 type Config struct {
+	Enabled           bool
+	ConfigFilePath    string
+	AllowSignUp       bool
+	SkipOrgRoleSync   bool
+	SyncCron          string
+	ActiveSyncEnabled bool
+}
+
+// ServersConfig holds list of connections to LDAP
+type ServersConfig struct {
 	Servers []*ServerConfig `toml:"servers" json:"servers"`
 }
 
@@ -83,16 +93,27 @@ var loadingMutex = &sync.Mutex{}
 
 // We need to define in this space so `GetConfig` fn
 // could be defined as singleton
-var config *Config
+var config *ServersConfig
+
+func GetLDAPConfig(cfg *setting.Cfg) *Config {
+	return &Config{
+		Enabled:           cfg.LDAPAuthEnabled,
+		ConfigFilePath:    cfg.LDAPConfigFilePath,
+		AllowSignUp:       cfg.LDAPAllowSignup,
+		SkipOrgRoleSync:   cfg.LDAPSkipOrgRoleSync,
+		SyncCron:          cfg.LDAPSyncCron,
+		ActiveSyncEnabled: cfg.LDAPActiveSyncEnabled,
+	}
+}
 
 // GetConfig returns the LDAP config if LDAP is enabled otherwise it returns nil. It returns either cached value of
 // the config or it reads it and caches it first.
-func GetConfig(cfg *setting.Cfg) (*Config, error) {
+func GetConfig(cfg *Config) (*ServersConfig, error) {
 	if cfg != nil {
-		if !cfg.LDAPAuthEnabled {
+		if !cfg.Enabled {
 			return nil, nil
 		}
-	} else if !cfg.LDAPAuthEnabled {
+	} else if !cfg.Enabled {
 		return nil, nil
 	}
 
@@ -104,11 +125,11 @@ func GetConfig(cfg *setting.Cfg) (*Config, error) {
 	loadingMutex.Lock()
 	defer loadingMutex.Unlock()
 
-	return readConfig(cfg.LDAPConfigFilePath)
+	return readConfig(cfg.ConfigFilePath)
 }
 
-func readConfig(configFile string) (*Config, error) {
-	result := &Config{}
+func readConfig(configFile string) (*ServersConfig, error) {
+	result := &ServersConfig{}
 
 	logger.Info("LDAP enabled, reading config file", "file", configFile)
 
