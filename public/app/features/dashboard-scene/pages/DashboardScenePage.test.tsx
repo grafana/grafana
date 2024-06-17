@@ -7,13 +7,21 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { config, getPluginLinkExtensions, locationService, setPluginImportUtils } from '@grafana/runtime';
+import {
+  config,
+  getBackendSrv,
+  getPluginLinkExtensions,
+  locationService,
+  setPluginImportUtils,
+} from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import store from 'app/core/store';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
+import { DashboardRoutes } from 'app/types';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
@@ -24,6 +32,11 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   setPluginExtensionGetter: jest.fn(),
   getPluginLinkExtensions: jest.fn(),
+  getBackendSrv: () => {
+    return {
+      get: jest.fn().mockResolvedValue({ dashboard: simpleDashboard, meta: { url: '' } }),
+    };
+  },
   getDataSourceSrv: () => {
     return {
       get: jest.fn().mockResolvedValue({}),
@@ -37,12 +50,19 @@ jest.mock('@grafana/runtime', () => ({
 
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
-function setup() {
+function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps> } = {}) {
   const context = getGrafanaContextMock();
+  const defaultRouteProps = getRouteComponentProps();
   const props: Props = {
-    ...getRouteComponentProps(),
+    ...defaultRouteProps,
+    match: {
+      ...defaultRouteProps.match,
+      params: {
+        uid: 'my-dash-uid',
+      },
+    },
+    ...routeProps,
   };
-  props.match.params.uid = 'my-dash-uid';
 
   const renderResult = render(
     <TestProvider grafanaContext={context}>
@@ -258,14 +278,39 @@ describe('DashboardScenePage', () => {
   });
 
   describe('home page', () => {
-    it('should not show controls', async () => {
+    it('should render the dashboard when the route is home', async () => {
+      setup({
+        routeProps: {
+          route: {
+            ...getRouteComponentProps().route,
+            routeName: DashboardRoutes.Home,
+          },
+          match: {
+            ...getRouteComponentProps().match,
+            path: '/',
+            params: {},
+          },
+        },
+      });
+
+      await waitForDashbordToRender();
+
+      expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
+      expect(await screen.findByText('Content A')).toBeInTheDocument();
+
+      expect(await screen.findByTitle('Panel B')).toBeInTheDocument();
+      expect(await screen.findByText('Content B')).toBeInTheDocument();
+    });
+
+    it('should show controls', async () => {
       getDashboardScenePageStateManager().clearDashboardCache();
       loadDashboardMock.mockClear();
       loadDashboardMock.mockResolvedValue({ dashboard: { panels: [] }, meta: {} });
 
       setup();
 
-      await waitFor(() => expect(screen.queryByText('Refresh')).not.toBeInTheDocument());
+      await waitFor(() => expect(screen.queryByText('Refresh')).toBeInTheDocument());
+      await waitFor(() => expect(screen.queryByText('Last 6 hours')).toBeInTheDocument());
     });
   });
 });
