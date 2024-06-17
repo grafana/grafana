@@ -13,11 +13,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
 )
 
 type subResourceREST struct {
 	builder *DataSourceAPIBuilder
+	logger  log.Logger
 }
 
 var _ = rest.Connecter(&subResourceREST{})
@@ -67,15 +69,17 @@ func (r *subResourceREST) Connect(ctx context.Context, name string, opts runtime
 			return
 		}
 
-		err = r.builder.client.CallResource(ctx, &backend.CallResourceRequest{
-			PluginContext: pluginCtx,
-			Path:          clonedReq.URL.Path,
-			Method:        req.Method,
-			URL:           clonedReq.URL.String(),
-			Body:          body,
-			Headers:       req.Header,
-		}, httpresponsesender.New(w))
-
+		_, err = panicGuard(r.logger, func() (interface{}, error) {
+			err = r.builder.client.CallResource(ctx, &backend.CallResourceRequest{
+				PluginContext: pluginCtx,
+				Path:          clonedReq.URL.Path,
+				Method:        req.Method,
+				URL:           clonedReq.URL.String(),
+				Body:          body,
+				Headers:       req.Header,
+			}, httpresponsesender.New(w))
+			return nil, err
+		})
 		if err != nil {
 			responder.Error(err)
 		}

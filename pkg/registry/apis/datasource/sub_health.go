@@ -10,10 +10,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 type subHealthREST struct {
 	builder *DataSourceAPIBuilder
+	logger  log.Logger
 }
 
 var (
@@ -52,8 +54,10 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 	ctx = contextualMiddlewares(ctx)
 
-	healthResponse, err := r.builder.client.CheckHealth(ctx, &backend.CheckHealthRequest{
-		PluginContext: pluginCtx,
+	healthResponse, err := panicGuard(r.logger, func() (*backend.CheckHealthResult, error) {
+		return r.builder.client.CheckHealth(ctx, &backend.CheckHealthRequest{
+			PluginContext: pluginCtx,
+		})
 	})
 	if err != nil {
 		return nil, err
