@@ -48,9 +48,6 @@ type LDAPImpl struct {
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, ssoSettings ssosettings.Service) *LDAPImpl {
 	s := &LDAPImpl{
-		client:       nil,
-		ldapCfg:      nil,
-		cfg:          nil,
 		log:          log.New("ldap.service"),
 		loadingMutex: &sync.Mutex{},
 		features:     features,
