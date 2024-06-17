@@ -1,13 +1,7 @@
 import { attachDebugger, createLogger } from '@grafana/ui';
 
-export function loadScript(url: string, async = false) {
-  return new Promise((resolve) => {
-    const script = document.createElement('script');
-    script.onload = resolve;
-    script.src = url;
-    script.async = async;
-    document.head.appendChild(script);
-  });
+export async function loadScript(url: string) {
+  return System.import(url).then((m) => (m.default ? m.default : m));
 }
 
 /** @internal */
