@@ -8,9 +8,7 @@ export function userHasPermission(action: string, user: CurrentUser): boolean {
 
 export function userHasPermissionInMetadata(
   action: string,
-  object: {
-    accessControl?: Record<string, boolean>;
-  }
+  object: WithAccessControlMetadata,
 ): boolean {
   return !!object.accessControl?.[action];
 }

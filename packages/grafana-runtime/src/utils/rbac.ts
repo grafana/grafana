@@ -11,9 +11,7 @@ export const hasPermission = (action: string) => userHasPermission(action, getCu
 
 export const hasPermissionInMetadata = (
   action: string,
-  object: {
-    accessControl?: Record<string, boolean>;
-  }
+  object: WithAccessControlMetadata,
 ) => userHasPermissionInMetadata(action, object);
 
 export const hasAllPermissions = (actions: string[]) => userHasAllPermissions(actions, getCurrentUser());
