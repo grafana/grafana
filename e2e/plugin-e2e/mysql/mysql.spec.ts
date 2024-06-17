@@ -9,14 +9,17 @@ import {
   tableNameWithSpecialCharacter,
 } from './mocks/mysql.mocks';
 
+
 test.beforeEach(async ({ context, selectors, explorePage }) => {
   await explorePage.datasource.set('gdev-mysql');
   await context.route(selectors.apis.DataSource.queryPattern, async (route, request) => {
-    switch (request.postDataJSON().queries[0].refId) {
+    const refId = request.postDataJSON().queries[0].refId;
+    if (/fields-.*/g.test(refId)) {
+      return route.fulfill({ json: fieldsResponse(refId), status: 200 });
+    }
+    switch (refId) {
       case 'tables':
         return route.fulfill({ json: tablesResponse, status: 200 });
-      case 'fields':
-        return route.fulfill({ json: fieldsResponse, status: 200 });
       case 'datasets':
         return route.fulfill({ json: datasetResponse, status: 200 });
       default:

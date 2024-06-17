@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { QueryEditorExpressionType } from '../../expressions';
 import { SQLQuery } from '../../types';
+import { buildMockDB } from '../SqlComponents.testHelpers';
 
 import { SelectRow } from './SelectRow';
 
@@ -38,14 +39,7 @@ describe('SelectRow', () => {
 
   it('should show query passed as a prop', () => {
     const onQueryChange = jest.fn();
-    render(
-      <SelectRow
-        onQueryChange={onQueryChange}
-        query={query}
-        columns={[]}
-        db={{ functions: () => [], toRawSql: jest.fn() } as any}
-      />
-    );
+    render(<SelectRow onQueryChange={onQueryChange} query={query} columns={[]} db={buildMockDB()} />);
 
     expect(screen.getByTestId(selectors.components.SQLQueryEditor.selectAggregation)).toHaveTextContent('$__timeGroup');
     expect(screen.getByTestId(selectors.components.SQLQueryEditor.selectAlias)).toHaveTextContent('time');
@@ -56,14 +50,7 @@ describe('SelectRow', () => {
   describe('should handle multiple columns manipulations', () => {
     it('adding column', () => {
       const onQueryChange = jest.fn();
-      render(
-        <SelectRow
-          onQueryChange={onQueryChange}
-          query={query}
-          columns={[]}
-          db={{ functions: () => [], toRawSql: jest.fn() } as any}
-        />
-      );
+      render(<SelectRow onQueryChange={onQueryChange} query={query} columns={[]} db={buildMockDB()} />);
       screen.getByRole('button', { name: 'Add column' }).click();
       expect(onQueryChange).toHaveBeenCalledWith({
         ...query,
@@ -86,7 +73,7 @@ describe('SelectRow', () => {
         <SelectRow
           columns={[]}
           onQueryChange={onQueryChange}
-          db={{ functions: () => [], toRawSql: jest.fn() } as any}
+          db={buildMockDB()}
           query={{
             ...query,
             sql: {
@@ -125,7 +112,7 @@ describe('SelectRow', () => {
       render(
         <SelectRow
           columns={[]}
-          db={{ functions: () => [], toRawSql: jest.fn() } as any}
+          db={buildMockDB()}
           onQueryChange={onQueryChange}
           query={{
             ...query,
@@ -148,6 +135,8 @@ describe('SelectRow', () => {
 
     it('modifying second column aggregation', async () => {
       const onQueryChange = jest.fn();
+      const db = buildMockDB();
+      db.functions = () => [{ name: 'AVG' }];
       const multipleColumns = Object.freeze<SQLQuery>({
         ...query,
         sql: {
@@ -161,14 +150,7 @@ describe('SelectRow', () => {
           ],
         },
       });
-      render(
-        <SelectRow
-          columns={[]}
-          db={{ functions: () => [{ name: 'AVG' }], toRawSql: jest.fn() } as any}
-          onQueryChange={onQueryChange}
-          query={multipleColumns}
-        />
-      );
+      render(<SelectRow columns={[]} db={db} onQueryChange={onQueryChange} query={multipleColumns} />);
       await userEvent.click(screen.getAllByTestId(selectors.components.SQLQueryEditor.selectAggregation)[1]);
       await userEvent.click(screen.getByText('AVG'));
 
@@ -189,6 +171,7 @@ describe('SelectRow', () => {
 
     it('modifying second column name with custom value', async () => {
       const onQueryChange = jest.fn();
+      const db = buildMockDB();
       const multipleColumns = Object.freeze<SQLQuery>({
         ...query,
         sql: {
@@ -204,7 +187,7 @@ describe('SelectRow', () => {
       });
       render(
         <SelectRow
-          db={{ functions: () => [{ name: 'AVG' }], toRawSql: jest.fn() } as any}
+          db={db}
           columns={[{ label: 'newColumn', value: 'newColumn' }]}
           onQueryChange={onQueryChange}
           query={multipleColumns}
@@ -233,6 +216,7 @@ describe('SelectRow', () => {
 
     it('handles second parameter', async () => {
       const onQueryChange = jest.fn();
+      const db = buildMockDB();
       const multipleColumns = Object.freeze<SQLQuery>({
         ...query,
         sql: {
@@ -248,12 +232,7 @@ describe('SelectRow', () => {
       });
       render(
         <SelectRow
-          db={
-            {
-              toRawSql: jest.fn(),
-              functions: () => [],
-            } as any
-          }
+          db={db}
           columns={[{ label: 'gaugeValue', value: 'gaugeValue' }]}
           onQueryChange={onQueryChange}
           query={multipleColumns}
@@ -282,10 +261,11 @@ describe('SelectRow', () => {
 
     it('handles second parameter removal', () => {
       const onQueryChange = jest.fn();
+      const db = buildMockDB();
       render(
         <SelectRow
           onQueryChange={onQueryChange}
-          db={{ functions: () => [], toRawSql: jest.fn() } as any}
+          db={db}
           columns={[]}
           query={{
             ...query,

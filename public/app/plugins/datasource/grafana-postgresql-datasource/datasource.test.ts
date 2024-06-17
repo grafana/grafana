@@ -36,6 +36,12 @@ const fakeDataSourceSrv: DataSourceSrv = {
   getInstanceSettings: () => ({ id: 8674 }),
 } as unknown as DataSourceSrv;
 
+const uid = '0000';
+// mock uuidv4 to give back the same value every time
+jest.mock('uuid', () => ({
+  v4: () => uid,
+}));
+
 let origBackendSrv: BackendSrv;
 let origDataSourceSrv: DataSourceSrv;
 beforeAll(() => {
@@ -404,8 +410,7 @@ describe('PostgreSQLDatasource', () => {
     it('should return a list of fields when fetchFields is called', async () => {
       const fetchFieldsResponse = {
         results: {
-          columns: {
-            refId: 'columns',
+          [`columns-${uid}`]: {
             frames: [
               dataFrameToJSON(
                 createDataFrame({
