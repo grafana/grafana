@@ -474,7 +474,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		return historian.NewAnnotationBackend(store, rs, met), nil
 	}
 	if backend == historian.BackendTypeLoki {
-		l.Info("loki state history backend is enabled, log all changes", cfg.LogAll)
+		l.Info(fmt.Sprintf("loki state history backend is enabled, log all changes %v, otel enabled %v", cfg.LogAll, cfg.OtelEnabled))
 		lcfg, err := historian.NewLokiConfig(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)

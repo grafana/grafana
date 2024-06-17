@@ -42,6 +42,7 @@ type LokiConfig struct {
 	Encoder           encoder
 	MaxQueryLength    time.Duration
 	LogAll            bool
+	OtelConfig        OtelConfig
 }
 
 func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig, error) {
@@ -80,6 +81,13 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 		// Snappy-compressed protobuf is the default, same goes for Promtail.
 		Encoder: SnappyProtoEncoder{},
 		LogAll:  cfg.LogAll,
+		OtelConfig: OtelConfig{
+			Enabled:       cfg.OtelEnabled,
+			Endpoint:      cfg.OtelEndpoint,
+			EnableTLS:     cfg.OtelEnableTLS,
+			TLSSkipVerify: cfg.OtelTLSSkipVerify,
+			ApiKey:        cfg.OtelApiKey,
+		},
 	}, nil
 }
 

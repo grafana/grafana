@@ -59,7 +59,7 @@ type RemoteLokiBackend struct {
 func NewRemoteLokiBackend(cfg LokiConfig, req client.Requester, metrics *metrics.Historian) *RemoteLokiBackend {
 	logger := log.New("ngalert.state.historian", "backend", "loki")
 	return &RemoteLokiBackend{
-		client:         NewLokiClient(cfg, req, metrics, logger),
+		client:         NewHistorianExportClient(cfg, req, metrics, logger),
 		externalLabels: cfg.ExternalLabels,
 		clock:          clock.New(),
 		metrics:        metrics,
@@ -410,4 +410,12 @@ func queryHasLogFilters(query models.HistoryQuery) bool {
 		query.DashboardUID != "" ||
 		query.PanelID != 0 ||
 		len(query.Labels) > 0
+}
+
+func NewHistorianExportClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger) remoteLokiClient {
+	if cfg.OtelConfig.Enabled {
+		return NewOtelLokiClient(cfg.OtelConfig, metrics)
+	}
+
+	return NewLokiClient(cfg, req, metrics, logger)
 }
