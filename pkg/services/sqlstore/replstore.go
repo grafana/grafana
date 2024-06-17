@@ -19,10 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	testReadReplStore *SQLStore
-)
-
 // ReplStore is a wrapper around a main SQLStore and a read-only SQLStore. The
 // main SQLStore is anonymous, so the ReplStore may be used directly as a
 // SQLStore.
