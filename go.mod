@@ -474,5 +474,5 @@ replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
 // lock for k8s api server compat
 replace github.com/google/cel-go => github.com/google/cel-go v0.17.7
 
-// lock for mysql driver for mysql tsdb
+// lock for mysql tsdb compat
 replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
