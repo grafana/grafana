@@ -616,6 +616,9 @@
     },
     "query-library": {
       "delete-query": "Delete query",
+      "delete-query-title": "Delete",
+      "delete-query-button": "Delete",
+      "delete-query-text": "Are you sure you want to permanently delete your query?",
       "query-deleted": "Query deleted"
     },
     "run-query": {
