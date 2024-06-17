@@ -254,7 +254,7 @@ describe('Popover menu', () => {
     setup({
       onClickFilterOutString: undefined,
       onClickFilterString: undefined,
-     });
+    });
     await userEvent.click(screen.getByText('log message 1'));
     expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
   });
@@ -264,7 +264,7 @@ describe('Popover menu', () => {
     setup({
       onClickFilterOutString,
       onClickFilterString,
-     });
+    });
     await userEvent.click(screen.getByText('log message 1'));
     expect(screen.getByText('Copy selection')).toBeInTheDocument();
     await userEvent.click(screen.getByText('Add as line contains filter'));
@@ -272,7 +272,7 @@ describe('Popover menu', () => {
     await userEvent.click(screen.getByText('log message 1'));
     expect(screen.getByText('Copy selection')).toBeInTheDocument();
     await userEvent.click(screen.getByText('Add as line does not contain filter'));
-    
+
     expect(onClickFilterOutString).toHaveBeenCalledTimes(1);
     expect(onClickFilterString).toHaveBeenCalledTimes(1);
   });
