@@ -18,20 +18,20 @@ type ZanzanaSettings struct {
 	Mode ZanzanaMode
 }
 
-func (c *Cfg) readZanzanaSettings() {
+func (cfg *Cfg) readZanzanaSettings() {
 	s := ZanzanaSettings{}
 
-	sec := c.Raw.Section("zanzana")
+	sec := cfg.Raw.Section("zanzana")
 	s.Mode = ZanzanaMode(sec.Key("mode").MustString("embedded"))
 
 	validModes := []ZanzanaMode{ZanzanaModeEmbedded, ZanzanaModeClient}
 
 	if !slices.Contains(validModes, s.Mode) {
-		c.Logger.Warn("Invalid zanzana mode", "expected", validModes, "got", s.Mode)
+		cfg.Logger.Warn("Invalid zanzana mode", "expected", validModes, "got", s.Mode)
 		s.Mode = "embedded"
 	}
 
 	s.Addr = sec.Key("address").MustString("")
 
-	c.Zanzana = s
+	cfg.Zanzana = s
 }
