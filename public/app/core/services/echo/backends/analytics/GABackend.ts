@@ -13,17 +13,17 @@ export class GAEchoBackend implements EchoBackend<PageviewEchoEvent, GAEchoBacke
 
   constructor(public options: GAEchoBackendOptions) {
     const url = `https://www.google-analytics.com/analytics${options.debug ? '_debug' : ''}.js`;
-    loadScript(url);
-
-    const ga = (window.ga =
-      window.ga ||
-      // this had the equivalent of `eslint-disable-next-line prefer-arrow/prefer-arrow-functions`
-      function () {
-        (ga.q = ga.q || []).push(arguments);
-      });
-    ga.l = +new Date();
-    ga('create', options.googleAnalyticsId, 'auto');
-    ga('set', 'anonymizeIp', true);
+    loadScript(url).then((script) => {
+      const ga = (window.ga =
+        window.ga ||
+        // this had the equivalent of `eslint-disable-next-line prefer-arrow/prefer-arrow-functions`
+        function () {
+          (ga.q = ga.q || []).push(arguments);
+        });
+      ga.l = +new Date();
+      ga('create', options.googleAnalyticsId, 'auto');
+      ga('set', 'anonymizeIp', true);
+    });
   }
 
   addEvent = (e: PageviewEchoEvent) => {
