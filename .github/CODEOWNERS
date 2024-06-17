@@ -79,7 +79,7 @@
 /pkg/components/apikeygen/ @grafana/identity-access-team
 /pkg/components/satokengen/ @grafana/identity-access-team
 /pkg/components/dashdiffs/ @grafana/grafana-app-platform-squad
-/pkg/components/imguploader/ @grafana/grafana-backend-group
+/pkg/components/imguploader/ @grafana/alerting-backend
 /pkg/components/loki/ @grafana/grafana-backend-group
 /pkg/components/null/ @grafana/grafana-backend-group
 /pkg/components/simplejson/ @grafana/grafana-backend-group
@@ -104,6 +104,8 @@
 /pkg/server/ @grafana/grafana-backend-group
 /pkg/apiserver @grafana/grafana-app-platform-squad
 /pkg/apimachinery @grafana/grafana-app-platform-squad
+/pkg/apimachinery/identity/ @grafana/identity-access-team
+/pkg/apimachinery/errutil/ @grafana/grafana-backend-group
 /pkg/promlib @grafana/observability-metrics
 /pkg/services/annotations/ @grafana/grafana-search-and-storage
 /pkg/services/apikey/ @grafana/identity-access-team
@@ -154,8 +156,6 @@
 
 /pkg/infra/kvstore/ @grafana/grafana-backend-group
 /pkg/infra/fs/ @grafana/grafana-backend-group
-/pkg/infra/x/ @grafana/grafana-backend-group
-
 
 # devenv
 # Backend code, developers environment
@@ -223,6 +223,7 @@
 /devenv/local-npm/ @grafana/frontend-ops
 /devenv/vscode/ @grafana/frontend-ops
 /devenv/setup.sh @grafana/grafana-backend-services-squad
+/devenv/plugins.yaml @grafana/plugins-platform-frontend
 
 # Emails
 /emails/ @grafana/alerting-frontend
@@ -241,6 +242,7 @@
 /Makefile @grafana/grafana-release-guild
 /scripts/build/ @grafana/grafana-release-guild
 /scripts/list-release-artifacts.sh @grafana/grafana-release-guild
+/.trivyignore @grafana/grafana-backend-services-squad
 
 # OSS Plugin Partnerships backend code
 /pkg/tsdb/cloudwatch/ @grafana/aws-datasources
@@ -413,7 +415,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/live/ @grafana/grafana-app-platform-squad
 /public/app/features/apiserver/ @grafana/grafana-app-platform-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
-/public/app/features/manage-dashboards/RecentlyDeletedPage.tsx @grafana/grafana-frontend-platform
 /public/app/features/notifications/ @grafana/grafana-frontend-platform
 /public/app/features/org/ @grafana/grafana-frontend-platform
 /public/app/features/panel/ @grafana/dashboards-squad
@@ -599,6 +600,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/services/anonymous/ @grafana/identity-access-team
 /pkg/services/auth/ @grafana/identity-access-team
 /pkg/services/authn/ @grafana/identity-access-team
+/pkg/services/authz/ @grafana/identity-access-team
 /pkg/services/signingkeys/ @grafana/identity-access-team
 /pkg/services/dashboards/accesscontrol.go @grafana/identity-access-team
 /pkg/services/datasources/guardian/ @grafana/identity-access-team
@@ -658,6 +660,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/backport.yml @grafana/grafana-release-guild
 /.github/workflows/bump-version.yml @grafana/grafana-release-guild
 /.github/workflows/close-milestone.yml @grafana/grafana-release-guild
+/.github/workflows/release-pr.yml @grafana/grafana-release-guild
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
@@ -686,7 +689,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/stale.yml @grafana/grafana-release-guild
 /.github/workflows/update-changelog.yml @grafana/grafana-release-guild
 /.github/workflows/update-make-docs.yml @grafana/docs-tooling
-/.github/workflows/snyk.yml @grafana/security-team
 /.github/workflows/scripts/kinds/verify-kinds.go @grafana/platform-cat
 /.github/workflows/publish-kinds-next.yml @grafana/platform-cat
 /.github/workflows/publish-kinds-release.yml @grafana/platform-cat
@@ -701,6 +703,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/run-scenes-e2e.yml @grafana/dashboards-squad
 /.github/workflows/go_lint.yml @grafana/grafana-backend-services-squad
+/.github/workflows/trivy-scan.yml @grafana/grafana-backend-services-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

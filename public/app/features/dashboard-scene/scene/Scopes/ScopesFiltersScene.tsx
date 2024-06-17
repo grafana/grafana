@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import React from 'react';
+import { finalize, from, Subscription } from 'rxjs';
 
-import { Scope } from '@grafana/data';
+import { GrafanaTheme2, Scope } from '@grafana/data';
 import {
   SceneComponentProps,
   sceneGraph,
@@ -11,27 +13,30 @@ import {
   SceneObjectUrlValues,
   SceneObjectWithUrlSync,
 } from '@grafana/scenes';
+import { Button, Drawer, Spinner, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
-import { ScopesFiltersAdvancedSelector } from './ScopesFiltersAdvancedSelector';
-import { ScopesFiltersBasicSelector } from './ScopesFiltersBasicSelector';
+import { ScopesInput } from './ScopesInput';
 import { ScopesScene } from './ScopesScene';
-import { fetchNodes, fetchScope, fetchScopes } from './api';
-import { NodesMap } from './types';
+import { ScopesTreeLevel } from './ScopesTreeLevel';
+import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
+import { NodesMap, SelectedScope, TreeScope } from './types';
 
 export interface ScopesFiltersSceneState extends SceneObjectState {
   nodes: NodesMap;
   loadingNodeName: string | undefined;
-  scopes: Scope[];
-  dirtyScopeNames: string[];
+  scopes: SelectedScope[];
+  treeScopes: TreeScope[];
   isLoadingScopes: boolean;
-  isBasicOpened: boolean;
-  isAdvancedOpened: boolean;
+  isOpened: boolean;
 }
 
 export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState> implements SceneObjectWithUrlSync {
   static Component = ScopesFiltersSceneRenderer;
 
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scopes'] });
+
+  private nodesFetchingSub: Subscription | undefined;
 
   get scopesParent(): ScopesScene {
     return sceneGraph.getAncestor(this, ScopesScene);
@@ -53,26 +58,31 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       },
       loadingNodeName: undefined,
       scopes: [],
-      dirtyScopeNames: [],
+      treeScopes: [],
       isLoadingScopes: false,
-      isBasicOpened: false,
-      isAdvancedOpened: false,
+      isOpened: false,
     });
 
     this.addActivationHandler(() => {
       this.fetchBaseNodes();
+
+      return () => {
+        this.nodesFetchingSub?.unsubscribe();
+      };
     });
   }
 
   public getUrlState() {
-    return { scopes: this.getScopeNames() };
+    return {
+      scopes: this.state.scopes.map(({ scope }) => scope.metadata.name),
+    };
   }
 
   public updateFromUrl(values: SceneObjectUrlValues) {
-    let dirtyScopeNames = values.scopes ?? [];
-    dirtyScopeNames = Array.isArray(dirtyScopeNames) ? dirtyScopeNames : [dirtyScopeNames];
+    let scopeNames = values.scopes ?? [];
+    scopeNames = Array.isArray(scopeNames) ? scopeNames : [scopeNames];
 
-    this.updateScopes(dirtyScopeNames);
+    this.updateScopes(scopeNames.map((scopeName) => ({ scopeName, path: [] })));
   }
 
   public fetchBaseNodes() {
@@ -80,6 +90,8 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public async updateNode(path: string[], isExpanded: boolean, query: string) {
+    this.nodesFetchingSub?.unsubscribe();
+
     let nodes = { ...this.state.nodes };
     let currentLevel: NodesMap = nodes;
 
@@ -90,20 +102,34 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     const name = path[path.length - 1];
     const currentNode = currentLevel[name];
 
-    if (isExpanded || currentNode.query !== query) {
-      this.setState({ loadingNodeName: name });
-
-      currentNode.nodes = await fetchNodes(name, query);
-    }
+    const isDifferentQuery = currentNode.query !== query;
 
     currentNode.isExpanded = isExpanded;
     currentNode.query = query;
 
     this.setState({ nodes, loadingNodeName: undefined });
+
+    if (isExpanded || isDifferentQuery) {
+      this.setState({ loadingNodeName: name });
+
+      this.nodesFetchingSub = from(fetchNodes(name, query))
+        .pipe(
+          finalize(() => {
+            this.setState({ loadingNodeName: undefined });
+          })
+        )
+        .subscribe((childNodes) => {
+          currentNode.nodes = childNodes;
+
+          this.setState({ nodes });
+
+          this.nodesFetchingSub?.unsubscribe();
+        });
+    }
   }
 
   public toggleNodeSelect(path: string[]) {
-    let dirtyScopeNames = [...this.state.dirtyScopeNames];
+    let treeScopes = [...this.state.treeScopes];
 
     let siblings = this.state.nodes;
 
@@ -111,81 +137,145 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       siblings = siblings[path[idx]].nodes;
     }
 
-    const name = path[path.length - 1];
-    const { linkId } = siblings[name];
+    const nodeName = path[path.length - 1];
+    const { linkId } = siblings[nodeName];
 
-    const selectedIdx = dirtyScopeNames.findIndex((scopeName) => scopeName === linkId);
+    const selectedIdx = treeScopes.findIndex(({ scopeName }) => scopeName === linkId);
 
     if (selectedIdx === -1) {
       fetchScope(linkId!);
 
       const selectedFromSameNode =
-        dirtyScopeNames.length === 0 || Object.values(siblings).some(({ linkId }) => linkId === dirtyScopeNames[0]);
+        treeScopes.length === 0 || Object.values(siblings).some(({ linkId }) => linkId === treeScopes[0].scopeName);
 
-      this.setState({ dirtyScopeNames: !selectedFromSameNode ? [linkId!] : [...dirtyScopeNames, linkId!] });
+      const treeScope = {
+        scopeName: linkId!,
+        path,
+      };
+
+      this.setState({ treeScopes: !selectedFromSameNode ? [treeScope] : [...treeScopes, treeScope] });
     } else {
-      dirtyScopeNames.splice(selectedIdx, 1);
+      treeScopes.splice(selectedIdx, 1);
 
-      this.setState({ dirtyScopeNames });
+      this.setState({ treeScopes });
     }
   }
 
-  public openBasicSelector() {
+  public open() {
     if (!this.scopesParent.state.isViewing) {
-      this.setState({ isBasicOpened: true, isAdvancedOpened: false });
+      this.setState({ isOpened: true });
     }
   }
 
-  public closeBasicSelector() {
-    this.setState({ isBasicOpened: false });
-  }
-
-  public openAdvancedSelector() {
-    if (!this.scopesParent.state.isViewing) {
-      this.setState({ isBasicOpened: false, isAdvancedOpened: true });
-    }
-  }
-
-  public closeAdvancedSelector() {
-    this.setState({ isAdvancedOpened: false });
+  public close() {
+    this.setState({ isOpened: false });
   }
 
   public getSelectedScopes(): Scope[] {
-    return this.state.scopes;
+    return this.state.scopes.map(({ scope }) => scope);
   }
 
-  public async updateScopes(dirtyScopeNames = this.state.dirtyScopeNames) {
-    if (isEqual(dirtyScopeNames, this.getScopeNames())) {
+  public async updateScopes(treeScopes = this.state.treeScopes) {
+    if (isEqual(treeScopes, this.getTreeScopes())) {
       return;
     }
 
-    this.setState({ dirtyScopeNames, isLoadingScopes: true });
+    this.setState({ treeScopes, isLoadingScopes: true });
 
-    this.setState({ scopes: await fetchScopes(dirtyScopeNames), isLoadingScopes: false });
+    this.setState({ scopes: await fetchSelectedScopes(treeScopes), isLoadingScopes: false });
   }
 
   public resetDirtyScopeNames() {
-    this.setState({ dirtyScopeNames: this.getScopeNames() });
+    this.setState({ treeScopes: this.getTreeScopes() });
   }
 
   public removeAllScopes() {
-    this.setState({ scopes: [], dirtyScopeNames: [], isLoadingScopes: false });
+    this.setState({ scopes: [], treeScopes: [], isLoadingScopes: false });
   }
 
   public enterViewMode() {
-    this.setState({ isBasicOpened: false, isAdvancedOpened: false });
+    this.setState({ isOpened: false });
   }
 
-  private getScopeNames(): string[] {
-    return this.state.scopes.map(({ metadata: { name } }) => name);
+  private getTreeScopes(): TreeScope[] {
+    return this.state.scopes.map(({ scope, path }) => ({
+      scopeName: scope.metadata.name,
+      path,
+    }));
   }
 }
 
 export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<ScopesFiltersScene>) {
+  const styles = useStyles2(getStyles);
+  const { nodes, loadingNodeName, treeScopes, isLoadingScopes, isOpened, scopes } = model.useState();
+  const { isViewing } = model.scopesParent.useState();
+
   return (
     <>
-      <ScopesFiltersBasicSelector model={model} />
-      <ScopesFiltersAdvancedSelector model={model} />
+      <ScopesInput
+        nodes={nodes}
+        scopes={scopes}
+        isDisabled={isViewing}
+        isLoading={isLoadingScopes}
+        onInputClick={() => model.open()}
+        onRemoveAllClick={() => model.removeAllScopes()}
+      />
+
+      {isOpened && (
+        <Drawer
+          title={t('scopes.filters.title', 'Select scopes')}
+          size="sm"
+          onClose={() => {
+            model.close();
+            model.resetDirtyScopeNames();
+          }}
+        >
+          {isLoadingScopes ? (
+            <Spinner data-testid="scopes-filters-loading" />
+          ) : (
+            <ScopesTreeLevel
+              nodes={nodes}
+              nodePath={['']}
+              loadingNodeName={loadingNodeName}
+              scopes={treeScopes}
+              onNodeUpdate={(path, isExpanded, query) => model.updateNode(path, isExpanded, query)}
+              onNodeSelectToggle={(path) => model.toggleNodeSelect(path)}
+            />
+          )}
+          <div className={styles.buttonGroup}>
+            <Button
+              variant="primary"
+              data-testid="scopes-filters-apply"
+              onClick={() => {
+                model.close();
+                model.updateScopes();
+              }}
+            >
+              <Trans i18nKey="scopes.filters.apply">Apply</Trans>
+            </Button>
+            <Button
+              variant="secondary"
+              data-testid="scopes-filters-cancel"
+              onClick={() => {
+                model.close();
+                model.resetDirtyScopeNames();
+              }}
+            >
+              <Trans i18nKey="scopes.filters.cancel">Cancel</Trans>
+            </Button>
+          </div>
+        </Drawer>
+      )}
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    buttonGroup: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      marginTop: theme.spacing(8),
+    }),
+  };
+};
