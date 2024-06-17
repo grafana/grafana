@@ -1263,13 +1263,20 @@ def verify_grafanacom_step():
         "environment": {
             # JEV: how would i know this is actually the gcom api key? See scripts/drone/rgm.star:126
             "GCOM_API_KEY": from_secret("grafana_api_key"),
+            "GCP_KEY": from_secret("gcp_grafanauploads"),
         },
         "commands": [
             # Download/install gcom utility
-            # JEV: auth?
             "curl -L -o /usr/local/bin/gcom https://github.com/grafana/gcom/releases/latest/download/gcom-linux-amd64",
             "chmod +x /usr/local/bin/gcom",
+
+            # Authenticate gcloud
+            "printenv GCP_KEY > /tmp/key.json",
+            "gcloud auth activate-service-account --key-file=/tmp/key.json",
             "./drone/verify-grafanacom.sh",
+
+            # Remove the temporary key file
+            "rm /tmp/key.json",
         ],
         "depends_on": ["publish-grafanacom"], # JEV: anything else?
     }
