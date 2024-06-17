@@ -29,7 +29,6 @@ type TimeIntervalsGetter interface {
 type TimeIntervalInterface interface {
 	Create(ctx context.Context, timeInterval *v0alpha1.TimeInterval, opts v1.CreateOptions) (*v0alpha1.TimeInterval, error)
 	Update(ctx context.Context, timeInterval *v0alpha1.TimeInterval, opts v1.UpdateOptions) (*v0alpha1.TimeInterval, error)
-	UpdateStatus(ctx context.Context, timeInterval *v0alpha1.TimeInterval, opts v1.UpdateOptions) (*v0alpha1.TimeInterval, error)
 	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
 	Get(ctx context.Context, name string, opts v1.GetOptions) (*v0alpha1.TimeInterval, error)
@@ -37,7 +36,6 @@ type TimeIntervalInterface interface {
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v0alpha1.TimeInterval, err error)
 	Apply(ctx context.Context, timeInterval *alertingnotificationsv0alpha1.TimeIntervalApplyConfiguration, opts v1.ApplyOptions) (result *v0alpha1.TimeInterval, err error)
-	ApplyStatus(ctx context.Context, timeInterval *alertingnotificationsv0alpha1.TimeIntervalApplyConfiguration, opts v1.ApplyOptions) (result *v0alpha1.TimeInterval, err error)
 	TimeIntervalExpansion
 }
 
@@ -127,22 +125,6 @@ func (c *timeIntervals) Update(ctx context.Context, timeInterval *v0alpha1.TimeI
 	return
 }
 
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *timeIntervals) UpdateStatus(ctx context.Context, timeInterval *v0alpha1.TimeInterval, opts v1.UpdateOptions) (result *v0alpha1.TimeInterval, err error) {
-	result = &v0alpha1.TimeInterval{}
-	err = c.client.Put().
-		Namespace(c.ns).
-		Resource("timeintervals").
-		Name(timeInterval.Name).
-		SubResource("status").
-		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(timeInterval).
-		Do(ctx).
-		Into(result)
-	return
-}
-
 // Delete takes name of the timeInterval and deletes it. Returns an error if one occurs.
 func (c *timeIntervals) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
@@ -204,36 +186,6 @@ func (c *timeIntervals) Apply(ctx context.Context, timeInterval *alertingnotific
 		Namespace(c.ns).
 		Resource("timeintervals").
 		Name(*name).
-		VersionedParams(&patchOpts, scheme.ParameterCodec).
-		Body(data).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// ApplyStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
-func (c *timeIntervals) ApplyStatus(ctx context.Context, timeInterval *alertingnotificationsv0alpha1.TimeIntervalApplyConfiguration, opts v1.ApplyOptions) (result *v0alpha1.TimeInterval, err error) {
-	if timeInterval == nil {
-		return nil, fmt.Errorf("timeInterval provided to Apply must not be nil")
-	}
-	patchOpts := opts.ToPatchOptions()
-	data, err := json.Marshal(timeInterval)
-	if err != nil {
-		return nil, err
-	}
-
-	name := timeInterval.Name
-	if name == nil {
-		return nil, fmt.Errorf("timeInterval.Name must be provided to Apply")
-	}
-
-	result = &v0alpha1.TimeInterval{}
-	err = c.client.Patch(types.ApplyPatchType).
-		Namespace(c.ns).
-		Resource("timeintervals").
-		Name(*name).
-		SubResource("status").
 		VersionedParams(&patchOpts, scheme.ParameterCodec).
 		Body(data).
 		Do(ctx).

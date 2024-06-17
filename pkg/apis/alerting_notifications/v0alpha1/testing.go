@@ -10,8 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// +k8s:openapi-gen=false
+// +k8s:deepcopy-gen=false
 type IntervalMutator func(spec *Interval)
 
+// +k8s:openapi-gen=false
+// +k8s:deepcopy-gen=false
 type IntervalGenerator struct {
 	mutators []IntervalMutator
 }

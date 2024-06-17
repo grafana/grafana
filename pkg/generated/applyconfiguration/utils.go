@@ -19,10 +19,6 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 	// Group=notifications.alerting.grafana.app, Version=v0alpha1
 	case v0alpha1.SchemeGroupVersion.WithKind("Interval"):
 		return &alertingnotificationsv0alpha1.IntervalApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("Status"):
-		return &alertingnotificationsv0alpha1.StatusApplyConfiguration{}
-	case v0alpha1.SchemeGroupVersion.WithKind("StatusOperatorState"):
-		return &alertingnotificationsv0alpha1.StatusOperatorStateApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TimeInterval"):
 		return &alertingnotificationsv0alpha1.TimeIntervalApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TimeIntervalSpec"):

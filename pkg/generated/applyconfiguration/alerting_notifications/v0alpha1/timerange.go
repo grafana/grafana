@@ -7,8 +7,8 @@ package v0alpha1
 // TimeRangeApplyConfiguration represents an declarative configuration of the TimeRange type for use
 // with apply.
 type TimeRangeApplyConfiguration struct {
-	EndMinute   *string `json:"endMinute,omitempty"`
-	StartMinute *string `json:"startMinute,omitempty"`
+	EndTime   *string `json:"end_time,omitempty"`
+	StartTime *string `json:"start_time,omitempty"`
 }
 
 // TimeRangeApplyConfiguration constructs an declarative configuration of the TimeRange type for use with
@@ -17,18 +17,18 @@ func TimeRange() *TimeRangeApplyConfiguration {
 	return &TimeRangeApplyConfiguration{}
 }
 
-// WithEndMinute sets the EndMinute field in the declarative configuration to the given value
+// WithEndTime sets the EndTime field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the EndMinute field is set to the value of the last call.
-func (b *TimeRangeApplyConfiguration) WithEndMinute(value string) *TimeRangeApplyConfiguration {
-	b.EndMinute = &value
+// If called multiple times, the EndTime field is set to the value of the last call.
+func (b *TimeRangeApplyConfiguration) WithEndTime(value string) *TimeRangeApplyConfiguration {
+	b.EndTime = &value
 	return b
 }
 
-// WithStartMinute sets the StartMinute field in the declarative configuration to the given value
+// WithStartTime sets the StartTime field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the StartMinute field is set to the value of the last call.
-func (b *TimeRangeApplyConfiguration) WithStartMinute(value string) *TimeRangeApplyConfiguration {
-	b.StartMinute = &value
+// If called multiple times, the StartTime field is set to the value of the last call.
+func (b *TimeRangeApplyConfiguration) WithStartTime(value string) *TimeRangeApplyConfiguration {
+	b.StartTime = &value
 	return b
 }

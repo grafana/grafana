@@ -90,18 +90,6 @@ func (c *FakeTimeIntervals) Update(ctx context.Context, timeInterval *v0alpha1.T
 	return obj.(*v0alpha1.TimeInterval), err
 }
 
-// UpdateStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeTimeIntervals) UpdateStatus(ctx context.Context, timeInterval *v0alpha1.TimeInterval, opts v1.UpdateOptions) (*v0alpha1.TimeInterval, error) {
-	obj, err := c.Fake.
-		Invokes(testing.NewUpdateSubresourceAction(timeintervalsResource, "status", c.ns, timeInterval), &v0alpha1.TimeInterval{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v0alpha1.TimeInterval), err
-}
-
 // Delete takes name of the timeInterval and deletes it. Returns an error if one occurs.
 func (c *FakeTimeIntervals) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
@@ -144,29 +132,6 @@ func (c *FakeTimeIntervals) Apply(ctx context.Context, timeInterval *alertingnot
 	}
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(timeintervalsResource, c.ns, *name, types.ApplyPatchType, data), &v0alpha1.TimeInterval{})
-
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v0alpha1.TimeInterval), err
-}
-
-// ApplyStatus was generated because the type contains a Status member.
-// Add a +genclient:noStatus comment above the type to avoid generating ApplyStatus().
-func (c *FakeTimeIntervals) ApplyStatus(ctx context.Context, timeInterval *alertingnotificationsv0alpha1.TimeIntervalApplyConfiguration, opts v1.ApplyOptions) (result *v0alpha1.TimeInterval, err error) {
-	if timeInterval == nil {
-		return nil, fmt.Errorf("timeInterval provided to Apply must not be nil")
-	}
-	data, err := json.Marshal(timeInterval)
-	if err != nil {
-		return nil, err
-	}
-	name := timeInterval.Name
-	if name == nil {
-		return nil, fmt.Errorf("timeInterval.Name must be provided to Apply")
-	}
-	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(timeintervalsResource, c.ns, *name, types.ApplyPatchType, data, "status"), &v0alpha1.TimeInterval{})
 
 	if obj == nil {
 		return nil, err

@@ -7,7 +7,7 @@ package v0alpha1
 // TimeIntervalSpecApplyConfiguration represents an declarative configuration of the TimeIntervalSpec type for use
 // with apply.
 type TimeIntervalSpecApplyConfiguration struct {
-	Intervals []IntervalApplyConfiguration `json:"intervals,omitempty"`
+	TimeIntervals []IntervalApplyConfiguration `json:"time_intervals,omitempty"`
 }
 
 // TimeIntervalSpecApplyConfiguration constructs an declarative configuration of the TimeIntervalSpec type for use with
@@ -16,15 +16,15 @@ func TimeIntervalSpec() *TimeIntervalSpecApplyConfiguration {
 	return &TimeIntervalSpecApplyConfiguration{}
 }
 
-// WithIntervals adds the given value to the Intervals field in the declarative configuration
+// WithTimeIntervals adds the given value to the TimeIntervals field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
-// If called multiple times, values provided by each call will be appended to the Intervals field.
-func (b *TimeIntervalSpecApplyConfiguration) WithIntervals(values ...*IntervalApplyConfiguration) *TimeIntervalSpecApplyConfiguration {
+// If called multiple times, values provided by each call will be appended to the TimeIntervals field.
+func (b *TimeIntervalSpecApplyConfiguration) WithTimeIntervals(values ...*IntervalApplyConfiguration) *TimeIntervalSpecApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
-			panic("nil value passed to WithIntervals")
+			panic("nil value passed to WithTimeIntervals")
 		}
-		b.Intervals = append(b.Intervals, *values[i])
+		b.TimeIntervals = append(b.TimeIntervals, *values[i])
 	}
 	return b
 }

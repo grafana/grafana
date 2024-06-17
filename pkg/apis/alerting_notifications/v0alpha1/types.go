@@ -14,7 +14,6 @@ type TimeInterval struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
 	Spec              TimeIntervalSpec `json:"spec"`
-	Status            Status           `json:"status"`
 }
 
 func (o *TimeInterval) GetSpec() any {
@@ -28,35 +27,6 @@ func (o *TimeInterval) SetSpec(spec any) error {
 	}
 	o.Spec = cast
 	return nil
-}
-
-func (o *TimeInterval) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
-}
-
-func (o *TimeInterval) GetSubresource(name string) (any, bool) {
-	switch name {
-	case "status":
-		return o.Status, true
-	default:
-		return nil, false
-	}
-}
-
-func (o *TimeInterval) SetSubresource(name string, value any) error {
-	switch name {
-	case "status":
-		cast, ok := value.(Status)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type Status", value)
-		}
-		o.Status = cast
-		return nil
-	default:
-		return fmt.Errorf("subresource '%s' does not exist", name)
-	}
 }
 
 func (o *TimeInterval) GetCreatedBy() string {

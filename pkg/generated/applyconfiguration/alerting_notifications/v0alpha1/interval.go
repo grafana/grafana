@@ -7,7 +7,7 @@ package v0alpha1
 // IntervalApplyConfiguration represents an declarative configuration of the Interval type for use
 // with apply.
 type IntervalApplyConfiguration struct {
-	DaysOfMonth []string                      `json:"daysOfMonth,omitempty"`
+	DaysOfMonth []string                      `json:"days_of_month,omitempty"`
 	Location    *string                       `json:"location,omitempty"`
 	Months      []string                      `json:"months,omitempty"`
 	Times       []TimeRangeApplyConfiguration `json:"times,omitempty"`

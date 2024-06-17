@@ -16,14 +16,11 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Interval":            schema_pkg_apis_alerting_notifications_v0alpha1_Interval(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.OperatorState":       schema_pkg_apis_alerting_notifications_v0alpha1_OperatorState(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Status":              schema_pkg_apis_alerting_notifications_v0alpha1_Status(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.StatusOperatorState": schema_pkg_apis_alerting_notifications_v0alpha1_StatusOperatorState(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeInterval":        schema_pkg_apis_alerting_notifications_v0alpha1_TimeInterval(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeIntervalList":    schema_pkg_apis_alerting_notifications_v0alpha1_TimeIntervalList(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeIntervalSpec":    schema_pkg_apis_alerting_notifications_v0alpha1_TimeIntervalSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeRange":           schema_pkg_apis_alerting_notifications_v0alpha1_TimeRange(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Interval":         schema_pkg_apis_alerting_notifications_v0alpha1_Interval(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeInterval":     schema_pkg_apis_alerting_notifications_v0alpha1_TimeInterval(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeIntervalList": schema_pkg_apis_alerting_notifications_v0alpha1_TimeIntervalList(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeIntervalSpec": schema_pkg_apis_alerting_notifications_v0alpha1_TimeIntervalSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeRange":        schema_pkg_apis_alerting_notifications_v0alpha1_TimeRange(ref),
 	}
 }
 
@@ -34,7 +31,7 @@ func schema_pkg_apis_alerting_notifications_v0alpha1_Interval(ref common.Referen
 				Description: "Interval defines model for Interval.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"daysOfMonth": {
+					"days_of_month": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
 								"x-kubernetes-list-type": "atomic",
@@ -147,158 +144,6 @@ func schema_pkg_apis_alerting_notifications_v0alpha1_Interval(ref common.Referen
 	}
 }
 
-func schema_pkg_apis_alerting_notifications_v0alpha1_OperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "OperatorState defines model for OperatorState.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"descriptiveState": {
-						SchemaProps: spec.SchemaProps{
-							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"details": {
-						SchemaProps: spec.SchemaProps{
-							Description: "details contains any extra information that is operator-specific",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"lastEvaluation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "lastEvaluation is the ResourceVersion last evaluated",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"lastEvaluation", "state"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_alerting_notifications_v0alpha1_Status(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Status defines model for Status.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"additionalFields": {
-						SchemaProps: spec.SchemaProps{
-							Description: "additionalFields is reserved for future use",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"operatorStates": {
-						SchemaProps: spec.SchemaProps{
-							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.StatusOperatorState"),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.StatusOperatorState"},
-	}
-}
-
-func schema_pkg_apis_alerting_notifications_v0alpha1_StatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "StatusOperatorState defines model for status.#OperatorState.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"descriptiveState": {
-						SchemaProps: spec.SchemaProps{
-							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"details": {
-						SchemaProps: spec.SchemaProps{
-							Description: "details contains any extra information that is operator-specific",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"lastEvaluation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "lastEvaluation is the ResourceVersion last evaluated",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"lastEvaluation", "state"},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_alerting_notifications_v0alpha1_TimeInterval(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -331,18 +176,12 @@ func schema_pkg_apis_alerting_notifications_v0alpha1_TimeInterval(ref common.Ref
 							Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeIntervalSpec"),
 						},
 					},
-					"status": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Status"),
-						},
-					},
 				},
-				Required: []string{"metadata", "spec", "status"},
+				Required: []string{"metadata", "spec"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Status", "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeIntervalSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeIntervalSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -401,7 +240,7 @@ func schema_pkg_apis_alerting_notifications_v0alpha1_TimeIntervalSpec(ref common
 				Description: "Spec defines model for Spec.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"intervals": {
+					"time_intervals": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
 								"x-kubernetes-list-type": "atomic",
@@ -420,7 +259,7 @@ func schema_pkg_apis_alerting_notifications_v0alpha1_TimeIntervalSpec(ref common
 						},
 					},
 				},
-				Required: []string{"intervals"},
+				Required: []string{"time_intervals"},
 			},
 		},
 		Dependencies: []string{
@@ -435,14 +274,14 @@ func schema_pkg_apis_alerting_notifications_v0alpha1_TimeRange(ref common.Refere
 				Description: "TimeRange defines model for TimeRange.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"endMinute": {
+					"end_time": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
 						},
 					},
-					"startMinute": {
+					"start_time": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
@@ -450,7 +289,7 @@ func schema_pkg_apis_alerting_notifications_v0alpha1_TimeRange(ref common.Refere
 						},
 					},
 				},
-				Required: []string{"endMinute", "startMinute"},
+				Required: []string{"end_time", "start_time"},
 			},
 		},
 	}
