@@ -440,7 +440,6 @@ require (
 )
 
 require (
-	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.0.4 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -472,5 +471,8 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 // Use our fork xorm. go.work currently overrides this and points to the local ./pkg/util/xorm directory.
 replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
 
-// locks for compat k8s api server compat
+// lock for compat k8s api server compat
 replace github.com/google/cel-go => github.com/google/cel-go v0.17.7
+
+// lock for mysql driver
+replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
