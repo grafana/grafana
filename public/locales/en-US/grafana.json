@@ -673,11 +673,12 @@
   "export": {
     "json": {
       "cancel-button": "Cancel",
-      "copy-button": "Copy to Clipboard",
+      "copy-button": "Copy to clipboard",
+      "download-button": "Download file",
       "export-externally-label": "Export the dashboard to use in another instance",
       "info-text": "Copy or download a JSON file containing the JSON of your dashboard.",
       "loading-text": "Loading...",
-      "save-button": "Save to file"
+      "title": "Save dashboard JSON"
     },
     "menu": {
       "export-as-json-label": "Export"
@@ -1685,6 +1686,11 @@
       "message": "No services accounts found",
       "more-info": "Remember, you can provide specific permissions for API access to other applications",
       "title": "You haven't created any service accounts yet"
+    }
+  },
+  "share-dashboard": {
+    "menu": {
+      "export-json-title": "Export as JSON"
     }
   },
   "share-drawer": {

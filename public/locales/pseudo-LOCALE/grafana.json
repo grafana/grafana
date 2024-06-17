@@ -673,11 +673,12 @@
   "export": {
     "json": {
       "cancel-button": "Cäŉčęľ",
-      "copy-button": "Cőpy ŧő Cľįpþőäřđ",
+      "copy-button": "Cőpy ŧő čľįpþőäřđ",
+      "download-button": "Đőŵŉľőäđ ƒįľę",
       "export-externally-label": "Ēχpőřŧ ŧĥę đäşĥþőäřđ ŧő ūşę įŉ äŉőŧĥęř įŉşŧäŉčę",
       "info-text": "Cőpy őř đőŵŉľőäđ ä ĴŜØŃ ƒįľę čőŉŧäįŉįŉģ ŧĥę ĴŜØŃ őƒ yőūř đäşĥþőäřđ.",
       "loading-text": "Ŀőäđįŉģ...",
-      "save-button": "Ŝävę ŧő ƒįľę"
+      "title": "Ŝävę đäşĥþőäřđ ĴŜØŃ"
     },
     "menu": {
       "export-as-json-label": "Ēχpőřŧ"
@@ -1685,6 +1686,11 @@
       "message": "Ńő şęřvįčęş äččőūŉŧş ƒőūŉđ",
       "more-info": "Ŗęmęmþęř, yőū čäŉ přővįđę şpęčįƒįč pęřmįşşįőŉş ƒőř ÅPĨ äččęşş ŧő őŧĥęř äppľįčäŧįőŉş",
       "title": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy şęřvįčę äččőūŉŧş yęŧ"
+    }
+  },
+  "share-dashboard": {
+    "menu": {
+      "export-json-title": "Ēχpőřŧ äş ĴŜØŃ"
     }
   },
   "share-drawer": {

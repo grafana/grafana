@@ -165,7 +165,7 @@ describe('NavToolbarActions', () => {
     it('Should show new export button when newDashboardSharingComponent FF is enabled', async () => {
       config.featureToggles.newDashboardSharingComponent = true;
       setup();
-      const newExportButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.newExportButton.container);
+      const newExportButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
       expect(newExportButton).toBeInTheDocument();
     });
   });

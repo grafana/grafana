@@ -10,7 +10,7 @@ import { DashboardScene } from '../../scene/DashboardScene';
 
 import ExportButton from './ExportButton';
 
-const selector = e2eSelectors.pages.Dashboard.DashNav.newExportButton;
+const selector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton;
 
 describe('ExportButton', () => {
   it('should render Export menu', async () => {
@@ -24,7 +24,7 @@ describe('ExportButton', () => {
     const arrowMenu = await screen.findByTestId(selector.arrowMenu);
     await userEvent.click(arrowMenu);
 
-    expect(await screen.findByTestId(selector.menu.container)).toBeInTheDocument();
+    expect(await screen.findByTestId(selector.Menu.container)).toBeInTheDocument();
   });
 });
 

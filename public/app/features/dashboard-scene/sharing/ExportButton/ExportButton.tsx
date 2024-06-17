@@ -9,7 +9,7 @@ import { DashboardScene } from '../../scene/DashboardScene';
 
 import ExportMenu from './ExportMenu';
 
-const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newExportButton;
+const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton;
 
 export default function ExportButton({ dashboard }: { dashboard: DashboardScene }) {
   const [isOpen, setIsOpen] = useState(false);

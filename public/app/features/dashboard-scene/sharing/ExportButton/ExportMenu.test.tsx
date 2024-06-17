@@ -9,7 +9,7 @@ import { DashboardScene } from '../../scene/DashboardScene';
 
 import ExportMenu from './ExportMenu';
 
-const selector = e2eSelectors.pages.Dashboard.DashNav.newExportButton.menu;
+const selector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton.Menu;
 
 describe('ExportMenu', () => {
   it('should render menu items', async () => {
