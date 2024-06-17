@@ -101,4 +101,17 @@ describe('AdvancedResourcePicker', () => {
     expect(screen.getByDisplayValue('rg2')).toBeInTheDocument();
     expect(screen.getByDisplayValue('res2')).toBeInTheDocument();
   });
+
+  it('should display an error when the namespace field ends in a /', async () => {
+    const onChange = jest.fn();
+
+    render(
+      <AdvancedResourcePicker
+        onChange={onChange}
+        resources={[{ metricNamespace: 'Microsoft.OperationalInsights/workspaces/' }]}
+      />
+    );
+
+    expect(screen.getByText('Namespace cannot end with a "/"')).toBeInTheDocument();
+  });
 });
