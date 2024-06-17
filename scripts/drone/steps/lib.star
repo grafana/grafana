@@ -1261,7 +1261,6 @@ def verify_grafanacom_step():
         "name": "verify-grafanacom",
         "image": images["node"], # JEV: curl also? If I also need a curl image, do I also need a new step? 1 image per step?
         "environment": {
-            # JEV: how would i know this is actually the gcom api key? See scripts/drone/rgm.star:126
             "GCOM_API_KEY": from_secret("grafana_api_key"),
             "GCP_KEY": from_secret("gcp_grafanauploads"),
         },
@@ -1278,5 +1277,5 @@ def verify_grafanacom_step():
             # Remove the temporary key file
             "rm /tmp/key.json",
         ],
-        "depends_on": ["publish-grafanacom"], # JEV: anything else?
+        "depends_on": ["publish-grafanacom"],
     }

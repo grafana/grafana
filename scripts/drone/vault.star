@@ -39,12 +39,10 @@ def vault_secret(name, path, key):
         },
     }
 
-# JEV: add gcom secret
 def secrets():
     return [
         vault_secret(gcp_grafanauploads, "infra/data/ci/grafana-release-eng/grafanauploads", "credentials.json"),
         vault_secret(gcp_grafanauploads_base64, "infra/data/ci/grafana-release-eng/grafanauploads", "credentials_base64"),
-        # JEV: wait, is this the gcom api secret???n
         vault_secret("grafana_api_key", "infra/data/ci/grafana-release-eng/grafanacom", "api_key"),
         vault_secret(gcr_pull_secret, "secret/data/common/gcr", ".dockerconfigjson"),
         vault_secret(gar_pull_secret, "secret/data/common/gar", ".dockerconfigjson"),
