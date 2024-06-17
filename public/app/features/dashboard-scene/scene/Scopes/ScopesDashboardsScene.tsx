@@ -74,7 +74,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
       <div className={styles.searchInputContainer}>
         <Input
           prefix={<Icon name="search" />}
-          placeholder={t('scopes.suggestedDashboards.search', 'Filter')}
+          placeholder={t('scopes.suggestedDashboards.search', 'Search')}
           disabled={isLoading}
           data-testid="scopes-dashboards-search"
           onChange={(evt) => model.changeSearchQuery(evt.currentTarget.value)}

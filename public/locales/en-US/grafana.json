@@ -1606,7 +1606,7 @@
     },
     "suggestedDashboards": {
       "loading": "Loading dashboards",
-      "search": "Filter",
+      "search": "Search",
       "toggle": {
         "collapse": "Collapse scope filters",
         "expand": "Expand scope filters"
@@ -1615,7 +1615,8 @@
     "tree": {
       "collapse": "Collapse",
       "expand": "Expand",
-      "search": "Filter"
+      "headline": "Recommended",
+      "search": "Search"
     }
   },
   "search": {
