@@ -23,9 +23,6 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (history.location.state as any)?.routeReloadCounter;
 
-  console.log('DashboardScenePage', { match, route, queryParams, history });
-  console.log('DashboardScenePage', { dashboard, isLoading, loadError, routeReloadCounter });
-
   // Check if the user is coming from Explore, it's indicated byt the dashboard existence in local storage
   const comingFromExplore = useMemo(() => {
     return Boolean(store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY));
