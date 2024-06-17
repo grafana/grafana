@@ -15,7 +15,7 @@ import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './typ
 import { getCellColors, getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, textWrapped, height } = props;
+  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height } = props;
 
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
@@ -60,7 +60,8 @@ export const DefaultCell = (props: TableCellProps) => {
     isStringValue,
     textShouldWrap,
     textWrapped,
-    rowStyled
+    rowStyled,
+    rowExpanded
   );
 
   if (isStringValue) {
@@ -122,7 +123,8 @@ function getCellStyle(
   isStringValue = false,
   shouldWrapText = false,
   textWrapped = false,
-  rowStyled = false
+  rowStyled = false,
+  rowExpanded = false
 ) {
   // Setup color variables
   let textColor: string | undefined = undefined;
@@ -145,7 +147,8 @@ function getCellStyle(
     isStringValue,
     shouldWrapText,
     textWrapped,
-    rowStyled
+    rowStyled,
+    rowExpanded
   );
 }
 

@@ -267,6 +267,7 @@ export const RowsList = (props: RowsListProps) => {
       prepareRow(row);
 
       const expandedRowStyle = tableState.expanded[row.id] ? css({ '&:hover': { background: 'inherit' } }) : {};
+      const rowExpanded = nestedDataField && tableState.expanded[row.id];
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
         style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
@@ -304,7 +305,7 @@ export const RowsList = (props: RowsListProps) => {
           onMouseLeave={onRowLeave}
         >
           {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
-          {nestedDataField && tableState.expanded[row.id] && (
+          {rowExpanded && (
             <ExpandedRow
               nestedData={nestedDataField}
               tableStyles={tableStyles}
@@ -326,6 +327,7 @@ export const RowsList = (props: RowsListProps) => {
               timeRange={timeRange}
               frame={data}
               rowStyled={rowBg !== undefined}
+              rowExpanded={rowExpanded}
               textWrapped={textWrapField !== undefined}
               height={Number(style.height)}
             />
