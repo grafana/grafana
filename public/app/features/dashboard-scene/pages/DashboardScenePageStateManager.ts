@@ -171,9 +171,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   private async loadSnapshotScene(slug: string): Promise<DashboardScene> {
-    const queryParams = { scopes: this.getScopes() };
-
-    const rsp = await dashboardLoaderSrv.loadDashboard('snapshot', slug, '', queryParams);
+    const rsp = await dashboardLoaderSrv.loadDashboard('snapshot', slug, '');
 
     if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);

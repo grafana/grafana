@@ -35,12 +35,7 @@ export class DashboardLoaderSrv {
     };
   }
 
-  loadDashboard(
-    type: UrlQueryValue,
-    slug: string | undefined,
-    uid: string | undefined,
-    queryParams?: UrlQueryMap | undefined
-  ): Promise<DashboardDTO> {
+  loadDashboard(type: UrlQueryValue, slug: string | undefined, uid: string | undefined): Promise<DashboardDTO> {
     const stateManager = getDashboardScenePageStateManager();
     let promise;
 
@@ -88,7 +83,7 @@ export class DashboardLoaderSrv {
       }
 
       promise = getDashboardAPI()
-        .getDashboardDTO(uid, queryParams)
+        .getDashboardDTO(uid)
         .then((result) => {
           if (result.meta.isFolder) {
             appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
