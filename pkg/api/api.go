@@ -165,7 +165,7 @@ func (hs *HTTPServer) registerRoutes() {
 		)
 	}
 
-	if hs.Cfg.PluginAdminEnabled && (hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)) {
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 		r.Get("/dashboard/recently-deleted", reqSignedIn, hs.Index)
 	}
 
