@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/generated/clientset/versioned"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -21,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -96,7 +96,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 
-	org := helper.Org1
+	org1 := helper.Org1
 
 	type testCase struct {
 		user      apis.User
@@ -106,14 +106,14 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 		canDelete bool
 	}
 
-	reader := helper.CreateUser("IntervalsReader", apis.Org1, roletype.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+	reader := helper.CreateUser("IntervalsReader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions: []string{
 				accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
 			},
 		},
 	})
-	writer := helper.CreateUser("IntervalsWriter", "Org1", roletype.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+	writer := helper.CreateUser("IntervalsWriter", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions: []string{
 				accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
@@ -122,7 +122,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 		},
 	})
 
-	deleter := helper.CreateUser("IntervalsDeleter", apis.Org1, roletype.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+	deleter := helper.CreateUser("IntervalsDeleter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions: []string{
 				accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
@@ -133,21 +133,21 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 
 	testCases := []testCase{
 		{
-			user:      org.Admin,
+			user:      org1.Admin,
 			canRead:   true,
 			canUpdate: true,
 			canCreate: true,
 			canDelete: true,
 		},
 		{
-			user:      org.Editor,
+			user:      org1.Editor,
 			canRead:   true,
 			canUpdate: true,
 			canCreate: true,
 			canDelete: true,
 		},
 		{
-			user:    org.Viewer,
+			user:    org1.Viewer,
 			canRead: true,
 		},
 		{
@@ -167,7 +167,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 		},
 	}
 
-	admin := org.Admin
+	admin := org1.Admin
 	adminK8sClient, err := versioned.NewForConfig(admin.NewRestConfig())
 	require.NoError(t, err)
 	adminClient := adminK8sClient.NotificationsV0alpha1().TimeIntervals("default")

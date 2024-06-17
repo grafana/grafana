@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -390,7 +389,7 @@ func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	}
 }
 
-func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole roletype.RoleType, permissions []resourcepermissions.SetResourcePermissionCommand) User {
+func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.RoleType, permissions []resourcepermissions.SetResourcePermissionCommand) User {
 	c.t.Helper()
 
 	store := c.env.SQLStore
