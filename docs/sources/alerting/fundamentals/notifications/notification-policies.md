@@ -86,6 +86,10 @@ The `team=security` policy is not a match and **Continue matching siblings** was
 
 **Disk Usage – 80%** has both a `team` and `severity` label, and matches a child policy of the operations team.
 
+{{% admonition type="note" %}}
+When an alert matches both a parent policy and a child policy (like it does in this case), the routing follows the child policy (`severity`) as it provides a more specific match.
+{{% /admonition %}}
+
 **Unauthorized log entry** has a `team` label but does not match the first policy (`team=operations`) since the values are not the same, so it will continue searching and match the `team=security` policy. It does not have any child policies, so the additional `severity=high` label is ignored.
 
 {{< /collapse >}}
