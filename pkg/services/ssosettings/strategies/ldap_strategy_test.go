@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,8 +28,8 @@ var (
 		"config": map[string]interface{}{
 			"servers": []interface{}{
 				map[string]interface{}{
-					"Host": "127.0.0.1",
-					"Port": int64(3389),
+					"host": "127.0.0.1",
+					"port": int64(3389),
 					"attributes": map[string]interface{}{
 						"email":     "mail",
 						"member_of": "memberOf",
@@ -76,9 +75,7 @@ func TestGetLDAPConfig(t *testing.T) {
 	cfg, err := setting.NewCfgFromINIFile(iniFile)
 	require.NoError(t, err)
 
-	ldap := service.ProvideService(cfg)
-
-	strategy := NewLDAPStrategy(cfg, ldap)
+	strategy := NewLDAPStrategy(cfg)
 
 	result, err := strategy.GetProviderConfig(context.Background(), "ldap")
 	require.NoError(t, err)
