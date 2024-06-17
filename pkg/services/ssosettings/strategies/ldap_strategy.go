@@ -6,22 +6,20 @@ import (
 	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/ldap/service"
+	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type LDAPStrategy struct {
-	cfg  *setting.Cfg
-	ldap service.LDAP
+	cfg *setting.Cfg
 }
 
 var _ ssosettings.FallbackStrategy = (*LDAPStrategy)(nil)
 
-func NewLDAPStrategy(cfg *setting.Cfg, ldap service.LDAP) *LDAPStrategy {
+func NewLDAPStrategy(cfg *setting.Cfg) *LDAPStrategy {
 	return &LDAPStrategy{
-		cfg:  cfg,
-		ldap: ldap,
+		cfg: cfg,
 	}
 }
 
@@ -52,8 +50,13 @@ func (s *LDAPStrategy) GetProviderConfig(_ context.Context, _ string) (map[strin
 func (s *LDAPStrategy) getLDAPConfig() (map[string]any, error) {
 	var configMap map[string]any
 
-	config := s.ldap.Config()
-	configJson, err := json.Marshal(config)
+	config := ldap.GetLDAPConfig(s.cfg)
+	ldapConfig, err := ldap.GetConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	configJson, err := json.Marshal(ldapConfig)
 	if err != nil {
 		return nil, err
 	}
