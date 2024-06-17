@@ -59,13 +59,13 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, ssoSe
 
 		ldapSettings, err := s.ssoSettings.GetForProvider(context.Background(), social.LDAPProviderName)
 		if err != nil {
-			s.log.Error("failed to retrieve LDAP settings from SSO settings service", "error", err)
+			s.log.Error("Failed to retrieve LDAP settings from SSO settings service", "error", err)
 			return s
 		}
 
 		err = s.Reload(context.Background(), *ldapSettings)
 		if err != nil {
-			s.log.Error("failed to load LDAP settings", "error", err)
+			s.log.Error("Failed to load LDAP settings", "error", err)
 			return s
 		}
 	} else {
