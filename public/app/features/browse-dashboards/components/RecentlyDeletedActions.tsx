@@ -8,11 +8,12 @@ import appEvents from '../../../core/app_events';
 import { Trans } from '../../../core/internationalization';
 import { useDispatch } from '../../../types';
 import { ShowModalReactEvent } from '../../../types/events';
-import { useRestoreDashboardMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
-import { setAllSelection, useActionSelectionState } from '../../browse-dashboards/state';
-import { PermanentlyDeleteModal } from '../components/PermanentlyDeleteModal';
-import { RestoreModal } from '../components/RestoreModal';
-import { useRecentlyDeletedStateManager } from '../utils/useRecentlyDeletedStateManager';
+import { useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
+import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
+import { setAllSelection, useActionSelectionState } from '../state';
+
+import { PermanentlyDeleteModal } from './PermanentlyDeleteModal';
+import { RestoreModal } from './RestoreModal';
 
 export function RecentlyDeletedActions() {
   const styles = useStyles2(getStyles);

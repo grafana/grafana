@@ -563,8 +563,8 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 // Returns the whole JSON model as a string if it fails to extract a minimum of 1 query.
 func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 	var queryErr error
-	var queries []string
 
+	queries := make([]string, 0, len(rule.Data))
 	for _, q := range rule.Data {
 		q, err := q.GetQuery()
 		if err != nil {

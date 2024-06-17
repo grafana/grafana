@@ -205,15 +205,17 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 }
 
 func buildRedactedAMs(l log.Logger, alertmanagers []ExternalAMcfg, ordId int64) []string {
-	var redactedAMs []string
+	redactedAMs := make([]string, 0, len(alertmanagers))
 	for _, am := range alertmanagers {
 		parsedAM, err := url.Parse(am.URL)
 		if err != nil {
 			l.Error("Failed to parse alertmanager string", "org", ordId, "error", err)
 			continue
 		}
+
 		redactedAMs = append(redactedAMs, parsedAM.Redacted())
 	}
+
 	return redactedAMs
 }
 
@@ -225,9 +227,6 @@ func asSHA256(strings []string) string {
 }
 
 func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcfg, error) {
-	var (
-		alertmanagers []ExternalAMcfg
-	)
 	// We might have alertmanager datasources that are acting as external
 	// alertmanager, let's fetch them.
 	query := &datasources.GetDataSourcesByTypeQuery{
@@ -240,6 +239,9 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcf
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
 	}
+
+	alertmanagers := make([]ExternalAMcfg, 0, len(dataSources))
+
 	for _, ds := range dataSources {
 		if !ds.JsonData.Get(definitions.HandleGrafanaManagedAlerts).MustBool(false) {
 			continue
@@ -262,11 +264,13 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcf
 				"error", err)
 			continue
 		}
+
 		alertmanagers = append(alertmanagers, ExternalAMcfg{
 			URL:     amURL,
 			Headers: headers,
 		})
 	}
+
 	return alertmanagers, nil
 }
 
