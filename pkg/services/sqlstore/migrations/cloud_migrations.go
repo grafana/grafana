@@ -130,4 +130,10 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 
 	localDirColumn := Column{Name: "local_directory", Type: DB_Text, Nullable: true}
 	mg.AddMigration("add snapshot local_directory column", NewAddColumnMigration(migrationSnapshotTable, &localDirColumn))
+
+	gmsSnapshotUIDColumn := Column{Name: "gms_snapshot_uid", Type: DB_Text, Nullable: true}
+	mg.AddMigration("add snapshot gms_snapshot_uid column", NewAddColumnMigration(migrationSnapshotTable, &gmsSnapshotUIDColumn))
+
+	encryptionKeyColumn := Column{Name: "encryption_key", Type: DB_Text, Nullable: true}
+	mg.AddMigration("add snapshot encryption_key column", NewAddColumnMigration(migrationSnapshotTable, &encryptionKeyColumn))
 }

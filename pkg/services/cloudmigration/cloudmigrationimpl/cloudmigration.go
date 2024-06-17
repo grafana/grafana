@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -17,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -419,129 +420,6 @@ func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration
 	return resp, nil
 }
 
-func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.MigrateDataRequest, error) {
-	var migrationDataSlice []cloudmigration.MigrateDataRequestItem
-	// Data sources
-	dataSources, err := s.getDataSources(ctx)
-	if err != nil {
-		s.log.Error("Failed to get datasources", "err", err)
-		return nil, err
-	}
-	for _, ds := range dataSources {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.DatasourceDataType,
-			RefID: ds.UID,
-			Name:  ds.Name,
-			Data:  ds,
-		})
-	}
-
-	// Dashboards
-	dashboards, err := s.getDashboards(ctx)
-	if err != nil {
-		s.log.Error("Failed to get dashboards", "err", err)
-		return nil, err
-	}
-
-	for _, dashboard := range dashboards {
-		dashboard.Data.Del("id")
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.DashboardDataType,
-			RefID: dashboard.UID,
-			Name:  dashboard.Title,
-			Data:  map[string]any{"dashboard": dashboard.Data},
-		})
-	}
-
-	// Folders
-	folders, err := s.getFolders(ctx)
-	if err != nil {
-		s.log.Error("Failed to get folders", "err", err)
-		return nil, err
-	}
-
-	for _, f := range folders {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.FolderDataType,
-			RefID: f.UID,
-			Name:  f.Title,
-			Data:  f,
-		})
-	}
-	migrationData := &cloudmigration.MigrateDataRequest{
-		Items: migrationDataSlice,
-	}
-
-	return migrationData, nil
-}
-
-func (s *Service) getDataSources(ctx context.Context) ([]datasources.AddDataSourceCommand, error) {
-	dataSources, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
-	if err != nil {
-		s.log.Error("Failed to get all datasources", "err", err)
-		return nil, err
-	}
-
-	result := []datasources.AddDataSourceCommand{}
-	for _, dataSource := range dataSources {
-		// Decrypt secure json to send raw credentials
-		decryptedData, err := s.secretsService.DecryptJsonData(ctx, dataSource.SecureJsonData)
-		if err != nil {
-			s.log.Error("Failed to decrypt secure json data", "err", err)
-			return nil, err
-		}
-		dataSourceCmd := datasources.AddDataSourceCommand{
-			OrgID:           dataSource.OrgID,
-			Name:            dataSource.Name,
-			Type:            dataSource.Type,
-			Access:          dataSource.Access,
-			URL:             dataSource.URL,
-			User:            dataSource.User,
-			Database:        dataSource.Database,
-			BasicAuth:       dataSource.BasicAuth,
-			BasicAuthUser:   dataSource.BasicAuthUser,
-			WithCredentials: dataSource.WithCredentials,
-			IsDefault:       dataSource.IsDefault,
-			JsonData:        dataSource.JsonData,
-			SecureJsonData:  decryptedData,
-			ReadOnly:        dataSource.ReadOnly,
-			UID:             dataSource.UID,
-		}
-		result = append(result, dataSourceCmd)
-	}
-	return result, err
-}
-
-func (s *Service) getFolders(ctx context.Context) ([]folder.Folder, error) {
-	reqCtx := contexthandler.FromContext(ctx)
-	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
-		SignedInUser: reqCtx.SignedInUser,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	var result []folder.Folder
-	for _, folder := range folders {
-		result = append(result, *folder)
-	}
-
-	return result, nil
-}
-
-func (s *Service) getDashboards(ctx context.Context) ([]dashboards.Dashboard, error) {
-	dashs, err := s.dashboardService.GetAllDashboards(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var result []dashboards.Dashboard
-	for _, dashboard := range dashs {
-		result = append(result, *dashboard)
-	}
-	return result, nil
-}
-
 func (s *Service) createMigrationRun(ctx context.Context, cmr cloudmigration.CloudMigrationSnapshot) (string, error) {
 	uid, err := s.store.CreateMigrationRun(ctx, cmr)
 	if err != nil {
@@ -581,6 +459,57 @@ func (s *Service) DeleteSession(ctx context.Context, uid string) (*cloudmigratio
 		return c, fmt.Errorf("deleting migration from db: %w", err)
 	}
 	return c, nil
+}
+
+func (s *Service) CreateSnapshot(ctx context.Context, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.CreateSnapshot")
+	defer span.End()
+
+	session, err := s.store.GetMigrationSessionByUID(ctx, sessionUid)
+	if err != nil {
+		return nil, fmt.Errorf("fetching migration session for uid %s: %w", sessionUid, err)
+	}
+
+	initResp, err := s.gmsClient.InitializeSnapshot(ctx, *session)
+	if err != nil {
+		return nil, fmt.Errorf("initializing snapshot with GMS for session %s: %w", sessionUid, err)
+	}
+
+	dir := filepath.Join("cloudmigration.snapshots", fmt.Sprintf("snapshot-%s", initResp.GMSSnapshotUID))
+	err = os.MkdirAll(dir, 0750)
+	if err != nil {
+		return nil, fmt.Errorf("creating snapshot directory: %w", err)
+	}
+
+	snapshot := cloudmigration.CloudMigrationSnapshot{
+		SessionUID:     sessionUid,
+		Status:         cloudmigration.SnapshotStatusInitializing,
+		EncryptionKey:  initResp.EncryptionKey,
+		UploadURL:      initResp.UploadURL,
+		GMSSnapshotUID: initResp.GMSSnapshotUID,
+		LocalDir:       dir,
+	}
+
+	uid, err := s.store.CreateSnapshot(ctx, snapshot)
+	if err != nil {
+		return nil, fmt.Errorf("saving snapshot: %w", err)
+	}
+	snapshot.UID = uid
+
+	go s.buildSnapshot(ctx, snapshot)
+	return &snapshot, nil
+}
+
+func (s *Service) GetSnapshot(ctx context.Context, sessionUid string, snapshotUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+	return nil, nil
+}
+
+func (s *Service) GetSnapshotList(ctx context.Context, sessionUid string) ([]cloudmigration.CloudMigrationSnapshot, error) {
+	return nil, nil
+}
+
+func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
+	return nil
 }
 
 func (s *Service) parseCloudMigrationConfig() (string, error) {

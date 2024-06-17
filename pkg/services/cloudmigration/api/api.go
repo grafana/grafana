@@ -362,7 +362,7 @@ func (cma *CloudMigrationAPI) DeleteSession(c *contextmodel.ReqContext) response
 
 // swagger:route POST /cloudmigration/migration/{uid}/snapshot migrations createSnapshot
 //
-// Trigger the creation of an instance snapshot.
+// Trigger the creation of an instance snapshot associated with the provided session.
 // If the snapshot initialization is successful, the snapshot uid is returned.
 //
 // Responses:
@@ -377,7 +377,7 @@ func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) respons
 
 	uid := web.Params(c.Req)[":uid"]
 	if err := util.ValidateUID(uid); err != nil {
-		return response.ErrOrFallback(http.StatusBadRequest, "invalid migration uid", err)
+		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
 
 	return response.JSON(http.StatusOK, CreateSnapshotResponseDTO{
@@ -399,9 +399,9 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	_, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetSnapshot")
 	defer span.End()
 
-	migUid, snapshotUid := web.Params(c.Req)[":uid"], web.Params(c.Req)[":snapshotUid"]
-	if err := util.ValidateUID(migUid); err != nil {
-		return response.ErrOrFallback(http.StatusBadRequest, "invalid migration uid", err)
+	sessUid, snapshotUid := web.Params(c.Req)[":uid"], web.Params(c.Req)[":snapshotUid"]
+	if err := util.ValidateUID(sessUid); err != nil {
+		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
 	if err := util.ValidateUID(snapshotUid); err != nil {
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
@@ -411,7 +411,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 		SnapshotDTO: SnapshotDTO{
 			SnapshotUID: util.GenerateShortUID(),
 			Status:      "blah",
-			SessionUID:  migUid,
+			SessionUID:  sessUid,
 			Created:     time.Now(),
 			Finished:    time.Now(),
 		},
@@ -421,7 +421,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 
 // swagger:route GET /cloudmigration/migration/{uid}/snapshot migrations getShapshotList
 //
-// Get a list of snapshots for a migration.
+// Get a list of snapshots for a session.
 //
 // Responses:
 // 200: snapshotListResponse
@@ -435,7 +435,7 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 
 	uid := web.Params(c.Req)[":uid"]
 	if err := util.ValidateUID(uid); err != nil {
-		return response.ErrOrFallback(http.StatusBadRequest, "invalid migration uid", err)
+		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
 
 	return response.JSON(http.StatusOK, SnapshotListResponseDTO{
@@ -465,15 +465,13 @@ func (cma *CloudMigrationAPI) UploadSnapshot(c *contextmodel.ReqContext) respons
 	_, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.UploadSnapshot")
 	defer span.End()
 
-	migUid, snapshotUid := web.Params(c.Req)[":uid"], web.Params(c.Req)[":snapshotUid"]
-	if err := util.ValidateUID(migUid); err != nil {
-		return response.ErrOrFallback(http.StatusBadRequest, "invalid migration uid", err)
+	sessUid, snapshotUid := web.Params(c.Req)[":uid"], web.Params(c.Req)[":snapshotUid"]
+	if err := util.ValidateUID(sessUid); err != nil {
+		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
 	if err := util.ValidateUID(snapshotUid); err != nil {
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
 	}
-
-	// todo
 
 	return response.JSON(http.StatusOK, nil)
 }

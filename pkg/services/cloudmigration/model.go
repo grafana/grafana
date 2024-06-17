@@ -31,23 +31,24 @@ type CloudMigrationSession struct {
 }
 
 type CloudMigrationSnapshot struct {
-	ID            int64  `xorm:"pk autoincr 'id'"`
-	UID           string `xorm:"uid"`
-	SessionUID    string `xorm:"session_uid"`
-	Status        SnapshotStatus
-	EncryptionKey string `xorm:"-"` // stored in the unified secrets table
-	UploadURL     string `xorm:"upload_url"`
-	LocalDir      string `xorm:"local_directory"`
-	Result        []byte //store raw gms response body
-	Created       time.Time
-	Updated       time.Time
-	Finished      time.Time
+	ID             int64  `xorm:"pk autoincr 'id'"`
+	UID            string `xorm:"uid"`
+	SessionUID     string `xorm:"session_uid"`
+	Status         SnapshotStatus
+	EncryptionKey  string `xorm:"encryption_key"` // stored in the unified secrets table
+	UploadURL      string `xorm:"upload_url"`
+	LocalDir       string `xorm:"local_directory"`
+	GMSSnapshotUID string `xorm:"gms_snapshot_uid"`
+	Result         []byte //store raw gms response body
+	Created        time.Time
+	Updated        time.Time
+	Finished       time.Time
 }
 
 type SnapshotStatus int
 
 const (
-	SnapshotStatusInitializing = iota
+	SnapshotStatusInitializing = iota + 1
 	SnapshotStatusCreating
 	SnapshotStatusPendingUpload
 	SnapshotStatusUploading
@@ -156,4 +157,14 @@ type MigrateDataResponseItem struct {
 	RefID  string
 	Status ItemStatus
 	Error  string
+}
+
+type CreateSessionResponse struct {
+	SnapshotUid string
+}
+
+type InitializeSnapshotResponse struct {
+	EncryptionKey  string
+	UploadURL      string
+	GMSSnapshotUID string
 }

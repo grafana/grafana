@@ -59,3 +59,19 @@ func (s *NoopServiceImpl) CreateMigrationRun(context.Context, cloudmigration.Clo
 func (s *NoopServiceImpl) RunMigration(context.Context, string) (*cloudmigration.MigrateDataResponse, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
+
+func (s *NoopServiceImpl) CreateSnapshot(ctx context.Context, sessionUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+	return nil, cloudmigration.ErrFeatureDisabledError
+}
+
+func (s *NoopServiceImpl) GetSnapshot(ctx context.Context, sessionUid string, snapshotUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+	return nil, cloudmigration.ErrFeatureDisabledError
+}
+
+func (s *NoopServiceImpl) GetSnapshotList(ctx context.Context, sessionUid string) ([]cloudmigration.CloudMigrationSnapshot, error) {
+	return nil, cloudmigration.ErrFeatureDisabledError
+}
+
+func (s *NoopServiceImpl) UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
+	return cloudmigration.ErrFeatureDisabledError
+}
