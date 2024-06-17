@@ -72,7 +72,7 @@ To use the new XY chart visualization, you must first enable the `autoMigrateXYC
 
 ### Re-designed settings page for Alerting
 
-<!-- Gilles De Mey -->
+<!-- Gilles -->
 
 _Generally available in all editions of Grafana_
 
@@ -96,7 +96,7 @@ Select from existing templates or enter a custom one for your specific needs. Yo
 
 ### Add OAuth2 to HTTP settings for vanilla Alertmanager / Mimir
 
-<!-- Gilles de Mey -->
+<!-- Gilles -->
 
 _Generally available in all editions of Grafana_
 
