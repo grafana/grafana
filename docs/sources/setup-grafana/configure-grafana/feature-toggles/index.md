@@ -101,6 +101,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                                                             |
 | `newPDFRendering`                      | New implementation for the dashboard-to-PDF rendering                                                                                                                                        |
 | `ssoSettingsSAML`                      | Use the new SSO Settings API to configure the SAML connector                                                                                                                                 |
+| `openSearchBackendFlowEnabled`         | Enables the backend query flow for Open Search datasource plugin                                                                                                                             |
 
 ## Experimental feature toggles
 
