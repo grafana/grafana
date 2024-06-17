@@ -45,17 +45,17 @@ type CloudMigrationSnapshot struct {
 	Finished       time.Time
 }
 
-type SnapshotStatus int
+type SnapshotStatus string
 
 const (
-	SnapshotStatusInitializing = iota + 1
-	SnapshotStatusCreating
-	SnapshotStatusPendingUpload
-	SnapshotStatusUploading
-	SnapshotStatusPendingProcessing
-	SnapshotStatusProcessing
-	SnapshotStatusFinished
-	SnapshotStatusUnknown
+	SnapshotStatusInitializing      = "initializing"
+	SnapshotStatusCreating          = "creating"
+	SnapshotStatusPendingUpload     = "pending_upload"
+	SnapshotStatusUploading         = "uploading"
+	SnapshotStatusPendingProcessing = "pending_processing"
+	SnapshotStatusProcessing        = "processing"
+	SnapshotStatusFinished          = "finished"
+	SnapshotStatusUnknown           = "unknown"
 )
 
 func (r CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {

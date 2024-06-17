@@ -173,16 +173,36 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, snapshot cloudmigration.
 	if snapshot.UID == "" {
 		return fmt.Errorf("missing snapshot uid")
 	}
-	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if snapshot.Status > 0 {
-			rawSQL := "UPDATE cloud_migration_snapshot SET status=? WHERE uid=?"
-			if _, err := sess.Exec(rawSQL, snapshot.Status, snapshot.UID); err != nil {
-				return fmt.Errorf("updating snapshot snatatus for uid %s: %w", snapshot.UID, err)
+	err := ss.db.InTransaction(ctx, func(ctx context.Context) error {
+		// Update status if set
+		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			if snapshot.Status != "" {
+				rawSQL := "UPDATE cloud_migration_snapshot SET status=? WHERE uid=?"
+				if _, err := sess.Exec(rawSQL, snapshot.Status, snapshot.UID); err != nil {
+					return fmt.Errorf("updating snapshot status for uid %s: %w", snapshot.UID, err)
+				}
 			}
+			return nil
+		}); err != nil {
+			return err
 		}
 
-		return err
+		// Update result if set
+		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			if len(snapshot.Result) > 0 {
+				rawSQL := "UPDATE cloud_migration_snapshot SET result=? WHERE uid=?"
+				if _, err := sess.Exec(rawSQL, snapshot.Result, snapshot.UID); err != nil {
+					return fmt.Errorf("updating snapshot result for uid %s: %w", snapshot.UID, err)
+				}
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+
+		return nil
 	})
+
 	return err
 }
 
