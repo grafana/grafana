@@ -698,8 +698,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const { dedupedRows, dedupCount } = dedupRows(filteredLogs, dedupStrategy);
   const navigationRange = createNavigationRange(logRows);
 
-  console.log(visualisationType === 'logs', hasData);
-
   return (
     <>
       {getRowContext && contextRow && (
