@@ -7,6 +7,7 @@ import { Loader } from 'app/features/dashboard/components/ShareModal/SharePublic
 import { publicDashboardPersisted } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
+import { getDashboardSceneFor } from '../../utils/utils';
 import { SceneShareTabState } from '../types';
 
 import { ConfigPublicDashboard } from './ConfigPublicDashboard';
@@ -23,7 +24,7 @@ export class SharePublicDashboardTab extends SceneObjectBase<SceneShareTabState>
 
 function SharePublicDashboardTabRenderer({ model }: SceneComponentProps<SharePublicDashboardTab>) {
   const { data: publicDashboard, isLoading: isGetLoading } = useGetPublicDashboardQuery(
-    model.state.dashboardRef.resolve().state.uid!
+    getDashboardSceneFor(model).state.uid!
   );
 
   return (

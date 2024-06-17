@@ -1,13 +1,10 @@
 import { SceneObject, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
 
-import { DashboardScene } from '../scene/DashboardScene';
-
 export interface ModalSceneObjectLike {
   onDismiss: () => void;
 }
 
 export interface SceneShareTabState extends SceneObjectState {
-  dashboardRef: SceneObjectRef<DashboardScene>;
   modalRef?: SceneObjectRef<ModalSceneObjectLike>;
 }
 

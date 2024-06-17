@@ -13,6 +13,7 @@ import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/co
 
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardUrl } from '../utils/urlBuilders';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { updateShareLinkConfigurationFromStorage } from './ShareButton/utils';
 import { SceneShareTabState } from './types';
@@ -37,7 +38,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
   static Component = ShareLinkTabRenderer;
 
-  constructor(state: Partial<ShareLinkConfiguration> & ShareLinkTabState) {
+  constructor(state: Partial<ShareLinkTabState>) {
     super({
       ...state,
       useLockedTime: state.useLockedTime ?? true,
@@ -55,8 +56,8 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
   async buildUrl() {
     this.setState({ isBuildUrlLoading: true });
-    const { panelRef, dashboardRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme } = this.state;
-    const dashboard = dashboardRef.resolve();
+    const { panelRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme } = this.state;
+    const dashboard = getDashboardSceneFor(this);
     const panel = panelRef?.resolve();
 
     const opts = { useAbsoluteTimeRange, theme: selectedTheme, useShortUrl };
@@ -143,9 +144,9 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
 function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
   const state = model.useState();
-  const { panelRef, dashboardRef } = state;
+  const { panelRef } = state;
 
-  const dashboard = dashboardRef.resolve();
+  const dashboard = getDashboardSceneFor(model);
   const panel = panelRef?.resolve();
 
   const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);

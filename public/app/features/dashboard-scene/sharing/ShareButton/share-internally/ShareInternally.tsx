@@ -7,14 +7,13 @@ import { Alert, ClipboardButton, Divider, Label, Spinner, Stack, Switch, Text, u
 import { t, Trans } from 'app/core/internationalization';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
 
-import { DashboardScene } from '../../../scene/DashboardScene';
 import { ShareLinkTab } from '../../ShareLinkTab';
 import { DEFAULT_SHARE_LINK_CONFIGURATION, getShareLinkConfigurationFromStorage } from '../utils';
 
 export class ShareInternally extends ShareLinkTab {
   static Component = ShareInternallyRenderer;
 
-  constructor(state: { dashboardRef: SceneObjectRef<DashboardScene>; panelRef?: SceneObjectRef<VizPanel> }) {
+  constructor(state: { panelRef?: SceneObjectRef<VizPanel> }) {
     const { useAbsoluteTimeRange, useShortUrl, theme } =
       getShareLinkConfigurationFromStorage() || DEFAULT_SHARE_LINK_CONFIGURATION;
     super({
@@ -22,9 +21,6 @@ export class ShareInternally extends ShareLinkTab {
       useLockedTime: useAbsoluteTimeRange,
       useShortUrl,
       selectedTheme: theme,
-      shareUrl: '',
-      imageUrl: '',
-      isBuildUrlLoading: false,
     });
   }
 }
