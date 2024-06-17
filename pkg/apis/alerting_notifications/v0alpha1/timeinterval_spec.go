@@ -25,6 +25,7 @@ type Interval struct {
 // Spec defines model for Spec.
 // +k8s:openapi-gen=true
 type TimeIntervalSpec struct {
+	Name string `json:"name"`
 	// +listType=atomic
 	TimeIntervals []Interval `json:"time_intervals"`
 }

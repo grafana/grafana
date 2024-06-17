@@ -2,6 +2,8 @@ package timeinterval
 
 import (
 	"encoding/json"
+	"fmt"
+	"hash/fnv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -9,6 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
+
+func getIntervalUID(t definitions.MuteTimeInterval) string {
+	sum := fnv.New64()
+	_, _ = sum.Write([]byte(t.Name))
+	return fmt.Sprintf("%016x", sum.Sum64())
+}
 
 func convertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval, namespacer request.NamespaceMapper) (*model.TimeIntervalList, error) {
 	data, err := json.Marshal(intervals)
@@ -27,7 +35,7 @@ func convertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval
 		result.Items = append(result.Items, model.TimeInterval{
 			TypeMeta: resourceInfo.TypeMeta(),
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      interval.Name,
+				Name:      getIntervalUID(interval), // TODO replace to stable UID when we switch to normal storage
 				Namespace: namespacer(orgID),
 				Annotations: map[string]string{ // TODO find a better place for provenance?
 					"grafana.com/provenance": string(interval.Provenance),
@@ -54,7 +62,7 @@ func convertToK8sResource(orgID int64, interval definitions.MuteTimeInterval, na
 	return &model.TimeInterval{
 		TypeMeta: resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      interval.Name,
+			Name:      getIntervalUID(interval), // TODO replace to stable UID when we switch to normal storage
 			Namespace: namespacer(orgID),
 			Annotations: map[string]string{ // TODO find a better place for provenance?
 				"grafana.com/provenance": string(interval.Provenance),
@@ -70,14 +78,12 @@ func convertToDomainModel(interval *model.TimeInterval) (definitions.MuteTimeInt
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
-	result := definitions.MuteTimeInterval{
-		Version: interval.ResourceVersion,
-	}
+	result := definitions.MuteTimeInterval{}
 	err = json.Unmarshal(b, &result)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
-	result.Name = interval.Name
+	result.Version = interval.ResourceVersion
 	err = result.Validate()
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err

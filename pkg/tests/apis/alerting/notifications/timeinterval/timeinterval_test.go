@@ -31,6 +31,63 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+func TestIntegrationResourceIdentifier(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+
+	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
+	require.NoError(t, err)
+	client := adminK8sClient.NotificationsV0alpha1().TimeIntervals("default")
+
+	newInterval := &v0alpha1.TimeInterval{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.TimeIntervalSpec{
+			Name:          "time-newInterval",
+			TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
+		},
+	}
+
+	t.Run("create should fail if object name is specified", func(t *testing.T) {
+		interval := newInterval.DeepCopy()
+		interval.Name = "time-newInterval"
+		_, err := client.Create(ctx, interval, v1.CreateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
+	})
+
+	var resourceID string
+	t.Run("create should succeed and provide resource name", func(t *testing.T) {
+		actual, err := client.Create(ctx, newInterval, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
+		resourceID = actual.Name
+	})
+
+	var existingInterval *v0alpha1.TimeInterval
+	t.Run("resource should be available by the identifier", func(t *testing.T) {
+		actual, err := client.Get(ctx, resourceID, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
+		require.Equal(t, newInterval.Spec, actual.Spec)
+		existingInterval = actual
+	})
+
+	t.Run("update should fail if name in the specification changes", func(t *testing.T) {
+		if existingInterval == nil {
+			t.Skip()
+		}
+		updated := existingInterval.DeepCopy()
+		updated.Spec.Name = "another-newInterval"
+		_, err := client.Update(ctx, updated, v1.UpdateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
+	})
+}
+
 func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -124,12 +181,12 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 			var expected = &v0alpha1.TimeInterval{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
-					Name:      fmt.Sprintf("time-interval-1-%s", tc.user.Identity.GetLogin()),
 					Annotations: map[string]string{
 						"grafana.com/provenance": "",
 					},
 				},
 				Spec: v0alpha1.TimeIntervalSpec{
+					Name:          fmt.Sprintf("time-interval-1-%s", tc.user.Identity.GetLogin()),
 					TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
 				},
 			}
@@ -149,13 +206,13 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 
 					expected = actual
 				})
-			}
-
-			if !tc.canCreate {
+			} else {
 				t.Run("should be forbidden to create", func(t *testing.T) {
 					_, err := client.Create(ctx, expected, v1.CreateOptions{})
 					require.Truef(t, errors.IsForbidden(err), "Payload %s", string(d))
 				})
+
+				// create resource to proceed with other tests
 				expected, err = adminClient.Create(ctx, expected, v1.CreateOptions{})
 				require.NoErrorf(t, err, "Payload %s", string(d))
 				require.NotNil(t, expected)
@@ -168,18 +225,17 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 					require.Len(t, list.Items, 1)
 				})
 
-				t.Run("should be able to read time interval by name", func(t *testing.T) {
+				t.Run("should be able to read time interval by resource identifier", func(t *testing.T) {
 					got, err := client.Get(ctx, expected.Name, v1.GetOptions{})
 					require.NoError(t, err)
 					require.Equal(t, expected, got)
 
-					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
+					t.Run("should get NotFound if resource does not exist", func(t *testing.T) {
 						_, err := client.Get(ctx, "Notfound", v1.GetOptions{})
 						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
 					})
 				})
-			}
-			if !tc.canRead {
+			} else {
 				t.Run("should be forbidden to list time intervals", func(t *testing.T) {
 					_, err := client.List(ctx, v1.ListOptions{})
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
@@ -216,8 +272,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
 					})
 				})
-			}
-			if !tc.canUpdate {
+			} else {
 				t.Run("should be forbidden to update time interval", func(t *testing.T) {
 					_, err := client.Update(ctx, updatedExpected, v1.UpdateOptions{})
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
@@ -243,8 +298,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 						require.Truef(t, errors.IsNotFound(err), "Should get NotFound error but got: %s", err)
 					})
 				})
-			}
-			if !tc.canDelete {
+			} else {
 				t.Run("should be forbidden to delete time interval", func(t *testing.T) {
 					err := client.Delete(ctx, expected.Name, deleteOptions)
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
@@ -291,9 +345,9 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 	created, err := adminClient.Create(ctx, &v0alpha1.TimeInterval{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
-			Name:      "time-interval-1",
 		},
 		Spec: v0alpha1.TimeIntervalSpec{
+			Name:          "time-interval-1",
 			TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
 		},
 	}, v1.CreateOptions{})
@@ -340,9 +394,9 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 	interval := v0alpha1.TimeInterval{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
-			Name:      "time-interval",
 		},
 		Spec: v0alpha1.TimeIntervalSpec{
+			Name:          "time-interval",
 			TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
 		},
 	}

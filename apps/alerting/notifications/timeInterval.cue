@@ -28,6 +28,7 @@ timeInterval: {
 					location?: string
 				}
 				spec: {
+					name: string
 					time_intervals: [...#Interval]
 				}
 			}

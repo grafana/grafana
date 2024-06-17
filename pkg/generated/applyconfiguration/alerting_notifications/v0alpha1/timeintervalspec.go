@@ -7,6 +7,7 @@ package v0alpha1
 // TimeIntervalSpecApplyConfiguration represents an declarative configuration of the TimeIntervalSpec type for use
 // with apply.
 type TimeIntervalSpecApplyConfiguration struct {
+	Name          *string                      `json:"name,omitempty"`
 	TimeIntervals []IntervalApplyConfiguration `json:"time_intervals,omitempty"`
 }
 
@@ -14,6 +15,14 @@ type TimeIntervalSpecApplyConfiguration struct {
 // apply.
 func TimeIntervalSpec() *TimeIntervalSpecApplyConfiguration {
 	return &TimeIntervalSpecApplyConfiguration{}
+}
+
+// WithName sets the Name field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Name field is set to the value of the last call.
+func (b *TimeIntervalSpecApplyConfiguration) WithName(value string) *TimeIntervalSpecApplyConfiguration {
+	b.Name = &value
+	return b
 }
 
 // WithTimeIntervals adds the given value to the TimeIntervals field in the declarative configuration

@@ -240,6 +240,13 @@ func schema_pkg_apis_alerting_notifications_v0alpha1_TimeIntervalSpec(ref common
 				Description: "Spec defines model for Spec.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"time_intervals": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
@@ -259,7 +266,7 @@ func schema_pkg_apis_alerting_notifications_v0alpha1_TimeIntervalSpec(ref common
 						},
 					},
 				},
-				Required: []string{"time_intervals"},
+				Required: []string{"name", "time_intervals"},
 			},
 		},
 		Dependencies: []string{
