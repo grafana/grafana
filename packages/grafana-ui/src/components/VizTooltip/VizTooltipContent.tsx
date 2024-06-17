@@ -28,7 +28,7 @@ export const VizTooltipContent = ({
   const scrollableStyle: CSSProperties = scrollable
     ? {
         maxHeight: maxHeight,
-        overflowY: 'scroll',
+        overflowY: 'auto',
       }
     : {};
 

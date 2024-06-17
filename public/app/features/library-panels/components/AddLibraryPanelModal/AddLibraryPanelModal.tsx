@@ -4,7 +4,7 @@ import { useAsync, useDebounce } from 'react-use';
 import { FetchError, isFetchError } from '@grafana/runtime';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { Button, Field, Input, Modal } from '@grafana/ui';
-import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 
 import { PanelModel } from '../../../dashboard/state';
@@ -36,6 +36,7 @@ export const AddLibraryPanelContents = ({
 
   const onCreate = useCallback(() => {
     panel.libraryPanel = { uid: '', name: panelName };
+
     saveLibraryPanel(panel, folderUid!).then((res: LibraryPanel | FetchError) => {
       if (!isFetchError(res)) {
         onDismiss?.();
@@ -84,9 +85,9 @@ export const AddLibraryPanelContents = ({
           'Library panel permissions are derived from the folder permissions'
         )}
       >
-        <OldFolderPicker
-          onChange={({ uid }) => setFolderUid(uid)}
-          initialFolderUid={initialFolderUid}
+        <FolderPicker
+          onChange={(uid) => setFolderUid(uid)}
+          value={folderUid}
           inputId="share-panel-library-panel-folder-picker"
         />
       </Field>
