@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
+import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
 
 import { Playlist, PlaylistMode } from './types';
 
@@ -12,6 +13,7 @@ export interface Props {
 }
 
 export const StartModal = ({ playlist, onDismiss }: Props) => {
+  const styles = useStyles2(getStyles);
   const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
   const [displayTimePicker, setDisplayTimePicker] = useState(true);
@@ -52,30 +54,6 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
         <Field label="Mode">
           <RadioButtonGroup value={mode} options={modes} onChange={setMode} />
         </Field>
-        {config.featureToggles.dashboardScene && (
-          <Field label="Display dashboard controls" description="Customize dashboard elements visibility">
-            <Stack direction="row">
-              <Checkbox
-                label="Time and refresh"
-                name="displayTimePicker"
-                value={displayTimePicker}
-                onChange={(e) => setDisplayTimePicker(e.currentTarget.checked)}
-              />
-              <Checkbox
-                label="Variables"
-                name="displayVariableControls"
-                value={displayVariables}
-                onChange={(e) => setDisplayVariables(e.currentTarget.checked)}
-              />
-              <Checkbox
-                label="Dashboard links"
-                name="displayLinks"
-                value={displayLinks}
-                onChange={(e) => setDisplayLinks(e.currentTarget.checked)}
-              />
-            </Stack>
-          </Field>
-        )}
         <Field>
           <Checkbox
             label="Autofit"
@@ -85,6 +63,32 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
             onChange={(e) => setAutofit(e.currentTarget.checked)}
           />
         </Field>
+        {config.featureToggles.dashboardScene && (
+          <Field label="Display dashboard controls" description="Customize dashboard elements visibility">
+            <Box marginTop={2} marginBottom={2}>
+              <Stack direction="column" alignItems="start" justifyContent="left" gap={2}>
+                <Checkbox
+                  label="Time and refresh"
+                  name="displayTimePicker"
+                  value={displayTimePicker}
+                  onChange={(e) => setDisplayTimePicker(e.currentTarget.checked)}
+                />
+                <Checkbox
+                  label="Variables"
+                  name="displayVariableControls"
+                  value={displayVariables}
+                  onChange={(e) => setDisplayVariables(e.currentTarget.checked)}
+                />
+                <Checkbox
+                  label="Dashboard links"
+                  name="displayLinks"
+                  value={displayLinks}
+                  onChange={(e) => setDisplayLinks(e.currentTarget.checked)}
+                />
+              </Stack>
+            </Box>
+          </Field>
+        )}
       </FieldSet>
       <Modal.ButtonRow>
         <Button variant="primary" onClick={onStart}>
@@ -94,3 +98,11 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
     </Modal>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    dashboardControlsList: css({
+      padding: `${theme.spacing(2)} 0`,
+    }),
+  };
+}
