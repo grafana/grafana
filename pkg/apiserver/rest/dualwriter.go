@@ -277,7 +277,6 @@ func sortUnstructuredSlice(sl []any) []any {
 		default:
 			ret[i] = v
 		}
-
 	}
 
 	return ret
