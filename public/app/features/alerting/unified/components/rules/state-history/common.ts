@@ -7,6 +7,7 @@ export interface Line {
   current: GrafanaAlertStateWithReason;
   values?: Record<string, number>;
   labels?: Record<string, string>;
+  ruleUID?: string;
 }
 
 export interface LogRecord {

@@ -706,4 +706,12 @@ const (
 	// FlagPinNavItems
 	// Enables pinning of nav items
 	FlagPinNavItems = "pinNavItems"
+
+	// FlagAuthZGRPCServer
+	// Enables the gRPC server for authorization
+	FlagAuthZGRPCServer = "authZGRPCServer"
+
+	// FlagOpenSearchBackendFlowEnabled
+	// Enables the backend query flow for Open Search datasource plugin
+	FlagOpenSearchBackendFlowEnabled = "openSearchBackendFlowEnabled"
 )

@@ -32,7 +32,7 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
         this.state.filters.subscribeToState((newState, prevState) => {
           if (newState.scopes !== prevState.scopes) {
             if (this.state.isExpanded) {
-              this.state.dashboards.fetchDashboards(newState.scopes);
+              this.state.dashboards.fetchDashboards(this.state.filters.getSelectedScopes());
             }
 
             sceneGraph.getTimeRange(this.parent!).onRefresh();
@@ -94,10 +94,10 @@ export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>)
             className={cx(!isExpanded && styles.iconNotExpanded)}
             aria-label={
               isExpanded
-                ? t('scopes.root.collapse', 'Collapse scope filters')
-                : t('scopes.root.expand', 'Expand scope filters')
+                ? t('scopes.suggestedDashboards.toggle.collapse', 'Collapse scope filters')
+                : t('scopes.suggestedDashboards.toggle..expand', 'Expand scope filters')
             }
-            data-testid="scopes-root-expand"
+            data-testid="scopes-dashboards-expand"
             onClick={() => model.toggleIsExpanded()}
           />
         )}

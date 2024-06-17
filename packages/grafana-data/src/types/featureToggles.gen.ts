@@ -193,4 +193,6 @@ export interface FeatureToggles {
   pluginProxyPreserveTrailingSlash?: boolean;
   azureMonitorPrometheusExemplars?: boolean;
   pinNavItems?: boolean;
+  authZGRPCServer?: boolean;
+  openSearchBackendFlowEnabled?: boolean;
 }
