@@ -57,11 +57,12 @@ function generateOptions(amount: number) {
   return Array.from({ length: amount }, () => ({
     label: chance.name(),
     value: chance.guid(),
+    description: chance.sentence(),
   }));
 }
 
 const manyOptions = generateOptions(1e5);
-manyOptions.push({ label: 'Banana', value: 'banana' });
+manyOptions.push({ label: 'Banana', value: 'banana', description: 'A yellow fruit' });
 
 export const ManyOptions: StoryFn<typeof Combobox> = (args) => {
   const [value, setValue] = useState<Value>(manyOptions[5].value);

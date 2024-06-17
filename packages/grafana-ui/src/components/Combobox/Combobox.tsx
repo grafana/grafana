@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import React, { useMemo, useRef, useState } from 'react';
-import { useVirtual } from 'react-virtual';
 
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
@@ -11,6 +11,7 @@ export type Value = string | number;
 type Option = {
   label: string;
   value: Value;
+  description?: string;
 };
 
 interface ComboboxProps
@@ -47,9 +48,9 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
 
   const styles = useStyles2(getStyles);
 
-  const rowVirtualizer = useVirtual({
-    size: items.length,
-    parentRef: listRef,
+  const rowVirtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => listRef.current,
     estimateSize,
     overscan: 2,
   });
@@ -75,19 +76,21 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
       <ul className={styles.ulMenu} {...getMenuProps({ ref: listRef })}>
         {isOpen && (
           <>
-            <li key="total-size" style={{ height: rowVirtualizer.totalSize }} />
-            {rowVirtualizer.virtualItems.map((virtualRow) => {
+            <li key="total-size" style={{ height: rowVirtualizer.getTotalSize() }} />
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
                 <li
                   key={items[virtualRow.index].value}
                   {...getItemProps({ item: items[virtualRow.index], index: virtualRow.index })}
+                  data-index={virtualRow.index}
+                  ref={rowVirtualizer.measureElement}
                   className={styles.menuItem}
                   style={{
-                    height: virtualRow.size,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
                 >
-                  {items[virtualRow.index].label}
+                  <span>{items[virtualRow.index].label}</span>
+                  {items[virtualRow.index].description && <span>{items[virtualRow.index].description}</span>}
                 </li>
               );
             })}
@@ -101,14 +104,20 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
 const getStyles = () => ({
   ulMenu: css({
     position: 'absolute',
-    maxHeight: 100,
+    height: 400,
+    width: 600,
     overflowY: 'scroll',
-    width: 400,
+    contain: 'strict',
   }),
   menuItem: css({
     position: 'absolute',
     top: 0,
     left: 0,
     width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    '&:first-child': {
+      fontWeight: 'bold',
+    },
   }),
 });
