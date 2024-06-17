@@ -5,7 +5,7 @@ go 1.21.10
 require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gorilla/mux v1.8.1
-	github.com/grafana/grafana-plugin-sdk-go v0.234.0
+	github.com/grafana/grafana-plugin-sdk-go v0.235.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240409140820-518d3341d58f
 	github.com/prometheus/client_golang v1.19.0
 	github.com/stretchr/testify v1.9.0
@@ -60,11 +60,13 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20240416155748-26353dc0451f // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/grafana/otel-profiling-go v0.5.1 // indirect
+	github.com/grafana/pyroscope-go/godeltaprof v0.1.7 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-plugin v1.6.1 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
@@ -139,8 +141,8 @@ require (
 	golang.org/x/tools v0.22.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240429193739-8cf5692501f6 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240520151616-dc85e6b867a5 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240604185151-ef581f913117 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117 // indirect
 	google.golang.org/grpc v1.64.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect

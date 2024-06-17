@@ -163,8 +163,13 @@ func TestMetaAccessor(t *testing.T) {
 		}, res.GetAnnotations())
 
 		meta.SetNamespace("aaa")
+		meta.SetResourceVersionInt64(12345)
 		require.Equal(t, "aaa", res.GetNamespace())
 		require.Equal(t, "aaa", meta.GetNamespace())
+
+		rv, err := meta.GetResourceVersionInt64()
+		require.NoError(t, err)
+		require.Equal(t, int64(12345), rv)
 	})
 
 	t.Run("find titles", func(t *testing.T) {
