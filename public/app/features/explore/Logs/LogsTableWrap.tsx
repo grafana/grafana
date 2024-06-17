@@ -488,6 +488,24 @@ export function LogsTableWrap(props: Props) {
     }
   };
 
+  const getWrappedFieldName = () => {
+    const activeColumns = Object.keys(columnsWithMeta).filter(
+      (columnName) => columnsWithMeta[columnName].active && columnsWithMeta[columnName].type !== 'TIME_FIELD'
+    );
+
+    if (activeColumns.find((activeColumn) => activeColumn === logsFrame?.bodyField.name)) {
+      return logsFrame?.bodyField.name;
+    }
+
+    activeColumns.sort((a, b) => (columnsWithMeta?.[a]?.index ?? 0) - (columnsWithMeta?.[b]?.index ?? 0));
+
+    if (activeColumns.length) {
+      return activeColumns[0];
+    }
+
+    return 'N/A';
+  };
+
   return (
     <>
       <div className={styles.optionsWrapper}>
@@ -506,7 +524,7 @@ export function LogsTableWrap(props: Props) {
             />
           </InlineField>
         )}
-        <InlineField label={`Wrap ${logsFrame?.bodyField.name ?? 'body'}`} transparent>
+        <InlineField label={`Wrap ${getWrappedFieldName()}`} transparent>
           <InlineSwitch value={props.wrapLogMessage} onChange={props.setWrapLogMessage} transparent />
         </InlineField>
       </div>

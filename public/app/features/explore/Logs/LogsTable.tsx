@@ -42,6 +42,33 @@ interface Props {
   wrapLogsMessage: boolean;
 }
 
+function setCellOptions(frameWithOverrides: DataFrame, bodyFieldName: string | undefined, wrapLogsMessage: boolean) {
+  const activeBodyField = frameWithOverrides.fields.find((field) => {
+    return field.name === bodyFieldName;
+  });
+
+  if (activeBodyField) {
+    // Just on body for now?
+    activeBodyField.config.custom.cellOptions = {
+      ...activeBodyField?.config?.custom?.cellOptions,
+      type: 'auto',
+      wrapText: wrapLogsMessage,
+    };
+  } else {
+    // Set first non-time column
+    const firstNonTimeField = frameWithOverrides.fields.find((field) => {
+      return field.type !== FieldType.time;
+    });
+    if (firstNonTimeField) {
+      firstNonTimeField.config.custom.cellOptions = {
+        ...firstNonTimeField?.config?.custom?.cellOptions,
+        type: 'auto',
+        wrapText: wrapLogsMessage,
+      };
+    }
+  }
+}
+
 export function LogsTable(props: Props) {
   const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame, wrapLogsMessage } =
     props;
@@ -66,6 +93,7 @@ export function LogsTable(props: Props) {
           overrides: [],
         },
       });
+
       // `getLinks` and `applyFieldOverrides` are taken from TableContainer.tsx
       for (const field of frameWithOverrides.fields) {
         field.getLinks = (config: ValueLinkConfig) => {
@@ -89,17 +117,11 @@ export function LogsTable(props: Props) {
           filterable: isFieldFilterable(field, logsFrame?.bodyField.name ?? '', logsFrame?.timeField.name ?? ''),
         };
 
-        // Just on body for now?
-        if (field.name === logsFrame?.bodyField.name) {
-          field.config.custom.cellOptions = {
-            type: 'auto',
-            wrapText: wrapLogsMessage,
-          };
-        }
-
         // If it's a string, then try to guess for a better type for numeric support in viz
         field.type = field.type === FieldType.string ? guessFieldTypeForField(field) ?? FieldType.string : field.type;
       }
+
+      setCellOptions(frameWithOverrides, logsFrame?.bodyField.name, wrapLogsMessage);
 
       return frameWithOverrides;
     },
