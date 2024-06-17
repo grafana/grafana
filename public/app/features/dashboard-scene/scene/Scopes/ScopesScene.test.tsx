@@ -15,6 +15,8 @@ import {
   fetchSelectedScopesSpy,
   getApplicationsClustersExpand,
   getApplicationsClustersSelect,
+  getApplicationsClustersSlothClusterNorthSelect,
+  getApplicationsClustersSlothClusterSouthSelect,
   getApplicationsExpand,
   getApplicationsSearch,
   getApplicationsSlothPictureFactorySelect,
@@ -34,6 +36,7 @@ import {
   mocksNodes,
   mocksScopeDashboardBindings,
   mocksScopes,
+  queryAllDashboard,
   queryFiltersApply,
   queryApplicationsClustersSlothClusterNorthTitle,
   queryApplicationsClustersTitle,
@@ -298,6 +301,20 @@ describe('ScopesScene', () => {
         expect(getDashboard('2')).toBeInTheDocument();
         await userEvents.type(getDashboardsSearch(), '1');
         expect(queryDashboard('2')).not.toBeInTheDocument();
+      });
+
+      it('Deduplicates the dashboards list', async () => {
+        await userEvents.click(getDashboardsExpand());
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsClustersExpand());
+        await userEvents.click(getApplicationsClustersSlothClusterNorthSelect());
+        await userEvents.click(getApplicationsClustersSlothClusterSouthSelect());
+        await userEvents.click(getFiltersApply());
+        expect(queryAllDashboard('5')).toHaveLength(1);
+        expect(queryAllDashboard('6')).toHaveLength(1);
+        expect(queryAllDashboard('7')).toHaveLength(1);
+        expect(queryAllDashboard('8')).toHaveLength(1);
       });
     });
 
