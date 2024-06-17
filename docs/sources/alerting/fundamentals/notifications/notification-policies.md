@@ -72,6 +72,8 @@ By default, once a matching policy is found, the system does not continue to loo
 
 The default notification policy matches all alert instances. It always handles alert instances if there are no child policies or if none of the child policies match the alert instance's labels—this prevents any alerts from being missed.
 
+If alerts use multiple labels, these labels must also be present in a notification policy to match and route notifications to a specific contact point.
+
 {{% /admonition %}}
 
 {{< collapse title="Routing example" >}}
