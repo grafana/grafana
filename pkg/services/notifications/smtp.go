@@ -70,7 +70,7 @@ func (sc *SmtpClient) Send(ctx context.Context, messages ...*Message) (int, erro
 				emailsSentFailed.Inc()
 			}
 
-			err = fmt.Errorf("failed to send notification to email addresses: %s: %w", strings.Join(msg.To, ";"), innerError)
+			err = fmt.Errorf("failed to send email: %w", innerError)
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 
