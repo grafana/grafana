@@ -40,6 +40,7 @@ type CloudMigrationSnapshot struct {
 	LocalDir       string `xorm:"local_directory"`
 	GMSSnapshotUID string `xorm:"gms_snapshot_uid"`
 	Result         []byte //store raw gms response body
+	ErrorString    string `xorm:"error_string"`
 	Created        time.Time
 	Updated        time.Time
 	Finished       time.Time
@@ -55,6 +56,7 @@ const (
 	SnapshotStatusPendingProcessing = "pending_processing"
 	SnapshotStatusProcessing        = "processing"
 	SnapshotStatusFinished          = "finished"
+	SnapshotStatusError             = "error"
 	SnapshotStatusUnknown           = "unknown"
 )
 
@@ -85,6 +87,12 @@ type CloudMigrationSessionResponse struct {
 
 type CloudMigrationSessionListResponse struct {
 	Sessions []CloudMigrationSessionResponse
+}
+
+type UpdateSnapshotCmd struct {
+	UID    string
+	Status SnapshotStatus
+	Result []byte //store raw gms response body
 }
 
 // access token

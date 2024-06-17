@@ -136,4 +136,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 
 	encryptionKeyColumn := Column{Name: "encryption_key", Type: DB_Text, Nullable: true}
 	mg.AddMigration("add snapshot encryption_key column", NewAddColumnMigration(migrationSnapshotTable, &encryptionKeyColumn))
+
+	errorStringColumn := Column{Name: "error_string", Type: DB_Text, Nullable: true}
+	mg.AddMigration("add snapshot error_string column", NewAddColumnMigration(migrationSnapshotTable, &errorStringColumn))
 }

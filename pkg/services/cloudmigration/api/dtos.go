@@ -228,6 +228,7 @@ const (
 	SnapshotStatusPendingProcessing SnapshotStatus = "PENDING_PROCESSING"
 	SnapshotStatusProcessing        SnapshotStatus = "PROCESSING"
 	SnapshotStatusFinished          SnapshotStatus = "FINISHED"
+	SnapshotStatusError             SnapshotStatus = "ERROR"
 	SnapshotStatusUnknown           SnapshotStatus = "UNKNOWN"
 )
 

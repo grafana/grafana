@@ -142,11 +142,10 @@ func (s *Service) buildSnapshot(ctx context.Context, snapshotMeta cloudmigration
 	defer s.buildSnapshotMutex.Unlock()
 	s.buildSnapshotError = false
 
-	s.log.Debug("snapshot meta", "snapshot", snapshotMeta)
-
 	// update snapshot status to creating, add some retries since this is a background task
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
-		err := s.store.UpdateSnapshot(ctx, cloudmigration.CloudMigrationSnapshot{
+		err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+			UID:    snapshotMeta.UID,
 			Status: cloudmigration.SnapshotStatusCreating,
 		})
 		return retryer.FuncComplete, err
@@ -162,11 +161,13 @@ func (s *Service) buildSnapshot(ctx context.Context, snapshotMeta cloudmigration
 	//   - some sort of regular check-in so we know we haven't timed out
 	//   - a channel to listen for cancel events
 	//   - retries baked into the snapshot writing process?
+	s.log.Debug("snapshot meta", "snapshot", snapshotMeta)
 	time.Sleep(3 * time.Second)
 
 	// update snapshot status to pending upload with retry
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
-		err := s.store.UpdateSnapshot(ctx, cloudmigration.CloudMigrationSnapshot{
+		err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+			UID:    snapshotMeta.UID,
 			Status: cloudmigration.SnapshotStatusPendingUpload,
 		})
 		return retryer.FuncComplete, err

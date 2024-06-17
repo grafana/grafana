@@ -62,6 +62,7 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 		cloudMigrationRoute.Get("/migration/:uid/snapshot/:snapshotUid", routing.Wrap(cma.GetSnapshot))
 		cloudMigrationRoute.Get("/migration/:uid/snapshot", routing.Wrap(cma.GetSnapshotList))
 		cloudMigrationRoute.Post("/migration/:uid/snapshot/:snapshotUid/upload", routing.Wrap(cma.UploadSnapshot))
+		cloudMigrationRoute.Post("/migration/:uid/snapshot/:snapshotUid/cancel", routing.Wrap(cma.CancelSnapshot))
 	}, middleware.ReqOrgAdmin)
 }
 
@@ -456,7 +457,7 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 	})
 }
 
-// swagger:route POST /cloudmigration/migration/{uid}/snapshot/{snapshotUid} migrations uploadSnapshot
+// swagger:route POST /cloudmigration/migration/{uid}/snapshot/{snapshotUid}/upload migrations uploadSnapshot
 //
 // Upload a snapshot to the Grafana Migration Service for processing.
 //
@@ -477,6 +478,34 @@ func (cma *CloudMigrationAPI) UploadSnapshot(c *contextmodel.ReqContext) respons
 	if err := util.ValidateUID(snapshotUid); err != nil {
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
 	}
+
+	return response.JSON(http.StatusOK, nil)
+}
+
+// swagger:route POST /cloudmigration/migration/{uid}/snapshot/{snapshotUid}/cancel migrations cancelSnapshot
+//
+// Cancel a snapshot, wherever it is in its processing chain.
+// TODO: Implement
+//
+// Responses:
+// 200:
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (cma *CloudMigrationAPI) CancelSnapshot(c *contextmodel.ReqContext) response.Response {
+	_, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.CancelSnapshot")
+	defer span.End()
+
+	sessUid, snapshotUid := web.Params(c.Req)[":uid"], web.Params(c.Req)[":snapshotUid"]
+	if err := util.ValidateUID(sessUid); err != nil {
+		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
+	}
+	if err := util.ValidateUID(snapshotUid); err != nil {
+		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
+	}
+
+	// Implement
 
 	return response.JSON(http.StatusOK, nil)
 }
