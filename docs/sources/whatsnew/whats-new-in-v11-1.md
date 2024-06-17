@@ -166,4 +166,4 @@ The majority of screen reader users [find things on a web page using headings](h
 
 ### Reduced motion support
 
-Users who are affected by a lot of animations on a web site have the possibility to configure [reduced motion settings](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion). Grafana now supports this, either by making animations simpler or removing them altogether. We have [implemented a rule](https://github.com/grafana/grafana/tree/main/packages/grafana-eslint-rules#no-unreduced-motion), which prohibits unhandled transitions and animations, ensuring that we can continously support reduced motion.
+Users who are affected by a lot of animations on a web site have the possibility to configure [reduced motion settings](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion). Grafana now supports this, either by making animations simpler or removing them altogether. We have [implemented a rule](https://github.com/grafana/grafana/tree/main/packages/grafana-eslint-rules#no-unreduced-motion), which prohibits unhandled transitions and animations, ensuring that we can continuously support reduced motion.
