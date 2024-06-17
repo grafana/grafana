@@ -19,10 +19,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/errutil"
+	"github.com/grafana/grafana/pkg/build/fsutil"
 	"github.com/grafana/grafana/pkg/build/grafana"
 	"github.com/grafana/grafana/pkg/build/plugins"
 	"github.com/grafana/grafana/pkg/build/syncutil"
-	"github.com/grafana/grafana/pkg/infra/fs"
 )
 
 var (
@@ -99,7 +99,7 @@ func packageGrafana(
 	p syncutil.WorkerPool,
 ) error {
 	distDir := filepath.Join(grafanaDir, "dist")
-	exists, err := fs.Exists(distDir)
+	exists, err := fsutil.Exists(distDir)
 	if err != nil {
 		return err
 	}
@@ -317,28 +317,28 @@ func createPackage(srcDir string, options linuxPackageOptions) error {
 		}
 	}
 
-	if err := fs.CopyFile(filepath.Join(options.wrapperFilePath, binary),
+	if err := fsutil.CopyFile(filepath.Join(options.wrapperFilePath, binary),
 		filepath.Join(packageRoot, "usr", "sbin", binary)); err != nil {
 		return err
 	}
-	if err := fs.CopyFile(filepath.Join(options.wrapperFilePath, cliBinary),
+	if err := fsutil.CopyFile(filepath.Join(options.wrapperFilePath, cliBinary),
 		filepath.Join(packageRoot, "usr", "sbin", cliBinary)); err != nil {
 		return err
 	}
-	if err := fs.CopyFile(filepath.Join(options.wrapperFilePath, serverBinary),
+	if err := fsutil.CopyFile(filepath.Join(options.wrapperFilePath, serverBinary),
 		filepath.Join(packageRoot, "usr", "sbin", serverBinary)); err != nil {
 		return err
 	}
-	if err := fs.CopyFile(options.initdScriptSrc, filepath.Join(packageRoot, options.initdScriptFilePath)); err != nil {
+	if err := fsutil.CopyFile(options.initdScriptSrc, filepath.Join(packageRoot, options.initdScriptFilePath)); err != nil {
 		return err
 	}
-	if err := fs.CopyFile(options.defaultFileSrc, filepath.Join(packageRoot, options.etcDefaultFilePath)); err != nil {
+	if err := fsutil.CopyFile(options.defaultFileSrc, filepath.Join(packageRoot, options.etcDefaultFilePath)); err != nil {
 		return err
 	}
-	if err := fs.CopyFile(options.systemdFileSrc, filepath.Join(packageRoot, options.systemdServiceFilePath)); err != nil {
+	if err := fsutil.CopyFile(options.systemdFileSrc, filepath.Join(packageRoot, options.systemdServiceFilePath)); err != nil {
 		return err
 	}
-	if err := fs.CopyRecursive(srcDir, filepath.Join(packageRoot, options.homeDir)); err != nil {
+	if err := fsutil.CopyRecursive(srcDir, filepath.Join(packageRoot, options.homeDir)); err != nil {
 		return err
 	}
 
@@ -416,7 +416,7 @@ func executeFPM(options linuxPackageOptions, packageRoot, srcDir string) error {
 	}
 	log.Printf("Creating %s package: %s...", options.packageType, cmdStr)
 	const rvmPath = "/etc/profile.d/rvm.sh"
-	exists, err := fs.Exists(rvmPath)
+	exists, err := fsutil.Exists(rvmPath)
 	if err != nil {
 		return err
 	}
@@ -439,7 +439,7 @@ func copyPubDir(grafanaDir, tmpDir string) error {
 	srcPubDir := filepath.Join(grafanaDir, "public")
 	tgtPubDir := filepath.Join(tmpDir, "public")
 	log.Printf("Copying %q to %q...", srcPubDir, tgtPubDir)
-	if err := fs.CopyRecursive(srcPubDir, tgtPubDir); err != nil {
+	if err := fsutil.CopyRecursive(srcPubDir, tgtPubDir); err != nil {
 		return fmt.Errorf("failed to copy %q to %q: %w", srcPubDir, tgtPubDir, err)
 	}
 
@@ -469,7 +469,7 @@ func copyBinaries(grafanaDir, tmpDir string, args grafana.BuildArgs, edition con
 		srcPath := filepath.Join(binDir, file.Name())
 		tgtPath := filepath.Join(tgtDir, file.Name())
 
-		if err := fs.CopyFile(srcPath, tgtPath); err != nil {
+		if err := fsutil.CopyFile(srcPath, tgtPath); err != nil {
 			return err
 		}
 	}
@@ -491,7 +491,7 @@ func copyConfFiles(grafanaDir, tmpDir string) error {
 	}
 	for _, info := range infos {
 		fpath := filepath.Join(confDir, info.Name())
-		if err := fs.CopyRecursive(fpath, filepath.Join(tmpDir, "conf", info.Name())); err != nil {
+		if err := fsutil.CopyRecursive(fpath, filepath.Join(tmpDir, "conf", info.Name())); err != nil {
 			return err
 		}
 	}
@@ -510,7 +510,7 @@ func copyPlugins(ctx context.Context, v config.Variant, grafanaDir, tmpDir strin
 	}
 
 	tgtDir := filepath.Join(tmpDir, "plugins-bundled")
-	exists, err := fs.Exists(tgtDir)
+	exists, err := fsutil.Exists(tgtDir)
 	if err != nil {
 		return err
 	}
@@ -550,7 +550,7 @@ func copyPlugins(ctx context.Context, v config.Variant, grafanaDir, tmpDir strin
 
 			wantExe = fmt.Sprintf("%s_%s", plugExe, sfx)
 			log.Printf("The external plugin should contain an executable %q", wantExe)
-			exists, err := fs.Exists(filepath.Join(srcDir, wantExe))
+			exists, err := fsutil.Exists(filepath.Join(srcDir, wantExe))
 			if err != nil {
 				return err
 			}
@@ -591,7 +591,7 @@ func copyPlugins(ctx context.Context, v config.Variant, grafanaDir, tmpDir strin
 			}
 
 			log.Printf("Copying %q to %q", pth, dstPath)
-			return fs.CopyFile(pth, dstPath)
+			return fsutil.CopyFile(pth, dstPath)
 		}); err != nil {
 			return fmt.Errorf("failed to copy external plugin %q to %q: %w", srcDir, dstDir, err)
 		}
@@ -610,7 +610,7 @@ func copyInternalPlugins(pluginsDir, tmpDir string) error {
 	tgtDir := filepath.Join(tmpDir, "plugins-bundled", "internal")
 	srcDir := filepath.Join(pluginsDir, "dist")
 
-	exists, err := fs.Exists(tgtDir)
+	exists, err := fsutil.Exists(tgtDir)
 	if err != nil {
 		return err
 	}
@@ -635,7 +635,7 @@ func copyInternalPlugins(pluginsDir, tmpDir string) error {
 
 		dstPath := filepath.Join(tgtDir, fi.Name())
 		log.Printf("Copying internal plugin %q to %q...", srcPath, dstPath)
-		if err := fs.CopyRecursive(srcPath, dstPath); err != nil {
+		if err := fsutil.CopyRecursive(srcPath, dstPath); err != nil {
 			return fmt.Errorf("failed to copy %q to %q: %w", srcPath, dstPath, err)
 		}
 	}
@@ -696,7 +696,7 @@ func realPackageVariant(ctx context.Context, v config.Variant, edition config.Ed
 			return fmt.Errorf("failed to create tools dir %q: %w", toolsDir, err)
 		}
 
-		if err := fs.CopyFile("/usr/local/go/lib/time/zoneinfo.zip",
+		if err := fsutil.CopyFile("/usr/local/go/lib/time/zoneinfo.zip",
 			filepath.Join(tmpDir, "tools", "zoneinfo.zip")); err != nil {
 			return err
 		}
@@ -860,7 +860,7 @@ type linuxPackageOptions struct {
 // createArchive makes a distribution archive.
 func createArchive(srcDir string, edition config.Edition, v config.Variant, version, grafanaDir string) error {
 	distDir := filepath.Join(grafanaDir, "dist")
-	exists, err := fs.Exists(distDir)
+	exists, err := fsutil.Exists(distDir)
 	if err != nil {
 		return err
 	}
