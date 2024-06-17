@@ -147,14 +147,7 @@
     }
   },
   "central-alert-history": {
-    "error": "Something went wrong loading the alert state history",
-    "filter": {
-      "button": {
-        "clear": "Clear"
-      },
-      "label": "Filter events",
-      "placeholder": "Filter events in the list with labels"
-    }
+    "error": "Something went wrong loading the alert state history"
   },
   "clipboard-button": {
     "inline-toast": {

@@ -147,14 +147,7 @@
     }
   },
   "central-alert-history": {
-    "error": "Ŝőmęŧĥįŉģ ŵęŉŧ ŵřőŉģ ľőäđįŉģ ŧĥę äľęřŧ şŧäŧę ĥįşŧőřy",
-    "filter": {
-      "button": {
-        "clear": "Cľęäř"
-      },
-      "label": "Fįľŧęř ęvęŉŧş",
-      "placeholder": "Fįľŧęř ęvęŉŧş įŉ ŧĥę ľįşŧ ŵįŧĥ ľäþęľş"
-    }
+    "error": "Ŝőmęŧĥįŉģ ŵęŉŧ ŵřőŉģ ľőäđįŉģ ŧĥę äľęřŧ şŧäŧę ĥįşŧőřy"
   },
   "clipboard-button": {
     "inline-toast": {
