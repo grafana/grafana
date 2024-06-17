@@ -179,7 +179,11 @@ export class ContextSrv {
 
   // evaluates access control permissions, granting access if the user has any of them
   evaluatePermission(actions: string[]) {
-    return userHasAnyPermission(actions, this.user);
+    if (userHasAnyPermission(actions, this.user)) {
+      return [];
+    }
+    // Hack to reject when user does not have permission
+    return ['Reject'];
   }
 
   // schedules a job to perform token ration in the background

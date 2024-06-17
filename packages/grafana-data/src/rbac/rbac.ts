@@ -11,15 +11,9 @@ export function userHasPermissionInMetadata(action: string, object: WithAccessCo
 }
 
 export function userHasAllPermissions(actions: string[], user: CurrentUser) {
-  if (actions.every((action) => userHasPermission(action, user))) {
-    return [];
-  }
-  return ['Reject'];
+  return actions.every((action) => userHasPermission(action, user));
 }
 
 export function userHasAnyPermission(actions: string[], user: CurrentUser) {
-  if (actions.some((action) => userHasPermission(action, user))) {
-    return [];
-  }
-  return ['Reject'];
+  return actions.some((action) => userHasPermission(action, user));
 }
