@@ -226,6 +226,20 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string) (*cloudmig
 	return &snapshot, err
 }
 
+func (ss *sqlStore) GetSnapshotList(ctx context.Context, sessionUid string) ([]cloudmigration.CloudMigrationSnapshot, error) {
+	// TODO: make results optional
+	var runs = make([]cloudmigration.CloudMigrationSnapshot, 0)
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Find(&runs, &cloudmigration.CloudMigrationSnapshot{
+			SessionUID: sessionUid,
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+	return runs, nil
+}
+
 func (ss *sqlStore) encryptToken(ctx context.Context, cm *cloudmigration.CloudMigrationSession) error {
 	s, err := ss.secretsService.Encrypt(ctx, []byte(cm.AuthToken), secrets.WithoutScope())
 	if err != nil {

@@ -514,7 +514,7 @@ func (s *Service) GetSnapshot(ctx context.Context, sessionUid string, snapshotUi
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetSnapshot")
 	defer span.End()
 
-	snapshot, err := s.store.GetSnapshotByUID(ctx, sessionUid)
+	snapshot, err := s.store.GetSnapshotByUID(ctx, snapshotUid)
 	if err != nil {
 		return nil, fmt.Errorf("fetching snapshot for uid %s: %w", snapshotUid, err)
 	}
@@ -522,10 +522,31 @@ func (s *Service) GetSnapshot(ctx context.Context, sessionUid string, snapshotUi
 }
 
 func (s *Service) GetSnapshotList(ctx context.Context, sessionUid string) ([]cloudmigration.CloudMigrationSnapshot, error) {
-	return nil, nil
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetSnapshotList")
+	defer span.End()
+
+	snapshotList, err := s.store.GetSnapshotList(ctx, sessionUid)
+	if err != nil {
+		return nil, fmt.Errorf("fetching snapshots for session uid %s: %w", sessionUid, err)
+	}
+	return snapshotList, nil
 }
 
 func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.UploadSnapshot")
+	defer span.End()
+
+	snapshot, err := s.GetSnapshot(ctx, sessionUid, snapshotUid)
+	if err != nil {
+		return fmt.Errorf("fetching snapshot with uid %s: %w", snapshotUid, err)
+	}
+
+	s.log.Info("Uploading snapshot with GMS ID %s in local directory %s to url %s", snapshot.GMSSnapshotUID, snapshot.LocalDir, snapshot.UploadURL)
+	s.log.Debug("UploadSnapshot not yet implemented, faking it")
+
+	// start uploading the snapshot asynchronously while we return a success response to the client
+	go s.uploadSnapshot(ctx, *snapshot)
+
 	return nil
 }
 

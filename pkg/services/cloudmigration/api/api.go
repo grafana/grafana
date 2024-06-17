@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -458,7 +457,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 // 403: forbiddenError
 // 500: internalServerError
 func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) response.Response {
-	_, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetShapshotList")
+	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetShapshotList")
 	defer span.End()
 
 	uid := web.Params(c.Req)[":uid"]
@@ -466,16 +465,24 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
 
+	snapshotList, err := cma.cloudMigrationService.GetSnapshotList(ctx, uid)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "error retrieving snapshot list", err)
+	}
+
+	dtos := make([]SnapshotDTO, len(snapshotList))
+	for i := 0; i < len(snapshotList); i++ {
+		dtos = append(dtos, SnapshotDTO{
+			SnapshotUID: snapshotList[i].UID,
+			Status:      fromSnapshotStatus(snapshotList[i].Status),
+			SessionUID:  uid,
+			Created:     snapshotList[i].Created,
+			Finished:    snapshotList[i].Finished,
+		})
+	}
+
 	return response.JSON(http.StatusOK, SnapshotListResponseDTO{
-		Snapshots: []SnapshotDTO{
-			{
-				SnapshotUID: util.GenerateShortUID(),
-				Status:      "blah",
-				SessionUID:  uid,
-				Created:     time.Now(),
-				Finished:    time.Now(),
-			},
-		},
+		Snapshots: dtos,
 	})
 }
 

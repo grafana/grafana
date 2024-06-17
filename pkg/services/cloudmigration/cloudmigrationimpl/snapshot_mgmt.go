@@ -176,3 +176,41 @@ func (s *Service) buildSnapshot(ctx context.Context, snapshotMeta cloudmigration
 		s.buildSnapshotError = true
 	}
 }
+
+// asynchronous process for and updating the snapshot status
+func (s *Service) uploadSnapshot(ctx context.Context, snapshotMeta cloudmigration.CloudMigrationSnapshot) {
+	// TODO -- make sure we can only upload one snapshot at a time
+	s.buildSnapshotMutex.Lock()
+	defer s.buildSnapshotMutex.Unlock()
+	s.buildSnapshotError = false
+
+	// update snapshot status to uploading, add some retries since this is a background task
+	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
+		err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+			UID:    snapshotMeta.UID,
+			Status: cloudmigration.SnapshotStatusUploading,
+		})
+		return retryer.FuncComplete, err
+	}, 10, time.Millisecond*100, time.Second*10); err != nil {
+		s.log.Error("failed to set snapshot status to 'creating'", "err", err)
+		s.buildSnapshotError = true
+		return
+	}
+
+	// upload snapshot
+	// just sleep for now to simulate snapshot creation happening
+	s.log.Debug("snapshot meta", "snapshot", snapshotMeta)
+	time.Sleep(3 * time.Second)
+
+	// update snapshot status to pending processing with retry
+	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
+		err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+			UID:    snapshotMeta.UID,
+			Status: cloudmigration.SnapshotStatusPendingProcessing,
+		})
+		return retryer.FuncComplete, err
+	}, 10, time.Millisecond*100, time.Second*10); err != nil {
+		s.log.Error("failed to set snapshot status to 'pending upload'", "err", err)
+		s.buildSnapshotError = true
+	}
+}
