@@ -9,7 +9,7 @@ import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 export interface DashboardAPI {
   /** Get a dashboard with the access control metadata */
-  getDashboardDTO(uid: string, queryParams?: UrlQueryMap | undefined): Promise<DashboardDTO>;
+  getDashboardDTO(uid: string): Promise<DashboardDTO>;
   /** Save dashboard */
   saveDashboard(options: SaveDashboardCommand): Promise<unknown>;
   /** Delete a dashboard */
