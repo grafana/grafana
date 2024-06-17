@@ -16,7 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/marketplacecatalog"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	"github.com/urfave/cli/v2"
 
@@ -164,7 +163,7 @@ func (s *AwsMarketplacePublishingService) Login(ctx context.Context) error {
 		return err
 	}
 	authString := strings.Split(string(authData), ":")
-	authData, err = json.Marshal(registry.AuthConfig{
+	authData, err = json.Marshal(types.AuthConfig{
 		Username: authString[0],
 		Password: authString[1],
 	})
