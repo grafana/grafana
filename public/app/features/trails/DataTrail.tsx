@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
-import { AdHocVariableFilter, GrafanaTheme2, VariableHide, urlUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { AdHocVariableFilter, GrafanaTheme2, VariableHide, urlUtil, PluginExtensionLink } from '@grafana/data';
+import { locationService, UsePluginExtensionsResult, usePluginLinkExtensions } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   DataSourceVariable,
@@ -24,7 +24,7 @@ import {
   VariableDependencyConfig,
   VariableValueSelectors,
 } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
@@ -235,6 +235,29 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       <div className={styles.container}>
         {showHeaderForFirstTimeUsers && <MetricsHeader />}
         <history.Component model={history} />
+        <ExtensionsProvider>
+          {(extensions) => {
+            const labelVar = model.useState().$variables?.useState().variables[1].useState();
+            // @ts-ignore seems like there isn't typing for the state
+            const filters =
+              labelVar && labelVar.filters.length === 2
+                ? {
+                    // @ts-ignore
+                    key: labelVar.filters[0].key,
+                    // @ts-ignore
+                    value: labelVar.filters[0].value,
+                  }
+                : undefined;
+
+            return extensions.extensions.map((e) => {
+              return (
+                <ToolbarButton key={e.id} onClick={(event) => e.onClick?.(event, filters)} icon={e.icon}>
+                  {e.title}
+                </ToolbarButton>
+              );
+            });
+          }}
+        </ExtensionsProvider>
         {controls && (
           <div className={styles.controls}>
             {controls.map((control) => (
@@ -247,6 +270,19 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       </div>
     );
   };
+}
+
+type ExtensionsProviderProps = {
+  children: (extensions: UsePluginExtensionsResult<PluginExtensionLink>) => ReactNode;
+};
+function ExtensionsProvider(props: ExtensionsProviderProps) {
+  const extensions = usePluginLinkExtensions({
+    extensionPointId: 'grafana/data-trails/toolbar',
+    context: {},
+    limitPerPlugin: 3,
+  });
+
+  return props.children(extensions);
 }
 
 export function getTopSceneFor(metric?: string) {
