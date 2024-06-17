@@ -28,7 +28,6 @@ import {
   UserActionEvent,
   GroupByVariable,
   AdHocFiltersVariable,
-  SnapshotVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
@@ -60,6 +59,7 @@ import {
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
+import { SnapshotVariable } from './custom-variables/snapshotVariable';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
