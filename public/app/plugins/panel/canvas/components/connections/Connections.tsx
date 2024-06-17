@@ -33,6 +33,7 @@ export class Connections {
   connectionSVGVertex?: SVGElement;
   connectionVertexPath?: SVGPathElement;
   connectionVertex?: SVGCircleElement;
+  connectionsSVG?: SVGElement;
 
   connectionSource?: ElementState;
   connectionTarget?: ElementState;
@@ -76,6 +77,10 @@ export class Connections {
 
   setConnectionSVGRef = (connectionSVG: SVGSVGElement) => {
     this.connectionSVG = connectionSVG;
+  };
+
+  setConnectionsSVGRef = (connectionsSVG: SVGElement) => {
+    this.connectionsSVG = connectionsSVG;
   };
 
   setConnectionLineRef = (connectionLine: SVGLineElement) => {
@@ -598,6 +603,7 @@ export class Connections {
   };
 
   handleConnectionDragStart = (selectedTarget: HTMLElement, clientX: number, clientY: number) => {
+    console.log('handleConnectionDragStart');
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
     if (this.connectionSVG && this.connectionLine && this.scene.viewportDiv && this.scene.viewportDiv.parentElement) {
       const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
@@ -670,6 +676,7 @@ export class Connections {
           setSVGVertexRef={this.setConnectionSVGVertexRef}
           setVertexPathRef={this.setConnectionVertexPathRef}
           setVertexRef={this.setConnectionVertexRef}
+          setConnectionsSVGRef={this.setConnectionsSVGRef}
           scene={this.scene}
         />
       </>

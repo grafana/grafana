@@ -777,8 +777,26 @@ export class Scene {
     });
 
     infiniteViewer.on('scroll', () => {
+      const svgConnections = this.connections.connectionsSVG;
+      if (svgConnections) {
+        const scale = infiniteViewer.getZoom();
+        const left = infiniteViewer.getScrollLeft();
+        const top = infiniteViewer.getScrollTop();
+        const width = infiniteViewer.getContainerWidth();
+        const height = infiniteViewer.getContainerHeight();
+
+        svgConnections.style.left = `${left}px`;
+        svgConnections.style.top = `${top}px`;
+        svgConnections.style.width = `${width / scale}px`;
+        svgConnections.style.height = `${height / scale}px`;
+
+        svgConnections.setAttribute('viewBox', `${left} ${top} ${width / scale} ${height / scale}`);
+      }
       // console.log(infiniteViewer.getScrollLeft(), infiniteViewer.getScrollTop());
     });
+    // .on('pinch', () => {
+    //   console.log('pinch');
+    // });
   };
 
   reorderElements = (src: ElementState, dest: ElementState, dragToGap: boolean, destPosition: number) => {
