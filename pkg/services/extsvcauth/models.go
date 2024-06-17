@@ -37,8 +37,6 @@ type SelfCfg struct {
 	Enabled bool
 	// Permissions are the permissions that the external service needs its associated service account to have.
 	Permissions []accesscontrol.Permission
-	// ActionSets
-	ActionSets []resourcepermissions.ActionSet
 }
 
 // ExternalServiceRegistration represents the registration form to save new client.
@@ -46,6 +44,8 @@ type ExternalServiceRegistration struct {
 	Name string
 	// Self access configuration
 	Self SelfCfg
+	// ActionSets
+	ActionSets []resourcepermissions.ActionSet
 	// Auth Provider that the client will use to connect to Grafana
 	AuthProvider AuthProvider
 	// Auth Provider specific config
