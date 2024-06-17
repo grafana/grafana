@@ -378,7 +378,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
           return;
         }
-        const { scrollElement } = props;
+        const scrollElement = props.scrollElement;
 
         if (scrollElement) {
           scrollElement.scroll({
@@ -388,7 +388,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         }
       });
     },
-    [props]
+    [props.scrollElement]
   );
 
   const onChangeLogsSortOrder = () => {
@@ -699,6 +699,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const filteredLogs = filterRows(logRows, hiddenLogLevels);
   const { dedupedRows, dedupCount } = dedupRows(filteredLogs, dedupStrategy);
   const navigationRange = createNavigationRange(logRows);
+
+  console.log(visualisationType === 'logs', hasData);
 
   return (
     <>
