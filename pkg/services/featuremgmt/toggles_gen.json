@@ -1601,6 +1601,18 @@
     },
     {
       "metadata": {
+        "name": "openSearchBackendFlowEnabled",
+        "resourceVersion": "1718357852240",
+        "creationTimestamp": "2024-06-14T09:37:32Z"
+      },
+      "spec": {
+        "description": "Enables the backend query flow for Open Search datasource plugin",
+        "stage": "preview",
+        "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
         "name": "panelFilterVariable",
         "resourceVersion": "1717578796182",
         "creationTimestamp": "2023-11-03T12:15:54Z"
