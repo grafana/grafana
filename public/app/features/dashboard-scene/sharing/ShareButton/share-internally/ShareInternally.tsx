@@ -51,7 +51,7 @@ function ShareInternallyRenderer({ model }: SceneComponentProps<ShareInternally>
       <Stack justifyContent="space-between">
         <Stack gap={2} direction="column">
           <Stack gap={1} direction="column">
-            <Stack gap={1}>
+            <Stack gap={1} alignItems="start">
               <Switch
                 label={t('link.share.time-range-label', 'Lock time range')}
                 id="share-current-time-range"
@@ -59,7 +59,6 @@ function ShareInternallyRenderer({ model }: SceneComponentProps<ShareInternally>
                 onChange={model.onToggleLockedTime}
               />
               <Label
-                style={{ flex: 1 }}
                 description={t(
                   'link.share.time-range-description',
                   'Change the current relative time range to an absolute time range'
@@ -68,14 +67,14 @@ function ShareInternallyRenderer({ model }: SceneComponentProps<ShareInternally>
                 <Trans i18nKey="link.share.time-range-label">Lock time range</Trans>
               </Label>
             </Stack>
-            <Stack gap={1}>
+            <Stack gap={1} alignItems="start">
               <Switch
                 id="share-short-url"
                 value={useShortUrl}
                 label={t('link.share.short-url-label', 'Shorten link')}
                 onChange={model.onUrlShorten}
               />
-              <Label style={{ flex: 1 }}>
+              <Label>
                 <Trans i18nKey="link.share.short-url-label">Shorten link</Trans>
               </Label>
             </Stack>
