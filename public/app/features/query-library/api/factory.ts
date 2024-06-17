@@ -3,7 +3,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { AddQueryTemplateCommand, DeleteQueryTemplateCommand, QueryTemplate } from '../types';
 
 import { convertAddQueryTemplateCommandToDataQuerySpec, convertDataQueryResponseToQueryTemplates } from './mappers';
-import { BASE_URL, baseQuery } from './query';
+import { baseQuery } from './query';
 
 export const queryLibraryApi = createApi({
   baseQuery,
@@ -26,7 +26,6 @@ export const queryLibraryApi = createApi({
         url: `${uid}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['QueryTemplatesList'],
     }),
   }),
   reducerPath: 'queryLibrary',
