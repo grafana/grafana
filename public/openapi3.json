@@ -6194,10 +6194,14 @@
             "format": "int64",
             "type": "integer"
           },
+          "isDeleted": {
+            "type": "boolean"
+          },
           "isStarred": {
             "type": "boolean"
           },
-          "remainingTrashAtAge": {
+          "permanentlyDeleteDate": {
+            "format": "date-time",
             "type": "string"
           },
           "slug": {
