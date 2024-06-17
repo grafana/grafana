@@ -97,7 +97,7 @@ func PrepareAlertStatuses(manager state.AlertInstanceManager, opts AlertStatuses
 		}
 
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
-			Labels:      alertState.GetLabels(labelOptions...),
+			Labels:      apimodels.LabelsFromMap(alertState.GetLabels(labelOptions...)),
 			Annotations: alertState.Annotations,
 
 			// TODO: or should we make this two fields? Using one field lets the
@@ -471,7 +471,7 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 				totals["error"] += 1
 			}
 			alert := apimodels.Alert{
-				Labels:      alertState.GetLabels(labelOptions...),
+				Labels:      apimodels.LabelsFromMap(alertState.GetLabels(labelOptions...)),
 				Annotations: alertState.Annotations,
 
 				// TODO: or should we make this two fields? Using one field lets the
