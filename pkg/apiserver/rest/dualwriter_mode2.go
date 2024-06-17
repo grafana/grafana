@@ -306,10 +306,6 @@ func (d *DualWriterMode2) ConvertToTable(ctx context.Context, object runtime.Obj
 	return d.Storage.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (d *DualWriterMode2) Compare(storageObj, legacyObj runtime.Object) bool {
-	return Compare(storageObj, legacyObj)
-}
-
 func parseList(legacyList []runtime.Object) (metainternalversion.ListOptions, map[string]int, error) {
 	options := metainternalversion.ListOptions{}
 	originKeys := []string{}

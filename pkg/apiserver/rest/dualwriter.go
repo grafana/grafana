@@ -225,7 +225,8 @@ func hashUnstructuredObjToCompare(obj runtime.Object) []byte {
 	}
 	// we don't want to compare meta fields
 	delete(unstObj, "meta")
-	ordered := sortedUnstructeredMap(unstObj)
+
+	ordered := sortUnstructeredMap(unstObj)
 	h := md5.New()
 	if err := json.NewEncoder(h).Encode(ordered); err != nil {
 		return nil
@@ -234,45 +235,45 @@ func hashUnstructuredObjToCompare(obj runtime.Object) []byte {
 }
 
 type kv struct {
-	Key   string
-	Value any
+	value any
+	key   string
 }
 
-func sortedUnstructeredMap(obj map[string]any) []kv {
+func sortUnstructeredMap(obj map[string]any) []kv {
 	ret := make([]kv, 0, len(obj))
 
 	for k, v := range obj {
 		item := kv{
-			Key: k,
+			key: k,
 		}
 
 		switch t := v.(type) {
 		case map[string]any:
-			item.Value = sortedUnstructeredMap(t)
+			item.value = sortUnstructeredMap(t)
 		case []any:
-			item.Value = sortedUnstructuredSlice(t)
+			item.value = sortUnstructuredSlice(t)
 		default:
-			item.Value = v
+			item.value = v
 		}
 
 		ret = append(ret, item)
 	}
 
 	sort.Slice(ret, func(i, j int) bool {
-		return ret[i].Key < ret[j].Key
+		return ret[i].key < ret[j].key
 	})
 
 	return ret
 }
 
-func sortedUnstructuredSlice(sl []any) []any {
+func sortUnstructuredSlice(sl []any) []any {
 	ret := make([]any, len(sl))
 	for i, v := range sl {
 		switch vv := v.(type) {
 		case map[string]any:
-			ret[i] = sortedUnstructeredMap(vv)
+			ret[i] = sortUnstructeredMap(vv)
 		case []any:
-			ret[i] = sortedUnstructuredSlice(vv)
+			ret[i] = sortUnstructuredSlice(vv)
 		default:
 			ret[i] = v
 		}

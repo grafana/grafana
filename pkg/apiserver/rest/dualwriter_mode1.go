@@ -243,7 +243,3 @@ func (d *DualWriterMode1) NewList() runtime.Object {
 func (d *DualWriterMode1) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return d.Legacy.ConvertToTable(ctx, object, tableOptions)
 }
-
-func (d *DualWriterMode1) Compare(storageObj, legacyObj runtime.Object) bool {
-	return Compare(storageObj, legacyObj)
-}
