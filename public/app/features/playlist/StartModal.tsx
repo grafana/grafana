@@ -1,9 +1,8 @@
-import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
+import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
+import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 
 import { Playlist, PlaylistMode } from './types';
 
@@ -13,7 +12,6 @@ export interface Props {
 }
 
 export const StartModal = ({ playlist, onDismiss }: Props) => {
-  const styles = useStyles2(getStyles);
   const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
   const [displayTimePicker, setDisplayTimePicker] = useState(true);
@@ -98,11 +96,3 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
     </Modal>
   );
 };
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    dashboardControlsList: css({
-      padding: `${theme.spacing(2)} 0`,
-    }),
-  };
-}
