@@ -206,9 +206,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const { register, unregister, outlineItems, updateItem, unregisterAllChildren } = useContentOutlineContext() ?? {};
   const flipOrderTimer = useRef<number | undefined>(undefined);
   const cancelFlippingTimer = useRef<number | undefined>(undefined);
-  const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(
-    (name: string, mode: SeriesVisibilityChangeMode) => {}
-  );
+  const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
 
   const tableHeight = getLogsTableHeight();
@@ -1049,7 +1047,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
 };
 
 const checkUnescapedContent = memoizeOne((logRows: LogRowModel[]) => {
-  return !!logRows.some((r) => r.hasUnescapedContent);
+  return logRows.some((r) => r.hasUnescapedContent);
 });
 
 const dedupRows = memoizeOne((logRows: LogRowModel[], dedupStrategy: LogsDedupStrategy) => {
