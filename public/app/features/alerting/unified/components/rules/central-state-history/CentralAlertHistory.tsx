@@ -1,27 +1,13 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
-import {
-  Alert,
-  Button,
-  Field,
-  Icon,
-  Input,
-  Label,
-  LoadingBar,
-  Stack,
-  Text,
-  Tooltip,
-  useStyles2,
-  withErrorBoundary,
-} from '@grafana/ui';
+import { SceneComponentProps, SceneObjectBase, TextBoxVariable, sceneGraph } from '@grafana/scenes';
+import { Alert, Icon, LoadingBar, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { Trans, t } from 'app/core/internationalization';
+import { t } from 'app/core/internationalization';
 import {
   GrafanaAlertStateWithReason,
   isAlertStateWithReason,
@@ -39,74 +25,58 @@ import { CollapseToggle } from '../../CollapseToggle';
 import { LogRecord } from '../state-history/common';
 import { useRuleHistoryRecords } from '../state-history/useRuleHistoryRecords';
 
-const LIMIT_EVENTS = 250;
+import { LABELS_FILTER } from './CentralAlertHistoryScene';
 
-const HistoryEventsList = ({ timeRange }: { timeRange?: TimeRange }) => {
-  const styles = useStyles2(getStyles);
+export const LIMIT_EVENTS = 1000;
 
-  // Filter state
-  const [eventsFilter, setEventsFilter] = useState('');
-  // form for filter fields
-  const { register, handleSubmit, reset } = useForm({ defaultValues: { query: '' } }); //  form for search field
+/**
+ *
+ * This component displays a list of history events.
+ * It fetches the events from the history api and displays them in a list.
+ * The list is filtered by the labels in the filter variable and by the time range variable in the scene graph.
+ */
+export const HistoryEventsList = ({ timeRange, model }: { timeRange?: TimeRange; model: HistoryEventsListObject }) => {
+  const filtersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)!;
+
+  const valueInfilterTextBox = !(filtersVariable instanceof TextBoxVariable) ? '' : filtersVariable.getValue();
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
-  const onFilterCleared = useCallback(() => {
-    setEventsFilter('');
-    reset();
-  }, [setEventsFilter, reset]);
 
   const {
     data: stateHistory,
     isLoading,
     isError,
     error,
-  } = stateHistoryApi.endpoints.getRuleHistory.useQuery(
-    {
-      from: from,
-      to: to,
-      limit: LIMIT_EVENTS,
-    },
-    {
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
-    }
-  );
+  } = stateHistoryApi.endpoints.getRuleHistory.useQuery({
+    from: from,
+    to: to,
+    limit: LIMIT_EVENTS,
+  });
 
-  const { historyRecords } = useRuleHistoryRecords(stateHistory, eventsFilter);
+  const { historyRecords } = useRuleHistoryRecords(stateHistory, valueInfilterTextBox.toString());
 
   if (isError) {
     return <HistoryErrorMessage error={error} />;
   }
 
   return (
-    <Stack direction="column" gap={1}>
-      <div className={styles.labelsFilter}>
-        <form onSubmit={handleSubmit((data) => setEventsFilter(data.query))}>
-          <SearchFieldInput
-            {...register('query')}
-            showClearFilterSuffix={!!eventsFilter}
-            onClearFilterClick={onFilterCleared}
-          />
-          <input type="submit" hidden />
-        </form>
-      </div>
+    <>
       <LoadingIndicator visible={isLoading} />
       <HistoryLogEvents logRecords={historyRecords} />
-    </Stack>
+    </>
   );
 };
 
 // todo: this function has been copied from RuleList.v2.tsx, should be moved to a shared location
 const LoadingIndicator = ({ visible = false }) => {
   const [measureRef, { width }] = useMeasure<HTMLDivElement>();
-  return <div ref={measureRef}>{visible && <LoadingBar width={width} />}</div>;
+  return <div ref={measureRef}>{visible && <LoadingBar width={width} data-testid="loading-bar" />}</div>;
 };
 
 interface HistoryLogEventsProps {
   logRecords: LogRecord[];
 }
 function HistoryLogEvents({ logRecords }: HistoryLogEventsProps) {
-  // display log records
   return (
     <ul>
       {logRecords.map((record) => {
@@ -129,52 +99,12 @@ function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
   return <Alert title={title}>{stringifyErrorLike(error)}</Alert>;
 }
 
-interface SearchFieldInputProps {
-  showClearFilterSuffix: boolean;
-  onClearFilterClick: () => void;
-}
-const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProps>(
-  ({ showClearFilterSuffix, onClearFilterClick, ...rest }: SearchFieldInputProps, ref) => {
-    const placeholder = t('central-alert-history.filter.placeholder', 'Filter events in the list with labels');
-    return (
-      <Field
-        label={
-          <Label htmlFor="eventsSearchInput">
-            <Stack gap={0.5}>
-              <span>
-                <Trans i18nKey="central-alert-history.filter.label">Filter events</Trans>
-              </span>
-            </Stack>
-          </Label>
-        }
-      >
-        <Input
-          id="eventsSearchInput"
-          prefix={<Icon name="search" />}
-          suffix={
-            showClearFilterSuffix && (
-              <Button fill="text" icon="times" size="sm" onClick={onClearFilterClick}>
-                <Trans i18nKey="central-alert-history.filter.button.clear">Clear</Trans>
-              </Button>
-            )
-          }
-          placeholder={placeholder}
-          ref={ref}
-          {...rest}
-        />
-      </Field>
-    );
-  }
-);
-
-SearchFieldInput.displayName = 'SearchFieldInput';
-
 function EventRow({ record }: { record: LogRecord }) {
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useState(true);
   return (
     <div>
-      <div className={styles.header} data-testid="rule-group-header">
+      <div className={styles.header} data-testid="event-row-header">
         <CollapseToggle
           size="sm"
           className={styles.collapseToggle}
@@ -365,19 +295,21 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: 'block',
       color: theme.colors.text.link,
     }),
-    labelsFilter: css({
-      width: '100%',
-      paddingTop: theme.spacing(4),
-    }),
   };
 };
 
+/**
+ * This is a scene object that displays a list of history events.
+ */
+
 export class HistoryEventsListObject extends SceneObjectBase {
   public static Component = HistoryEventsListObjectRenderer;
+  public constructor() {
+    super({});
+  }
 }
 
 export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
   const { value: timeRange } = sceneGraph.getTimeRange(model).useState(); // get time range from scene graph
-
-  return <HistoryEventsList timeRange={timeRange} />;
+  return <HistoryEventsList timeRange={timeRange} model={model} />;
 }

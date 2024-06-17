@@ -7,7 +7,14 @@ import {
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from '../../../../../../types/unified-alerting-dto';
-import { grafanaRulerRule, namespaceByUid, namespaces } from '../../alertRuleApi';
+import {
+  getHistoryResponse,
+  grafanaRulerRule,
+  namespaceByUid,
+  namespaces,
+  time_0,
+  time_plus_30,
+} from '../../alertRuleApi';
 
 export const rulerRulesHandler = () => {
   return http.get(`/api/ruler/grafana/api/v1/rules`, () => {
@@ -69,5 +76,17 @@ export const rulerRuleHandler = () => {
   });
 };
 
-const handlers = [rulerRulesHandler(), rulerRuleNamespaceHandler(), rulerRuleGroupHandler(), rulerRuleHandler()];
+export const historyHandler = () => {
+  return http.get('/api/v1/rules/history', () => {
+    return HttpResponse.json(getHistoryResponse([time_0, time_0, time_plus_30, time_plus_30]));
+  });
+};
+
+const handlers = [
+  rulerRulesHandler(),
+  rulerRuleNamespaceHandler(),
+  rulerRuleGroupHandler(),
+  rulerRuleHandler(),
+  historyHandler(),
+];
 export default handlers;
