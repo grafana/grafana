@@ -1654,6 +1654,7 @@
     },
     "results-table": {
       "datasource-header": "Data source",
+      "deleted-remaining-header": "Time remaining (todo)",
       "location-header": "Location",
       "name-header": "Name",
       "tags-header": "Tags",

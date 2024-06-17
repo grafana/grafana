@@ -112,15 +112,20 @@ export const generateColumns = (
     Cell: (p) => {
       let classNames = cx(styles.nameCellStyle);
       let name = access.name.values[p.row.index];
+      const isDeleted = access.isDeleted?.values[p.row.index];
+
       if (!name?.length) {
         const loading = p.row.index >= response.view.dataFrame.length;
         name = loading ? 'Loading...' : 'Missing title'; // normal for panels
         classNames += ' ' + styles.missingTitleText;
       }
+
       return (
         <div className={styles.cell} {...p.cellProps}>
           {!response.isItemLoaded(p.row.index) ? (
             <Skeleton width={200} />
+          ) : isDeleted ? (
+            <span className={classNames}>{name}</span>
           ) : (
             <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
               {name}
@@ -136,8 +141,16 @@ export const generateColumns = (
   });
   availableWidth -= width;
 
+  const showDeletedRemaining =
+    response.view.fields.permanentlyDeleteDate && hasValue(response.view.fields.permanentlyDeleteDate);
+
   width = TYPE_COLUMN_WIDTH;
-  columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles));
+  if (showDeletedRemaining && access.permanentlyDeleteDate) {
+    // Deleted time remaining column takes the place of the type column
+    columns.push(makeDeletedRemainingColumn(response, access.permanentlyDeleteDate, width, styles));
+  } else {
+    columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles));
+  }
   availableWidth -= width;
 
   // Show datasources if we have any
@@ -325,6 +338,32 @@ function makeDataSourceColumn(
       );
     },
     width,
+  };
+}
+
+function makeDeletedRemainingColumn(
+  response: QueryResponse,
+  deletedField: Field<Date | undefined>,
+  width: number,
+  styles: Record<string, string>
+) {
+  return {
+    id: 'column-delete-age',
+    field: deletedField,
+    Header: t('search.results-table.deleted-remaining-header', 'Time remaining (todo)'),
+    Cell: (p) => {
+      const i = p.row.index;
+
+      const deletedDate = deletedField.values[i];
+      // PR TODO: we shouldn't use Intl.DateTimeFormat here directly
+      const formatted = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(deletedDate);
+
+      return (
+        <div {...p.cellProps} className={cx(styles.cell, styles.typeCell)}>
+          {!response.isItemLoaded(p.row.index) ? <Skeleton width={100} /> : formatted}
+        </div>
+      );
+    },
   };
 }
 
