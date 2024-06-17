@@ -358,7 +358,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Recently Deleted",
 				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
-				Id:       "dashboard/recently-deleted",
+				Id:       "dashboards/recently-deleted",
 				Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
 			})
 		}
