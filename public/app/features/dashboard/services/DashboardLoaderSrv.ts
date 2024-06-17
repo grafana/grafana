@@ -82,7 +82,6 @@ export class DashboardLoaderSrv {
           };
         });
     } else if (uid) {
-      // Don't load dashboard from cache if we're passing any query parameters
       const cachedDashboard = stateManager.getFromCache(uid);
       if (cachedDashboard) {
         return Promise.resolve(cachedDashboard);
