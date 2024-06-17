@@ -56,7 +56,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         >
           {scopes && <scopes.Component model={scopes} />}
           <NavToolbarActions dashboard={model} />
-          {!isHomePage && controls && (
+          {controls && (
             <div
               className={cx(styles.controlsWrapper, scopes && !isScopesExpanded && styles.controlsWrapperWithScopes)}
             >
