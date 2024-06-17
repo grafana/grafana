@@ -2,12 +2,14 @@ package cloudmigrationimpl
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/util/retryer"
 )
 
 func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.MigrateDataRequest, error) {
@@ -133,6 +135,34 @@ func (s *Service) getDashboards(ctx context.Context) ([]dashboards.Dashboard, er
 	return result, nil
 }
 
-func (s *Service) buildSnapshot(ctx context.Context, snapshot cloudmigration.CloudMigrationSnapshot) {
+// asynchronous process for writing the snapshot to the filesystem and updating the snapshot status
+func (s *Service) buildSnapshot(ctx context.Context, snapshotMeta cloudmigration.CloudMigrationSnapshot) {
+	// TODO -- make sure we can only build one snapshot at a time
+	s.buildSnapshotMutex.Lock()
+	defer s.buildSnapshotMutex.Unlock()
+	s.buildSnapshotError = false
 
+	// update snapshot status to creating, add some retries since this is a background task
+	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
+		err := s.store.UpdateSnapshot(ctx, cloudmigration.CloudMigrationSnapshot{
+			Status: cloudmigration.SnapshotStatusCreating,
+		})
+		return retryer.FuncComplete, err
+	}, 10, time.Millisecond*100, time.Second*10); err != nil {
+		s.log.Error("failed to set snapshot status to 'creating'", "err", err)
+		s.buildSnapshotError = true
+		return
+	}
+
+	// build snapshot
+
+	// update snapshot status to pending upload with retry
+	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
+		err := s.store.UpdateSnapshot(ctx, cloudmigration.CloudMigrationSnapshot{
+			Status: cloudmigration.SnapshotStatusPendingUpload,
+		})
+		return retryer.FuncComplete, err
+	}, 10, time.Millisecond*100, time.Second*10); err != nil {
+		s.log.Error("failed to set snapshot status to 'pending upload'", "err", err)
+	}
 }

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -37,6 +38,9 @@ type Service struct {
 
 	log *log.ConcreteLogger
 	cfg *setting.Cfg
+
+	buildSnapshotMutex sync.Mutex
+	buildSnapshotError bool
 
 	features  featuremgmt.FeatureToggles
 	gmsClient gmsclient.Client
@@ -465,22 +469,26 @@ func (s *Service) CreateSnapshot(ctx context.Context, sessionUid string) (*cloud
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.CreateSnapshot")
 	defer span.End()
 
+	// fetch session for the gms auth token
 	session, err := s.store.GetMigrationSessionByUID(ctx, sessionUid)
 	if err != nil {
 		return nil, fmt.Errorf("fetching migration session for uid %s: %w", sessionUid, err)
 	}
 
+	// query gms to establish new snapshot
 	initResp, err := s.gmsClient.InitializeSnapshot(ctx, *session)
 	if err != nil {
 		return nil, fmt.Errorf("initializing snapshot with GMS for session %s: %w", sessionUid, err)
 	}
 
+	// create new directory for snapshot writing
 	dir := filepath.Join("cloudmigration.snapshots", fmt.Sprintf("snapshot-%s", initResp.GMSSnapshotUID))
 	err = os.MkdirAll(dir, 0750)
 	if err != nil {
 		return nil, fmt.Errorf("creating snapshot directory: %w", err)
 	}
 
+	// save snapshot to the db
 	snapshot := cloudmigration.CloudMigrationSnapshot{
 		SessionUID:     sessionUid,
 		Status:         cloudmigration.SnapshotStatusInitializing,
@@ -496,7 +504,9 @@ func (s *Service) CreateSnapshot(ctx context.Context, sessionUid string) (*cloud
 	}
 	snapshot.UID = uid
 
-	go s.buildSnapshot(ctx, snapshot)
+	// start building the snapshot asynchronously while we return a success response to the client
+	go s.buildSnapshot(context.Background(), snapshot)
+
 	return &snapshot, nil
 }
 

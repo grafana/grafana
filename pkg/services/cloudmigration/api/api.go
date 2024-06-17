@@ -372,7 +372,7 @@ func (cma *CloudMigrationAPI) DeleteSession(c *contextmodel.ReqContext) response
 // 403: forbiddenError
 // 500: internalServerError
 func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) response.Response {
-	_, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.CreateSnapshot")
+	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.CreateSnapshot")
 	defer span.End()
 
 	uid := web.Params(c.Req)[":uid"]
@@ -380,8 +380,13 @@ func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) respons
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
 
+	ss, err := cma.cloudMigrationService.CreateSnapshot(ctx, uid)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "error creating snapshot", err)
+	}
+
 	return response.JSON(http.StatusOK, CreateSnapshotResponseDTO{
-		SnapshotUID: util.GenerateShortUID(),
+		SnapshotUID: ss.UID,
 	})
 }
 
