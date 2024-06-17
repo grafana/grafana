@@ -23,7 +23,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.0 // @grafana/grafana-release-guild
 	github.com/aws/aws-sdk-go v1.51.31 // @grafana/aws-datasources
 	github.com/blang/semver/v4 v4.0.0 // @grafana/grafana-release-guild
-	github.com/docker/docker v26.0.1+incompatible // @grafana/grafana-release-guild
+	github.com/docker/docker v26.0.2+incompatible // @grafana/grafana-release-guild
 	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-release-guild
 	github.com/gogo/protobuf v1.3.2 // indirect; @grafana/alerting-backend
 	github.com/golang/protobuf v1.5.4 // indirect; @grafana/grafana-backend-group
@@ -66,7 +66,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
-	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/drone-runners/drone-runner-docker v1.8.2 // indirect
 	github.com/drone/drone-go v1.7.1 // indirect
@@ -81,7 +81,7 @@ require (
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.3-0.20220512140940-7b36cea86235 // indirect
+	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -98,8 +98,9 @@ require (
 )
 
 require (
+	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
-	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
+	github.com/moby/term v0.5.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gotest.tools/v3 v3.5.1 // indirect
