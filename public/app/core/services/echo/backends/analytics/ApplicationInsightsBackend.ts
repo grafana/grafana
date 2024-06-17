@@ -39,8 +39,8 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
     };
 
     const url = 'https://js.monitor.azure.com/scripts/b/ai.2.min.js';
-    loadScript(url).then((script) => {
-      const init = new script.ApplicationInsights(applicationInsightsOpts);
+    loadScript(url).then(({ ApplicationInsights }) => {
+      const init = new ApplicationInsights(applicationInsightsOpts);
       window.applicationInsights = init.loadAppInsights();
     });
   }
