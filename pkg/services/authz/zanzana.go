@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/dskit/services"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -18,25 +20,26 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// TODO: probably create a wrapper for openfga client
-func ProvideZanzana(cfg *setting.Cfg) (openfgav1.OpenFGAServiceClient, error) {
-	srv, err := zanzana.New(zanzana.NewStore())
-	if err != nil {
-		return nil, fmt.Errorf("failed to start zanzana: %w", err)
-	}
+type ZanzanaClient interface{}
 
-	var client openfgav1.OpenFGAServiceClient
+func ProvideZanzana(cfg *setting.Cfg) (ZanzanaClient, error) {
+	var client *zanzana.Client
 
-	// FIXME(kalleep): add config for connecting to remote zanzana instance
 	switch cfg.Zanzana.Mode {
 	case setting.ZanzanaModeClient:
-		panic("unimplemented")
+		conn, err := grpc.NewClient(cfg.Zanzana.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
+		}
+		client = zanzana.NewClient(openfgav1.NewOpenFGAServiceClient(conn))
 	case setting.ZanzanaModeEmbedded:
-		// run zanzana embedded in grafana
+		srv, err := zanzana.NewServer(zanzana.NewStore())
+		if err != nil {
+			return nil, fmt.Errorf("failed to start zanzana: %w", err)
+		}
 		channel := &inprocgrpc.Channel{}
 		openfgav1.RegisterOpenFGAServiceServer(channel, srv)
-		client = openfgav1.NewOpenFGAServiceClient(channel)
-
+		client = zanzana.NewClient(openfgav1.NewOpenFGAServiceClient(channel))
 	default:
 		return nil, fmt.Errorf("unsupported zanzana mode: %s", cfg.Zanzana.Mode)
 	}
@@ -44,11 +47,11 @@ func ProvideZanzana(cfg *setting.Cfg) (openfgav1.OpenFGAServiceClient, error) {
 	return client, nil
 }
 
-type Service interface {
+type ZanzanaService interface {
 	services.NamedService
 }
 
-var _ Service = (*Zanzana)(nil)
+var _ ZanzanaService = (*Zanzana)(nil)
 
 // ProvideZanzanaService is used to register zanzana as a module so we can run it seperatly from grafana.
 func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Zanzana, error) {
@@ -57,7 +60,7 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 		features: features,
 		logger:   log.New("zanzana"),
 	}
-	// We need to use dskit service for when we are ready to use this as a standalone module
+
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName("zanzana")
 
 	return s, nil
@@ -74,7 +77,7 @@ type Zanzana struct {
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
-	srv, err := zanzana.New(zanzana.NewStore())
+	srv, err := zanzana.NewServer(zanzana.NewStore())
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -90,7 +93,8 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return err
 	}
 
-	// authenticator interceptors.Authenticator
+	// FIXME(kalleep): For now we use noopAuthenticator but we should create an authenticator that can be shared
+	// between different services.
 	z.handle, err = grpcserver.ProvideService(z.cfg, z.features, noopAuthenticator{}, tracer, prometheus.DefaultRegisterer)
 	if err != nil {
 		return fmt.Errorf("failed to create zanzana grpc server: %w", err)
@@ -105,7 +109,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 }
 
 func (z *Zanzana) running(ctx context.Context) error {
-	// handle.Run is blocking so we can just run it here
+	// Run is blocking so we can just run it here
 	return z.handle.Run(ctx)
 }
 
@@ -118,7 +122,6 @@ func (z *Zanzana) stopping(err error) error {
 
 type noopAuthenticator struct{}
 
-// for now don't perform any authentication
 func (n noopAuthenticator) Authenticate(ctx context.Context) (context.Context, error) {
 	return ctx, nil
 }

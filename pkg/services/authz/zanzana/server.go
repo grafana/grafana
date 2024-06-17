@@ -6,7 +6,7 @@ import (
 	"github.com/openfga/openfga/pkg/storage"
 )
 
-func New(store storage.OpenFGADatastore) (*server.Server, error) {
+func NewServer(store storage.OpenFGADatastore) (*server.Server, error) {
 	// FIXME(kalleep): add support for more options, configure logging, tracing etc
 	opts := []server.OpenFGAServiceV1Option{
 		server.WithDatastore(store),

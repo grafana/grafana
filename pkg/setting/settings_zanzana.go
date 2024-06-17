@@ -12,6 +12,8 @@ const (
 )
 
 type ZanzanaSettings struct {
+	// Addr is only used when mode is set to client
+	Addr string
 	// Mode can either be embedded or client
 	Mode ZanzanaMode
 }
