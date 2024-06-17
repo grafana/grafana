@@ -232,6 +232,29 @@ const (
 	SnapshotStatusUnknown           SnapshotStatus = "UNKNOWN"
 )
 
+func fromSnapshotStatus(status cloudmigration.SnapshotStatus) SnapshotStatus {
+	switch status {
+	case cloudmigration.SnapshotStatusInitializing:
+		return SnapshotStatusInitializing
+	case cloudmigration.SnapshotStatusCreating:
+		return SnapshotStatusCreating
+	case cloudmigration.SnapshotStatusPendingUpload:
+		return SnapshotStatusPendingUpload
+	case cloudmigration.SnapshotStatusUploading:
+		return SnapshotStatusUploading
+	case cloudmigration.SnapshotStatusPendingProcessing:
+		return SnapshotStatusPendingProcessing
+	case cloudmigration.SnapshotStatusProcessing:
+		return SnapshotStatusProcessing
+	case cloudmigration.SnapshotStatusFinished:
+		return SnapshotStatusFinished
+	case cloudmigration.SnapshotStatusError:
+		return SnapshotStatusError
+	default:
+		return SnapshotStatusUnknown
+	}
+}
+
 // swagger:response createSnapshotResponse
 type CreateSnapshotResponse struct {
 	// in: body

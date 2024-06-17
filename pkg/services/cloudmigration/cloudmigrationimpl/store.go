@@ -18,4 +18,5 @@ type store interface {
 
 	CreateSnapshot(ctx context.Context, snapshot cloudmigration.CloudMigrationSnapshot) (string, error)
 	UpdateSnapshot(ctx context.Context, snapshot cloudmigration.UpdateSnapshotCmd) error
+	GetSnapshotByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSnapshot, error)
 }

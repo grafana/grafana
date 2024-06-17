@@ -511,7 +511,14 @@ func (s *Service) CreateSnapshot(ctx context.Context, sessionUid string) (*cloud
 }
 
 func (s *Service) GetSnapshot(ctx context.Context, sessionUid string, snapshotUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
-	return nil, nil
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetSnapshot")
+	defer span.End()
+
+	snapshot, err := s.store.GetSnapshotByUID(ctx, sessionUid)
+	if err != nil {
+		return nil, fmt.Errorf("fetching snapshot for uid %s: %w", snapshotUid, err)
+	}
+	return snapshot, nil
 }
 
 func (s *Service) GetSnapshotList(ctx context.Context, sessionUid string) ([]cloudmigration.CloudMigrationSnapshot, error) {

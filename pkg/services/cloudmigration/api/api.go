@@ -402,7 +402,7 @@ func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) respons
 // 403: forbiddenError
 // 500: internalServerError
 func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.Response {
-	_, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetSnapshot")
+	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetSnapshot")
 	defer span.End()
 
 	sessUid, snapshotUid := web.Params(c.Req)[":uid"], web.Params(c.Req)[":snapshotUid"]
@@ -413,16 +413,38 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
 	}
 
-	return response.JSON(http.StatusOK, GetSnapshotResponseDTO{
+	snapshot, err := cma.cloudMigrationService.GetSnapshot(ctx, sessUid, snapshotUid)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "error retrieving snapshot", err)
+	}
+
+	result, err := snapshot.GetResult()
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "error snapshot reading snapshot results", err)
+	}
+
+	dtoResults := make([]MigrateDataResponseItemDTO, len(result.Items))
+	for i := 0; i < len(result.Items); i++ {
+		dtoResults[i] = MigrateDataResponseItemDTO{
+			Type:   MigrateDataType(result.Items[i].Type),
+			RefID:  result.Items[i].RefID,
+			Status: ItemStatus(result.Items[i].Status),
+			Error:  result.Items[i].Error,
+		}
+	}
+
+	respDto := GetSnapshotResponseDTO{
 		SnapshotDTO: SnapshotDTO{
-			SnapshotUID: util.GenerateShortUID(),
-			Status:      "blah",
+			SnapshotUID: snapshot.UID,
+			Status:      fromSnapshotStatus(snapshot.Status),
 			SessionUID:  sessUid,
-			Created:     time.Now(),
-			Finished:    time.Now(),
+			Created:     snapshot.Created,
+			Finished:    snapshot.Finished,
 		},
-		Results: []MigrateDataResponseItemDTO{},
-	})
+		Results: dtoResults,
+	}
+
+	return response.JSON(http.StatusOK, respDto)
 }
 
 // swagger:route GET /cloudmigration/migration/{uid}/snapshot migrations getShapshotList

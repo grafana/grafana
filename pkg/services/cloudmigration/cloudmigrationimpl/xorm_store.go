@@ -206,6 +206,26 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 	return err
 }
 
+func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+	var snapshot cloudmigration.CloudMigrationSnapshot
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		exist, err := sess.Where("uid=?", uid).Get(&snapshot)
+		if err != nil {
+			return err
+		}
+		if !exist {
+			return cloudmigration.ErrSnapshotNotFound
+		}
+		return nil
+	})
+
+	if err := ss.decryptKey(ctx, &snapshot); err != nil {
+		return &snapshot, err
+	}
+
+	return &snapshot, err
+}
+
 func (ss *sqlStore) encryptToken(ctx context.Context, cm *cloudmigration.CloudMigrationSession) error {
 	s, err := ss.secretsService.Encrypt(ctx, []byte(cm.AuthToken), secrets.WithoutScope())
 	if err != nil {
