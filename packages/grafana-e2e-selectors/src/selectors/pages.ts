@@ -67,10 +67,10 @@ export const Pages = {
           shareInternally: 'data-testid new share button share internally',
         },
       },
-      newExportButton: {
+      NewExportButton: {
         container: 'data-testid new export button',
         arrowMenu: 'data-testid new export button arrow menu',
-        menu: {
+        Menu: {
           container: 'data-testid new export button menu',
           exportAsJson: 'data-testid new export button export as json',
         },

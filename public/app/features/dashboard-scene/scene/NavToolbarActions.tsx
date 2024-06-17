@@ -576,7 +576,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'new-export-dashboard-button',
-    condition: uid && !isEditing && !meta.isSnapshot && !isPlaying,
+    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
     render: () => <ExportButton key="new-export-dashboard-button" dashboard={dashboard} />,
   });
 

@@ -1,4 +1,4 @@
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import saveAs from 'file-saver';
 import React, { useState } from 'react';
 import { useAsync } from 'react-use';
@@ -24,7 +24,7 @@ export interface Props {
 }
 
 export default function ExportAsJSON({ dashboardRef }: Props) {
-  const [isSharingExternally, setSharingExternallyState] = useState(true);
+  const [isSharingExternally, setIsSharingExternally] = useState(true);
 
   function onShareExternallyChange() {
     setSharingExternallyState(!isSharingExternally);
