@@ -106,9 +106,10 @@ describe('AdvancedResourcePicker', () => {
     const onChange = jest.fn();
 
     render(
-      <AdvancedResourcePicker onChange={onChange} resources={[
-        { metricNamespace: 'Microsoft.OperationalInsights/workspaces/' }
-      ]} />
+      <AdvancedResourcePicker
+        onChange={onChange}
+        resources={[{ metricNamespace: 'Microsoft.OperationalInsights/workspaces/' }]}
+      />
     );
 
     expect(screen.getByText('Namespace cannot end with a "/"')).toBeInTheDocument();
