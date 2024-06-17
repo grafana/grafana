@@ -45,10 +45,10 @@ export class DashboardLoaderSrv {
     let promise;
 
     if (type === 'script' && slug) {
-      promise = this._loadScriptedDashboard(slug, queryParams);
+      promise = this._loadScriptedDashboard(slug);
     } else if (type === 'snapshot' && slug) {
       promise = getDashboardSnapshotSrv()
-        .getSnapshot(slug, queryParams)
+        .getSnapshot(slug)
         .catch(() => {
           return this._dashboardLoadFailed('Snapshot not found', true);
         });
@@ -56,7 +56,7 @@ export class DashboardLoaderSrv {
       promise = this._loadFromDatasource(slug); // explore dashboards as code
     } else if (type === 'public' && uid) {
       promise = backendSrv
-        .getPublicDashboardByUid(uid, queryParams)
+        .getPublicDashboardByUid(uid)
         .then((result) => {
           return result;
         })
@@ -83,11 +83,9 @@ export class DashboardLoaderSrv {
         });
     } else if (uid) {
       // Don't load dashboard from cache if we're passing any query parameters
-      if (Object.keys(queryParams ?? {}).length === 0) {
-        const cachedDashboard = stateManager.getFromCache(uid);
-        if (cachedDashboard) {
-          return Promise.resolve(cachedDashboard);
-        }
+      const cachedDashboard = stateManager.getFromCache(uid);
+      if (cachedDashboard) {
+        return Promise.resolve(cachedDashboard);
       }
 
       promise = getDashboardAPI()
@@ -119,11 +117,11 @@ export class DashboardLoaderSrv {
     return promise;
   }
 
-  _loadScriptedDashboard(file: string, queryParams?: UrlQueryMap | undefined) {
+  _loadScriptedDashboard(file: string) {
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
     return getBackendSrv()
-      .get(url, queryParams)
+      .get(url)
       .then(this._executeScript.bind(this))
       .then(
         (result: any) => {

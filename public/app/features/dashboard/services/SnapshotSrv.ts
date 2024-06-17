@@ -1,6 +1,5 @@
 import { lastValueFrom, map } from 'rxjs';
 
-import { UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, FetchResponse } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
@@ -39,7 +38,7 @@ export interface DashboardSnapshotSrv {
   getSnapshots: () => Promise<Snapshot[]>;
   getSharingOptions: () => Promise<SnapshotSharingOptions>;
   deleteSnapshot: (key: string) => Promise<void>;
-  getSnapshot: (key: string, queryParams?: UrlQueryMap | undefined) => Promise<DashboardDTO>;
+  getSnapshot: (key: string) => Promise<DashboardDTO>;
 }
 
 const legacyDashboardSnapshotSrv: DashboardSnapshotSrv = {
@@ -47,8 +46,8 @@ const legacyDashboardSnapshotSrv: DashboardSnapshotSrv = {
   getSnapshots: () => getBackendSrv().get<Snapshot[]>('/api/dashboard/snapshots'),
   getSharingOptions: () => getBackendSrv().get<SnapshotSharingOptions>('/api/snapshot/shared-options'),
   deleteSnapshot: (key: string) => getBackendSrv().delete('/api/snapshots/' + key),
-  getSnapshot: async (key: string, queryParams) => {
-    const dto = await getBackendSrv().get<DashboardDTO>('/api/snapshots/' + key, queryParams);
+  getSnapshot: async (key: string) => {
+    const dto = await getBackendSrv().get<DashboardDTO>('/api/snapshots/' + key);
     dto.meta.canShare = false;
     return dto;
   },
@@ -118,7 +117,7 @@ class K8sAPI implements DashboardSnapshotSrv {
     return getBackendSrv().get<SnapshotSharingOptions>('/api/snapshot/shared-options');
   }
 
-  async getSnapshot(uid: string, queryParams?: UrlQueryMap): Promise<DashboardDTO> {
+  async getSnapshot(uid: string): Promise<DashboardDTO> {
     const headers: Record<string, string> = {};
     if (!contextSrv.isSignedIn) {
       alert('TODO... need a barer token for anonymous use case');
@@ -131,7 +130,6 @@ class K8sAPI implements DashboardSnapshotSrv {
           url: this.url + '/' + uid + '/body',
           method: 'GET',
           headers: headers,
-          params: queryParams,
         })
         .pipe(
           map((response: FetchResponse<K8sDashboardSnapshot>) => {
