@@ -1,4 +1,4 @@
-import { CurrentUserDTO } from '../types';
+import { CurrentUserDTO, WithAccessControlMetadata } from '../types';
 
 export interface CurrentUser extends Omit<CurrentUserDTO, 'lightTheme'> {}
 
@@ -6,10 +6,7 @@ export function userHasPermission(action: string, user: CurrentUser): boolean {
   return !!user.permissions?.[action];
 }
 
-export function userHasPermissionInMetadata(
-  action: string,
-  object: WithAccessControlMetadata,
-): boolean {
+export function userHasPermissionInMetadata(action: string, object: WithAccessControlMetadata): boolean {
   return !!object.accessControl?.[action];
 }
 
