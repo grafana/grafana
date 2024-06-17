@@ -152,7 +152,7 @@ type AlertingRule struct {
 	Query    string  `json:"query,omitempty"`
 	Duration float64 `json:"duration,omitempty"`
 	// required: true
-	Annotations overrideLabels `json:"annotations,omitempty"`
+	Annotations promlabels.Labels `json:"annotations,omitempty"`
 	// required: true
 	ActiveAt       *time.Time       `json:"activeAt,omitempty"`
 	Alerts         []Alert          `json:"alerts,omitempty"`
@@ -167,8 +167,8 @@ type Rule struct {
 	// required: true
 	Name string `json:"name"`
 	// required: true
-	Query  string         `json:"query"`
-	Labels overrideLabels `json:"labels,omitempty"`
+	Query  string            `json:"query"`
+	Labels promlabels.Labels `json:"labels,omitempty"`
 	// required: true
 	Health    string `json:"health"`
 	LastError string `json:"lastError,omitempty"`
@@ -184,7 +184,7 @@ type Alert struct {
 	// required: true
 	Labels promlabels.Labels `json:"labels"`
 	// required: true
-	Annotations overrideLabels `json:"annotations"`
+	Annotations promlabels.Labels `json:"annotations"`
 	// required: true
 	State    string     `json:"state"`
 	ActiveAt *time.Time `json:"activeAt"`
@@ -336,10 +336,8 @@ func (s AlertsSorter) Len() int           { return len(s.alerts) }
 func (s AlertsSorter) Swap(i, j int)      { s.alerts[i], s.alerts[j] = s.alerts[j], s.alerts[i] }
 func (s AlertsSorter) Less(i, j int) bool { return s.by(&s.alerts[i], &s.alerts[j]) }
 
-// override the labels type with a map for generation.
-// The custom marshaling for labels.Labels ends up doing this anyways.
-type overrideLabels map[string]string
-
+// LabelsFromMap creates Labels from a map. Note the Labels type requires the
+// labels be sorted, so we make sure to do that.
 func LabelsFromMap(m map[string]string) promlabels.Labels {
 	sb := promlabels.NewScratchBuilder(len(m))
 	for k, v := range m {
