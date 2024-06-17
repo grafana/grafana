@@ -772,6 +772,18 @@
       "success": "Library panel saved"
     }
   },
+  "link": {
+    "share": {
+      "config-alert-description": "Updating your settings will modify the default copy link to include these changes.",
+      "config-alert-title": "Link configuration",
+      "config-description": "Create a personalized, direct link to share your dashboard within your organization, with the following customization options:",
+      "copy-link-button": "Copy link",
+      "copy-to-clipboard": "Link copied to clipboard",
+      "short-url-label": "Shorten link",
+      "time-range-description": "Change the current relative time range to an absolute time range",
+      "time-range-label": "Lock time range"
+    }
+  },
   "login": {
     "error": {
       "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
@@ -1653,6 +1665,12 @@
       "message": "No services accounts found",
       "more-info": "Remember, you can provide specific permissions for API access to other applications",
       "title": "You haven't created any service accounts yet"
+    }
+  },
+  "share-dashboard": {
+    "menu": {
+      "share-internally-description": "Advanced settings",
+      "share-internally-title": "Share internally"
     }
   },
   "share-drawer": {

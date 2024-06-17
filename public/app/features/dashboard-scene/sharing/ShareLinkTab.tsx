@@ -29,6 +29,7 @@ export interface ShareLinkConfiguration {
 interface ShareOptions extends ShareLinkConfiguration {
   shareUrl: string;
   imageUrl: string;
+  isBuildUrlLoading: boolean;
 }
 
 export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
@@ -44,6 +45,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
       selectedTheme: state.selectedTheme ?? 'current',
       shareUrl: '',
       imageUrl: '',
+      isBuildUrlLoading: false,
     });
 
     this.addActivationHandler(() => {
@@ -52,12 +54,13 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
   }
 
   async buildUrl() {
+    this.setState({ isBuildUrlLoading: true });
     const { panelRef, dashboardRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme } = this.state;
     const dashboard = dashboardRef.resolve();
     const panel = panelRef?.resolve();
 
-    const opts = { useAbsoluteTimeRange, theme: selectedTheme };
-    let shareUrl = await createDashboardShareUrl(dashboard, opts, panel);
+    const opts = { useAbsoluteTimeRange, theme: selectedTheme, useShortUrl };
+    let shareUrl = createDashboardShareUrl(dashboard, opts, panel);
 
     if (useShortUrl) {
       shareUrl = await createShortLink(shareUrl);
@@ -85,31 +88,43 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
       timeZone: getRenderTimeZone(timeRange.getTimeZone()),
     });
 
-    this.setState({ shareUrl, imageUrl });
+    this.setState({ shareUrl, imageUrl, isBuildUrlLoading: false });
   }
 
   public getTabLabel() {
     return t('share-modal.tab-title.link', 'Link');
   }
 
-  onToggleLockedTime = () => {
+  onToggleLockedTime = async () => {
     const useLockedTime = !this.state.useLockedTime;
-    updateShareLinkConfigurationFromStorage({ ...this.state, useLockedTime });
+    updateShareLinkConfigurationFromStorage({
+      useAbsoluteTimeRange: useLockedTime,
+      useShortUrl: this.state.useShortUrl,
+      theme: this.state.selectedTheme,
+    });
     this.setState({ useLockedTime });
-    this.buildUrl();
+    await this.buildUrl();
   };
 
-  onUrlShorten = () => {
+  onUrlShorten = async () => {
     const useShortUrl = !this.state.useShortUrl;
     this.setState({ useShortUrl });
-    updateShareLinkConfigurationFromStorage({ ...this.state, useShortUrl });
-    this.buildUrl();
+    updateShareLinkConfigurationFromStorage({
+      useShortUrl,
+      useAbsoluteTimeRange: this.state.useLockedTime,
+      theme: this.state.selectedTheme,
+    });
+    await this.buildUrl();
   };
 
-  onThemeChange = (value: string) => {
+  onThemeChange = async (value: string) => {
     this.setState({ selectedTheme: value });
-    updateShareLinkConfigurationFromStorage({ ...this.state, selectedTheme: value });
-    this.buildUrl();
+    updateShareLinkConfigurationFromStorage({
+      theme: value,
+      useShortUrl: this.state.useShortUrl,
+      useAbsoluteTimeRange: this.state.useLockedTime,
+    });
+    await this.buildUrl();
   };
 
   getShareUrl = () => {
