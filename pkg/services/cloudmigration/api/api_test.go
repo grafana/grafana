@@ -181,7 +181,7 @@ func TestCloudMigrationAPI_GetMigrationList(t *testing.T) {
 			requestUrl:         "/api/cloudmigration/migration",
 			basicRole:          org.RoleAdmin,
 			expectedHttpResult: http.StatusOK,
-			expectedBody:       `{"migrations":[{"uid":"mock_uid_1","stack":"mock_stack_1","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"},{"uid":"mock_uid_2","stack":"mock_stack_2","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"}]}`,
+			expectedBody:       `{"sessions":[{"uid":"mock_uid_1","slug":"mock_stack_1","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"},{"uid":"mock_uid_2","slug":"mock_stack_2","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"}]}`,
 		},
 		{
 			desc:               "should return 403 if no used is not admin",
@@ -216,7 +216,7 @@ func TestCloudMigrationAPI_CreateMigration(t *testing.T) {
 			requestBody:        `{"auth_token":"asdf"}`,
 			basicRole:          org.RoleAdmin,
 			expectedHttpResult: http.StatusOK,
-			expectedBody:       `{"uid":"fake_uid","stack":"fake_stack","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"}`,
+			expectedBody:       `{"uid":"fake_uid","slug":"fake_stack","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"}`,
 		},
 		{
 			desc:               "should return 403 if no used is not admin",

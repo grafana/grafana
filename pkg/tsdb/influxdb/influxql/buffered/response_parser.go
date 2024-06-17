@@ -269,12 +269,12 @@ func transformRowsForTimeSeries(rows []models.Row, query models.Query) data.Fram
 }
 
 func newFrameWithTimeField(row models.Row, column string, colIndex int, query models.Query, frameName []byte) *data.Frame {
-	var timeArray []time.Time
 	var floatArray []*float64
 	var stringArray []*string
 	var boolArray []*bool
 	valType := util.Typeof(row.Values, colIndex)
 
+	timeArray := make([]time.Time, 0, len(row.Values))
 	for _, valuePair := range row.Values {
 		timestamp, timestampErr := util.ParseTimestamp(valuePair[0])
 		// we only add this row if the timestamp is valid

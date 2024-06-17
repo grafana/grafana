@@ -7,6 +7,7 @@ import (
 	"path"
 
 	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,6 +25,7 @@ import (
 	filestorage "github.com/grafana/grafana/pkg/apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
@@ -110,6 +112,7 @@ type service struct {
 	builders []builder.APIGroupBuilder
 
 	tracing *tracing.TracingService
+	metrics prometheus.Registerer
 
 	authorizer  *authorizer.GrafanaAuthorizer
 	authzClient authz.Client
@@ -135,6 +138,7 @@ func ProvideService(
 		authorizer:  authorizer.NewGrafanaAuthorizer(cfg, orgService),
 		tracing:     tracing,
 		db:          db, // For Unified storage
+		metrics:     metrics.ProvideRegisterer(),
 	}
 
 	// This will be used when running as a dskit service
@@ -318,7 +322,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Install the API group+version
-	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions)
+	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions, s.metrics)
 	if err != nil {
 		return err
 	}
@@ -328,7 +332,7 @@ func (s *service) start(ctx context.Context) error {
 
 	var runningServer *genericapiserver.GenericAPIServer
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		runningServer, err = s.startAggregator(transport, serverConfig, server)
+		runningServer, err = s.startAggregator(transport, serverConfig, server, s.metrics)
 		if err != nil {
 			return err
 		}
@@ -378,6 +382,7 @@ func (s *service) startAggregator(
 	transport *roundTripperFunc,
 	serverConfig *genericapiserver.RecommendedConfig,
 	server *genericapiserver.GenericAPIServer,
+	reg prometheus.Registerer,
 ) (*genericapiserver.GenericAPIServer, error) {
 	namespaceMapper := request.GetNamespaceMapper(s.cfg)
 
@@ -386,7 +391,7 @@ func (s *service) startAggregator(
 		return nil, err
 	}
 
-	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, server)
+	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, server, reg)
 	if err != nil {
 		return nil, err
 	}

@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ builder.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
@@ -50,6 +51,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl,
 	provisioning provisioning.ProvisioningService,
 	dashStore dashboards.Store,
+	reg prometheus.Registerer,
 	sql db.DB,
 ) *DashboardsAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
@@ -121,6 +123,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 	desiredMode grafanarest.DualWriterMode,
+	reg prometheus.Registerer,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
@@ -151,7 +154,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		if err := store.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(desiredMode, legacyStore, store)
+		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(desiredMode, legacyStore, store, reg)
 	}
 
 	// Summary

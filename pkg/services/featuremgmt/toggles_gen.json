@@ -309,21 +309,6 @@
     },
     {
       "metadata": {
-        "name": "authZGRPCServer",
-        "resourceVersion": "1718093439898",
-        "creationTimestamp": "2024-06-11T08:10:39Z",
-        "deletionTimestamp": "2024-06-13T11:41:02Z"
-      },
-      "spec": {
-        "description": "Enables the gRPC server for authorization",
-        "stage": "experimental",
-        "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "autoMigrateGraphPanel",
         "resourceVersion": "1717578796182",
         "creationTimestamp": "2024-02-08T22:00:48Z"
@@ -1616,6 +1601,18 @@
     },
     {
       "metadata": {
+        "name": "openSearchBackendFlowEnabled",
+        "resourceVersion": "1718357852240",
+        "creationTimestamp": "2024-06-14T09:37:32Z"
+      },
+      "spec": {
+        "description": "Enables the backend query flow for Open Search datasource plugin",
+        "stage": "preview",
+        "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
         "name": "panelFilterVariable",
         "resourceVersion": "1717578796182",
         "creationTimestamp": "2023-11-03T12:15:54Z"
@@ -1696,32 +1693,6 @@
         "name": "pinNavItems",
         "resourceVersion": "1718017263521",
         "creationTimestamp": "2024-06-10T11:01:03Z"
-      },
-      "spec": {
-        "description": "Enables pinning of nav items",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
-      }
-    },
-    {
-      "metadata": {
-        "name": "pinNavItems",
-        "resourceVersion": "1718017263521",
-        "creationTimestamp": "2024-06-10T11:01:03Z",
-        "deletionTimestamp": "2024-06-12T08:28:14Z"
-      },
-      "spec": {
-        "description": "Enables pinning of nav items",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
-      }
-    },
-    {
-      "metadata": {
-        "name": "pinNavItems",
-        "resourceVersion": "1718017263521",
-        "creationTimestamp": "2024-06-10T11:01:03Z",
-        "deletionTimestamp": "2024-06-13T11:41:02Z"
       },
       "spec": {
         "description": "Enables pinning of nav items",
@@ -2260,12 +2231,15 @@
     {
       "metadata": {
         "name": "transformationsVariableSupport",
-        "resourceVersion": "1717578796182",
-        "creationTimestamp": "2023-10-04T14:28:46Z"
+        "resourceVersion": "1718190346540",
+        "creationTimestamp": "2023-10-04T14:28:46Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-06-12 11:05:46.540869 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Allows using variables in transformations",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
