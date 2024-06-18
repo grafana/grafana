@@ -349,7 +349,7 @@ func (proxy *DataSourceProxy) logRequest() {
 
 	uri, err := loggermw.SanitizeURL(proxy.ctx.Req.RequestURI)
 	if err == nil {
-		proxy.ctx.Logger.Warn("Could not sanitize RequestURI in ds proxy due to: %e", err)
+		proxy.ctx.Logger.Error("Could not sanitize RequestURI", "error", err)
 	}
 
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
