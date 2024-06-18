@@ -2,6 +2,7 @@ package historian
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/unknwon/log"
+	"github.com/valyala/bytebufferpool"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
@@ -23,7 +25,10 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-var _ remoteLokiClient = (*otelLokiClient)(nil)
+var (
+	_            remoteLokiClient = (*otelLokiClient)(nil)
+	payloadsPool                  = bytebufferpool.Pool{}
+)
 
 type OtelConfig struct {
 	Enabled       bool
@@ -155,6 +160,8 @@ func (p *otelLokiClient) pushHttp(ctx context.Context, req *plogotlp.ExportReque
 		contentTypeHeader   = "Content-Type"
 		apiKeyHeader        = "apikey"
 		protobufContentType = "application/x-protobuf"
+		contentEncoding     = "Content-Encoding"
+		contentEncodingGzip = "gzip"
 	)
 
 	err = p.initClient()
@@ -167,11 +174,26 @@ func (p *otelLokiClient) pushHttp(ctx context.Context, req *plogotlp.ExportReque
 		return "", fmt.Errorf("failed to marshal logs: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, p.cfg.Endpoint, bytes.NewReader(protoBody))
+	gzippedBuffer := payloadsPool.Get()
+	defer payloadsPool.Put(gzippedBuffer)
+
+	gzipWriter := gzip.NewWriter(gzippedBuffer)
+	_, err = gzipWriter.Write(protoBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to gzip request: %w", err)
+	}
+
+	err = gzipWriter.Close()
+	if err != nil {
+		return "", fmt.Errorf("failed to close the gzip writer: %w", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, p.cfg.Endpoint, bytes.NewReader(gzippedBuffer.Bytes()))
 	if err != nil {
 		return "", fmt.Errorf("failed to create http request: %w", err)
 	}
 
+	httpReq.Header.Set(contentEncoding, contentEncodingGzip)
 	httpReq.Header.Set(contentTypeHeader, protobufContentType)
 	if p.cfg.ApiKey != "" {
 		httpReq.Header.Set(apiKeyHeader, p.cfg.ApiKey)
