@@ -8,9 +8,7 @@
             "grafana.app/originName": "elsewhere",
             "grafana.app/originPath": "path/to/item",
             "grafana.app/originTimestamp": "2024-02-02T00:00:00Z"
-        },
-        "creationTimestamp": "2024-03-03T00:00:00Z",
-        "uid": "8tGrXJgGbFI0"
+        }
     },
     "spec": {
         "title": "hello",

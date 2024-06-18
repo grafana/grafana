@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // Package-level errors.
@@ -49,15 +50,16 @@ func ProvideSQLResourceServer(db db.EntityDBInterface, tracer tracing.Tracer) (r
 }
 
 type sqlResourceStore struct {
-	log         log.Logger
-	db          db.EntityDBInterface // needed to keep xorm engine in scope
-	sess        *session.SessionDB
-	dialect     migrator.Dialect
-	broadcaster sqlstash.Broadcaster[*resource.WatchEvent]
-	ctx         context.Context // TODO: remove
-	cancel      context.CancelFunc
-	stream      chan *resource.WatchEvent
-	tracer      trace.Tracer
+	log     log.Logger
+	db      db.EntityDBInterface // needed to keep xorm engine in scope
+	sess    *session.SessionDB
+	dialect migrator.Dialect
+	ctx     context.Context // TODO: remove
+	cancel  context.CancelFunc
+	tracer  trace.Tracer
+
+	//broadcaster sqlstash.Broadcaster[*resource.WatchEvent]
+	//stream chan *resource.WatchEvent
 
 	sqlDB      db.DB
 	sqlDialect sqltemplate.Dialect
@@ -109,18 +111,7 @@ func (s *sqlResourceStore) Init() error {
 	s.sess = sess
 	s.dialect = migrator.NewDialect(engine.DriverName())
 
-	// set up the broadcaster
-	s.broadcaster, err = sqlstash.NewBroadcaster(s.ctx, func(stream chan *resource.WatchEvent) error {
-		s.stream = stream
-
-		// start the poller
-		go s.poller(stream)
-
-		return nil
-	})
-	if err != nil {
-		return err
-	}
+	// TODO.... set up the broadcaster
 
 	return nil
 }
@@ -139,13 +130,18 @@ func (s *sqlResourceStore) Stop() {
 	s.cancel()
 }
 
-func (s *sqlResourceStore) WriteEvent(ctx context.Context, event *resource.WriteEvent) (int64, error) {
+func (s *sqlResourceStore) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	_, span := s.tracer.Start(ctx, "storage_server.WriteEvent")
 	defer span.End()
 
 	// TODO... actually write write the event!
 
 	return 0, ErrNotImplementedYet
+}
+
+// Create new name for a given resource
+func (s *sqlResourceStore) GenerateName(_ context.Context, _ *resource.ResourceKey, _ string) (string, error) {
+	return util.GenerateShortUID(), nil
 }
 
 func (s *sqlResourceStore) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {

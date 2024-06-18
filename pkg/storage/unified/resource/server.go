@@ -10,18 +10,16 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
-
-// HACK!!! since requester is not behaving as expected....
-// we are not getting the same names right now
-const CHECK_USER_MATCH = false
 
 // Package-level errors.
 var (
@@ -46,7 +44,10 @@ type AppendingStore interface {
 	// Write a Create/Update/Delete,
 	// NOTE: the contents of WriteEvent have been validated
 	// Return the revisionVersion for this event or error
-	WriteEvent(context.Context, *WriteEvent) (int64, error)
+	WriteEvent(context.Context, WriteEvent) (int64, error)
+
+	// Create new name for a given resource
+	GenerateName(ctx context.Context, key *ResourceKey, prefix string) (string, error)
 
 	// Read a value from storage
 	Read(context.Context, *ReadRequest) (*ReadResponse, error)
@@ -84,6 +85,9 @@ type ResourceServerOptions struct {
 
 	// Callbacks for startup and shutdown
 	Lifecycle LifecycleHooks
+
+	// Get the current time in unix millis
+	Now func() int64
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -114,6 +118,11 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Diagnostics == nil {
 		opts.Search = &noopService{}
 	}
+	if opts.Now == nil {
+		opts.Now = func() int64 {
+			return time.Now().UnixMilli()
+		}
+	}
 
 	return &server{
 		tracer:      opts.Tracer,
@@ -123,6 +132,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		diagnostics: opts.Diagnostics,
 		access:      opts.WriteAccess,
 		lifecycle:   opts.Lifecycle,
+		now:         opts.Now,
 	}, nil
 }
 
@@ -136,6 +146,7 @@ type server struct {
 	diagnostics DiagnosticsServer
 	access      WriteAccessHooks
 	lifecycle   LifecycleHooks
+	now         func() int64
 
 	// init checking
 	once    sync.Once
@@ -166,39 +177,27 @@ func (s *server) Stop() {
 	s.initErr = fmt.Errorf("service is stopped")
 }
 
-func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue []byte) (*WriteEvent, error) {
-	if key.Name == "" {
-		return nil, apierrors.NewBadRequest("empty name")
+// Old value indicates an update -- otherwise a create
+func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, oldValue []byte) (*writeEventBuilder, error) {
+	event, err := newEventFromBytes(value, oldValue)
+	if err != nil {
+		return nil, err
 	}
-	// TODO -- make sure it is alphanumeric+
-
-	var err error
-	event := &WriteEvent{
-		EventID: s.nextEventID(),
-		Key:     key,
-		Value:   value,
-	}
+	event.EventID = s.nextEventID()
+	event.Key = key
 	event.Requester, err = identity.GetRequester(ctx)
 	if err != nil {
 		return nil, ErrUserNotFoundInContext
 	}
 
-	dummy := &metav1.PartialObjectMetadata{}
-	err = json.Unmarshal(value, dummy)
-	if err != nil {
-		return nil, ErrUnableToReadResourceJSON
+	obj := event.Meta
+	if key.Name != obj.GetName() {
+		return nil, apierrors.NewBadRequest("key/name do not match")
+	}
+	if key.Namespace != obj.GetNamespace() {
+		return nil, apierrors.NewBadRequest("key/namespace do not match")
 	}
 
-	obj, err := utils.MetaAccessor(dummy)
-	if err != nil {
-		return nil, apierrors.NewBadRequest("invalid object in json")
-	}
-	if obj.GetUID() == "" {
-		return nil, apierrors.NewBadRequest("the UID must be set")
-	}
-	if obj.GetGenerateName() != "" {
-		return nil, apierrors.NewBadRequest("can not save value with generate name")
-	}
 	gvk := obj.GetGroupVersionKind()
 	if gvk.Kind == "" {
 		return nil, apierrors.NewBadRequest("expecting resources with a kind in the body")
@@ -211,11 +210,29 @@ func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue
 			fmt.Sprintf("group in key does not match group in the body (%s != %s)", key.Group, gvk.Group),
 		)
 	}
+
+	// This needs to be a create function
+	if key.Name == "" {
+		prefix := obj.GetGenerateName()
+		if prefix == "" {
+			return nil, apierrors.NewBadRequest("must have name or generate name set")
+		}
+		key.Name, err = s.store.GenerateName(ctx, key, prefix)
+		if err != nil {
+			return nil, err
+		}
+		obj.SetName(key.Name)
+		obj.SetGenerateName("")
+	} else if obj.GetGenerateName() != "" {
+		return nil, apierrors.NewBadRequest("values with a name must not include generate name")
+	}
+	err = validateName(obj.GetName())
+	if err != nil {
+		return nil, err
+	}
+
 	if obj.GetName() != key.Name {
 		return nil, apierrors.NewBadRequest("key name does not match the name in the body")
-	}
-	if obj.GetNamespace() != key.Namespace {
-		return nil, apierrors.NewBadRequest("key namespace does not match the namespace in the body")
 	}
 	folder := obj.GetFolder()
 	if folder != "" {
@@ -234,41 +251,26 @@ func (s *server) newEvent(ctx context.Context, key *ResourceKey, value, oldValue
 			return nil, err
 		}
 	}
-	event.Object = obj
+	obj.SetOriginInfo(origin)
 
-	// This is an update
-	if oldValue != nil {
-		dummy := &metav1.PartialObjectMetadata{}
-		err = json.Unmarshal(oldValue, dummy)
-		if err != nil {
-			return nil, apierrors.NewBadRequest("error reading old json value")
-		}
-		old, err := utils.MetaAccessor(dummy)
-		if err != nil {
-			return nil, apierrors.NewBadRequest("invalid object inside old json")
-		}
-		if key.Name != old.GetName() {
+	// Make sure old values do not mutate things they should not
+	if event.OldMeta != nil {
+		old := event.OldMeta
+
+		if obj.GetUID() != event.OldMeta.GetUID() {
 			return nil, apierrors.NewBadRequest(
-				fmt.Sprintf("the old value has a different name (%s != %s)", key.Name, old.GetName()))
+				fmt.Sprintf("UIDs do not match (old: %s, new: %s)", old.GetUID(), obj.GetUID()))
 		}
 
 		// Can not change creation timestamps+user
-		if obj.GetCreatedBy() != old.GetCreatedBy() {
+		if obj.GetCreatedBy() != event.OldMeta.GetCreatedBy() {
 			return nil, apierrors.NewBadRequest(
-				fmt.Sprintf("can not change the created by metadata (%s != %s)", obj.GetCreatedBy(), old.GetCreatedBy()))
+				fmt.Sprintf("created by changed (old: %s, new: %s)", old.GetCreatedBy(), obj.GetCreatedBy()))
 		}
-		if obj.GetCreationTimestamp() != old.GetCreationTimestamp() {
+		if obj.GetCreationTimestamp() != event.OldMeta.GetCreationTimestamp() {
 			return nil, apierrors.NewBadRequest(
-				fmt.Sprintf("can not change the CreationTimestamp metadata (%v != %v)", obj.GetCreationTimestamp(), old.GetCreationTimestamp()))
+				fmt.Sprintf("creation timestamp changed (old:%v, new:%v)", old.GetCreationTimestamp(), obj.GetCreationTimestamp()))
 		}
-
-		oldFolder := obj.GetFolder()
-		if oldFolder != folder {
-			event.FolderChanged = true
-		}
-		event.OldObject = old
-	} else if folder != "" {
-		event.FolderChanged = true
 	}
 	return event, nil
 }
@@ -281,41 +283,33 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		return nil, err
 	}
 
-	event, err := s.newEvent(ctx, req.Key, req.Value, nil)
+	rsp := &CreateResponse{}
+	builder, err := s.newEventBuilder(ctx, req.Key, req.Value, nil)
 	if err != nil {
-		return nil, err
+		rsp.Status, err = errToStatus(err)
+		return rsp, err
 	}
-	event.Operation = ResourceOperation_CREATED
-	event.Blob = req.Blob
+
+	obj := builder.Meta
+	obj.SetCreatedBy(builder.Requester.GetUID().String())
+	obj.SetUpdatedBy("")
+	obj.SetUpdatedTimestamp(nil)
+	obj.SetCreationTimestamp(metav1.NewTime(time.UnixMilli(s.now())))
+	obj.SetUID(types.UID(uuid.New().String()))
+
+	event, err := builder.toEvent()
+	if err != nil {
+		rsp.Status, err = errToStatus(err)
+		return rsp, err
+	}
 	event.Message = req.Message
 
-	rsp := &CreateResponse{}
-	// Make sure the created by user is accurate
-	//----------------------------------------
-	val := event.Object.GetCreatedBy()
-	if val != "" && val != event.Requester.GetUID().String() && CHECK_USER_MATCH {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf(
-			"created by annotation do not match (%s != %s)", val, event.Requester.GetUID().String(),
-		))
-	}
-
-	// Create can not have updated properties
-	//----------------------------------------
-	if event.Object.GetUpdatedBy() != "" {
-		return nil, apierrors.NewBadRequest("unexpected metadata.annotations#" + utils.AnnoKeyCreatedBy)
-	}
-
-	ts, err := event.Object.GetUpdatedTimestamp()
-	if err != nil {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid timestamp: %s", err))
-	}
-	if ts != nil {
-		return nil, apierrors.NewBadRequest("unexpected metadata.annotations#" + utils.AnnoKeyUpdatedTimestamp)
-	}
-
-	// Append and set the resource version
 	rsp.ResourceVersion, err = s.store.WriteEvent(ctx, event)
-	rsp.Status, err = errToStatus(err)
+	if err == nil {
+		rsp.Value = event.Value // with mutated fields
+	} else {
+		rsp.Status, err = errToStatus(err)
+	}
 	return rsp, err
 }
 
@@ -367,23 +361,33 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 		return nil, apierrors.NewBadRequest("current value does not exist")
 	}
 
-	event, err := s.newEvent(ctx, req.Key, req.Value, latest.Value)
+	builder, err := s.newEventBuilder(ctx, req.Key, req.Value, latest.Value)
 	if err != nil {
-		return nil, err
+		rsp.Status, err = errToStatus(err)
+		return rsp, err
 	}
+
+	obj := builder.Meta
+	obj.SetUpdatedBy(builder.Requester.GetUID().String())
+	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
+
+	event, err := builder.toEvent()
+	if err != nil {
+		rsp.Status, err = errToStatus(err)
+		return rsp, err
+	}
+
 	event.Operation = ResourceOperation_UPDATED
 	event.PreviousRV = latest.ResourceVersion
 	event.Message = req.Message
 
-	// Make sure the update user is accurate
-	//----------------------------------------
-	val := event.Object.GetUpdatedBy()
-	if val != "" && val != event.Requester.GetUID().String() && CHECK_USER_MATCH {
-		return nil, apierrors.NewBadRequest("updated by annotation does not match: metadata.annotations#" + utils.AnnoKeyUpdatedBy)
-	}
-
 	rsp.ResourceVersion, err = s.store.WriteEvent(ctx, event)
 	rsp.Status, err = errToStatus(err)
+	if err == nil {
+		rsp.Value = event.Value // with mutated fields
+	} else {
+		rsp.Status, err = errToStatus(err)
+	}
 	return rsp, err
 }
 
@@ -410,14 +414,14 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		return nil, ErrOptimisticLockingFailed
 	}
 
-	now := metav1.NewTime(time.Now())
-	event := &WriteEvent{
+	now := metav1.NewTime(time.UnixMilli(s.now()))
+	event := WriteEvent{
 		EventID:    s.nextEventID(),
 		Key:        req.Key,
 		Operation:  ResourceOperation_DELETED,
 		PreviousRV: latest.ResourceVersion,
 	}
-	event.Requester, err = identity.GetRequester(ctx)
+	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, apierrors.NewBadRequest("unable to get user")
 	}
@@ -427,15 +431,15 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("unable to read previous object, %v", err))
 	}
-	event.Object, err = utils.MetaAccessor(marker)
+	obj, err := utils.MetaAccessor(marker)
 	if err != nil {
 		return nil, err
 	}
-	event.Object.SetDeletionTimestamp(&now)
-	event.Object.SetUpdatedTimestamp(&now.Time)
-	event.Object.SetManagedFields(nil)
-	event.Object.SetFinalizers(nil)
-	event.Object.SetUpdatedBy(event.Requester.GetUID().String())
+	obj.SetDeletionTimestamp(&now)
+	obj.SetUpdatedTimestamp(&now.Time)
+	obj.SetManagedFields(nil)
+	obj.SetFinalizers(nil)
+	obj.SetUpdatedBy(requester.GetUID().String())
 	marker.TypeMeta = metav1.TypeMeta{
 		Kind:       "DeletedMarker",
 		APIVersion: "storage.grafana.app/v0alpha1", // ?? or can we stick this in common?

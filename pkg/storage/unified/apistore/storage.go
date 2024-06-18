@@ -14,7 +14,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -30,9 +29,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const SortByKey = "grafana.app/sortBy"
@@ -116,35 +113,9 @@ func (s *Storage) Create(ctx context.Context, _ string, obj runtime.Object, out 
 		return err
 	}
 
-	user, err := appcontext.User(ctx)
-	if err != nil {
-		return err
-	}
-
 	err = s.Versioner().PrepareObjectForStorage(obj)
 	if err != nil {
 		return err
-	}
-
-	meta, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return err
-	}
-	meta.SetCreatedBy(user.GetUID().String())
-	origin, err := meta.GetOriginInfo()
-	if err != nil {
-		return err
-	}
-	meta.SetOriginInfo(origin)
-
-	// Set a unique name
-	if meta.GetGenerateName() != "" {
-		if key.Name != "" {
-			return apierrors.NewBadRequest("both generate name and name are set")
-		}
-		key.Name = util.GenerateShortUID()
-		meta.SetName(key.Name)
-		meta.SetGenerateName("")
 	}
 
 	var buf bytes.Buffer
@@ -174,8 +145,7 @@ func (s *Storage) Create(ctx context.Context, _ string, obj runtime.Object, out 
 	}
 
 	// Create into the out value
-	// can we copy it?
-	_, _, err = s.codec.Decode(cmd.Value, nil, out)
+	_, _, err = s.codec.Decode(rsp.Value, nil, out)
 	if err != nil {
 		return err
 	}
@@ -472,11 +442,6 @@ func (s *Storage) GuaranteedUpdate(
 		return err
 	}
 
-	user, err := appcontext.User(ctx)
-	if err != nil {
-		return err
-	}
-
 	// Get the current version
 	err = s.Get(ctx, "<ignored>", storage.GetOptions{}, destination)
 	if err != nil {
@@ -528,19 +493,6 @@ func (s *Storage) GuaranteedUpdate(
 		)
 	}
 
-	now := time.Now()
-	accessor, err = utils.MetaAccessor(updatedObj)
-	if err != nil {
-		return apierrors.NewInternalError(err)
-	}
-	accessor.SetUpdatedTimestamp(&now)
-	accessor.SetUpdatedBy(user.GetUID().String())
-	origin, err := accessor.GetOriginInfo()
-	if err != nil {
-		return err
-	}
-	accessor.SetOriginInfo(origin)
-
 	var buf bytes.Buffer
 	err = s.codec.Encode(updatedObj, &buf)
 	if err != nil {
@@ -557,8 +509,17 @@ func (s *Storage) GuaranteedUpdate(
 	if err != nil {
 		return err
 	}
-	accessor.SetResourceVersionInt64(rsp.ResourceVersion)
 
+	// Read the mutated fields the response field
+	_, _, err = s.codec.Decode(rsp.Value, nil, destination)
+	if err != nil {
+		return err
+	}
+	accessor, err = utils.MetaAccessor(destination)
+	if err != nil {
+		return err
+	}
+	accessor.SetResourceVersionInt64(rsp.ResourceVersion)
 	return nil
 }
 
