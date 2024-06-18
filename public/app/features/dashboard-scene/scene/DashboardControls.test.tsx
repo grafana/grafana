@@ -117,8 +117,16 @@ describe('DashboardControls', () => {
     it('should not call setState if no changes', () => {
       const scene = buildTestScene();
       const setState = jest.spyOn(scene, 'setState');
-      scene.updateFromUrl({});
-      scene.updateFromUrl({});
+      scene.updateFromUrl({
+        '_dash.hideTimePicker': 'true',
+        '_dash.hideVariables': 'true',
+        '_dash.hideLinks': 'true',
+      });
+      scene.updateFromUrl({
+        '_dash.hideTimePicker': 'true',
+        '_dash.hideVariables': 'true',
+        '_dash.hideLinks': 'true',
+      });
       expect(setState).toHaveBeenCalledTimes(1);
     });
   });
