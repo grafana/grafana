@@ -611,10 +611,6 @@ const (
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
 
-	// FlagBetterPageScrolling
-	// Removes CustomScrollbar from the UI, relying on native browser scrollbars
-	FlagBetterPageScrolling = "betterPageScrolling"
-
 	// FlagAuthAPIAccessTokenAuth
 	// Enables the use of Auth API access tokens for authentication
 	FlagAuthAPIAccessTokenAuth = "authAPIAccessTokenAuth"
@@ -714,4 +710,12 @@ const (
 	// FlagOpenSearchBackendFlowEnabled
 	// Enables the backend query flow for Open Search datasource plugin
 	FlagOpenSearchBackendFlowEnabled = "openSearchBackendFlowEnabled"
+
+	// FlagSsoSettingsLDAP
+	// Use the new SSO Settings API to configure LDAP
+	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
+
+	// FlagDatabaseReadReplica
+	// Use a read replica for some database queries.
+	FlagDatabaseReadReplica = "databaseReadReplica"
 )
