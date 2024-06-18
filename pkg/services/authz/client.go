@@ -57,6 +57,7 @@ type LegacyClient struct {
 	tracer   tracing.Tracer
 }
 
+// ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
 func ProvideAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, acSvc accesscontrol.Service,
 	grpcServer grpcserver.Provider, tracer tracing.Tracer,
