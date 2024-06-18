@@ -88,7 +88,7 @@ func TestProcessTicks(t *testing.T) {
 		Tracer:        testTracer,
 		Log:           log.New("ngalert.state.manager"),
 	}
-	st := state.NewManager(managerCfg, state.NewNoopPersister(), notifier)
+	st := state.NewManager(managerCfg, state.NewNoopPersister())
 
 	sched := NewScheduler(schedCfg, st)
 
@@ -488,7 +488,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		MaxStateSaveConcurrency: 1,
 	}
 	syncStatePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.perist"), managerCfg)
-	st := state.NewManager(managerCfg, syncStatePersister, senderMock)
+	st := state.NewManager(managerCfg, syncStatePersister)
 
 	return NewScheduler(schedCfg, st)
 }

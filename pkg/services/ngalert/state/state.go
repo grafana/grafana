@@ -171,6 +171,37 @@ func (c StateTransition) Changed() bool {
 	return c.PreviousState != c.State.State || c.PreviousStateReason != c.State.StateReason
 }
 
+type StateTransitions []StateTransition
+
+// NeedsSending returns the subset of StateTransitions that need to be sent to the Alertmanager.
+func (c StateTransitions) NeedsSending() StateTransitions {
+	var result StateTransitions
+	for _, t := range c {
+		if t.NeedsSending(ResendDelay) {
+			result = append(result, t)
+		}
+	}
+	return result
+}
+
+// StaleStates returns the subset of StateTransitions that are stale.
+func (c StateTransitions) StaleStates() StateTransitions {
+	var result StateTransitions
+	for _, t := range c {
+		if t.IsStale() {
+			result = append(result, t)
+		}
+	}
+	return result
+}
+
+// UpdateLastSentAt updates the LastSentAt field for all StateTransitions.
+func (c StateTransitions) UpdateLastSentAt(evaluatedAt time.Time) {
+	for _, t := range c {
+		t.LastSentAt = evaluatedAt
+	}
+}
+
 type Evaluation struct {
 	EvaluationTime  time.Time
 	EvaluationState eval.State
@@ -468,6 +499,11 @@ func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
 	}
 
 	return r
+}
+
+// IsStale returns true if the state is stale, meaning that the state is ready to be evicted from the cache.
+func (a *State) IsStale() bool {
+	return a.StateReason == models.StateReasonMissingSeries
 }
 
 // shouldTakeImage returns true if the state just has transitioned to alerting from another state,

@@ -35,7 +35,7 @@ type backtestingEvaluator interface {
 }
 
 type stateManager interface {
-	ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *models.AlertRule, results eval.Results, extraLabels data.Labels) []state.StateTransition
+	ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *models.AlertRule, results eval.Results, extraLabels data.Labels) state.StateTransitions
 	schedule.RuleStateProvider
 }
 
@@ -58,7 +58,7 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracin
 				Tracer:        tracer,
 				Log:           log.New("ngalert.state.manager"),
 			}
-			return state.NewManager(cfg, state.NewNoopPersister(), state.NewNoopSender())
+			return state.NewManager(cfg, state.NewNoopPersister())
 		},
 	}
 }

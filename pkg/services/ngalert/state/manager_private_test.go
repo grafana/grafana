@@ -254,7 +254,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 
 			ApplyNoDataAndErrorToAllStates: applyNoDataErrorToAllStates,
 		}
-		st := NewManager(cfg, NewNoopPersister(), NewNoopSender())
+		st := NewManager(cfg, NewNoopPersister())
 
 		tss := make([]time.Time, 0, len(resultsAtTime))
 		for ts, results := range resultsAtTime {
@@ -271,6 +271,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			results := resultsAtTime[ts]
 			clk.Set(ts)
 			actual := st.ProcessEvalResults(context.Background(), ts, alertRule, results, systemLabels)
+			actual.NeedsSending().UpdateLastSentAt(ts)
 
 			expectedTransitions, ok := expectedTransitionsAtTime[ts]
 			if !ok { // skip if nothing to assert

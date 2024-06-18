@@ -31,7 +31,7 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 		Tracer:    tracing.InitializeTracerForTest(),
 		Log:       log.New("ngalert.state.manager"),
 	}
-	sut := state.NewManager(cfg, state.NewNoopPersister(), state.NewNoopSender())
+	sut := state.NewManager(cfg, state.NewNoopPersister())
 	now := time.Now().UTC()
 	rule := makeBenchRule()
 	results := makeBenchResults(100)

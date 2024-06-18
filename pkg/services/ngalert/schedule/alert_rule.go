@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/prometheus/alertmanager/api/v2/models"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -338,6 +340,8 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 	evalAttemptFailures := a.metrics.EvalAttemptFailures.WithLabelValues(orgID)
 	evalTotalFailures := a.metrics.EvalFailures.WithLabelValues(orgID)
 	processDuration := a.metrics.ProcessDuration.WithLabelValues(orgID)
+	sendDuration := a.metrics.SendDuration.WithLabelValues(orgID)
+	persistDuration := a.metrics.StatePersistDuration.WithLabelValues(orgID)
 
 	logger := a.logger.FromContext(ctx).New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
 	start := a.clock.Now()
@@ -408,7 +412,7 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 		))
 	}
 	start = a.clock.Now()
-	_ = a.stateManager.ProcessEvalResults(
+	processedStates := a.stateManager.ProcessEvalResults(
 		ctx,
 		e.scheduledAt,
 		e.rule,
@@ -416,7 +420,36 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 		state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !a.disableGrafanaFolder),
 	)
 	processDuration.Observe(a.clock.Now().Sub(start).Seconds())
+
+	start = a.clock.Now()
+	alerts := a.send(ctx, e.scheduledAt, key, processedStates)
+	span.AddEvent("results processed", trace.WithAttributes(
+		attribute.Int64("state_transitions", int64(len(processedStates))),
+		attribute.Int64("alerts_sent", int64(len(alerts.PostableAlerts))),
+	))
+	sendDuration.Observe(a.clock.Now().Sub(start).Seconds())
+
+	start = a.clock.Now()
+	a.stateManager.Persist(ctx, e.scheduledAt, e.rule, processedStates)
+	persistDuration.Observe(a.clock.Now().Sub(start).Seconds())
+
 	return nil
+}
+
+// send sends alerts to the alert sender for all states that need to be sent and updates the LastSentAt timestamp.
+func (a *alertRule) send(ctx context.Context, evaluatedAt time.Time, key ngmodels.AlertRuleKey, states state.StateTransitions) definitions.PostableAlerts {
+	statesBeingSent := states.NeedsSending()
+
+	alerts := definitions.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(states))}
+	for _, alertState := range statesBeingSent {
+		alerts.PostableAlerts = append(alerts.PostableAlerts, *state.StateToPostableAlert(alertState, a.appURL))
+	}
+
+	if len(alerts.PostableAlerts) > 0 {
+		a.sender.Send(ctx, key, alerts)
+		statesBeingSent.UpdateLastSentAt(evaluatedAt)
+	}
+	return alerts
 }
 
 // sendExpire sends alerts to expire all previously firing alerts in the provided state transitions.
