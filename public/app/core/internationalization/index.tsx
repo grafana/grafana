@@ -84,12 +84,12 @@ export function getI18next() {
   if (!tFunc) {
     if (process.env.NODE_ENV !== 'test') {
       console.warn(
-        't() was called before i18n was initialized. This is probably caused by calling t() in the root module scope, instead of lazily on render'
+        'An attempt to internationalize was made before it was initialized. This was probably caused by calling a locale-aware function in the root module scope, instead of in render'
       );
     }
 
     if (process.env.NODE_ENV === 'development') {
-      throw new Error('t() was called before i18n was initialized');
+      throw new Error('getI18next was called before i18n was initialized');
     }
 
     return i18n;
