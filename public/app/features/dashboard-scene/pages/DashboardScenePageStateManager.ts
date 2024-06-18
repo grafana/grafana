@@ -1,4 +1,4 @@
-import { isEqual } from 'lodash';
+import { xor } from 'lodash';
 
 import { locationUtil } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
@@ -233,7 +233,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
     const scopes = getScopesFromUrl();
     const fromCacheEntries = this.cache[options.uid] ?? [];
-    const fromCacheIdx = fromCacheEntries.findIndex((cacheEntry) => isEqual(cacheEntry.scopes, scopes));
+    const fromCacheIdx = fromCacheEntries.findIndex((cacheEntry) => xor(cacheEntry.scopes, scopes).length === 0);
     const fromCache = fromCacheEntries[fromCacheIdx]?.scene;
 
     // When coming from Explore, skip returnning scene from cache
@@ -278,7 +278,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     if (
       cachedDashboard &&
       cachedDashboard.cacheKey === cacheKey &&
-      isEqual(cachedDashboard.scopes, getScopesFromUrl()) &&
+      xor(cachedDashboard.scopes, getScopesFromUrl()).length === 0 &&
       Date.now() - cachedDashboard?.ts < DASHBOARD_CACHE_TTL
     ) {
       return cachedDashboard.dashboard;
