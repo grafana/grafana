@@ -48,7 +48,7 @@ jobs:
       - name: Generate changelog
         run: git commit --allow-empty -m "Update changelog placeholder"
       - name: Update package.json versions
-        uses: ./.github/workflows/bump-version
+        uses: ./.github/workflows/bump-version.yml
         with:
           version: ${{ inputs.version }}
       - name: add package.json changes
