@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { locationUtil } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
@@ -16,6 +18,7 @@ import {
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
 
+import { getScopesFromUrl } from '../../dashboard/utils/getScopesFromUrl';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
@@ -45,7 +48,15 @@ interface DashboardCacheEntry {
   dashboard: DashboardDTO;
   ts: number;
   cacheKey: string;
+  scopes: string[] | undefined;
 }
+
+interface DashboardSceneCacheEntry {
+  scene: DashboardScene;
+  scopes: string[] | undefined;
+}
+
+type CacheMap = Record<string, DashboardSceneCacheEntry[]>;
 
 export interface LoadDashboardOptions {
   uid: string;
@@ -60,7 +71,7 @@ export interface LoadDashboardOptions {
 }
 
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
-  private cache: Record<string, DashboardScene> = {};
+  private cache: CacheMap = {};
 
   // This is a simplistic, short-term cache for DashboardDTOs to avoid fetching the same dashboard multiple times across a short time span.
   private dashboardCache?: DashboardCacheEntry;
@@ -142,7 +153,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       // Do not cache new dashboards
-      this.dashboardCache = { dashboard: rsp, ts: Date.now(), cacheKey };
+      this.dashboardCache = { dashboard: rsp, ts: Date.now(), cacheKey, scopes: getScopesFromUrl() };
     } catch (e) {
       // Ignore cancelled errors
       if (isFetchError(e) && e.cancelled) {
@@ -220,7 +231,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
     const rsp = await this.fetchDashboard(options);
 
-    const fromCache = this.cache[options.uid];
+    const scopes = getScopesFromUrl();
+    const fromCacheEntries = this.cache[options.uid] ?? [];
+    const fromCacheIdx = fromCacheEntries.findIndex((cacheEntry) => isEqual(cacheEntry.scopes, scopes));
+    const fromCache = fromCacheEntries[fromCacheIdx]?.scene;
 
     // When coming from Explore, skip returnning scene from cache
     if (!comingFromExplore) {
@@ -234,7 +248,16 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
       if (options.uid && !comingFromExplore) {
-        this.cache[options.uid] = scene;
+        if (fromCache) {
+          fromCacheEntries[fromCacheIdx].scene = scene;
+        } else {
+          fromCacheEntries.push({
+            scene,
+            scopes,
+          });
+        }
+
+        this.cache[options.uid] = fromCacheEntries;
       }
 
       return scene;
@@ -255,6 +278,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     if (
       cachedDashboard &&
       cachedDashboard.cacheKey === cacheKey &&
+      isEqual(cachedDashboard.scopes, getScopesFromUrl()) &&
       Date.now() - cachedDashboard?.ts < DASHBOARD_CACHE_TTL
     ) {
       return cachedDashboard.dashboard;
@@ -275,7 +299,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public setDashboardCache(cacheKey: string, dashboard: DashboardDTO) {
-    this.dashboardCache = { dashboard, ts: Date.now(), cacheKey };
+    this.dashboardCache = { dashboard, ts: Date.now(), cacheKey, scopes: getScopesFromUrl() };
   }
 
   public clearDashboardCache() {
