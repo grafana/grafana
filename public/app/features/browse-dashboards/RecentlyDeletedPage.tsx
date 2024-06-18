@@ -34,7 +34,7 @@ const RecentlyDeletedPage = memo(() => {
   }, [dispatch, stateManager]);
 
   return (
-    <Page navId="dashboards/recentlyDeleted">
+    <Page navId="dashboards/recently-deleted">
       <Page.Contents>
         <ActionRow
           state={searchState}
