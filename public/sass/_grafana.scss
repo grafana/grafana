@@ -13,16 +13,13 @@
 @import 'base/type';
 @import 'base/forms';
 @import 'base/grid';
-@import 'base/fonts';
-@import 'base/code';
+@import 'base/font_awesome';
 
 // UTILS
 @import 'utils/utils';
-@import 'utils/spacings';
 @import 'utils/widths';
 
 // COMPONENTS
-@import 'components/scrollbar';
 @import 'components/buttons';
 @import 'components/alerts';
 @import 'components/tags';
@@ -33,7 +30,6 @@
 @import 'components/dropdown';
 @import 'components/infobox';
 @import 'components/query_editor';
-@import 'components/tabbed_view';
 @import 'components/query_part';
 @import 'components/json_explorer';
 @import 'components/dashboard_grid';

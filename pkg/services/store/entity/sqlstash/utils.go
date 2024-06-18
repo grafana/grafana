@@ -9,7 +9,6 @@ import (
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
 )
@@ -33,7 +32,7 @@ func getCurrentUser(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("%w: %w", ErrUserNotFoundInContext, err)
 	}
 
-	return store.GetUserIDString(user), nil
+	return user.GetUID().String(), nil
 }
 
 // ptrOr returns the first non-nil pointer in the list or a new non-nil pointer.

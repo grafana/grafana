@@ -13,12 +13,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	prometheusModel "github.com/prometheus/common/model"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type State struct {

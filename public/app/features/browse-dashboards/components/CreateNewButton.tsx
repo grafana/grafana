@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import {
   getNewDashboardPhrase,
@@ -50,11 +50,11 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
           label={getNewDashboardPhrase()}
           onClick={() =>
             reportInteraction('grafana_menu_item_clicked', {
-              url: addFolderUidToUrl('/dashboard/new', parentFolder?.uid),
+              url: buildUrl('/dashboard/new', parentFolder?.uid),
               from: location.pathname,
             })
           }
-          url={addFolderUidToUrl('/dashboard/new', parentFolder?.uid)}
+          url={buildUrl('/dashboard/new', parentFolder?.uid)}
         />
       )}
       {canCreateFolder && <MenuItem onClick={() => setShowNewFolderDrawer(true)} label={getNewFolderPhrase()} />}
@@ -63,11 +63,11 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
           label={getImportPhrase()}
           onClick={() =>
             reportInteraction('grafana_menu_item_clicked', {
-              url: addFolderUidToUrl('/dashboard/import', parentFolder?.uid),
+              url: buildUrl('/dashboard/import', parentFolder?.uid),
               from: location.pathname,
             })
           }
-          url={addFolderUidToUrl('/dashboard/import', parentFolder?.uid)}
+          url={buildUrl('/dashboard/import', parentFolder?.uid)}
         />
       )}
     </Menu>
@@ -101,6 +101,7 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
  * @param folderUid  folder id
  * @returns url with paramter if folder is present
  */
-function addFolderUidToUrl(url: string, folderUid: string | undefined) {
-  return folderUid ? url + '?folderUid=' + folderUid : url;
+function buildUrl(url: string, folderUid: string | undefined) {
+  const baseUrl = folderUid ? url + '?folderUid=' + folderUid : url;
+  return config.appSubUrl ? config.appSubUrl + baseUrl : baseUrl;
 }
