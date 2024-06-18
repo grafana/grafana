@@ -61,7 +61,6 @@ As soon as a matching policy is found, the system does not continue to look for 
 If alerts use multiple labels, these labels must also be present in a notification policy to match and route notifications to a specific contact point.
 {{% /admonition %}}
 
-
 Lastly, if none of the notification policies are selected the default notification policy is used.
 
 ### Routing example
