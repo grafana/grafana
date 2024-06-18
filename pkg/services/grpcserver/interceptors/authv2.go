@@ -29,7 +29,7 @@ import (
 type mode string
 
 var (
-	inProcessMode mode = "in-proc"
+	inProcessMode mode = "inproc"
 	remoteMode    mode = "remote"
 )
 
@@ -43,7 +43,7 @@ func (m mode) isValid() bool {
 
 type authCfg struct {
 	// mode is the authentication mode.
-	// in-proc: authentication is done in-process => no need to go fetch keys from a remote server.
+	// inproc: authentication is done in-process => no need to go fetch keys from a remote server.
 	// remote: authentication relies on a remote server
 	mode mode
 
@@ -59,7 +59,7 @@ type authCfg struct {
 func readAuthConfig(cfg *setting.Cfg) (*authCfg, error) {
 	section := cfg.SectionWithEnvOverrides("grpc_auth")
 
-	mode := mode(section.Key("mode").MustString("in-proc"))
+	mode := mode(section.Key("mode").MustString(string(inProcessMode)))
 	if !mode.isValid() {
 		return nil, fmt.Errorf("invalid mode: %s", mode)
 	}
@@ -158,7 +158,7 @@ func (a *jwtAuthenticator) Authenticate(ctx context.Context) (context.Context, e
 	//     User Request: access token + id token => user impersonation
 
 	// Problem I foresee:
-	//     in-proc mode: is creating an admin user sufficient?
+	//     inproc mode: is creating an admin user sufficient?
 	//     remote mode: service auth needs the access control service to get the permissions
 	//     remote mode: user request needs to downscope the user permissions
 	// Maybe this is not actually something I have to do here, given the authorization service is the one actually interested in the user's permissions
