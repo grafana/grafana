@@ -537,7 +537,7 @@ func (s *Service) GetSnapshot(ctx context.Context, sessionUid string, snapshotUi
 		}
 
 		// grab any result available
-		// TODO: think of a better way to enforce consistent use of types here
+		// TODO: figure out a more intelligent way to do this, will depend on GMS apis
 		snapshot.Result = snapshotMeta.Result
 
 		if snapshotMeta.Status == cloudmigration.SnapshotStatusFinished {
