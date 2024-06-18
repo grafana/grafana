@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 export function getCodeStyles(theme: GrafanaTheme2) {
   return css({
-    'code, pre, kbd, samp': {
+    'code, pre, kdb, samp': {
       ...theme.typography.code,
       fontSize: theme.typography.bodySmall.fontSize,
       backgroundColor: theme.colors.background.primary,
