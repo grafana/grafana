@@ -463,7 +463,8 @@
       "metadata": {
         "name": "betterPageScrolling",
         "resourceVersion": "1717578796182",
-        "creationTimestamp": "2024-03-06T15:06:47Z"
+        "creationTimestamp": "2024-03-06T15:06:47Z",
+        "deletionTimestamp": "2024-06-18T09:25:56Z"
       },
       "spec": {
         "description": "Removes CustomScrollbar from the UI, relying on native browser scrollbars",

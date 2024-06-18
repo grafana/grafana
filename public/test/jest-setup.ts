@@ -67,6 +67,8 @@ global.IntersectionObserver = mockIntersectionObserver;
 
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
+// add scrollTo interface since it's not implemented in jsdom
+Element.prototype.scrollTo = () => {};
 
 jest.mock('../app/core/core', () => ({
   ...jest.requireActual('../app/core/core'),
