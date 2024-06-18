@@ -74,7 +74,7 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 	}
 
 	state := alertState.State
-	if !alertState.ResolvedAt.IsZero() {
+	if alertState.ResolvedAt != nil {
 		// If this is a resolved alert, we need to send an alert with the correct labels such that they will expire the previous alert.
 		// In most cases the labels on the state will be correct, however when the previous alert was a NoData or Error alert, we need to
 		// ensure to modify it appropriately.
@@ -142,7 +142,6 @@ func errorAlert(labels, annotations data.Labels, alertState *State, urlStr strin
 
 func FromStateTransitionToPostableAlerts(evaluatedAt time.Time, firingStates []StateTransition, stateManager *Manager, appURL *url.URL) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
-	ts := evaluatedAt
 
 	sentAlerts := make([]*State, 0, len(firingStates))
 	for _, alertState := range firingStates {
@@ -154,7 +153,7 @@ func FromStateTransitionToPostableAlerts(evaluatedAt time.Time, firingStates []S
 		if alertState.StateReason == ngModels.StateReasonMissingSeries { // do not put stale state back to state manager
 			continue
 		}
-		alertState.LastSentAt = ts
+		alertState.LastSentAt = &evaluatedAt
 		sentAlerts = append(sentAlerts, alertState.State)
 	}
 	stateManager.Put(sentAlerts)

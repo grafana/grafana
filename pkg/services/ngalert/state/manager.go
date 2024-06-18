@@ -251,9 +251,9 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 		// Set Resolved property so the scheduler knows to send a postable alert
 		// to Alertmanager.
 		if oldState == eval.Alerting || oldState == eval.Error || oldState == eval.NoData {
-			s.ResolvedAt = now
+			s.ResolvedAt = &now
 		} else {
-			s.ResolvedAt = time.Time{}
+			s.ResolvedAt = nil
 		}
 		s.LastEvaluationTime = now
 		s.Values = map[string]float64{}
@@ -429,10 +429,10 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	// to Alertmanager.
 	newlyResolved := false
 	if oldState == eval.Alerting && currentState.State == eval.Normal {
-		currentState.ResolvedAt = result.EvaluatedAt
+		currentState.ResolvedAt = &result.EvaluatedAt
 		newlyResolved = true
 	} else if currentState.State != eval.Normal && currentState.State != eval.Pending { // Retain the last resolved time for Normal->Normal and Normal->Pending.
-		currentState.ResolvedAt = time.Time{}
+		currentState.ResolvedAt = nil
 	}
 
 	if shouldTakeImage(currentState.State, oldState, currentState.Image, newlyResolved) {
@@ -520,7 +520,7 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 		s.LastEvaluationTime = evaluatedAt
 
 		if oldState == eval.Alerting {
-			s.ResolvedAt = evaluatedAt
+			s.ResolvedAt = &evaluatedAt
 			image, err := takeImage(ctx, st.images, alertRule)
 			if err != nil {
 				logger.Warn("Failed to take an image",

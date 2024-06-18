@@ -425,7 +425,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t1,
 					EndsAt:             t1.Add(state.ResendDelay * 4),
 					LastEvaluationTime: t1,
-					LastSentAt:         t1,
+					LastSentAt:         &t1,
 				},
 			},
 		},
@@ -473,7 +473,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t2,
 					EndsAt:             t2.Add(state.ResendDelay * 4),
 					LastEvaluationTime: t2,
-					LastSentAt:         t2,
+					LastSentAt:         &t2,
 				},
 			},
 		},
@@ -504,7 +504,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
-					LastSentAt:         tn(4),
+					LastSentAt:         util.Pointer(tn(4)),
 				},
 			},
 		},
@@ -529,8 +529,8 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t2,
 					EndsAt:             t2,
 					LastEvaluationTime: t2,
-					ResolvedAt:         t2,
-					LastSentAt:         t2,
+					ResolvedAt:         &t2,
+					LastSentAt:         &t2,
 				},
 			},
 		},
@@ -558,8 +558,8 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t2,
 					EndsAt:             t2,
 					LastEvaluationTime: t3,
-					ResolvedAt:         t2,
-					LastSentAt:         t2,
+					ResolvedAt:         &t2,
+					LastSentAt:         &t2,
 				},
 			},
 		},
@@ -590,8 +590,8 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
-					ResolvedAt:         t3,
-					LastSentAt:         t3,
+					ResolvedAt:         &t3,
+					LastSentAt:         &t3,
 				},
 			},
 		},
@@ -625,7 +625,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(5),
-					LastSentAt:         tn(3), // 30s resend delay causing the last sent at to be t3.
+					LastSentAt:         util.Pointer(tn(3)), // 30s resend delay causing the last sent at to be t3.
 				},
 			},
 		},
@@ -656,7 +656,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
-					LastSentAt:         t3, // Resend delay is 30s, so last sent at is t3.
+					LastSentAt:         &t3, // Resend delay is 30s, so last sent at is t3.
 				},
 			},
 		},
@@ -765,7 +765,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           tn(5),
 					EndsAt:             tn(5).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(5),
-					LastSentAt:         tn(5),
+					LastSentAt:         util.Pointer(tn(5)),
 				},
 			},
 		},
@@ -790,7 +790,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t2,
 					EndsAt:             t2.Add(state.ResendDelay * 4),
 					LastEvaluationTime: t2,
-					LastSentAt:         t2,
+					LastSentAt:         &t2,
 				},
 			},
 		},
@@ -824,7 +824,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t2,
 					EndsAt:             t2.Add(state.ResendDelay * 4),
 					LastEvaluationTime: t2,
-					LastSentAt:         t2,
+					LastSentAt:         &t2,
 				},
 			},
 		},
@@ -868,7 +868,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t2,
 					EndsAt:             t2.Add(state.ResendDelay * 4),
 					LastEvaluationTime: t2,
-					LastSentAt:         t2,
+					LastSentAt:         &t2,
 				},
 			},
 		},
@@ -905,7 +905,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t2,
 					EndsAt:             t2.Add(state.ResendDelay * 4),
 					LastEvaluationTime: t2,
-					LastSentAt:         t2,
+					LastSentAt:         &t2,
 				},
 			},
 		},
@@ -937,7 +937,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t3,
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
-					LastSentAt:         t3, // Resend delay is 30s, so last sent at is t3.
+					LastSentAt:         &t3, // Resend delay is 30s, so last sent at is t3.
 				},
 			},
 		},
@@ -969,7 +969,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
-					LastSentAt:         tn(4),
+					LastSentAt:         util.Pointer(tn(4)),
 				},
 			},
 		},
@@ -1056,7 +1056,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           tn(5),
 					EndsAt:             tn(5).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(5),
-					LastSentAt:         tn(5),
+					LastSentAt:         util.Pointer(tn(5)),
 				},
 			},
 		},
@@ -1089,7 +1089,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t2,
 					EndsAt:             t2.Add(state.ResendDelay * 4),
 					LastEvaluationTime: t2,
-					LastSentAt:         t2,
+					LastSentAt:         &t2,
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test", "Error": "[sse.dataQueryError] failed to execute query [A]: this is an error"},
 				},
@@ -1123,7 +1123,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t3,
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
-					LastSentAt:         t3, // Resend delay is 30s, so last sent at is t3.
+					LastSentAt:         &t3, // Resend delay is 30s, so last sent at is t3.
 				},
 			},
 		},
@@ -1155,7 +1155,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           tn(4),
 					EndsAt:             tn(4).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(4),
-					LastSentAt:         tn(4),
+					LastSentAt:         util.Pointer(tn(4)),
 				},
 			},
 		},
@@ -1243,7 +1243,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           tn(4),
 					EndsAt:             tn(6).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(6),
-					LastSentAt:         tn(6), // After 30s resend delay, last sent at is t6.
+					LastSentAt:         util.Pointer(tn(6)), // After 30s resend delay, last sent at is t6.
 				},
 			},
 		},
@@ -1274,7 +1274,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           tn(8),
 					EndsAt:             tn(8).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(8),
-					LastSentAt:         tn(5),
+					LastSentAt:         util.Pointer(tn(5)),
 				},
 			},
 		},
@@ -1305,7 +1305,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           tn(6),
 					EndsAt:             tn(6).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(6),
-					LastSentAt:         tn(5),
+					LastSentAt:         util.Pointer(tn(5)),
 				},
 			},
 		},
@@ -1372,7 +1372,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t3,
 					EndsAt:             t3.Add(state.ResendDelay * 4),
 					LastEvaluationTime: t3,
-					LastSentAt:         t1, // Resend delay is 30s, so last sent at is t1.
+					LastSentAt:         &t1, // Resend delay is 30s, so last sent at is t1.
 				},
 			},
 		},
@@ -1779,7 +1779,7 @@ func TestStaleResults(t *testing.T) {
 			assert.Equal(t, models.StateReasonMissingSeries, s.StateReason)
 			assert.Equal(t, clk.Now(), s.EndsAt)
 			if s.CacheID == state2 {
-				assert.Equalf(t, clk.Now(), s.ResolvedAt, "Returned stale state should have ResolvedAt set")
+				assert.Equalf(t, clk.Now(), *s.ResolvedAt, "Returned stale state should have ResolvedAt set")
 			}
 			key, err := s.GetAlertInstanceKey()
 			require.NoError(t, err)
@@ -1932,7 +1932,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 				} else {
 					assert.Equal(t, clk.Now(), s.StartsAt)
 					if oldState.State == eval.Alerting {
-						assert.Equal(t, clk.Now(), s.ResolvedAt)
+						assert.Equal(t, clk.Now(), *s.ResolvedAt)
 					}
 				}
 				assert.Equal(t, clk.Now(), s.EndsAt)
@@ -2072,7 +2072,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 				} else {
 					assert.Equal(t, clk.Now(), s.StartsAt)
 					if oldState.State == eval.Alerting {
-						assert.Equal(t, clk.Now(), s.ResolvedAt)
+						assert.Equal(t, clk.Now(), *s.ResolvedAt)
 					}
 				}
 				assert.Equal(t, clk.Now(), s.EndsAt)

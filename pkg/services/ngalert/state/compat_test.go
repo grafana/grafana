@@ -269,7 +269,7 @@ func TestStateToPostableAlertFromNodataError(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			alertState := randomTransition(tc.from, tc.to)
 			if tc.resolved {
-				alertState.ResolvedAt = alertState.LastEvaluationTime
+				alertState.ResolvedAt = &alertState.LastEvaluationTime
 			}
 			alertState.Labels = data.Labels(standardLabels)
 			result := StateToPostableAlert(alertState, appURL)
@@ -342,7 +342,7 @@ func randomTransition(from, to eval.State) StateTransition {
 			EndsAt:             randomTimeInFuture(),
 			LastEvaluationTime: randomTimeInPast(),
 			EvaluationDuration: randomDuration(),
-			LastSentAt:         randomTimeInPast(),
+			LastSentAt:         util.Pointer(randomTimeInPast()),
 			Annotations:        make(map[string]string),
 			Labels:             make(map[string]string),
 			Values:             make(map[string]float64),

@@ -68,8 +68,8 @@ type State struct {
 	// ResolvedAt is set when the state is first resolved. That is to say, when the state first transitions
 	// from Alerting, NoData, or Error to Normal. It is reset to zero when the state transitions from Normal
 	// to any other state.
-	ResolvedAt           time.Time
-	LastSentAt           time.Time
+	ResolvedAt           *time.Time
+	LastSentAt           *time.Time
 	LastEvaluationString string
 	LastEvaluationTime   time.Time
 	EvaluationDuration   time.Duration
@@ -406,20 +406,19 @@ func (a *State) NeedsSending(resendDelay time.Duration, resolvedRetention time.D
 	}
 
 	// We should send a notification if the state has been resolved since the last notification.
-	if a.ResolvedAt.After(a.LastSentAt) {
+	if a.ResolvedAt != nil && (a.LastSentAt == nil || a.ResolvedAt.After(*a.LastSentAt)) {
 		return true
 	}
 
 	// For normal states, we should only be sending if this is a resolved notification or a re-send of the resolved
 	// notification within the resolvedRetention period.
-	if a.State == eval.Normal && (a.ResolvedAt.IsZero() || a.LastEvaluationTime.Sub(a.ResolvedAt) > resolvedRetention) {
+	if a.State == eval.Normal && (a.ResolvedAt == nil || a.LastEvaluationTime.Sub(*a.ResolvedAt) > resolvedRetention) {
 		return false
 	}
 
 	// We should send, and re-send notifications, each time LastSentAt is <= LastEvaluationTime + resendDelay.
 	// This can include normal->normal transitions that were resolved in recent past evaluations.
-	nextSent := a.LastSentAt.Add(resendDelay)
-	return nextSent.Before(a.LastEvaluationTime) || nextSent.Equal(a.LastEvaluationTime)
+	return a.LastSentAt == nil || !a.LastSentAt.Add(resendDelay).After(a.LastEvaluationTime)
 }
 
 func (a *State) Equals(b *State) bool {

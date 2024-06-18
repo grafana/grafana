@@ -364,7 +364,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-2 * time.Minute),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-2 * time.Minute)),
 			},
 		},
 		{
@@ -374,7 +374,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime,
+				LastSentAt:         util.Pointer(evaluationTime),
 			},
 		},
 		{
@@ -384,7 +384,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -402,7 +402,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime,
+				LastSentAt:         util.Pointer(evaluationTime),
 			},
 		},
 		{
@@ -411,9 +411,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:    true,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         evaluationTime,
+				ResolvedAt:         util.Pointer(evaluationTime),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -423,9 +423,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:          true,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         evaluationTime.Add(-2 * time.Minute),
+				ResolvedAt:         util.Pointer(evaluationTime.Add(-2 * time.Minute)),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -435,9 +435,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:          false,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         evaluationTime.Add(-2 * time.Minute),
+				ResolvedAt:         util.Pointer(evaluationTime.Add(-2 * time.Minute)),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -447,9 +447,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:          false,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         evaluationTime.Add(-16 * time.Minute),
+				ResolvedAt:         util.Pointer(evaluationTime.Add(-16 * time.Minute)),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -458,9 +458,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:    false,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         time.Time{},
+				ResolvedAt:         util.Pointer(time.Time{}),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -470,7 +470,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.NoData,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -480,7 +480,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.NoData,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second)),
 			},
 		},
 		{
@@ -490,7 +490,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Error,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -500,7 +500,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Error,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second),
+				LastSentAt:         util.Pointer(evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second)),
 			},
 		},
 	}

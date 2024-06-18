@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	alertingModels "github.com/grafana/alerting/models"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -835,8 +836,8 @@ func stateForRule(rule *models.AlertRule, ts time.Time, evalState eval.State) *s
 		Labels:             make(map[string]string),
 		StartsAt:           ts,
 		EndsAt:             ts,
-		ResolvedAt:         ts,
-		LastSentAt:         ts,
+		ResolvedAt:         &ts,
+		LastSentAt:         &ts,
 		LastEvaluationTime: ts,
 	}
 	for k, v := range rule.Labels {
