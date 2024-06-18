@@ -153,11 +153,11 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event resource.WriteEvent
 }
 
 // Create new name for a given resource
-func (f *entityBridge) GenerateName(ctx context.Context, key *resource.ResourceKey, prefix string) (string, error) {
+func (b *entityBridge) GenerateName(_ context.Context, _ *resource.ResourceKey, _ string) (string, error) {
 	return util.GenerateShortUID(), nil
 }
 
-func (b *entityBridge) Watch(ctx context.Context, req *resource.WatchRequest) (chan *resource.WatchEvent, error) {
+func (b *entityBridge) Watch(_ context.Context, _ *resource.WatchRequest) (chan *resource.WatchEvent, error) {
 	return nil, resource.ErrNotImplementedYet
 }
 

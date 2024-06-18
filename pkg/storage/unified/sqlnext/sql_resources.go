@@ -50,15 +50,16 @@ func ProvideSQLResourceServer(db db.EntityDBInterface, tracer tracing.Tracer) (r
 }
 
 type sqlResourceStore struct {
-	log         log.Logger
-	db          db.EntityDBInterface // needed to keep xorm engine in scope
-	sess        *session.SessionDB
-	dialect     migrator.Dialect
-	broadcaster sqlstash.Broadcaster[*resource.WatchEvent]
-	ctx         context.Context // TODO: remove
-	cancel      context.CancelFunc
-	stream      chan *resource.WatchEvent
-	tracer      trace.Tracer
+	log     log.Logger
+	db      db.EntityDBInterface // needed to keep xorm engine in scope
+	sess    *session.SessionDB
+	dialect migrator.Dialect
+	ctx     context.Context // TODO: remove
+	cancel  context.CancelFunc
+	tracer  trace.Tracer
+
+	//broadcaster sqlstash.Broadcaster[*resource.WatchEvent]
+	//stream chan *resource.WatchEvent
 
 	sqlDB      db.DB
 	sqlDialect sqltemplate.Dialect
@@ -139,7 +140,7 @@ func (s *sqlResourceStore) WriteEvent(ctx context.Context, event resource.WriteE
 }
 
 // Create new name for a given resource
-func (f *sqlResourceStore) GenerateName(ctx context.Context, key *resource.ResourceKey, prefix string) (string, error) {
+func (s *sqlResourceStore) GenerateName(_ context.Context, _ *resource.ResourceKey, _ string) (string, error) {
 	return util.GenerateShortUID(), nil
 }
 
