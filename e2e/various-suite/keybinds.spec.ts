@@ -1,7 +1,8 @@
 import { e2e } from '../utils';
 import { fromBaseUrl } from '../utils/support/url';
 
-describe('Keyboard shortcuts', () => {
+// Skipping due to race conditions with same scenes test e2e/scenes/various-suite/keybinds.spec.ts
+describe.skip('Keyboard shortcuts', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 
