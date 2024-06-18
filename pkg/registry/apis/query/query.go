@@ -197,15 +197,19 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 	// Add user headers... here or in client.QueryData
 	pluginID := req.PluginId
 	pluginUID := req.UID
-	comparisonReq := datasourceRequest{
-		PluginId: pluginID,
-		UID:      pluginUID,
-		Request: &v0alpha1.QueryDataRequest{
-			TimeRange: req.Request.TimeRange,
-			Queries:   req.Request.Queries,
-			Debug:     req.Request.Debug,
-		},
-		Headers: req.Headers, // TODO: fix this - this currently isn't used
+	runComparison := b.peformComparison(req)
+	var comparisonReq datasourceRequest
+	if runComparison {
+		comparisonReq = datasourceRequest{
+			PluginId: pluginID,
+			UID:      pluginUID,
+			Request: &v0alpha1.QueryDataRequest{
+				TimeRange: req.Request.TimeRange,
+				Queries:   req.Request.Queries,
+				Debug:     req.Request.Debug,
+			},
+			Headers: req.Headers, // TODO: fix this - this currently isn't used
+		}
 	}
 
 	var err error
@@ -222,27 +226,34 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return nil, err
 	}
 
-	code, rsp, dur, err := b.peformQuery(ctx, client, req, pluginID, pluginUID)
+	res := b.peformQuery(ctx, client, req, pluginID, pluginUID)
 	// Create a response object with the error when missing (happens for client errors like 404)
-	if rsp == nil && err != nil {
-		rsp = &backend.QueryDataResponse{Responses: make(backend.Responses)}
+	if res.response == nil && res.err != nil {
+		res.response = &backend.QueryDataResponse{Responses: make(backend.Responses)}
 		for _, q := range req.Request.Queries {
-			rsp.Responses[q.RefID] = backend.DataResponse{
-				Status: backend.Status(code),
+			res.response.Responses[q.RefID] = backend.DataResponse{
+				Status: backend.Status(res.code),
 				Error:  err,
 			}
 		}
 	}
 
-	if b.peformComparison(req) {
+	if runComparison {
 		b.log.Debug("running passive mode comparison to multi-tenant")
-		go b.queryDataAndCompare(ctx, pluginID, pluginUID, comparisonReq, code, rsp, dur)
+		go b.queryDataAndCompare(ctx, pluginID, pluginUID, comparisonReq, res)
 	}
 
-	return rsp, err
+	return res.response, res.err
 }
 
-func (b *QueryAPIBuilder) peformQuery(ctx context.Context, client v0alpha1.QueryDataClient, req datasourceRequest, pluginID, pluginUID string) (int, *backend.QueryDataResponse, time.Duration, error) {
+type queryRes struct {
+	code        int
+	response    *backend.QueryDataResponse
+	elapsedTime time.Duration
+	err         error
+}
+
+func (b *QueryAPIBuilder) peformQuery(ctx context.Context, client v0alpha1.QueryDataClient, req datasourceRequest, pluginID, pluginUID string) queryRes {
 	startTime := time.Now()
 	code, rsp, err := client.QueryData(ctx, *req.Request)
 	elapsedTime := time.Since(startTime)
@@ -262,13 +273,24 @@ func (b *QueryAPIBuilder) peformQuery(ctx context.Context, client v0alpha1.Query
 		}
 	}
 
-	return code, rsp, elapsedTime, err
+	return queryRes{
+		code:        code,
+		response:    rsp,
+		elapsedTime: elapsedTime,
+		err:         err,
+	}
 }
 
 // peformComparison determines if a comparison check should be made
 func (b *QueryAPIBuilder) peformComparison(req datasourceRequest) bool {
 	// not in passive mode
 	if b.passiveModeClient == nil {
+		return false
+	}
+
+	// Only compare Loki & Prometheus requests. We do not want to compare all requests
+	// as some datasources have costs attached to queries.
+	if req.PluginId == datasources.DS_PROMETHEUS || req.PluginId == datasources.DS_LOKI {
 		return false
 	}
 
@@ -281,13 +303,11 @@ func (b *QueryAPIBuilder) peformComparison(req datasourceRequest) bool {
 		return false
 	}
 
-	// Only compare Loki & Prometheus requests. We do not want to compare all requests
-	// as some datasources have costs attached to queries.
-	return req.PluginId == datasources.DS_PROMETHEUS || req.PluginId == datasources.DS_LOKI
+	return true
 }
 
 // queryDataAndCompare runs the query again, this time from the MT service, and compares the results. All of this happens in a go routine and is non-blocking.
-func (b *QueryAPIBuilder) queryDataAndCompare(ctx context.Context, pluginID string, pluginUID string, req datasourceRequest, stCode int, stRsp *backend.QueryDataResponse, stDuration time.Duration) {
+func (b *QueryAPIBuilder) queryDataAndCompare(ctx context.Context, pluginID string, pluginUID string, req datasourceRequest, originalRes queryRes) {
 	client, err := (*b.passiveModeClient).GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
 		Type: pluginID,
 		UID:  pluginUID,
@@ -298,36 +318,36 @@ func (b *QueryAPIBuilder) queryDataAndCompare(ctx context.Context, pluginID stri
 	}
 
 	// the original query will likely complete before this query. Do not use the same context so the query can complete.
-	mtCode, mtRsp, elapsedTime, err := b.peformQuery(context.Background(), client, req, pluginID, pluginUID)
+	res := b.peformQuery(context.Background(), client, req, pluginID, pluginUID)
 	if err != nil {
 		b.increaseCompare(compareResultError, pluginID)
 		b.log.Error("unable to query", "error", err)
 		return
 	}
 
-	if mtCode != stCode {
+	if res.code != originalRes.code {
 		b.increaseCompare(compareResultError, pluginID)
-		b.log.Error("codes do not match", "got", mtCode, "expected", stCode)
+		b.log.Error("codes do not match", "got", res.code, "expected", originalRes.code)
 		return
 	}
 
-	if mtRsp.Responses != nil {
-		b.compareResults(pluginID, stRsp, mtRsp)
+	if res.response.Responses != nil {
+		b.compareResults(pluginID, originalRes.response, res.response)
 		// only compare duration if there is a response. Errors will usually be faster.
-		b.reportDurationDiff(pluginID, stDuration, elapsedTime)
+		b.reportDurationDiff(pluginID, originalRes.elapsedTime, res.elapsedTime)
 	}
 }
 
-func (b *QueryAPIBuilder) compareResults(pluginID string, stRsp, mtRsp *backend.QueryDataResponse) bool {
+func (b *QueryAPIBuilder) compareResults(pluginID string, originalRes, newRes *backend.QueryDataResponse) bool {
 	// If the length of both responses is different, we know that
 	// something is not right and can straight up return.
-	if len(stRsp.Responses) != len(mtRsp.Responses) {
-		b.log.Debug("response sizes are different", "expected", len(stRsp.Responses), "got", len(mtRsp.Responses))
+	if len(originalRes.Responses) != len(newRes.Responses) {
+		b.log.Debug("response sizes are different", "expected", len(originalRes.Responses), "got", len(newRes.Responses))
 		b.increaseCompare(compareResultDifferent, pluginID)
 		return false
 	}
-	for k, v := range stRsp.Responses {
-		vv, exists := mtRsp.Responses[k]
+	for k, v := range originalRes.Responses {
+		vv, exists := newRes.Responses[k]
 		if !exists {
 			b.log.Debug("key missing", "expected", k, "got", nil)
 			b.increaseCompare(compareResultDifferent, pluginID)
