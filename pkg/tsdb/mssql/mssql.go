@@ -48,7 +48,7 @@ const (
 func ProvideService(cfg *setting.Cfg) *Service {
 	logger := backend.NewLoggerWith("logger", "tsdb.mssql")
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(cfg, logger)),
+		im:     datasource.NewInstanceManager(NewInstanceSettings(cfg, logger)),
 		logger: logger,
 	}
 }
@@ -136,7 +136,7 @@ func newMSSQL(ctx context.Context, driverName string, userFacingDefaultError str
 	return db, handler, nil
 }
 
-func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:      cfg.SqlDatasourceMaxOpenConnsDefault,
