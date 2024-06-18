@@ -1,6 +1,62 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`delete rule should be able to delete a rule 1`] = `
+exports[`delete rule should be able to delete a Data source managed rule 1`] = `
+[
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/mockCombinedNamespace/mockCombinedRuleGroup?subtype=cortex",
+  },
+  {
+    "body": {
+      "name": "group-1",
+      "rules": [
+        {
+          "alert": "r1",
+          "annotations": {
+            "summary": "test alert",
+          },
+          "expr": "up = 1",
+          "labels": {
+            "foo": "bar",
+          },
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/mockCombinedNamespace?subtype=cortex",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/mockCombinedNamespace/mockCombinedRuleGroup?subtype=cortex",
+  },
+]
+`;
+
+exports[`delete rule should be able to delete a Grafana managed rule 1`] = `
 [
   {
     "body": "",

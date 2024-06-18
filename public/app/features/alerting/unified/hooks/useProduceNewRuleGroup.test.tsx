@@ -9,10 +9,17 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import server, { setupMswServer } from '../mockApi';
-import { mockCombinedRule, mockCombinedRuleGroup, mockGrafanaRulerRule, mockRulerRuleGroup } from '../mocks';
+import {
+  mockCombinedRule,
+  mockCombinedRuleGroup,
+  mockGrafanaRulerRule,
+  mockRulerAlertingRule,
+  mockRulerRecordingRule,
+  mockRulerRuleGroup,
+} from '../mocks';
 import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '../mocks/alertRuleApi';
 import { setUpdateRulerRuleNamespaceHandler } from '../mocks/server/configure';
-import { captureRequests, serializeRequest, serializeRequests } from '../mocks/server/events';
+import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from '../mocks/server/handlers/alertRules';
 import { stringifyErrorLike } from '../utils/misc';
 import { getRuleGroupLocationFromCombinedRule } from '../utils/rules';
@@ -78,32 +85,74 @@ describe('pause rule', () => {
 });
 
 describe('delete rule', () => {
-  const rules = [
-    mockCombinedRule({
-      name: 'r1',
-      rulerRule: mockGrafanaRulerRule({ uid: 'r1' }),
-    }),
-    mockCombinedRule({
-      name: 'r2',
-      rulerRule: mockGrafanaRulerRule({ uid: 'r2' }),
-    }),
-  ];
-  const group = mockRulerRuleGroup({
-    name: 'group-1',
-    rules: [rules[0].rulerRule!, rules[1].rulerRule!],
-  });
+  it('should be able to delete a Grafana managed rule', async () => {
+    const rules = [
+      mockCombinedRule({
+        name: 'r1',
+        rulerRule: mockGrafanaRulerRule({ uid: 'r1' }),
+      }),
+      mockCombinedRule({
+        name: 'r2',
+        rulerRule: mockGrafanaRulerRule({ uid: 'r2' }),
+      }),
+    ];
+    const group = mockRulerRuleGroup({
+      name: 'group-1',
+      rules: [rules[0].rulerRule!, rules[1].rulerRule!],
+    });
 
-  const getGroup = rulerRuleGroupHandler({
-    delay: 1000,
-    response: HttpResponse.json(group),
-  });
+    const getGroup = rulerRuleGroupHandler({
+      delay: 1000,
+      response: HttpResponse.json(group),
+    });
 
-  const updateNamespace = updateRulerRuleNamespaceHandler({
-    response: new HttpResponse(undefined, { status: 200 }),
-  });
+    const updateNamespace = updateRulerRuleNamespaceHandler({
+      response: new HttpResponse(undefined, { status: 200 }),
+    });
 
-  it('should be able to delete a rule', async () => {
     server.use(getGroup, updateNamespace);
+
+    const capture = captureRequests();
+
+    render(<DeleteTestComponent rule={rules[1]} />);
+
+    await userEvent.click(byRole('button').get());
+
+    expect(await byText(/success/i).find()).toBeInTheDocument();
+
+    const requests = await capture;
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
+  });
+
+  it('should be able to delete a Data source managed rule', async () => {
+    const rules = [
+      mockCombinedRule({
+        name: 'r1',
+        rulerRule: mockRulerAlertingRule({ alert: 'r1', labels: { foo: 'bar' } }),
+      }),
+      mockCombinedRule({
+        name: 'r2',
+        rulerRule: mockRulerRecordingRule({ record: 'r2', labels: { bar: 'baz' } }),
+      }),
+    ];
+
+    const group = mockRulerRuleGroup({
+      name: 'group-1',
+      rules: [rules[0].rulerRule!, rules[1].rulerRule!],
+    });
+
+    const getGroup = rulerRuleGroupHandler({
+      delay: 1000,
+      response: HttpResponse.json(group),
+    });
+
+    const updateNamespace = updateRulerRuleNamespaceHandler({
+      response: new HttpResponse(undefined, { status: 200 }),
+    });
+
+    server.use(getGroup, updateNamespace);
+
     const capture = captureRequests();
 
     render(<DeleteTestComponent rule={rules[1]} />);
