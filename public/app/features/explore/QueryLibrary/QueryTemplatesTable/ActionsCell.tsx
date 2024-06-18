@@ -12,6 +12,8 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import ExploreRunQueryButton from '../../ExploreRunQueryButton';
 
+import { useQueryLibraryListStyles } from './styles';
+
 interface ActionsCellProps {
   queryUid?: string;
   query?: DataQuery;
@@ -20,6 +22,7 @@ interface ActionsCellProps {
 
 function ActionsCell({ query, rootDatasourceUid, queryUid }: ActionsCellProps) {
   const [deleteQueryTemplate] = useDeleteQueryTemplateMutation();
+  const styles = useQueryLibraryListStyles();
 
   const onDeleteQuery = (queryUid: string) => {
     const performDelete = (queryUid: string) => {
@@ -43,8 +46,10 @@ function ActionsCell({ query, rootDatasourceUid, queryUid }: ActionsCellProps) {
   };
 
   return (
-    <div>
+    <div className={styles.cell}>
       <IconButton
+        className={styles.actionButton}
+        size="lg"
         name="trash-alt"
         title={t('explore.query-library.delete-query', 'Delete query')}
         tooltip={t('explore.query-library.delete-query', 'Delete query')}
