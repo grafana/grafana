@@ -8,7 +8,7 @@ import appEvents from '../../../core/app_events';
 import { Trans } from '../../../core/internationalization';
 import { useDispatch } from '../../../types';
 import { ShowModalReactEvent } from '../../../types/events';
-import { useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
+import { useHardDeleteDashboardMutation, useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
 import { setAllSelection, useActionSelectionState } from '../state';
 
@@ -23,6 +23,7 @@ export function RecentlyDeletedActions() {
   const [, stateManager] = useRecentlyDeletedStateManager();
 
   const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
+  const [deleteDashboard, { isLoading: isDeleteLoading }] = useHardDeleteDashboardMutation();
 
   const selectedDashboards = useMemo(() => {
     return Object.entries(selectedItemsState.dashboard)
@@ -38,6 +39,13 @@ export function RecentlyDeletedActions() {
 
   const onRestore = async () => {
     const promises = selectedDashboards.map((uid) => restoreDashboard({ dashboardUID: uid }));
+
+    await Promise.all(promises);
+    onActionComplete();
+  };
+
+  const onDelete = async () => {
+    const promises = selectedDashboards.map((uid) => deleteDashboard({ dashboardUID: uid }));
 
     await Promise.all(promises);
     onActionComplete();
@@ -64,8 +72,8 @@ export function RecentlyDeletedActions() {
         props: {
           //TODO: review the following
           selectedDashboards,
-          onConfirm: onRestore,
-          isLoading: isRestoreLoading,
+          onConfirm: onDelete,
+          isLoading: isDeleteLoading,
         },
       })
     );
