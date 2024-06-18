@@ -83,7 +83,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       return model;
     }
 
-    const cacheKey = this.getCacheKey(route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid);
+    const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
     const cachedDashboard = this.getDashboardFromCache(cacheKey);
 
     if (cachedDashboard) {
