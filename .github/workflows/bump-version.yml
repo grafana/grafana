@@ -37,8 +37,7 @@ jobs:
         uses: dagger/dagger-for-github@v5
         with:
           verb: run
-          args: go run ./pkg/build/workflows/bump-version
-          version: ${{ inputs.version }}
+          args: go run ./pkg/build/workflows/bump-version -version=${{ inputs.version }}
       # Go is required for also updating the schema versions as part of the precommit hook:
       - uses: actions/setup-go@v4
         with:
