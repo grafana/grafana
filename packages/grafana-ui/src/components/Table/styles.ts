@@ -19,14 +19,15 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     asCellText?: boolean,
     textShouldWrap?: boolean,
     textWrapped?: boolean,
-    rowStyled?: boolean
+    rowStyled?: boolean,
+    rowExpanded?: boolean
   ) => {
     return css({
       label: overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow',
       padding: `${cellPadding}px`,
       width: '100%',
       // Cell height need to account for row border
-      height: `${rowHeight - 1}px`,
+      height: rowExpanded ? 'auto !important' : `${rowHeight - 1}px`,
       wordBreak: textWrapped ? 'break-all' : 'inherit',
 
       display: 'flex',
