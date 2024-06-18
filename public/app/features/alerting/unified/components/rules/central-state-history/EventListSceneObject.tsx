@@ -27,7 +27,7 @@ import { useRuleHistoryRecords } from '../state-history/useRuleHistoryRecords';
 
 import { LABELS_FILTER } from './CentralAlertHistoryScene';
 
-export const LIMIT_EVENTS = 1000;
+export const LIMIT_EVENTS = 9000;
 
 /**
  *
