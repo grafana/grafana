@@ -46,7 +46,7 @@ export const AddToLibraryForm = ({ onCancel, onSave, query }: Props) => {
         getAppEvents().publish({
           type: AppEvents.alertSuccess.name,
           payload: [
-            t('explore.rich-history-card.query-template-added', 'Query template successfully added to the library'),
+            t('explore.query-library.query-template-added', 'Query template successfully added to the library'),
           ],
         });
         return true;
@@ -55,7 +55,7 @@ export const AddToLibraryForm = ({ onCancel, onSave, query }: Props) => {
         getAppEvents().publish({
           type: AppEvents.alertError.name,
           payload: [
-            t('explore.rich-history-card.query-template-error', 'Error attempting to add this query to the library'),
+            t('explore.query-library.query-template-error', 'Error attempting to add this query to the library'),
           ],
         });
         return false;
