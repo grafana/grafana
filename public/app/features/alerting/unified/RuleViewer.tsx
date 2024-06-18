@@ -8,7 +8,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleProvider } from './components/rule-viewer/RuleContext';
-import DetailView from './components/rule-viewer/RuleViewer';
+import DetailView, { ActiveTab, useActiveTab } from './components/rule-viewer/RuleViewer';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { stringifyErrorLike } from './utils/misc';
 import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
@@ -21,6 +21,11 @@ type RuleViewerProps = GrafanaRouteComponentProps<{
 const RuleViewer = (props: RuleViewerProps): JSX.Element => {
   const id = getRuleIdFromPathname(props.match.params);
 
+  // we'll use this to fetch all instances only when on the "instances" tab
+  const [activeTab] = useActiveTab();
+  const instancesTab = activeTab === ActiveTab.Instances;
+  const limitAlerts = instancesTab ? undefined : 0;
+
   // we convert the stringified ID to a rule identifier object which contains additional
   // type and source information
   const identifier = React.useMemo(() => {
@@ -32,7 +37,7 @@ const RuleViewer = (props: RuleViewerProps): JSX.Element => {
   }, [id]);
 
   // we then fetch the rule from the correct API endpoint(s)
-  const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
+  const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier, limitAlerts });
 
   if (error) {
     return (
