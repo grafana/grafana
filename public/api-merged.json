@@ -19970,6 +19970,7 @@
       }
     },
     "State": {
+      "description": "+enum",
       "type": "string"
     },
     "Status": {
@@ -20729,6 +20730,7 @@
       }
     },
     "Type": {
+      "description": "+enum",
       "type": "string"
     },
     "TypeMeta": {
