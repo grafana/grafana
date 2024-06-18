@@ -29,7 +29,7 @@ func TestSimpleServer(t *testing.T) {
 	ctx := identity.WithRequester(context.Background(), testUserA)
 
 	var root hackpadfs.FS
-	if false {
+	if true {
 		tmp, err := os.MkdirTemp("", "xxx-*")
 		require.NoError(t, err)
 
@@ -78,7 +78,7 @@ func TestSimpleServer(t *testing.T) {
 
 		// Now update the value
 		tmp := &unstructured.Unstructured{}
-		err = json.Unmarshal(raw, tmp)
+		err = json.Unmarshal(created.Value, tmp)
 		require.NoError(t, err)
 
 		now := time.Now().UnixMilli()

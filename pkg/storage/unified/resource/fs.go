@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/hack-pad/hackpadfs"
 	"github.com/hack-pad/hackpadfs/mem"
 	"go.opentelemetry.io/otel/trace"
@@ -49,7 +50,7 @@ type fsEvent struct {
 }
 
 // The only write command
-func (f *fsStore) WriteEvent(ctx context.Context, event *WriteEvent) (int64, error) {
+func (f *fsStore) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
 	body := fsEvent{
 		ResourceVersion: event.EventID,
 		Message:         event.Message,
@@ -79,6 +80,12 @@ func (f *fsStore) WriteEvent(ctx context.Context, event *WriteEvent) (int64, err
 	}
 	_, err = hackpadfs.WriteFile(file, bytes)
 	return event.EventID, err
+}
+
+// Create new name for a given resource
+func (f *fsStore) GenerateName(ctx context.Context, key *ResourceKey, prefix string) (string, error) {
+	// TODO... shorter and make sure it does not exist
+	return prefix + "x" + uuid.New().String(), nil
 }
 
 // Read implements ResourceStoreServer.

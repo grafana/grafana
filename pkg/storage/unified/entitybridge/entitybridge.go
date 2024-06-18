@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // Creates a ResourceServer using the existing entity tables
@@ -91,7 +92,7 @@ func toEntityKey(key *resource.ResourceKey) string {
 	return e.String()
 }
 
-func (b *entityBridge) WriteEvent(ctx context.Context, event *resource.WriteEvent) (int64, error) {
+func (b *entityBridge) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	key := toEntityKey(event.Key)
 
 	// Delete does not need to create an entity first
@@ -149,6 +150,11 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event *resource.WriteEven
 	}
 
 	return 0, fmt.Errorf("unsupported operation: %s", event.Operation.String())
+}
+
+// Create new name for a given resource
+func (f *entityBridge) GenerateName(ctx context.Context, key *resource.ResourceKey, prefix string) (string, error) {
+	return util.GenerateShortUID(), nil
 }
 
 func (b *entityBridge) Watch(ctx context.Context, req *resource.WatchRequest) (chan *resource.WatchEvent, error) {
