@@ -536,6 +536,10 @@ func (d *dashboardStore) GetSoftDeletedDashboard(ctx context.Context, orgID int6
 
 func (d *dashboardStore) RestoreDashboard(ctx context.Context, orgID int64, dashboardUID string, folder *folder.Folder) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if folder == nil || folder.UID == "" {
+			_, err := sess.Exec("UPDATE dashboard SET deleted=NULL, folder_id=0, folder_uid=NULL WHERE org_id=? AND uid=?", orgID, dashboardUID)
+			return err
+		}
 		// nolint:staticcheck
 		_, err := sess.Exec("UPDATE dashboard SET deleted=NULL, folder_id = ?, folder_uid=? WHERE org_id=? AND uid=?", folder.ID, folder.UID, orgID, dashboardUID)
 		return err
