@@ -1,5 +1,3 @@
-import { xor } from 'lodash';
-
 import { locationUtil } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
@@ -48,15 +46,7 @@ interface DashboardCacheEntry {
   dashboard: DashboardDTO;
   ts: number;
   cacheKey: string;
-  scopes: string[] | undefined;
 }
-
-interface DashboardSceneCacheEntry {
-  scene: DashboardScene;
-  scopes: string[] | undefined;
-}
-
-type CacheMap = Record<string, DashboardSceneCacheEntry[]>;
 
 export interface LoadDashboardOptions {
   uid: string;
@@ -71,7 +61,7 @@ export interface LoadDashboardOptions {
 }
 
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
-  private cache: CacheMap = {};
+  private cache: Record<string, DashboardScene> = {};
 
   // This is a simplistic, short-term cache for DashboardDTOs to avoid fetching the same dashboard multiple times across a short time span.
   private dashboardCache?: DashboardCacheEntry;
@@ -93,8 +83,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       return model;
     }
 
-    const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
-    const cachedDashboard = this.getFromCache(cacheKey);
+    const cacheKey = this.getCacheKey(route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid);
+    const cachedDashboard = this.getDashboardFromCache(cacheKey);
 
     if (cachedDashboard) {
       return cachedDashboard;
@@ -153,7 +143,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       // Do not cache new dashboards
-      this.dashboardCache = { dashboard: rsp, ts: Date.now(), cacheKey, scopes: getScopesFromUrl() };
+      this.setDashboardCache(cacheKey, rsp);
     } catch (e) {
       // Ignore cancelled errors
       if (isFetchError(e) && e.cancelled) {
@@ -231,10 +221,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
     const rsp = await this.fetchDashboard(options);
 
-    const scopes = getScopesFromUrl();
-    const fromCacheEntries = this.cache[options.uid] ?? [];
-    const fromCacheIdx = fromCacheEntries.findIndex((cacheEntry) => xor(cacheEntry.scopes, scopes).length === 0);
-    const fromCache = fromCacheEntries[fromCacheIdx]?.scene;
+    const fromCache = this.getSceneFromCache(options.uid);
 
     // When coming from Explore, skip returnning scene from cache
     if (!comingFromExplore) {
@@ -248,16 +235,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
       if (options.uid && !comingFromExplore) {
-        if (fromCache) {
-          fromCacheEntries[fromCacheIdx].scene = scene;
-        } else {
-          fromCacheEntries.push({
-            scene,
-            scopes,
-          });
-        }
-
-        this.cache[options.uid] = fromCacheEntries;
+        this.setSceneCache(options.uid, scene);
       }
 
       return scene;
@@ -272,13 +250,13 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     throw new Error('Dashboard not found');
   }
 
-  public getFromCache(cacheKey: string) {
+  public getDashboardFromCache(cacheKey: string) {
     const cachedDashboard = this.dashboardCache;
+    cacheKey = this.getCacheKey(cacheKey);
 
     if (
       cachedDashboard &&
       cachedDashboard.cacheKey === cacheKey &&
-      xor(cachedDashboard.scopes, getScopesFromUrl()).length === 0 &&
       Date.now() - cachedDashboard?.ts < DASHBOARD_CACHE_TTL
     ) {
       return cachedDashboard.dashboard;
@@ -299,11 +277,37 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public setDashboardCache(cacheKey: string, dashboard: DashboardDTO) {
-    this.dashboardCache = { dashboard, ts: Date.now(), cacheKey, scopes: getScopesFromUrl() };
+    cacheKey = this.getCacheKey(cacheKey);
+
+    this.dashboardCache = { dashboard, ts: Date.now(), cacheKey };
   }
 
   public clearDashboardCache() {
     this.dashboardCache = undefined;
+  }
+
+  public getSceneFromCache(cacheKey: string) {
+    cacheKey = this.getCacheKey(cacheKey);
+
+    return this.cache[cacheKey];
+  }
+
+  public setSceneCache(cacheKey: string, scene: DashboardScene) {
+    cacheKey = this.getCacheKey(cacheKey);
+
+    this.cache[cacheKey] = scene;
+  }
+
+  public getCacheKey(cacheKey: string): string {
+    const scopesSearchParams = getScopesFromUrl();
+
+    if (!scopesSearchParams?.has('scopes')) {
+      return cacheKey;
+    }
+
+    scopesSearchParams.sort();
+
+    return `${cacheKey}__scp__${scopesSearchParams.toString()}`;
   }
 }
 
