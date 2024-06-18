@@ -149,7 +149,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         return null;
       }
 
-      console.error(e);
       throw e;
     }
 
