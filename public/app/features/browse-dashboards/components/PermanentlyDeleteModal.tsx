@@ -24,15 +24,16 @@ export const PermanentlyDeleteModal = ({
       body={
         <Text element="p">
           <Trans i18nKey="recently-deleted.permanently-delete-modal.text" count={numberOfDashboards}>
-            This action will restore {{ numberOfDashboards }} dashboards.
+            This action will delete {{ numberOfDashboards }} dashboards.
           </Trans>
         </Text>
       }
       title={t('recently-deleted.permanently-delete-modal.title', 'Permanently Delete Dashboards')}
+      confirmationText={t('recently-deleted.permanently-delete-modal.confirm-text', 'Delete')}
       confirmText={
         isLoading
-          ? t('recently-deleted.permanently-delete-modal.delete-loading', 'Restoring...')
-          : t('recently-deleted.permanently-delete-modal.delete-button', 'Restore')
+          ? t('recently-deleted.permanently-delete-modal.delete-loading', 'Deleting...')
+          : t('recently-deleted.permanently-delete-modal.delete-button', 'Delete')
       }
       confirmButtonVariant="destructive"
       onConfirm={onDelete}

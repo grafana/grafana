@@ -1556,7 +1556,16 @@
   },
   "recently-deleted": {
     "buttons": {
+      "delete": "Đęľęŧę pęřmäŉęŉŧľy",
       "restore": "Ŗęşŧőřę"
+    },
+    "permanently-delete-modal": {
+      "confirm-text": "Đęľęŧę",
+      "delete-button": "Đęľęŧę",
+      "delete-loading": "Đęľęŧįŉģ...",
+      "text_one": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę {{numberOfDashboards}} đäşĥþőäřđş.",
+      "text_other": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę {{numberOfDashboards}} đäşĥþőäřđş.",
+      "title": "Pęřmäŉęŉŧľy Đęľęŧę Đäşĥþőäřđş"
     },
     "restore-modal": {
       "restore-button": "Ŗęşŧőřę",
