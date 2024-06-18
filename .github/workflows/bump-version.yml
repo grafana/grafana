@@ -30,18 +30,15 @@ jobs:
           example: 7.4.3, 7.4.3-preview or 7.4.3-preview1"
           exit 1
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # Go is required for 'make gen-cue' and for the 'go run' in the dagger action
+      - uses: actions/setup-go@v4
         with:
-          node-version: '18'
+          go-version-file: go.mod
       - name: Bump versions
         uses: dagger/dagger-for-github@v5
         with:
           verb: run
           args: go run ./pkg/build/workflows/bump-version -version=${{ inputs.version }}
-      # Go is required for also updating the schema versions as part of the precommit hook:
-      - uses: actions/setup-go@v4
-        with:
-          go-version-file: go.mod
       - name: make gen-cue
         run: make gen-cue
       - if: ${{ inputs.push }}
