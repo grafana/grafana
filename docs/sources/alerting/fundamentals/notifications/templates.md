@@ -106,6 +106,10 @@ Here are some commonly used built-in [variables](ref:variables-label-annotation)
 
         CPU usage for instance1 has exceeded 80% for the last 5 minutes: 81.2345
 
+{{% admonition type="caution" %}}
+Extra whitespace in label templates can break matches with notification policies.
+{{% /admonition %}}
+
 ### Template annotations
 
 Both labels and annotations have the same structure: a set of named values; however their intended uses are different. The purpose of annotations is to add additional information to existing alerts.
