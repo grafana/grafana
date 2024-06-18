@@ -1317,6 +1317,12 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 		},
+		{
+			Name:        "openSearchBackendFlowEnabled",
+			Description: "Enables the backend query flow for Open Search datasource plugin",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       awsDatasourcesSquad,
+		},
 	}
 )
 

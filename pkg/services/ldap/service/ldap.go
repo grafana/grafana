@@ -19,7 +19,7 @@ var (
 // LDAP is the interface for the LDAP service.
 type LDAP interface {
 	ReloadConfig() error
-	Config() *ldap.Config
+	Config() *ldap.ServersConfig
 	Client() multildap.IMultiLDAP
 
 	// Login authenticates the user against the LDAP server.
@@ -30,8 +30,8 @@ type LDAP interface {
 
 type LDAPImpl struct {
 	client  multildap.IMultiLDAP
-	cfg     *setting.Cfg
-	ldapCfg *ldap.Config
+	cfg     *ldap.Config
+	ldapCfg *ldap.ServersConfig
 	log     log.Logger
 
 	// loadingMutex locks the reading of the config so multiple requests for reloading are sequential.
@@ -42,7 +42,7 @@ func ProvideService(cfg *setting.Cfg) *LDAPImpl {
 	s := &LDAPImpl{
 		client:       nil,
 		ldapCfg:      nil,
-		cfg:          cfg,
+		cfg:          ldap.GetLDAPConfig(cfg),
 		log:          log.New("ldap.service"),
 		loadingMutex: &sync.Mutex{},
 	}
@@ -63,14 +63,14 @@ func ProvideService(cfg *setting.Cfg) *LDAPImpl {
 }
 
 func (s *LDAPImpl) ReloadConfig() error {
-	if !s.cfg.LDAPAuthEnabled {
+	if !s.cfg.Enabled {
 		return nil
 	}
 
 	s.loadingMutex.Lock()
 	defer s.loadingMutex.Unlock()
 
-	config, err := readConfig(s.cfg.LDAPConfigFilePath)
+	config, err := readConfig(s.cfg.ConfigFilePath)
 	if err != nil {
 		return err
 	}
@@ -90,12 +90,12 @@ func (s *LDAPImpl) Client() multildap.IMultiLDAP {
 	return s.client
 }
 
-func (s *LDAPImpl) Config() *ldap.Config {
+func (s *LDAPImpl) Config() *ldap.ServersConfig {
 	return s.ldapCfg
 }
 
 func (s *LDAPImpl) Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, error) {
-	if !s.cfg.LDAPAuthEnabled {
+	if !s.cfg.Enabled {
 		return nil, ErrLDAPNotEnabled
 	}
 
@@ -108,7 +108,7 @@ func (s *LDAPImpl) Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, 
 }
 
 func (s *LDAPImpl) User(username string) (*login.ExternalUserInfo, error) {
-	if !s.cfg.LDAPAuthEnabled {
+	if !s.cfg.Enabled {
 		return nil, ErrLDAPNotEnabled
 	}
 
