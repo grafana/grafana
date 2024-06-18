@@ -9,7 +9,7 @@ on:
         default: true
         required: false
       dry_run:
-        default: true
+        default: false
         required: false
 jobs:
   main:
