@@ -36,21 +36,9 @@ describe('DashboardScenePageStateManager', () => {
       const loader = new DashboardScenePageStateManager({});
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
-      expect(loader.state.dashboard).toBeUndefined();
+      expect(loader.state.dashboard).toBeDefined();
       expect(loader.state.isLoading).toBe(false);
-      expect(loader.state.loadError).toBe('Error: Dashboard not found');
-    });
-
-    it('should handle home dashboard redirect', async () => {
-      setBackendSrv({
-        get: () => Promise.resolve({ redirectUri: '/d/asd' }),
-      } as unknown as BackendSrv);
-
-      const loader = new DashboardScenePageStateManager({});
-      await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
-
-      expect(loader.state.dashboard).toBeUndefined();
-      expect(loader.state.loadError).toBeUndefined();
+      expect(loader.state.loadError).toBe('Dashboard not found');
     });
 
     it('shoud fetch dashboard from local storage and remove it after if it exists', async () => {
@@ -128,6 +116,36 @@ describe('DashboardScenePageStateManager', () => {
 
       expect(dash!.state.$timeRange?.state.from).toEqual('now-6h');
     });
+
+    describe('Home dashboard', () => {
+      it('should handle home dashboard redirect', async () => {
+        setBackendSrv({
+          get: () => Promise.resolve({ redirectUri: '/d/asd' }),
+        } as unknown as BackendSrv);
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+        expect(loader.state.dashboard).toBeUndefined();
+        expect(loader.state.loadError).toBeUndefined();
+      });
+
+      it('should handle invalid home dashboard request', async () => {
+        setBackendSrv({
+          get: () =>
+            Promise.reject({
+              status: 500,
+              data: { message: 'Failed to load home dashboard' },
+            }),
+        } as unknown as BackendSrv);
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+        expect(loader.state.dashboard).toBeDefined();
+        expect(loader.state.dashboard?.state.title).toEqual('Failed to load home dashboard');
+        expect(loader.state.loadError).toEqual('Failed to load home dashboard');
+      });
 
     describe('New dashboards', () => {
       it('Should have new empty model with meta.isNew and should not be cached', async () => {
