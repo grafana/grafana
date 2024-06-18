@@ -9,22 +9,29 @@ if ! artifacts=$(gcom /downloads/grafana/versions/$version); then
 fi
 
 # Use Node.js to parse the JSON response and extract the download URLs
-urls=$(node -e "
+url_string=$(node -e "
   const artifacts = JSON.parse(JSON.stringify($artifacts));
   const downloadUrls = artifacts.packages.map((package) => package.links.find((link) => link.rel === 'download').href);
-  console.log(downloadUrls.join('\n'));
+  console.log(downloadUrls.join(' '));
 ")
 
+# Convert the url_string to a Bash array.
+read -r -a urls <<< "$url_string"
+
 # If empty, no artifact URLs were found for the specified version. Exit with an error.
-if [ -z "$urls" ]; then
+if [ ${#urls[@]} -eq 0 ]; then
   echo "No artifact URLs found for version $version. Please check the provided version."
   exit 1
 fi
 
-failed_urls=$(echo "$urls" | xargs -I{} -P0 sh -c \
-             'status_code=$(curl -L -s -o /dev/null -w "%{http_code}" "$1"); \
-             if [ "$status_code" -ne 200 ]; then echo "$1"; fi' \
-             -- {})
+# Iterate over the URLs and check the status code of each. If any URL does not return a 200 status code, add it to the failed_urls string.
+failed_urls=""
+for url in "${urls[@]}"; do
+  status_code=$(curl -L -s -o /dev/null -w "%{http_code}" "$url")
+  if [ "$status_code" -ne 200 ]; then
+    failed_urls+="$url\n"
+  fi
+done
 
 # If any URLs failed, print them and exit with an error.
 if [ -n "$failed_urls" ]; then
