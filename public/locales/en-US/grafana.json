@@ -677,7 +677,6 @@
       "download-button": "Download file",
       "export-externally-label": "Export the dashboard to use in another instance",
       "info-text": "Copy or download a JSON file containing the JSON of your dashboard.",
-      "loading-text": "Loading...",
       "title": "Save dashboard JSON"
     },
     "menu": {
