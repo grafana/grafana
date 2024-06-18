@@ -250,6 +250,37 @@ func TestReload(t *testing.T) {
 				AllowSignUp: true,
 			},
 		},
+		{
+			description: "config disabled",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled":            false,
+					"skip_org_role_sync": false,
+					"allow_sign_up":      true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host": "127.0.0.1",
+							},
+						},
+					},
+				},
+				IsDeleted: false,
+			},
+			expectedServersConfig: &ldap.ServersConfig{
+				Servers: []*ldap.ServerConfig{
+					{
+						Host: "127.0.0.1",
+					},
+				},
+			},
+			expectedConfig: &ldap.Config{
+				Enabled:         false,
+				AllowSignUp:     true,
+				SkipOrgRoleSync: false,
+			},
+		},
 	}
 
 	for _, tt := range testCases {
