@@ -26,9 +26,8 @@ export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> 
   });
 
   public constructor(initialState: Partial<SnapshotVariableState>) {
-    //TODO: Add new `snapshot` type to Variable Type
     super({
-      type: 'custom',
+      type: 'snapshot',
       isReadOnly: true,
       query: '',
       value: '',
