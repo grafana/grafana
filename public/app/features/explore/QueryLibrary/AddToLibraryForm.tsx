@@ -1,19 +1,22 @@
 import React, { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { DataSourcePicker } from '@grafana/runtime';
+import { AppEvents, dateTime } from '@grafana/data';
+import { DataSourcePicker, getAppEvents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button, InlineSwitch, Modal, RadioButtonGroup, TextArea } from '@grafana/ui';
 import { Field } from '@grafana/ui/';
 import { Input } from '@grafana/ui/src/components/Input/Input';
 import { t } from 'app/core/internationalization';
+import { getQueryDisplayText } from 'app/core/utils/richHistory';
+import { useAddQueryTemplateMutation } from 'app/features/query-library';
+import { AddQueryTemplateCommand } from 'app/features/query-library/types';
 
-import { getQueryDisplayText } from '../../../core/utils/richHistory';
 import { useDatasource } from '../QueryLibrary/utils/useDatasource';
 
 type Props = {
   onCancel: () => void;
-  onSave: (details: QueryDetails) => void;
+  onSave: () => void;
   query: DataQuery;
 };
 
@@ -31,8 +34,27 @@ const info = t(
   `You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.`
 );
 
-export const RichHistoryAddToLibraryForm = ({ onCancel, onSave, query }: Props) => {
+export const AddToLibraryForm = ({ onCancel, onSave, query }: Props) => {
   const { register, handleSubmit } = useForm<QueryDetails>();
+
+  const [addQueryTemplate] = useAddQueryTemplateMutation();
+
+  const handleAddQueryTemplate = async (addQueryTemplateCommand: AddQueryTemplateCommand) => {
+    addQueryTemplate(addQueryTemplateCommand)
+      .unwrap()
+      .then(() => {
+        getAppEvents().publish({
+          type: AppEvents.alertSuccess.name,
+          payload: [
+            t('explore.rich-history-card.query-template-added', 'Query template successfully added to the library'),
+          ],
+        });
+        return true;
+      })
+      .catch(() => {
+        return false;
+      });
+  };
 
   const datasource = useDatasource(query.datasource);
 
@@ -40,8 +62,12 @@ export const RichHistoryAddToLibraryForm = ({ onCancel, onSave, query }: Props) 
     return datasource?.getQueryDisplayText?.(query) || getQueryDisplayText(query);
   }, [datasource, query]);
 
-  const onSubmit = (data: QueryDetails) => {
-    onSave(data);
+  const onSubmit = async (data: QueryDetails) => {
+    const timestamp = dateTime().toISOString();
+    const temporaryDefaultTitle = data.description || `Imported from Explore - ${timestamp}`;
+    handleAddQueryTemplate({ title: temporaryDefaultTitle, targets: [query] }).then((isSuccess) => {
+      onSave();
+    });
   };
 
   return (

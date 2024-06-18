@@ -22,7 +22,7 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { AngularComponent, config, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
@@ -449,9 +449,17 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const isHidden = !!query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
+    const hasQueryLibrary = this.props.app === CoreApp.Explore && (config.featureToggles.queryLibrary || false);
 
     return (
       <>
+        {hasQueryLibrary && (
+          <QueryOperationAction
+            title={t('query-operation.header.save-to-query-library', 'Save to query library')}
+            icon="save"
+            onClick={this.onToggleHelp}
+          />
+        )}
         {hasEditorHelp && (
           <QueryOperationToggleAction
             title={t('query-operation.header.datasource-help', 'Show data source help')}
