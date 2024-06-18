@@ -57,7 +57,7 @@ export const InventoryService = {
     return api.post<NodeListDBPayload, object>(`/v1/management/Node/List`, body, false, token);
   },
   removeNode(body: RemoveNodeBody, token?: CancelToken) {
-    return api.post<void, RemoveNodeBody>(`${BASE_URL}/Nodes/Remove`, body, false, token);
+    return api.post<void, RemoveNodeBody>(`/v1/management/Node/Unregister`, body, false, token);
   },
   getService(serviceId: string, token?: CancelToken) {
     return api.post<any, any>(`${BASE_URL}/Services/Get`, { service_id: serviceId }, false, token);
