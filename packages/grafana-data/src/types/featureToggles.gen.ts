@@ -169,7 +169,6 @@ export interface FeatureToggles {
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
-  betterPageScrolling?: boolean;
   authAPIAccessTokenAuth?: boolean;
   scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
@@ -195,4 +194,5 @@ export interface FeatureToggles {
   pinNavItems?: boolean;
   authZGRPCServer?: boolean;
   openSearchBackendFlowEnabled?: boolean;
+  ssoSettingsLDAP?: boolean;
 }

@@ -1127,14 +1127,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:         "betterPageScrolling",
-			Description:  "Removes CustomScrollbar from the UI, relying on native browser scrollbars",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:              "authAPIAccessTokenAuth",
 			Description:       "Enables the use of Auth API access tokens for authentication",
 			Stage:             FeatureStageExperimental,
@@ -1322,6 +1314,14 @@ var (
 			Description: "Enables the backend query flow for Open Search datasource plugin",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
+		},
+		{
+			Name:              "ssoSettingsLDAP",
+			Description:       "Use the new SSO Settings API to configure LDAP",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 	}
 )

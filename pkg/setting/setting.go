@@ -16,7 +16,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -1024,9 +1023,9 @@ func (cfg *Cfg) validateStaticRootPath() error {
 func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.setHomePath(args)
 
-	// Fix for missing IANA db on Windows
+	// Fix for missing IANA db on Windows or Alpine
 	_, zoneInfoSet := os.LookupEnv(zoneInfo)
-	if runtime.GOOS == "windows" && !zoneInfoSet {
+	if !zoneInfoSet {
 		if err := os.Setenv(zoneInfo, filepath.Join(cfg.HomePath, "tools", "zoneinfo.zip")); err != nil {
 			cfg.Logger.Error("Can't set ZONEINFO environment variable", "err", err)
 		}
