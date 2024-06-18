@@ -307,7 +307,7 @@ type Cfg struct {
 	UserInviteMaxLifetime        time.Duration
 	HiddenUsers                  map[string]struct{}
 	CaseInsensitiveLogin         bool // Login and Email will be considered case insensitive
-	UserLastSeenUpdateInterval	 time.Duration
+	UserLastSeenUpdateInterval   time.Duration
 	VerificationEmailMaxLifetime time.Duration
 
 	// Service Accounts
