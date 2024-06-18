@@ -33,12 +33,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Bump versions
         uses: dagger/dagger-for-github@v5
         with:
