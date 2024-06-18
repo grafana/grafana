@@ -338,12 +338,7 @@ export function createVariableForSnapshots(variable: TypedVariableModel): SceneV
     return snapshotVariable;
   }
 
-  if (
-    variable.type === 'adhoc' ||
-    variable.type === 'groupby' ||
-    variable.type === 'system' ||
-    variable.type === 'constant'
-  ) {
+  if (variable.type === 'adhoc' || variable.type === 'system' || variable.type === 'constant') {
     current = {
       value: '',
       text: '',

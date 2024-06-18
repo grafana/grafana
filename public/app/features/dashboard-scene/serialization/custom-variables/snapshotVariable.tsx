@@ -12,7 +12,8 @@ import {
   sceneGraph,
   VariableGetOptionsArgs,
 } from '@grafana/scenes';
-import { AdHocFilterRenderer } from 'app/features/variables/adhoc/picker/AdHocFilterRenderer';
+
+import { SnapshotFilterRenderer } from './SnapshotFilterRenderer';
 
 export interface SnapshotVariableState extends MultiValueVariableState {
   query?: string;
@@ -72,14 +73,9 @@ export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> 
     // model can have filters or not, so we need to check
     if (model.state.filters && model.state.filters.length > 0) {
       return model.state.filters.map((filter) => {
-        return AdHocFilterRenderer({
+        return SnapshotFilterRenderer({
           filter,
-          disabled: true,
           datasource: { uid: '' },
-          allFilters: [],
-          onKeyChange: () => {},
-          onOperatorChange: () => {},
-          onValueChange: () => {},
         });
       });
     }
