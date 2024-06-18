@@ -33,7 +33,7 @@ refs:
 
 # Group alert notifications
 
-Grouping is an important feature of Grafana Alerting as it allows you to batch relevant alerts together into a smaller number of notifications. This is particularly important if notifications are delivered to first-responders, such as engineers on-call, where receiving lots of notifications in a short period of time can be overwhelming and in some cases can negatively impact a first-responders ability to respond to an incident. For example, consider a large outage where many of your systems are down. In this case, grouping can be the difference between receiving 1 phone call and 100 phone calls.
+Grouping in Grafana Alerting allows you to batch relevant alerts together into a smaller number of notifications. This is particularly important if notifications are delivered to first-responders, such as engineers on-call, where receiving lots of notifications in a short period of time can be overwhelming. In some cases, it can negatively impact a first-responders ability to respond to an incident. For example, consider a large outage where many of your systems are down. In this case, grouping can be the difference between receiving 1 phone call and 100 phone calls.
 
 ## Group notifications
 
@@ -42,7 +42,7 @@ Grouping combines similar alert instances within a specific period into a single
 In the notification policy, you can configure how to group multiple alerts into a single notification:
 
 - The `Group by` option specifies the criteria for grouping incoming alerts within the policy. The default is by alert rule.
-- [Timing options](#timing-options) determine when to sent the notification.
+- [Timing options](#timing-options) determine when and how often to send the notification.
 
 {{< figure src="/media/docs/alerting/alerting-notification-policy-diagram-with-labels-v3.png" max-width="750px" alt="A diagram about the components of a notification policy, including labels and groups" >}}
 
@@ -65,7 +65,7 @@ If you want to group all alerts handled by the notification policy in a single g
 
 ### Disable grouping
 
-If you want to receive every alert as a separate notification, you can do so by grouping by a special label called `...`.
+If you want to receive every alert as a separate notification, you can do so by grouping by a special label called `...`, ensuring that other labels are not present.
 
 ## Timing options
 
@@ -101,7 +101,7 @@ The longer the group wait, the more time other alerts have to be included in the
 
 Consider a notification policy that:
 
-- Matches all alert instances with the `team` label—matching labels equals to `team=~".*"`.
+- Matches all alert instances with the `team` label—matching labels equals to `team=~.+`.
 - Groups notifications by the `team` label—one group for each distinct `team`.
 - Sets the Group wait timer to `30s`.
 

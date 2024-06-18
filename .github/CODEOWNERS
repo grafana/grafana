@@ -79,7 +79,7 @@
 /pkg/components/apikeygen/ @grafana/identity-access-team
 /pkg/components/satokengen/ @grafana/identity-access-team
 /pkg/components/dashdiffs/ @grafana/grafana-app-platform-squad
-/pkg/components/imguploader/ @grafana/grafana-backend-group
+/pkg/components/imguploader/ @grafana/alerting-backend
 /pkg/components/loki/ @grafana/grafana-backend-group
 /pkg/components/null/ @grafana/grafana-backend-group
 /pkg/components/simplejson/ @grafana/grafana-backend-group
@@ -104,6 +104,8 @@
 /pkg/server/ @grafana/grafana-backend-group
 /pkg/apiserver @grafana/grafana-app-platform-squad
 /pkg/apimachinery @grafana/grafana-app-platform-squad
+/pkg/apimachinery/identity/ @grafana/identity-access-team
+/pkg/apimachinery/errutil/ @grafana/grafana-backend-group
 /pkg/promlib @grafana/observability-metrics
 /pkg/services/annotations/ @grafana/grafana-search-and-storage
 /pkg/services/apikey/ @grafana/identity-access-team
@@ -154,8 +156,6 @@
 
 /pkg/infra/kvstore/ @grafana/grafana-backend-group
 /pkg/infra/fs/ @grafana/grafana-backend-group
-/pkg/infra/x/ @grafana/grafana-backend-group
-
 
 # devenv
 # Backend code, developers environment
@@ -223,6 +223,7 @@
 /devenv/local-npm/ @grafana/frontend-ops
 /devenv/vscode/ @grafana/frontend-ops
 /devenv/setup.sh @grafana/grafana-backend-services-squad
+/devenv/plugins.yaml @grafana/plugins-platform-frontend
 
 # Emails
 /emails/ @grafana/alerting-frontend
@@ -414,7 +415,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/live/ @grafana/grafana-app-platform-squad
 /public/app/features/apiserver/ @grafana/grafana-app-platform-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
-/public/app/features/manage-dashboards/RecentlyDeletedPage.tsx @grafana/grafana-frontend-platform
 /public/app/features/notifications/ @grafana/grafana-frontend-platform
 /public/app/features/org/ @grafana/grafana-frontend-platform
 /public/app/features/panel/ @grafana/dashboards-squad
@@ -600,6 +600,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/services/anonymous/ @grafana/identity-access-team
 /pkg/services/auth/ @grafana/identity-access-team
 /pkg/services/authn/ @grafana/identity-access-team
+/pkg/services/authz/ @grafana/identity-access-team
 /pkg/services/signingkeys/ @grafana/identity-access-team
 /pkg/services/dashboards/accesscontrol.go @grafana/identity-access-team
 /pkg/services/datasources/guardian/ @grafana/identity-access-team

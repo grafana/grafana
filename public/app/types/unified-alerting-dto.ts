@@ -42,6 +42,11 @@ export function isAlertStateWithReason(
   return state !== null && state !== undefined && !propAlertingRuleStateValues.includes(state);
 }
 
+export function mapStateWithReasonToReason(state: GrafanaAlertStateWithReason): string {
+  const match = state.match(/\((.*?)\)/);
+  return match ? match[1] : '';
+}
+
 export function mapStateWithReasonToBaseState(
   state: GrafanaAlertStateWithReason | PromAlertingRuleState
 ): GrafanaAlertState | PromAlertingRuleState {

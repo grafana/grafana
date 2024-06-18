@@ -28,8 +28,8 @@ import (
 
 	"github.com/go-kit/log/level"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -272,7 +272,9 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 		}
 	}
 
-	tp = NewProfilingTracerProvider(tp)
+	if ots.cfg.ProfilingIntegration {
+		tp = NewProfilingTracerProvider(tp)
+	}
 
 	// Register our TracerProvider as the global so any imported
 	// instrumentation in the future will default to using it

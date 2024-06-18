@@ -59,6 +59,8 @@
     "join-by-field": (import '../dev-dashboards/transforms/join-by-field.json'),
     "join-by-labels": (import '../dev-dashboards/transforms/join-by-labels.json'),
     "lazy_loading": (import '../dev-dashboards/panel-common/lazy_loading.json'),
+    "link-onclick-extensions": (import '../dev-dashboards/extensions/link-onclick-extensions.json'),
+    "link-path-extensions": (import '../dev-dashboards/extensions/link-path-extensions.json'),
     "linked-viz": (import '../dev-dashboards/panel-common/linked-viz.json'),
     "live-flakey": (import '../dev-dashboards/live/live-flakey.json'),
     "live-flakey-refresh": (import '../dev-dashboards/live/live-flakey-refresh.json'),

@@ -8,6 +8,7 @@ import { config } from '@grafana/runtime';
 import { Button, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { ElementState } from 'app/features/canvas/runtime/element';
+import { frameSelection, reorderElements } from 'app/features/canvas/runtime/sceneElementManagement';
 
 import { getGlobalStyles } from '../../globalStyles';
 import { Options } from '../../panelcfg.gen';
@@ -77,7 +78,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
     const data = onNodeDrop(info, treeData);
 
     setTreeData(data);
-    destEl.parent?.scene.reorderElements(srcEl, destEl, info.dropToGap, destPosition);
+    reorderElements(srcEl, destEl, info.dropToGap, destPosition);
   };
 
   const onExpand = (expandedKeys: Key[]) => {
@@ -118,7 +119,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
   // TODO: This functionality is currently kinda broken / no way to decouple / delete created frames at this time
   const onFrameSelection = () => {
     if (layer.scene) {
-      layer.scene.frameSelection();
+      frameSelection(layer.scene);
     } else {
       console.warn('no scene!');
     }

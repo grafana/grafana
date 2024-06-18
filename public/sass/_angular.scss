@@ -1,6 +1,8 @@
 // these styles are only used by angular components/pages
 // once angular is disabled, this file can be deleted
 
+@use 'sass:map';
+
 .edit-tab-content {
   flex-grow: 1;
   min-width: 0;
@@ -1791,4 +1793,56 @@ $easing: cubic-bezier(0, 0, 0.265, 1);
       display: none;
     }
   }
+}
+
+.section-heading {
+  font-size: $font-size-md;
+  margin-bottom: $space-sm;
+}
+
+@each $prop, $abbrev in (margin: m, padding: p) {
+  @each $size, $lengths in $spacers {
+    $length-x: map.get($lengths, x);
+    $length-y: map.get($lengths, y);
+
+    .#{$abbrev}-a-#{$size} {
+      #{$prop}: $length-y $length-x !important;
+    } // a = All sides
+    .#{$abbrev}-t-#{$size} {
+      #{$prop}-top: $length-y !important;
+    }
+    .#{$abbrev}-r-#{$size} {
+      #{$prop}-right: $length-x !important;
+    }
+    .#{$abbrev}-b-#{$size} {
+      #{$prop}-bottom: $length-y !important;
+    }
+    .#{$abbrev}-l-#{$size} {
+      #{$prop}-left: $length-x !important;
+    }
+
+    // Axes
+    .#{$abbrev}-x-#{$size} {
+      #{$prop}-right: $length-x !important;
+      #{$prop}-left: $length-x !important;
+    }
+    .#{$abbrev}-y-#{$size} {
+      #{$prop}-top: $length-y !important;
+      #{$prop}-bottom: $length-y !important;
+    }
+  }
+}
+
+.pull-right {
+  float: right;
+}
+.pull-left {
+  float: left;
+}
+
+/* makes the font 33% larger relative to the icon container */
+.#{$fa-css-prefix}-lg {
+  font-size: calc(4em / 3);
+  line-height: calc(3em / 4);
+  vertical-align: -15%;
 }
