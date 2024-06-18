@@ -2821,6 +2821,37 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana-plugins/mssql@workspace:public/app/plugins/datasource/mssql":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/mssql@workspace:public/app/plugins/datasource/mssql"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "npm:11.2.0-pre"
+    "@grafana/e2e-selectors": "npm:11.2.0-pre"
+    "@grafana/experimental": "npm:1.7.12"
+    "@grafana/plugin-configs": "npm:11.2.0-pre"
+    "@grafana/runtime": "npm:11.2.0-pre"
+    "@grafana/sql": "npm:11.2.0-pre"
+    "@grafana/ui": "npm:11.2.0-pre"
+    "@testing-library/react": "npm:15.0.2"
+    "@testing-library/user-event": "npm:14.5.2"
+    "@types/jest": "npm:29.5.12"
+    "@types/lodash": "npm:4.17.4"
+    "@types/node": "npm:20.14.2"
+    "@types/react": "npm:18.3.3"
+    "@types/testing-library__jest-dom": "npm:5.14.9"
+    lodash: "npm:4.17.21"
+    react: "npm:18.2.0"
+    rxjs: "npm:7.8.1"
+    ts-node: "npm:10.9.2"
+    tslib: "npm:2.6.3"
+    typescript: "npm:5.4.5"
+    webpack: "npm:5.91.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana-plugins/mysql@workspace:public/app/plugins/datasource/mysql":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/mysql@workspace:public/app/plugins/datasource/mysql"
