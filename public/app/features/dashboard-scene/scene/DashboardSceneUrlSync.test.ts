@@ -1,6 +1,7 @@
 import { AppEvents } from '@grafana/data';
 import { SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
+import { KioskMode } from 'app/types';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
@@ -38,6 +39,29 @@ describe('DashboardSceneUrlSync', () => {
       expect(scene.urlSync?.getUrlState().autofitpanels).toBeUndefined();
       (scene.state.body as SceneGridLayout).setState({ UNSAFE_fitPanels: true });
       expect(scene.urlSync?.getUrlState().autofitpanels).toBe('true');
+    });
+
+    it('Should set kiosk mode when url has kiosk', () => {
+      const scene = buildTestScene();
+
+      scene.urlSync?.updateFromUrl({ kiosk: 'invalid' });
+      expect(scene.state.kioskMode).toBe(undefined);
+      scene.urlSync?.updateFromUrl({ kiosk: '' });
+      expect(scene.state.kioskMode).toBe(KioskMode.Full);
+      scene.urlSync?.updateFromUrl({ kiosk: 'tv' });
+      expect(scene.state.kioskMode).toBe(KioskMode.TV);
+      scene.urlSync?.updateFromUrl({ kiosk: 'true' });
+      expect(scene.state.kioskMode).toBe(KioskMode.Full);
+    });
+
+    it('Should get the kiosk mode from the scene state', () => {
+      const scene = buildTestScene();
+
+      expect(scene.urlSync?.getUrlState().kiosk).toBe(undefined);
+      scene.setState({ kioskMode: KioskMode.TV });
+      expect(scene.urlSync?.getUrlState().kiosk).toBe(KioskMode.TV);
+      scene.setState({ kioskMode: KioskMode.Full });
+      expect(scene.urlSync?.getUrlState().kiosk).toBe('');
     });
   });
 

@@ -463,7 +463,8 @@
       "metadata": {
         "name": "betterPageScrolling",
         "resourceVersion": "1717578796182",
-        "creationTimestamp": "2024-03-06T15:06:47Z"
+        "creationTimestamp": "2024-03-06T15:06:47Z",
+        "deletionTimestamp": "2024-06-18T09:25:56Z"
       },
       "spec": {
         "description": "Removes CustomScrollbar from the UI, relying on native browser scrollbars",
@@ -1601,6 +1602,18 @@
     },
     {
       "metadata": {
+        "name": "openSearchBackendFlowEnabled",
+        "resourceVersion": "1718357852240",
+        "creationTimestamp": "2024-06-14T09:37:32Z"
+      },
+      "spec": {
+        "description": "Enables the backend query flow for Open Search datasource plugin",
+        "stage": "preview",
+        "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
         "name": "panelFilterVariable",
         "resourceVersion": "1717578796182",
         "creationTimestamp": "2023-11-03T12:15:54Z"
@@ -2112,6 +2125,20 @@
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "allowSelfServe": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "ssoSettingsLDAP",
+        "resourceVersion": "1718624569822",
+        "creationTimestamp": "2024-06-17T11:42:49Z"
+      },
+      "spec": {
+        "description": "Use the new SSO Settings API to configure LDAP",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
