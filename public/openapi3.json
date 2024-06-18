@@ -10349,6 +10349,7 @@
         "type": "object"
       },
       "State": {
+        "description": "+enum",
         "type": "string"
       },
       "Status": {
@@ -11108,6 +11109,7 @@
         "type": "array"
       },
       "Type": {
+        "description": "+enum",
         "type": "string"
       },
       "TypeMeta": {
