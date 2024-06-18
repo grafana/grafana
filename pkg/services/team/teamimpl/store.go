@@ -365,7 +365,7 @@ func getTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (t
 func (ss *xormStore) IsMember(orgId int64, teamId int64, userId int64) (bool, error) {
 	var isMember bool
 
-	err := ss.db.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
+	err := ss.db.WithDbSession(context.Background(), func(sess *db.Session) error {
 		var err error
 		isMember, err = isTeamMember(sess, orgId, teamId, userId)
 		return err
