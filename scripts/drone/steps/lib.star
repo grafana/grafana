@@ -1276,9 +1276,6 @@ def verify_grafanacom_step():
             "printenv GCP_KEY > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
             "./drone/verify-grafanacom.sh",
-
-            # Remove the temporary key file
-            "rm /tmp/key.json",
         ],
         "depends_on": ["publish-grafanacom"],
     }
