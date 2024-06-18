@@ -71,6 +71,7 @@ func WithUpdatedVersion(d *dagger.Client, src *dagger.Directory, nodeVersion, ve
 		WithExec([]string{"yarn", "install"}).
 		WithExec([]string{"npm", "version", version, "--no-git-tag-version"}).
 		WithExec([]string{"yarn", "run", "lerna", "version", version, "--no-push", "--no-git-tag-version", "--force-publish", "--exact", "--yes"}).
+		WithExec([]string{"yarn", "install"}).
 		Directory("/src").
 		WithoutDirectory("node_modules")
 }
