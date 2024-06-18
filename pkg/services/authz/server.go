@@ -24,7 +24,7 @@ type legacyServer struct {
 
 func newLegacyServer(
 	acSvc accesscontrol.Service, features featuremgmt.FeatureToggles,
-	grpcServer grpcserver.Provider, tracer tracing.Tracer,
+	grpcServer grpcserver.Provider, tracer tracing.Tracer, cfg *Cfg,
 ) (*legacyServer, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
@@ -36,7 +36,9 @@ func newLegacyServer(
 		tracer: tracer,
 	}
 
-	grpcServer.GetServer().RegisterService(&authzv1.AuthzService_ServiceDesc, s)
+	if cfg.listen {
+		grpcServer.GetServer().RegisterService(&authzv1.AuthzService_ServiceDesc, s)
+	}
 
 	return s, nil
 }
