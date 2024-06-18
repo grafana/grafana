@@ -28,7 +28,7 @@ export const VizTooltipContent = ({
   const scrollableStyle: CSSProperties = scrollable
     ? {
         maxHeight: maxHeight,
-        overflowY: 'scroll',
+        overflowY: 'auto',
       }
     : {};
 
@@ -46,6 +46,7 @@ export const VizTooltipContent = ({
           justify={'space-between'}
           isPinned={isPinned}
           lineStyle={lineStyle}
+          showValueScroll={!scrollable}
         />
       ))}
       {children}

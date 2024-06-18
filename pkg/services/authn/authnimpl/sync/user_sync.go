@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -158,6 +158,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 		return nil
 	}
 
+	goCtx := context.WithoutCancel(ctx)
 	go func(userID int64) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -165,7 +166,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 			}
 		}()
 
-		if err := s.userService.UpdateLastSeenAt(context.Background(),
+		if err := s.userService.UpdateLastSeenAt(goCtx,
 			&user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: r.OrgID}); err != nil &&
 			!errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)

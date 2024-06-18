@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"net"
@@ -14,6 +15,7 @@ import (
 	"go.opentelemetry.io/contrib/samplers/jaegerremote"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -26,6 +28,7 @@ import (
 
 	"github.com/go-kit/log/level"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -107,6 +110,25 @@ func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
 	}
 
 	return spanCtx.TraceID().String()
+}
+
+// Error sets the status to error and record the error as an exception in the provided span.
+func Error(span trace.Span, err error) error {
+	attr := []attribute.KeyValue{}
+	grafanaErr := errutil.Error{}
+	if errors.As(err, &grafanaErr) {
+		attr = append(attr, attribute.String("message_id", grafanaErr.MessageID))
+	}
+
+	span.SetStatus(codes.Error, err.Error())
+	span.RecordError(err, trace.WithAttributes(attr...))
+	return err
+}
+
+// Errorf wraps fmt.Errorf and also sets the status to error and record the error as an exception in the provided span.
+func Errorf(span trace.Span, format string, args ...any) error {
+	err := fmt.Errorf(format, args...)
+	return Error(span, err)
 }
 
 type noopTracerProvider struct {
@@ -248,6 +270,10 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if ots.cfg.ProfilingIntegration {
+		tp = NewProfilingTracerProvider(tp)
 	}
 
 	// Register our TracerProvider as the global so any imported

@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -35,6 +35,8 @@ type Storage interface {
 	rest.CreaterUpdater
 	rest.GracefulDeleter
 	rest.CollectionDeleter
+	// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
+	Compare(storageObj, legacyObj runtime.Object) bool
 }
 
 // LegacyStorage is a storage implementation that writes to the Grafana SQL database.
@@ -80,29 +82,42 @@ type DualWriter interface {
 type DualWriterMode int
 
 const (
-	Mode1 DualWriterMode = iota + 1
+	// Mode0 represents writing to and reading from solely LegacyStorage. This mode is enabled when the
+	// `unifiedStorage` feature flag is not set. All reads and writes are made to LegacyStorage. None are made to Storage.
+	Mode0 DualWriterMode = iota
+	// Mode1 represents writing to and reading from LegacyStorage for all primary functionality while additionally
+	// reading and writing to Storage on a best effort basis for the sake of collecting metrics.
+	Mode1
+	// Mode2 is the dual writing mode that represents writing to LegacyStorage and Storage and reading from LegacyStorage.
 	Mode2
+	// Mode3 represents writing to LegacyStorage and Storage and reading from Storage.
 	Mode3
+	// Mode4 represents writing and reading from Storage.
 	Mode4
 )
 
+// TODO: make this function private as there should only be one public way of setting the dual writing mode
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage) DualWriter {
+func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage, reg prometheus.Registerer) DualWriter {
+	metrics := &dualWriterMetrics{}
+	metrics.init(reg)
 	switch mode {
+	// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
+	// writing to legacy storage without `unifiedStorage` enabled.
 	case Mode1:
 		// read and write only from legacy storage
-		return NewDualWriterMode1(legacy, storage)
+		return newDualWriterMode1(legacy, storage, metrics)
 	case Mode2:
 		// write to both, read from storage but use legacy as backup
-		return NewDualWriterMode2(legacy, storage)
+		return newDualWriterMode2(legacy, storage, metrics)
 	case Mode3:
 		// write to both, read from storage only
-		return NewDualWriterMode3(legacy, storage)
+		return newDualWriterMode3(legacy, storage, metrics)
 	case Mode4:
 		// read and write only from storage
-		return NewDualWriterMode4(legacy, storage)
+		return newDualWriterMode4(legacy, storage, metrics)
 	default:
-		return NewDualWriterMode1(legacy, storage)
+		return newDualWriterMode1(legacy, storage, metrics)
 	}
 }
 
@@ -127,12 +142,15 @@ func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object
 func SetDualWritingMode(
 	ctx context.Context,
 	kvs *kvstore.NamespacedKVStore,
-	features featuremgmt.FeatureToggles,
-	entity string,
 	legacy LegacyStorage,
 	storage Storage,
+	entity string,
+	desiredMode DualWriterMode,
+	reg prometheus.Registerer,
 ) (DualWriter, error) {
 	toMode := map[string]DualWriterMode{
+		// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
+		// writing to legacy storage without `unifiedStorage` enabled.
 		"1": Mode1,
 		"2": Mode2,
 		"3": Mode3,
@@ -164,7 +182,7 @@ func SetDualWritingMode(
 	}
 
 	// Desired mode is 2 and current mode is 1
-	if features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode2) && (currentMode == Mode1) {
+	if (desiredMode == Mode2) && (currentMode == Mode1) {
 		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 2.
 		// There are none between mode 1 and mode 2
 		currentMode = Mode2
@@ -174,19 +192,18 @@ func SetDualWritingMode(
 			return nil, errDualWriterSetCurrentMode
 		}
 	}
-	// #TODO enable this check when we have a flag/config for setting mode 1 as the desired mode
-	// if features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode1) && (currentMode == Mode2) {
-	// 	// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 1.
-	// 	// There are none between mode 1 and mode 2
-	// 	currentMode = Mode1
+	if (desiredMode == Mode1) && (currentMode == Mode2) {
+		// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 1.
+		// There are none between mode 1 and mode 2
+		currentMode = Mode1
 
-	// 	err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
-	// 	if err != nil {
-	// 		return nil, errDualWriterSetCurrentMode
-	// 	}
-	// }
+		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
+		if err != nil {
+			return nil, errDualWriterSetCurrentMode
+		}
+	}
 
 	// 	#TODO add support for other combinations of desired and current modes
 
-	return NewDualWriter(currentMode, legacy, storage), nil
+	return NewDualWriter(currentMode, legacy, storage, reg), nil
 }

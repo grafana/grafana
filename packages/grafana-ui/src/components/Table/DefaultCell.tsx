@@ -15,7 +15,7 @@ import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './typ
 import { getCellColors, getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps, frame, rowStyled } = props;
+  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height } = props;
 
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
@@ -59,7 +59,9 @@ export const DefaultCell = (props: TableCellProps) => {
     inspectEnabled,
     isStringValue,
     textShouldWrap,
-    rowStyled
+    textWrapped,
+    rowStyled,
+    rowExpanded
   );
 
   if (isStringValue) {
@@ -70,6 +72,14 @@ export const DefaultCell = (props: TableCellProps) => {
     } else if (justifyContent === 'center') {
       cellProps.style = { ...cellProps.style, textAlign: 'center' };
     }
+  }
+
+  if (height) {
+    cellProps.style = { ...cellProps.style, height };
+  }
+
+  if (textWrapped) {
+    cellProps.style = { ...cellProps.style, textWrap: 'wrap' };
   }
 
   return (
@@ -112,7 +122,9 @@ function getCellStyle(
   disableOverflowOnHover = false,
   isStringValue = false,
   shouldWrapText = false,
-  rowStyled = false
+  textWrapped = false,
+  rowStyled = false,
+  rowExpanded = false
 ) {
   // Setup color variables
   let textColor: string | undefined = undefined;
@@ -134,7 +146,9 @@ function getCellStyle(
     !disableOverflowOnHover,
     isStringValue,
     shouldWrapText,
-    rowStyled
+    textWrapped,
+    rowStyled,
+    rowExpanded
   );
 }
 

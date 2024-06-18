@@ -12,16 +12,16 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var ExtraGithubSettingKeys = map[string]ExtraKeyInfo{
@@ -82,7 +82,7 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *
 	return provider
 }
 
-func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
+func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSettings, _ ssoModels.SSOSettings, requester identity.Requester) error {
 	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
@@ -307,37 +307,37 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		return nil, fmt.Errorf("error getting user teams: %s", err)
 	}
 
-	teams := convertToGroupList(teamMemberships)
-
-	var role roletype.RoleType
-	var isGrafanaAdmin *bool = nil
-
-	if !s.info.SkipOrgRoleSync {
-		var grafanaAdmin bool
-		role, grafanaAdmin, err = s.extractRoleAndAdmin(response.Body, teams)
-		if err != nil {
-			return nil, err
-		}
-
-		if s.info.AllowAssignGrafanaAdmin {
-			isGrafanaAdmin = &grafanaAdmin
-		}
+	userInfo := &social.BasicUserInfo{
+		Name:   data.Login,
+		Login:  data.Login,
+		Id:     fmt.Sprintf("%d", data.Id),
+		Email:  data.Email,
+		Groups: convertToGroupList(teamMemberships),
 	}
 
-	// we skip allowing assignment of GrafanaAdmin if skipOrgRoleSync is present
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
-	userInfo := &social.BasicUserInfo{
-		Name:           data.Login,
-		Login:          data.Login,
-		Id:             fmt.Sprintf("%d", data.Id),
-		Email:          data.Email,
-		Role:           role,
-		Groups:         teams,
-		IsGrafanaAdmin: isGrafanaAdmin,
+	var directlyMappedRole org.RoleType
+
+	if !s.info.SkipOrgRoleSync {
+		var grafanaAdmin bool
+		directlyMappedRole, grafanaAdmin, err = s.extractRoleAndAdminOptional(response.Body, userInfo.Groups)
+		if err != nil {
+			s.log.Warn("Failed to extract role", "err", err)
+		}
+
+		if s.info.AllowAssignGrafanaAdmin {
+			userInfo.IsGrafanaAdmin = &grafanaAdmin
+		}
+
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
+			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
+		}
 	}
+
 	if data.Name != "" {
 		userInfo.Name = data.Name
 	}

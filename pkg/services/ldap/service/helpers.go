@@ -13,8 +13,8 @@ import (
 
 const defaultTimeout = 10
 
-func readConfig(configFile string) (*ldap.Config, error) {
-	result := &ldap.Config{}
+func readConfig(configFile string) (*ldap.ServersConfig, error) {
+	result := &ldap.ServersConfig{}
 
 	logger.Info("LDAP enabled, reading config file", "file", configFile)
 

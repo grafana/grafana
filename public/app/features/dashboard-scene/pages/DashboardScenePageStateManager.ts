@@ -5,6 +5,7 @@ import { default as localStorageStore } from 'app/core/store';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import {
   DASHBOARD_FROM_LS_KEY,
   removeDashboardToFetchFromLocalStorage,
@@ -16,6 +17,7 @@ import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { updateNavModel } from './utils';
 
@@ -177,13 +179,22 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         return;
       }
 
-      if (!(config.publicDashboardAccessToken && dashboard.state.controls?.state.hideTimeControls)) {
-        dashboard.startUrlSync();
+      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
+        restoreDashboardStateFromLocalStorage(dashboard);
       }
 
       this.setState({ dashboard: dashboard, isLoading: false });
       const measure = stopMeasure(LOAD_SCENE_MEASUREMENT);
       trackDashboardSceneLoaded(dashboard, measure?.duration);
+
+      if (options.route !== DashboardRoutes.New) {
+        emitDashboardViewEvent({
+          meta: dashboard.state.meta,
+          uid: dashboard.state.uid,
+          title: dashboard.state.title,
+          id: dashboard.state.id,
+        });
+      }
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }

@@ -97,8 +97,8 @@ func PrepareAlertStatuses(manager state.AlertInstanceManager, opts AlertStatuses
 		}
 
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
-			Labels:      alertState.GetLabels(labelOptions...),
-			Annotations: alertState.Annotations,
+			Labels:      apimodels.LabelsFromMap(alertState.GetLabels(labelOptions...)),
+			Annotations: apimodels.LabelsFromMap(alertState.Annotations),
 
 			// TODO: or should we make this two fields? Using one field lets the
 			// frontend use the same logic for parsing text on annotations and this.
@@ -235,6 +235,9 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
 
+// TODO: Refactor this function to reduce the cylomatic complexity
+//
+//nolint:gocyclo
 func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
@@ -292,16 +295,26 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		return ruleResponse
 	}
 
-	namespaceUIDs := make([]string, len(opts.Namespaces))
-	for k := range opts.Namespaces {
-		namespaceUIDs = append(namespaceUIDs, k)
+	namespaceUIDs := make([]string, 0, len(opts.Namespaces))
+
+	folderUID := opts.Query.Get("folder_uid")
+	_, exists := opts.Namespaces[folderUID]
+	if folderUID != "" && exists {
+		namespaceUIDs = append(namespaceUIDs, folderUID)
+	} else {
+		for k := range opts.Namespaces {
+			namespaceUIDs = append(namespaceUIDs, k)
+		}
 	}
+
+	ruleGroups := opts.Query["rule_group"]
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID:         opts.OrgID,
 		NamespaceUIDs: namespaceUIDs,
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
+		RuleGroups:    ruleGroups,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
@@ -311,10 +324,23 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		return ruleResponse
 	}
 
+	ruleNames := opts.Query["rule_name"]
+	ruleNamesSet := make(map[string]struct{}, len(ruleNames))
+	for _, rn := range ruleNames {
+		ruleNamesSet[rn] = struct{}{}
+	}
+
 	// Group rules together by Namespace and Rule Group. Rules are also grouped by Org ID,
-	// but in this API all rules belong to the same organization.
+	// but in this API all rules belong to the same organization. Also filter by rule name if
+	// it was provided as a query param.
 	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
 	for _, rule := range ruleList {
+		if len(ruleNamesSet) > 0 {
+			if _, exists := ruleNamesSet[rule.Title]; !exists {
+				continue
+			}
+		}
+
 		groupKey := rule.GetGroupKey()
 		ruleGroup := groupedRules[groupKey]
 		ruleGroup = append(ruleGroup, rule)
@@ -343,6 +369,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		if !ok {
 			continue
 		}
+
 		ruleGroup, totals := toRuleGroup(log, manager, groupKey, folder, rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
@@ -417,14 +444,14 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 			Name:        rule.Title,
 			Query:       ruleToQuery(log, rule),
 			Duration:    rule.For.Seconds(),
-			Annotations: rule.Annotations,
+			Annotations: apimodels.LabelsFromMap(rule.Annotations),
 		}
 
 		newRule := apimodels.Rule{
 			Name:           rule.Title,
-			Labels:         rule.GetLabels(labelOptions...),
+			Labels:         apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
 			Health:         "ok",
-			Type:           apiv1.RuleTypeAlerting,
+			Type:           rule.Type().String(),
 			LastEvaluation: time.Time{},
 		}
 
@@ -444,8 +471,8 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 				totals["error"] += 1
 			}
 			alert := apimodels.Alert{
-				Labels:      alertState.GetLabels(labelOptions...),
-				Annotations: alertState.Annotations,
+				Labels:      apimodels.LabelsFromMap(alertState.GetLabels(labelOptions...)),
+				Annotations: apimodels.LabelsFromMap(alertState.Annotations),
 
 				// TODO: or should we make this two fields? Using one field lets the
 				// frontend use the same logic for parsing text on annotations and this.
@@ -536,8 +563,8 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, groupKey ng
 // Returns the whole JSON model as a string if it fails to extract a minimum of 1 query.
 func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 	var queryErr error
-	var queries []string
 
+	queries := make([]string, 0, len(rule.Data))
 	for _, q := range rule.Data {
 		q, err := q.GetQuery()
 		if err != nil {

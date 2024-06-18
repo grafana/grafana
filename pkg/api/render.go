@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/util"
@@ -43,6 +43,20 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 	scale := c.QueryFloat64("scale")
 	if scale == 0 {
 		scale = hs.Cfg.RendererDefaultImageScale
+	}
+
+	theme := c.QueryStrings("theme")
+	var themeModel models.Theme
+	if len(theme) > 0 {
+		themeStr := theme[0]
+		_, err := models.ParseTheme(themeStr)
+		if err != nil {
+			c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error: theme can only be light or dark", err)
+			return
+		}
+		themeModel = models.Theme(themeStr)
+	} else {
+		themeModel = models.ThemeDark
 	}
 
 	headers := http.Header{}
@@ -81,7 +95,7 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 		Width:             width,
 		Height:            height,
 		DeviceScaleFactor: scale,
-		Theme:             models.ThemeDark,
+		Theme:             themeModel,
 	}, nil)
 	if err != nil {
 		if errors.Is(err, rendering.ErrTimeout) {

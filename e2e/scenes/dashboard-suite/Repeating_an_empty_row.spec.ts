@@ -1,7 +1,7 @@
 import { e2e } from '../utils';
 const PAGE_UNDER_TEST = 'dtpl2Ctnk/repeating-an-empty-row';
 
-describe.skip('Repeating empty rows', () => {
+describe('Repeating empty rows', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
@@ -38,8 +38,8 @@ describe.skip('Repeating empty rows', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().contains('1').click();
-    e2e.components.Select.option().contains('3').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('1').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('3').click();
 
     // blur the dropdown
     cy.get('body').click();

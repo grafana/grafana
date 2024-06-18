@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/meta"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,20 +16,16 @@ import (
 type DualWriterMode1 struct {
 	Legacy  LegacyStorage
 	Storage Storage
-	Log     klog.Logger
 	*dualWriterMetrics
+	Log klog.Logger
 }
 
-const (
-	mode1Str = "1"
-)
+const mode1Str = "1"
 
 // NewDualWriterMode1 returns a new DualWriter in mode 1.
 // Mode 1 represents writing to and reading from LegacyStorage.
-func NewDualWriterMode1(legacy LegacyStorage, storage Storage) *DualWriterMode1 {
-	metrics := &dualWriterMetrics{}
-	metrics.init()
-	return &DualWriterMode1{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode1"), dualWriterMetrics: metrics}
+func newDualWriterMode1(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics) *DualWriterMode1 {
+	return &DualWriterMode1{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode1"), dualWriterMetrics: dwm}
 }
 
 // Mode returns the mode of the dual writer.
@@ -38,45 +34,41 @@ func (d *DualWriterMode1) Mode() DualWriterMode {
 }
 
 // Create overrides the behavior of the generic DualWriter and writes only to LegacyStorage.
-func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	log := d.Log.WithValues("kind", options.Kind)
 	ctx = klog.NewContext(ctx, log)
 	var method = "create"
 
 	startLegacy := time.Now()
-	res, err := d.Legacy.Create(ctx, obj, createValidation, options)
+	created, err := d.Legacy.Create(ctx, original, createValidation, options)
 	if err != nil {
 		log.Error(err, "unable to create object in legacy storage")
 		d.recordLegacyDuration(true, mode1Str, options.Kind, method, startLegacy)
-		return res, err
+		return created, err
 	}
 	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
 
+	createdCopy := created.DeepCopyObject()
+
 	go func() {
-		accessorCreated, err := meta.Accessor(res)
-		if err != nil {
-			log.Error(err, "unable to get accessor for created object")
-		}
-
-		accessorOld, err := meta.Accessor(obj)
-		if err != nil {
-			log.Error(err, "unable to get accessor for old object")
-		}
-
-		enrichObject(accessorOld, accessorCreated)
-		startStorage := time.Now()
 		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage create timeout"))
 		defer cancel()
-		_, errObjectSt := d.Storage.Create(ctx, obj, createValidation, options)
+
+		if err := enrichLegacyObject(original, createdCopy, true); err != nil {
+			cancel()
+		}
+
+		startStorage := time.Now()
+		_, errObjectSt := d.Storage.Create(ctx, createdCopy, createValidation, options)
 		d.recordStorageDuration(errObjectSt != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
-	return res, nil
+	return created, err
 }
 
 // Get overrides the behavior of the generic DualWriter and reads only from LegacyStorage.
 func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	log := d.Log.WithValues("name", name, "resourceVersion", options.ResourceVersion, "kind", options.Kind)
+	log := d.Log.WithValues("kind", options.Kind)
 	ctx = klog.NewContext(ctx, log)
 	var method = "get"
 
@@ -134,7 +126,7 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 		d.recordLegacyDuration(true, mode1Str, options.Kind, method, startLegacy)
 		return res, async, err
 	}
-	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(false, mode1Str, name, method, startLegacy)
 
 	go func() {
 		startStorage := time.Now()
@@ -144,7 +136,7 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 		d.recordStorageDuration(err != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
-	return res, async, nil
+	return res, async, err
 }
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes only from LegacyStorage.
@@ -170,7 +162,7 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 		d.recordStorageDuration(err != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
-	return res, nil
+	return res, err
 }
 
 func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -188,46 +180,43 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
 
 	go func() {
-		updated, err := objInfo.UpdatedObject(ctx, res)
-		if err != nil {
-			log.WithValues("object", updated).Error(err, "could not update or create object")
-		}
+		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage update timeout"))
 
+		resCopy := res.DeepCopyObject()
 		// get the object to be updated
 		foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
-			log.WithValues("object", foundObj).Error(err, "could not get object to update")
+			if !apierrors.IsNotFound(err) {
+				log.WithValues("object", foundObj).Error(err, "could not get object to update")
+				cancel()
+			}
+			log.Info("object not found for update, creating one")
+		}
+
+		updated, err := objInfo.UpdatedObject(ctx, resCopy)
+		if err != nil {
+			log.WithValues("object", updated).Error(err, "could not update or create object")
+			cancel()
 		}
 
 		// if the object is found, create a new updateWrapper with the object found
 		if foundObj != nil {
-			accessorOld, err := meta.Accessor(foundObj)
-			if err != nil {
-				log.Error(err, "unable to get accessor for original updated object")
+			if err := enrichLegacyObject(foundObj, resCopy, false); err != nil {
+				log.Error(err, "could not enrich object")
+				cancel()
 			}
-
-			accessor, err := meta.Accessor(res)
-			if err != nil {
-				log.Error(err, "unable to get accessor for updated object")
-			}
-
-			accessor.SetResourceVersion(accessorOld.GetResourceVersion())
-			accessor.SetUID(accessorOld.GetUID())
-
-			enrichObject(accessorOld, accessor)
 			objInfo = &updateWrapper{
 				upstream: objInfo,
-				updated:  res,
+				updated:  resCopy,
 			}
 		}
 		startStorage := time.Now()
-		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage update timeout"))
 		defer cancel()
 		_, _, errObjectSt := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 		d.recordStorageDuration(errObjectSt != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
-	return res, async, nil
+	return res, async, err
 }
 
 func (d *DualWriterMode1) Destroy() {
@@ -253,4 +242,8 @@ func (d *DualWriterMode1) NewList() runtime.Object {
 
 func (d *DualWriterMode1) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return d.Legacy.ConvertToTable(ctx, object, tableOptions)
+}
+
+func (d *DualWriterMode1) Compare(storageObj, legacyObj runtime.Object) bool {
+	return d.Storage.Compare(storageObj, legacyObj)
 }

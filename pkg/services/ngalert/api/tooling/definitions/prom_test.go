@@ -69,32 +69,42 @@ func TestSortAlertsByImportance(t *testing.T) {
 	}, {
 		name: "inactive alerts with same importance are ordered by labels",
 		input: []Alert{
-			{State: "normal", Labels: map[string]string{"c": "d"}},
-			{State: "normal", Labels: map[string]string{"a": "b"}},
+			{State: "normal", Labels: LabelsFromMap(map[string]string{"c": "d"})},
+			{State: "normal", Labels: LabelsFromMap(map[string]string{"a": "b"})},
 		},
 		expected: []Alert{
-			{State: "normal", Labels: map[string]string{"a": "b"}},
-			{State: "normal", Labels: map[string]string{"c": "d"}},
+			{State: "normal", Labels: LabelsFromMap(map[string]string{"a": "b"})},
+			{State: "normal", Labels: LabelsFromMap(map[string]string{"c": "d"})},
 		},
 	}, {
-		name: "active alerts with same importance and active time are ordered fewest labels first",
+		name: "active alerts with same importance and active time are ordered by label names",
 		input: []Alert{
-			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"a": "b", "c": "d"}},
-			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"e": "f"}},
+			{State: "alerting", ActiveAt: &tm1, Labels: LabelsFromMap(map[string]string{"c": "d", "e": "f"})},
+			{State: "alerting", ActiveAt: &tm1, Labels: LabelsFromMap(map[string]string{"a": "b"})},
 		},
 		expected: []Alert{
-			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"e": "f"}},
-			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"a": "b", "c": "d"}},
+			{State: "alerting", ActiveAt: &tm1, Labels: LabelsFromMap(map[string]string{"a": "b"})},
+			{State: "alerting", ActiveAt: &tm1, Labels: LabelsFromMap(map[string]string{"c": "d", "e": "f"})},
 		},
 	}, {
 		name: "active alerts with same importance and active time are ordered by labels",
 		input: []Alert{
-			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"c": "d"}},
-			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"a": "b"}},
+			{State: "alerting", ActiveAt: &tm1, Labels: LabelsFromMap(map[string]string{"c": "d"})},
+			{State: "alerting", ActiveAt: &tm1, Labels: LabelsFromMap(map[string]string{"a": "b"})},
 		},
 		expected: []Alert{
-			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"a": "b"}},
-			{State: "alerting", ActiveAt: &tm1, Labels: map[string]string{"c": "d"}},
+			{State: "alerting", ActiveAt: &tm1, Labels: LabelsFromMap(map[string]string{"a": "b"})},
+			{State: "alerting", ActiveAt: &tm1, Labels: LabelsFromMap(map[string]string{"c": "d"})},
+		},
+	}, {
+		name: "active alerts with same importance and active time are ordered by label values",
+		input: []Alert{
+			{State: "alerting", ActiveAt: &tm1, Labels: LabelsFromMap(map[string]string{"x": "b"})},
+			{State: "alerting", ActiveAt: &tm1, Labels: LabelsFromMap(map[string]string{"x": "a"})},
+		},
+		expected: []Alert{
+			{State: "alerting", ActiveAt: &tm1, Labels: LabelsFromMap(map[string]string{"x": "a"})},
+			{State: "alerting", ActiveAt: &tm1, Labels: LabelsFromMap(map[string]string{"x": "b"})},
 		},
 	}}
 

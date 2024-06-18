@@ -24,6 +24,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
   const isHomePage = !meta.url && !meta.slug && !meta.isNew && !meta.isSnapshot;
+  const hasControls = controls?.hasControls();
 
   if (editview) {
     return (
@@ -37,7 +38,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const emptyState = <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />;
 
   const withPanels = (
-    <div className={cx(styles.body)}>
+    <div className={cx(styles.body, !hasControls && styles.bodyWithoutControls)}>
       <bodyToRender.Component model={bodyToRender} />
     </div>
   );
@@ -49,14 +50,14 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         <div
           className={cx(
             styles.pageContainer,
-            controls && !scopes && styles.pageContainerWithControls,
+            hasControls && !scopes && styles.pageContainerWithControls,
             scopes && styles.pageContainerWithScopes,
             scopes && isScopesExpanded && styles.pageContainerWithScopesExpanded
           )}
         >
           {scopes && <scopes.Component model={scopes} />}
           <NavToolbarActions dashboard={model} />
-          {!isHomePage && controls && (
+          {!isHomePage && controls && hasControls && (
             <div
               className={cx(styles.controlsWrapper, scopes && !isScopesExpanded && styles.controlsWrapperWithScopes)}
             >
@@ -64,6 +65,8 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             </div>
           )}
           <CustomScrollbar
+            // This id is used by the image renderer to scroll through the dashboard
+            divId="page-scrollbar"
             autoHeightMin={'100%'}
             className={styles.scrollbarContainer}
             testId={selectors.pages.Dashboard.DashNav.scrollContainer}
@@ -117,6 +120,9 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 0,
       gridArea: 'controls',
       padding: theme.spacing(2),
+      ':empty': {
+        display: 'none',
+      },
     }),
     controlsWrapperWithScopes: css({
       padding: theme.spacing(2, 2, 2, 0),
@@ -137,7 +143,11 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       display: 'flex',
       gap: '8px',
-      marginBottom: theme.spacing(2),
+      paddingBottom: theme.spacing(2),
+      boxSizing: 'border-box',
+    }),
+    bodyWithoutControls: css({
+      paddingTop: theme.spacing(2),
     }),
   };
 }

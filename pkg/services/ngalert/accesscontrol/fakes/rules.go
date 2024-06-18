@@ -3,8 +3,9 @@ package fakes
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
@@ -15,18 +16,20 @@ type Call struct {
 }
 
 type FakeRuleService struct {
-	HasAccessFunc                             func(context.Context, identity.Requester, accesscontrol.Evaluator) (bool, error)
-	HasAccessOrErrorFunc                      func(context.Context, identity.Requester, accesscontrol.Evaluator, func() string) error
+	HasAccessFunc                             func(context.Context, identity.Requester, ac.Evaluator) (bool, error)
+	HasAccessOrErrorFunc                      func(context.Context, identity.Requester, ac.Evaluator, func() string) error
 	AuthorizeDatasourceAccessForRuleFunc      func(context.Context, identity.Requester, *models.AlertRule) error
 	AuthorizeDatasourceAccessForRuleGroupFunc func(context.Context, identity.Requester, models.RulesGroup) error
 	HasAccessToRuleGroupFunc                  func(context.Context, identity.Requester, models.RulesGroup) (bool, error)
 	AuthorizeAccessToRuleGroupFunc            func(context.Context, identity.Requester, models.RulesGroup) error
+	HasAccessInFolderFunc                     func(context.Context, identity.Requester, accesscontrol.Namespaced) (bool, error)
+	AuthorizeAccessInFolderFunc               func(context.Context, identity.Requester, accesscontrol.Namespaced) error
 	AuthorizeRuleChangesFunc                  func(context.Context, identity.Requester, *store.GroupDelta) error
 
 	Calls []Call
 }
 
-func (s *FakeRuleService) HasAccess(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+func (s *FakeRuleService) HasAccess(ctx context.Context, user identity.Requester, evaluator ac.Evaluator) (bool, error) {
 	s.Calls = append(s.Calls, Call{"HasAccess", []interface{}{ctx, user, evaluator}})
 	if s.HasAccessFunc != nil {
 		return s.HasAccessFunc(ctx, user, evaluator)
@@ -34,7 +37,7 @@ func (s *FakeRuleService) HasAccess(ctx context.Context, user identity.Requester
 	return false, nil
 }
 
-func (s *FakeRuleService) HasAccessOrError(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator, action func() string) error {
+func (s *FakeRuleService) HasAccessOrError(ctx context.Context, user identity.Requester, evaluator ac.Evaluator, action func() string) error {
 	s.Calls = append(s.Calls, Call{"HasAccessOrError", []interface{}{ctx, user, evaluator, action}})
 	if s.HasAccessOrErrorFunc != nil {
 		return s.HasAccessOrErrorFunc(ctx, user, evaluator, action)
@@ -70,6 +73,22 @@ func (s *FakeRuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user i
 	s.Calls = append(s.Calls, Call{"AuthorizeRuleGroupRead", []interface{}{ctx, user, rules}})
 	if s.AuthorizeAccessToRuleGroupFunc != nil {
 		return s.AuthorizeAccessToRuleGroupFunc(ctx, user, rules)
+	}
+	return nil
+}
+
+func (s *FakeRuleService) HasAccessInFolder(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) (bool, error) {
+	s.Calls = append(s.Calls, Call{"HasAccessInFolder", []interface{}{ctx, user, namespaced}})
+	if s.HasAccessInFolderFunc != nil {
+		return s.HasAccessInFolderFunc(ctx, user, namespaced)
+	}
+	return false, nil
+}
+
+func (s *FakeRuleService) AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error {
+	s.Calls = append(s.Calls, Call{"AuthorizeAccessInFolder", []interface{}{ctx, user, namespaced}})
+	if s.AuthorizeAccessInFolderFunc != nil {
+		return s.AuthorizeAccessInFolderFunc(ctx, user, namespaced)
 	}
 	return nil
 }

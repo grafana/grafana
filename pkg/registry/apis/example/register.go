@@ -22,8 +22,10 @@ import (
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ builder.APIGroupBuilder = (*TestingAPIBuilder)(nil)
@@ -40,7 +42,7 @@ func NewTestingAPIBuilder() *TestingAPIBuilder {
 	}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *TestingAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, reg prometheus.Registerer) *TestingAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
@@ -51,6 +53,11 @@ func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration bui
 
 func (b *TestingAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.gv
+}
+
+func (b *TestingAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
+	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
+	return grafanarest.Mode0
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
@@ -85,7 +92,8 @@ func (b *TestingAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	_ generic.RESTOptionsGetter,
-	_ bool,
+	_ grafanarest.DualWriterMode,
+	_ prometheus.Registerer,
 ) (*genericapiserver.APIGroupInfo, error) {
 	b.codecs = codecs
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(b.gv.Group, scheme, metav1.ParameterCodec, codecs)

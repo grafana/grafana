@@ -221,7 +221,7 @@ export function hashRulerRule(rule: RulerRuleDTO): string {
   }
 }
 
-function hashRule(rule: Rule): string {
+export function hashRule(rule: Rule): string {
   if (isRecordingRule(rule)) {
     return hash(JSON.stringify([rule.type, rule.query, hashLabelsOrAnnotations(rule.labels)])).toString();
   }
@@ -240,7 +240,7 @@ function hashRule(rule: Rule): string {
   throw new Error('only recording and alerting rules can be hashed');
 }
 
-function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
+export function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
   return JSON.stringify(Object.entries(item || {}).sort((a, b) => a[0].localeCompare(b[0])));
 }
 

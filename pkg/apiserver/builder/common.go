@@ -3,6 +3,8 @@ package builder
 import (
 	"net/http"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -27,7 +29,8 @@ type APIGroupBuilder interface {
 		scheme *runtime.Scheme,
 		codecs serializer.CodecFactory,
 		optsGetter generic.RESTOptionsGetter,
-		dualWrite bool,
+		desiredMode grafanarest.DualWriterMode,
+		reg prometheus.Registerer,
 	) (*genericapiserver.APIGroupInfo, error)
 
 	// Get OpenAPI definitions
@@ -40,6 +43,11 @@ type APIGroupBuilder interface {
 	// Standard namespace checking will happen before this is called, specifically
 	// the namespace must matches an org|stack that the user belongs to
 	GetAuthorizer() authorizer.Authorizer
+
+	// Get the desired dual writing mode. These are modes 1, 2, 3 and 4 if
+	// the feature flag `unifiedStorage` is enabled and mode 0 if it is not enabled.
+	// #TODO add type for map[string]grafanarest.DualWriterMode?
+	GetDesiredDualWriterMode(dualWrite bool, toMode map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode
 }
 
 // Builders that implement OpenAPIPostProcessor are given a chance to modify the schema directly

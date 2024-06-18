@@ -15,7 +15,9 @@ import (
 
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ builder.APIGroupBuilder = (*PeakQAPIBuilder)(nil)
@@ -27,7 +29,7 @@ func NewPeakQAPIBuilder() *PeakQAPIBuilder {
 	return &PeakQAPIBuilder{}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *PeakQAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, reg prometheus.Registerer) *PeakQAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
@@ -42,6 +44,11 @@ func (b *PeakQAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 func (b *PeakQAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return peakq.SchemeGroupVersion
+}
+
+func (b *PeakQAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
+	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
+	return grafanarest.Mode0
 }
 
 func (b *PeakQAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -66,7 +73,8 @@ func (b *PeakQAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
-	_ bool, // dual write (not relevant)
+	_ grafanarest.DualWriterMode, // dual write desired mode (not relevant)
+	_ prometheus.Registerer, // prometheus registerer
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(peakq.GROUP, scheme, metav1.ParameterCodec, codecs)
 

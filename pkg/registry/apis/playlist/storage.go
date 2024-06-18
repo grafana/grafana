@@ -1,6 +1,7 @@
 package playlist
 
 import (
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
@@ -37,4 +38,18 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, le
 		return nil, err
 	}
 	return &storage{Store: store}, nil
+}
+
+// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
+func (s *storage) Compare(storageObj, legacyObj runtime.Object) bool {
+	accStr, err := meta.Accessor(storageObj)
+	if err != nil {
+		return false
+	}
+	accLegacy, err := meta.Accessor(legacyObj)
+	if err != nil {
+		return false
+	}
+
+	return accStr.GetName() == accLegacy.GetName()
 }

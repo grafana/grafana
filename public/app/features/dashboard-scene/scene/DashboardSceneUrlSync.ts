@@ -11,6 +11,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
+import { KioskMode } from 'app/types';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
@@ -28,7 +29,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'kiosk'];
   }
 
   getUrlState(): SceneObjectUrlValues {
@@ -39,6 +40,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
+      kiosk: state.kioskMode === KioskMode.Full ? '' : state.kioskMode === KioskMode.TV ? 'tv' : undefined,
     };
   }
 
@@ -124,6 +126,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // Handle edit panel state
     if (typeof values.editPanel === 'string') {
       const panel = findVizPanelByKey(this._scene, values.editPanel);
+
       if (!panel) {
         console.warn(`Panel ${values.editPanel} not found`);
         return;
@@ -144,6 +147,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         });
         return;
       }
+
       update.editPanel = buildPanelEditScene(panel);
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;
@@ -154,6 +158,14 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
       if (!!this._scene.state.body.state.UNSAFE_fitPanels !== UNSAFE_fitPanels) {
         this._scene.state.body.setState({ UNSAFE_fitPanels });
+      }
+    }
+
+    if (typeof values.kiosk === 'string') {
+      if (values.kiosk === 'true' || values.kiosk === '') {
+        update.kioskMode = KioskMode.Full;
+      } else if (values.kiosk === 'tv') {
+        update.kioskMode = KioskMode.TV;
       }
     }
 
