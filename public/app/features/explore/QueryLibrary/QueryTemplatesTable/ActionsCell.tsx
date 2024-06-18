@@ -33,12 +33,12 @@ function ActionsCell({ query, rootDatasourceUid, queryUid }: ActionsCellProps) {
 
     getAppEvents().publish(
       new ShowConfirmModalEvent({
-        title: t('explore.query-library.delete-query-title', 'Delete'),
+        title: t('explore.query-library.delete-query-title', 'Delete query'),
         text: t(
           'explore.query-library.delete-query-text',
-          'Are you sure you want to permanently delete your query from the query library?'
+          "You're about to remove this query from the query library. This action cannot be undone. Do you want to continue?"
         ),
-        yesText: t('query-library.delete-query-button', 'Delete'),
+        yesText: t('query-library.delete-query-button', 'Delete query'),
         icon: 'trash-alt',
         onConfirm: () => performDelete(queryUid),
       })
