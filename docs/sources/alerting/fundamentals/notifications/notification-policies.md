@@ -55,7 +55,11 @@ If a notification policy has label matchers that match the labels of the alert i
 
 If no child policies are defined in a notification policy or if none of the child policies have any label matchers that match the alert instance's labels, the default notification policy is used.
 
+{{% admonition type="note" %}}
 As soon as a matching policy is found, the system does not continue to look for other matching policies. If you want to continue to look for other policies that may match, enable **Continue matching siblings** on that particular policy.
+
+If alerts use multiple labels, these labels must also be present in a notification policy to match and route notifications to a specific contact point.
+{{% /admonition %}}
 
 Lastly, if none of the notification policies are selected the default notification policy is used.
 
@@ -72,6 +76,10 @@ Here's a breakdown of how these policies are selected:
 The `team=security` policy is not evaluated since we already found a match and **Continue matching siblings** was not configured for that policy.
 
 **Disk Usage – 80%** has both a `team` and `severity` label, and matches a child policy of the operations team.
+
+{{% admonition type="note" %}}
+When an alert matches both a parent policy and a child policy (like it does in this case), the routing follows the child policy (`severity`) as it provides a more specific match.
+{{% /admonition %}}
 
 **Unauthorized log entry** has a `team` label but does not match the first policy (`team=operations`) since the values are not the same, so it will continue searching and match the `team=security` policy. It does not have any child policies, so the additional `severity=high` label is ignored.
 
