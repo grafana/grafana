@@ -417,18 +417,18 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 		return response.ErrOrFallback(http.StatusInternalServerError, "error retrieving snapshot", err)
 	}
 
-	result, err := snapshot.GetResult()
+	result, err := snapshot.GetSnapshotResult()
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "error snapshot reading snapshot results", err)
 	}
 
-	dtoResults := make([]MigrateDataResponseItemDTO, len(result.Items))
-	for i := 0; i < len(result.Items); i++ {
+	dtoResults := make([]MigrateDataResponseItemDTO, len(result))
+	for i := 0; i < len(result); i++ {
 		dtoResults[i] = MigrateDataResponseItemDTO{
-			Type:   MigrateDataType(result.Items[i].Type),
-			RefID:  result.Items[i].RefID,
-			Status: ItemStatus(result.Items[i].Status),
-			Error:  result.Items[i].Error,
+			Type:   MigrateDataType(result[i].Type),
+			RefID:  result[i].RefID,
+			Status: ItemStatus(result[i].Status),
+			Error:  result[i].Error,
 		}
 	}
 
@@ -497,7 +497,7 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 // 403: forbiddenError
 // 500: internalServerError
 func (cma *CloudMigrationAPI) UploadSnapshot(c *contextmodel.ReqContext) response.Response {
-	_, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.UploadSnapshot")
+	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.UploadSnapshot")
 	defer span.End()
 
 	sessUid, snapshotUid := web.Params(c.Req)[":uid"], web.Params(c.Req)[":snapshotUid"]
@@ -506,6 +506,10 @@ func (cma *CloudMigrationAPI) UploadSnapshot(c *contextmodel.ReqContext) respons
 	}
 	if err := util.ValidateUID(snapshotUid); err != nil {
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
+	}
+
+	if err := cma.cloudMigrationService.UploadSnapshot(ctx, sessUid, snapshotUid); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "error uploading snapshot", err)
 	}
 
 	return response.JSON(http.StatusOK, nil)

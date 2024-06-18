@@ -63,6 +63,7 @@ const (
 	SnapshotStatusUnknown           = "unknown"
 )
 
+// Deprecated, use GetSnapshotResult for the async workflow
 func (r CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
 	var result MigrateDataResponse
 	err := json.Unmarshal(r.Result, &result)
@@ -71,6 +72,17 @@ func (r CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
 	}
 	result.RunUID = r.UID
 	return &result, nil
+}
+
+func (r CloudMigrationSnapshot) GetSnapshotResult() ([]MigrateDataResponseItem, error) {
+	var result []MigrateDataResponseItem
+	if len(r.Result) > 0 {
+		err := json.Unmarshal(r.Result, &result)
+		if err != nil {
+			return nil, errors.New("could not parse result of run")
+		}
+	}
+	return result, nil
 }
 
 type CloudMigrationRunList struct {

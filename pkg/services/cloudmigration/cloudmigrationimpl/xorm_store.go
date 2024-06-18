@@ -150,6 +150,12 @@ func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.
 	if err := ss.encryptKey(ctx, &snapshot); err != nil {
 		return "", err
 	}
+	if snapshot.Result == nil {
+		snapshot.Result = make([]byte, 0)
+	}
+	if snapshot.UID == "" {
+		snapshot.UID = util.GenerateShortUID()
+	}
 
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		snapshot.Created = time.Now()

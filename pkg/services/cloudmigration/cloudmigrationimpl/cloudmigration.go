@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -482,7 +483,8 @@ func (s *Service) CreateSnapshot(ctx context.Context, sessionUid string) (*cloud
 	}
 
 	// create new directory for snapshot writing
-	dir := filepath.Join("cloudmigration.snapshots", fmt.Sprintf("snapshot-%s", initResp.GMSSnapshotUID))
+	snapshotUid := util.GenerateShortUID()
+	dir := filepath.Join("cloudmigration.snapshots", fmt.Sprintf("snapshot-%s-%s", snapshotUid, initResp.GMSSnapshotUID))
 	err = os.MkdirAll(dir, 0750)
 	if err != nil {
 		return nil, fmt.Errorf("creating snapshot directory: %w", err)
@@ -490,6 +492,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, sessionUid string) (*cloud
 
 	// save snapshot to the db
 	snapshot := cloudmigration.CloudMigrationSnapshot{
+		UID:            snapshotUid,
 		SessionUID:     sessionUid,
 		Status:         cloudmigration.SnapshotStatusInitializing,
 		EncryptionKey:  initResp.EncryptionKey,
@@ -576,7 +579,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 	s.log.Debug("UploadSnapshot not yet implemented, faking it")
 
 	// start uploading the snapshot asynchronously while we return a success response to the client
-	go s.uploadSnapshot(ctx, *snapshot)
+	go s.uploadSnapshot(context.Background(), *snapshot)
 
 	return nil
 }
