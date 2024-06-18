@@ -2942,6 +2942,22 @@ steps:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-grafanacom
+- commands:
+  - curl -L -o /usr/local/bin/gcom https://github.com/grafana/gcom/releases/latest/download/gcom-linux-amd64
+  - chmod +x /usr/local/bin/gcom
+  - printenv GCP_KEY > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - ./drone/verify-grafanacom.sh
+  - rm /tmp/key.json
+  depends_on:
+  - publish-grafanacom
+  environment:
+    GCOM_API_KEY:
+      from_secret: grafana_api_key
+    GCP_KEY:
+      from_secret: gcp_grafanauploads
+  image: node:20.9.0-alpine
+  name: verify-grafanacom
 trigger:
   event:
   - promote
@@ -4893,6 +4909,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 08f38b820f97302de03a9fdfd39fb12c185bb36170704cf7591c16f33c3e4d31
+hmac: 0e17559b828c69324eb6ad91e82957822cee8dbd6280fc0ff278e3f23009ee04
 
 ...
