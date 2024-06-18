@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -374,7 +373,7 @@ func (proxy *DataSourceProxy) logRequest() {
 
 	panelPluginId := proxy.ctx.Req.Header.Get("X-Panel-Plugin-Id")
 
-	uri, err := loggermw.SanitizeURI(proxy.ctx.Req.RequestURI)
+	uri, err := util.SanitizeURI(proxy.ctx.Req.RequestURI)
 	if err == nil {
 		proxy.ctx.Logger.Error("Could not sanitize RequestURI", "error", err)
 	}

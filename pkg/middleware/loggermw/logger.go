@@ -19,12 +19,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 
@@ -114,7 +113,7 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 		"size", rw.Size(),
 	}
 
-	referer, err := SanitizeURI(r.Referer())
+	referer, err := util.SanitizeURI(r.Referer())
 	// We add an empty referer when there's a parsing error, hence this is before the err check.
 	logParams = append(logParams, "referer", referer)
 	if err != nil {
@@ -153,69 +152,4 @@ func errorLogParams(err error) []any {
 		"errorMessageID", gfErr.MessageID,
 		"error", gfErr.LogMessage,
 	}
-}
-
-const masking = "hidden"
-
-var sensitiveQueryChecks = map[string]func(v map[string]string) bool{
-	"auth_token": func(v map[string]string) bool {
-		if _, ok := v["auth_token"]; ok {
-			return true
-		}
-		return false
-	},
-	"x-amz-signature": func(v map[string]string) bool {
-		if _, ok := v["x-amz-signature"]; ok {
-			return true
-		}
-		return false
-	},
-	"x-goog-signature": func(v map[string]string) bool {
-		if _, ok := v["x-goog-signature"]; ok {
-			return true
-		}
-		return false
-	},
-	"sig": func(v map[string]string) bool {
-		if _, ok := v["sig"]; !ok {
-			return false
-		}
-		if _, ok := v["sv"]; ok {
-			return true
-		}
-		return false
-	},
-}
-
-func SanitizeURI(s string) (string, error) {
-	if s == "" {
-		return s, nil
-	}
-
-	u, err := url.ParseRequestURI(s)
-	if err != nil {
-		return "", fmt.Errorf("failed to sanitize URL")
-	}
-
-	// strip out sensitive query strings
-	urlValues := u.Query()
-	keys := lowerToKeyMap(urlValues)
-	for key, checker := range sensitiveQueryChecks {
-		if originalKey, ok := keys[key]; ok {
-			if checker(keys) {
-				urlValues.Set(originalKey, masking)
-			}
-		}
-	}
-	u.RawQuery = urlValues.Encode()
-
-	return u.String(), nil
-}
-
-func lowerToKeyMap(values url.Values) map[string]string {
-	lm := make(map[string]string)
-	for key := range values {
-		lm[strings.ToLower((key))] = key
-	}
-	return lm
 }
