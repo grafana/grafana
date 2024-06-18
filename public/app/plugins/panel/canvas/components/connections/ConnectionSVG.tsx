@@ -11,11 +11,12 @@ import { ConnectionCoordinates } from '../../panelcfg.gen';
 import { ConnectionState } from '../../types';
 import {
   calculateAngle,
-  calculateCoordinates,
+  // calculateCoordinates,
+  calculateCoordinates2,
   calculateDistance,
   calculateMidpoint,
   getConnectionStyles,
-  getParentBoundingClientRect,
+  // getParentBoundingClientRect,
 } from '../../utils';
 
 import { CONNECTION_VERTEX_ADD_ID, CONNECTION_VERTEX_ID } from './Connections';
@@ -125,7 +126,7 @@ export const ConnectionSVG = ({
 
   // Figure out target and then target's relative coordinates drawing (if no target do parent)
   const renderConnections = () => {
-    // console.log('renderConnections');
+    console.log('renderConnections');
     return (
       scene.connections.state
         // Render selected connection last, ensuring it is above other connections
@@ -133,17 +134,19 @@ export const ConnectionSVG = ({
         .map((v, idx) => {
           const { source, target, info, vertices } = v;
           const sourceRect = source.div?.getBoundingClientRect();
-          const parent = source.div?.parentElement;
+          const parent = source.div?.parentElement; // do we need this?
           // const transformScale = scene.scale;
-          const transformScale = 1;
-          const parentRect = getParentBoundingClientRect(scene);
+          // const transformScale = 1;
+          // const parentRect = getParentBoundingClientRect(scene);
+          const parentRect = scene.viewportDiv?.getBoundingClientRect();
 
           if (!sourceRect || !parent || !parentRect) {
             return;
           }
 
-          let { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
-          // console.log('x1, y1, x2, y2', x1, y1, x2, y2);
+          // let { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
+          let { x1, y1, x2, y2 } = calculateCoordinates2(source, target, info);
+          console.log('x1, y1, x2, y2', x1, y1, x2, y2);
           // x1 = x1 - Math.min(x1, x2);
           // y1 = y1 - Math.min(y1, y2);
           // x2 = x2 - Math.min(x1, x2);
@@ -544,6 +547,8 @@ export const ConnectionSVG = ({
     );
   };
 
+  console.log(scene.width, scene.height);
+
   return (
     <>
       {/* svg line for connection creation */}
@@ -583,7 +588,7 @@ export const ConnectionSVG = ({
         // key={idx}
         // viewBox={`0 0 ${Math.abs(x1 - x2)} ${Math.abs(y1 - y2)}`}
         // viewBox={`${Math.min(x1, x2)} ${Math.min(y1, y2)} ${Math.abs(x1 - x2)} ${Math.abs(y1 - y2)}`}
-        viewBox={'0 0 1355 689'}
+        viewBox={`0 0 ${scene.width} ${scene.height}`}
         // style={{
         //   top: Math.min(y1, y2),
         //   left: Math.min(x1, x2),
@@ -593,8 +598,8 @@ export const ConnectionSVG = ({
         style={{
           top: 0,
           left: 0,
-          width: 1355,
-          height: 689,
+          width: scene.width,
+          height: scene.height,
         }}
       >
         {renderConnections()}
@@ -617,7 +622,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   connection: css({
     position: 'absolute',
-    width: '100%',
+    // width: '100%',
     // height: '100%',
     zIndex: 1000,
     pointerEvents: 'none',

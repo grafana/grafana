@@ -778,12 +778,16 @@ export class Scene {
 
     infiniteViewer.on('scroll', () => {
       const svgConnections = this.connections.connectionsSVG;
+      // const wrapper = infiniteViewer.getWrapper();
+      // console.log(wrapper);
       if (svgConnections) {
         const scale = infiniteViewer.getZoom();
         const left = infiniteViewer.getScrollLeft();
         const top = infiniteViewer.getScrollTop();
-        const width = infiniteViewer.getContainerWidth();
-        const height = infiniteViewer.getContainerHeight();
+        // const width = infiniteViewer.getContainerWidth();
+        // const height = infiniteViewer.getContainerHeight();
+        const width = this.width;
+        const height = this.height;
 
         svgConnections.style.left = `${left}px`;
         svgConnections.style.top = `${top}px`;
@@ -792,11 +796,7 @@ export class Scene {
 
         svgConnections.setAttribute('viewBox', `${left} ${top} ${width / scale} ${height / scale}`);
       }
-      // console.log(infiniteViewer.getScrollLeft(), infiniteViewer.getScrollTop());
     });
-    // .on('pinch', () => {
-    //   console.log('pinch');
-    // });
   };
 
   reorderElements = (src: ElementState, dest: ElementState, dragToGap: boolean, destPosition: number) => {

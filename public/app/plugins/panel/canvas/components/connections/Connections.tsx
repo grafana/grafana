@@ -9,7 +9,8 @@ import { Scene } from 'app/features/canvas/runtime/scene';
 import { ConnectionState } from '../../types';
 import {
   calculateAngle,
-  calculateCoordinates,
+  // calculateCoordinates,
+  calculateCoordinates2,
   getConnections,
   getParentBoundingClientRect,
   isConnectionSource,
@@ -321,15 +322,20 @@ export class Connections {
     this.connectionVertex?.setAttribute('cy', `${y}`);
 
     const selectedValue = this.selection.value;
-    const sourceRect = selectedValue!.source.div!.getBoundingClientRect();
+    // const sourceRect = selectedValue!.source.div!.getBoundingClientRect();
 
     // calculate relative coordinates based on source and target coorindates of connection
-    const { x1, y1, x2, y2 } = calculateCoordinates(
-      sourceRect,
-      parentBoundingRect,
-      selectedValue?.info!,
+    // const { x1, y1, x2, y2 } = calculateCoordinates(
+    //   sourceRect,
+    //   parentBoundingRect,
+    //   selectedValue?.info!,
+    //   selectedValue!.target,
+    //   transformScale
+    // );
+    const { x1, y1, x2, y2 } = calculateCoordinates2(
+      selectedValue!.source,
       selectedValue!.target,
-      transformScale
+      selectedValue?.info!
     );
 
     let { xStart, yStart, xEnd, yEnd } = { xStart: x1, yStart: y1, xEnd: x2, yEnd: y2 };
@@ -477,15 +483,21 @@ export class Connections {
     this.connectionVertex?.setAttribute('cy', `${y}`);
 
     const selectedValue = this.selection.value;
-    const sourceRect = selectedValue!.source.div!.getBoundingClientRect();
+    // const sourceRect = selectedValue!.source.div!.getBoundingClientRect();
 
     // calculate relative coordinates based on source and target coorindates of connection
-    const { x1, y1, x2, y2 } = calculateCoordinates(
-      sourceRect,
-      parentBoundingRect,
-      selectedValue?.info!,
+    // const { x1, y1, x2, y2 } = calculateCoordinates(
+    //   sourceRect,
+    //   parentBoundingRect,
+    //   selectedValue?.info!,
+    //   selectedValue!.target,
+    //   transformScale
+    // );
+
+    const { x1, y1, x2, y2 } = calculateCoordinates2(
+      selectedValue!.source,
       selectedValue!.target,
-      transformScale
+      selectedValue?.info!
     );
 
     let { xStart, yStart, xEnd, yEnd } = { xStart: x1, yStart: y1, xEnd: x2, yEnd: y2 };
