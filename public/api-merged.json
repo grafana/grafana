@@ -15815,11 +15815,15 @@
           "type": "integer",
           "format": "int64"
         },
+        "isDeleted": {
+          "type": "boolean"
+        },
         "isStarred": {
           "type": "boolean"
         },
-        "remainingTrashAtAge": {
-          "type": "string"
+        "permanentlyDeleteDate": {
+          "type": "string",
+          "format": "date-time"
         },
         "slug": {
           "type": "string"
@@ -19966,7 +19970,6 @@
       }
     },
     "State": {
-      "description": "+enum",
       "type": "string"
     },
     "Status": {
@@ -20726,7 +20729,6 @@
       }
     },
     "Type": {
-      "description": "+enum",
       "type": "string"
     },
     "TypeMeta": {

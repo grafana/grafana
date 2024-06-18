@@ -72,6 +72,8 @@ By default, once a matching policy is found, the system does not continue to loo
 
 The default notification policy matches all alert instances. It always handles alert instances if there are no child policies or if none of the child policies match the alert instance's labels—this prevents any alerts from being missed.
 
+If alerts use multiple labels, these labels must also be present in a notification policy to match and route notifications to a specific contact point.
+
 {{% /admonition %}}
 
 {{< collapse title="Routing example" >}}
@@ -83,6 +85,10 @@ Here's a breakdown of the previous example:
 The `team=security` policy is not a match and **Continue matching siblings** was not configured for that policy.
 
 **Disk Usage – 80%** has both a `team` and `severity` label, and matches a child policy of the operations team.
+
+{{% admonition type="note" %}}
+When an alert matches both a parent policy and a child policy (like it does in this case), the routing follows the child policy (`severity`) as it provides a more specific match.
+{{% /admonition %}}
 
 **Unauthorized log entry** has a `team` label but does not match the first policy (`team=operations`) since the values are not the same, so it will continue searching and match the `team=security` policy. It does not have any child policies, so the additional `severity=high` label is ignored.
 

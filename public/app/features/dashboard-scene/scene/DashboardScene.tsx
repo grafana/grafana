@@ -35,7 +35,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
@@ -125,6 +125,8 @@ export interface DashboardSceneState extends SceneObjectState {
   isEmpty?: boolean;
   /** Scene object that handles the scopes selector */
   scopes?: ScopesScene;
+  /** Kiosk mode */
+  kioskMode?: KioskMode;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
