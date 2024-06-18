@@ -1556,6 +1556,49 @@
         }
       }
     },
+    "/reports/render/csvs": {
+      "get": {
+        "description": "Available to all users and with a valid license.",
+        "produces": [
+          "application/zip"
+        ],
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
+        "summary": "Download a CSV report.",
+        "operationId": "renderReportCSVs",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboards",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "title",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/contentResponse"
+          },
+          "204": {
+            "$ref": "#/responses/noContentResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
@@ -1571,7 +1614,7 @@
         "parameters": [
           {
             "type": "string",
-            "name": "dashboardID",
+            "name": "dashboards",
             "in": "query"
           },
           {
@@ -9301,6 +9344,12 @@
             "$ref": "#/definitions/RoleDTO"
           }
         }
+      }
+    },
+    "noContentResponse": {
+      "description": "",
+      "schema": {
+        "type": "object"
       }
     },
     "notFoundError": {
