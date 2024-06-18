@@ -19,7 +19,9 @@ export interface Props extends GrafanaRouteComponentProps<DashboardPageRoutePara
 
 export function DashboardScenePage({ match, route, queryParams, history }: Props) {
   const stateManager = getDashboardScenePageStateManager();
+
   const { dashboard, isLoading, loadError } = stateManager.useState();
+
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (history.location.state as any)?.routeReloadCounter;
 
