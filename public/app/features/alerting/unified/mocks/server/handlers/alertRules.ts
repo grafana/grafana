@@ -44,8 +44,8 @@ export const updateRulerRuleNamespaceHandler = (options?: HandlerOptions) =>
       await delay(options.delay ?? 0);
     }
 
-    if (options?.error) {
-      return options.error;
+    if (options?.response) {
+      return options.response;
     }
 
     // This mimic API response as closely as possible.
@@ -61,10 +61,14 @@ export const updateRulerRuleNamespaceHandler = (options?: HandlerOptions) =>
     });
   });
 
-export const rulerRuleGroupHandler = () => {
+export const rulerRuleGroupHandler = (options?: HandlerOptions) => {
   return http.get<{ folderUid: string; groupName: string }>(
     `/api/ruler/grafana/api/v1/rules/:folderUid/:groupName`,
     ({ params: { folderUid, groupName } }) => {
+      if (options?.response) {
+        return options.response;
+      }
+
       // This mimic API response as closely as possible.
       // Invalid folderUid returns 403 but invalid group will return 202 with empty list of rules
       const namespace = namespaces[folderUid];
@@ -81,6 +85,24 @@ export const rulerRuleGroupHandler = () => {
     }
   );
 };
+
+export const deleteRulerRuleGroupHandler = () =>
+  http.delete<{ folderUid: string; groupName: string }>(
+    `/api/ruler/grafana/api/v1/rules/:folderUid/:groupName`,
+    ({ params: { folderUid } }) => {
+      const namespace = namespaces[folderUid];
+      if (!namespace) {
+        return new HttpResponse(null, { status: 403 });
+      }
+
+      return HttpResponse.json(
+        {
+          message: 'Rules deleted',
+        },
+        { status: 202 }
+      );
+    }
+  );
 
 export const rulerRuleHandler = () => {
   const grafanaRules = new Map<string, RulerGrafanaRuleDTO>(
@@ -101,6 +123,7 @@ const handlers = [
   getRulerRuleNamespaceHandler(),
   updateRulerRuleNamespaceHandler(),
   rulerRuleGroupHandler(),
+  deleteRulerRuleGroupHandler(),
   rulerRuleHandler(),
 ];
 export default handlers;

@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`pausing rules should pause a single rule in a group 1`] = `
+exports[`pausing rules should pause a Grafana managed rule in a group 1`] = `
 {
   "interval": "5m",
   "name": "group-1",

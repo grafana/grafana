@@ -222,7 +222,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       providesTags: ['CombinedAlertRule'],
     }),
 
-    deleteRuleGroupFromNamespace: build.query<
+    deleteRuleGroupFromNamespace: build.mutation<
       RulerRuleGroupDTO,
       { rulerConfig: RulerDataSourceConfig; namespace: string; group: string }
     >({
@@ -230,7 +230,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
         return { url: path, params, method: 'DELETE' };
       },
-      providesTags: ['CombinedAlertRule'],
+      invalidatesTags: ['CombinedAlertRule'],
     }),
 
     getAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string }>({

@@ -1,4 +1,5 @@
 import { HttpHandler, matchRequestUrl } from 'msw';
+import { JsonValue } from 'type-fest';
 
 import server from 'app/features/alerting/unified/mockApi';
 
@@ -22,13 +23,45 @@ export function waitForServerRequest(handler: HttpHandler) {
   });
 }
 
-export async function serializeRequest(request: Request) {
+interface SerializedRequest {
+  method: string;
+  url: string;
+  body: string | JsonValue;
+  headers: string[][];
+}
+
+export async function captureRequests(): Promise<Request[]> {
+  let requests: Request[] = [];
+
+  server.events.on('request:start', ({ request }) => {
+    requests.push(request);
+  });
+
+  return new Promise(async (resolve) => {
+    resolve(requests);
+  });
+}
+
+const DEVICE_ID_HEADER = 'x-grafana-device-id';
+
+export async function serializeRequest(originalRequest: Request): Promise<SerializedRequest> {
+  const request = originalRequest;
   const { method, url, headers } = request;
+
+  // omit the fingerprint ID from the request header since it is machine-specific
+  headers.delete(DEVICE_ID_HEADER);
+
+  const body = await request.json().catch(() => request.text());
+  const serializedHeaders = Array.from(headers.entries());
 
   return {
     method,
     url,
-    body: await request.json(),
-    headers: Array.from(headers.entries()),
+    body,
+    headers: serializedHeaders,
   };
+}
+
+export async function serializeRequests(requests: Request[]): Promise<SerializedRequest[]> {
+  return Promise.all(requests.map(serializeRequest));
 }

@@ -5,7 +5,8 @@ import { mockRulerAlertingRule, mockRulerGrafanaRule, mockRulerRecordingRule } f
 import { deleteRuleAction, pauseRuleAction, ruleGroupReducer } from './ruleGroups';
 
 describe('pausing rules', () => {
-  it('should pause a single rule in a group', () => {
+  // pausing only works for Grafana managed rules
+  it('should pause a Grafana managed rule in a group', () => {
     const initialGroup: PostableRulerRuleGroupDTO = {
       name: 'group-1',
       interval: '5m',
@@ -28,6 +29,20 @@ describe('pausing rules', () => {
     expect(output.rules[2]).toStrictEqual(initialGroup.rules[2]);
 
     expect(output).toMatchSnapshot();
+  });
+
+  it('should throw if the uid does not exist in the group', () => {
+    const group: PostableRulerRuleGroupDTO = {
+      name: 'group-1',
+      interval: '5m',
+      rules: [mockRulerGrafanaRule({}, { uid: '1' })],
+    };
+
+    const action = pauseRuleAction({ uid: '2', pause: true });
+
+    expect(() => {
+      ruleGroupReducer(group, action);
+    }).toThrow();
   });
 });
 

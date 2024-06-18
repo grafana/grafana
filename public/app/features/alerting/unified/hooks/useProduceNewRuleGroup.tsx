@@ -15,7 +15,7 @@ type ProduceResult = RulerRuleGroupDTO | AlertGroupUpdated;
 function useProduceNewRuleGroup() {
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
   const [updateRuleGroup] = alertRuleApi.endpoints.updateRuleGroupForNamespace.useMutation();
-  const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useLazyQuery();
+  const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
 
   const [isLoading, setLoading] = useState<boolean>(false);
   const [isUninitialized, setUninitialized] = useState<boolean>(true);

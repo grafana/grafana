@@ -5,17 +5,19 @@ import { byRole, byText } from 'testing-library-selector';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { CombinedRule } from 'app/types/unified-alerting';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { setupMswServer } from '../mockApi';
-import { mockCombinedRule, mockCombinedRuleGroup, mockGrafanaRulerRule } from '../mocks';
+import server, { setupMswServer } from '../mockApi';
+import { mockCombinedRule, mockCombinedRuleGroup, mockGrafanaRulerRule, mockRulerRuleGroup } from '../mocks';
 import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '../mocks/alertRuleApi';
 import { setUpdateRulerRuleNamespaceHandler } from '../mocks/server/configure';
-import { serializeRequest, waitForServerRequest } from '../mocks/server/events';
+import { captureRequests, serializeRequest, serializeRequests } from '../mocks/server/events';
+import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from '../mocks/server/handlers/alertRules';
 import { stringifyErrorLike } from '../utils/misc';
 import { getRuleGroupLocationFromCombinedRule } from '../utils/rules';
 
-import { usePauseRuleInGroup } from './useProduceNewRuleGroup';
+import { useDeleteRuleFromGroup, usePauseRuleInGroup } from './useProduceNewRuleGroup';
 
 setupMswServer();
 
@@ -23,57 +25,118 @@ beforeAll(() => {
   setBackendSrv(backendSrv);
 });
 
-it('should be able to pause a rule', async () => {
-  const handler = setUpdateRulerRuleNamespaceHandler({ delay: 1000 });
+describe('pause rule', () => {
+  it('should be able to pause a rule', async () => {
+    const capture = captureRequests();
+    setUpdateRulerRuleNamespaceHandler({ delay: 1000 });
 
-  render(<TestComponent />);
-  expect(byText(/uninitialized/i).get()).toBeInTheDocument();
+    render(<PauseTestComponent />);
+    expect(byText(/uninitialized/i).get()).toBeInTheDocument();
 
-  await userEvent.click(byRole('button').get());
-  expect(await byText(/loading/i).find()).toBeInTheDocument();
+    await userEvent.click(byRole('button').get());
+    expect(await byText(/loading/i).find()).toBeInTheDocument();
 
-  const request = await waitForServerRequest(handler);
-  const serializedRequest = await serializeRequest(request);
+    expect(await byText(/success/i).find()).toBeInTheDocument();
+    expect(await byText(/result/i).find()).toBeInTheDocument();
+    expect(byText(/error/i).query()).not.toBeInTheDocument();
 
-  expect(serializedRequest.body).toHaveProperty('rules[0].grafana_alert.is_paused', true);
-  expect(serializedRequest).toMatchSnapshot();
+    const requests = await capture;
+    const [get, update, ...rest] = await serializeRequests(requests);
 
-  expect(await byText(/success/i).find()).toBeInTheDocument();
-  expect(await byText(/result/i).find()).toBeInTheDocument();
-  expect(byText(/error/i).query()).not.toBeInTheDocument();
-});
-
-it('should throw if the rule is not found in the group', async () => {
-  setUpdateRulerRuleNamespaceHandler();
-  render(
-    <TestComponent
-      rulerRule={mockGrafanaRulerRule({ uid: 'does-not-exist', namespace_uid: grafanaRulerNamespace.uid })}
-    />
-  );
-  expect(byText(/uninitialized/i).get()).toBeInTheDocument();
-
-  await userEvent.click(byRole('button').get());
-  expect(await byText(/error: No rule with UID/i).find()).toBeInTheDocument();
-});
-
-it('should be able to handle error', async () => {
-  setUpdateRulerRuleNamespaceHandler({
-    delay: 1000,
-    error: new HttpResponse('oops', { status: 500 }),
+    expect(update.body).toHaveProperty('rules[0].grafana_alert.is_paused', true);
+    expect([get, update, ...rest]).toMatchSnapshot();
   });
 
-  render(<TestComponent />);
+  it('should throw if the rule is not found in the group', async () => {
+    setUpdateRulerRuleNamespaceHandler();
+    render(
+      <PauseTestComponent
+        rulerRule={mockGrafanaRulerRule({ uid: 'does-not-exist', namespace_uid: grafanaRulerNamespace.uid })}
+      />
+    );
+    expect(byText(/uninitialized/i).get()).toBeInTheDocument();
 
-  expect(await byText(/uninitialized/i).find()).toBeInTheDocument();
+    await userEvent.click(byRole('button').get());
+    expect(await byText(/error: No rule with UID/i).find()).toBeInTheDocument();
+  });
 
-  await userEvent.click(byRole('button').get());
-  expect(await byText(/loading/i).find()).toBeInTheDocument();
-  expect(byText(/success/i).query()).not.toBeInTheDocument();
-  expect(await byText(/error: oops/i).find()).toBeInTheDocument();
+  it('should be able to handle error', async () => {
+    setUpdateRulerRuleNamespaceHandler({
+      delay: 1000,
+      response: new HttpResponse('oops', { status: 500 }),
+    });
+
+    render(<PauseTestComponent />);
+
+    expect(await byText(/uninitialized/i).find()).toBeInTheDocument();
+
+    await userEvent.click(byRole('button').get());
+    expect(await byText(/loading/i).find()).toBeInTheDocument();
+    expect(byText(/success/i).query()).not.toBeInTheDocument();
+    expect(await byText(/error: oops/i).find()).toBeInTheDocument();
+  });
+});
+
+describe('delete rule', () => {
+  const rules = [
+    mockCombinedRule({
+      name: 'r1',
+      rulerRule: mockGrafanaRulerRule({ uid: 'r1' }),
+    }),
+    mockCombinedRule({
+      name: 'r2',
+      rulerRule: mockGrafanaRulerRule({ uid: 'r2' }),
+    }),
+  ];
+  const group = mockRulerRuleGroup({
+    name: 'group-1',
+    rules: [rules[0].rulerRule!, rules[1].rulerRule!],
+  });
+
+  const getGroup = rulerRuleGroupHandler({
+    delay: 1000,
+    response: HttpResponse.json(group),
+  });
+
+  const updateNamespace = updateRulerRuleNamespaceHandler({
+    response: new HttpResponse(undefined, { status: 200 }),
+  });
+
+  it('should be able to delete a rule', async () => {
+    server.use(getGroup, updateNamespace);
+    const capture = captureRequests();
+
+    render(<DeleteTestComponent rule={rules[1]} />);
+
+    await userEvent.click(byRole('button').get());
+
+    expect(await byText(/success/i).find()).toBeInTheDocument();
+
+    const requests = await capture;
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
+  });
+
+  it('should delete the entire group if no more rules are left', async () => {
+    const capture = captureRequests();
+
+    const combined = mockCombinedRule({
+      rulerRule: grafanaRulerRule,
+    });
+
+    render(<DeleteTestComponent rule={combined} />);
+    await userEvent.click(byRole('button').get());
+
+    expect(await byText(/success/i).find()).toBeInTheDocument();
+
+    const requests = await capture;
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
+  });
 });
 
 // this test component will cycle through the loading states
-const TestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
+const PauseTestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
   const [pauseRule, requestState] = usePauseRuleInGroup();
 
   const rulerRule = options.rulerRule ?? grafanaRulerRule;
@@ -83,7 +146,7 @@ const TestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
   });
   const ruleGroupID = getRuleGroupLocationFromCombinedRule(rule);
 
-  const onClick = async () => {
+  const onClick = () => {
     // always handle your errors!
     pauseRule(ruleGroupID, rulerRule, true).catch(() => {});
   };
@@ -95,6 +158,30 @@ const TestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
       {requestState.isLoading && 'loading'}
       {requestState.isSuccess && 'success'}
       {requestState.result && 'result'}
+      {requestState.isError && `error: ${stringifyErrorLike(requestState.error)}`}
+    </>
+  );
+};
+
+type DeleteTestComponentProps = {
+  rule: CombinedRule;
+};
+const DeleteTestComponent = ({ rule }: DeleteTestComponentProps) => {
+  const [deleteRuleFromGroup, requestState] = useDeleteRuleFromGroup();
+
+  // always handle your errors!
+  const ruleGroupID = getRuleGroupLocationFromCombinedRule(rule);
+  const onClick = () => {
+    deleteRuleFromGroup(ruleGroupID, rule.rulerRule!);
+  };
+
+  return (
+    <>
+      <button onClick={() => onClick()} />
+      {requestState.isUninitialized && 'uninitialized'}
+      {requestState.isLoading && 'loading'}
+      {requestState.isSuccess && 'success'}
+      {requestState.result && `result: ${JSON.stringify(requestState.result, null, 2)}`}
       {requestState.isError && `error: ${stringifyErrorLike(requestState.error)}`}
     </>
   );

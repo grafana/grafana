@@ -14,7 +14,7 @@ import { updateRulerRuleNamespaceHandler } from './handlers/alertRules';
 
 export type HandlerOptions = {
   delay?: number;
-  error?: HttpResponse;
+  response?: HttpResponse;
 };
 
 /**
