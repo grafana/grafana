@@ -48,15 +48,18 @@ jobs:
         run: git commit --allow-empty -m "Update changelog placeholder"
       - name: Update package.json
         run: git commit --allow-empty -m "Update version in package.json(s) (and yarn install) placeholder"
+      - name: git push
+        if: ${{ inputs.dry_run }}
+        run: git push
       - name: Create PR without backports
-        if: "${{ github.event.inputs.backport == '' }}"
+        if: "${{ inputs.backport == '' }}"
         run: >
-          gh pr create --dry-run=${{ inputs.dry_run }} -H "release/${{ inputs.version }}" -B "${{ inputs.target }}" --title "Release: ${{ inputs.version }}" --body "These code changes must be merged after a release is complete"
+          gh pr create --dry-run=${{ inputs.dry_run }} -B "${{ inputs.target }}" --title "Release: ${{ inputs.version }}" --body "These code changes must be merged after a release is complete"
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
       - name: Create PR with backports
-        if: "${{ github.event.inputs.backport != '' }}"
+        if: "${{ inputs.backport != '' }}"
         run: >
-          gh pr create -l "backport ${{ inputs.backport }}" --dry-run=${{ inputs.dry_run }} -H "release/${{ inputs.version }}" -B "${{ inputs.target }}" --title "Release: ${{ inputs.version }}" --body "These code changes must be merged after a release is complete"
+          gh pr create -l "backport ${{ inputs.backport }}" --dry-run=${{ inputs.dry_run }} -B "${{ inputs.target }}" --title "Release: ${{ inputs.version }}" --body "These code changes must be merged after a release is complete"
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
