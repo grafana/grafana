@@ -342,7 +342,6 @@
 /plugins-bundled/ @grafana/plugins-platform-frontend
 /packages/grafana-plugin-configs/ @grafana/plugins-platform-frontend
 /packages/grafana-prometheus/ @grafana/observability-metrics
-/packages/grafana-o11y-ds-frontend/ @grafana/observability-logs @grafana/observability-traces-and-profiling
 /packages/grafana-sql/ @grafana/partner-datasources @grafana/oss-big-tent
 
 # root files, mostly frontend
