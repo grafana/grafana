@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/middleware"
@@ -154,37 +155,35 @@ func errorLogParams(err error) []any {
 	}
 }
 
-type queryCheck struct {
-	key     string
-	checker func(v url.Values) bool
-}
-
 const masking = "hidden"
 
-var sensitiveQueryChecks = [...]queryCheck{
-	{
-		key: "auth_token",
-		checker: func(v url.Values) bool {
-			return v.Has("auth_token")
-		},
+var sensitiveQueryChecks = map[string]func(v map[string]string) bool{
+	"auth_token": func(v map[string]string) bool {
+		if _, ok := v["auth_token"]; ok {
+			return true
+		}
+		return false
 	},
-	{
-		key: "X-Amz-Signature",
-		checker: func(v url.Values) bool {
-			return v.Has("X-Amz-Signature")
-		},
+	"x-amz-signature": func(v map[string]string) bool {
+		if _, ok := v["x-amz-signature"]; ok {
+			return true
+		}
+		return false
 	},
-	{
-		key: "X-Goog-Signature",
-		checker: func(v url.Values) bool {
-			return v.Has("X-Goog-Signature")
-		},
+	"x-goog-signature": func(v map[string]string) bool {
+		if _, ok := v["x-goog-signature"]; ok {
+			return true
+		}
+		return false
 	},
-	{
-		key: "sig",
-		checker: func(v url.Values) bool {
-			return v.Has("sig") && v.Has("sv")
-		},
+	"sig": func(v map[string]string) bool {
+		if _, ok := v["sig"]; !ok {
+			return false
+		}
+		if _, ok := v["sv"]; ok {
+			return true
+		}
+		return false
 	},
 }
 
@@ -199,13 +198,24 @@ func SanitizeURI(s string) (string, error) {
 	}
 
 	// strip out sensitive query strings
-	values := u.Query()
-	for _, check := range sensitiveQueryChecks {
-		if check.checker(values) {
-			values.Set(check.key, masking)
+	urlValues := u.Query()
+	keys := lowerToKeyMap(urlValues)
+	for key, checker := range sensitiveQueryChecks {
+		if originalKey, ok := keys[key]; ok {
+			if checker(keys) {
+				urlValues.Set(originalKey, masking)
+			}
 		}
 	}
-	u.RawQuery = values.Encode()
+	u.RawQuery = urlValues.Encode()
 
 	return u.String(), nil
+}
+
+func lowerToKeyMap(values url.Values) map[string]string {
+	lm := make(map[string]string)
+	for key := range values {
+		lm[strings.ToLower((key))] = key
+	}
+	return lm
 }
