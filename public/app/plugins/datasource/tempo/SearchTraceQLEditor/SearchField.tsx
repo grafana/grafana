@@ -183,6 +183,12 @@ const SearchField = ({
         />
         {!hideValue && (
           <Select
+            /**
+             * Trace cardinality means we need to use the virtualized variant of the Select component.
+             * For example the number of span names being returned can easily reach 10s of thousands,
+             * which is enough to cause a user's web browser to seize up
+             */
+            virtualized
             className={styles.dropdown}
             inputId={`${filter.id}-value`}
             isLoading={isLoadingValues}
