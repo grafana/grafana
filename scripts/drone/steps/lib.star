@@ -1275,7 +1275,7 @@ def verify_grafanacom_step():
             # Authenticate gcloud
             "printenv GCP_KEY > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
-            "./drone/verify-grafanacom.sh",
+            "for i in {{1..5}}; do ./drone/verify-grafanacom.sh && break || sleep 60; done",
         ],
         "depends_on": ["publish-grafanacom"],
     }
