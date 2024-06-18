@@ -5,7 +5,7 @@ export const ENGLISH_US = 'en-US';
 export const FRENCH_FRANCE = 'fr-FR';
 export const SPANISH_SPAIN = 'es-ES';
 export const GERMAN_GERMANY = 'de-DE';
-export const BRAZILIAN_PORTUGUESE = 'pt-BR';
+export const BRAZILIAN_PORTUGUESE = 'pt-br';
 export const CHINESE_SIMPLIFIED = 'zh-Hans';
 export const PSEUDO_LOCALE = 'pseudo-LOCALE';
 
@@ -105,6 +105,15 @@ if (process.env.NODE_ENV !== 'test') {
   }
 }
 
-export const VALID_LANGUAGES = LANGUAGES.map((v) => v.code);
+export const VALID_LANGUAGES = LANGUAGES.flatMap((v) => {
+  let codes = [v.code];
+  const codeSplit = v.code.split('-');
+  // This makes sure that if the language was added with a lowercase country code,
+  // we also add the valid version (i.e. pt-br -> pt-BR)
+  if (codeSplit.length === 2 && codeSplit[1].toUpperCase() !== codeSplit[1]) {
+    codes.push(`${codeSplit[0]}-${codeSplit[1].toUpperCase()}`);
+  }
+  return codes;
+});
 
 export const NAMESPACES = uniq(LANGUAGES.flatMap((v) => Object.keys(v.loader)));
