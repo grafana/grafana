@@ -77,7 +77,7 @@ For every dashboard and data source, you can access usage information.
 
 To see dashboard usage information, click the dashboard insights icon in the header.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights-11.2.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
 
 Dashboard insights show the following information:
 
