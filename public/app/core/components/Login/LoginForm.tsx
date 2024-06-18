@@ -83,5 +83,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
       width: '100%',
     }),
+
+    skipButton: css({
+      alignSelf: 'flex-start',
+    }),
   };
 };
