@@ -146,7 +146,7 @@ export const ConnectionSVG = ({
 
           // let { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
           let { x1, y1, x2, y2 } = calculateCoordinates2(source, target, info);
-          console.log('x1, y1, x2, y2', x1, y1, x2, y2);
+          // console.log('x1, y1, x2, y2', x1, y1, x2, y2);
           // x1 = x1 - Math.min(x1, x2);
           // y1 = y1 - Math.min(y1, y2);
           // x2 = x2 - Math.min(x1, x2);
@@ -546,8 +546,6 @@ export const ConnectionSVG = ({
         })
     );
   };
-
-  console.log(scene.width, scene.height);
 
   return (
     <>
