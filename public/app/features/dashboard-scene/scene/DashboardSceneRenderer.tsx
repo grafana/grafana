@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { getNavModel } from 'app/core/selectors/navModel';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 import { useSelector } from 'app/types';
@@ -43,6 +44,16 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     </div>
   );
 
+  const notFound = meta.dashboardNotFound && <EntityNotFound entity="Dashboard" key="dashboard-not-found" />;
+
+  let body = [withPanels];
+
+  if (notFound) {
+    body = [notFound];
+  } else if (isEmpty) {
+    body = [emptyState, withPanels];
+  }
+
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       {editPanel && <editPanel.Component model={editPanel} />}
@@ -55,9 +66,10 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             scopes && isScopesExpanded && styles.pageContainerWithScopesExpanded
           )}
         >
-          {scopes && <scopes.Component model={scopes} />}
+          {scopes && !meta.dashboardNotFound && <scopes.Component model={scopes} />}
           <NavToolbarActions dashboard={model} />
-          {!isHomePage && controls && hasControls && (
+
+          {!isHomePage && !meta.dashboardNotFound && controls && hasControls && (
             <div
               className={cx(styles.controlsWrapper, scopes && !isScopesExpanded && styles.controlsWrapperWithScopes)}
             >
@@ -71,10 +83,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             className={styles.scrollbarContainer}
             testId={selectors.pages.Dashboard.DashNav.scrollContainer}
           >
-            <div className={cx(styles.canvasContent, isHomePage && styles.homePagePadding)}>
-              <>{isEmpty && emptyState}</>
-              {withPanels}
-            </div>
+            <div className={cx(styles.canvasContent, isHomePage && styles.homePagePadding)}>{body}</div>
           </CustomScrollbar>
         </div>
       )}
