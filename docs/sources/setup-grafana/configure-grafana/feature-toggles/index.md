@@ -62,7 +62,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `logRowsPopoverMenu`               | Enable filtering menu displayed when text of a log line is selected                                                                                                                                                          | Yes                |
 | `lokiQueryHints`                   | Enables query hints for Loki                                                                                                                                                                                                 | Yes                |
 | `alertingQueryOptimization`        | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
-| `betterPageScrolling`              | Removes CustomScrollbar from the UI, relying on native browser scrollbars                                                                                                                                                    | Yes                |
 | `cloudWatchNewLabelParsing`        | Updates CloudWatch label parsing to be more accurate                                                                                                                                                                         | Yes                |
 | `pluginProxyPreserveTrailingSlash` | Preserve plugin proxy trailing slash.                                                                                                                                                                                        |                    |
 
@@ -101,6 +100,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                                                             |
 | `newPDFRendering`                      | New implementation for the dashboard-to-PDF rendering                                                                                                                                        |
 | `ssoSettingsSAML`                      | Use the new SSO Settings API to configure the SAML connector                                                                                                                                 |
+| `openSearchBackendFlowEnabled`         | Enables the backend query flow for Open Search datasource plugin                                                                                                                             |
 
 ## Experimental feature toggles
 
@@ -190,6 +190,7 @@ Experimental features might be changed or removed without prior notice.
 | `alertingCentralAlertHistory`               | Enables the new central alert history.                                                                                                                                                                                                                                            |
 | `azureMonitorPrometheusExemplars`           | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                                                                                                                                      |
 | `pinNavItems`                               | Enables pinning of nav items                                                                                                                                                                                                                                                      |
+| `databaseReadReplica`                       | Use a read replica for some database queries.                                                                                                                                                                                                                                     |
 
 ## Development feature toggles
 

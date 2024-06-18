@@ -200,3 +200,18 @@ export function setAllSelection(
     }
   }
 }
+
+export function clearFolders(state: BrowseDashboardsState, action: PayloadAction<Array<string | undefined>>) {
+  const folderUIDs = Array.isArray(action.payload) ? action.payload : [action.payload];
+
+  for (const folderUID of folderUIDs) {
+    if (!folderUID) {
+      state.rootItems = undefined;
+    } else {
+      state.childrenByParentUID[folderUID] = undefined;
+
+      // close the folder to require it to be refetched next time its opened
+      state.openFolders[folderUID] = false;
+    }
+  }
+}
