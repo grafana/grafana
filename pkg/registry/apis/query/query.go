@@ -197,10 +197,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 	// Add user headers... here or in client.QueryData
 	pluginID := req.PluginId
 	pluginUID := req.UID
-	ctxLogger := b.log.FromContext(ctx)
-	if logger, ok := ctxLogger.(*log.ConcreteLogger); ok {
-		ctxLogger = log.WithPrefix(logger, "datasource", pluginID, "dsUID", pluginUID)
-	}
+	ctxLogger := b.log.New("datasource", pluginID, "dsUID", pluginUID).FromContext(ctx)
 	runComparison := b.peformComparison(req, ctxLogger)
 	var comparisonReq datasourceRequest
 	if runComparison {
