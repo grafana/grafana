@@ -68,7 +68,9 @@ Choosing how, when, and where to send your alert notifications is an important p
 
 Start defining your [contact points](ref:contact-points) to specify how to receive your alert notifications. Then, configure your alert rules to send their alerts to either a contact point or use the [Notification Policy Tree](#notification-policies) to flexibly route alerts to contact points.
 
-{{< figure src="/media/docs/alerting/alerting-configure-notifications.svg" max-width="750px" alt="Configure alerts to send notifications to a contact point or via notification policies" caption="Configure alerts to send notifications to a contact point or via notification policies" >}}
+<br/>
+
+{{< figure src="/media/docs/alerting/alerting-configure-notifications-v2.png" max-width="750px" alt="Configure alert rules to forward firing alerts directly to a contact point or through notification policies" caption="Configure alert rules to forward firing alerts directly to a contact point or through notification policies" >}}
 
 ## How it works at a glance
 
