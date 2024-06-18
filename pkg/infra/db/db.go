@@ -62,6 +62,15 @@ func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *sqlstore.SQLStore {
 	return db
 }
 
+func InitTestReplDBWithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.ReplStore, *setting.Cfg) {
+	return sqlstore.InitTestReplDB(t, opts...)
+}
+
+func InitTestReplDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *sqlstore.ReplStore {
+	db, _ := InitTestReplDBWithCfg(t, opts...)
+	return db
+}
+
 func InitTestDBWithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.SQLStore, *setting.Cfg) {
 	return sqlstore.InitTestDB(t, opts...)
 }
