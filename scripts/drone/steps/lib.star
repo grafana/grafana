@@ -1275,6 +1275,9 @@ def verify_grafanacom_step():
             # Authenticate gcloud
             "printenv GCP_KEY > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
+
+            # There may be a slight lag between when artifacts are uploaded to Google Storage,
+            # and when they are available on the website. This sould account for that discrepancy.
             "for i in {{1..5}}; do ./drone/verify-grafanacom.sh && break || sleep 60; done",
         ],
         "depends_on": ["publish-grafanacom"],
