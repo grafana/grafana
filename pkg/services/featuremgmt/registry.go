@@ -1315,6 +1315,14 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
 		},
+		{
+			Name:              "ssoSettingsLDAP",
+			Description:       "Use the new SSO Settings API to configure LDAP",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
 	}
 )
 

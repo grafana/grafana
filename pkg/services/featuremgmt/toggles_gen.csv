@@ -175,3 +175,4 @@ azureMonitorPrometheusExemplars,experimental,@grafana/partner-datasources,false,
 pinNavItems,experimental,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
 openSearchBackendFlowEnabled,preview,@grafana/aws-datasources,false,false,false
+ssoSettingsLDAP,experimental,@grafana/identity-access-team,false,false,false
