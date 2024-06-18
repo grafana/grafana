@@ -410,7 +410,7 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
       }),
       option('chat_id', 'Chat ID', 'ID of the chat where to send the messages', {
         required: true,
-        setValueAs: (value) => (typeof value === 'string' ? parseInt(value, 10) : 0),
+        setValueAs: (value) => (typeof value === 'string' ? parseInt(value, 10) : value),
       }),
       option('message', 'Message', 'Message template', {
         placeholder: '{{ template "webex.default.message" .}}',
