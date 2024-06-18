@@ -37,6 +37,7 @@ export const PermanentlyDeleteModal = ({
       confirmButtonVariant="destructive"
       onConfirm={onDelete}
       onDismiss={onDismiss}
+      {...props}
     />
   );
 };

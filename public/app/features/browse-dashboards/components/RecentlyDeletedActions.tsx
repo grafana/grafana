@@ -65,12 +65,10 @@ export function RecentlyDeletedActions() {
   };
 
   const showDeleteModal = () => {
-    //TODO: Modal doesn't open
     appEvents.publish(
       new ShowModalReactEvent({
         component: PermanentlyDeleteModal,
         props: {
-          //TODO: review the following
           selectedDashboards,
           onConfirm: onDelete,
           isLoading: isDeleteLoading,
