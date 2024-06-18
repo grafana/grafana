@@ -1,4 +1,5 @@
 import { cx } from '@emotion/css';
+import { intervalToDuration } from 'date-fns';
 import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
@@ -14,6 +15,7 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList, Text } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
+import { formatDate, formatDuration } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -25,6 +27,7 @@ import { ExplainScorePopup } from './ExplainScorePopup';
 import { TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 175;
+const DURATION_COLUMN_WIDTH = 200;
 const DATASOURCE_COLUMN_WIDTH = 200;
 
 export const generateColumns = (
@@ -144,14 +147,15 @@ export const generateColumns = (
   const showDeletedRemaining =
     response.view.fields.permanentlyDeleteDate && hasValue(response.view.fields.permanentlyDeleteDate);
 
-  width = TYPE_COLUMN_WIDTH;
   if (showDeletedRemaining && access.permanentlyDeleteDate) {
-    // Deleted time remaining column takes the place of the type column
+    width = DURATION_COLUMN_WIDTH;
     columns.push(makeDeletedRemainingColumn(response, access.permanentlyDeleteDate, width, styles));
+    availableWidth -= width;
   } else {
+    width = TYPE_COLUMN_WIDTH;
     columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles));
+    availableWidth -= width;
   }
-  availableWidth -= width;
 
   // Show datasources if we have any
   if (access.ds_uid && onDatasourceChange) {
@@ -346,21 +350,32 @@ function makeDeletedRemainingColumn(
   deletedField: Field<Date | undefined>,
   width: number,
   styles: Record<string, string>
-) {
+): TableColumn {
   return {
     id: 'column-delete-age',
     field: deletedField,
-    Header: t('search.results-table.deleted-remaining-header', 'Time remaining (todo)'),
+    Header: t('search.results-table.deleted-remaining-header', 'Time remaining'),
     Cell: (p) => {
       const i = p.row.index;
-
       const deletedDate = deletedField.values[i];
-      // PR TODO: we shouldn't use Intl.DateTimeFormat here directly
-      const formatted = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(deletedDate);
+
+      if (!deletedDate || !response.isItemLoaded(p.row.index)) {
+        return (
+          <div {...p.cellProps} className={cx(styles.cell, styles.typeCell)}>
+            <Skeleton width={100} />
+          </div>
+        );
+      }
+
+      const duration = calcCourseDuration(new Date(), deletedDate);
+      const isDeletingSoon = duration.days === 0 && duration.hours === 0 && duration.minutes === 0;
+      const formatted = isDeletingSoon
+        ? t('search.results-table.deleted-less-than-1-min', '< 1 min')
+        : formatDuration(duration);
 
       return (
         <div {...p.cellProps} className={cx(styles.cell, styles.typeCell)}>
-          {!response.isItemLoaded(p.row.index) ? <Skeleton width={100} /> : formatted}
+          {formatted}
         </div>
       );
     },
@@ -480,4 +495,36 @@ function getDisplayValue({
     return '-';
   }
   return formattedValueToString(getDisplay(value));
+}
+
+const MILLISECONDS_IN_MINUTE = 60 * 1000;
+const MINUTES_IN_HOUR = 60;
+const HOURS_IN_DAY = 24;
+
+/**
+ * Calculates the rough duration with between two dates, with varying precision depending on
+ * how far apart the dates are. e.g:
+ *  - 20 days, 13 hours, 43 minutes apart, 35 seconds - returns { days: 20, hours: 0, minutes: 0 }
+ *  - 13 hours, 43 minutes apart, 35 seconds - returns { days: 0, hours: 13, minutes: 0 }
+ *  - 43 minutes apart, 35 seconds - returns { days: 0, hours: 0, minutes: 43 }
+ *  - 35 seconds - returns { days: 0, hours: 0, minutes: 0 }
+ */
+function calcCourseDuration(start: Date, end: Date) {
+  let minutes = (end.getTime() - start.getTime()) / MILLISECONDS_IN_MINUTE;
+
+  let hours = minutes > MINUTES_IN_HOUR ? Math.floor(minutes / MINUTES_IN_HOUR) : 0;
+  if (hours > 0) {
+    minutes = 0;
+  }
+
+  let days = hours > HOURS_IN_DAY ? Math.floor(hours / HOURS_IN_DAY) : 0;
+  if (days > 0) {
+    hours = 0;
+  }
+
+  return {
+    days,
+    hours,
+    minutes,
+  };
 }
