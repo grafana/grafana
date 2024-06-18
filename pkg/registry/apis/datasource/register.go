@@ -25,7 +25,6 @@ import (
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
@@ -238,11 +237,11 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 			},
 		),
 	}
-	storage[conn.StoragePath("query")] = &subQueryREST{logger: log.New("apis.datasource.query"), builder: b}
-	storage[conn.StoragePath("health")] = &subHealthREST{logger: log.New("apis.datasource.health"), builder: b}
+	storage[conn.StoragePath("query")] = &subQueryREST{builder: b}
+	storage[conn.StoragePath("health")] = &subHealthREST{builder: b}
 
 	// TODO! only setup this endpoint if it is implemented
-	storage[conn.StoragePath("resource")] = &subResourceREST{logger: log.New("apis.datasource.resource"), builder: b}
+	storage[conn.StoragePath("resource")] = &subResourceREST{builder: b}
 
 	// Frontend proxy
 	if len(b.pluginJSON.Routes) > 0 {

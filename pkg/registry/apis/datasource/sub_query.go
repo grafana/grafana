@@ -11,13 +11,11 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type subQueryREST struct {
 	builder *DataSourceAPIBuilder
-	logger  log.Logger
 }
 
 var (
@@ -75,11 +73,9 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 		ctx = contextualMiddlewares(ctx)
-		rsp, err := panicGuard(r.logger, func() (*backend.QueryDataResponse, error) {
-			return r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
-				Queries:       queries,
-				PluginContext: pluginCtx,
-			})
+		rsp, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
+			Queries:       queries,
+			PluginContext: pluginCtx,
 		})
 		if err != nil {
 			responder.Error(err)
