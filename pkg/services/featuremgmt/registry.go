@@ -1127,14 +1127,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:         "betterPageScrolling",
-			Description:  "Removes CustomScrollbar from the UI, relying on native browser scrollbars",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:              "authAPIAccessTokenAuth",
 			Description:       "Enables the use of Auth API access tokens for authentication",
 			Stage:             FeatureStageExperimental,
@@ -1330,6 +1322,13 @@ var (
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:        "databaseReadReplica",
+			Description: "Use a read replica for some database queries.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendServicesSquad,
+			Expression:  "false", // enabled by default
 		},
 	}
 )
