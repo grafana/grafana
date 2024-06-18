@@ -7,13 +7,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import {
-  config,
-  getBackendSrv,
-  getPluginLinkExtensions,
-  locationService,
-  setPluginImportUtils,
-} from '@grafana/runtime';
+import { config, getPluginLinkExtensions, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
