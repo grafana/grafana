@@ -158,7 +158,7 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, map[string]string{
 			"grafana.app/originName": "test",
 			"grafana.app/originPath": "a/b/c",
-			"grafana.app/originKey":  "kkk",
+			"grafana.app/originHash": "kkk",
 			"grafana.app/folder":     "folderUID",
 		}, res.GetAnnotations())
 
@@ -192,7 +192,7 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, map[string]string{
 			"grafana.app/originName": "test",
 			"grafana.app/originPath": "a/b/c",
-			"grafana.app/originKey":  "kkk",
+			"grafana.app/originHash": "kkk",
 			"grafana.app/folder":     "folderUID",
 		}, obj.GetAnnotations())
 
@@ -215,7 +215,7 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, map[string]string{
 			"grafana.app/originName": "test",
 			"grafana.app/originPath": "a/b/c",
-			"grafana.app/originKey":  "kkk",
+			"grafana.app/originHash": "kkk",
 			"grafana.app/folder":     "folderUID",
 		}, obj2.GetAnnotations())
 
