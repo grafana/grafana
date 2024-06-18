@@ -1152,6 +1152,33 @@ def publish_grafanacom_step(ver_mode):
         ],
     }
 
+def verify_grafanacom_step():
+    return {
+        "name": "verify-grafanacom",
+        "image": images["node"],
+        "environment": {
+            "GCOM_API_KEY": from_secret("grafana_api_key"),
+            "GCP_KEY": from_secret("gcp_grafanauploads"),
+        },
+        "commands": [
+            # Download and install `curl` - it isn't available inside of the `node:{version}-alpine` docker image.
+            "apk add curl",
+
+            # Download/install gcom utility
+            "curl -L -o /usr/local/bin/gcom https://github.com/grafana/gcom/releases/latest/download/gcom-linux-amd64",
+            "chmod +x /usr/local/bin/gcom",
+
+            # Authenticate gcloud
+            "printenv GCP_KEY > /tmp/key.json",
+            "gcloud auth activate-service-account --key-file=/tmp/key.json",
+
+            # There may be a slight lag between when artifacts are uploaded to Google Storage,
+            # and when they are available on the website. This sould account for that discrepancy.
+            "for i in {{1..5}}; do ./drone/verify-grafanacom.sh && break || sleep 60; done",
+        ],
+        "depends_on": ["publish-grafanacom"],
+    }
+
 def publish_linux_packages_step(package_manager = "deb"):
     return {
         "name": "publish-linux-packages-{}".format(package_manager),
@@ -1254,31 +1281,4 @@ def slack_step(channel, template, secret):
             "channel": channel,
             "template": template,
         },
-    }
-
-def verify_grafanacom_step():
-    return {
-        "name": "verify-grafanacom",
-        "image": images["node"],
-        "environment": {
-            "GCOM_API_KEY": from_secret("grafana_api_key"),
-            "GCP_KEY": from_secret("gcp_grafanauploads"),
-        },
-        "commands": [
-            # Download and install `curl` - it isn't available inside of the `node:{version}-alpine` docker image.
-            "apk add curl",
-
-            # Download/install gcom utility
-            "curl -L -o /usr/local/bin/gcom https://github.com/grafana/gcom/releases/latest/download/gcom-linux-amd64",
-            "chmod +x /usr/local/bin/gcom",
-
-            # Authenticate gcloud
-            "printenv GCP_KEY > /tmp/key.json",
-            "gcloud auth activate-service-account --key-file=/tmp/key.json",
-
-            # There may be a slight lag between when artifacts are uploaded to Google Storage,
-            # and when they are available on the website. This sould account for that discrepancy.
-            "for i in {{1..5}}; do ./drone/verify-grafanacom.sh && break || sleep 60; done",
-        ],
-        "depends_on": ["publish-grafanacom"],
     }
