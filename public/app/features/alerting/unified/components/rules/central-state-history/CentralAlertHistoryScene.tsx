@@ -27,8 +27,8 @@ import {
 
 import { DataSourceInformation } from '../../../home/Insights';
 
-import { HistoryEventsListObject } from './CentralAlertHistory';
 import { alertStateHistoryDatasource, useRegisterHistoryRuntimeDataSource } from './CentralHistoryRuntimeDataSource';
+import { HistoryEventsListObject } from './EventListSceneObject';
 
 export const LABELS_FILTER = 'filter';
 /**
@@ -83,8 +83,12 @@ export const CentralAlertHistoryScene = () => {
 
   return <scene.Component model={scene} />;
 };
-
-function getEventsSceneObject(ashDs: DataSourceInformation) {
+/**
+ * Creates a SceneFlexItem with a timeseries panel that shows the events.
+ * The query uses a runtime datasource that fetches the events from the history api.
+ * @param alertStateHistoryDataSource the datasource information for the runtime datasource
+ */
+function getEventsSceneObject(alertStateHistoryDataSource: DataSourceInformation) {
   return new EmbeddedScene({
     controls: [],
     body: new SceneFlexLayout({
@@ -93,7 +97,7 @@ function getEventsSceneObject(ashDs: DataSourceInformation) {
         new SceneFlexItem({
           ySizing: 'content',
           body: new SceneFlexLayout({
-            children: [getEventsScenesFlexItem(ashDs)],
+            children: [getEventsScenesFlexItem(alertStateHistoryDataSource)],
           }),
         }),
       ],
@@ -101,6 +105,11 @@ function getEventsSceneObject(ashDs: DataSourceInformation) {
   });
 }
 
+/**
+ * Creates a SceneQueryRunner with the datasource information for the runtime datasource.
+ * @param datasource the datasource information for the runtime datasource
+ * @returns the SceneQueryRunner
+ */
 function getSceneQuery(datasource: DataSourceInformation) {
   const query = new SceneQueryRunner({
     datasource: datasource,

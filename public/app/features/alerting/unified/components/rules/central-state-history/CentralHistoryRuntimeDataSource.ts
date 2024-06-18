@@ -8,7 +8,7 @@ import { dispatch } from 'app/store/store';
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { DataSourceInformation } from '../../../home/Insights';
 
-import { LIMIT_EVENTS } from './CentralAlertHistory';
+import { LIMIT_EVENTS } from './EventListSceneObject';
 import { historyResultToDataFrame } from './utils';
 
 const historyDataSourceUid = '__history_api_ds__';
@@ -54,6 +54,12 @@ class HistoryAPIDatasource extends RuntimeDataSource {
   }
 }
 
+/**
+ * Fetch the history events from the history api.
+ * @param from the start time
+ * @param to the end time
+ * @returns the history events only filtered by time
+ */
 export const getHistory = async (from: number, to: number) => {
   return await dispatch(
     stateHistoryApi.endpoints.getRuleHistory.initiate(

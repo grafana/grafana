@@ -10,15 +10,14 @@ import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 import { LABELS_FILTER } from './CentralAlertHistoryScene';
 
 const GROUPING_INTERVAL = 10 * 1000; // 10 seconds
-const QUERY_PARAM_PREFIX = 'var-';
+const QUERY_PARAM_PREFIX = 'var-'; // Prefix used by Grafana to sync variables in the URL
 /*
- * This function is used to convert the history response to a DataFrame list.
+ * This function is used to convert the history response to a DataFrame list and filter the data by labels.
  * The response is a list of log records, each log record has a timestamp and a line.
  * We group all records by alert instance (unique set of labels) and create a DataFrame for each group (instance).
  * This allows us to be able to filter by labels in the groupDataFramesByTime function.
  */
 export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
-  // merge timestamp with "line"
   const tsValues = data?.data?.values[0] ?? [];
   const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
   const lines = data?.data?.values[1] ?? [];
@@ -43,8 +42,8 @@ export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
     return logRecordsToDataFrame(key, records);
   });
 
-  // Group DataFrames by time
-  return groupDataFramesByTime(dataFrames);
+  // Group DataFrames by time and filter by labels
+  return groupDataFramesByTimeAndFilterByLabels(dataFrames);
 }
 
 // Scenes sync variables in the URL adding a prefix to the variable name.
@@ -54,10 +53,10 @@ function getFilterInQueryParams() {
 }
 
 /*
- * This function groups the data frames by time.
+ * This function groups the data frames by time and filters them by labels.
  * The interval is set to 10 seconds.
  * */
-function groupDataFramesByTime(dataFrames: DataFrame[]): DataFrame[] {
+function groupDataFramesByTimeAndFilterByLabels(dataFrames: DataFrame[]): DataFrame[] {
   // Filter data frames by labels. This is used to filter out the data frames that do not match the query.
   const filterValue = getFilterInQueryParams();
   const dataframesFiltered = dataFrames.filter((frame) => {
