@@ -214,7 +214,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
         // Added temporarily to allow skipping non-compatible variables
         .filter((v): v is SceneVariable => Boolean(v));
 
-      console.log('variableObjects', variableObjects);
       variables = new SceneVariableSet({
         variables: variableObjects,
       });
@@ -328,7 +327,6 @@ export function createVariableForSnapshots(variable: TypedVariableModel): SceneV
   if (variable.type === 'interval') {
     const intervals = getIntervalsFromQueryString(variable.query);
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
-    console.log('currentInterval', currentInterval);
     snapshotVariable = new SnapshotVariable({
       name: variable.name,
       label: variable.label,
@@ -372,7 +370,6 @@ export function createVariableForSnapshots(variable: TypedVariableModel): SceneV
     filters: filters,
     hide: variable.hide,
   });
-  console.log('customVariable', snapshotVariable);
   return snapshotVariable;
 }
 

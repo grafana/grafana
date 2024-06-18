@@ -15,9 +15,8 @@ import {
 import { AdHocFilterRenderer } from 'app/features/variables/adhoc/picker/AdHocFilterRenderer';
 
 export interface SnapshotVariableState extends MultiValueVariableState {
-  query: string;
-  filters: AdHocVariableFilter[];
-  isReadOnly: boolean;
+  query?: string;
+  filters?: AdHocVariableFilter[];
 }
 
 export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> {
@@ -84,7 +83,6 @@ export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> 
         });
       });
     }
-    //TODO:fix the typescript error
     return renderSelectForVariable(model);
   };
   // we will always preserve the current value and text for snapshots
