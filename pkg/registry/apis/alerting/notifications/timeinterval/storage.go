@@ -9,6 +9,8 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	model "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -27,7 +29,13 @@ func (s storage) Compare(storageObj, legacyObj runtime.Object) bool {
 	return false
 }
 
-func NewStorage(legacySvc TimeIntervalService, namespacer request.NamespaceMapper, scheme *runtime.Scheme, desiredMode grafanarest.DualWriterMode, optsGetter generic.RESTOptionsGetter) (rest.Storage, error) {
+func NewStorage(
+	legacySvc TimeIntervalService,
+	namespacer request.NamespaceMapper,
+	scheme *runtime.Scheme,
+	desiredMode grafanarest.DualWriterMode,
+	optsGetter generic.RESTOptionsGetter,
+	reg prometheus.Registerer) (rest.Storage, error) {
 	legacyStore := &legacyStorage{
 		service:    legacySvc,
 		namespacer: namespacer,
@@ -65,7 +73,7 @@ func NewStorage(legacySvc TimeIntervalService, namespacer request.NamespaceMappe
 		if err := s.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		return grafanarest.NewDualWriter(desiredMode, legacyStore, storage{Store: s}), nil
+		return grafanarest.NewDualWriter(desiredMode, legacyStore, storage{Store: s}, reg), nil
 	}
 	return legacyStore, nil
 }

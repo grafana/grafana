@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -71,10 +72,16 @@ func (t NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(notificationsModels.SchemeGroupVersion)
 }
 
-func (t NotificationsAPIBuilder) GetAPIGroupInfo(scheme *runtime.Scheme, codecs serializer.CodecFactory, optsGetter generic.RESTOptionsGetter, desiredMode grafanarest.DualWriterMode) (*genericapiserver.APIGroupInfo, error) {
+func (t NotificationsAPIBuilder) GetAPIGroupInfo(
+	scheme *runtime.Scheme,
+	codecs serializer.CodecFactory,
+	optsGetter generic.RESTOptionsGetter,
+	desiredMode grafanarest.DualWriterMode,
+	reg prometheus.Registerer,
+) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(notificationsModels.GROUP, scheme, metav1.ParameterCodec, codecs)
 
-	intervals, err := timeInterval.NewStorage(t.ng.Api.MuteTimings, t.namespacer, scheme, desiredMode, optsGetter)
+	intervals, err := timeInterval.NewStorage(t.ng.Api.MuteTimings, t.namespacer, scheme, desiredMode, optsGetter, reg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize time-interval storage: %w", err)
 	}
