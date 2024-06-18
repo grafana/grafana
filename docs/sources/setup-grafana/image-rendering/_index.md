@@ -209,6 +209,10 @@ HTTP_PORT=0
 
 #### HTTP protocol
 
+{{% admonition type="note" %}}
+HTTPS protocol is supported from v3.11.0 and later.
+{{% /admonition %}}
+
 Change the protocol of the server, it can be `http` or `https`. Default is `http`.
 
 ```json
