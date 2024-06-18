@@ -90,7 +90,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 **To create a dashboard**:
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the primary menu.
 1. Click **New** and select **New Dashboard**.
 1. On the empty dashboard, click **+ Add visualization**.
 
@@ -110,14 +110,10 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    For more information about data sources, refer to [Data sources](ref:data-sources) for specific guidelines.
 
 1. Write or construct a query in the query language of your data source.
-
-1. Click the Refresh dashboard icon to query the data source.
-
-   ![Refresh dashboard icon](/media/docs/grafana/dashboards/screenshot-refresh-dashboard-9.5.png)
-
+1. Click **Refresh** to query the data source.
 1. In the visualization list, select a visualization type.
 
-   ![Visualization selector](/media/docs/grafana/dashboards/screenshot-select-visualization-9-5.png)
+   ![Visualization selector](/media/docs/grafana/dashboards/screenshot-select-visualization-11-2.png)
 
    Grafana displays a preview of your query results with the visualization applied.
 
@@ -134,18 +130,19 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    - [Configure thresholds](ref:configure-thresholds)
    - [Configure standard options](ref:configure-standard-options)
 
-1. When you've finished editing your panel, click **Save** to save the dashboard.
-
-   Alternatively, click **Apply** if you want to see your changes applied to the dashboard first. Then click the save icon in the dashboard header.
-
+1. When you've finished editing your panel, click **Save dashboard**.
 1. Enter a title and description for your dashboard or have Grafana create them using [generative AI features](ref:generative-ai-features).
 1. Select a folder, if applicable.
 1. Click **Save**.
-1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the drop-down.
+1. To add more panels to the dashboard, click **Back to dashboard**.
+   Then click **Add** in the dashboard header and select **Visualization** in the drop-down.
 
    ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
 
    When you add additional panels to the dashboard, you're taken straight to the **Edit panel** view.
+
+1. When you've saved all the changes you want to make to the dashboard, click **Exit edit**.
+   Now, when you want to make more changes to the saved dashboard, click **Edit**.
 
 ## Copy an existing dashboard
 
@@ -153,8 +150,8 @@ To copy an existing dashboard, follow these steps:
 
 1. Click **Dashboards** in the primary menu.
 1. Open the dashboard to be copied.
-1. Click **Settings** (gear icon) in the top right of the dashboard.
-1. Click **Save as** in the top-right corner of the dashboard.
+1. Click **Edit**.
+1. Click the **Save dashboard** drop-down and select **Save as copy**.
 1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
 
    By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is located in the same folder.
@@ -173,7 +170,7 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 
 **To configure repeating rows:**
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the primary menu.
 1. Navigate to the dashboard you want to work on.
 1. At the top of the dashboard, click **Add** and select **Row** in the drop-down.
 
@@ -200,7 +197,7 @@ For example, in a dashboard:
 
 You can place a panel on a dashboard in any location.
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the primary menu.
 1. Navigate to the dashboard you want to work on.
 1. Click the panel title and drag the panel to the new location.
 
@@ -208,6 +205,6 @@ You can place a panel on a dashboard in any location.
 
 You can size a dashboard panel to suits your needs.
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the primary menu.
 1. Navigate to the dashboard you want to work on.
 1. To adjust the size of the panel, click and drag the lower-right corner of the panel.
