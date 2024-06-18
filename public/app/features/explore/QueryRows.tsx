@@ -1,15 +1,18 @@
 import { createSelector } from '@reduxjs/toolkit';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { CoreApp, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import { Modal } from '@grafana/ui';
+import { t } from '@grafana/ui/src/utils/i18n';
 import { useDispatch, useSelector } from 'app/types';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
+import { AddToLibraryForm } from './QueryLibrary/AddToLibraryForm';
 import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
@@ -33,6 +36,7 @@ const makeSelectors = (exploreId: string) => {
 
 export const QueryRows = ({ exploreId }: Props) => {
   const dispatch = useDispatch();
+  const [openAddQLRefId, setOpenAddQLRefId] = useState<string | undefined>(undefined);
   const { getQueries, getDatasourceInstanceSettings, getQueryResponse, getHistory, getEventBridge } = useMemo(
     () => makeSelectors(exploreId),
     [exploreId]
@@ -74,6 +78,10 @@ export const QueryRows = ({ exploreId }: Props) => {
     reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
   };
 
+  const onBeginQLSave = (refId: string) => {
+    setOpenAddQLRefId(refId);
+  };
+
   return (
     <QueryEditorRows
       dsSettings={dsSettings}
@@ -84,22 +92,45 @@ export const QueryRows = ({ exploreId }: Props) => {
       onQueryCopied={onQueryCopied}
       onQueryRemoved={onQueryRemoved}
       onQueryToggled={onQueryToggled}
+      onBeginQuerySave={onBeginQLSave}
       data={queryResponse}
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
-      queryRowWrapper={(children, refId) => (
-        <ContentOutlineItem
-          title={refId}
-          icon="arrow"
-          key={refId}
-          panelId="Queries"
-          customTopOffset={-10}
-          level="child"
-        >
-          {children}
-        </ContentOutlineItem>
-      )}
+      queryRowWrapper={(children, refId) => {
+        const query = queries.find((q) => q.refId === refId);
+        return (
+          <>
+            <ContentOutlineItem
+              title={refId}
+              icon="arrow"
+              key={refId}
+              panelId="Queries"
+              customTopOffset={-10}
+              level="child"
+            >
+              {children}
+            </ContentOutlineItem>
+            {query !== undefined && (
+              <Modal
+                title={t('explore.add-to-library-modal.title', 'Add query to Query Library')}
+                isOpen={openAddQLRefId === refId}
+                onDismiss={() => setOpenAddQLRefId(undefined)}
+              >
+                <AddToLibraryForm
+                  onCancel={() => {
+                    setOpenAddQLRefId(undefined);
+                  }}
+                  onSave={function (): void {
+                    setOpenAddQLRefId(undefined);
+                  }}
+                  query={query}
+                />
+              </Modal>
+            )}
+          </>
+        );
+      }}
     />
   );
 };

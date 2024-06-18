@@ -34,6 +34,7 @@ export interface Props {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  onBeginQuerySave?: (refId: string) => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
 }
 
@@ -146,6 +147,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       onQueryRemoved,
       onQueryToggled,
       queryRowWrapper,
+      onBeginQuerySave,
     } = this.props;
 
     return (
@@ -176,6 +178,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       onQueryCopied={onQueryCopied}
                       onQueryRemoved={onQueryRemoved}
                       onQueryToggled={onQueryToggled}
+                      onBeginQuerySave={onBeginQuerySave}
                       queries={queries}
                       app={app}
                       history={history}

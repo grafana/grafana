@@ -65,6 +65,7 @@ export interface Props<TQuery extends DataQuery> {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  onBeginQuerySave?: (refId: string) => void;
   collapsable?: boolean;
 }
 
@@ -361,6 +362,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }));
   };
 
+  onClickSave = () => {
+    this.props.onBeginQuerySave!(this.props.query.refId);
+  };
+
   onClickExample = (query: TQuery) => {
     if (query.datasource === undefined) {
       query.datasource = { type: this.props.dataSource.type, uid: this.props.dataSource.uid };
@@ -453,11 +458,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     return (
       <>
-        {hasQueryLibrary && (
+        {hasQueryLibrary && this.props.onBeginQuerySave !== undefined && (
           <QueryOperationAction
             title={t('query-operation.header.save-to-query-library', 'Save to query library')}
             icon="save"
-            onClick={this.onToggleHelp}
+            onClick={this.onClickSave}
           />
         )}
         {hasEditorHelp && (
