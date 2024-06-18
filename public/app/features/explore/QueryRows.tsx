@@ -121,8 +121,10 @@ export const QueryRows = ({ exploreId }: Props) => {
                   onCancel={() => {
                     setOpenAddQLRefId(undefined);
                   }}
-                  onSave={function (): void {
-                    setOpenAddQLRefId(undefined);
+                  onSave={(isSuccess) => {
+                    if (isSuccess) {
+                      setOpenAddQLRefId(undefined);
+                    }
                   }}
                   query={query}
                 />

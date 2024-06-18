@@ -13,11 +13,11 @@ type Props = {
 
 export const RichHistoryAddToLibrary = ({ query }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [prevAdded, setPrevAdded] = useState(false);
+  const [hasBeenSaved, setHasBeenSaved] = useState(false);
 
   const buttonLabel = t('explore.rich-history-card.add-to-library', 'Add to library');
 
-  return isQueryLibraryEnabled() && !prevAdded ? (
+  return isQueryLibraryEnabled() && !hasBeenSaved ? (
     <>
       <Button variant="secondary" aria-label={buttonLabel} onClick={() => setIsOpen(true)}>
         {buttonLabel}
@@ -30,9 +30,11 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
         <AddToLibraryForm
           onCancel={() => setIsOpen(() => false)}
           query={query}
-          onSave={() => {
-            setIsOpen(false);
-            setPrevAdded(true);
+          onSave={(isSuccess) => {
+            if (isSuccess) {
+              setIsOpen(false);
+              setHasBeenSaved(true);
+            }
           }}
         />
       </Modal>

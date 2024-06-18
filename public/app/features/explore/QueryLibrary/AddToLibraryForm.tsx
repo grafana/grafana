@@ -16,7 +16,7 @@ import { useDatasource } from '../QueryLibrary/utils/useDatasource';
 
 type Props = {
   onCancel: () => void;
-  onSave: () => void;
+  onSave: (isSuccess: boolean) => void;
   query: DataQuery;
 };
 
@@ -40,7 +40,7 @@ export const AddToLibraryForm = ({ onCancel, onSave, query }: Props) => {
   const [addQueryTemplate] = useAddQueryTemplateMutation();
 
   const handleAddQueryTemplate = async (addQueryTemplateCommand: AddQueryTemplateCommand) => {
-    addQueryTemplate(addQueryTemplateCommand)
+    return addQueryTemplate(addQueryTemplateCommand)
       .unwrap()
       .then(() => {
         getAppEvents().publish({
@@ -52,6 +52,12 @@ export const AddToLibraryForm = ({ onCancel, onSave, query }: Props) => {
         return true;
       })
       .catch(() => {
+        getAppEvents().publish({
+          type: AppEvents.alertError.name,
+          payload: [
+            t('explore.rich-history-card.query-template-error', 'Error attempting to add this query to the library'),
+          ],
+        });
         return false;
       });
   };
@@ -66,7 +72,7 @@ export const AddToLibraryForm = ({ onCancel, onSave, query }: Props) => {
     const timestamp = dateTime().toISOString();
     const temporaryDefaultTitle = data.description || `Imported from Explore - ${timestamp}`;
     handleAddQueryTemplate({ title: temporaryDefaultTitle, targets: [query] }).then((isSuccess) => {
-      onSave();
+      onSave(isSuccess);
     });
   };
 
