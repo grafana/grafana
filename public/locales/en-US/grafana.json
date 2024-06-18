@@ -1197,7 +1197,7 @@
     "public": {
       "title": "Public dashboards"
     },
-    "recentlyDeleted": {
+    "recently-deleted": {
       "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
       "title": "Recently Deleted"
     },

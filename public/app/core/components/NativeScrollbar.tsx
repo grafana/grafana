@@ -1,21 +1,12 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef } from 'react';
 
-import { config } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 
-type FlaggedScrollerProps = Parameters<typeof CustomScrollbar>[0];
-
-export default function FlaggedScrollbar(props: FlaggedScrollerProps) {
-  if (config.featureToggles.betterPageScrolling) {
-    return <NativeScrollbar {...props}>{props.children}</NativeScrollbar>;
-  }
-
-  return <CustomScrollbar {...props} />;
-}
+type Props = Parameters<typeof CustomScrollbar>[0];
 
 // Shim to provide API-compatibility for Page's scroll-related props
-function NativeScrollbar({ children, scrollRefCallback, scrollTop, divId }: FlaggedScrollerProps) {
+export default function NativeScrollbar({ children, scrollRefCallback, scrollTop, divId }: Props) {
   const styles = useStyles2(getStyles);
   const ref = useRef<HTMLDivElement>(null);
 
