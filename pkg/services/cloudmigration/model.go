@@ -40,11 +40,13 @@ type CloudMigrationSnapshot struct {
 	UploadURL      string `xorm:"upload_url"`
 	LocalDir       string `xorm:"local_directory"`
 	GMSSnapshotUID string `xorm:"gms_snapshot_uid"`
-	Result         []byte //store raw gms response body
 	ErrorString    string `xorm:"error_string"`
 	Created        time.Time
 	Updated        time.Time
 	Finished       time.Time
+
+	// []MigrateDataResponseItem
+	Result []byte `xorm:"result"` //store raw gms response body
 }
 
 type SnapshotStatus string

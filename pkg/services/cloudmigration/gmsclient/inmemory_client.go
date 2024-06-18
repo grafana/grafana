@@ -2,7 +2,9 @@ package gmsclient
 
 import (
 	"context"
+	"encoding/json"
 	"math/rand"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/util"
@@ -55,4 +57,41 @@ func (c *memoryClientImpl) InitializeSnapshot(context.Context, cloudmigration.Cl
 	}
 
 	return c.snapshot, nil
+}
+
+func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (*cloudmigration.CloudMigrationSnapshot, error) {
+	// just fake an entire response
+	gmsSnapshot := cloudmigration.CloudMigrationSnapshot{
+		Status:         cloudmigration.SnapshotStatusFinished,
+		GMSSnapshotUID: util.GenerateShortUID(),
+		Result:         []byte{},
+		Finished:       time.Now(),
+	}
+
+	result := []cloudmigration.MigrateDataResponseItem{
+		{
+			Type:   cloudmigration.DashboardDataType,
+			RefID:  util.GenerateShortUID(),
+			Status: cloudmigration.ItemStatusOK,
+		},
+		{
+			Type:   cloudmigration.DatasourceDataType,
+			RefID:  util.GenerateShortUID(),
+			Status: cloudmigration.ItemStatusError,
+			Error:  "fake error",
+		},
+		{
+			Type:   cloudmigration.FolderDataType,
+			RefID:  util.GenerateShortUID(),
+			Status: cloudmigration.ItemStatusOK,
+		},
+	}
+
+	b, err := json.Marshal(result)
+	if err != nil {
+		return nil, err
+	}
+	gmsSnapshot.Result = b
+
+	return &gmsSnapshot, nil
 }

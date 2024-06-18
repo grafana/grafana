@@ -510,6 +510,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, sessionUid string) (*cloud
 	return &snapshot, nil
 }
 
+// GetSnapshot returns the on-prem version of a snapshot, supplemented with processing status from GMS
 func (s *Service) GetSnapshot(ctx context.Context, sessionUid string, snapshotUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetSnapshot")
 	defer span.End()
@@ -518,6 +519,36 @@ func (s *Service) GetSnapshot(ctx context.Context, sessionUid string, snapshotUi
 	if err != nil {
 		return nil, fmt.Errorf("fetching snapshot for uid %s: %w", snapshotUid, err)
 	}
+
+	session, err := s.store.GetMigrationSessionByUID(ctx, sessionUid)
+	if err != nil {
+		return nil, fmt.Errorf("fetching session for uid %s: %w", sessionUid, err)
+	}
+
+	if snapshot.Status == cloudmigration.SnapshotStatusPendingProcessing ||
+		snapshot.Status == cloudmigration.SnapshotStatusProcessing {
+		// ask GMS for status if it's in the cloud
+		snapshotMeta, err := s.gmsClient.GetSnapshotStatus(ctx, *session, *snapshot)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching snapshot status from GMS: sessionUid: %s, snapshotUid: %s", sessionUid, snapshotUid)
+		}
+
+		// grab any result available
+		// TODO: think of a better way to enforce consistent use of types here
+		snapshot.Result = snapshotMeta.Result
+
+		if snapshotMeta.Status == cloudmigration.SnapshotStatusFinished {
+			// we need to update the snapshot in our db before reporting anything finished to the client
+			if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+				UID:    snapshot.UID,
+				Status: cloudmigration.SnapshotStatusFinished,
+				Result: snapshot.Result,
+			}); err != nil {
+				return nil, fmt.Errorf("error updating snapshot status: %w", err)
+			}
+		}
+	}
+
 	return snapshot, nil
 }
 

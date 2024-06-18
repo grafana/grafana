@@ -213,4 +213,22 @@ func (s *Service) uploadSnapshot(ctx context.Context, snapshotMeta cloudmigratio
 		s.log.Error("failed to set snapshot status to 'pending upload'", "err", err)
 		s.buildSnapshotError = true
 	}
+
+	// simulate the rest
+	// processing
+	time.Sleep(3 * time.Second)
+	if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+		UID:    snapshotMeta.UID,
+		Status: cloudmigration.SnapshotStatusProcessing,
+	}); err != nil {
+		s.log.Error("updating snapshot", "err", err)
+	}
+	// finished
+	time.Sleep(3 * time.Second)
+	if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+		UID:    snapshotMeta.UID,
+		Status: cloudmigration.SnapshotStatusFinished,
+	}); err != nil {
+		s.log.Error("updating snapshot", "err", err)
+	}
 }
