@@ -32,8 +32,8 @@ type ServersConfig struct {
 
 // ServerConfig holds connection data to LDAP
 type ServerConfig struct {
-	Host string `toml:"host"`
-	Port int    `toml:"port"`
+	Host string `toml:"host" json:"host"`
+	Port int    `toml:"port" json:"port,omitempty"`
 
 	UseSSL        bool     `toml:"use_ssl" json:"use_ssl,omitempty"`
 	StartTLS      bool     `toml:"start_tls" json:"start_tls,omitempty"`
