@@ -1265,6 +1265,9 @@ def verify_grafanacom_step():
             "GCP_KEY": from_secret("gcp_grafanauploads"),
         },
         "commands": [
+            # Download and install `curl` - it isn't available inside of the `node:{version}-alpine` docker image.
+            "apk add curl",
+
             # Download/install gcom utility
             "curl -L -o /usr/local/bin/gcom https://github.com/grafana/gcom/releases/latest/download/gcom-linux-amd64",
             "chmod +x /usr/local/bin/gcom",
