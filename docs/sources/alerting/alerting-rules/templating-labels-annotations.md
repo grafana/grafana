@@ -33,7 +33,7 @@ All templates should be written in [text/template](https://pkg.go.dev/text/templ
 Each template is evaluated whenever the alert rule is evaluated, and is evaluated for every alert separately. For example, if your alert rule has a templated summary annotation, and the alert rule has 10 firing alerts, then the template will be executed 10 times, once for each alert. You should try to avoid doing expensive computations in your templates as much as possible.
 
 {{% admonition type="caution" %}}
-Extra whitespace in label templates can break the match with notification policies.
+Extra whitespace in label templates can break matches with notification policies.
 {{% /admonition %}}
 
 ## Examples
