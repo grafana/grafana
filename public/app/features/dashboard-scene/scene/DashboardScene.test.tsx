@@ -207,6 +207,8 @@ describe('DashboardScene', () => {
           editPanel,
         });
 
+        expect(scene.state.editPanel!['_discardChanges']).toBe(false);
+
         scene.exitEditMode({ skipConfirm: true });
 
         expect(scene.state.editPanel!['_discardChanges']).toBe(true);
