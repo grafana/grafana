@@ -18,7 +18,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
   const onShareInternallyClick = () => {
     const drawer = new ShareDrawer({
       title: t('share-dashboard.menu.share-internally-title', 'Share internally'),
-      body: new ShareInternally({ dashboardRef: dashboard.getRef() }),
+      body: new ShareInternally({ panelRef: panel?.getRef() }),
     });
 
     dashboard.showModal(drawer);
