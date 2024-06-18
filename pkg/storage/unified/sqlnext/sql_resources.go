@@ -139,6 +139,10 @@ func (s *sqlResourceStore) WriteEvent(ctx context.Context, event resource.WriteE
 	return 0, ErrNotImplementedYet
 }
 
+func (s *sqlResourceStore) Watch(context.Context, *resource.WatchRequest) (chan *resource.WatchEvent, error) {
+	return nil, ErrNotImplementedYet
+}
+
 // Create new name for a given resource
 func (s *sqlResourceStore) GenerateName(_ context.Context, _ *resource.ResourceKey, _ string) (string, error) {
 	return util.GenerateShortUID(), nil
