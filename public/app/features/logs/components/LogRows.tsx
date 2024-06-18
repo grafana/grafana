@@ -147,6 +147,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     if (document.getSelection()?.toString()) {
       return;
     }
+    this.closePopoverMenu();
   };
 
   closePopoverMenu = () => {
