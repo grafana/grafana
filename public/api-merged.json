@@ -2299,11 +2299,11 @@
         "tags": [
           "migrations"
         ],
-        "summary": "Get a list of all cloud migrations.",
-        "operationId": "getMigrationList",
+        "summary": "Get a list of all cloud migration sessions that have been created.",
+        "operationId": "getSessionList",
         "responses": {
           "200": {
-            "$ref": "#/responses/cloudMigrationListResponse"
+            "$ref": "#/responses/cloudMigrationSessionListResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -2320,11 +2320,21 @@
         "tags": [
           "migrations"
         ],
-        "summary": "Create a migration.",
-        "operationId": "createMigration",
+        "summary": "Create a migration session.",
+        "operationId": "createSession",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CloudMigrationSessionRequestDTO"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "$ref": "#/responses/cloudMigrationResponse"
+            "$ref": "#/responses/cloudMigrationSessionResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -2372,16 +2382,15 @@
     },
     "/cloudmigration/migration/{uid}": {
       "get": {
-        "description": "It returns migrations that has been created.",
         "tags": [
           "migrations"
         ],
-        "summary": "Get a cloud migration.",
-        "operationId": "getCloudMigration",
+        "summary": "Get a cloud migration session by its uid.",
+        "operationId": "getSession",
         "parameters": [
           {
             "type": "string",
-            "description": "UID of a migration",
+            "description": "UID of a migration session",
             "name": "uid",
             "in": "path",
             "required": true
@@ -2389,7 +2398,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/cloudMigrationResponse"
+            "$ref": "#/responses/cloudMigrationSessionResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -2406,12 +2415,12 @@
         "tags": [
           "migrations"
         ],
-        "summary": "Delete a migration.",
-        "operationId": "deleteCloudMigration",
+        "summary": "Delete a migration session by its uid.",
+        "operationId": "deleteSession",
         "parameters": [
           {
             "type": "string",
-            "description": "UID of a migration",
+            "description": "UID of a migration session",
             "name": "uid",
             "in": "path",
             "required": true
@@ -2494,6 +2503,30 @@
       }
     },
     "/cloudmigration/token": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Fetch the cloud migration token if it exists.",
+        "operationId": "getCloudMigrationToken",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationGetTokenResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "post": {
         "tags": [
           "migrations"
@@ -2503,6 +2536,38 @@
         "responses": {
           "200": {
             "$ref": "#/responses/cloudMigrationCreateTokenResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/token/{uid}": {
+      "delete": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Deletes a cloud migration token.",
+        "operationId": "deleteCloudMigrationToken",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID of a cloud migration token",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/cloudMigrationDeleteTokenResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -11089,6 +11154,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       },
@@ -11105,6 +11176,17 @@
             "name": "name",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Version of mute timing to use for optimistic concurrency. Leave empty to disable validation",
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -12125,6 +12207,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "record": {
+          "$ref": "#/definitions/AlertRuleRecordExport"
+        },
         "title": {
           "type": "string"
         },
@@ -12272,6 +12357,18 @@
         }
       }
     },
+    "AlertRuleRecordExport": {
+      "type": "object",
+      "title": "Record is the provisioned export of models.Record.",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "string"
+        }
+      }
+    },
     "AlertingFileExport": {
       "type": "object",
       "title": "AlertingFileExport is the full provisioned file export.",
@@ -12378,7 +12475,7 @@
           }
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -13196,25 +13293,33 @@
         }
       }
     },
-    "CloudMigrationListResponse": {
+    "CloudMigrationSessionListResponseDTO": {
       "type": "object",
       "properties": {
-        "migrations": {
+        "sessions": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/CloudMigrationResponse"
+            "$ref": "#/definitions/CloudMigrationSessionResponseDTO"
           }
         }
       }
     },
-    "CloudMigrationResponse": {
+    "CloudMigrationSessionRequestDTO": {
+      "type": "object",
+      "properties": {
+        "authToken": {
+          "type": "string"
+        }
+      }
+    },
+    "CloudMigrationSessionResponseDTO": {
       "type": "object",
       "properties": {
         "created": {
           "type": "string",
           "format": "date-time"
         },
-        "stack": {
+        "slug": {
           "type": "string"
         },
         "uid": {
@@ -13223,17 +13328,6 @@
         "updated": {
           "type": "string",
           "format": "date-time"
-        }
-      }
-    },
-    "CloudMigrationRunList": {
-      "type": "object",
-      "properties": {
-        "runs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MigrateDataResponseListDTO"
-          }
         }
       }
     },
@@ -14611,7 +14705,9 @@
         }
       }
     },
-    "EvalQueriesResponse": {},
+    "EvalQueriesResponse": {
+      "type": "object"
+    },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
     },
@@ -15075,6 +15171,29 @@
         }
       }
     },
+    "GetAccessTokenResponseDTO": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string"
+        },
+        "firstUsedAt": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lastUsedAt": {
+          "type": "string"
+        }
+      }
+    },
     "GetAnnotationTagsResponse": {
       "type": "object",
       "title": "GetAnnotationTagsResponse is a response struct for FindTagsResult.",
@@ -15513,6 +15632,9 @@
           "items": {
             "$ref": "#/definitions/TimeIntervalItem"
           }
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -15693,11 +15815,15 @@
           "type": "integer",
           "format": "int64"
         },
+        "isDeleted": {
+          "type": "boolean"
+        },
         "isStarred": {
           "type": "boolean"
         },
-        "remainingTrashAtAge": {
-          "type": "string"
+        "permanentlyDeleteDate": {
+          "type": "string",
+          "format": "date-time"
         },
         "slug": {
           "type": "string"
@@ -17653,6 +17779,9 @@
           "items": {
             "$ref": "#/definitions/TimeIntervalItem"
           }
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -17846,6 +17975,9 @@
         },
         "provenance": {
           "$ref": "#/definitions/Provenance"
+        },
+        "record": {
+          "$ref": "#/definitions/Record"
         },
         "ruleGroup": {
           "type": "string",
@@ -18414,13 +18546,20 @@
     },
     "Record": {
       "type": "object",
-      "title": "Record defines how data produced by a recording rule is written.",
+      "required": [
+        "metric",
+        "from"
+      ],
       "properties": {
         "from": {
-          "type": "string"
+          "description": "Which expression node should be used as the input for the recorded metric.",
+          "type": "string",
+          "example": "A"
         },
         "metric": {
-          "type": "string"
+          "description": "Name of the recorded metric.",
+          "type": "string",
+          "example": "grafana_alerts_ratio"
         }
       }
     },
@@ -19001,7 +19140,7 @@
           "type": "string"
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -19112,10 +19251,6 @@
         }
       }
     },
-    "RuleType": {
-      "type": "string",
-      "title": "RuleType models the type of a rule."
-    },
     "SNSConfig": {
       "type": "object",
       "properties": {
@@ -19204,6 +19339,32 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "SearchDTO": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "basicRole": {
+          "type": "string"
+        },
+        "onlyRoles": {
+          "type": "boolean"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
         }
       }
     },
@@ -19617,6 +19778,20 @@
       "type": "integer",
       "format": "int64"
     },
+    "SilenceMetadata": {
+      "type": "object",
+      "properties": {
+        "folder_uid": {
+          "type": "string"
+        },
+        "rule_title": {
+          "type": "string"
+        },
+        "rule_uid": {
+          "type": "string"
+        }
+      }
+    },
     "SlackAction": {
       "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
       "type": "object",
@@ -19766,6 +19941,17 @@
     },
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
+    },
+    "SnapshotListDTO": {
+      "type": "object",
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseListDTO"
+          }
+        }
+      }
     },
     "Span": {
       "type": "object",
@@ -21399,9 +21585,9 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/alertGroup"
       }
     },
@@ -21532,6 +21718,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -21587,13 +21774,39 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableAlert"
       }
     },
+    "gettableGrafanaSilence": {
+      "type": "object",
+      "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "example": {
+            "create": false,
+            "read": true,
+            "write": false
+          }
+        },
+        "metadata": {
+          "$ref": "#/definitions/SilenceMetadata"
+        }
+      }
+    },
+    "gettableGrafanaSilences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/gettableGrafanaSilence"
+      }
+    },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -21642,13 +21855,14 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableSilence"
       }
     },
     "integration": {
+      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -21792,6 +22006,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -22162,28 +22377,37 @@
         "$ref": "#/definitions/CreateAccessTokenResponseDTO"
       }
     },
-    "cloudMigrationListResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/CloudMigrationListResponse"
-      }
+    "cloudMigrationDeleteTokenResponse": {
+      "description": "(empty)"
     },
-    "cloudMigrationResponse": {
+    "cloudMigrationGetTokenResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/CloudMigrationResponse"
+        "$ref": "#/definitions/GetAccessTokenResponseDTO"
       }
     },
     "cloudMigrationRunListResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/CloudMigrationRunList"
+        "$ref": "#/definitions/SnapshotListDTO"
       }
     },
     "cloudMigrationRunResponse": {
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/MigrateDataResponseDTO"
+      }
+    },
+    "cloudMigrationSessionListResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationSessionListResponseDTO"
+      }
+    },
+    "cloudMigrationSessionResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationSessionResponseDTO"
       }
     },
     "conflictError": {

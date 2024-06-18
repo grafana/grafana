@@ -10,23 +10,23 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
     createCloudMigrationToken: suppressErrorsOnQuery,
 
     // List Cloud Configs
-    getMigrationList: {
+    getSessionList: {
       providesTags: ['cloud-migration-config'] /* should this be a -list? */,
     },
 
     // Create Cloud Config
-    createMigration(endpoint) {
+    createSession(endpoint) {
       suppressErrorsOnQuery(endpoint);
       endpoint.invalidatesTags = ['cloud-migration-config'];
     },
 
     // Get one Cloud Config
-    getCloudMigration: {
+    getSession: {
       providesTags: ['cloud-migration-config'],
     },
 
     // Delete one Cloud Config
-    deleteCloudMigration: {
+    deleteSession: {
       invalidatesTags: ['cloud-migration-config'],
     },
 

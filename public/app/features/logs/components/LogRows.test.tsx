@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { range } from 'lodash';
 import React from 'react';
 
-import { CoreApp, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
-import { LogRows, PREVIEW_LIMIT } from './LogRows';
+import { LogRows, PREVIEW_LIMIT, Props } from './LogRows';
 import { createLogRow } from './__mocks__/logRow';
 
 jest.mock('@grafana/runtime', () => ({
@@ -207,7 +207,7 @@ describe('LogRows', () => {
 });
 
 describe('Popover menu', () => {
-  function setup(app = CoreApp.Explore) {
+  function setup(overrides: Partial<Props> = {}) {
     const rows: LogRowModel[] = [createLogRow({ uid: '1' })];
     return render(
       <LogRows
@@ -221,9 +221,9 @@ describe('Popover menu', () => {
         logsSortOrder={LogsSortOrder.Descending}
         enableLogDetails={true}
         displayedFields={[]}
-        onClickFilterOutValue={() => {}}
-        onClickFilterValue={() => {}}
-        app={app}
+        onClickFilterOutString={() => {}}
+        onClickFilterString={() => {}}
+        {...overrides}
       />
     );
   }
@@ -232,6 +232,8 @@ describe('Popover menu', () => {
     orgGetSelection = document.getSelection;
     jest.spyOn(document, 'getSelection').mockReturnValue({
       toString: () => 'selected log line',
+      removeAllRanges: () => {},
+      addRange: (range: Range) => {},
     } as Selection);
   });
   afterAll(() => {
@@ -248,9 +250,30 @@ describe('Popover menu', () => {
     expect(screen.getByText('Add as line contains filter')).toBeInTheDocument();
     expect(screen.getByText('Add as line does not contain filter')).toBeInTheDocument();
   });
-  it('Does not appear outside Explore', async () => {
-    setup(CoreApp.Unknown);
+  it('Does not appear when the props are not defined', async () => {
+    setup({
+      onClickFilterOutString: undefined,
+      onClickFilterString: undefined,
+    });
     await userEvent.click(screen.getByText('log message 1'));
     expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
+  });
+  it('Appears after selecting test', async () => {
+    const onClickFilterOutString = jest.fn();
+    const onClickFilterString = jest.fn();
+    setup({
+      onClickFilterOutString,
+      onClickFilterString,
+    });
+    await userEvent.click(screen.getByText('log message 1'));
+    expect(screen.getByText('Copy selection')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Add as line contains filter'));
+
+    await userEvent.click(screen.getByText('log message 1'));
+    expect(screen.getByText('Copy selection')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Add as line does not contain filter'));
+
+    expect(onClickFilterOutString).toHaveBeenCalledTimes(1);
+    expect(onClickFilterString).toHaveBeenCalledTimes(1);
   });
 });

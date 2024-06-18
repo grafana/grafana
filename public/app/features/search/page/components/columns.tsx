@@ -173,7 +173,7 @@ export const generateColumns = (
                 {parts.map((p) => {
                   let info = meta.locationInfo[p];
                   if (!info && p === 'general') {
-                    info = { kind: 'folder', url: '/dashboards', name: 'General' };
+                    info = { kind: 'folder', url: '/dashboards', name: 'Dashboards' };
                   }
                   return info ? (
                     <a key={p} href={info.url} className={styles.locationItem}>

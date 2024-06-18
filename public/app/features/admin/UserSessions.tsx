@@ -72,17 +72,15 @@ class BaseUserSessions extends PureComponent<Props, State> {
                       <td>{session.clientIp}</td>
                       <td>{`${session.browser} on ${session.os} ${session.osVersion}`}</td>
                       <td>
-                        <div className="pull-right">
-                          {canLogout && (
-                            <ConfirmButton
-                              confirmText="Confirm logout"
-                              confirmVariant="destructive"
-                              onConfirm={this.onSessionRevoke(session.id)}
-                            >
-                              Force logout
-                            </ConfirmButton>
-                          )}
-                        </div>
+                        {canLogout && (
+                          <ConfirmButton
+                            confirmText="Confirm logout"
+                            confirmVariant="destructive"
+                            onConfirm={this.onSessionRevoke(session.id)}
+                          >
+                            Force logout
+                          </ConfirmButton>
+                        )}
                       </td>
                     </tr>
                   ))}

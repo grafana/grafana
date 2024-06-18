@@ -40,7 +40,7 @@ const runExploreQuery = async (options: MetadataQueryOptions): Promise<Array<{ t
     return datasource.runMetadataQuery(target);
   } else {
     const options = { policy: target.policy };
-    return datasource.metricFindQuery(query, options);
+    return datasource.metricFindQuery({ refId: 'run-explore-query', query }, options);
   }
 };
 

@@ -1117,6 +1117,7 @@ func TestNestedFolderService(t *testing.T) {
 		t.Run("move without the right permissions should fail", func(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
+			//dashboardFolderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 
 			nestedFolderStore := NewFakeStore()
 			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
@@ -1151,6 +1152,34 @@ func TestNestedFolderService(t *testing.T) {
 			require.NoError(t, err)
 			// the folder is set inside InTransaction() but the fake one is called
 			// require.NotNil(t, f)
+		})
+
+		t.Run("cannot move the k6 folder even when has permissions to move folders", func(t *testing.T) {
+			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceAllScope()}}
+
+			features := featuremgmt.WithFeatures("nestedFolders")
+			folderSvc := setup(t, &dashboards.FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), NewFakeStore(), features, acimpl.ProvideAccessControl(features), dbtest.NewFakeDB())
+			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: accesscontrol.K6FolderUID, NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
+			require.Error(t, err, folder.ErrBadRequest)
+		})
+
+		t.Run("cannot move a k6 subfolder even when has permissions to move folders", func(t *testing.T) {
+			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceAllScope()}}
+
+			childUID := "k6-app-child"
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedFolder = &folder.Folder{
+				OrgID:     orgID,
+				UID:       childUID,
+				ParentUID: accesscontrol.K6FolderUID,
+			}
+
+			features := featuremgmt.WithFeatures("nestedFolders")
+			folderSvc := setup(t, &dashboards.FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), nestedFolderStore, features, acimpl.ProvideAccessControl(features), dbtest.NewFakeDB())
+			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: childUID, NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
+			require.Error(t, err, folder.ErrBadRequest)
 		})
 
 		t.Run("move to the root folder without folder creation permissions fails", func(t *testing.T) {
@@ -1456,6 +1485,58 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 			for _, ancestor := range append(ancestorFoldersWithPermissions, ancestorFoldersWithoutPermissions...) {
 				toDelete = append(toDelete, ancestor.UID)
 			}
+			err := serviceWithFlagOn.store.Delete(context.Background(), toDelete, orgID)
+			assert.NoError(t, err)
+		})
+	})
+
+	t.Run("Should not list k6 folders or subfolders", func(t *testing.T) {
+		_, err = nestedFolderStore.Create(context.Background(), folder.CreateFolderCommand{
+			UID:          accesscontrol.K6FolderUID,
+			OrgID:        orgID,
+			SignedInUser: &signedInAdminUser,
+		})
+		require.NoError(t, err)
+
+		k6ChildFolder, err := nestedFolderStore.Create(context.Background(), folder.CreateFolderCommand{
+			UID:          "k6-app-child",
+			ParentUID:    accesscontrol.K6FolderUID,
+			OrgID:        orgID,
+			SignedInUser: &signedInAdminUser,
+		})
+		require.NoError(t, err)
+
+		unrelatedFolder, err := nestedFolderStore.Create(context.Background(), folder.CreateFolderCommand{
+			UID:          "another-folder",
+			OrgID:        orgID,
+			SignedInUser: &signedInAdminUser,
+		})
+		require.NoError(t, err)
+
+		folders, err := serviceWithFlagOn.GetFolders(context.Background(), folder.GetFoldersQuery{
+			OrgID:        orgID,
+			SignedInUser: &signedInAdminUser,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(folders), "should not return k6 folders or subfolders")
+		assert.Equal(t, unrelatedFolder.UID, folders[0].UID)
+
+		// Service accounts should be able to list k6 folders
+		svcAccountUser := user.SignedInUser{UserID: 2, IsServiceAccount: true, OrgID: orgID, Permissions: map[int64]map[string][]string{
+			orgID: {
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll},
+			},
+		}}
+		folders, err = serviceWithFlagOn.GetFolders(context.Background(), folder.GetFoldersQuery{
+			OrgID:        orgID,
+			SignedInUser: &svcAccountUser,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, 3, len(folders), "service accounts should be able to list k6 folders")
+
+		t.Cleanup(func() {
+			//guardian.New = origNewGuardian
+			toDelete := []string{k6ChildFolder.UID, accesscontrol.K6FolderUID, unrelatedFolder.UID}
 			err := serviceWithFlagOn.store.Delete(context.Background(), toDelete, orgID)
 			assert.NoError(t, err)
 		})
@@ -2215,4 +2296,55 @@ func createRule(t *testing.T, store *ngstore.DBstore, folderUID, title string) *
 	require.NoError(t, err)
 
 	return &rule
+}
+
+func TestSplitFullpath(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected []string
+	}{
+		{
+			name:     "empty string",
+			input:    "",
+			expected: []string{},
+		},
+		{
+			name:     "root folder",
+			input:    "/",
+			expected: []string{},
+		},
+		{
+			name:     "single folder",
+			input:    "folder",
+			expected: []string{"folder"},
+		},
+		{
+			name:     "single folder with leading slash",
+			input:    "/folder",
+			expected: []string{"folder"},
+		},
+		{
+			name:     "nested folder",
+			input:    "folder/subfolder/subsubfolder",
+			expected: []string{"folder", "subfolder", "subsubfolder"},
+		},
+		{
+			name:     "escaped slashes",
+			input:    "folder\\/with\\/slashes",
+			expected: []string{"folder/with/slashes"},
+		},
+		{
+			name:     "nested folder with escaped slashes",
+			input:    "folder\\/with\\/slashes/subfolder\\/with\\/slashes",
+			expected: []string{"folder/with/slashes", "subfolder/with/slashes"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := SplitFullpath(tt.input)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
 }

@@ -9,13 +9,14 @@ include .bingo/Variables.mk
 
 
 GO = go
-GO_VERSION = 1.22.3
+GO_VERSION = 1.22.4
 GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
-GO_RACE  := $(shell [ -n "$(GO_BUILD_DEV)$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
+GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
+GO_RACE_FLAG := $(if $(GO_RACE),-race)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
-GO_BUILD_FLAGS += $(if $(GO_RACE),-race)
+GO_BUILD_FLAGS += $(GO_RACE_FLAG)
 
 targets := $(shell echo '$(sources)' | tr "," " ")
 
@@ -28,7 +29,7 @@ all: deps build
 
 .PHONY: deps-go
 deps-go: ## Install backend dependencies.
-	$(GO) run build.go setup
+	$(GO) run $(GO_RACE_FLAG) build.go setup
 
 .PHONY: deps-js
 deps-js: node_modules ## Install frontend dependencies.
@@ -60,6 +61,7 @@ swagger-oss-gen: $(SWAGGER) ## Generate API Swagger specification
 	rm -f $(SPEC_TARGET)
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
+	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha \
@@ -77,6 +79,7 @@ swagger-enterprise-gen: $(SWAGGER) ## Generate API Swagger specification
 	rm -f $(ENTERPRISE_SPEC_TARGET)
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
+	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha \
@@ -111,7 +114,7 @@ OAPI_SPEC_TARGET = public/openapi3.json
 
 .PHONY: openapi3-gen
 openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 already generated
-	$(GO) run scripts/openapi3/openapi3conv.go $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
+	$(GO) run $(GO_RACE_FLAG) scripts/openapi3/openapi3conv.go $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
 ##@ Internationalisation
 .PHONY: i18n-extract-enterprise
@@ -154,7 +157,7 @@ gen-feature-toggles:
 .PHONY: gen-go
 gen-go:
 	@echo "generate go files"
-	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags $(WIRE_TAGS) ./pkg/server
+	$(GO) run $(GO_RACE_FLAG) ./pkg/build/wire/cmd/wire/main.go gen -tags $(WIRE_TAGS) ./pkg/server
 
 .PHONY: fix-cue
 fix-cue: $(CUE)
@@ -229,44 +232,44 @@ test-go: test-go-unit test-go-integration
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
 	go list -f '{{.Dir}}/...' -m | xargs \
-	$(GO) test -short -covermode=atomic -timeout=30m
+	$(GO) test $(GO_RACE_FLAG) -short -covermode=atomic -timeout=30m
 
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
 	@echo "test backend integration tests"
-	$(GO) test -count=1 -run "^TestIntegration" -covermode=atomic -timeout=5m $(GO_INTEGRATION_TESTS)
+	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegration" -covermode=atomic -timeout=5m $(GO_INTEGRATION_TESTS)
 
 .PHONY: test-go-integration-alertmanager
 test-go-integration-alertmanager: ## Run integration tests for the remote alertmanager (config taken from the mimir_backend block).
 	@echo "test remote alertmanager integration tests"
 	$(GO) clean -testcache
 	AM_URL=http://localhost:8080 AM_TENANT_ID=test \
-	$(GO) test -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/...
+	$(GO) test $(GO_RACE_FLAG) -count=1 -run "^TestIntegrationRemoteAlertmanager" -covermode=atomic -timeout=5m ./pkg/services/ngalert/...
 
 .PHONY: test-go-integration-postgres
 test-go-integration-postgres: devenv-postgres ## Run integration tests for postgres backend with flags.
 	@echo "test backend integration postgres tests"
 	$(GO) clean -testcache
 	GRAFANA_TEST_DB=postgres \
-	$(GO) test -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m $(GO_INTEGRATION_TESTS)
+	$(GO) test $(GO_RACE_FLAG) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m $(GO_INTEGRATION_TESTS)
 
 .PHONY: test-go-integration-mysql
 test-go-integration-mysql: devenv-mysql ## Run integration tests for mysql backend with flags.
 	@echo "test backend integration mysql tests"
 	GRAFANA_TEST_DB=mysql \
-	$(GO) test -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m $(GO_INTEGRATION_TESTS)
+	$(GO) test $(GO_RACE_FLAG) -p=1 -count=1 -run "^TestIntegration" -covermode=atomic -timeout=10m $(GO_INTEGRATION_TESTS)
 
 .PHONY: test-go-integration-redis
 test-go-integration-redis: ## Run integration tests for redis cache.
 	@echo "test backend integration redis tests"
 	$(GO) clean -testcache
-	REDIS_URL=localhost:6379 $(GO) test -run IntegrationRedis -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
+	REDIS_URL=localhost:6379 $(GO) test $(GO_RACE_FLAG) -run IntegrationRedis -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
 
 .PHONY: test-go-integration-memcached
 test-go-integration-memcached: ## Run integration tests for memcached cache.
 	@echo "test backend integration memcached tests"
 	$(GO) clean -testcache
-	MEMCACHED_HOSTS=localhost:11211 $(GO) test -run IntegrationMemcached -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
+	MEMCACHED_HOSTS=localhost:11211 $(GO) test $(GO_RACE_FLAG) -run IntegrationMemcached -covermode=atomic -timeout=2m $(GO_INTEGRATION_TESTS)
 
 .PHONY: test-js
 test-js: ## Run tests for frontend.

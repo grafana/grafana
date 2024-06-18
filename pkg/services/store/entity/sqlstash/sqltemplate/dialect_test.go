@@ -73,7 +73,7 @@ func TestParseRowLockingClause(t *testing.T) {
 	}
 }
 
-func TestRowLockingClauseAll_SelectFor(t *testing.T) {
+func TestRowLockingClauseMap_SelectFor(t *testing.T) {
 	t.Parallel()
 
 	splitSpace := func(s string) []string {
@@ -95,21 +95,22 @@ func TestRowLockingClauseAll_SelectFor(t *testing.T) {
 		},
 	}
 
+	var nilRLC rowLockingClauseMap
 	for i, tc := range testCases {
-		gotOutput, gotErr := rowLockingClauseAll(true).SelectFor(tc.input...)
+		gotOutput, gotErr := nilRLC.SelectFor(tc.input...)
 		if !errors.Is(gotErr, tc.err) {
-			t.Fatalf("[true] unexpected error %v in test case %d", gotErr, i)
-		}
-		if gotOutput != string(tc.output) {
-			t.Fatalf("[true] unexpected error %v in test case %d", gotErr, i)
-		}
-
-		gotOutput, gotErr = rowLockingClauseAll(false).SelectFor(tc.input...)
-		if !errors.Is(gotErr, tc.err) {
-			t.Fatalf("[false] unexpected error %v in test case %d", gotErr, i)
+			t.Fatalf("[nil] unexpected error %v in test case %d", gotErr, i)
 		}
 		if gotOutput != "" {
-			t.Fatalf("[false] unexpected error %v in test case %d", gotErr, i)
+			t.Fatalf("[nil] unexpected output %v in test case %d", gotOutput, i)
+		}
+
+		gotOutput, gotErr = rowLockingClauseAll.SelectFor(tc.input...)
+		if !errors.Is(gotErr, tc.err) {
+			t.Fatalf("[all] unexpected error %v in test case %d", gotErr, i)
+		}
+		if gotOutput != string(tc.output) {
+			t.Fatalf("[all] unexpected output %v in test case %d", gotOutput, i)
 		}
 	}
 }
@@ -139,5 +140,45 @@ func TestStandardIdent_Ident(t *testing.T) {
 		if gotOutput != tc.output {
 			t.Fatalf("unexpected error %v in test case %d", gotErr, i)
 		}
+	}
+}
+
+func TestArgPlaceholderFunc(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		input           int
+		valuePositional string
+	}{
+		{
+			input:           1,
+			valuePositional: "$1",
+		},
+		{
+			input:           16,
+			valuePositional: "$16",
+		},
+	}
+
+	for i, tc := range testCases {
+		got := argFmtSQL92(tc.input)
+		if got != "?" {
+			t.Fatalf("[argFmtSQL92] unexpected value %q in test case %d", got, i)
+		}
+
+		got = argFmtPositional(tc.input)
+		if got != tc.valuePositional {
+			t.Fatalf("[argFmtPositional] unexpected value %q in test case %d", got, i)
+		}
+	}
+}
+
+func TestName_Name(t *testing.T) {
+	t.Parallel()
+
+	const v = "some dialect name"
+	n := name(v)
+	if n.Name() != v {
+		t.Fatalf("unexpected dialect name %q", n.Name())
 	}
 }

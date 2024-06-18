@@ -83,9 +83,8 @@ export function RootView({ root, onPathChange }: Props) {
         <InlineField grow>
           <FilterInput placeholder="Search Storage" value={searchQuery} onChange={setSearchQuery} />
         </InlineField>
-        <Button className="pull-right" onClick={() => onPathChange('', StorageView.AddRoot)}>
-          Add Root
-        </Button>
+        <div className="page-action-bar__spacer" />
+        <Button onClick={() => onPathChange('', StorageView.AddRoot)}>Add Root</Button>
       </div>
 
       <div>{renderRoots('', roots.base)}</div>
@@ -100,12 +99,12 @@ export function RootView({ root, onPathChange }: Props) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    secondaryTextColor: css`
-      color: ${theme.colors.text.secondary};
-    `,
-    clickable: css`
-      pointer-events: none;
-    `,
+    secondaryTextColor: css({
+      color: theme.colors.text.secondary,
+    }),
+    clickable: css({
+      pointerEvents: 'none',
+    }),
   };
 }
 

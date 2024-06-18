@@ -199,24 +199,6 @@ def enterprise_downstream_step(ver_mode):
 
     return step
 
-def lint_backend_step():
-    return {
-        "name": "lint-backend",
-        "image": images["go"],
-        "environment": {
-            # We need CGO because of go-sqlite3
-            "CGO_ENABLED": "1",
-        },
-        "depends_on": [
-            "wire-install",
-        ],
-        "commands": [
-            "apk add --update make build-base",
-            # Don't use Make since it will re-download the linters
-            "make lint-go",
-        ],
-    }
-
 def validate_modfile_step():
     return {
         "name": "validate-modfile",
@@ -831,7 +813,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
         "name": "end-to-end-tests-{}-{}".format(suite, cloud),
-        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:3.0.0",
+        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.10.0:1.0.0",
         "depends_on": [
             "grafana-server",
         ],

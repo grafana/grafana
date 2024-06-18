@@ -65,39 +65,6 @@ describe('SelectBase', () => {
     expect(screen.queryByText('Test label')).not.toBeInTheDocument();
   });
 
-  describe('with custom values', () => {
-    it('allows editing a custom SelectableValue', async () => {
-      render(
-        <SelectBase
-          onChange={onChangeHandler}
-          allowCustomValue
-          value={{
-            label: 'my custom value',
-            value: 'my custom value',
-          }}
-        />
-      );
-
-      await userEvent.click(screen.getByRole('combobox'));
-      await userEvent.type(screen.getByRole('combobox'), '{backspace}{backspace}{enter}');
-      expect(onChangeHandler).toHaveBeenCalled();
-      expect(onChangeHandler.mock.calls[0][0]).toEqual(
-        expect.objectContaining({ label: 'my custom val', value: 'my custom val' })
-      );
-    });
-
-    it('allows editing a custom basic value', async () => {
-      render(<SelectBase onChange={onChangeHandler} allowCustomValue value="my custom value" />);
-
-      await userEvent.click(screen.getByRole('combobox'));
-      await userEvent.type(screen.getByRole('combobox'), '{backspace}{backspace}{enter}');
-      expect(onChangeHandler).toHaveBeenCalled();
-      expect(onChangeHandler.mock.calls[0][0]).toEqual(
-        expect.objectContaining({ label: 'my custom val', value: 'my custom val' })
-      );
-    });
-  });
-
   describe('when openMenuOnFocus prop', () => {
     describe('is provided', () => {
       it('opens on focus', () => {

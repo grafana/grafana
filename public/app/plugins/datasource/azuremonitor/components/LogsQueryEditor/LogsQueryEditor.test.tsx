@@ -75,7 +75,7 @@ describe('LogsQueryEditor', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
 
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           resources: [
@@ -189,7 +189,7 @@ describe('LogsQueryEditor', () => {
     const applyButton = screen.getByRole('button', { name: 'Apply' });
     await userEvent.click(applyButton);
 
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           resources: ['/subscriptions/def-123'],
@@ -218,7 +218,7 @@ describe('LogsQueryEditor', () => {
     const dashboardTimeOption = await screen.findByLabelText('Dashboard');
     await userEvent.click(dashboardTimeOption);
 
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           dashboardTime: true,

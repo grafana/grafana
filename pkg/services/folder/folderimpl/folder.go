@@ -15,12 +15,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slices"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -33,6 +33,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+const FULLPATH_SEPARATOR = "/"
 
 type Service struct {
 	store                store
@@ -178,7 +180,17 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 		}
 	}
 
-	return dashFolders, nil
+	// only list k6 folders when requested by a service account - prevents showing k6 folders in the UI for users
+	result := make([]*folder.Folder, 0, len(dashFolders))
+	requesterIsSvcAccount := qry.SignedInUser.GetID().Namespace() == identity.NamespaceServiceAccount
+	for _, folder := range dashFolders {
+		if (folder.UID == accesscontrol.K6FolderUID || folder.ParentUID == accesscontrol.K6FolderUID) && !requesterIsSvcAccount {
+			continue
+		}
+		result = append(result, folder)
+	}
+
+	return result, nil
 }
 
 func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
@@ -345,10 +357,8 @@ func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery
 	var folderPermissions []string
 	if q.Permission == dashboardaccess.PERMISSION_EDIT {
 		folderPermissions = permissions[dashboards.ActionFoldersWrite]
-		folderPermissions = append(folderPermissions, permissions[dashboards.ActionDashboardsWrite]...)
 	} else {
 		folderPermissions = permissions[dashboards.ActionFoldersRead]
-		folderPermissions = append(folderPermissions, permissions[dashboards.ActionDashboardsRead]...)
 	}
 
 	if len(folderPermissions) == 0 && !q.SignedInUser.GetIsGrafanaAdmin() {
@@ -868,6 +878,16 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
+	// k6-specific check to prevent folder move for a k6-app folder and its children
+	if cmd.UID == accesscontrol.K6FolderUID {
+		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
+	}
+	if f, err := s.store.Get(ctx, folder.GetFolderQuery{UID: &cmd.UID, OrgID: cmd.OrgID}); err != nil {
+		return nil, err
+	} else if f != nil && f.ParentUID == accesscontrol.K6FolderUID {
+		return nil, folder.ErrBadRequest.Errorf("k6 project may not be moved")
+	}
+
 	// Check that the user is allowed to move the folder to the destination folder
 	var evaluator accesscontrol.Evaluator
 	if cmd.NewParentUID != "" {
@@ -900,16 +920,11 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, folder.ErrMaximumDepthReached.Errorf("failed to move folder")
 	}
 
-	// if the current folder is already a parent of newparent, we should return error
 	for _, parent := range parents {
+		// if the current folder is already a parent of newparent, we should return error
 		if parent.UID == cmd.UID {
 			return nil, folder.ErrCircularReference.Errorf("failed to move folder")
 		}
-	}
-
-	newParentUID := ""
-	if cmd.NewParentUID != "" {
-		newParentUID = cmd.NewParentUID
 	}
 
 	var f *folder.Folder
@@ -917,7 +932,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		if f, err = s.store.Update(ctx, folder.UpdateFolderCommand{
 			UID:          cmd.UID,
 			OrgID:        cmd.OrgID,
-			NewParentUID: &newParentUID,
+			NewParentUID: &cmd.NewParentUID,
 			SignedInUser: cmd.SignedInUser,
 		}); err != nil {
 			if s.db.GetDialect().IsUniqueConstraintViolation(err) {
@@ -929,7 +944,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		if _, err := s.legacyUpdate(ctx, &folder.UpdateFolderCommand{
 			UID:          cmd.UID,
 			OrgID:        cmd.OrgID,
-			NewParentUID: &newParentUID,
+			NewParentUID: &cmd.NewParentUID,
 			SignedInUser: cmd.SignedInUser,
 			// bypass optimistic locking used for dashboards
 			Overwrite: true,
@@ -1107,6 +1122,36 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 	}
 
 	return cmd, nil
+}
+
+// SplitFullpath splits a string into an array of strings using the FULLPATH_SEPARATOR as the delimiter.
+// It handles escape characters by appending the separator and the new string if the current string ends with an escape character.
+// The resulting array does not contain empty strings.
+func SplitFullpath(s string) []string {
+	splitStrings := strings.Split(s, FULLPATH_SEPARATOR)
+
+	result := make([]string, 0)
+	current := ""
+
+	for _, str := range splitStrings {
+		if strings.HasSuffix(current, "\\") {
+			// If the current string ends with an escape character, append the separator and the new string
+			current = current[:len(current)-1] + FULLPATH_SEPARATOR + str
+		} else {
+			// If the current string does not end with an escape character, append the current string to the result and start a new current string
+			if current != "" {
+				result = append(result, current)
+			}
+			current = str
+		}
+	}
+
+	// Append the last string to the result
+	if current != "" {
+		result = append(result, current)
+	}
+
+	return result
 }
 
 // getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard

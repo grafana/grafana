@@ -1,12 +1,20 @@
 import { MutableDataFrame } from '@grafana/data';
 import { DataQuery, defaultDashboard } from '@grafana/schema';
-import { backendSrv } from 'app/core/services/backend_srv';
 import * as api from 'app/features/dashboard/state/initDashboard';
 import { ExplorePanelData } from 'app/types';
 
 import { createEmptyQueryResponse } from '../../state/utils';
 
 import { setDashboardInLocalStorage } from './addToDashboard';
+
+let mockDashboard = {} as unknown;
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: () => ({
+    getDashboardDTO: () => {
+      return Promise.resolve(mockDashboard);
+    },
+  }),
+}));
 
 describe('addPanelToDashboard', () => {
   let spy: jest.SpyInstance;
@@ -71,7 +79,9 @@ describe('addPanelToDashboard', () => {
   it('Previous panels should not be removed', async () => {
     const queries: DataQuery[] = [{ refId: 'A' }];
     const existingPanel = { prop: 'this should be kept' };
-    jest.spyOn(backendSrv, 'getDashboardByUid').mockResolvedValue({
+
+    // Set the mocked dashboard
+    mockDashboard = {
       dashboard: {
         ...defaultDashboard,
         templating: { list: [] },
@@ -80,7 +90,7 @@ describe('addPanelToDashboard', () => {
         panels: [existingPanel],
       },
       meta: {},
-    });
+    };
 
     await setDashboardInLocalStorage({
       queries,

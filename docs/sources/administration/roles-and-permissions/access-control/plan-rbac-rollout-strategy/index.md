@@ -136,7 +136,7 @@ The following request creates a custom role that includes permissions to access 
 
 ```
 curl --location --request POST '<grafana_url>/api/access-control/roles/' \
---header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
+--header 'Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "version": 1,
@@ -144,7 +144,7 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
     "displayName": "Read-only access to alerts in folder Test-Folder",
     "description": "Let user query DS1 and DS2, and read alerts in folder Test-Folders",
     "group":"Custom",
-    "global": true,
+    "global": false,
     "permissions": [
         {
             "action": "folders:read",

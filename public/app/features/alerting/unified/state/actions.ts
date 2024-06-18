@@ -491,7 +491,11 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
       withSerializedError(
         (async () => {
           const latestConfig = await thunkAPI
-            .dispatch(alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName))
+            .dispatch(
+              alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName, {
+                forceRefetch: true,
+              })
+            )
             .unwrap();
 
           const isLatestConfigEmpty = isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files);

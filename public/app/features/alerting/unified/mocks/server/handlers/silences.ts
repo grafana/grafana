@@ -4,22 +4,45 @@ import { mockSilences } from 'app/features/alerting/unified/mocks';
 import { MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 
 const silencesListHandler = (silences = mockSilences) =>
-  http.get<{ datasourceUid: string }>('/api/alertmanager/:datasourceUid/api/v2/silences', ({ params }) => {
+  http.get<{ datasourceUid: string }>('/api/alertmanager/:datasourceUid/api/v2/silences', ({ params, request }) => {
     if (params.datasourceUid === MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER) {
       return HttpResponse.json({ traceId: '' }, { status: 502 });
     }
-    return HttpResponse.json(silences);
+
+    // Server only responds with ACL/rule metadata if query param is sent
+    const accessControlQueryParam = new URL(request.url).searchParams.get('accesscontrol');
+    const ruleMetadataQueryParam = new URL(request.url).searchParams.get('ruleMetadata');
+
+    const mappedSilences = silences.map(({ accessControl, metadata, ...silence }) => {
+      return {
+        ...silence,
+        ...(accessControlQueryParam && { accessControl }),
+        ...(ruleMetadataQueryParam && { metadata }),
+      };
+    });
+
+    return HttpResponse.json(mappedSilences);
   });
 
 const silenceGetHandler = () =>
-  http.get<{ uuid: string }>('/api/alertmanager/:datasourceUid/api/v2/silence/:uuid', ({ params }) => {
+  http.get<{ uuid: string }>('/api/alertmanager/:datasourceUid/api/v2/silence/:uuid', ({ params, request }) => {
     const { uuid } = params;
     const matchingMockSilence = mockSilences.find((silence) => silence.id === uuid);
-    if (matchingMockSilence) {
-      return HttpResponse.json(matchingMockSilence);
+    if (!matchingMockSilence) {
+      return HttpResponse.json({ message: 'silence not found' }, { status: 404 });
     }
 
-    return HttpResponse.json({ message: 'silence not found' }, { status: 404 });
+    // Server only responds with ACL/rule metadata if query param is sent
+    const accessControlQueryParam = new URL(request.url).searchParams.get('accesscontrol');
+    const ruleMetadataQueryParam = new URL(request.url).searchParams.get('ruleMetadata');
+
+    const { accessControl, metadata, ...silence } = matchingMockSilence;
+
+    return HttpResponse.json({
+      ...silence,
+      ...(accessControlQueryParam && { accessControl }),
+      ...(ruleMetadataQueryParam && { metadata }),
+    });
   });
 
 export const silenceCreateHandler = () =>

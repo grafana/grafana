@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -602,6 +603,7 @@ func CopyRule(r *AlertRule, mutators ...AlertRuleMutator) *AlertRule {
 		NoDataState:     r.NoDataState,
 		ExecErrState:    r.ExecErrState,
 		For:             r.For,
+		Record:          r.Record,
 	}
 
 	if r.DashboardUID != nil {
@@ -1052,6 +1054,29 @@ func (n SilenceMutators) WithMatcher(name, value string, matchType labels.MatchT
 			IsEqual: util.Pointer(matchType == labels.MatchRegexp || matchType == labels.MatchEqual),
 		}
 		s.Silence.Matchers = append(s.Silence.Matchers, &m)
+	}
+}
+func (n SilenceMutators) WithRuleUID(value string) Mutator[Silence] {
+	return func(s *Silence) {
+		name := alertingModels.RuleUIDLabel
+		m := amv2.Matcher{
+			Name:    &name,
+			Value:   &value,
+			IsRegex: util.Pointer(false),
+			IsEqual: util.Pointer(true),
+		}
+		for _, matcher := range s.Silence.Matchers {
+			if isRuleUIDMatcher(*matcher) {
+				*matcher = m
+				return
+			}
+		}
+		s.Silence.Matchers = append(s.Silence.Matchers, &m)
+	}
+}
+func (n SilenceMutators) Expired() Mutator[Silence] {
+	return func(s *Silence) {
+		s.EndsAt = util.Pointer(strfmt.DateTime(time.Now().Add(-time.Minute)))
 	}
 }
 

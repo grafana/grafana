@@ -50,4 +50,38 @@ pyroscope.scrape "default" {
     {"__address__" = "host.docker.internal:6060", "service_name"="grafana"},
   ]
   forward_to = [pyroscope.write.default.receiver]
+
+  profiling_config {
+    profile.process_cpu {
+      enabled = true
+    }
+
+    profile.godeltaprof_memory {
+      enabled = true
+    }
+
+    profile.memory { // disable memory, use godeltaprof_memory instead
+      enabled = false
+    }
+
+    profile.godeltaprof_mutex {
+      enabled = true
+    }
+
+    profile.mutex { // disable mutex, use godeltaprof_mutex instead
+      enabled = false
+    }
+
+    profile.godeltaprof_block {
+      enabled = true
+    }
+
+    profile.block { // disable block, use godeltaprof_block instead
+      enabled = false
+    }
+
+    profile.goroutine {
+      enabled = true
+    }
+  }
 }

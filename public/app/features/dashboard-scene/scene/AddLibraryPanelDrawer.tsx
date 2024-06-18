@@ -1,6 +1,12 @@
 import React from 'react';
 
-import { SceneComponentProps, SceneGridLayout, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneGridLayout,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+} from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
@@ -15,7 +21,9 @@ import { NEW_PANEL_HEIGHT, NEW_PANEL_WIDTH, getDashboardSceneFor, getVizPanelKey
 import { DashboardGridItem } from './DashboardGridItem';
 import { LibraryVizPanel } from './LibraryVizPanel';
 
-export interface AddLibraryPanelDrawerState extends SceneObjectState {}
+export interface AddLibraryPanelDrawerState extends SceneObjectState {
+  panelToReplaceRef?: SceneObjectRef<LibraryVizPanel>;
+}
 
 export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawerState> {
   public onClose = () => {
@@ -39,16 +47,28 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
       panelKey: getVizPanelKeyForPanelId(panelId),
     });
 
-    const newGridItem = new DashboardGridItem({
-      height: NEW_PANEL_HEIGHT,
-      width: NEW_PANEL_WIDTH,
-      x: 0,
-      y: 0,
-      body: body,
-      key: `grid-item-${panelId}`,
-    });
+    const panelToReplace = this.state.panelToReplaceRef?.resolve();
 
-    layout.setState({ children: [newGridItem, ...layout.state.children] });
+    if (panelToReplace) {
+      const gridItemToReplace = panelToReplace.parent;
+
+      if (!(gridItemToReplace instanceof DashboardGridItem)) {
+        throw new Error('Trying to replace a panel that does not have a DashboardGridItem');
+      }
+
+      gridItemToReplace.setState({ body });
+    } else {
+      const newGridItem = new DashboardGridItem({
+        height: NEW_PANEL_HEIGHT,
+        width: NEW_PANEL_WIDTH,
+        x: 0,
+        y: 0,
+        body: body,
+        key: `grid-item-${panelId}`,
+      });
+
+      layout.setState({ children: [newGridItem, ...layout.state.children] });
+    }
 
     this.onClose();
   };

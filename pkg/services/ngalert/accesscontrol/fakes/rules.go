@@ -3,8 +3,8 @@ package fakes
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -22,6 +22,7 @@ type FakeRuleService struct {
 	AuthorizeDatasourceAccessForRuleGroupFunc func(context.Context, identity.Requester, models.RulesGroup) error
 	HasAccessToRuleGroupFunc                  func(context.Context, identity.Requester, models.RulesGroup) (bool, error)
 	AuthorizeAccessToRuleGroupFunc            func(context.Context, identity.Requester, models.RulesGroup) error
+	HasAccessInFolderFunc                     func(context.Context, identity.Requester, accesscontrol.Namespaced) (bool, error)
 	AuthorizeAccessInFolderFunc               func(context.Context, identity.Requester, accesscontrol.Namespaced) error
 	AuthorizeRuleChangesFunc                  func(context.Context, identity.Requester, *store.GroupDelta) error
 
@@ -74,6 +75,14 @@ func (s *FakeRuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user i
 		return s.AuthorizeAccessToRuleGroupFunc(ctx, user, rules)
 	}
 	return nil
+}
+
+func (s *FakeRuleService) HasAccessInFolder(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) (bool, error) {
+	s.Calls = append(s.Calls, Call{"HasAccessInFolder", []interface{}{ctx, user, namespaced}})
+	if s.HasAccessInFolderFunc != nil {
+		return s.HasAccessInFolderFunc(ctx, user, namespaced)
+	}
+	return false, nil
 }
 
 func (s *FakeRuleService) AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error {
