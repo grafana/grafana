@@ -93,13 +93,3 @@ func ValidateUID(uid string) error {
 	}
 	return nil
 }
-
-func AutofixUID(uid string) string {
-	if IsShortUIDTooLong(uid) {
-		return uid[:MaxUIDLength]
-	}
-	if !IsValidShortUID(uid) {
-		uid = validUIDReplacer(uid, "-")
-	}
-	return uid
-}
