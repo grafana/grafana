@@ -343,6 +343,11 @@
 /packages/grafana-plugin-configs/ @grafana/plugins-platform-frontend
 /packages/grafana-prometheus/ @grafana/observability-metrics
 /packages/grafana-sql/ @grafana/partner-datasources @grafana/oss-big-tent
+/packages/grafana-o11y-ds-frontend/src/NodeGraph @grafana/observability-traces-and-profiling
+/packages/grafana-o11y-ds-frontend/src/pyroscope @grafana/observability-traces-and-profiling
+/packages/grafana-o11y-ds-frontend/src/TraceToLogs @grafana/observability-traces-and-profiling
+/packages/grafana-o11y-ds-frontend/src/TraceToMetrics @grafana/observability-traces-and-profiling
+/packages/grafana-o11y-ds-frontend/src/TraceToProfiles @grafana/observability-traces-and-profiling
 
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
