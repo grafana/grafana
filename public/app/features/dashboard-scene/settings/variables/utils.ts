@@ -36,7 +36,8 @@ interface EditableVariableConfig {
   editor: React.ComponentType<any>;
 }
 
-export type EditableVariableType = Exclude<VariableType, 'system'>;
+//exclude system variable type and snapshot variable type
+export type EditableVariableType = Exclude<VariableType, 'system' | 'snapshot'>;
 
 export function isEditableVariableType(type: VariableType): type is EditableVariableType {
   return type !== 'system';

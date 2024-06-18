@@ -1,6 +1,6 @@
 import { uniqueId } from 'lodash';
 
-import { DataFrameDTO, DataFrameJSON, TypedVariableModel } from '@grafana/data';
+import { AdHocVariableFilter, DataFrameDTO, DataFrameJSON, TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -322,18 +322,54 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
 }
 
 export function createVariableForSnapshots(variable: TypedVariableModel): SceneVariable {
-  const snapshotVariable = new SnapshotVariable({
+  let snapshotVariable: SnapshotVariable;
+  let current: { value: string | string[]; text: string | string[] };
+  let filters: AdHocVariableFilter[];
+  if (variable.type === 'interval') {
+    const intervals = getIntervalsFromQueryString(variable.query);
+    const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
+    console.log('currentInterval', currentInterval);
+    snapshotVariable = new SnapshotVariable({
+      name: variable.name,
+      label: variable.label,
+      description: variable.description,
+      value: currentInterval,
+      text: currentInterval,
+      hide: variable.hide,
+    });
+    return snapshotVariable;
+  }
+
+  if (
+    variable.type === 'adhoc' ||
+    variable.type === 'groupby' ||
+    variable.type === 'system' ||
+    variable.type === 'constant'
+  ) {
+    current = {
+      value: '',
+      text: '',
+    };
+  } else {
+    current = {
+      value: variable.current?.value ?? '',
+      text: variable.current?.text ?? '',
+    };
+  }
+
+  if (variable.type === 'adhoc' && variable.filters) {
+    filters = variable.filters;
+  } else {
+    filters = [];
+  }
+
+  snapshotVariable = new SnapshotVariable({
     name: variable.name,
     label: variable.label,
     description: variable.description,
-    value: variable.current?.value ?? '',
-    text: variable.current?.text ?? '',
-    query: variable.query,
-    isMulti: variable.multi,
-    allValue: variable.allValue || undefined,
-    includeAll: variable.includeAll,
-    defaultToAll: Boolean(variable.includeAll),
-    skipUrlSync: variable.skipUrlSync,
+    value: current?.value ?? '',
+    text: current?.text ?? '',
+    filters: filters,
     hide: variable.hide,
   });
   console.log('customVariable', snapshotVariable);

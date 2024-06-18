@@ -1,5 +1,6 @@
 import { Observable, map, of } from 'rxjs';
 
+import { AdHocVariableFilter } from '@grafana/data';
 import {
   MultiValueVariable,
   MultiValueVariableState,
@@ -11,15 +12,17 @@ import {
   sceneGraph,
   VariableGetOptionsArgs,
 } from '@grafana/scenes';
+import { AdHocFilterRenderer } from 'app/features/variables/adhoc/picker/AdHocFilterRenderer';
 
 export interface SnapshotVariableState extends MultiValueVariableState {
   query: string;
+  filters: AdHocVariableFilter[];
   isReadOnly: boolean;
 }
 
 export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
-    statePaths: ['query'],
+    statePaths: [],
   });
 
   public constructor(initialState: Partial<SnapshotVariableState>) {
@@ -31,6 +34,7 @@ export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> 
       value: '',
       text: '',
       options: [],
+      filters: [],
       name: '',
       ...initialState,
     });
@@ -57,19 +61,36 @@ export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> 
   public validateAndUpdate(): Observable<ValidateAndUpdateResult> {
     return this.getValueOptions({}).pipe(
       map((options) => {
-        this._updateValueGivenNewOptions(options);
+        if (this.state.options !== options) {
+          this._updateValueGivenNewOptions(options);
+        }
         return {};
       })
     );
   }
 
-  public static Component = ({ model }: SceneComponentProps<MultiValueVariable>) => {
+  public static Component = ({ model }: SceneComponentProps<MultiValueVariable<SnapshotVariableState>>) => {
+    //if filters are present, render the filter component
+    // model can have filters or not, so we need to check
+    if (model.state.filters && model.state.filters.length > 0) {
+      return model.state.filters.map((filter) => {
+        return AdHocFilterRenderer({
+          filter,
+          disabled: true,
+          datasource: { uid: '' },
+          allFilters: [],
+          onKeyChange: () => {},
+          onOperatorChange: () => {},
+          onValueChange: () => {},
+        });
+      });
+    }
+    //TODO:fix the typescript error
     return renderSelectForVariable(model);
   };
   // we will always preserve the current value and text for snapshots
   private _updateValueGivenNewOptions(options: VariableValueOption[]) {
     const { value: currentValue, text: currentText } = this.state;
-
     const stateUpdate: Partial<MultiValueVariableState> = {
       options,
       loading: false,
