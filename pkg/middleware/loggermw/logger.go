@@ -113,7 +113,7 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 		"size", rw.Size(),
 	}
 
-	referer, err := SanitizeURL(r.Referer())
+	referer, err := SanitizeURI(r.Referer())
 	// We add an empty referer when there's a parsing error, hence this is before the err check.
 	logParams = append(logParams, "referer", referer)
 	if err != nil {
@@ -159,6 +159,8 @@ type queryCheck struct {
 	checker func(v url.Values) bool
 }
 
+const masking = "hidden"
+
 var sensitiveQueryChecks = [...]queryCheck{
 	{
 		key: "auth_token",
@@ -200,7 +202,7 @@ func SanitizeURI(s string) (string, error) {
 	values := u.Query()
 	for _, check := range sensitiveQueryChecks {
 		if check.checker(values) {
-			values.Del(check.key)
+			values.Set(check.key, masking)
 		}
 	}
 	u.RawQuery = values.Encode()
