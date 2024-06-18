@@ -15,7 +15,7 @@ import (
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -34,7 +34,7 @@ func newScopeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGette
 		PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		TableConvertor: utils.NewTableConverter(
+		TableConvertor: gapiutil.NewTableConverter(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
@@ -76,7 +76,7 @@ func newScopeDashboardBindingStorage(scheme *runtime.Scheme, optsGetter generic.
 		PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		TableConvertor: utils.NewTableConverter(
+		TableConvertor: gapiutil.NewTableConverter(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
@@ -118,7 +118,7 @@ func newScopeNodeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsG
 		PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		TableConvertor: utils.NewTableConverter(
+		TableConvertor: gapiutil.NewTableConverter(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},

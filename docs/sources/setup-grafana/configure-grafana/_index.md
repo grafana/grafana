@@ -1635,6 +1635,12 @@ across cluster more quickly at the expense of increased bandwidth usage. The def
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
+### ha_reconnect_timeout
+
+Length of time to attempt to reconnect to a lost peer. When running Grafana in a Kubernetes cluster, set this duration to less than `15m`.
+
+The string is a possibly signed sequence of decimal numbers followed by a unit suffix (ms, s, m, h, d), such as `30s` or `1m`.
+
 ### ha_push_pull_interval
 
 The interval between gossip full state syncs. Setting this interval lower (more frequent) will increase convergence speeds

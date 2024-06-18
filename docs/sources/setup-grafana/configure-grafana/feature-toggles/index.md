@@ -48,6 +48,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashgpt`                          | Enable AI powered features in dashboards                                                                                                                                                                                     | Yes                |
 | `alertingInsights`                 | Show the new alerting insights landing page                                                                                                                                                                                  | Yes                |
 | `panelMonitoring`                  | Enables panel monitoring through logs and measurements                                                                                                                                                                       | Yes                |
+| `transformationsVariableSupport`   | Allows using variables in transformations                                                                                                                                                                                    | Yes                |
 | `kubernetesPlaylists`              | Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s                                                                                                                                | Yes                |
 | `recoveryThreshold`                | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                                                                                                                                     | Yes                |
 | `lokiStructuredMetadata`           | Enables the loki data source to request structured metadata from the Loki server                                                                                                                                             | Yes                |
@@ -91,7 +92,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `reportingRetries`                     | Enables rendering retries for the reporting feature                                                                                                                                          |
 | `externalServiceAccounts`              | Automatic service account and token setup for plugins                                                                                                                                        |
 | `formatString`                         | Enable format string transformer                                                                                                                                                             |
-| `transformationsVariableSupport`       | Allows using variables in transformations                                                                                                                                                    |
 | `cloudWatchBatchQueries`               | Runs CloudWatch metrics queries as separate batches                                                                                                                                          |
 | `teamHttpHeaders`                      | Enables Team LBAC for datasources to apply team headers to the client requests                                                                                                               |
 | `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                                                                                         |
@@ -101,6 +101,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                                                             |
 | `newPDFRendering`                      | New implementation for the dashboard-to-PDF rendering                                                                                                                                        |
 | `ssoSettingsSAML`                      | Use the new SSO Settings API to configure the SAML connector                                                                                                                                 |
+| `openSearchBackendFlowEnabled`         | Enables the backend query flow for Open Search datasource plugin                                                                                                                             |
 
 ## Experimental feature toggles
 
@@ -189,6 +190,7 @@ Experimental features might be changed or removed without prior notice.
 | `dashboardRestore`                          | Enables deleted dashboard restore feature                                                                                                                                                                                                                                         |
 | `alertingCentralAlertHistory`               | Enables the new central alert history.                                                                                                                                                                                                                                            |
 | `azureMonitorPrometheusExemplars`           | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                                                                                                                                      |
+| `pinNavItems`                               | Enables pinning of nav items                                                                                                                                                                                                                                                      |
 
 ## Development feature toggles
 

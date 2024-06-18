@@ -627,6 +627,18 @@ export class Mousetrap {
         // keep a list of which sequences were matches for later
         doNotReset[seq] = 1;
         this._fireCallback(callbacks[i].callback, e, callbacks[i].combo, seq);
+
+        // When matching a callback, don't reset other callbacks that starts with this prefix
+        // This allows chaining of multiple shortcuts that share a prefix. e.g. if we have
+        // `t left` and `t right`, allow user to hit `t left`, `right` without resetting the sequence
+        const suffixPrefixIndex = seq.lastIndexOf(character);
+        const sequencePrefix = seq.slice(0, suffixPrefixIndex);
+        for (const [seq, level] of Object.entries(this._sequenceLevels)) {
+          if (level > 0 && seq.startsWith(sequencePrefix)) {
+            doNotReset[seq] = 1;
+          }
+        }
+
         continue;
       }
 
@@ -634,6 +646,14 @@ export class Mousetrap {
       // that means this is a regular match so we should fire that
       if (!processedSequenceCallback) {
         this._fireCallback(callbacks[i].callback, e, callbacks[i].combo);
+      }
+    }
+
+    // Don't reset a sequence if this character is the start of a sequence that has already progressed.
+    // This allows `t left` to be hit immediately after a `t right`
+    for (const callback of this._callbacks[character] ?? []) {
+      if (callback.action === e.type && callback.seq && callback.level === 0) {
+        doNotReset[callback.seq] = 1;
       }
     }
 
@@ -674,6 +694,11 @@ export class Mousetrap {
       throw new Error("Didn't get a KeyboardEvent");
     }
     const event: KeyboardEvent = rawEvent;
+
+    // Don't trigger shortcuts when a key is just held down
+    if (event.repeat) {
+      return;
+    }
 
     // normalize e.which for key events
     // @see http://stackoverflow.com/questions/4285627/javascript-keycode-vs-charcode-utter-confusion
@@ -743,9 +768,9 @@ export class Mousetrap {
         this._ignoreNextKeyup = characterFromEvent(e);
       }
 
-      // weird race condition if a sequence ends with the key
-      // another sequence begins with
-      setTimeout(this._resetSequences, 10);
+      // Reset the sequence timer and allow for this shortcut to be
+      // triggered again just by repeating the last key
+      this._resetSequenceTimer();
     };
 
     // loop through keys one at a time and bind the appropriate callback

@@ -82,6 +82,7 @@ func TestLoader_Load(t *testing.T) {
 								URL:  "https://grafana.com",
 							},
 							Description: "Data source for Amazon AWS monitoring service",
+							Keywords:    []string{"aws", "amazon"},
 							Logos: plugins.Logos{
 								Small: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 								Large: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",

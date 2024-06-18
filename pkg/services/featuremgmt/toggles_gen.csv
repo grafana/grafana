@@ -94,7 +94,7 @@ externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,false
 formatString,preview,@grafana/dataviz-squad,false,false,true
-transformationsVariableSupport,preview,@grafana/dataviz-squad,false,false,true
+transformationsVariableSupport,GA,@grafana/dataviz-squad,false,false,true
 kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
@@ -173,3 +173,6 @@ preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,fals
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
 pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,false,false
 azureMonitorPrometheusExemplars,experimental,@grafana/partner-datasources,false,false,false
+pinNavItems,experimental,@grafana/grafana-frontend-platform,false,false,false
+authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
+openSearchBackendFlowEnabled,preview,@grafana/aws-datasources,false,false,false

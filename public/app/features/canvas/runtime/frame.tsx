@@ -14,6 +14,7 @@ import { canvasElementRegistry } from '../registry';
 import { ElementState } from './element';
 import { RootElement } from './root';
 import { Scene } from './scene';
+import { initMoveable } from './sceneAbleManagement';
 
 const DEFAULT_OFFSET = 10;
 const HORIZONTAL_OFFSET = 50;
@@ -111,7 +112,7 @@ export class FrameState extends ElementState {
   reinitializeMoveable() {
     // Need to first clear current selection and then re-init moveable with slight delay
     this.scene.clearCurrentSelection();
-    setTimeout(() => this.scene.initMoveable(true, this.scene.isEditingEnabled));
+    setTimeout(() => initMoveable(true, this.scene.isEditingEnabled, this.scene));
   }
 
   // ??? or should this be on the element directly?
