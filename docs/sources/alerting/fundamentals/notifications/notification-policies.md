@@ -55,13 +55,12 @@ If a notification policy has label matchers that match the labels of the alert i
 
 If no child policies are defined in a notification policy or if none of the child policies have any label matchers that match the alert instance's labels, the default notification policy is used.
 
-<<<<<<< HEAD
+{{% admonition type="note" %}}
 As soon as a matching policy is found, the system does not continue to look for other matching policies. If you want to continue to look for other policies that may match, enable **Continue matching siblings** on that particular policy.
-=======
-If alerts use multiple labels, these labels must also be present in a notification policy to match and route notifications to a specific contact point.
 
+If alerts use multiple labels, these labels must also be present in a notification policy to match and route notifications to a specific contact point.
 {{% /admonition %}}
->>>>>>> 0cc67bb93d6 (alerting: notes on label matchers (#89269))
+
 
 Lastly, if none of the notification policies are selected the default notification policy is used.
 
