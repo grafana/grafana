@@ -56,6 +56,6 @@ jobs:
           git checkout -b "bump-version/${{ github.run_id }}/${{ inputs.version }}"
           git add .
           git commit -m "bump version ${{ inputs.version }}"
-          gh pr create --dry-run=${{ inputs.dry_run }} -l "no-changelog" -H "bump-version/${{ github.run_id }}/${{ inputs.version }}" -B "${{ github.ref }}" --title "Release: Bump version to ${{ inputs.version }}" --body "Updated version to ${{ inputs.version }}"
+          gh pr create --dry-run=${{ inputs.dry_run }} -l "no-changelog" -H "bump-version/${{ github.run_id }}/${{ inputs.version }}" -B "${{ github.ref_name }}" --title "Release: Bump version to ${{ inputs.version }}" --body "Updated version to ${{ inputs.version }}"
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
