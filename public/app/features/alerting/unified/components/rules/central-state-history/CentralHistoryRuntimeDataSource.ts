@@ -11,8 +11,8 @@ import { DataSourceInformation } from '../../../home/Insights';
 import { LIMIT_EVENTS } from './EventListSceneObject';
 import { historyResultToDataFrame } from './utils';
 
-const historyDataSourceUid = '__history_api_ds__';
-const historyDataSourcePluginId = '__history_api_ds__';
+const historyDataSourceUid = '__history_api_ds_uid__';
+const historyDataSourcePluginId = '__history_api_ds_pluginId__';
 
 export const alertStateHistoryDatasource: DataSourceInformation = {
   type: historyDataSourcePluginId,
@@ -22,7 +22,7 @@ export const alertStateHistoryDatasource: DataSourceInformation = {
 
 export function useRegisterHistoryRuntimeDataSource() {
   // we need to memoize the datasource so it is not registered multiple times for each render
-  const ds = useMemo(() => new HistoryAPIDatasource(historyDataSourcePluginId, historyDataSourceUid), []);
+  const ds = useMemo(() => new HistoryAPIDatasource(historyDataSourceUid, historyDataSourcePluginId), []);
   useEffect(() => {
     sceneUtils.registerRuntimeDataSource({ dataSource: ds });
   }, [ds]);

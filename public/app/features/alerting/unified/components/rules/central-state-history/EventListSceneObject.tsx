@@ -4,7 +4,7 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, TextBoxVariable, sceneGraph } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, TextBoxVariable, VariableValue, sceneGraph } from '@grafana/scenes';
 import { Alert, Icon, LoadingBar, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { t } from 'app/core/internationalization';
@@ -35,10 +35,13 @@ export const LIMIT_EVENTS = 1000;
  * It fetches the events from the history api and displays them in a list.
  * The list is filtered by the labels in the filter variable and by the time range variable in the scene graph.
  */
-export const HistoryEventsList = ({ timeRange, model }: { timeRange?: TimeRange; model: HistoryEventsListObject }) => {
-  const filtersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)!;
-
-  const valueInfilterTextBox = !(filtersVariable instanceof TextBoxVariable) ? '' : filtersVariable.getValue();
+export const HistoryEventsList = ({
+  timeRange,
+  valueInfilterTextBox,
+}: {
+  timeRange?: TimeRange;
+  valueInfilterTextBox: VariableValue;
+}) => {
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
 
@@ -311,5 +314,11 @@ export class HistoryEventsListObject extends SceneObjectBase {
 
 export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
   const { value: timeRange } = sceneGraph.getTimeRange(model).useState(); // get time range from scene graph
-  return <HistoryEventsList timeRange={timeRange} model={model} />;
+  const filtersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model)!;
+
+  const valueInfilterTextBox: VariableValue = !(filtersVariable instanceof TextBoxVariable)
+    ? ''
+    : filtersVariable.getValue();
+
+  return <HistoryEventsList timeRange={timeRange} valueInfilterTextBox={valueInfilterTextBox} />;
 }
