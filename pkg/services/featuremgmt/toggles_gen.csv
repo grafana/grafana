@@ -160,7 +160,6 @@ accessActionSets,experimental,@grafana/identity-access-team,false,false,false
 disableNumericMetricsSortingInExpressions,experimental,@grafana/observability-metrics,false,true,false
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 queryLibrary,experimental,@grafana/explore-squad,false,false,false
-autofixDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 newDashboardSharingComponent,experimental,@grafana/sharing-squad,false,false,true
 alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
@@ -176,3 +175,4 @@ pinNavItems,experimental,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
 openSearchBackendFlowEnabled,preview,@grafana/aws-datasources,false,false,false
 ssoSettingsLDAP,experimental,@grafana/identity-access-team,false,false,false
+failWrongDSUID,experimental,@grafana/plugins-platform-backend,false,false,false

@@ -651,10 +651,6 @@ const (
 	// Enables Query Library feature in Explore
 	FlagQueryLibrary = "queryLibrary"
 
-	// FlagAutofixDSUID
-	// Automatically migrates invalid datasource UIDs
-	FlagAutofixDSUID = "autofixDSUID"
-
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
 	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
@@ -714,4 +710,8 @@ const (
 	// FlagSsoSettingsLDAP
 	// Use the new SSO Settings API to configure LDAP
 	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
+
+	// FlagFailWrongDSUID
+	// Throws an error if a datasource has an invalid UIDs
+	FlagFailWrongDSUID = "failWrongDSUID"
 )
