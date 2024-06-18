@@ -107,7 +107,7 @@ Here are some commonly used built-in [variables](ref:variables-label-annotation)
         CPU usage for instance1 has exceeded 80% for the last 5 minutes: 81.2345
 
 {{% admonition type="caution" %}}
-Extra whitespace in label templates can break the match with notification policies.
+Extra whitespace in label templates can break matches with notification policies.
 {{% /admonition %}}
 
 ### Template annotations
