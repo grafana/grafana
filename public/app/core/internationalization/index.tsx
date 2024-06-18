@@ -95,5 +95,5 @@ export function getI18next() {
     return i18n;
   }
 
-  return i18nInstance;
+  return i18nInstance || i18n;
 }
