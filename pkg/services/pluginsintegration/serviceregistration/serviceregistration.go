@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -65,9 +64,6 @@ func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, 
 	if len(svc.Permissions) > 0 {
 		self.Permissions = toAccessControlPermissions(svc.Permissions)
 	}
-	if len(svc.ActionSets) > 0 {
-		self.ActionSets = toResourcePermissions(svc.ActionSets)
-	}
 
 	registration := &extsvcauth.ExternalServiceRegistration{
 		Name:         pluginID,
@@ -101,17 +97,6 @@ func toAccessControlPermissions(ps []pfs.Permission) []accesscontrol.Permission 
 		res = append(res, accesscontrol.Permission{
 			Action: p.Action,
 			Scope:  scope,
-		})
-	}
-	return res
-}
-
-func toResourcePermissions(ps []pfs.ActionSet) []resourcepermissions.ActionSet {
-	res := make([]resourcepermissions.ActionSet, 0, len(ps))
-	for _, p := range ps {
-		res = append(res, resourcepermissions.ActionSet{
-			Action:  p.Action,
-			Actions: p.Actions,
 		})
 	}
 	return res

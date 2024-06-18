@@ -787,6 +787,10 @@ func (s *InMemoryActionSets) ResolveActionSet(actionSet string) []string {
 	return s.actionSetToActions[actionSet]
 }
 
+func (s *InMemoryActionSets) ResolvePluginActionSet(actionSet string) []string {
+	return s.actionSetToActions[actionSet]
+}
+
 func isFolderOrDashboardAction(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) || strings.HasPrefix(action, dashboards.ScopeFoldersRoot)
 }
@@ -850,6 +854,11 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 func GetActionSetName(resource, permission string) string {
 	// lower cased
 	resource = strings.ToLower(resource)
+	// in the of having a resource which is already defined from the actionset name
+	// such as "k6testid:k6-app:edit" we should not add the resource to the actionset name
+	if permission == "" {
+		return resource
+	}
 	permission = strings.ToLower(permission)
 	return fmt.Sprintf("%s:%s", resource, permission)
 }

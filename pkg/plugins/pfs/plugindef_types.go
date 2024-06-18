@@ -26,20 +26,6 @@ type Info struct {
 
 type IAM struct {
 	Permissions []Permission `json:"permissions,omitempty"`
-	ActionSets  []ActionSet  `json:"actionsets,omitempty"`
-}
-
-type ActionSet struct {
-	// actionsets
-	Action  string   `json:"action"`
-	Actions []string `json:"actions"`
-
-	// TODO @eleijonmarck: register a managed permission
-	// managed permissions for the actionset
-	// DisplayName string   `json:"displayName"`
-	// Kind        string   `json:"kind"`
-	// Identifier  string   `json:"identifier"`
-	// Grants      []string `json:"grants"`
 }
 
 type Permission struct {

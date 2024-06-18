@@ -94,6 +94,34 @@ func (r *RegisterPluginRoles) Register(ctx context.Context, p *plugins.Plugin) (
 	return p, nil
 }
 
+// RegisterActionSets implements an InitializeFunc for registering plugin roles.
+type RegisterActionSets struct {
+	log          log.Logger
+	roleRegistry plugins.ActionSetRegistry
+}
+
+// RegisterActionSetsStep returns a new InitializeFunc for registering plugin roles.
+func RegisterActionSetsStep(actionRegistry plugins.ActionSetRegistry) initialization.InitializeFunc {
+	return newRegisterActionSets(actionRegistry).Register
+}
+
+func newRegisterActionSets(registry plugins.ActionSetRegistry) *RegisterActionSets {
+	return &RegisterActionSets{
+		log:          log.New("plugins.actionsets.registration"),
+		roleRegistry: registry,
+	}
+}
+
+// Register registers the plugin roles with the role registry.
+func (r *RegisterActionSets) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	r.log.Info("Registering actionsets", "pluginId", p.ID, "actionSets", p.ActionSets)
+	if err := r.roleRegistry.DeclareActionSets(ctx, p.ID, p.Name, p.ActionSets); err != nil {
+		r.log.Warn("Declare plugin actionsets failed.", "pluginId", p.ID, "error", err)
+		return nil, err
+	}
+	return p, nil
+}
+
 // ReportBuildMetrics reports build information for all plugins, except core and bundled plugins.
 func ReportBuildMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if !p.IsCorePlugin() && !p.IsBundledPlugin() {

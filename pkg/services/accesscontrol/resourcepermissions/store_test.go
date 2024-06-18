@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -787,6 +788,91 @@ func TestStore_StoreActionSet(t *testing.T) {
 			actionSetName := GetActionSetName(tt.resource, tt.action)
 			actionSet := asService.ResolveActionSet(actionSetName)
 			require.Equal(t, tt.actions, actionSet)
+		})
+	}
+}
+
+func TestStore_DeclareActionSet(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	type actionSetTest struct {
+		desc        string
+		pluginID    string
+		pluginName  string
+		actionsets  []plugins.ActionSetRegistration
+		expectedErr error
+	}
+
+	pluginID := "k6testid"
+	tests := []actionSetTest{
+		{
+			desc:       "should not be able to declare action set without prefix for action",
+			pluginID:   pluginID,
+			pluginName: "k6testname",
+			actionsets: []plugins.ActionSetRegistration{{
+				ActionSet: plugins.ActionSet{
+					Action:  "wrongprefix:k6-app:edit",
+					Actions: []string{"folders:read", "folders:write"},
+				},
+			},
+			},
+			expectedErr: &accesscontrol.ErrorActionPrefixMissing{},
+		},
+		{
+			desc:       "should not be able to declare action set outside of allowlist",
+			pluginID:   pluginID,
+			pluginName: "k6testname",
+			actionsets: []plugins.ActionSetRegistration{{
+				ActionSet: plugins.ActionSet{
+					Action:  pluginID + ":k6-app:edit",
+					Actions: []string{"folders:read", "folders:write"},
+				},
+			},
+			},
+			expectedErr: &accesscontrol.ErrorActionNotAllowed{},
+		},
+		{
+			desc:       "should be able to declare action set",
+			pluginID:   pluginID,
+			pluginName: "k6testname",
+			actionsets: []plugins.ActionSetRegistration{
+				{
+					ActionSet: plugins.ActionSet{
+						Action:  pluginID + ":folders:admin",
+						Actions: []string{"folders:read", "folders:write", "k6-app:configuration"},
+					},
+				},
+				{
+					ActionSet: plugins.ActionSet{
+						Action:  pluginID + ":folders:edit",
+						Actions: []string{"folders:read", "folders:write"},
+					},
+				},
+				{
+					ActionSet: plugins.ActionSet{
+						Action:  pluginID + ":folders:view",
+						Actions: []string{"folders:read"},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			asService := NewActionSetService()
+			err := asService.DeclareActionSets(context.TODO(), tt.pluginID, tt.pluginID, tt.actionsets)
+			if tt.expectedErr != nil {
+				require.Error(t, err)
+				require.IsType(t, tt.expectedErr, err)
+				return
+			}
+			require.NoError(t, err)
+			for _, as := range tt.actionsets {
+				actions := asService.ResolvePluginActionSet(as.ActionSet.Action)
+				require.ElementsMatch(t, as.ActionSet.Actions, actions)
+			}
 		})
 	}
 }
