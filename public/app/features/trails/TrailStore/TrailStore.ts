@@ -248,6 +248,7 @@ function getUrlStateForComparison(trail: DataTrail) {
   return urlState;
 }
 
+function correctUrlStateForComparison(urlState: SceneObjectUrlValues) {
   // Omit some URL parameters that are not useful for state comparison,
   // as they can change in the URL without creating new steps
   delete urlState.actionView;
