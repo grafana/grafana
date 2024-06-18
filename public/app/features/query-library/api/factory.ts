@@ -26,6 +26,7 @@ export const queryLibraryApi = createApi({
         url: `${uid}`,
         method: 'DELETE',
       }),
+      invalidatesTags: ['QueryTemplatesList'],
     }),
   }),
   reducerPath: 'queryLibrary',
