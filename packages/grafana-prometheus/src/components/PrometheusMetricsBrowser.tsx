@@ -409,7 +409,8 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
       this.updateLabelState(name, { values, loading: false });
     } catch (error) {
       console.error(error);
-    }Stack
+    }
+  }
 
   async fetchSeries(selector: string, lastFacetted?: string) {
     const { languageProvider } = this.props;
