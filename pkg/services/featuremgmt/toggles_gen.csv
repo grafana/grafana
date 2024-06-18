@@ -92,7 +92,8 @@ pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,tru
 idForwarding,experimental,@grafana/identity-access-team,false,false,false
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
-enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,false
+enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
+disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 formatString,preview,@grafana/dataviz-squad,false,false,true
 transformationsVariableSupport,GA,@grafana/dataviz-squad,false,false,true
 kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false

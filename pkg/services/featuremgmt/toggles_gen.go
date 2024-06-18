@@ -383,6 +383,10 @@ const (
 	// Enables native HTTP Histograms
 	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
 
+	// FlagDisableClassicHTTPHistogram
+	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
+	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
+
 	// FlagFormatString
 	// Enable format string transformer
 	FlagFormatString = "formatString"
