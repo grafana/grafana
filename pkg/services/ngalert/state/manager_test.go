@@ -973,13 +973,9 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					CacheID: func() string {
+					CacheID: func() data.Fingerprint {
 						lbls := models.InstanceLabels(labels["system + rule + labels1"])
-						r, err := lbls.StringKey()
-						if err != nil {
-							panic(err)
-						}
-						return r
+						return lbls.Fingerprint()
 					}(),
 					Labels: mergeLabels(labels["system + rule + labels1"], data.Labels{
 						"datasource_uid": "datasource_uid_1",
@@ -1317,7 +1313,7 @@ func TestProcessEvalResults(t *testing.T) {
 			states := st.GetStatesForRuleUID(tc.alertRule.OrgID, tc.alertRule.UID)
 			assert.Len(t, states, len(tc.expectedStates))
 
-			expectedStates := make(map[string]*state.State, len(tc.expectedStates))
+			expectedStates := make(map[data.Fingerprint]*state.State, len(tc.expectedStates))
 			for _, s := range tc.expectedStates {
 				// patch all optional fields of the expected state
 				setCacheID(s)
@@ -1404,12 +1400,11 @@ func TestProcessEvalResults(t *testing.T) {
 
 		require.NotEmpty(t, states)
 
-		savedStates := make(map[string]models.AlertInstance)
+		savedStates := make(map[data.Fingerprint]models.AlertInstance)
 		for _, op := range instanceStore.RecordedOps() {
 			switch q := op.(type) {
 			case models.AlertInstance:
-				cacheId, err := q.Labels.StringKey()
-				require.NoError(t, err)
+				cacheId := q.Labels.Fingerprint()
 				savedStates[cacheId] = q
 			}
 		}
@@ -1578,7 +1573,7 @@ func TestStaleResultsHandler(t *testing.T) {
 }
 
 func TestStaleResults(t *testing.T) {
-	getCacheID := func(t *testing.T, rule *models.AlertRule, result eval.Result) string {
+	getCacheID := func(t *testing.T, rule *models.AlertRule, result eval.Result) data.Fingerprint {
 		t.Helper()
 		labels := data.Labels{}
 		for key, value := range rule.Labels {
@@ -1588,14 +1583,12 @@ func TestStaleResults(t *testing.T) {
 			labels[key] = value
 		}
 		lbls := models.InstanceLabels(labels)
-		key, err := lbls.StringKey()
-		require.NoError(t, err)
-		return key
+		return lbls.Fingerprint()
 	}
 
-	checkExpectedStates := func(t *testing.T, actual []*state.State, expected map[string]struct{}) map[string]*state.State {
+	checkExpectedStates := func(t *testing.T, actual []*state.State, expected map[data.Fingerprint]struct{}) map[data.Fingerprint]*state.State {
 		t.Helper()
-		result := make(map[string]*state.State)
+		result := make(map[data.Fingerprint]*state.State)
 		require.Len(t, actual, len(expected))
 		for _, currentState := range actual {
 			_, ok := expected[currentState.CacheID]
@@ -1604,7 +1597,7 @@ func TestStaleResults(t *testing.T) {
 		}
 		return result
 	}
-	checkExpectedStateTransitions := func(t *testing.T, actual []state.StateTransition, expected map[string]struct{}) {
+	checkExpectedStateTransitions := func(t *testing.T, actual []state.StateTransition, expected map[data.Fingerprint]struct{}) {
 		t.Helper()
 		require.Len(t, actual, len(expected))
 		for _, currentState := range actual {
@@ -1643,7 +1636,7 @@ func TestStaleResults(t *testing.T) {
 	state2 := getCacheID(t, rule, initResults[1])
 	state3 := getCacheID(t, rule, initResults[2])
 
-	initStates := map[string]struct{}{
+	initStates := map[data.Fingerprint]struct{}{
 		state1: {},
 		state2: {},
 		state3: {},
@@ -1687,7 +1680,7 @@ func TestStaleResults(t *testing.T) {
 
 	t.Run("should remove stale states from cache", func(t *testing.T) {
 		currentStates = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
-		checkExpectedStates(t, currentStates, map[string]struct{}{
+		checkExpectedStates(t, currentStates, map[data.Fingerprint]struct{}{
 			getCacheID(t, rule, results[0]): {},
 		})
 	})
@@ -1782,7 +1775,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		expectedStatesMap := make(map[string]*state.State, len(tc.expectedStates))
+		expectedStatesMap := make(map[data.Fingerprint]*state.State, len(tc.expectedStates))
 		for _, expectedState := range tc.expectedStates {
 			s := setCacheID(expectedState)
 			expectedStatesMap[s.CacheID] = s
@@ -1992,20 +1985,15 @@ func TestResetStateByRuleUID(t *testing.T) {
 }
 
 func setCacheID(s *state.State) *state.State {
-	if s.CacheID != "" {
+	if s.CacheID != 0 {
 		return s
 	}
-	il := models.InstanceLabels(s.Labels)
-	id, err := il.StringKey()
-	if err != nil {
-		panic(err)
-	}
-	s.CacheID = id
+	s.CacheID = s.Labels.Fingerprint()
 	return s
 }
 
-func stateSliceToMap(states []*state.State) map[string]*state.State {
-	result := make(map[string]*state.State, len(states))
+func stateSliceToMap(states []*state.State) map[data.Fingerprint]*state.State {
+	result := make(map[data.Fingerprint]*state.State, len(states))
 	for _, s := range states {
 		setCacheID(s)
 		result[s.CacheID] = s

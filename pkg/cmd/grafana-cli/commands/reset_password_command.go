@@ -47,7 +47,7 @@ func resetPasswordCommand(c utils.CommandLine, runner server.Runner) error {
 	return err
 }
 
-func resetPassword(adminId int64, newPassword user.Password, userSvc user.Service) error {
+func resetPassword(adminId int64, password user.Password, userSvc user.Service) error {
 	userQuery := user.GetUserByIDQuery{ID: adminId}
 	usr, err := userSvc.GetByID(context.Background(), &userQuery)
 	if err != nil {
@@ -55,11 +55,6 @@ func resetPassword(adminId int64, newPassword user.Password, userSvc user.Servic
 	}
 	if !usr.IsAdmin {
 		return ErrMustBeAdmin
-	}
-
-	password, err := newPassword.Hash(usr.Salt)
-	if err != nil {
-		return err
 	}
 
 	if err := userSvc.Update(context.Background(), &user.UpdateUserCommand{UserID: adminId, Password: &password}); err != nil {

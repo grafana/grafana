@@ -51,7 +51,6 @@ export interface FeatureToggles {
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
-  nestedFolderPicker?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
@@ -74,7 +73,6 @@ export interface FeatureToggles {
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
   refactorVariablesTimeRange?: boolean;
-  enableElasticsearchBackendQuerying?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
   extraThemes?: boolean;
@@ -82,7 +80,6 @@ export interface FeatureToggles {
   pluginsFrontendSandbox?: boolean;
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
-  lokiFormatQuery?: boolean;
   recordedQueriesMulti?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
@@ -119,6 +116,7 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
+  kubernetesDashboards?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -192,4 +190,9 @@ export interface FeatureToggles {
   alertingDisableSendAlertsExternal?: boolean;
   preserveDashboardStateWhenNavigating?: boolean;
   alertingCentralAlertHistory?: boolean;
+  pluginProxyPreserveTrailingSlash?: boolean;
+  azureMonitorPrometheusExemplars?: boolean;
+  pinNavItems?: boolean;
+  authZGRPCServer?: boolean;
+  openSearchBackendFlowEnabled?: boolean;
 }

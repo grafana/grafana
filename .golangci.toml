@@ -1,5 +1,6 @@
 [run]
 timeout = "10m"
+concurrency = 10
 
 [linters-settings.exhaustive]
 default-signifies-exhaustive = true
@@ -120,19 +121,28 @@ enabled-checks = ["ruleguard"]
 [linters-settings.gocritic.settings.ruleguard]
 rules = "pkg/ruleguard.rules.go"
 
+[linters-settings.misspell]
+ignore-words = ["Unknwon", "Creater"]
+
 [linters-settings.nakedret]
 max-func-lines = 60
 
 [linters]
 disable-all = true
+# try to keep this list sorted, please
 enable = [
+  "asciicheck",
   "bodyclose",
   "depguard",
   "dogsled",
   "errcheck",
+  "errorlint",
+  "exhaustive",
+  "exportloopref",
   # "gochecknoinits",
   # "goconst",
   # "gocritic", # Temporarily disabled on 2022-09-09, running into weird bug "ruleguard: execution error: used Run() with an empty rule set; forgot to call Load() first?"
+  "gocyclo",
   "goimports",
   "goprintffuncname",
   "gosec",
@@ -141,19 +151,14 @@ enable = [
   "ineffassign",
   "misspell",
   "nakedret",
-  "exportloopref",
+  "prealloc",
+  "revive",
   "staticcheck",
   "stylecheck",
   "typecheck",
   "unconvert",
   "unused",
   "whitespace",
-  "gocyclo",
-  "exhaustive",
-  "typecheck",
-  "asciicheck",
-  "errorlint",
-  "revive",
 ]
 
 # Disabled linters (might want them later)
@@ -162,6 +167,7 @@ enable = [
 
 [issues]
 exclude-use-default = false
+max-same-issues = 0
 
 # Enable when appropriate
 # Poorly chosen identifier
@@ -233,10 +239,6 @@ text = "501"
 [[issues.exclude-rules]]
 linters = ["gosec"]
 text = "404"
-
-[[issues.exclude-rules]]
-linters = ["misspell"]
-text = "Unknwon` is a misspelling of `Unknown"
 
 [[issues.exclude-rules]]
 linters = ["errorlint"]

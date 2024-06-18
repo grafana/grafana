@@ -531,7 +531,7 @@ func TestRuleRoutine(t *testing.T) {
 			for i := 0; i < 2; i++ {
 				states = append(states, &state.State{
 					AlertRuleUID: rule.UID,
-					CacheID:      util.GenerateShortUID(),
+					CacheID:      data.Labels(rule.Labels).Fingerprint(),
 					OrgID:        rule.OrgID,
 					State:        s,
 					StartsAt:     sch.clock.Now(),

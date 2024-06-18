@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ldap "github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	secretsfake "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
@@ -81,6 +82,7 @@ func TestSocialService_ProvideService(t *testing.T) {
 		nil,
 		&setting.OSSImpl{Cfg: cfg},
 		&licensing.OSSLicensingService{},
+		ldap.ProvideService(cfg),
 	)
 
 	for _, tc := range testCases {
@@ -182,7 +184,19 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	sqlStore := db.InitTestDB(t)
 
-	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets, &usagestats.UsageStatsMock{}, nil, nil, &licensing.OSSLicensingService{})
+	ssoSettingsSvc := ssosettingsimpl.ProvideService(
+		cfg,
+		sqlStore,
+		accessControl,
+		routing.NewRouteRegister(),
+		featuremgmt.WithFeatures(),
+		secrets,
+		&usagestats.UsageStatsMock{},
+		nil,
+		nil,
+		&licensing.OSSLicensingService{},
+		ldap.ProvideService(cfg),
+	)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

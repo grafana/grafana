@@ -705,7 +705,7 @@ Set the policy template that will be used when adding the `Content-Security-Poli
 
 ### angular_support_enabled
 
-This currently defaults to `true` but will default to `false` in a future release. When set to false the angular framework and support components will not be loaded. This means that
+This is set to false by default, meaning that the angular framework and support components will not be loaded. This means that
 all [plugins]({{< relref "../../developers/angular_deprecation/angular-plugins" >}}) and core features that depend on angular support will stop working.
 
 The core features that depend on angular are:
@@ -1640,6 +1640,12 @@ The interval between sending gossip messages. By lowering this value (more frequ
 across cluster more quickly at the expense of increased bandwidth usage. The default value is `200ms`.
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_reconnect_timeout
+
+Length of time to attempt to reconnect to a lost peer. When running Grafana in a Kubernetes cluster, set this duration to less than `15m`.
+
+The string is a possibly signed sequence of decimal numbers followed by a unit suffix (ms, s, m, h, d), such as `30s` or `1m`.
 
 ### ha_push_pull_interval
 

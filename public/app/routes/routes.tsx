@@ -436,10 +436,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     config.featureToggles.dashboardRestore && {
-      path: '/dashboard/trash',
+      path: '/dashboard/recentlyDeleted',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsDelete]),
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "TrashPage" */ 'app/features/trash-section/TrashPage')
+        () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
       ),
     },
     {
