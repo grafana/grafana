@@ -1,5 +1,5 @@
   mimir_backend:
-    image: us.gcr.io/kubernetes-dev/mimir:santihernandezc-validate_grafana_am_config-1e903e462-WIP
+    image: grafana/mimir:r295-a23e559
     container_name: mimir_backend
     command:
       - -target=backend
