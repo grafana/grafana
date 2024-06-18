@@ -357,7 +357,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 	t.Run("should provide provenance status", func(t *testing.T) {
 		require.NoError(t, db.SetProvenance(ctx, &definitions.MuteTimeInterval{
 			MuteTimeInterval: config.MuteTimeInterval{
-				Name: created.Name,
+				Name: created.Spec.Name,
 			},
 		}, admin.Identity.GetOrgID(), "API"))
 
@@ -423,16 +423,15 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 	t.Run("should update if version is empty", func(t *testing.T) {
 		updated := created.DeepCopy()
 		updated.ResourceVersion = ""
-		updated.Spec = v0alpha1.TimeIntervalSpec{
-			TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
-		}
+		updated.Spec.TimeIntervals = v0alpha1.IntervalGenerator{}.GenerateMany(2)
+
 		actualUpdated, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
 		require.NoError(t, err)
 		require.EqualValues(t, updated.Spec, actualUpdated.Spec)
 		require.NotEqual(t, created.ResourceVersion, actualUpdated.ResourceVersion)
 	})
 	t.Run("should fail to delete if version does not match", func(t *testing.T) {
-		actual, err := adminClient.Get(ctx, interval.Name, v1.GetOptions{})
+		actual, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
 		require.NoError(t, err)
 
 		err = adminClient.Delete(ctx, actual.Name, v1.DeleteOptions{
@@ -443,7 +442,7 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
 	})
 	t.Run("should succeed if version matches", func(t *testing.T) {
-		actual, err := adminClient.Get(ctx, interval.Name, v1.GetOptions{})
+		actual, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
 		require.NoError(t, err)
 
 		err = adminClient.Delete(ctx, actual.Name, v1.DeleteOptions{
