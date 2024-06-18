@@ -44,7 +44,7 @@ function getMessages(): Message[] {
     },
     {
       content: `The panels in the dashboard are: ${getDashboardPanelPrompt(dashboard)}`,
-      role: Role.system,
+      role: Role.user,
     },
   ];
 }

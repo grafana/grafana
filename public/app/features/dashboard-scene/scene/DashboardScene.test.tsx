@@ -12,7 +12,7 @@ import {
   behaviors,
   SceneDataTransformer,
 } from '@grafana/scenes';
-import { Dashboard, DashboardCursorSync } from '@grafana/schema';
+import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -753,6 +753,20 @@ describe('DashboardScene', () => {
         expect(gridItem.state.body!.state.key).toBe('panel-7');
       });
 
+      it('Should maintain size of duplicated panel', () => {
+        const gItem = (scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem;
+        gItem.setState({ height: 1 });
+        const vizPanel = gItem.state.body;
+        scene.duplicatePanel(vizPanel as VizPanel);
+
+        const body = scene.state.body as SceneGridLayout;
+        const newGridItem = body.state.children[5] as DashboardGridItem;
+
+        expect(body.state.children.length).toBe(6);
+        expect(newGridItem.state.body!.state.key).toBe('panel-7');
+        expect(newGridItem.state.height).toBe(1);
+      });
+
       it('Should duplicate a library panel', () => {
         const libraryPanel = ((scene.state.body as SceneGridLayout).state.children[4] as DashboardGridItem).state.body;
         const vizPanel = (libraryPanel as LibraryVizPanel).state.panel;
@@ -887,6 +901,80 @@ describe('DashboardScene', () => {
 
         expect(body.state.children.length).toBe(1);
         expect(gridItem.state.body).toBeInstanceOf(VizPanel);
+      });
+
+      it('Should create a library panel', () => {
+        const vizPanel = new VizPanel({
+          title: 'Panel A',
+          key: 'panel-1',
+          pluginId: 'table',
+        });
+
+        const gridItem = new DashboardGridItem({
+          key: 'griditem-1',
+          body: vizPanel,
+        });
+
+        const scene = buildTestScene({
+          body: new SceneGridLayout({
+            children: [gridItem],
+          }),
+        });
+
+        const libPanel = {
+          uid: 'uid',
+          name: 'name',
+        };
+
+        scene.createLibraryPanel(vizPanel, libPanel as LibraryPanel);
+
+        const layout = scene.state.body as SceneGridLayout;
+        const newGridItem = layout.state.children[0] as DashboardGridItem;
+
+        expect(layout.state.children.length).toBe(1);
+        expect(newGridItem.state.body).toBeInstanceOf(LibraryVizPanel);
+        expect((newGridItem.state.body as LibraryVizPanel).state.uid).toBe('uid');
+        expect((newGridItem.state.body as LibraryVizPanel).state.name).toBe('name');
+      });
+
+      it('Should create a library panel under a row', () => {
+        const vizPanel = new VizPanel({
+          title: 'Panel A',
+          key: 'panel-1',
+          pluginId: 'table',
+        });
+
+        const gridItem = new DashboardGridItem({
+          key: 'griditem-1',
+          body: vizPanel,
+        });
+
+        const scene = buildTestScene({
+          body: new SceneGridLayout({
+            children: [
+              new SceneGridRow({
+                key: 'row-1',
+                children: [gridItem],
+              }),
+            ],
+          }),
+        });
+
+        const libPanel = {
+          uid: 'uid',
+          name: 'name',
+        };
+
+        scene.createLibraryPanel(vizPanel, libPanel as LibraryPanel);
+
+        const layout = scene.state.body as SceneGridLayout;
+        const newGridItem = (layout.state.children[0] as SceneGridRow).state.children[0] as DashboardGridItem;
+
+        expect(layout.state.children.length).toBe(1);
+        expect((layout.state.children[0] as SceneGridRow).state.children.length).toBe(1);
+        expect(newGridItem.state.body).toBeInstanceOf(LibraryVizPanel);
+        expect((newGridItem.state.body as LibraryVizPanel).state.uid).toBe('uid');
+        expect((newGridItem.state.body as LibraryVizPanel).state.name).toBe('name');
       });
     });
   });

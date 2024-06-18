@@ -23,6 +23,7 @@ interface APIQuery {
   sort?: string;
   starred?: boolean;
   permission?: PermissionLevelString;
+  deleted?: boolean;
 }
 
 // Internal object to hold folderId
@@ -34,7 +35,7 @@ export class SQLSearcher implements GrafanaSearcher {
   locationInfo: Record<string, LocationInfoEXT> = {
     general: {
       kind: 'folder',
-      name: 'General',
+      name: 'Dashboards',
       url: '/dashboards',
     },
   }; // share location info with everyone
@@ -89,6 +90,7 @@ export class SQLSearcher implements GrafanaSearcher {
         sort: query.sort,
         permission: query.permission,
         page,
+        deleted: query.deleted,
       },
       query
     );

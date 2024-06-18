@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiQuery } from '../../types';
 
@@ -32,7 +34,8 @@ describe('LokiQueryCodeEditor', () => {
     props.showExplain = true;
     props.datasource.metadataRequest = jest.fn().mockResolvedValue([]);
     render(<LokiQueryCodeEditor {...props} query={defaultQuery} />);
-    expect(await screen.findByText('Loading...')).toBeInTheDocument();
+    const monacoEditor = await screen.findByTestId(selectors.components.ReactMonacoEditor.editorLazy);
+    expect(monacoEditor).toBeInTheDocument();
     expect(screen.getByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
   });
 
@@ -40,7 +43,8 @@ describe('LokiQueryCodeEditor', () => {
     const props = createDefaultProps();
     props.datasource.metadataRequest = jest.fn().mockResolvedValue([]);
     render(<LokiQueryCodeEditor {...props} query={defaultQuery} />);
-    expect(await screen.findByText('Loading...')).toBeInTheDocument();
+    const monacoEditor = await screen.findByTestId(selectors.components.ReactMonacoEditor.editorLazy);
+    expect(monacoEditor).toBeInTheDocument();
     expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
   });
 });

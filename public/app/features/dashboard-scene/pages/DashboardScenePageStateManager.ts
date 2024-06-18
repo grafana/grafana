@@ -1,10 +1,14 @@
 import { locationUtil } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { defaultDashboard } from '@grafana/schema';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { default as localStorageStore } from 'app/core/store';
+import { getMessageFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import {
   DASHBOARD_FROM_LS_KEY,
   removeDashboardToFetchFromLocalStorage,
@@ -15,7 +19,10 @@ import { DashboardDTO, DashboardRoutes } from 'app/types';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
-import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import {
+  createDashboardSceneFromDashboardModel,
+  transformSaveModelToScene,
+} from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { updateNavModel } from './utils';
@@ -142,7 +149,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         return null;
       }
 
-      console.error(e);
       throw e;
     }
 
@@ -182,15 +188,25 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         restoreDashboardStateFromLocalStorage(dashboard);
       }
 
-      if (!(config.publicDashboardAccessToken && dashboard.state.controls?.state.hideTimeControls)) {
-        dashboard.startUrlSync();
-      }
-
       this.setState({ dashboard: dashboard, isLoading: false });
       const measure = stopMeasure(LOAD_SCENE_MEASUREMENT);
       trackDashboardSceneLoaded(dashboard, measure?.duration);
+
+      if (options.route !== DashboardRoutes.New) {
+        emitDashboardViewEvent({
+          meta: dashboard.state.meta,
+          uid: dashboard.state.uid,
+          title: dashboard.state.title,
+          id: dashboard.state.id,
+        });
+      }
     } catch (err) {
-      this.setState({ isLoading: false, loadError: String(err) });
+      const msg = getMessageFromError(err);
+      this.setState({
+        isLoading: false,
+        loadError: msg,
+        dashboard: getErrorScene(msg),
+      });
     }
   }
 
@@ -275,4 +291,43 @@ export function getDashboardScenePageStateManager(): DashboardScenePageStateMana
   }
 
   return stateManager;
+}
+
+function getErrorScene(msg: string) {
+  return createDashboardSceneFromDashboardModel(
+    new DashboardModel(
+      {
+        ...defaultDashboard,
+        title: msg,
+        panels: [
+          {
+            fieldConfig: {
+              defaults: {},
+              overrides: [],
+            },
+            gridPos: {
+              h: 6,
+              w: 12,
+              x: 7,
+              y: 0,
+            },
+            id: 1,
+            options: {
+              code: {
+                language: 'plaintext',
+                showLineNumbers: false,
+                showMiniMap: false,
+              },
+              content: `<br/><br/><center><h1>${msg}</h1></center>`,
+              mode: 'html',
+            },
+            title: '',
+            transparent: true,
+            type: 'text',
+          },
+        ],
+      },
+      { canSave: false, canEdit: false }
+    )
+  );
 }

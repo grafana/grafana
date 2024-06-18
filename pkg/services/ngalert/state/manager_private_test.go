@@ -276,7 +276,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			if !ok { // skip if nothing to assert
 				continue
 			}
-			expectedTransitionsMap := make(map[string]StateTransition, len(expectedTransitions))
+			expectedTransitionsMap := make(map[data.Fingerprint]StateTransition, len(expectedTransitions))
 			for i := range expectedTransitions {
 				patchState(alertRule, expectedTransitions[i].State)
 				expectedTransitionsMap[expectedTransitions[i].CacheID] = expectedTransitions[i]
@@ -294,7 +294,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				}
 			}
 			if len(expectedTransitionsMap) > 0 {
-				vals := make([]string, 0, len(expectedTransitionsMap))
+				vals := make([]data.Fingerprint, 0, len(expectedTransitionsMap))
 				for _, s := range expectedTransitionsMap {
 					vals = append(vals, s.CacheID)
 				}
@@ -2524,15 +2524,6 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			ngmodels.KeepLastErrState: baseRuleWith(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.KeepLastErrState)),
 		}
 
-		cacheID := func(lbls data.Labels) string {
-			l := ngmodels.InstanceLabels(lbls)
-			r, err := l.StringKey()
-			if err != nil {
-				panic(err)
-			}
-			return r
-		}
-
 		type errorTestCase struct {
 			desc                string
 			ruleMutators        []ngmodels.AlertRuleMutator
@@ -2587,7 +2578,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Normal,
 								State: &State{
-									CacheID:            cacheID(labels["system + rule"]),
+									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									State:              eval.Error,
 									Error:              datasourceError,
@@ -2748,7 +2739,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Normal,
 								State: &State{
-									CacheID:            cacheID(labels["system + rule"]),
+									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									State:              eval.Error,
 									Error:              datasourceError,
@@ -2881,7 +2872,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Normal,
 								State: &State{
-									CacheID:            cacheID(labels["system + rule"]),
+									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									State:              eval.Error,
 									Error:              datasourceError,
@@ -3028,7 +3019,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Error,
 								State: &State{
-									CacheID:            cacheID(labels["system + rule"]),
+									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									Error:              datasourceError,
 									State:              eval.Normal,
@@ -3148,7 +3139,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Normal,
 								State: &State{
-									CacheID:            cacheID(labels["system + rule"]),
+									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									State:              eval.Error,
 									Error:              datasourceError,
@@ -3244,7 +3235,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Pending,
 								State: &State{
-									CacheID:            cacheID(labels["system + rule"]),
+									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									State:              eval.Error,
 									Error:              datasourceError,
@@ -3330,7 +3321,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Pending,
 								State: &State{
-									CacheID:            cacheID(labels["system + rule"]),
+									CacheID:            labels["system + rule"].Fingerprint(),
 									Labels:             labels["system + rule + datasource-error"],
 									State:              eval.Error,
 									Error:              datasourceError,
@@ -3539,14 +3530,11 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 }
 
 func setCacheID(s *State) *State {
-	if s.CacheID != "" {
+	if s.CacheID != 0 {
 		return s
 	}
-	il := ngmodels.InstanceLabels(s.Labels)
-	id, err := il.StringKey()
-	if err != nil {
-		panic(err)
-	}
-	s.CacheID = id
+
+	s.CacheID = s.Labels.Fingerprint()
+
 	return s
 }

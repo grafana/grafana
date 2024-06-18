@@ -1,12 +1,10 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { render, screen, waitFor, within, userEvent } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types/accessControl';
 
 import 'core-js/stable/structured-clone';
-import { TestProvider } from '../../../../../../../test/helpers/TestProvider';
 import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { mockApi, setupMswServer } from '../../../mockApi';
@@ -140,9 +138,7 @@ describe('NotificationPreview', () => {
     mockOneAlertManager();
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />, {
-      wrapper: TestProvider,
-    });
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
 
     await userEvent.click(ui.previewButton.get());
     await waitFor(() => {
@@ -166,9 +162,7 @@ describe('NotificationPreview', () => {
     mockTwoAlertManagers();
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />, {
-      wrapper: TestProvider,
-    });
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
     await waitFor(() => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
@@ -195,9 +189,7 @@ describe('NotificationPreview', () => {
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
     mockHasEditPermission(true);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />, {
-      wrapper: TestProvider,
-    });
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
     await waitFor(() => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
@@ -219,9 +211,7 @@ describe('NotificationPreview', () => {
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
     mockHasEditPermission(false);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />, {
-      wrapper: TestProvider,
-    });
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
     await waitFor(() => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
@@ -266,8 +256,7 @@ describe('NotificationPreviewByAlertmanager', () => {
         alertManagerSource={grafanaAlertManagerDataSource}
         potentialInstances={potentialInstances}
         onlyOneAM={true}
-      />,
-      { wrapper: TestProvider }
+      />
     );
 
     await waitFor(() => {
@@ -321,8 +310,7 @@ describe('NotificationPreviewByAlertmanager', () => {
         alertManagerSource={grafanaAlertManagerDataSource}
         potentialInstances={potentialInstances}
         onlyOneAM={true}
-      />,
-      { wrapper: TestProvider }
+      />
     );
 
     await waitFor(() => {
@@ -376,8 +364,7 @@ describe('NotificationPreviewByAlertmanager', () => {
         alertManagerSource={grafanaAlertManagerDataSource}
         potentialInstances={potentialInstances}
         onlyOneAM={true}
-      />,
-      { wrapper: TestProvider }
+      />
     );
 
     await waitFor(() => {
@@ -401,5 +388,81 @@ describe('NotificationPreviewByAlertmanager', () => {
 
     expect(matchingInstances1).toHaveTextContent(/job=prometheus/);
     expect(matchingInstances1).toHaveTextContent(/severity=warning/);
+  });
+
+  describe('regex matching', () => {
+    it('does not match regex in middle of the word as alertmanager will anchor when queried via API', async () => {
+      const potentialInstances: Labels[] = [{ regexfield: 'foobarfoo' }];
+
+      mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
+        amConfigBuilder
+          .addReceivers((b) => b.withName('email'))
+          .withRoute((routeBuilder) =>
+            routeBuilder
+              .withReceiver('email')
+              .addRoute((rb) => rb.withReceiver('email').addMatcher('regexfield', MatcherOperator.regex, 'bar'))
+          )
+      );
+
+      render(
+        <NotificationPreviewByAlertManager
+          alertManagerSource={grafanaAlertManagerDataSource}
+          potentialInstances={potentialInstances}
+          onlyOneAM={true}
+        />
+      );
+
+      expect(await screen.findByText(/default policy/i)).toBeInTheDocument();
+      expect(screen.queryByText(/regexfield/)).not.toBeInTheDocument();
+    });
+
+    it('matches regex at the start of the word', async () => {
+      const potentialInstances: Labels[] = [{ regexfield: 'baaaaaaah' }];
+
+      mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
+        amConfigBuilder
+          .addReceivers((b) => b.withName('email'))
+          .withRoute((routeBuilder) =>
+            routeBuilder
+              .withReceiver('email')
+              .addRoute((rb) => rb.withReceiver('email').addMatcher('regexfield', MatcherOperator.regex, 'ba.*h'))
+          )
+      );
+
+      render(
+        <NotificationPreviewByAlertManager
+          alertManagerSource={grafanaAlertManagerDataSource}
+          potentialInstances={potentialInstances}
+          onlyOneAM={true}
+        />
+      );
+
+      expect(await screen.findByText(/regexfield/i)).toBeInTheDocument();
+    });
+
+    it('handles negated regex correctly', async () => {
+      const potentialInstances: Labels[] = [{ regexfield: 'thing' }];
+
+      mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
+        amConfigBuilder
+          .addReceivers((b) => b.withName('email'))
+          .withRoute((routeBuilder) =>
+            routeBuilder
+              .withReceiver('email')
+              .addRoute((rb) => rb.withReceiver('email').addMatcher('regexfield', MatcherOperator.notRegex, 'thing'))
+          )
+      );
+
+      render(
+        <NotificationPreviewByAlertManager
+          alertManagerSource={grafanaAlertManagerDataSource}
+          potentialInstances={potentialInstances}
+          onlyOneAM={true}
+        />
+      );
+
+      expect(await screen.findByText(/default policy/i)).toBeInTheDocument();
+      expect(screen.queryByText(/regexfield/i)).not.toBeInTheDocument();
+    });
   });
 });

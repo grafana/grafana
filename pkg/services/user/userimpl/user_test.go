@@ -223,7 +223,7 @@ func TestUpdateLastSeenAt(t *testing.T) {
 	userService.cfg = setting.NewCfg()
 
 	t.Run("update last seen at", func(t *testing.T) {
-		userStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 1, OrgID: 1, Email: "email", Login: "login", Name: "name", LastSeenAt: time.Now().Add(-10 * time.Minute)}
+		userStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 1, OrgID: 1, Email: "email", Login: "login", Name: "name", LastSeenAt: time.Now().Add(-20 * time.Minute)}
 		err := userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: 1, OrgID: 1})
 		require.NoError(t, err)
 	})
@@ -288,10 +288,6 @@ func (f *FakeUserStore) Delete(ctx context.Context, userID int64) error {
 
 func (f *FakeUserStore) GetByID(context.Context, int64) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
-}
-
-func (f *FakeUserStore) CaseInsensitiveLoginConflict(context.Context, string, string) error {
-	return f.ExpectedError
 }
 
 func (f *FakeUserStore) LoginConflict(context.Context, string, string) error {

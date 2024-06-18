@@ -3,7 +3,7 @@ import { Feature } from 'ol';
 import { FeatureLike } from 'ol/Feature';
 import Map from 'ol/Map';
 import { Geometry, LineString, Point, SimpleGeometry } from 'ol/geom';
-import VectorLayer from 'ol/layer/Vector';
+import VectorImage from 'ol/layer/VectorImage';
 import { Fill, Stroke, Style, Text } from 'ol/style';
 import FlowLine from 'ol-ext/style/FlowLine';
 import React, { ReactNode } from 'react';
@@ -91,7 +91,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
 
-    const vectorLayer = new VectorLayer({
+    const vectorLayer = new VectorImage({
       source,
     });
     const hasArrows = config.arrow === 1 || config.arrow === -1 || config.arrow === 2;

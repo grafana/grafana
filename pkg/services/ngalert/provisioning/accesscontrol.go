@@ -3,8 +3,9 @@ package provisioning
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
@@ -12,6 +13,7 @@ import (
 type RuleAccessControlService interface {
 	HasAccess(ctx context.Context, user identity.Requester, evaluator ac.Evaluator) (bool, error)
 	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
+	AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error
 	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
 }
 
@@ -26,6 +28,21 @@ type provisioningRuleAccessControl struct {
 }
 
 var _ ruleAccessControlService = &provisioningRuleAccessControl{}
+
+// AuthorizeRuleRead authorizes the read access to a rule for a user.
+// It first checks if the user has permission to read all rules. If yes, it bypasses the authorization.
+// If not, it calls the RuleAccessControlService to authorize access to the rule.
+// It returns an error if the authorization fails or if there is an error during permission check.
+func (p *provisioningRuleAccessControl) AuthorizeRuleRead(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
+	can, err := p.CanReadAllRules(ctx, user)
+	if err != nil {
+		return err
+	}
+	if !can {
+		return p.RuleAccessControlService.AuthorizeAccessInFolder(ctx, user, rule)
+	}
+	return nil
+}
 
 // AuthorizeRuleGroupRead authorizes the read access to a group of rules for a user.
 // It first checks if the user has permission to read all rules. If yes, it bypasses the authorization.

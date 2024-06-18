@@ -25,6 +25,36 @@
       "user": "User"
     }
   },
+  "alert-labels": {
+    "button": {
+      "hide": "Hide common labels",
+      "show": {
+        "tooltip": "Show common labels"
+      }
+    }
+  },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": "Define how the alert rule is evaluated."
+      },
+      "info-help": {
+        "text": "Define the alert behavior when the evaluation fails or the query returns no data."
+      },
+      "pending-period": "Pending period"
+    },
+    "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
+    "evaluation-behaviour-description2": "An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the same evaluation group are evaluated over the same evaluation interval.",
+    "evaluation-behaviour-description3": "Pending period specifies how long the threshold condition must be met before the alert starts firing. This option helps prevent alerts from being triggered by temporary issues.",
+    "evaluation-behaviour-for": {
+      "error-parsing": "Failed to parse duration",
+      "validation": "Pending period must be greater than or equal to the evaluation interval."
+    },
+    "evaluation-behaviour-group": {
+      "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
+    },
+    "pause": "Pause evaluation"
+  },
   "annotations": {
     "empty-state": {
       "button-title": "Add annotation query",
@@ -62,15 +92,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
+      "alertRule_other": "{{count}} alert rule",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
+      "dashboard_other": "{{count}} dashboard",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
+      "folder_other": "{{count}} folder",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
+      "libraryPanel_other": "{{count}} library panel",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
+      "total_other": "{{count}} item"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -114,6 +144,16 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
+    }
+  },
+  "central-alert-history": {
+    "error": "Something went wrong loading the alert state history",
+    "filter": {
+      "button": {
+        "clear": "Clear"
+      },
+      "label": "Filter events",
+      "placeholder": "Filter events in the list with labels"
     }
   },
   "clipboard-button": {
@@ -431,6 +471,16 @@
       "title": "Versions"
     }
   },
+  "dashboards": {
+    "settings": {
+      "variables": {
+        "dependencies": {
+          "button": "Show dependencies",
+          "title": "Dependencies"
+        }
+      }
+    }
+  },
   "data-source-list": {
     "empty-state": {
       "button-title": "Add data source",
@@ -465,6 +515,22 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "add-to-library-modal": {
+      "auto-star": "Auto-star this query to add it to your starred list in the Query Library.",
+      "data-source-name": "Data source name",
+      "data-source-type": "Data source type",
+      "description": "Description",
+      "info": "You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.",
+      "query": "Query",
+      "title": "Add query to Query Library",
+      "visibility": "Visibility"
+    },
+    "logs": {
+      "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
+      "no-logs-found": "No logs found.",
+      "scan-for-older-logs": "Scan for older logs",
+      "stop-scan": "Stop scan"
+    },
     "rich-history": {
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
@@ -710,7 +776,7 @@
     },
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "button-cancel": "Cancel",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
@@ -894,7 +960,7 @@
       "title": "Alerting"
     },
     "alerting-admin": {
-      "subtitle": "Manage Alertmanager configurations and configure where alert instances generated from Grafana managed alert rules are sent",
+      "subtitle": "Manage Alertmanager configurations",
       "title": "Settings"
     },
     "alerting-am-routes": {
@@ -1118,6 +1184,10 @@
     "public": {
       "title": "Public dashboards"
     },
+    "recently-deleted": {
+      "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
+      "title": "Recently Deleted"
+    },
     "recorded-queries": {
       "title": "Recorded queries"
     },
@@ -1179,10 +1249,6 @@
       "subtitle": "Optimize performance with k6 and Synthetic Monitoring insights",
       "title": "Testing & synthetics"
     },
-    "trash": {
-      "subtitle": "Any items remaining in the Trash for more than 30 days will be automatically deleted",
-      "title": "Trash"
-    },
     "upgrading": {
       "title": "Stats and license"
     },
@@ -1238,6 +1304,7 @@
       "new-alert-rule": "New alert rule",
       "query": "Query",
       "remove": "Remove",
+      "replace-library-panel": "Replace library panel",
       "share": "Share",
       "show-legend": "Show legend",
       "unlink-library-panel": "Unlink library panel",
@@ -1335,6 +1402,16 @@
       "revoke-public-URL-button-title": "Revoke public URL",
       "settings-title": "Settings"
     },
+    "configuration": {
+      "display-annotations-label": "Display annotations",
+      "enable-time-range-label": "Enable time range",
+      "settings-label": "Settings",
+      "success-pause": "Your dashboard access has been paused",
+      "success-resume": "Your dashboard access has been resumed",
+      "success-update": "Settings have been successfully updated",
+      "success-update-old": "Public dashboard updated!",
+      "time-range-tooltip": "The shared dashboard uses the default time range settings of the dashboard"
+    },
     "create-page": {
       "generate-public-url-button": "Generate public URL",
       "unsupported-features-desc": "Currently, we don’t support template variables or frontend data sources",
@@ -1346,15 +1423,32 @@
       "revoke-title": "Revoke public URL"
     },
     "email-sharing": {
+      "accept-button": "Accept",
+      "alert-text": "Effective immediately, sharing public dashboards by email incurs a cost per active user. Going forward, you’ll be prompted for payment whenever you add new users to your dashboard.",
+      "bill-ack": "I understand that adding users requires payment.*",
+      "cancel-button": "Cancel",
       "input-invalid-email-text": "Invalid email",
       "input-required-email-text": "Email is required",
       "invite-button": "Invite",
       "invite-field-desc": "Invite people by email",
       "invite-field-label": "Invite",
+      "learn-more-button": "Learn more",
+      "recipient-email-placeholder": "Type in the recipient email address and press Enter",
+      "recipient-invalid-email-text": "Invalid email",
+      "recipient-invitation-button": "Invite",
+      "recipient-invitation-description": "Invite someone by email",
+      "recipient-invitation-tooltip": "This dashboard contains sensitive data. By using this feature you will be sharing with external people.",
+      "recipient-list-description": "Only people you've directly invited can access this dashboard",
+      "recipient-list-title": "People with access",
+      "recipient-required-email-text": "Email is required",
       "resend-button": "Resend",
       "resend-button-title": "Resend",
+      "resend-invite-label": "Resend invite",
+      "revoke-access-label": "Revoke access",
       "revoke-button": "Revoke",
-      "revoke-button-title": "Revoke"
+      "revoke-button-title": "Revoke",
+      "success-creation": "Your dashboard is ready for external sharing",
+      "success-share-type-change": "Dashboard access restricted: Only specific people can now access with the link"
     },
     "modal-alerts": {
       "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} public dashboards",
@@ -1365,6 +1459,15 @@
       "unsupported-data-source-alert-title": "Unsupported data sources",
       "unsupported-template-variable-alert-desc": "This public dashboard may not work since it uses template variables",
       "unsupported-template-variable-alert-title": "Template variables are not supported"
+    },
+    "public-sharing": {
+      "accept-button": "Accept",
+      "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link.",
+      "cancel-button": "Cancel",
+      "learn-more-button": "Learn more",
+      "public-ack": "I understand that this entire dashboard will be public.*",
+      "success-creation": "Your dashboard is now publicly accessible",
+      "success-share-type-change": "Dashboard access updated: Anyone with the link can now access"
     },
     "settings-bar-header": {
       "collapse-settings-tooltip": "Collapse settings",
@@ -1384,6 +1487,29 @@
       "time-range-picker-disabled-text": "Time range picker = disabled",
       "time-range-picker-enabled-text": "Time range picker = enabled",
       "time-range-text": "Time range = "
+    },
+    "share": {
+      "success-delete": "Your dashboard is no longer shareable",
+      "success-delete-old": "Public dashboard deleted!"
+    },
+    "share-configuration": {
+      "access-label": "can access",
+      "share-type-label": "Link access"
+    },
+    "share-externally": {
+      "copy-link-button": "Copy external link",
+      "email-share-type-option-description": "Only people with access can open with the link",
+      "email-share-type-option-label": "Only specific people",
+      "pause-access-button": "Pause access",
+      "pause-access-tooltip": "Pausing will temporarily disable access to this dashboard for all users",
+      "public-share-type-option-description": "Anyone with the link can access",
+      "public-share-type-option-label": "Anyone with the link",
+      "resume-access-button": "Resume access",
+      "revoke-access-button": "Revoke access",
+      "revoke-access-description": "Are you sure you want to revoke this access? The dashboard can no longer be shared."
+    },
+    "sharing": {
+      "success-creation": "Dashboard is public!"
     }
   },
   "public-dashboard-list": {
@@ -1446,6 +1572,18 @@
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
+  "recently-deleted": {
+    "buttons": {
+      "restore": "Restore"
+    },
+    "restore-modal": {
+      "restore-button": "Restore",
+      "restore-loading": "Restoring...",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
+      "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
+      "title": "Restore Dashboards"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
@@ -1473,6 +1611,31 @@
       "label": "Back to {{title}}"
     },
     "dismissable-button": "Close"
+  },
+  "scopes": {
+    "filters": {
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "input": {
+        "placeholder": "Select scopes...",
+        "removeAll": "Remove all scopes"
+      },
+      "title": "Select scopes"
+    },
+    "suggestedDashboards": {
+      "loading": "Loading dashboards",
+      "search": "Search",
+      "toggle": {
+        "collapse": "Collapse scope filters",
+        "expand": "Expand scope filters"
+      }
+    },
+    "tree": {
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "headline": "Recommended",
+      "search": "Search"
+    }
   },
   "search": {
     "actions": {
@@ -1509,6 +1672,11 @@
       "message": "No services accounts found",
       "more-info": "Remember, you can provide specific permissions for API access to other applications",
       "title": "You haven't created any service accounts yet"
+    }
+  },
+  "share-drawer": {
+    "confirm-action": {
+      "back-arrow-button": "Back button"
     }
   },
   "share-modal": {
@@ -1632,6 +1800,21 @@
     "empty-state": {
       "button-title": "Create silence",
       "title": "You haven't created any silences yet"
+    },
+    "table": {
+      "add-silence-button": "Add Silence",
+      "edit-button": "Edit",
+      "expired-silences": "Expired silences are automatically deleted after 5 days.",
+      "no-matching-silences": "No matching silences found;",
+      "noConfig": "Create a new contact point to create a configuration using the default values or contact your administrator to set up the Alertmanager.",
+      "recreate-button": "Recreate",
+      "unsilence-button": "Unsilence"
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "Alert name",
+      "state": "State"
     }
   },
   "snapshot": {
@@ -1666,6 +1849,8 @@
       "apply-button": "Apply time range",
       "cancel-button": "Cancel",
       "close": "Close calendar",
+      "next-month": "Next month",
+      "previous-month": "Previous month",
       "select-time": "Select a time range"
     },
     "content": {

@@ -109,6 +109,13 @@ module.exports = {
         test: /(unicons|mono|custom)[\\/].*\.svg$/,
         type: 'asset/source',
       },
+      {
+        // Required for msagl library (used in Nodegraph panel) to work
+        test: /\.m?js$/,
+        resolve: {
+          fullySpecified: false,
+        },
+      },
     ],
   },
   // https://webpack.js.org/plugins/split-chunks-plugin/#split-chunks-example-3

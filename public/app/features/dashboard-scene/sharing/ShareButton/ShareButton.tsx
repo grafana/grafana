@@ -2,21 +2,22 @@ import React, { useCallback, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { VizPanel } from '@grafana/scenes';
 import { Button, ButtonGroup, Dropdown } from '@grafana/ui';
-import { createAndCopyDashboardShortLink } from 'app/core/utils/shortLinks';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import ShareMenu from './ShareMenu';
+import { buildShareUrl } from './utils';
 
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton;
 
-export default function ShareButton({ dashboard }: { dashboard: DashboardScene }) {
+export default function ShareButton({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const [_, buildUrl] = useAsyncFn(async () => {
-    return await createAndCopyDashboardShortLink(dashboard, { useAbsoluteTimeRange: true, theme: 'current' });
+    return await buildShareUrl(dashboard, panel);
   }, [dashboard]);
 
   const onMenuClick = useCallback((isOpen: boolean) => {

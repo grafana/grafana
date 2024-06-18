@@ -139,9 +139,9 @@ export interface CombinedRuleNamespace {
 export interface RuleWithLocation<T = RulerRuleDTO> {
   ruleSourceName: string;
   namespace: string;
+  namespace_uid?: string; // Grafana folder UID
   group: RulerRuleGroupDTO;
   rule: T;
-  namespace_uid?: string;
 }
 
 export interface CombinedRuleWithLocation extends CombinedRule {

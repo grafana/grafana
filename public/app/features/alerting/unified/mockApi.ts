@@ -10,6 +10,7 @@ import { DashboardDTO, FolderDTO, NotifierDTO, OrgUser } from 'app/types';
 import {
   PromBuildInfoResponse,
   PromRulesResponse,
+  RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
@@ -282,6 +283,9 @@ export function mockAlertRuleApi(server: SetupServer) {
       server.use(
         http.get(`/api/ruler/${dsName}/api/v1/rules/${namespace}/${group}`, () => HttpResponse.json(response))
       );
+    },
+    getAlertRule: (uid: string, response: RulerGrafanaRuleDTO) => {
+      server.use(http.get(`/api/ruler/grafana/api/v1/rule/${uid}`, () => HttpResponse.json(response)));
     },
   };
 }

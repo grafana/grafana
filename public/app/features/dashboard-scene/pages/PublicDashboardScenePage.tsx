@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps } from '@grafana/scenes';
+import { SceneComponentProps, UrlSyncContextProvider } from '@grafana/scenes';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -55,7 +55,16 @@ export function PublicDashboardScenePage({ match, route }: Props) {
     return <PublicDashboardNotAvailable />;
   }
 
-  return <PublicDashboardSceneRenderer model={dashboard} />;
+  // if no time picker render without url sync
+  if (dashboard.state.controls?.state.hideTimeControls) {
+    return <PublicDashboardSceneRenderer model={dashboard} />;
+  }
+
+  return (
+    <UrlSyncContextProvider scene={dashboard}>
+      <PublicDashboardSceneRenderer model={dashboard} />
+    </UrlSyncContextProvider>
+  );
 }
 
 function PublicDashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {

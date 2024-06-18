@@ -16,17 +16,68 @@ labels:
 menuTitle: Jaeger
 title: Jaeger data source
 weight: 800
+refs:
+  node-graph:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/
+  build-dashboards:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
+  data-source-management:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  provisioning-data-sources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
+  configure-grafana-feature-toggles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
+  explore-trace-integration:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/trace-integration/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/trace-integration/
+  variable-syntax:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
+  query-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+  exemplars:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/
 ---
 
 # Jaeger data source
 
 Grafana ships with built-in support for Jaeger, which provides open source, end-to-end distributed tracing. This topic explains configuration and queries specific to the Jaeger data source.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation][data-source-management].
+For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Once you've added the data source, you can [configure it](#configure-the-data-source) so your Grafana instance's users can create queries in the [query editor](#query-the-data-source) when the users [build dashboards][build-dashboards] and use [Explore][explore].
+Once you've added the data source, you can [configure it](#configure-the-data-source) so your Grafana instance's users can create queries in the [query editor](#query-the-data-source) when the users [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
 You can also [upload a JSON trace file](#upload-a-json-trace-file), [link to a trace ID from logs](#link-to-a-trace-id-from-logs), and [link to a trace ID from metrics](#link-to-a-trace-id-from-metrics).
 
@@ -63,12 +114,12 @@ Available in Grafana v7.4 and higher.
 If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
 {{% /admonition %}}
 
-The **Trace to logs** setting configures the [trace to logs feature][explore-trace-integration] that is available when you integrate Grafana with Jaeger.
+The **Trace to logs** setting configures the [trace to logs feature](ref:explore-trace-integration) that is available when you integrate Grafana with Jaeger.
 
 There are two ways to configure the trace to logs feature:
 
 - Use a simplified configuration with default query, or
-- Configure a custom query where you can use a [template language][variable-syntax] to interpolate variables from the trace or span.
+- Configure a custom query where you can use a [template language](ref:variable-syntax) to interpolate variables from the trace or span.
 
 #### Use a simple configuration
 
@@ -112,7 +163,7 @@ The following table describes the ways in which you can configure your trace to 
 
 | Setting name              | Description                                                                                                                                                                                                                                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Data source**           | Defines the target data source. You can select only Loki or Splunk \[logs\] data sources.                                                                                                                                                                                                                    |
+| **Data source**           | Defines the target data source. You can select only Loki or Splunk logs data sources.                                                                                                                                                                                                                        |
 | **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                                                                              |
 | **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                                                                  |
 | **Tags**                  | Defines the tags to use in the logs query. Default: `cluster`, `hostname`, `namespace`, `pod`, `service.name`, `service.namespace`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example, map `http.status` to `http_status`. |
@@ -147,7 +198,7 @@ Each linked query consists of:
 
 ### Node Graph
 
-The **Node Graph** setting enables the [Node Graph visualization][node-graph], which is disabled by default.
+The **Node Graph** setting enables the [Node Graph visualization](ref:node-graph), which is disabled by default.
 
 Once enabled, Grafana displays the Node Graph above the trace view.
 
@@ -166,7 +217,7 @@ You can choose one of three options:
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning and available configuration options, refer to [Provisioning Grafana][provisioning-data-sources].
+For more information about provisioning and available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
 #### Provisioning example
 
@@ -217,10 +268,10 @@ datasources:
 
 ## Query the data source
 
-You can query and display traces from Jaeger via [Explore][explore].
+You can query and display traces from Jaeger via [Explore](ref:explore).
 
 This topic explains configuration and queries specific to the Jaeger data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
+For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
 
 ### Query by search
 
@@ -331,39 +382,7 @@ To configure this feature, see the [Derived fields]({{< relref "../loki#configur
 
 You can link to Jaeger traces from metrics in Prometheus data sources by configuring an exemplar.
 
-To configure this feature, see the [introduction to exemplars][exemplars] documentation.
-
-{{% docs/reference %}}
-[build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
-[build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
-
-[configure-grafana-feature-toggles]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
-[configure-grafana-feature-toggles]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
-
-[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-
-[exemplars]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/exemplars"
-[exemplars]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/exemplars"
-
-[explore-trace-integration]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore/trace-integration"
-[explore-trace-integration]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore/trace-integration"
-
-[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-
-[node-graph]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph"
-[node-graph]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph"
-
-[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
-[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
-
-[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-
-[variable-syntax]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
-[variable-syntax]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
-{{% /docs/reference %}}
+To configure this feature, see the [introduction to exemplars](ref:exemplars) documentation.
 
 ## Visualizing the dependency graph
 

@@ -18,6 +18,15 @@ jest.mock('@grafana/ui', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({
+    replace: (val: string) => {
+      return val;
+    },
+  }),
+}));
+
 const defaultProps = {
   query: {
     refId: 'A',
