@@ -6,7 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Button, ClipboardButton, CodeEditor, Label, Stack, Switch, useTheme2 } from '@grafana/ui';
+import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useTheme2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { ShareExportTab } from '../ShareExportTab';
@@ -67,15 +67,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
             );
           }
 
-          if (dashboardJson.loading) {
-            return (
-              <div>
-                <Trans i18nKey="export.json.loading-text">Loading...</Trans>
-              </div>
-            );
-          }
-
-          return null;
+          return dashboardJson.loading && <Spinner />;
         }}
       </AutoSizer>
 
