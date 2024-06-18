@@ -95,7 +95,7 @@ func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.Namespa
 			createdAt := time.UnixMilli(v.CreatedAt).UTC()
 			meta.SetOriginInfo(&utils.ResourceOriginInfo{
 				Name:      "SQL",
-				Key:       fmt.Sprintf("%d", v.Id),
+				Path:      fmt.Sprintf("%d", v.Id),
 				Timestamp: &createdAt,
 			})
 		}
@@ -133,7 +133,7 @@ func getLegacyID(item *unstructured.Unstructured) int64 {
 	}
 	info, _ := meta.GetOriginInfo()
 	if info != nil && info.Name == "SQL" {
-		i, err := strconv.ParseInt(info.Key, 10, 64)
+		i, err := strconv.ParseInt(info.Path, 10, 64)
 		if err == nil {
 			return i
 		}

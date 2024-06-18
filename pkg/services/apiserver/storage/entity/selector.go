@@ -21,8 +21,6 @@ type Requirements struct {
 	ListDeleted bool
 	// ListHistory is a resource name to list the history of
 	ListHistory string
-	// ListOriginKeys needs to include the origin key of a given entity in order for it to be selected.
-	ListOriginKeys []string
 }
 
 func ReadLabelSelectors(selector labels.Selector) (Requirements, labels.Selector, error) {
@@ -48,11 +46,6 @@ func ReadLabelSelectors(selector labels.Selector) (Requirements, labels.Selector
 				return requirements, newSelector, apierrors.NewBadRequest(SortByKey + " label selector only supports in")
 			}
 			requirements.SortBy = r.Values().List()
-		case utils.AnnoKeyOriginKey:
-			if r.Operator() != selection.In {
-				return requirements, newSelector, apierrors.NewBadRequest(SortByKey + " label selector only supports in")
-			}
-			requirements.ListOriginKeys = r.Values().List()
 		case ListDeletedKey:
 			if r.Operator() != selection.Equals {
 				return requirements, newSelector, apierrors.NewBadRequest(ListDeletedKey + " label selector only supports equality")
