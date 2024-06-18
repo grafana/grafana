@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	secretsFakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -1648,7 +1647,6 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies, sam
 		prometheus.NewRegistry(),
 		&setting.OSSImpl{Cfg: cfg},
 		licensing,
-		service.ProvideService(cfg),
 	)
 
 	// overriding values for exposed fields
