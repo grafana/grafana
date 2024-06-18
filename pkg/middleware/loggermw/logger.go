@@ -186,7 +186,7 @@ var sensitiveQueryChecks = [...]queryCheck{
 	},
 }
 
-func SanitizeURL(s string) (string, error) {
+func SanitizeURI(s string) (string, error) {
 	if s == "" {
 		return s, nil
 	}
