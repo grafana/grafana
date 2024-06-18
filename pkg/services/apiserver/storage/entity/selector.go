@@ -21,8 +21,6 @@ type Requirements struct {
 	ListDeleted bool
 	// ListHistory is a resource name to list the history of
 	ListHistory string
-	// ListOriginKeys needs to include the origin key of a given entity in order for it to be selected.
-	ListOriginKeys []string
 }
 
 func ReadLabelSelectors(selector labels.Selector) (Requirements, labels.Selector, error) {

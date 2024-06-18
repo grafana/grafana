@@ -100,9 +100,6 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery,
 	if query.Requirements.ListDeleted {
 		return nil, 0, fmt.Errorf("ListDeleted not yet supported")
 	}
-	if len(query.Requirements.ListOriginKeys) > 0 {
-		return nil, 0, fmt.Errorf("ListOriginKeys not yet supported")
-	}
 
 	token, err := readContinueToken(query)
 	if err != nil {
