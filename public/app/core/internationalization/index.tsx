@@ -7,6 +7,7 @@ import { DEFAULT_LANGUAGE, NAMESPACES, VALID_LANGUAGES } from './constants';
 import { loadTranslations } from './loadTranslations';
 
 let tFunc: TFunction<string[], undefined> | undefined;
+let i18nInstance: typeof i18n;
 
 export async function initializeI18n(language: string): Promise<{ language: string | undefined }> {
   // This is a placeholder so we can put a 'comment' in the message json files.
@@ -28,7 +29,7 @@ export async function initializeI18n(language: string): Promise<{ language: stri
     ns: NAMESPACES,
   };
 
-  let i18nInstance = i18n;
+  i18nInstance = i18n;
   if (language === 'detect') {
     i18nInstance = i18nInstance.use(LanguageDetector);
     const detection: DetectorOptions = { order: ['navigator'], caches: [] };
@@ -79,10 +80,20 @@ export const t = (id: string, defaultMessage: string, values?: Record<string, un
   return tFunc(id, defaultMessage, values);
 };
 
-export const i18nDate = (value: number | Date | string, format: Intl.DateTimeFormatOptions = {}): string => {
-  if (typeof value === 'string') {
-    return i18nDate(new Date(value), format);
+export function getI18next() {
+  if (!tFunc) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn(
+        't() was called before i18n was initialized. This is probably caused by calling t() in the root module scope, instead of lazily on render'
+      );
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      throw new Error('t() was called before i18n was initialized');
+    }
+
+    return i18n;
   }
-  const dateFormatter = new Intl.DateTimeFormat(i18n.language, format);
-  return dateFormatter.format(value);
-};
+
+  return i18nInstance;
+}
