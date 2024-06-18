@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { SceneObjectBase, SceneComponentProps, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { Button, HorizontalGroup, Tab } from '@grafana/ui';
+import { Button, Stack, Tab } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { GroupActionComponents } from 'app/features/query/components/QueryActionComponent';
@@ -42,6 +42,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   constructor(panelManager: VizPanelManager) {
     super({});
+
     this.TabComponent = (props: PanelDataTabHeaderProps) => {
       return QueriesTab({ ...props, model: this });
     };
@@ -177,9 +178,9 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   }
 }
 
-function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
+export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
   const { datasource, dsSettings } = model.panelManager.useState();
-  const { data } = model.panelManager.queryRunner.useState();
+  const { data, queries } = model.panelManager.queryRunner.useState();
 
   if (!datasource || !dsSettings || !data) {
     return null;
@@ -188,7 +189,7 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
 
   return (
-    <>
+    <div data-testid={selectors.components.QueryTab.content}>
       <QueryGroupTopSection
         data={data}
         dsSettings={dsSettings}
@@ -201,14 +202,14 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
 
       <QueryEditorRows
         data={data}
-        queries={model.getQueries()}
+        queries={queries}
         dsSettings={dsSettings}
         onAddQuery={model.onAddQuery}
         onQueriesChange={model.onQueriesChange}
         onRunQueries={model.onRunQueries}
       />
 
-      <HorizontalGroup spacing="md" align="flex-start">
+      <Stack gap={2}>
         {showAddButton && (
           <Button
             icon="plus"
@@ -224,14 +225,14 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
             icon="plus"
             onClick={model.onAddExpressionClick}
             variant="secondary"
-            data-testid="query-tab-add-expression"
+            data-testid={selectors.components.QueryTab.addExpression}
           >
             <span>Expression&nbsp;</span>
           </Button>
         )}
         {model.renderExtraActions()}
-      </HorizontalGroup>
-    </>
+      </Stack>
+    </div>
   );
 }
 

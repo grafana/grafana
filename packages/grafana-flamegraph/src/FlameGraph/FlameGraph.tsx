@@ -50,6 +50,8 @@ type Props = {
   collapsing?: boolean;
   selectedView: SelectedView;
   search: string;
+  collapsedMap: CollapsedMap;
+  setCollapsedMap: (collapsedMap: CollapsedMap) => void;
 };
 
 const FlameGraph = ({
@@ -72,10 +74,11 @@ const FlameGraph = ({
   collapsing,
   selectedView,
   search,
+  collapsedMap,
+  setCollapsedMap,
 }: Props) => {
   const styles = getStyles();
 
-  const [collapsedMap, setCollapsedMap] = useState<CollapsedMap>(new Map());
   const [levels, setLevels] = useState<LevelItem[][]>();
   const [levelsCallers, setLevelsCallers] = useState<LevelItem[][]>();
   const [totalProfileTicks, setTotalProfileTicks] = useState<number>(0);
@@ -84,8 +87,6 @@ const FlameGraph = ({
 
   useEffect(() => {
     if (data) {
-      setCollapsedMap(data.getCollapsedMap());
-
       let levels = data.getLevels();
       let totalProfileTicks = levels.length ? levels[0][0].value : 0;
       let totalProfileTicksRight = levels.length ? levels[0][0].valueRight : undefined;

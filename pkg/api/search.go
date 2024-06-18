@@ -28,6 +28,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	page := c.QueryInt64("page")
 	dashboardType := c.Query("type")
 	sort := c.Query("sort")
+	deleted := c.Query("deleted")
 	permission := dashboardaccess.PERMISSION_VIEW
 
 	if limit > 5000 {
@@ -77,6 +78,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		Limit:         limit,
 		Page:          page,
 		IsStarred:     starred == "true",
+		IsDeleted:     deleted == "true",
 		OrgId:         c.SignedInUser.GetOrgID(),
 		DashboardIds:  dbIDs,
 		DashboardUIDs: dbUIDs,
@@ -190,6 +192,10 @@ type SearchParams struct {
 	// default: alpha-asc
 	// Enum: alpha-asc,alpha-desc
 	Sort string `json:"sort"`
+	// Flag indicating if only soft deleted Dashboards should be returned
+	// in:query
+	// required: false
+	Deleted bool `json:"deleted"`
 }
 
 // swagger:response searchResponse

@@ -100,7 +100,7 @@ export function deleteLibraryPanel(uid: string, args: SearchArgs): DispatchResul
 }
 
 export function asyncDispatcher(dispatch: Dispatch<AnyAction>) {
-  return function (action: any) {
+  return function (action: AnyAction | DispatchResult) {
     if (action instanceof Function) {
       return action(dispatch);
     }

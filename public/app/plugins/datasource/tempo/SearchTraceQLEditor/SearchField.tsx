@@ -34,6 +34,7 @@ interface Props {
   query: string;
   isMulti?: boolean;
   allowCustomValue?: boolean;
+  addVariablesToOptions?: boolean;
 }
 const SearchField = ({
   filter,
@@ -46,6 +47,7 @@ const SearchField = ({
   hideTag,
   hideValue,
   query,
+  addVariablesToOptions,
   isMulti = true,
   allowCustomValue = true,
 }: Props) => {
@@ -126,6 +128,13 @@ const SearchField = ({
       operatorList = numberOperators;
   }
 
+  const tagOptions = (filter.tag !== undefined ? uniq([filter.tag, ...tags]) : tags).map((t) => ({
+    label: t,
+    value: t,
+  }));
+
+  const operatorOptions = operatorList.map(operatorSelectableValue);
+
   return (
     <>
       <HorizontalGroup spacing={'none'} width={'auto'}>
@@ -133,7 +142,7 @@ const SearchField = ({
           <Select
             className={styles.dropdown}
             inputId={`${filter.id}-scope`}
-            options={withTemplateVariableOptions(scopeOptions)}
+            options={addVariablesToOptions ? withTemplateVariableOptions(scopeOptions) : scopeOptions}
             value={filter.scope}
             onChange={(v) => {
               updateFilter({ ...filter, scope: v?.value });
@@ -148,12 +157,7 @@ const SearchField = ({
             inputId={`${filter.id}-tag`}
             isLoading={isTagsLoading}
             // Add the current tag to the list if it doesn't exist in the tags prop, otherwise the field will be empty even though the state has a value
-            options={withTemplateVariableOptions(
-              (filter.tag !== undefined ? uniq([filter.tag, ...tags]) : tags).map((t) => ({
-                label: t,
-                value: t,
-              }))
-            )}
+            options={addVariablesToOptions ? withTemplateVariableOptions(tagOptions) : tagOptions}
             value={filter.tag}
             onChange={(v) => {
               updateFilter({ ...filter, tag: v?.value, value: [] });
@@ -167,7 +171,7 @@ const SearchField = ({
         <Select
           className={styles.dropdown}
           inputId={`${filter.id}-operator`}
-          options={withTemplateVariableOptions(operatorList.map(operatorSelectableValue))}
+          options={addVariablesToOptions ? withTemplateVariableOptions(operatorOptions) : operatorOptions}
           value={filter.operator}
           onChange={(v) => {
             updateFilter({ ...filter, operator: v?.value });
@@ -179,10 +183,16 @@ const SearchField = ({
         />
         {!hideValue && (
           <Select
+            /**
+             * Trace cardinality means we need to use the virtualized variant of the Select component.
+             * For example the number of span names being returned can easily reach 10s of thousands,
+             * which is enough to cause a user's web browser to seize up
+             */
+            virtualized
             className={styles.dropdown}
             inputId={`${filter.id}-value`}
             isLoading={isLoadingValues}
-            options={withTemplateVariableOptions(options)}
+            options={addVariablesToOptions ? withTemplateVariableOptions(options) : options}
             value={filter.value}
             onChange={(val) => {
               if (Array.isArray(val)) {

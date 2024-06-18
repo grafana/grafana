@@ -68,6 +68,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   drawerActive: css({
     opacity: 1,
-    animation: `0.5s ease-out ${drawerSlide(theme)}`,
+    [theme.transitions.handleMotion('no-preference')]: {
+      animation: `0.5s ease-out ${drawerSlide(theme)}`,
+    },
   }),
 });

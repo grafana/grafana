@@ -36,7 +36,3 @@ export function filterAlerts(
     );
   });
 }
-
-export function isPrivateLabel(label: string) {
-  return !(label.startsWith('__') && label.endsWith('__'));
-}

@@ -4,13 +4,17 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -41,6 +45,10 @@ type AlertsSender interface {
 type RulesStore interface {
 	GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error)
 	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error
+}
+
+type RecordingWriter interface {
+	Write(ctx context.Context, name string, t time.Time, frames data.Frames, extraLabels map[string]string) error
 }
 
 type schedule struct {
@@ -75,6 +83,7 @@ type schedule struct {
 	appURL               *url.URL
 	disableGrafanaFolder bool
 	jitterEvaluations    JitterStrategy
+	featureToggles       featuremgmt.FeatureToggles
 
 	metrics *metrics.Scheduler
 
@@ -88,6 +97,8 @@ type schedule struct {
 	schedulableAlertRules alertRulesRegistry
 
 	tracer tracing.Tracer
+
+	recordingWriter RecordingWriter
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -97,6 +108,7 @@ type SchedulerCfg struct {
 	C                    clock.Clock
 	MinRuleInterval      time.Duration
 	DisableGrafanaFolder bool
+	FeatureToggles       featuremgmt.FeatureToggles
 	AppURL               *url.URL
 	JitterEvaluations    JitterStrategy
 	EvaluatorFactory     eval.EvaluatorFactory
@@ -105,6 +117,7 @@ type SchedulerCfg struct {
 	AlertSender          AlertsSender
 	Tracer               tracing.Tracer
 	Log                  log.Logger
+	RecordingWriter      RecordingWriter
 }
 
 // NewScheduler returns a new scheduler.
@@ -127,11 +140,13 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		appURL:                cfg.AppURL,
 		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
 		jitterEvaluations:     cfg.JitterEvaluations,
+		featureToggles:        cfg.FeatureToggles,
 		stateManager:          stateManager,
 		minRuleInterval:       cfg.MinRuleInterval,
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
 		alertsSender:          cfg.AlertSender,
 		tracer:                cfg.Tracer,
+		recordingWriter:       cfg.RecordingWriter,
 	}
 
 	return &sch
@@ -244,19 +259,22 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.evaluatorFactory,
 		&sch.schedulableAlertRules,
 		sch.clock,
+		sch.featureToggles,
 		sch.metrics,
 		sch.log,
 		sch.tracer,
+		sch.recordingWriter,
 		sch.evalAppliedFunc,
 		sch.stopAppliedFunc,
 	)
 	for _, item := range alertRules {
+		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, item, ruleFactory)
 		key := item.GetKey()
-		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, key, ruleFactory)
+		logger := sch.log.FromContext(ctx).New(key.LogContext()...)
 
 		// enforce minimum evaluation interval
 		if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
-			sch.log.Debug("Interval adjusted", append(key.LogContext(), "originalInterval", item.IntervalSeconds, "adjustedInterval", sch.minRuleInterval.Seconds())...)
+			logger.Debug("Interval adjusted", "originalInterval", item.IntervalSeconds, "adjustedInterval", sch.minRuleInterval.Seconds())
 			item.IntervalSeconds = int64(sch.minRuleInterval.Seconds())
 		}
 
@@ -271,7 +289,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		if invalidInterval {
 			// this is expected to be always false
 			// given that we validate interval during alert rule updates
-			sch.log.Warn("Rule has an invalid interval and will be ignored. Interval should be divided exactly by scheduler interval", append(key.LogContext(), "ruleInterval", time.Duration(item.IntervalSeconds)*time.Second, "schedulerInterval", sch.baseInterval)...)
+			logger.Warn("Rule has an invalid interval and will be ignored. Interval should be divided exactly by scheduler interval", "ruleInterval", time.Duration(item.IntervalSeconds)*time.Second, "schedulerInterval", sch.baseInterval)
 			continue
 		}
 
@@ -290,7 +308,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		if isReadyToRun {
-			sch.log.Debug("Rule is ready to run on the current tick", "uid", item.UID, "tick", tickNum, "frequency", itemFrequency, "offset", offset)
+			logger.Debug("Rule is ready to run on the current tick", "tick", tickNum, "frequency", itemFrequency, "offset", offset)
 			readyToRun = append(readyToRun, readyToRunItem{ruleRoutine: ruleRoutine, Evaluation: Evaluation{
 				scheduledAt: tick,
 				rule:        item,
@@ -299,7 +317,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 		if _, isUpdated := updated[key]; isUpdated && !isReadyToRun {
 			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that
-			sch.log.Debug("Rule has been updated. Notifying evaluation routine", key.LogContext()...)
+			logger.Debug("Rule has been updated. Notifying evaluation routine")
 			go func(routine Rule, rule *ngmodels.AlertRule) {
 				routine.Update(RuleVersionAndPauseStatus{
 					Fingerprint: ruleWithFolder{rule: rule, folderTitle: folderTitle}.Fingerprint(),
@@ -325,6 +343,9 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
 	}
 
+	slices.SortFunc(readyToRun, func(a, b readyToRunItem) int {
+		return strings.Compare(a.rule.UID, b.rule.UID)
+	})
 	for i := range readyToRun {
 		item := readyToRun[i]
 

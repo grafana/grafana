@@ -13,8 +13,8 @@ import React from 'react';
 
 export const Spacer = () => (
   <span
-    className={css`
-      flex: 1;
-    `}
+    className={css({
+      flex: 1,
+    })}
   />
 );

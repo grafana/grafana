@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 
@@ -149,6 +149,15 @@ function LinkToContactPoints() {
   );
 }
 
+const rotation = keyframes({
+  from: {
+    transform: 'rotate(720deg)',
+  },
+  to: {
+    transform: 'rotate(0deg)',
+  },
+});
+
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointsSelector: css({
     display: 'flex',
@@ -172,14 +181,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   loading: css({
     pointerEvents: 'none',
-    animation: 'rotation 2s infinite linear',
-    '@keyframes rotation': {
-      from: {
-        transform: 'rotate(720deg)',
-      },
-      to: {
-        transform: 'rotate(0deg)',
-      },
+    [theme.transitions.handleMotion('no-preference')]: {
+      animation: `${rotation} 2s infinite linear`,
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      animation: `${rotation} 6s infinite linear`,
     },
   }),
   warn: css({

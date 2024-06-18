@@ -44,7 +44,6 @@ export interface FeatureToggles {
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   topnav?: boolean;
-  returnToPrevious?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
@@ -52,7 +51,6 @@ export interface FeatureToggles {
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
-  nestedFolderPicker?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
@@ -75,7 +73,6 @@ export interface FeatureToggles {
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
   refactorVariablesTimeRange?: boolean;
-  enableElasticsearchBackendQuerying?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
   extraThemes?: boolean;
@@ -83,7 +80,6 @@ export interface FeatureToggles {
   pluginsFrontendSandbox?: boolean;
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
-  lokiFormatQuery?: boolean;
   recordedQueriesMulti?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
@@ -120,6 +116,8 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
+  kubernetesDashboards?: boolean;
+  datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
   queryServiceFromUI?: boolean;
@@ -167,6 +165,7 @@ export interface FeatureToggles {
   nodeGraphDotLayout?: boolean;
   groupToNestedTableTransformation?: boolean;
   newPDFRendering?: boolean;
+  tlsMemcached?: boolean;
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
@@ -181,4 +180,20 @@ export interface FeatureToggles {
   disableNumericMetricsSortingInExpressions?: boolean;
   grafanaManagedRecordingRules?: boolean;
   queryLibrary?: boolean;
+  autofixDSUID?: boolean;
+  logsExploreTableDefaultVisualization?: boolean;
+  newDashboardSharingComponent?: boolean;
+  alertingListViewV2?: boolean;
+  notificationBanner?: boolean;
+  dashboardRestore?: boolean;
+  datasourceProxyDisableRBAC?: boolean;
+  alertingDisableSendAlertsExternal?: boolean;
+  preserveDashboardStateWhenNavigating?: boolean;
+  alertingCentralAlertHistory?: boolean;
+  pluginProxyPreserveTrailingSlash?: boolean;
+  azureMonitorPrometheusExemplars?: boolean;
+  pinNavItems?: boolean;
+  authZGRPCServer?: boolean;
+  openSearchBackendFlowEnabled?: boolean;
+  ssoSettingsLDAP?: boolean;
 }

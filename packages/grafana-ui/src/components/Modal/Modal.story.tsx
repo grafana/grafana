@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Story, Meta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { oneLineTrim } from 'common-tags';
 import React, { useState } from 'react';
 
@@ -46,7 +46,7 @@ const meta: Meta = {
   },
 };
 
-export const Basic: Story = ({ body, title, ...args }) => {
+export const Basic: StoryFn = ({ body, title, ...args }) => {
   return (
     <Modal title={title} {...args}>
       {body}
@@ -73,7 +73,7 @@ const tabs = [
   { label: '3rd child', value: 'third', active: false },
 ];
 
-export const WithTabs: Story = (args) => {
+export const WithTabs: StoryFn = (args) => {
   const [activeTab, setActiveTab] = useState('first');
   const modalHeader = (
     <ModalTabsHeader
@@ -103,7 +103,7 @@ WithTabs.args = {
   icon: 'cog',
 };
 
-export const UsingContentClassName: Story = ({ title, body, ...args }) => {
+export const UsingContentClassName: StoryFn = ({ title, body, ...args }) => {
   const override = {
     modalContent: css({
       backgroundColor: 'darkorange',

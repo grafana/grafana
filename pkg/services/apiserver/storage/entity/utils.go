@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
 
@@ -68,7 +68,6 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 		grafanaAccessor.SetUpdatedTimestamp(&updatedAt)
 	}
 	grafanaAccessor.SetSlug(rsp.Slug)
-	grafanaAccessor.SetAction(rsp.Action.String())
 
 	if rsp.Origin != nil {
 		originTime := time.UnixMilli(rsp.Origin.Time).UTC()

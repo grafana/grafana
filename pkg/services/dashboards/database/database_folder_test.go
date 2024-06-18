@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
-	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -252,6 +251,11 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 
 	setup := func() {
 		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		cfg.AutoAssignOrg = true
+		cfg.AutoAssignOrgId = 1
+		cfg.AutoAssignOrgRole = string(org.RoleViewer)
+
+		tracer := tracing.InitializeTracerForTest()
 		quotaService := quotatest.New(false, nil)
 
 		// enable nested folders so that the folder table is populated for all the tests
@@ -261,17 +265,20 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		dashboardWriteStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 
-		usr := createUser(t, sqlStore, cfg, "viewer", "Viewer", false)
+		orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+		require.NoError(t, err)
+		usrSvc, err := userimpl.ProvideService(
+			sqlStore, orgService, cfg, nil, nil, tracer,
+			quotaService, supportbundlestest.NewFakeBundleService(),
+		)
+		require.NoError(t, err)
+
+		usr := createUser(t, usrSvc, orgService, "viewer", false)
 		viewer = &user.SignedInUser{
 			UserID:  usr.ID,
 			OrgID:   usr.OrgID,
 			OrgRole: org.RoleViewer,
 		}
-
-		orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
-		require.NoError(t, err)
-		usrSvc, err := userimpl.ProvideService(sqlStore, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
-		require.NoError(t, err)
 
 		// create admin user in the same org
 		currentUserCmd := user.CreateUserCommand{Login: "admin", Email: "admin@test.com", Name: "an admin", IsAdmin: false, OrgID: viewer.OrgID}
@@ -298,7 +305,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracer), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
 		parentUID := ""
 		for i := 0; ; i++ {
@@ -439,27 +446,14 @@ func moveDashboard(t *testing.T, dashboardStore dashboards.Store, orgId int64, d
 	return dash
 }
 
-func createUser(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, name string, role string, isAdmin bool) user.User {
+func createUser(t *testing.T, userSrv user.Service, orgSrv org.Service, name string, isAdmin bool) user.User {
 	t.Helper()
-	cfg.AutoAssignOrg = true
-	cfg.AutoAssignOrgId = 1
-	cfg.AutoAssignOrgRole = role
 
-	qs := quotaimpl.ProvideService(sqlStore, cfg)
-	orgService, err := orgimpl.ProvideService(sqlStore, cfg, qs)
-	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, cfg, nil, nil, qs, supportbundlestest.NewFakeBundleService())
-	require.NoError(t, err)
-
-	o, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: fmt.Sprintf("test org %d", time.Now().UnixNano())})
+	o, err := orgSrv.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: fmt.Sprintf("test org %d", time.Now().UnixNano())})
 	require.NoError(t, err)
 
 	currentUserCmd := user.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin, OrgID: o.ID}
-	currentUser, err := usrSvc.Create(context.Background(), &currentUserCmd)
+	currentUser, err := userSrv.Create(context.Background(), &currentUserCmd)
 	require.NoError(t, err)
-	orgs, err := orgService.GetUserOrgList(context.Background(), &org.GetUserOrgListQuery{UserID: currentUser.ID})
-	require.NoError(t, err)
-	require.Equal(t, org.RoleType(role), orgs[0].Role)
-	require.Equal(t, o.ID, orgs[0].OrgID)
 	return *currentUser
 }

@@ -55,7 +55,7 @@ const rule = createRule({
       description: 'Check if animation or transition properties are used directly.',
     },
     messages: {
-      noUnreducedMotion: 'Avoid direct use of `animation*` or `transition*` properties. Use the `handleReducedMotion` utility function or wrap in a `prefers-reduced-motion` media query.',
+      noUnreducedMotion: 'Avoid direct use of `animation*` or `transition*` properties. Use the `handleMotion` utility function from theme.transitions or wrap in a `prefers-reduced-motion` media query.',
     },
     schema: [],
   },

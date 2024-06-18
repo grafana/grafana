@@ -86,3 +86,20 @@ export function getDefaultRelativeTimeRange(): RelativeTimeRange {
     to: 0,
   };
 }
+
+/**
+ * Simple helper to quickly create a TimeRange object either from string representations of a dateTime or directly
+ * DateTime objects.
+ */
+export function makeTimeRange(from: DateTime | string, to: DateTime | string): TimeRange {
+  const fromDateTime = typeof from === 'string' ? dateTime(from) : from;
+  const toDateTime = typeof to === 'string' ? dateTime(to) : to;
+  return {
+    from: fromDateTime,
+    to: toDateTime,
+    raw: {
+      from: fromDateTime,
+      to: toDateTime,
+    },
+  };
+}

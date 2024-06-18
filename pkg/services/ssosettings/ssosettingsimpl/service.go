@@ -11,12 +11,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -50,6 +50,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	settingsProvider setting.Provider, licensing licensing.Licensing) *Service {
 	fbStrategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
+		strategies.NewLDAPStrategy(cfg),
 	}
 
 	configurableProviders := make(map[string]bool)
@@ -58,6 +59,11 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	}
 
 	providersList := ssosettings.AllOAuthProviders
+
+	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP) {
+		providersList = append(providersList, social.LDAPProviderName)
+	}
+
 	if licensing.FeatureEnabled(social.SAMLProviderName) {
 		fbStrategies = append(fbStrategies, strategies.NewSAMLStrategy(settingsProvider))
 
@@ -126,11 +132,7 @@ func (s *Service) GetForProviderWithRedactedSecrets(ctx context.Context, provide
 		return nil, err
 	}
 
-	for k, v := range storeSettings.Settings {
-		if strVal, ok := v.(string); ok {
-			storeSettings.Settings[k] = setting.RedactedValue(k, strVal)
-		}
-	}
+	storeSettings.Settings = removeSecrets(storeSettings.Settings)
 
 	return storeSettings, nil
 }
@@ -177,11 +179,7 @@ func (s *Service) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSet
 	}
 
 	for _, storeSetting := range configurableSettings {
-		for k, v := range storeSetting.Settings {
-			if strVal, ok := v.(string); ok {
-				storeSetting.Settings[k] = setting.RedactedValue(k, strVal)
-			}
-		}
+		storeSetting.Settings = removeSecrets(storeSetting.Settings)
 	}
 
 	return configurableSettings, nil
@@ -208,7 +206,7 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings, requ
 	}
 	settings.Settings = settingsWithSecrets
 
-	err = reloadable.Validate(ctx, *settings, requester)
+	err = reloadable.Validate(ctx, *settings, *storedSettings, requester)
 	if err != nil {
 		return err
 	}
@@ -449,7 +447,8 @@ func (s *Service) isProviderConfigurable(provider string) bool {
 func removeSecrets(settings map[string]any) map[string]any {
 	result := make(map[string]any)
 	for k, v := range settings {
-		if IsSecretField(k) {
+		val, ok := v.(string)
+		if ok && val != "" && IsSecretField(k) {
 			result[k] = setting.RedactedPassword
 			continue
 		}
@@ -470,7 +469,9 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 
 	for k, v := range systemSettings {
 		if _, ok := settings[k]; !ok {
-			settings[k] = v
+			if isMergingAllowed(k) {
+				settings[k] = v
+			}
 		} else if isURL(k) && isEmptyString(settings[k]) {
 			// Overwrite all URL settings from the DB containing an empty string with their value
 			// from the system settings. This fixes an issue with empty auth_url, api_url and token_url
@@ -481,6 +482,20 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 	}
 
 	return settings
+}
+
+// isMergingAllowed returns true if the field provided can be merged from the system settings.
+// It won't allow SAML fields that are part of a group of settings to be merged from system settings
+// because the DB settings already contain one valid setting from each group.
+func isMergingAllowed(fieldName string) bool {
+	forbiddenMergePatterns := []string{"certificate", "private_key", "idp_metadata"}
+
+	for _, v := range forbiddenMergePatterns {
+		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
+			return false
+		}
+	}
+	return true
 }
 
 // mergeSecrets returns a new map with the current value for secrets that have not been updated

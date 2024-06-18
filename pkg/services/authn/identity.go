@@ -2,13 +2,12 @@ package authn
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -22,10 +21,10 @@ var _ Requester = (*Identity)(nil)
 
 type Identity struct {
 	// ID is the unique identifier for the entity in the Grafana database.
-	// It is in the format <namespace>:<id> where namespace is one of the
-	// Namespace* constants. For example, "user:1" or "api-key:1".
 	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
 	ID NamespaceID
+	// UID is a unique identifier stored for the entity in Grafana database. Not all entities support uid so it can be empty.
+	UID NamespaceID
 	// OrgID is the active organization for the entity.
 	OrgID int64
 	// OrgName is the name of the active organization.
@@ -73,12 +72,16 @@ type Identity struct {
 	IDToken string
 }
 
-func (i *Identity) GetID() string {
-	return i.ID.String()
+func (i *Identity) GetID() NamespaceID {
+	return i.ID
 }
 
-func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
+func (i *Identity) GetNamespacedID() (namespace identity.Namespace, identifier string) {
 	return i.ID.Namespace(), i.ID.ID()
+}
+
+func (i *Identity) GetUID() NamespaceID {
+	return i.UID
 }
 
 func (i *Identity) GetAuthID() string {
@@ -201,8 +204,6 @@ func (i *Identity) IsNil() bool {
 
 // SignedInUser returns a SignedInUser from the identity.
 func (i *Identity) SignedInUser() *user.SignedInUser {
-	namespace, id := i.GetNamespacedID()
-
 	u := &user.SignedInUser{
 		OrgID:           i.OrgID,
 		OrgName:         i.OrgName,
@@ -213,43 +214,36 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		AuthID:          i.AuthID,
 		AuthenticatedBy: i.AuthenticatedBy,
 		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
-		IsAnonymous:     namespace == NamespaceAnonymous,
+		IsAnonymous:     i.ID.IsNamespace(NamespaceAnonymous),
 		IsDisabled:      i.IsDisabled,
 		HelpFlags1:      i.HelpFlags1,
 		LastSeenAt:      i.LastSeenAt,
 		Teams:           i.Teams,
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
-		NamespacedID:    i.ID.String(),
+		NamespacedID:    i.ID,
 	}
 
-	if namespace == NamespaceAPIKey {
-		u.ApiKeyID = intIdentifier(id)
+	if i.ID.IsNamespace(NamespaceAPIKey) {
+		id, _ := i.ID.ParseInt()
+		u.ApiKeyID = id
 	} else {
-		u.UserID = intIdentifier(id)
-		u.IsServiceAccount = namespace == NamespaceServiceAccount
+		id, _ := i.ID.UserID()
+		u.UserID = id
+		u.UserUID = i.UID.ID()
+		u.IsServiceAccount = i.ID.IsNamespace(NamespaceServiceAccount)
 	}
 
 	return u
 }
 
-func intIdentifier(identifier string) int64 {
-	id, err := strconv.ParseInt(identifier, 10, 64)
-	if err != nil {
-		// FIXME (kalleep): Improve error handling
-		return -1
-	}
-
-	return id
-}
-
 func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
-	_, id := i.GetNamespacedID()
+	id, _ := i.ID.UserID()
 	return login.ExternalUserInfo{
 		OAuthToken:     i.OAuthToken,
 		AuthModule:     i.AuthenticatedBy,
 		AuthId:         i.AuthID,
-		UserId:         intIdentifier(id),
+		UserId:         id,
 		Email:          i.Email,
 		Login:          i.Login,
 		Name:           i.Name,

@@ -37,8 +37,8 @@ func (auth stackIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 		return authorizer.DecisionDeny, fmt.Sprintf("error reading namespace: %v", err), nil
 	}
 
-	// No opinion when the namespace is arbitrary
-	if info.OrgID == -1 {
+	// No opinion when the namespace is empty
+	if info.Value == "" {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 

@@ -220,6 +220,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                 placeholder="Give your template a name"
                 width={42}
                 autoFocus={true}
+                id="new-template-name"
               />
             </InlineField>
 
@@ -429,14 +430,14 @@ export const getStyles = (theme: GrafanaTheme2) => {
         display: 'none',
       },
     }),
-    snippets: css`
-      margin-top: ${theme.spacing(2)};
-      font-size: ${theme.typography.bodySmall.fontSize};
-    `,
-    code: css`
-      color: ${theme.colors.text.secondary};
-      font-weight: ${theme.typography.fontWeightBold};
-    `,
+    snippets: css({
+      marginTop: theme.spacing(2),
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    code: css({
+      color: theme.colors.text.secondary,
+      fontWeight: theme.typography.fontWeightBold,
+    }),
   };
 };
 
@@ -471,4 +472,4 @@ const defaultPayload: TestTemplateAlert[] = [
   },
 ];
 
-const defaultPayloadString = JSON.stringify(defaultPayload, null, 2);
+export const defaultPayloadString = JSON.stringify(defaultPayload, null, 2);

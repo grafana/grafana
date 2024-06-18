@@ -123,8 +123,10 @@ func TestForkedAlertmanager_ModeRemoteSecondary(t *testing.T) {
 		// We care about the status of the internal Alertmanager.
 		internal, _, forked := genTestAlertmanagers(tt, modeRemoteSecondary)
 		status := apimodels.GettableStatus{}
-		internal.EXPECT().GetStatus().Return(status).Once()
-		require.Equal(tt, status, forked.GetStatus())
+		internal.EXPECT().GetStatus(ctx).Return(status, nil).Once()
+		got, err := forked.GetStatus(ctx)
+		require.NoError(tt, err)
+		require.Equal(tt, status, got)
 	})
 
 	t.Run("CreateSilence", func(tt *testing.T) {
@@ -427,39 +429,71 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 	})
 
 	t.Run("GetStatus", func(tt *testing.T) {
-		// We care about the status of the remote Alertmanager.
-		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		status := apimodels.GettableStatus{}
-		remote.EXPECT().GetStatus().Return(status).Once()
-		require.Equal(tt, status, forked.GetStatus())
+		{
+			// We care about the status of the remote Alertmanager.
+			_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+			status := apimodels.GettableStatus{}
+			remote.EXPECT().GetStatus(ctx).Return(status, nil).Once()
+			got, err := forked.GetStatus(ctx)
+			require.NoError(tt, err)
+			require.Equal(tt, status, got)
+		}
+
+		{
+			// If there's an error in the remote Alertmanager, it should be returned.
+			_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+			remote.EXPECT().GetStatus(ctx).Return(apimodels.GettableStatus{}, expErr).Once()
+			_, err := forked.GetStatus(ctx)
+			require.ErrorIs(tt, expErr, err)
+		}
 	})
 
 	t.Run("CreateSilence", func(tt *testing.T) {
-		// We should create the silence in the remote Alertmanager.
-		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-
+		// We should create the silence in both Alertmanagers using the same uid.
+		testSilence := &apimodels.PostableSilence{}
 		expID := "test-id"
-		remote.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return(expID, nil).Once()
-		id, err := forked.CreateSilence(ctx, nil)
+
+		internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		remote.EXPECT().CreateSilence(mock.Anything, testSilence).Return(expID, nil).Once()
+		internal.EXPECT().CreateSilence(mock.Anything, testSilence).Return(testSilence.ID, nil).Once()
+		id, err := forked.CreateSilence(ctx, testSilence)
 		require.NoError(tt, err)
+		require.Equal(tt, expID, testSilence.ID)
 		require.Equal(tt, expID, id)
 
 		// If there's an error in the remote Alertmanager, the error should be returned.
-		remote.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return("", expErr).Maybe()
-		_, err = forked.CreateSilence(ctx, nil)
+		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		remote.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return("", expErr).Once()
+		_, err = forked.CreateSilence(ctx, testSilence)
 		require.ErrorIs(tt, expErr, err)
+
+		// An error in the internal Alertmanager should not be returned.
+		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		remote.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return(expID, nil).Once()
+		internal.EXPECT().CreateSilence(mock.Anything, mock.Anything).Return("", expErr).Once()
+		id, err = forked.CreateSilence(ctx, testSilence)
+		require.NoError(tt, err)
+		require.Equal(tt, expID, id)
 	})
 
 	t.Run("DeleteSilence", func(tt *testing.T) {
-		// We should delete the silence in the remote Alertmanager.
-		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().DeleteSilence(mock.Anything, mock.Anything).Return(nil).Once()
-		require.NoError(tt, forked.DeleteSilence(ctx, ""))
+		// We should delete the silence in both Alertmanagers.
+		testID := "test-id"
+		internal, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		remote.EXPECT().DeleteSilence(mock.Anything, testID).Return(nil).Once()
+		internal.EXPECT().DeleteSilence(mock.Anything, testID).Return(nil).Once()
+		require.NoError(tt, forked.DeleteSilence(ctx, testID))
 
 		// If there's an error in the remote Alertmanager, the error should be returned.
 		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().DeleteSilence(mock.Anything, mock.Anything).Return(expErr).Maybe()
-		require.ErrorIs(tt, expErr, forked.DeleteSilence(ctx, ""))
+		remote.EXPECT().DeleteSilence(mock.Anything, testID).Return(expErr).Maybe()
+		require.ErrorIs(tt, expErr, forked.DeleteSilence(ctx, testID))
+
+		// An error in the internal Alertmanager should not be returned.
+		internal, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		remote.EXPECT().DeleteSilence(mock.Anything, testID).Return(nil).Maybe()
+		internal.EXPECT().DeleteSilence(mock.Anything, testID).Return(nil).Maybe()
+		require.NoError(tt, forked.DeleteSilence(ctx, testID))
 	})
 
 	t.Run("GetSilence", func(tt *testing.T) {
@@ -592,28 +626,30 @@ func TestForkedAlertmanager_ModeRemotePrimary(t *testing.T) {
 
 	t.Run("TestReceivers", func(tt *testing.T) {
 		// TestReceivers should be called only in the remote Alertmanager.
-		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, nil).Once()
+		// TODO: change to remote AM once it's implemented there.
+		internal, _, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, nil).Once()
 		_, err := forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
 		require.NoError(tt, err)
 
 		// If there's an error in the remote Alertmanager, it should be returned.
-		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, expErr).Once()
+		internal, _, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().TestReceivers(mock.Anything, mock.Anything).Return(nil, expErr).Once()
 		_, err = forked.TestReceivers(ctx, apimodels.TestReceiversConfigBodyParams{})
 		require.ErrorIs(tt, expErr, err)
 	})
 
 	t.Run("TestTemplate", func(tt *testing.T) {
-		// TestTemplate should be called only in the remote Alertmanager.
-		_, remote, forked := genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, nil).Once()
+		// TestTemplate should be called only in the internal Alertmanager.
+		// TODO: change to remote AM once it's implemented there.
+		internal, _, forked := genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, nil).Once()
 		_, err := forked.TestTemplate(ctx, apimodels.TestTemplatesConfigBodyParams{})
 		require.NoError(tt, err)
 
-		// If there's an error in the remote Alertmanager, it should be returned.
-		_, remote, forked = genTestAlertmanagers(tt, modeRemotePrimary)
-		remote.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, expErr).Once()
+		// If there's an error in the internal Alertmanager, it should be returned.
+		internal, _, forked = genTestAlertmanagers(tt, modeRemotePrimary)
+		internal.EXPECT().TestTemplate(mock.Anything, mock.Anything).Return(nil, expErr).Once()
 		_, err = forked.TestTemplate(ctx, apimodels.TestTemplatesConfigBodyParams{})
 		require.ErrorIs(tt, expErr, err)
 	})

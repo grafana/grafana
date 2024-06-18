@@ -1,5 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/packages/grafana-ui/src/components/Select/SelectBase.tsx
-import { Matcher, waitFor } from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
 import { byRole } from 'testing-library-selector';
@@ -17,8 +17,4 @@ export const getSelectParent = (input: HTMLElement) =>
 export const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
   await userEvent.click(byRole('combobox').get(selectElement));
   await selectOptionInTest(selectElement, optionText);
-};
-export const clickSelectOptionMatch = async (selectElement: HTMLElement, optionText: Matcher): Promise<void> => {
-  await userEvent.click(byRole('combobox').get(selectElement));
-  await selectOptionInTest(selectElement, optionText as string);
 };

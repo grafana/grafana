@@ -9,9 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -35,7 +36,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 	}
 	t.Run("Testing Team commands and queries", func(t *testing.T) {
 		sqlStore, cfg := db.InitTestDBWithCfg(t)
-		teamSvc, err := ProvideService(sqlStore, cfg)
+		teamSvc, err := ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest())
 		require.NoError(t, err)
 		testUser := &user.SignedInUser{
 			OrgID: 1,
@@ -50,8 +51,10 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		quotaService := quotaimpl.ProvideService(sqlStore, cfg)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 		require.NoError(t, err)
-		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, cfg, teamSvc, nil, quotaService,
-			supportbundlestest.NewFakeBundleService())
+		userSvc, err := userimpl.ProvideService(
+			sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
+			quotaService, supportbundlestest.NewFakeBundleService(),
+		)
 		require.NoError(t, err)
 
 		t.Run("Given saved users and two teams", func(t *testing.T) {
@@ -73,9 +76,9 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					require.NoError(t, err)
 					userIds = append(userIds, usr.ID)
 				}
-				team1, err = teamSvc.CreateTeam("group1 name", "test1@test.com", testOrgID)
+				team1, err = teamSvc.CreateTeam(context.Background(), "group1 name", "test1@test.com", testOrgID)
 				require.NoError(t, err)
-				team2, err = teamSvc.CreateTeam("group2 name", "test2@test.com", testOrgID)
+				team2, err = teamSvc.CreateTeam(context.Background(), "group2 name", "test2@test.com", testOrgID)
 				require.NoError(t, err)
 			}
 			setup()
@@ -435,7 +438,10 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				quotaService := quotaimpl.ProvideService(sqlStore, cfg)
 				orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 				require.NoError(t, err)
-				userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, cfg, teamSvc, nil, quotaService, supportbundlestest.NewFakeBundleService())
+				userSvc, err := userimpl.ProvideService(
+					sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
+					quotaService, supportbundlestest.NewFakeBundleService(),
+				)
 				require.NoError(t, err)
 				setup()
 				userCmd = user.CreateUserCommand{
@@ -524,12 +530,12 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 	}
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
-	teamSvc, err := ProvideService(store, cfg)
+	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// Seed 10 teams
 	for i := 1; i <= 10; i++ {
-		_, err := teamSvc.CreateTeam(fmt.Sprintf("team-%d", i), fmt.Sprintf("team-%d@example.org", i), 1)
+		_, err := teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team-%d", i), fmt.Sprintf("team-%d@example.org", i), 1)
 		require.NoError(t, err)
 	}
 
@@ -561,16 +567,19 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	// Seed 2 teams with 2 members
 	setup := func(store db.DB, cfg *setting.Cfg) {
-		teamSvc, err := ProvideService(store, cfg)
+		teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
 		require.NoError(t, err)
-		team1, errCreateTeam := teamSvc.CreateTeam("group1 name", "test1@example.org", testOrgID)
+		team1, errCreateTeam := teamSvc.CreateTeam(context.Background(), "group1 name", "test1@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
-		team2, errCreateTeam := teamSvc.CreateTeam("group2 name", "test2@example.org", testOrgID)
+		team2, errCreateTeam := teamSvc.CreateTeam(context.Background(), "group2 name", "test2@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
 		quotaService := quotaimpl.ProvideService(store, cfg)
 		orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)
 		require.NoError(t, err)
-		userSvc, err := userimpl.ProvideService(store, orgSvc, cfg, teamSvc, nil, quotaService, supportbundlestest.NewFakeBundleService())
+		userSvc, err := userimpl.ProvideService(
+			store, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
+			quotaService, supportbundlestest.NewFakeBundleService(),
+		)
 		require.NoError(t, err)
 
 		for i := 0; i < 4; i++ {
@@ -604,7 +613,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
 	setup(store, cfg)
-	teamSvc, err := ProvideService(store, cfg)
+	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	type getTeamMembersTestCase struct {

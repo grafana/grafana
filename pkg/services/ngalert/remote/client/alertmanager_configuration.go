@@ -19,6 +19,11 @@ type UserGrafanaConfig struct {
 	Hash                      string                        `json:"configuration_hash"`
 	CreatedAt                 int64                         `json:"created"`
 	Default                   bool                          `json:"default"`
+	Promoted                  bool                          `json:"promoted"`
+}
+
+func (mc *Mimir) ShouldPromoteConfig() bool {
+	return mc.promoteConfig
 }
 
 func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error) {
@@ -46,6 +51,7 @@ func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg *apimo
 		Hash:                      hash,
 		CreatedAt:                 createdAt,
 		Default:                   isDefault,
+		Promoted:                  mc.promoteConfig,
 	})
 	if err != nil {
 		return err

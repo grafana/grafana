@@ -15,12 +15,12 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -409,7 +409,8 @@ func TestService_Logout(t *testing.T) {
 		identity     *authn.Identity
 		sessionToken *usertoken.UserToken
 
-		client authn.Client
+		client             authn.Client
+		signoutRedirectURL string
 
 		expectedErr          error
 		expectedTokenRevoked bool
@@ -419,31 +420,39 @@ func TestService_Logout(t *testing.T) {
 	tests := []TestCase{
 		{
 			desc:             "should redirect to default redirect url when identity is not a user",
-			identity:         &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceServiceAccount, 1)},
+			identity:         &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceServiceAccount, 1)},
 			expectedRedirect: &authn.Redirect{URL: "http://localhost:3000/login"},
 		},
 		{
 			desc:                 "should redirect to default redirect url when no external provider was used to authenticate",
-			identity:             &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1)},
+			identity:             &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1)},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			expectedTokenRevoked: true,
 		},
 		{
 			desc:                 "should redirect to default redirect url when client is not found",
-			identity:             &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "notfound"},
+			identity:             &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "notfound"},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			expectedTokenRevoked: true,
 		},
 		{
 			desc:                 "should redirect to default redirect url when client do not implement logout extension",
-			identity:             &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
+			identity:             &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
 			expectedTokenRevoked: true,
 		},
 		{
+			desc:                 "should use signout redirect url if configured",
+			identity:             &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
+			expectedRedirect:     &authn.Redirect{URL: "some-url"},
+			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
+			signoutRedirectURL:   "some-url",
+			expectedTokenRevoked: true,
+		},
+		{
 			desc:             "should redirect to client specific url",
-			identity:         &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
+			identity:         &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
 			expectedRedirect: &authn.Redirect{URL: "http://idp.com/logout"},
 			client: &authntest.MockClient{
 				NameFunc: func() string { return "auth.client.azuread" },
@@ -473,6 +482,10 @@ func TestService_Logout(t *testing.T) {
 						return nil
 					},
 				}
+
+				if tt.signoutRedirectURL != "" {
+					svc.cfg.SignoutRedirectUrl = tt.signoutRedirectURL
+				}
 			})
 
 			redirect, err := s.Logout(context.Background(), tt.identity, tt.sessionToken)
@@ -487,26 +500,26 @@ func TestService_Logout(t *testing.T) {
 func TestService_ResolveIdentity(t *testing.T) {
 	t.Run("should return error for for unknown namespace", func(t *testing.T) {
 		svc := setupTests(t)
-		_, err := svc.ResolveIdentity(context.Background(), 1, "some:1")
-		assert.ErrorIs(t, err, authn.ErrInvalidNamespaceID)
+		_, err := svc.ResolveIdentity(context.Background(), 1, authn.NewNamespaceID("some", 1))
+		assert.ErrorIs(t, err, authn.ErrUnsupportedIdentity)
 	})
 
 	t.Run("should return error for for namespace that don't have a resolver", func(t *testing.T) {
 		svc := setupTests(t)
-		_, err := svc.ResolveIdentity(context.Background(), 1, "api-key:1")
+		_, err := svc.ResolveIdentity(context.Background(), 1, authn.MustParseNamespaceID("api-key:1"))
 		assert.ErrorIs(t, err, authn.ErrUnsupportedIdentity)
 	})
 
 	t.Run("should resolve for user", func(t *testing.T) {
 		svc := setupTests(t)
-		identity, err := svc.ResolveIdentity(context.Background(), 1, "user:1")
+		identity, err := svc.ResolveIdentity(context.Background(), 1, authn.MustParseNamespaceID("user:1"))
 		assert.NoError(t, err)
 		assert.NotNil(t, identity)
 	})
 
 	t.Run("should resolve for service account", func(t *testing.T) {
 		svc := setupTests(t)
-		identity, err := svc.ResolveIdentity(context.Background(), 1, "service-account:1")
+		identity, err := svc.ResolveIdentity(context.Background(), 1, authn.MustParseNamespaceID("service-account:1"))
 		assert.NoError(t, err)
 		assert.NotNil(t, identity)
 	})
@@ -514,14 +527,14 @@ func TestService_ResolveIdentity(t *testing.T) {
 	t.Run("should resolve for valid namespace if client is registered", func(t *testing.T) {
 		svc := setupTests(t, func(svc *Service) {
 			svc.RegisterClient(&authntest.MockClient{
-				NamespaceFunc: func() string { return authn.NamespaceAPIKey },
+				NamespaceFunc: func() string { return authn.NamespaceAPIKey.String() },
 				ResolveIdentityFunc: func(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
 					return &authn.Identity{}, nil
 				},
 			})
 		})
 
-		identity, err := svc.ResolveIdentity(context.Background(), 1, "api-key:1")
+		identity, err := svc.ResolveIdentity(context.Background(), 1, authn.MustParseNamespaceID("api-key:1"))
 		assert.NoError(t, err)
 		assert.NotNil(t, identity)
 	})
@@ -548,6 +561,7 @@ func setupTests(t *testing.T, opts ...func(svc *Service)) *Service {
 		metrics:                newMetrics(nil),
 		postAuthHooks:          newQueue[authn.PostAuthHookFn](),
 		postLoginHooks:         newQueue[authn.PostLoginHookFn](),
+		preLogoutHooks:         newQueue[authn.PreLogoutHookFn](),
 	}
 
 	for _, o := range opts {

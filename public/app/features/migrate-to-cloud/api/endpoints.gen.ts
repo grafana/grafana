@@ -1,26 +1,30 @@
 import { baseAPI as api } from './baseAPI';
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
-    getMigrationList: build.query<GetMigrationListApiResponse, GetMigrationListApiArg>({
+    getSessionList: build.query<GetSessionListApiResponse, GetSessionListApiArg>({
       query: () => ({ url: `/cloudmigration/migration` }),
     }),
-    createMigration: build.mutation<CreateMigrationApiResponse, CreateMigrationApiArg>({
-      query: (queryArg) => ({ url: `/cloudmigration/migration`, method: 'POST', body: queryArg.cloudMigrationRequest }),
-    }),
-    deleteCloudMigration: build.mutation<DeleteCloudMigrationApiResponse, DeleteCloudMigrationApiArg>({
-      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.id}`, method: 'DELETE' }),
-    }),
-    getCloudMigration: build.query<GetCloudMigrationApiResponse, GetCloudMigrationApiArg>({
-      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.id}` }),
-    }),
-    getCloudMigrationRunList: build.query<GetCloudMigrationRunListApiResponse, GetCloudMigrationRunListApiArg>({
-      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.id}/run` }),
-    }),
-    runCloudMigration: build.mutation<RunCloudMigrationApiResponse, RunCloudMigrationApiArg>({
-      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.id}/run`, method: 'POST' }),
+    createSession: build.mutation<CreateSessionApiResponse, CreateSessionApiArg>({
+      query: (queryArg) => ({
+        url: `/cloudmigration/migration`,
+        method: 'POST',
+        body: queryArg.cloudMigrationSessionRequestDto,
+      }),
     }),
     getCloudMigrationRun: build.query<GetCloudMigrationRunApiResponse, GetCloudMigrationRunApiArg>({
-      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.id}/run/${queryArg.runId}` }),
+      query: (queryArg) => ({ url: `/cloudmigration/migration/run/${queryArg.runUid}` }),
+    }),
+    deleteSession: build.mutation<DeleteSessionApiResponse, DeleteSessionApiArg>({
+      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}`, method: 'DELETE' }),
+    }),
+    getSession: build.query<GetSessionApiResponse, GetSessionApiArg>({
+      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}` }),
+    }),
+    getCloudMigrationRunList: build.query<GetCloudMigrationRunListApiResponse, GetCloudMigrationRunListApiArg>({
+      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}/run` }),
+    }),
+    runCloudMigration: build.mutation<RunCloudMigrationApiResponse, RunCloudMigrationApiArg>({
+      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}/run`, method: 'POST' }),
     }),
     createCloudMigrationToken: build.mutation<CreateCloudMigrationTokenApiResponse, CreateCloudMigrationTokenApiArg>({
       query: () => ({ url: `/cloudmigration/token`, method: 'POST' }),
@@ -32,38 +36,36 @@ const injectedRtkApi = api.injectEndpoints({
   overrideExisting: false,
 });
 export { injectedRtkApi as generatedAPI };
-export type GetMigrationListApiResponse = /** status 200 (empty) */ CloudMigrationListResponse;
-export type GetMigrationListApiArg = void;
-export type CreateMigrationApiResponse = /** status 200 (empty) */ CloudMigrationResponse;
-export type CreateMigrationApiArg = {
-  cloudMigrationRequest: CloudMigrationRequest;
-};
-export type DeleteCloudMigrationApiResponse = unknown;
-export type DeleteCloudMigrationApiArg = {
-  /** ID of an migration */
-  id: number;
-};
-export type GetCloudMigrationApiResponse = /** status 200 (empty) */ CloudMigrationResponse;
-export type GetCloudMigrationApiArg = {
-  /** ID of an migration */
-  id: number;
-};
-export type GetCloudMigrationRunListApiResponse = /** status 200 (empty) */ CloudMigrationRunList;
-export type GetCloudMigrationRunListApiArg = {
-  /** ID of an migration */
-  id: number;
-};
-export type RunCloudMigrationApiResponse = /** status 200 (empty) */ MigrateDataResponseDto;
-export type RunCloudMigrationApiArg = {
-  /** ID of an migration */
-  id: number;
+export type GetSessionListApiResponse = /** status 200 (empty) */ CloudMigrationSessionListResponseDto;
+export type GetSessionListApiArg = void;
+export type CreateSessionApiResponse = /** status 200 (empty) */ CloudMigrationSessionResponseDto;
+export type CreateSessionApiArg = {
+  cloudMigrationSessionRequestDto: CloudMigrationSessionRequestDto;
 };
 export type GetCloudMigrationRunApiResponse = /** status 200 (empty) */ MigrateDataResponseDto;
 export type GetCloudMigrationRunApiArg = {
-  /** ID of an migration */
-  id: number;
-  /** Run ID of a migration run */
-  runId: number;
+  /** RunUID of a migration run */
+  runUid: string;
+};
+export type DeleteSessionApiResponse = unknown;
+export type DeleteSessionApiArg = {
+  /** UID of a migration session */
+  uid: string;
+};
+export type GetSessionApiResponse = /** status 200 (empty) */ CloudMigrationSessionResponseDto;
+export type GetSessionApiArg = {
+  /** UID of a migration session */
+  uid: string;
+};
+export type GetCloudMigrationRunListApiResponse = /** status 200 (empty) */ SnapshotListDto;
+export type GetCloudMigrationRunListApiArg = {
+  /** UID of a migration */
+  uid: string;
+};
+export type RunCloudMigrationApiResponse = /** status 200 (empty) */ MigrateDataResponseDto;
+export type RunCloudMigrationApiArg = {
+  /** UID of a migration */
+  uid: string;
 };
 export type CreateCloudMigrationTokenApiResponse = /** status 200 (empty) */ CreateAccessTokenResponseDto;
 export type CreateCloudMigrationTokenApiArg = void;
@@ -71,14 +73,14 @@ export type GetDashboardByUidApiResponse = /** status 200 (empty) */ DashboardFu
 export type GetDashboardByUidApiArg = {
   uid: string;
 };
-export type CloudMigrationResponse = {
+export type CloudMigrationSessionResponseDto = {
   created?: string;
-  id?: number;
-  stack?: string;
+  slug?: string;
+  uid?: string;
   updated?: string;
 };
-export type CloudMigrationListResponse = {
-  migrations?: CloudMigrationResponse[];
+export type CloudMigrationSessionListResponseDto = {
+  sessions?: CloudMigrationSessionResponseDto[];
 };
 export type ErrorResponseBody = {
   /** Error An optional detailed description of the actual error. Only included if running in developer mode. */
@@ -90,7 +92,7 @@ export type ErrorResponseBody = {
     For example, a 412 Precondition Failed error may include additional information of why that error happened. */
   status?: string;
 };
-export type CloudMigrationRequest = {
+export type CloudMigrationSessionRequestDto = {
   authToken?: string;
 };
 export type MigrateDataResponseItemDto = {
@@ -100,11 +102,14 @@ export type MigrateDataResponseItemDto = {
   type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER';
 };
 export type MigrateDataResponseDto = {
-  id?: number;
   items?: MigrateDataResponseItemDto[];
+  uid?: string;
 };
-export type CloudMigrationRunList = {
-  runs?: MigrateDataResponseDto[];
+export type MigrateDataResponseListDto = {
+  uid?: string;
+};
+export type SnapshotListDto = {
+  runs?: MigrateDataResponseListDto[];
 };
 export type CreateAccessTokenResponseDto = {
   token?: string;
@@ -141,7 +146,6 @@ export type DashboardMeta = {
   provisioned?: boolean;
   provisionedExternalId?: string;
   publicDashboardEnabled?: boolean;
-  publicDashboardUid?: string;
   slug?: string;
   type?: string;
   updated?: string;
@@ -154,13 +158,13 @@ export type DashboardFullWithMeta = {
   meta?: DashboardMeta;
 };
 export const {
-  useGetMigrationListQuery,
-  useCreateMigrationMutation,
-  useDeleteCloudMigrationMutation,
-  useGetCloudMigrationQuery,
+  useGetSessionListQuery,
+  useCreateSessionMutation,
+  useGetCloudMigrationRunQuery,
+  useDeleteSessionMutation,
+  useGetSessionQuery,
   useGetCloudMigrationRunListQuery,
   useRunCloudMigrationMutation,
-  useGetCloudMigrationRunQuery,
   useCreateCloudMigrationTokenMutation,
   useGetDashboardByUidQuery,
 } = injectedRtkApi;

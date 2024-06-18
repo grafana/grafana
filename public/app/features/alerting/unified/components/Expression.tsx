@@ -53,7 +53,7 @@ export const Expression: FC<Props> = ({ expression: query, rulesSource }) => {
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  well: css`
-    font-family: ${theme.typography.fontFamilyMonospace};
-  `,
+  well: css({
+    fontFamily: theme.typography.fontFamilyMonospace,
+  }),
 });

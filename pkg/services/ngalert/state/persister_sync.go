@@ -56,7 +56,7 @@ func (a *SyncStatePersister) deleteAlertStates(ctx context.Context, states []Sta
 	for _, s := range states {
 		key, err := s.GetAlertInstanceKey()
 		if err != nil {
-			a.log.Error("Failed to delete alert instance with invalid labels", "cacheID", s.CacheID, "error", err)
+			a.log.Error("Failed to delete alert instance with invalid labels", "cacheID", s.CacheID, "labels", s.Labels.String(), "error", err)
 			continue
 		}
 		toDelete = append(toDelete, key)

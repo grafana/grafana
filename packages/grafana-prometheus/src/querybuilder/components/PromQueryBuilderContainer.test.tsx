@@ -20,7 +20,7 @@ describe('PromQueryBuilderContainer', () => {
 
     expect(screen.getByText('metric_test')).toBeInTheDocument();
     await addOperationInQueryBuilder('Range functions', 'Rate');
-    expect(props.onChange).toBeCalledWith({
+    expect(props.onChange).toHaveBeenCalledWith({
       expr: 'rate(metric_test{job="testjob"}[$__rate_interval])',
       refId: 'A',
     });

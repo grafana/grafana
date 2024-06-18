@@ -43,36 +43,36 @@ export const DynamicTableWithGuidelines = <T extends object>({
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  relative: css`
-    position: relative;
-    height: 100%;
-  `,
-  guideline: css`
-    left: -19px;
-    border-left: 1px solid ${theme.colors.border.weak};
-    position: absolute;
+  relative: css({
+    position: 'relative',
+    height: '100%',
+  }),
+  guideline: css({
+    left: '-19px',
+    borderLeft: `1px solid ${theme.colors.border.weak}`,
+    position: 'absolute',
 
-    ${theme.breakpoints.down('md')} {
-      display: none;
-    }
-  `,
-  topGuideline: css`
-    width: 18px;
-    border-bottom: 1px solid ${theme.colors.border.medium};
-    top: 0;
-    bottom: 50%;
-  `,
-  bottomGuideline: css`
-    top: 50%;
-    bottom: 0;
-  `,
-  contentGuideline: css`
-    top: 0;
-    bottom: 0;
-    left: -49px !important;
-  `,
-  headerGuideline: css`
-    top: -17px;
-    bottom: 0;
-  `,
+    [theme.breakpoints.down('md')]: {
+      display: 'none',
+    },
+  }),
+  topGuideline: css({
+    width: '18px',
+    borderBottom: `1px solid ${theme.colors.border.medium}`,
+    top: 0,
+    bottom: '50%',
+  }),
+  bottomGuideline: css({
+    top: '50%',
+    bottom: 0,
+  }),
+  contentGuideline: css({
+    top: 0,
+    bottom: 0,
+    left: '-49px !important',
+  }),
+  headerGuideline: css({
+    top: '-17px',
+    bottom: 0,
+  }),
 });

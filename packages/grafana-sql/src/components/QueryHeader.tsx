@@ -1,6 +1,5 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useId, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { v4 as uuidv4 } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -48,6 +47,8 @@ export function QueryHeader({
   const [_, copyToClipboard] = useCopyToClipboard();
   const [showConfirm, setShowConfirm] = useState(false);
   const toRawSql = db.toRawSql;
+
+  const htmlId = useId();
 
   const onEditorModeChange = useCallback(
     (newEditorMode: EditorMode) => {
@@ -136,7 +137,7 @@ export function QueryHeader({
         {editorMode === EditorMode.Builder && (
           <>
             <InlineSwitch
-              id={`sql-filter-${uuidv4()}}`}
+              id={`sql-filter-${htmlId}`}
               label="Filter"
               data-testid={selectors.components.SQLQueryEditor.headerFilterSwitch}
               transparent={true}
@@ -157,7 +158,7 @@ export function QueryHeader({
             />
 
             <InlineSwitch
-              id={`sql-group-${uuidv4()}}`}
+              id={`sql-group-${htmlId}`}
               label="Group"
               data-testid={selectors.components.SQLQueryEditor.headerGroupSwitch}
               transparent={true}
@@ -178,7 +179,7 @@ export function QueryHeader({
             />
 
             <InlineSwitch
-              id={`sql-order-${uuidv4()}}`}
+              id={`sql-order-${htmlId}`}
               label="Order"
               data-testid={selectors.components.SQLQueryEditor.headerOrderSwitch}
               transparent={true}
@@ -199,7 +200,7 @@ export function QueryHeader({
             />
 
             <InlineSwitch
-              id={`sql-preview-${uuidv4()}}`}
+              id={`sql-preview-${htmlId}`}
               label="Preview"
               data-testid={selectors.components.SQLQueryEditor.headerPreviewSwitch}
               transparent={true}
@@ -297,6 +298,7 @@ export function QueryHeader({
               <EditorField label="Dataset" width={25}>
                 <DatasetSelector
                   db={db}
+                  inputId={`sql-dataset-${htmlId}`}
                   dataset={query.dataset}
                   dialect={dialect}
                   preconfiguredDataset={preconfiguredDataset}
@@ -307,6 +309,7 @@ export function QueryHeader({
             <EditorField label="Table" width={25}>
               <TableSelector
                 db={db}
+                inputId={`sql-tableselect-${htmlId}`}
                 dataset={query.dataset || preconfiguredDataset}
                 table={query.table}
                 onChange={onTableChange}

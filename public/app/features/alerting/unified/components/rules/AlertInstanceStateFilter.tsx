@@ -67,12 +67,12 @@ export const AlertInstanceStateFilter = ({
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    tag: css`
-      font-size: 11px;
-      font-weight: normal;
-      padding: ${theme.spacing(0.25, 0.5)};
-      vertical-align: middle;
-      margin-left: ${theme.spacing(0.5)};
-    `,
+    tag: css({
+      fontSize: '11px',
+      fontWeight: 'normal',
+      padding: theme.spacing(0.25, 0.5),
+      verticalAlign: 'middle',
+      marginLeft: theme.spacing(0.5),
+    }),
   };
 }

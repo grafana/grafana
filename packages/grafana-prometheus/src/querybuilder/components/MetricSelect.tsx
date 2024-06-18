@@ -56,7 +56,7 @@ export function MetricSelect({
   metricLookupDisabled,
   onBlur,
   variableEditor,
-}: MetricSelectProps) {
+}: Readonly<MetricSelectProps>) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
     metrics?: SelectableValue[];
@@ -190,7 +190,7 @@ export function MetricSelect({
           {...props.innerProps}
           ref={props.innerRef}
           className={`${styles.customOptionWidth} metric-encyclopedia-open`}
-          aria-label="Select option"
+          data-testid={selectors.components.Select.option}
           onKeyDown={(e) => {
             // if there is no metric and the m.e. is enabled, open the modal
             if (e.code === 'Enter') {
@@ -241,10 +241,16 @@ export function MetricSelect({
       <div
         {...innerProps}
         className={`${stylesMenu.menu} ${styles.customMenuContainer}`}
-        style={{ maxHeight }}
+        style={{ maxHeight: Math.round(maxHeight * 0.9) }}
         aria-label="Select options menu"
       >
-        <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
+        <CustomScrollbar
+          scrollRefCallback={innerRef}
+          autoHide={false}
+          autoHeightMax="inherit"
+          hideHorizontalTrack
+          showScrollIndicators
+        >
           {children}
         </CustomScrollbar>
         {optionsLoaded && (
@@ -263,7 +269,7 @@ export function MetricSelect({
     return (
       <AsyncSelect
         data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.metricSelect}
-        isClearable={variableEditor ? true : false}
+        isClearable={Boolean(variableEditor)}
         inputId="prometheus-metric-select"
         className={styles.select}
         value={query.metric ? toOption(query.metric) : undefined}
@@ -271,6 +277,7 @@ export function MetricSelect({
         allowCustomValue
         formatOptionLabel={formatOptionLabel}
         filterOption={customFilterOption}
+        minMenuHeight={250}
         onOpenMenu={async () => {
           if (metricLookupDisabled) {
             return;
@@ -286,7 +293,7 @@ export function MetricSelect({
 
           if (prometheusMetricEncyclopedia) {
             setState({
-              // add the modal butoon option to the options
+              // add the modal button option to the options
               metrics: [...metricsModalOption, ...metrics],
               isLoading: undefined,
               // pass the initial metrics into the metrics explorer
@@ -303,7 +310,7 @@ export function MetricSelect({
         }}
         loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
         isLoading={state.isLoading}
-        defaultOptions={state.metrics}
+        defaultOptions={state.metrics ?? Array.from(new Array(25), () => ({ value: '' }))} // We need empty values when `state.metrics` is falsy in order for the select to correctly determine top/bottom placement
         onChange={(input) => {
           const value = input?.value;
           if (value) {
@@ -321,7 +328,7 @@ export function MetricSelect({
         components={
           prometheusMetricEncyclopedia ? { Option: CustomOption, MenuList: CustomMenu } : { MenuList: CustomMenu }
         }
-        onBlur={onBlur ? onBlur : () => {}}
+        onBlur={onBlur}
       />
     );
   };
@@ -359,53 +366,53 @@ export function MetricSelect({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  select: css`
-    min-width: 125px;
-  `,
-  highlight: css`
-    label: select__match-highlight;
-    background: inherit;
-    padding: inherit;
-    color: ${theme.colors.warning.contrastText};
-    background-color: ${theme.colors.warning.main};
-  `,
-  customOption: css`
-    padding: 8px;
-    display: flex;
-    justify-content: space-between;
-    cursor: pointer;
-    :hover {
-      background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.1)};
-    }
-  `,
-  customOptionlabel: css`
-    color: ${theme.colors.text.primary};
-  `,
-  customOptionDesc: css`
-    color: ${theme.colors.text.secondary};
-    font-size: ${theme.typography.size.xs};
-    opacity: 50%;
-  `,
-  focus: css`
-    background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.1)};
-  `,
-  customOptionWidth: css`
-    min-width: 400px;
-  `,
-  customMenuFooter: css`
-    flex: 0;
-    display: flex;
-    justify-content: space-between;
-    padding: ${theme.spacing(1.5)};
-    border-top: 1px solid ${theme.colors.border.weak};
-    color: ${theme.colors.text.secondary};
-  `,
-  customMenuContainer: css`
-    display: flex;
-    flex-direction: column;
-    background: ${theme.colors.background.primary};
-    box-shadow: ${theme.shadows.z3};
-  `,
+  select: css({
+    minWidth: '125px',
+  }),
+  highlight: css({
+    label: 'select__match-highlight',
+    background: 'inherit',
+    padding: 'inherit',
+    color: theme.colors.warning.contrastText,
+    backgroundColor: theme.colors.warning.main,
+  }),
+  customOption: css({
+    padding: '8px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    cursor: 'pointer',
+    ':hover': {
+      backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
+    },
+  }),
+  customOptionlabel: css({
+    color: theme.colors.text.primary,
+  }),
+  customOptionDesc: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.size.xs,
+    opacity: '50%',
+  }),
+  focus: css({
+    backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
+  }),
+  customOptionWidth: css({
+    minWidth: '400px',
+  }),
+  customMenuFooter: css({
+    flex: 0,
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: theme.spacing(1.5),
+    borderTop: `1px solid ${theme.colors.border.weak}`,
+    color: theme.colors.text.secondary,
+  }),
+  customMenuContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    background: theme.colors.background.primary,
+    boxShadow: theme.shadows.z3,
+  }),
 });
 
 export const formatPrometheusLabelFiltersToString = (

@@ -5,7 +5,6 @@ import React, { PropsWithChildren, useEffect } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationSearchToObject, locationService } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
-import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import store from 'app/core/store';
@@ -55,8 +54,7 @@ export function AppChrome({ children }: Props) {
 
   const { pathname, search } = locationService.getLocation();
   const url = pathname + search;
-  const shouldShowReturnToPrevious =
-    config.featureToggles.returnToPrevious && state.returnToPrevious && url !== state.returnToPrevious.href;
+  const shouldShowReturnToPrevious = state.returnToPrevious && url !== state.returnToPrevious.href;
 
   // Clear returnToPrevious when the page is manually navigated to
   useEffect(() => {
@@ -169,6 +167,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     pageContainer: css({
       label: 'page-container',
+      display: 'flex',
+      flexDirection: 'column',
       flexGrow: 1,
       minHeight: 0,
       minWidth: 0,

@@ -24,10 +24,11 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -392,12 +393,13 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	c.env.Cfg.AutoAssignOrg = true
 	c.env.Cfg.AutoAssignOrgId = int(orgId)
 
-	teamSvc, err := teamimpl.ProvideService(store, c.env.Cfg)
+	teamSvc, err := teamimpl.ProvideService(store, c.env.Cfg, tracing.InitializeTracerForTest())
 	require.NoError(c.t, err)
 
 	cache := localcache.ProvideService()
-	userSvc, err := userimpl.ProvideService(store,
-		orgService, c.env.Cfg, teamSvc, cache, quotaService,
+	userSvc, err := userimpl.ProvideService(
+		store, orgService, c.env.Cfg, teamSvc,
+		cache, tracing.InitializeTracerForTest(), quotaService,
 		supportbundlestest.NewFakeBundleService())
 	require.NoError(c.t, err)
 

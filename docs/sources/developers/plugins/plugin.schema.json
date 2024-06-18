@@ -555,6 +555,34 @@
           }
         }
       }
+    },
+    "extensions": {
+      "type": "array",
+      "description": "The list of extensions that the plugin registers under other extension points.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "extensionPointId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["link", "component"]
+          }
+        },
+        "required": ["extensionPointId", "title", "type"]
+      }
+    },
+    "apiVersion": {
+      "type": "string",
+      "description": "[internal only] The API version for the plugin. Used for Datasource API servers. This metadata is temporary and will be removed in the future.",
+      "pattern": "^v([\\d]+)(?:(alpha|beta)([\\d]+))?$"
     }
   }
 }

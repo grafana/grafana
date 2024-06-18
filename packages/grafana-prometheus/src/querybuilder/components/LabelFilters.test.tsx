@@ -59,7 +59,7 @@ describe('LabelFilters', () => {
     const { name, value } = getLabelSelects(1);
     await selectOptionInTest(name, 'baz');
     await selectOptionInTest(value, 'qux');
-    expect(onChange).toBeCalledWith([
+    expect(onChange).toHaveBeenCalledWith([
       { label: 'foo', op: '=', value: 'bar' },
       { label: 'baz', op: '=', value: 'qux' },
     ]);
@@ -68,7 +68,7 @@ describe('LabelFilters', () => {
   it('removes label', async () => {
     const { onChange } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
     await userEvent.click(screen.getByLabelText(/remove-foo/));
-    expect(onChange).toBeCalledWith([]);
+    expect(onChange).toHaveBeenCalledWith([]);
   });
 
   it('removes label but preserves a label with a value of empty string', async () => {
@@ -80,7 +80,7 @@ describe('LabelFilters', () => {
       ],
     });
     await userEvent.click(screen.getByLabelText(/remove-foo/));
-    expect(onChange).toBeCalledWith([
+    expect(onChange).toHaveBeenCalledWith([
       { label: 'lab', op: '=', value: 'bel' },
       { label: 'le', op: '=', value: '' },
     ]);

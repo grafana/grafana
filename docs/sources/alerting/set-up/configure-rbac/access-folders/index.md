@@ -52,11 +52,11 @@ By default, users with the basic roles Admin, Editor, and Viewer roles have quer
 
 If you used fixed roles or custom roles, you need to update data source permissions.
 
-Alternatively, an admin can assign the role **Datasource Reader**, which grants the user access to all data sources.
+Alternatively, an administrator can assign the role **Datasource Reader**, which grants the user access to all data sources.
 
 To manage data source permissions, complete the following steps.
 
 1. In the left-side menu, click **Connections** > **Data sources**.
 1. Click the data source you want to change the permissions for.
 1. Click the **Permissions** tab.
-1. In the **Permission column**, update the permission or remove it by clicking **X**.
+1. In the **Permission column**, update the permission, or remove it by clicking **X**.

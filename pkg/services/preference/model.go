@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 var ErrPrefNotFound = errors.New("preference not found")

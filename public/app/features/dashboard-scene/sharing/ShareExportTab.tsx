@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { Button, ClipboardButton, CodeEditor, Field, Modal, Switch, VerticalGroup } from '@grafana/ui';
+import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
@@ -114,7 +114,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
           <p className="share-modal-info-text">
             <Trans i18nKey="share-modal.export.info-text">Export this dashboard.</Trans>
           </p>
-          <VerticalGroup spacing="md">
+          <Stack gap={2} direction="column">
             <Field label={exportExternallyTranslation}>
               <Switch
                 id="share-externally-toggle"
@@ -122,7 +122,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
                 onChange={model.onShareExternallyChange}
               />
             </Field>
-          </VerticalGroup>
+          </Stack>
 
           <Modal.ButtonRow>
             <Button

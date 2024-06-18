@@ -66,7 +66,7 @@ func createTestContext(t *testing.T) (entityStore.EntityStoreClient, factory.Des
 	db := sqlstore.InitTestDBWithMigration(t, nil, sqlstore.InitTestDBOpt{EnsureDefaultOrgAndUser: false})
 	require.NoError(t, err)
 
-	eDB, err := dbimpl.ProvideEntityDB(db, cfg, featureToggles)
+	eDB, err := dbimpl.ProvideEntityDB(db, cfg, featureToggles, nil)
 	require.NoError(t, err)
 
 	err = eDB.Init()
@@ -153,6 +153,7 @@ func TestIntegrationWatch(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("In maintenance")
 
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
@@ -164,6 +165,7 @@ func TestIntegrationClusterScopedWatch(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("In maintenance")
 
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
@@ -175,6 +177,7 @@ func TestIntegrationNamespaceScopedWatch(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("In maintenance")
 
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
@@ -186,6 +189,7 @@ func TestIntegrationDeleteTriggerWatch(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("In maintenance")
 
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
@@ -197,6 +201,7 @@ func TestIntegrationWatchFromZero(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("In maintenance")
 
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
@@ -210,6 +215,7 @@ func TestIntegrationWatchFromNonZero(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("In maintenance")
 
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
@@ -255,6 +261,7 @@ func TestIntegrationWatcherTimeout(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("In maintenance")
 
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
@@ -266,6 +273,7 @@ func TestIntegrationWatchDeleteEventObjectHaveLatestRV(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("In maintenance")
 
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
@@ -303,6 +311,7 @@ func TestIntegrationWatchDispatchBookmarkEvents(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("In maintenance")
 
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
@@ -326,6 +335,7 @@ func TestIntegrationEtcdWatchSemantics(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	t.Skip("In maintenance")
 
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()

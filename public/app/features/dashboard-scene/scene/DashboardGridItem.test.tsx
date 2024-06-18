@@ -4,7 +4,7 @@ import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
 
-import { DashboardGridItem } from './DashboardGridItem';
+import { DashboardGridItem, DashboardGridItemState } from './DashboardGridItem';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -61,6 +61,18 @@ describe('PanelRepeaterGridItem', () => {
 
     // In vertical direction height itemCount * itemHeight
     expect(repeater.state.height).toBe(50);
+  });
+
+  it('Should skip repeat when variable values are the same ', async () => {
+    const { scene, repeater, variable } = buildPanelRepeaterScene({ variableQueryTime: 0, itemHeight: 10 });
+    const stateUpdates: DashboardGridItemState[] = [];
+    repeater.subscribeToState((state) => stateUpdates.push(state));
+
+    activateFullSceneTree(scene);
+
+    expect(stateUpdates.length).toBe(1);
+    repeater.variableDependency?.variableUpdateCompleted(variable, true);
+    expect(stateUpdates.length).toBe(1);
   });
 
   it('Should adjust itemHeight when container is resized, direction horizontal', async () => {

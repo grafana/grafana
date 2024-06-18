@@ -20,7 +20,7 @@ func NewFakeService() *FakeService {
 	return &FakeService{}
 }
 
-func (s *FakeService) CreateTeam(name, email string, orgID int64) (team.Team, error) {
+func (s *FakeService) CreateTeam(ctx context.Context, name, email string, orgID int64) (team.Team, error) {
 	return s.ExpectedTeam, s.ExpectedError
 }
 
@@ -44,7 +44,7 @@ func (s *FakeService) GetTeamsByUser(ctx context.Context, query *team.GetTeamsBy
 	return s.ExpectedTeamsByUser, s.ExpectedError
 }
 
-func (s *FakeService) IsTeamMember(orgId int64, teamId int64, userId int64) (bool, error) {
+func (s *FakeService) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
 	return s.ExpectedIsMember, s.ExpectedError
 }
 

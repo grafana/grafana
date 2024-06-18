@@ -70,7 +70,7 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 	case request.Path == "random-flakey-stream":
 		conf = testStreamConfig{
 			Interval: 100 * time.Millisecond,
-			Drop:     0.75, // keep 25%
+			Drop:     0.90, // keep 10%
 		}
 	case request.Path == "random-labeled-stream":
 		conf = testStreamConfig{

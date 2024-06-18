@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -26,13 +27,16 @@ type MimirClient interface {
 	GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error)
 	CreateGrafanaAlertmanagerConfig(ctx context.Context, configuration *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error
 	DeleteGrafanaAlertmanagerConfig(ctx context.Context) error
+
+	ShouldPromoteConfig() bool
 }
 
 type Mimir struct {
-	client   client.Requester
-	endpoint *url.URL
-	logger   log.Logger
-	metrics  *metrics.RemoteAlertmanager
+	client        client.Requester
+	endpoint      *url.URL
+	logger        log.Logger
+	metrics       *metrics.RemoteAlertmanager
+	promoteConfig bool
 }
 
 type Config struct {
@@ -40,7 +44,8 @@ type Config struct {
 	TenantID string
 	Password string
 
-	Logger log.Logger
+	Logger        log.Logger
+	PromoteConfig bool
 }
 
 // successResponse represents a successful response from the Mimir API.
@@ -64,7 +69,7 @@ func (e *errorResponse) Error() string {
 	return e.Error2
 }
 
-func New(cfg *Config, metrics *metrics.RemoteAlertmanager) (*Mimir, error) {
+func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Mimir, error) {
 	rt := &MimirAuthRoundTripper{
 		TenantID: cfg.TenantID,
 		Password: cfg.Password,
@@ -74,12 +79,15 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager) (*Mimir, error) {
 	c := &http.Client{
 		Transport: rt,
 	}
+	tc := client.NewTimedClient(c, metrics.RequestLatency)
+	trc := client.NewTracedClient(tc, tracer, "remote.alertmanager.client")
 
 	return &Mimir{
-		endpoint: cfg.URL,
-		client:   client.NewTimedClient(c, metrics.RequestLatency),
-		logger:   cfg.Logger,
-		metrics:  metrics,
+		endpoint:      cfg.URL,
+		client:        trc,
+		logger:        cfg.Logger,
+		metrics:       metrics,
+		promoteConfig: cfg.PromoteConfig,
 	}, nil
 }
 

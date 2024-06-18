@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { AdHocVariableFilter, GrafanaTheme2, VariableHide, urlUtil } from '@grafana/data';
+import { AdHocVariableFilter, GrafanaTheme2, PageLayoutType, VariableHide, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -25,16 +25,18 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
-import { MetricSelectScene } from './MetricSelectScene';
+import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
 import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
+import { getMetricName } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -50,10 +52,11 @@ export interface DataTrailState extends SceneObjectState {
 
   // Synced with url
   metric?: string;
+  metricSearch?: string;
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch'] });
 
   public constructor(state: Partial<DataTrailState>) {
     super({
@@ -93,15 +96,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       );
     }
 
-    this.enableUrlSync();
-
     // Save the current trail as a recent if the browser closes or reloads
     const saveRecentTrail = () => getTrailStore().setRecentTrail(this);
     window.addEventListener('unload', saveRecentTrail);
 
     return () => {
-      this.disableUrlSync();
-
       if (!this.state.embedded) {
         saveRecentTrail();
       }
@@ -109,21 +108,9 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     };
   }
 
-  private enableUrlSync() {
-    if (!this.state.embedded) {
-      getUrlSyncManager().initSync(this);
-    }
-  }
-
-  private disableUrlSync() {
-    if (!this.state.embedded) {
-      getUrlSyncManager().cleanUp(this);
-    }
-  }
-
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE],
-    onReferencedVariableValueChanged: (variable: SceneVariable) => {
+    onReferencedVariableValueChanged: async (variable: SceneVariable) => {
       const { name } = variable.state;
       if (name === VAR_DATASOURCE) {
         this.datasourceHelper.reset();
@@ -161,20 +148,22 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   public restoreFromHistoryStep(state: DataTrailState) {
-    this.disableUrlSync();
+    if (!state.topScene && !state.metric) {
+      // If the top scene for an  is missing, correct it.
+      state.topScene = new MetricSelectScene({});
+    }
 
     this.setState(
       sceneUtils.cloneSceneObjectState(state, {
         history: this.state.history,
         metric: !state.metric ? undefined : state.metric,
+        metricSearch: !state.metricSearch ? undefined : state.metricSearch,
       })
     );
 
     const urlState = getUrlSyncManager().getUrlState(this);
     const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
     locationService.replace(fullUrl);
-
-    this.enableUrlSync();
   }
 
   private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
@@ -197,7 +186,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   getUrlState() {
-    return { metric: this.state.metric };
+    const { metric, metricSearch } = this.state;
+    return { metric, metricSearch };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
@@ -207,33 +197,41 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       if (this.state.metric !== values.metric) {
         Object.assign(stateUpdate, this.getSceneUpdatesForNewMetricValue(values.metric));
       }
-    } else if (values.metric === null) {
+    } else if (values.metric == null) {
       stateUpdate.metric = undefined;
       stateUpdate.topScene = new MetricSelectScene({});
+    }
+
+    if (typeof values.metricSearch === 'string') {
+      stateUpdate.metricSearch = values.metricSearch;
+    } else if (values.metric == null) {
+      stateUpdate.metricSearch = undefined;
     }
 
     this.setState(stateUpdate);
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history, settings } = model.useState();
+    const { controls, topScene, history, settings, metric } = model.useState();
     const styles = useStyles2(getStyles);
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     return (
-      <div className={styles.container}>
-        {showHeaderForFirstTimeUsers && <MetricsHeader />}
-        <history.Component model={history} />
-        {controls && (
-          <div className={styles.controls}>
-            {controls.map((control) => (
-              <control.Component key={control.state.key} model={control} />
-            ))}
-            <settings.Component model={settings} />
-          </div>
-        )}
-        <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
-      </div>
+      <Page navId="explore/metrics" pageNav={{ text: getMetricName(metric) }} layout={PageLayoutType.Custom}>
+        <div className={styles.container}>
+          {showHeaderForFirstTimeUsers && <MetricsHeader />}
+          <history.Component model={history} />
+          {controls && (
+            <div className={styles.controls}>
+              {controls.map((control) => (
+                <control.Component key={control.state.key} model={control} />
+              ))}
+              <settings.Component model={settings} />
+            </div>
+          )}
+          <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+        </div>
+      </Page>
     );
   };
 }
@@ -277,6 +275,8 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       minHeight: '100%',
       flexDirection: 'column',
+      background: theme.isLight ? theme.colors.background.primary : theme.colors.background.canvas,
+      padding: theme.spacing(2, 3, 2, 3),
     }),
     body: css({
       flexGrow: 1,

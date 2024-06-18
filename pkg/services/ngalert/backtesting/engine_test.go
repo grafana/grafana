@@ -13,7 +13,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval/eval_mocks"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -160,9 +160,10 @@ func TestNewBacktestingEvaluator(t *testing.T) {
 func TestEvaluatorTest(t *testing.T) {
 	states := []eval.State{eval.Normal, eval.Alerting, eval.Pending}
 	generateState := func(prefix string) *state.State {
+		labels := models.GenerateAlertLabels(rand.Intn(5)+1, prefix+"-")
 		return &state.State{
-			CacheID: "state-" + prefix,
-			Labels:  models.GenerateAlertLabels(rand.Intn(5)+1, prefix+"-"),
+			CacheID: labels.Fingerprint(),
+			Labels:  labels,
 			State:   states[rand.Intn(len(states))],
 		}
 	}
@@ -189,7 +190,8 @@ func TestEvaluatorTest(t *testing.T) {
 			return manager
 		},
 	}
-	rule := models.AlertRuleGen(models.WithInterval(time.Second))()
+	gen := models.RuleGen
+	rule := gen.With(gen.WithInterval(time.Second)).GenerateRef()
 	ruleInterval := time.Duration(rule.IntervalSeconds) * time.Second
 
 	t.Run("should return data frame in specific format", func(t *testing.T) {
@@ -200,10 +202,11 @@ func TestEvaluatorTest(t *testing.T) {
 		var states []state.StateTransition
 
 		for _, s := range allStates {
+			labels := models.GenerateAlertLabels(rand.Intn(5)+1, s.String()+"-")
 			states = append(states, state.StateTransition{
 				State: &state.State{
-					CacheID:     "state-" + s.String(),
-					Labels:      models.GenerateAlertLabels(rand.Intn(5)+1, s.String()+"-"),
+					CacheID:     labels.Fingerprint(),
+					Labels:      labels,
 					State:       s,
 					StateReason: util.GenerateShortUID(),
 				},
@@ -225,7 +228,7 @@ func TestEvaluatorTest(t *testing.T) {
 			require.Equal(t, data.FieldTypeTime, timestampField.Type())
 		})
 
-		fieldByState := make(map[string]*data.Field, len(states))
+		fieldByState := make(map[data.Fingerprint]*data.Field, len(states))
 
 		t.Run("should contain a field per state", func(t *testing.T) {
 			for _, s := range states {
@@ -268,11 +271,12 @@ func TestEvaluatorTest(t *testing.T) {
 		from := time.Unix(0, 0)
 		to := from.Add(5 * ruleInterval)
 
+		labels := models.GenerateAlertLabels(rand.Intn(5)+1, "test-")
 		states := []state.StateTransition{
 			{
 				State: &state.State{
-					CacheID:     "state-1",
-					Labels:      models.GenerateAlertLabels(rand.Intn(5)+1, "test-"),
+					CacheID:     labels.Fingerprint(),
+					Labels:      labels,
 					State:       eval.Normal,
 					StateReason: util.GenerateShortUID(),
 				},

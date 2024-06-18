@@ -9,7 +9,7 @@ describe('value substring to matcher', () => {
       fields: [
         {
           name: 'temp',
-          values: ['24', null, '10', 'asd', '42', 'ASD'],
+          values: ['24', null, '10', 'asd', '42', 'ASD', [1, 2, 3]],
         },
       ],
     }),
@@ -49,6 +49,14 @@ describe('value substring to matcher', () => {
     const frame = data[0];
     const field = frame.fields[0];
     const valueIndex = 1;
+
+    expect(matcher(valueIndex, field, frame, data)).toBeFalsy();
+  });
+
+  it('should be a mismatch if the option is an array / non-string and should not cause errors', () => {
+    const frame = data[0];
+    const field = frame.fields[0];
+    const valueIndex = 6;
 
     expect(matcher(valueIndex, field, frame, data)).toBeFalsy();
   });

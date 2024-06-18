@@ -180,15 +180,12 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 
 			rulesStates, ok := orgStates[entry.RuleUID]
 			if !ok {
-				rulesStates = &ruleStates{states: make(map[string]*State)}
+				rulesStates = &ruleStates{states: make(map[data.Fingerprint]*State)}
 				orgStates[entry.RuleUID] = rulesStates
 			}
 
 			lbs := map[string]string(entry.Labels)
-			cacheID, err := entry.Labels.StringKey()
-			if err != nil {
-				st.log.Error("Error getting cacheId for entry", "error", err)
-			}
+			cacheID := entry.Labels.Fingerprint()
 			var resultFp data.Fingerprint
 			if entry.ResultFingerprint != "" {
 				fp, err := strconv.ParseUint(entry.ResultFingerprint, 16, 64)
@@ -214,11 +211,12 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 			statesCount++
 		}
 	}
+
 	st.cache.setAllStates(states)
 	st.log.Info("State cache has been initialized", "states", statesCount, "duration", time.Since(startTime))
 }
 
-func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
+func (st *Manager) Get(orgID int64, alertRuleUID string, stateId data.Fingerprint) *State {
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
@@ -358,14 +356,13 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
-	currentState.Results = append(currentState.Results, Evaluation{
+	currentState.LatestResult = &Evaluation{
 		EvaluationTime:  result.EvaluatedAt,
 		EvaluationState: result.State,
 		Values:          NewEvaluationValues(result.Values),
 		Condition:       alertRule.Condition,
-	})
+	}
 	currentState.LastEvaluationString = result.EvaluationString
-	currentState.TrimResults(alertRule)
 	oldState := currentState.State
 	oldReason := currentState.StateReason
 

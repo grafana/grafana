@@ -26,7 +26,8 @@ export interface AnnotationEvent {
   id?: string;
   annotation?: any;
   dashboardId?: number;
-  dashboardUID?: string;
+  /** May be null if it isn't set via the HTTP API */
+  dashboardUID?: string | null;
   panelId?: number;
   userId?: number;
   login?: string;

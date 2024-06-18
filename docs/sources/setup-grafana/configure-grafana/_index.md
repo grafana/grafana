@@ -705,7 +705,7 @@ Set the policy template that will be used when adding the `Content-Security-Poli
 
 ### angular_support_enabled
 
-This currently defaults to `true` but will default to `false` in a future release. When set to false the angular framework and support components will not be loaded. This means that
+This is set to false by default, meaning that the angular framework and support components will not be loaded. This means that
 all [plugins]({{< relref "../../developers/angular_deprecation/angular-plugins" >}}) and core features that depend on angular support will stop working.
 
 The core features that depend on angular are:
@@ -1175,6 +1175,28 @@ Azure cloud environment where Grafana is hosted:
 | US Government cloud                              | AzureUSGovernment      |
 | Microsoft German national cloud ("Black Forest") | AzureGermanCloud       |
 
+### clouds_config
+
+The JSON config defines a list of Azure clouds and their associated properties when hosted in custom Azure environments.
+
+For example:
+
+```ini
+clouds_config = `[
+		{
+			"name":"CustomCloud1",
+			"displayName":"Custom Cloud 1",
+			"aadAuthority":"https://login.cloud1.contoso.com/",
+			"properties":{
+				"azureDataExplorerSuffix": ".kusto.windows.cloud1.contoso.com",
+				"logAnalytics":            "https://api.loganalytics.cloud1.contoso.com",
+				"portal":                  "https://portal.azure.cloud1.contoso.com",
+				"prometheusResourceId":    "https://prometheus.monitor.azure.cloud1.contoso.com",
+				"resourceManager":         "https://management.azure.cloud1.contoso.com"
+			}
+		}]`
+```
+
 ### managed_identity_enabled
 
 Specifies whether Grafana hosted in Azure service with Managed Identity configured (e.g. Azure Virtual Machines instance). Disabled by default, needs to be explicitly enabled.
@@ -1612,6 +1634,12 @@ The interval between sending gossip messages. By lowering this value (more frequ
 across cluster more quickly at the expense of increased bandwidth usage. The default value is `200ms`.
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_reconnect_timeout
+
+Length of time to attempt to reconnect to a lost peer. When running Grafana in a Kubernetes cluster, set this duration to less than `15m`.
+
+The string is a possibly signed sequence of decimal numbers followed by a unit suffix (ms, s, m, h, d), such as `30s` or `1m`.
 
 ### ha_push_pull_interval
 

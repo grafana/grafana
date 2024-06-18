@@ -45,7 +45,7 @@ function getMessages(): Message[] {
     },
     {
       content: `The title of the dashboard is "${dashboard.title}"\n` + `${panelPrompt}`,
-      role: Role.system,
+      role: Role.user,
     },
   ];
 }

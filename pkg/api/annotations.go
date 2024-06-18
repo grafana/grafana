@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -141,7 +140,7 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "Failed to save annotation", err)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, err := c.SignedInUser.GetID().UserID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to save annotation", err)
 	}
@@ -228,7 +227,7 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, err := c.SignedInUser.GetID().UserID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to save Graphite annotation", err)
 	}
@@ -285,10 +284,9 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		}
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, err := c.SignedInUser.GetID().UserID()
 	if err != nil {
-		return response.Error(http.StatusInternalServerError,
-			"Failed to update annotation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update annotation", err)
 	}
 
 	item := annotations.Item{
@@ -348,10 +346,9 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		}
 	}
 
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	userID, err := c.SignedInUser.GetID().UserID()
 	if err != nil {
-		return response.Error(http.StatusInternalServerError,
-			"Failed to update annotation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update annotation", err)
 	}
 
 	existing := annotations.Item{

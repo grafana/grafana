@@ -11,7 +11,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -62,7 +61,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		queries, dsRef, err := legacydata.ToDataSourceQueries(dqr)
+		queries, dsRef, err := data.ToDataSourceQueries(dqr)
 		if err != nil {
 			responder.Error(err)
 			return

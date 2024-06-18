@@ -138,7 +138,13 @@ describe('GroupByField', () => {
 
   it('should allow selecting template variables', async () => {
     const { container } = render(
-      <GroupByField datasource={datasource} query={query} onChange={onChange} isTagsLoading={false} />
+      <GroupByField
+        datasource={datasource}
+        query={query}
+        onChange={onChange}
+        isTagsLoading={false}
+        addVariablesToOptions={true}
+      />
     );
 
     const tagSelect = container.querySelector(`input[aria-label="Select tag for filter 1"]`);

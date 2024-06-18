@@ -12,17 +12,16 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -58,6 +57,7 @@ func ProvideService(
 		tracer:                 tracer,
 		metrics:                newMetrics(registerer),
 		sessionService:         sessionService,
+		preLogoutHooks:         newQueue[authn.PreLogoutHookFn](),
 		postAuthHooks:          newQueue[authn.PostAuthHookFn](),
 		postLoginHooks:         newQueue[authn.PostLoginHookFn](),
 	}
@@ -84,6 +84,8 @@ type Service struct {
 	postAuthHooks *queue[authn.PostAuthHookFn]
 	// postLoginHooks are called after a login request is performed, both for failing and successful requests.
 	postLoginHooks *queue[authn.PostLoginHookFn]
+	// preLogoutHooks are called before a logout request is performed.
+	preLogoutHooks *queue[authn.PreLogoutHookFn]
 }
 
 func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -260,21 +262,33 @@ func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Reque
 	return redirectClient.RedirectURL(ctx, r)
 }
 
+func (s *Service) RegisterPreLogoutHook(hook authn.PreLogoutHookFn, priority uint) {
+	s.preLogoutHooks.insert(hook, priority)
+}
+
 func (s *Service) Logout(ctx context.Context, user authn.Requester, sessionToken *auth.UserToken) (*authn.Redirect, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.Logout")
 	defer span.End()
 
 	redirect := &authn.Redirect{URL: s.cfg.AppSubURL + "/login"}
+	if s.cfg.SignoutRedirectUrl != "" {
+		redirect.URL = s.cfg.SignoutRedirectUrl
+	}
 
-	namespace, id := user.GetNamespacedID()
-	if namespace != authn.NamespaceUser {
+	if !user.GetID().IsNamespace(authn.NamespaceUser) {
 		return redirect, nil
 	}
 
-	userID, err := identity.IntIdentifier(namespace, id)
+	id, err := user.GetID().ParseInt()
 	if err != nil {
-		s.log.FromContext(ctx).Debug("Invalid user id", "id", userID, "err", err)
+		s.log.FromContext(ctx).Debug("Invalid user id", "id", id, "err", err)
 		return redirect, nil
+	}
+
+	for _, hook := range s.preLogoutHooks.items {
+		if err := hook.v(ctx, user, sessionToken); err != nil {
+			s.log.Error("Failed to run pre logout hook. Skipping...", "error", err)
+		}
 	}
 
 	if authModule := user.GetAuthenticatedBy(); authModule != "" {
@@ -301,25 +315,20 @@ func (s *Service) Logout(ctx context.Context, user authn.Requester, sessionToken
 	}
 
 Default:
-	if err = s.sessionService.RevokeToken(ctx, sessionToken, false); err != nil {
+	if err = s.sessionService.RevokeToken(ctx, sessionToken, false); err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
 		return nil, err
 	}
 
 	return redirect, nil
 }
 
-func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*authn.Identity, error) {
+func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
 	r := &authn.Request{}
 	r.OrgID = orgID
 	// hack to not update last seen
 	r.SetMeta(authn.MetaKeyIsLogin, "true")
 
-	id, err := authn.ParseNamespaceID(namespaceID)
-	if err != nil {
-		return nil, err
-	}
-
-	identity, err := s.resolveIdenity(ctx, orgID, id)
+	identity, err := s.resolveIdenity(ctx, orgID, namespaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -378,7 +387,7 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID a
 			}}, nil
 	}
 
-	resolver, ok := s.idenityResolverClients[namespaceID.Namespace()]
+	resolver, ok := s.idenityResolverClients[namespaceID.Namespace().String()]
 	if !ok {
 		return nil, authn.ErrUnsupportedIdentity.Errorf("no resolver for : %s", namespaceID.Namespace())
 	}

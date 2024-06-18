@@ -16,7 +16,7 @@ title: Configure Telegram for Alerting
 weight: 300
 ---
 
-## Configure Telegram for Alerting
+# Configure Telegram for Alerting
 
 Use the Grafana Alerting - Telegram integration to send [Telegram](https://telegram.org/) notifications when your alerts are firing.
 

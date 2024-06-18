@@ -89,6 +89,7 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 				  "verbs": [
 					"create",
 					"delete",
+					"deletecollection",
 					"get",
 					"list",
 					"patch",

@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models/usertoken"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -72,6 +72,7 @@ type FetchPermissionsParams struct {
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
 type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
+type PreLogoutHookFn func(ctx context.Context, requester identity.Requester, sessionToken *usertoken.UserToken) error
 
 type Service interface {
 	// Authenticate authenticates a request
@@ -88,9 +89,10 @@ type Service interface {
 	RedirectURL(ctx context.Context, client string, r *Request) (*Redirect, error)
 	// Logout revokes session token and does additional clean up if client used to authenticate supports it
 	Logout(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*Redirect, error)
-
+	// RegisterPreLogoutHook registers a hook that is called before a logout request.
+	RegisterPreLogoutHook(hook PreLogoutHookFn, priority uint)
 	// ResolveIdentity resolves an identity from org and namespace id.
-	ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*Identity, error)
+	ResolveIdentity(ctx context.Context, orgID int64, namespaceID NamespaceID) (*Identity, error)
 
 	// RegisterClient will register a new authn.Client that can be used for authentication
 	RegisterClient(c Client)

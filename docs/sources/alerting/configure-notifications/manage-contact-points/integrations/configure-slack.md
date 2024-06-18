@@ -14,9 +14,15 @@ labels:
 menuTitle: Slack
 title: Configure Slack for Alerting
 weight: 300
+refs:
+  nested-policy:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#add-new-nested-policy
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/#add-new-nested-policy
 ---
 
-## Configure Slack for Alerting
+# Configure Slack for Alerting
 
 Use the Grafana Alerting - Slack integration to send Slack notifications when your alerts are firing.
 
@@ -84,10 +90,4 @@ To add the contact point and integration you created to your default notificatio
 1. Click **Update default policy**.
 
 **Note:**
-If you have more than one contact point, add a new notification policy rather than edit the default one, so you can route specific alerts to Slack. For more information, refer to [Notification policies][nested-policy].
-
-{{% docs/reference %}}
-[nested-policy]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy#add-new-nested-policy"
-
-[nested-policy]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy#add-new-nested-policy"
-{{% /docs/reference %}}
+If you have more than one contact point, add a new notification policy rather than edit the default one, so you can route specific alerts to Slack. For more information, refer to [Notification policies](ref:nested-policy).

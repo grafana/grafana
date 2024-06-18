@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -174,7 +175,7 @@ func TestApplyUserHeader(t *testing.T) {
 		require.NoError(t, err)
 		req.Header.Set("X-Grafana-User", "admin")
 
-		ApplyUserHeader(false, req, &user.SignedInUser{Login: "admin", NamespacedID: "user:1"})
+		ApplyUserHeader(false, req, &user.SignedInUser{Login: "admin", NamespacedID: identity.MustParseNamespaceID("user:1")})
 		require.NotContains(t, req.Header, "X-Grafana-User")
 	})
 
@@ -191,7 +192,7 @@ func TestApplyUserHeader(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/", nil)
 		require.NoError(t, err)
 
-		ApplyUserHeader(true, req, &user.SignedInUser{IsAnonymous: true, NamespacedID: "anonymous:1"})
+		ApplyUserHeader(true, req, &user.SignedInUser{IsAnonymous: true, NamespacedID: identity.MustParseNamespaceID("anonymous:0")})
 		require.NotContains(t, req.Header, "X-Grafana-User")
 	})
 
@@ -199,7 +200,7 @@ func TestApplyUserHeader(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/", nil)
 		require.NoError(t, err)
 
-		ApplyUserHeader(true, req, &user.SignedInUser{Login: "admin", NamespacedID: "user:1"})
+		ApplyUserHeader(true, req, &user.SignedInUser{Login: "admin", NamespacedID: identity.MustParseNamespaceID("user:1")})
 		require.Equal(t, "admin", req.Header.Get("X-Grafana-User"))
 	})
 }

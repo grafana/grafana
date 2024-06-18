@@ -28,6 +28,7 @@ type PluginSetting struct {
 	SignatureType   plugins.SignatureType   `json:"signatureType"`
 	SignatureOrg    string                  `json:"signatureOrg"`
 	AngularDetected bool                    `json:"angularDetected"`
+	APIVersion      string                  `json:"apiVersion"`
 }
 
 type PluginListItem struct {
@@ -49,6 +50,7 @@ type PluginListItem struct {
 	AccessControl   accesscontrol.Metadata  `json:"accessControl,omitempty"`
 	AngularDetected bool                    `json:"angularDetected"`
 	IAM             *pfs.IAM                `json:"iam,omitempty"`
+	APIVersion      string                  `json:"apiVersion"`
 }
 
 type PluginList []PluginListItem

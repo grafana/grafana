@@ -67,7 +67,7 @@ const AnnotationValue = ({ annotationKey, value, valueLink }: Props) => {
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  well: css`
-    word-break: break-word;
-  `,
+  well: css({
+    wordBreak: 'break-word',
+  }),
 });
