@@ -66,6 +66,7 @@ case "$1" in
         ;;
     "enterprise")
         echo "Enterprise"
+        env[SMTP_PLUGIN_ENABLED]=true
         CLEANUP="rm -rf ./e2e/extensions-suite"
         SETUP="cp -Lr ./e2e/extensions ./e2e/extensions-suite"
         enterpriseSuite=$(basename "${args[1]}")
@@ -104,6 +105,11 @@ case "$1" in
                 enterpriseSuite=$(basename "${args[2]}")
                 ;;
         esac
+      ;;
+   "enterprise-smtp")
+      env[SMTP_PLUGIN_ENABLED]=true
+      cypressConfig[specPattern]=./e2e/extensions/enterprise/smtp-suite/$testFilesForSingleSuite
+      cypressConfig[video]=${args[1]}
       ;;
 
     *)
