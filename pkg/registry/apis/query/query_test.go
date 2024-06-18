@@ -129,7 +129,7 @@ func TestCompareResults(t *testing.T) {
 				},
 			},
 		}
-		assert.True(t, b.compareResults("prometheus", &prometheusResp, &prometheusRespSame))
+		assert.True(t, b.compareResults("prometheus", &prometheusResp, &prometheusRespSame, &v0alpha1.QueryDataRequest{}))
 	})
 	t.Run("field names differ", func(t *testing.T) {
 		prometheusRespDiff := backend.QueryDataResponse{
@@ -155,6 +155,6 @@ func TestCompareResults(t *testing.T) {
 				},
 			},
 		}
-		assert.False(t, b.compareResults("prometheus", &prometheusResp, &prometheusRespDiff))
+		assert.False(t, b.compareResults("prometheus", &prometheusResp, &prometheusRespDiff, &v0alpha1.QueryDataRequest{}))
 	})
 }
