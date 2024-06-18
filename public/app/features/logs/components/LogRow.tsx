@@ -256,7 +256,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             </td>
           )}
           <td
-            className={hasError || isSampled ? styles.logsRowWithError : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`}
+            className={
+              hasError || isSampled
+                ? styles.logsRowWithError
+                : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`
+            }
           >
             {hasError && (
               <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">

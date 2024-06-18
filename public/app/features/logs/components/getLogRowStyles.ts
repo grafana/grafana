@@ -120,9 +120,11 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
     logIconError: css`
       color: ${theme.colors.warning.main};
     `,
-    logIconInfo: css`
-      color: ${theme.colors.info.main};
-    `,
+    logIconInfo: css({
+      color: theme.colors.info.main,
+      position: 'relative',
+      top: '-2px',
+    }),
     logsRowToggleDetails: css`
       label: logs-row-toggle-details__level;
       font-size: 9px;
