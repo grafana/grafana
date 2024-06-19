@@ -338,7 +338,8 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               </Stack>
             </Field>
 
-            {checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
+            {/* if we're dealing with a Grafana-managed group, check if the evaluation interval is valid / permitted */}
+            {isGrafanaManagedGroup && checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
               <EvaluationIntervalLimitExceeded />
             )}
 
