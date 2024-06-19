@@ -56,8 +56,14 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
       interpolatedFilters.push(
         ...filters.map((filter) => {
           if (filter.config.id === ValueMatcherID.between) {
-            const interpolatedFrom = ctx.interpolate(filter.config.options.from);
-            const interpolatedTo = ctx.interpolate(filter.config.options.to);
+            const interpolatedFrom =
+              typeof filter.config.options.from !== 'string'
+                ? filter.config.options.from
+                : ctx.interpolate(filter.config.options.from);
+            const interpolatedTo =
+              typeof filter.config.options.to !== 'string'
+                ? filter.config.options.to
+                : ctx.interpolate(filter.config.options.to);
 
             const newFilter = {
               ...filter,
@@ -76,7 +82,10 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
             // Due to colliding syntaxes, interpolating regex filters will cause issues.
             return filter;
           } else if (filter.config.options.value) {
-            const interpolatedValue = ctx.interpolate(filter.config.options.value);
+            const interpolatedValue =
+              typeof filter.config.options.value !== 'string'
+                ? filter.config.options.value
+                : ctx.interpolate(filter.config.options.value);
             const newFilter = {
               ...filter,
               config: { ...filter.config, options: { ...filter.config.options, value: interpolatedValue } },
