@@ -109,8 +109,8 @@ const lokiQueryResult = {
     },
   },
 };
-
-describe('Loki Query Editor', () => {
+// Skipping due to race conditions with same scenes test e2e/scenes/various-suite/loki-table-explore-to-dash.spec.ts
+describe.skip('Loki Query Editor', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
