@@ -96,7 +96,7 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event resource.WriteEvent
 	key := toEntityKey(event.Key)
 
 	// Delete does not need to create an entity first
-	if event.Operation == resource.ResourceOperation_DELETED {
+	if event.Event == resource.WatchEvent_DELETED {
 		rsp, err := b.entity.Delete(ctx, &entity.DeleteEntityRequest{
 			Key:             key,
 			PreviousVersion: event.PreviousRV,
@@ -125,8 +125,8 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event resource.WriteEvent
 		Size:   int64(len(event.Value)),
 	}
 
-	switch event.Operation {
-	case resource.ResourceOperation_CREATED:
+	switch event.Event {
+	case resource.WatchEvent_ADDED:
 		msg.Action = entity.Entity_CREATED
 		rsp, err := b.entity.Create(ctx, &entity.CreateEntityRequest{Entity: msg})
 		if err != nil {
@@ -134,7 +134,7 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event resource.WriteEvent
 		}
 		return rsp.Entity.ResourceVersion, err
 
-	case resource.ResourceOperation_UPDATED:
+	case resource.WatchEvent_MODIFIED:
 		msg.Action = entity.Entity_UPDATED
 		rsp, err := b.entity.Update(ctx, &entity.UpdateEntityRequest{
 			Entity:          msg,
@@ -145,11 +145,10 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event resource.WriteEvent
 		}
 		return rsp.Entity.ResourceVersion, err
 
-	case resource.ResourceOperation_UNKNOWN:
-	case resource.ResourceOperation_DELETED:
+	default:
 	}
 
-	return 0, fmt.Errorf("unsupported operation: %s", event.Operation.String())
+	return 0, fmt.Errorf("unsupported operation: %s", event.Event.String())
 }
 
 // Create new name for a given resource
@@ -186,7 +185,6 @@ func (b *entityBridge) Read(ctx context.Context, req *resource.ReadRequest) (*re
 	return &resource.ReadResponse{
 		ResourceVersion: v.ResourceVersion,
 		Value:           v.Body,
-		Message:         v.Message,
 	}, nil
 }
 
@@ -221,7 +219,6 @@ func (b *entityBridge) List(ctx context.Context, req *resource.ListRequest) (*re
 		rsp.Items = append(rsp.Items, &resource.ResourceWrapper{
 			ResourceVersion: item.ResourceVersion,
 			Value:           item.Body,
-			Operation:       resource.ResourceOperation(item.Action),
 		})
 	}
 	return rsp, nil

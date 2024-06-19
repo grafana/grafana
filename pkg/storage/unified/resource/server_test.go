@@ -69,11 +69,13 @@ func TestSimpleServer(t *testing.T) {
 			Key:   key,
 		})
 		require.NoError(t, err)
+		require.Nil(t, created.Status)
 		require.True(t, created.ResourceVersion > 0)
 
 		// The key does not include resource version
 		found, err := server.Read(ctx, &ReadRequest{Key: key})
 		require.NoError(t, err)
+		require.Nil(t, found.Status)
 		require.Equal(t, created.ResourceVersion, found.ResourceVersion)
 
 		// Now update the value
@@ -95,11 +97,13 @@ func TestSimpleServer(t *testing.T) {
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
+		require.Nil(t, updated.Status)
 		require.True(t, updated.ResourceVersion > created.ResourceVersion)
 
 		// We should still get the latest
 		found, err = server.Read(ctx, &ReadRequest{Key: key})
 		require.NoError(t, err)
+		require.Nil(t, found.Status)
 		require.Equal(t, updated.ResourceVersion, found.ResourceVersion)
 
 		all, err = server.List(ctx, &ListRequest{Options: &ListOptions{

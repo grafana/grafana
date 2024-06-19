@@ -20,12 +20,13 @@ const AnnoKeyUpdatedTimestamp = "grafana.app/updatedTimestamp"
 const AnnoKeyUpdatedBy = "grafana.app/updatedBy"
 const AnnoKeyFolder = "grafana.app/folder"
 const AnnoKeySlug = "grafana.app/slug"
+const AnnoKeyMessage = "grafana.app/message"
 
 // Identify where values came from
 
 const AnnoKeyOriginName = "grafana.app/originName"
 const AnnoKeyOriginPath = "grafana.app/originPath"
-const AnnoKeyOriginKey = "grafana.app/originKey"
+const AnnoKeyOriginHash = "grafana.app/originHash"
 const AnnoKeyOriginTimestamp = "grafana.app/originTimestamp"
 
 // ResourceOriginInfo is saved in annotations.  This is used to identify where the resource came from
@@ -37,8 +38,8 @@ type ResourceOriginInfo struct {
 	// The path within the named origin above (external_id in the existing dashboard provisioing)
 	Path string `json:"path,omitempty"`
 
-	// Verification/identification key (check_sum in existing dashboard provisioning)
-	Key string `json:"key,omitempty"`
+	// Verification/identification hash (check_sum in existing dashboard provisioning)
+	Hash string `json:"hash,omitempty"`
 
 	// Origin modification timestamp when the resource was saved
 	// This will be before the resource updated time
@@ -68,6 +69,8 @@ type GrafanaMetaAccessor interface {
 	SetUpdatedBy(user string)
 	GetFolder() string
 	SetFolder(uid string)
+	GetMessage() string
+	SetMessage(msg string)
 	SetAnnotation(key string, val string)
 
 	GetSlug() string
@@ -77,7 +80,7 @@ type GrafanaMetaAccessor interface {
 	SetOriginInfo(info *ResourceOriginInfo)
 	GetOriginName() string
 	GetOriginPath() string
-	GetOriginKey() string
+	GetOriginHash() string
 	GetOriginTimestamp() (*time.Time, error)
 
 	// Find a title in the object
@@ -200,6 +203,14 @@ func (m *grafanaMetaAccessor) SetFolder(uid string) {
 	m.SetAnnotation(AnnoKeyFolder, uid)
 }
 
+func (m *grafanaMetaAccessor) GetMessage() string {
+	return m.get(AnnoKeyMessage)
+}
+
+func (m *grafanaMetaAccessor) SetMessage(uid string) {
+	m.SetAnnotation(AnnoKeyMessage, uid)
+}
+
 func (m *grafanaMetaAccessor) GetSlug() string {
 	return m.get(AnnoKeySlug)
 }
@@ -219,15 +230,15 @@ func (m *grafanaMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
 
 	delete(anno, AnnoKeyOriginName)
 	delete(anno, AnnoKeyOriginPath)
-	delete(anno, AnnoKeyOriginKey)
+	delete(anno, AnnoKeyOriginHash)
 	delete(anno, AnnoKeyOriginTimestamp)
 	if info != nil && info.Name != "" {
 		anno[AnnoKeyOriginName] = info.Name
 		if info.Path != "" {
 			anno[AnnoKeyOriginPath] = info.Path
 		}
-		if info.Key != "" {
-			anno[AnnoKeyOriginKey] = info.Key
+		if info.Hash != "" {
+			anno[AnnoKeyOriginHash] = info.Hash
 		}
 		if info.Timestamp != nil {
 			anno[AnnoKeyOriginTimestamp] = info.Timestamp.UTC().Format(time.RFC3339)
@@ -245,7 +256,7 @@ func (m *grafanaMetaAccessor) GetOriginInfo() (*ResourceOriginInfo, error) {
 	return &ResourceOriginInfo{
 		Name:      v,
 		Path:      m.GetOriginPath(),
-		Key:       m.GetOriginKey(),
+		Hash:      m.GetOriginHash(),
 		Timestamp: t,
 	}, err
 }
@@ -258,8 +269,8 @@ func (m *grafanaMetaAccessor) GetOriginPath() string {
 	return m.get(AnnoKeyOriginPath)
 }
 
-func (m *grafanaMetaAccessor) GetOriginKey() string {
-	return m.get(AnnoKeyOriginKey)
+func (m *grafanaMetaAccessor) GetOriginHash() string {
+	return m.get(AnnoKeyOriginHash)
 }
 
 func (m *grafanaMetaAccessor) GetOriginTimestamp() (*time.Time, error) {

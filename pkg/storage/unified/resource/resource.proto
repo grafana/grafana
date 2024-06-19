@@ -14,22 +14,12 @@ message ResourceKey {
   string name = 4;
 }
 
-enum ResourceOperation {
-  UNKNOWN = 0;
-  CREATED = 1;
-  UPDATED = 2;
-  DELETED = 3;
-}
-
 message ResourceWrapper {
   // The resource version
   int64 resource_version = 1;
 
   // Full kubernetes json bytes (although the resource version may not be accurate)
   bytes value = 2;
-
-  // Operation
-  ResourceOperation operation = 3;
 
   // The resource has an attached blob
   bool has_blob = 4;
@@ -40,17 +30,11 @@ message ResourceMeta {
   // The resource version
   int64 resource_version = 1;
 
-  // The optional commit message
-  ResourceOperation operation = 2;
-
   // Size of the full resource body
   int32 size = 3;
 
   // Hash for the resource
   string hash = 4;
-
-  // The optional commit message
-  string message = 5;
 
   // The kubernetes metadata section (not the full resource)
   // https://github.com/kubernetes/kubernetes/blob/v1.30.2/staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/types.go#L1496
@@ -129,9 +113,6 @@ message CreateRequest {
   // The resource JSON.  
   bytes value = 2;
 
-  // Optional commit message
-  string message = 3;
-
   // Optionally include a large binary object
   LinkBlob blob = 4;
 }
@@ -156,10 +137,6 @@ message UpdateRequest {
 
   // The resource JSON.  
   bytes value = 3;
-
-  // Optional commit message
-  // +optional
-  string message = 4;
 
   // Optionally link a resource object
   LinkBlob blob = 5;
@@ -217,9 +194,6 @@ message ReadResponse {
 
   // The properties
   bytes value = 3;
-
-  // The the commit message
-  string message = 4;
 
   // A Signed URL that will let you fetch the blob
   // If this value starts with # you must read the bytes using the GetResourceBlob request
@@ -365,9 +339,6 @@ message WatchEvent {
 
   // Previous resource version (for update+delete)
   Resource previous = 4;
-
-  // The commit message that triggered this change
-  string message = 5;
 }
 
 message HistoryRequest {
