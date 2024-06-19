@@ -60,26 +60,25 @@ This following sections describe the areas of the Grafana panel editor.
 
 The header section lists the dashboard in which the panel appears and the following controls:
 
-- **Discard:** Discards changes you have made to the panel since you last saved the dashboard.
-- **Save:** Saves changes you made to the panel.
-- **Apply:** Applies changes you made and closes the panel editor, returning you to the dashboard. You'll have to save the dashboard to persist the applied changes.
+- **Back to dashboard** - Return to the dashboard from the panel editor view.
+- **Discard panel changes** - Discards changes you have made to the panel since you last saved the dashboard.
+- **Save dashboard** - Saves your changes to the dashboard.
 
 ## Visualization preview
 
 The visualization preview section contains the following options:
 
-- **Table view:** Convert any visualization to a table so you can see the data. Table views are helpful for troubleshooting. This view only contains the raw data. It doesn't include transformations you might have applied to the data or the formatting options available in the [Table](ref:table) visualization.
-- **Fill:** The visualization preview fills the available space. If you change the width of the side pane or height of the bottom pane the visualization changes to fill the available space.
-- **Actual:** The visualization preview has the exact size as the size on the dashboard. If not enough space is available, the visualization scales down preserving the aspect ratio.
-- **Time range controls:** **Default** is either the browser local timezone or the timezone selected at a higher level.
+- **Table view** - Convert any visualization to a table so you can see the data. Table views are helpful for troubleshooting. This view only contains the raw data. It doesn't include transformations you might have applied to the data or the formatting options available in the [Table](ref:table) visualization.
+- **Time range controls** - **Default** is either the browser local timezone or the timezone selected at a higher level.
+- **Refresh** - Query the data source.
 
 ## Data section
 
 The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
-- **Query tab:** Select your data source and enter queries here. For more information, refer to [Add a query](ref:add-a-query). When you create a new dashboard, you'll be prompted to select a data source before you get to the panel editor. You set or update the data source in existing dashboards using the drop-down in the **Query** tab.
-- **Transform tab:** Apply data transformations. For more information, refer to [Transform data](ref:transform-data).
-- **Alert tab:** Write alert rules. For more information, refer to [the overview of Grafana Alerting](ref:the-overview-of-grafana-alerting).
+- **Queries** tab - Select your data source and enter queries here. For more information, refer to [Add a query](ref:add-a-query). When you create a new dashboard, you'll be prompted to select a data source before you get to the panel editor. You set or update the data source in existing dashboards using the drop-down in the **Query** tab.
+- **Transformations** tab - Apply data transformations. For more information, refer to [Transform data](ref:transform-data).
+- **Alert** tab - Write alert rules. For more information, refer to [the overview of Grafana Alerting](ref:the-overview-of-grafana-alerting).
 
 ## Panel display options
 
