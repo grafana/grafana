@@ -9,7 +9,6 @@ import {
   tableNameWithSpecialCharacter,
 } from './mocks/mysql.mocks';
 
-
 test.beforeEach(async ({ context, selectors, explorePage }) => {
   await explorePage.datasource.set('gdev-mysql');
   await context.route(selectors.apis.DataSource.queryPattern, async (route, request) => {

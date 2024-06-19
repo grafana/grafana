@@ -55,7 +55,7 @@ export class MySqlDatasource extends SqlDatasource {
       return [];
     }
     const queryString = buildColumnQuery(query.table, query.dataset);
-    const frame = await this.runSql<string[]>(queryString, { refId: `fields-${uuidv4}` });
+    const frame = await this.runSql<string[]>(queryString, { refId: `fields-${uuidv4()}` });
     const fields = frame.map((f) => ({
       name: f[0],
       text: f[0],

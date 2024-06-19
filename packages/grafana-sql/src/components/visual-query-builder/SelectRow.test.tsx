@@ -22,6 +22,7 @@ jest.mock('@grafana/runtime', () => ({
 describe('SelectRow', () => {
   const query = Object.freeze<SQLQuery>({
     refId: 'A',
+    rawSql: '',
     sql: {
       columns: [
         {
