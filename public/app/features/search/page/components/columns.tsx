@@ -12,7 +12,7 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Checkbox, Icon, IconName, TagList, Text } from '@grafana/ui';
+import { Checkbox, Icon, IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
@@ -375,7 +375,9 @@ function makeDeletedRemainingColumn(
 
       return (
         <div {...p.cellProps} className={cx(styles.cell, styles.typeCell)}>
-          {formatted}
+          <Tooltip content={formatDate(deletedDate, { dateStyle: 'medium', timeStyle: 'short' })}>
+            <span>{formatted}</span>
+          </Tooltip>
         </div>
       );
     },
