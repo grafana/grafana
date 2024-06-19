@@ -112,6 +112,7 @@ export interface FeatureToggles {
   externalServiceAccounts?: boolean;
   panelMonitoring?: boolean;
   enableNativeHTTPHistogram?: boolean;
+  disableClassicHTTPHistogram?: boolean;
   formatString?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
@@ -195,4 +196,6 @@ export interface FeatureToggles {
   authZGRPCServer?: boolean;
   openSearchBackendFlowEnabled?: boolean;
   ssoSettingsLDAP?: boolean;
+  databaseReadReplica?: boolean;
+  zanzana?: boolean;
 }

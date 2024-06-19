@@ -152,7 +152,6 @@ func Test_GetMigrationStatusList(t *testing.T) {
 		list, err := s.GetMigrationStatusList(ctx, "qwerty")
 		require.NoError(t, err)
 		require.Equal(t, 2, len(list))
-		// TODO validate that this is ok
 	})
 
 	t.Run("returns no error if migration was not found, just empty list", func(t *testing.T) {
@@ -188,11 +187,11 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	// insert cloud migration run test data
 	_, err = testDB.GetSqlxSession().Exec(ctx, `
  			INSERT INTO
- 			    cloud_migration_snapshot (session_uid, uid, result, created, updated, finished)
+ 			    cloud_migration_snapshot (session_uid, uid, result, created, updated, finished, status)
  			VALUES
- 			    ('qwerty', 'poiuy', ?, '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000'),
-  				('qwerty', 'lkjhg', ?, '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000'),
-  				('zxcvbn', 'mnbvvc', ?, '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000');
+ 			    ('qwerty', 'poiuy', ?, '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
+  				('qwerty', 'lkjhg', ?, '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
+  				('zxcvbn', 'mnbvvc', ?, '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished");
  		`,
 		[]byte("ERROR"),
 		[]byte("OK"),
