@@ -13,20 +13,11 @@ import (
 )
 
 func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.MigrateDataRequest, error) {
-	var migrationDataSlice []cloudmigration.MigrateDataRequestItem
 	// Data sources
 	dataSources, err := s.getDataSources(ctx)
 	if err != nil {
 		s.log.Error("Failed to get datasources", "err", err)
 		return nil, err
-	}
-	for _, ds := range dataSources {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.DatasourceDataType,
-			RefID: ds.UID,
-			Name:  ds.Name,
-			Data:  ds,
-		})
 	}
 
 	// Dashboards
@@ -34,6 +25,27 @@ func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.Mig
 	if err != nil {
 		s.log.Error("Failed to get dashboards", "err", err)
 		return nil, err
+	}
+
+	// Folders
+	folders, err := s.getFolders(ctx)
+	if err != nil {
+		s.log.Error("Failed to get folders", "err", err)
+		return nil, err
+	}
+
+	migrationDataSlice := make(
+		[]cloudmigration.MigrateDataRequestItem, 0,
+		len(dataSources)+len(dashboards)+len(folders),
+	)
+
+	for _, ds := range dataSources {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.DatasourceDataType,
+			RefID: ds.UID,
+			Name:  ds.Name,
+			Data:  ds,
+		})
 	}
 
 	for _, dashboard := range dashboards {
@@ -46,13 +58,6 @@ func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.Mig
 		})
 	}
 
-	// Folders
-	folders, err := s.getFolders(ctx)
-	if err != nil {
-		s.log.Error("Failed to get folders", "err", err)
-		return nil, err
-	}
-
 	for _, f := range folders {
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.FolderDataType,
@@ -61,6 +66,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.Mig
 			Data:  f,
 		})
 	}
+
 	migrationData := &cloudmigration.MigrateDataRequest{
 		Items: migrationDataSlice,
 	}
@@ -114,9 +120,9 @@ func (s *Service) getFolders(ctx context.Context) ([]folder.Folder, error) {
 		return nil, err
 	}
 
-	var result []folder.Folder
-	for _, folder := range folders {
-		result = append(result, *folder)
+	result := make([]folder.Folder, len(folders))
+	for i, folder := range folders {
+		result[i] = *folder
 	}
 
 	return result, nil
@@ -128,10 +134,11 @@ func (s *Service) getDashboards(ctx context.Context) ([]dashboards.Dashboard, er
 		return nil, err
 	}
 
-	var result []dashboards.Dashboard
-	for _, dashboard := range dashs {
-		result = append(result, *dashboard)
+	result := make([]dashboards.Dashboard, len(dashs))
+	for i, dashboard := range dashs {
+		result[i] = *dashboard
 	}
+
 	return result, nil
 }
 
