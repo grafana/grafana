@@ -2062,3 +2062,59 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		}
 	})
 }
+
+func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+	// Create a user to make authenticated requests
+	createUser(t, env.SQLStore, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+
+	folderUID := util.GenerateShortUID()
+	client.CreateFolder(t, folderUID, "folder1")
+
+	t.Run("group renamed followed by delete for case-only changes should not delete both groups", func(t *testing.T) { // Regression test.
+		group := generateAlertRuleGroup(3, alertRuleGen())
+		groupName := group.Name
+
+		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		getGroup := client.GetRulesGroup(t, folderUID, group.Name)
+		require.Lenf(t, getGroup.Rules, 3, "expected 3 rules in group")
+		require.Equal(t, groupName, getGroup.Rules[0].GrafanaManagedAlert.RuleGroup)
+
+		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+		newGroup := strings.ToUpper(group.Name)
+		group.Name = newGroup
+		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+		getGroup = client.GetRulesGroup(t, folderUID, group.Name)
+		require.Lenf(t, getGroup.Rules, 3, "expected 3 rules in group")
+		require.Equal(t, newGroup, getGroup.Rules[0].GrafanaManagedAlert.RuleGroup)
+
+		status, body = client.DeleteRulesGroup(t, folderUID, groupName)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post noop rule group. Response: %s", body)
+
+		// Old group is gone.
+		getGroup = client.GetRulesGroup(t, folderUID, groupName)
+		require.Lenf(t, getGroup.Rules, 0, "expected no rules")
+
+		// New group still exists.
+		getGroup = client.GetRulesGroup(t, folderUID, newGroup)
+		require.Lenf(t, getGroup.Rules, 3, "expected 3 rules in group")
+		require.Equal(t, newGroup, getGroup.Rules[0].GrafanaManagedAlert.RuleGroup)
+	})
+}

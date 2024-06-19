@@ -1446,6 +1446,82 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
+		{
+			name: "Detects App Insights resource queries",
+			queryModel: []backend.DataQuery{{
+				JSON: []byte(fmt.Sprintf(`{
+						"queryType": "Azure Log Analytics",
+						"azureLogAnalytics": {
+							"resources":     ["/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Insights/components/AppInsightsTestDataWorkspace"],
+							"query":        "Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
+							"resultFormat": "%s",
+							"dashboardTime": false
+						}
+					}`, dataquery.ResultFormatTimeSeries)),
+				RefID:     "A",
+				TimeRange: timeRange,
+				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+			}},
+			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{{
+				RefID:        "A",
+				ResultFormat: dataquery.ResultFormatTimeSeries,
+				URL:          "v1/apps/AppInsightsTestDataWorkspace/query",
+				JSON: []byte(fmt.Sprintf(`{
+						"queryType": "Azure Log Analytics",
+						"azureLogAnalytics": {
+							"resources":     ["/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Insights/components/AppInsightsTestDataWorkspace"],
+							"query":        "Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
+							"resultFormat": "%s",
+							"dashboardTime": false
+						}
+					}`, dataquery.ResultFormatTimeSeries)),
+				Query:            "Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer",
+				Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Insights/components/AppInsightsTestDataWorkspace"},
+				TimeRange:        timeRange,
+				QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+				AppInsightsQuery: true,
+				DashboardTime:    false,
+			}},
+			Err: require.NoError,
+		},
+		{
+			name: "Detects App Insights resource queries (case insensitive)",
+			queryModel: []backend.DataQuery{{
+				JSON: []byte(fmt.Sprintf(`{
+						"queryType": "Azure Log Analytics",
+						"azureLogAnalytics": {
+							"resources":     ["/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/microsoft.insights/components/AppInsightsTestDataWorkspace"],
+							"query":        "Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
+							"resultFormat": "%s",
+							"dashboardTime": false
+						}
+					}`, dataquery.ResultFormatTimeSeries)),
+				RefID:     "A",
+				TimeRange: timeRange,
+				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+			}},
+			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{{
+				RefID:        "A",
+				ResultFormat: dataquery.ResultFormatTimeSeries,
+				URL:          "v1/apps/AppInsightsTestDataWorkspace/query",
+				JSON: []byte(fmt.Sprintf(`{
+						"queryType": "Azure Log Analytics",
+						"azureLogAnalytics": {
+							"resources":     ["/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/microsoft.insights/components/AppInsightsTestDataWorkspace"],
+							"query":        "Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
+							"resultFormat": "%s",
+							"dashboardTime": false
+						}
+					}`, dataquery.ResultFormatTimeSeries)),
+				Query:            "Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer",
+				Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/microsoft.insights/components/AppInsightsTestDataWorkspace"},
+				TimeRange:        timeRange,
+				QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+				AppInsightsQuery: true,
+				DashboardTime:    false,
+			}},
+			Err: require.NoError,
+		},
 	}
 
 	for _, tt := range tests {

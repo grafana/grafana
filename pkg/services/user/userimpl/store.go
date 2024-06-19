@@ -291,7 +291,6 @@ func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string, case
 }
 
 func (ss *sqlStore) loginConflict(ctx context.Context, sess *db.Session, login, email string, caseInsensitive bool) error {
-	users := make([]user.User, 0)
 	where := "email=? OR login=?"
 	if caseInsensitive {
 		where = "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
@@ -306,13 +305,11 @@ func (ss *sqlStore) loginConflict(ctx context.Context, sess *db.Session, login, 
 	if exists {
 		return user.ErrUserAlreadyExists
 	}
-	if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
-		email, login).Find(&users); err != nil {
-		return err
-	}
-
-	if len(users) > 1 {
-		return &user.ErrCaseInsensitiveLoginConflict{Users: users}
+	if caseInsensitive {
+		err := ss.userCaseInsensitiveLoginConflict(ctx, sess, login, email)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -97,7 +97,7 @@ func getApiURL(resourceOrWorkspace string, isAppInsightsQuery bool) string {
 
 func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureLogAnalyticsQuery, error) {
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
-	appInsightsRegExp, err := regexp.Compile("providers/Microsoft.Insights/components")
+	appInsightsRegExp, err := regexp.Compile("(?i)providers/microsoft.insights/components")
 	if err != nil {
 		return nil, fmt.Errorf("failed to compile Application Insights regex")
 	}

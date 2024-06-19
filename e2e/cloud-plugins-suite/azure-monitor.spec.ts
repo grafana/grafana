@@ -221,7 +221,7 @@ describe('Azure monitor datasource', () => {
           .click();
         e2eSelectors.queryEditor.argsQueryEditor.subscriptions.input().find('input').type('datasources{enter}');
         e2e.components.CodeEditor.container().type(
-          "Resources | where resourceGroup == 'cloud-plugins-e2e-test' | project name, resourceGroup"
+          "Resources | where resourceGroup == 'cloud-plugins-e2e-test-azmon' | project name, resourceGroup"
         );
         e2e.components.PanelEditor.toggleTableView().click({ force: true });
       },
@@ -280,7 +280,7 @@ describe('Azure monitor datasource', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resourceGroups')
       .parent()
       .find('input')
-      .type('cloud-plugins-e2e-test{downArrow}{enter}');
+      .type('cloud-plugins-e2e-test-azmon{downArrow}{enter}');
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces').parent().find('button').click();
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces')
       .parent()

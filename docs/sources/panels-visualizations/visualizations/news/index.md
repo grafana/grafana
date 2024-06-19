@@ -30,6 +30,8 @@ In version 8.5, we discontinued the "Use Proxy" option for Grafana news visualiz
 
 You can use the news visualization to provide regular news and updates to your users.
 
+{{< docs/play title="News Panel" url="https://play.grafana.org/d/cdodkwspaaa68b/" >}}
+
 ## Configure a news visualization
 
 Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), enter the URL of an RSS in the [URL](#url) field in the **News** section. This visualization type doesn't accept any other queries, and you shouldn't expect to be able to filter or query the RSS feed data in any way using this visualization.

@@ -630,18 +630,6 @@ type ListNamespaceAlertRulesQuery struct {
 	NamespaceUID string
 }
 
-// ListOrgRuleGroupsQuery is the query for listing unique rule groups
-// for an organization
-type ListOrgRuleGroupsQuery struct {
-	OrgID         int64
-	NamespaceUIDs []string
-
-	// DashboardUID and PanelID are optional and allow filtering rules
-	// to return just those for a dashboard and panel.
-	DashboardUID string
-	PanelID      int64
-}
-
 type UpdateRule struct {
 	Existing *AlertRule
 	New      AlertRule
