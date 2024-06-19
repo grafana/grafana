@@ -8,7 +8,7 @@ import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
 
 export type Value = string | number;
-type Option = {
+export type Option = {
   label: string;
   value: Value;
   description?: string;
