@@ -38,7 +38,7 @@ type authCfg struct {
 }
 
 func readAuthConfig(cfg *setting.Cfg) (*authCfg, error) {
-	section := cfg.SectionWithEnvOverrides("grpc_auth")
+	section := cfg.SectionWithEnvOverrides("grpc_authentication")
 
 	mode := mode(section.Key("mode").MustString(string(inProcessMode)))
 	if !mode.isValid() {
