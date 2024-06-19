@@ -59,7 +59,7 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 		// async approach to data migration using snapshots
 		cloudMigrationRoute.Post("/migration/:uid/snapshot", routing.Wrap(cma.CreateSnapshot))
 		cloudMigrationRoute.Get("/migration/:uid/snapshot/:snapshotUid", routing.Wrap(cma.GetSnapshot))
-		cloudMigrationRoute.Get("/migration/:uid/snapshot", routing.Wrap(cma.GetSnapshotList))
+		cloudMigrationRoute.Get("/migration/:uid/snapshots", routing.Wrap(cma.GetSnapshotList))
 		cloudMigrationRoute.Post("/migration/:uid/snapshot/:snapshotUid/upload", routing.Wrap(cma.UploadSnapshot))
 		cloudMigrationRoute.Post("/migration/:uid/snapshot/:snapshotUid/cancel", routing.Wrap(cma.CancelSnapshot))
 	}, middleware.ReqOrgAdmin)
@@ -446,7 +446,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	return response.JSON(http.StatusOK, respDto)
 }
 
-// swagger:route GET /cloudmigration/migration/{uid}/snapshot migrations getShapshotList
+// swagger:route GET /cloudmigration/migration/{uid}/snapshots migrations getShapshotList
 //
 // Get a list of snapshots for a session.
 //
