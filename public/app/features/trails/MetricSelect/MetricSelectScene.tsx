@@ -266,7 +266,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const sortedMetricNames =
       trail.state.metric !== undefined ? sortRelatedMetrics(metricNames, trail.state.metric) : metricNames;
     const metricsMap: Record<string, MetricPanel> = {};
-    const metricsLimit = 120;
 
     // Clear absent metrics from cache
     Object.keys(this.previewCache).forEach((metric) => {
@@ -277,10 +276,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     for (let index = 0; index < sortedMetricNames.length; index++) {
       const metricName = sortedMetricNames[index];
-
-      if (Object.keys(metricsMap).length > metricsLimit) {
-        break;
-      }
 
       const oldPanel = this.previewCache[metricName];
 
@@ -479,7 +474,6 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       flexDirection: 'column',
-      flexGrow: 1,
     }),
     headingWrapper: css({
       marginBottom: theme.spacing(0.5),
