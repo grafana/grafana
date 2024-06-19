@@ -298,6 +298,9 @@ This transformation has the following options:
   - **Numeric** - attempts to make the values numbers
   - **String** - will make the values strings
   - **Time** - attempts to parse the values as time
+    - The input will be parsed according to the [Moment.js parsing format](https://momentjs.com/docs/#/parsing/)
+    - It will parse the numeric input as a Unix epoch timestamp in milliseconds.
+      You must multiply your input by 1000 if it's in seconds.
     - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
   - **Boolean** - will make the values booleans
   - **Enum** - will make the values enums
