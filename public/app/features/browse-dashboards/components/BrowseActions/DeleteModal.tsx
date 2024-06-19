@@ -36,12 +36,16 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
       body={
         <>
           {config.featureToggles.dashboardRestore && (
-            <Text element="p">
-              <Trans i18nKey="browse-dashboards.action.delete-modal-restore-dashboards-text">
-                This action will delete selected folders permanently and selected dashboards will be kept in a soft
-                delete state for another 30 days. You can restore them during that period of time.
-              </Trans>
-            </Text>
+            <>
+              <Text element="p">
+                <Trans i18nKey="browse-dashboards.action.delete-modal-restore-dashboards-text">
+                  This action will delete the selected folders immediately but the selected dashboards will be marked
+                  for deletion in 30 days. You can restore the dashboards anytime before the 30 days expires. Folders
+                  cannot be restored.
+                </Trans>
+              </Text>
+              <Space v={2} />
+            </>
           )}
           <Text element="p">
             <Trans i18nKey="browse-dashboards.action.delete-modal-text">
