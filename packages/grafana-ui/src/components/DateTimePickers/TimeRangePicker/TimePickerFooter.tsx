@@ -91,7 +91,6 @@ export const TimePickerFooter = (props: Props) => {
           <div>
             <TabsBar>
               <Tab
-                key="tz"
                 label={t('time-picker.footer.time-zone-option', 'Time zone')}
                 active={editMode === 'tz'}
                 onChangeTab={() => {
@@ -100,7 +99,6 @@ export const TimePickerFooter = (props: Props) => {
                 aria-controls="timezone-settings-panel"
               />
               <Tab
-                key="fy"
                 label={t('time-picker.footer.fiscal-year-option', 'Fiscal year')}
                 active={editMode === 'fy'}
                 onChangeTab={() => {
