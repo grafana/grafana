@@ -21,8 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// FIXME(kalleep): Add support for postgres, mysql and sqlite data stores.
-// Postgres and mysql is already implmented by openFGA so we just need to hook up migartions for them.
+// FIXME(kalleep): Add sqlite data store.
 // There is no support for sqlite atm but we are working on adding it: https://github.com/openfga/openfga/pull/1615
 func NewStore(cfg *setting.Cfg) (storage.OpenFGADatastore, error) {
 	grafanaDBCfg, zanzanaDBCfg, err := parseConfig(cfg)
@@ -32,8 +31,6 @@ func NewStore(cfg *setting.Cfg) (storage.OpenFGADatastore, error) {
 
 	switch grafanaDBCfg.Type {
 	case migrator.SQLite:
-		// FIXME(kalleep): At the moment sqlite is not a supported data store.
-		// So we just return in memory store for now.
 		return memory.New(), nil
 	case migrator.MySQL:
 		// For mysql we need to pass parseTime parameter in connection string
