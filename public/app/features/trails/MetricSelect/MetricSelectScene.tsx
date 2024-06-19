@@ -26,10 +26,10 @@ import {
 } from '@grafana/scenes';
 import { InlineSwitch, Field, Alert, Icon, useStyles2, Tooltip, Input } from '@grafana/ui';
 
-import { Node, Parser } from '../../../../../../groop/ts/groop/parser';
 import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
+import { Node, Parser } from '../groop/parser';
 import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
 import { reportExploreMetrics } from '../interactions';
 import {
@@ -67,7 +67,6 @@ export interface MetricSelectSceneState extends SceneObjectState {
 }
 
 const ROW_PREVIEW_HEIGHT = '175px';
-// const ROW_CARD_HEIGHT = '64px';
 
 const MAX_METRIC_NAMES = 20000;
 
