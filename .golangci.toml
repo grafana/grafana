@@ -129,14 +129,20 @@ max-func-lines = 60
 
 [linters]
 disable-all = true
+# try to keep this list sorted, please
 enable = [
+  "asciicheck",
   "bodyclose",
   "depguard",
   "dogsled",
   "errcheck",
+  "errorlint",
+  "exhaustive",
+  "exportloopref",
   # "gochecknoinits",
   # "goconst",
   # "gocritic", # Temporarily disabled on 2022-09-09, running into weird bug "ruleguard: execution error: used Run() with an empty rule set; forgot to call Load() first?"
+  "gocyclo",
   "goimports",
   "goprintffuncname",
   "gosec",
@@ -145,19 +151,14 @@ enable = [
   "ineffassign",
   "misspell",
   "nakedret",
-  "exportloopref",
+  "prealloc",
+  "revive",
   "staticcheck",
   "stylecheck",
   "typecheck",
   "unconvert",
   "unused",
   "whitespace",
-  "gocyclo",
-  "exhaustive",
-  "typecheck",
-  "asciicheck",
-  "errorlint",
-  "revive",
 ]
 
 # Disabled linters (might want them later)

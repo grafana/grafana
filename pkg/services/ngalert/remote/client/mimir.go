@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -68,7 +69,7 @@ func (e *errorResponse) Error() string {
 	return e.Error2
 }
 
-func New(cfg *Config, metrics *metrics.RemoteAlertmanager) (*Mimir, error) {
+func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Mimir, error) {
 	rt := &MimirAuthRoundTripper{
 		TenantID: cfg.TenantID,
 		Password: cfg.Password,
@@ -78,10 +79,12 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager) (*Mimir, error) {
 	c := &http.Client{
 		Transport: rt,
 	}
+	tc := client.NewTimedClient(c, metrics.RequestLatency)
+	trc := client.NewTracedClient(tc, tracer, "remote.alertmanager.client")
 
 	return &Mimir{
 		endpoint:      cfg.URL,
-		client:        client.NewTimedClient(c, metrics.RequestLatency),
+		client:        trc,
 		logger:        cfg.Logger,
 		metrics:       metrics,
 		promoteConfig: cfg.PromoteConfig,
