@@ -27,7 +27,7 @@ export interface AnnotationTarget {
    * Only required/valid for the grafana datasource...
    * but code+tests is already depending on it so hard to change
    */
-  tags: string[];
+  tags: Array<string>;
   /**
    * Only required/valid for the grafana datasource...
    * but code+tests is already depending on it so hard to change
@@ -47,7 +47,7 @@ export interface AnnotationPanelFilter {
   /**
    * Panel IDs that should be included or excluded
    */
-  ids: number[];
+  ids: Array<number>;
 }
 
 export const defaultAnnotationPanelFilter: Partial<AnnotationPanelFilter> = {
@@ -65,7 +65,7 @@ export interface AnnotationContainer {
   /**
    * List of annotations
    */
-  list?: AnnotationQuery[];
+  list?: Array<AnnotationQuery>;
 }
 
 export const defaultAnnotationContainer: Partial<AnnotationContainer> = {
@@ -165,7 +165,7 @@ export interface VariableModel {
   /**
    * Options that can be selected for a variable.
    */
-  options?: VariableOption[];
+  options?: Array<VariableOption>;
   /**
    * Query used to fetch values for a variable
    */
@@ -211,11 +211,11 @@ export interface VariableOption {
   /**
    * Text to be displayed for the option
    */
-  text: (string | string[]);
+  text: (string | Array<string>);
   /**
    * Value of the option
    */
-  value: (string | string[]);
+  value: (string | Array<string>);
 }
 
 /**
@@ -302,7 +302,7 @@ export interface DashboardLink {
   /**
    * List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
    */
-  tags: string[];
+  tags: Array<string>;
   /**
    * If true, the link will be opened in a new tab
    */
@@ -480,7 +480,7 @@ export interface ThresholdsConfig {
   /**
    * Must be sorted by 'value', first value is always -Infinity
    */
-  steps: Threshold[];
+  steps: Array<Threshold>;
 }
 
 export const defaultThresholdsConfig: Partial<ThresholdsConfig> = {
@@ -662,11 +662,11 @@ export interface TimePickerConfig {
   /**
    * Interval options available in the refresh picker dropdown.
    */
-  refresh_intervals?: string[];
+  refresh_intervals?: Array<string>;
   /**
    * Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
    */
-  time_options?: string[];
+  time_options?: Array<string>;
 }
 
 export const defaultTimePickerConfig: Partial<TimePickerConfig> = {
@@ -734,7 +734,7 @@ export interface Panel {
   /**
    * Panel links.
    */
-  links?: DashboardLink[];
+  links?: Array<DashboardLink>;
   /**
    * The maximum number of data points that the panel queries are retrieving.
    */
@@ -796,7 +796,7 @@ export interface Panel {
    * When there are multiple transformations, Grafana applies them in the order they are listed.
    * Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
    */
-  transformations?: DataTransformerConfig[];
+  transformations?: Array<DataTransformerConfig>;
   /**
    * Whether to display the panel without a background.
    */
@@ -918,11 +918,11 @@ export interface FieldConfig {
   /**
    * The behavior when clicking on a result
    */
-  links?: unknown[];
+  links?: Array<unknown>;
   /**
    * Convert input values into a display string
    */
-  mappings?: ValueMapping[];
+  mappings?: Array<ValueMapping>;
   /**
    * The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
    */
@@ -938,7 +938,7 @@ export interface FieldConfig {
   /**
    * An explicit path to the field in the datasource.  When the frame meta includes a path,
    * This will default to `${frame.meta.path}/${field.name}
-   *
+   * 
    * When defined, this value can be used as an identifier within the datasource scope, and
    * may be used to update the results
    */
@@ -994,7 +994,7 @@ export interface RowPanel {
   /**
    * List of panels in the row
    */
-  panels: Panel[];
+  panels: Array<Panel>;
   /**
    * Name of template variable to repeat for.
    */
@@ -1051,7 +1051,7 @@ export interface Dashboard {
   /**
    * Links with references to other dashboards or external websites.
    */
-  links?: DashboardLink[];
+  links?: Array<DashboardLink>;
   /**
    * When set to true, the dashboard will redraw panels at an interval matching the pixel width.
    * This will keep data "moving left" regardless of the query refresh rate. This setting helps
@@ -1132,7 +1132,7 @@ export interface Dashboard {
   /**
    * Tags associated with dashboard.
    */
-  tags?: string[];
+  tags?: Array<string>;
   /**
    * Configured template variables
    */
@@ -1140,7 +1140,7 @@ export interface Dashboard {
     /**
      * List of configured template variables with their saved values along with some other metadata
      */
-    list?: VariableModel[];
+    list?: Array<VariableModel>;
   };
   /**
    * Time range for dashboard.
