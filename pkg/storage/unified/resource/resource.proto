@@ -60,21 +60,6 @@ message ResourceMeta {
   bool has_blob = 7;
 }
 
-// Basic blob metadata
-message BlobInfo {
-  // System identifier
-  string path = 1;
-
-  // Content Length
-  int64 size = 2;
-
-  // Content type header
-  string content_type = 3;
-
-  // Content hash used for an etag
-  string hash = 4;
-}
-
 // Status structure is copied from:
 // https://github.com/kubernetes/apimachinery/blob/v0.30.1/pkg/apis/meta/v1/generated.proto#L979
 message StatusResult {
@@ -97,25 +82,6 @@ message StatusResult {
   int32 code = 4;
 }
 
-message LinkBlob {
-  enum Action {
-    UNKNOWN = 0;
-    // Upload raw bytes
-    UPLOAD = 1;
-    // Keep the existing blob (valid for updates)
-    KEEP = 2;
-    // Do not keep the existing version (same as not sending LinkBlob, only valid for updates)
-    REMOVE = 3;
-    // TODO... support presigned uploads
-  }
-
-  // Content type header
-  string content_type = 1;
-
-  // Raw value to write
-  bytes value = 2;
-}
-
 // ----------------------------------
 // CRUD Objects
 // ----------------------------------
@@ -131,9 +97,6 @@ message CreateRequest {
 
   // Optional commit message
   string message = 3;
-
-  // Optionally include a large binary object
-  LinkBlob blob = 4;
 }
 
 message CreateResponse {
@@ -160,9 +123,6 @@ message UpdateRequest {
   // Optional commit message
   // +optional
   string message = 4;
-
-  // Optionally link a resource object
-  LinkBlob blob = 5;
 }
 
 message UpdateResponse {
@@ -203,9 +163,6 @@ message ReadRequest {
 
   // Optionally pick an explicit resource version
   int64 resource_version = 3;
-
-  // Include a signed blob_url (if exists)
-  bool include_blob_url = 2;
 }
 
 message ReadResponse {
@@ -220,28 +177,6 @@ message ReadResponse {
 
   // The the commit message
   string message = 4;
-
-  // A Signed URL that will let you fetch the blob
-  // If this value starts with # you must read the bytes using the GetResourceBlob request
-  string blob_url = 5;
-}
-
-message GetBlobRequest {
-  ResourceKey key = 1;
-
-  // The new resource version
-  int64 resource_version = 2;
-}
-
-message GetBlobResponse {
-  // Status code
-  StatusResult status = 1;
-
-  // Headers
-  BlobInfo info = 2;
-
-  // The raw object value
-  bytes value = 3;
 }
 
 // ----------------------------------
@@ -455,6 +390,85 @@ message HealthCheckResponse {
   ServingStatus status = 1;
 }
 
+
+//----------------------------
+// Blob Support
+//----------------------------
+
+message PutBlobRequest {
+  enum Method {
+    // Use the inline raw []byte
+    GRPC = 0;
+
+    // Get a signed URL and PUT the value 
+    HTTP = 1;
+  }
+
+  // The resource that will use this blob
+  // NOTE: the name may not yet exist, but group+resource are required
+  ResourceKey resource = 1;
+
+  // How to upload
+  Method method = 2;
+
+  // Content type header
+  string content_type = 3;
+
+  // Raw value to write
+  // Not valid when method == HTTP
+  bytes value = 4;
+}
+
+message PutBlobResponse {
+  // Status code
+  StatusResult status = 1;
+
+  // The blob uid.  This must be saved into the resource to support access
+  string uid = 2;
+
+  // The URL where this value can be PUT
+  string url = 3;
+
+  // Size of the uploaded blob
+  int64 size = 4;
+
+  // Content hash used for an etag
+  string hash = 5;
+
+  // Validated mimetype (from content_type)
+  string mime_type = 6;
+
+  // Validated charset (from content_type)
+  string charset = 7;
+}
+
+message GetBlobRequest {
+  ResourceKey resource = 1;
+
+  // The new resource version
+  int64 resource_version = 2;
+
+  // Do not return a pre-signed URL (when possible)
+  bool must_proxy_bytes = 3;
+}
+
+message GetBlobResponse {
+  // Status code sent on errors
+  StatusResult status = 1;
+
+  // (optional) When possible, the system will return a presigned URL
+  // that can be used to actually read the full blob+metadata
+  // When this is set, neither info nor value will be set
+  string url = 2;
+
+  // Content type 
+  string content_type = 3;
+
+  // The raw object value
+  bytes value = 4;
+}
+
+
 // This provides the CRUD+List+Watch support needed for a k8s apiserver
 // The semantics and behaviors of this service are constrained by kubernetes
 // This does not understand the resource schemas, only deals with json bytes 
@@ -466,6 +480,16 @@ service ResourceStore {
   rpc Delete(DeleteRequest) returns (DeleteResponse);
   rpc List(ListRequest) returns (ListResponse);
   rpc Watch(WatchRequest) returns (stream WatchEvent);
+
+  // Upload a blob that will be saved in a resource
+  rpc PutBlob(PutBlobRequest) returns (PutBlobResponse);
+
+  // Get blob contents.  When possible, this will return a signed URL
+  // For large payloads, signed URLs are required to avoid protobuf message size limits
+  rpc GetBlob(GetBlobRequest) returns (GetBlobResponse);
+
+  // NOTE: there is no direct access to delete blobs 
+  // >> cleanup will be managed via garbage collection or direct access to the underlying storage
 }
 
 // Clients can use this service directly
@@ -474,9 +498,6 @@ service ResourceSearch {
   // TODO: rpc Search(...) ... eventually a typed response
 
   rpc Read(ReadRequest) returns (ReadResponse); // Duplicated -- for client read only usage
-
-  // Get the raw blob bytes and metadata
-  rpc GetBlob(GetBlobRequest) returns (GetBlobResponse);
 
   // Show resource history (and trash)
   rpc History(HistoryRequest) returns (HistoryResponse);

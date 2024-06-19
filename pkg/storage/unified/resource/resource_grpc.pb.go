@@ -19,12 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	ResourceStore_Read_FullMethodName   = "/resource.ResourceStore/Read"
-	ResourceStore_Create_FullMethodName = "/resource.ResourceStore/Create"
-	ResourceStore_Update_FullMethodName = "/resource.ResourceStore/Update"
-	ResourceStore_Delete_FullMethodName = "/resource.ResourceStore/Delete"
-	ResourceStore_List_FullMethodName   = "/resource.ResourceStore/List"
-	ResourceStore_Watch_FullMethodName  = "/resource.ResourceStore/Watch"
+	ResourceStore_Read_FullMethodName    = "/resource.ResourceStore/Read"
+	ResourceStore_Create_FullMethodName  = "/resource.ResourceStore/Create"
+	ResourceStore_Update_FullMethodName  = "/resource.ResourceStore/Update"
+	ResourceStore_Delete_FullMethodName  = "/resource.ResourceStore/Delete"
+	ResourceStore_List_FullMethodName    = "/resource.ResourceStore/List"
+	ResourceStore_Watch_FullMethodName   = "/resource.ResourceStore/Watch"
+	ResourceStore_PutBlob_FullMethodName = "/resource.ResourceStore/PutBlob"
+	ResourceStore_GetBlob_FullMethodName = "/resource.ResourceStore/GetBlob"
 )
 
 // ResourceStoreClient is the client API for ResourceStore service.
@@ -42,6 +44,11 @@ type ResourceStoreClient interface {
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 	Watch(ctx context.Context, in *WatchRequest, opts ...grpc.CallOption) (ResourceStore_WatchClient, error)
+	// Upload a blob that will be saved in a resource
+	PutBlob(ctx context.Context, in *PutBlobRequest, opts ...grpc.CallOption) (*PutBlobResponse, error)
+	// Get blob contents.  When possible, this will return a signed URL
+	// For large payloads, signed URLs are required to avoid protobuf message size limits
+	GetBlob(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (*GetBlobResponse, error)
 }
 
 type resourceStoreClient struct {
@@ -135,6 +142,26 @@ func (x *resourceStoreWatchClient) Recv() (*WatchEvent, error) {
 	return m, nil
 }
 
+func (c *resourceStoreClient) PutBlob(ctx context.Context, in *PutBlobRequest, opts ...grpc.CallOption) (*PutBlobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PutBlobResponse)
+	err := c.cc.Invoke(ctx, ResourceStore_PutBlob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceStoreClient) GetBlob(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (*GetBlobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetBlobResponse)
+	err := c.cc.Invoke(ctx, ResourceStore_GetBlob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ResourceStoreServer is the server API for ResourceStore service.
 // All implementations should embed UnimplementedResourceStoreServer
 // for forward compatibility
@@ -150,6 +177,11 @@ type ResourceStoreServer interface {
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	List(context.Context, *ListRequest) (*ListResponse, error)
 	Watch(*WatchRequest, ResourceStore_WatchServer) error
+	// Upload a blob that will be saved in a resource
+	PutBlob(context.Context, *PutBlobRequest) (*PutBlobResponse, error)
+	// Get blob contents.  When possible, this will return a signed URL
+	// For large payloads, signed URLs are required to avoid protobuf message size limits
+	GetBlob(context.Context, *GetBlobRequest) (*GetBlobResponse, error)
 }
 
 // UnimplementedResourceStoreServer should be embedded to have forward compatible implementations.
@@ -173,6 +205,12 @@ func (UnimplementedResourceStoreServer) List(context.Context, *ListRequest) (*Li
 }
 func (UnimplementedResourceStoreServer) Watch(*WatchRequest, ResourceStore_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
+}
+func (UnimplementedResourceStoreServer) PutBlob(context.Context, *PutBlobRequest) (*PutBlobResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PutBlob not implemented")
+}
+func (UnimplementedResourceStoreServer) GetBlob(context.Context, *GetBlobRequest) (*GetBlobResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlob not implemented")
 }
 
 // UnsafeResourceStoreServer may be embedded to opt out of forward compatibility for this service.
@@ -297,6 +335,42 @@ func (x *resourceStoreWatchServer) Send(m *WatchEvent) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _ResourceStore_PutBlob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PutBlobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceStoreServer).PutBlob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceStore_PutBlob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceStoreServer).PutBlob(ctx, req.(*PutBlobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourceStore_GetBlob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBlobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceStoreServer).GetBlob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceStore_GetBlob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceStoreServer).GetBlob(ctx, req.(*GetBlobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ResourceStore_ServiceDesc is the grpc.ServiceDesc for ResourceStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -324,6 +398,14 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "List",
 			Handler:    _ResourceStore_List_Handler,
 		},
+		{
+			MethodName: "PutBlob",
+			Handler:    _ResourceStore_PutBlob_Handler,
+		},
+		{
+			MethodName: "GetBlob",
+			Handler:    _ResourceStore_GetBlob_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -337,7 +419,6 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	ResourceSearch_Read_FullMethodName    = "/resource.ResourceSearch/Read"
-	ResourceSearch_GetBlob_FullMethodName = "/resource.ResourceSearch/GetBlob"
 	ResourceSearch_History_FullMethodName = "/resource.ResourceSearch/History"
 	ResourceSearch_Origin_FullMethodName  = "/resource.ResourceSearch/Origin"
 )
@@ -350,8 +431,6 @@ const (
 // NOTE: This is read only, and no read afer write guarantees
 type ResourceSearchClient interface {
 	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error)
-	// Get the raw blob bytes and metadata
-	GetBlob(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (*GetBlobResponse, error)
 	// Show resource history (and trash)
 	History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error)
 	// Used for efficient provisioning
@@ -370,16 +449,6 @@ func (c *resourceSearchClient) Read(ctx context.Context, in *ReadRequest, opts .
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ReadResponse)
 	err := c.cc.Invoke(ctx, ResourceSearch_Read_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *resourceSearchClient) GetBlob(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (*GetBlobResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetBlobResponse)
-	err := c.cc.Invoke(ctx, ResourceSearch_GetBlob_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -414,8 +483,6 @@ func (c *resourceSearchClient) Origin(ctx context.Context, in *OriginRequest, op
 // NOTE: This is read only, and no read afer write guarantees
 type ResourceSearchServer interface {
 	Read(context.Context, *ReadRequest) (*ReadResponse, error)
-	// Get the raw blob bytes and metadata
-	GetBlob(context.Context, *GetBlobRequest) (*GetBlobResponse, error)
 	// Show resource history (and trash)
 	History(context.Context, *HistoryRequest) (*HistoryResponse, error)
 	// Used for efficient provisioning
@@ -428,9 +495,6 @@ type UnimplementedResourceSearchServer struct {
 
 func (UnimplementedResourceSearchServer) Read(context.Context, *ReadRequest) (*ReadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
-}
-func (UnimplementedResourceSearchServer) GetBlob(context.Context, *GetBlobRequest) (*GetBlobResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetBlob not implemented")
 }
 func (UnimplementedResourceSearchServer) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method History not implemented")
@@ -464,24 +528,6 @@ func _ResourceSearch_Read_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ResourceSearchServer).Read(ctx, req.(*ReadRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ResourceSearch_GetBlob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetBlobRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ResourceSearchServer).GetBlob(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ResourceSearch_GetBlob_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResourceSearchServer).GetBlob(ctx, req.(*GetBlobRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -532,10 +578,6 @@ var ResourceSearch_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Read",
 			Handler:    _ResourceSearch_Read_Handler,
-		},
-		{
-			MethodName: "GetBlob",
-			Handler:    _ResourceSearch_GetBlob_Handler,
 		},
 		{
 			MethodName: "History",

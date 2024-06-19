@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -20,6 +22,7 @@ const AnnoKeyUpdatedTimestamp = "grafana.app/updatedTimestamp"
 const AnnoKeyUpdatedBy = "grafana.app/updatedBy"
 const AnnoKeyFolder = "grafana.app/folder"
 const AnnoKeySlug = "grafana.app/slug"
+const AnnoKeyBlob = "grafana.app/blob"
 
 // Identify where values came from
 
@@ -48,6 +51,86 @@ type ResourceOriginInfo struct {
 	_ any `json:"-"`
 }
 
+type BlobInfo struct {
+	UID      string `json:"uid"`
+	Size     int64  `json:"size,omitempty"`
+	Hash     string `json:"hash,omitempty"`
+	MimeType string `json:"mime,omitempty"`
+	Charset  string `json:"charset,omitempty"` // content type = mime+charset
+}
+
+// Content type is mime + charset
+func (b *BlobInfo) SetContentType(v string) {
+	b.MimeType = v
+	b.Charset = ""
+	idx := strings.Index(v, ";")
+	if idx > 0 {
+		b.MimeType = v[:idx]
+		kv := strings.Split(strings.TrimSpace(v[idx+1:]), "=")
+		if len(kv) == 2 && kv[0] == "charset" {
+			b.Charset = kv[1]
+		}
+	}
+}
+
+// Content type is mime + charset
+func (b *BlobInfo) ContentType() string {
+	sb := bytes.NewBufferString(b.MimeType)
+	if b.Charset != "" {
+		sb.WriteString("; charset=")
+		sb.WriteString(b.Charset)
+	}
+	return sb.String()
+}
+
+func (b *BlobInfo) String() string {
+	sb := bytes.NewBufferString(b.UID)
+	if b.Size > 0 {
+		sb.WriteString(fmt.Sprintf("; size=%d", b.Size))
+	}
+	if b.Hash != "" {
+		sb.WriteString("; hash=")
+		sb.WriteString(b.Hash)
+	}
+	if b.MimeType != "" {
+		sb.WriteString("; mime=")
+		sb.WriteString(b.MimeType)
+	}
+	if b.Charset != "" {
+		sb.WriteString("; charset=")
+		sb.WriteString(b.Charset)
+	}
+	return sb.String()
+}
+
+func ParseBlobInfo(v string) *BlobInfo {
+	if v == "" {
+		return nil
+	}
+	info := &BlobInfo{}
+	for i, part := range strings.Split(v, ";") {
+		if i == 0 {
+			info.UID = part
+			continue
+		}
+		kv := strings.Split(strings.TrimSpace(part), "=")
+		if len(kv) == 2 {
+			val := kv[1]
+			switch kv[0] {
+			case "size":
+				info.Size, _ = strconv.ParseInt(val, 10, 64)
+			case "hash":
+				info.Hash = val
+			case "mime":
+				info.MimeType = val
+			case "charset":
+				info.Charset = val
+			}
+		}
+	}
+	return info
+}
+
 // Accessor functions for k8s objects
 type GrafanaMetaAccessor interface {
 	metav1.Object
@@ -72,6 +155,9 @@ type GrafanaMetaAccessor interface {
 
 	GetSlug() string
 	SetSlug(v string)
+
+	SetBlob(v *BlobInfo)
+	GetBlob() *BlobInfo
 
 	GetOriginInfo() (*ResourceOriginInfo, error)
 	SetOriginInfo(info *ResourceOriginInfo)
@@ -190,6 +276,17 @@ func (m *grafanaMetaAccessor) GetUpdatedBy() string {
 
 func (m *grafanaMetaAccessor) SetUpdatedBy(user string) {
 	m.SetAnnotation(AnnoKeyUpdatedBy, user)
+}
+
+func (m *grafanaMetaAccessor) GetBlob() *BlobInfo {
+	return ParseBlobInfo(m.get(AnnoKeyBlob))
+}
+
+func (m *grafanaMetaAccessor) SetBlob(info *BlobInfo) {
+	if info == nil {
+		m.SetAnnotation(AnnoKeyBlob, "") // delete
+	}
+	m.SetAnnotation(AnnoKeyBlob, info.String())
 }
 
 func (m *grafanaMetaAccessor) GetFolder() string {

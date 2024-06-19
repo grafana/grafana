@@ -7,7 +7,7 @@ import (
 )
 
 func InitResourceTables(mg *migrator.Migrator) string {
-	marker := "Initialize resource tables (v0)" // changing this key wipe+rewrite everything
+	marker := "Initialize resource tables (vX)" // changing this key wipe+rewrite everything
 	mg.AddMigration(marker, &migrator.RawSQLMigration{})
 
 	tables := []migrator.Table{}
@@ -65,7 +65,7 @@ func InitResourceTables(mg *migrator.Migrator) string {
 			{Name: "hash", Type: migrator.DB_NVarchar, Length: 32, Nullable: false},
 
 			// Path to linked blob (or null).  This blob may be saved in SQL, or in an object store
-			{Name: "blob_path_hash", Type: migrator.DB_NVarchar, Length: 60, Nullable: true},
+			{Name: "blob_uid", Type: migrator.DB_NVarchar, Length: 60, Nullable: true},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"rv"}, Type: migrator.UniqueIndex},
@@ -74,7 +74,7 @@ func InitResourceTables(mg *migrator.Migrator) string {
 			{Cols: []string{"operation"}, Type: migrator.IndexType},
 			{Cols: []string{"namespace"}, Type: migrator.IndexType},
 			{Cols: []string{"group", "resource", "name"}, Type: migrator.IndexType},
-			{Cols: []string{"blob_path_hash"}, Type: migrator.IndexType},
+			{Cols: []string{"blob_uid"}, Type: migrator.IndexType},
 		},
 	})
 
@@ -111,19 +111,28 @@ func InitResourceTables(mg *migrator.Migrator) string {
 		},
 	})
 
-	// This table is optional -- values can be saved in blob storage
+	// This table is optional, blobs can also be saved to object store or disk
+	// This is an append only store
 	tables = append(tables, migrator.Table{
 		Name: "resource_blob", // even things that failed?
 		Columns: []*migrator.Column{
-			{Name: "path_hash", Type: migrator.DB_NVarchar, Length: 60, Nullable: false, IsPrimaryKey: true},
-			{Name: "path", Type: migrator.DB_Text, Nullable: false},
-			{Name: "body", Type: migrator.DB_Blob, Nullable: true},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 60, Nullable: false, IsPrimaryKey: true},
+			{Name: "value", Type: migrator.DB_Blob, Nullable: true},
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
 			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "content_type", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+
+			// These is used for auditing and cleanup (could be path?)
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 63, Nullable: true},
+			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"path_hash"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"uid"}, Type: migrator.UniqueIndex},
+
+			// Used for auditing
+			{Cols: []string{"namespace", "group", "resource", "name"}, Type: migrator.IndexType},
 		},
 	})
 

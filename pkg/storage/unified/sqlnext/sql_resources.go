@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -166,13 +167,25 @@ func (s *sqlResourceStore) List(ctx context.Context, req *resource.ListRequest) 
 	return nil, ErrNotImplementedYet
 }
 
-// Get the raw blob bytes and metadata
-func (s *sqlResourceStore) GetBlob(ctx context.Context, req *resource.GetBlobRequest) (*resource.GetBlobResponse, error) {
-	_, span := s.tracer.Start(ctx, "storage_server.List")
-	defer span.End()
+func (s *sqlResourceStore) PutBlob(ctx context.Context, req *resource.PutBlobRequest) (*resource.PutBlobResponse, error) {
+	if req.Method == resource.PutBlobRequest_HTTP {
+		return &resource.PutBlobResponse{
+			Status: &resource.StatusResult{
+				Status:  "Failure",
+				Message: "http upload not supported",
+				Code:    http.StatusNotImplemented,
+			},
+		}, nil
+	}
 
-	fmt.Printf("TODO, GET BLOB: %+v", req.Key)
+	uid := util.GenerateShortUID()
 
+	fmt.Printf("TODO, UPLOAD: %s // %+v", uid, req)
+
+	return nil, ErrNotImplementedYet
+}
+
+func (s *sqlResourceStore) GetBlob(ctx context.Context, uid string, mustProxy bool) (*resource.GetBlobResponse, error) {
 	return nil, ErrNotImplementedYet
 }
 

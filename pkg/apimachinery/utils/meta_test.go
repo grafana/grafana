@@ -172,6 +172,14 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, int64(12345), rv)
 	})
 
+	t.Run("blob info", func(t *testing.T) {
+		info := &utils.BlobInfo{UID: "AAA", Size: 123, Hash: "xyz", MimeType: "application/json", Charset: "utf-8"}
+		anno := info.String()
+		require.Equal(t, "AAA; size=123; hash=xyz; mime=application/json; charset=utf-8", anno)
+		copy := utils.ParseBlobInfo(anno)
+		require.Equal(t, info, copy)
+	})
+
 	t.Run("find titles", func(t *testing.T) {
 		// with a k8s object that has Spec.Title
 		obj := &TestResource{
