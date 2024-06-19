@@ -11,10 +11,11 @@ import {
   DataTopic,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardGridItem } from '../../scene/DashboardGridItem';
+import { DashboardScene } from '../../scene/DashboardScene';
 import { LibraryVizPanel } from '../../scene/LibraryVizPanel';
 import { gridItemToPanel, vizPanelToPanel } from '../../serialization/transformSceneToSaveModel';
 import { getQueryRunnerFor } from '../../utils/utils';
@@ -62,15 +63,31 @@ export function getGithubMarkdown(panel: VizPanel, snapshot: string): string {
 }
 
 export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRange: TimeRange) {
-  let saveModel;
+  let saveModel: ReturnType<typeof gridItemToPanel> = { type: '' };
   const isLibraryPanel = panel.parent instanceof LibraryVizPanel;
   const gridItem = (isLibraryPanel ? panel.parent.parent : panel.parent) as DashboardGridItem;
+  const scene = panel.getRoot() as DashboardScene;
 
   if (isLibraryPanel) {
     saveModel = {
       ...gridItemToPanel(gridItem),
       ...vizPanelToPanel(panel),
     };
+  } else if (scene.state.editPanel) {
+    // If panel edit mode is open when the user chooses the "get help" panel menu option
+    // we want the debug dashboard to include the panel with any changes that were made while
+    // in panel edit mode.
+    const gridItems = (scene.state.body as SceneGridLayout).state.children as DashboardGridItem[];
+    const sourcePanel = scene.state.editPanel.state.vizManager.state.sourcePanel.resolve();
+    for (const item of gridItems) {
+      const vizPanel = item.state.body instanceof LibraryVizPanel ? item.state.body.state.panel! : item.state.body;
+      if (vizPanel === sourcePanel) {
+        const gridItemClone = item.clone();
+        scene.state.editPanel!.state.vizManager.commitChangesTo(vizPanel);
+        saveModel = gridItemToPanel(gridItemClone);
+        break;
+      }
+    }
   } else {
     saveModel = gridItemToPanel(gridItem);
   }
