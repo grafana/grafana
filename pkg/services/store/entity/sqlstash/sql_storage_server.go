@@ -19,6 +19,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	foldersapi "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -299,8 +300,13 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 	defer span.End()
 	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "read"}))
 
-	user := appcontext.MustUser(ctx)
-	stackID, err := StackID(s.cfg.StackID, user.OrgID)
+	// TODO (gamab) rework all of this
+	id, err := identity.GetRequester(ctx)
+	if err != nil {
+		ctxLogger.Error("error getting user from ctx", "error", err)
+		return nil, err
+	}
+	stackID, err := StackID(s.cfg.StackID, id.GetOrgID())
 	if err != nil {
 		ctxLogger.Error("error parsing stack id", "error", err)
 		return nil, err
@@ -316,16 +322,18 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 		ctxLogger.Error("read error", "error", err)
 	}
 
+	// TODO (gamab) rework all of this
+	ns, nid := id.GetNamespacedID()
 	// Check access
 	if hasAccess, err := s.authorizer.HasAccess(ctx, &authz.HasAccessRequest{
 		StackID: stackID,
-		Subject: user.NamespacedID.String(),
+		Subject: ns.String() + ":" + nid,
 		Method:  authz.MethodRead,
 		Object:  authzlib.Resource{Kind: res.Resource, ID: res.Key},
 		Parent:  authzlib.Resource{Kind: foldersapi.RESOURCE, ID: res.Folder}, // Assuming parents are always folders
 	}); err != nil || !hasAccess {
 		ctxLogger.Error("access denied",
-			"user", user.NamespacedID.String(),
+			"user", ns.String()+":"+nid,
 			"method", authz.MethodRead,
 			"key", res.Key,
 			"error", err)
@@ -618,15 +626,15 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		return nil, err
 	}
 
-	user, err := appcontext.User(ctx)
-	if err != nil {
-		ctxLogger.Error("error getting user from ctx", "error", err)
-		return nil, err
-	}
-	if user == nil {
-		ctxLogger.Error("could not find user in context", "error", ErrUserNotFoundInContext)
-		return nil, ErrUserNotFoundInContext
-	}
+	// user, err := appcontext.User(ctx)
+	// if err != nil {
+	// 	ctxLogger.Error("error getting user from ctx", "error", err)
+	// 	return nil, err
+	// }
+	// if user == nil {
+	// 	ctxLogger.Error("could not find user in context", "error", ErrUserNotFoundInContext)
+	// 	return nil, ErrUserNotFoundInContext
+	// }
 
 	fields := s.getReadFields(r)
 
@@ -713,7 +721,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	rvMaxRow := &RVMaxRow{}
 	query, args := rvMaxQuery.ToQuery()
 
-	err = s.sess.Get(ctx, rvMaxRow, query, args...)
+	err := s.sess.Get(ctx, rvMaxRow, query, args...)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			ctxLogger.Error("error running rvMaxQuery", "error", err)

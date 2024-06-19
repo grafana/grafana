@@ -41,6 +41,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
@@ -116,6 +117,7 @@ type service struct {
 
 	authorizer  *authorizer.GrafanaAuthorizer
 	authzClient authz.Client
+	keyService  signingkeys.Service
 }
 
 func ProvideService(
@@ -126,9 +128,11 @@ func ProvideService(
 	tracing *tracing.TracingService,
 	db db.DB,
 	authzClient authz.Client,
+	keyService signingkeys.Service,
 ) (*service, error) {
 	s := &service{
 		authzClient: authzClient,
+		keyService:  keyService,
 		cfg:         cfg,
 		features:    features,
 		rr:          rr,
@@ -272,7 +276,10 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-		store := entity.NewEntityStoreClientLocal(s.cfg, storeServer)
+		store, err := entity.NewEntityStoreClientLocal(s.cfg, storeServer, s.keyService)
+		if err != nil {
+			return err
+		}
 
 		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 

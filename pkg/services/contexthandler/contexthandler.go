@@ -112,17 +112,21 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 		}
 
-		identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
+		id, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 		if err != nil {
 			// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 			reqContext.LookupTokenErr = err
 		} else {
-			reqContext.SignedInUser = identity.SignedInUser()
-			reqContext.UserToken = identity.SessionToken
+			reqContext.SignedInUser = id.SignedInUser()
+			reqContext.UserToken = id.SessionToken
 			reqContext.IsSignedIn = !reqContext.SignedInUser.IsAnonymous
 			reqContext.AllowAnonymous = reqContext.SignedInUser.IsAnonymous
-			reqContext.IsRenderCall = identity.IsAuthenticatedBy(login.RenderModule)
+			reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
 		}
+
+		// Hack: register a requester in the context for the grpc authn middleware
+		ctx = identity.WithRequester(ctx, id)
+		*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
 		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
 		span.AddEvent("user", trace.WithAttributes(

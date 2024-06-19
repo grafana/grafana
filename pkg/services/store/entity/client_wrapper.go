@@ -6,14 +6,15 @@ import (
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 	grpcUtils "github.com/grafana/grafana/pkg/services/store/entity/grpc"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer) (EntityStoreClient, error) {
+func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer, keyService signingkeys.Service) (EntityStoreClient, error) {
 	channel := &inprocgrpc.Channel{}
 
-	auth, err := grpcUtils.ProvideAuthenticator(cfg)
+	auth, err := grpcUtils.ProvideInProcessAuthenticator(cfg, keyService)
 	if err != nil {
 		return nil, err
 	}

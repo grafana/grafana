@@ -9,18 +9,27 @@ import (
 
 	"github.com/go-jose/go-jose/v3"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	authnlib "github.com/grafana/authlib/authn"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
-	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+const GRPCJWTModule = "grpcjwt"
+
+var (
+	ErrorMissingIDToken     = status.Error(codes.Unauthenticated, "unauthenticated: missing id token")
+	ErrorMissingAccessToken = status.Error(codes.Unauthenticated, "unauthenticated: missing access token")
+	ErrorInvalidIDToken     = status.Error(codes.PermissionDenied, "unauthorized: invalid id token")
+	ErrorInvalidAccessToken = status.Error(codes.PermissionDenied, "unauthorized: invalid access token")
 )
 
 type Authenticator struct {
@@ -99,73 +108,118 @@ func provideAuthenticator(cfg *setting.Cfg, keysService signingkeys.Service) (*A
 }
 
 func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
-	ctxLogger := f.logger.FromContext(ctx)
-
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, fmt.Errorf("no metadata found")
+		return ctx, fmt.Errorf("no metadata found")
 	}
-	// In proc mode:
-	//     Service Auth: no access token => user with all permissions?
-	//     User Request: id token => user from token
-	// If remote mode:
-	//     Service Auth: access token => user from token
-	//     User Request: access token + id token => user impersonation
-
-	// Problem I foresee:
-	//     inproc mode: is creating an admin user sufficient?
-	//     remote mode: service auth needs the access control service to get the permissions
-	//     remote mode: user request needs to downscope the user permissions
-	// Maybe this is not actually something I have to do here, given the authorization service is the one actually interested in the user's permissions
-	// Do I need to pass in the calling service token to the authorization server for it to restrict the permissions as it should?
-
-	// Check if I can reuse authn ExtendedJWT Authenticate method
-
-	// TODO remote mode
 
 	// TODO (gamab) add orgID to claims ?
-	orgID, err := strconv.ParseInt(md.Get("grafana-orgid")[0], 10, 64)
+	grfOrgID := md.Get("grafana-orgid")
+	if len(grfOrgID) == 0 || grfOrgID[0] == "" {
+		// TODO (gamab) maybe use default org id?
+		return ctx, fmt.Errorf("no org id found")
+	}
+	orgID, err := strconv.ParseInt(grfOrgID[0], 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("invalid org id: %w", err)
+		return ctx, fmt.Errorf("invalid org id: %w", err)
 	}
 
-	// Extract tokens
-	idToken := md.Get("x-grafana-id")[0]
-	accessToken := md.Get("x-access-token")[0]
-
-	atClaims, err := f.atVerifier.Verify(ctx, accessToken)
-	if err != nil {
-		return nil, fmt.Errorf("failed to verify access token: %w", err)
+	if f.cfg.mode == inProcessMode {
+		return f.inProcAuthentication(ctx, orgID, md)
 	}
 
-	if idToken == "" {
+	return f.remoteAuthentication(ctx, orgID, md)
+}
+
+// inProcAuthentication authenticates the user based on the id token in the metadata.
+// it assumes that there is no access token
+func (f *Authenticator) inProcAuthentication(ctx context.Context, orgID int64, md metadata.MD) (context.Context, error) {
+	ctxLogger := f.logger.FromContext(ctx)
+
+	idToken := md.Get("x-grafana-id")
+	if len(idToken) == 0 || idToken[0] == "" {
+		return ctx, ErrorMissingIDToken
+	}
+
+	idClaims, err := f.idVerifier.Verify(ctx, idToken[0])
+	if err != nil {
+		return ctx, ErrorInvalidIDToken
+	}
+
+	usr, err := f.authenticateUser(orgID, idClaims)
+	if err != nil {
+		ctxLogger.Error("failed to authenticate user", "error", err)
+		return ctx, fmt.Errorf("failed to authenticate user: %w", err)
+	}
+
+	return identity.WithRequester(ctx, usr), nil
+}
+
+func (f *Authenticator) remoteAuthentication(ctx context.Context, orgID int64, md metadata.MD) (context.Context, error) {
+	ctxLogger := f.logger.FromContext(ctx)
+
+	accessToken := md.Get("x-access-token")
+	if len(accessToken) == 0 || accessToken[0] == "" {
+		return ctx, ErrorMissingAccessToken
+	}
+
+	atClaims, err := f.atVerifier.Verify(ctx, accessToken[0])
+	if err != nil {
+		return ctx, ErrorInvalidAccessToken
+	}
+
+	idToken := md.Get("x-grafana-id")
+	if len(idToken) == 0 || idToken[0] == "" {
 		// Service authentication
 		usr, err := f.authenticateService(orgID, atClaims)
 		if err != nil {
 			ctxLogger.Error("failed to authenticate service", "error", err)
-			return nil, fmt.Errorf("failed to authenticate service: %w", err)
+			return ctx, fmt.Errorf("failed to authenticate service: %w", err)
 		}
 
 		return identity.WithRequester(ctx, usr), nil
 	}
 
 	// Validate ID token
-	idClaims, err := f.idVerifier.Verify(ctx, idToken)
+	idClaims, err := f.idVerifier.Verify(ctx, idToken[0])
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify id token: %w", err)
+		return ctx, ErrorInvalidIDToken
 	}
 
 	// User authentication
-	usr, err := f.authenticateUser(orgID, idClaims, atClaims)
+	usr, err := f.authenticateImpersonatedUser(orgID, idClaims, atClaims)
 	if err != nil {
 		ctxLogger.Error("failed to authenticate user", "error", err)
-		return nil, fmt.Errorf("failed to authenticate user: %w", err)
+		return ctx, fmt.Errorf("failed to authenticate user: %w", err)
 	}
 
 	return identity.WithRequester(ctx, usr), nil
 }
 
-func (f *Authenticator) authenticateUser(orgID int64, idClaims *authnlib.Claims[authnlib.IDTokenClaims],
+func (f *Authenticator) authenticateUser(orgID int64, idClaims *authnlib.Claims[authnlib.IDTokenClaims]) (*authn.Identity, error) {
+	// TODO (gamab) namespace validation
+	// Only allow id tokens signed for namespace configured for this instance.
+
+	userID, err := authn.ParseNamespaceID(idClaims.Subject)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse id token subject: %w", err)
+	}
+
+	if !userID.IsNamespace(authn.NamespaceUser) && !userID.IsNamespace(authn.NamespaceServiceAccount) {
+		return nil, fmt.Errorf("unexpected identity: %s", userID.String())
+	}
+
+	return &authn.Identity{
+		ID:              userID,
+		OrgID:           orgID,
+		AuthenticatedBy: GRPCJWTModule,
+		AuthID:          userID.String(), // TODO (gamab) what should this be?
+		ClientParams:    authn.ClientParams{}}, nil
+}
+
+func (f *Authenticator) authenticateImpersonatedUser(
+	orgID int64,
+	idClaims *authnlib.Claims[authnlib.IDTokenClaims],
 	atClaims *authnlib.Claims[authnlib.AccessTokenClaims],
 ) (*authn.Identity, error) {
 	// TODO (gamab) namespace validation
@@ -193,14 +247,14 @@ func (f *Authenticator) authenticateUser(orgID int64, idClaims *authnlib.Claims[
 		return nil, fmt.Errorf("failed to parse id token subject: %w", err)
 	}
 
-	if !userID.IsNamespace(authn.NamespaceUser) {
+	if !userID.IsNamespace(authn.NamespaceUser) && !userID.IsNamespace(authn.NamespaceServiceAccount) {
 		return nil, fmt.Errorf("unexpected identity: %s", userID.String())
 	}
 
 	return &authn.Identity{
 		ID:              userID,
 		OrgID:           orgID,
-		AuthenticatedBy: login.ExtendedJWTModule,
+		AuthenticatedBy: GRPCJWTModule,
 		AuthID:          accessID.String(),
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
@@ -230,7 +284,7 @@ func (a *Authenticator) authenticateService(orgID int64, claims *authnlib.Claims
 		ID:              id,
 		UID:             id,
 		OrgID:           orgID,
-		AuthenticatedBy: login.ExtendedJWTModule,
+		AuthenticatedBy: GRPCJWTModule,
 		AuthID:          claims.Subject,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
@@ -264,18 +318,41 @@ func StreamClientInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *grp
 
 var _ grpc.StreamClientInterceptor = StreamClientInterceptor
 
+// func WrapContext(ctx context.Context) (context.Context, error) {
+// 	user, err := appcontext.User(ctx)
+// 	if err != nil {
+// 		return ctx, err
+// 	}
+
+// 	// set grpc metadata into the context to pass to the grpc server
+// 	return metadata.NewOutgoingContext(ctx, metadata.Pairs(
+// 		"grafana-idtoken", user.IDToken,
+// 		"grafana-userid", strconv.FormatInt(user.UserID, 10),
+// 		"grafana-orgid", strconv.FormatInt(user.OrgID, 10),
+// 		"grafana-login", user.Login,
+// 		// "grafana-namespace", // TODO (gamab)
+// 	)), nil
+// }
+
 func WrapContext(ctx context.Context) (context.Context, error) {
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return ctx, err
+	}
+
+	id := user.GetID()
+	userID, err := id.UserID()
 	if err != nil {
 		return ctx, err
 	}
 
 	// set grpc metadata into the context to pass to the grpc server
 	return metadata.NewOutgoingContext(ctx, metadata.Pairs(
-		"grafana-idtoken", user.IDToken,
-		"grafana-userid", strconv.FormatInt(user.UserID, 10),
-		"grafana-orgid", strconv.FormatInt(user.OrgID, 10),
-		"grafana-login", user.Login,
+		// "x-grafana-access", // TODO (gamab)
+		"x-grafana-id", user.GetIDToken(),
+		"grafana-userid", strconv.FormatInt(userID, 10),
+		"grafana-orgid", strconv.FormatInt(user.GetOrgID(), 10),
+		"grafana-login", user.GetLogin(),
 		// "grafana-namespace", // TODO (gamab)
 	)), nil
 }

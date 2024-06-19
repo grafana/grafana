@@ -173,3 +173,7 @@ func (u *StaticRequester) GetDisplayName() string {
 func (u *StaticRequester) GetIDToken() string {
 	return u.IDToken
 }
+
+func (u *StaticRequester) GetAuthZParams() AuthZParams {
+	return AuthZParams{}
+}
