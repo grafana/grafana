@@ -15,7 +15,7 @@ import (
 
 func TestCDKBlobStore(t *testing.T) {
 	bucket := memblob.OpenBucket(nil)
-	if true {
+	if false {
 		tmp, err := os.MkdirTemp("", "xxx-*")
 		require.NoError(t, err)
 
@@ -29,7 +29,7 @@ func TestCDKBlobStore(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	store, err := NewCDKBlobStore(ctx, CDKOptions{
+	store, err := NewCDKBlobStore(ctx, CDKBlobStoreOptions{
 		Bucket: bucket,
 		//RootFolder: "xyz",
 	})

@@ -35,7 +35,7 @@ func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.Feat
 		}
 
 		fmt.Printf("ROOT: %s\n\n", tmp)
-		store, err := resource.NewCDKAppendingStore(context.Background(), resource.CDKOptions{
+		store, err := resource.NewCDKAppendingStore(context.Background(), resource.CDKAppenderOptions{
 			Bucket: bucket,
 		})
 		if err != nil {
@@ -98,7 +98,7 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event resource.WriteEvent
 	key := toEntityKey(event.Key)
 
 	// Delete does not need to create an entity first
-	if event.Event == resource.WatchEvent_DELETED {
+	if event.Type == resource.WatchEvent_DELETED {
 		rsp, err := b.entity.Delete(ctx, &entity.DeleteEntityRequest{
 			Key:             key,
 			PreviousVersion: event.PreviousRV,
@@ -119,15 +119,14 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event resource.WriteEvent
 		Guid:      string(event.Object.GetUID()),
 
 		//	Key:     fmt.Sprint("%s/%s/%s/%s", ),
-		Folder:  obj.GetFolder(),
-		Body:    event.Value,
-		Message: event.Message,
+		Folder: obj.GetFolder(),
+		Body:   event.Value,
 
 		Labels: obj.GetLabels(),
 		Size:   int64(len(event.Value)),
 	}
 
-	switch event.Event {
+	switch event.Type {
 	case resource.WatchEvent_ADDED:
 		msg.Action = entity.Entity_CREATED
 		rsp, err := b.entity.Create(ctx, &entity.CreateEntityRequest{Entity: msg})
@@ -150,10 +149,10 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event resource.WriteEvent
 	default:
 	}
 
-	return 0, fmt.Errorf("unsupported operation: %s", event.Event.String())
+	return 0, fmt.Errorf("unsupported operation: %s", event.Type.String())
 }
 
-func (b *entityBridge) Watch(ctx context.Context, since int64, options *resource.ListOptions) (chan *resource.WatchEvent, error) {
+func (b *entityBridge) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
 	return nil, resource.ErrNotImplementedYet
 }
 

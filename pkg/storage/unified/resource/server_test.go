@@ -29,7 +29,7 @@ func TestSimpleServer(t *testing.T) {
 	ctx := identity.WithRequester(context.Background(), testUserA)
 
 	bucket := memblob.OpenBucket(nil)
-	if true {
+	if false {
 		tmp, err := os.MkdirTemp("", "xxx-*")
 		require.NoError(t, err)
 
@@ -41,7 +41,7 @@ func TestSimpleServer(t *testing.T) {
 
 		fmt.Printf("ROOT: %s\n\n", tmp)
 	}
-	store, err := NewCDKAppendingStore(ctx, CDKOptions{
+	store, err := NewCDKAppendingStore(ctx, CDKAppenderOptions{
 		Bucket: bucket,
 	})
 	require.NoError(t, err)

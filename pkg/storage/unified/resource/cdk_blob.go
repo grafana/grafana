@@ -19,21 +19,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-type CDKOptions struct {
+type CDKBlobStoreOptions struct {
 	Tracer        trace.Tracer
 	Bucket        *blob.Bucket
 	RootFolder    string
 	URLExpiration time.Duration
-
-	// When running in a cluster, each node should have a different ID
-	// This is used for snowflake generation and log identification
-	NodeID int64
-
-	// Get the next ResourceVersion.  When not set, this will default to snowflake IDs
-	NextResourceVersion func() int64
 }
 
-func NewCDKBlobStore(ctx context.Context, opts CDKOptions) (BlobStore, error) {
+func NewCDKBlobStore(ctx context.Context, opts CDKBlobStoreOptions) (BlobStore, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("cdk-blob-store")
 	}

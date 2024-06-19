@@ -140,7 +140,7 @@ func (s *sqlResourceStore) WriteEvent(ctx context.Context, event resource.WriteE
 	return 0, ErrNotImplementedYet
 }
 
-func (s *sqlResourceStore) Watch(ctx context.Context, since int64, options *resource.ListOptions) (chan *resource.WatchEvent, error) {
+func (s *sqlResourceStore) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
 	return nil, ErrNotImplementedYet
 }
 

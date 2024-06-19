@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel/trace"
@@ -22,7 +23,20 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func NewCDKAppendingStore(ctx context.Context, opts CDKOptions) (AppendingStore, error) {
+type CDKAppenderOptions struct {
+	Tracer     trace.Tracer
+	Bucket     *blob.Bucket
+	RootFolder string
+
+	// When running in a cluster, each node should have a different ID
+	// This is used for snowflake generation and log identification
+	NodeID int64
+
+	// Get the next ResourceVersion.  When not set, this will default to snowflake IDs
+	NextResourceVersion func() int64
+}
+
+func NewCDKAppendingStore(ctx context.Context, opts CDKAppenderOptions) (AppendingStore, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("cdk-appending-store")
 	}
@@ -71,6 +85,9 @@ type cdkAppender struct {
 	root   string
 	nextRV func() int64
 	mutex  sync.Mutex
+
+	// Typically one... the server wrapper
+	subscribers []chan *WrittenEvent
 }
 
 func (s *cdkAppender) getPath(key *ResourceKey, rv int64) string {
@@ -110,14 +127,33 @@ func (s *cdkAppender) getPath(key *ResourceKey, rv int64) string {
 	return buffer.String()
 }
 
-func (s *cdkAppender) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+func (s *cdkAppender) WriteEvent(ctx context.Context, event WriteEvent) (rv int64, err error) {
+	// Scope the lock
+	{
+		s.mutex.Lock()
+		defer s.mutex.Unlock()
 
-	rv := s.nextRV()
-	err := s.bucket.WriteAll(ctx, s.getPath(event.Key, rv), event.Value, &blob.WriterOptions{
-		ContentType: "application/json",
-	})
+		rv = s.nextRV()
+		err = s.bucket.WriteAll(ctx, s.getPath(event.Key, rv), event.Value, &blob.WriterOptions{
+			ContentType: "application/json",
+		})
+	}
+
+	// Async notify all subscribers
+	if s.subscribers != nil {
+		go func() {
+			write := &WrittenEvent{
+				WriteEvent: event,
+
+				Timestamp:       time.Now().UnixMilli(),
+				ResourceVersion: rv,
+			}
+			for _, sub := range s.subscribers {
+				sub <- write
+			}
+		}()
+	}
+
 	return rv, err
 }
 
@@ -188,8 +224,35 @@ func (s *cdkAppender) List(ctx context.Context, req *ListRequest) (*ListResponse
 }
 
 // Watch implements AppendingStore.
-func (s *cdkAppender) Watch(ctx context.Context, since int64, options *ListOptions) (chan *WatchEvent, error) {
-	panic("unimplemented")
+func (s *cdkAppender) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
+	stream := make(chan *WrittenEvent, 10)
+	{
+		s.mutex.Lock()
+		defer s.mutex.Unlock()
+
+		// Add the event stream
+		s.subscribers = append(s.subscribers, stream)
+	}
+
+	// Wait for context done
+	go func() {
+		// Wait till the context is done
+		<-ctx.Done()
+
+		// Then remove the subscription
+		s.mutex.Lock()
+		defer s.mutex.Unlock()
+
+		// Copy all streams without our listener
+		subs := []chan *WrittenEvent{}
+		for _, sub := range s.subscribers {
+			if sub != stream {
+				subs = append(subs, sub)
+			}
+		}
+		s.subscribers = subs
+	}()
+	return stream, nil
 }
 
 // group > resource > namespace > name > versions

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"sync"
 	"time"
@@ -54,8 +55,9 @@ type AppendingStore interface {
 	// Implement List -- this expects the read after write semantics
 	List(context.Context, *ListRequest) (*ListResponse, error)
 
-	// Get new events (initial events are supported by the container)
-	Watch(ctx context.Context, since int64, options *ListOptions) (chan *WatchEvent, error)
+	// Get all events from the store
+	// For HA setups, this will be more events than the local WriteEvent above!
+	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
 }
 
 // This interface is not exposed to end users directly
@@ -146,8 +148,11 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		}
 	}
 
+	// Make this cancelable
+	ctx, cancel := context.WithCancel(context.Background())
 	return &server{
 		tracer:      opts.Tracer,
+		log:         slog.Default().With("logger", "resource-server"),
 		nextEventID: opts.NextEventID,
 		store:       opts.Store,
 		search:      opts.Search,
@@ -155,6 +160,8 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		access:      opts.WriteAccess,
 		lifecycle:   opts.Lifecycle,
 		now:         opts.Now,
+		ctx:         ctx,
+		cancel:      cancel,
 	}, nil
 }
 
@@ -162,6 +169,7 @@ var _ ResourceServer = &server{}
 
 type server struct {
 	tracer      trace.Tracer
+	log         *slog.Logger
 	nextEventID func() int64
 	store       AppendingStore
 	search      ResourceSearchServer
@@ -171,6 +179,11 @@ type server struct {
 	lifecycle   LifecycleHooks
 	now         func() int64
 
+	// Background watch task
+	ctx         context.Context
+	cancel      context.CancelFunc
+	broadcaster Broadcaster[*WrittenEvent]
+
 	// init checking
 	once    sync.Once
 	initErr error
@@ -179,8 +192,6 @@ type server struct {
 // Init implements ResourceServer.
 func (s *server) Init() error {
 	s.once.Do(func() {
-		// TODO, setup a broadcaster for watch
-
 		// Call lifecycle hooks
 		if s.lifecycle != nil {
 			err := s.lifecycle.Init()
@@ -188,15 +199,24 @@ func (s *server) Init() error {
 				s.initErr = fmt.Errorf("initialize Resource Server: %w", err)
 			}
 		}
+
+		// Start listening for changes
+		s.initWatcher()
 	})
 	return s.initErr
 }
 
 func (s *server) Stop() {
 	s.initErr = fmt.Errorf("service is stopping")
+
 	if s.lifecycle != nil {
 		s.lifecycle.Stop()
 	}
+
+	// Stops the streaming
+	s.cancel()
+
+	// mark the value as done
 	s.initErr = fmt.Errorf("service is stopped")
 }
 
@@ -389,7 +409,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 		return rsp, err
 	}
 
-	event.Event = WatchEvent_MODIFIED
+	event.Type = WatchEvent_MODIFIED
 	event.PreviousRV = latest.ResourceVersion
 
 	rsp.ResourceVersion, err = s.store.WriteEvent(ctx, event)
@@ -429,7 +449,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	event := WriteEvent{
 		EventID:    s.nextEventID(),
 		Key:        req.Key,
-		Event:      WatchEvent_DELETED,
+		Type:       WatchEvent_DELETED,
 		PreviousRV: latest.ResourceVersion,
 	}
 	requester, err := identity.GetRequester(ctx)
@@ -501,20 +521,74 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	return rsp, err
 }
 
+func (s *server) initWatcher() error {
+	var err error
+	s.broadcaster, err = NewBroadcaster(s.ctx, func(out chan<- *WrittenEvent) error {
+		events, err := s.store.WatchWriteEvents(s.ctx)
+		if err != nil {
+			return err
+		}
+		go func() {
+			for {
+				// pipe all events
+				v := <-events
+				out <- v
+			}
+		}()
+		return nil
+	})
+	return err
+}
+
 func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	if err := s.Init(); err != nil {
 		return err
 	}
 
-	// TODO??? can we move any of the common processing here?
-	stream, err := s.store.Watch(srv.Context(), req.Since, req.Options)
+	fmt.Printf("WATCH %v\n", req.Options.Key)
+
+	ctx := srv.Context()
+
+	// Start listening -- this will buffer any changes that happen while we backfill
+	stream, err := s.broadcaster.Subscribe(ctx)
 	if err != nil {
 		return err
 	}
-	for event := range stream {
-		srv.Send(event)
+	defer s.broadcaster.Unsubscribe(stream)
+
+	since := req.Since
+	if req.SendInitialEvents {
+		fmt.Printf("TODO... query\n")
+
+		if req.AllowWatchBookmarks {
+			fmt.Printf("TODO... send bookmark\n")
+		}
 	}
-	return nil
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+
+		case event, ok := <-stream:
+			if !ok {
+				s.log.Debug("watch events closed")
+				return nil
+			}
+
+			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
+				srv.Send(&WatchEvent{
+					Timestamp: event.Timestamp,
+					Type:      event.Type,
+					Resource: &WatchEvent_Resource{
+						Value:   event.Value,
+						Version: event.ResourceVersion,
+					},
+					// TODO... previous???
+				})
+			}
+		}
+	}
 }
 
 // GetBlob implements ResourceServer.
