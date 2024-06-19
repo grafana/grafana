@@ -773,6 +773,35 @@ describe('PrometheusDatasource', () => {
       const result = ds.applyTemplateVariables(query, {}, filters);
       expect(result).toMatchObject({ expr: 'test{job=~"99"}' });
     });
+
+    it('should replace variables in adhoc filters on backend when promQLScope is enabled', () => {
+      config.featureToggles.promQLScope = true;
+      const searchPattern = /\$A/g;
+      replaceMock.mockImplementation((a: string) => a?.replace(searchPattern, '99') ?? a);
+
+      const query = {
+        expr: 'test',
+        refId: 'A',
+      };
+      const filters = [
+        {
+          key: 'job',
+          operator: '=~',
+          value: '$A',
+        },
+      ];
+      const result = ds.applyTemplateVariables(query, {}, filters);
+      expect(result).toMatchObject({
+        expr: 'test',
+        adhocFilters: [
+          {
+            key: 'job',
+            operator: 'regex-match',
+            value: '99',
+          },
+        ],
+      });
+    });
   });
 
   describe('metricFindQuery', () => {

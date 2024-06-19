@@ -829,7 +829,11 @@ export class PrometheusDatasource
       return [];
     }
 
-    return filters.map((f) => ({ ...f, operator: scopeFilterOperatorMap[f.operator] }));
+    return filters.map((f) => ({
+      ...f,
+      value: this.templateSrv.replace(f.value, {}, this.interpolateQueryExpr),
+      operator: scopeFilterOperatorMap[f.operator],
+    }));
   }
 
   enhanceExprWithAdHocFilters(filters: AdHocVariableFilter[] | undefined, expr: string) {
