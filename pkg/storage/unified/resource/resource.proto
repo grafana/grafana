@@ -30,9 +30,6 @@ message ResourceWrapper {
 
   // Operation
   ResourceOperation operation = 3;
-
-  // The resource has an attached blob
-  bool has_blob = 4;
 }
 
 // The history and trash commands need access to commit messages
@@ -55,9 +52,6 @@ message ResourceMeta {
   // The kubernetes metadata section (not the full resource)
   // https://github.com/kubernetes/kubernetes/blob/v1.30.2/staging/src/k8s.io/apimachinery/pkg/apis/meta/v1/types.go#L1496
   bytes partial_object_meta = 6;
-
-  // The resource has an attached blob
-  bool has_blob = 7;
 }
 
 // Status structure is copied from:

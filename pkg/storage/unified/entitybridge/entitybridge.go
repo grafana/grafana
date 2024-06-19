@@ -157,7 +157,7 @@ func (b *entityBridge) GenerateName(_ context.Context, _ *resource.ResourceKey, 
 	return util.GenerateShortUID(), nil
 }
 
-func (b *entityBridge) Watch(_ context.Context, _ *resource.WatchRequest) (chan *resource.WatchEvent, error) {
+func (b *entityBridge) Watch(ctx context.Context, since int64, options *resource.ListOptions) (chan *resource.WatchEvent, error) {
 	return nil, resource.ErrNotImplementedYet
 }
 

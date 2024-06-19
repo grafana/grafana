@@ -57,11 +57,12 @@ type AppendingStore interface {
 	// Implement List -- this expects the read after write semantics
 	List(context.Context, *ListRequest) (*ListResponse, error)
 
-	// Watch for events
-	Watch(context.Context, *WatchRequest) (chan *WatchEvent, error)
+	// Get new events (initial events are supported by the container)
+	Watch(ctx context.Context, since int64, options *ListOptions) (chan *WatchEvent, error)
 }
 
 // This interface is not exposed to end users directly
+// Access to this interface is already gated by access control
 type BlobStore interface {
 	// Indicates if storage layer supports signed urls
 	SupportsSignedURLs() bool
@@ -521,7 +522,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	}
 
 	// TODO??? can we move any of the common processing here?
-	stream, err := s.store.Watch(srv.Context(), req)
+	stream, err := s.store.Watch(srv.Context(), req.Since, req.Options)
 	if err != nil {
 		return err
 	}
