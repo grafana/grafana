@@ -76,9 +76,9 @@ The visualization preview section contains the following options:
 
 The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
-- **Queries** tab - Select your data source and enter queries here. For more information, refer to [Add a query](ref:add-a-query). When you create a new dashboard, you'll be prompted to select a data source before you get to the panel editor. You set or update the data source in existing dashboards using the drop-down in the **Query** tab.
-- **Transformations** tab - Apply data transformations. For more information, refer to [Transform data](ref:transform-data).
-- **Alert** tab - Write alert rules. For more information, refer to [the overview of Grafana Alerting](ref:the-overview-of-grafana-alerting).
+- **Queries** - Select your data source and enter queries here. For more information, refer to [Add a query](ref:add-a-query). When you create a new dashboard, you'll be prompted to select a data source before you get to the panel editor. You set or update the data source in existing dashboards using the drop-down in the **Query** tab.
+- **Transformations** - Apply data transformations. For more information, refer to [Transform data](ref:transform-data).
+- **Alert** - Write alert rules. For more information, refer to [the overview of Grafana Alerting](ref:the-overview-of-grafana-alerting).
 
 ## Panel display options
 
