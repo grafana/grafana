@@ -49,8 +49,8 @@ If you've already set up a data source that you know how to query, refer to [Cre
 
 To create your first dashboard using the built-in `-- Grafana --` data source:
 
-1. Click **Dashboards** in the left-side menu.
-1. On the Dashboards page, click **New** and select **New Dashboard** from the drop-down menu.
+1. Click **Dashboards** in the main menu.
+1. On the **Dashboards** page, click **New** and select **New Dashboard** from the drop-down menu.
 1. On the dashboard, click **+ Add visualization**.
 
    ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
@@ -61,15 +61,13 @@ To create your first dashboard using the built-in `-- Grafana --` data source:
 
    This configures your [query]({{< relref "../panels-visualizations/query-transform-data#add-a-query" >}}) and generates the Random Walk dashboard.
 
-1. Click the Refresh dashboard icon to query the data source.
+1. Click **Refresh** to query the data source.
+1. When you've finished editing your panel, click **Save dashboard**.
 
-   ![Refresh dashboard icon](/media/docs/grafana/dashboards/screenshot-refresh-dashboard-9.5.png)
-
-1. When you've finished editing your panel, click **Save** to save the dashboard.
-
-   Alternatively, click **Apply** if you want to see your changes applied to the dashboard first. Then click the save icon in the dashboard header.
+   Alternatively, click **Back to dashboard** if you want to see your changes applied to the dashboard first. Then click **Save dashboard** when you're ready.
 
 1. Add a descriptive title for the dashboard, or have Grafana create one using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards), and then click **Save**.
+1. Click **Back to dashboard** and then **Exit edit**.
 
 Congratulations, you have created your first dashboard and it's displaying results.
 

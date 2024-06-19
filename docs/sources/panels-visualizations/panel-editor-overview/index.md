@@ -52,7 +52,7 @@ refs:
 
 In the panel editor, you can update all the elements of a visualization including the data source, queries, time range, and visualization display options.
 
-![Panel editor](/media/docs/grafana/panels-visualizations/screenshot-panel-editor-view.png)
+![Panel editor](media/docs/grafana/panels-visualizations/screenshot-grafana-11.2-panel-editor.png)
 
 This following sections describe the areas of the Grafana panel editor.
 
@@ -60,9 +60,9 @@ This following sections describe the areas of the Grafana panel editor.
 
 The header section lists the dashboard in which the panel appears and the following controls:
 
-- **Back to dashboard** - Return to the dashboard from the panel editor view.
-- **Discard panel changes** - Discards changes you have made to the panel since you last saved the dashboard.
-- **Save dashboard** - Saves your changes to the dashboard.
+- **Back to dashboard** - Return to the dashboard with changes applied, but not yet saved.
+- **Discard panel changes** - Discard changes you have made to the panel since you last saved the dashboard.
+- **Save dashboard** - Save your changes to the dashboard.
 
 ## Visualization preview
 
@@ -76,7 +76,7 @@ The visualization preview section contains the following options:
 
 The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
-- **Queries** - Select your data source and enter queries here. For more information, refer to [Add a query](ref:add-a-query). When you create a new dashboard, you'll be prompted to select a data source before you get to the panel editor. You set or update the data source in existing dashboards using the drop-down in the **Query** tab.
+- **Queries** - Select your data source and enter queries here. For more information, refer to [Add a query](ref:add-a-query). When you create a new dashboard, you'll be prompted to select a data source before you get to the panel editor. You set or update the data source in existing dashboards using the drop-down in the **Queries** tab.
 - **Transformations** - Apply data transformations. For more information, refer to [Transform data](ref:transform-data).
 - **Alert** - Write alert rules. For more information, refer to [the overview of Grafana Alerting](ref:the-overview-of-grafana-alerting).
 

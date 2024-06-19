@@ -131,6 +131,9 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    - [Configure standard options](ref:configure-standard-options)
 
 1. When you've finished editing your panel, click **Save dashboard**.
+
+   Alternatively, click **Back to dashboard** if you want to see your changes applied to the dashboard first. Then click **Save dashboard** when you're ready.
+
 1. Enter a title and description for your dashboard or have Grafana create them using [generative AI features](ref:generative-ai-features).
 1. Select a folder, if applicable.
 1. Click **Save**.
