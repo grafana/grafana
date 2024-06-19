@@ -133,12 +133,14 @@ export const ConnectionSVG = ({
         .sort((_a, b) => (selectedConnection === b && scene.panel.context.instanceState.selectedConnection ? -1 : 0))
         .map((v, idx) => {
           const { source, target, info, vertices } = v;
-          const sourceRect = source.div?.getBoundingClientRect();
+          // const sourceRect = source.div?.getBoundingClientRect();
+          const sourceRect = source.div;
           const parent = source.div?.parentElement; // do we need this?
           // const transformScale = scene.scale;
           // const transformScale = 1;
           // const parentRect = getParentBoundingClientRect(scene);
-          const parentRect = scene.viewportDiv?.getBoundingClientRect();
+          // const parentRect = scene.viewportDiv?.getBoundingClientRect();
+          const parentRect = scene.viewportDiv;
 
           if (!sourceRect || !parent || !parentRect) {
             return;

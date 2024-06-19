@@ -12,6 +12,7 @@ import {
   // calculateCoordinates,
   calculateCoordinates2,
   getConnections,
+  getElementTransformAndDimensions,
   getParentBoundingClientRect,
   isConnectionSource,
   isConnectionTarget,
@@ -212,7 +213,8 @@ export class Connections {
 
     if (!event.buttons) {
       if (this.connectionSource && this.connectionSource.div && this.connectionSource.div.parentElement) {
-        const sourceRect = this.connectionSource.div.getBoundingClientRect();
+        // const sourceRect = this.connectionSource.div.getBoundingClientRect();
+        const sourceRect = getElementTransformAndDimensions(this.connectionSource.div);
 
         // const transformScale = this.scene.scale;
         const transformScale = 1;
@@ -235,7 +237,8 @@ export class Connections {
         let targetName;
 
         if (this.connectionTarget && this.connectionTarget.div) {
-          const targetRect = this.connectionTarget.div.getBoundingClientRect();
+          // const targetRect = this.connectionTarget.div.getBoundingClientRect();
+          const targetRect = getElementTransformAndDimensions(this.connectionTarget.div);
 
           const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
           const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
@@ -618,7 +621,8 @@ export class Connections {
     console.log('handleConnectionDragStart');
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
     if (this.connectionSVG && this.connectionLine && this.scene.viewportDiv && this.scene.viewportDiv.parentElement) {
-      const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
+      // const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
+      const connectionStartTargetBox = getElementTransformAndDimensions(selectedTarget);
 
       // const transformScale = this.scene.scale;
       const transformScale = 1;

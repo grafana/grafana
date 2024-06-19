@@ -369,26 +369,24 @@ export const calculateCoordinates = (
 
 export const calculateCoordinates2 = (source: ElementState, target: ElementState, info: CanvasConnection) => {
   const sourceDiv = source.div;
-  const sourceDivWidth = parseFloat(sourceDiv!.style.width);
-  const sourceDivHeight = parseFloat(sourceDiv!.style.height);
-  const { left, top } = getCoordinatesFromTransform(sourceDiv!);
-  const sourceHorizontalCenter = left + sourceDivWidth / 2;
-  const sourceVerticalCenter = top + sourceDivHeight / 2;
-  const x1 = sourceHorizontalCenter + (info.source.x * sourceDivWidth) / 2;
-  const y1 = sourceVerticalCenter - (info.source.y * sourceDivHeight) / 2;
+  const { left, top, width, height } = getElementTransformAndDimensions(sourceDiv!);
+  const sourceHorizontalCenter = left + width / 2;
+  const sourceVerticalCenter = top + height / 2;
+  const x1 = sourceHorizontalCenter + (info.source.x * width) / 2;
+  const y1 = sourceVerticalCenter - (info.source.y * height) / 2;
 
   let x2: number;
   let y2: number;
   const targetDiv = target.div;
   if (info.targetName && targetDiv) {
     // calculate closed connection x2, y2
-    const targetDivWidth = parseFloat(targetDiv.style.width);
-    const targetDivHeight = parseFloat(targetDiv.style.height);
-    const { left, top } = getCoordinatesFromTransform(targetDiv);
-    const targetHorizontalCenter = left + targetDivWidth / 2;
-    const targetVerticalCenter = top + targetDivHeight / 2;
-    x2 = targetHorizontalCenter + (info.target.x * targetDivWidth) / 2;
-    y2 = targetVerticalCenter - (info.target.y * targetDivHeight) / 2;
+    // const targetDivWidth = parseFloat(targetDiv.style.width);
+    // const targetDivHeight = parseFloat(targetDiv.style.height);
+    const { left, top, width, height } = getElementTransformAndDimensions(targetDiv);
+    const targetHorizontalCenter = left + width / 2;
+    const targetVerticalCenter = top + height / 2;
+    x2 = targetHorizontalCenter + (info.target.x * width) / 2;
+    y2 = targetVerticalCenter - (info.target.y * height) / 2;
   } else {
     // calculate open connection x2, y2
     // const parentHorizontalCenter = parentRect.width / 2;
@@ -403,11 +401,9 @@ export const calculateCoordinates2 = (source: ElementState, target: ElementState
   return { x1, y1, x2, y2 };
 };
 
-const getCoordinatesFromTransform = (element: HTMLDivElement) => {
-  // Get the computed styles of the element
+export const getElementTransformAndDimensions = (element: HTMLElement) => {
   const style = window.getComputedStyle(element);
 
-  // Get the transform property value
   const transform = style.transform;
 
   // Initialize x and y
@@ -423,7 +419,12 @@ const getCoordinatesFromTransform = (element: HTMLDivElement) => {
     y = matrix.m42;
   }
 
-  return { left: x, top: y };
+  // Get the width and height of the element
+  // TODO: there sould be a better way than parseFloat
+  const width = parseFloat(style.width);
+  const height = parseFloat(style.height);
+
+  return { left: x, top: y, width, height, x, y };
 };
 
 export const calculateMidpoint = (x1: number, y1: number, x2: number, y2: number) => {
