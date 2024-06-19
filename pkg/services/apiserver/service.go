@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregator"
@@ -157,11 +156,16 @@ func ProvideService(
 				req.URL.Path = "/"
 			}
 
+			if c.SignedInUser != nil {
+				ctx := appcontext.WithUser(c.Req.Context(), c.SignedInUser)
+				req = req.WithContext(ctx)
+			}
+
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 			s.handler.ServeHTTP(resp, req)
 		}
-		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
-		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
+		k8sRoute.Any("/", handler)
+		k8sRoute.Any("/*", handler)
 	}
 
 	s.rr.Group("/apis", proxyHandler)
