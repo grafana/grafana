@@ -1884,6 +1884,12 @@ $easing: cubic-bezier(0, 0, 0.265, 1);
   }
 }
 
+.add-data-source-item-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
 .add-data-source-item-logo {
   margin-right: $space-lg;
   margin-left: $space-sm;
@@ -1910,6 +1916,10 @@ $easing: cubic-bezier(0, 0, 0.265, 1);
 
 .add-data-source-item-badge {
   margin-top: 6px;
+}
+
+.add-data-source-item-text {
+  font-size: $font-size-h5;
 }
 
 .panel-empty {
