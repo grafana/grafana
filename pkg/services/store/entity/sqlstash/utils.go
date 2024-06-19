@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
 )
@@ -27,7 +27,7 @@ func createETag(body []byte, meta []byte, status []byte) string {
 // getCurrentUser returns a string identifying the user making a request with
 // the given context.
 func getCurrentUser(ctx context.Context) (string, error) {
-	user, err := identity.GetRequester(ctx)
+	user, err := appcontext.User(ctx)
 	if err != nil || user == nil {
 		return "", fmt.Errorf("%w: %w", ErrUserNotFoundInContext, err)
 	}
