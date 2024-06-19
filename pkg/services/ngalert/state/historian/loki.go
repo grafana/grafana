@@ -151,7 +151,7 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 	if err != nil {
 		return nil, err
 	}
-	return merge(res, query.RuleUID)
+	return merge(res)
 }
 
 func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
@@ -176,7 +176,7 @@ func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 }
 
 // merge will put all the results in one array sorted by timestamp.
-func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
+func merge(res QueryRes) (*data.Frame, error) {
 	// Find the total number of elements in all arrays.
 	totalLen := 0
 	for _, arr := range res.Data.Result {

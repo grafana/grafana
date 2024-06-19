@@ -412,7 +412,7 @@ func TestMerge(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			m, err := merge(tc.res, tc.ruleID)
+			m, err := merge(tc.res)
 			require.NoError(t, err)
 
 			var dfTimeColumn *data.Field
