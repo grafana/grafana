@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useId, useState } from 'react';
 
 import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -35,6 +35,10 @@ export const TimePickerFooter = (props: Props) => {
   } = props;
   const [isEditing, setEditing] = useState(false);
   const [editMode, setEditMode] = useState('tz');
+
+  const timeSettingsId = useId();
+  const timeZoneSettingsId = useId();
+  const fiscalYearSettingsId = useId();
 
   const onToggleChangeTimeSettings = useCallback(
     (event?: React.MouseEvent) => {
@@ -79,14 +83,14 @@ export const TimePickerFooter = (props: Props) => {
           onClick={onToggleChangeTimeSettings}
           size="sm"
           aria-expanded={isEditing}
-          aria-controls="time-settings-section"
+          aria-controls={timeSettingsId}
           icon={isEditing ? 'angle-up' : 'angle-down'}
         >
           <Trans i18nKey="time-picker.footer.change-settings-button">Change time settings</Trans>
         </Button>
       </section>
       {isEditing ? (
-        <div className={style.editContainer} id="time-settings-section">
+        <div className={style.editContainer} id={timeSettingsId}>
           <TabsBar>
             <Tab
               label={t('time-picker.footer.time-zone-option', 'Time zone')}
@@ -94,7 +98,7 @@ export const TimePickerFooter = (props: Props) => {
               onChangeTab={() => {
                 setEditMode('tz');
               }}
-              aria-controls="timezone-settings-panel"
+              aria-controls={timeZoneSettingsId}
             />
             <Tab
               label={t('time-picker.footer.fiscal-year-option', 'Fiscal year')}
@@ -102,7 +106,7 @@ export const TimePickerFooter = (props: Props) => {
               onChangeTab={() => {
                 setEditMode('fy');
               }}
-              aria-controls="fiscalyear-settings-panel"
+              aria-controls={fiscalYearSettingsId}
             />
           </TabsBar>
           <TabContent>
@@ -110,7 +114,7 @@ export const TimePickerFooter = (props: Props) => {
               <section
                 role="tabpanel"
                 data-testid={selectors.components.TimeZonePicker.containerV2}
-                id="timezone-settings-panel"
+                id={timeZoneSettingsId}
                 className={cx(style.timeZoneContainer, style.timeSettingContainer)}
               >
                 <TimeZonePicker
@@ -130,7 +134,7 @@ export const TimePickerFooter = (props: Props) => {
               <section
                 role="tabpanel"
                 data-testid={selectors.components.TimeZonePicker.containerV2}
-                id="fiscalyear-settings-panel"
+                id={fiscalYearSettingsId}
                 className={cx(style.timeZoneContainer, style.timeSettingContainer)}
               >
                 <Field
