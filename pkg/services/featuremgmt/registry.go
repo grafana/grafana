@@ -700,11 +700,24 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "enableNativeHTTPHistogram",
-			Description:  "Enables native HTTP Histograms",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        hostedGrafanaTeam,
+			Name:              "enableNativeHTTPHistogram",
+			Description:       "Enables native HTTP Histograms",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      false,
+			Owner:             grafanaBackendServicesSquad,
+			HideFromAdminPage: true,
+			AllowSelfServe:    false,
+			RequiresRestart:   true,
+		},
+		FeatureFlag{
+			Name:              "disableClassicHTTPHistogram",
+			Description:       "Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      false,
+			Owner:             grafanaBackendServicesSquad,
+			HideFromAdminPage: true,
+			AllowSelfServe:    false,
+			RequiresRestart:   true,
 		},
 		{
 			Name:         "formatString",
@@ -1322,6 +1335,13 @@ var (
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:        "databaseReadReplica",
+			Description: "Use a read replica for some database queries.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendServicesSquad,
+			Expression:  "false", // enabled by default
 		},
 	}
 )
