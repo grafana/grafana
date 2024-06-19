@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/openfga/openfga/assets"
-	"github.com/openfga/openfga/pkg/logger"
 	"github.com/openfga/openfga/pkg/storage"
 	"github.com/openfga/openfga/pkg/storage/memory"
 	"github.com/openfga/openfga/pkg/storage/mysql"
@@ -16,6 +15,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,8 +23,8 @@ import (
 
 // FIXME(kalleep): Add sqlite data store.
 // There is no support for sqlite atm but we are working on adding it: https://github.com/openfga/openfga/pull/1615
-func NewStore(cfg *setting.Cfg) (storage.OpenFGADatastore, error) {
-	grafanaDBCfg, zanzanaDBCfg, err := parseConfig(cfg)
+func NewStore(cfg *setting.Cfg, logger log.Logger) (storage.OpenFGADatastore, error) {
+	grafanaDBCfg, zanzanaDBCfg, err := parseConfig(cfg, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse database config: %w", err)
 	}
@@ -50,8 +50,8 @@ func NewStore(cfg *setting.Cfg) (storage.OpenFGADatastore, error) {
 	return nil, fmt.Errorf("unsupported database engine: %s", grafanaDBCfg.Type)
 }
 
-func NewEmbeddedStore(cfg *setting.Cfg, db db.DB) (storage.OpenFGADatastore, error) {
-	grafanaDBCfg, zanzanaDBCfg, err := parseConfig(cfg)
+func NewEmbeddedStore(cfg *setting.Cfg, db db.DB, logger log.Logger) (storage.OpenFGADatastore, error) {
+	grafanaDBCfg, zanzanaDBCfg, err := parseConfig(cfg, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse database config: %w", err)
 	}
@@ -82,17 +82,15 @@ func NewEmbeddedStore(cfg *setting.Cfg, db db.DB) (storage.OpenFGADatastore, err
 	return nil, fmt.Errorf("unsupported database engine: %s", db.GetDialect().DriverName())
 }
 
-func parseConfig(cfg *setting.Cfg) (*sqlstore.DatabaseConfig, *sqlcommon.Config, error) {
+func parseConfig(cfg *setting.Cfg, logger log.Logger) (*sqlstore.DatabaseConfig, *sqlcommon.Config, error) {
 	sec := cfg.Raw.Section("database")
 	grafanaDBCfg, err := sqlstore.NewDatabaseConfig(cfg, nil)
 	if err != nil {
 		return nil, nil, nil
 	}
 
-	// There are a couple of things that are not supported by
 	zanzanaDBCfg := &sqlcommon.Config{
-		// FIXME(kalleep): set logger when we have written a adapter
-		Logger: logger.NewNoopLogger(),
+		Logger: newZanzanaLogger(logger),
 		// MaxTuplesPerWriteField: 0,
 		// MaxTypesPerModelField:  0,
 		MaxOpenConns:    grafanaDBCfg.MaxOpenConn,

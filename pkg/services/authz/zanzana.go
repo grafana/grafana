@@ -90,12 +90,12 @@ type Zanzana struct {
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
-	store, err := zanzana.NewStore(z.cfg)
+	store, err := zanzana.NewStore(z.cfg, z.logger)
 	if err != nil {
 		return fmt.Errorf("failed to initilize zanana store: %w", err)
 	}
 
-	srv, err := zanzana.NewServer(store)
+	srv, err := zanzana.NewServer(store, z.logger)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
