@@ -5,6 +5,8 @@ import (
 	"slices"
 	"sync"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/services/screenshot"
@@ -99,4 +101,17 @@ type NoopImageService struct{}
 
 func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
 	return &models.Image{}, nil
+}
+
+type FakePersister struct {
+	LastPersistedStates []StateTransition
+}
+
+func (n *FakePersister) Async(_ context.Context, _ *cache) {}
+func (n *FakePersister) Sync(_ context.Context, _ trace.Span, states StateTransitions) {
+	n.LastPersistedStates = states
+}
+
+func NewFakePersister() *FakePersister {
+	return &FakePersister{LastPersistedStates: make([]StateTransition, 0)}
 }

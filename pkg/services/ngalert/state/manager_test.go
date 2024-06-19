@@ -258,7 +258,7 @@ func TestDashboardAnnotations(t *testing.T) {
 	st.Warm(ctx, dbstore)
 	bValue := float64(42)
 	cValue := float64(1)
-	states := st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
+	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
 		Instance:    data.Labels{"instance_label": "testValue2"},
 		State:       eval.Alerting,
 		EvaluatedAt: evaluationTime,
@@ -269,8 +269,6 @@ func TestDashboardAnnotations(t *testing.T) {
 	}}, data.Labels{
 		"alertname": rule.Title,
 	})
-	states.NeedsSending().UpdateLastSentAt(evaluationTime)
-	st.Persist(ctx, evaluationTime, rule, states)
 
 	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - B=42.000000, C=1.000000"}
 	sort.Strings(expected)
@@ -1328,9 +1326,7 @@ func TestProcessEvalResults(t *testing.T) {
 					res[i].EvaluatedAt = evalTime
 				}
 				clk.Set(evalTime)
-				states := st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels)
-				states.NeedsSending().UpdateLastSentAt(evalTime)
-				st.Persist(context.Background(), evalTime, tc.alertRule, states)
+				_ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels)
 				results += len(res)
 			}
 
@@ -1420,10 +1416,8 @@ func TestProcessEvalResults(t *testing.T) {
 		rule := models.RuleGen.GenerateRef()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
-		states := st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, make(data.Labels))
-		states.NeedsSending().UpdateLastSentAt(clk.Now())
-		st.Persist(context.Background(), clk.Now(), rule, states)
-
+		_ = st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, make(data.Labels))
+		states := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 		require.NotEmpty(t, states)
 
 		savedStates := make(map[data.Fingerprint]models.AlertInstance)
@@ -1647,13 +1641,14 @@ func TestStaleResults(t *testing.T) {
 		Tracer:        tracing.InitializeTracerForTest(),
 		Log:           log.New("ngalert.state.manager"),
 	}
-	st := state.NewManager(cfg, state.NewNoopPersister())
+	persister := state.NewFakePersister()
+	st := state.NewManager(cfg, persister)
 
 	gen := models.RuleGen
 	rule := gen.With(gen.WithFor(0)).GenerateRef()
 
 	initResults := eval.Results{
-		eval.ResultGen(eval.WithEvaluatedAt(clk.Now()))(),
+		eval.ResultGen(eval.WithState(eval.Alerting), eval.WithEvaluatedAt(clk.Now()))(),
 		eval.ResultGen(eval.WithState(eval.Alerting), eval.WithEvaluatedAt(clk.Now()))(),
 		eval.ResultGen(eval.WithState(eval.Normal), eval.WithEvaluatedAt(clk.Now()))(),
 	}
@@ -1669,7 +1664,12 @@ func TestStaleResults(t *testing.T) {
 	}
 
 	// Init
-	processed := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil)
+	statesToSend := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil)
+
+	// Check that it returns just those state transitions that needs to be sent.
+	checkExpectedStateTransitions(t, statesToSend, map[data.Fingerprint]struct{}{state1: {}, state2: {}}) // Does not contain the Normal state3.
+
+	processed := persister.LastPersistedStates
 	checkExpectedStateTransitions(t, processed, initStates)
 
 	currentStates := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
@@ -1686,7 +1686,8 @@ func TestStaleResults(t *testing.T) {
 
 	var expectedStaleKeys []models.AlertInstanceKey
 	t.Run("should mark missing states as stale", func(t *testing.T) {
-		processed = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil)
+		_ = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil)
+		processed = persister.LastPersistedStates
 		checkExpectedStateTransitions(t, processed, initStates)
 		for _, s := range processed {
 			if s.CacheID == state1 {
