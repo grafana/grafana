@@ -66,15 +66,25 @@ export interface HeatmapData {
   warning?: string;
 }
 
-export function prepareHeatmapData(
-  frames: DataFrame[],
-  annotations: DataFrame[] | undefined,
-  options: Options,
-  palette: string[],
-  theme: GrafanaTheme2,
-  replaceVariables: InterpolateFunction = (v) => v,
-  timeRange?: TimeRange
-): HeatmapData {
+interface PrepareHeatmapDataOptions {
+  frames: DataFrame[];
+  annotations?: DataFrame[];
+  options: Options;
+  palette: string[];
+  theme: GrafanaTheme2;
+  replaceVariables?: InterpolateFunction;
+  timeRange?: TimeRange;
+}
+
+export function prepareHeatmapData({
+  frames,
+  annotations,
+  options,
+  palette,
+  theme,
+  replaceVariables = (v) => v,
+  timeRange,
+}: PrepareHeatmapDataOptions): HeatmapData {
   if (!frames?.length) {
     return {};
   }

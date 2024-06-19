@@ -59,7 +59,15 @@ export const HeatmapPanel = ({
 
   const info = useMemo(() => {
     try {
-      return prepareHeatmapData(data.series, data.annotations, options, palette, theme, replaceVariables, timeRange);
+      return prepareHeatmapData({
+        frames: data.series,
+        annotations: data.annotations,
+        options,
+        palette,
+        theme,
+        replaceVariables,
+        timeRange,
+      });
     } catch (ex) {
       return { warning: `${ex}` };
     }
