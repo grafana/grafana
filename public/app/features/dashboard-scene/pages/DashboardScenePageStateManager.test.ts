@@ -146,6 +146,7 @@ describe('DashboardScenePageStateManager', () => {
         expect(loader.state.dashboard?.state.title).toEqual('Failed to load home dashboard');
         expect(loader.state.loadError).toEqual('Failed to load home dashboard');
       });
+    });
 
     describe('New dashboards', () => {
       it('Should have new empty model with meta.isNew and should not be cached', async () => {
