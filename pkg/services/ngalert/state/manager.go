@@ -311,6 +311,11 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	))
 
 	allChanges := StateTransitions(append(states, staleStates...))
+
+	// It's important that this is done *before* we sync the states to the persister. Otherwise, we will not persist
+	// the LastSentAt field to the store. This is not perfect, since the Manager is not responsible for sending the
+	// alerts we are not guaranteed that an actual attempt at sending will reflect the timestamp. Can be improved in a
+	// future update.
 	statesToSend := allChanges.UpdateLastSentAt(evaluatedAt)
 
 	st.persister.Sync(ctx, span, allChanges)
