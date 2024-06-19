@@ -90,7 +90,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 **To create a dashboard**:
 
-1. Click **Dashboards** in the primary menu.
+1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
 1. On the empty dashboard, click **+ Add visualization**.
 
@@ -99,7 +99,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. In the dialog box that opens, do one of the following:
 
    - Select one of your existing data sources.
-   - Select one of the Grafana's [built-in special data sources](ref:built-in-special-data-sources).
+   - Select one of the Grafana [built-in special data sources](ref:built-in-special-data-sources).
    - Click **Configure a new data source** to set up a new one (Admins only).
 
    {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
@@ -144,17 +144,17 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. When you've saved all the changes you want to make to the dashboard, click **Exit edit**.
    Now, when you want to make more changes to the saved dashboard, click **Edit**.
 
-## Copy an existing dashboard
+## Copy a dashboard
 
-To copy an existing dashboard, follow these steps:
+To copy a dashboard, follow these steps:
 
-1. Click **Dashboards** in the primary menu.
-1. Open the dashboard to be copied.
+1. Click **Dashboards** in the main menu.
+1. Open the dashboard you want to copy.
 1. Click **Edit**.
 1. Click the **Save dashboard** drop-down and select **Save as copy**.
 1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
 
-   By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is located in the same folder.
+   By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is in the same folder.
 
 1. Click **Save**.
 
@@ -170,7 +170,7 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 
 **To configure repeating rows:**
 
-1. Click **Dashboards** in the primary menu.
+1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to work on.
 1. At the top of the dashboard, click **Add** and select **Row** in the drop-down.
 
@@ -197,7 +197,7 @@ For example, in a dashboard:
 
 You can place a panel on a dashboard in any location.
 
-1. Click **Dashboards** in the primary menu.
+1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to work on.
 1. Click the panel title and drag the panel to the new location.
 
@@ -205,6 +205,6 @@ You can place a panel on a dashboard in any location.
 
 You can size a dashboard panel to suits your needs.
 
-1. Click **Dashboards** in the primary menu.
+1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to work on.
 1. To adjust the size of the panel, click and drag the lower-right corner of the panel.
