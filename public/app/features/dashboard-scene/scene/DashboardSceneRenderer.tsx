@@ -36,10 +36,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     );
   }
 
-  const emptyState = <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />;
+  const emptyState = (
+    <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} key="dashboard-empty-state" />
+  );
 
   const withPanels = (
-    <div className={cx(styles.body, !hasControls && styles.bodyWithoutControls)}>
+    <div className={cx(styles.body, !hasControls && styles.bodyWithoutControls)} key="dashboard-panels">
       <bodyToRender.Component model={bodyToRender} />
     </div>
   );
