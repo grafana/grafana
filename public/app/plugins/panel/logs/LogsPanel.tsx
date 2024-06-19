@@ -19,7 +19,8 @@ import {
   toUtc,
   urlUtil,
 } from '@grafana/data';
-import { CustomScrollbar, usePanelContext, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
+import { LogsTableWrap } from 'app/features/explore/Logs/LogsTableWrap';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
@@ -84,7 +85,9 @@ export const LogsPanel = ({
     onClickFilterOutString,
     onClickFilterString,
     isFilterLabelActive,
+    displayMode,
   },
+  width,
   id,
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
@@ -96,6 +99,7 @@ export const LogsPanel = ({
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
   let closeCallback = useRef<() => void>();
+  const theme = useTheme2();
 
   const { eventBus, onAddAdHocFilter } = usePanelContext();
   const onLogRowHover = useCallback(
@@ -302,48 +306,70 @@ export const LogsPanel = ({
           getLogRowContextUi={getLogRowContextUi}
         />
       )}
+
       <CustomScrollbar
         autoHide
         scrollTop={scrollTop}
         scrollRefCallback={(scrollElement) => setScrollElement(scrollElement)}
       >
-        <div className={style.container} ref={logsContainerRef}>
-          {showCommonLabels && !isAscending && renderCommonLabels()}
-          <LogRows
-            containerRendered={logsContainerRef.current !== null}
-            scrollIntoView={scrollIntoView}
-            permalinkedRowId={getLogsPanelState()?.logs?.id ?? undefined}
-            onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
-            logRows={logRows}
-            showContextToggle={showContextToggle}
-            deduplicatedRows={deduplicatedRows}
-            dedupStrategy={dedupStrategy}
-            showLabels={showLabels}
-            showTime={showTime}
-            wrapLogMessage={wrapLogMessage}
-            prettifyLogMessage={prettifyLogMessage}
-            timeZone={timeZone}
-            getFieldLinks={getFieldLinks}
+        {!displayMode || displayMode === 'logs' ? (
+          <div className={style.container} ref={logsContainerRef}>
+            {showCommonLabels && !isAscending && renderCommonLabels()}
+            <LogRows
+              containerRendered={logsContainerRef.current !== null}
+              scrollIntoView={scrollIntoView}
+              permalinkedRowId={getLogsPanelState()?.logs?.id ?? undefined}
+              onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
+              logRows={logRows}
+              showContextToggle={showContextToggle}
+              deduplicatedRows={deduplicatedRows}
+              dedupStrategy={dedupStrategy}
+              showLabels={showLabels}
+              showTime={showTime}
+              wrapLogMessage={wrapLogMessage}
+              prettifyLogMessage={prettifyLogMessage}
+              timeZone={timeZone}
+              getFieldLinks={getFieldLinks}
+              logsSortOrder={sortOrder}
+              enableLogDetails={enableLogDetails}
+              previewLimit={isAscending ? logRows.length : undefined}
+              onLogRowHover={onLogRowHover}
+              app={CoreApp.Dashboard}
+              onOpenContext={onOpenContext}
+              onClickFilterLabel={
+                isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : defaultOnClickFilterLabel
+              }
+              onClickFilterOutLabel={
+                isOnClickFilterOutLabel(onClickFilterOutLabel) ? onClickFilterOutLabel : defaultOnClickFilterOutLabel
+              }
+              onClickFilterString={isOnClickFilterString(onClickFilterString) ? onClickFilterString : undefined}
+              onClickFilterOutString={
+                isOnClickFilterOutString(onClickFilterOutString) ? onClickFilterOutString : undefined
+              }
+              isFilterLabelActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
+            />
+            {showCommonLabels && isAscending && renderCommonLabels()}
+          </div>
+        ) : (
+          <LogsTableWrap
             logsSortOrder={sortOrder}
-            enableLogDetails={enableLogDetails}
-            previewLimit={isAscending ? logRows.length : undefined}
-            onLogRowHover={onLogRowHover}
-            app={CoreApp.Dashboard}
-            onOpenContext={onOpenContext}
+            range={timeRange}
+            splitOpen={() => {}}
+            timeZone={timeZone}
+            width={width}
+            logsFrames={data.series}
             onClickFilterLabel={
               isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : defaultOnClickFilterLabel
             }
             onClickFilterOutLabel={
               isOnClickFilterOutLabel(onClickFilterOutLabel) ? onClickFilterOutLabel : defaultOnClickFilterOutLabel
             }
-            onClickFilterString={isOnClickFilterString(onClickFilterString) ? onClickFilterString : undefined}
-            onClickFilterOutString={
-              isOnClickFilterOutString(onClickFilterOutString) ? onClickFilterOutString : undefined
-            }
-            isFilterLabelActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
+            panelState={undefined}
+            theme={theme}
+            updatePanelState={() => {}}
+            datasourceType="unknown"
           />
-          {showCommonLabels && isAscending && renderCommonLabels()}
-        </div>
+        )}
       </CustomScrollbar>
     </>
   );
