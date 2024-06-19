@@ -20,6 +20,8 @@ This topic includes instructions for installing and running Grafana on Kubernete
 The Grafana open-source community offers Helm Charts for running it on Kubernetes. Please be aware that the code is provided without any warranties. If you encounter any problems, you can report them to the [Official GitHub repository](https://github.com/grafana/helm-charts/).
 {{% /admonition %}}
 
+Watch this video to learn more about installing Grafana using Helm Charts: {{< youtube id="sgYrEleW24E">}}
+
 ## Before you begin
 
 To install Grafana using Helm, ensure you have completed the following:

@@ -13,7 +13,7 @@ type Props = QueryEditorProps<InfluxDatasource, InfluxQuery, InfluxOptions, Infl
 const refId = 'InfluxVariableQueryEditor-VariableQuery';
 
 export const InfluxVariableEditor = ({ onChange, datasource, query }: Props) => {
-  const getFluxVariableQuery = (q: InfluxVariableQuery | string) => {
+  const getVariableQuery = (q: InfluxVariableQuery | string) => {
     // in legacy variable support query can be only a string
     // in new variable support query can be an object and hold more information
     // to be able to support old version we check the query here
@@ -24,7 +24,7 @@ export const InfluxVariableEditor = ({ onChange, datasource, query }: Props) => 
     return {
       refId,
       query: q,
-      maxDataPoints: 1000,
+      ...(datasource.version === InfluxVersion.Flux ? { maxDataPoints: 1000 } : {}),
     };
   };
 
@@ -34,7 +34,7 @@ export const InfluxVariableEditor = ({ onChange, datasource, query }: Props) => 
         <>
           <FluxQueryEditor
             datasource={datasource}
-            query={getFluxVariableQuery(query)}
+            query={getVariableQuery(query)}
             onChange={(q) => {
               onChange({ ...query, query: q.query ?? '' });
             }}
@@ -72,11 +72,11 @@ export const InfluxVariableEditor = ({ onChange, datasource, query }: Props) => 
           <InlineField label="Query" labelWidth={20} required grow aria-labelledby="influx-variable-query">
             <TextArea
               aria-label="influx-variable-query"
-              defaultValue={query.query}
+              defaultValue={getVariableQuery(query).query}
               placeholder="metric name or tags query"
               rows={1}
               onBlur={(e) => {
-                onChange({ refId, query: query.query ?? '' });
+                onChange({ refId, query: e.currentTarget.value ?? '' });
               }}
             />
           </InlineField>

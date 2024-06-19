@@ -258,7 +258,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     drawerContent: css({
       backgroundColor: `${theme.colors.background.primary} !important`,
       display: 'flex',
-      overflow: 'unset',
+      overflow: 'unset !important',
       flexDirection: 'column',
     }),
     drawerMotion: css({

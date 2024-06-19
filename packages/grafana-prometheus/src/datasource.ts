@@ -743,6 +743,30 @@ export class PrometheusDatasource
         expression = `histogram_quantile(0.95, sum(rate(${expression}[$__rate_interval])) by (le))`;
         break;
       }
+      case 'ADD_HISTOGRAM_AVG': {
+        expression = `histogram_avg(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_FRACTION': {
+        expression = `histogram_fraction(0,0.2,rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_COUNT': {
+        expression = `histogram_count(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_SUM': {
+        expression = `histogram_sum(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_STDDEV': {
+        expression = `histogram_stddev(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_STDVAR': {
+        expression = `histogram_stdvar(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
       case 'ADD_RATE': {
         expression = `rate(${expression}[$__rate_interval])`;
         break;

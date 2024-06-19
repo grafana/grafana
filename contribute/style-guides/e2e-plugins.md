@@ -33,3 +33,5 @@ Playwright end-to-end tests for plugins should be added to the [`e2e/plugin-e2e`
 The script above assumes you have Grafana running on `localhost:3000`. You may change this by providing environment variables.
 
 `HOST=127.0.0.1 PORT=3001 yarn e2e:playwright`
+
+- `yarn e2e:playwright:server` will start a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) on port 3001 and run the Playwright tests. The development server is provisioned with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources and apps.

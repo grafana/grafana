@@ -26,6 +26,10 @@ When you set the **Tooltip mode** to **All**, the **Values sort order** option i
 - **Ascending** - Values in the tooltip are listed from smallest to largest.
 - **Descending** - Values in the tooltip are listed from largest to smallest.
 
+### Max width
+
+Set the maximum width of the tooltip box.
+
 ### Max height
 
 Set the maximum height of the tooltip box. The default is 600 pixels.

@@ -101,6 +101,7 @@ export interface SearchState {
   folderUid?: string;
   includePanels?: boolean;
   eventTrackingNamespace: EventTrackingNamespace;
+  deleted: boolean;
 }
 
 export type OnToggleChecked = (item: DashboardViewItem) => void;

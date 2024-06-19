@@ -572,6 +572,7 @@ export const Components = {
   },
   Variables: {
     variableOption: 'data-testid variable-option',
+    variableLinkWrapper: 'data-testid variable-link-wrapper',
   },
   Annotations: {
     annotationsTypeInput: 'data-testid annotations-type-input',
