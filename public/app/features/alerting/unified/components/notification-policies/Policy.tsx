@@ -744,6 +744,7 @@ export const TimingOptionsMeta = ({ timingOptions }: TimingOptionsMetaProps) => 
       >
         <span>
           <Trans i18nKey="alerting.policies.metadata.timingOptions.groupWait">
+            {/* @ts-expect-error */}
             Wait <Text color="primary">{{ groupWait }}</Text> to group instances
           </Trans>
         </span>
@@ -759,6 +760,7 @@ export const TimingOptionsMeta = ({ timingOptions }: TimingOptionsMetaProps) => 
       >
         <span>
           <Trans i18nKey="alerting.policies.metadata.timingOptions.groupInterval">
+            {/* @ts-expect-error */}
             <Text color="primary">{{ groupInterval }}</Text> before sending updates
           </Trans>
         </span>
@@ -774,6 +776,7 @@ export const TimingOptionsMeta = ({ timingOptions }: TimingOptionsMetaProps) => 
       >
         <span>
           <Trans i18nKey="alerting.policies.metadata.timingOptions.repeatInterval">
+            {/* @ts-expect-error */}
             repeated every <Text color="primary">{{ repeatInterval }}</Text>
           </Trans>
         </span>
