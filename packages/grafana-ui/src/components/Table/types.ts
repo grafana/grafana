@@ -100,6 +100,7 @@ export interface Props {
   // The index of the field value that the table will initialize scrolled to
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
+  uid?: number;
 }
 
 /**
