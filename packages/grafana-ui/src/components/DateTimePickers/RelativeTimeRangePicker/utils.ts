@@ -90,26 +90,23 @@ const secondsToRelativeFormat = (seconds: number): string => {
  * @param seconds - The duration in seconds.
  * @returns The formatted duration string.
  */
-export function formatDuration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  const weeks = Math.floor(days / 7);
-
-  const timeUnits: Array<[number, string]> = [
-    [weeks % 52, 'w'],
-    [(days % 365) - 7 * (weeks % 52), 'd'],
-    [hours % 24, 'h'],
-    [minutes % 60, 'm'],
-    [seconds % 60, 's'],
+function formatDuration(seconds: number): string {
+  const units = [
+    { unit: 'w', value: 7 * 24 * 60 * 60 },
+    { unit: 'd', value: 24 * 60 * 60 },
+    { unit: 'h', value: 60 * 60 },
+    { unit: 'm', value: 60 },
+    { unit: 's', value: 1 },
   ];
 
-  return (
-    timeUnits
-      // remove all 0 values
-      .filter(([time]) => time > 0)
-      // join time and unit
-      .map(([time, unit]) => time + unit)
-      .join('')
-  );
+  for (const { unit, value } of units) {
+    if (seconds % value === 0) {
+      const quotient = seconds / value;
+      return `${quotient}${unit}`;
+    }
+  }
+
+  // If no perfect division, use the least significant unit
+  const leastSignificant = units[units.length - 1];
+  return `${seconds}${leastSignificant.unit}`;
 }
