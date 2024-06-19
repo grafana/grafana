@@ -245,6 +245,7 @@ To add a field override, follow these steps:
 1. Continue to add overrides to this field by clicking **Add override property**.
 1. Add as many overrides as you need.
 1. When you're finished, click **Save dashboard**.
+1. Click **Back to dashboard** and then **Exit edit**.
 
 ## Edit a field override
 
@@ -260,5 +261,6 @@ To edit a field override, follow these steps:
    - Delete existing override properties by clicking the **X** next to the property.
    - Delete an override entirely by clicking the trash icon at the top-right corner.
 1. Click **Save dashboard**.
+1. Click **Back to dashboard** and then **Exit edit**.
 
 The changes you make take effect immediately.

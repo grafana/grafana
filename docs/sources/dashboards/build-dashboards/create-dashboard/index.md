@@ -153,7 +153,7 @@ To copy a dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to copy.
-1. Click **Edit**.
+1. Click **Edit** in top-right corner.
 1. Click the **Save dashboard** drop-down and select **Save as copy**.
 1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
 

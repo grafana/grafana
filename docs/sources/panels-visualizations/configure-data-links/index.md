@@ -251,3 +251,4 @@ If you want to add all of the current dashboard's variables to the URL, then use
 1. If you want the link to open in a new tab, then toggle the **Open in a new tab** switch.
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save dashboard**.
+1. Click **Back to dashboard** and then **Exit edit**.
