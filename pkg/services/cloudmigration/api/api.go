@@ -469,6 +469,9 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 		Limit:      c.QueryInt("limit"),
 		Offset:     c.QueryInt("offset"),
 	}
+	if q.Limit == 0 {
+		q.Limit = 100
+	}
 
 	snapshotList, err := cma.cloudMigrationService.GetSnapshotList(ctx, q)
 	if err != nil {
@@ -477,13 +480,13 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 
 	dtos := make([]SnapshotDTO, len(snapshotList))
 	for i := 0; i < len(snapshotList); i++ {
-		dtos = append(dtos, SnapshotDTO{
+		dtos[i] = SnapshotDTO{
 			SnapshotUID: snapshotList[i].UID,
 			Status:      fromSnapshotStatus(snapshotList[i].Status),
 			SessionUID:  uid,
 			Created:     snapshotList[i].Created,
 			Finished:    snapshotList[i].Finished,
-		})
+		}
 	}
 
 	return response.JSON(http.StatusOK, SnapshotListResponseDTO{

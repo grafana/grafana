@@ -230,12 +230,5 @@ func (s *Service) uploadSnapshot(ctx context.Context, snapshotMeta cloudmigratio
 	}); err != nil {
 		s.log.Error("updating snapshot", "err", err)
 	}
-	// finished
-	time.Sleep(3 * time.Second)
-	if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:    snapshotMeta.UID,
-		Status: cloudmigration.SnapshotStatusFinished,
-	}); err != nil {
-		s.log.Error("updating snapshot", "err", err)
-	}
+	// end here as the GetSnapshot handler will fill in the rest when called
 }
