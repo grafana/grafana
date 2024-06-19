@@ -1,6 +1,6 @@
 import React, { useId } from 'react';
 
-import { HorizontalGroup, InlineFormLabel, Input, Select, TextArea } from '@grafana/ui';
+import { Stack, InlineFormLabel, Input, Select, TextArea } from '@grafana/ui';
 
 import { InfluxQuery } from '../../../../../types';
 import { DEFAULT_RESULT_FORMAT, RESULT_FORMATS } from '../../../constants';
@@ -46,7 +46,7 @@ export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.E
         }}
         value={currentQuery ?? ''}
       />
-      <HorizontalGroup>
+      <Stack>
         <InlineFormLabel htmlFor={selectElementId}>Format as</InlineFormLabel>
         <Select
           inputId={selectElementId}
@@ -69,7 +69,7 @@ export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.E
           }}
           value={currentAlias ?? ''}
         />
-      </HorizontalGroup>
+      </Stack>
     </div>
   );
 };
