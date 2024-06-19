@@ -73,9 +73,9 @@ You can share a dashboard as a direct link or as a snapshot. You can also export
 If you change a dashboard, ensure that you save the changes before sharing.
 {{% /admonition %}}
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
-1. Click the **Share** button at the top right of the screen.
+1. Click **Share** in the top-right corner.
 
    The share dialog opens and shows the Link tab.
 
@@ -108,7 +108,7 @@ If you created a snapshot by mistake, click **Delete snapshot** in the dialog bo
 
 To delete existing snapshots, follow these steps:
 
-1. In the primary menu, click **Dashboards**.
+1. Click **Dashboards** in the main menu.
 1. Click **Snapshots** to go to the snapshots management page.
 1. Click the red **x** next to the snapshot URL that you want to delete.
 
@@ -120,7 +120,7 @@ The dashboard export action creates a Grafana JSON file that contains everything
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
-1. Click the **Share** icon in the top navigation bar.
+1. Click **Share** in the top-right corner.
 1. Click **Export**.
 
    If you're exporting the dashboard to use in another instance, with different data source UIDs, enable the **Export for sharing externally** switch.
@@ -141,10 +141,10 @@ You can generate and save PDF files of any dashboard.
 
 > **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 
-1. Click **Dashboards** in the left-side menu.
+1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
-1. Click the **Share** button at the top right of the screen.
-1. On the PDF tab, select a layout option for the exported dashboard: **Portrait** or **Landscape**.
+1. Click **Share** in the top-right corner.
+1. On the **PDF** tab, select a layout option for the exported dashboard: **Portrait** or **Landscape**.
 1. Click **Save as PDF** to render the dashboard as a PDF file.
 
    Grafana opens the PDF file in a new window or browser tab.
@@ -210,7 +210,7 @@ If you created a snapshot by mistake, click **Delete snapshot** in the dialog bo
 
 To delete existing snapshots, follow these steps:
 
-1. In the primary menu, click **Dashboards**.
+1. Click **Dashboards** in the main menu.
 1. Click **Snapshots** to go to the snapshots management page.
 1. Click the red **x** next to the snapshot URL that you want to delete.
 
@@ -243,4 +243,4 @@ To create a library panel from the **Share Panel** dialog:
 1. In **Library panel name**, enter the name.
 1. In **Save in folder**, select the folder in which to save the library panel. By default, the root level is selected.
 1. Click **Create library panel** to save your changes.
-1. Save the dashboard.
+1. Click **Save dashboard**.

@@ -151,7 +151,7 @@ Click the icon next to the panel title to see available panel links.
 
    To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
 
-1. Expand the **Panel options** section, scroll down to Panel links.
+1. Expand the **Panel options** section, scroll down to **Panel links**.
 1. Click **Add link**.
 1. Enter a **Title**. **Title** is a human-readable label for the link that will be displayed in the UI.
 1. Enter the **URL** you want to link to.
