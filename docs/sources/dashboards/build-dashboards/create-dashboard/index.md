@@ -145,7 +145,8 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    When you add additional panels to the dashboard, you're taken straight to the **Edit panel** view.
 
 1. When you've saved all the changes you want to make to the dashboard, click **Exit edit**.
-   Now, when you want to make more changes to the saved dashboard, click **Edit**.
+
+   Now, when you want to make more changes to the saved dashboard, click **Edit** in the top-right corner.
 
 ## Copy a dashboard
 

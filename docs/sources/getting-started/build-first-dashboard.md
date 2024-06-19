@@ -73,7 +73,7 @@ Congratulations, you have created your first dashboard and it's displaying resul
 
 #### Next steps
 
-Continue to experiment with what you have built, try the [explore workflow](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) or another visualization feature. Refer to [Data sources]({{< relref "../datasources" >}}) for a list of supported data sources and instructions on how to [add a data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source). The following topics will be of interest to you:
+Continue to experiment with what you have built, try the [explore workflow](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) or another visualization feature. Refer to [Data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) for a list of supported data sources and instructions on how to [add a data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source). The following topics will be of interest to you:
 
 - [Panels and visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/)
 - [Dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/)

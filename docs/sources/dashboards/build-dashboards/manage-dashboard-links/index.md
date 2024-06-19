@@ -86,6 +86,9 @@ Add links to other dashboards at the top of your current dashboard.
 1. In the dashboard you want to link, click **Edit**.
 1. Click **Settings**.
 1. Go to the **Links** tab and then click **Add dashboard link**.
+
+   The default link type is **Dashboards**.
+
 1. In the **With tags** drop-down, enter tags to limit the linked dashboards to only the ones with the tags you enter.
 
    If you don't add any tags, Grafana includes links to all other dashboards.
