@@ -3,7 +3,6 @@ package resource
 import (
 	"bytes"
 	context "context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
@@ -20,6 +19,7 @@ import (
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/memblob"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -115,39 +115,17 @@ func (s *cdkAppender) WriteEvent(ctx context.Context, event WriteEvent) (int64, 
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	body := fsEvent{
-		ResourceVersion: s.nextRV(),
-		Message:         event.Message,
-		Operation:       event.Operation.String(),
-		Value:           event.Value,
-	}
-
-	bytes, err := json.Marshal(&body)
-	if err != nil {
-		return 0, err
-	}
-
-	err = s.bucket.WriteAll(ctx, s.getPath(event.Key, body.ResourceVersion), bytes, &blob.WriterOptions{
+	rv := s.nextRV()
+	err := s.bucket.WriteAll(ctx, s.getPath(event.Key, rv), event.Value, &blob.WriterOptions{
 		ContentType: "application/json",
 	})
-	return body.ResourceVersion, err
+	return rv, err
 }
 
 // Create new name for a given resource
 func (s *cdkAppender) GenerateName(ctx context.Context, key *ResourceKey, prefix string) (string, error) {
 	// TODO... shorter and make sure it does not exist
 	return prefix + "x" + uuid.New().String(), nil
-}
-
-func (s *cdkAppender) open(ctx context.Context, p string) (*fsEvent, error) {
-	raw, err := s.bucket.ReadAll(ctx, p)
-	if err != nil {
-		return nil, err
-	}
-
-	evt := &fsEvent{}
-	err = json.Unmarshal(raw, evt)
-	return evt, err
 }
 
 // Read implements ResourceStoreServer.
@@ -168,6 +146,7 @@ func (s *cdkAppender) Read(ctx context.Context, req *ReadRequest) (*ReadResponse
 				if idx > 0 {
 					v, err := strconv.ParseInt(obj.Key[idx:edx], 10, 64)
 					if err == nil && v > rv {
+						rv = v
 						path = obj.Key // find the path with biggest resource version
 					}
 				}
@@ -175,19 +154,22 @@ func (s *cdkAppender) Read(ctx context.Context, req *ReadRequest) (*ReadResponse
 		}
 	}
 
-	evt, err := s.open(ctx, path)
-	if err != nil || evt.Operation == ResourceOperation_DELETED.String() {
-		return nil, apierrors.NewNotFound(schema.GroupResource{
-			Group:    req.Key.Group,
-			Resource: req.Key.Resource,
-		}, req.Key.Name)
+	raw, err := s.bucket.ReadAll(ctx, path)
+	if err == nil && bytes.Contains(raw, []byte(`"DeletedMarker"`)) {
+		tmp := &unstructured.Unstructured{}
+		err = tmp.UnmarshalJSON(raw)
+		if err == nil && tmp.GetKind() == "DeletedMarker" {
+			return nil, apierrors.NewNotFound(schema.GroupResource{
+				Group:    req.Key.Group,
+				Resource: req.Key.Resource,
+			}, req.Key.Name)
+		}
 	}
 
 	return &ReadResponse{
-		ResourceVersion: evt.ResourceVersion,
-		Value:           evt.Value,
-		Message:         evt.Message,
-	}, nil
+		ResourceVersion: rv,
+		Value:           raw,
+	}, err
 }
 
 // List implements AppendingStore.
@@ -200,15 +182,13 @@ func (s *cdkAppender) List(ctx context.Context, req *ListRequest) (*ListResponse
 	rsp := &ListResponse{}
 	for _, item := range resources {
 		latest := item.versions[0]
-		evt, err := s.open(ctx, latest.key)
+		raw, err := s.bucket.ReadAll(ctx, latest.key)
 		if err != nil {
 			return nil, err
 		}
-
 		rsp.Items = append(rsp.Items, &ResourceWrapper{
 			ResourceVersion: latest.rv,
-			Value:           evt.Value,
-			// Operation??
+			Value:           raw,
 		})
 	}
 	return rsp, nil
