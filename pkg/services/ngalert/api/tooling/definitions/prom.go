@@ -172,9 +172,9 @@ type Rule struct {
 	Health    string `json:"health"`
 	LastError string `json:"lastError,omitempty"`
 	// required: true
-	Type           v1.RuleType `json:"type"`
-	LastEvaluation time.Time   `json:"lastEvaluation"`
-	EvaluationTime float64     `json:"evaluationTime"`
+	Type           string    `json:"type"`
+	LastEvaluation time.Time `json:"lastEvaluation"`
+	EvaluationTime float64   `json:"evaluationTime"`
 }
 
 // Alert has info for an alert.

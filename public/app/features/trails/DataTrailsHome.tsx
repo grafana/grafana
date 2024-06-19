@@ -65,7 +65,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
 
         <Stack gap={5}>
           <div className={styles.column}>
-            <Text variant="h4">Recent metrics</Text>
+            <Text variant="h4">Recent metrics explorations</Text>
             <div className={styles.trailList}>
               {getTrailStore().recent.map((trail, index) => {
                 const resolvedTrail = trail.resolve();

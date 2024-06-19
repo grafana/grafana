@@ -133,6 +133,13 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIRe
 			errs = append(errs, err)
 		}
 	}
+	for _, i := range cp.Sns {
+		el, err := marshallIntegration(j, "sns", i, i.DisableResolveMessage)
+		integration = append(integration, el)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
 	for _, i := range cp.Slack {
 		el, err := marshallIntegration(j, "slack", i, i.DisableResolveMessage)
 		integration = append(integration, el)
@@ -283,6 +290,11 @@ func parseIntegration(json jsoniter.API, result *definitions.ContactPoint, recei
 		integration := definitions.SensugoIntegration{DisableResolveMessage: disable}
 		if err = json.Unmarshal(data, &integration); err == nil {
 			result.Sensugo = append(result.Sensugo, integration)
+		}
+	case "sns":
+		integration := definitions.SnsIntegration{DisableResolveMessage: disable}
+		if err = json.Unmarshal(data, &integration); err == nil {
+			result.Sns = append(result.Sns, integration)
 		}
 	case "slack":
 		integration := definitions.SlackIntegration{DisableResolveMessage: disable}

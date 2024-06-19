@@ -6,7 +6,7 @@ import { Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardMeta } from 'app/types';
 
 import { RemovePanelEvent } from '../../../types/events';
@@ -65,7 +65,7 @@ export class DashboardSrv {
 
   saveJSONDashboard(json: string) {
     const parsedJson = JSON.parse(json);
-    return saveDashboard({
+    return getDashboardAPI().saveDashboard({
       dashboard: parsedJson,
       folderUid: this.dashboard?.meta.folderUid || parsedJson.folderUid,
     });

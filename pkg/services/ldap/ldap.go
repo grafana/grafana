@@ -3,6 +3,7 @@ package ldap
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"math"
@@ -96,28 +97,14 @@ func New(config *ServerConfig, cfg *setting.Cfg) IServer {
 // Dial dials in the LDAP
 // TODO: decrease cyclomatic complexity
 func (server *Server) Dial() error {
-	var err error
-	var certPool *x509.CertPool
-	if server.Config.RootCACert != "" {
-		certPool = x509.NewCertPool()
-		for _, caCertFile := range util.SplitString(server.Config.RootCACert) {
-			// nolint:gosec
-			// We can ignore the gosec G304 warning on this one because `caCertFile` comes from ldap config.
-			pem, err := os.ReadFile(caCertFile)
-			if err != nil {
-				return err
-			}
-			if !certPool.AppendCertsFromPEM(pem) {
-				return errors.New("Failed to append CA certificate " + caCertFile)
-			}
-		}
+	certPool, err := getRootCACertPool(*server.Config)
+	if err != nil {
+		return err
 	}
-	var clientCert tls.Certificate
-	if server.Config.ClientCert != "" && server.Config.ClientKey != "" {
-		clientCert, err = tls.LoadX509KeyPair(server.Config.ClientCert, server.Config.ClientKey)
-		if err != nil {
-			return err
-		}
+
+	clientCert, err := getClientCert(*server.Config)
+	if err != nil {
+		return err
 	}
 
 	timeout := time.Duration(server.Config.Timeout) * time.Second
@@ -311,6 +298,66 @@ func (server *Server) Users(logins []string) (
 	)
 
 	return serializedUsers, nil
+}
+
+func getRootCACertPool(config ServerConfig) (*x509.CertPool, error) {
+	var pemCerts [][]byte
+
+	if config.RootCACert != "" {
+		for _, caCertFile := range util.SplitString(config.RootCACert) {
+			// nolint:gosec
+			// We can ignore the gosec G304 warning on this one because `caCertFile` comes from ldap config.
+			pem, err := os.ReadFile(caCertFile)
+			if err != nil {
+				return nil, err
+			}
+
+			pemCerts = append(pemCerts, pem)
+		}
+	} else if len(config.RootCACertValue) > 0 {
+		for _, cert := range config.RootCACertValue {
+			pem, err := base64.StdEncoding.DecodeString(cert)
+			if err != nil {
+				return nil, err
+			}
+
+			pemCerts = append(pemCerts, pem)
+		}
+	}
+
+	if len(pemCerts) > 0 {
+		certPool := x509.NewCertPool()
+
+		for _, pem := range pemCerts {
+			if !certPool.AppendCertsFromPEM(pem) {
+				return nil, errors.New("failed to append CA certificate")
+			}
+		}
+
+		return certPool, nil
+	}
+
+	return nil, nil
+}
+
+func getClientCert(config ServerConfig) (tls.Certificate, error) {
+	if config.ClientCert != "" && config.ClientKey != "" {
+		return tls.LoadX509KeyPair(config.ClientCert, config.ClientKey)
+	} else if config.ClientCertValue != "" && config.ClientKeyValue != "" {
+		certPem, err := base64.StdEncoding.DecodeString(config.ClientCertValue)
+		if err != nil {
+			return tls.Certificate{}, err
+		}
+
+		keyPem, err := base64.StdEncoding.DecodeString(config.ClientKeyValue)
+		if err != nil {
+			return tls.Certificate{}, err
+		}
+
+		return tls.X509KeyPair(certPem, keyPem)
+	}
+
+	return tls.Certificate{}, nil
 }
 
 // getUsersIteration is a helper function for Users() method.

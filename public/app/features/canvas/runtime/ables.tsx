@@ -1,8 +1,9 @@
 import { MoveableManagerInterface, Renderer } from 'moveable';
 
-import { HorizontalConstraint, VerticalConstraint } from '../types';
+import { VerticalConstraint, HorizontalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 import { Scene } from './scene';
+import { findElementByTarget } from './sceneElementManagement';
 
 export const settingsViewable = (scene: Scene) => ({
   name: 'settingsViewable',
@@ -99,7 +100,7 @@ export const constraintViewable = (scene: Scene) => ({
   events: [],
   render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
     const rect = moveable.getRect();
-    const targetElement = scene.findElementByTarget(moveable.state.target!);
+    const targetElement = findElementByTarget(moveable.state.target!, scene.root.elements);
 
     // If selection is more than 1 element don't display constraint visualizations
     if (scene.selecto?.getSelectedTargets() && scene.selecto?.getSelectedTargets().length > 1) {

@@ -13,10 +13,10 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -333,7 +333,6 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 
 func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *folder.CreateFolderCommand) (*folder.Folder, error) {
 	dto.SignedInUser = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
-
 	f, err := dr.folderService.Create(ctx, dto)
 	if err != nil {
 		dr.log.Error("failed to create folder for provisioned dashboards", "folder", dto.Title, "org", dto.OrgID, "err", err)
@@ -701,9 +700,16 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 	hitList := make([]*model.Hit, 0)
 	hits := make(map[int64]*model.Hit)
 
+	requesterIsSvcAccount := query.SignedInUser.GetID().Namespace() == identity.NamespaceServiceAccount
+
 	for _, item := range res {
 		hit, exists := hits[item.ID]
 		if !exists {
+			// Don't list k6 items for users, we don't want users to interact with k6 folders directly through folder UI
+			if (item.UID == accesscontrol.K6FolderUID || item.FolderUID == accesscontrol.K6FolderUID) && !requesterIsSvcAccount {
+				continue
+			}
+
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 			hit = &model.Hit{
 				ID:          item.ID,

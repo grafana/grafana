@@ -161,7 +161,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
           )}
           control={control}
           name={name}
-          defaultValue={option.defaultValue}
+          defaultValue={option.defaultValue?.value}
           rules={{
             validate: {
               customValidator: (v) => (customValidator ? customValidator(v) : true),

@@ -55,6 +55,15 @@ export const addQueryHistoryToQueryLibrary = async () => {
   await userEvent.click(button);
 };
 
+export const submitAddToQueryLibrary = async ({ description }: { description: string }) => {
+  const input = within(screen.getByRole('dialog')).getByLabelText('Description');
+  await userEvent.type(input, description);
+  const saveButton = screen.getByRole('button', {
+    name: /save/i,
+  });
+  await userEvent.click(saveButton);
+};
+
 export const closeQueryHistory = async () => {
   const selector = withinQueryHistory();
   const closeButton = selector.getByRole('button', { name: 'Close query history' });

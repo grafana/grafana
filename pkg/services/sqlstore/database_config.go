@@ -192,7 +192,7 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 		if !filepath.IsAbs(dbCfg.Path) {
 			dbCfg.Path = filepath.Join(cfg.DataPath, dbCfg.Path)
 		}
-		if err := os.MkdirAll(path.Dir(dbCfg.Path), os.ModePerm); err != nil {
+		if err := os.MkdirAll(path.Dir(dbCfg.Path), 0o750); err != nil {
 			return err
 		}
 

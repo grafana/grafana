@@ -31,8 +31,9 @@ var testData embed.FS
 func TestExportFromPayload(t *testing.T) {
 	orgID := int64(1)
 	folder := &folder2.Folder{
-		UID:   "e4584834-1a87-4dff-8913-8a4748dfca79",
-		Title: "foo bar",
+		UID:      "e4584834-1a87-4dff-8913-8a4748dfca79",
+		Title:    "foo bar",
+		Fullpath: "foo bar",
 	}
 
 	ruleStore := fakes.NewRuleStore(t)
@@ -405,12 +406,12 @@ func TestExportRules(t *testing.T) {
 			if tc.expectedStatus != 200 {
 				return
 			}
-			var exp []ngmodels.AlertRuleGroupWithFolderTitle
+			var exp []ngmodels.AlertRuleGroupWithFolderFullpath
 			gr := ngmodels.GroupByAlertRuleGroupKey(tc.expectedRules)
 			for key, rules := range gr {
 				folder, err := ruleStore.GetNamespaceByUID(context.Background(), key.NamespaceUID, orgID, nil)
 				require.NoError(t, err)
-				exp = append(exp, ngmodels.NewAlertRuleGroupWithFolderTitleFromRulesGroup(key, rules, folder.Title))
+				exp = append(exp, ngmodels.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(key, rules, folder.Fullpath))
 			}
 			sort.SliceStable(exp, func(i, j int) bool {
 				gi, gj := exp[i], exp[j]
@@ -422,7 +423,7 @@ func TestExportRules(t *testing.T) {
 				}
 				return gi.Title < gj.Title
 			})
-			groups, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle(exp)
+			groups, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath(exp)
 			require.NoError(t, err)
 
 			require.Equal(t, string(exportResponse(rc, groups).Body()), string(resp.Body()))

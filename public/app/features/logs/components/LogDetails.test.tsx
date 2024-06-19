@@ -11,6 +11,7 @@ import {
   FieldType,
   createDataFrame,
   DataFrameType,
+  CoreApp,
 } from '@grafana/data';
 
 import { LogDetails, Props } from './LogDetails';
@@ -32,6 +33,7 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
     onClickHideField: () => {},
     theme,
     styles,
+    app: CoreApp.Explore,
     ...(propOverrides || {}),
   };
 

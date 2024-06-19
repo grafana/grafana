@@ -167,6 +167,8 @@ type ProvisionedAlertRule struct {
 	IsPaused bool `json:"isPaused"`
 	// example: {"receiver":"email","group_by":["alertname","grafana_folder","cluster"],"group_wait":"30s","group_interval":"1m","repeat_interval":"4d","mute_time_intervals":["Weekends","Holidays"]}
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings"`
+	//example: {"metric":"grafana_alerts_ratio", "from":"A"}
+	Record *Record `json:"record"`
 }
 
 // swagger:route GET /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteGetAlertRuleGroup
@@ -273,6 +275,7 @@ type AlertRuleExport struct {
 	Labels               *map[string]string                   `json:"labels,omitempty" yaml:"labels,omitempty" hcl:"labels"`
 	IsPaused             bool                                 `json:"isPaused" yaml:"isPaused" hcl:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettingsExport `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty" hcl:"notification_settings,block"`
+	Record               *AlertRuleRecordExport               `json:"record,omitempty" yaml:"record,omitempty" hcl:"record"`
 }
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.
@@ -300,4 +303,10 @@ type AlertRuleNotificationSettingsExport struct {
 	GroupInterval     *string  `yaml:"group_interval,omitempty" json:"group_interval,omitempty" hcl:"group_interval,optional"`
 	RepeatInterval    *string  `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty" hcl:"repeat_interval,optional"`
 	MuteTimeIntervals []string `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty" hcl:"mute_timings"` // TF -> `mute_timings`
+}
+
+// Record is the provisioned export of models.Record.
+type AlertRuleRecordExport struct {
+	Metric string `json:"metric" yaml:"metric" hcl:"metric"`
+	From   string `json:"from" yaml:"from" hcl:"from"`
 }

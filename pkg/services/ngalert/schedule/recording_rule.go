@@ -7,6 +7,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -36,9 +37,11 @@ type recordingRule struct {
 	logger  log.Logger
 	metrics *metrics.Scheduler
 	tracer  tracing.Tracer
+
+	writer RecordingWriter
 }
 
-func newRecordingRule(parent context.Context, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, ft featuremgmt.FeatureToggles, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer) *recordingRule {
+func newRecordingRule(parent context.Context, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, ft featuremgmt.FeatureToggles, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter) *recordingRule {
 	ctx, stop := util.WithCancelCause(parent)
 	return &recordingRule{
 		ctx:            ctx,
@@ -51,6 +54,7 @@ func newRecordingRule(parent context.Context, maxAttempts int64, clock clock.Clo
 		logger:         logger,
 		metrics:        metrics,
 		tracer:         tracer,
+		writer:         writer,
 	}
 }
 
@@ -111,7 +115,10 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	logger := r.logger.FromContext(ctx).New("now", ev.scheduledAt, "fingerprint", ev.Fingerprint())
 	orgID := fmt.Sprint(ev.rule.OrgID)
 	evalDuration := r.metrics.EvalDuration.WithLabelValues(orgID)
+	evalAttemptTotal := r.metrics.EvalAttemptTotal.WithLabelValues(orgID)
+	evalAttemptFailures := r.metrics.EvalAttemptFailures.WithLabelValues(orgID)
 	evalTotal := r.metrics.EvalTotal.WithLabelValues(orgID)
+	evalTotalFailures := r.metrics.EvalFailures.WithLabelValues(orgID)
 	evalStart := r.clock.Now()
 
 	defer func() {
@@ -134,6 +141,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	))
 	defer span.End()
 
+	var latestError error
 	for attempt := int64(1); attempt <= r.maxAttempts; attempt++ {
 		logger := logger.New("attempt", attempt)
 		if ctx.Err() != nil {
@@ -142,52 +150,85 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 			return
 		}
 
+		evalAttemptTotal.Inc()
 		err := r.tryEvaluation(ctx, ev, logger)
+		latestError = err
 		if err == nil {
-			return
+			break
 		}
 
 		logger.Error("Failed to evaluate rule", "attempt", attempt, "error", err)
-		select {
-		case <-ctx.Done():
-			logger.Error("Context has been cancelled while backing off", "attempt", attempt)
-			return
-		case <-time.After(retryDelay):
-			continue
+		evalAttemptFailures.Inc()
+
+		if eval.IsNonRetryableError(err) {
+			break
 		}
+
+		if attempt < r.maxAttempts {
+			select {
+			case <-ctx.Done():
+				logger.Error("Context has been cancelled while backing off", "attempt", attempt)
+				return
+			case <-time.After(retryDelay):
+				continue
+			}
+		}
+	}
+
+	if latestError != nil {
+		evalTotalFailures.Inc()
+		span.SetStatus(codes.Error, "rule evaluation failed")
+		span.RecordError(latestError)
+		if r.maxAttempts > 0 {
+			logger.Error("Recording rule evaluation failed after all attempts", "lastError", latestError)
+		}
+	} else {
+		logger.Debug("Recording rule evaluation succeeded")
 	}
 }
 
 func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logger log.Logger) error {
-	orgID := fmt.Sprint(ev.rule.OrgID)
-	evalAttemptTotal := r.metrics.EvalAttemptTotal.WithLabelValues(orgID)
-	evalAttemptFailures := r.metrics.EvalAttemptFailures.WithLabelValues(orgID)
-	evalTotalFailures := r.metrics.EvalFailures.WithLabelValues(orgID)
-
-	start := r.clock.Now()
+	evalStart := r.clock.Now()
 	evalCtx := eval.NewContext(ctx, SchedulerUserFor(ev.rule.OrgID))
 	result, err := r.buildAndExecutePipeline(ctx, evalCtx, ev, logger)
-	dur := r.clock.Now().Sub(start)
-
-	evalAttemptTotal.Inc()
-	span := trace.SpanFromContext(ctx)
-
-	// TODO: In some cases, err can be nil but the dataframe itself contains embedded error frames. Parse these out like we do when evaluating alert rules.
-	// TODO: (Maybe, refactor something in eval package so we can use shared code for this)
+	evalDur := r.clock.Now().Sub(evalStart)
 	if err != nil {
-		evalAttemptFailures.Inc()
-		// TODO: Only errors embedded in the frame can be considered retryable.
-		// TODO: Since we are not handling these yet per the above TODO, we can blindly consider all errors to be non-retryable for now, and just exit.
-		evalTotalFailures.Inc()
-		span.SetStatus(codes.Error, "rule evaluation failed")
-		span.RecordError(err)
 		return fmt.Errorf("server side expressions pipeline returned an error: %w", err)
 	}
 
-	logger.Debug("Alert rule evaluated", "results", result, "duration", dur)
+	// There might be errors in the pipeline results, even if the query succeeded.
+	if err := eval.FindConditionError(result, ev.rule.Record.From); err != nil {
+		return fmt.Errorf("the query failed with an error: %w", err)
+	}
+
+	logger.Info("Recording rule evaluated", "results", result, "duration", evalDur)
+	span := trace.SpanFromContext(ctx)
 	span.AddEvent("rule evaluated", trace.WithAttributes(
 		attribute.Int64("results", int64(len(result.Responses))),
 	))
+
+	frames, err := r.frameRef(ev.rule.Record.From, result)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to extract frames from rule evaluation")
+		span.RecordError(err)
+		return fmt.Errorf("failed to extract frames from rule evaluation: %w", err)
+	}
+
+	writeStart := r.clock.Now()
+	err = r.writer.Write(ctx, ev.rule.Record.Metric, writeStart, frames, ev.rule.Labels)
+	writeDur := r.clock.Now().Sub(writeStart)
+
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to write metrics")
+		span.RecordError(err)
+		return fmt.Errorf("metric remote write failed: %w", err)
+	}
+
+	logger.Debug("Metrics written", "duration", writeDur)
+	span.AddEvent("metrics written", trace.WithAttributes(
+		attribute.Int64("frames", int64(len(frames))),
+	))
+
 	return nil
 }
 
@@ -211,4 +252,18 @@ func (r *recordingRule) evaluationDoneTestHook(ev *Evaluation) {
 	}
 
 	r.evalAppliedHook(ev.rule.GetKey(), ev.scheduledAt)
+}
+
+func (r *recordingRule) frameRef(refID string, resp *backend.QueryDataResponse) (data.Frames, error) {
+	if len(resp.Responses) == 0 {
+		return nil, fmt.Errorf("no responses returned from rule evaluation")
+	}
+
+	for ref, resp := range resp.Responses {
+		if ref == refID {
+			return resp.Frames, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no response with refID %s found in rule evaluation", refID)
 }

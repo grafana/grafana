@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 
+import { getAzureClouds } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { Select, Field } from '@grafana/ui';
@@ -16,17 +17,23 @@ export interface Props {
   userIdentityEnabled: boolean;
   credentials: AzureCredentials;
   azureCloudOptions?: SelectableValue[];
-  legacyAzureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
   disabled?: boolean;
   children?: JSX.Element;
 }
 
+export function getAzureCloudOptions(): Array<SelectableValue<string>> {
+  const cloudInfo = getAzureClouds();
+
+  return cloudInfo.map((cloud) => ({
+    value: cloud.name,
+    label: cloud.displayName,
+  }));
+}
+
 export const AzureCredentialsForm = (props: Props) => {
   const {
     credentials,
-    azureCloudOptions,
-    legacyAzureCloudOptions,
     onCredentialsChange,
     disabled,
     managedIdentityEnabled,
@@ -102,7 +109,7 @@ export const AzureCredentialsForm = (props: Props) => {
       {credentials.authType === 'clientsecret' && (
         <AppRegistrationCredentials
           credentials={credentials}
-          azureCloudOptions={legacyAzureCloudOptions}
+          azureCloudOptions={getAzureCloudOptions()}
           onCredentialsChange={onCredentialsChange}
           disabled={disabled}
         />
@@ -111,7 +118,7 @@ export const AzureCredentialsForm = (props: Props) => {
       {credentials.authType === 'currentuser' && (
         <CurrentUserFallbackCredentials
           credentials={credentials}
-          azureCloudOptions={azureCloudOptions}
+          azureCloudOptions={getAzureCloudOptions()}
           onCredentialsChange={onCredentialsChange}
           disabled={disabled}
           managedIdentityEnabled={managedIdentityEnabled}

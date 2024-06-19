@@ -23,6 +23,7 @@ import { InputControl } from './InputControl';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { SelectContainer } from './SelectContainer';
 import { SelectMenu, SelectMenuOptions, VirtualizedSelectMenu } from './SelectMenu';
+import { SelectOptionGroup } from './SelectOptionGroup';
 import { SelectOptionGroupHeader } from './SelectOptionGroupHeader';
 import { Props, SingleValue } from './SingleValue';
 import { ValueContainer } from './ValueContainer';
@@ -204,8 +205,6 @@ export function SelectBase<T, Rest = {}>({
     }
   }
 
-  const [internalInputValue, setInternalInputValue] = useState('');
-
   const commonSelectProps = {
     'aria-label': ariaLabel,
     'data-testid': dataTestid,
@@ -281,35 +280,6 @@ export function SelectBase<T, Rest = {}>({
     creatableProps.onCreateOption = onCreateOption;
     creatableProps.createOptionPosition = createOptionPosition;
     creatableProps.isValidNewOption = isValidNewOption;
-
-    // code needed to allow editing a custom value once entered
-    // we only want to do this for single selects, not multi
-    if (!isMulti) {
-      creatableProps.inputValue = internalInputValue;
-      creatableProps.onMenuOpen = () => {
-        // make sure we call the base onMenuOpen if it exists
-        commonSelectProps.onMenuOpen?.();
-
-        // restore the input state to the selected value
-        setInternalInputValue(selectedValue?.[0]?.label ?? '');
-      };
-      creatableProps.onInputChange = (val, actionMeta) => {
-        // make sure we call the base onInputChange
-        commonSelectProps.onInputChange(val, actionMeta);
-
-        // update the input value state on change since we're explicitly controlling it
-        if (actionMeta.action === 'input-change') {
-          setInternalInputValue(val);
-        }
-      };
-      creatableProps.onMenuClose = () => {
-        // make sure we call the base onMenuClose if it exists
-        commonSelectProps.onMenuClose?.();
-
-        // clear the input state on menu close, else react-select won't show the SingleValue component correctly
-        setInternalInputValue('');
-      };
-    }
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
@@ -330,6 +300,7 @@ export function SelectBase<T, Rest = {}>({
         ref={reactSelectRef}
         components={{
           MenuList: SelectMenuComponent,
+          Group: SelectOptionGroup,
           GroupHeading: SelectOptionGroupHeader,
           ValueContainer,
           IndicatorsContainer: CustomIndicatorsContainer,

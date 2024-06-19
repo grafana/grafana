@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	secretsFakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -892,7 +893,7 @@ func TestService_Upsert(t *testing.T) {
 		wg.Add(1)
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings, mock.Anything).Return(nil)
+		reloadable.On("Validate", mock.Anything, settings, mock.Anything, mock.Anything).Return(nil)
 		reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
 			defer wg.Done()
 			return settings.Provider == provider &&
@@ -1000,7 +1001,7 @@ func TestService_Upsert(t *testing.T) {
 		}
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings, mock.Anything).Return(errors.New("validation failed"))
+		reloadable.On("Validate", mock.Anything, settings, mock.Anything, mock.Anything).Return(errors.New("validation failed"))
 		env.reloadables[provider] = reloadable
 
 		err := env.service.Upsert(context.Background(), &settings, &user.SignedInUser{})
@@ -1068,7 +1069,7 @@ func TestService_Upsert(t *testing.T) {
 		}
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings, mock.Anything).Return(nil)
+		reloadable.On("Validate", mock.Anything, settings, mock.Anything, mock.Anything).Return(nil)
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return(nil, errors.New("encryption failed")).Once()
 
@@ -1107,7 +1108,7 @@ func TestService_Upsert(t *testing.T) {
 		expected.Settings["client_secret"] = "encrypted-client-secret"
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, expected, mock.Anything).Return(nil)
+		reloadable.On("Validate", mock.Anything, expected, mock.Anything, mock.Anything).Return(nil)
 		reloadable.On("Reload", mock.Anything, mock.Anything).Return(nil).Maybe()
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Decrypt", mock.Anything, []byte("current-client-secret"), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
@@ -1154,7 +1155,7 @@ func TestService_Upsert(t *testing.T) {
 		expected.Settings["private_key"] = "current-private-key"
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, expected, mock.Anything).Return(nil)
+		reloadable.On("Validate", mock.Anything, expected, mock.Anything, mock.Anything).Return(nil)
 		reloadable.On("Reload", mock.Anything, mock.Anything).Return(nil).Maybe()
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Decrypt", mock.Anything, []byte("encrypted-current-client-secret"), mock.Anything).Return([]byte("current-client-secret"), nil).Once()
@@ -1190,7 +1191,7 @@ func TestService_Upsert(t *testing.T) {
 		}
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings, mock.Anything).Return(nil)
+		reloadable.On("Validate", mock.Anything, settings, mock.Anything, mock.Anything).Return(nil)
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
@@ -1222,7 +1223,7 @@ func TestService_Upsert(t *testing.T) {
 		}
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings, mock.Anything).Return(nil)
+		reloadable.On("Validate", mock.Anything, settings, mock.Anything, mock.Anything).Return(nil)
 		reloadable.On("Reload", mock.Anything, mock.Anything).Return(errors.New("failed reloading new settings")).Maybe()
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
@@ -1555,7 +1556,7 @@ func Test_ProviderService(t *testing.T) {
 				"azuread",
 				"okta",
 			},
-			strategiesLength: 1,
+			strategiesLength: 2,
 		},
 		{
 			name:             "should return all fallback strategies and it should return all OAuth providers but not SAML because the licensing feature is enabled but the configurable provider is not setup",
@@ -1569,7 +1570,7 @@ func Test_ProviderService(t *testing.T) {
 				"azuread",
 				"okta",
 			},
-			strategiesLength: 2,
+			strategiesLength: 3,
 		},
 		{
 			name:             "should return all fallback strategies and it should return all OAuth providers and SAML because the licensing feature is enabled and the provider is setup",
@@ -1585,7 +1586,7 @@ func Test_ProviderService(t *testing.T) {
 				"okta",
 				"saml",
 			},
-			strategiesLength: 2,
+			strategiesLength: 3,
 		},
 	}
 	for _, tc := range tests {
@@ -1647,6 +1648,7 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies, sam
 		prometheus.NewRegistry(),
 		&setting.OSSImpl{Cfg: cfg},
 		licensing,
+		service.ProvideService(cfg),
 	)
 
 	// overriding values for exposed fields

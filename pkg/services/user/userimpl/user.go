@@ -309,11 +309,11 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 }
 
 func shouldUpdateLastSeen(t time.Time) bool {
-	return time.Since(t) > time.Minute*5
+	return time.Since(t) > time.Minute*15
 }
 
 func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetSignedInUserWithCacheCtx", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "user.GetSignedInUser", trace.WithAttributes(
 		attribute.Int64("userID", query.UserID),
 		attribute.Int64("orgID", query.OrgID),
 	))

@@ -16,12 +16,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func TestIntegrationProvisioning(t *testing.T) {
@@ -527,7 +527,33 @@ func TestMuteTimings(t *testing.T) {
 		}
 	})
 
+	t.Run("should fail to update mute timing if version does not match", func(t *testing.T) {
+		tm := anotherMuteTiming
+		tm.Version = "wrong-version"
+		tm.TimeIntervals = []timeinterval.TimeInterval{
+			{
+				Times: []timeinterval.TimeRange{
+					{
+						StartMinute: 36,
+						EndMinute:   49,
+					},
+				},
+			},
+		}
+		_, status, body := apiClient.UpdateMuteTimingWithStatus(t, tm)
+		requireStatusCode(t, http.StatusConflict, status, body)
+		var validationError errutil.PublicError
+		assert.NoError(t, json.Unmarshal([]byte(body), &validationError))
+		assert.NotEmpty(t, validationError, validationError.Message)
+		assert.Equal(t, "alerting.notifications.conflict", validationError.MessageID)
+		if t.Failed() {
+			t.Fatalf("response: %s", body)
+		}
+	})
+
 	t.Run("should update existing mute timing", func(t *testing.T) {
+		mt, _, _ := apiClient.GetMuteTimingByNameWithStatus(t, anotherMuteTiming.Name)
+
 		anotherMuteTiming.TimeIntervals = []timeinterval.TimeInterval{
 			{
 				Times: []timeinterval.TimeRange{
@@ -538,6 +564,7 @@ func TestMuteTimings(t *testing.T) {
 				},
 			},
 		}
+		anotherMuteTiming.Version = mt.Version
 
 		mt, status, body := apiClient.UpdateMuteTimingWithStatus(t, anotherMuteTiming)
 		requireStatusCode(t, http.StatusAccepted, status, body)
