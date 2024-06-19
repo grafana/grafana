@@ -14,15 +14,17 @@ const AlertRulesToolbarButton = React.lazy(
 
 export function initAlerting() {
   const grafanaRulesPermissions = getRulesPermissions(GRAFANA_RULES_SOURCE_NAME);
+  const alertingEnabled = config.unifiedAlertingEnabled || (config.featureToggles.alertingPreviewUpgrade ?? false);
 
   if (contextSrv.hasPermission(grafanaRulesPermissions.read)) {
     addCustomRightAction({
-      show: () => config.unifiedAlertingEnabled || (config.featureToggles.alertingPreviewUpgrade ?? false),
-      component: ({ dashboard }) => (
-        <React.Suspense fallback={null} key="alert-rules-button">
-          {dashboard && <AlertRulesToolbarButton dashboardUid={dashboard.uid} />}
-        </React.Suspense>
-      ),
+      show: () => alertingEnabled,
+      component: ({ dashboard }) =>
+        alertingEnabled ? (
+          <React.Suspense fallback={null} key="alert-rules-button">
+            {dashboard && <AlertRulesToolbarButton dashboardUid={dashboard.uid} />}
+          </React.Suspense>
+        ) : null,
       index: -2,
     });
   }
