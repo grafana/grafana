@@ -496,7 +496,7 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 // Upload a snapshot to the Grafana Migration Service for processing.
 //
 // Responses:
-// 200: uploadSnapshotResponse
+// 200:
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError

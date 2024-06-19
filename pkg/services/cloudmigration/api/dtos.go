@@ -255,6 +255,9 @@ func fromSnapshotStatus(status cloudmigration.SnapshotStatus) SnapshotStatus {
 	}
 }
 
+// swagger:parameters createSnapshot
+type CreateSnapshotRequest struct{}
+
 // swagger:response createSnapshotResponse
 type CreateSnapshotResponse struct {
 	// in: body
@@ -299,3 +302,9 @@ type SnapshotListResponse struct {
 type SnapshotListResponseDTO struct {
 	Snapshots []SnapshotDTO `json:"snapshots"`
 }
+
+// swagger:parameters uploadSnapshot
+type UploadSnapshotParams struct{}
+
+// swagger:parameters cancelSnapshot
+type CancelSnapshotParams struct{}
