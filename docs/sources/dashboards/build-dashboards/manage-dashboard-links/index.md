@@ -140,7 +140,7 @@ To duplicate a dashboard link, click the copy link icon next to the link that yo
 
 ### Delete a dashboard link
 
-To delete a dashboard link, click the red **X** next to the link that you want to delete.
+To delete a dashboard link, click the red **X** next to the link that you want to delete and then **Delete**.
 
 ## Panel links
 
