@@ -112,16 +112,16 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 		}
 
-		id, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
+		identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 		if err != nil {
 			// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 			reqContext.LookupTokenErr = err
 		} else {
-			reqContext.SignedInUser = id.SignedInUser()
-			reqContext.UserToken = id.SessionToken
+			reqContext.SignedInUser = identity.SignedInUser()
+			reqContext.UserToken = identity.SessionToken
 			reqContext.IsSignedIn = !reqContext.SignedInUser.IsAnonymous
 			reqContext.AllowAnonymous = reqContext.SignedInUser.IsAnonymous
-			reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
+			reqContext.IsRenderCall = identity.IsAuthenticatedBy(login.RenderModule)
 		}
 
 		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
