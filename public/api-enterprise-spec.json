@@ -1556,6 +1556,49 @@
         }
       }
     },
+    "/reports/render/csvs": {
+      "get": {
+        "description": "Available to all users and with a valid license.",
+        "produces": [
+          "application/zip"
+        ],
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
+        "summary": "Download a CSV report.",
+        "operationId": "renderReportCSVs",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboards",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "title",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/contentResponse"
+          },
+          "204": {
+            "$ref": "#/responses/noContentResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
@@ -1571,7 +1614,7 @@
         "parameters": [
           {
             "type": "string",
-            "name": "dashboardID",
+            "name": "dashboards",
             "in": "query"
           },
           {
@@ -3116,6 +3159,17 @@
         }
       }
     },
+    "CloudMigrationRunListDTO": {
+      "type": "object",
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseListDTO"
+          }
+        }
+      }
+    },
     "CloudMigrationSessionListResponseDTO": {
       "type": "object",
       "properties": {
@@ -3586,6 +3640,14 @@
             "Admin"
           ],
           "example": "Admin"
+        }
+      }
+    },
+    "CreateSnapshotResponseDTO": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -4683,6 +4745,45 @@
         }
       ]
     },
+    "GetSnapshotResponseDTO": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseItemDTO"
+          }
+        },
+        "sessionUid": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "INITIALIZING",
+            "CREATING",
+            "PENDING_UPLOAD",
+            "UPLOADING",
+            "PENDING_PROCESSING",
+            "PROCESSING",
+            "FINISHED",
+            "ERROR",
+            "UNKNOWN"
+          ]
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
     "Hit": {
       "type": "object",
       "properties": {
@@ -4703,11 +4804,15 @@
           "type": "integer",
           "format": "int64"
         },
+        "isDeleted": {
+          "type": "boolean"
+        },
         "isStarred": {
           "type": "boolean"
         },
-        "remainingTrashAtAge": {
-          "type": "string"
+        "permanentlyDeleteDate": {
+          "type": "string",
+          "format": "date-time"
         },
         "slug": {
           "type": "string"
@@ -7037,18 +7142,53 @@
       "type": "integer",
       "format": "int64"
     },
-    "SnapshotListDTO": {
+    "SnapshotDTO": {
+      "description": "Base snapshot without results",
       "type": "object",
       "properties": {
-        "runs": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sessionUid": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "INITIALIZING",
+            "CREATING",
+            "PENDING_UPLOAD",
+            "UPLOADING",
+            "PENDING_PROCESSING",
+            "PROCESSING",
+            "FINISHED",
+            "ERROR",
+            "UNKNOWN"
+          ]
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "SnapshotListResponseDTO": {
+      "type": "object",
+      "properties": {
+        "snapshots": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/MigrateDataResponseListDTO"
+            "$ref": "#/definitions/SnapshotDTO"
           }
         }
       }
     },
     "State": {
+      "description": "+enum",
       "type": "string"
     },
     "Status": {
@@ -7492,6 +7632,7 @@
       }
     },
     "Type": {
+      "description": "+enum",
       "type": "string"
     },
     "TypeMeta": {
@@ -8345,7 +8486,7 @@
     "cloudMigrationRunListResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/SnapshotListDTO"
+        "$ref": "#/definitions/CloudMigrationRunListDTO"
       }
     },
     "cloudMigrationRunResponse": {
@@ -8508,6 +8649,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/ServiceAccountDTO"
+      }
+    },
+    "createSnapshotResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CreateSnapshotResponseDTO"
       }
     },
     "createTeamResponse": {
@@ -9077,6 +9224,12 @@
         }
       }
     },
+    "getSnapshotResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/GetSnapshotResponseDTO"
+      }
+    },
     "getStatusResponse": {
       "description": ""
     },
@@ -9295,6 +9448,12 @@
             "$ref": "#/definitions/RoleDTO"
           }
         }
+      }
+    },
+    "noContentResponse": {
+      "description": "",
+      "schema": {
+        "type": "object"
       }
     },
     "notFoundError": {
@@ -9525,6 +9684,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/RoleAssignmentsDTO"
+      }
+    },
+    "snapshotListResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SnapshotListResponseDTO"
       }
     },
     "unauthorisedError": {

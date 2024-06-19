@@ -240,7 +240,7 @@ export function hashRule(rule: Rule): string {
   throw new Error('only recording and alerting rules can be hashed');
 }
 
-function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
+export function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
   return JSON.stringify(Object.entries(item || {}).sort((a, b) => a[0].localeCompare(b[0])));
 }
 

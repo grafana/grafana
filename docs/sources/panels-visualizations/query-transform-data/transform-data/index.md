@@ -46,7 +46,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/#sparkline
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/#sparkline
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table/#sparkline
   calculation-types:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
@@ -59,9 +59,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
   dashboard-variable:
     - pattern: /docs/grafana/
-      destination: docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
-      destination: docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
   feature-toggle:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
@@ -71,12 +71,12 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table/
   time-series-panel:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
 ---
 
 # Transform data
@@ -298,6 +298,9 @@ This transformation has the following options:
   - **Numeric** - attempts to make the values numbers
   - **String** - will make the values strings
   - **Time** - attempts to parse the values as time
+    - The input will be parsed according to the [Moment.js parsing format](https://momentjs.com/docs/#/parsing/)
+    - It will parse the numeric input as a Unix epoch timestamp in milliseconds.
+      You must multiply your input by 1000 if it's in seconds.
     - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
   - **Boolean** - will make the values booleans
   - **Enum** - will make the values enums
