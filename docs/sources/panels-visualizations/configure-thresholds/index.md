@@ -174,6 +174,7 @@ You can add as many thresholds to a visualization as you want. Grafana automatic
 1. Click the colored circle to the left of the threshold value to open the color picker, where you can update the threshold color.
 1. Under **Thresholds mode**, select either **Absolute** or **Percentage**.
 1. Under **Show thresholds**, set how the threshold is displayed or turn it off.
+1. Click **Save dashboard**.
 
 To delete a threshold, navigate to the panel that contains the threshold and click the trash icon next to the threshold you want to remove.
 
