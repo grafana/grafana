@@ -89,6 +89,30 @@ export const mocksScopeDashboardBindings: ScopeDashboardBinding[] = [
     metadata: { name: 'binding4' },
     spec: { dashboard: '4', dashboardTitle: 'My Dashboard 4', scope: 'slothVoteTracker' },
   },
+  {
+    metadata: { name: 'binding5' },
+    spec: { dashboard: '5', dashboardTitle: 'My Dashboard 5', scope: 'slothClusterNorth' },
+  },
+  {
+    metadata: { name: 'binding6' },
+    spec: { dashboard: '6', dashboardTitle: 'My Dashboard 6', scope: 'slothClusterNorth' },
+  },
+  {
+    metadata: { name: 'binding7' },
+    spec: { dashboard: '7', dashboardTitle: 'My Dashboard 7', scope: 'slothClusterNorth' },
+  },
+  {
+    metadata: { name: 'binding8' },
+    spec: { dashboard: '5', dashboardTitle: 'My Dashboard 5', scope: 'slothClusterSouth' },
+  },
+  {
+    metadata: { name: 'binding9' },
+    spec: { dashboard: '6', dashboardTitle: 'My Dashboard 6', scope: 'slothClusterSouth' },
+  },
+  {
+    metadata: { name: 'binding10' },
+    spec: { dashboard: '8', dashboardTitle: 'My Dashboard 8', scope: 'slothClusterSouth' },
+  },
 ] as const;
 
 export const mocksNodes: Array<ScopeNode & { parent: string }> = [
@@ -226,7 +250,7 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
 export const fetchNodesSpy = jest.spyOn(api, 'fetchNodes');
 export const fetchScopeSpy = jest.spyOn(api, 'fetchScope');
 export const fetchSelectedScopesSpy = jest.spyOn(api, 'fetchSelectedScopes');
-export const fetchDashboardsSpy = jest.spyOn(api, 'fetchDashboards');
+export const fetchSuggestedDashboardsSpy = jest.spyOn(api, 'fetchSuggestedDashboards');
 
 const selectors = {
   tree: {
@@ -261,6 +285,7 @@ export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
 export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
 export const getDashboardsSearch = () => screen.getByTestId(selectors.dashboards.search);
+export const queryAllDashboard = (uid: string) => screen.queryAllByTestId(selectors.dashboards.dashboard(uid));
 export const queryDashboard = (uid: string) => screen.queryByTestId(selectors.dashboards.dashboard(uid));
 export const getDashboard = (uid: string) => screen.getByTestId(selectors.dashboards.dashboard(uid));
 
@@ -281,6 +306,10 @@ export const getApplicationsClustersSelect = () => screen.getByTestId(selectors.
 export const getApplicationsClustersExpand = () => screen.getByTestId(selectors.tree.expand('applications.clusters'));
 export const queryApplicationsClustersSlothClusterNorthTitle = () =>
   screen.queryByTestId(selectors.tree.title('applications.clusters-slothClusterNorth'));
+export const getApplicationsClustersSlothClusterNorthSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications.clusters-slothClusterNorth'));
+export const getApplicationsClustersSlothClusterSouthSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications.clusters-slothClusterSouth'));
 
 export const getClustersSelect = () => screen.getByTestId(selectors.tree.select('clusters'));
 export const getClustersExpand = () => screen.getByTestId(selectors.tree.expand('clusters'));

@@ -1320,10 +1320,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/core/services/echo/backends/analytics/ApplicationInsightsBackend.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/core/services/echo/backends/analytics/RudderstackBackend.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -1646,8 +1642,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/AlertLabels.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/alerting/unified/components/AnnotationDetailsField.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -2875,6 +2870,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard-scene/saving/shared.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
+    ],
+    "public/app/features/dashboard-scene/scene/DashboardControls.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/dashboard-scene/scene/NavToolbarActions.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -4704,8 +4702,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "31"],
       [0, 0, 0, "Styles should be written using objects.", "32"],
       [0, 0, 0, "Styles should be written using objects.", "33"],
-      [0, 0, 0, "Styles should be written using objects.", "34"],
-      [0, 0, 0, "Styles should be written using objects.", "35"]
+      [0, 0, 0, "Styles should be written using objects.", "34"]
     ],
     "public/app/features/logs/components/log-context/LogContextButtons.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
