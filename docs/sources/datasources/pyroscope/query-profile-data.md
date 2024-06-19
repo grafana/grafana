@@ -12,6 +12,27 @@ labels:
 title: Query profile data
 menuTitle: Query profile data
 weight: 300
+refs:
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  configure-tempo-data-source:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/
+    - pattern: /docs/grafana-cloud/
+      destination: docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/configure-tempo-data-source/
+  provisioning-data-sources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
+  flame-graph:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
 ---
 
 # Query profile data
@@ -42,7 +63,7 @@ To access the query editor:
 1. Expand the **Options** section to view **Query Type** and **Group by**.
    ![Options section](/media/docs/pyroscope/query-editor/options-section.png 'Options section')
 
-1. Select a query type to return the profile data. Data is shown in the [Flame Graph][flame-graph], metric data visualized in a graph, or both. You can only select both options in Explore. The panels used on dashboards allow only one visualization.
+1. Select a query type to return the profile data. Data is shown in the [Flame Graph](ref:flame-graph), metric data visualized in a graph, or both. You can only select both options in Explore. The panels used on dashboards allow only one visualization.
 
 Using **Group by**, you can group metric data by a specified label.
 Without any **Group by** label, metric data aggregates over all the labels into single time series.
@@ -51,7 +72,7 @@ You can use multiple labels to group by. Group by only effects the metric data a
 ## Profiles query results
 
 Profiles can be visualized in a flame graph.
-Refer to the [Flame Graph documentation][flame-graph] to learn about the visualization and its features.
+Refer to the [Flame Graph documentation](ref:flame-graph) to learn about the visualization and its features.
 
 ![Flame graph](/media/docs/pyroscope/query-editor/flame-graph.png 'Flame graph')
 
@@ -66,17 +87,3 @@ Metrics results represent the aggregated sum value over time of the selected pro
 ![Metrics graph](/media/docs/pyroscope/query-editor/metric-graph.png 'Metrics graph')
 
 This allows you to quickly see any spikes in the value of the scraped profiles and zoom in to a particular time range.
-
-{{% docs/reference %}}
-[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-
-[flame-graph]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
-[flame-graph]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
-
-[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#datasources"
-[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#datasources"
-
-[configure-tempo-data-source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo/configure-tempo-data-source"
-[configure-tempo-data-source]: "/docs/grafana-cloud/ -> docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/configure-tempo-data-source"
-{{% /docs/reference %}}

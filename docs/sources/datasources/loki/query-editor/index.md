@@ -15,13 +15,34 @@ labels:
 menuTitle: Query editor
 title: Loki query editor
 weight: 300
+refs:
+  logs:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/
+  query-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+  annotate-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # Loki query editor
 
 The Loki data source's query editor helps you create [log](#create-a-log-query) and [metric](#create-a-metric-query) queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
 
-For general documentation on querying data sources in Grafana, refer to [Query and transform data][query-transform-data].
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
 
 ## Choose a query editing mode
 
@@ -35,7 +56,7 @@ To switch between the editor modes, select the corresponding **Builder** and **C
 To run a query, select **Run queries** located at the top of the editor.
 
 {{% admonition type="note" %}}
-To run Loki queries in [Explore][explore], select **Run query**.
+To run Loki queries in [Explore](ref:explore), select **Run query**.
 {{% /admonition %}}
 
 Each mode is synchronized, so you can switch between them without losing your work, although there are some limitations. Builder mode doesn't support some complex queries.
@@ -157,7 +178,7 @@ The following options are the same for both **Builder** and **Code** mode:
 ## Create a log query
 
 Loki log queries return the contents of the log lines.
-You can query and display log data from Loki via [Explore][explore], and with the [Logs panel][logs] in dashboards.
+You can query and display log data from Loki via [Explore](ref:explore), and with the [Logs panel](ref:logs) in dashboards.
 
 To display the results of a log query, select the Loki data source, then enter a LogQL query.
 
@@ -175,7 +196,7 @@ To reset filters and use the initial log context query, click the `Revert to ini
 
 ### Tail live logs
 
-Loki supports live tailing of logs in real-time in [Explore][explore].
+Loki supports live tailing of logs in real-time in [Explore](ref:explore).
 
 Live tailing relies on two Websocket connections: one between the browser and Grafana server, and another between the Grafana server and Loki server.
 
@@ -241,23 +262,9 @@ For more information about metric queries, refer to the [Loki metric queries doc
 
 ## Apply annotations
 
-[Annotations][annotate-visualizations] overlay rich event information on top of graphs.
+[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 You can use any non-metric Loki query as a source for annotations.
 Grafana automatically uses log content as annotation text and your log stream labels as tags.
 You don't need to create any additional mapping.
-
-{{% docs/reference %}}
-[annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
-[annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
-
-[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-
-[logs]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/logs"
-[logs]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/logs"
-
-[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-{{% /docs/reference %}}

@@ -10,6 +10,45 @@ labels:
     - oss
 title: Data sources
 weight: 60
+refs:
+  query-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+  alerts:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+  panels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/
+  grafana-enterprise:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
+  organization-roles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  plugin-management:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/
+    - pattern: /docs/grafana-cloud
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/
+  data-source-management:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
 ---
 
 # Grafana data sources
@@ -24,9 +63,9 @@ Each data source comes with a _query editor_,
 which formulates custom queries according to the source's structure.
 After you add and configure a data source, you can use it as an input for many operations, including:
 
-- Query the data with [Explore][explore].
-- Visualize it in [panels][panels].
-- Create rules for [alerts][alerts].
+- Query the data with [Explore](ref:explore).
+- Visualize it in [panels](ref:panels).
+- Create rules for [alerts](ref:alerts).
 
 This documentation describes how to manage data sources in general,
 and how to configure or query the built-in data sources.
@@ -36,10 +75,10 @@ To develop a custom plugin, refer to [Create a data source plugin](#create-a-dat
 
 ## Manage data sources
 
-Only users with the [organization administrator role][organization-roles] can add or remove data sources.
+Only users with the [organization administrator role](ref:organization-roles) can add or remove data sources.
 To access data source management tools in Grafana as an administrator, navigate to **Configuration > Data Sources** in the Grafana sidebar.
 
-For details on data source management, including instructions on how configure user permissions for queries, refer to the [administration documentation][data-source-management].
+For details on data source management, including instructions on how configure user permissions for queries, refer to the [administration documentation](ref:data-source-management).
 
 ## Add a data source
 
@@ -61,7 +100,7 @@ Only users with the organization admin role can add data sources.
 {{< figure src="/static/img/docs/queries/influxdb-query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" caption="The InfluxDB query editor" >}}
 
 Each data source's **query editor** provides a customized user interface that helps you write queries that take advantage of its unique capabilities.
-You use a data source's query editor when you create queries in [dashboard panels][query-transform-data] or [Explore][explore].
+You use a data source's query editor when you create queries in [dashboard panels](ref:query-transform-data) or [Explore](ref:explore).
 
 Because of the differences between query languages, each data source query editor looks and functions differently.
 Depending on your data source, the query editor might provide auto-completion features, metric names, variable suggestions, or a visual query-building interface.
@@ -70,7 +109,7 @@ For example, this video demonstrates the visual Prometheus query builder:
 
 {{< vimeo 720004179 >}}
 
-For general information about querying in Grafana, and common options and user interface elements across all query editors, refer to [Query and transform data][query-transform-data].
+For general information about querying in Grafana, and common options and user interface elements across all query editors, refer to [Query and transform data](ref:query-transform-data).
 
 ## Special data sources
 
@@ -124,39 +163,13 @@ You can add additional data sources as plugins (that are not available in core G
 ### Find data source plugins in the plugin catalog
 
 To view available data source plugins, go to the [plugin catalog](/grafana/plugins/?type=datasource) and select the "Data sources" filter.
-For details about the plugin catalog, refer to [Plugin management][Plugin-management].
+For details about the plugin catalog, refer to [Plugin management](ref:plugin-management).
 
 You can further filter the plugin catalog's results for data sources provided by the Grafana community, Grafana Labs, and partners.
-If you use [Grafana Enterprise][Grafana-Enterprise], you can also filter by Enterprise-supported plugins.
+If you use [Grafana Enterprise](ref:grafana-enterprise), you can also filter by Enterprise-supported plugins.
 
 For more documentation on a specific data source plugin's features, including its query language and editor, refer to its plugin catalog page.
 
 ### Create a data source plugin
 
 To build your own data source plugin, refer to the [Build a data source plugin](/developers/plugin-tools/tutorials/build-a-data-source-plugin) tutorial and [Plugin tools](/developers/plugin-tools).
-
-{{% docs/reference %}}
-[alerts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
-[alerts]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
-
-[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-
-[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-
-[organization-roles]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#organization-roles"
-[organization-roles]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#organization-roles"
-
-[panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
-[panels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
-
-[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-
-[Plugin-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/plugin-management"
-[Plugin-management]: "/docs/grafana-cloud -> /docs/grafana/<GRAFANA VERSION>/administration/plugin-management"
-
-[Grafana-Enterprise]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
-
-{{% /docs/reference %}}

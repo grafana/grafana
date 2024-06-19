@@ -15,11 +15,27 @@ labels:
     - oss
 title: Parca
 weight: 1110
+refs:
+  provisioning-data-sources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  flame-graph:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
 ---
 
 # Parca data source
 
-Grafana ships with built-in support for Parca, a continuous profiling OSS database for analysis of CPU and memory usage, down to the line number and throughout time. Add it as a data source, and you are ready to query your profiles in [Explore][explore].
+Grafana ships with built-in support for Parca, a continuous profiling OSS database for analysis of CPU and memory usage, down to the line number and throughout time. Add it as a data source, and you are ready to query your profiles in [Explore](ref:explore).
 
 ## Configure the Parca data source
 
@@ -61,11 +77,11 @@ Use the labels selector input to filter by labels. Parca uses similar syntax to 
 
 ![Options section](/static/img/docs/parca/options-section.png 'Options section')
 
-Select a query type to return the profile data which can be shown in the [Flame Graph][flame-graph], metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
+Select a query type to return the profile data which can be shown in the [Flame Graph](ref:flame-graph), metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
 
 ### Profiles query results
 
-Profiles can be visualized in a flame graph. See the [Flame Graph documentation][flame-graph] to learn about the visualization and its features.
+Profiles can be visualized in a flame graph. See the [Flame Graph documentation](ref:flame-graph) to learn about the visualization and its features.
 
 ![Flame graph](/static/img/docs/parca/flame-graph.png 'Flame graph')
 
@@ -81,7 +97,7 @@ This allows you to quickly see any spikes in the value of the scraped profiles a
 
 ## Provision the Parca data source
 
-You can modify the Grafana configuration files to provision the Parca data source. To learn more, and to view the available provisioning settings, see [provisioning documentation][provisioning-data-sources].
+You can modify the Grafana configuration files to provision the Parca data source. To learn more, and to view the available provisioning settings, see [provisioning documentation](ref:provisioning-data-sources).
 
 Here is an example config:
 
@@ -93,14 +109,3 @@ datasources:
     type: parca
     url: http://localhost:3100
 ```
-
-{{% docs/reference %}}
-[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-
-[flame-graph]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
-[flame-graph]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
-
-[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#datasources"
-[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#datasources"
-{{% /docs/reference %}}
