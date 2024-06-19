@@ -647,6 +647,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   ): Observable<DataQueryResponse> => {
     return this._request('/api/metrics/query_range', {
       query: queryValue,
+      step: options.targets[0].step,
       start: options.range.from.unix(),
       end: options.range.to.unix(),
     }).pipe(
