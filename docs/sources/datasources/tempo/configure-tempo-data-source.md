@@ -206,8 +206,8 @@ datasources:
         # Field with an internal link pointing to a logs data source in Grafana.
         # datasourceUid value must match the uid value of the logs data source.
         datasourceUid: 'loki'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
         tags: ['job', 'instance', 'pod', 'namespace']
         filterByTraceID: false
         filterBySpanID: false
