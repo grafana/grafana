@@ -215,7 +215,7 @@ export const Table = memo((props: Props) => {
 
     if (isCountRowsSet) {
       const footerItemsCountRows: FooterItem[] = [];
-      footerItemsCountRows[0] = headerGroups[0]?.headers[0]?.filteredRows.length.toString() ?? data.length.toString();
+      footerItemsCountRows[0] = rows.length.toString() ?? data.length.toString();
       setFooterItems(footerItemsCountRows);
       return;
     }
@@ -287,7 +287,7 @@ export const Table = memo((props: Props) => {
         />
         {isSmall ? null : (
           <div className={tableStyles.paginationSummary}>
-            {itemsRangeStart} - {itemsRangeEnd} of {data.length} rows
+            {itemsRangeStart} - {itemsRangeEnd < rows.length ? itemsRangeEnd : rows.length} of {rows.length} rows
           </div>
         )}
       </div>

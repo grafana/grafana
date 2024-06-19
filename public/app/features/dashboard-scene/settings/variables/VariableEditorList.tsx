@@ -8,6 +8,8 @@ import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
+import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
+
 import { VariableEditorListRow } from './VariableEditorListRow';
 
 export interface Props {
@@ -81,6 +83,7 @@ export function VariableEditorList({
               </table>
             </div>
             <Stack>
+              <VariablesDependenciesButton variables={variables} />
               <Button
                 data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton}
                 onClick={onAdd}

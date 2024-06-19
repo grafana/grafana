@@ -165,6 +165,10 @@ func (hs *HTTPServer) registerRoutes() {
 		)
 	}
 
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+		r.Get("/dashboard/recently-deleted", reqSignedIn, hs.Index)
+	}
+
 	r.Get("/explore", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
 
 	r.Get("/playlists/", reqSignedIn, hs.Index)

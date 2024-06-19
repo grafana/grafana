@@ -11,13 +11,14 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -98,9 +99,6 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery,
 	}
 	if query.Requirements.ListDeleted {
 		return nil, 0, fmt.Errorf("ListDeleted not yet supported")
-	}
-	if len(query.Requirements.ListOriginKeys) > 0 {
-		return nil, 0, fmt.Errorf("ListOriginKeys not yet supported")
 	}
 
 	token, err := readContinueToken(query)
@@ -317,7 +315,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var origin_name sql.NullString
 	var origin_path sql.NullString
 	var origin_ts sql.NullInt64
-	var origin_key sql.NullString
+	var origin_hash sql.NullString
 	var data []byte // the dashboard JSON
 	var version int64
 
@@ -326,7 +324,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		&created, &createdByID, &createdByName,
 		&updated, &updatedByID, &updatedByName,
 		&plugin_id,
-		&origin_name, &origin_path, &origin_key, &origin_ts,
+		&origin_name, &origin_path, &origin_hash, &origin_ts,
 		&version,
 		&row.Title, &data,
 	)
@@ -335,7 +333,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	if err == nil {
 		dash.ResourceVersion = fmt.Sprintf("%d", created.UnixMilli())
 		dash.Namespace = a.namespacer(orgId)
-		dash.UID = utils.CalculateClusterWideUID(dash)
+		dash.UID = gapiutil.CalculateClusterWideUID(dash)
 		dash.SetCreationTimestamp(v1.NewTime(created))
 		meta, err := utils.MetaAccessor(dash)
 		if err != nil {
@@ -369,7 +367,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 			meta.SetOriginInfo(&utils.ResourceOriginInfo{
 				Name:      origin_name.String,
 				Path:      originPath,
-				Key:       origin_key.String,
+				Hash:      origin_hash.String,
 				Timestamp: &ts,
 			})
 		} else if plugin_id != "" {

@@ -15,12 +15,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slices"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -209,7 +209,10 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	var dashFolder *folder.Folder
 	var err error
 	switch {
-	case q.UID != nil && *q.UID != "":
+	case q.UID != nil:
+		if *q.UID == "" {
+			return &folder.GeneralFolder, nil
+		}
 		dashFolder, err = s.getFolderByUID(ctx, q.OrgID, *q.UID)
 		if err != nil {
 			return nil, err

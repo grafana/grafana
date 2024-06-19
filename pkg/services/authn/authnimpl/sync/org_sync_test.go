@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -79,7 +79,7 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 					Login:          "test",
 					Name:           "test",
 					Email:          "test",
-					OrgRoles:       map[int64]roletype.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
+					OrgRoles:       map[int64]identity.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
 					IsGrafanaAdmin: ptrBool(false),
 					ClientParams: authn.ClientParams{
 						SyncOrgRoles: true,
@@ -95,7 +95,7 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
-				OrgRoles:       map[int64]roletype.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
+				OrgRoles:       map[int64]identity.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
 				OrgID:          1, //set using org
 				IsGrafanaAdmin: ptrBool(false),
 				ClientParams: authn.ClientParams{
