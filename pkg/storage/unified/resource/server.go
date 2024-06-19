@@ -48,9 +48,6 @@ type AppendingStore interface {
 	// Return the revisionVersion for this event or error
 	WriteEvent(context.Context, WriteEvent) (int64, error)
 
-	// Create new name for a given resource
-	GenerateName(ctx context.Context, key *ResourceKey, prefix string) (string, error)
-
 	// Read a value from storage
 	Read(context.Context, *ReadRequest) (*ReadResponse, error)
 
@@ -217,9 +214,6 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 	}
 
 	obj := event.Meta
-	if key.Name != obj.GetName() {
-		return nil, apierrors.NewBadRequest("key/name do not match")
-	}
 	if key.Namespace != obj.GetNamespace() {
 		return nil, apierrors.NewBadRequest("key/namespace do not match")
 	}
@@ -239,27 +233,20 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 
 	// This needs to be a create function
 	if key.Name == "" {
-		prefix := obj.GetGenerateName()
-		if prefix == "" {
-			return nil, apierrors.NewBadRequest("must have name or generate name set")
+		if obj.GetName() == "" {
+			return nil, apierrors.NewBadRequest("missing name")
 		}
-		key.Name, err = s.store.GenerateName(ctx, key, prefix)
-		if err != nil {
-			return nil, err
-		}
-		obj.SetName(key.Name)
-		obj.SetGenerateName("")
-	} else if obj.GetGenerateName() != "" {
-		return nil, apierrors.NewBadRequest("values with a name must not include generate name")
+		key.Name = obj.GetName()
+	} else if key.Name != obj.GetName() {
+		return nil, apierrors.NewBadRequest(
+			fmt.Sprintf("key/name do not match (key: %s, name: %s)", key.Name, obj.GetName()))
 	}
+	obj.SetGenerateName("")
 	err = validateName(obj.GetName())
 	if err != nil {
 		return nil, err
 	}
 
-	if obj.GetName() != key.Name {
-		return nil, apierrors.NewBadRequest("key name does not match the name in the body")
-	}
 	folder := obj.GetFolder()
 	if folder != "" {
 		err = s.access.CanWriteFolder(ctx, event.Requester, folder)

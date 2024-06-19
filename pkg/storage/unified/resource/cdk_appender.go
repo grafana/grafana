@@ -12,7 +12,6 @@ import (
 	"sync"
 
 	"github.com/bwmarrin/snowflake"
-	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	"gocloud.dev/blob"
@@ -120,12 +119,6 @@ func (s *cdkAppender) WriteEvent(ctx context.Context, event WriteEvent) (int64, 
 		ContentType: "application/json",
 	})
 	return rv, err
-}
-
-// Create new name for a given resource
-func (s *cdkAppender) GenerateName(ctx context.Context, key *ResourceKey, prefix string) (string, error) {
-	// TODO... shorter and make sure it does not exist
-	return prefix + "x" + uuid.New().String(), nil
 }
 
 // Read implements ResourceStoreServer.

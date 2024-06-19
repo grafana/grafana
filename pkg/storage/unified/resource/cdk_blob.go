@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"mime"
 	"time"
 
 	"github.com/google/uuid"
@@ -102,13 +103,12 @@ func (s *cdkBlobStore) getBlobPath(key *ResourceKey, info *utils.BlobInfo) (stri
 	buffer.WriteString("/")
 	buffer.WriteString(info.UID)
 
-	switch info.MimeType {
-	case "application/json":
-		buffer.WriteString(".json")
-	case "image/png":
-		buffer.WriteString(".png")
-	default:
-		return "", fmt.Errorf("unsupported mimetype")
+	ext, err := mime.ExtensionsByType(info.MimeType)
+	if err != nil {
+		return "", err
+	}
+	if len(ext) > 0 {
+		buffer.WriteString(ext[0])
 	}
 	return buffer.String(), nil
 }

@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"mime"
 	"reflect"
 	"strconv"
 	"strings"
@@ -62,16 +63,15 @@ type BlobInfo struct {
 
 // Content type is mime + charset
 func (b *BlobInfo) SetContentType(v string) {
-	b.MimeType = v
+	var params map[string]string
+	var err error
+
 	b.Charset = ""
-	idx := strings.Index(v, ";")
-	if idx > 0 {
-		b.MimeType = v[:idx]
-		kv := strings.Split(strings.TrimSpace(v[idx+1:]), "=")
-		if len(kv) == 2 && kv[0] == "charset" {
-			b.Charset = kv[1]
-		}
+	b.MimeType, params, err = mime.ParseMediaType(v)
+	if err != nil {
+		return
 	}
+	b.Charset = params["charset"]
 }
 
 // Content type is mime + charset

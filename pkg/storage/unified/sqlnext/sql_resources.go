@@ -144,11 +144,6 @@ func (s *sqlResourceStore) Watch(ctx context.Context, since int64, options *reso
 	return nil, ErrNotImplementedYet
 }
 
-// Create new name for a given resource
-func (s *sqlResourceStore) GenerateName(_ context.Context, _ *resource.ResourceKey, _ string) (string, error) {
-	return util.GenerateShortUID(), nil
-}
-
 func (s *sqlResourceStore) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
 	_, span := s.tracer.Start(ctx, "storage_server.GetResource")
 	defer span.End()
