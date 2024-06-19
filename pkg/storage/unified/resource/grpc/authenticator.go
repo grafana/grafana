@@ -23,9 +23,9 @@ const (
 )
 
 func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
-	rrr, _ := identity.GetRequester(ctx)
-	if rrr != nil {
-		return ctx, nil
+	requester, _ := identity.GetRequester(ctx)
+	if requester != nil {
+		return ctx, nil // identity is already in the context
 	}
 
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -35,8 +35,9 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 
 	token := md.Get(keyIDToken)[0]
 	if token != "" {
-		fmt.Printf("TODO, create the requester from the token!")
-
+		token = "TODO"
+		// fmt.Printf("TODO, create the requester from the token!")
+		//
 		// jwtToken, err := jwt.ParseSigned(idToken)
 		// if err != nil {
 		// 	return nil, fmt.Errorf("invalid id token: %w", err)
@@ -46,7 +47,7 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 		// if err != nil {
 		// 	return nil, fmt.Errorf("invalid id token: %w", err)
 		// }
-		// // fmt.Printf("JWT CLAIMS: %+v\n", claims)
+		// fmt.Printf("JWT CLAIMS: %+v\n", claims)
 	}
 
 	login := md.Get(keyLogin)[0]
@@ -102,7 +103,7 @@ func WrapContext(ctx context.Context) (context.Context, error) {
 	return metadata.NewOutgoingContext(ctx, metadata.Pairs(
 		keyIDToken, user.GetIDToken(),
 		keyLogin, user.GetLogin(),
-		keyOrgID, fmt.Sprintf("%d", user.GetOrgID()),
+		keyOrgID, strconv.FormatInt(user.GetOrgID(), 10),
 		keyUserID, user.GetID().ID(),
 		keyUserUID, user.GetUID().ID(),
 	)), nil
