@@ -722,4 +722,8 @@ const (
 	// FlagDatabaseReadReplica
 	// Use a read replica for some database queries.
 	FlagDatabaseReadReplica = "databaseReadReplica"
+
+	// FlagZanzana
+	// Use openFGA as authorization engine.
+	FlagZanzana = "zanzana"
 )

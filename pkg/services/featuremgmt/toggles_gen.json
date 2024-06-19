@@ -2305,6 +2305,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/hosted-grafana-team"
       }
+    },
+    {
+      "metadata": {
+        "name": "zanzana",
+        "resourceVersion": "1718787304727",
+        "creationTimestamp": "2024-06-19T08:55:04Z"
+      },
+      "spec": {
+        "description": "Use openFGA as authorization engine.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
     }
   ]
 }
