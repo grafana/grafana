@@ -53,7 +53,7 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   const { control, watch, register, trigger, formState, setValue } = useFormContext();
   const selectedType = watch(fieldName('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
-  const parse_mode = watch(fieldName('settings.parse_mode')) ?? defaultValues.settings.parse_mode;
+  const parse_mode = watch(fieldName('settings.parse_mode')) ?? defaultValues.settings?.parse_mode;
   const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
   // TODO I don't like integration specific code here but other ways require a bigger refactoring
