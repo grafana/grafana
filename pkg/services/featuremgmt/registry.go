@@ -1343,6 +1343,14 @@ var (
 			Owner:       grafanaBackendServicesSquad,
 			Expression:  "false", // enabled by default
 		},
+		{
+			Name:              "zanzana",
+			Description:       "Use openFGA as authorization engine.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
 	}
 )
 
