@@ -60,6 +60,6 @@ describe('DashboardSceneRenderer', () => {
       </GrafanaContext.Provider>
     );
 
-    expect(await screen.findByTestId(selectors.components.EntityNotFound)).toBeInTheDocument();
+    expect(await screen.findByTestId(selectors.components.EntityNotFound.container)).toBeInTheDocument();
   });
 });
