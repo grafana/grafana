@@ -45,7 +45,7 @@ type RuleAccessControlService interface {
 	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
 	AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 	AuthorizeDatasourceAccessForRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
-	AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error
+	AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error
 }
 
 // API handlers.

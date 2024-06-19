@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -24,7 +23,7 @@ type SilenceService struct {
 }
 
 type RuleAccessControlService interface {
-	HasAccessInFolder(ctx context.Context, user identity.Requester, rule accesscontrol.Namespaced) (bool, error)
+	HasAccessInFolder(ctx context.Context, user identity.Requester, rule models.Namespaced) (bool, error)
 }
 
 // SilenceAccessControlService provides access control for silences.
