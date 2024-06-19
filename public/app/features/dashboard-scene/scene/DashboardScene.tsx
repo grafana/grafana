@@ -317,6 +317,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.setState({ isEditing: false });
     }
 
+    // if we are in edit panel, we need to onDiscard()
+    // so the useEffect cleanup comes later and
+    // doesn't try to commit the changes
+    if (this.state.editPanel) {
+      this.state.editPanel.onDiscard();
+    }
+
     // Disable grid dragging
     this.propagateEditModeChange();
   }
