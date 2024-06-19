@@ -722,7 +722,11 @@ export class PrometheusDatasource
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
         const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
-        const withAdhocFilters = this.enhanceExprWithAdHocFilters(filters, interpolatedQuery);
+        const withAdhocFilters = this.templateSrv.replace(
+              this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
+              scopedVars,
+              this.interpolateQueryExpr
+            );
 
         const expandedQuery = {
           ...query,
@@ -889,10 +893,14 @@ export class PrometheusDatasource
     };
 
     // interpolate expression
+
+    // We need a first replace to evaluate variables before applying adhoc filters
+    // This is required for an expression like `metric > $VAR` where $VAR is a float to which we must not add adhoc filters
     const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
 
-    // Add ad hoc filters
-    const exprWithAdHocFilters = this.enhanceExprWithAdHocFilters(filters, expr);
+    // Apply ad-hoc filters
+    // When ad-hoc filters are applied, we replace again the variables in case the ad-hoc filters also reference a variable
+    const exprWithAdHocFilters = this.templateSrv.replace(this.enhanceExprWithAdHocFilters(filters, expr), variables, this.interpolateQueryExpr);
 
     return {
       ...target,
