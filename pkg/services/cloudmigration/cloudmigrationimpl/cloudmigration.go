@@ -404,7 +404,6 @@ func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration
 		return nil, fmt.Errorf("migrate data error: %w", err)
 	}
 
-	// TODO update cloud migration run schema to treat the result as a first-class citizen
 	respData, err := json.Marshal(resp)
 	if err != nil {
 		s.log.Error("error marshalling migration response data: %w", err)

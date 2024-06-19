@@ -152,7 +152,6 @@ func Test_GetMigrationStatusList(t *testing.T) {
 		list, err := s.GetMigrationStatusList(ctx, "qwerty")
 		require.NoError(t, err)
 		require.Equal(t, 2, len(list))
-		// TODO validate that this is ok
 	})
 
 	t.Run("returns no error if migration was not found, just empty list", func(t *testing.T) {

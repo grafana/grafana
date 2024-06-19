@@ -1,4 +1,5 @@
 [sample token]
+// NOT A REAL TOKEN
 eyJUb2tlbiI6ImNvbXBsZXRlbHlfZmFrZV90b2tlbl9jZG9peTFhYzdwdXlwZCIsIkluc3RhbmNlIjp7IlN0YWNrSUQiOjEyMzQ1LCJTbHVnIjoic3R1Ymluc3RhbmNlIiwiUmVnaW9uU2x1ZyI6ImZha2UtcmVnaW9uIiwiQ2x1c3RlclNsdWciOiJmYWtlLWNsdXNlciJ9fQ==
 
 [create session}
