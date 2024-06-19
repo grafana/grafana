@@ -10,12 +10,10 @@ import (
 
 // zanzanaLogger is a grafana logger wrapper compatible with OpenFGA logger interface
 type zanzanaLogger struct {
-	logger *log.ConcreteLogger
+	logger log.Logger
 }
 
-func newZanzanaLogger() *zanzanaLogger {
-	logger := log.New("openfga-server")
-
+func newZanzanaLogger(logger log.Logger) *zanzanaLogger {
 	return &zanzanaLogger{
 		logger: logger,
 	}
