@@ -49,6 +49,10 @@ type CloudMigrationSnapshot struct {
 	Result []byte `xorm:"result"` //store raw gms response body
 }
 
+func (s CloudMigrationSnapshot) ShouldQueryGMS() bool {
+	return s.Status == SnapshotStatusPendingProcessing || s.Status == SnapshotStatusProcessing
+}
+
 type SnapshotStatus string
 
 const (

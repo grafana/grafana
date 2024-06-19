@@ -528,8 +528,7 @@ func (s *Service) GetSnapshot(ctx context.Context, sessionUid string, snapshotUi
 		return nil, fmt.Errorf("fetching session for uid %s: %w", sessionUid, err)
 	}
 
-	if snapshot.Status == cloudmigration.SnapshotStatusPendingProcessing ||
-		snapshot.Status == cloudmigration.SnapshotStatusProcessing {
+	if snapshot.ShouldQueryGMS() {
 		// ask GMS for status if it's in the cloud
 		snapshotMeta, err := s.gmsClient.GetSnapshotStatus(ctx, *session, *snapshot)
 		if err != nil {
