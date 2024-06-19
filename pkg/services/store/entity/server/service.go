@@ -73,7 +73,10 @@ func ProvideService(
 		return nil, err
 	}
 
-	authn := grpc.ProvideAuthenticator(cfg)
+	authn, err := grpc.ProvideAuthenticator(cfg)
+	if err != nil {
+		return nil, err
+	}
 
 	s := &service{
 		config:        newConfig(cfg),

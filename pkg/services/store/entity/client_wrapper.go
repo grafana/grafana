@@ -10,10 +10,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer) EntityStoreClient {
+func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer) (EntityStoreClient, error) {
 	channel := &inprocgrpc.Channel{}
 
-	auth := grpcUtils.ProvideAuthenticator(cfg)
+	auth, err := grpcUtils.ProvideAuthenticator(cfg)
+	if err != nil {
+		return nil, err
+	}
 
 	channel.RegisterService(
 		grpchan.InterceptServer(
@@ -23,7 +26,7 @@ func NewEntityStoreClientLocal(cfg *setting.Cfg, server EntityStoreServer) Entit
 		),
 		server,
 	)
-	return NewEntityStoreClient(grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor))
+	return NewEntityStoreClient(grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)), nil
 }
 
 func NewEntityStoreClientGRPC(channel *grpc.ClientConn) EntityStoreClient {
