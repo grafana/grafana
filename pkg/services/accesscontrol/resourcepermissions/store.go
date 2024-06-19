@@ -3,10 +3,12 @@ package resourcepermissions
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -848,6 +850,55 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 		s.actionToActionSets[action] = append(s.actionToActionSets[action], actionSet.Action)
 	}
 	s.log.Debug("stored action set", "action set name", actionSet.Action)
+}
+
+// DeclareActionSets allow the caller to declare, to the service, actionsets
+// currently we only support actionsets for folders and dashboards
+// we only update core actionsets for plugins
+// we do not create new actionsets for plugins
+func (s *InMemoryActionSets) DeclareActionSets(ctx context.Context, ID, name string, regs []plugins.ActionSetRegistration) error {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) && !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		return nil
+	}
+
+	asRegs := ToActionSets(ID, name, regs)
+	for _, r := range asRegs {
+		if err := ValidateActionSet(ID, r); err != nil {
+			return err
+		}
+		// register actionWithoutPluginPrefix set
+		// remove prefix from actionWithoutPluginPrefix
+		actionWithoutPluginPrefix := ""
+		if strings.Contains(r.Action, ID+":") {
+			actionWithoutPluginPrefix = strings.TrimPrefix(r.Action, ID+":")
+		} else {
+			actionWithoutPluginPrefix = strings.TrimPrefix(r.Action, ID+".")
+		}
+		// check if actionset exists
+		// if it does, we should not overwrite it
+		// we should append the actions to the existing actionset
+		if _, ok := s.actionSetToActions[actionWithoutPluginPrefix]; ok {
+			// append actions to existing actionset
+			actions := s.actionSetToActions[actionWithoutPluginPrefix]
+			// diff actions
+			actionsToBeAdded := []string{}
+			for _, action := range r.Actions {
+				// check if action is already in the actionset
+				if !slices.Contains(actions, action) {
+					actionsToBeAdded = append(actionsToBeAdded, action)
+				}
+			}
+			actions = append(actions, actionsToBeAdded...)
+
+			// NOTE: overrides the existing actionset
+			s.StoreActionSet(actionWithoutPluginPrefix, "", actions)
+			continue
+		}
+		// if actionset does not exist, create a new one
+		s.log.Debug("Registering plugin actionset", "action", r.Action)
+	}
+
+	return nil
 }
 
 // GetActionSetName function creates an action set from a list of actions and stores it inmemory.

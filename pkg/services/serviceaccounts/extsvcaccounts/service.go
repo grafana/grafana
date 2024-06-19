@@ -57,7 +57,7 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, bus bus.Bus, db db.DB, featu
 
 	if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
 		// need to create a new instance to allocate a pointer for the service
-		svc := resourcepermissions.NewActionSetService()
+		svc := resourcepermissions.NewActionSetService(features)
 		// Register actionset service for the external service accounts
 		esa.actionSetsSvc = &svc
 	}

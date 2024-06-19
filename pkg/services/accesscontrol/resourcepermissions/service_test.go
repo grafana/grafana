@@ -290,7 +290,7 @@ func TestService_RegisterActionSets(t *testing.T) {
 				features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
 			}
 			ac := acimpl.ProvideAccessControl(features)
-			actionSets := NewActionSetService()
+			actionSets := NewActionSetService(features)
 			_, err := New(
 				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
 				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, actionSets,
@@ -336,9 +336,10 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	acService := &actest.FakeService{}
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	features := featuremgmt.WithFeatures()
 	service, err := New(
-		cfg, ops, featuremgmt.WithFeatures(), routing.NewRouteRegister(), license,
-		ac, acService, sql, teamSvc, userSvc, NewActionSetService(),
+		cfg, ops, features, routing.NewRouteRegister(), license,
+		ac, acService, sql, teamSvc, userSvc, NewActionSetService(features),
 	)
 	require.NoError(t, err)
 

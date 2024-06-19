@@ -782,7 +782,7 @@ func TestStore_StoreActionSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			asService := NewActionSetService()
+			asService := NewActionSetService(featuremgmt.WithFeatures())
 			asService.StoreActionSet(tt.resource, tt.action, tt.actions)
 
 			actionSetName := GetActionSetName(tt.resource, tt.action)
@@ -861,7 +861,8 @@ func TestStore_DeclareActionSet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			asService := NewActionSetService()
+			asService := NewActionSetService(featuremgmt.WithFeatures())
+			// TODO: make these tests work
 			err := asService.DeclareActionSets(context.TODO(), tt.pluginID, tt.pluginID, tt.actionsets)
 			if tt.expectedErr != nil {
 				require.Error(t, err)
@@ -870,7 +871,7 @@ func TestStore_DeclareActionSet(t *testing.T) {
 			}
 			require.NoError(t, err)
 			for _, as := range tt.actionsets {
-				actions := asService.ResolvePluginActionSet(as.ActionSet.Action)
+				actions := asService.ResolveAction(as.ActionSet.Action)
 				require.ElementsMatch(t, as.ActionSet.Actions, actions)
 			}
 		})
@@ -878,7 +879,7 @@ func TestStore_DeclareActionSet(t *testing.T) {
 }
 
 func TestStore_ResolveActionSet(t *testing.T) {
-	actionSetService := NewActionSetService()
+	actionSetService := NewActionSetService(featuremgmt.WithFeatures())
 	actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
 	actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
 	actionSetService.StoreActionSet("dashboards", "view", []string{"dashboards:read"})
@@ -921,7 +922,7 @@ func TestStore_ResolveActionSet(t *testing.T) {
 }
 
 func TestStore_ExpandActions(t *testing.T) {
-	actionSetService := NewActionSetService()
+	actionSetService := NewActionSetService(featuremgmt.WithFeatures())
 	actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
 	actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
 	actionSetService.StoreActionSet("dashboards", "view", []string{"dashboards:read"})

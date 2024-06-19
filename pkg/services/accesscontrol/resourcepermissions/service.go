@@ -432,9 +432,6 @@ type ActionSetService interface {
 	// ResolveActionSet resolves an action set to a list of corresponding actions.
 	ResolveActionSet(actionSet string) []string
 
-	// ResolvePluginActionSet resolves an action set to a list of corresponding actions.
-	ResolvePluginActionSet(actionSet string) []string
-
 	StoreActionSet(resource, permission string, actions []string)
 
 	plugins.ActionSetRegistry
@@ -450,36 +447,18 @@ type ActionSet struct {
 // InMemoryActionSets is an in-memory implementation of the ActionSetService.
 type InMemoryActionSets struct {
 	log                log.Logger
+	features           featuremgmt.FeatureToggles
 	actionSetToActions map[string][]string
 	actionToActionSets map[string][]string
 }
 
 // NewActionSetService returns a new instance of InMemoryActionSetService.
-func NewActionSetService() ActionSetService {
+func NewActionSetService(features featuremgmt.FeatureToggles) ActionSetService {
 	actionSets := &InMemoryActionSets{
 		log:                log.New("resourcepermissions.actionsets"),
+		features:           features,
 		actionSetToActions: make(map[string][]string),
 		actionToActionSets: make(map[string][]string),
 	}
 	return actionSets
-}
-
-// DeclareActionSets allow the caller to declare, to the service, actionsetts
-func (s *InMemoryActionSets) DeclareActionSets(ctx context.Context, ID, name string, regs []plugins.ActionSetRegistration) error {
-	// TODO: Shouldl protect behind feature toggle
-	// if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) && !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-	// 	return nil
-	// }
-
-	asRegs := ToActionSets(ID, name, regs)
-	for _, r := range asRegs {
-		if err := ValidateActionSet(ID, r); err != nil {
-			return err
-		}
-		s.log.Debug("Registering plugin actionset", "action", r.Action)
-		// register action set
-		s.StoreActionSet(r.Action, "", r.Actions)
-	}
-
-	return nil
 }
