@@ -1,6 +1,6 @@
 import { uniqueId } from 'lodash';
 
-import { AdHocVariableFilter, DataFrameDTO, DataFrameJSON, TypedVariableModel } from '@grafana/data';
+import { AdHocVariableFilter, DataFrameDTO, DataFrameJSON, MetricFindValue, TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -324,6 +324,8 @@ export function createVariableForSnapshots(variable: TypedVariableModel): SceneV
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   let filters: AdHocVariableFilter[];
+  let baseFilters: AdHocVariableFilter[];
+  let defaultKeys: MetricFindValue[];
   if (variable.type === 'interval') {
     const intervals = getIntervalsFromQueryString(variable.query);
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
@@ -352,8 +354,12 @@ export function createVariableForSnapshots(variable: TypedVariableModel): SceneV
 
   if (variable.type === 'adhoc' && variable.filters) {
     filters = variable.filters;
+    baseFilters = variable.baseFilters ?? [];
+    defaultKeys = variable.defaultKeys ?? [];
   } else {
     filters = [];
+    baseFilters = [];
+    defaultKeys = [];
   }
 
   snapshotVariable = new SnapshotVariable({
@@ -364,6 +370,8 @@ export function createVariableForSnapshots(variable: TypedVariableModel): SceneV
     text: current?.text ?? '',
     filters: filters,
     hide: variable.hide,
+    baseFilters: baseFilters,
+    defaultKeys: defaultKeys,
   });
   return snapshotVariable;
 }

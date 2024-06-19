@@ -1,6 +1,6 @@
 import { Observable, map, of } from 'rxjs';
 
-import { AdHocVariableFilter } from '@grafana/data';
+import { AdHocVariableFilter, MetricFindValue } from '@grafana/data';
 import {
   MultiValueVariable,
   MultiValueVariableState,
@@ -18,6 +18,8 @@ import { SnapshotFilterRenderer } from './SnapshotFilterRenderer';
 export interface SnapshotVariableState extends MultiValueVariableState {
   query?: string;
   filters?: AdHocVariableFilter[];
+  baseFilters?: AdHocVariableFilter[];
+  defaultKeys?: MetricFindValue[];
 }
 
 export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> {
