@@ -126,6 +126,9 @@ describe('transformSaveModelToScene', () => {
       expect(scene.state?.$variables?.state.variables).toHaveLength(2);
       expect(scene.state?.$variables?.getByName('constant')).toBeInstanceOf(ConstantVariable);
       expect(scene.state?.$variables?.getByName('CoolFilters')).toBeInstanceOf(AdHocFiltersVariable);
+      expect(
+        (scene.state?.$variables?.getByName('CoolFilters') as AdHocFiltersVariable).state.useQueriesAsFilterForOptions
+      ).toBe(true);
       expect(dashboardControls).toBeDefined();
 
       expect(dashboardControls.state.refreshPicker.state.intervals).toEqual(defaultTimePickerConfig.refresh_intervals);
@@ -936,6 +939,7 @@ describe('transformSaveModelToScene', () => {
         baseFilters: [{ key: 'baseFilterTest', operator: '=', value: 'test' }],
         datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
         applyMode: 'auto',
+        useQueriesAsFilterForOptions: true,
       });
     });
 
@@ -1018,6 +1022,7 @@ describe('transformSaveModelToScene', () => {
             value: '3',
           },
         ],
+        useQueriesAsFilterForOptions: true,
       });
     });
 
