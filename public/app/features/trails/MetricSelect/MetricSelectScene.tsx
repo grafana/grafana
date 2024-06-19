@@ -6,11 +6,13 @@ import { GrafanaTheme2, RawTimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
+  NestedScene,
   PanelBuilders,
   SceneComponentProps,
   SceneCSSGridItem,
   SceneCSSGridLayout,
   SceneFlexItem,
+  SceneFlexLayout,
   sceneGraph,
   SceneObject,
   SceneObjectBase,
@@ -24,6 +26,7 @@ import {
 } from '@grafana/scenes';
 import { InlineSwitch, Field, Alert, Icon, useStyles2, Tooltip, Input } from '@grafana/ui';
 
+import { Parser } from '../../../../../../groop/ts/groop/parser';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
@@ -53,7 +56,7 @@ interface MetricPanel {
 }
 
 export interface MetricSelectSceneState extends SceneObjectState {
-  body: SceneCSSGridLayout;
+  body: SceneFlexLayout;
   showPreviews?: boolean;
   metricNames?: string[];
   metricNamesLoading?: boolean;
@@ -69,35 +72,55 @@ const MAX_METRIC_NAMES = 20000;
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   private previewCache: Record<string, MetricPanel> = {};
   private ignoreNextUpdate = false;
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: [VAR_DATASOURCE, VAR_FILTERS],
+    onReferencedVariableValueChanged: (variable: SceneVariable) => {
+      // Might need ??
+      // this.metricContainer.setState({ children: [] });
+      // In all cases, we want to reload the metric names
+      this._debounceRefreshMetricNames();
+    },
+  });
+  private metricContainer: SceneCSSGridLayout;
+  private groupContainer: NestedScene;
 
   constructor(state: Partial<MetricSelectSceneState>) {
+    const _groupContainer = new NestedScene({
+      title: 'This is a test',
+      canCollapse: true,
+      isCollapsed: true,
+      body: new SceneFlexLayout({
+        direction: 'column',
+        children: [],
+      }),
+    });
+    const _metricContainer = new SceneCSSGridLayout({
+      children: [],
+      templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
+      autoRows: ROW_PREVIEW_HEIGHT,
+      isLazy: true,
+    });
+
     super({
       $variables: state.$variables,
       body:
         state.body ??
-        new SceneCSSGridLayout({
-          children: [],
-          templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
-          autoRows: ROW_PREVIEW_HEIGHT,
-          isLazy: true,
+        new SceneFlexLayout({
+          direction: 'column',
+          children: [new SceneFlexItem({ body: _metricContainer }), _groupContainer],
         }),
       showPreviews: true,
       ...state,
     });
 
+    this.groupContainer = _groupContainer;
+    this.metricContainer = _metricContainer;
+
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
-  protected _variableDependency = new VariableDependencyConfig(this, {
-    variableNames: [VAR_DATASOURCE, VAR_FILTERS],
-    onReferencedVariableValueChanged: (variable: SceneVariable) => {
-      // In all cases, we want to reload the metric names
-      this._debounceRefreshMetricNames();
-    },
-  });
-
   private _onActivate() {
-    if (this.state.body.state.children.length === 0) {
+    if (this.metricContainer.state.children.length === 0) {
       this.buildLayout();
     } else {
       // Temp hack when going back to select metric scene and variable updates
@@ -266,6 +289,12 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       metricsMap[metricName] = panel;
     }
 
+    const groopParser = new Parser();
+    groopParser.config.maxDepth = 2;
+    groopParser.config.minGroupSize = 2;
+    const grooping = groopParser.parse(sortedMetricNames);
+    console.log(grooping, this.groupContainer);
+
     try {
       // If there is a current metric, do not present it
       const currentMetric = sceneGraph.getAncestor(this, MetricScene).state.metric;
@@ -326,7 +355,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     const rowTemplate = this.state.showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
 
-    this.state.body.setState({ children, autoRows: rowTemplate });
+    this.metricContainer.setState({ children, autoRows: rowTemplate });
   }
 
   public updateMetricPanel = (metric: string, isLoaded?: boolean, isEmpty?: boolean) => {
