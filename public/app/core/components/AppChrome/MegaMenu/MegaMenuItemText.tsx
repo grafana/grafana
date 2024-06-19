@@ -4,6 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Icon, Link, useTheme2 } from '@grafana/ui';
+import { useLinkWithVariables } from 'app/percona/shared/helpers/navigation';
 
 export interface Props {
   children: React.ReactNode;
@@ -17,6 +18,8 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url }: P
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
+  // @PERCONA
+  const urlWithVariables = useLinkWithVariables(url);
 
   const linkContent = (
     <div className={styles.linkContent}>
@@ -35,7 +38,7 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url }: P
       className={cx(styles.container, {
         [styles.containerActive]: isActive,
       })}
-      href={url}
+      href={urlWithVariables}
       target={target}
       onClick={onClick}
     >
