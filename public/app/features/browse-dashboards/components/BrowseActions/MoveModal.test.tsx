@@ -20,7 +20,7 @@ describe('browse-dashboards MoveModal', () => {
   const mockOnDismiss = jest.fn();
   const mockOnConfirm = jest.fn();
   const mockFolders = [
-    { title: 'General', uid: '' } as DashboardSearchHit,
+    { title: 'Dashboards', uid: '' } as DashboardSearchHit,
     { title: 'Folder 1', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
   ];
   let props: Props;

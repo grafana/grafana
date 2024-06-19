@@ -1,6 +1,6 @@
 package definitions
 
-import "github.com/grafana/grafana/pkg/util/errutil"
+import "github.com/grafana/grafana/pkg/apimachinery/errutil"
 
 // swagger:model
 type NotFound struct{}

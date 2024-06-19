@@ -16,6 +16,7 @@ import {
   addQueryHistoryToQueryLibrary,
   openQueryHistory,
   openQueryLibrary,
+  submitAddToQueryLibrary,
   switchToQueryHistory,
 } from './helper/interactions';
 import { setupExplore, waitForExplore } from './helper/setup';
@@ -134,6 +135,7 @@ describe('QueryLibrary', () => {
     await switchToQueryHistory();
     await assertQueryHistory(['{"expr":"TEST"}']);
     await addQueryHistoryToQueryLibrary();
+    await submitAddToQueryLibrary({ description: 'Test' });
     expect(testEventBus.publish).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'alert-success',

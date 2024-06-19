@@ -147,6 +147,24 @@ describe('Alertmanager card', () => {
     render(cardWithStatus('inconclusive'));
     expect(screen.getByText(/Inconclusive/)).toBeInTheDocument();
   });
+
+  it('should not render the enable / disable buttons or status when disabled', () => {
+    render(
+      <AlertmanagerCard
+        name="Foo"
+        receiving={true}
+        status="active"
+        showStatus={false}
+        onEditConfiguration={jest.fn()}
+      />
+    );
+
+    const enableButton = screen.queryByRole('button', { name: 'Enable' });
+    expect(enableButton).not.toBeInTheDocument();
+
+    // should also not show the status for external alertmanagers
+    expect(screen.queryByText(/Receiving/)).not.toBeInTheDocument();
+  });
 });
 
 const cardWithStatus = (status: ConnectionStatus) => (

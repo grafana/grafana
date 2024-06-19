@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { withTheme2, Themeable2 } from '@grafana/ui';
+import { withTheme2, Themeable2, PopoverContent } from '@grafana/ui';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';
 import { UniqueKeyMaker } from '../UniqueKeyMaker';
@@ -50,6 +50,7 @@ export interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  pinLineButtonTooltipTitle?: PopoverContent;
   onLogRowHover?: (row?: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   getRowContextQuery?: (
@@ -68,8 +69,8 @@ export interface Props extends Themeable2 {
    * Any overflowing content will be clipped at the table boundary.
    */
   overflowingContent?: boolean;
-  onClickFilterValue?: (value: string, refId?: string) => void;
-  onClickFilterOutValue?: (value: string, refId?: string) => void;
+  onClickFilterString?: (value: string, refId?: string) => void;
+  onClickFilterOutString?: (value: string, refId?: string) => void;
 }
 
 interface State {
@@ -104,10 +105,10 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   };
 
   popoverMenuSupported() {
-    if (!config.featureToggles.logRowsPopoverMenu || this.props.app !== CoreApp.Explore) {
+    if (!config.featureToggles.logRowsPopoverMenu) {
       return false;
     }
-    return Boolean(this.props.onClickFilterOutValue || this.props.onClickFilterValue);
+    return Boolean(this.props.onClickFilterOutString || this.props.onClickFilterString);
   }
 
   handleSelection = (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel): boolean => {
@@ -146,6 +147,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     if (document.getSelection()?.toString()) {
       return;
     }
+    this.closePopoverMenu();
   };
 
   closePopoverMenu = () => {
@@ -217,8 +219,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
             row={this.state.selectedRow}
             selection={this.state.selection}
             {...this.state.popoverMenuCoordinates}
-            onClickFilterValue={rest.onClickFilterValue}
-            onClickFilterOutValue={rest.onClickFilterOutValue}
+            onClickFilterString={rest.onClickFilterString}
+            onClickFilterOutString={rest.onClickFilterOutString}
           />
         )}
         <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
@@ -238,6 +240,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   permalinkedRowId={this.props.permalinkedRowId}
                   onPinLine={this.props.onPinLine}
                   onUnpinLine={this.props.onUnpinLine}
+                  pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
                   pinned={this.props.pinnedRowId === row.uid}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
@@ -260,6 +263,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   permalinkedRowId={this.props.permalinkedRowId}
                   onPinLine={this.props.onPinLine}
                   onUnpinLine={this.props.onUnpinLine}
+                  pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
                   pinned={this.props.pinnedRowId === row.uid}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}

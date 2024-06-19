@@ -435,6 +435,13 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),
     },
+    config.featureToggles.dashboardRestore && {
+      path: '/dashboard/recently-deleted',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsDelete]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
+      ),
+    },
     {
       path: '/playlists',
       component: SafeDynamicImport(

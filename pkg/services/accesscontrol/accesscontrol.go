@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -76,6 +76,7 @@ type Options struct {
 type SearchOptions struct {
 	ActionPrefix string // Needed for the PoC v1, it's probably going to be removed.
 	Action       string
+	ActionSets   []string
 	Scope        string
 	NamespacedID string    // ID of the identity (ex: user:3, service-account:4)
 	wildcards    Wildcards // private field computed based on the Scope

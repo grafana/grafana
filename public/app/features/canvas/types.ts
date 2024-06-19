@@ -1,14 +1,6 @@
 import { LinkModel } from '@grafana/data/src';
 import { ColorDimensionConfig, ResourceDimensionConfig, TextDimensionConfig } from '@grafana/schema';
-import {
-  BackgroundImageSize,
-  Constraint,
-  HorizontalConstraint,
-  Placement,
-  VerticalConstraint,
-  LineConfig,
-  BackgroundConfig,
-} from 'app/plugins/panel/canvas/panelcfg.gen';
+import { BackgroundImageSize } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 export enum QuickPlacement {
   Top = 'top',
@@ -69,13 +61,3 @@ export interface StandardEditorConfig {
   background?: boolean;
   border?: boolean;
 }
-
-export {
-  Placement,
-  Constraint,
-  HorizontalConstraint,
-  VerticalConstraint,
-  BackgroundImageSize,
-  LineConfig,
-  BackgroundConfig,
-};

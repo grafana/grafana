@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 var logger = log.New("tsdb.graphite")
@@ -351,7 +350,7 @@ func epochMStoGraphiteTime(tr backend.TimeRange) (string, string) {
 /**
  * Graphite should always return timestamp as a number but values might be nil when data is missing
  */
-func parseDataTimePoint(dataTimePoint legacydata.DataTimePoint) (time.Time, *float64, error) {
+func parseDataTimePoint(dataTimePoint DataTimePoint) (time.Time, *float64, error) {
 	if !dataTimePoint[1].Valid {
 		return time.Time{}, nil, errors.New("failed to parse data point timestamp")
 	}

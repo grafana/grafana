@@ -14,6 +14,7 @@ import { PanelOptionsPane } from './PanelOptionsPane';
 import { VizPanelManager, VizPanelManagerState } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
+  isNewPanel: boolean;
   isDirty?: boolean;
   panelId: number;
   optionsPane: PanelOptionsPane;
@@ -59,6 +60,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     return () => {
       if (!this._discardChanges) {
         this.commitChanges();
+      } else if (this.state.isNewPanel) {
+        getDashboardSceneFor(this).removePanel(panelManager.state.sourcePanel.resolve()!);
       }
     };
   }
@@ -173,10 +176,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 }
 
-export function buildPanelEditScene(panel: VizPanel): PanelEditor {
+export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
   return new PanelEditor({
     panelId: getPanelIdForVizPanel(panel),
     optionsPane: new PanelOptionsPane({}),
     vizManager: VizPanelManager.createFor(panel),
+    isNewPanel,
   });
 }

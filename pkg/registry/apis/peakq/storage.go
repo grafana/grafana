@@ -12,7 +12,7 @@ import (
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -31,7 +31,7 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*
 		PredicateFunc:             grafanaregistry.Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		TableConvertor: utils.NewTableConverter(
+		TableConvertor: gapiutil.NewTableConverter(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
@@ -59,4 +59,10 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*
 		return nil, err
 	}
 	return &storage{Store: store}, nil
+}
+
+// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
+func (s *storage) Compare(storageObj, legacyObj runtime.Object) bool {
+	//TODO: define the comparison logic between a query template returned by the storage and a query template returned by the legacy storage
+	return false
 }

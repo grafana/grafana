@@ -374,7 +374,10 @@ export class PrometheusDatasource
     };
 
     if (config.featureToggles.promQLScope) {
-      processedTarget.scopes = (request.scopes ?? []).map((scope) => scope.spec);
+      processedTarget.scopes = (request.scopes ?? []).map((scope) => ({
+        name: scope.metadata.name,
+        ...scope.spec,
+      }));
     }
 
     if (config.featureToggles.groupByVariable) {
@@ -656,14 +659,19 @@ export class PrometheusDatasource
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
         const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
+        const replacedInterpolatedQuery = config.featureToggles.promQLScope
+          ? interpolatedQuery
+          : this.templateSrv.replace(
+              this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
+              scopedVars,
+              this.interpolateQueryExpr
+            );
 
         const expandedQuery = {
           ...query,
           ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
           datasource: this.getRef(),
-          expr: config.featureToggles.promQLScope
-            ? interpolatedQuery
-            : this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
+          expr: replacedInterpolatedQuery,
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
 
@@ -740,6 +748,30 @@ export class PrometheusDatasource
         expression = `histogram_quantile(0.95, sum(rate(${expression}[$__rate_interval])) by (le))`;
         break;
       }
+      case 'ADD_HISTOGRAM_AVG': {
+        expression = `histogram_avg(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_FRACTION': {
+        expression = `histogram_fraction(0,0.2,rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_COUNT': {
+        expression = `histogram_count(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_SUM': {
+        expression = `histogram_sum(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_STDDEV': {
+        expression = `histogram_stddev(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_STDVAR': {
+        expression = `histogram_stdvar(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
       case 'ADD_RATE': {
         expression = `rate(${expression}[$__rate_interval])`;
         break;
@@ -797,7 +829,11 @@ export class PrometheusDatasource
       return [];
     }
 
-    return filters.map((f) => ({ ...f, operator: scopeFilterOperatorMap[f.operator] }));
+    return filters.map((f) => ({
+      ...f,
+      value: this.templateSrv.replace(f.value, {}, this.interpolateQueryExpr),
+      operator: scopeFilterOperatorMap[f.operator],
+    }));
   }
 
   enhanceExprWithAdHocFilters(filters: AdHocVariableFilter[] | undefined, expr: string) {
@@ -838,12 +874,21 @@ export class PrometheusDatasource
     };
 
     // interpolate expression
+
+    // We need a first replace to evaluate variables before applying adhoc filters
+    // This is required for an expression like `metric > $VAR` where $VAR is a float to which we must not add adhoc filters
     const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
+
+    // Apply ad-hoc filters
+    // When ad-hoc filters are applied, we replace again the variables in case the ad-hoc filters also reference a variable
+    const exprWithAdhoc = config.featureToggles.promQLScope
+      ? expr
+      : this.templateSrv.replace(this.enhanceExprWithAdHocFilters(filters, expr), variables, this.interpolateQueryExpr);
 
     return {
       ...target,
       ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
-      expr: config.featureToggles.promQLScope ? expr : this.enhanceExprWithAdHocFilters(filters, expr),
+      expr: exprWithAdhoc,
       interval: this.templateSrv.replace(target.interval, variables),
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),
     };

@@ -15,9 +15,9 @@ import {
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
-import { withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
+import { withTheme2, Themeable2, Icon, Tooltip, PopoverContent } from '@grafana/ui';
 
-import { checkLogsError, escapeUnescapedString } from '../utils';
+import { checkLogsError, escapeUnescapedString, checkLogsSampled } from '../utils';
 
 import { LogDetails } from './LogDetails';
 import { LogLabels } from './LogLabels';
@@ -60,6 +60,7 @@ interface Props extends Themeable2 {
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  pinLineButtonTooltipTitle?: PopoverContent;
   pinned?: boolean;
   containerRendered?: boolean;
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
@@ -221,6 +222,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const { showDetails, showingContext, permalinked } = this.state;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
+    const { sampleMessage, isSampled } = checkLogsSampled(row);
     const logRowBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
       [styles.highlightBackground]: showingContext || permalinked,
@@ -254,11 +256,20 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             </td>
           )}
           <td
-            className={hasError ? styles.logsRowWithError : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`}
+            className={
+              hasError || isSampled
+                ? styles.logsRowWithError
+                : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`
+            }
           >
             {hasError && (
               <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
                 <Icon className={styles.logIconError} name="exclamation-triangle" size="xs" />
+              </Tooltip>
+            )}
+            {isSampled && (
+              <Tooltip content={`${sampleMessage}`} placement="right" theme="info">
+                <Icon className={styles.logIconInfo} name="info-circle" size="xs" />
               </Tooltip>
             )}
           </td>
@@ -305,9 +316,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               styles={styles}
               onPinLine={this.props.onPinLine}
               onUnpinLine={this.props.onUnpinLine}
+              pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
               pinned={this.props.pinned}
               mouseIsOver={this.state.mouseIsOver}
               onBlur={this.onMouseLeave}
+              expanded={this.state.showDetails}
             />
           )}
         </tr>

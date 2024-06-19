@@ -22,7 +22,7 @@ import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
-import { PanelEditor } from '../panel-edit/PanelEditor';
+import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ShareButton from '../sharing/ShareButton/ShareButton';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
@@ -139,7 +139,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: meta.isSnapshot && !isEditing,
+    condition: meta.isSnapshot && !meta.dashboardNotFound && !isEditing,
     render: () => (
       <GoToSnapshotOriginButton
         key="go-to-snapshot-origin"
@@ -170,9 +170,9 @@ export function ToolbarActions({ dashboard }: Props) {
               testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
               label={t('dashboard.add-menu.visualization', 'Visualization')}
               onClick={() => {
-                const id = dashboard.onCreateNewPanel();
+                const vizPanel = dashboard.onCreateNewPanel();
                 DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-                locationService.partial({ editPanel: id });
+                dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
               }}
             />
             <Menu.Item
@@ -415,11 +415,11 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditingPanel && !isEditingLibraryPanel && !editview && !meta.isNew && !isViewingPanel,
+    condition: isEditingPanel && !isEditingLibraryPanel && !editview && !isViewingPanel,
     render: () => (
       <Button
         onClick={editPanel?.onDiscard}
-        tooltip="Discard panel changes"
+        tooltip={editPanel?.state.isNewPanel ? 'Discard panel' : 'Discard panel changes'}
         size="sm"
         disabled={!isEditedPanelDirty || !isDirty}
         key="discard"
@@ -427,7 +427,7 @@ export function ToolbarActions({ dashboard }: Props) {
         variant="destructive"
         data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
       >
-        Discard panel changes
+        {editPanel?.state.isNewPanel ? 'Discard panel' : 'Discard panel changes'}
       </Button>
     ),
   });
@@ -566,7 +566,12 @@ export function ToolbarActions({ dashboard }: Props) {
             Save dashboard
           </Button>
           <Dropdown overlay={menu}>
-            <Button icon="angle-down" variant={isDirty ? 'primary' : 'secondary'} size="sm" />
+            <Button
+              aria-label="More save options"
+              icon="angle-down"
+              variant={isDirty ? 'primary' : 'secondary'}
+              size="sm"
+            />
           </Dropdown>
         </ButtonGroup>
       );

@@ -15,6 +15,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -23,12 +24,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -37,17 +39,18 @@ const (
 )
 
 type Service struct {
-	SQLStore           Store
-	SecretsStore       kvstore.SecretsKVStore
-	SecretsService     secrets.Service
-	cfg                *setting.Cfg
-	features           featuremgmt.FeatureToggles
-	permissionsService accesscontrol.DatasourcePermissionsService
-	ac                 accesscontrol.AccessControl
-	logger             log.Logger
-	db                 db.DB
-	pluginStore        pluginstore.Store
-	pluginClient       plugins.Client // access to everything
+	SQLStore                  Store
+	SecretsStore              kvstore.SecretsKVStore
+	SecretsService            secrets.Service
+	cfg                       *setting.Cfg
+	features                  featuremgmt.FeatureToggles
+	permissionsService        accesscontrol.DatasourcePermissionsService
+	ac                        accesscontrol.AccessControl
+	logger                    log.Logger
+	db                        db.DB
+	pluginStore               pluginstore.Store
+	pluginClient              plugins.Client
+	basePluginContextProvider plugincontext.BasePluginContextProvider
 
 	ptc proxyTransportCache
 }
@@ -66,6 +69,7 @@ func ProvideService(
 	db db.DB, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
 	quotaService quota.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
+	basePluginContextProvider plugincontext.BasePluginContextProvider,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
 	store := &SqlStore{db: db, logger: dslogger, features: features}
@@ -76,14 +80,15 @@ func ProvideService(
 		ptc: proxyTransportCache{
 			cache: make(map[int64]cachedRoundTripper),
 		},
-		cfg:                cfg,
-		features:           features,
-		permissionsService: datasourcePermissionsService,
-		ac:                 ac,
-		logger:             dslogger,
-		db:                 db,
-		pluginStore:        pluginStore,
-		pluginClient:       pluginClient,
+		cfg:                       cfg,
+		features:                  features,
+		permissionsService:        datasourcePermissionsService,
+		ac:                        ac,
+		logger:                    dslogger,
+		db:                        db,
+		pluginStore:               pluginStore,
+		pluginClient:              pluginClient,
+		basePluginContextProvider: basePluginContextProvider,
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
@@ -216,10 +221,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		return nil, fmt.Errorf("invalid jsonData")
 	}
 
-	settings, err := s.prepareInstanceSettings(ctx, backend.PluginContext{
-		OrgID:    cmd.OrgID,
-		PluginID: cmd.Type,
-	}, &backend.DataSourceInstanceSettings{
+	settings, err := s.prepareInstanceSettings(ctx, &backend.DataSourceInstanceSettings{
 		UID:                     cmd.UID,
 		Name:                    cmd.Name,
 		URL:                     cmd.URL,
@@ -231,7 +233,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		BasicAuthEnabled:        cmd.BasicAuth,
 		BasicAuthUser:           cmd.BasicAuthUser,
 		APIVersion:              cmd.APIVersion,
-	})
+	}, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -296,7 +298,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 }
 
 // This will valid validate the instance settings return a version that is safe to be saved
-func (s *Service) prepareInstanceSettings(ctx context.Context, pluginContext backend.PluginContext, settings *backend.DataSourceInstanceSettings) (*backend.DataSourceInstanceSettings, error) {
+func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend.DataSourceInstanceSettings, ds *datasources.DataSource) (*backend.DataSourceInstanceSettings, error) {
 	operation := backend.AdmissionRequestCreate
 
 	// First apply global validation rules -- these are required regardless which plugin we are talking to
@@ -315,8 +317,8 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, pluginContext bac
 	// Make sure it is a known plugin type
 	p, found := s.pluginStore.Plugin(ctx, settings.Type)
 	if !found {
-		return nil, errutil.BadRequest("datasource.unknownPlugin",
-			errutil.WithPublicMessage(fmt.Sprintf("plugin '%s' not found", settings.Type)))
+		// Ignore non-existing plugins for the time being
+		return settings, nil
 	}
 
 	// When the APIVersion is set, the client must also implement AdmissionHandler
@@ -330,6 +332,15 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, pluginContext bac
 	pb, err := backend.DataSourceInstanceSettingsToProtoBytes(settings)
 	if err != nil {
 		return nil, err
+	}
+
+	pluginContext := s.basePluginContextProvider.GetBasePluginContext(ctx, p, nil)
+	if ds != nil {
+		datasourceSettings, err := adapters.ModelToInstanceSettings(ds, s.decryptSecureJsonDataFn(ctx))
+		if err != nil {
+			return nil, err
+		}
+		pluginContext.DataSourceInstanceSettings = datasourceSettings
 	}
 
 	req := &backend.AdmissionRequest{
@@ -443,35 +454,10 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 	})
 }
 
-func (s *Service) getPluginContext(ctx context.Context, orgID int64, pluginID string, ds *datasources.DataSource) (backend.PluginContext, error) {
-	var err error
-	if ds == nil {
-		return backend.PluginContext{
-			OrgID:    orgID,
-			PluginID: pluginID,
-		}, err
+func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
+	return func(ds *datasources.DataSource) (map[string]string, error) {
+		return s.DecryptedValues(ctx, ds)
 	}
-	pctx := backend.PluginContext{
-		OrgID:    orgID,
-		PluginID: pluginID,
-		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			UID:              ds.UID,
-			Type:             pluginID,
-			Name:             ds.Name,
-			URL:              ds.URL,
-			Database:         ds.Database,
-			BasicAuthEnabled: ds.BasicAuth,
-			BasicAuthUser:    ds.BasicAuthUser,
-			Updated:          ds.Updated,
-			APIVersion:       ds.APIVersion,
-			User:             ds.User,
-		},
-	}
-	pctx.DataSourceInstanceSettings.JSONData, err = ds.JsonData.ToDB()
-	if err == nil && len(ds.SecureJsonData) > 0 {
-		pctx.DataSourceInstanceSettings.DecryptedSecureJSONData, err = s.DecryptedValues(ctx, ds)
-	}
-	return pctx, err
 }
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
@@ -494,12 +480,8 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		if err != nil {
 			return fmt.Errorf("invalid jsonData")
 		}
-		pctx, err := s.getPluginContext(ctx, cmd.OrgID, cmd.Type, dataSource)
-		if err != nil {
-			return err
-		}
 
-		settings, err := s.prepareInstanceSettings(ctx, pctx,
+		settings, err := s.prepareInstanceSettings(ctx,
 			&backend.DataSourceInstanceSettings{
 				UID:                     cmd.UID,
 				Name:                    cmd.Name,
@@ -513,7 +495,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 				BasicAuthUser:           cmd.BasicAuthUser,
 				APIVersion:              cmd.APIVersion,
 				Updated:                 time.Now(),
-			})
+			}, dataSource)
 		if err != nil {
 			return err
 		}

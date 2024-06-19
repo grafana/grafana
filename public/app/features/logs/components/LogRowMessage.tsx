@@ -3,6 +3,7 @@ import Highlighter from 'react-highlight-words';
 
 import { CoreApp, findHighlightChunksInText, LogRowContextOptions, LogRowModel } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+import { PopoverContent } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowMenuCell } from './LogRowMenuCell';
@@ -25,10 +26,12 @@ interface Props {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  pinLineButtonTooltipTitle?: PopoverContent;
   pinned?: boolean;
   styles: LogRowStyles;
   mouseIsOver: boolean;
   onBlur: () => void;
+  expanded?: boolean;
 }
 
 interface LogMessageProps {
@@ -58,13 +61,20 @@ const LogMessage = ({ hasAnsi, entry, highlights, styles }: LogMessageProps) => 
   return <>{entry}</>;
 };
 
-const restructureLog = (line: string, prettifyLogMessage: boolean): string => {
+const restructureLog = (
+  line: string,
+  prettifyLogMessage: boolean,
+  wrapLogMessage: boolean,
+  expanded: boolean
+): string => {
   if (prettifyLogMessage) {
     try {
       return JSON.stringify(JSON.parse(line), undefined, 2);
-    } catch (error) {
-      return line;
-    }
+    } catch (error) {}
+  }
+  // With wrapping disabled, we want to turn it into a single-line log entry unless the line is expanded
+  if (!wrapLogMessage && !expanded) {
+    line = line.replace(/(\r\n|\n|\r)/g, '');
   }
   return line;
 };
@@ -80,13 +90,18 @@ export const LogRowMessage = React.memo((props: Props) => {
     onPermalinkClick,
     onUnpinLine,
     onPinLine,
+    pinLineButtonTooltipTitle,
     pinned,
     mouseIsOver,
     onBlur,
     getRowContextQuery,
+    expanded,
   } = props;
   const { hasAnsi, raw } = row;
-  const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
+  const restructuredEntry = useMemo(
+    () => restructureLog(raw, prettifyLogMessage, wrapLogMessage, Boolean(expanded)),
+    [raw, prettifyLogMessage, wrapLogMessage, expanded]
+  );
   const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
   return (
     <>
@@ -112,6 +127,7 @@ export const LogRowMessage = React.memo((props: Props) => {
             onPermalinkClick={onPermalinkClick}
             onPinLine={onPinLine}
             onUnpinLine={onUnpinLine}
+            pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
             pinned={pinned}
             styles={styles}
             mouseIsOver={mouseIsOver}

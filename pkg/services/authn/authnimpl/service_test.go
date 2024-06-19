@@ -15,12 +15,12 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -561,6 +561,7 @@ func setupTests(t *testing.T, opts ...func(svc *Service)) *Service {
 		metrics:                newMetrics(nil),
 		postAuthHooks:          newQueue[authn.PostAuthHookFn](),
 		postLoginHooks:         newQueue[authn.PostLoginHookFn](),
+		preLogoutHooks:         newQueue[authn.PreLogoutHookFn](),
 	}
 
 	for _, o := range opts {

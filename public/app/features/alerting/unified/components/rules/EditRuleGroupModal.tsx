@@ -293,7 +293,14 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               </Stack>
             )}
             <Field
-              label={<Label htmlFor="groupName">Evaluation group name</Label>}
+              label={
+                <Label
+                  htmlFor="groupName"
+                  description="A group evaluates all its rules over the same evaluation interval."
+                >
+                  Evaluation group
+                </Label>
+              }
               invalid={!!errors.groupName}
               error={errors.groupName?.message}
             >
@@ -331,7 +338,8 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               </Stack>
             </Field>
 
-            {checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
+            {/* if we're dealing with a Grafana-managed group, check if the evaluation interval is valid / permitted */}
+            {isGrafanaManagedGroup && checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
               <EvaluationIntervalLimitExceeded />
             )}
 

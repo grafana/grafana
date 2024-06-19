@@ -218,9 +218,9 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		logger.Error("Failed to create request url", "error", err, "url", ds.URL, "path", req.Path)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl.String(), bytes.NewBuffer(req.Body))
+	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl, bytes.NewBuffer(req.Body))
 	if err != nil {
-		logger.Error("Failed to create request", "error", err, "url", esUrl.String())
+		logger.Error("Failed to create request", "error", err, "url", esUrl)
 		return err
 	}
 
@@ -272,12 +272,19 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	})
 }
 
-func createElasticsearchURL(req *backend.CallResourceRequest, ds *es.DatasourceInfo) (*url.URL, error) {
+func createElasticsearchURL(req *backend.CallResourceRequest, ds *es.DatasourceInfo) (string, error) {
 	esUrl, err := url.Parse(ds.URL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse data source URL: %s, error: %w", ds.URL, err)
+		return "", fmt.Errorf("failed to parse data source URL: %s, error: %w", ds.URL, err)
 	}
 
 	esUrl.Path = path.Join(esUrl.Path, req.Path)
-	return esUrl, nil
+	esUrlString := esUrl.String()
+	// If the request path is empty and the URL does not end with a slash, add a slash to the URL.
+	// This ensures that for version checks executed to the root URL, the URL ends with a slash.
+	// This is helpful, for example, for load balancers that expect URLs to match the pattern /.*.
+	if req.Path == "" && esUrlString[len(esUrlString)-1:] != "/" {
+		return esUrl.String() + "/", nil
+	}
+	return esUrlString, nil
 }

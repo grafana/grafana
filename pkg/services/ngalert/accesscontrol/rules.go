@@ -5,9 +5,9 @@ import (
 
 	"golang.org/x/net/context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -29,6 +29,10 @@ func NewRuleService(ac accesscontrol.AccessControl) *RuleService {
 	return &RuleService{
 		genericService{ac: ac},
 	}
+}
+
+type Namespaced interface {
+	GetNamespaceUID() string
 }
 
 // getReadFolderAccessEvaluator constructs accesscontrol.Evaluator that checks all permissions required to read rules in  specific folder
@@ -96,7 +100,7 @@ func (r *RuleService) AuthorizeDatasourceAccessForRuleGroup(ctx context.Context,
 	})
 }
 
-// AuthorizeAccessToRuleGroup checks that the identity.Requester has permissions to all rules, which means that it has permissions to:
+// HasAccessToRuleGroup checks that the identity.Requester has permissions to all rules, which means that it has permissions to:
 // - ("folders:read") read folders which contain the rules
 // - ("alert.rules:read") read alert rules in the folders
 // Returns false if the requester does not have enough permissions, and error if something went wrong during the permission evaluation.
@@ -108,7 +112,7 @@ func (r *RuleService) HasAccessToRuleGroup(ctx context.Context, user identity.Re
 // AuthorizeAccessToRuleGroup checks that the identity.Requester has permissions to all rules, which means that it has permissions to:
 // - ("folders:read") read folders which contain the rules
 // - ("alert.rules:read") read alert rules in the folders
-// Returns error if at least one permissions is missing or if something went wrong during the permission evaluation
+// Returns error if at least one permission is missing or if something went wrong during the permission evaluation
 func (r *RuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
 	eval := r.getRulesReadEvaluator(rules...)
 	return r.HasAccessOrError(ctx, user, eval, func() string {
@@ -118,6 +122,28 @@ func (r *RuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user ident
 			folderUID = rules[0].NamespaceUID
 		}
 		return fmt.Sprintf("access rule group '%s' in folder '%s'", groupName, folderUID)
+	})
+}
+
+// HasAccessInFolder checks that the identity.Requester has permissions to read alert rules in the given folder,
+// which requires the following permissions:
+// - ("folders:read") read the folder
+// - ("alert.rules:read") read alert rules in the folder
+// Returns false if the requester does not have enough permissions, and error if something went wrong during the permission evaluation.
+func (r *RuleService) HasAccessInFolder(ctx context.Context, user identity.Requester, rule Namespaced) (bool, error) {
+	eval := accesscontrol.EvalAll(getReadFolderAccessEvaluator(rule.GetNamespaceUID()))
+	return r.HasAccess(ctx, user, eval)
+}
+
+// AuthorizeAccessInFolder checks that the identity.Requester has permissions to read alert rules in the given folder,
+// which requires the following permissions:
+// - ("folders:read") read the folder
+// - ("alert.rules:read") read alert rules in the folder
+// Returns error if at least one permission is missing or if something went wrong during the permission evaluation
+func (r *RuleService) AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, rule Namespaced) error {
+	eval := accesscontrol.EvalAll(getReadFolderAccessEvaluator(rule.GetNamespaceUID()))
+	return r.HasAccessOrError(ctx, user, eval, func() string {
+		return fmt.Sprintf("access rules in folder '%s'", rule.GetNamespaceUID())
 	})
 }
 

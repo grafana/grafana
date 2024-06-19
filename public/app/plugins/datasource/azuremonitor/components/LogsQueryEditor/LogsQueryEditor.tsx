@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 
 import { PanelData, TimeRange } from '@grafana/data';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
-import { Alert, LinkButton } from '@grafana/ui';
+import { getTemplateSrv } from '@grafana/runtime';
+import { Alert, LinkButton, Text, TextLink } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
@@ -13,14 +14,19 @@ import { parseResourceDetails } from '../ResourcePicker/utils';
 import FormatAsField from '../shared/FormatAsField';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
+import { LogsManagement } from './LogsManagement';
 import QueryField from './QueryField';
 import { TimeManagement } from './TimeManagement';
-import { setFormatAs } from './setQueryValue';
+import { setBasicLogsQuery, setFormatAs, setKustoQuery } from './setQueryValue';
 import useMigrations from './useMigrations';
+import { calculateTimeRange, shouldShowBasicLogsToggle } from './utils';
+
+const MAX_DATA_RETENTION_DAYS = 8; // limit is only for basic logs
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
+  basicLogsEnabled: boolean;
   subscriptionId?: string;
   onChange: (newQuery: AzureMonitorQuery) => void;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
@@ -33,6 +39,7 @@ interface LogsQueryEditorProps {
 const LogsQueryEditor = ({
   query,
   datasource,
+  basicLogsEnabled,
   subscriptionId,
   variableOptionGroup,
   onChange,
@@ -42,6 +49,15 @@ const LogsQueryEditor = ({
   data,
 }: LogsQueryEditorProps) => {
   const migrationError = useMigrations(datasource, query, onChange);
+  const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(
+    shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)
+  );
+  const [showDataRetentionWarning, setShowDataRetentionWarning] = useState<boolean>(false);
+  const [dataIngestedWarning, setDataIngestedWarning] = useState<React.ReactNode | null>(null);
+  const templateSrv = getTemplateSrv();
+  const from = templateSrv?.replace('$__from');
+  const to = templateSrv?.replace('$__to');
+
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
       // Only if there is some resource(s) selected we should disable rows
@@ -65,6 +81,66 @@ const LogsQueryEditor = ({
     }
   }, [query.azureLogAnalytics?.resources, datasource.azureLogAnalyticsDatasource]);
 
+  useEffect(() => {
+    if (shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)) {
+      setShowBasicLogsToggle(true);
+    } else {
+      setShowBasicLogsToggle(false);
+    }
+  }, [basicLogsEnabled, query.azureLogAnalytics?.resources, templateSrv]);
+
+  useEffect(() => {
+    if ((!basicLogsEnabled || !showBasicLogsToggle) && query.azureLogAnalytics?.basicLogsQuery) {
+      const updatedBasicLogsQuery = setBasicLogsQuery(query, false);
+      onChange(setKustoQuery(updatedBasicLogsQuery, ''));
+    }
+  }, [basicLogsEnabled, onChange, query, showBasicLogsToggle]);
+
+  useEffect(() => {
+    const timeRange = calculateTimeRange(parseInt(from, 10), parseInt(to, 10));
+    // Basic logs data retention is fixed at 8 days
+    // need to add this check to make user aware of this limitation in case they have selected a longer time range
+    if (showBasicLogsToggle && query.azureLogAnalytics?.basicLogsQuery && timeRange > MAX_DATA_RETENTION_DAYS) {
+      setShowDataRetentionWarning(true);
+    } else {
+      setShowDataRetentionWarning(false);
+    }
+  }, [query.azureLogAnalytics?.basicLogsQuery, showBasicLogsToggle, from, to]);
+
+  useEffect(() => {
+    const getBasicLogsUsage = async (query: AzureMonitorQuery) => {
+      try {
+        if (showBasicLogsToggle && query.azureLogAnalytics?.basicLogsQuery && !!query.azureLogAnalytics.query) {
+          const querySplit = query.azureLogAnalytics.query.split('|');
+          // Basic Logs queries are required to start the query with a table
+          const table = querySplit[0].trim();
+          const dataIngested = await datasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage(query, table);
+          const textToShow = !!dataIngested
+            ? `This query is processing ${dataIngested} GiB when run. `
+            : 'This is a Basic Logs query and incurs cost per GiB scanned. ';
+          setDataIngestedWarning(
+            <>
+              <Text color="primary">
+                {textToShow}{' '}
+                <TextLink
+                  href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1"
+                  external
+                >
+                  Learn More
+                </TextLink>
+              </Text>
+            </>
+          );
+        } else {
+          setDataIngestedWarning(null);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    getBasicLogsUsage(query).catch((err) => console.error(err));
+  }, [datasource.azureLogAnalyticsDatasource, query, showBasicLogsToggle, from, to]);
   let portalLinkButton = null;
 
   if (data?.series) {
@@ -116,6 +192,15 @@ const LogsQueryEditor = ({
               )}
               selectionNotice={() => 'You may only choose items of the same resource type.'}
             />
+            {showBasicLogsToggle && (
+              <LogsManagement
+                query={query}
+                datasource={datasource}
+                variableOptionGroup={variableOptionGroup}
+                onQueryChange={onChange}
+                setError={setError}
+              />
+            )}
             <TimeManagement
               query={query}
               datasource={datasource}
@@ -135,6 +220,7 @@ const LogsQueryEditor = ({
           setError={setError}
           schema={schema}
         />
+        {dataIngestedWarning}
         <EditorRow>
           <EditorFieldGroup>
             {!hideFormatAs && (
@@ -161,6 +247,13 @@ const LogsQueryEditor = ({
           </EditorFieldGroup>
         </EditorRow>
       </EditorRows>
+      {showDataRetentionWarning && (
+        <Alert severity="warning" title="Basic Logs data retention">
+          <Text>
+            Data retention for Basic Logs is fixed at eight days. You will only see data within this timeframe.
+          </Text>
+        </Alert>
+      )}
     </span>
   );
 };
