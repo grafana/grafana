@@ -265,12 +265,6 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		Queries:       []backend.DataQuery{},
 	}
 
-	// @PERCONA
-	// @PERCONA_TODO
-	// xProxyFilter := parsedReq.httpRequest.Header.Get("X-Proxy-Filter")
-	// req.Headers["X-Proxy-Filter"] = xProxyFilter
-	// middlewares = append(middlewares, httpclientprovider.ForwardedProxyFilterMiddleware(xProxyFilter))
-
 	for _, q := range queries {
 		req.Queries = append(req.Queries, q.query)
 	}
