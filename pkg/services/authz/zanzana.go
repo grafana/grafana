@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -22,7 +23,7 @@ import (
 
 type ZanzanaClient interface{}
 
-func ProvideZanzana(cfg *setting.Cfg) (ZanzanaClient, error) {
+func ProvideZanzana(cfg *setting.Cfg, db db.DB) (ZanzanaClient, error) {
 	var client *zanzana.Client
 
 	switch cfg.Zanzana.Mode {
@@ -33,10 +34,16 @@ func ProvideZanzana(cfg *setting.Cfg) (ZanzanaClient, error) {
 		}
 		client = zanzana.NewClient(openfgav1.NewOpenFGAServiceClient(conn))
 	case setting.ZanzanaModeEmbedded:
-		srv, err := zanzana.NewServer(zanzana.NewStore())
+		store, err := zanzana.NewEmbeddedStore(cfg, db)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
+
+		srv, err := zanzana.NewServer(store)
+		if err != nil {
+			return nil, fmt.Errorf("failed to start zanzana: %w", err)
+		}
+
 		channel := &inprocgrpc.Channel{}
 		openfgav1.RegisterOpenFGAServiceServer(channel, srv)
 		client = zanzana.NewClient(openfgav1.NewOpenFGAServiceClient(channel))
@@ -77,7 +84,12 @@ type Zanzana struct {
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
-	srv, err := zanzana.NewServer(zanzana.NewStore())
+	store, err := zanzana.NewStore(z.cfg)
+	if err != nil {
+		return fmt.Errorf("failed to initilize zanana store: %w", err)
+	}
+
+	srv, err := zanzana.NewServer(store)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
