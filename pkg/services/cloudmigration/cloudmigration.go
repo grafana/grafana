@@ -26,6 +26,6 @@ type Service interface {
 
 	CreateSnapshot(ctx context.Context, sessionUid string) (*CloudMigrationSnapshot, error)
 	GetSnapshot(ctx context.Context, sessionUid string, snapshotUid string) (*CloudMigrationSnapshot, error)
-	GetSnapshotList(ctx context.Context, sessionUid string) ([]CloudMigrationSnapshot, error)
+	GetSnapshotList(ctx context.Context, query ListSnapshotsQuery) ([]CloudMigrationSnapshot, error)
 	UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error
 }

@@ -157,19 +157,19 @@ func (m FakeServiceImpl) GetSnapshot(ctx context.Context, sessionUid string, sna
 	}, nil
 }
 
-func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, sessionUid string) ([]cloudmigration.CloudMigrationSnapshot, error) {
+func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
 	return []cloudmigration.CloudMigrationSnapshot{
 		{
 			UID:        util.GenerateShortUID(),
-			SessionUID: sessionUid,
+			SessionUID: query.SessionUID,
 			Status:     cloudmigration.SnapshotStatusUnknown,
 		},
 		{
 			UID:        util.GenerateShortUID(),
-			SessionUID: sessionUid,
+			SessionUID: query.SessionUID,
 			Status:     cloudmigration.SnapshotStatusUnknown,
 		},
 	}, nil

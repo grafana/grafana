@@ -68,7 +68,7 @@ func (s *NoopServiceImpl) GetSnapshot(ctx context.Context, sessionUid string, sn
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetSnapshotList(ctx context.Context, sessionUid string) ([]cloudmigration.CloudMigrationSnapshot, error) {
+func (s *NoopServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 

@@ -232,12 +232,12 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string) (*cloudmig
 	return &snapshot, err
 }
 
-func (ss *sqlStore) GetSnapshotList(ctx context.Context, sessionUid string) ([]cloudmigration.CloudMigrationSnapshot, error) {
-	// TODO: make results optional
+func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
 	var runs = make([]cloudmigration.CloudMigrationSnapshot, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		sess.Limit(query.Limit, query.Offset)
 		return sess.Find(&runs, &cloudmigration.CloudMigrationSnapshot{
-			SessionUID: sessionUid,
+			SessionUID: query.SessionUID,
 		})
 	})
 	if err != nil {

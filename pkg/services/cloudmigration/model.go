@@ -104,6 +104,12 @@ type CloudMigrationSessionListResponse struct {
 	Sessions []CloudMigrationSessionResponse
 }
 
+type ListSnapshotsQuery struct {
+	SessionUID string
+	Offset     int
+	Limit      int
+}
+
 type UpdateSnapshotCmd struct {
 	UID    string
 	Status SnapshotStatus

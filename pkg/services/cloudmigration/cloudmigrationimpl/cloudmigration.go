@@ -555,13 +555,13 @@ func (s *Service) GetSnapshot(ctx context.Context, sessionUid string, snapshotUi
 	return snapshot, nil
 }
 
-func (s *Service) GetSnapshotList(ctx context.Context, sessionUid string) ([]cloudmigration.CloudMigrationSnapshot, error) {
+func (s *Service) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetSnapshotList")
 	defer span.End()
 
-	snapshotList, err := s.store.GetSnapshotList(ctx, sessionUid)
+	snapshotList, err := s.store.GetSnapshotList(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("fetching snapshots for session uid %s: %w", sessionUid, err)
+		return nil, fmt.Errorf("fetching snapshots for session uid %s: %w", query.SessionUID, err)
 	}
 	return snapshotList, nil
 }

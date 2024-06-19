@@ -464,8 +464,13 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 	if err := util.ValidateUID(uid); err != nil {
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid session uid", err)
 	}
+	q := cloudmigration.ListSnapshotsQuery{
+		SessionUID: uid,
+		Limit:      c.QueryInt("limit"),
+		Offset:     c.QueryInt("offset"),
+	}
 
-	snapshotList, err := cma.cloudMigrationService.GetSnapshotList(ctx, uid)
+	snapshotList, err := cma.cloudMigrationService.GetSnapshotList(ctx, q)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "error retrieving snapshot list", err)
 	}

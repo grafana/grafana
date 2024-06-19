@@ -276,6 +276,20 @@ type GetSnapshotResponseDTO struct {
 	Results []MigrateDataResponseItemDTO `json:"results"`
 }
 
+// swagger:parameters getShapshotList
+type GetSnapshotListParams struct {
+	// Offset is used for pagination with limit
+	// in:query
+	// required:false
+	// default: 0
+	Offset int `json:"offset"`
+	// Max limit for results returned.
+	// in:query
+	// required:false
+	// default: 100
+	Limit int `json:"limit"`
+}
+
 // swagger:response snapshotListResponse
 type SnapshotListResponse struct {
 	// in: body
