@@ -73,10 +73,9 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
   return (
     <div>
       <Input suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />} {...restProps} {...getInputProps()} />
-      <ul className={styles.ulMenu} {...getMenuProps({ ref: listRef })}>
+      <div className={styles.ulMenu} {...getMenuProps({ ref: listRef })}>
         {isOpen && (
-          <>
-            <li key="total-size" style={{ height: rowVirtualizer.getTotalSize() }} />
+          <ul style={{ height: rowVirtualizer.getTotalSize() }}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
                 <li
@@ -94,9 +93,9 @@ export const Combobox = ({ options, onChange, value, ...restProps }: ComboboxPro
                 </li>
               );
             })}
-          </>
+          </ul>
         )}
-      </ul>
+      </div>
     </div>
   );
 };
