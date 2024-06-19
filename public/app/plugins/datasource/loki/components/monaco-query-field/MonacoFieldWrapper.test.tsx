@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -24,7 +24,9 @@ function renderComponent({ initialValue = '', onChange = jest.fn(), onRunQuery =
 
 describe('MonacoFieldWrapper', () => {
   test('Renders with no errors', async () => {
-    renderComponent();
+    await act(() => {
+      renderComponent();
+    });
 
     await waitFor(async () => {
       const monacoEditor = await screen.findByTestId(selectors.components.ReactMonacoEditor.editorLazy);
