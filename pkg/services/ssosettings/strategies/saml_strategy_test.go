@@ -45,9 +45,10 @@ var (
 	name_id_format = urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
 	skip_org_role_sync = false
 	role_values_none = guest disabled
-	access_token_url = http://localhost:8086/auth/realms/grafana/protocol/openid-connect/token
+	token_url = http://localhost:8086/auth/realms/grafana/protocol/openid-connect/token
 	client_id = grafana
 	client_secret = grafana
+	force_use_graph_api = false
 	`
 
 	expectedSAMLInfo = map[string]any{
@@ -82,9 +83,10 @@ var (
 		"name_id_format":             "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
 		"skip_org_role_sync":         false,
 		"role_values_none":           "guest disabled",
-		"access_token_url":           "http://localhost:8086/auth/realms/grafana/protocol/openid-connect/token",
+		"token_url":                  "http://localhost:8086/auth/realms/grafana/protocol/openid-connect/token",
 		"client_id":                  "grafana",
 		"client_secret":              "grafana",
+		"force_use_graph_api":        false,
 	}
 )
 
