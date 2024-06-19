@@ -76,29 +76,25 @@ const secondsToRelativeFormat = (seconds: number): string => {
     return 'now';
   }
 
+  const absoluteSeconds = Math.abs(seconds);
   if (seconds < 0) {
-    return `now+${formatPrometheusDuration(Math.abs(seconds))}`;
+    return `now+${formatDuration(absoluteSeconds)}`;
   }
 
-  return `now-${formatPrometheusDuration(Math.abs(seconds))}`;
+  return `now-${formatDuration(absoluteSeconds)}`;
 };
 
 /**
- * Formats the given duration in milliseconds into a human-readable string representation.
+ * Formats the given duration in seconds into a human-readable string representation.
  *
- * @param milliseconds - The duration in milliseconds.
+ * @param seconds - The duration in seconds.
  * @returns The formatted duration string.
  */
-export function formatPrometheusDuration(seconds: number): string {
+export function formatDuration(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
   const weeks = Math.floor(days / 7);
-
-  // we'll make an exception here for 0, 0ms seems a bit weird
-  if (seconds === 0) {
-    return '0s';
-  }
 
   const timeUnits: Array<[number, string]> = [
     [weeks % 52, 'w'],
