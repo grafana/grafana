@@ -20,6 +20,7 @@ const AnnoKeyUpdatedTimestamp = "grafana.app/updatedTimestamp"
 const AnnoKeyUpdatedBy = "grafana.app/updatedBy"
 const AnnoKeyFolder = "grafana.app/folder"
 const AnnoKeySlug = "grafana.app/slug"
+const AnnoKeyMessage = "grafana.app/message"
 
 // Identify where values came from
 
@@ -68,6 +69,8 @@ type GrafanaMetaAccessor interface {
 	SetUpdatedBy(user string)
 	GetFolder() string
 	SetFolder(uid string)
+	GetMessage() string
+	SetMessage(msg string)
 	SetAnnotation(key string, val string)
 
 	GetSlug() string
@@ -198,6 +201,14 @@ func (m *grafanaMetaAccessor) GetFolder() string {
 
 func (m *grafanaMetaAccessor) SetFolder(uid string) {
 	m.SetAnnotation(AnnoKeyFolder, uid)
+}
+
+func (m *grafanaMetaAccessor) GetMessage() string {
+	return m.get(AnnoKeyMessage)
+}
+
+func (m *grafanaMetaAccessor) SetMessage(uid string) {
+	m.SetAnnotation(AnnoKeyMessage, uid)
 }
 
 func (m *grafanaMetaAccessor) GetSlug() string {

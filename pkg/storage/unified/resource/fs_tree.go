@@ -144,13 +144,14 @@ func (t *nameEvents) append(fs *fsStore, rv int64, rsp *ListResponse) error {
 	}
 
 	for _, rev := range t.versions {
-		val, err := fs.open(t.path + "/" + rev.file)
+		raw, err := hackpadfs.ReadFile(fs.root, t.path+"/"+rev.file)
 		if err != nil {
 			return err
 		}
+
 		wrapper := &ResourceWrapper{
-			ResourceVersion: val.ResourceVersion,
-			Value:           val.Value,
+			ResourceVersion: rev.rv,
+			Value:           raw,
 			//			Operation:       val.Operation,
 		}
 		rsp.Items = append(rsp.Items, wrapper)

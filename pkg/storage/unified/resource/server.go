@@ -302,7 +302,6 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		rsp.Status, err = errToStatus(err)
 		return rsp, err
 	}
-	event.Message = req.Message
 
 	rsp.ResourceVersion, err = s.store.WriteEvent(ctx, event)
 	if err == nil {
@@ -377,9 +376,8 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 		return rsp, err
 	}
 
-	event.Operation = ResourceOperation_UPDATED
+	event.Event = WatchEvent_MODIFIED
 	event.PreviousRV = latest.ResourceVersion
-	event.Message = req.Message
 
 	rsp.ResourceVersion, err = s.store.WriteEvent(ctx, event)
 	rsp.Status, err = errToStatus(err)
@@ -418,7 +416,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	event := WriteEvent{
 		EventID:    s.nextEventID(),
 		Key:        req.Key,
-		Operation:  ResourceOperation_DELETED,
+		Event:      WatchEvent_DELETED,
 		PreviousRV: latest.ResourceVersion,
 	}
 	requester, err := identity.GetRequester(ctx)

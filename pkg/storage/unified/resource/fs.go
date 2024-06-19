@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -13,7 +14,10 @@ import (
 	"github.com/hack-pad/hackpadfs/mem"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type FileSystemOptions struct {
@@ -41,23 +45,8 @@ type fsStore struct {
 	keys KeyConversions
 }
 
-type fsEvent struct {
-	ResourceVersion int64           `json:"resourceVersion"`
-	Message         string          `json:"message,omitempty"`
-	Operation       string          `json:"operation,omitempty"`
-	Value           json.RawMessage `json:"value,omitempty"`
-	BlobPath        string          `json:"blob,omitempty"`
-}
-
 // The only write command
 func (f *fsStore) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
-	body := fsEvent{
-		ResourceVersion: event.EventID,
-		Message:         event.Message,
-		Operation:       event.Operation.String(),
-		Value:           event.Value,
-		// Blob...
-	}
 	// For this case, we will treat them the same
 	dir, err := f.keys.KeyToPath(event.Key, 0)
 	if err != nil {
@@ -68,17 +57,12 @@ func (f *fsStore) WriteEvent(ctx context.Context, event WriteEvent) (int64, erro
 		return 0, err
 	}
 
-	bytes, err := json.Marshal(&body)
-	if err != nil {
-		return 0, err
-	}
-
 	fpath := filepath.Join(dir, fmt.Sprintf("%d.json", event.EventID))
 	file, err := hackpadfs.OpenFile(f.root, fpath, hackpadfs.FlagWriteOnly|hackpadfs.FlagCreate, 0750)
 	if err != nil {
 		return 0, err
 	}
-	_, err = hackpadfs.WriteFile(file, bytes)
+	_, err = hackpadfs.WriteFile(file, event.Value)
 	return event.EventID, err
 }
 
@@ -116,35 +100,44 @@ func (f *fsStore) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, er
 		for _, v := range files {
 			fname = v.Name()
 			if strings.HasSuffix(fname, ".json") {
+				// The RV is encoded in the path
+				rv, err = strconv.ParseInt(strings.TrimSuffix(fname, ".json"), 10, 64)
+				if err != nil {
+					return nil, err
+				}
+
 				break
 			}
 		}
 	}
 
-	evt, err := f.open(filepath.Join(dir, fname))
-	if err != nil || evt.Operation == ResourceOperation_DELETED.String() {
-		return nil, apierrors.NewNotFound(schema.GroupResource{
-			Group:    req.Key.Group,
-			Resource: req.Key.Resource,
-		}, req.Key.Name)
-	}
-
-	return &ReadResponse{
-		ResourceVersion: evt.ResourceVersion,
-		Value:           evt.Value,
-		Message:         evt.Message,
-	}, nil
-}
-
-func (f *fsStore) open(p string) (*fsEvent, error) {
-	raw, err := hackpadfs.ReadFile(f.root, p)
+	raw, err := hackpadfs.ReadFile(f.root, filepath.Join(dir, fname))
 	if err != nil {
 		return nil, err
 	}
+	if req.ResourceVersion < 1 {
+		// The operation is inside the body, so need to inspect :(
+		tmp := &metav1.PartialObjectMetadata{}
+		err = json.Unmarshal(raw, tmp)
+		if err != nil {
+			return nil, err
+		}
+		meta, err := utils.MetaAccessor(tmp)
+		if err != nil {
+			return nil, err
+		}
+		if meta.GetGroupVersionKind().Kind == "DeletedMarker" {
+			return nil, apierrors.NewNotFound(schema.GroupResource{
+				Group:    req.Key.Group,
+				Resource: req.Key.Resource,
+			}, req.Key.Name)
+		}
+	}
 
-	evt := &fsEvent{}
-	err = json.Unmarshal(raw, evt)
-	return evt, err
+	return &ReadResponse{
+		ResourceVersion: rv,
+		Value:           raw,
+	}, nil
 }
 
 // List implements AppendingStore.
