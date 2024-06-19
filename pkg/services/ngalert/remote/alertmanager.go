@@ -15,7 +15,6 @@ import (
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
-	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -487,21 +486,7 @@ func (am *Alertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus
 }
 
 func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
-	params := amreceiver.NewGetReceiversParamsWithContext(ctx)
-	res, err := am.amClient.Receiver.GetReceivers(params)
-	if err != nil {
-		return []apimodels.Receiver{}, err
-	}
-
-	rcvs := make([]apimodels.Receiver, len(res.Payload))
-	for i, rcv := range res.Payload {
-		rcvs[i] = apimodels.Receiver{
-			Name:         *rcv.Name,
-			Integrations: []apimodels.Integration{},
-		}
-	}
-
-	return rcvs, nil
+	return am.mimirClient.GetReceivers(ctx)
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
