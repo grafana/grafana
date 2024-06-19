@@ -393,6 +393,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanelScene, editPanel } = this.state;
 
+    if (meta.dashboardNotFound) {
+      return { text: 'Not found' };
+    }
+
     let pageNav: NavModelItem = {
       text: this.state.title,
       url: getDashboardUrl({
