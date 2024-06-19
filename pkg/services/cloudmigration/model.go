@@ -49,10 +49,6 @@ type CloudMigrationSnapshot struct {
 	Result []byte `xorm:"result"` //store raw gms response body
 }
 
-func (s CloudMigrationSnapshot) ShouldQueryGMS() bool {
-	return s.Status == SnapshotStatusPendingProcessing || s.Status == SnapshotStatusProcessing
-}
-
 type SnapshotStatus string
 
 const (
@@ -68,20 +64,24 @@ const (
 )
 
 // Deprecated, use GetSnapshotResult for the async workflow
-func (r CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
+func (s CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
 	var result MigrateDataResponse
-	err := json.Unmarshal(r.Result, &result)
+	err := json.Unmarshal(s.Result, &result)
 	if err != nil {
 		return nil, errors.New("could not parse result of run")
 	}
-	result.RunUID = r.UID
+	result.RunUID = s.UID
 	return &result, nil
 }
 
-func (r CloudMigrationSnapshot) GetSnapshotResult() ([]MigrateDataResponseItem, error) {
+func (s CloudMigrationSnapshot) ShouldQueryGMS() bool {
+	return s.Status == SnapshotStatusPendingProcessing || s.Status == SnapshotStatusProcessing
+}
+
+func (s CloudMigrationSnapshot) GetSnapshotResult() ([]MigrateDataResponseItem, error) {
 	var result []MigrateDataResponseItem
-	if len(r.Result) > 0 {
-		err := json.Unmarshal(r.Result, &result)
+	if len(s.Result) > 0 {
+		err := json.Unmarshal(s.Result, &result)
 		if err != nil {
 			return nil, errors.New("could not parse result of run")
 		}
