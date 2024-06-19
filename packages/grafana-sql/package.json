@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "@grafana/sql",
-  "version": "10.4.4",
+  "version": "10.4.5",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git",
