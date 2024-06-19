@@ -19,7 +19,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	foldersapi "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -300,18 +299,6 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 	defer span.End()
 	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "read"}))
 
-	// TODO (gamab) rework all of this
-	id, err := identity.GetRequester(ctx)
-	if err != nil {
-		ctxLogger.Error("error getting user from ctx", "error", err)
-		return nil, err
-	}
-	stackID, err := StackID(s.cfg.StackID, id.GetOrgID())
-	if err != nil {
-		ctxLogger.Error("error parsing stack id", "error", err)
-		return nil, err
-	}
-
 	if err := s.Init(); err != nil {
 		ctxLogger.Error("init error", "error", err)
 		return nil, err
@@ -322,18 +309,27 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 		ctxLogger.Error("read error", "error", err)
 	}
 
-	// TODO (gamab) rework all of this
-	ns, nid := id.GetNamespacedID()
 	// Check access
+	usr, err := appcontext.User(ctx)
+	if err != nil {
+		ctxLogger.Error("error getting user from ctx", "error", err)
+		return nil, err
+	}
+	stackID, err := StackID(s.cfg.StackID, usr.GetOrgID())
+	if err != nil {
+		ctxLogger.Error("error parsing stack id", "error", err)
+		return nil, err
+	}
+
 	if hasAccess, err := s.authorizer.HasAccess(ctx, &authz.HasAccessRequest{
 		StackID: stackID,
-		Subject: ns.String() + ":" + nid,
+		Subject: usr.NamespacedID.String(),
 		Method:  authz.MethodRead,
 		Object:  authzlib.Resource{Kind: res.Resource, ID: res.Key},
 		Parent:  authzlib.Resource{Kind: foldersapi.RESOURCE, ID: res.Folder}, // Assuming parents are always folders
 	}); err != nil || !hasAccess {
 		ctxLogger.Error("access denied",
-			"user", ns.String()+":"+nid,
+			"user", usr.NamespacedID.String(),
 			"method", authz.MethodRead,
 			"key", res.Key,
 			"error", err)

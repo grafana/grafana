@@ -5,14 +5,6 @@ import (
 	"strconv"
 )
 
-// AuthZParams contains authorization parameters that are used to fetch the permissions for an entity.
-type AuthZParams struct {
-	// Roles is a list of roles that the entity has.
-	Roles []string
-	// ActionsLookup is a list of actions that the entity is allowed to perform.
-	ActionsLookup []string
-}
-
 type Requester interface {
 	// GetID returns namespaced id for the entity
 	GetID() NamespaceID
@@ -58,9 +50,6 @@ type Requester interface {
 	// IsNil returns true if the identity is nil
 	// FIXME: remove this method once all services are using an interface
 	IsNil() bool
-
-	// GetAuthZParams returns the authorization parameters used to fetch the permissions for the entity.
-	GetAuthZParams() AuthZParams
 
 	// Legacy
 

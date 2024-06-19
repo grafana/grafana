@@ -250,8 +250,3 @@ func (u *SignedInUser) GetDisplayName() string {
 func (u *SignedInUser) GetIDToken() string {
 	return u.IDToken
 }
-
-// GetPermissions returns the permissions of the active entity
-func (u *SignedInUser) GetAuthZParams() identity.AuthZParams {
-	return identity.AuthZParams{}
-}

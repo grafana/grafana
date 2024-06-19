@@ -16,6 +16,7 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -34,7 +35,8 @@ var (
 
 type Authenticator struct {
 	atVerifier authnlib.Verifier[authnlib.AccessTokenClaims]
-	cfg        *authCfg
+	authCfg    *authCfg
+	cfg        *setting.Cfg
 	idVerifier authnlib.Verifier[authnlib.IDTokenClaims]
 	logger     log.Logger
 }
@@ -101,7 +103,8 @@ func provideAuthenticator(cfg *setting.Cfg, keysService signingkeys.Service) (*A
 
 	return &Authenticator{
 		atVerifier: atVerifier,
-		cfg:        authCfg,
+		authCfg:    authCfg,
+		cfg:        cfg,
 		idVerifier: idVerifier,
 		logger:     log.New("grpc-authenticator"),
 	}, nil
@@ -124,7 +127,9 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 		return ctx, fmt.Errorf("invalid org id: %w", err)
 	}
 
-	if f.cfg.mode == inProcessMode {
+	// FIXME (gamab): once Grafana can sign access tokens we can use them in dev mode.
+	// In-process mode and dev env do not require an access token
+	if f.authCfg.mode == inProcessMode || f.cfg.Env == setting.Dev {
 		return f.inProcAuthentication(ctx, orgID, md)
 	}
 
@@ -135,14 +140,17 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 // it assumes that there is no access token
 func (f *Authenticator) inProcAuthentication(ctx context.Context, orgID int64, md metadata.MD) (context.Context, error) {
 	ctxLogger := f.logger.FromContext(ctx)
+	ctxLogger.Debug("in-process authentication")
 
-	idToken := md.Get("x-grafana-id")
-	if len(idToken) == 0 || idToken[0] == "" {
+	idToken, ok := getFirstMetadataValue(md, "x-grafana-id")
+	if !ok {
+		ctxLogger.Error("missing id token")
 		return ctx, ErrorMissingIDToken
 	}
 
-	idClaims, err := f.idVerifier.Verify(ctx, idToken[0])
+	idClaims, err := f.idVerifier.Verify(ctx, idToken)
 	if err != nil {
+		ctxLogger.Error("failed to verify id token", "error", err)
 		return ctx, ErrorInvalidIDToken
 	}
 
@@ -152,24 +160,29 @@ func (f *Authenticator) inProcAuthentication(ctx context.Context, orgID int64, m
 		return ctx, fmt.Errorf("failed to authenticate user: %w", err)
 	}
 
-	return identity.WithRequester(ctx, usr), nil
+	ctxLogger.Info("user authenticated", "subject", idClaims.Subject, "org_id", orgID)
+	ctx = appcontext.WithUser(ctx, usr.SignedInUser()) // TODO: I don't think it's necessary to have a requester since we have the claims
+	return identity.WithIDClaims(ctx, idClaims), nil
 }
 
 func (f *Authenticator) remoteAuthentication(ctx context.Context, orgID int64, md metadata.MD) (context.Context, error) {
 	ctxLogger := f.logger.FromContext(ctx)
+	ctxLogger.Debug("remote authentication")
 
-	accessToken := md.Get("x-access-token")
-	if len(accessToken) == 0 || accessToken[0] == "" {
+	accessToken, ok := getFirstMetadataValue(md, "x-access-token")
+	if !ok {
+		ctxLogger.Error("missing access token")
 		return ctx, ErrorMissingAccessToken
 	}
 
-	atClaims, err := f.atVerifier.Verify(ctx, accessToken[0])
+	atClaims, err := f.atVerifier.Verify(ctx, accessToken)
 	if err != nil {
+		ctxLogger.Error("failed to verify access token", "error", err)
 		return ctx, ErrorInvalidAccessToken
 	}
 
-	idToken := md.Get("x-grafana-id")
-	if len(idToken) == 0 || idToken[0] == "" {
+	idToken, ok := getFirstMetadataValue(md, "x-grafana-id")
+	if !ok {
 		// Service authentication
 		usr, err := f.authenticateService(orgID, atClaims)
 		if err != nil {
@@ -177,12 +190,15 @@ func (f *Authenticator) remoteAuthentication(ctx context.Context, orgID int64, m
 			return ctx, fmt.Errorf("failed to authenticate service: %w", err)
 		}
 
-		return identity.WithRequester(ctx, usr), nil
+		ctxLogger.Info("service authenticated", "service", atClaims.Subject, "org_id", orgID)
+		ctx = appcontext.WithUser(ctx, usr.SignedInUser()) // TODO: I don't think it's necessary to have a requester since we have the claims
+		return identity.WithAccessClaims(ctx, atClaims), nil
 	}
 
 	// Validate ID token
-	idClaims, err := f.idVerifier.Verify(ctx, idToken[0])
+	idClaims, err := f.idVerifier.Verify(ctx, idToken)
 	if err != nil {
+		ctxLogger.Error("failed to verify id token", "error", err)
 		return ctx, ErrorInvalidIDToken
 	}
 
@@ -193,7 +209,10 @@ func (f *Authenticator) remoteAuthentication(ctx context.Context, orgID int64, m
 		return ctx, fmt.Errorf("failed to authenticate user: %w", err)
 	}
 
-	return identity.WithRequester(ctx, usr), nil
+	ctxLogger.Info("impersonated user authenticated", "service", atClaims.Subject, "subject", idClaims.Subject, "org_id", orgID)
+	ctx = appcontext.WithUser(ctx, usr.SignedInUser()) // TODO: I don't think it's necessary to have a requester since we have the claims
+	ctx = identity.WithIDClaims(ctx, idClaims)
+	return identity.WithAccessClaims(ctx, atClaims), nil
 }
 
 func (f *Authenticator) authenticateUser(orgID int64, idClaims *authnlib.Claims[authnlib.IDTokenClaims]) (*authn.Identity, error) {
@@ -296,6 +315,18 @@ func (a *Authenticator) authenticateService(orgID int64, claims *authnlib.Claims
 	}, nil
 }
 
+func getFirstMetadataValue(md metadata.MD, key string) (string, bool) {
+	values := md.Get(key)
+	if len(values) == 0 {
+		return "", false
+	}
+	if len(values[0]) == 0 {
+		return "", false
+	}
+
+	return values[0], true
+}
+
 var _ interceptors.Authenticator = (*Authenticator)(nil)
 
 func UnaryClientInterceptor(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
@@ -318,41 +349,17 @@ func StreamClientInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *grp
 
 var _ grpc.StreamClientInterceptor = StreamClientInterceptor
 
-// func WrapContext(ctx context.Context) (context.Context, error) {
-// 	user, err := appcontext.User(ctx)
-// 	if err != nil {
-// 		return ctx, err
-// 	}
-
-// 	// set grpc metadata into the context to pass to the grpc server
-// 	return metadata.NewOutgoingContext(ctx, metadata.Pairs(
-// 		"grafana-idtoken", user.IDToken,
-// 		"grafana-userid", strconv.FormatInt(user.UserID, 10),
-// 		"grafana-orgid", strconv.FormatInt(user.OrgID, 10),
-// 		"grafana-login", user.Login,
-// 		// "grafana-namespace", // TODO (gamab)
-// 	)), nil
-// }
-
 func WrapContext(ctx context.Context) (context.Context, error) {
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return ctx, err
-	}
-
-	id := user.GetID()
-	userID, err := id.UserID()
+	user, err := appcontext.User(ctx)
 	if err != nil {
 		return ctx, err
 	}
 
 	// set grpc metadata into the context to pass to the grpc server
 	return metadata.NewOutgoingContext(ctx, metadata.Pairs(
-		// "x-grafana-access", // TODO (gamab)
 		"x-grafana-id", user.GetIDToken(),
-		"grafana-userid", strconv.FormatInt(userID, 10),
+		// "grafana-userid", strconv.FormatInt(user.UserID, 10),
 		"grafana-orgid", strconv.FormatInt(user.GetOrgID(), 10),
-		"grafana-login", user.GetLogin(),
-		// "grafana-namespace", // TODO (gamab)
+		// "grafana-login", user.Login,
 	)), nil
 }

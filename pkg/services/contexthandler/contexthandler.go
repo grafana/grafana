@@ -124,10 +124,6 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
 		}
 
-		// Hack: register a requester in the context for the grpc authn middleware
-		ctx = identity.WithRequester(ctx, id)
-		*reqContext.Req = *reqContext.Req.WithContext(ctx)
-
 		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
 		span.AddEvent("user", trace.WithAttributes(
 			attribute.String("uname", reqContext.Login),

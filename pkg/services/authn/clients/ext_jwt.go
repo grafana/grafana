@@ -50,6 +50,7 @@ func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
 			},
 		}
 	}
+	// TODO (should we go through to the keyService instead on premise?)
 	keys := authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
 		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
 	}, authlib.WithHTTPClientKeyRetrieverOpt(client))

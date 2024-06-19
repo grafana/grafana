@@ -253,11 +253,3 @@ func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 		IsDisabled:     i.IsDisabled,
 	}
 }
-
-// GetPermissions returns the permissions of the active entity
-func (i *Identity) GetAuthZParams() identity.AuthZParams {
-	return identity.AuthZParams{
-		Roles:         i.ClientParams.FetchPermissionsParams.Roles,
-		ActionsLookup: i.ClientParams.FetchPermissionsParams.ActionsLookup,
-	}
-}
