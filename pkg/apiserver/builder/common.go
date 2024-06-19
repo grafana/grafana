@@ -3,7 +3,6 @@ package builder
 import (
 	"net/http"
 
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -13,6 +12,8 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 // TODO: this (or something like it) belongs in grafana-app-sdk,

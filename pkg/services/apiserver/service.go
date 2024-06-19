@@ -219,9 +219,10 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 		auth := b.GetAuthorizer()
-		if auth != nil {
-			s.authorizer.Register(b.GetGroupVersion(), auth)
+		if auth == nil {
+
 		}
+		s.authorizer.Register(b.GetGroupVersion(), auth)
 	}
 
 	o := grafanaapiserveroptions.NewOptions(Codecs.LegacyCodec(groupVersions...))
