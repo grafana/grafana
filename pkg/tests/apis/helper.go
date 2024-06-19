@@ -143,8 +143,11 @@ func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
 
 	deep := v.DeepCopy()
 	anno := deep.GetAnnotations()
-	if anno["grafana.app/originKey"] != "" {
-		anno["grafana.app/originKey"] = "${originKey}"
+	if anno["grafana.app/originPath"] != "" {
+		anno["grafana.app/originPath"] = "${originPath}"
+	}
+	if anno["grafana.app/originHash"] != "" {
+		anno["grafana.app/originHash"] = "${originHash}"
 	}
 	if anno["grafana.app/updatedTimestamp"] != "" {
 		anno["grafana.app/updatedTimestamp"] = "${updatedTimestamp}"
