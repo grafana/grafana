@@ -21,7 +21,7 @@ images = {
     "plugins_slack": "plugins/slack",
     "python": "python:3.8",
     "postgres_alpine": "postgres:12.3-alpine",
-    "mimir": "grafana/mimir:r295-a23e559",
+    "mimir": "grafana/mimir-alpine:r295-a23e559",
     "mysql5": "mysql:5.7.39",
     "mysql8": "mysql:8.0.32",
     "redis_alpine": "redis:6.2.11-alpine",
