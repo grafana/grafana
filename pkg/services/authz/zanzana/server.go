@@ -6,11 +6,10 @@ import (
 )
 
 func NewServer(store storage.OpenFGADatastore) (*server.Server, error) {
-	log := NewZanzanaLogger()
 	// FIXME(kalleep): add support for more options, configure logging, tracing etc
 	opts := []server.OpenFGAServiceV1Option{
 		server.WithDatastore(store),
-		server.WithLogger(log),
+		server.WithLogger(newZanzanaLogger()),
 	}
 
 	// FIXME(kalleep): Interceptors

@@ -8,15 +8,15 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-// ZanzanaLogger is a grafana logger wrapper compatible with OpenFGA logger interface
-type ZanzanaLogger struct {
+// zanzanaLogger is a grafana logger wrapper compatible with OpenFGA logger interface
+type zanzanaLogger struct {
 	logger *log.ConcreteLogger
 }
 
-func NewZanzanaLogger() *ZanzanaLogger {
+func newZanzanaLogger() *zanzanaLogger {
 	logger := log.New("openfga-server")
 
-	return &ZanzanaLogger{
+	return &zanzanaLogger{
 		logger: logger,
 	}
 }
@@ -37,50 +37,50 @@ func zapFieldsToArgs(fields []zap.Field) []any {
 	return args
 }
 
-func (l *ZanzanaLogger) Debug(msg string, fields ...zap.Field) {
+func (l *zanzanaLogger) Debug(msg string, fields ...zap.Field) {
 	l.logger.Debug(msg, zapFieldsToArgs(fields)...)
 }
 
-func (l *ZanzanaLogger) Info(msg string, fields ...zap.Field) {
+func (l *zanzanaLogger) Info(msg string, fields ...zap.Field) {
 	l.logger.Info(msg, zapFieldsToArgs(fields)...)
 }
 
-func (l *ZanzanaLogger) Warn(msg string, fields ...zap.Field) {
+func (l *zanzanaLogger) Warn(msg string, fields ...zap.Field) {
 	l.logger.Warn(msg, zapFieldsToArgs(fields)...)
 }
 
-func (l *ZanzanaLogger) Error(msg string, fields ...zap.Field) {
+func (l *zanzanaLogger) Error(msg string, fields ...zap.Field) {
 	l.logger.Error(msg, zapFieldsToArgs(fields)...)
 }
 
-func (l *ZanzanaLogger) Panic(msg string, fields ...zap.Field) {
+func (l *zanzanaLogger) Panic(msg string, fields ...zap.Field) {
 	l.logger.Error(msg, zapFieldsToArgs(fields)...)
 }
 
-func (l *ZanzanaLogger) Fatal(msg string, fields ...zap.Field) {
+func (l *zanzanaLogger) Fatal(msg string, fields ...zap.Field) {
 	l.logger.Error(msg, zapFieldsToArgs(fields)...)
 }
 
-func (l *ZanzanaLogger) DebugWithContext(ctx context.Context, msg string, fields ...zap.Field) {
+func (l *zanzanaLogger) DebugWithContext(ctx context.Context, msg string, fields ...zap.Field) {
 	l.logger.Debug(msg, zapFieldsToArgs(fields)...)
 }
 
-func (l *ZanzanaLogger) InfoWithContext(ctx context.Context, msg string, fields ...zap.Field) {
+func (l *zanzanaLogger) InfoWithContext(ctx context.Context, msg string, fields ...zap.Field) {
 	l.logger.Info(msg, zapFieldsToArgs(fields)...)
 }
 
-func (l *ZanzanaLogger) WarnWithContext(ctx context.Context, msg string, fields ...zap.Field) {
+func (l *zanzanaLogger) WarnWithContext(ctx context.Context, msg string, fields ...zap.Field) {
 	l.logger.Warn(msg, zapFieldsToArgs(fields)...)
 }
 
-func (l *ZanzanaLogger) ErrorWithContext(ctx context.Context, msg string, fields ...zap.Field) {
+func (l *zanzanaLogger) ErrorWithContext(ctx context.Context, msg string, fields ...zap.Field) {
 	l.logger.Error(msg, zapFieldsToArgs(fields)...)
 }
 
-func (l *ZanzanaLogger) PanicWithContext(ctx context.Context, msg string, fields ...zap.Field) {
+func (l *zanzanaLogger) PanicWithContext(ctx context.Context, msg string, fields ...zap.Field) {
 	l.logger.Error(msg, zapFieldsToArgs(fields)...)
 }
 
-func (l *ZanzanaLogger) FatalWithContext(ctx context.Context, msg string, fields ...zap.Field) {
+func (l *zanzanaLogger) FatalWithContext(ctx context.Context, msg string, fields ...zap.Field) {
 	l.logger.Error(msg, zapFieldsToArgs(fields)...)
 }
