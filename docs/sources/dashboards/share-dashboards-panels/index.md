@@ -59,9 +59,9 @@ You must have an authorized viewer permission to see an image rendered by a dire
 
 The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 As of Grafana 8.0, anonymous access permission is not available in Grafana Cloud.
-{{% /admonition %}}
+{{< /admonition >}}
 
 When you share a panel or dashboard as a snapshot, a snapshot (which is a panel or dashboard at the moment you take the snapshot) is publicly available on the web. Anyone with a link to it can access it. Because snapshots do not require any authorization to view, Grafana removes information related to the account it came from, as well as any sensitive data from the snapshot.
 
@@ -69,9 +69,9 @@ When you share a panel or dashboard as a snapshot, a snapshot (which is a panel 
 
 You can share a dashboard as a direct link or as a snapshot. You can also export a dashboard.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you change a dashboard, ensure that you save the changes before sharing.
-{{% /admonition %}}
+{{< /admonition >}}
 
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
@@ -139,7 +139,9 @@ A template variable of the type `Constant` is automatically hidden in the dashbo
 
 You can generate and save PDF files of any dashboard.
 
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+{{< /admonition >}}
 
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
@@ -220,7 +222,9 @@ The snapshot is immediately deleted. You may need to clear your browser cache or
 
 You can embed a panel using an iframe on another web site. A viewer must be signed into Grafana to view the graph.
 
-**> Note:** As of Grafana 8.0, anonymous access permission is no longer available for Grafana Cloud.
+{{< admonition type="note" >}}
+As of Grafana 8.0, anonymous access permission is no longer available for Grafana Cloud.
+{{< /admonition >}}
 
 Here is an example of the HTML code:
 
