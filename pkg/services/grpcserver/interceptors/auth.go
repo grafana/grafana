@@ -17,12 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// TODO rework authentication
-// There are currently two authenticators in the codebase:
-// - pkg/services/grpcserver/interceptors/auth.go
-// - pkg/services/store/entity/authz/interceptors.go.
-// Difference is that one can access the user and the other has to rely on the JWTs
-
 type Authenticator interface {
 	Authenticate(ctx context.Context) (context.Context, error)
 }
