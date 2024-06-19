@@ -3,8 +3,7 @@ import { e2e } from '../utils';
 
 const DASHBOARD_ID = 'c46b2460-16b7-42a5-82d1-b07fbf431950';
 
-// Skipping due to race conditions with same scenes test e2e/scenes/panels-suite/frontend-sandbox-panel.spec.ts
-describe.skip('Panel sandbox', () => {
+describe('Panel sandbox', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), true);
     return e2e.flows.importDashboard(panelSandboxDashboard, 1000, true);

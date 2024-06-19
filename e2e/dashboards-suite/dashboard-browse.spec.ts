@@ -1,7 +1,7 @@
 import testDashboard from '../dashboards/TestDashboard.json';
 import { e2e } from '../utils';
-// Skipping due to race conditions with same scenes test e2e/scenes/dashboards-suite/dashboard-browse.spec.ts
-describe.skip('Dashboard browse', () => {
+
+describe('Dashboard browse', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

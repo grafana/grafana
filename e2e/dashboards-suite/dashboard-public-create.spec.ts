@@ -1,7 +1,6 @@
 import { e2e } from '../utils';
 
-// Skipping due to race conditions with same scenes test e2e/scenes/dashboards-suite/dashboard-public-create.spec.ts
-describe.skip('Public dashboards', () => {
+describe('Public dashboards', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

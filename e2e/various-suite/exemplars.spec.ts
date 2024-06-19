@@ -17,8 +17,8 @@ const addDataSource = () => {
     },
   });
 };
-// Skipping due to race conditions with same scenes test e2e/scenes/various-suite/exemplars.spec.ts
-describe.skip('Exemplars', () => {
+
+describe('Exemplars', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 
