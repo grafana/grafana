@@ -30,8 +30,9 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		return zanzana.NoopClient{}, nil
 	}
 
-	var client *zanzana.Client
+	logger := log.New("zanzana")
 
+	var client *zanzana.Client
 	switch cfg.Zanzana.Mode {
 	case setting.ZanzanaModeClient:
 		conn, err := grpc.NewClient(cfg.Zanzana.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -40,12 +41,12 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		}
 		client = zanzana.NewClient(openfgav1.NewOpenFGAServiceClient(conn))
 	case setting.ZanzanaModeEmbedded:
-		store, err := zanzana.NewEmbeddedStore(cfg, db)
+		store, err := zanzana.NewEmbeddedStore(cfg, db, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
 
-		srv, err := zanzana.NewServer(store)
+		srv, err := zanzana.NewServer(store, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to start zanzana: %w", err)
 		}
