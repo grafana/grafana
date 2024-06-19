@@ -160,7 +160,7 @@ Click the icon next to the panel title to see available panel links.
    - `to` - Defines the upper limit of the time range, specified in ms epoch.
    - `time` and `time.window` - Define a time range from `time-time.window/2` to `time+time.window/2`. Both params should be specified in ms. For example `?time=1500000000000&time.window=10000` will result in 10s time range from 1499999995000 to 1500000005000.
 1. If you want the link to open in a new tab, then select **Open in new tab**.
-1. Click **Save** to save changes and close the window.
+1. Click **Save** to save changes and close the dialog box.
 1. Click **Save dashboard** in the top-right corner.
 
 ### Update a panel link
@@ -174,7 +174,7 @@ Click the icon next to the panel title to see available panel links.
 1. Find the link that you want to make changes to.
 1. Click the Edit (pencil) icon to open the Edit link window.
 1. Make any necessary changes.
-1. Click **Save** to save changes and close the window.
+1. Click **Save** to save changes and close the dialog box.
 1. Click **Save dashboard** in the top-right corner.
 
 ### Delete a panel link
