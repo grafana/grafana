@@ -21,7 +21,7 @@ This page lists the minimum hardware and software requirements to install Grafan
 
 To run Grafana, you must have a supported operating system, hardware that meets or exceeds minimum requirements, a supported database, and a supported browser.
 
-The following video guides you through the steps, common commands and the ways in which you can install Grafana in all of the operating systems described in this document:
+The following video guides you through the steps and common commands for installing Grafana on various operating systems as described in this document.
 
 {{< youtube id="f-x_p2lvz8s" >}}
 

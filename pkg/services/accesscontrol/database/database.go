@@ -228,10 +228,24 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 		if options.ActionPrefix != "" {
 			q += ` AND p.action LIKE ?`
 			params = append(params, options.ActionPrefix+"%")
+			if len(options.ActionSets) > 0 {
+				q += ` OR p.action IN ( ? ` + strings.Repeat(", ?", len(options.ActionSets)-1) + ")"
+				for _, a := range options.ActionSets {
+					params = append(params, a)
+				}
+			}
 		}
 		if options.Action != "" {
-			q += ` AND p.action = ?`
-			params = append(params, options.Action)
+			if len(options.ActionSets) == 0 {
+				q += ` AND p.action = ?`
+				params = append(params, options.Action)
+			} else {
+				actions := append(options.ActionSets, options.Action)
+				q += ` AND p.action IN ( ? ` + strings.Repeat(", ?", len(actions)-1) + ")"
+				for _, a := range actions {
+					params = append(params, a)
+				}
+			}
 		}
 		if options.Scope != "" {
 			// Search for scope and wildcard that include the scope

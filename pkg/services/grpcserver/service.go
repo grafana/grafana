@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/dskit/middleware"
@@ -51,10 +52,13 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 	// nothing unless the feature is actually enabled.
 	if grpcRequestDuration == nil {
 		grpcRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: "grafana",
-			Name:      "grpc_request_duration_seconds",
-			Help:      "Time (in seconds) spent serving HTTP requests.",
-			Buckets:   instrument.DefBuckets,
+			Namespace:                       "grafana",
+			Name:                            "grpc_request_duration_seconds",
+			Help:                            "Time (in seconds) spent serving gRPC calls.",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1, // enable native histograms
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"method", "route", "status_code", "ws"})
 
 		if err := registerer.Register(grpcRequestDuration); err != nil {

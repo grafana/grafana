@@ -29,7 +29,7 @@ var (
 
 func (r *findREST) New() runtime.Object {
 	// This is added as the "ResponseType" regarless what ProducesObject() says :)
-	return &scope.TreeResults{}
+	return &scope.FindScopeNodeChildrenResults{}
 }
 
 func (r *findREST) Destroy() {}
@@ -39,7 +39,7 @@ func (r *findREST) NamespaceScoped() bool {
 }
 
 func (r *findREST) GetSingularName() string {
-	return "TreeResult" // Used for the
+	return "FindScopeNodeChildrenResults" // Used for the
 }
 
 func (r *findREST) ProducesMIMETypes(verb string) []string {
@@ -47,7 +47,7 @@ func (r *findREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *findREST) ProducesObject(verb string) interface{} {
-	return &scope.TreeResults{}
+	return &scope.FindScopeNodeChildrenResults{}
 }
 
 func (r *findREST) ConnectMethods() []string {
@@ -68,7 +68,7 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		parent := req.URL.Query().Get("parent")
 		query := req.URL.Query().Get("query")
-		results := &scope.TreeResults{}
+		results := &scope.FindScopeNodeChildrenResults{}
 
 		raw, err := r.scopeNodeStorage.List(ctx, &internalversion.ListOptions{
 			Limit: 1000,
@@ -93,7 +93,7 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 	}), nil
 }
 
-func filterAndAppendItem(item scope.ScopeNode, parent string, query string, results *scope.TreeResults) {
+func filterAndAppendItem(item scope.ScopeNode, parent string, query string, results *scope.FindScopeNodeChildrenResults) {
 	if parent != item.Spec.ParentName {
 		return // Someday this will have an index in raw storage on parentName
 	}
@@ -104,12 +104,5 @@ func filterAndAppendItem(item scope.ScopeNode, parent string, query string, resu
 		return
 	}
 
-	results.Items = append(results.Items, scope.TreeItem{
-		NodeID:      item.Name,
-		NodeType:    item.Spec.NodeType,
-		Title:       item.Spec.Title,
-		Description: item.Spec.Description,
-		LinkType:    item.Spec.LinkType,
-		LinkID:      item.Spec.LinkID,
-	})
+	results.Items = append(results.Items, item)
 }

@@ -190,4 +190,44 @@ describe('getQueryHints()', () => {
     hints = getQueryHints('container_cpu_usage_seconds_total:irate_total', series);
     expect(hints!.length).toBe(0);
   });
+
+  // native histograms
+  it('returns hints for native histogram by metric type without suffix "_bucket"', () => {
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
+    const mock: unknown = { languageProvider: { metricsMetadata: { foo: { type: 'histogram' } } } };
+    const datasource = mock as PrometheusDatasource;
+
+    let hints = getQueryHints('foo', series, datasource);
+    expect(hints!.length).toBe(6);
+    const hintsString = JSON.stringify(hints);
+    expect(hintsString).toContain('ADD_HISTOGRAM_AVG');
+    expect(hintsString).toContain('ADD_HISTOGRAM_COUNT');
+    expect(hintsString).toContain('ADD_HISTOGRAM_SUM');
+    expect(hintsString).toContain('ADD_HISTOGRAM_FRACTION');
+    expect(hintsString).toContain('ADD_HISTOGRAM_AVG');
+  });
+
+  it('returns no hints for native histogram when there are native histogram functions in the query', () => {
+    const queryWithNativeHistogramFunction = 'histogram_avg(foo)';
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
+    const mock: unknown = { languageProvider: { metricsMetadata: { foo: { type: 'histogram' } } } };
+    const datasource = mock as PrometheusDatasource;
+
+    let hints = getQueryHints(queryWithNativeHistogramFunction, series, datasource);
+    expect(hints!.length).toBe(0);
+  });
 });

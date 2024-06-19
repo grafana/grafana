@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -365,7 +365,7 @@ func getTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (t
 func (ss *xormStore) IsMember(orgId int64, teamId int64, userId int64) (bool, error) {
 	var isMember bool
 
-	err := ss.db.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
+	err := ss.db.WithDbSession(context.Background(), func(sess *db.Session) error {
 		var err error
 		isMember, err = isTeamMember(sess, orgId, teamId, userId)
 		return err

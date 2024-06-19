@@ -406,6 +406,99 @@ func TestProvisioningApi(t *testing.T) {
 		})
 	})
 
+	t.Run("recording rules", func(t *testing.T) {
+		t.Run("are enabled", func(t *testing.T) {
+			env := createTestEnv(t, testConfig)
+			env.features = featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules)
+
+			t.Run("POST returns 201", func(t *testing.T) {
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+				rule := createTestRecordingRule("rule", 1)
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 201, response.Status())
+			})
+
+			t.Run("PUT returns 200", func(t *testing.T) {
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				uid := util.GenerateShortUID()
+				rule := createTestAlertRule("rule", 3)
+				rule.UID = uid
+
+				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+					UID:          rule.FolderUID,
+					Title:        "Folder Title",
+					OrgID:        rule.OrgID,
+					SignedInUser: &user.SignedInUser{OrgID: rule.OrgID},
+				})
+				require.NoError(t, err)
+
+				insertRuleInOrg(t, sut, rule, 3)
+
+				// make rule a recording rule
+				rule.Record = &definitions.Record{
+					Metric: "test_metric",
+					From:   "A",
+				}
+
+				rc := createTestRequestCtx()
+				rc.SignedInUser.OrgID = 3
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+
+				require.Equal(t, 200, response.Status())
+			})
+		})
+
+		t.Run("are not enabled", func(t *testing.T) {
+			t.Run("POST returns 400", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createTestRecordingRule("rule", 1)
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "recording rules cannot be created on this instance")
+			})
+
+			t.Run("PUT returns 400", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				uid := util.GenerateShortUID()
+				rule := createTestAlertRule("rule", 3)
+				rule.UID = uid
+
+				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+					UID:          rule.FolderUID,
+					Title:        "Folder Title",
+					OrgID:        rule.OrgID,
+					SignedInUser: &user.SignedInUser{OrgID: rule.OrgID},
+				})
+				require.NoError(t, err)
+
+				insertRuleInOrg(t, sut, rule, 3)
+
+				// make rule a recording rule
+				rule.Record = &definitions.Record{
+					Metric: "test_metric",
+					From:   "A",
+				}
+
+				rc := createTestRequestCtx()
+				rc.SignedInUser.OrgID = 3
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "recording rules cannot be created on this instance")
+			})
+		})
+	})
+
 	t.Run("alert rule groups", func(t *testing.T) {
 		t.Run("are present", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
@@ -1644,6 +1737,7 @@ type testEnvironment struct {
 	ac               *recordingAccessControlFake
 	user             *user.SignedInUser
 	rulesAuthz       *fakes.FakeRuleService
+	features         featuremgmt.FeatureToggles
 }
 
 func createTestEnv(t *testing.T, testConfig string) testEnvironment {
@@ -1738,6 +1832,8 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 
 	ruleAuthz := &fakes.FakeRuleService{}
 
+	features := featuremgmt.WithFeatures()
+
 	return testEnvironment{
 		secrets:          secretsService,
 		log:              log,
@@ -1751,6 +1847,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		ac:               ac,
 		user:             user,
 		rulesAuthz:       ruleAuthz,
+		features:         features,
 	}
 }
 
@@ -1773,6 +1870,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),
 		folderSvc:           env.folderService,
+		featureManager:      env.features,
 	}
 }
 
@@ -1969,6 +2067,32 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 			GroupInterval:     util.Pointer(model.Duration(5 * time.Second)),
 			RepeatInterval:    util.Pointer(model.Duration(5 * time.Minute)),
 			MuteTimeIntervals: []string{"test-mute"},
+		},
+	}
+}
+
+func createTestRecordingRule(title string, orgID int64) definitions.ProvisionedAlertRule {
+	return definitions.ProvisionedAlertRule{
+		UID:       title,
+		OrgID:     orgID,
+		Title:     title,
+		Condition: "A",
+		Data: []definitions.AlertQuery{
+			{
+				RefID: "A",
+				Model: json.RawMessage(testModel),
+				RelativeTimeRange: definitions.RelativeTimeRange{
+					From: definitions.Duration(60),
+					To:   definitions.Duration(0),
+				},
+			},
+		},
+		RuleGroup: "my-cool-group",
+		FolderUID: "folder-uid",
+		For:       model.Duration(60),
+		Record: &definitions.Record{
+			Metric: "test_record",
+			From:   "A",
 		},
 	}
 }

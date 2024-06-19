@@ -40,8 +40,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.reporting.title', 'Reporting');
     case 'dashboards/public':
       return t('nav.public.title', 'Public dashboards');
-    case 'dashboards/trash':
-      return t('nav.trash.title', 'Trash');
+    case 'dashboards/recently-deleted':
+      return t('nav.recently-deleted.title', 'Recently Deleted');
     case 'dashboards/new':
       return t('nav.new-dashboard.title', 'New dashboard');
     case 'dashboards/folder/new':
@@ -208,10 +208,10 @@ export function getNavSubTitle(navId: string | undefined) {
       );
     case 'dashboards/library-panels':
       return t('nav.library-panels.subtitle', 'Reusable panels that can be added to multiple dashboards');
-    case 'dashboards/trash':
+    case 'dashboards/recently-deleted':
       return t(
-        'nav.trash.subtitle',
-        'Any items remaining in the Trash for more than 30 days will be automatically deleted'
+        'nav.recently-deleted.subtitle',
+        'Any items listed here for more than 30 days will be automatically deleted.'
       );
     case 'alerting':
       return t('nav.alerting.subtitle', 'Learn about problems in your systems moments after they occur');

@@ -157,7 +157,6 @@ describe('SearchForm', () => {
     await user.click(asyncOperationSelect);
     jest.advanceTimersByTime(3000);
 
-    await user.clear(asyncOperationSelect);
     await user.type(asyncOperationSelect, '$');
     const operationOption = await screen.findByText('$operation');
     expect(operationOption).toBeDefined();

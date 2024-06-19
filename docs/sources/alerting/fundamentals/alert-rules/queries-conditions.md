@@ -47,8 +47,6 @@ A query specifies the desired data to retrieve from a data source and applies re
 
 In Alerting, an alert rule defines of one or more queries and expressions that select the data you want to measure and a [condition](#alert-condition) that needs to be met before an alert rule fires.
 
-{{< figure src="/media/docs/alerting/alerting-define-query-and-alert-condition.png" max-width="750px" >}}
-
 ## Data source queries
 
 Alerting queries are the same type of queries available in Grafana panels. Queries in Grafana can be applied in various ways, depending on the data source and query language being used. However, not all [data sources support Alerting](ref:data-source-alerting).
