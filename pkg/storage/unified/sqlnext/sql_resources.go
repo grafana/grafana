@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -139,13 +140,8 @@ func (s *sqlResourceStore) WriteEvent(ctx context.Context, event resource.WriteE
 	return 0, ErrNotImplementedYet
 }
 
-func (s *sqlResourceStore) Watch(context.Context, *resource.WatchRequest) (chan *resource.WatchEvent, error) {
+func (s *sqlResourceStore) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
 	return nil, ErrNotImplementedYet
-}
-
-// Create new name for a given resource
-func (s *sqlResourceStore) GenerateName(_ context.Context, _ *resource.ResourceKey, _ string) (string, error) {
-	return util.GenerateShortUID(), nil
 }
 
 func (s *sqlResourceStore) Read(ctx context.Context, req *resource.ReadRequest) (*resource.ReadResponse, error) {
@@ -166,13 +162,25 @@ func (s *sqlResourceStore) List(ctx context.Context, req *resource.ListRequest) 
 	return nil, ErrNotImplementedYet
 }
 
-// Get the raw blob bytes and metadata
-func (s *sqlResourceStore) GetBlob(ctx context.Context, req *resource.GetBlobRequest) (*resource.GetBlobResponse, error) {
-	_, span := s.tracer.Start(ctx, "storage_server.List")
-	defer span.End()
+func (s *sqlResourceStore) PutBlob(ctx context.Context, req *resource.PutBlobRequest) (*resource.PutBlobResponse, error) {
+	if req.Method == resource.PutBlobRequest_HTTP {
+		return &resource.PutBlobResponse{
+			Status: &resource.StatusResult{
+				Status:  "Failure",
+				Message: "http upload not supported",
+				Code:    http.StatusNotImplemented,
+			},
+		}, nil
+	}
 
-	fmt.Printf("TODO, GET BLOB: %+v", req.Key)
+	uid := util.GenerateShortUID()
 
+	fmt.Printf("TODO, UPLOAD: %s // %+v", uid, req)
+
+	return nil, ErrNotImplementedYet
+}
+
+func (s *sqlResourceStore) GetBlob(ctx context.Context, uid string, mustProxy bool) (*resource.GetBlobResponse, error) {
 	return nil, ErrNotImplementedYet
 }
 

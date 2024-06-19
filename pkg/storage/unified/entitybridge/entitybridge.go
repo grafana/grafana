@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hack-pad/hackpadfs"
-	hackos "github.com/hack-pad/hackpadfs/os"
+	"gocloud.dev/blob/fileblob"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -16,32 +15,35 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // Creates a ResourceServer using the existing entity tables
 // NOTE: most of the field values are ignored
 func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceServer, error) {
 	if true {
-		var root hackpadfs.FS
-		if false {
-			tmp, err := os.MkdirTemp("", "xxx-*")
-			if err != nil {
-				return nil, err
-			}
+		tmp, err := os.MkdirTemp("", "xxx-*")
+		if err != nil {
+			return nil, err
+		}
 
-			root, err = hackos.NewFS().Sub(tmp[1:])
-			if err != nil {
-				return nil, err
-			}
+		bucket, err := fileblob.OpenBucket(tmp, &fileblob.Options{
+			CreateDir: true,
+			Metadata:  fileblob.MetadataDontWrite, // skip
+		})
+		if err != nil {
+			return nil, err
+		}
 
-			fmt.Printf("ROOT: %s\n", tmp)
+		fmt.Printf("ROOT: %s\n\n", tmp)
+		store, err := resource.NewCDKAppendingStore(context.Background(), resource.CDKAppenderOptions{
+			Bucket: bucket,
+		})
+		if err != nil {
+			return nil, err
 		}
 
 		return resource.NewResourceServer(resource.ResourceServerOptions{
-			Store: resource.NewFileSystemStore(resource.FileSystemOptions{
-				Root: root,
-			}),
+			Store: store,
 		})
 	}
 
@@ -96,7 +98,7 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event resource.WriteEvent
 	key := toEntityKey(event.Key)
 
 	// Delete does not need to create an entity first
-	if event.Event == resource.WatchEvent_DELETED {
+	if event.Type == resource.WatchEvent_DELETED {
 		rsp, err := b.entity.Delete(ctx, &entity.DeleteEntityRequest{
 			Key:             key,
 			PreviousVersion: event.PreviousRV,
@@ -117,15 +119,14 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event resource.WriteEvent
 		Guid:      string(event.Object.GetUID()),
 
 		//	Key:     fmt.Sprint("%s/%s/%s/%s", ),
-		Folder:  obj.GetFolder(),
-		Body:    event.Value,
-		Message: event.Message,
+		Folder: obj.GetFolder(),
+		Body:   event.Value,
 
 		Labels: obj.GetLabels(),
 		Size:   int64(len(event.Value)),
 	}
 
-	switch event.Event {
+	switch event.Type {
 	case resource.WatchEvent_ADDED:
 		msg.Action = entity.Entity_CREATED
 		rsp, err := b.entity.Create(ctx, &entity.CreateEntityRequest{Entity: msg})
@@ -148,15 +149,10 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event resource.WriteEvent
 	default:
 	}
 
-	return 0, fmt.Errorf("unsupported operation: %s", event.Event.String())
+	return 0, fmt.Errorf("unsupported operation: %s", event.Type.String())
 }
 
-// Create new name for a given resource
-func (b *entityBridge) GenerateName(_ context.Context, _ *resource.ResourceKey, _ string) (string, error) {
-	return util.GenerateShortUID(), nil
-}
-
-func (b *entityBridge) Watch(_ context.Context, _ *resource.WatchRequest) (chan *resource.WatchEvent, error) {
+func (b *entityBridge) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
 	return nil, resource.ErrNotImplementedYet
 }
 

@@ -1,4 +1,4 @@
-package sqlstash
+package resource
 
 import (
 	"context"

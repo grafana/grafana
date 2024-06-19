@@ -11,16 +11,26 @@ import (
 
 type WriteEvent struct {
 	EventID    int64
-	Event      WatchEvent_Type // ADDED, MODIFIED, DELETED
+	Type       WatchEvent_Type // ADDED, MODIFIED, DELETED
 	Key        *ResourceKey    // the request key
 	PreviousRV int64           // only for Update+Delete
-	Message    string          // commit message
-
-	// Access to raw metadata
-	Object utils.GrafanaMetaAccessor
 
 	// The json payload (without resourceVersion)
 	Value []byte
+
+	// Access real fields
+	Object utils.GrafanaMetaAccessor
+}
+
+// WriteEvents after they include a resource version
+type WrittenEvent struct {
+	WriteEvent
+
+	// The resource version
+	ResourceVersion int64
+
+	// Timestamp when the event is created
+	Timestamp int64
 }
 
 // A function to write events
@@ -29,7 +39,7 @@ type EventAppender = func(context.Context, *WriteEvent) (int64, error)
 type writeEventBuilder struct {
 	EventID int64
 	Key     *ResourceKey // the request key
-	Event   WatchEvent_Type
+	Type    WatchEvent_Type
 
 	Requester identity.Requester
 	Object    *unstructured.Unstructured
@@ -53,9 +63,9 @@ func newEventFromBytes(value, oldValue []byte) (*writeEventBuilder, error) {
 	}
 
 	if oldValue == nil {
-		builder.Event = WatchEvent_ADDED
+		builder.Type = WatchEvent_ADDED
 	} else {
-		builder.Event = WatchEvent_MODIFIED
+		builder.Type = WatchEvent_MODIFIED
 
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
@@ -73,7 +83,7 @@ func newEventFromBytes(value, oldValue []byte) (*writeEventBuilder, error) {
 func (b *writeEventBuilder) toEvent() (event WriteEvent, err error) {
 	event.EventID = b.EventID
 	event.Key = b.Key
-	event.Event = b.Event
+	event.Type = b.Type
 	event.Object = b.Meta
 	event.Value, err = b.Object.MarshalJSON()
 	return // includes the named values

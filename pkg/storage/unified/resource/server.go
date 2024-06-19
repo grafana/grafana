@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"sync"
 	"time"
@@ -40,14 +41,13 @@ type ResourceServer interface {
 	LifecycleHooks
 }
 
+// This store is not exposed directly to users, it is a helper to implement writing
+// resources as a stream of WriteEvents
 type AppendingStore interface {
 	// Write a Create/Update/Delete,
 	// NOTE: the contents of WriteEvent have been validated
 	// Return the revisionVersion for this event or error
 	WriteEvent(context.Context, WriteEvent) (int64, error)
-
-	// Create new name for a given resource
-	GenerateName(ctx context.Context, key *ResourceKey, prefix string) (string, error)
 
 	// Read a value from storage
 	Read(context.Context, *ReadRequest) (*ReadResponse, error)
@@ -55,8 +55,26 @@ type AppendingStore interface {
 	// Implement List -- this expects the read after write semantics
 	List(context.Context, *ListRequest) (*ListResponse, error)
 
-	// Watch for events
-	Watch(context.Context, *WatchRequest) (chan *WatchEvent, error)
+	// Get all events from the store
+	// For HA setups, this will be more events than the local WriteEvent above!
+	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
+}
+
+// This interface is not exposed to end users directly
+// Access to this interface is already gated by access control
+type BlobStore interface {
+	// Indicates if storage layer supports signed urls
+	SupportsSignedURLs() bool
+
+	// Get the raw blob bytes and metadata -- limited to protobuf message size
+	// For larger payloads, we should use presigned URLs to upload from the client
+	PutBlob(context.Context, *PutBlobRequest) (*PutBlobResponse, error)
+
+	// Get blob contents.  When possible, this will return a signed URL
+	// For large payloads, signed URLs are required to avoid protobuf message size limits
+	GetBlob(ctx context.Context, resource *ResourceKey, info *utils.BlobInfo, mustProxy bool) (*GetBlobResponse, error)
+
+	// TODO? List+Delete?  This is for admin access
 }
 
 type ResourceServerOptions struct {
@@ -72,6 +90,9 @@ type ResourceServerOptions struct {
 
 	// Real storage backend
 	Store AppendingStore
+
+	// The blob storage engine
+	Blob BlobStore
 
 	// Real storage backend
 	Search ResourceSearchServer
@@ -115,6 +136,9 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Search == nil {
 		opts.Search = &noopService{}
 	}
+	if opts.Blob == nil {
+		opts.Blob = &noopService{}
+	}
 	if opts.Diagnostics == nil {
 		opts.Search = &noopService{}
 	}
@@ -124,8 +148,11 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		}
 	}
 
+	// Make this cancelable
+	ctx, cancel := context.WithCancel(context.Background())
 	return &server{
 		tracer:      opts.Tracer,
+		log:         slog.Default().With("logger", "resource-server"),
 		nextEventID: opts.NextEventID,
 		store:       opts.Store,
 		search:      opts.Search,
@@ -133,6 +160,8 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		access:      opts.WriteAccess,
 		lifecycle:   opts.Lifecycle,
 		now:         opts.Now,
+		ctx:         ctx,
+		cancel:      cancel,
 	}, nil
 }
 
@@ -140,13 +169,20 @@ var _ ResourceServer = &server{}
 
 type server struct {
 	tracer      trace.Tracer
+	log         *slog.Logger
 	nextEventID func() int64
 	store       AppendingStore
 	search      ResourceSearchServer
+	blob        BlobStore
 	diagnostics DiagnosticsServer
 	access      WriteAccessHooks
 	lifecycle   LifecycleHooks
 	now         func() int64
+
+	// Background watch task
+	ctx         context.Context
+	cancel      context.CancelFunc
+	broadcaster Broadcaster[*WrittenEvent]
 
 	// init checking
 	once    sync.Once
@@ -156,8 +192,6 @@ type server struct {
 // Init implements ResourceServer.
 func (s *server) Init() error {
 	s.once.Do(func() {
-		// TODO, setup a broadcaster for watch
-
 		// Call lifecycle hooks
 		if s.lifecycle != nil {
 			err := s.lifecycle.Init()
@@ -165,15 +199,24 @@ func (s *server) Init() error {
 				s.initErr = fmt.Errorf("initialize Resource Server: %w", err)
 			}
 		}
+
+		// Start listening for changes
+		s.initWatcher()
 	})
 	return s.initErr
 }
 
 func (s *server) Stop() {
 	s.initErr = fmt.Errorf("service is stopping")
+
 	if s.lifecycle != nil {
 		s.lifecycle.Stop()
 	}
+
+	// Stops the streaming
+	s.cancel()
+
+	// mark the value as done
 	s.initErr = fmt.Errorf("service is stopped")
 }
 
@@ -191,9 +234,6 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 	}
 
 	obj := event.Meta
-	if key.Name != obj.GetName() {
-		return nil, apierrors.NewBadRequest("key/name do not match")
-	}
 	if key.Namespace != obj.GetNamespace() {
 		return nil, apierrors.NewBadRequest("key/namespace do not match")
 	}
@@ -213,27 +253,20 @@ func (s *server) newEventBuilder(ctx context.Context, key *ResourceKey, value, o
 
 	// This needs to be a create function
 	if key.Name == "" {
-		prefix := obj.GetGenerateName()
-		if prefix == "" {
-			return nil, apierrors.NewBadRequest("must have name or generate name set")
+		if obj.GetName() == "" {
+			return nil, apierrors.NewBadRequest("missing name")
 		}
-		key.Name, err = s.store.GenerateName(ctx, key, prefix)
-		if err != nil {
-			return nil, err
-		}
-		obj.SetName(key.Name)
-		obj.SetGenerateName("")
-	} else if obj.GetGenerateName() != "" {
-		return nil, apierrors.NewBadRequest("values with a name must not include generate name")
+		key.Name = obj.GetName()
+	} else if key.Name != obj.GetName() {
+		return nil, apierrors.NewBadRequest(
+			fmt.Sprintf("key/name do not match (key: %s, name: %s)", key.Name, obj.GetName()))
 	}
+	obj.SetGenerateName("")
 	err = validateName(obj.GetName())
 	if err != nil {
 		return nil, err
 	}
 
-	if obj.GetName() != key.Name {
-		return nil, apierrors.NewBadRequest("key name does not match the name in the body")
-	}
 	folder := obj.GetFolder()
 	if folder != "" {
 		err = s.access.CanWriteFolder(ctx, event.Requester, folder)
@@ -376,7 +409,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 		return rsp, err
 	}
 
-	event.Event = WatchEvent_MODIFIED
+	event.Type = WatchEvent_MODIFIED
 	event.PreviousRV = latest.ResourceVersion
 
 	rsp.ResourceVersion, err = s.store.WriteEvent(ctx, event)
@@ -416,7 +449,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	event := WriteEvent{
 		EventID:    s.nextEventID(),
 		Key:        req.Key,
-		Event:      WatchEvent_DELETED,
+		Type:       WatchEvent_DELETED,
 		PreviousRV: latest.ResourceVersion,
 	}
 	requester, err := identity.GetRequester(ctx)
@@ -440,7 +473,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	obj.SetUpdatedBy(requester.GetUID().String())
 	marker.TypeMeta = metav1.TypeMeta{
 		Kind:       "DeletedMarker",
-		APIVersion: "storage.grafana.app/v0alpha1", // ?? or can we stick this in common?
+		APIVersion: "common.grafana.app/v0alpha1", // ?? or can we stick this in common?
 	}
 	marker.Annotations["RestoreResourceVersion"] = fmt.Sprintf("%d", event.PreviousRV)
 	event.Value, err = json.Marshal(marker)
@@ -488,20 +521,110 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	return rsp, err
 }
 
+func (s *server) initWatcher() error {
+	var err error
+	s.broadcaster, err = NewBroadcaster(s.ctx, func(out chan<- *WrittenEvent) error {
+		events, err := s.store.WatchWriteEvents(s.ctx)
+		if err != nil {
+			return err
+		}
+		go func() {
+			for {
+				// pipe all events
+				v := <-events
+				out <- v
+			}
+		}()
+		return nil
+	})
+	return err
+}
+
 func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	if err := s.Init(); err != nil {
 		return err
 	}
 
-	// TODO??? can we move any of the common processing here?
-	stream, err := s.store.Watch(srv.Context(), req)
+	fmt.Printf("WATCH %v\n", req.Options.Key)
+
+	ctx := srv.Context()
+
+	// Start listening -- this will buffer any changes that happen while we backfill
+	stream, err := s.broadcaster.Subscribe(ctx)
 	if err != nil {
 		return err
 	}
-	for event := range stream {
-		srv.Send(event)
+	defer s.broadcaster.Unsubscribe(stream)
+
+	since := req.Since
+	if req.SendInitialEvents {
+		fmt.Printf("TODO... query\n")
+
+		if req.AllowWatchBookmarks {
+			fmt.Printf("TODO... send bookmark\n")
+		}
 	}
-	return nil
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+
+		case event, ok := <-stream:
+			if !ok {
+				s.log.Debug("watch events closed")
+				return nil
+			}
+
+			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
+				srv.Send(&WatchEvent{
+					Timestamp: event.Timestamp,
+					Type:      event.Type,
+					Resource: &WatchEvent_Resource{
+						Value:   event.Value,
+						Version: event.ResourceVersion,
+					},
+					// TODO... previous???
+				})
+			}
+		}
+	}
+}
+
+// GetBlob implements ResourceServer.
+func (s *server) PutBlob(ctx context.Context, req *PutBlobRequest) (*PutBlobResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+	rsp, err := s.blob.PutBlob(ctx, req)
+	rsp.Status, err = errToStatus(err)
+	return rsp, err
+}
+
+func (s *server) getPartialObject(ctx context.Context, key *ResourceKey, rv int64) (utils.GrafanaMetaAccessor, *StatusResult) {
+	rsp, err := s.store.Read(ctx, &ReadRequest{
+		Key:             key,
+		ResourceVersion: rv,
+	})
+	if err != nil {
+		rsp.Status, _ = errToStatus(err)
+	}
+	if rsp.Status != nil {
+		return nil, rsp.Status
+	}
+
+	partial := &metav1.PartialObjectMetadata{}
+	err = json.Unmarshal(rsp.Value, partial)
+	if err != nil {
+		rsp.Status, _ = errToStatus(fmt.Errorf("error reading body %w", err))
+		return nil, rsp.Status
+	}
+	obj, err := utils.MetaAccessor(partial)
+	if err != nil {
+		rsp.Status, _ = errToStatus(fmt.Errorf("error getting accessor %w", err))
+		return nil, rsp.Status
+	}
+	return obj, nil
 }
 
 // GetBlob implements ResourceServer.
@@ -509,7 +632,23 @@ func (s *server) GetBlob(ctx context.Context, req *GetBlobRequest) (*GetBlobResp
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
-	rsp, err := s.search.GetBlob(ctx, req)
+
+	// NOTE: in SQL... this could be simple select rather than a full fetch and extract
+	obj, status := s.getPartialObject(ctx, req.Resource, req.ResourceVersion)
+	if status != nil {
+		return &GetBlobResponse{Status: status}, nil
+	}
+
+	info := obj.GetBlob()
+	if info == nil || info.UID == "" {
+		return &GetBlobResponse{Status: &StatusResult{
+			Status:  "Failure",
+			Message: "Resource does not have a linked blob",
+			Code:    404,
+		}}, nil
+	}
+
+	rsp, err := s.blob.GetBlob(ctx, req.Resource, info, req.MustProxyBytes)
 	rsp.Status, err = errToStatus(err)
 	return rsp, err
 }

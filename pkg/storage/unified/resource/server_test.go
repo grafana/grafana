@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hack-pad/hackpadfs"
-	hackos "github.com/hack-pad/hackpadfs/os"
 	"github.com/stretchr/testify/require"
+	"gocloud.dev/blob/fileblob"
+	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -28,20 +28,26 @@ func TestSimpleServer(t *testing.T) {
 	}
 	ctx := identity.WithRequester(context.Background(), testUserA)
 
-	var root hackpadfs.FS
-	if true {
+	bucket := memblob.OpenBucket(nil)
+	if false {
 		tmp, err := os.MkdirTemp("", "xxx-*")
 		require.NoError(t, err)
 
-		root, err = hackos.NewFS().Sub(tmp[1:])
+		bucket, err = fileblob.OpenBucket(tmp, &fileblob.Options{
+			CreateDir: true,
+			Metadata:  fileblob.MetadataDontWrite, // skip
+		})
 		require.NoError(t, err)
+
 		fmt.Printf("ROOT: %s\n\n", tmp)
 	}
+	store, err := NewCDKAppendingStore(ctx, CDKAppenderOptions{
+		Bucket: bucket,
+	})
+	require.NoError(t, err)
 
 	server, err := NewResourceServer(ResourceServerOptions{
-		Store: NewFileSystemStore(FileSystemOptions{
-			Root: root,
-		}),
+		Store: store,
 	})
 	require.NoError(t, err)
 
