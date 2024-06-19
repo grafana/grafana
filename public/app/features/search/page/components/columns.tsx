@@ -518,6 +518,9 @@ function calcCourseDuration(start: Date, end: Date) {
     days = 0;
     hours = 0;
     minutes = 0;
+  } else if (days > 0) {
+    hours = 0;
+    minutes = 0;
   } else if (hours > 0) {
     minutes = 0;
   }
