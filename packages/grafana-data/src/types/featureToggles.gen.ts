@@ -197,4 +197,5 @@ export interface FeatureToggles {
   openSearchBackendFlowEnabled?: boolean;
   ssoSettingsLDAP?: boolean;
   databaseReadReplica?: boolean;
+  zanzana?: boolean;
 }

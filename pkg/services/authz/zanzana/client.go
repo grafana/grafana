@@ -12,3 +12,5 @@ type Client struct {
 func NewClient(c openfgav1.OpenFGAServiceClient) *Client {
 	return &Client{c}
 }
+
+type NoopClient struct{}

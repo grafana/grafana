@@ -10,12 +10,10 @@ import (
 
 // zanzanaLogger is a grafana logger wrapper compatible with OpenFGA logger interface
 type zanzanaLogger struct {
-	logger *log.ConcreteLogger
+	logger log.Logger
 }
 
-func newZanzanaLogger() *zanzanaLogger {
-	logger := log.New("openfga-server")
-
+func newZanzanaLogger(logger log.Logger) *zanzanaLogger {
 	return &zanzanaLogger{
 		logger: logger,
 	}
@@ -23,7 +21,8 @@ func newZanzanaLogger() *zanzanaLogger {
 
 // Simple converter for zap logger fields
 func zapFieldsToArgs(fields []zap.Field) []any {
-	args := make([]any, 0)
+	// We need to pre-allocated space for key and value
+	args := make([]any, 0, len(fields)*2)
 	for _, f := range fields {
 		args = append(args, f.Key)
 		if f.Interface != nil {
