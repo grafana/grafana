@@ -311,8 +311,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	))
 
 	allChanges := StateTransitions(append(states, staleStates...))
-	statesToSend := allChanges.NeedsSending()
-	statesToSend.UpdateLastSentAt(evaluatedAt)
+	statesToSend := allChanges.UpdateLastSentAt(evaluatedAt)
 
 	st.persister.Sync(ctx, span, allChanges)
 	if st.historian != nil {

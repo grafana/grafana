@@ -173,17 +173,6 @@ func (c StateTransition) Changed() bool {
 
 type StateTransitions []StateTransition
 
-// NeedsSending returns the subset of StateTransitions that need to be sent to the Alertmanager.
-func (c StateTransitions) NeedsSending() StateTransitions {
-	var result StateTransitions
-	for _, t := range c {
-		if t.NeedsSending(ResendDelay) {
-			result = append(result, t)
-		}
-	}
-	return result
-}
-
 // StaleStates returns the subset of StateTransitions that are stale.
 func (c StateTransitions) StaleStates() StateTransitions {
 	var result StateTransitions
@@ -195,11 +184,17 @@ func (c StateTransitions) StaleStates() StateTransitions {
 	return result
 }
 
-// UpdateLastSentAt updates the LastSentAt field for all StateTransitions.
-func (c StateTransitions) UpdateLastSentAt(evaluatedAt time.Time) {
+// UpdateLastSentAt returns the subset StateTransitions that need sending and updates their LastSentAt field.
+// Note: This is not idempotent, running this twice can (and usually will) return different results.
+func (c StateTransitions) UpdateLastSentAt(evaluatedAt time.Time) StateTransitions {
+	var result StateTransitions
 	for _, t := range c {
-		t.LastSentAt = evaluatedAt
+		if t.NeedsSending(ResendDelay) {
+			t.LastSentAt = evaluatedAt
+			result = append(result, t)
+		}
 	}
+	return result
 }
 
 type Evaluation struct {
