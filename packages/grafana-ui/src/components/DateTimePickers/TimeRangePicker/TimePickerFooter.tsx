@@ -87,26 +87,24 @@ export const TimePickerFooter = (props: Props) => {
       </section>
       {isEditing ? (
         <div className={style.editContainer} id="time-settings-section">
-          <div>
-            <TabsBar>
-              <Tab
-                label={t('time-picker.footer.time-zone-option', 'Time zone')}
-                active={editMode === 'tz'}
-                onChangeTab={() => {
-                  setEditMode('tz');
-                }}
-                aria-controls="timezone-settings-panel"
-              />
-              <Tab
-                label={t('time-picker.footer.fiscal-year-option', 'Fiscal year')}
-                active={editMode === 'fy'}
-                onChangeTab={() => {
-                  setEditMode('fy');
-                }}
-                aria-controls="fiscalyear-settings-panel"
-              />
-            </TabsBar>
-          </div>
+          <TabsBar>
+            <Tab
+              label={t('time-picker.footer.time-zone-option', 'Time zone')}
+              active={editMode === 'tz'}
+              onChangeTab={() => {
+                setEditMode('tz');
+              }}
+              aria-controls="timezone-settings-panel"
+            />
+            <Tab
+              label={t('time-picker.footer.fiscal-year-option', 'Fiscal year')}
+              active={editMode === 'fy'}
+              onChangeTab={() => {
+                setEditMode('fy');
+              }}
+              aria-controls="fiscalyear-settings-panel"
+            />
+          </TabsBar>
           <TabContent>
             {editMode === 'tz' ? (
               <section
@@ -162,7 +160,7 @@ export const TimePickerFooter = (props: Props) => {
 const getStyle = (theme: GrafanaTheme2) => ({
   container: css({
     borderTop: `1px solid ${theme.colors.border.weak}`,
-    padding: '11px',
+    padding: theme.spacing(1.5),
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -170,7 +168,8 @@ const getStyle = (theme: GrafanaTheme2) => ({
   }),
   editContainer: css({
     borderTop: `1px solid ${theme.colors.border.weak}`,
-    padding: '11px',
+    padding: theme.spacing(1.5),
+    paddingTop: 0,
     justifyContent: 'space-between',
     alignItems: 'center',
   }),
