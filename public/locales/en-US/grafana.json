@@ -55,6 +55,17 @@
     },
     "pause": "Pause evaluation"
   },
+  "alerting": {
+    "policies": {
+      "metadata": {
+        "timingOptions": {
+          "groupInterval": "<0>{{groupInterval}}</0> before sending updates",
+          "groupWait": "Wait <1>{{groupWait}}</1> to group instances",
+          "repeatInterval": "repeated every <1>{{repeatInterval}}</1>"
+        }
+      }
+    }
+  },
   "annotations": {
     "empty-state": {
       "button-title": "Add annotation query",
