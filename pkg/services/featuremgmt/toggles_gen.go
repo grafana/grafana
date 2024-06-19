@@ -383,6 +383,10 @@ const (
 	// Enables native HTTP Histograms
 	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
 
+	// FlagDisableClassicHTTPHistogram
+	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
+	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
+
 	// FlagFormatString
 	// Enable format string transformer
 	FlagFormatString = "formatString"
@@ -714,4 +718,8 @@ const (
 	// FlagFailWrongDSUID
 	// Throws an error if a datasource has an invalid UIDs
 	FlagFailWrongDSUID = "failWrongDSUID"
+
+	// FlagDatabaseReadReplica
+	// Use a read replica for some database queries.
+	FlagDatabaseReadReplica = "databaseReadReplica"
 )
