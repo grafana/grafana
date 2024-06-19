@@ -44,9 +44,6 @@ func NewStore(cfg *setting.Cfg) (storage.OpenFGADatastore, error) {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 		return postgres.New(grafanaDBCfg.ConnectionString, zanzanaDBCfg)
-
-	default:
-
 	}
 
 	// Should never happen
@@ -148,10 +145,10 @@ func getMigrations(path string) ([]migration, error) {
 	}
 
 	// parseStatements extracts statements from a sql file so we can execute
-	// them as seperate migrations. OpenFGA uses Goose as their migration egine
+	// them as separate migrations. OpenFGA uses Goose as their migration egine
 	// and Goose uses a single sql file for both up and down migrations.
 	// Grafana only supports up migration so we strip out the down migration
-	// and parse each individual statment
+	// and parse each individual statement
 	parseStatements := func(data []byte) ([]string, error) {
 		scripts := strings.Split(strings.TrimPrefix(string(data), "-- +goose Up"), "-- +goose Down")
 		if len(scripts) != 2 {
