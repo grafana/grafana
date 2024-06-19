@@ -10,6 +10,7 @@ import {
   GrafanaTheme2,
   InterpolateFunction,
   outerJoinDataFrames,
+  TimeRange,
   ValueFormatter,
 } from '@grafana/data';
 import { parseSampleValue, sortSeriesByLabel } from '@grafana/prometheus';
@@ -71,7 +72,8 @@ export function prepareHeatmapData(
   options: Options,
   palette: string[],
   theme: GrafanaTheme2,
-  replaceVariables: InterpolateFunction = (v) => v
+  replaceVariables: InterpolateFunction = (v) => v,
+  timeRange?: TimeRange
 ): HeatmapData {
   if (!frames?.length) {
     return {};
@@ -104,7 +106,7 @@ export function prepareHeatmapData(
       }
 
       return getDenseHeatmapData(
-        calculateHeatmapFromData(frames, optionsCopy.calculation ?? {}),
+        calculateHeatmapFromData(frames, { ...options.calculation, timeRange }),
         exemplars,
         optionsCopy,
         palette,
@@ -113,7 +115,7 @@ export function prepareHeatmapData(
     }
 
     return getDenseHeatmapData(
-      calculateHeatmapFromData(frames, options.calculation ?? {}),
+      calculateHeatmapFromData(frames, { ...options.calculation, timeRange }),
       exemplars,
       options,
       palette,
