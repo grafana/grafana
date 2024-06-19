@@ -38,7 +38,6 @@ type CreateAccessTokenResponseDTO struct {
 // swagger:parameters deleteCloudMigrationToken
 type DeleteCloudMigrationToken struct {
 	// UID of a cloud migration token
-	//
 	// in: path
 	UID string `json:"uid"`
 }
@@ -67,7 +66,6 @@ type CloudMigrationSessionListResponseDTO struct {
 // swagger:parameters getSession
 type GetCloudMigrationSessionRequest struct {
 	// UID of a migration session
-	//
 	// in: path
 	UID string `json:"uid"`
 }
@@ -92,7 +90,6 @@ type CloudMigrationSessionRequestDTO struct {
 // swagger:parameters runCloudMigration
 type RunCloudMigrationRequest struct {
 	// UID of a migration
-	//
 	// in: path
 	UID string `json:"uid"`
 }
@@ -138,7 +135,6 @@ const (
 // swagger:parameters getCloudMigrationRun
 type GetMigrationRunParams struct {
 	// RunUID of a migration run
-	//
 	// in: path
 	RunUID string `json:"runUID"`
 }
@@ -146,7 +142,6 @@ type GetMigrationRunParams struct {
 // swagger:parameters getCloudMigrationRunList
 type GetCloudMigrationRunList struct {
 	// UID of a migration
-	//
 	// in: path
 	UID string `json:"uid"`
 }
@@ -154,10 +149,10 @@ type GetCloudMigrationRunList struct {
 // swagger:response cloudMigrationRunListResponse
 type CloudMigrationRunListResponse struct {
 	// in: body
-	Body SnapshotListDTO
+	Body CloudMigrationRunListDTO
 }
 
-type SnapshotListDTO struct {
+type CloudMigrationRunListDTO struct {
 	Runs []MigrateDataResponseListDTO `json:"runs"`
 }
 
@@ -168,7 +163,6 @@ type MigrateDataResponseListDTO struct {
 // swagger:parameters deleteSession
 type DeleteMigrationSessionRequest struct {
 	// UID of a migration session
-	//
 	// in: path
 	UID string `json:"uid"`
 }
@@ -206,4 +200,139 @@ func convertMigrateDataResponseToDTO(r cloudmigration.MigrateDataResponse) Migra
 		RunUID: r.RunUID,
 		Items:  items,
 	}
+}
+
+// Base snapshot without results
+type SnapshotDTO struct {
+	SnapshotUID string         `json:"uid"`
+	Status      SnapshotStatus `json:"status"`
+	SessionUID  string         `json:"sessionUid"`
+	Created     time.Time      `json:"created"`
+	Finished    time.Time      `json:"finished"`
+}
+
+// swagger:enum SnapshotStatus
+type SnapshotStatus string
+
+const (
+	SnapshotStatusInitializing      SnapshotStatus = "INITIALIZING"
+	SnapshotStatusCreating          SnapshotStatus = "CREATING"
+	SnapshotStatusPendingUpload     SnapshotStatus = "PENDING_UPLOAD"
+	SnapshotStatusUploading         SnapshotStatus = "UPLOADING"
+	SnapshotStatusPendingProcessing SnapshotStatus = "PENDING_PROCESSING"
+	SnapshotStatusProcessing        SnapshotStatus = "PROCESSING"
+	SnapshotStatusFinished          SnapshotStatus = "FINISHED"
+	SnapshotStatusError             SnapshotStatus = "ERROR"
+	SnapshotStatusUnknown           SnapshotStatus = "UNKNOWN"
+)
+
+func fromSnapshotStatus(status cloudmigration.SnapshotStatus) SnapshotStatus {
+	switch status {
+	case cloudmigration.SnapshotStatusInitializing:
+		return SnapshotStatusInitializing
+	case cloudmigration.SnapshotStatusCreating:
+		return SnapshotStatusCreating
+	case cloudmigration.SnapshotStatusPendingUpload:
+		return SnapshotStatusPendingUpload
+	case cloudmigration.SnapshotStatusUploading:
+		return SnapshotStatusUploading
+	case cloudmigration.SnapshotStatusPendingProcessing:
+		return SnapshotStatusPendingProcessing
+	case cloudmigration.SnapshotStatusProcessing:
+		return SnapshotStatusProcessing
+	case cloudmigration.SnapshotStatusFinished:
+		return SnapshotStatusFinished
+	case cloudmigration.SnapshotStatusError:
+		return SnapshotStatusError
+	default:
+		return SnapshotStatusUnknown
+	}
+}
+
+// swagger:parameters createSnapshot
+type CreateSnapshotRequest struct {
+	// UID of a session
+	// in: path
+	UID string `json:"uid"`
+}
+
+// swagger:response createSnapshotResponse
+type CreateSnapshotResponse struct {
+	// in: body
+	Body CreateSnapshotResponseDTO
+}
+
+type CreateSnapshotResponseDTO struct {
+	SnapshotUID string `json:"uid"`
+}
+
+// swagger:parameters getSnapshot
+type GetSnapshotParams struct {
+	// Session UID of a session
+	// in: path
+	UID string `json:"uid"`
+
+	// UID of a snapshot
+	// in: path
+	SnapshotUID string `json:"snapshotUid"`
+}
+
+// swagger:response getSnapshotResponse
+type GetSnapshotResponse struct {
+	// in: body
+	Body GetSnapshotResponseDTO
+}
+
+type GetSnapshotResponseDTO struct {
+	SnapshotDTO
+	Results []MigrateDataResponseItemDTO `json:"results"`
+}
+
+// swagger:parameters getShapshotList
+type GetSnapshotListParams struct {
+	// Offset is used for pagination with limit
+	// in:query
+	// required:false
+	// default: 0
+	Offset int `json:"offset"`
+	// Max limit for results returned.
+	// in:query
+	// required:false
+	// default: 100
+	Limit int `json:"limit"`
+	// Session UID of a session
+	// in: path
+	UID string `json:"uid"`
+}
+
+// swagger:response snapshotListResponse
+type SnapshotListResponse struct {
+	// in: body
+	Body SnapshotListResponseDTO
+}
+
+type SnapshotListResponseDTO struct {
+	Snapshots []SnapshotDTO `json:"snapshots"`
+}
+
+// swagger:parameters uploadSnapshot
+type UploadSnapshotParams struct {
+	// Session UID of a session
+	// in: path
+	UID string `json:"uid"`
+
+	// UID of a snapshot
+	// in: path
+	SnapshotUID string `json:"snapshotUid"`
+}
+
+// swagger:parameters cancelSnapshot
+type CancelSnapshotParams struct {
+	// Session UID of a session
+	// in: path
+	UID string `json:"uid"`
+
+	// UID of a snapshot
+	// in: path
+	SnapshotUID string `json:"snapshotUid"`
 }

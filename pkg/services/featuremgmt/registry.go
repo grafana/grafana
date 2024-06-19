@@ -709,7 +709,7 @@ var (
 			AllowSelfServe:    false,
 			RequiresRestart:   true,
 		},
-		FeatureFlag{
+		{
 			Name:              "disableClassicHTTPHistogram",
 			Description:       "Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)",
 			Stage:             FeatureStageExperimental,

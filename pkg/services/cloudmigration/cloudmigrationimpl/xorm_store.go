@@ -146,6 +146,106 @@ func (ss *sqlStore) GetMigrationStatusList(ctx context.Context, migrationUID str
 	return runs, nil
 }
 
+func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
+	if err := ss.encryptKey(ctx, &snapshot); err != nil {
+		return "", err
+	}
+	if snapshot.Result == nil {
+		snapshot.Result = make([]byte, 0)
+	}
+	if snapshot.UID == "" {
+		snapshot.UID = util.GenerateShortUID()
+	}
+
+	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		snapshot.Created = time.Now()
+		snapshot.Updated = time.Now()
+		snapshot.UID = util.GenerateShortUID()
+
+		_, err := sess.Insert(&snapshot)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	return snapshot.UID, nil
+}
+
+// UpdateSnapshot takes a snapshot object containing a uid and updates a subset of features in the database.
+func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.UpdateSnapshotCmd) error {
+	if update.UID == "" {
+		return fmt.Errorf("missing snapshot uid")
+	}
+	err := ss.db.InTransaction(ctx, func(ctx context.Context) error {
+		// Update status if set
+		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			if update.Status != "" {
+				rawSQL := "UPDATE cloud_migration_snapshot SET status=? WHERE uid=?"
+				if _, err := sess.Exec(rawSQL, update.Status, update.UID); err != nil {
+					return fmt.Errorf("updating snapshot status for uid %s: %w", update.UID, err)
+				}
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+
+		// Update result if set
+		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			if len(update.Result) > 0 {
+				rawSQL := "UPDATE cloud_migration_snapshot SET result=? WHERE uid=?"
+				if _, err := sess.Exec(rawSQL, update.Result, update.UID); err != nil {
+					return fmt.Errorf("updating snapshot result for uid %s: %w", update.UID, err)
+				}
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
+}
+
+func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+	var snapshot cloudmigration.CloudMigrationSnapshot
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		exist, err := sess.Where("uid=?", uid).Get(&snapshot)
+		if err != nil {
+			return err
+		}
+		if !exist {
+			return cloudmigration.ErrSnapshotNotFound
+		}
+		return nil
+	})
+
+	if err := ss.decryptKey(ctx, &snapshot); err != nil {
+		return &snapshot, err
+	}
+
+	return &snapshot, err
+}
+
+func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
+	var runs = make([]cloudmigration.CloudMigrationSnapshot, 0)
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		sess.Limit(query.Limit, query.Offset)
+		return sess.Find(&runs, &cloudmigration.CloudMigrationSnapshot{
+			SessionUID: query.SessionUID,
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+	return runs, nil
+}
+
 func (ss *sqlStore) encryptToken(ctx context.Context, cm *cloudmigration.CloudMigrationSession) error {
 	s, err := ss.secretsService.Encrypt(ctx, []byte(cm.AuthToken), secrets.WithoutScope())
 	if err != nil {
@@ -168,6 +268,32 @@ func (ss *sqlStore) decryptToken(ctx context.Context, cm *cloudmigration.CloudMi
 		return fmt.Errorf("decrypting auth token: %w", err)
 	}
 	cm.AuthToken = string(t)
+
+	return nil
+}
+
+func (ss *sqlStore) encryptKey(ctx context.Context, snapshot *cloudmigration.CloudMigrationSnapshot) error {
+	s, err := ss.secretsService.Encrypt(ctx, []byte(snapshot.EncryptionKey), secrets.WithoutScope())
+	if err != nil {
+		return fmt.Errorf("encrypting key: %w", err)
+	}
+
+	snapshot.EncryptionKey = base64.StdEncoding.EncodeToString(s)
+
+	return nil
+}
+
+func (ss *sqlStore) decryptKey(ctx context.Context, snapshot *cloudmigration.CloudMigrationSnapshot) error {
+	decoded, err := base64.StdEncoding.DecodeString(snapshot.EncryptionKey)
+	if err != nil {
+		return fmt.Errorf("key could not be decoded")
+	}
+
+	t, err := ss.secretsService.Decrypt(ctx, decoded)
+	if err != nil {
+		return fmt.Errorf("decrypting key: %w", err)
+	}
+	snapshot.EncryptionKey = string(t)
 
 	return nil
 }

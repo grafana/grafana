@@ -15,6 +15,7 @@ var (
 	ErrMigrationRunNotFound        = errutil.NotFound("cloudmigrations.migrationRunNotFound").Errorf("Migration run not found")
 	ErrMigrationNotDeleted         = errutil.Internal("cloudmigrations.sessionNotDeleted").Errorf("Session not deleted")
 	ErrTokenNotFound               = errutil.NotFound("cloudmigrations.tokenNotFound").Errorf("Token not found")
+	ErrSnapshotNotFound            = errutil.NotFound("cloudmigrations.snapshotNotFound").Errorf("Snapshot not found")
 )
 
 // CloudMigration domain structs
@@ -31,26 +32,64 @@ type CloudMigrationSession struct {
 }
 
 type CloudMigrationSnapshot struct {
-	ID         int64  `xorm:"pk autoincr 'id'"`
-	UID        string `xorm:"uid"`
-	SessionUID string `xorm:"session_uid"`
-	Result     []byte //store raw gms response body
-	Created    time.Time
-	Updated    time.Time
-	Finished   time.Time
+	ID             int64  `xorm:"pk autoincr 'id'"`
+	UID            string `xorm:"uid"`
+	SessionUID     string `xorm:"session_uid"`
+	Status         SnapshotStatus
+	EncryptionKey  string `xorm:"encryption_key"` // stored in the unified secrets table
+	UploadURL      string `xorm:"upload_url"`
+	LocalDir       string `xorm:"local_directory"`
+	GMSSnapshotUID string `xorm:"gms_snapshot_uid"`
+	ErrorString    string `xorm:"error_string"`
+	Created        time.Time
+	Updated        time.Time
+	Finished       time.Time
+
+	// []MigrateDataResponseItem
+	Result []byte `xorm:"result"` //store raw gms response body
 }
 
-func (r CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
+type SnapshotStatus string
+
+const (
+	SnapshotStatusInitializing      = "initializing"
+	SnapshotStatusCreating          = "creating"
+	SnapshotStatusPendingUpload     = "pending_upload"
+	SnapshotStatusUploading         = "uploading"
+	SnapshotStatusPendingProcessing = "pending_processing"
+	SnapshotStatusProcessing        = "processing"
+	SnapshotStatusFinished          = "finished"
+	SnapshotStatusError             = "error"
+	SnapshotStatusUnknown           = "unknown"
+)
+
+// Deprecated, use GetSnapshotResult for the async workflow
+func (s CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
 	var result MigrateDataResponse
-	err := json.Unmarshal(r.Result, &result)
+	err := json.Unmarshal(s.Result, &result)
 	if err != nil {
 		return nil, errors.New("could not parse result of run")
 	}
-	result.RunUID = r.UID
+	result.RunUID = s.UID
 	return &result, nil
 }
 
-type SnapshotList struct {
+func (s CloudMigrationSnapshot) ShouldQueryGMS() bool {
+	return s.Status == SnapshotStatusPendingProcessing || s.Status == SnapshotStatusProcessing
+}
+
+func (s CloudMigrationSnapshot) GetSnapshotResult() ([]MigrateDataResponseItem, error) {
+	var result []MigrateDataResponseItem
+	if len(s.Result) > 0 {
+		err := json.Unmarshal(s.Result, &result)
+		if err != nil {
+			return nil, errors.New("could not parse result of run")
+		}
+	}
+	return result, nil
+}
+
+type CloudMigrationRunList struct {
 	Runs []MigrateDataResponseList
 }
 
@@ -67,6 +106,18 @@ type CloudMigrationSessionResponse struct {
 
 type CloudMigrationSessionListResponse struct {
 	Sessions []CloudMigrationSessionResponse
+}
+
+type ListSnapshotsQuery struct {
+	SessionUID string
+	Offset     int
+	Limit      int
+}
+
+type UpdateSnapshotCmd struct {
+	UID    string
+	Status SnapshotStatus
+	Result []byte //store raw gms response body
 }
 
 // access token
@@ -139,4 +190,14 @@ type MigrateDataResponseItem struct {
 	RefID  string
 	Status ItemStatus
 	Error  string
+}
+
+type CreateSessionResponse struct {
+	SnapshotUid string
+}
+
+type InitializeSnapshotResponse struct {
+	EncryptionKey  string
+	UploadURL      string
+	GMSSnapshotUID string
 }
