@@ -371,7 +371,7 @@ function makeDeletedRemainingColumn(
       const isDeletingSoon = duration.days === 0 && duration.hours === 0 && duration.minutes === 0;
       const formatted = isDeletingSoon
         ? t('search.results-table.deleted-less-than-1-min', '< 1 min')
-        : formatDuration(duration);
+        : formatDuration(duration, { style: 'long' });
 
       return (
         <div {...p.cellProps} className={cx(styles.cell, styles.typeCell)}>
@@ -510,7 +510,7 @@ const HOURS_IN_DAY = 24;
  *  - 35 seconds - returns { days: 0, hours: 0, minutes: 0 }
  */
 function calcCourseDuration(start: Date, end: Date) {
-  let minutes = (end.getTime() - start.getTime()) / MILLISECONDS_IN_MINUTE;
+  let minutes = Math.floor((end.getTime() - start.getTime()) / MILLISECONDS_IN_MINUTE);
 
   let hours = minutes > MINUTES_IN_HOUR ? Math.floor(minutes / MINUTES_IN_HOUR) : 0;
   if (hours > 0) {
