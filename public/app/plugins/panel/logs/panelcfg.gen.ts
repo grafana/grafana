@@ -12,7 +12,7 @@ import * as common from '@grafana/schema';
 
 export interface Options {
   dedupStrategy: common.LogsDedupStrategy;
-  displayMode: ('logs' | 'table');
+  displayMode?: ('logs' | 'table');
   enableLogDetails: boolean;
   isFilterLabelActive?: unknown;
   /**

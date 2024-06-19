@@ -14,7 +14,7 @@ export const pluginVersion = "11.2.0-pre";
 
 export interface Options {
   dedupStrategy: common.LogsDedupStrategy;
-  displayMode: ('logs' | 'table');
+  displayMode?: ('logs' | 'table');
   enableLogDetails: boolean;
   isFilterLabelActive?: unknown;
   /**
