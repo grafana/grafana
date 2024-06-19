@@ -6134,10 +6134,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`./thirdArgAfterSearchQuery\`)", "4"],
       [0, 0, 0, "Do not re-export imported variable (\`./withinStringQuery\`)", "5"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/CheatSheet/LogsCheatSheet.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/XrayLinkConfig.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],

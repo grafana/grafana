@@ -11,6 +11,7 @@ import { getElementStyles } from './elements';
 import { getExtraStyles } from './extra';
 import { getFontStyles } from './fonts';
 import { getFormElementStyles } from './forms';
+import { getJsonFormatterStyles } from './jsonFormatter';
 import { getLegacySelectStyles } from './legacySelect';
 import { getMarkdownStyles } from './markdownStyles';
 import { getPageStyles } from './page';
@@ -31,6 +32,7 @@ export function GlobalStyles() {
         getExtraStyles(theme),
         getFontStyles(theme),
         getFormElementStyles(theme),
+        getJsonFormatterStyles(theme),
         getPageStyles(theme),
         getCardStyles(theme),
         getAgularPanelStyles(theme),
