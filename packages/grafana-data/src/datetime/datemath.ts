@@ -40,8 +40,12 @@ export function parse(
   }
 
   if (typeof text !== 'string') {
-    if (isDateTime(text) || isDate(text)) {
-      return dateTimeForTimeZone(timezone, text);
+    if (isDateTime(text)) {
+      return text;
+    }
+
+    if (isDate(text)) {
+      return dateTime(text);
     }
 
     // We got some non string which is not a moment nor Date. TS should be able to check for that but not always.

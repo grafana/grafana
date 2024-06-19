@@ -52,22 +52,6 @@ describe('DateMath', () => {
     expect(startOfDay).toBe(expected.getTime());
   });
 
-  describe('time zones', () => {
-    it('parse should take timezones into account', () => {
-      const dateToParse = new Date(1590674400000); //  Thursday, May 28, 2020 2:00:00 PM
-      const timezone = 'Europe/Istanbul'; // +3 UTC
-
-      const parsedDate = dateMath.parse(dateToParse, undefined, timezone)!;
-      expect(parsedDate.toString()).toBe('Thu May 28 2020 17:00:00 GMT+0300');
-
-      const parsedDateRoundedDown = dateMath.parseDateMath('-1d/d', parsedDate, false)!;
-      expect(parsedDateRoundedDown.toString()).toBe('Wed May 27 2020 00:00:00 GMT+0300');
-
-      const parsedDateRoundedUp = dateMath.parseDateMath('-1d/d', parsedDate, true)!;
-      expect(parsedDateRoundedUp.toString()).toBe('Wed May 27 2020 23:59:59 GMT+0300');
-    });
-  });
-
   describe('with fiscal quarters', () => {
     beforeEach(() => {
       const fixedTime = dateTime('2023-07-05T06:06:06.666Z').valueOf();
