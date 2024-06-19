@@ -4,13 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	k8suser "k8s.io/apiserver/pkg/authentication/user"
-	"k8s.io/apiserver/pkg/endpoints/request"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -44,37 +40,25 @@ func User(ctx context.Context) (*user.SignedInUser, error) {
 		return c.SignedInUser, nil
 	}
 
-	// Find the kubernetes user info
-	k8sUserInfo, ok := request.UserFrom(ctx)
-	if ok {
-		for _, group := range k8sUserInfo.GetGroups() {
-			switch group {
-			case k8suser.APIServerUser:
-				fallthrough
-			case k8suser.SystemPrivilegedGroup:
-				orgId := int64(1)
-				return &user.SignedInUser{
-					UserID:         1,
-					OrgID:          orgId,
-					Name:           k8sUserInfo.GetName(),
-					Login:          k8sUserInfo.GetName(),
-					OrgRole:        identity.RoleAdmin,
-					IsGrafanaAdmin: true,
-					Permissions: map[int64]map[string][]string{
-						orgId: {
-							"*": {"*"}, // all resources, all scopes
-
-							// Dashboards do not support wildcard action
-							dashboards.ActionDashboardsRead:   {"*"},
-							dashboards.ActionDashboardsCreate: {"*"},
-							dashboards.ActionDashboardsWrite:  {"*"},
-							dashboards.ActionDashboardsDelete: {"*"},
-							dashboards.ActionFoldersCreate:    {"*"},
-							dashboards.ActionFoldersRead:      {dashboards.ScopeFoldersAll}, // access to read all folders
-						},
-					},
-				}, nil
-			}
+	// If the requester was set, but not user
+	requester, _ := identity.GetRequester(ctx)
+	if requester != nil {
+		id, err := requester.GetID().UserID()
+		if err == nil {
+			orgId := requester.GetOrgID()
+			return &user.SignedInUser{
+				NamespacedID: requester.GetID(),
+				UserID:       id,
+				UserUID:      requester.GetUID().ID(),
+				OrgID:        orgId,
+				OrgName:      requester.GetOrgName(),
+				OrgRole:      requester.GetOrgRole(),
+				Login:        requester.GetLogin(),
+				IDToken:      requester.GetIDToken(),
+				Permissions: map[int64]map[string][]string{
+					orgId: requester.GetPermissions(),
+				},
+			}, nil
 		}
 	}
 

@@ -1,7 +1,6 @@
 package filters
 
 import (
-	"fmt"
 	"net/http"
 
 	"k8s.io/apiserver/pkg/authentication/user"
@@ -18,7 +17,6 @@ func WithRequester(handler http.Handler) http.Handler {
 		if err != nil {
 			// Find the kubernetes user info
 			k8sUserInfo, ok := request.UserFrom(ctx)
-			fmt.Printf("k8sUserInfo: %v\n", k8sUserInfo)
 			if ok {
 				orgId := int64(1)
 				for _, group := range k8sUserInfo.GetGroups() {
@@ -59,7 +57,6 @@ func WithRequester(handler http.Handler) http.Handler {
 					}
 				}
 				if requester != nil {
-					fmt.Printf("ADDING: %v\n", requester)
 					req = req.WithContext(identity.WithRequester(ctx, requester))
 				}
 			}
