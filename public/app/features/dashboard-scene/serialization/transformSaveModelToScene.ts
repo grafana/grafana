@@ -59,7 +59,7 @@ import {
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
-import { SnapshotVariable } from './custom-variables/snapshotVariable';
+import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
