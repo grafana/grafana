@@ -38,7 +38,6 @@ type CreateAccessTokenResponseDTO struct {
 // swagger:parameters deleteCloudMigrationToken
 type DeleteCloudMigrationToken struct {
 	// UID of a cloud migration token
-	//
 	// in: path
 	UID string `json:"uid"`
 }
@@ -67,7 +66,6 @@ type CloudMigrationSessionListResponseDTO struct {
 // swagger:parameters getSession
 type GetCloudMigrationSessionRequest struct {
 	// UID of a migration session
-	//
 	// in: path
 	UID string `json:"uid"`
 }
@@ -92,7 +90,6 @@ type CloudMigrationSessionRequestDTO struct {
 // swagger:parameters runCloudMigration
 type RunCloudMigrationRequest struct {
 	// UID of a migration
-	//
 	// in: path
 	UID string `json:"uid"`
 }
@@ -138,7 +135,6 @@ const (
 // swagger:parameters getCloudMigrationRun
 type GetMigrationRunParams struct {
 	// RunUID of a migration run
-	//
 	// in: path
 	RunUID string `json:"runUID"`
 }
@@ -146,7 +142,6 @@ type GetMigrationRunParams struct {
 // swagger:parameters getCloudMigrationRunList
 type GetCloudMigrationRunList struct {
 	// UID of a migration
-	//
 	// in: path
 	UID string `json:"uid"`
 }
@@ -168,7 +163,6 @@ type MigrateDataResponseListDTO struct {
 // swagger:parameters deleteSession
 type DeleteMigrationSessionRequest struct {
 	// UID of a migration session
-	//
 	// in: path
 	UID string `json:"uid"`
 }
@@ -256,7 +250,11 @@ func fromSnapshotStatus(status cloudmigration.SnapshotStatus) SnapshotStatus {
 }
 
 // swagger:parameters createSnapshot
-type CreateSnapshotRequest struct{}
+type CreateSnapshotRequest struct {
+	// UID of a session
+	// in: path
+	UID string `json:"uid"`
+}
 
 // swagger:response createSnapshotResponse
 type CreateSnapshotResponse struct {
@@ -266,6 +264,17 @@ type CreateSnapshotResponse struct {
 
 type CreateSnapshotResponseDTO struct {
 	SnapshotUID string `json:"uid"`
+}
+
+// swagger:parameters getSnapshot
+type GetSnapshotParams struct {
+	// Session UID of a session
+	// in: path
+	UID string `json:"uid"`
+
+	// UID of a snapshot
+	// in: path
+	SnapshotUID string `json:"snapshotUid"`
 }
 
 // swagger:response getSnapshotResponse
@@ -291,6 +300,9 @@ type GetSnapshotListParams struct {
 	// required:false
 	// default: 100
 	Limit int `json:"limit"`
+	// Session UID of a session
+	// in: path
+	UID string `json:"uid"`
 }
 
 // swagger:response snapshotListResponse
@@ -304,7 +316,23 @@ type SnapshotListResponseDTO struct {
 }
 
 // swagger:parameters uploadSnapshot
-type UploadSnapshotParams struct{}
+type UploadSnapshotParams struct {
+	// Session UID of a session
+	// in: path
+	UID string `json:"uid"`
+
+	// UID of a snapshot
+	// in: path
+	SnapshotUID string `json:"snapshotUid"`
+}
 
 // swagger:parameters cancelSnapshot
-type CancelSnapshotParams struct{}
+type CancelSnapshotParams struct {
+	// Session UID of a session
+	// in: path
+	UID string `json:"uid"`
+
+	// UID of a snapshot
+	// in: path
+	SnapshotUID string `json:"snapshotUid"`
+}
