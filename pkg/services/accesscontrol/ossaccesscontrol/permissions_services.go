@@ -326,7 +326,7 @@ func (e DatasourcePermissionsService) SetBuiltInRolePermission(ctx context.Conte
 // if an OSS/unlicensed instance is upgraded to Enterprise/licensed.
 // https://github.com/grafana/identity-access-team/issues/672
 func (e DatasourcePermissionsService) SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
-	var dbCommands []resourcepermissions.SetResourcePermissionsCommand
+	dbCommands := make([]resourcepermissions.SetResourcePermissionsCommand, 0, len(commands))
 	for _, cmd := range commands {
 		// Only set query permissions for built-in roles; do not set permissions for data sources with * as UID, as this would grant wildcard permissions
 		if cmd.Permission != "Query" || cmd.BuiltinRole == "" || resourceID == "*" {
