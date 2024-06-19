@@ -21,7 +21,8 @@ func newZanzanaLogger(logger log.Logger) *zanzanaLogger {
 
 // Simple converter for zap logger fields
 func zapFieldsToArgs(fields []zap.Field) []any {
-	args := make([]any, 0)
+	// We need to pre-allocated space for key and value
+	args := make([]any, 0, len(fields)*2)
 	for _, f := range fields {
 		args = append(args, f.Key)
 		if f.Interface != nil {
