@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { Button } from '../../Button/Button';
+import { Button } from '../../Button';
 import { Modal } from '../../Modal/Modal';
 
 import { DataLinkEditorModalContent } from './DataLinkEditorModalContent';
@@ -16,14 +17,26 @@ interface DataLinksInlineEditorProps {
   onChange: (links: DataLink[]) => void;
   getSuggestions: () => VariableSuggestion[];
   data: DataFrame[];
+  oneClickEnabled?: boolean;
 }
 
-export const DataLinksInlineEditor = ({ links, onChange, getSuggestions, data }: DataLinksInlineEditorProps) => {
+export const DataLinksInlineEditor = ({
+  links,
+  onChange,
+  getSuggestions,
+  data,
+  oneClickEnabled = false,
+}: DataLinksInlineEditorProps) => {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
 
+  const [linksSafe, updateLinksSafe] = useState<DataLink[]>([]);
+
+  useEffect(() => {
+    updateLinksSafe(links ?? []);
+  }, [links]);
+
   const styles = useStyles2(getDataLinksInlineEditorStyles);
-  const linksSafe: DataLink[] = links ?? [];
   const isEditing = editIndex !== null;
 
   const onDataLinkChange = (index: number, link: DataLink) => {
@@ -62,25 +75,51 @@ export const DataLinksInlineEditor = ({ links, onChange, getSuggestions, data }:
     onChange(update);
   };
 
+  const onDragEnd = (result: DropResult) => {
+    if (!links || !result.destination) {
+      return;
+    }
+
+    const copy = [...linksSafe];
+    const link = copy[result.source.index];
+    link.sortIndex = result.destination.index;
+
+    const swapLink = copy[result.destination.index];
+    swapLink.sortIndex = result.source.index;
+
+    copy.splice(result.source.index, 1);
+    copy.splice(result.destination.index, 0, link);
+
+    updateLinksSafe(copy);
+  };
+
   return (
     <>
-      {linksSafe.length > 0 && (
-        <div className={styles.wrapper}>
-          {linksSafe.map((l, i) => {
-            return (
-              <DataLinksListItem
-                key={`${l.title}/${i}`}
-                index={i}
-                link={l}
-                onChange={onDataLinkChange}
-                onEdit={() => setEditIndex(i)}
-                onRemove={() => onDataLinkRemove(i)}
-                data={data}
-              />
-            );
-          })}
-        </div>
-      )}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="sortable-links" direction="vertical">
+          {(provided) => (
+            <div className={styles.wrapper} ref={provided.innerRef} {...provided.droppableProps}>
+              {linksSafe.map((l, i) => {
+                const key = `${l.title}/${i}`;
+                return (
+                  <DataLinksListItem
+                    key={key}
+                    index={i}
+                    link={l}
+                    onChange={onDataLinkChange}
+                    onEdit={() => setEditIndex(i)}
+                    onRemove={() => onDataLinkRemove(i)}
+                    data={data}
+                    itemKey={key}
+                    oneClickEnabled={oneClickEnabled}
+                  />
+                );
+              })}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
 
       {isEditing && editIndex !== null && (
         <Modal
