@@ -34,6 +34,7 @@ export interface CanvasElementOptions<TConfig = any> {
   connections?: CanvasConnection[];
   links?: DataLink[];
   getLinks?: (config: ValueLinkConfig) => LinkModel[];
+  oneClickLinks?: boolean;
 }
 
 // Unit is percentage from the middle of the element
