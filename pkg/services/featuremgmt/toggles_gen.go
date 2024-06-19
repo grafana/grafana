@@ -383,6 +383,10 @@ const (
 	// Enables native HTTP Histograms
 	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
 
+	// FlagDisableClassicHTTPHistogram
+	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
+	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
+
 	// FlagFormatString
 	// Enable format string transformer
 	FlagFormatString = "formatString"
@@ -611,10 +615,6 @@ const (
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
 
-	// FlagBetterPageScrolling
-	// Removes CustomScrollbar from the UI, relying on native browser scrollbars
-	FlagBetterPageScrolling = "betterPageScrolling"
-
 	// FlagAuthAPIAccessTokenAuth
 	// Enables the use of Auth API access tokens for authentication
 	FlagAuthAPIAccessTokenAuth = "authAPIAccessTokenAuth"
@@ -718,4 +718,8 @@ const (
 	// FlagSsoSettingsLDAP
 	// Use the new SSO Settings API to configure LDAP
 	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
+
+	// FlagDatabaseReadReplica
+	// Use a read replica for some database queries.
+	FlagDatabaseReadReplica = "databaseReadReplica"
 )
