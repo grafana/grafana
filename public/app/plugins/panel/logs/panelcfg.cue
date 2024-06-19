@@ -33,6 +33,7 @@ composableKinds: PanelCfg: {
 					wrapLogMessage:       bool
 					prettifyLogMessage:   bool
 					enableLogDetails:     bool
+					displayMode:          "logs" | "table"
 					sortOrder:            common.LogsSortOrder
 					dedupStrategy:        common.LogsDedupStrategy
 					// TODO: figure out how to define callbacks
