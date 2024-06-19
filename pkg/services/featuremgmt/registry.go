@@ -709,7 +709,7 @@ var (
 			AllowSelfServe:    false,
 			RequiresRestart:   true,
 		},
-		FeatureFlag{
+		{
 			Name:              "disableClassicHTTPHistogram",
 			Description:       "Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)",
 			Stage:             FeatureStageExperimental,
@@ -1342,6 +1342,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaBackendServicesSquad,
 			Expression:  "false", // enabled by default
+		},
+		{
+			Name:              "zanzana",
+			Description:       "Use openFGA as authorization engine.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 	}
 )
