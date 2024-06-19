@@ -23,7 +23,13 @@ import (
 
 type ZanzanaClient interface{}
 
-func ProvideZanzana(cfg *setting.Cfg, db db.DB) (ZanzanaClient, error) {
+// ProvideZanzana used to register ZanzanaClient.
+// It will also start an embedded ZanzanaSever if mode is set to "embedded".
+func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureToggles) (ZanzanaClient, error) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+		return zanzana.NoopClient{}, nil
+	}
+
 	var client *zanzana.Client
 
 	switch cfg.Zanzana.Mode {
