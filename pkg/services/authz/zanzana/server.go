@@ -1,17 +1,17 @@
 package zanzana
 
 import (
-	"github.com/openfga/openfga/pkg/logger"
 	"github.com/openfga/openfga/pkg/server"
 	"github.com/openfga/openfga/pkg/storage"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-func NewServer(store storage.OpenFGADatastore) (*server.Server, error) {
+func NewServer(store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
 	// FIXME(kalleep): add support for more options, configure logging, tracing etc
 	opts := []server.OpenFGAServiceV1Option{
 		server.WithDatastore(store),
-		// FIXME(kalleep): Write and log adapter for open fga logging interface
-		server.WithLogger(logger.NewNoopLogger()),
+		server.WithLogger(newZanzanaLogger(logger)),
 	}
 
 	// FIXME(kalleep): Interceptors
