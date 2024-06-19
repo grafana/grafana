@@ -368,7 +368,7 @@ function makeDeletedRemainingColumn(
       }
 
       const duration = calcCourseDuration(new Date(), deletedDate);
-      const isDeletingSoon = duration.days === 0 && duration.hours === 0 && duration.minutes === 0;
+      const isDeletingSoon = !Object.values(duration).some((v) => v > 0);
       const formatted = isDeletingSoon
         ? t('search.results-table.deleted-less-than-1-min', '< 1 min')
         : formatDuration(duration, { style: 'long' });
@@ -499,32 +499,32 @@ function getDisplayValue({
   return formattedValueToString(getDisplay(value));
 }
 
-const MILLISECONDS_IN_MINUTE = 60 * 1000;
-const MINUTES_IN_HOUR = 60;
-const HOURS_IN_DAY = 24;
-
 /**
- * Calculates the rough duration with between two dates, with varying precision depending on
- * how far apart the dates are. e.g:
+ * Calculates the rough duration between two dates, keeping only the most significant unit e.g:
  *  - 20 days, 13 hours, 43 minutes apart, 35 seconds - returns { days: 20, hours: 0, minutes: 0 }
  *  - 13 hours, 43 minutes apart, 35 seconds - returns { days: 0, hours: 13, minutes: 0 }
  *  - 43 minutes apart, 35 seconds - returns { days: 0, hours: 0, minutes: 43 }
  *  - 35 seconds - returns { days: 0, hours: 0, minutes: 0 }
  */
 function calcCourseDuration(start: Date, end: Date) {
-  let minutes = Math.floor((end.getTime() - start.getTime()) / MILLISECONDS_IN_MINUTE);
+  let { years = 0, months = 0, days = 0, hours = 0, minutes = 0 } = intervalToDuration({ start, end });
 
-  let hours = minutes > MINUTES_IN_HOUR ? Math.floor(minutes / MINUTES_IN_HOUR) : 0;
-  if (hours > 0) {
+  if (years > 0) {
+    months = 0;
+    days = 0;
+    hours = 0;
+    minutes = 0;
+  } else if (months > 0) {
+    days = 0;
+    hours = 0;
+    minutes = 0;
+  } else if (hours > 0) {
     minutes = 0;
   }
 
-  let days = hours > HOURS_IN_DAY ? Math.floor(hours / HOURS_IN_DAY) : 0;
-  if (days > 0) {
-    hours = 0;
-  }
-
   return {
+    years,
+    months,
     days,
     hours,
     minutes,
