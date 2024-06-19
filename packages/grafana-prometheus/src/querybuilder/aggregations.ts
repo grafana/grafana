@@ -28,6 +28,10 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
       params: [{ name: 'Identifier', type: 'string' }],
       defaultParams: ['count'],
     }),
+    ...createAggregationOperationWithParam(PromOperationId.Quantile, {
+      params: [{ name: 'Value', type: 'number' }],
+      defaultParams: [1],
+    }),
     createAggregationOverTime(PromOperationId.SumOverTime),
     createAggregationOverTime(PromOperationId.AvgOverTime),
     createAggregationOverTime(PromOperationId.MinOverTime),
