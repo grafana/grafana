@@ -377,6 +377,7 @@ func (ng *AlertNG) init() error {
 		RulesPerRuleGroupLimit:         ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
+		ResolvedRetention:              ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
 	}
 	logger := log.New("ngalert.state.manager.persist")
 	statePersister := state.NewSyncStatePersisiter(logger, cfg)

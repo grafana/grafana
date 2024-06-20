@@ -107,6 +107,7 @@
 /pkg/apimachinery/identity/ @grafana/identity-squad
 /pkg/apimachinery/errutil/ @grafana/grafana-backend-group
 /pkg/promlib @grafana/observability-metrics
+/pkg/storage/ @grafana/grafana-search-and-storage
 /pkg/services/annotations/ @grafana/grafana-search-and-storage
 /pkg/services/apikey/ @grafana/identity-squad
 /pkg/services/cleanup/ @grafana/grafana-backend-group
