@@ -135,7 +135,7 @@ To edit, duplicate, or delete dashboard link, follow these steps:
 1. Go to the **Links** tab.
 1. Do one of the following:
 
-   - **Edit** - Change the settings.
+   - **Edit** - Click the name of the link and update the link settings.
    - **Duplicate** - Click the copy link icon next to the link that you want to duplicate.
    - **Delete** - Click the red **X** next to the link that you want to delete, and then **Delete**.
 
