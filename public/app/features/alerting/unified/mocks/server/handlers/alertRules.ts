@@ -40,8 +40,8 @@ export const updateRulerRuleNamespaceHandler = (options?: HandlerOptions) =>
     const { folderUid } = params;
 
     // @TODO make this more generic so we can use this in other endpoints too
-    if (options?.delay) {
-      await delay(options.delay ?? 0);
+    if (options?.delay !== undefined) {
+      await delay(options.delay);
     }
 
     if (options?.response) {

@@ -35,7 +35,7 @@ beforeAll(() => {
 describe('pause rule', () => {
   it('should be able to pause a rule', async () => {
     const capture = captureRequests();
-    setUpdateRulerRuleNamespaceHandler({ delay: 1000 });
+    setUpdateRulerRuleNamespaceHandler({ delay: 0 });
 
     render(<PauseTestComponent />);
     expect(byText(/uninitialized/i).get()).toBeInTheDocument();
@@ -69,7 +69,7 @@ describe('pause rule', () => {
 
   it('should be able to handle error', async () => {
     setUpdateRulerRuleNamespaceHandler({
-      delay: 1000,
+      delay: 0,
       response: new HttpResponse('oops', { status: 500 }),
     });
 
@@ -102,7 +102,7 @@ describe('delete rule', () => {
     });
 
     const getGroup = rulerRuleGroupHandler({
-      delay: 1000,
+      delay: 0,
       response: HttpResponse.json(group),
     });
 
@@ -147,7 +147,7 @@ describe('delete rule', () => {
     });
 
     setRulerRuleGroupHandler({
-      delay: 1000,
+      delay: 0,
       response: HttpResponse.json(group),
     });
 
