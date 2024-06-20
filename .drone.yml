@@ -2923,8 +2923,7 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on:
-- publish-grafanacom
+depends_on: []
 image_pull_secrets:
 - gcr
 - gar
