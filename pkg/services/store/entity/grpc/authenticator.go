@@ -106,9 +106,7 @@ func provideAuthenticator(cfg *setting.Cfg, authCfg *authCfg, keysService signin
 	}
 
 	// Create a idVerifier
-	idVerifier := authnlib.NewIDTokenVerifier(authnlib.VerifierConfig{
-		AllowedAudiences: authCfg.allowedAudiences,
-	}, retriever)
+	idVerifier := authnlib.NewIDTokenVerifier(authnlib.VerifierConfig{}, retriever)
 
 	atVerifier := authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{
 		AllowedAudiences: authCfg.allowedAudiences,

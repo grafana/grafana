@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -47,12 +48,13 @@ var (
 // Make sure we implement correct interfaces
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 
-func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer, authorizer authz.Client, cfg *setting.Cfg) (SqlEntityServer, error) {
+func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer, authorizer authz.Client, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (SqlEntityServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	entityServer := &sqlEntityServer{
 		authorizer: authorizer,
 		cfg:        cfg,
+		features:   features,
 		db:         db,
 		log:        log.New("sql-entity-server"),
 		ctx:        ctx,
@@ -80,6 +82,7 @@ type SqlEntityServer interface {
 type sqlEntityServer struct {
 	authorizer  authz.Client
 	cfg         *setting.Cfg
+	features    featuremgmt.FeatureToggles
 	log         log.Logger
 	db          db.EntityDBInterface // needed to keep xorm engine in scope
 	sess        *session.SessionDB
@@ -310,30 +313,32 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 	}
 
 	// Check access
-	usr, err := appcontext.User(ctx)
-	if err != nil {
-		ctxLogger.Error("error getting user from ctx", "error", err)
-		return nil, err
-	}
-	stackID, err := StackID(s.cfg.StackID, usr.GetOrgID())
-	if err != nil {
-		ctxLogger.Error("error parsing stack id", "error", err)
-		return nil, err
-	}
+	if s.features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
+		usr, err := appcontext.User(ctx)
+		if err != nil {
+			ctxLogger.Error("error getting user from ctx", "error", err)
+			return nil, err
+		}
+		stackID, err := StackID(s.cfg.StackID, usr.GetOrgID())
+		if err != nil {
+			ctxLogger.Error("error parsing stack id", "error", err)
+			return nil, err
+		}
 
-	if hasAccess, err := s.authorizer.HasAccess(ctx, &authz.HasAccessRequest{
-		StackID: stackID,
-		Subject: usr.NamespacedID.String(),
-		Method:  authz.MethodRead,
-		Object:  authzlib.Resource{Kind: res.Resource, ID: res.Key},
-		Parent:  authzlib.Resource{Kind: foldersapi.RESOURCE, ID: res.Folder}, // Assuming parents are always folders
-	}); err != nil || !hasAccess {
-		ctxLogger.Error("access denied",
-			"user", usr.NamespacedID.String(),
-			"method", authz.MethodRead,
-			"key", res.Key,
-			"error", err)
-		return nil, ErrNotFound
+		if hasAccess, err := s.authorizer.HasAccess(ctx, &authz.HasAccessRequest{
+			StackID: stackID,
+			Subject: usr.NamespacedID.String(),
+			Method:  authz.MethodRead,
+			Object:  authzlib.Resource{Kind: res.Resource, ID: res.Key},
+			Parent:  authzlib.Resource{Kind: foldersapi.RESOURCE, ID: res.Folder}, // Assuming parents are always folders
+		}); err != nil || !hasAccess {
+			ctxLogger.Error("access denied",
+				"user", usr.NamespacedID.String(),
+				"method", authz.MethodRead,
+				"key", res.Key,
+				"error", err)
+			return nil, ErrNotFound
+		}
 	}
 
 	return res, err
