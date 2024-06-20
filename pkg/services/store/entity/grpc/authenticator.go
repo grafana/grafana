@@ -18,8 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/setting"
@@ -35,12 +35,13 @@ var (
 )
 
 type Authenticator struct {
-	atVerifier authnlib.Verifier[authnlib.AccessTokenClaims]
-	authCfg    *authCfg
-	cfg        *setting.Cfg
-	features   featuremgmt.FeatureToggles
-	idVerifier authnlib.Verifier[authnlib.IDTokenClaims]
-	logger     log.Logger
+	atVerifier      authnlib.Verifier[authnlib.AccessTokenClaims]
+	authCfg         *authCfg
+	cfg             *setting.Cfg
+	defaultOrgID    int64
+	idVerifier      authnlib.Verifier[authnlib.IDTokenClaims]
+	logger          log.Logger
+	namespaceMapper func(orgID int64) string
 }
 
 // keyServiceWrapper wraps a signingkeys.Service to implement the authnlib.KeyRetriever interface.
@@ -112,12 +113,19 @@ func provideAuthenticator(cfg *setting.Cfg, authCfg *authCfg, keysService signin
 		AllowedAudiences: authCfg.allowedAudiences,
 	}, retriever)
 
+	defaultOrgID := int64(1)
+	if cfg.AutoAssignOrg && cfg.AutoAssignOrgId > 0 {
+		defaultOrgID = int64(cfg.AutoAssignOrgId)
+	}
+
 	return &Authenticator{
-		atVerifier: atVerifier,
-		authCfg:    authCfg,
-		cfg:        cfg,
-		idVerifier: idVerifier,
-		logger:     log.New("grpc-authenticator"),
+		atVerifier:      atVerifier,
+		authCfg:         authCfg,
+		cfg:             cfg,
+		defaultOrgID:    defaultOrgID,
+		idVerifier:      idVerifier,
+		logger:          log.New("grpc-authenticator"),
+		namespaceMapper: request.GetNamespaceMapper(cfg),
 	}, nil
 }
 
@@ -231,8 +239,10 @@ func (f *Authenticator) remoteAuthentication(ctx context.Context, orgID int64, m
 }
 
 func (f *Authenticator) authenticateUser(orgID int64, idClaims *authnlib.Claims[authnlib.IDTokenClaims]) (*authn.Identity, error) {
-	// TODO (gamab) namespace validation
 	// Only allow id tokens signed for namespace configured for this instance.
+	if allowedNamespace := f.namespaceMapper(f.defaultOrgID); idClaims.Rest.Namespace != allowedNamespace {
+		return nil, fmt.Errorf("unexpected id token namespace: %s", idClaims.Rest.Namespace)
+	}
 
 	userID, err := authn.ParseNamespaceID(idClaims.Subject)
 	if err != nil {
@@ -256,16 +266,15 @@ func (f *Authenticator) authenticateImpersonatedUser(
 	idClaims *authnlib.Claims[authnlib.IDTokenClaims],
 	atClaims *authnlib.Claims[authnlib.AccessTokenClaims],
 ) (*authn.Identity, error) {
-	// TODO (gamab) namespace validation
-	// // Only allow id tokens signed for namespace configured for this instance.
-	// if allowedNamespace := a.namespaceMapper(a.getDefaultOrgID()); idTokenClaims.Rest.Namespace != allowedNamespace {
-	// 	return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected id token namespace: %s", idTokenClaims.Rest.Namespace)
-	// }
-	//
-	// // Allow access tokens with either the same namespace as the validated id token namespace or wildcard (`*`).
-	// if !accessTokenClaims.Rest.NamespaceMatches(idTokenClaims.Rest.Namespace) {
-	// 	return nil, errExtJWTMisMatchedNamespaceClaims.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
-	// }
+	// Only allow id tokens signed for namespace configured for this instance.
+	if allowedNamespace := f.namespaceMapper(f.defaultOrgID); idClaims.Rest.Namespace != allowedNamespace {
+		return nil, fmt.Errorf("unexpected id token namespace: %s", idClaims.Rest.Namespace)
+	}
+
+	// Allow access tokens with either the same namespace as the validated id token namespace or wildcard (`*`).
+	if !atClaims.Rest.NamespaceMatches(idClaims.Rest.Namespace) {
+		return nil, fmt.Errorf("unexpected access token namespace: %s", atClaims.Rest.Namespace)
+	}
 
 	accessID, err := authn.ParseNamespaceID(atClaims.Subject)
 	if err != nil {
@@ -300,10 +309,10 @@ func (f *Authenticator) authenticateImpersonatedUser(
 }
 
 func (a *Authenticator) authenticateService(orgID int64, claims *authnlib.Claims[authnlib.AccessTokenClaims]) (*authn.Identity, error) {
-	// // Allow access tokens with that has a wildcard namespace or a namespace matching this instance.
-	// if allowedNamespace := a.namespaceMapper(s.getDefaultOrgID()); !claims.Rest.NamespaceMatches(allowedNamespace) {
-	// 	return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", claims.Rest.Namespace)
-	// }
+	// Allow access tokens with that has a wildcard namespace or a namespace matching this instance.
+	if allowedNamespace := a.namespaceMapper(a.defaultOrgID); !claims.Rest.NamespaceMatches(allowedNamespace) {
+		return nil, fmt.Errorf("unexpected access token namespace: %s", claims.Rest.Namespace)
+	}
 
 	id, err := authn.ParseNamespaceID(claims.Subject)
 	if err != nil {
