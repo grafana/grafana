@@ -20,6 +20,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
+import AttributeActionExtensionPoint from "../../common/AttributeActionExtensionPoint";
 import CopyIcon from '../../common/CopyIcon';
 import { TraceKeyValuePair, TraceLink, TNil } from '../../types';
 
@@ -145,6 +146,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
                 </td>
                 <td>{valueMarkup}</td>
                 <td className={styles.copyColumn}>
+                  <AttributeActionExtensionPoint attribute={row} attributes={data}/>
                   <CopyIcon
                     className={copyIconClassName}
                     copyText={JSON.stringify(row, null, 2)}
