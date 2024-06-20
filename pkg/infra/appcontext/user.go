@@ -14,7 +14,11 @@ type ctxUserKey struct{}
 // WithUser adds the supplied SignedInUser to the context.
 func WithUser(ctx context.Context, usr *user.SignedInUser) context.Context {
 	ctx = context.WithValue(ctx, ctxUserKey{}, usr)
-	return identity.WithRequester(ctx, usr) // make sure it is also in the simplified version
+	// make sure it is also in the simplified version
+	if usr == nil || usr.IsNil() {
+		return identity.WithRequester(ctx, nil)
+	}
+	return identity.WithRequester(ctx, usr)
 }
 
 // User extracts the SignedInUser from the supplied context.
