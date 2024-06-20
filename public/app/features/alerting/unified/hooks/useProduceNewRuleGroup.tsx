@@ -11,8 +11,17 @@ import { fetchRulesSourceBuildInfoAction, getDataSourceRulerConfig } from '../st
 
 type ProduceResult = RulerRuleGroupDTO | AlertGroupUpdated;
 
-// @TODO the manual state tracking here is not great, but I don't have a better idea that works /shrug
-function useProduceNewRuleGroup() {
+/**
+ * Hook for reuse that handles freshly fetching a rule group's definition, applying an action to it,
+ * and then performing the API mutations necessary to persist the change.
+ *
+ * All rule groups changes should ideally be implemented as a wrapper around this hook,
+ * to ensure that we always protect as best we can against accidentally overwriting changes,
+ * and to guard against user concurrency issues.
+ *
+ * @TODO the manual state tracking here is not great, but I don't have a better idea that works /shrug
+ */
+ function useProduceNewRuleGroup() {
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
   const [updateRuleGroup] = alertRuleApi.endpoints.updateRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
