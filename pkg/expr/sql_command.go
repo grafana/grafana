@@ -137,14 +137,16 @@ func (gr *SQLCommand) Type() string {
 }
 
 func exceedsLimit(frames []*data.Frame, limit int64) bool {
+	total := 0
 	for _, frame := range frames {
 		if frame != nil {
 			if int64(frame.Rows()) > limit {
 				return true
 			}
+			total += frame.Rows()
 		}
 	}
-	return false
+	return int64(total) > limit
 }
 
 func DefaultEngine() sql.Engine {
