@@ -2,17 +2,17 @@
 
 version=${1:-$TAG}
 
-base_url="/downloads/grafana/versions/$version"
+base_url="https://grafana.com/api/downloads/grafana/versions/$version"
 
 # Construct the URL based on the provided version and edition
 if [ "$EDITION" = "enterprise" ]; then
-    url="/downloads/grafana-enterprise/versions/$version"
+    url="https://grafana.com/api/downloads/grafana-enterprise/versions/$version"
 else
-    url="/downloads/grafana/versions/$version"
+    url="https://grafana.com/api/downloads/grafana/versions/$version"
 fi
 
 # Make a request to the GCOM API to retrieve the artifacts for the specified version. Exit if the request fails.
-if ! artifacts=$(gcom "$url"); then
+if ! artifacts=$(curl "$url"); then
   echo "Failed to retrieve artifact URLs from Grafana.com API. Please check the API key, authentication, edition, and version."
   exit 1
 fi

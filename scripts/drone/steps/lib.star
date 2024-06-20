@@ -1156,10 +1156,6 @@ def verify_grafanacom_step(depends_on=["publish-grafanacom"]):
     return {
         "name": "verify-grafanacom",
         "image": images["node"],
-        "environment": {
-            "GCOM_API_KEY": from_secret("grafana_api_key"),
-            "GCP_KEY": from_secret("gcp_grafanauploads"),
-        },
         "commands": [
             # Download and install `curl` - it isn't available inside of the `node:{version}-alpine` docker image.
             "apk add curl",
