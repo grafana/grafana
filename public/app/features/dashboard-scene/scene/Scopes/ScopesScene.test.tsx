@@ -56,12 +56,6 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-jest.mock('app/features/dashboard/api/dashboard_api', () => ({
-  __esModule: true,
-  ...jest.requireActual('app/features/dashboard/api/dashboard_api'),
-  instance: undefined,
-}));
-
 describe('ScopesScene', () => {
   describe('Feature flag off', () => {
     beforeAll(() => {
