@@ -58,6 +58,27 @@ func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.Tracer) string {
 	return driverWithHooks
 }
 
+// WrapDatabaseDriverWithHooks creates a fake database driver that
+// executes pre and post functions which we use to gather metrics about
+// database queries. It also registers the metrics.
+func WrapDatabaseReplDriverWithHooks(dbType string, tracer tracing.Tracer) string {
+	drivers := map[string]driver.Driver{
+		migrator.SQLite:   &sqlite3.SQLiteDriver{},
+		migrator.MySQL:    &mysql.MySQLDriver{},
+		migrator.Postgres: &pq.Driver{},
+	}
+
+	d, exist := drivers[dbType]
+	if !exist {
+		return dbType
+	}
+
+	driverWithHooks := dbType + "ReplicaWithHooks"
+	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{log: log.New("sqlstore.metrics"), tracer: tracer}))
+	core.RegisterDriver(driverWithHooks, &databaseQueryWrapperDriver{dbType: dbType})
+	return driverWithHooks
+}
+
 // databaseQueryWrapper satisfies the sqlhook.databaseQueryWrapper interface
 // which allow us to wrap all SQL queries with a `Before` & `After` hook.
 type databaseQueryWrapper struct {
