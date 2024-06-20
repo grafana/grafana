@@ -25,7 +25,6 @@ import (
 	storagetesting "k8s.io/apiserver/pkg/storage/testing"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-
 	"github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
