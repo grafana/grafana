@@ -52,10 +52,11 @@ export interface DataTrailState extends SceneObjectState {
 
   // Synced with url
   metric?: string;
+  metricSearch?: string;
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch'] });
 
   public constructor(state: Partial<DataTrailState>) {
     super({
@@ -109,7 +110,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE],
-    onReferencedVariableValueChanged: (variable: SceneVariable) => {
+    onReferencedVariableValueChanged: async (variable: SceneVariable) => {
       const { name } = variable.state;
       if (name === VAR_DATASOURCE) {
         this.datasourceHelper.reset();
@@ -156,6 +157,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       sceneUtils.cloneSceneObjectState(state, {
         history: this.state.history,
         metric: !state.metric ? undefined : state.metric,
+        metricSearch: !state.metricSearch ? undefined : state.metricSearch,
       })
     );
 
@@ -184,7 +186,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   getUrlState() {
-    return { metric: this.state.metric };
+    const { metric, metricSearch } = this.state;
+    return { metric, metricSearch };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
@@ -197,6 +200,12 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     } else if (values.metric == null) {
       stateUpdate.metric = undefined;
       stateUpdate.topScene = new MetricSelectScene({});
+    }
+
+    if (typeof values.metricSearch === 'string') {
+      stateUpdate.metricSearch = values.metricSearch;
+    } else if (values.metric == null) {
+      stateUpdate.metricSearch = undefined;
     }
 
     this.setState(stateUpdate);
