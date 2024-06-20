@@ -798,11 +798,15 @@ func TestStore_DeclareActionSet(t *testing.T) {
 	}
 
 	type actionSetTest struct {
-		desc        string
-		pluginID    string
-		pluginName  string
-		actionsets  []plugins.ActionSetRegistration
-		expectedErr error
+		desc              string
+		pluginID          string
+		pluginName        string
+		actionsets        []plugins.ActionSetRegistration
+		expectedErr       error
+		expectedActionSet struct {
+			action  string
+			actions []string
+		}
 	}
 
 	pluginID := "k6testid"
@@ -834,45 +838,44 @@ func TestStore_DeclareActionSet(t *testing.T) {
 			expectedErr: &accesscontrol.ErrorActionNotAllowed{},
 		},
 		{
-			desc:       "should be able to declare action set",
+			desc:       "should be able to declare action set to extend existing action set",
 			pluginID:   pluginID,
 			pluginName: "k6testname",
 			actionsets: []plugins.ActionSetRegistration{
 				{
 					ActionSet: plugins.ActionSet{
-						Action:  pluginID + ":folders:admin",
-						Actions: []string{"folders:read", "folders:write", "k6-app:configuration"},
-					},
-				},
-				{
-					ActionSet: plugins.ActionSet{
-						Action:  pluginID + ":folders:edit",
-						Actions: []string{"folders:read", "folders:write"},
-					},
-				},
-				{
-					ActionSet: plugins.ActionSet{
 						Action:  pluginID + ":folders:view",
-						Actions: []string{"folders:read"},
+						Actions: []string{"k6tests:read"},
 					},
 				},
+			},
+			expectedActionSet: struct {
+				action  string
+				actions []string
+			}{
+				action:  "folders:view",
+				actions: []string{"folders:read", "k6tests:read"},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			asService := NewActionSetService(featuremgmt.WithFeatures())
-			// TODO: make these tests work
+			asService := NewActionSetService(featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall, featuremgmt.FlagAccessActionSets))
+			// first register the folders:view actions
+			// mimiking pre seeded actionsets
+			asService.StoreActionSet("folders", "view", []string{"folders:read"})
+
 			err := asService.DeclareActionSets(context.TODO(), tt.pluginID, tt.pluginID, tt.actionsets)
 			if tt.expectedErr != nil {
-				require.Error(t, err)
 				require.IsType(t, tt.expectedErr, err)
+				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			for _, as := range tt.actionsets {
-				actions := asService.ResolveAction(as.ActionSet.Action)
-				require.ElementsMatch(t, as.ActionSet.Actions, actions)
+
+			if tt.expectedActionSet.action != "" {
+				actionSet := asService.ResolveActionSet(tt.expectedActionSet.action)
+				require.ElementsMatch(t, tt.expectedActionSet.actions, actionSet)
 			}
 		})
 	}

@@ -2,6 +2,7 @@ package resourcepermissions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -826,15 +827,6 @@ func (s *InMemoryActionSets) ExpandActionSetsWithFilter(permissions []accesscont
 	return expandedPermissions
 }
 
-// GetActionSet returns the action set for the given action.
-func (s *InMemoryActionSets) GetActionSet(actionName string) []string {
-	actionSet, ok := s.actionSetToActions[actionName]
-	if !ok {
-		return nil
-	}
-	return actionSet
-}
-
 func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions []string) {
 	name := GetActionSetName(resource, permission)
 	actionSet := &ActionSet{
@@ -858,7 +850,7 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 // we do not create new actionsets for plugins
 func (s *InMemoryActionSets) DeclareActionSets(ctx context.Context, ID, name string, regs []plugins.ActionSetRegistration) error {
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) && !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		return nil
+		return errors.New("action sets are not enabled, please enable the feature flag")
 	}
 
 	asRegs := ToActionSets(ID, name, regs)
@@ -892,7 +884,6 @@ func (s *InMemoryActionSets) DeclareActionSets(ctx context.Context, ID, name str
 
 			// NOTE: overrides the existing actionset
 			s.StoreActionSet(actionWithoutPluginPrefix, "", actions)
-			continue
 		}
 		// if actionset does not exist, create a new one
 		s.log.Debug("Registering plugin actionset", "action", r.Action)
