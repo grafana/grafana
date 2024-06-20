@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,8 +20,6 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
-
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
