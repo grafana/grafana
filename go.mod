@@ -435,6 +435,8 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect; @grafana-app-platform-squad
 )
 
+require github.com/Masterminds/squirrel v1.5.4
+
 require (
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.0.4 // indirect
