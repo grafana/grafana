@@ -1163,15 +1163,6 @@ def verify_grafanacom_step(depends_on=["publish-grafanacom"]):
         "commands": [
             # Download and install `curl` - it isn't available inside of the `node:{version}-alpine` docker image.
             "apk add curl",
-
-            # Download/install gcom utility, and make it executable.
-            "curl -L -o /usr/local/bin/gcom https://github.com/grafana/gcom/releases/latest/download/gcom-linux-amd64",
-            "chmod +x /usr/local/bin/gcom",
-
-            # Authenticate gcloud.
-            "printenv GCP_KEY > /tmp/key.json",
-            "gcloud auth activate-service-account --key-file=/tmp/key.json",
-
             # Make the following script executable.
             "chmod +x ./drone/verify-grafanacom.sh",
 
