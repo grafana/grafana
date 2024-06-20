@@ -1,4 +1,4 @@
-import React, {ReactElement, Suspense} from "react";
+import React, {ReactElement} from "react";
 
 import {PluginExtensionPoints} from "@grafana/data";
 import {usePluginComponents} from "@grafana/runtime";
@@ -17,7 +17,6 @@ export default function AttributeActionExtensionPoint(props: AttributeActionExte
 
   return (
     <>
-      <Suspense fallback={null}>
       {components.map((component) => {
         const Component = component as React.ComponentType<{
           attribute: TraceKeyValuePair | undefined;
@@ -26,7 +25,6 @@ export default function AttributeActionExtensionPoint(props: AttributeActionExte
 
         return <Component key={props.attribute?.key} attribute={props.attribute} attributes={props.attributes}/>;
       })}
-      </Suspense>
     </>
   );
 }
