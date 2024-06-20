@@ -160,6 +160,11 @@ func ProvideService(
 				req.URL.Path = "/"
 			}
 
+			if c.SignedInUser != nil {
+				ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
+				req = req.WithContext(ctx)
+			}
+
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 			s.handler.ServeHTTP(resp, req)
 		}
