@@ -79,6 +79,7 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 1. Click **Save**.
 1. Click the **Back to applications** link at the top of the page.
 1. From the **More** button dropdown menu, click **Refresh Application Data**.
+1. Ensure the `groups` scope is included in the `Scopes` (`scopes` in Terraform and config file) configuration of the Okta integration.
 
 #### Optional: Add the role attribute to the User (default) Okta profile
 
@@ -161,12 +162,7 @@ To integrate your Okta OIDC provider with Grafana using our Okta OIDC integratio
 
 1. Review the list of other Okta OIDC [configuration options]({{< relref "#configuration-options" >}}) and complete them as necessary.
 
-1. Optional: [Configure a refresh token]({{< relref "#configure-a-refresh-token" >}}):
-
-   a. Extend the `scopes` field of `[auth.okta]` section in Grafana configuration file with the refresh token scope used by your OIDC provider.
-
-   b. Enable the [refresh token]({{< relref "#configure-a-refresh-token" >}}) at the Okta application settings.
-
+1. Optional: [Configure a refresh token]({{< relref "#configure-a-refresh-token" >}}).
 1. [Configure role mapping]({{< relref "#configure-role-mapping" >}}).
 1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization-enterprise-only" >}}).
 1. Restart Grafana.
