@@ -95,12 +95,12 @@ To view notification errors, complete the following steps.
 
    If any contact points are failing, a message at the right-hand corner of the screen alerts the user to the fact that there are errors and how many.
 
-2. Click on the contact point to view the details of errors for each contact point.
+1. Click on the contact point to view the details of errors for each contact point.
 
    Error details are displayed if you hover over the Error icon.
 
    If a contact point has more than one integration, you see all errors for each of the integrations listed.
 
-3. In the **Health** column, check the status of the notification.
+1. In the **Health** column, check the status of the notification.
 
    This can be either OK, No attempts, or Error.
