@@ -1160,7 +1160,7 @@ def verify_grafanacom_step(depends_on=["publish-grafanacom"]):
             # Download and install `curl` - it isn't available inside of the `node:{version}-alpine` docker image.
             "apk add curl",
             # Make the following script executable.
-            "chmod +x ./drone/verify-grafanacom.sh",
+            "chmod +x ./scripts/drone/verify-grafanacom.sh",
 
             # There may be a slight lag between when artifacts are uploaded to Google Storage,
             # and when they are available on the website. This sould account for that discrepancy.
