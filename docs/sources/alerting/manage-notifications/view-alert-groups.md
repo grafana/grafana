@@ -101,6 +101,6 @@ To view notification errors, complete the following steps.
 
    If a contact point has more than one integration, you see all errors for each of the integrations listed.
 
-3. In the Health column, check the status of the notification.
+3. In the **Health** column, check the status of the notification.
 
    This can be either OK, No attempts, or Error.
