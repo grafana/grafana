@@ -2944,8 +2944,7 @@ steps:
   - gcloud auth activate-service-account --key-file=/tmp/key.json
   - chmod +x ./drone/verify-grafanacom.sh
   - for i in {{1..5}}; do ./drone/verify-grafanacom.sh && break || sleep 60; done
-  depends_on:
-  - publish-grafanacom
+  depends_on: []
   environment:
     GCOM_API_KEY:
       from_secret: grafana_api_key
@@ -5009,3 +5008,8 @@ get:
   path: secret/data/common/gcr
 kind: secret
 name: gcr_credentials
+---
+kind: signature
+hmac: 464c0ad5caeceec47b632bffce15f1285bafb4f6088f59513a1289cd0f6611ac
+
+...
