@@ -28,6 +28,19 @@ import { useURLSearchParams } from './useURLSearchParams';
 const MAX_NEEDLE_SIZE = 25;
 const INFO_THRESHOLD = Infinity;
 
+/**
+ * Escape query strings so that regex characters don't interfere
+ * with uFuzzy search methods.
+ *
+ * The fuzzy searching will take the query and generate a regex - but if the query
+ * contains a regex itself, then it can easily end up being split in a bad place
+ * and end up creating an invalid expression
+ */
+const escapeQueryRegex = (query: string) => {
+  // see https://stackoverflow.com/a/6969486
+  return query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
 export function useRulesFilter() {
   const [queryParams, updateQueryParams] = useURLSearchParams();
   const searchQuery = queryParams.get('search') ?? '';
@@ -130,10 +143,12 @@ export const filterRules = (
   if (namespaceFilter) {
     const namespaceHaystack = filteredNamespaces.map((ns) => ns.name);
 
+    const escapedQuery = escapeQueryRegex(namespaceFilter);
+
     const ufuzzy = getSearchInstance(namespaceFilter);
     const [idxs, info, order] = ufuzzy.search(
       namespaceHaystack,
-      namespaceFilter,
+      escapedQuery,
       getOutOfOrderLimit(namespaceFilter),
       INFO_THRESHOLD
     );
@@ -157,9 +172,11 @@ const reduceNamespaces = (filterState: RulesFilter) => {
       const groupsHaystack = filteredGroups.map((g) => g.name);
       const ufuzzy = getSearchInstance(groupNameFilter);
 
+      const escapedQuery = escapeQueryRegex(groupNameFilter);
+
       const [idxs, info, order] = ufuzzy.search(
         groupsHaystack,
-        groupNameFilter,
+        escapedQuery,
         getOutOfOrderLimit(groupNameFilter),
         INFO_THRESHOLD
       );
@@ -193,10 +210,11 @@ const reduceGroups = (filterState: RulesFilter) => {
     if (ruleNameQuery) {
       const rulesHaystack = filteredRules.map((r) => r.name);
       const ufuzzy = getSearchInstance(ruleNameQuery);
+      const escapedQuery = escapeQueryRegex(ruleNameQuery);
 
       const [idxs, info, order] = ufuzzy.search(
         rulesHaystack,
-        ruleNameQuery,
+        escapedQuery,
         getOutOfOrderLimit(ruleNameQuery),
         INFO_THRESHOLD
       );
