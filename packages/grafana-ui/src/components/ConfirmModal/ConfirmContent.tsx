@@ -40,6 +40,8 @@ export interface ConfirmContentProps {
   onDismiss(): void;
   /** Alternative action callback */
   onAlternative?(): void;
+  /** Disable the confirm button if needed */
+  isConfirmButtonDissabled?: boolean;
 }
 
 export const ConfirmContent = ({
@@ -55,13 +57,15 @@ export const ConfirmContent = ({
   alternativeButtonLabel,
   description,
   justifyButtons = 'flex-end',
+  isConfirmButtonDissabled,
 }: ConfirmContentProps) => {
-  const [disabled, setDisabled] = useState(Boolean(confirmPromptText));
+  const [disabled, setDisabled] = useState(isConfirmButtonDissabled);
   const styles = useStyles2(getStyles);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setDisabled(confirmPromptText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
+    !isConfirmButtonDissabled &&
+      setDisabled(confirmPromptText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
   };
 
   useEffect(() => {
@@ -69,8 +73,8 @@ export const ConfirmContent = ({
   }, []);
 
   useEffect(() => {
-    setDisabled(Boolean(confirmPromptText));
-  }, [confirmPromptText]);
+    setDisabled(isConfirmButtonDissabled ? true : Boolean(confirmPromptText));
+  }, [confirmPromptText, isConfirmButtonDissabled]);
 
   const onConfirmClick = async () => {
     setDisabled(true);
