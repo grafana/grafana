@@ -594,6 +594,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-dashboards-suite
 - commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/dashboards-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/dashboards-suite
+- commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
@@ -601,6 +609,14 @@ steps:
     HOST: grafana-server
   image: cypress/included:13.10.0
   name: end-to-end-tests-smoke-tests-suite
+- commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/smoke-tests-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
@@ -610,6 +626,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-panels-suite
 - commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/panels-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/panels-suite
+- commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
@@ -618,37 +642,13 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-various-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite scenes/dashboards-suite
-  depends_on:
-  - grafana-server
-  environment:
-    HOST: grafana-server
-  image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes-dashboards-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite scenes/smoke-tests-suite
-  depends_on:
-  - grafana-server
-  environment:
-    HOST: grafana-server
-  image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes-smoke-tests-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite scenes/panels-suite
-  depends_on:
-  - grafana-server
-  environment:
-    HOST: grafana-server
-  image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes-panels-suite
-- commands:
   - ./bin/build e2e-tests --port 3001 --suite scenes/various-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes-various-suite
+  name: end-to-end-tests-scenes/various-suite
 - commands:
   - cd /
   - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
@@ -1941,6 +1941,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-dashboards-suite
 - commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/dashboards-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/dashboards-suite
+- commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
@@ -1948,6 +1956,14 @@ steps:
     HOST: grafana-server
   image: cypress/included:13.10.0
   name: end-to-end-tests-smoke-tests-suite
+- commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/smoke-tests-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
@@ -1957,6 +1973,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-panels-suite
 - commands:
+  - ./bin/build e2e-tests --port 3001 --suite scenes/panels-suite
+  depends_on:
+  - grafana-server
+  environment:
+    HOST: grafana-server
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-scenes/panels-suite
+- commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
@@ -1965,37 +1989,13 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-various-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite scenes/dashboards-suite
-  depends_on:
-  - grafana-server
-  environment:
-    HOST: grafana-server
-  image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes-dashboards-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite scenes/smoke-tests-suite
-  depends_on:
-  - grafana-server
-  environment:
-    HOST: grafana-server
-  image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes-smoke-tests-suite
-- commands:
-  - ./bin/build e2e-tests --port 3001 --suite scenes/panels-suite
-  depends_on:
-  - grafana-server
-  environment:
-    HOST: grafana-server
-  image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes-panels-suite
-- commands:
   - ./bin/build e2e-tests --port 3001 --suite scenes/various-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes-various-suite
+  name: end-to-end-tests-scenes/various-suite
 - commands:
   - cd /
   - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
@@ -2093,13 +2093,9 @@ steps:
     \"e2e_artifacts\"}"'
   depends_on:
   - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-scenes-dashboards-suite
   - end-to-end-tests-panels-suite
-  - end-to-end-tests-scenes-panels-suite
   - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-scenes-smoke-tests-suite
   - end-to-end-tests-various-suite
-  - end-to-end-tests-scenes-various-suite
   environment:
     E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
     GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
@@ -2145,13 +2141,9 @@ steps:
   depends_on:
   - build-storybook
   - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-scenes-dashboards-suite
   - end-to-end-tests-panels-suite
-  - end-to-end-tests-scenes-panels-suite
   - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-scenes-smoke-tests-suite
   - end-to-end-tests-various-suite
-  - end-to-end-tests-scenes-various-suite
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads
@@ -2255,13 +2247,9 @@ steps:
   - ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'
   depends_on:
   - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-scenes-dashboards-suite
   - end-to-end-tests-panels-suite
-  - end-to-end-tests-scenes-panels-suite
   - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-scenes-smoke-tests-suite
   - end-to-end-tests-various-suite
-  - end-to-end-tests-scenes-various-suite
   - build-frontend-packages
   environment:
     NPM_TOKEN:
@@ -2278,13 +2266,9 @@ steps:
   - ./bin/build upload-packages --edition oss
   depends_on:
   - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-scenes-dashboards-suite
   - end-to-end-tests-panels-suite
-  - end-to-end-tests-scenes-panels-suite
   - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-scenes-smoke-tests-suite
   - end-to-end-tests-various-suite
-  - end-to-end-tests-scenes-various-suite
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads_base64
@@ -5032,6 +5016,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: ba86e9c1fb16bb20bff8d56f158ea31f32c3e44f6d517a04ae774fc28f9101e7
+hmac: 99d12ec54be24bb8021d6974201b1eaa15d7c8142cf18cc067467faec51a3d64
 
 ...
