@@ -2939,7 +2939,8 @@ steps:
 - commands:
   - apk add curl
   - chmod +x ./scripts/drone/verify-grafanacom.sh
-  - for i in {{1..5}}; do ./drone/verify-grafanacom.sh && break || sleep 60; done
+  - for i in {{1..5}}; do ./scripts/drone/verify-grafanacom.sh && break || sleep 60;
+    done
   depends_on: []
   image: node:20.9.0-alpine
   name: verify-grafanacom
@@ -3036,7 +3037,8 @@ steps:
 - commands:
   - apk add curl
   - chmod +x ./scripts/drone/verify-grafanacom.sh
-  - for i in {{1..5}}; do ./drone/verify-grafanacom.sh && break || sleep 60; done
+  - for i in {{1..5}}; do ./scripts/drone/verify-grafanacom.sh && break || sleep 60;
+    done
   depends_on:
   - publish-grafanacom
   image: node:20.9.0-alpine
@@ -4992,6 +4994,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: c684695be613113721a115949f3c247dceae3a1921cf92ce7a6e55e58e42303c
+hmac: 3e889a7dae2864c9b698758ca9162f064dcffa1dc8e2695b0bdef2330344a365
 
 ...
