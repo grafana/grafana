@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 )
 
 const (
@@ -23,7 +22,8 @@ const (
 	mdOrgRole = "grafana-org-role"
 )
 
-var _ interceptors.Authenticator = (*Authenticator)(nil)
+// This is in a package we can no import
+// var _ interceptors.Authenticator = (*Authenticator)(nil)
 
 type Authenticator struct {
 	IDTokenVerifier authn.Verifier[authn.IDTokenClaims]
