@@ -47,9 +47,9 @@ func RegisterAPIService(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
 ) *NotificationsAPIBuilder {
-	// if ng.IsDisabled() || !features.IsEnabledGlobally(featuremgmt.FlagAlertingNotificationsApi) {
-	// 	return nil
-	// }
+	if ng.IsDisabled() || !features.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
+		return nil
+	}
 	builder := &NotificationsAPIBuilder{
 		ng:         ng,
 		namespacer: request.GetNamespaceMapper(cfg),

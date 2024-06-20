@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -32,14 +33,21 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+func getTestHelper(t *testing.T) *apis.K8sTestHelper {
+	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagAlertingApiServer,
+		},
+	})
+}
+
 func TestIntegrationResourceIdentifier(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
-
+	helper := getTestHelper(t)
 	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
 	require.NoError(t, err)
 	client := adminK8sClient.NotificationsV0alpha1().TimeIntervals("default")
@@ -96,7 +104,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+	helper := getTestHelper(t)
 
 	org1 := helper.Org1
 
@@ -330,7 +338,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+	helper := getTestHelper(t)
 
 	org := helper.Org1
 
@@ -387,7 +395,7 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+	helper := getTestHelper(t)
 
 	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
 	require.NoError(t, err)
@@ -473,7 +481,7 @@ func TestIntegrationTimeIntervalPatch(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+	helper := getTestHelper(t)
 
 	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
 	require.NoError(t, err)
