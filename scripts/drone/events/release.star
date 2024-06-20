@@ -222,9 +222,6 @@ def publish_packages_pipeline():
             steps=[
                 verify_grafanacom_step(),
             ],
-            depends_on=[
-                "publish-grafanacom",
-            ],
         ),
         pipeline(
             name = "publish-packages",
