@@ -34,6 +34,9 @@ type StatePersister interface {
 	Sync(ctx context.Context, span trace.Span, states StateTransitions)
 }
 
+// Sender is an optional callback intended for sending the states to an alertmanager.
+type Sender func(context.Context, StateTransitions)
+
 type Manager struct {
 	log     log.Logger
 	metrics *metrics.State
@@ -290,7 +293,14 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 // This will update the states in cache/store and return the state transitions that need to be sent to the alertmanager.
-func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) StateTransitions {
+func (st *Manager) ProcessEvalResults(
+	ctx context.Context,
+	evaluatedAt time.Time,
+	alertRule *ngModels.AlertRule,
+	results eval.Results,
+	extraLabels data.Labels,
+	send Sender,
+) StateTransitions {
 	utcTick := evaluatedAt.UTC().Format(time.RFC3339Nano)
 	ctx, span := st.tracer.Start(ctx, "alert rule state calculation", trace.WithAttributes(
 		attribute.String("rule_uid", alertRule.UID),
@@ -313,16 +323,24 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	allChanges := StateTransitions(append(states, staleStates...))
 
 	// It's important that this is done *before* we sync the states to the persister. Otherwise, we will not persist
-	// the LastSentAt field to the store. This is not perfect, since the Manager is not responsible for sending the
-	// alerts we are not guaranteed that an actual attempt at sending will reflect the timestamp. Can be improved in a
-	// future update.
-	statesToSend := allChanges.UpdateLastSentAt(evaluatedAt)
+	// the LastSentAt field to the store.
+	var statesToSend StateTransitions
+	if send != nil {
+		statesToSend = allChanges.UpdateLastSentAt(evaluatedAt)
+	}
 
 	st.persister.Sync(ctx, span, allChanges)
 	if st.historian != nil {
 		st.historian.Record(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
 	}
-	return statesToSend
+
+	// Optional callback intended for sending the states to an alertmanager.
+	// Some uses ,such as backtesting or the testing api, do not send.
+	if send != nil {
+		send(ctx, statesToSend)
+	}
+
+	return allChanges
 }
 
 func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger) []StateTransition {

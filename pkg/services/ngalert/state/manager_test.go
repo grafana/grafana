@@ -268,7 +268,7 @@ func TestDashboardAnnotations(t *testing.T) {
 		},
 	}}, data.Labels{
 		"alertname": rule.Title,
-	})
+	}, nil)
 
 	expected := []string{rule.Title + " {alertname=" + rule.Title + ", instance_label=testValue2, test1=testValue1, test2=testValue2} - B=42.000000, C=1.000000"}
 	sort.Strings(expected)
@@ -1326,7 +1326,7 @@ func TestProcessEvalResults(t *testing.T) {
 					res[i].EvaluatedAt = evalTime
 				}
 				clk.Set(evalTime)
-				_ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels)
+				_ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels, state.NoopSender)
 				results += len(res)
 			}
 
@@ -1416,8 +1416,7 @@ func TestProcessEvalResults(t *testing.T) {
 		rule := models.RuleGen.GenerateRef()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
-		_ = st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, make(data.Labels))
-		states := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+		states := st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, make(data.Labels), nil)
 		require.NotEmpty(t, states)
 
 		savedStates := make(map[data.Fingerprint]models.AlertInstance)
@@ -1578,7 +1577,7 @@ func TestStaleResultsHandler(t *testing.T) {
 				"alertname":                    rule.Title,
 				"__alert_rule_namespace_uid__": rule.NamespaceUID,
 				"__alert_rule_uid__":           rule.UID,
-			})
+			}, nil)
 			for _, s := range tc.expectedStates {
 				setCacheID(s)
 				cachedState := st.Get(s.OrgID, s.AlertRuleUID, s.CacheID)
@@ -1641,8 +1640,7 @@ func TestStaleResults(t *testing.T) {
 		Tracer:        tracing.InitializeTracerForTest(),
 		Log:           log.New("ngalert.state.manager"),
 	}
-	persister := state.NewFakePersister()
-	st := state.NewManager(cfg, persister)
+	st := state.NewManager(cfg, state.NewNoopPersister())
 
 	gen := models.RuleGen
 	rule := gen.With(gen.WithFor(0)).GenerateRef()
@@ -1664,13 +1662,14 @@ func TestStaleResults(t *testing.T) {
 	}
 
 	// Init
-	statesToSend := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil)
+	var statesToSend state.StateTransitions
+	processed := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil, func(_ context.Context, states state.StateTransitions) {
+		statesToSend = states
+	})
+	checkExpectedStateTransitions(t, processed, initStates)
 
 	// Check that it returns just those state transitions that needs to be sent.
 	checkExpectedStateTransitions(t, statesToSend, map[data.Fingerprint]struct{}{state1: {}, state2: {}}) // Does not contain the Normal state3.
-
-	processed := persister.LastPersistedStates
-	checkExpectedStateTransitions(t, processed, initStates)
 
 	currentStates := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 	statesMap := checkExpectedStates(t, currentStates, initStates)
@@ -1686,8 +1685,7 @@ func TestStaleResults(t *testing.T) {
 
 	var expectedStaleKeys []models.AlertInstanceKey
 	t.Run("should mark missing states as stale", func(t *testing.T) {
-		_ = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil)
-		processed = persister.LastPersistedStates
+		processed = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil, nil)
 		checkExpectedStateTransitions(t, processed, initStates)
 		for _, s := range processed {
 			if s.CacheID == state1 {

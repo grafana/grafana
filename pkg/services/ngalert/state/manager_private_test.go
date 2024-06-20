@@ -254,8 +254,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 
 			ApplyNoDataAndErrorToAllStates: applyNoDataErrorToAllStates,
 		}
-		persister := NewFakePersister()
-		st := NewManager(cfg, persister)
+		st := NewManager(cfg, NewNoopPersister())
 
 		tss := make([]time.Time, 0, len(resultsAtTime))
 		for ts, results := range resultsAtTime {
@@ -271,14 +270,15 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		for _, ts := range tss {
 			results := resultsAtTime[ts]
 			clk.Set(ts)
-			statesToSend := st.ProcessEvalResults(context.Background(), ts, alertRule, results, systemLabels)
+			var statesToSend StateTransitions
+			actual := st.ProcessEvalResults(context.Background(), ts, alertRule, results, systemLabels, func(_ context.Context, states StateTransitions) {
+				statesToSend = states
+			})
 
 			// Expect all statesToSend to have a LastSentAt set to the evaluation time.
 			for _, state := range statesToSend {
 				assert.Equalf(t, ts, state.LastSentAt, "LastSentAt should be set to the evaluation time for all ready-to-send transitions.")
 			}
-
-			actual := persister.LastPersistedStates
 
 			expectedTransitions, ok := expectedTransitionsAtTime[ts]
 			if !ok { // skip if nothing to assert

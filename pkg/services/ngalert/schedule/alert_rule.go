@@ -411,29 +411,30 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 		))
 	}
 	start = a.clock.Now()
-	processedStates := a.stateManager.ProcessEvalResults(
+	_ = a.stateManager.ProcessEvalResults(
 		ctx,
 		e.scheduledAt,
 		e.rule,
 		results,
 		state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !a.disableGrafanaFolder),
+		func(ctx context.Context, statesToSend state.StateTransitions) {
+			start := a.clock.Now()
+			alerts := a.send(ctx, key, statesToSend)
+			span.AddEvent("results processed", trace.WithAttributes(
+				attribute.Int64("alerts_sent", int64(len(alerts.PostableAlerts))),
+			))
+			sendDuration.Observe(a.clock.Now().Sub(start).Seconds())
+		},
 	)
 	processDuration.Observe(a.clock.Now().Sub(start).Seconds())
-
-	start = a.clock.Now()
-	alerts := a.send(ctx, key, processedStates)
-	span.AddEvent("results processed", trace.WithAttributes(
-		attribute.Int64("alerts_sent", int64(len(alerts.PostableAlerts))),
-	))
-	sendDuration.Observe(a.clock.Now().Sub(start).Seconds())
 
 	return nil
 }
 
 // send sends alerts for the given state transitions.
-func (a *alertRule) send(ctx context.Context, key ngmodels.AlertRuleKey, statesToSend state.StateTransitions) definitions.PostableAlerts {
-	alerts := definitions.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(statesToSend))}
-	for _, alertState := range statesToSend {
+func (a *alertRule) send(ctx context.Context, key ngmodels.AlertRuleKey, states state.StateTransitions) definitions.PostableAlerts {
+	alerts := definitions.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(states))}
+	for _, alertState := range states {
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *state.StateToPostableAlert(alertState, a.appURL))
 	}
 

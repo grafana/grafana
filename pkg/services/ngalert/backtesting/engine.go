@@ -35,7 +35,7 @@ type backtestingEvaluator interface {
 }
 
 type stateManager interface {
-	ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *models.AlertRule, results eval.Results, extraLabels data.Labels) state.StateTransitions
+	ProcessEvalResults(context.Context, time.Time, *models.AlertRule, eval.Results, data.Labels, state.Sender) state.StateTransitions
 	schedule.RuleStateProvider
 }
 
@@ -97,7 +97,7 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 			logger.Info("Unexpected evaluation. Skipping", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluationTime", currentTime, "evaluationIndex", idx, "expectedEvaluations", length)
 			return nil
 		}
-		states := stateManager.ProcessEvalResults(ruleCtx, currentTime, rule, results, nil)
+		states := stateManager.ProcessEvalResults(ruleCtx, currentTime, rule, results, nil, nil)
 		tsField.Set(idx, currentTime)
 		for _, s := range states {
 			field, ok := valueFields[s.CacheID]
