@@ -12,6 +12,7 @@ import (
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -52,6 +53,7 @@ type Client interface {
 }
 
 type LegacyClient struct {
+	cfg      *setting.Cfg
 	clientV1 authzv1.AuthzServiceClient
 	logger   log.Logger
 	tracer   tracing.Tracer
@@ -81,9 +83,9 @@ func ProvideAuthZClient(
 
 	switch authCfg.mode {
 	case ModeInProc:
-		client = newInProcLegacyClient(tracer, server)
+		client = newInProcLegacyClient(cfg, tracer, server)
 	case ModeGRPC:
-		client, err = newGrpcLegacyClient(tracer, authCfg.remoteAddress)
+		client, err = newGrpcLegacyClient(cfg, tracer, authCfg.remoteAddress)
 		if err != nil {
 			return nil, err
 		}
@@ -106,10 +108,10 @@ func ProvideStandaloneAuthZClient(
 		return nil, err
 	}
 
-	return newGrpcLegacyClient(tracer, authCfg.remoteAddress)
+	return newGrpcLegacyClient(cfg, tracer, authCfg.remoteAddress)
 }
 
-func newInProcLegacyClient(tracer tracing.Tracer, server *legacyServer) *LegacyClient {
+func newInProcLegacyClient(cfg *setting.Cfg, tracer tracing.Tracer, server *legacyServer) *LegacyClient {
 	channel := &inprocgrpc.Channel{}
 
 	// In-process we don't have to authenticate the service making the request
@@ -131,13 +133,14 @@ func newInProcLegacyClient(tracer tracing.Tracer, server *legacyServer) *LegacyC
 	client := authzv1.NewAuthzServiceClient(conn)
 
 	return &LegacyClient{
+		cfg:      cfg,
 		clientV1: client,
 		logger:   log.New("authz.client"),
 		tracer:   tracer,
 	}
 }
 
-func newGrpcLegacyClient(tracer tracing.Tracer, address string) (*LegacyClient, error) {
+func newGrpcLegacyClient(cfg *setting.Cfg, tracer tracing.Tracer, address string) (*LegacyClient, error) {
 	// Create a connection to the gRPC server
 	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -147,6 +150,7 @@ func newGrpcLegacyClient(tracer tracing.Tracer, address string) (*LegacyClient, 
 	client := authzv1.NewAuthzServiceClient(conn)
 
 	return &LegacyClient{
+		cfg:      cfg,
 		clientV1: client,
 		logger:   log.New("authz.client"),
 		tracer:   tracer,
@@ -164,9 +168,52 @@ func (c *LegacyClient) HasAccess(ctx context.Context, req *HasAccessRequest) (bo
 		return true, nil
 	}
 
+	action := ToRbacAction(req.Method, req.Object)
+
+	authCtx, err := identity.GetAuthCtx(ctx)
+	if err != nil {
+		return false, tracing.Errorf(span, "failed to get the request auth context: %w", err)
+	}
+
+	// No user => check on the service permissions
+	if authCtx.IDClaims == nil {
+		if authCtx.AccessClaims == nil {
+			return false, tracing.Errorf(span, "failed to get access claims")
+		}
+		perms := authCtx.AccessClaims.Rest.Permissions
+		for _, p := range perms {
+			if p == action {
+				return true, nil
+			}
+		}
+		return false, nil
+	}
+
+	// Impersonation => fetch the user permissions
+	if authCtx.AccessClaims == nil && c.cfg.Env != setting.Dev {
+		ctxLogger.Error("access claims are required when running in production mode")
+		return false, tracing.Errorf(span, "missing access claims")
+	}
+	// Make sure the service is allowed to perform the requested action
+	if authCtx.AccessClaims != nil {
+		if authCtx.AccessClaims.Rest.DelegatedPermissions == nil {
+			return false, nil
+		}
+		serviceIsAllowedAction := false
+		for _, p := range authCtx.AccessClaims.Rest.DelegatedPermissions {
+			if p == action {
+				serviceIsAllowedAction = true
+				break
+			}
+		}
+		if !serviceIsAllowedAction {
+			return false, nil
+		}
+	}
+
 	readReq := &authzv1.ReadRequest{
 		StackId: req.StackID,
-		Action:  ToRbacAction(req.Method, req.Object),
+		Action:  action,
 		Subject: req.Subject,
 	}
 
