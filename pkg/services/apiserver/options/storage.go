@@ -19,7 +19,7 @@ const (
 	StorageTypeLegacy      StorageType = "legacy"
 	StorageTypeUnified     StorageType = "unified"
 	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
-	StorageTypeUnifiedExp  StorageType = "unified-exp"
+	StorageTypeUnifiedNext StorageType = "unified-next"
 )
 
 type StorageOptions struct {
@@ -45,10 +45,10 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 func (o *StorageOptions) Validate() []error {
 	errs := []error{}
 	switch o.StorageType {
-	case StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc, StorageTypeUnifiedExp:
+	case StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc, StorageTypeUnifiedNext:
 		// no-op
 	default:
-		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s, %s, %s", StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc, StorageTypeUnifiedExp))
+		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s, %s, %s", StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc, StorageTypeUnifiedNext))
 	}
 
 	if _, _, err := net.SplitHostPort(o.Address); err != nil {

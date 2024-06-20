@@ -262,7 +262,7 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-	case grafanaapiserveroptions.StorageTypeUnifiedExp:
+	case grafanaapiserveroptions.StorageTypeUnifiedNext:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
