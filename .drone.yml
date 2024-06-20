@@ -2924,6 +2924,49 @@ volumes:
 clone:
   retries: 3
 depends_on:
+- publish-grafanacom
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: verify-grafanacom-artifacts
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - apk add curl
+  - curl -L -o /usr/local/bin/gcom https://github.com/grafana/gcom/releases/latest/download/gcom-linux-amd64
+  - chmod +x /usr/local/bin/gcom
+  - printenv GCP_KEY > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - chmod +x ./drone/verify-grafanacom.sh
+  - for i in {{1..5}}; do ./drone/verify-grafanacom.sh && break || sleep 60; done
+  depends_on:
+  - publish-grafanacom
+  environment:
+    GCOM_API_KEY:
+      from_secret: grafana_api_key
+    GCP_KEY:
+      from_secret: gcp_grafanauploads
+  image: node:20.9.0-alpine
+  name: verify-grafanacom
+trigger:
+  event:
+  - promote
+  target: verify-grafanacom-artifacts
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
 - publish-artifacts-public
 - publish-docker-public
 environment:
@@ -4967,8 +5010,3 @@ get:
   path: secret/data/common/gcr
 kind: secret
 name: gcr_credentials
----
-kind: signature
-hmac: ba86e9c1fb16bb20bff8d56f158ea31f32c3e44f6d517a04ae774fc28f9101e7
-
-...
