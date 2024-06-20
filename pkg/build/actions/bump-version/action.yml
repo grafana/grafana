@@ -1,0 +1,39 @@
+name: Bump version
+description: Updates package.json versions in Grafana and subpackages and regenerates schemas
+inputs:
+  version:
+    description: The new version (ex. 1.2.3)
+    required: true
+  push:
+    default: true
+    required: false
+  dry_run:
+    default: false
+    required: false
+runs:
+  uses: "composite"
+  steps:
+    - uses: actions-ecosystem/action-regex-match@v2.0.2
+      if: ${{ github.event.inputs.version != '' }}
+      id: regex-match
+      with:
+        text: ${{ github.event.inputs.version }}
+        # https://semver.org/
+        regex: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'
+    - name: Validate input version
+      if: ${{ steps.regex-match.outputs.match == '' && github.event.inputs.version != '' }}
+      run: |
+        echo "The input version format is not correct, please respect:\
+        major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. \
+        example: 7.4.3, 7.4.3-preview or 7.4.3-preview1"
+        exit 1
+    - uses: actions/setup-go@v4
+      with:
+        go-version-file: go.mod
+    - name: Bump versions
+      uses: dagger/dagger-for-github@v5
+      with:
+        verb: run
+        args: go run ./pkg/build/workflows/bump-version -version=${{ inputs.version }}
+    - name: make gen-cue
+      run: make gen-cue
