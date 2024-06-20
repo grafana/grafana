@@ -2,7 +2,6 @@ import { isNumber, isString } from 'lodash';
 
 import {
   AppEvents,
-  DataLink,
   Field,
   FieldType,
   getFieldDisplayName,
@@ -154,20 +153,16 @@ export function getDataLinks(
 
   const elementConfig = elementOptions.config;
 
-  const getDefaultField = (link: DataLink) => {
-    return {
-      name: 'New field',
-      type: FieldType.string,
-      config: { links: [link] },
-      values: [],
-    };
+  const defaultField = {
+    name: 'New field',
+    type: FieldType.string,
+    config: { links: elementOptions.links ?? [] },
+    values: [],
   };
 
-  elementOptions.links?.forEach((link) => {
-    if (frames) {
-      elementOptions.getLinks = getLinksSupplier(frames[0], getDefaultField(link), {}, interpolateVariables);
-    }
-  });
+  if (frames) {
+    elementOptions.getLinks = getLinksSupplier(frames[0], defaultField, {}, interpolateVariables);
+  }
 
   if (elementOptions.getLinks) {
     elementOptions.getLinks({}).forEach((link) => {
@@ -178,6 +173,9 @@ export function getDataLinks(
       }
     });
   }
+
+  // sort element data links
+  links.sort((a, b) => a.sortIndex! - b.sortIndex!);
 
   frames?.forEach((frame) => {
     const visibleFields = frame.fields.filter((field) => !Boolean(field.config.custom?.hideFrom?.tooltip));

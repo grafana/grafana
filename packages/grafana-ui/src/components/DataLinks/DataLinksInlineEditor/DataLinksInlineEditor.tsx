@@ -31,6 +31,7 @@ export const DataLinksInlineEditor = ({
   const [isNew, setIsNew] = useState(false);
 
   const [linksSafe, updateLinksSafe] = useState<DataLink[]>([]);
+  links?.sort((a, b) => (a.sortIndex ?? 0) - (b.sortIndex ?? 0));
 
   useEffect(() => {
     updateLinksSafe(links ?? []);

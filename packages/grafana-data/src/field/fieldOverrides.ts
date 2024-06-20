@@ -487,6 +487,7 @@ export const getLinksSupplier =
           href,
           title: replaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
+          sortIndex: link.sortIndex,
           onClick: (evt: MouseEvent, origin: Field) => {
             link.onClick!({
               origin: origin ?? field,
@@ -502,6 +503,7 @@ export const getLinksSupplier =
           title: replaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
           origin: field,
+          sortIndex: link.sortIndex,
         };
       }
 
