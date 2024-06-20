@@ -57,6 +57,10 @@ interface RestoreDashboardArgs {
   dashboardUID: string;
 }
 
+interface HardDeleteDashboardArgs {
+  dashboardUID: string;
+}
+
 function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
     try {
@@ -382,6 +386,19 @@ export const browseDashboardsAPI = createApi({
         method: 'PATCH',
       }),
     }),
+
+    // permanently delete a dashboard. used in PermanentlyDeleteModal.
+    hardDeleteDashboard: builder.mutation<void, HardDeleteDashboardArgs>({
+      query: ({ dashboardUID }) => ({
+        url: `/dashboards/uid/${dashboardUID}/trash`,
+        method: 'DELETE',
+      }),
+      onQueryStarted: ({ dashboardUID }, { queryFulfilled, dispatch }) => {
+        queryFulfilled.then(() => {
+          dispatch(refreshParents([dashboardUID]));
+        });
+      },
+    }),
   }),
 });
 
@@ -397,6 +414,7 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
   useRestoreDashboardMutation,
+  useHardDeleteDashboardMutation,
 } = browseDashboardsAPI;
 
 export { skipToken } from '@reduxjs/toolkit/query/react';

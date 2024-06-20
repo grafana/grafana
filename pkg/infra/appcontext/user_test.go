@@ -11,8 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -52,11 +50,9 @@ func TestUserFromContext(t *testing.T) {
 		require.Equal(t, expected.UserID, actual.UserID)
 	})
 
-	t.Run("should return user set by HTTP ReqContext", func(t *testing.T) {
+	t.Run("should return user set as a requester", func(t *testing.T) {
 		expected := testUser()
-		ctx := ctxkey.Set(context.Background(), &contextmodel.ReqContext{
-			SignedInUser: expected,
-		})
+		ctx := identity.WithRequester(context.Background(), expected)
 		actual, err := appcontext.User(ctx)
 		require.NoError(t, err)
 		require.Equal(t, expected.UserID, actual.UserID)
