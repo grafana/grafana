@@ -896,7 +896,7 @@ Default is 1h (1 hour).
 
 The frequency of updating a user's last seen time.
 This setting should be expressed as a duration. Examples: 1h (hour), 15m (minutes)
-Default is `15m` (15 minutes). The minimum supported duration is `5m` (5 minutes).
+Default is `15m` (15 minutes). The minimum supported duration is `5m` (5 minutes). The maximum supported duration is `1h` (1 hour).
 
 ### hidden_users
 
