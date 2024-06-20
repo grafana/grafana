@@ -1699,7 +1699,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	if cfg.UserLastSeenUpdateInterval < time.Minute*5 {
 		cfg.Logger.Warn("the minimum supported value for the `last_seen_update_interval` configuration is 5m (5 minutes)")
-		cfg.UserLastSeenUpdateInterval = time.Minute*5
+		cfg.UserLastSeenUpdateInterval = time.Minute * 5
 	}
 
 	cfg.HiddenUsers = make(map[string]struct{})
