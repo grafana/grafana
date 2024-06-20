@@ -1,7 +1,5 @@
 ---
 Feedback Link: https://github.com/grafana/tutorials/issues/new
-authors:
-  - antonio-calero-merello
 categories:
   - alerting
 description: Get started with Grafana Alerting by creating your first alert in just a few minutes. Learn how to set up an alert, send alert notifications to a public webhook, and generate sample data to observe your alert in action.
