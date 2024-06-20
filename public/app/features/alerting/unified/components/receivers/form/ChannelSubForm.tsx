@@ -53,7 +53,7 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   const { control, watch, register, trigger, formState, setValue } = useFormContext();
   const selectedType = watch(fieldName('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
-  const parse_mode = watch(fieldName('settings.parse_mode')) ?? defaultValues.settings?.parse_mode;
+  const parse_mode = watch(fieldName('settings.parse_mode'));
   const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
   // TODO I don't like integration specific code here but other ways require a bigger refactoring
@@ -193,7 +193,7 @@ export function ChannelSubForm<R extends ChannelValues>({
           {isTelegram && !isParseModeNone && (
             <Alert
               title="Telegram messages are limited to 4096 UTF-8 characters. 
-              If you use a `parse_mode` other than 'None', truncation might result in an invalid message, and causing the notification to fail.
+              If you use a `parse_mode` other than 'None', truncation may result in an invalid message, causing the notification to fail.
               For longer messages, we recommend using an alternative contact method."
               severity="warning"
             ></Alert>

@@ -24,7 +24,7 @@ Use the Grafana Alerting - Telegram integration to send [Telegram](https://teleg
 
 ### Telegram limitation
 
-Telegram messages are limited to 4096 UTF-8 characters. If you use a `parse_mode` other than `None`, truncation might result in an invalid message, and causing the notification to fail.
+Telegram messages are limited to 4096 UTF-8 characters. If you use a `parse_mode` other than `None`, truncation may result in an invalid message, causing the notification to fail.
 For longer messages, we recommend using an alternative contact method.
 
 ### Telegram bot API token and chat ID
