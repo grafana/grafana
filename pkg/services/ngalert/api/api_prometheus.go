@@ -237,7 +237,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 
 // TODO: Refactor this function to reduce the cylomatic complexity
 //
-//nolint:gocyclo
+
 func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
@@ -334,24 +334,8 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	// but in this API all rules belong to the same organization. Also filter by rule name if
 	// it was provided as a query param.
 	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
-	for _, rule := range ruleList {
-		if len(ruleNamesSet) > 0 {
-			if _, exists := ruleNamesSet[rule.Title]; !exists {
-				continue
-			}
-		}
 
-		groupKey := rule.GetGroupKey()
-		ruleGroup := groupedRules[groupKey]
-		ruleGroup = append(ruleGroup, rule)
-		groupedRules[groupKey] = ruleGroup
-	}
-	// Sort the rules in each rule group by index. We do this at the end instead of
-	// after each append to avoid having to sort each group multiple times.
-	for _, groupRules := range groupedRules {
-		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(groupRules)
-	}
-
+	processGroupRules(groupedRules, ruleList, ruleNamesSet)
 	rulesTotals := make(map[string]int64, len(groupedRules))
 	for groupKey, rules := range groupedRules {
 		folder, ok := opts.Namespaces[groupKey.NamespaceUID]
@@ -416,6 +400,26 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	}
 
 	return ruleResponse
+}
+
+func processGroupRules(groupedRules map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule, ruleList ngmodels.RulesGroup, ruleNamesSet map[string]struct{}) {
+	for _, rule := range ruleList {
+		if len(ruleNamesSet) > 0 {
+			if _, exists := ruleNamesSet[rule.Title]; !exists {
+				continue
+			}
+		}
+
+		groupKey := rule.GetGroupKey()
+		ruleGroup := groupedRules[groupKey]
+		ruleGroup = append(ruleGroup, rule)
+		groupedRules[groupKey] = ruleGroup
+	}
+	// Sort the rules in each rule group by index. We do this at the end instead of
+	// after each append to avoid having to sort each group multiple times.
+	for _, groupRules := range groupedRules {
+		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(groupRules)
+	}
 }
 
 // This is the same as matchers.Matches but avoids the need to create a LabelSet
