@@ -50,9 +50,11 @@ refs:
 
 Usage insights enables you to have a better understanding of how your Grafana instance is used.
 
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
-> Grafana Cloud insights logs include additional fields with their own dashboards.
-> Read more in the [Grafana Cloud documentation](/docs/grafana-cloud/usage-insights/).
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
+Grafana Cloud insights logs include additional fields with their own dashboards.
+Read more in the [Grafana Cloud documentation](https://grafana.com/docs/grafana-cloud/account-management/usage-insights/).
+{{< /admonition >}}
 
 The usage insights feature collects a number of aggregated data and stores them in the database:
 
@@ -77,7 +79,7 @@ For every dashboard and data source, you can access usage information.
 
 To see dashboard usage information, click the dashboard insights icon in the header.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights-11.2.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
 
 Dashboard insights show the following information:
 
