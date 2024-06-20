@@ -42,4 +42,6 @@ DataSourceRef: {
 	type?: string
 	// Specific datasource instance
 	uid?: string
+	// The plugin version that wrote the query
+	pluginVersion?: string
 } @cuetsy(kind="interface")
