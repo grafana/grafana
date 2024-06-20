@@ -147,7 +147,15 @@
     }
   },
   "central-alert-history": {
-    "error": "Something went wrong loading the alert state history"
+    "error": "Something went wrong loading the alert state history",
+    "filter": {
+      "info": {
+        "label1": "Filter events using label querying without spaces, ex:",
+        "label2": "Invalid use of spaces:",
+        "label3": "Valid use of spaces:",
+        "label4": "Filter alerts using label querying without braces, ex:"
+      }
+    }
   },
   "clipboard-button": {
     "inline-toast": {
