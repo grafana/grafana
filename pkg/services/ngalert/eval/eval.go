@@ -75,7 +75,21 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 		execCtx = timeoutCtx
 	}
 	logger.FromContext(ctx).Debug("Executing pipeline", "commands", strings.Join(r.pipeline.GetCommandTypes(), ","), "datasources", strings.Join(r.pipeline.GetDatasourceTypes(), ","))
-	return r.expressionService.ExecutePipeline(execCtx, now, r.pipeline)
+	result, err := r.expressionService.ExecutePipeline(execCtx, now, r.pipeline)
+
+	// Check if the result of the condition evaluation is too large
+	if err == nil && result != nil && r.evalResultLimit > 0 {
+		conditionResultLength := 0
+		if conditionResponse, ok := result.Responses[r.condition.Condition]; ok {
+			conditionResultLength = len(conditionResponse.Frames)
+		}
+		if conditionResultLength > r.evalResultLimit {
+			logger.FromContext(ctx).Error("Query evaluation returned too many results", "limit", r.evalResultLimit, "actual", conditionResultLength)
+			return nil, fmt.Errorf("query evaluation returned too many results: %d (limit: %d)", conditionResultLength, r.evalResultLimit)
+		}
+	}
+
+	return result, err
 }
 
 // Evaluate evaluates the condition and converts the response to Results
@@ -84,7 +98,7 @@ func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Resul
 	if err != nil {
 		return nil, err
 	}
-	return EvaluateAlert(response, r.condition, now, r.evalResultLimit), nil
+	return EvaluateAlert(response, r.condition, now), nil
 }
 
 type evaluatorImpl struct {
@@ -111,9 +125,9 @@ func NewEvaluatorFactory(
 }
 
 // EvaluateAlert takes the results of an executed query and evaluates it as an alert rule, returning alert states that the query produces.
-func EvaluateAlert(queryResponse *backend.QueryDataResponse, condition models.Condition, now time.Time, evalResultLimit int) Results {
+func EvaluateAlert(queryResponse *backend.QueryDataResponse, condition models.Condition, now time.Time) Results {
 	execResults := queryDataResponseToExecutionResults(condition, queryResponse)
-	return evaluateExecutionResult(execResults, now, evalResultLimit)
+	return evaluateExecutionResult(execResults, now)
 }
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
@@ -635,7 +649,7 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 //   - Nonzero (e.g 1.2, NaN) results in Alerting.
 //   - nil results in noData.
 //   - unsupported Frame schemas results in Error.
-func evaluateExecutionResult(execResults ExecutionResults, ts time.Time, evalResultLimit int) Results {
+func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results {
 	evalResults := make([]Result, 0)
 
 	appendErrRes := func(e error) {
@@ -669,12 +683,6 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time, evalRes
 
 	if len(execResults.Condition) == 0 {
 		appendNoData(nil)
-		return evalResults
-	}
-
-	if evalResultLimit > 0 && len(execResults.Condition) > evalResultLimit {
-		logger.Error("Query evaluation returned too many results", "results", len(execResults.Condition), "limit", evalResultLimit)
-		appendErrRes(fmt.Errorf("query evaluation returned too many results: %d (limit: %d)", len(execResults.Condition), evalResultLimit))
 		return evalResults
 	}
 
