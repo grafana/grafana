@@ -6,7 +6,7 @@ aliases:
   - ../../alerting/unified-alerting/alert-groups/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alert-groups/
   - ../../alerting/manage-notifications/view-notification-errors/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-notification-errors/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/view-alert-groups/
-description: The Groups view lists the grouped alerts that are actively triggering notifications.
+description: The Groups view lists grouped alerts that are actively triggering notifications.
 keywords:
   - grafana
   - alerting
