@@ -26,7 +26,7 @@ const (
 var _ interceptors.Authenticator = (*Authenticator)(nil)
 
 type Authenticator struct {
-	idTokenVerifier authn.Verifier[authn.IDTokenClaims]
+	IDTokenVerifier authn.Verifier[authn.IDTokenClaims]
 }
 
 func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
@@ -58,12 +58,12 @@ func (f *Authenticator) DecodeMetadata(ctx context.Context, meta metadata.MD) (i
 
 	// First try the token
 	token := getter(mdToken)
-	if token != "" && f.idTokenVerifier != nil {
-		claims, err := f.idTokenVerifier.Verify(ctx, token)
+	if token != "" && f.IDTokenVerifier != nil {
+		claims, err := f.IDTokenVerifier.Verify(ctx, token)
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("CLAIMS: %+v\n", claims)
+		fmt.Printf("TODO, convert CLAIMS to an identity %+v\n", claims)
 	}
 
 	user := &identity.StaticRequester{}
@@ -71,6 +71,23 @@ func (f *Authenticator) DecodeMetadata(ctx context.Context, meta metadata.MD) (i
 	if user.Login == "" {
 		return nil, fmt.Errorf("no login found in grpc metadata")
 	}
+
+	// The namespaced verisons have a "-" in the key
+	// TODO, remove after this has been deployed to unified storage
+	if getter(mdUserID) == "" {
+		var err error
+		user.Namespace = identity.NamespaceUser
+		user.UserID, err = strconv.ParseInt(getter("grafana-userid"), 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid user id: %w", err)
+		}
+		user.OrgID, err = strconv.ParseInt(getter("grafana-orgid"), 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid org id: %w", err)
+		}
+		return user, nil
+	}
+
 	ns, err := identity.ParseNamespaceID(getter(mdUserID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
@@ -138,5 +155,9 @@ func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 		mdOrgID, strconv.FormatInt(user.GetOrgID(), 10),
 		mdOrgRole, string(user.GetOrgRole()),
 		mdLogin, user.GetLogin(),
+
+		// TODO, Remove after this is deployed to unified storage
+		"grafana-userid", user.GetID().ID(),
+		"grafana-useruid", user.GetUID().ID(),
 	)
 }

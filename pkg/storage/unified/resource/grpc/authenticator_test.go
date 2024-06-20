@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-func TestUtils(t *testing.T) {
+func TestBasicEncodeDecode(t *testing.T) {
 	before := &identity.StaticRequester{
 		UserID:    123,
 		UserUID:   "abc",
