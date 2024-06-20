@@ -91,6 +91,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	defer span.End()
 
 	allFrames := []*data.Frame{}
+	totalRows := 0
 	for _, ref := range gr.varsToQuery {
 		results, ok := vars[ref]
 		if !ok {
@@ -98,11 +99,18 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 			continue
 		}
 		frames := results.Values.AsDataFrames(ref)
-		if exceedsLimit(frames, gr.limit) {
-			logger.Warn("SQL expression results exceeded limit", "limit", gr.limit)
+		exceeds, total := exceedsLimit(frames, gr.limit)
+		if exceeds {
+			logger.Error("SQL expression results exceeded limit", "limit", gr.limit)
 			return mathexp.Results{}, fmt.Errorf("SQL expression results exceeded limit of %d", gr.limit)
 		}
+		totalRows += total
 		allFrames = append(allFrames, frames...)
+	}
+
+	if totalRows > int(gr.limit) {
+		logger.Error("SQL expression results exceeded limit", "limit", totalRows, "results", gr.limit)
+		return mathexp.Results{}, fmt.Errorf("SQL expression - %d results exceeded limit of %d", totalRows, gr.limit)
 	}
 
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
@@ -136,17 +144,17 @@ func (gr *SQLCommand) Type() string {
 	return TypeSQL.String()
 }
 
-func exceedsLimit(frames []*data.Frame, limit int64) bool {
+func exceedsLimit(frames []*data.Frame, limit int64) (bool, int) {
 	total := 0
 	for _, frame := range frames {
 		if frame != nil {
 			if int64(frame.Rows()) > limit {
-				return true
+				return true, frame.Rows()
 			}
 			total += frame.Rows()
 		}
 	}
-	return int64(total) > limit
+	return int64(total) > limit, total
 }
 
 func DefaultEngine() sql.Engine {
