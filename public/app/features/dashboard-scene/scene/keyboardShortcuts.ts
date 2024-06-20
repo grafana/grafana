@@ -9,6 +9,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
+import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 
@@ -38,6 +39,66 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
       if (!scene.state.viewPanelScene) {
         locationService.push(getViewPanelUrl(vizPanel));
+      }
+    }),
+  });
+
+  keybindings.addBinding({
+    key: 'p left',
+    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+      const gridItem = sceneGraph.getAncestor(vizPanel, DashboardGridItem);
+      const grid = gridItem.parent;
+
+      if (scene.state.editable && scene.state.isEditing && gridItem.state.x && gridItem.state.x > 0) {
+        gridItem.setState({ x: gridItem.state.x - 1 });
+        grid?.forceRender();
+      }
+    }),
+  });
+
+  keybindings.addBinding({
+    key: 'p right',
+    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+      const gridItem = sceneGraph.getAncestor(vizPanel, DashboardGridItem);
+      const grid = gridItem.parent;
+
+      if (
+        scene.state.editable &&
+        scene.state.isEditing &&
+        gridItem.state.x &&
+        gridItem.state.width &&
+        gridItem.state.x + gridItem.state.width < 24
+      ) {
+        gridItem.setState({ x: gridItem.state.x + 1 });
+        grid?.forceRender();
+      }
+    }),
+  });
+
+  keybindings.addBinding({
+    key: 'p up',
+    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+      const gridItem = sceneGraph.getAncestor(vizPanel, DashboardGridItem);
+      const grid = gridItem.parent;
+
+      //console.log(gridItem);
+
+      if (scene.state.editable && scene.state.isEditing && gridItem.state.y && gridItem.state.y > 0) {
+        gridItem.setState({ y: gridItem.state.y - 1 });
+        grid?.forceRender();
+      }
+    }),
+  });
+
+  keybindings.addBinding({
+    key: 'p down',
+    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+      const gridItem = sceneGraph.getAncestor(vizPanel, DashboardGridItem);
+      const grid = gridItem.parent;
+
+      if (scene.state.editable && scene.state.isEditing && gridItem.state.y) {
+        gridItem.setState({ y: gridItem.state.y + 1 });
+        grid?.forceRender();
       }
     }),
   });
