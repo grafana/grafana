@@ -21,12 +21,12 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
   annotations-api:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/annotations/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/annotations/
+      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/annotations/
 ---
 
 # Annotate visualizations
