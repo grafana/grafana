@@ -1179,7 +1179,7 @@ def verify_grafanacom_step():
             # and when they are available on the website. This sould account for that discrepancy.
             "for i in {{1..5}}; do ./drone/verify-grafanacom.sh && break || sleep 60; done",
         ],
-        "depends_on": ["publish-grafanacom"],
+        "depends_on": depends_on,
     }
 
 def publish_linux_packages_step(package_manager = "deb"):
