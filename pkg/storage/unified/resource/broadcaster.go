@@ -1,4 +1,4 @@
-package sqlstash
+package resource
 
 import (
 	"context"
@@ -109,7 +109,7 @@ type broadcaster[T any] struct {
 
 	// subscription management
 
-	cache       Cache[T]
+	cache       channelCache[T]
 	subscribe   chan chan T
 	unsubscribe chan (<-chan T)
 	subs        map[<-chan T]chan T
@@ -166,7 +166,7 @@ func (b *broadcaster[T]) init(ctx context.Context, connect ConnectFunc[T]) error
 
 	// initialize our internal state
 	b.shouldTerminate = ctx.Done()
-	b.cache = NewCache[T](ctx, 100)
+	b.cache = newChannelCache[T](ctx, 100)
 	b.subscribe = make(chan chan T, 100)
 	b.unsubscribe = make(chan (<-chan T), 100)
 	b.subs = make(map[<-chan T]chan T)
@@ -239,9 +239,9 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 	}
 }
 
-const DefaultCacheSize = 100
+const defaultCacheSize = 100
 
-type Cache[T any] interface {
+type channelCache[T any] interface {
 	Len() int
 	Add(item T)
 	Get(i int) T
@@ -260,12 +260,12 @@ type cache[T any] struct {
 	ctx       context.Context
 }
 
-func NewCache[T any](ctx context.Context, size int) Cache[T] {
+func newChannelCache[T any](ctx context.Context, size int) channelCache[T] {
 	c := &cache[T]{}
 
 	c.ctx = ctx
 	if size <= 0 {
-		size = DefaultCacheSize
+		size = defaultCacheSize
 	}
 	c.size = size
 	c.cache = make([]T, c.size)
