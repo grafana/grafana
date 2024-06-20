@@ -175,7 +175,7 @@ To add a panel in a new dashboard click **+ Add visualization** in the middle of
 
 ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
-To add a panel to an existing dashboard:
+To add a panel to an existing dashboard, follow these steps:
 
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Click the **Add** drop-down and select **Visualization**:
