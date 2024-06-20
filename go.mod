@@ -2,8 +2,6 @@ module github.com/grafana/grafana
 
 go 1.21.10
 
-// Override xorm's outdated go-mssqldb dependency, since we can't upgrade to current xorm (due to breaking changes).
-// We need a more current go-mssqldb so we get rid of a version of apache/thrift with vulnerabilities.
 // Also, use our fork with fixes for unimplemented methods (required for Go 1.16).
 replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.9.2
 
@@ -134,8 +132,8 @@ require (
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
-	xorm.io/builder v0.3.6 // indirect
-	xorm.io/core v0.7.3
+	xorm.io/builder v0.3.6
+	xorm.io/core v0.7.2
 	xorm.io/xorm v0.8.2
 )
 
@@ -410,3 +408,5 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 
 // Use 1.10.6 of pq to avoid a change in 1.10.7 that has certificate validation issues. https://github.com/grafana/grafana/issues/65816
 replace github.com/lib/pq => github.com/lib/pq v1.10.6
+
+replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6
