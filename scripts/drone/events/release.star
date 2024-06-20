@@ -214,6 +214,16 @@ def publish_packages_pipeline():
 
     return [
         pipeline(
+            name="verify-grafanacom-artifacts",
+            trigger={
+                "event": ["promote"],
+                "target": "verify-grafanacom-artifacts"
+            },
+            steps=[
+                verify_grafanacom_step(),
+            ],
+        ),
+        pipeline(
             name = "publish-packages",
             trigger = trigger,
             steps = oss_steps,
