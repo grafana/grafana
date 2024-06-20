@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"strconv"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/user"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 type Authenticator struct{}
@@ -82,16 +84,17 @@ func StreamClientInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *grp
 var _ grpc.StreamClientInterceptor = StreamClientInterceptor
 
 func WrapContext(ctx context.Context) (context.Context, error) {
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return ctx, err
 	}
 
 	// set grpc metadata into the context to pass to the grpc server
 	return metadata.NewOutgoingContext(ctx, metadata.Pairs(
-		"grafana-idtoken", user.IDToken,
-		"grafana-userid", strconv.FormatInt(user.UserID, 10),
-		"grafana-orgid", strconv.FormatInt(user.OrgID, 10),
-		"grafana-login", user.Login,
+		"grafana-idtoken", user.GetIDToken(),
+		"grafana-userid", user.GetID().ID(),
+		"grafana-useruid", user.GetUID().ID(),
+		"grafana-orgid", strconv.FormatInt(user.GetOrgID(), 10),
+		"grafana-login", user.GetLogin(),
 	)), nil
 }

@@ -8,8 +8,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -28,13 +28,13 @@ func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
 		namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
 		return func(w http.ResponseWriter, r *http.Request) {
-			user, err := appcontext.User(r.Context())
+			user, err := identity.GetRequester(r.Context())
 			if err != nil || user == nil {
 				errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
 				return
 			}
 			r.URL.Path = "/apis/dashboardsnapshot.grafana.app/v0alpha1/namespaces/" +
-				namespaceMapper(user.OrgID) + "/dashboardsnapshots/create"
+				namespaceMapper(user.GetOrgID()) + "/dashboardsnapshots/create"
 			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
 		}
 	}
