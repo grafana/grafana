@@ -3684,6 +3684,7 @@ __metadata:
     "@storybook/react": "npm:^8.1.6"
     "@storybook/react-webpack5": "npm:^8.1.6"
     "@storybook/theming": "npm:^8.1.6"
+    "@tanstack/react-virtual": "npm:^3.5.1"
     "@testing-library/dom": "npm:10.0.0"
     "@testing-library/jest-dom": "npm:6.4.2"
     "@testing-library/react": "npm:15.0.2"
@@ -7800,6 +7801,25 @@ __metadata:
   version: 0.1.5
   resolution: "@swc/types@npm:0.1.5"
   checksum: 10/5f4de8c60d2623bed607c7fa1e0cee4ffc682af28d5ffe88dc9ed9903a1c2088ccc39f684689d6bb314595c9fbb560beaec773d633be515fb856ffc81d738822
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-virtual@npm:^3.5.1":
+  version: 3.5.1
+  resolution: "@tanstack/react-virtual@npm:3.5.1"
+  dependencies:
+    "@tanstack/virtual-core": "npm:3.5.1"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: 10/11c8e9e2391fa0c947848a720b7dccccb1e35a78ac3169d1c34629bbec4ec713eed78d4c17a3e540e01386ee25b600a53254357597ae91a5fe35c7436651e975
+  languageName: node
+  linkType: hard
+
+"@tanstack/virtual-core@npm:3.5.1":
+  version: 3.5.1
+  resolution: "@tanstack/virtual-core@npm:3.5.1"
+  checksum: 10/611ea09d37cf9183a51d2dfce401c3802b0d91f014e9bbaf32a6220ec7301b873b308130b795d935c0f5b73a43fd8358274915885da692d3e991eeeab6f8711b
   languageName: node
   linkType: hard
 

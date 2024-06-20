@@ -61,6 +61,7 @@
     "@react-aria/focus": "3.17.1",
     "@react-aria/overlays": "3.22.1",
     "@react-aria/utils": "3.24.1",
+    "@tanstack/react-virtual": "^3.5.1",
     "ansicolor": "1.1.100",
     "calculate-size": "1.1.1",
     "classnames": "2.5.1",
