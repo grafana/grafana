@@ -33,9 +33,9 @@ This feature is automatically available in Grafana 10 (and newer) and Grafana Cl
 
 To use the TraceQL query editor in self-hosted Grafana 9.3.2 and older, you need to [enable the `traceqlEditor` feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/).
 
-If trying to query a self-managed Grafana Tempo or Grafana Enterprise Traces database with a gateway (e.g., nginx) in front of it from your hosted Grafana, that gateway (e.g., nginx) must allow gRPC connections. If it does not, streaming will not work and queries will fail to return results. 
+If trying to query a self-managed Grafana Tempo or Grafana Enterprise Traces database with a gateway (e.g., nginx) in front of it from your hosted Grafana, that gateway (e.g., nginx) must allow gRPC connections. If it does not, streaming will not work and queries will fail to return results.
 
-If you cannot configure your gateway to allow gRPC, open a support escalation to request streaming query results be disabled in your hosted Grafana. 
+If you cannot configure your gateway to allow gRPC, open a support escalation to request streaming query results be disabled in your hosted Grafana.
 
 ## Write TraceQL queries using the query editor
 
