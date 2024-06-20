@@ -1,5 +1,5 @@
 import { identity } from 'lodash';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import {
@@ -154,8 +154,10 @@ export function ExploreGraph({
 
   const structureRev = useStructureRev(dataWithConfig);
 
+  const onHiddenSeriesChangedRef = useRef(onHiddenSeriesChanged);
+
   useEffect(() => {
-    if (onHiddenSeriesChanged) {
+    if (onHiddenSeriesChangedRef.current) {
       const hiddenFrames: string[] = [];
       dataWithConfig.forEach((frame) => {
         const allFieldsHidden = frame.fields.map((field) => field.config?.custom?.hideFrom?.viz).every(identity);
@@ -163,9 +165,9 @@ export function ExploreGraph({
           hiddenFrames.push(getFrameDisplayName(frame));
         }
       });
-      onHiddenSeriesChanged(hiddenFrames);
+      onHiddenSeriesChangedRef.current(hiddenFrames);
     }
-  }, [dataWithConfig, onHiddenSeriesChanged]);
+  }, [dataWithConfig]);
 
   const panelContext: PanelContext = {
     eventsScope: 'explore',

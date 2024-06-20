@@ -270,7 +270,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (initializeExplore.pending.match(action)) {
+  if (initializeExplore?.pending.match(action)) {
     const initialPanes = Object.entries(state.panes);
     const before = initialPanes.slice(0, action.meta.arg.position);
     const after = initialPanes.slice(before.length);
