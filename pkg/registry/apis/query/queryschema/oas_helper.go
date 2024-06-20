@@ -193,19 +193,32 @@ func getExamples(queryTypes *query.QueryTypeDefinitionList) map[string]*spec3.Ex
 	return examples
 }
 
+// The embedded schemas include some invalid properties
+func DoSchemaCleanup(s *spec.Schema) {
+	removeSchemaRefs(s)
+}
+
 func removeSchemaRefs(s *spec.Schema) {
 	if s == nil {
 		return
 	}
-	if s.Schema != "" {
-		s.Schema = ""
-	}
+
+	// Clear the "$schema" property
+	s.Schema = ""
+	s.SchemaProps.Schema = ""
+
 	// Examples is invalid -- only use the first example
 	examples, ok := s.ExtraProps["examples"]
 	if ok && examples != nil {
 		//fmt.Printf("TODO, use reflection to get first element from: %+v\n", examples)
 		//s.Example = examples[0]
 		delete(s.ExtraProps, "examples")
+	}
+
+	// Avoid https://github.com/kubernetes/kube-openapi/blob/master/pkg/util/proto/document.go#L100
+	if s.Ref.GetURL() != nil && len(s.Type) > 0 {
+		s.Ref = spec.Ref{}
+		s.AdditionalProperties = &spec.SchemaOrBool{Allows: true}
 	}
 
 	removeSchemaRefs(s.Not)

@@ -10,13 +10,14 @@ import (
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 )
 
 // This should eventually live in grafana-app-sdk
 func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefinitions {
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := v0alpha1.GetOpenAPIDefinitions(ref) // common grafana apis
-		maps.Copy(defs, data.GetOpenAPIDefinitions(ref))
+		maps.Copy(defs, cleanAll(data.GetOpenAPIDefinitions(ref)))
 		for _, b := range builders {
 			g := b.GetOpenAPIDefinitions()
 			if g != nil {
@@ -26,6 +27,23 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefiniti
 		}
 		return defs
 	}
+}
+
+func cleanAll(v map[string]common.OpenAPIDefinition) map[string]common.OpenAPIDefinition {
+	out := make(map[string]common.OpenAPIDefinition)
+	for k, s := range v {
+		clean := &s.Schema
+		clean.Schema = ""
+		clean.SchemaProps.Schema = ""
+		queryschema.DoSchemaCleanup(clean)
+		s.Schema = *clean
+		out[k] = s
+
+		// if k == "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.DataQuery" {
+		// 	fmt.Printf("%+v\n", s.Schema)
+		// }
+	}
+	return out
 }
 
 // Modify the OpenAPI spec to include the additional routes.
