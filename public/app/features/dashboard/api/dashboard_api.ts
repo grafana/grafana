@@ -1,6 +1,6 @@
 import { config, getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { ResourceClient } from 'app/features/apiserver/types';
+import { Resource, ResourceClient, ResourceForCreate } from 'app/features/apiserver/types';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -51,6 +51,16 @@ class K8sDashboardAPI implements DashboardAPI {
   }
 
   saveDashboard(options: SaveDashboardCommand): Promise<unknown> {
+    const dashboard = options.dashboard as DashboardDataDTO;
+    const obj: ResourceForCreate<DashboardDataDTO> = {
+      metadata: {
+        name: dashboard.uid,
+      },
+      spec: {
+        ...dashboard,
+      }
+    }
+
     return this.legacy.saveDashboard(options);
   }
 
@@ -69,6 +79,7 @@ class K8sDashboardAPI implements DashboardAPI {
         uid: d.metadata.name,
       },
       dashboard: d.spec,
+      k8s: d.metadata,
     };
   }
 }

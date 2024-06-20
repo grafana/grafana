@@ -1,5 +1,6 @@
 import { DataQuery } from '@grafana/data';
 import { Dashboard, DataSourceRef } from '@grafana/schema';
+import { ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 export interface DashboardDTO {
@@ -85,6 +86,9 @@ export interface DashboardDataDTO extends Dashboard {
   title: string;
   uid: string;
   panels?: any[];
+
+  // When loaded from kubernetes, this is the raw metadata
+  k8s?: Partial<ObjectMeta>
 }
 
 export enum DashboardRoutes {
