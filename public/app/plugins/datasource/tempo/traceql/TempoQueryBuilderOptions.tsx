@@ -99,7 +99,6 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
               className="width-4"
               placeholder="auto"
               type="string"
-              min={1}
               defaultValue={query.step}
               onCommitChange={onStepChange}
               value={query.step}
