@@ -220,7 +220,7 @@ def publish_packages_pipeline():
                 "target": "verify-grafanacom-artifacts"
             },
             steps=[
-                verify_grafanacom_step(),
+                verify_grafanacom_step(depends_on=[]),
             ],
         ),
         pipeline(
