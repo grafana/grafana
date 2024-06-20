@@ -10,7 +10,6 @@ import {
   parseDuration,
 } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
-import { config } from '@grafana/runtime';
 
 import { amendTable, Table, trimTable } from '../gcopypaste/app/features/live/data/amendTimeSeries';
 import { PromQuery } from '../types';
@@ -78,12 +77,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
   private getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
   private getProfileData?: (request: DataQueryRequest<T>, target: T) => DatasourceProfileData;
 
-  private perfObeserver?: PerformanceObserver;
-  private shouldProfile: boolean;
-
-  // send profile events every 10 minutes
-  sendEventsInterval = 60000 * 10;
-
   pendingRequestIdsToTargSigs = new Map<RequestID, ProfileData>();
 
   pendingAccumulatedEvents = new Map<
@@ -120,12 +113,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
 
-    if (config.grafanaJavascriptAgent.enabled && options.profileFunction !== undefined) {
-      this.profile();
-      this.shouldProfile = true;
-    } else {
-      this.shouldProfile = false;
-    }
     this.getProfileData = options.profileFunction;
     this.getTargetSignature = options.getTargetSignature;
   }
@@ -167,82 +154,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
     }
   };
 
-  private profile() {
-    // Check if PerformanceObserver is supported, and if we have Faro enabled for internal profiling
-    if (typeof PerformanceObserver !== 'function') {
-      return;
-    }
-
-    this.perfObeserver = new PerformanceObserver((list: PerformanceObserverEntryList) => {
-      list.getEntries().forEach((entry) => {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const entryTypeCast: PerformanceResourceTiming = entry as PerformanceResourceTiming;
-
-        // Safari support for this is coming in 16.4:
-        // https://caniuse.com/mdn-api_performanceresourcetiming_transfersize
-        // Gating that this exists to prevent runtime errors
-        const isSupported = typeof entryTypeCast?.transferSize === 'number';
-
-        if (entryTypeCast?.initiatorType === 'fetch' && isSupported) {
-          let fetchUrl = entryTypeCast.name;
-
-          if (fetchUrl.includes('/api/ds/query')) {
-            let match = fetchUrl.match(/requestId=([a-z\d]+)/i);
-
-            if (match) {
-              let requestId = match[1];
-
-              const requestTransferSize = Math.round(entryTypeCast.transferSize);
-              const currentRequest = this.pendingRequestIdsToTargSigs.get(requestId);
-
-              if (currentRequest) {
-                const entries = this.pendingRequestIdsToTargSigs.entries();
-
-                for (let [, value] of entries) {
-                  if (value.identity === currentRequest.identity && value.bytes !== null) {
-                    const previous = this.pendingAccumulatedEvents.get(value.identity);
-
-                    const savedBytes = value.bytes - requestTransferSize;
-
-                    this.pendingAccumulatedEvents.set(value.identity, {
-                      datasource: value.datasource ?? 'N/A',
-                      requestCount: (previous?.requestCount ?? 0) + 1,
-                      savedBytesTotal: (previous?.savedBytesTotal ?? 0) + savedBytes,
-                      initialRequestSize: value.bytes,
-                      lastRequestSize: requestTransferSize,
-                      panelId: currentRequest.panelId?.toString() ?? '',
-                      dashId: currentRequest.dashboardUID ?? '',
-                      expr: currentRequest.expr ?? '',
-                      refreshIntervalMs: currentRequest.refreshIntervalMs ?? 0,
-                      sent: false,
-                      from: currentRequest.from ?? '',
-                      queryRangeSeconds: currentRequest.queryRangeSeconds ?? 0,
-                    });
-
-                    // We don't need to save each subsequent request, only the first one
-                    this.pendingRequestIdsToTargSigs.delete(requestId);
-
-                    return;
-                  }
-                }
-
-                // If we didn't return above, this should be the first request, let's save the observed size
-                this.pendingRequestIdsToTargSigs.set(requestId, { ...currentRequest, bytes: requestTransferSize });
-              }
-            }
-          }
-        }
-      });
-    });
-
-    this.perfObeserver.observe({ type: 'resource', buffered: false });
-
-    setInterval(this.sendPendingTrackingEvents, this.sendEventsInterval);
-
-    // Send any pending profile information when the user navigates away
-    window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
-  }
-
   // can be used to change full range request to partial, split into multiple requests
   requestInfo(request: DataQueryRequest<T>): CacheRequestInfo<T> {
     // TODO: align from/to to interval to increase probability of hitting backend cache
@@ -265,7 +176,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
       let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
       let targSig = this.getTargetSignature(request, targ); // ${request.maxDataPoints} ?
 
-      if (this.shouldProfile && this.getProfileData) {
+      if (this.getProfileData) {
         this.pendingRequestIdsToTargSigs.set(request.requestId, {
           ...this.getProfileData(request, targ),
           identity: targIdent + '|' + targSig,
