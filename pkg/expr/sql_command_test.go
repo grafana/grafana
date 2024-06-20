@@ -47,6 +47,27 @@ func TestExecute(t *testing.T) {
 	}
 }
 
+func TestExecuteUnderLimit(t *testing.T) {
+	cmd, err := NewSQLCommand("a", "select a from foo, bar", &testEngine{})
+	if err != nil {
+		t.Fail()
+		return
+	}
+	cmd.limit = 4
+
+	frame := data.NewFrame("a", data.NewField("a", nil, []string{"1", "2", "3"}))
+	vars := mathexp.Vars{}
+	vars["foo"] = mathexp.Results{
+		Values: mathexp.Values{mathexp.TableData{Frame: frame}},
+	}
+
+	_, err = cmd.Execute(context.Background(), time.Now(), vars, &testTracer{})
+	if err != nil {
+		t.Fail()
+		return
+	}
+}
+
 func TestExecuteExceedsLimit(t *testing.T) {
 	cmd, err := NewSQLCommand("a", "select a from foo, bar", &testEngine{})
 	if err != nil {
