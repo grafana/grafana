@@ -49,32 +49,32 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/
   inspect:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/inspect-variable/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/inspect-variable/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/inspect-variable/
   prometheus-query-variables:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/#use-**rate_interval
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/#use-**rate_interval
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/template-variables/#use-**rate_interval
   raw-variable-format:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#raw
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#raw
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax/#raw
   data-source:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
   raw-format:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#raw
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#raw
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax/#raw
   add-a-data-source:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
