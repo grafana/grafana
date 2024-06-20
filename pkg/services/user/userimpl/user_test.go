@@ -221,7 +221,7 @@ func TestUpdateLastSeenAt(t *testing.T) {
 		tracer:       tracing.InitializeTracerForTest(),
 	}
 	userService.cfg = setting.NewCfg()
-	userService.cfg.UserLastSeenUpdateInterval = 5*time.Minute
+	userService.cfg.UserLastSeenUpdateInterval = 5 * time.Minute
 
 
 	t.Run("update last seen at", func(t *testing.T) {
