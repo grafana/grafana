@@ -78,6 +78,7 @@
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
       "delete-modal-invalid-title": "Cannot delete folder",
+      "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately but the selected dashboards will be marked for deletion in 30 days. You can restore the dashboards anytime before the 30 days expires. Folders cannot be restored.",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
       "deleting": "Deleting...",
@@ -1184,7 +1185,7 @@
     "public": {
       "title": "Public dashboards"
     },
-    "recentlyDeleted": {
+    "recently-deleted": {
       "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
       "title": "Recently Deleted"
     },
@@ -1574,7 +1575,16 @@
   },
   "recently-deleted": {
     "buttons": {
+      "delete": "Delete permanently",
       "restore": "Restore"
+    },
+    "permanently-delete-modal": {
+      "confirm-text": "Delete",
+      "delete-button": "Delete",
+      "delete-loading": "Deleting...",
+      "text_one": "This action will delete {{numberOfDashboards}} dashboards.",
+      "text_other": "This action will delete {{numberOfDashboards}} dashboards.",
+      "title": "Permanently Delete Dashboards"
     },
     "restore-modal": {
       "restore-button": "Restore",

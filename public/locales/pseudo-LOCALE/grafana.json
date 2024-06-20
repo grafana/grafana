@@ -78,6 +78,7 @@
       "delete-button": "Đęľęŧę",
       "delete-modal-invalid-text": "Øŉę őř mőřę ƒőľđęřş čőŉŧäįŉ ľįþřäřy päŉęľş őř äľęřŧ řūľęş. Đęľęŧę ŧĥęşę ƒįřşŧ įŉ őřđęř ŧő přőčęęđ.",
       "delete-modal-invalid-title": "Cäŉŉőŧ đęľęŧę ƒőľđęř",
+      "delete-modal-restore-dashboards-text": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę ŧĥę şęľęčŧęđ ƒőľđęřş įmmęđįäŧęľy þūŧ ŧĥę şęľęčŧęđ đäşĥþőäřđş ŵįľľ þę mäřĸęđ ƒőř đęľęŧįőŉ įŉ 30 đäyş. Ÿőū čäŉ řęşŧőřę ŧĥę đäşĥþőäřđş äŉyŧįmę þęƒőřę ŧĥę 30 đäyş ęχpįřęş. Főľđęřş čäŉŉőŧ þę řęşŧőřęđ.",
       "delete-modal-text": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę ŧĥę ƒőľľőŵįŉģ čőŉŧęŉŧ:",
       "delete-modal-title": "Đęľęŧę",
       "deleting": "Đęľęŧįŉģ...",
@@ -1184,7 +1185,7 @@
     "public": {
       "title": "Pūþľįč đäşĥþőäřđş"
     },
-    "recentlyDeleted": {
+    "recently-deleted": {
       "subtitle": "Åŉy įŧęmş ľįşŧęđ ĥęřę ƒőř mőřę ŧĥäŉ 30 đäyş ŵįľľ þę äūŧőmäŧįčäľľy đęľęŧęđ.",
       "title": "Ŗęčęŉŧľy Đęľęŧęđ"
     },
@@ -1574,7 +1575,16 @@
   },
   "recently-deleted": {
     "buttons": {
+      "delete": "Đęľęŧę pęřmäŉęŉŧľy",
       "restore": "Ŗęşŧőřę"
+    },
+    "permanently-delete-modal": {
+      "confirm-text": "Đęľęŧę",
+      "delete-button": "Đęľęŧę",
+      "delete-loading": "Đęľęŧįŉģ...",
+      "text_one": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę {{numberOfDashboards}} đäşĥþőäřđş.",
+      "text_other": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę {{numberOfDashboards}} đäşĥþőäřđş.",
+      "title": "Pęřmäŉęŉŧľy Đęľęŧę Đäşĥþőäřđş"
     },
     "restore-modal": {
       "restore-button": "Ŗęşŧőřę",

@@ -263,10 +263,6 @@ const (
 	// Split panels between visualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
 
-	// FlagPrometheusIncrementalQueryInstrumentation
-	// Adds RudderStack events to incremental queries
-	FlagPrometheusIncrementalQueryInstrumentation = "prometheusIncrementalQueryInstrumentation"
-
 	// FlagLogsExploreTableVisualisation
 	// A table visualisation for logs in Explore
 	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
@@ -382,6 +378,10 @@ const (
 	// FlagEnableNativeHTTPHistogram
 	// Enables native HTTP Histograms
 	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
+
+	// FlagDisableClassicHTTPHistogram
+	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
+	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
 
 	// FlagFormatString
 	// Enable format string transformer
@@ -611,10 +611,6 @@ const (
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
 
-	// FlagBetterPageScrolling
-	// Removes CustomScrollbar from the UI, relying on native browser scrollbars
-	FlagBetterPageScrolling = "betterPageScrolling"
-
 	// FlagAuthAPIAccessTokenAuth
 	// Enables the use of Auth API access tokens for authentication
 	FlagAuthAPIAccessTokenAuth = "authAPIAccessTokenAuth"
@@ -654,10 +650,6 @@ const (
 	// FlagQueryLibrary
 	// Enables Query Library feature in Explore
 	FlagQueryLibrary = "queryLibrary"
-
-	// FlagAutofixDSUID
-	// Automatically migrates invalid datasource UIDs
-	FlagAutofixDSUID = "autofixDSUID"
 
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
@@ -714,4 +706,24 @@ const (
 	// FlagOpenSearchBackendFlowEnabled
 	// Enables the backend query flow for Open Search datasource plugin
 	FlagOpenSearchBackendFlowEnabled = "openSearchBackendFlowEnabled"
+
+	// FlagSsoSettingsLDAP
+	// Use the new SSO Settings API to configure LDAP
+	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
+
+	// FlagFailWrongDSUID
+	// Throws an error if a datasource has an invalid UIDs
+	FlagFailWrongDSUID = "failWrongDSUID"
+
+	// FlagDatabaseReadReplica
+	// Use a read replica for some database queries.
+	FlagDatabaseReadReplica = "databaseReadReplica"
+
+	// FlagZanzana
+	// Use openFGA as authorization engine.
+	FlagZanzana = "zanzana"
+
+	// FlagPassScopeToDashboardApi
+	// Enables the passing of scopes to dashboards fetching in Grafana
+	FlagPassScopeToDashboardApi = "passScopeToDashboardApi"
 )
