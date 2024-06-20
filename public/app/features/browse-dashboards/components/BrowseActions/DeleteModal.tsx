@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-import { config } from '@grafana/runtime';
 import { Alert, ConfirmModal, Text, Space } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
@@ -18,16 +17,21 @@ export interface Props {
 
 export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const { data } = useGetAffectedItemsQuery(selectedItems);
-  const deleteIsInvalid = !config.featureToggles.nestedFolders && data && (data.alertRule || data.libraryPanel);
+  const deleteIsInvalid = Boolean(data && (data.alertRule || data.libraryPanel));
   const [isDeleting, setIsDeleting] = useState(false);
+  console.log('DeleteModal', { deleteIsInvalid });
   const onDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await onConfirm();
-      setIsDeleting(false);
-      onDismiss();
-    } catch {
-      setIsDeleting(false);
+    if (deleteIsInvalid) {
+      return;
+    } else {
+      setIsDeleting(true);
+      try {
+        await onConfirm();
+        setIsDeleting(false);
+        onDismiss();
+      } catch {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -58,7 +62,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
           ) : null}
         </>
       }
-      confirmationText="Delete"
+      confirmationText={deleteIsInvalid ? ' ' : 'Delete'}
       confirmText={
         isDeleting
           ? t('browse-dashboards.action.deleting', 'Deleting...')
