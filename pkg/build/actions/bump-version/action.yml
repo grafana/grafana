@@ -4,14 +4,8 @@ inputs:
   version:
     description: The new version (ex. 1.2.3)
     required: true
-  push:
-    default: true
-    required: false
-  dry_run:
-    default: false
-    required: false
 runs:
-  uses: "composite"
+  using: "composite"
   steps:
     - uses: actions-ecosystem/action-regex-match@v2.0.2
       if: ${{ github.event.inputs.version != '' }}
@@ -22,6 +16,7 @@ runs:
         regex: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'
     - name: Validate input version
       if: ${{ steps.regex-match.outputs.match == '' && github.event.inputs.version != '' }}
+      shell: bash
       run: |
         echo "The input version format is not correct, please respect:\
         major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. \
@@ -36,4 +31,5 @@ runs:
         verb: run
         args: go run ./pkg/build/workflows/bump-version -version=${{ inputs.version }}
     - name: make gen-cue
+      shell: bash
       run: make gen-cue
