@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -285,19 +284,6 @@ func oldReadEntity(rows *sql.Rows, r FieldSelectRequest) (*entity.Entity, error)
 	return raw, nil
 }
 
-// TODO move to some utility somewhere
-// TODO check this is the correct way to parse the stack id
-func StackID(stackID string, orgID int64) (int64, error) {
-	if stackID == "" {
-		return orgID, nil
-	}
-	stackIDSplit := strings.Split(stackID, ":")
-	if len(stackIDSplit) != 2 {
-		return 0, fmt.Errorf("invalid stack id: %s", stackID)
-	}
-	return strconv.ParseInt(stackIDSplit[1], 10, 64)
-}
-
 func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Read")
 	defer span.End()
@@ -320,26 +306,16 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 			ctxLogger.Error("error getting user from ctx", "error", err)
 			return nil, err
 		}
-		// TODO (gamab) put the stackID in ctx ?
-		stackID, err := StackID(s.cfg.StackID, authCtx.OrgID)
-		if err != nil {
-			ctxLogger.Error("error parsing stack id", "error", err)
-			return nil, err
-		}
-		subject := ""
-		if authCtx.IDClaims != nil {
-			subject = authCtx.IDClaims.Subject
-		}
 
 		if hasAccess, err := s.authorizer.HasAccess(ctx, &authz.HasAccessRequest{
-			StackID: stackID,
-			Subject: subject,
+			StackID: authCtx.OrgID, // TODO (gamab) make sure OrgID/StackID are interchangeable
+			Subject: authCtx.SujectID(),
 			Method:  authz.MethodRead,
 			Object:  authzlib.Resource{Kind: res.Resource, ID: res.Key},
 			Parent:  authzlib.Resource{Kind: foldersapi.RESOURCE, ID: res.Folder}, // Assuming parents are always folders
 		}); err != nil || !hasAccess {
 			ctxLogger.Error("access denied",
-				"user", subject,
+				"user", authCtx.SujectID(),
 				"method", authz.MethodRead,
 				"key", res.Key,
 				"error", err)

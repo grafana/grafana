@@ -33,6 +33,16 @@ type AuthCtx struct {
 	AccessClaims *authnlib.Claims[authnlib.AccessTokenClaims]
 }
 
+func (a *AuthCtx) SujectID() string {
+	if a.IDClaims != nil {
+		return a.IDClaims.Subject
+	}
+	if a.AccessClaims != nil {
+		return a.AccessClaims.Subject
+	}
+	return ""
+}
+
 type requestCtxKey struct{}
 
 // WithIDClaims attaches the id claims to the context.

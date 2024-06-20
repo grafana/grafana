@@ -129,12 +129,12 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 	}
 
 	// TODO (gamab) add orgID to claims ?
-	grfOrgID := md.Get("grafana-orgid")
-	if len(grfOrgID) == 0 || grfOrgID[0] == "" {
+	grfOrgID, ok := getFirstMetadataValue(md, "grafana-orgid")
+	if !ok {
 		// TODO (gamab) maybe use default org id?
 		return ctx, fmt.Errorf("no org id found")
 	}
-	orgID, err := strconv.ParseInt(grfOrgID[0], 10, 64)
+	orgID, err := strconv.ParseInt(grfOrgID, 10, 64)
 	if err != nil {
 		return ctx, fmt.Errorf("invalid org id: %w", err)
 	}
