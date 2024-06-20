@@ -98,6 +98,10 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 			logger.Warn("no results found for", "ref", ref)
 			continue
 		}
+		if results.Values.Length() > int(gr.limit) {
+			logger.Error("SQL expression results exceeded limit", "limit", gr.limit, "results", results.Values.Length())
+			return mathexp.Results{}, fmt.Errorf("SQL expression results exceeded limit of %d", gr.limit)
+		}
 		frames := results.Values.AsDataFrames(ref)
 		exceeds, total := exceedsLimit(frames, gr.limit)
 		if exceeds {
