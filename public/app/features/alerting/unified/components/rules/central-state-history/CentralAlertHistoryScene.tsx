@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
 import {
@@ -7,6 +8,7 @@ import {
   SceneFlexItem,
   SceneFlexLayout,
   SceneQueryRunner,
+  SceneReactObject,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
@@ -18,12 +20,16 @@ import {
 import { GraphDrawStyle, VisibilityMode } from '@grafana/schema/dist/esm/index';
 import {
   GraphGradientMode,
+  Icon,
   LegendDisplayMode,
   LineInterpolation,
   ScaleDistribution,
   StackingMode,
+  Tooltip,
   TooltipDisplayMode,
+  useStyles2,
 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { DataSourceInformation } from '../../../home/Insights';
 
@@ -44,14 +50,16 @@ export const LABELS_FILTER = 'filter';
 export const CentralAlertHistoryScene = () => {
   const filterVariable = new TextBoxVariable({
     name: LABELS_FILTER,
-    label: 'Filter events with labels',
-    description: 'Filter events in the events chart and in the list with labels',
+    label: 'Filter by labels: ',
   });
 
   useRegisterHistoryRuntimeDataSource(); // register the runtime datasource for the history api.
 
   const scene = new EmbeddedScene({
     controls: [
+      new SceneReactObject({
+        component: FilterInfo,
+      }),
       new VariableValueSelectors({}),
       new SceneControlsSpacer(),
       new SceneTimePicker({}),
@@ -155,3 +163,39 @@ export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
       .build(),
   });
 }
+
+export const FilterInfo = () => {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.container}>
+      <Tooltip
+        content={
+          <div>
+            <Trans i18nKey="central-alert-history.filter.info.label1">
+              Filter events using label querying without spaces, ex:
+            </Trans>
+            <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
+            <Trans i18nKey="central-alert-history.filter.info.label2">Invalid use of spaces:</Trans>
+            <pre>{`{severity= "critical"}`}</pre>
+            <pre>{`{severity ="critical"}`}</pre>
+            <Trans i18nKey="central-alert-history.filter.info.label3">Valid use of spaces:</Trans>
+            <pre>{`{severity=" critical"}`}</pre>
+            <Trans i18nKey="central-alert-history.filter.info.label4">
+              Filter alerts using label querying without braces, ex:
+            </Trans>
+            <pre>{`severity="critical", instance=~"cluster-us-.+"`}</pre>
+          </div>
+        }
+      >
+        <Icon name="info-circle" size="sm" />
+      </Tooltip>
+    </div>
+  );
+};
+
+const getStyles = () => ({
+  container: css({
+    padding: '0',
+    alignSelf: 'center',
+  }),
+});

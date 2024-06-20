@@ -24,7 +24,12 @@ export function useRegisterHistoryRuntimeDataSource() {
   // we need to memoize the datasource so it is not registered multiple times for each render
   const ds = useMemo(() => new HistoryAPIDatasource(historyDataSourceUid, historyDataSourcePluginId), []);
   useEffect(() => {
-    sceneUtils.registerRuntimeDataSource({ dataSource: ds });
+    try {
+      // avoid showing error when the datasource is already registered
+      sceneUtils.registerRuntimeDataSource({ dataSource: ds });
+    } catch (e) {
+      console.log('History Scenes datasource already registered');
+    }
   }, [ds]);
 }
 
