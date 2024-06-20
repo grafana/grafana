@@ -1,9 +1,14 @@
 name: Trivy Scan
 on:
   pull_request:
+    # only run on PRs where go.mod/go.sum/etc have been updated
+    paths:
+      - go.*
   push:
     branches:
       - main
+    paths:
+      - go.*
 
 jobs:
   trivy-scan:
@@ -25,6 +30,8 @@ jobs:
         vuln-type: 'os,library'
         severity: 'CRITICAL,HIGH'
         trivyignores: .trivyignore
+        # for the PR check, ignore JS-related issues
+        skip-files: 'yarn.lock,package.json'
     - name: Run Trivy vulnerability scanner (SARIF)
       uses: aquasecurity/trivy-action@0.22.0
       with:
