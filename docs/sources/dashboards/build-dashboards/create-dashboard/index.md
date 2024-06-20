@@ -140,7 +140,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. To add more panels to the dashboard, click **Back to dashboard**.
    Then click **Add** in the dashboard header and select **Visualization** in the drop-down.
 
-   ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
+   ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-11.2.png)
 
    When you add additional panels to the dashboard, you're taken straight to the **Edit panel** view.
 
