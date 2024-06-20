@@ -8,9 +8,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 )
@@ -57,6 +60,16 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	if true {
+		r, _ := identity.GetRequester(ctx)
+		u, _ := appcontext.User(ctx)
+		k, _ := k8srequest.UserFrom(ctx)
+
+		fmt.Printf("REQUESTER:  %+v\n", r)
+		fmt.Printf("APPCONTEXT: %+v\n", u)
+		fmt.Printf("KUBERNETES: %+v\n", k)
+	}
+
 	orgId, err := request.OrgIDForList(ctx)
 	if err != nil {
 		return nil, err

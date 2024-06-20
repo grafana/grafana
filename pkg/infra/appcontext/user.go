@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -32,34 +30,6 @@ func User(ctx context.Context) (*user.SignedInUser, error) {
 	grpcCtx := grpccontext.FromContext(ctx)
 	if grpcCtx != nil && grpcCtx.SignedInUser != nil {
 		return grpcCtx.SignedInUser, nil
-	}
-
-	// Set by incoming HTTP request
-	c, ok := ctxkey.Get(ctx).(*contextmodel.ReqContext)
-	if ok && c.SignedInUser != nil {
-		return c.SignedInUser, nil
-	}
-
-	// If the requester was set, but not user
-	requester, _ := identity.GetRequester(ctx)
-	if requester != nil {
-		id, err := requester.GetID().UserID()
-		if err == nil {
-			orgId := requester.GetOrgID()
-			return &user.SignedInUser{
-				NamespacedID: requester.GetID(),
-				UserID:       id,
-				UserUID:      requester.GetUID().ID(),
-				OrgID:        orgId,
-				OrgName:      requester.GetOrgName(),
-				OrgRole:      requester.GetOrgRole(),
-				Login:        requester.GetLogin(),
-				IDToken:      requester.GetIDToken(),
-				Permissions: map[int64]map[string][]string{
-					orgId: requester.GetPermissions(),
-				},
-			}, nil
-		}
 	}
 
 	return nil, fmt.Errorf("a SignedInUser was not found in the context")

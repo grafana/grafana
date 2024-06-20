@@ -15,6 +15,8 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -23,7 +25,6 @@ import (
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ builder.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
@@ -157,5 +158,9 @@ func (b *PlaylistAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 }
 
 func (b *PlaylistAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return nil // default authorizer is fine
+	// NO OPINION... allows any user
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+			return authorizer.DecisionNoOpinion, "", err // fallback to org/role logic
+		})
 }

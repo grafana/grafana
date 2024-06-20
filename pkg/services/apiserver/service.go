@@ -156,6 +156,11 @@ func ProvideService(
 				req.URL.Path = "/"
 			}
 
+			if c.SignedInUser != nil {
+				ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
+				req = req.WithContext(ctx)
+			}
+
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 			s.handler.ServeHTTP(resp, req)
 		}
@@ -215,7 +220,8 @@ func (s *service) start(ctx context.Context) error {
 
 		auth := b.GetAuthorizer()
 		if auth == nil {
-			auth = authorizer.NewRequireSignedInAuthorizer()
+			// Anonymous access requires an explicit authorizer
+			auth = authorizer.NewNotAnonymousAuthorizer()
 		}
 		s.authorizer.Register(b.GetGroupVersion(), auth)
 	}

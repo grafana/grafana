@@ -3,14 +3,18 @@ package authenticator
 import (
 	"context"
 	"net/http"
+	"slices"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/union"
+	k8suser "k8s.io/apiserver/pkg/authentication/user"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestSignedInUser(t *testing.T) {
@@ -73,6 +77,25 @@ func TestSignedInUser(t *testing.T) {
 		require.Equal(t, u.UserUID, res.User.GetUID())
 		require.Equal(t, []string{"1", "2"}, res.User.GetGroups())
 		require.Equal(t, "test-id-token", res.User.GetExtra()["id-token"][0])
+	})
+
+	t.Run("should set Anonymous details", func(t *testing.T) {
+		u := &user.SignedInUser{
+			NamespacedID: identity.AnonymousNamespaceID,
+		}
+		ctx := appcontext.WithUser(context.Background(), u)
+		req, err := http.NewRequest("GET", "http://localhost:3000/apis", nil)
+		require.NoError(t, err)
+		req = req.WithContext(ctx)
+		mockAuthenticator := &mockAuthenticator{}
+		all := union.New(authenticator.RequestFunc(signedInUserAuthenticator), mockAuthenticator)
+		res, ok, err := all.AuthenticateRequest(req)
+		require.NoError(t, err)
+		require.True(t, ok)
+		require.False(t, mockAuthenticator.called)
+
+		require.Equal(t, res.User.GetName(), k8suser.Anonymous)
+		require.True(t, slices.Contains(res.User.GetGroups(), k8suser.AllUnauthenticated))
 	})
 }
 
