@@ -35,7 +35,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect; @grafana/grafana-backend-group
 	github.com/stretchr/testify v1.9.0 // @grafana/grafana-backend-group
 	github.com/urfave/cli v1.22.15 // @grafana/grafana-backend-group
-	github.com/urfave/cli/v2 v2.25.1 // @grafana/grafana-backend-group
+	github.com/urfave/cli/v2 v2.27.1 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.51.0 // indirect; @grafana/plugins-platform-backend
 	go.opentelemetry.io/otel v1.26.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.26.0 // indirect; @grafana/grafana-backend-group
@@ -97,12 +97,28 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
+require dagger.io/dagger v0.11.8-rc.2
+
 require (
+	github.com/99designs/gqlgen v0.17.44 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
-	github.com/kr/pretty v0.3.1 // indirect
+	github.com/Khan/genqlient v0.7.0 // indirect
+	github.com/adrg/xdg v0.4.0 // indirect
+	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/moby/term v0.5.0 // indirect
-	github.com/rogpeppe/go-internal v1.12.0 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
+	github.com/sosodev/duration v1.2.0 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.11 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.0.0-20240518090000-14441aefdf88 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.2.0-alpha // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.26.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.26.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.26.0 // indirect
+	go.opentelemetry.io/otel/log v0.2.0-alpha // indirect
+	go.opentelemetry.io/otel/sdk/log v0.2.0-alpha // indirect
+	go.opentelemetry.io/proto/otlp v1.2.0 // indirect
+	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 )
 
