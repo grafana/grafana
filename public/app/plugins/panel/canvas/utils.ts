@@ -175,7 +175,7 @@ export function getDataLinks(
   }
 
   // sort element data links
-  links.sort((a, b) => a.sortIndex! - b.sortIndex!);
+  links.sort((a, b) => (a.sortIndex ?? 0) - (b.sortIndex ?? 0));
 
   frames?.forEach((frame) => {
     const visibleFields = frame.fields.filter((field) => !Boolean(field.config.custom?.hideFrom?.tooltip));
