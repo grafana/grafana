@@ -3,7 +3,6 @@ import { merge, Observable, of } from 'rxjs';
 
 import {
   CoreApp,
-  DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -80,6 +79,11 @@ export class CloudWatchDatasource
     return query.hide !== true || (isCloudWatchMetricsQuery(query) && query.id !== '');
   }
 
+  // reminder: when queries are made on the backend through alerting they will not go through this function
+  // we have duplicated code here to retry queries on the frontend so that the we can show partial results to users
+  // but ultimately anytime we add special error handling or logic retrying here we should ask ourselves
+  // could it only live in the backend? if so let's implement it there. If not, should it also live in the backend or just in the frontend?
+  // another note that at the end of the day all of these queries call super.query which is what forwards the request to the backend through /query
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
     options = cloneDeep(options);
 
@@ -142,11 +146,11 @@ export class CloudWatchDatasource
     }));
   }
 
-  getLogRowContext(
-    row: LogRowModel,
-    context?: LogRowContextOptions,
-    query?: CloudWatchLogsQuery
-  ): Promise<{ data: DataFrame[] }> {
+  /**
+   * Get log row context for a given log row. This is called when the user clicks on a log row in the logs visualization and the "show context button"
+   * it shows the surrounding logs.
+   */
+  getLogRowContext(row: LogRowModel, context?: LogRowContextOptions, query?: CloudWatchLogsQuery) {
     return this.logsQueryRunner.getLogRowContext(row, context, super.query.bind(this), query);
   }
 

@@ -31,10 +31,10 @@ func TestIntegrationCreate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db)
 
-	orgID := CreateOrg(t, db, db.Cfg)
+	orgID := CreateOrg(t, db, cfg)
 
 	t.Run("creating a folder without providing a UID should fail", func(t *testing.T) {
 		_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
@@ -151,10 +151,10 @@ func TestIntegrationDelete(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db)
 
-	orgID := CreateOrg(t, db, db.Cfg)
+	orgID := CreateOrg(t, db, cfg)
 
 	/*
 		t.Run("attempt to delete unknown folder should fail", func(t *testing.T) {
@@ -198,10 +198,10 @@ func TestIntegrationUpdate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db)
 
-	orgID := CreateOrg(t, db, db.Cfg)
+	orgID := CreateOrg(t, db, cfg)
 
 	// create parent folder
 	parent, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
@@ -373,10 +373,10 @@ func TestIntegrationGet(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db)
 
-	orgID := CreateOrg(t, db, db.Cfg)
+	orgID := CreateOrg(t, db, cfg)
 
 	// create folder
 	uid1 := util.GenerateShortUID()
@@ -490,10 +490,10 @@ func TestIntegrationGetParents(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db)
 
-	orgID := CreateOrg(t, db, db.Cfg)
+	orgID := CreateOrg(t, db, cfg)
 
 	// create folder
 	uid1 := util.GenerateShortUID()
@@ -558,10 +558,10 @@ func TestIntegrationGetChildren(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db)
 
-	orgID := CreateOrg(t, db, db.Cfg)
+	orgID := CreateOrg(t, db, cfg)
 
 	// create folder
 	uid1 := util.GenerateShortUID()
@@ -738,10 +738,10 @@ func TestIntegrationGetHeight(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db)
 
-	orgID := CreateOrg(t, db, db.Cfg)
+	orgID := CreateOrg(t, db, cfg)
 
 	// create folder
 	uid1 := util.GenerateShortUID()
@@ -771,10 +771,10 @@ func TestIntegrationGetFolders(t *testing.T) {
 	}
 
 	foldersNum := 10
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db)
 
-	orgID := CreateOrg(t, db, db.Cfg)
+	orgID := CreateOrg(t, db, cfg)
 
 	// create folders
 	uids := make([]string, 0)

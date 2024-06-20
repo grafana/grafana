@@ -11,6 +11,7 @@ import { TempoDatasource } from '../datasource';
 import { TempoQuery } from '../types';
 
 import InlineSearchField from './InlineSearchField';
+import { withTemplateVariableOptions } from './SearchField';
 import { replaceAt } from './utils';
 
 interface Props {
@@ -18,10 +19,11 @@ interface Props {
   onChange: (value: TempoQuery) => void;
   query: Partial<TempoQuery> & TempoQuery;
   isTagsLoading: boolean;
+  addVariablesToOptions?: boolean;
 }
 
 export const GroupByField = (props: Props) => {
-  const { datasource, onChange, query, isTagsLoading } = props;
+  const { datasource, onChange, query, isTagsLoading, addVariablesToOptions } = props;
   const styles = useStyles2(getStyles);
   const generateId = () => uuidv4().slice(0, 8);
 
@@ -74,57 +76,63 @@ export const GroupByField = (props: Props) => {
       tooltip="Select one or more tags to see the metrics summary. Note: the metrics summary API only considers spans of kind = server."
     >
       <>
-        {query.groupBy?.map((f, i) => (
-          <div key={f.id}>
-            <HorizontalGroup spacing={'none'} width={'auto'}>
-              <Select
-                aria-label={`Select scope for filter ${i + 1}`}
-                onChange={(v) => {
-                  updateFilter({ ...f, scope: v?.value, tag: '' });
-                }}
-                options={scopeOptions}
-                placeholder="Select scope"
-                value={f.scope}
-              />
-              <Select
-                aria-label={`Select tag for filter ${i + 1}`}
-                isClearable
-                isLoading={isTagsLoading}
-                key={f.tag}
-                onChange={(v) => {
-                  updateFilter({ ...f, tag: v?.value });
-                }}
-                options={getTags(f)?.map((t) => ({
-                  label: t,
-                  value: t,
-                }))}
-                placeholder="Select tag"
-                value={f.tag || ''}
-              />
-              {(f.tag || (query.groupBy?.length ?? 0) > 1) && (
-                <AccessoryButton
-                  aria-label={`Remove tag for filter ${i + 1}`}
-                  icon="times"
-                  onClick={() => removeFilter(f)}
-                  tooltip="Remove tag"
-                  title={`Remove tag for filter ${i + 1}`}
-                  variant="secondary"
+        {query.groupBy?.map((f, i) => {
+          const tags = getTags(f)
+            ?.concat(f.tag !== undefined && !getTags(f)?.includes(f.tag) ? [f.tag] : [])
+            .map((t) => ({
+              label: t,
+              value: t,
+            }));
+          return (
+            <div key={f.id}>
+              <HorizontalGroup spacing={'none'} width={'auto'}>
+                <Select
+                  aria-label={`Select scope for filter ${i + 1}`}
+                  onChange={(v) => {
+                    updateFilter({ ...f, scope: v?.value, tag: '' });
+                  }}
+                  options={scopeOptions}
+                  placeholder="Select scope"
+                  value={f.scope}
                 />
-              )}
-              {f.tag && i === (query.groupBy?.length ?? 0) - 1 && (
-                <span className={styles.addTag}>
+                <Select
+                  aria-label={`Select tag for filter ${i + 1}`}
+                  isClearable
+                  allowCustomValue
+                  isLoading={isTagsLoading}
+                  key={f.tag}
+                  onChange={(v) => {
+                    updateFilter({ ...f, tag: v?.value });
+                  }}
+                  options={addVariablesToOptions ? withTemplateVariableOptions(tags) : tags}
+                  placeholder="Select tag"
+                  value={f.tag || ''}
+                />
+                {(f.tag || (query.groupBy?.length ?? 0) > 1) && (
                   <AccessoryButton
-                    aria-label="Add tag"
-                    icon="plus"
-                    onClick={() => addFilter()}
-                    tooltip="Add tag"
+                    aria-label={`Remove tag for filter ${i + 1}`}
+                    icon="times"
+                    onClick={() => removeFilter(f)}
+                    tooltip="Remove tag"
+                    title={`Remove tag for filter ${i + 1}`}
                     variant="secondary"
                   />
-                </span>
-              )}
-            </HorizontalGroup>
-          </div>
-        ))}
+                )}
+                {f.tag && i === (query.groupBy?.length ?? 0) - 1 && (
+                  <span className={styles.addTag}>
+                    <AccessoryButton
+                      aria-label="Add tag"
+                      icon="plus"
+                      onClick={() => addFilter()}
+                      tooltip="Add tag"
+                      variant="secondary"
+                    />
+                  </span>
+                )}
+              </HorizontalGroup>
+            </div>
+          );
+        })}
       </>
     </InlineSearchField>
   );

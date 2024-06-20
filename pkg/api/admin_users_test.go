@@ -355,8 +355,9 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 		hs := &HTTPServer{
 			Cfg:             setting.NewCfg(),
 			SQLStore:        sqlStore,
-			authInfoService: &authinfotest.FakeService{},
+			authInfoService: &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound},
 			userService:     userSvc,
+			SocialService:   &mockSocialService{},
 		}
 
 		sc := setupScenarioContext(t, url)

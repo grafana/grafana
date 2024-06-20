@@ -41,14 +41,14 @@ const RuleType = (props: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    width: 380px;
-    cursor: pointer;
-    user-select: none;
-  `,
-  disabled: css`
-    opacity: 0.5;
-  `,
+  wrapper: css({
+    width: '380px',
+    cursor: 'pointer',
+    userSelect: 'none',
+  }),
+  disabled: css({
+    opacity: '0.5',
+  }),
 });
 
 export { RuleType };

@@ -17,7 +17,7 @@ const (
 
 	// teamAssignsSQL is a query to select all users' team assignments.
 	teamAssignsSQL = `SELECT tm.user_id, tr.org_id, tr.role_id
-	FROM team_role AS tr 
+	FROM team_role AS tr
 	INNER JOIN team_member AS tm ON tm.team_id = tr.team_id`
 
 	// basicRoleAssignsSQL is a query to select all users basic role (Admin, Editor, Viewer, None) assignments.
@@ -63,11 +63,9 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 		` + filter
 
 		if len(query.RolePrefixes) > 0 {
-			q += " WHERE ( " + strings.Repeat("role.name LIKE ? OR ", len(query.RolePrefixes)-1)
-			q += "role.name LIKE ? )"
-			for i := range query.RolePrefixes {
-				params = append(params, query.RolePrefixes[i]+"%")
-			}
+			rolePrefixesFilter, filterParams := accesscontrol.RolePrefixesFilter(query.RolePrefixes)
+			q += rolePrefixesFilter
+			params = append(params, filterParams...)
 		}
 
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
@@ -78,6 +76,82 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	})
 
 	return result, err
+}
+
+func (s *AccessControlStore) GetBasicRolesPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
+	return s.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
+		Roles:        query.Roles,
+		OrgID:        query.OrgID,
+		RolePrefixes: query.RolePrefixes,
+	})
+}
+
+type teamPermission struct {
+	TeamID int64 `xorm:"team_id"`
+	Action string
+	Scope  string
+}
+
+func (p teamPermission) Permission() accesscontrol.Permission {
+	return accesscontrol.Permission{
+		Action: p.Action,
+		Scope:  p.Scope,
+	}
+}
+
+func (s *AccessControlStore) GetTeamsPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) (map[int64][]accesscontrol.Permission, error) {
+	teams := query.TeamIDs
+	orgID := query.OrgID
+	rolePrefixes := query.RolePrefixes
+	result := make([]teamPermission, 0)
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		if len(teams) == 0 {
+			// no permission to fetch
+			return nil
+		}
+
+		q := `
+		SELECT
+			permission.action,
+			permission.scope,
+			all_role.team_id
+		FROM permission
+		INNER JOIN role ON role.id = permission.role_id
+		INNER JOIN (
+			SELECT tr.role_id, tr.team_id FROM team_role as tr
+			WHERE tr.team_id IN(?` + strings.Repeat(", ?", len(teams)-1) + `)
+			  AND tr.org_id = ?
+		) as all_role ON role.id = all_role.role_id
+		`
+
+		params := make([]any, 0)
+		for _, team := range teams {
+			params = append(params, team)
+		}
+		params = append(params, orgID)
+
+		if len(rolePrefixes) > 0 {
+			rolePrefixesFilter, filterParams := accesscontrol.RolePrefixesFilter(rolePrefixes)
+			q += rolePrefixesFilter
+			params = append(params, filterParams...)
+		}
+
+		if err := sess.SQL(q, params...).Find(&result); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	teamPermissions := make(map[int64][]accesscontrol.Permission)
+	for _, teamPermission := range result {
+		tp := teamPermissions[teamPermission.TeamID]
+		if tp == nil {
+			tp = make([]accesscontrol.Permission, 0)
+		}
+		teamPermissions[teamPermission.TeamID] = append(tp, teamPermission.Permission())
+	}
+	return teamPermissions, err
 }
 
 // SearchUsersPermissions returns the list of user permissions in specific organization indexed by UserID
@@ -154,10 +228,24 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 		if options.ActionPrefix != "" {
 			q += ` AND p.action LIKE ?`
 			params = append(params, options.ActionPrefix+"%")
+			if len(options.ActionSets) > 0 {
+				q += ` OR p.action IN ( ? ` + strings.Repeat(", ?", len(options.ActionSets)-1) + ")"
+				for _, a := range options.ActionSets {
+					params = append(params, a)
+				}
+			}
 		}
 		if options.Action != "" {
-			q += ` AND p.action = ?`
-			params = append(params, options.Action)
+			if len(options.ActionSets) == 0 {
+				q += ` AND p.action = ?`
+				params = append(params, options.Action)
+			} else {
+				actions := append(options.ActionSets, options.Action)
+				q += ` AND p.action IN ( ? ` + strings.Repeat(", ?", len(actions)-1) + ")"
+				for _, a := range actions {
+					params = append(params, a)
+				}
+			}
 		}
 		if options.Scope != "" {
 			// Search for scope and wildcard that include the scope

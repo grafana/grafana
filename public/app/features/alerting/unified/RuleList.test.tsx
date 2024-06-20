@@ -1,9 +1,9 @@
 import { SerializedError } from '@reduxjs/toolkit';
-import { prettyDOM, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { setupServer } from 'msw/node';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { prettyDOM, render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { PluginExtensionTypes, PluginMeta } from '@grafana/data';
@@ -14,6 +14,7 @@ import {
   locationService,
   setBackendSrv,
   setDataSourceSrv,
+  usePluginLinkExtensions,
 } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
@@ -35,28 +36,32 @@ import * as analytics from './Analytics';
 import RuleList from './RuleList';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRules } from './api/prometheus';
+import * as apiRuler from './api/ruler';
 import { deleteNamespace, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from './api/ruler';
 import {
   MockDataSourceSrv,
+  getPotentiallyPausedRulerRules,
   grantUserPermissions,
   mockDataSource,
+  mockFolder,
   mockPromAlert,
   mockPromAlertingRule,
   mockPromRecordingRule,
   mockPromRuleGroup,
   mockPromRuleNamespace,
+  mockRulerGrafanaRule,
   pausedPromRules,
-  getPotentiallyPausedRulerRules,
   somePromRules,
   someRulerRules,
-  mockFolder,
 } from './mocks';
+import { setupPluginsExtensionsHook } from './testSetup/plugins';
 import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginLinkExtensions: jest.fn(),
+  usePluginLinkExtensions: jest.fn(),
   useReturnToPrevious: jest.fn(),
 }));
 jest.mock('./api/buildInfo');
@@ -77,10 +82,14 @@ jest.mock('app/core/core', () => ({
 jest.spyOn(analytics, 'logInfo');
 jest.spyOn(config, 'getAllDataSources');
 jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
+jest.spyOn(apiRuler, 'rulerUrlBuilder');
+
+setupPluginsExtensionsHook();
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
   getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
+  usePluginLinkExtensionsMock: jest.mocked(usePluginLinkExtensions),
   rulesInSameGroupHaveInvalidForMock: jest.mocked(actions.rulesInSameGroupHaveInvalidFor),
 
   api: {
@@ -90,6 +99,7 @@ const mocks = {
     deleteGroup: jest.mocked(deleteRulerRulesGroup),
     deleteNamespace: jest.mocked(deleteNamespace),
     setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
+    rulerBuilderMock: jest.mocked(apiRuler.rulerUrlBuilder),
   },
 };
 
@@ -152,7 +162,7 @@ const ui = {
     paused: byText(/^Paused/),
   },
   actionButtons: {
-    more: byRole('button', { name: 'More' }),
+    more: byRole('button', { name: /More/ }),
   },
   moreActionItems: {
     pause: byRole('menuitem', { name: /pause evaluation/i }),
@@ -184,6 +194,11 @@ const configureMockServer = () => {
     message: 'rule group updated successfully',
     updated: ['foo', 'bar', 'baz'],
   });
+  mockAlertRuleApi(server).rulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, 'NAMESPACE_UID', 'groupPaused', {
+    name: 'group-1',
+    interval: '1m',
+    rules: [mockRulerGrafanaRule()],
+  });
 };
 
 beforeAll(() => {
@@ -201,7 +216,7 @@ describe('RuleList', () => {
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
     mocks.rulesInSameGroupHaveInvalidForMock.mockReturnValue([]);
-    mocks.getPluginLinkExtensionsMock.mockReturnValue({
+    mocks.usePluginLinkExtensionsMock.mockReturnValue({
       extensions: [
         {
           pluginId: 'grafana-ml-app',
@@ -213,6 +228,7 @@ describe('RuleList', () => {
           onClick: jest.fn(),
         },
       ],
+      isLoading: false,
     });
   });
 
@@ -440,11 +456,13 @@ describe('RuleList', () => {
     await userEvent.click(ui.ruleCollapseToggle.get(ruleRows[1]));
 
     const ruleDetails = ui.expandedContent.get(ruleRows[1]);
+    const labels = byTestId('label-value').getAll(ruleDetails);
+    expect(labels[0]).toHaveTextContent('severitywarning');
+    expect(labels[1]).toHaveTextContent('foobar');
 
-    expect(ruleDetails).toHaveTextContent('Labels severitywarning foobar');
     expect(ruleDetails).toHaveTextContent('Expressiontopk ( 5 , foo ) [ 5m ]');
     expect(ruleDetails).toHaveTextContent('messagegreat alert');
-    expect(ruleDetails).toHaveTextContent('Matching instances');
+    expect(ruleDetails).toHaveTextContent('Instances');
 
     // finally, check instances table
     const instancesTable = byTestId('dynamic-table').get(ruleDetails);
@@ -452,8 +470,8 @@ describe('RuleList', () => {
     const instanceRows = byTestId('row').getAll(instancesTable);
     expect(instanceRows).toHaveLength(2);
 
-    expect(instanceRows![0]).toHaveTextContent('Firing foobar severitywarning2021-03-18 08:47:05');
-    expect(instanceRows![1]).toHaveTextContent('Firing foobaz severityerror2021-03-18 08:47:05');
+    expect(instanceRows![0]).toHaveTextContent('Firingfoobarseveritywarning2021-03-18 08:47:05');
+    expect(instanceRows![1]).toHaveTextContent('Firingfoobazseverityerror2021-03-18 08:47:05');
 
     // expand details of an instance
     await userEvent.click(ui.ruleCollapseToggle.get(instanceRows![0]));
@@ -593,8 +611,9 @@ describe('RuleList', () => {
 
     await userEvent.click(ui.ruleCollapseToggle.get(ruleRows[0]));
     const ruleDetails = ui.expandedContent.get(ruleRows[0]);
-
-    expect(ruleDetails).toHaveTextContent('Labels severitywarning foobar');
+    const labels = byTestId('label-value').getAll(ruleDetails);
+    expect(labels[0]).toHaveTextContent('severitywarning');
+    expect(labels[1]).toHaveTextContent('foobar');
 
     // Check for different label matchers
     await userEvent.clear(filterInput);
@@ -613,6 +632,63 @@ describe('RuleList', () => {
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
   });
 
+  it('uses entire group when reordering after filtering', async () => {
+    const user = userEvent.setup();
+
+    mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
+
+    setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
+
+    mocks.api.discoverFeatures.mockResolvedValue({
+      application: PromApplication.Cortex,
+      features: {
+        rulerApiEnabled: true,
+      },
+    });
+
+    mocks.api.fetchRulerRules.mockImplementation(() => Promise.resolve(someRulerRules));
+    mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
+      if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+        return Promise.resolve([
+          mockPromRuleNamespace({
+            name: 'foofolder',
+            dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+            groups: [
+              mockPromRuleGroup({
+                name: 'grafana-group',
+                rules: [
+                  mockPromAlertingRule({
+                    query: '[]',
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ]);
+      } else {
+        return Promise.resolve([]);
+      }
+    });
+
+    renderRuleList();
+
+    const [firstReorderButton] = await screen.findAllByLabelText(/reorder/i);
+
+    const filterInput = ui.rulesFilterInput.get();
+    await userEvent.type(filterInput, 'alert1a{Enter}');
+
+    await user.click(firstReorderButton);
+
+    const reorderDialog = await screen.findByRole('dialog');
+
+    const alertsInReorder = within(reorderDialog).getAllByTestId('reorder-alert-rule');
+
+    // We've filtered down to one rule, but the reorder dialog should still
+    // have everything in the group visible for reordering
+    // If this were not the case, rules could be deleted ⚠️
+    expect(alertsInReorder).toHaveLength(2);
+  });
+
   describe('pausing rules', () => {
     beforeEach(() => {
       grantUserPermissions([
@@ -627,6 +703,13 @@ describe('RuleList', () => {
       mocks.api.fetchRules.mockImplementation((sourceName) =>
         Promise.resolve(sourceName === 'grafana' ? pausedPromRules('grafana') : [])
       );
+      mocks.api.rulerBuilderMock.mockReturnValue({
+        rules: () => ({ path: `api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rules` }),
+        namespace: () => ({ path: 'ruler' }),
+        namespaceGroup: () => ({
+          path: `api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rules/NAMESPACE_UID/groupPaused`,
+        }),
+      });
     });
 
     test('resuming paused alert rule', async () => {

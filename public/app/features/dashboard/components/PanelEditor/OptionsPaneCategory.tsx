@@ -111,9 +111,8 @@ export const OptionsPaneCategory = React.memo(
     return (
       <div
         className={boxStyles}
-        data-testid="options-category"
         data-plugin-sandbox={sandboxId}
-        aria-label={selectors.components.OptionsGroup.group(id)}
+        data-testid={selectors.components.OptionsGroup.group(id)}
         ref={ref}
       >
         {/* disabling a11y rules here because there's a Button that handles keyboard interaction */}
@@ -121,7 +120,7 @@ export const OptionsPaneCategory = React.memo(
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className={headerStyles} onClick={onToggle}>
           <Button
-            aria-label={selectors.components.OptionsGroup.toggle(id)}
+            data-testid={selectors.components.OptionsGroup.toggle(id)}
             type="button"
             fill="text"
             size="sm"

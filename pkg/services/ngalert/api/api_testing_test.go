@@ -174,8 +174,9 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 		})
 
 		t.Run("should return Forbidden if user cannot query a data source", func(t *testing.T) {
-			data1 := models.GenerateAlertQuery()
-			data2 := models.GenerateAlertQuery()
+			gen := models.RuleGen
+			data1 := gen.GenerateQuery()
+			data2 := gen.GenerateQuery()
 
 			ac := acMock.New().WithPermissions([]ac.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
@@ -195,12 +196,14 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				NamespaceTitle: f.Title,
 			})
 
+			t.Log(string(response.Body()))
 			require.Equal(t, http.StatusForbidden, response.Status())
 		})
 
 		t.Run("should return 200 if user can query all data sources", func(t *testing.T) {
-			data1 := models.GenerateAlertQuery()
-			data2 := models.GenerateAlertQuery()
+			gen := models.RuleGen
+			data1 := gen.GenerateQuery()
+			data2 := gen.GenerateQuery()
 
 			ac := acMock.New().WithPermissions([]ac.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
@@ -252,8 +255,9 @@ func TestRouteEvalQueries(t *testing.T) {
 		}
 
 		t.Run("should return Forbidden if user cannot query a data source", func(t *testing.T) {
-			data1 := models.GenerateAlertQuery()
-			data2 := models.GenerateAlertQuery()
+			g := models.RuleGen
+			data1 := g.GenerateQuery()
+			data2 := g.GenerateQuery()
 
 			srv := &TestingApiSrv{
 				authz: accesscontrol.NewRuleService(acMock.New().WithPermissions([]ac.Permission{

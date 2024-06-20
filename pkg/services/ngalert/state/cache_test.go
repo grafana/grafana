@@ -126,7 +126,8 @@ func Test_getOrCreate(t *testing.T) {
 	l := log.New("test")
 	c := newCache()
 
-	generateRule := models.AlertRuleGen(models.WithNotEmptyLabels(5, "rule-"))
+	gen := models.RuleGen
+	generateRule := gen.With(gen.WithNotEmptyLabels(5, "rule-")).GenerateRef
 
 	t.Run("should combine all labels", func(t *testing.T) {
 		rule := generateRule()

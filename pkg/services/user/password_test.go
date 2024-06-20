@@ -25,7 +25,7 @@ func TestPasswowrdService_ValidatePasswordHardcodePolicy(t *testing.T) {
 			strongPasswordPolicyEnabled: false,
 		},
 		{name: "should not return error when the password has 4 characters and strong password policy is disabled",
-			passwordTest:                LOWERCASE,
+			passwordTest:                "test",
 			expectedError:               nil,
 			strongPasswordPolicyEnabled: false,
 		},

@@ -13,7 +13,7 @@ import {
   useDeleteRecipientMutation,
   useGetPublicDashboardQuery,
   useReshareAccessToRecipientMutation,
-  useUpdatePublicDashboardMutation,
+  useUpdatePublicDashboardAccessMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -101,7 +101,7 @@ export const EmailSharingConfiguration = ({ dashboard }: { dashboard: DashboardM
 
   const dashboardUid = dashboard instanceof DashboardScene ? dashboard.state.uid : dashboard.uid;
   const { data: publicDashboard } = useGetPublicDashboardQuery(dashboardUid);
-  const [updateShareType] = useUpdatePublicDashboardMutation();
+  const [updateShareType] = useUpdatePublicDashboardAccessMutation();
   const [addEmail, { isLoading: isAddEmailLoading }] = useAddRecipientMutation();
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
@@ -228,52 +228,50 @@ export const EmailSharingConfiguration = ({ dashboard }: { dashboard: DashboardM
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    label: emailConfigContainer;
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    gap: ${theme.spacing(3)};
-  `,
-  field: css`
-    label: field-noMargin;
-    margin-bottom: 0;
-  `,
-  emailContainer: css`
-    label: emailContainer;
-    display: flex;
-    gap: ${theme.spacing(1)};
-  `,
-  emailInput: css`
-    label: emailInput;
-    flex-grow: 1;
-  `,
-  table: css`
-    label: table;
-    display: flex;
-    max-height: 220px;
-    overflow-y: scroll;
+  container: css({
+    label: 'emailConfigContainer',
+    display: 'flex',
+    flexDirection: 'column',
+    flexWrap: 'wrap',
+    gap: theme.spacing(3),
+  }),
+  field: css({
+    label: 'field-noMargin',
+    marginBottom: 0,
+  }),
+  emailContainer: css({
+    label: 'emailContainer',
+    display: 'flex',
+    gap: theme.spacing(1),
+  }),
+  emailInput: css({
+    label: 'emailInput',
+    flexGrow: 1,
+  }),
+  table: css({
+    label: 'table',
+    display: 'flex',
+    maxHeight: '220px',
+    overflowY: 'scroll',
+    '& tbody': {
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+    },
+    '& tr': {
+      minHeight: '40px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: theme.spacing(0.5, 1),
 
-    & tbody {
-      display: flex;
-      flex-direction: column;
-      flex-grow: 1;
-    }
-
-    & tr {
-      min-height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: ${theme.spacing(0.5, 1)};
-
-      :nth-child(odd) {
-        background: ${theme.colors.background.secondary};
-      }
-    }
-  `,
-  tableButtonsContainer: css`
-    display: flex;
-    justify-content: end;
-  `,
+      ':nth-child(odd)': {
+        background: theme.colors.background.secondary,
+      },
+    },
+  }),
+  tableButtonsContainer: css({
+    display: 'flex',
+    justifyContent: 'end',
+  }),
 });

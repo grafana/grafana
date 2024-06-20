@@ -5,12 +5,12 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { CoreApp, createTheme, DataSourceApi, EventBusSrv, LoadingState, PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getPluginLinkExtensions } from '@grafana/runtime';
+import { usePluginLinkExtensions } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { Explore, Props } from './Explore';
-import { changeShowQueryHistory, initialExploreState } from './state/main';
+import { initialExploreState } from './state/main';
 import { scanStopAction } from './state/query';
 import { createEmptyQueryResponse, makeExplorePaneState } from './state/utils';
 
@@ -100,8 +100,6 @@ const dummyProps: Props = {
   setSupplementaryQueryEnabled: jest.fn(),
   correlationEditorDetails: undefined,
   correlationEditorHelperData: undefined,
-  showQueryHistory: false,
-  changeShowQueryHistory: changeShowQueryHistory,
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
@@ -123,7 +121,7 @@ jest.mock('app/core/core', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getPluginLinkExtensions: jest.fn(() => ({ extensions: [] })),
+  usePluginLinkExtensions: jest.fn(() => ({ extensions: [] })),
 }));
 
 // for the AutoSizer component to have a width
@@ -137,7 +135,7 @@ jest.mock('react-virtualized-auto-sizer', () => {
     });
 });
 
-const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
+const usePluginLinkExtensionsMock = jest.mocked(usePluginLinkExtensions);
 
 const setup = (overrideProps?: Partial<Props>) => {
   const store = configureStore({
@@ -179,7 +177,7 @@ describe('Explore', () => {
   });
 
   it('should render toolbar extension point if extensions is available', async () => {
-    getPluginLinkExtensionsMock.mockReturnValueOnce({
+    usePluginLinkExtensionsMock.mockReturnValueOnce({
       extensions: [
         {
           id: '1',
@@ -198,6 +196,7 @@ describe('Explore', () => {
           onClick: () => {},
         },
       ],
+      isLoading: false,
     });
 
     setup({ queryResponse: makeEmptyQueryResponse(LoadingState.Done) });

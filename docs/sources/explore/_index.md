@@ -25,6 +25,8 @@ If you just want to explore your data and do not want to create a dashboard, the
 - [Query management in Explore]({{< relref "query-management/" >}})
 - [Logs integration in Explore]({{< relref "logs-integration/" >}})
 - [Trace integration in Explore]({{< relref "trace-integration/" >}})
+- [Explore metrics]({{< relref "explore-metrics/" >}})
+- [Correlations Editor in Explore]({{< relref "correlations-editor-in-explore/" >}})
 - [Inspector in Explore]({{< relref "explore-inspector/" >}})
 
 ## Start exploring
@@ -137,7 +139,7 @@ Available in Grafana 7.3 and later versions.
 
 The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs with query parameters. To create a shortened link to the executed query, click the **Share** option in the Explore toolbar.
 
-A shortened link will automatically get deleted after seven (7) days from its creation if it's never used. If a link is used at least once, it won't ever get deleted.
+A shortened link that is not accessed will automatically get deleted after a [configurable period](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#short_links) (defaulting to seven days). If a link is used at least once, it won't be deleted.
 
 ### Sharing shortened links with absolute time
 

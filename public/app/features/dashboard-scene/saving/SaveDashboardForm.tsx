@@ -101,7 +101,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   }
 
   return (
-    <Stack gap={0} direction="column">
+    <Stack gap={2} direction="column">
       <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
       <Field label="Message">
         <TextArea
@@ -118,7 +118,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
           rows={5}
         />
       </Field>
-      <Box paddingTop={2}>{renderFooter(state.error)}</Box>
+      {renderFooter(state.error)}
     </Stack>
   );
 }
@@ -133,37 +133,37 @@ export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashb
   const { hasTimeChanges, hasVariableValueChanges, hasRefreshChange } = changeInfo;
 
   return (
-    <>
+    <Stack direction={'column'} alignItems={'flex-start'}>
       {hasTimeChanges && (
-        <Field label="Update default time range" description="Will make current time range the new default">
-          <Checkbox
-            id="save-timerange"
-            checked={saveTimeRange}
-            onChange={drawer.onToggleSaveTimeRange}
-            data-testid={selectors.pages.SaveDashboardModal.saveTimerange}
-          />
-        </Field>
+        <Checkbox
+          id="save-timerange"
+          checked={saveTimeRange}
+          onChange={drawer.onToggleSaveTimeRange}
+          label="Update default time range"
+          description={'Will make current time range the new default'}
+          data-testid={selectors.pages.SaveDashboardModal.saveTimerange}
+        />
       )}
       {hasRefreshChange && (
-        <Field label="Update default refresh value" description="Will make the current refresh the new default">
-          <Checkbox
-            id="save-refresh"
-            checked={saveRefresh}
-            onChange={drawer.onToggleSaveRefresh}
-            data-testid={selectors.pages.SaveDashboardModal.saveRefresh}
-          />
-        </Field>
+        <Checkbox
+          id="save-refresh"
+          label="Update default refresh value"
+          description="Will make the current refresh the new default"
+          checked={saveRefresh}
+          onChange={drawer.onToggleSaveRefresh}
+          data-testid={selectors.pages.SaveDashboardModal.saveRefresh}
+        />
       )}
       {hasVariableValueChanges && (
-        <Field label="Update default variable values" description="Will make the current values the new default">
-          <Checkbox
-            id="save-variables"
-            checked={saveVariables}
-            onChange={drawer.onToggleSaveVariables}
-            data-testid={selectors.pages.SaveDashboardModal.saveVariables}
-          />
-        </Field>
+        <Checkbox
+          id="save-variables"
+          label="Update default variable values"
+          description="Will make the current values the new default"
+          checked={saveVariables}
+          onChange={drawer.onToggleSaveVariables}
+          data-testid={selectors.pages.SaveDashboardModal.saveVariables}
+        />
       )}
-    </>
+    </Stack>
   );
 }

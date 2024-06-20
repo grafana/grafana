@@ -180,7 +180,7 @@ Name of the TrueType font file with italic style.
 
 ### max_retries_per_panel
 
-Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the 'reportingRetries' feature toggle.
+Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
 
 ## [auditing]
 
@@ -319,6 +319,10 @@ List of comma- or space-separated Organization:OrgId:Role mappings. Organization
 ### role_values_none
 
 List of comma- or space-separated roles that will be mapped to the None role.
+
+### role_values_viewer
+
+List of comma- or space-separated roles that will be mapped to the Viewer role.
 
 ### role_values_editor
 
@@ -530,6 +534,34 @@ The default is `"grafana"`.
 A space-separated list of memcached servers. Example: `memcached-server-1:11211 memcached-server-2:11212 memcached-server-3:11211`. Or if there's only one server: `memcached-server:11211`.
 
 The default is `"localhost:11211"`.
+
+{{% admonition type="note" %}}
+The following memcached configuration requires the `tlsMemcached` feature toggle.
+{{% /admonition %}}
+
+### tls_enabled
+
+Enables TLS authentication for memcached. Defaults to `false`.
+
+### tls_cert_path
+
+Path to the client certificate, which will be used for authenticating with the server. Also requires the key path to be configured.
+
+### tls_key_path
+
+Path to the key for the client certificate. Also requires the client certificate to be configured.
+
+### tls_ca_path
+
+Path to the CA certificates to validate the server certificate against. If not set, the host's root CA certificates are used.
+
+### tls_server_name
+
+Override the expected name on the server certificate.
+
+### connection_timeout
+
+Timeout for the memcached client to connect to memcached. Defaults to `0`, which uses the memcached client default timeout per connection scheme.
 
 ## [recorded_queries]
 

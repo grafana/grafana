@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { capitalize } from 'lodash';
+import { capitalize, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef, PureComponent } from 'react';
 
@@ -32,27 +32,32 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
+import { DataQuery, DataTopic, TimeZone } from '@grafana/schema';
 import {
   Button,
   InlineField,
   InlineFieldRow,
   InlineSwitch,
   PanelChrome,
+  PopoverContent,
   RadioButtonGroup,
+  SeriesVisibilityChangeMode,
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
+import { mapMouseEventToMode } from '@grafana/ui/src/components/VizLegend/utils';
+import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
-import { getLogLevelFromKey } from 'app/features/logs/utils';
+import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { dispatch, getState } from 'app/store/store';
 
 import { ExploreItemState } from '../../../types';
 import { LogRows } from '../../logs/components/LogRows';
 import { LogRowContextModal } from '../../logs/components/log-context/LogRowContextModal';
-import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
+import { dedupLogRows, filterLogLevels, LogLevelColor } from '../../logs/logsModel';
+import { ContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
 
@@ -106,9 +111,10 @@ interface Props extends Themeable2 {
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;
-  onClickFilterValue?: (value: string, refId?: string) => void;
-  onClickFilterOutValue?: (value: string, refId?: string) => void;
+  onClickFilterString?: (value: string, refId?: string) => void;
+  onClickFilterOutString?: (value: string, refId?: string) => void;
   loadMoreLogs?(range: AbsoluteTimeRange): void;
+  onPinLineCallback?: () => void;
 }
 
 export type LogsVisualisationType = 'table' | 'logs';
@@ -129,6 +135,7 @@ interface State {
   tableFrame?: DataFrame;
   visualisationType?: LogsVisualisationType;
   logsContainer?: HTMLDivElement;
+  pinLineButtonTooltipTitle?: PopoverContent;
 }
 
 // we need to define the order of these explicitly
@@ -144,14 +151,27 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
   if (visualisationType === 'table') {
     return 'table';
   }
+  if (visualisationType === 'logs') {
+    return 'logs';
+  }
+  if (config.featureToggles.logsExploreTableDefaultVisualization) {
+    return 'table';
+  }
   return 'logs';
 };
+
+const PINNED_LOGS_LIMIT = 3;
 
 class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
   cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
   logsVolumeEventBus: EventBus;
+  static contextType = ContentOutlineContext;
+  declare context: React.ContextType<typeof ContentOutlineContext>;
+  // @ts-ignore
+  private toggleLegendRef: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void> =
+    React.createRef();
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -169,11 +189,16 @@ class UnthemedLogs extends PureComponent<Props, State> {
     tableFrame: undefined,
     visualisationType: this.props.panelState?.logs?.visualisationType ?? getDefaultVisualisationType(),
     logsContainer: undefined,
+    pinLineButtonTooltipTitle: 'Pin to content outline',
   };
 
   constructor(props: Props) {
     super(props);
     this.logsVolumeEventBus = props.eventBus.newScopedBus('logsvolume', { onlyLocal: false });
+  }
+
+  componentDidMount(): void {
+    this.registerLogLevelsWithContentOutline();
   }
 
   componentWillUnmount() {
@@ -203,6 +228,54 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   }
 
+  registerLogLevelsWithContentOutline = () => {
+    const levelsArr = Object.keys(LogLevelColor);
+    const logVolumeDataFrames = new Set(this.props.logsVolumeData?.data);
+    // TODO remove this once filtering multiple log volumes is supported
+    const numberOfLogVolumes = this.getNumberOfLogVolumes();
+
+    // clean up all current log levels
+    const logsParent = this.context?.outlineItems.find((item) => item.panelId === 'Logs' && item.level === 'root');
+    if (logsParent) {
+      this.context?.unregisterAllChildren(logsParent.id, 'filter');
+    }
+
+    // check if we have dataFrames that return the same level
+    const logLevelsArray: Array<{ levelStr: string; logLevel: LogLevel }> = [];
+    logVolumeDataFrames.forEach((dataFrame) => {
+      const { level } = getLogLevelInfo(dataFrame);
+      logLevelsArray.push({ levelStr: level, logLevel: getLogLevel(level) });
+    });
+
+    const sortedLLArray = logLevelsArray.sort(
+      (a: { levelStr: string; logLevel: LogLevel }, b: { levelStr: string; logLevel: LogLevel }) => {
+        return levelsArr.indexOf(a.logLevel.toString()) > levelsArr.indexOf(b.logLevel.toString()) ? 1 : -1;
+      }
+    );
+
+    const logLevels = new Set(sortedLLArray);
+
+    if (logLevels.size > 1 && this.props.logsVolumeEnabled && numberOfLogVolumes === 1) {
+      logLevels.forEach((level) => {
+        const allLevelsSelected = this.state.hiddenLogLevels.length === 0;
+        const currentLevelSelected = !this.state.hiddenLogLevels.find((hiddenLevel) => hiddenLevel === level.levelStr);
+        this.context?.register({
+          title: level.levelStr,
+          icon: 'gf-logs',
+          panelId: 'Logs',
+          level: 'child',
+          type: 'filter',
+          highlight: currentLevelSelected && !allLevelsSelected,
+          onClick: (e: React.MouseEvent) => {
+            this.toggleLegendRef.current?.(level.levelStr, mapMouseEventToMode(e));
+          },
+          ref: null,
+          color: LogLevelColor[level.logLevel],
+        });
+      });
+    }
+  };
+
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
     const state: ExploreItemState | undefined = getState().explore.panes[this.props.exploreId];
     if (state?.panelsState) {
@@ -218,7 +291,16 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  componentDidUpdate(prevProps: Readonly<Props>): void {
+  getNumberOfLogVolumes() {
+    const data = this.props.logsVolumeData?.data.filter(
+      (frame: DataFrame) => frame.meta?.dataTopic !== DataTopic.Annotations
+    );
+    const grouped = groupBy(data, 'meta.custom.datasourceName');
+    const numberOfLogVolumes = Object.keys(grouped).length;
+    return numberOfLogVolumes;
+  }
+
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
     if (this.props.loading && !prevProps.loading && this.props.panelState?.logs?.id) {
       // loading stopped, so we need to remove any permalinked log lines
       delete this.props.panelState.logs.id;
@@ -236,6 +318,13 @@ class UnthemedLogs extends PureComponent<Props, State> {
         visualisationType: visualisationType,
       });
       store.set(visualisationTypeKey, visualisationType);
+    }
+
+    if (
+      prevProps.logsVolumeData?.data !== this.props.logsVolumeData?.data ||
+      prevState.hiddenLogLevels !== this.state.hiddenLogLevels
+    ) {
+      this.registerLogLevelsWithContentOutline();
     }
   }
 
@@ -290,6 +379,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     reportInteraction('grafana_explore_logs_visualisation_changed', {
       newVisualizationType: visualisation,
       datasourceType: this.props.datasourceType ?? 'unknown',
+      defaultVisualisationType: config.featureToggles.logsExploreTableDefaultVisualization ? 'table' : 'logs',
     });
   };
 
@@ -569,6 +659,56 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.topLogsRef.current?.scrollIntoView();
   };
 
+  onPinToContentOutlineClick = (row: LogRowModel) => {
+    if (this.getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
+      this.setState({
+        pinLineButtonTooltipTitle: (
+          <span style={{ display: 'flex', textAlign: 'center' }}>
+            ❗️
+            <Trans i18nKey="explore.logs.maximum-pinned-logs">
+              Maximum of {{ PINNED_LOGS_LIMIT }} pinned logs reached. Unpin a log to add another.
+            </Trans>
+          </span>
+        ),
+      });
+      return;
+    }
+
+    // find the Logs parent item
+    const logsParent = this.context?.outlineItems.find((item) => item.panelId === 'Logs' && item.level === 'root');
+
+    //update the parent's expanded state
+    if (logsParent) {
+      this.context?.updateItem(logsParent.id, { expanded: true });
+    }
+
+    this.context?.register({
+      icon: 'gf-logs',
+      title: 'Pinned log',
+      panelId: 'Logs',
+      level: 'child',
+      ref: null,
+      color: LogLevelColor[row.logLevel],
+      childOnTop: true,
+      onClick: () => this.onOpenContext(row, () => {}),
+      onRemove: (id: string) => {
+        this.context?.unregister(id);
+        if (this.getPinnedLogsCount() < PINNED_LOGS_LIMIT) {
+          this.setState({
+            pinLineButtonTooltipTitle: 'Pin to content outline',
+          });
+        }
+      },
+    });
+
+    this.props.onPinLineCallback?.();
+  };
+
+  getPinnedLogsCount = () => {
+    const logsParent = this.context?.outlineItems.find((item) => item.panelId === 'Logs' && item.level === 'root');
+    return logsParent?.children?.filter((child) => child.title === 'Pinned log').length ?? 0;
+  };
+
   render() {
     const {
       width,
@@ -647,6 +787,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
         >
           {logsVolumeEnabled && (
             <LogsVolumePanelList
+              toggleLegendRef={this.toggleLegendRef}
               absoluteRange={absoluteRange}
               width={width}
               logsVolumeData={logsVolumeData}
@@ -859,8 +1000,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     scrollIntoView={this.scrollIntoView}
                     isFilterLabelActive={this.props.isFilterLabelActive}
                     containerRendered={!!this.state.logsContainer}
-                    onClickFilterValue={this.props.onClickFilterValue}
-                    onClickFilterOutValue={this.props.onClickFilterOutValue}
+                    onClickFilterString={this.props.onClickFilterString}
+                    onClickFilterOutString={this.props.onClickFilterOutString}
+                    onPinLine={this.onPinToContentOutlineClick}
+                    pinLineButtonTooltipTitle={this.state.pinLineButtonTooltipTitle}
                   />
                 </InfiniteScroll>
               </div>
@@ -868,9 +1011,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
             {!loading && !hasData && !scanning && (
               <div className={styles.logRows}>
                 <div className={styles.noData}>
-                  No logs found.
+                  <Trans i18nKey="explore.logs.no-logs-found">No logs found.</Trans>
                   <Button size="sm" variant="secondary" onClick={this.onClickScan}>
-                    Scan for older logs
+                    <Trans i18nKey="explore.logs.scan-for-older-logs">Scan for older logs</Trans>
                   </Button>
                 </div>
               </div>
@@ -880,7 +1023,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 <div className={styles.noData}>
                   <span>{scanText}</span>
                   <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
-                    Stop scan
+                    <Trans i18nKey="explore.logs.stop-scan">Stop scan</Trans>
                   </Button>
                 </div>
               </div>

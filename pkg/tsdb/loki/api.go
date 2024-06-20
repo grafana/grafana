@@ -359,7 +359,9 @@ func setXScopeOrgIDHeader(req *http.Request, ctx context.Context) *http.Request 
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		logger.Error("Error in retrieving metadata from context. Header not set")
+		// Metadata are currently set and needed only locally for multi-tenancy, while on cloud
+		// this is set by our stack
+		logger.Debug("Metadata not present in context. Header not set")
 		return req
 	}
 
@@ -367,7 +369,7 @@ func setXScopeOrgIDHeader(req *http.Request, ctx context.Context) *http.Request 
 	if len(tenantids) == 0 {
 		// We assume we are not using multi-tenant mode, which is fine
 		logger.Debug("Tenant ID not present. Header not set")
-	} else if len(tenantids[0]) > 1 {
+	} else if len(tenantids) > 1 {
 		// Loki supports multiple tenant IDs, but we should receive them from different contexts
 		logger.Error(strconv.Itoa(len(tenantids)) + " tenant IDs found. Header not set")
 	} else {

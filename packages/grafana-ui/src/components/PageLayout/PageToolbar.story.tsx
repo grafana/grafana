@@ -2,7 +2,7 @@ import { action } from '@storybook/addon-actions';
 import { Meta } from '@storybook/react';
 import React from 'react';
 
-import { ToolbarButton, VerticalGroup } from '@grafana/ui';
+import { ToolbarButton, Stack } from '@grafana/ui';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { IconButton } from '../IconButton/IconButton';
@@ -17,7 +17,7 @@ const meta: Meta<typeof PageToolbar> = {
 
 export const Examples = () => {
   return (
-    <VerticalGroup>
+    <Stack direction="column">
       <StoryExample name="With non clickable title">
         <PageToolbar pageIcon="bell" title="Dashboard">
           <ToolbarButton icon="panel-add" />
@@ -50,7 +50,7 @@ export const Examples = () => {
           <ToolbarButton>Apply</ToolbarButton>
         </PageToolbar>
       </StoryExample>
-    </VerticalGroup>
+    </Stack>
   );
 };
 

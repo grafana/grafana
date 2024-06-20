@@ -66,6 +66,11 @@ function renderDescriptionFromError(error?: PluginErrorCode): ReactElement {
           version of this plugin.
         </p>
       );
+    case PluginErrorCode.failedBackendStart:
+      return <p>This plugin failed to start. Server logs can provide more information.</p>;
+    case PluginErrorCode.angular:
+      // Error message already rendered by AngularDeprecationPluginNotice
+      return <></>;
     default:
       return (
         <p>

@@ -10,7 +10,6 @@ import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { configureStore } from 'app/store/configureStore';
 
-import 'whatwg-fetch';
 import { TemplatePreviewResponse } from '../../api/templateApi';
 import {
   mockPreviewTemplateResponse,

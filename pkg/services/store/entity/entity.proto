@@ -310,6 +310,9 @@ message EntityListRequest {
 
   // list deleted entities instead of active ones
   bool deleted = 12;
+
+  // Deprecated: Limit to a set of origin keys (empty is all)
+  repeated string origin_keys = 13;
 }
 
 message ReferenceRequest {
@@ -436,12 +439,29 @@ message EntityExternalReference {
   string identifier = 3;
 }
 
+//-----------------------------------------------
+// Health
+//-----------------------------------------------
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3;  // Used only by the Watch method.
+  }
+  ServingStatus status = 1;
+}
 
 //-----------------------------------------------
 // Storage interface
 //-----------------------------------------------
 
-// The entity store provides a basic CRUD (+watch eventually) interface for generic entitys
+// The entity store provides a basic CRUD (+watch eventually) interface for generic entities
 service EntityStore {
   rpc Read(ReadEntityRequest) returns (Entity);
   rpc Create(CreateEntityRequest) returns (CreateEntityResponse);
@@ -450,4 +470,5 @@ service EntityStore {
   rpc History(EntityHistoryRequest) returns (EntityHistoryResponse);
   rpc List(EntityListRequest) returns (EntityListResponse);
   rpc Watch(stream EntityWatchRequest) returns (stream EntityWatchResponse);
+  rpc IsHealthy(HealthCheckRequest) returns (HealthCheckResponse);
 }

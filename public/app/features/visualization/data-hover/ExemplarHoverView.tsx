@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
-import { LinkButton, useStyles2 } from '@grafana/ui';
+import { DataLinkButton, useStyles2 } from '@grafana/ui';
 import { VizTooltipRow } from '@grafana/ui/src/components/VizTooltip/VizTooltipRow';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
 
@@ -42,9 +42,7 @@ export const ExemplarHoverView = ({ displayValues, links, header = 'Exemplar' }:
       {links && links.length > 0 && (
         <div className={styles.exemplarFooter}>
           {links.map((link, i) => (
-            <LinkButton key={i} href={link.href} className={styles.linkButton}>
-              {link.title}
-            </LinkButton>
+            <DataLinkButton link={link} key={i} buttonProps={{ size: 'md' }} />
           ))}
         </div>
       )}

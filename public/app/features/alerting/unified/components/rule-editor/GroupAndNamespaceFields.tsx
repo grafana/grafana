@@ -109,16 +109,16 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
 };
 
 const getStyle = (theme: GrafanaTheme2) => ({
-  flexRow: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
+  flexRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
 
-    & > * + * {
-      margin-left: ${theme.spacing(3)};
-    }
-  `,
-  input: css`
-    width: 330px !important;
-  `,
+    '& > * + *': {
+      marginLeft: theme.spacing(3),
+    },
+  }),
+  input: css({
+    width: '330px !important',
+  }),
 });

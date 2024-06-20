@@ -43,6 +43,8 @@ export enum PluginErrorCode {
   missingSignature = 'signatureMissing',
   invalidSignature = 'signatureInvalid',
   modifiedSignature = 'signatureModified',
+  failedBackendStart = 'failedBackendStart',
+  angular = 'angular',
 }
 
 /** Describes error returned from Grafana plugins API call */
@@ -88,6 +90,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   signatureOrg?: string;
   live?: boolean;
   angular?: AngularMeta;
+  angularDetected?: boolean;
 }
 
 interface PluginDependencyInfo {

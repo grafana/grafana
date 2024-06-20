@@ -499,6 +499,98 @@ By default, Kubernetes deployment rollout history remains in the system so that 
 
 If you need to go back to any other `REVISION`, just repeat the steps above and use the correct revision number in the `--to-revision` parameter.
 
+## Provision Grafana resources using configuration files
+
+Provisioning can add, update, or delete resources specified in your configuration files when Grafana starts. For detailed information, refer to [Grafana Provisioning](/docs/grafana/<GRAFANA_VERSION>/administration/provisioning).
+
+This section outlines general instructions for provisioning Grafana resources within Kubernetes, using a persistent volume to supply the configuration files to the Grafana pod.
+
+1. Add a new `PersistentVolumeClaim` to the `grafana.yaml` file.
+
+   ```yaml
+   ---
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+     name: grafana-provisioning-pvc
+   spec:
+     accessModes:
+       - ReadWriteOnce
+     resources:
+       requests:
+         storage: 1Mi
+   ```
+
+1. In the `grafana.yaml` file, mount the persistent volume into `/etc/grafana/provisioning` as follows.
+
+   ```yaml
+   ...
+       volumeMounts:
+         - mountPath: /etc/grafana/provisioning
+           name: grafana-provisioning-pv
+         ...
+   volumes:
+     - name: grafana-provisioning-pv
+       persistentVolumeClaim:
+         claimName: grafana-provisioning-pvc
+   ...
+   ```
+
+1. Find or create the provision resources you want to add. For instance, create a `alerting.yaml` file adding a mute timing (alerting resource).
+
+   ```yaml
+   apiVersion: 1
+   muteTimes:
+     - orgId: 1
+       name: MuteWeekends
+       time_intervals:
+         - weekdays: [saturday, sunday]
+   ```
+
+1. By default, configuration files for alerting resources need to be placed in the `provisioning/alerting` directory.
+
+   Save the `alerting.yaml` file in a directory named `alerting`, as we will next supply this `alerting` directory to the `/etc/grafana/provisioning` folder of the Grafana pod.
+
+1. Verify first the content of the provisioning directory in the running Grafana pod.
+
+   ```bash
+   kubectl exec -n my-grafana <pod_name> -- ls /etc/grafana/provisioning/
+   ```
+
+   ```bash
+   kubectl exec -n my-grafana <pod_name> -- ls /etc/grafana/provisioning/alerting
+   ```
+
+   Because the `alerting` folder is not available yet, the last command should output a `No such file or directory` error.
+
+1. Copy the local `alerting` directory to `/etc/grafana/provisioning/` in the Grafana pod.
+
+   ```bash
+   kubectl cp alerting my-grafana/<pod_name>:/etc/grafana/provisioning/
+   ```
+
+   You can follow the same process to provision additional Grafana resources by supplying the following folders:
+
+   - `provisioning/dashboards`
+   - `provisioning/datasources`
+   - `provisioning/plugins`
+
+1. Verify the `alerting` directory in the running Grafana pod includes the `alerting.yaml` file.
+
+   ```bash
+   kubectl exec -n my-grafana <pod_name> -- ls /etc/grafana/provisioning/alerting
+   ```
+
+1. Restart the Grafana pod to provision the resources.
+
+   ```bash
+   kubectl rollout restart -n my-grafana deployment --selector=app=grafana
+   ```
+
+   Note that `rollout restart` kills the previous pod and scales a new pod. When the old pod terminates, you may have to enable port-forwarding in the new pod. For instructions, refer to the previous sections about port forwarding in this guide.
+
+1. Verify the Grafana resources are properly provisioned within the Grafana instance.
+
 ## Troubleshooting
 
 This section includes troubleshooting tips you might find helpful when deploying Grafana on Kubernetes.

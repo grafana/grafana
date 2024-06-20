@@ -26,12 +26,12 @@ export function NotificationPolicyMatchers({ route, matcherFormatter }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  defaultPolicy: css`
-    padding: ${theme.spacing(0.5)};
-    background: ${theme.colors.background.secondary};
-    width: fit-content;
-  `,
-  textMuted: css`
-    color: ${theme.colors.text.secondary};
-  `,
+  defaultPolicy: css({
+    padding: theme.spacing(0.5),
+    background: theme.colors.background.secondary,
+    width: 'fit-content',
+  }),
+  textMuted: css({
+    color: theme.colors.text.secondary,
+  }),
 });

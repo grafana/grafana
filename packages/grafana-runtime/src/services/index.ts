@@ -15,5 +15,21 @@ export {
   getPluginLinkExtensions,
   getPluginComponentExtensions,
   type GetPluginExtensions,
+  type GetPluginExtensionsOptions,
+  type GetPluginExtensionsResult,
+  type UsePluginExtensions,
+  type UsePluginExtensionsResult,
+  type UsePluginComponentResult,
 } from './pluginExtensions/getPluginExtensions';
+export {
+  setPluginExtensionsHook,
+  usePluginExtensions,
+  usePluginLinkExtensions,
+  usePluginComponentExtensions,
+  usePluginComponents,
+  usePluginLinks,
+} from './pluginExtensions/usePluginExtensions';
+
+export { setPluginComponentHook, usePluginComponent } from './pluginExtensions/usePluginComponent';
+
 export { isPluginExtensionLink, isPluginExtensionComponent } from './pluginExtensions/utils';

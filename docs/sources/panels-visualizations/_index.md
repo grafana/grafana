@@ -17,35 +17,56 @@ menuTitle: Panels and visualizations
 title: Panels and visualizations
 description: Learn about and configure panels and visualizations
 weight: 80
+hero:
+  title: Panels and visualizations
+  level: 1
+  width: 110
+  height: 110
+  description: >-
+    Easily collect, correlate, and visualize data so you can make informed decisions in real time.
+cards:
+  title_class: pt-0 lh-1
+  items:
+    - title: Visualizations
+      href: ./visualizations/
+      description: Learn about all the visualizations available in Grafana, including which visualizations are ideal for different datasets and how to configure their options.
+      height: 24
+    - title: Panel overview
+      href: ./panel-overview/
+      description: Learn about the features of the panel.
+      height: 24
+    - title: Panel editor
+      href: ./panel-editor-overview/
+      description: Learn about the features of the panel editor and how to begin editing a panel.
+      height: 24
+    - title: Configure standard options
+      href: ./configure-standard-options/
+      description: Learn about configuring standard options like units, field display names, and colors.
+      height: 24
+    - title: Query and transform data
+      href: ./query-transform-data/
+      description: Learn about querying and transforming your data to refine your visualizations.
+      height: 24
+refs:
+  query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
 ---
 
-# Panels and visualizations
+{{< docs/hero-simple key="hero" >}}
 
-The _panel_ is the basic visualization building block in Grafana.
-Each panel has a query editor specific to the data source selected in the panel.
-The query editor allows you to build a query that returns the data you want to visualize.
+---
 
-There are a wide variety of styling and formatting options for each panel.
-Panels can be dragged, dropped, and resized to rearrange them on the dashboard.
+## Overview
 
-Before you add a panel, ensure that you have configured a data source.
+Panels are the basic building block in Grafana dashboards, composed of a [query](ref:query) and a visualization, a graphical representation of query results.
 
-- For details about using data sources, refer to [Data sources][].
+Visualizations provide you several different ways to present your data within a panel, depending on what best suits the data and your needs. Grafana’s growing suite of visualizations, ranging from time series graphs to heatmaps to cutting-edge 3D charts, help you decode complex datasets.
 
-- For more information about managing data sources as an administrator, refer to [Data source management][].
+Panels offer a wide variety of formatting and styling options from applying colors based on field values to custom units. Each visualization also comes with options specific to it that give you further control over how your data is displayed. With Grafana panels and visualizations, you can easily get the information you need from your data and optimize performance.
 
-  {{% admonition type="note" %}}
-  [Data source management](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/) is only available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
-  {{% /admonition %}}
+## Explore
 
-This section includes the following sub topics:
-
-{{< section >}}
-
-{{% docs/reference %}}
-[Data source management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-[Data source management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-
-[Data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-[Data sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-{{% /docs/reference %}}
+{{< card-grid key="cards" type="simple" >}}

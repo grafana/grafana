@@ -34,7 +34,7 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 			SkipHostEnvVarsEnabled:     features.IsEnabledGlobally(featuremgmt.FlagPluginsSkipHostEnvVars),
 		},
 		cfg.AngularSupportEnabled,
-		cfg.GrafanaComURL,
+		cfg.GrafanaComAPIURL,
 		cfg.DisablePlugins,
 		cfg.HideAngularDeprecation,
 		cfg.ForwardHostEnvVars,

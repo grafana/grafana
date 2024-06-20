@@ -227,27 +227,27 @@ export function ChannelSubForm<R extends ChannelValues>({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  buttons: css`
-    & > * + * {
-      margin-left: ${theme.spacing(1)};
-    }
-  `,
-  innerContent: css`
-    max-width: 536px;
-  `,
-  wrapper: css`
-    margin: ${theme.spacing(2, 0)};
-    padding: ${theme.spacing(1)};
-    border: solid 1px ${theme.colors.border.medium};
-    border-radius: ${theme.shape.radius.default};
-    max-width: ${theme.breakpoints.values.xl}${theme.breakpoints.unit};
-  `,
-  topRow: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-  `,
-  channelSettingsHeader: css`
-    margin-top: ${theme.spacing(2)};
-  `,
+  buttons: css({
+    '& > * + *': {
+      marginLeft: theme.spacing(1),
+    },
+  }),
+  innerContent: css({
+    maxWidth: '536px',
+  }),
+  wrapper: css({
+    margin: theme.spacing(2, 0),
+    padding: theme.spacing(1),
+    border: `solid 1px ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.default,
+    maxWidth: `${theme.breakpoints.values.xl}${theme.breakpoints.unit}`,
+  }),
+  topRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  }),
+  channelSettingsHeader: css({
+    marginTop: theme.spacing(2),
+  }),
 });

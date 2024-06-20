@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -38,9 +38,8 @@ func TestAuthenticateJWT(t *testing.T) {
 			wantID: &authn.Identity{
 				OrgID:           0,
 				OrgName:         "",
-				OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleAdmin},
+				OrgRoles:        map[int64]identity.RoleType{1: identity.RoleAdmin},
 				Groups:          []string{"foo", "bar"},
-				ID:              "",
 				Login:           "eai-doe",
 				Name:            "Eai Doe",
 				Email:           "eai.doe@cor.po",
@@ -57,9 +56,8 @@ func TestAuthenticateJWT(t *testing.T) {
 					SyncPermissions: true,
 					SyncTeams:       true,
 					LookUpParams: login.UserLookupParams{
-						UserID: nil,
-						Email:  stringPtr("eai.doe@cor.po"),
-						Login:  stringPtr("eai-doe"),
+						Email: stringPtr("eai.doe@cor.po"),
+						Login: stringPtr("eai-doe"),
 					},
 				},
 			},
@@ -92,8 +90,7 @@ func TestAuthenticateJWT(t *testing.T) {
 			wantID: &authn.Identity{
 				OrgID:           0,
 				OrgName:         "",
-				OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleAdmin},
-				ID:              "",
+				OrgRoles:        map[int64]identity.RoleType{1: identity.RoleAdmin},
 				Login:           "eai-doe",
 				Groups:          []string{},
 				Name:            "Eai Doe",
@@ -111,9 +108,8 @@ func TestAuthenticateJWT(t *testing.T) {
 					SyncPermissions: true,
 					SyncTeams:       false,
 					LookUpParams: login.UserLookupParams{
-						UserID: nil,
-						Email:  stringPtr("eai.doe@cor.po"),
-						Login:  stringPtr("eai-doe"),
+						Email: stringPtr("eai.doe@cor.po"),
+						Login: stringPtr("eai-doe"),
 					},
 				},
 			},

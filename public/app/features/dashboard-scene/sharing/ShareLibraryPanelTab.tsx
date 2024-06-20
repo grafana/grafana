@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { t } from 'app/core/internationalization';
 import { ShareLibraryPanel } from 'app/features/dashboard/components/ShareModal/ShareLibraryPanel';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
@@ -31,11 +32,12 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
     return null;
   }
 
-  const vizPanel = panelRef.resolve();
+  const panel = panelRef.resolve();
+  const parent = panel.parent;
 
-  if (vizPanel.parent instanceof DashboardGridItem) {
+  if (parent instanceof DashboardGridItem) {
     const dashboardScene = dashboardRef.resolve();
-    const panelJson = gridItemToPanel(vizPanel.parent);
+    const panelJson = gridItemToPanel(parent);
     const panelModel = new PanelModel(panelJson);
 
     const dashboardJson = transformSceneToSaveModel(dashboardScene);
@@ -49,6 +51,7 @@ function ShareLibraryPanelTabRenderer({ model }: SceneComponentProps<ShareLibrar
         onDismiss={() => {
           modalRef?.resolve().onDismiss();
         }}
+        onCreateLibraryPanel={(libPanel: LibraryPanel) => dashboardScene.createLibraryPanel(panel, libPanel)}
       />
     );
   }

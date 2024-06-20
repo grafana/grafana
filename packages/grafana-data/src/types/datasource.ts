@@ -285,12 +285,12 @@ abstract class DataSourceApi<
   /**
    * Get tag keys for adhoc filters
    */
-  getTagKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<MetricFindValue[]>;
+  getTagKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
 
   /**
    * Get tag values for adhoc filters
    */
-  getTagValues?(options: DataSourceGetTagValuesOptions<TQuery>): Promise<MetricFindValue[]>;
+  getTagValues?(options: DataSourceGetTagValuesOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -375,6 +375,7 @@ export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuer
    */
   timeRange?: TimeRange;
   queries?: TQuery[];
+  scopes?: Scope[] | undefined;
 }
 
 /**
@@ -391,6 +392,7 @@ export interface DataSourceGetTagValuesOptions<TQuery extends DataQuery = DataQu
    */
   timeRange?: TimeRange;
   queries?: TQuery[];
+  scopes?: Scope[] | undefined;
 }
 
 export interface MetadataInspectorProps<
@@ -561,7 +563,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   // Used to correlate multiple related requests
   queryGroupId?: string;
 
-  scope?: Scope | undefined;
+  scopes?: Scope[] | undefined;
 }
 
 export interface DataQueryTimings {
@@ -587,7 +589,7 @@ export interface QueryFixAction {
    */
   options?: KeyValue<string>;
   /**
-   * An optional single row data frame containing the row that triggered the the QueryFixAction.
+   * An optional single row data frame containing the row that triggered the QueryFixAction.
    */
   frame?: DataFrame;
 }
@@ -601,6 +603,7 @@ export interface QueryHint {
 export interface MetricFindValue {
   text: string;
   value?: string | number;
+  group?: string;
   expandable?: boolean;
 }
 
@@ -708,6 +711,11 @@ export interface AnnotationQueryRequest<MoreOptions = {}> {
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
   ts: number;
   query: TQuery;
+}
+
+export interface GetTagResponse {
+  data: MetricFindValue[];
+  error?: DataQueryError;
 }
 
 abstract class LanguageProvider {

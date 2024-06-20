@@ -3,7 +3,7 @@ import { pickBy } from 'lodash';
 import React from 'react';
 
 import { GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
-import { Icon, IconName, LinkButton, useStyles2, useTheme2, VerticalGroup } from '@grafana/ui';
+import { Icon, IconName, LinkButton, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { Trans } from 'app/core/internationalization';
 
@@ -149,7 +149,7 @@ export const LoginServiceButtons = () => {
 
   if (hasServices) {
     return (
-      <VerticalGroup>
+      <Stack direction={'column'} width={'100%'}>
         <LoginDivider />
         {Object.entries(enabledServices).map(([key, service]) => {
           const serviceName = service.name;
@@ -166,7 +166,7 @@ export const LoginServiceButtons = () => {
             </LinkButton>
           );
         })}
-      </VerticalGroup>
+      </Stack>
     );
   }
 

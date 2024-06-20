@@ -10,8 +10,10 @@ import {
   GrafanaTheme2,
   InterpolateFunction,
   outerJoinDataFrames,
+  TimeRange,
   ValueFormatter,
 } from '@grafana/data';
+import { parseSampleValue, sortSeriesByLabel } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
 import { HeatmapCellLayout } from '@grafana/schema';
 import {
@@ -20,7 +22,6 @@ import {
   readHeatmapRowsCustomMeta,
   rowsToCellsHeatmap,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { parseSampleValue, sortSeriesByLabel } from 'app/plugins/datasource/prometheus/result_transformer';
 
 import { CellValues, Options } from './types';
 import { boundedMinMax, valuesToFills } from './utils';
@@ -65,14 +66,25 @@ export interface HeatmapData {
   warning?: string;
 }
 
-export function prepareHeatmapData(
-  frames: DataFrame[],
-  annotations: DataFrame[] | undefined,
-  options: Options,
-  palette: string[],
-  theme: GrafanaTheme2,
-  replaceVariables: InterpolateFunction = (v) => v
-): HeatmapData {
+interface PrepareHeatmapDataOptions {
+  frames: DataFrame[];
+  annotations?: DataFrame[];
+  options: Options;
+  palette: string[];
+  theme: GrafanaTheme2;
+  replaceVariables?: InterpolateFunction;
+  timeRange?: TimeRange;
+}
+
+export function prepareHeatmapData({
+  frames,
+  annotations,
+  options,
+  palette,
+  theme,
+  replaceVariables = (v) => v,
+  timeRange,
+}: PrepareHeatmapDataOptions): HeatmapData {
   if (!frames?.length) {
     return {};
   }
@@ -104,7 +116,7 @@ export function prepareHeatmapData(
       }
 
       return getDenseHeatmapData(
-        calculateHeatmapFromData(frames, optionsCopy.calculation ?? {}),
+        calculateHeatmapFromData(frames, { ...options.calculation, timeRange }),
         exemplars,
         optionsCopy,
         palette,
@@ -113,7 +125,7 @@ export function prepareHeatmapData(
     }
 
     return getDenseHeatmapData(
-      calculateHeatmapFromData(frames, options.calculation ?? {}),
+      calculateHeatmapFromData(frames, { ...options.calculation, timeRange }),
       exemplars,
       options,
       palette,

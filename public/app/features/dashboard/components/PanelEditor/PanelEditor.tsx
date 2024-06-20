@@ -266,7 +266,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         {panelPane}
         <div
           className={styles.tabsWrapper}
-          aria-label={selectors.components.PanelEditor.DataPane.content}
+          data-testid={selectors.components.PanelEditor.DataPane.content}
           key="panel-editor-tabs"
         >
           <PanelEditorTabs
@@ -309,7 +309,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               id="table-view"
               value={tableViewEnabled}
               onClick={this.onToggleTableView}
-              aria-label={selectors.components.PanelEditor.toggleTableView}
+              data-testid={selectors.components.PanelEditor.toggleTableView}
             />
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
             <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} isOnCanvas={true} />
@@ -442,7 +442,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       <Page
         navModel={sectionNav}
         pageNav={pageNav}
-        aria-label={selectors.components.PanelEditor.General.content}
+        data-testid={selectors.components.PanelEditor.General.content}
         layout={PageLayoutType.Custom}
         className={className}
       >
@@ -502,64 +502,64 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, props: Props) => {
       display: 'flex',
       paddingTop: theme.spacing(2),
     }),
-    verticalSplitPanesWrapper: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      width: 100%;
-      position: relative;
-    `,
-    mainPaneWrapper: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      width: 100%;
-      padding-right: ${uiState.isPanelOptionsVisible ? 0 : paneSpacing};
-    `,
-    variablesWrapper: css`
-      label: variablesWrapper;
-      display: flex;
-      flex-grow: 1;
-      flex-wrap: wrap;
-      gap: ${theme.spacing(1, 2)};
-    `,
-    panelWrapper: css`
-      flex: 1 1 0;
-      min-height: 0;
-      width: 100%;
-      padding-left: ${paneSpacing};
-    `,
-    tabsWrapper: css`
-      height: 100%;
-      width: 100%;
-    `,
-    panelToolbar: css`
-      display: flex;
-      padding: 0 0 ${paneSpacing} ${paneSpacing};
-      justify-content: space-between;
-      flex-wrap: wrap;
-    `,
-    angularWarning: css`
-      display: flex;
-      height: theme.spacing(4);
-      align-items: center;
-    `,
-    toolbarLeft: css`
-      padding-left: ${theme.spacing(1)};
-    `,
-    centeringContainer: css`
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      flex-direction: column;
-    `,
-    onlyPanel: css`
-      height: 100%;
-      position: absolute;
-      overflow: hidden;
-      width: 100%;
-    `,
+    verticalSplitPanesWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      width: '100%',
+      position: 'relative',
+    }),
+    mainPaneWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      width: '100%',
+      paddingRight: `${uiState.isPanelOptionsVisible ? 0 : paneSpacing}`,
+    }),
+    variablesWrapper: css({
+      label: 'variablesWrapper',
+      display: 'flex',
+      flexGrow: 1,
+      flexWrap: 'wrap',
+      gap: theme.spacing(1, 2),
+    }),
+    panelWrapper: css({
+      flex: '1 1 0',
+      minHeight: 0,
+      width: '100%',
+      paddingLeft: paneSpacing,
+    }),
+    tabsWrapper: css({
+      height: '100%',
+      width: '100%',
+    }),
+    panelToolbar: css({
+      display: 'flex',
+      padding: `0 0 ${paneSpacing} ${paneSpacing}`,
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+    }),
+    angularWarning: css({
+      display: 'flex',
+      height: theme.spacing(4),
+      alignItems: 'center',
+    }),
+    toolbarLeft: css({
+      paddingLeft: theme.spacing(1),
+    }),
+    centeringContainer: css({
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative',
+      flexDirection: 'column',
+    }),
+    onlyPanel: css({
+      height: '100%',
+      position: 'absolute',
+      overflow: 'hidden',
+      width: '100%',
+    }),
   };
 });
 

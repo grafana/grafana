@@ -4,16 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
-	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -112,18 +110,17 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 		return nil
 	}
 
-	namespace, id := identity.GetNamespacedID()
-	if !authidentity.IsNamespace(namespace, authn.NamespaceUser, authn.NamespaceServiceAccount) {
+	if !identity.ID.IsNamespace(authn.NamespaceUser, authn.NamespaceServiceAccount) {
 		return nil
 	}
 
-	userID, err := strconv.ParseInt(id, 10, 64)
+	userID, err := identity.ID.ParseInt()
 	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", identity.ID, "err", err)
 		return nil
 	}
 
-	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+	usr, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
 		UserID: userID,
 		OrgID:  r.OrgID,
 	})
@@ -151,17 +148,17 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 		return nil
 	}
 
-	namespace, id := identity.GetNamespacedID()
-	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
+	if !identity.ID.IsNamespace(authn.NamespaceUser, authn.NamespaceServiceAccount) {
 		return nil
 	}
 
-	userID, err := authidentity.IntIdentifier(namespace, id)
+	userID, err := identity.ID.ParseInt()
 	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", identity.ID, "err", err)
 		return nil
 	}
 
+	goCtx := context.WithoutCancel(ctx)
 	go func(userID int64) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -169,7 +166,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 			}
 		}()
 
-		if err := s.userService.UpdateLastSeenAt(context.Background(),
+		if err := s.userService.UpdateLastSeenAt(goCtx,
 			&user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: r.OrgID}); err != nil &&
 			!errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
@@ -184,18 +181,18 @@ func (s *UserSync) EnableUserHook(ctx context.Context, identity *authn.Identity,
 		return nil
 	}
 
-	namespace, id := identity.GetNamespacedID()
-	if namespace != authn.NamespaceUser {
+	if !identity.ID.IsNamespace(authn.NamespaceUser) {
 		return nil
 	}
 
-	userID, err := authidentity.IntIdentifier(namespace, id)
+	userID, err := identity.ID.ParseInt()
 	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", identity.ID, "err", err)
 		return nil
 	}
 
-	return s.userService.Disable(ctx, &user.DisableUserCommand{UserID: userID, IsDisabled: false})
+	isDisabled := false
+	return s.userService.Update(ctx, &user.UpdateUserCommand{UserID: userID, IsDisabled: &isDisabled})
 }
 
 func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, identity *authn.Identity, createConnection bool) error {
@@ -258,18 +255,17 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		needsUpdate = true
 	}
 
+	// Sync isGrafanaAdmin permission
+	if id.IsGrafanaAdmin != nil && *id.IsGrafanaAdmin != usr.IsAdmin {
+		updateCmd.IsGrafanaAdmin = id.IsGrafanaAdmin
+		usr.IsAdmin = *id.IsGrafanaAdmin
+		needsUpdate = true
+	}
+
 	if needsUpdate {
 		s.log.FromContext(ctx).Debug("Syncing user info", "id", id.ID, "update", fmt.Sprintf("%v", updateCmd))
 		if err := s.userService.Update(ctx, updateCmd); err != nil {
 			return err
-		}
-	}
-
-	// Sync isGrafanaAdmin permission
-	if id.IsGrafanaAdmin != nil && *id.IsGrafanaAdmin != usr.IsAdmin {
-		usr.IsAdmin = *id.IsGrafanaAdmin
-		if errPerms := s.userService.UpdatePermissions(ctx, usr.ID, *id.IsGrafanaAdmin); errPerms != nil {
-			return errPerms
 		}
 	}
 
@@ -368,16 +364,8 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 	var usr *user.User
 	var err error
 
-	// If not found, try to find the user by id
-	if params.UserID != nil && *params.UserID != 0 {
-		usr, err = s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: *params.UserID})
-		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-			return nil, err
-		}
-	}
-
 	// If not found, try to find the user by email address
-	if usr == nil && params.Email != nil && *params.Email != "" {
+	if params.Email != nil && *params.Email != "" {
 		usr, err = s.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: *params.Email})
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
@@ -402,7 +390,8 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
 func syncUserToIdentity(usr *user.User, id *authn.Identity) {
-	id.ID = authn.NamespacedID(authn.NamespaceUser, usr.ID)
+	id.ID = authn.NewNamespaceID(authn.NamespaceUser, usr.ID)
+	id.UID = authn.NewNamespaceIDString(authn.NamespaceUser, usr.UID)
 	id.Login = usr.Login
 	id.Email = usr.Email
 	id.Name = usr.Name
@@ -412,6 +401,14 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 
 // syncSignedInUserToIdentity syncs a user to an identity.
 func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity) {
+	var ns authn.Namespace
+	if identity.ID.IsNamespace(authn.NamespaceServiceAccount) {
+		ns = authn.NamespaceServiceAccount
+	} else {
+		ns = authn.NamespaceUser
+	}
+	identity.UID = authn.NewNamespaceIDString(ns, usr.UserUID)
+
 	identity.Name = usr.Name
 	identity.Login = usr.Login
 	identity.Email = usr.Email

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -160,6 +160,7 @@ type fakeRuleAccessControlService struct {
 	mu                             sync.Mutex
 	Calls                          []call
 	AuthorizeAccessToRuleGroupFunc func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
+	AuthorizeAccessInFolderFunc    func(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error
 	AuthorizeRuleChangesFunc       func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
 	CanReadAllRulesFunc            func(ctx context.Context, user identity.Requester) (bool, error)
 	CanWriteAllRulesFunc           func(ctx context.Context, user identity.Requester) (bool, error)
@@ -181,6 +182,14 @@ func (s *fakeRuleAccessControlService) AuthorizeRuleGroupRead(ctx context.Contex
 	s.RecordCall("AuthorizeRuleGroupRead", ctx, user, rules)
 	if s.AuthorizeAccessToRuleGroupFunc != nil {
 		return s.AuthorizeAccessToRuleGroupFunc(ctx, user, rules)
+	}
+	return nil
+}
+
+func (s *fakeRuleAccessControlService) AuthorizeRuleRead(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
+	s.RecordCall("AuthorizeRuleRead", ctx, user, rule)
+	if s.AuthorizeAccessInFolderFunc != nil {
+		return s.AuthorizeAccessInFolderFunc(ctx, user, rule)
 	}
 	return nil
 }

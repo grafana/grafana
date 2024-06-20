@@ -3,6 +3,7 @@ import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -144,7 +145,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const currentTab = tabs.find((t) => t.tabId === tab);
 
   return (
-    <div className={styles.dataPane}>
+    <div className={styles.dataPane} data-testid={selectors.components.PanelEditor.DataPane.content}>
       <TabsBar hideBorder={true} className={styles.tabsBar}>
         {tabs.map((t, index) => {
           return (
@@ -173,6 +174,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       minHeight: 0,
       height: '100%',
+      width: '100%',
     }),
     tabContent: css({
       padding: theme.spacing(2),

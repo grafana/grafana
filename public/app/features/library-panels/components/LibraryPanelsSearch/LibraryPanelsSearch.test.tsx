@@ -31,7 +31,7 @@ jest.mock('debounce-promise', () => {
   const debounce = () => {
     const debounced = () =>
       Promise.resolve([
-        { label: 'General', value: { uid: '', title: 'General' } },
+        { label: 'Dashboards', value: { uid: '', title: 'Dashboards' } },
         { label: 'Folder1', value: { id: 'xMsQdBfWz', title: 'Folder1' } },
         { label: 'Folder2', value: { id: 'wfTJJL5Wz', title: 'Folder2' } },
       ]);
@@ -105,7 +105,7 @@ describe('LibraryPanelsSearch', () => {
       await getTestContext();
 
       expect(screen.getByPlaceholderText(/search by name/i)).toBeInTheDocument();
-      expect(screen.getByText(/no library panels found/i)).toBeInTheDocument();
+      expect(screen.getByText(/you haven\'t created any library panels yet/i)).toBeInTheDocument();
     });
 
     describe('and user searches for library panel by name or description', () => {
@@ -132,7 +132,7 @@ describe('LibraryPanelsSearch', () => {
       await getTestContext({ showSort: true });
 
       expect(screen.getByPlaceholderText(/search by name/i)).toBeInTheDocument();
-      expect(screen.getByText(/no library panels found/i)).toBeInTheDocument();
+      expect(screen.getByText(/you haven\'t created any library panels yet/i)).toBeInTheDocument();
       expect(screen.getByText(/sort \(default a–z\)/i)).toBeInTheDocument();
     });
 
@@ -160,7 +160,7 @@ describe('LibraryPanelsSearch', () => {
       await getTestContext({ showPanelFilter: true });
 
       expect(screen.getByPlaceholderText(/search by name/i)).toBeInTheDocument();
-      expect(screen.getByText(/no library panels found/i)).toBeInTheDocument();
+      expect(screen.getByText(/you haven\'t created any library panels yet/i)).toBeInTheDocument();
       expect(screen.getByRole('combobox', { name: /panel type filter/i })).toBeInTheDocument();
     });
 
@@ -188,7 +188,7 @@ describe('LibraryPanelsSearch', () => {
       await getTestContext({ showFolderFilter: true });
 
       expect(screen.getByPlaceholderText(/search by name/i)).toBeInTheDocument();
-      expect(screen.getByText(/no library panels found/i)).toBeInTheDocument();
+      expect(screen.getByText(/you haven\'t created any library panels yet/i)).toBeInTheDocument();
       expect(screen.getByRole('combobox', { name: /folder filter/i })).toBeInTheDocument();
     });
 
@@ -207,7 +207,7 @@ describe('LibraryPanelsSearch', () => {
                 type: 'timeseries',
                 version: 1,
                 meta: {
-                  folderName: 'General',
+                  folderName: 'Dashboards',
                   folderUid: '',
                   connectedDashboards: 0,
                   created: '2021-01-01 12:00:00',
@@ -259,7 +259,7 @@ describe('LibraryPanelsSearch', () => {
               type: 'timeseries',
               version: 1,
               meta: {
-                folderName: 'General',
+                folderName: 'Dashboards',
                 folderUid: '',
                 connectedDashboards: 0,
                 created: '2021-01-01 12:00:00',
@@ -274,7 +274,7 @@ describe('LibraryPanelsSearch', () => {
 
       const card = () => screen.getByLabelText(/plugin visualization item time series/i);
 
-      expect(screen.queryByText(/no library panels found/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/you haven\'t created any library panels yet/i)).not.toBeInTheDocument();
       expect(card()).toBeInTheDocument();
       expect(within(card()).getByText(/library panel name/i)).toBeInTheDocument();
       expect(within(card()).getByText(/library panel description/i)).toBeInTheDocument();
@@ -300,7 +300,7 @@ describe('LibraryPanelsSearch', () => {
               type: 'timeseries',
               version: 1,
               meta: {
-                folderName: 'General',
+                folderName: 'Dashboards',
                 folderUid: '',
                 connectedDashboards: 0,
                 created: '2021-01-01 12:00:00',
@@ -315,7 +315,7 @@ describe('LibraryPanelsSearch', () => {
 
       const card = () => screen.getByLabelText(/plugin visualization item time series/i);
 
-      expect(screen.queryByText(/no library panels found/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/you haven\'t created any library panels yet/i)).not.toBeInTheDocument();
       expect(card()).toBeInTheDocument();
       expect(within(card()).getByText(/library panel name/i)).toBeInTheDocument();
       expect(within(card()).getByText(/library panel description/i)).toBeInTheDocument();
@@ -339,7 +339,7 @@ describe('LibraryPanelsSearch', () => {
                 type: 'timeseries',
                 version: 1,
                 meta: {
-                  folderName: 'General',
+                  folderName: 'Dashboards',
                   folderUid: '',
                   connectedDashboards: 0,
                   created: '2021-01-01 12:00:00',

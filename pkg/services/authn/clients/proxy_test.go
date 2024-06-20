@@ -202,8 +202,8 @@ func TestProxy_Hook(t *testing.T) {
 		proxyFieldRole: "X-Role",
 	}
 	cache := &fakeCache{data: make(map[string][]byte)}
-	userId := 1
-	userID := fmt.Sprintf("%s:%d", authn.NamespaceUser, userId)
+	userId := int64(1)
+	userID := authn.NewNamespaceID(authn.NamespaceUser, userId)
 
 	// withRole creates a test case for a user with a specific role.
 	withRole := func(role string) func(t *testing.T) {

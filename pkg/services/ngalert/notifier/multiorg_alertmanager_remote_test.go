@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -63,9 +64,10 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 				URL:               testsrv.URL,
 				TenantID:          tenantID,
 				BasicAuthPassword: password,
+				DefaultConfig:     setting.GetAlertmanagerDefaultConfiguration(),
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			remoteAM, err := remote.NewAlertmanager(externalAMCfg, notifier.NewFileStore(orgID, kvStore), secretsService.Decrypt, m)
+			remoteAM, err := remote.NewAlertmanager(externalAMCfg, notifier.NewFileStore(orgID, kvStore), secretsService.Decrypt, remote.NoopAutogenFn, m, tracing.InitializeTracerForTest())
 			require.NoError(t, err)
 
 			// Use both Alertmanager implementations in the forked Alertmanager.
@@ -268,7 +270,6 @@ var validConfig = `{
 				"uid": "",
 				"name": "email receiver",
 				"type": "email",
-				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
 				}

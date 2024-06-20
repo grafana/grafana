@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/shared/QueryBuilderHints.tsx
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
@@ -76,12 +77,12 @@ QueryBuilderHints.displayName = 'QueryBuilderHints';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      display: flex;
-      align-items: start;
-    `,
-    hint: css`
-      margin-right: ${theme.spacing(1)};
-    `,
+    container: css({
+      display: 'flex',
+      alignItems: 'start',
+    }),
+    hint: css({
+      marginRight: theme.spacing(1),
+    }),
   };
 };

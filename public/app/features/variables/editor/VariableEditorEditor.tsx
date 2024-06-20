@@ -1,11 +1,12 @@
+import { css, keyframes } from '@emotion/css';
 import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
-import { LoadingState, SelectableValue, VariableType } from '@grafana/data';
+import { GrafanaTheme2, LoadingState, SelectableValue, VariableHide, VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { Button, HorizontalGroup, Icon } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { StoreState, ThunkDispatch } from '../../../types';
 import { VariableHideSelect } from '../../dashboard-scene/settings/variables/components/VariableHideSelect';
@@ -20,7 +21,6 @@ import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable, getVariablesState } from '../state/selectors';
 import { changeVariableProp, changeVariableType, removeVariable } from '../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../state/types';
-import { VariableHide } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
@@ -55,7 +55,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch) => {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export interface OwnProps {
+export interface OwnProps extends Themeable2 {
   identifier: KeyedVariableIdentifier;
 }
 
@@ -147,12 +147,14 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
   };
 
   render() {
-    const { variable } = this.props;
+    const { theme, variable } = this.props;
     const EditorToRender = variableAdapters.get(this.props.variable.type).editor;
     if (!EditorToRender) {
       return null;
     }
     const loading = variable.state === LoadingState.Loading;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const styles = getStyles(theme);
 
     return (
       <>
@@ -210,7 +212,14 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
                 variant="secondary"
               >
                 Run query
-                {loading && <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />}
+                {loading && (
+                  <Icon
+                    className={styles.spin}
+                    name={prefersReducedMotion ? 'hourglass' : 'sync'}
+                    size="sm"
+                    style={{ marginLeft: '2px' }}
+                  />
+                )}
               </Button>
               <Button
                 variant="primary"
@@ -233,4 +242,23 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
   }
 }
 
-export const VariableEditorEditor = connector(VariableEditorEditorUnConnected);
+export const VariableEditorEditor = withTheme2(connector(VariableEditorEditorUnConnected));
+
+const spin = keyframes({
+  '0%': {
+    transform: 'rotate(0deg) scaleX(-1)', // scaleX flips the `sync` icon so arrows point the correct way
+  },
+  '100%': {
+    transform: 'rotate(359deg) scaleX(-1)',
+  },
+});
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    spin: css({
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${spin} 3s linear infinite`,
+      },
+    }),
+  };
+};

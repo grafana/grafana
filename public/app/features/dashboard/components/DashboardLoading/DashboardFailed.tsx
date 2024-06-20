@@ -24,10 +24,10 @@ export const DashboardFailed = ({ initError }: Props) => {
 };
 
 export const styles = {
-  dashboardLoading: css`
-    height: 60vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `,
+  dashboardLoading: css({
+    height: '60vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
 };

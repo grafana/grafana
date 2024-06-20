@@ -75,7 +75,7 @@ export const SilencePeriod = () => {
 };
 
 const styles = {
-  timeRange: css`
-    width: 400px;
-  `,
+  timeRange: css({
+    width: '400px',
+  }),
 };

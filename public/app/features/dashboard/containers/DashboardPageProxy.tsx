@@ -54,13 +54,13 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return null;
   }
 
-  if (dashboard.value && dashboard.value.dashboard.uid && dashboard.value.dashboard.uid !== props.match.params.uid) {
+  if (dashboard?.value?.dashboard?.uid !== props.match.params.uid && dashboard.value?.meta?.isNew !== true) {
     return null;
   }
 
   if (
     dashboard.value &&
-    !(dashboard.value.meta.canEdit || dashboard.value.meta.canMakeEditable) &&
+    !(dashboard.value.meta?.canEdit || dashboard.value.meta?.canMakeEditable) &&
     isScenesSupportedRoute
   ) {
     return <DashboardScenePage {...props} />;

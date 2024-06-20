@@ -4,13 +4,12 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -72,7 +71,9 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 				s.log.FromContext(ctx).Error("Failed to fetch role from db", "error", err, "role", role)
 				return nil, errSyncPermissionsForbidden
 			}
-			permissions = append(permissions, roleDTO.Permissions...)
+			if roleDTO != nil {
+				permissions = append(permissions, roleDTO.Permissions...)
+			}
 		}
 
 		return permissions, nil
@@ -98,13 +99,12 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 		return nil
 	}
 
-	namespace, id := ident.GetNamespacedID()
-	if namespace != authn.NamespaceUser {
+	if !ident.ID.IsNamespace(authn.NamespaceUser) {
 		s.log.FromContext(ctx).Debug("Skip syncing cloud role", "id", ident.ID)
 		return nil
 	}
 
-	userID, err := identity.IntIdentifier(namespace, id)
+	userID, err := ident.ID.ParseInt()
 	if err != nil {
 		return err
 	}

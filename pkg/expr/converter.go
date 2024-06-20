@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -31,7 +32,7 @@ func (c *ResultConverter) Convert(ctx context.Context,
 	dt, useDataplane, _ := shouldUseDataplane(frames, logger, c.Features.IsEnabled(ctx, featuremgmt.FlagDisableSSEDataplane))
 	if useDataplane {
 		logger.Debug("Handling SSE data source query through dataplane", "datatype", dt)
-		result, err := handleDataplaneFrames(ctx, c.Tracer, dt, frames)
+		result, err := handleDataplaneFrames(ctx, c.Tracer, c.Features, dt, frames)
 		return fmt.Sprintf("dataplane-%s", dt), result, err
 	}
 
@@ -79,7 +80,7 @@ func (c *ResultConverter) Convert(ctx context.Context,
 		}
 
 		if schema.Type != data.TimeSeriesTypeWide && !allowLongFrames {
-			return "", mathexp.Results{}, fmt.Errorf("input data must be a wide series but got type %s (input refid)", schema.Type)
+			return "", mathexp.Results{}, fmt.Errorf("%w but got type %s (input refid)", ErrSeriesMustBeWide, schema.Type)
 		}
 		filtered = append(filtered, frame)
 		totalLen += len(schema.ValueIndices)
@@ -119,7 +120,7 @@ func (c *ResultConverter) Convert(ctx context.Context,
 	}, nil
 }
 
-func getResponseFrame(resp *backend.QueryDataResponse, refID string) (data.Frames, error) {
+func getResponseFrame(logger *log.ConcreteLogger, resp *backend.QueryDataResponse, refID string) (data.Frames, error) {
 	response, ok := resp.Responses[refID]
 	if !ok {
 		// This indicates that the RefID of the request was not included to the response, i.e. some problem in the data source plugin
@@ -249,7 +250,7 @@ func extractNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
 func WideToMany(frame *data.Frame, fixSeries func(series mathexp.Series, valueField *data.Field)) ([]mathexp.Series, error) {
 	tsSchema := frame.TimeSeriesSchema()
 	if tsSchema.Type != data.TimeSeriesTypeWide {
-		return nil, fmt.Errorf("input data must be a wide series but got type %s", tsSchema.Type)
+		return nil, fmt.Errorf("%w but got type %s", ErrSeriesMustBeWide, tsSchema.Type)
 	}
 
 	if len(tsSchema.ValueIndices) == 1 {

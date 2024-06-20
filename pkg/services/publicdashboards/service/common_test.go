@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -14,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/service/intervalv2"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -27,14 +27,14 @@ func newPublicDashboardServiceImpl(
 ) (*PublicDashboardServiceImpl, db.DB, *setting.Cfg) {
 	t.Helper()
 
-	db := sqlstore.InitTestDB(t)
+	db, cfg := db.InitTestDBWithCfg(t)
 	tagService := tagimpl.ProvideService(db)
 	if annotationsRepo == nil {
-		annotationsRepo = annotationsimpl.ProvideService(db, db.Cfg, featuremgmt.WithFeatures(), tagService)
+		annotationsRepo = annotationsimpl.ProvideService(db, cfg, featuremgmt.WithFeatures(), tagService, tracing.InitializeTracerForTest())
 	}
 
 	if publicDashboardStore == nil {
-		publicDashboardStore = database.ProvideStore(db, db.Cfg, featuremgmt.WithFeatures())
+		publicDashboardStore = database.ProvideStore(db, cfg, featuremgmt.WithFeatures())
 	}
 	serviceWrapper := ProvideServiceWrapper(publicDashboardStore)
 
@@ -50,5 +50,5 @@ func newPublicDashboardServiceImpl(
 		serviceWrapper:     serviceWrapper,
 		license:            license,
 		features:           featuremgmt.WithFeatures(),
-	}, db, db.Cfg
+	}, db, cfg
 }

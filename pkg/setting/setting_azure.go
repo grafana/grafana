@@ -64,9 +64,18 @@ func (cfg *Cfg) readAzureSettings() {
 		if val := azureSection.Key("user_identity_client_secret").String(); val != "" {
 			tokenEndpointSettings.ClientSecret = val
 		}
+		if val := azureSection.Key("username_assertion").String(); val != "" && val == "username" {
+			tokenEndpointSettings.UsernameAssertion = true
+		}
 
 		azureSettings.UserIdentityTokenEndpoint = tokenEndpointSettings
 		azureSettings.UserIdentityFallbackCredentialsEnabled = azureSection.Key("user_identity_fallback_credentials_enabled").MustBool(true)
+	}
+
+	if customCloudsJSON := azureSection.Key("clouds_config").MustString(""); customCloudsJSON != "" {
+		if err := azureSettings.SetCustomClouds(customCloudsJSON); err != nil {
+			cfg.Logger.Error("Failed to parse custom Azure cloud settings", "err", err.Error())
+		}
 	}
 
 	azureSettings.ForwardSettingsPlugins = util.SplitString(azureSection.Key("forward_settings_to_plugins").String())

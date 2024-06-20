@@ -18,7 +18,9 @@ import (
 	_ "github.com/grafana/dskit/backoff"
 	_ "github.com/grafana/dskit/flagext"
 	_ "github.com/grafana/gofpdf"
-	_ "github.com/grpc-ecosystem/go-grpc-middleware"
+	_ "github.com/grafana/gomemcache/memcache"
+	_ "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
+	_ "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	_ "github.com/hashicorp/go-multierror"
 	_ "github.com/hashicorp/golang-lru/v2"
 	_ "github.com/linkedin/goavro/v2"
@@ -26,8 +28,8 @@ import (
 	_ "github.com/robfig/cron/v3"
 	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/stretchr/testify/require"
-	_ "github.com/vectordotdev/go-datemath"
 	_ "golang.org/x/time/rate"
+	_ "xorm.io/builder"
 )
 
 var IsEnterprise bool = false

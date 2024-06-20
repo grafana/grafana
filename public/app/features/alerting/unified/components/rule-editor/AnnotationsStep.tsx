@@ -90,7 +90,7 @@ const AnnotationsStep = () => {
 
   function getAnnotationsSectionDescription() {
     return (
-      <Stack direction="row" gap={0.5} alignItems="baseline">
+      <Stack direction="row" gap={0.5} alignItems="center">
         <Text variant="bodySmall" color="secondary">
           Add more context in your notification messages.
         </Text>
@@ -205,50 +205,50 @@ const AnnotationsStep = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  annotationValueInput: css`
-    width: 394px;
-  `,
-  textarea: css`
-    height: 76px;
-  `,
-  addAnnotationsButtonContainer: css`
-    margin-top: ${theme.spacing(1)};
-    gap: ${theme.spacing(1)};
-    display: flex;
-  `,
-  field: css`
-    margin-bottom: ${theme.spacing(0.5)};
-  `,
-  flexRow: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-  `,
-  flexRowItemMargin: css`
-    margin-top: ${theme.spacing(1)};
-  `,
-  deleteAnnotationButton: css`
-    display: inline-block;
-    margin-top: 10px;
-    margin-left: 10px;
-  `,
+  annotationValueInput: css({
+    width: '394px',
+  }),
+  textarea: css({
+    height: '76px',
+  }),
+  addAnnotationsButtonContainer: css({
+    marginTop: theme.spacing(1),
+    gap: theme.spacing(1),
+    display: 'flex',
+  }),
+  field: css({
+    marginBottom: theme.spacing(0.5),
+  }),
+  flexRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  }),
+  flexRowItemMargin: css({
+    marginTop: theme.spacing(1),
+  }),
+  deleteAnnotationButton: css({
+    display: 'inline-block',
+    marginTop: '10px',
+    marginLeft: '10px',
+  }),
 
-  annotationTitle: css`
-    color: ${theme.colors.text.primary};
-    margin-bottom: 3px;
-  `,
+  annotationTitle: css({
+    color: theme.colors.text.primary,
+    marginBottom: '3px',
+  }),
 
-  annotationContainer: css`
-    margin-top: 5px;
-  `,
+  annotationContainer: css({
+    marginTop: '5px',
+  }),
 
-  annotationDescription: css`
-    color: ${theme.colors.text.secondary};
-  `,
+  annotationDescription: css({
+    color: theme.colors.text.secondary,
+  }),
 
-  annotationValueContainer: css`
-    display: flex;
-  `,
+  annotationValueContainer: css({
+    display: 'flex',
+  }),
 });
 
 export default AnnotationsStep;

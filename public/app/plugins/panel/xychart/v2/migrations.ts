@@ -4,26 +4,10 @@ import { ScatterSeriesConfig, SeriesMapping, XYDimensionConfig, Options as PrevO
 
 import { XYSeriesConfig, Options } from './panelcfg.gen';
 
-// export const xyChartChangeHandler: PanelTypeChangedHandler = (
-//   panel,
-//   prevPluginId,
-//   prevOptions,
-//   prevFieldConfig
-// ): Options => {
-//   if (prevPluginId === 'xychart') {
-//     return migrateOptions({
-//       options: prevOptions,
-//       fieldConfig: prevFieldConfig,
-//     } as PanelModel);
-//   }
-
-//   return prevOptions as Options;
-// };
-
 export const xyChartMigrationHandler = (panel: PanelModel): Options => {
   const pluginVersion = panel?.pluginVersion ?? '';
 
-  if (pluginVersion === '') {
+  if (pluginVersion === '' || parseFloat(pluginVersion) < 11.1) {
     return migrateOptions(panel);
   }
 
@@ -244,15 +228,6 @@ function migrateOptions(panel: PanelModel): Options {
     mapping: seriesMapping === SeriesMapping.Auto ? SeriesMapping.Auto : SeriesMapping.Manual,
     series: newSeries,
   };
-
-  custDefaults.pointSize = custDefaults.pointSize.fixed;
-
-  // panel.fieldConfig = {
-  //   defaults,
-  //   overrides,
-  // };
-
-  // console.log('xyChartMigrationHandler', panel.options, newOptions);
 
   return newOptions;
 }

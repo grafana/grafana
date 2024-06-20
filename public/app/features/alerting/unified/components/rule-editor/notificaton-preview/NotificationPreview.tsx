@@ -112,34 +112,34 @@ export const NotificationPreview = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  collapsableSection: css`
-    width: auto;
-    border: 0;
-  `,
-  previewHeader: css`
-    margin: 0;
-  `,
-  routePreviewHeaderRow: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-top: ${theme.spacing(1)};
-  `,
-  collapseLabel: css`
-    flex: 1;
-  `,
-  button: css`
-    justify-content: flex-end;
-  `,
-  tagsInDetails: css`
-    display: flex;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  `,
-  policyPathItemMatchers: css`
-    display: flex;
-    flex-direction: row;
-    gap: ${theme.spacing(1)};
-  `,
+  collapsableSection: css({
+    width: 'auto',
+    border: 0,
+  }),
+  previewHeader: css({
+    margin: 0,
+  }),
+  routePreviewHeaderRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginTop: theme.spacing(1),
+  }),
+  collapseLabel: css({
+    flex: 1,
+  }),
+  button: css({
+    justifyContent: 'flex-end',
+  }),
+  tagsInDetails: css({
+    display: 'flex',
+    justifyContent: 'flex-start',
+    flexWrap: 'wrap',
+  }),
+  policyPathItemMatchers: css({
+    display: 'flex',
+    flexDirection: 'row',
+    gap: theme.spacing(1),
+  }),
 });

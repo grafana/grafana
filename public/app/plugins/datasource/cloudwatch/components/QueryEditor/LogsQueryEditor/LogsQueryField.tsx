@@ -19,9 +19,8 @@ export interface CloudWatchLogsQueryFieldProps
   query: CloudWatchLogsQuery;
 }
 export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) => {
-  const { query, datasource, onChange, ExtraFieldElement, data } = props;
+  const { query, datasource, onChange, ExtraFieldElement } = props;
 
-  const showError = data?.error?.refId === query.refId;
   const monacoRef = useRef<Monaco>();
   const disposalRef = useRef<monacoType.IDisposable>();
 
@@ -132,11 +131,6 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
         </div>
         {ExtraFieldElement}
       </div>
-      {showError ? (
-        <div className="query-row-break">
-          <div className="prom-query-field-info text-error">{data?.error?.message}</div>
-        </div>
-      ) : null}
     </>
   );
 };

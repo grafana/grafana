@@ -35,7 +35,9 @@ type APIServerFactory interface {
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
 
 	// Make an API server for a given group+version
-	MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
+	MakeAPIServer(ctx context.Context, tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
+
+	Shutdown()
 }
 
 // Zero dependency provider for testing
@@ -67,7 +69,7 @@ func (p *DummyAPIFactory) ApplyTo(config *genericapiserver.RecommendedConfig) er
 	return nil
 }
 
-func (p *DummyAPIFactory) MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error) {
+func (p *DummyAPIFactory) MakeAPIServer(_ context.Context, tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error) {
 	if gv.Version != "v0alpha1" {
 		return nil, fmt.Errorf("only alpha supported now")
 	}
@@ -107,11 +109,14 @@ func (p *DummyAPIFactory) MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVe
 			},
 			&pluginDatasourceImpl{}, // stub
 			&actest.FakeAccessControl{ExpectedEvaluate: true},
+			true, // show query types
 		)
 	}
 
 	return nil, fmt.Errorf("unsupported group")
 }
+
+func (p *DummyAPIFactory) Shutdown() {}
 
 // Simple stub for standalone datasource testing
 type pluginDatasourceImpl struct {

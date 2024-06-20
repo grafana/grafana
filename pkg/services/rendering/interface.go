@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var ErrTimeout = errors.New("timeout error - you can set timeout in seconds with &timeout url parameter")
@@ -42,18 +42,25 @@ func getRequestTimeout(opt TimeoutOpts) time.Duration {
 	return opt.Timeout * opt.RequestTimeoutMultiplier
 }
 
-type Opts struct {
+type CommonOpts struct {
 	TimeoutOpts
 	AuthOpts
+	Path            string
+	Timezone        string
+	ConcurrentLimit int
+	Headers         map[string][]string
+}
+
+type CSVOpts struct {
+	CommonOpts
+}
+
+type Opts struct {
+	CommonOpts
 	ErrorOpts
 	Width             int
 	Height            int
-	Path              string
-	Encoding          string
-	Timezone          string
-	ConcurrentLimit   int
 	DeviceScaleFactor float64
-	Headers           map[string][]string
 	Theme             models.Theme
 }
 
@@ -75,14 +82,9 @@ type SanitizeSVGResponse struct {
 	Sanitized []byte
 }
 
-type CSVOpts struct {
-	TimeoutOpts
-	AuthOpts
-	Path            string
-	Encoding        string
-	Timezone        string
-	ConcurrentLimit int
-	Headers         map[string][]string
+type Result struct {
+	FilePath string
+	FileName string
 }
 
 type RenderResult struct {

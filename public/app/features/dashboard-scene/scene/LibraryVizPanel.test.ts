@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { waitFor } from '@testing-library/dom';
 import { merge } from 'lodash';
 import { http, HttpResponse } from 'msw';
@@ -113,7 +112,7 @@ function setUpApiMock(
       },
       version: 6,
       meta: {
-        folderName: 'General',
+        folderName: 'Dashboards',
         folderUid: '',
         connectedDashboards: 1,
         created: '2024-02-15T15:26:46Z',

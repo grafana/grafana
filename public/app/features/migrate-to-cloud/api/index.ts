@@ -6,24 +6,27 @@ import { generatedAPI } from './endpoints.gen';
 export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
   addTagTypes: ['cloud-migration-config', 'cloud-migration-run', 'cloud-migration-run-list'],
   endpoints: {
+    // Cloud-side - create token
+    createCloudMigrationToken: suppressErrorsOnQuery,
+
     // List Cloud Configs
-    getMigrationList: {
+    getSessionList: {
       providesTags: ['cloud-migration-config'] /* should this be a -list? */,
     },
 
     // Create Cloud Config
-    createMigration(endpoint) {
+    createSession(endpoint) {
       suppressErrorsOnQuery(endpoint);
       endpoint.invalidatesTags = ['cloud-migration-config'];
     },
 
     // Get one Cloud Config
-    getCloudMigration: {
+    getSession: {
       providesTags: ['cloud-migration-config'],
     },
 
     // Delete one Cloud Config
-    deleteCloudMigration: {
+    deleteSession: {
       invalidatesTags: ['cloud-migration-config'],
     },
 
@@ -39,9 +42,7 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
       invalidatesTags: ['cloud-migration-run-list'],
     },
 
-    getDashboardByUid(endpoint) {
-      suppressErrorsOnQuery(endpoint);
-    },
+    getDashboardByUid: suppressErrorsOnQuery,
   },
 });
 

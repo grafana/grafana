@@ -17,14 +17,16 @@ import (
 func NewLoggerMiddleware(logger plog.Logger) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &LoggerMiddleware{
-			next:   next,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
 			logger: logger,
 		}
 	})
 }
 
 type LoggerMiddleware struct {
-	next   plugins.Client
+	baseMiddleware
 	logger plog.Logger
 }
 
@@ -126,16 +128,4 @@ func (m *LoggerMiddleware) CollectMetrics(ctx context.Context, req *backend.Coll
 	})
 
 	return resp, err
-}
-
-func (m *LoggerMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *LoggerMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *LoggerMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
 }

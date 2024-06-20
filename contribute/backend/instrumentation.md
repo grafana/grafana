@@ -194,12 +194,11 @@ func (s *MyService) Hello(ctx context.Context, name string) (string, error) {
    if name == "" {
       err := fmt.Errorf("name cannot be empty")
 
-      // sets the span’s status to Error to make the span tracking
-      // a failed operation as an error span.
-      span.SetStatus(codes.Error, "failed to check name")
-      // record err as an exception span event for this span
-      span.RecordError(err)
-      return "", err
+      // Use the helper functions tracing.Errorf or tracing.Error
+      // to set the span’s status to Error to make
+      // the span tracking a failed operation as an error span and
+      // record error as an exception span event for the provided span.
+      return "", tracing.Errorf(span, "failed to check name: %w", err)
    }
 
    // Add some other event to show Events usage

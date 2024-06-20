@@ -23,6 +23,7 @@ import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverVi
 
 import { getDataLinks } from '../status-history/utils';
 import { getStyles } from '../timeseries/TimeSeriesTooltip';
+import { isTooltipScrollable } from '../timeseries/utils';
 
 import { HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
@@ -39,8 +40,8 @@ interface HeatmapTooltipProps {
   dismiss: () => void;
   panelData: PanelData;
   annotate?: () => void;
-  scrollable?: boolean;
   maxHeight?: number;
+  maxWidth?: number;
 }
 
 export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
@@ -58,6 +59,9 @@ export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
   return <HeatmapHoverCell {...props} />;
 };
 
+const defaultHistogramWidth = 264;
+const defaultHistogramHeight = 64;
+
 const HeatmapHoverCell = ({
   dataIdxs,
   dataRef,
@@ -66,8 +70,8 @@ const HeatmapHoverCell = ({
   showColorScale = false,
   mode,
   annotate,
-  scrollable,
   maxHeight,
+  maxWidth,
 }: HeatmapTooltipProps) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
@@ -112,7 +116,11 @@ const HeatmapHoverCell = ({
 
   let contentItems: VizTooltipItem[] = [];
 
-  const yValueIdx = index % (data.yBucketCount ?? 1);
+  const getYValueIndex = (idx: number) => {
+    return idx % (data.yBucketCount ?? 1);
+  };
+
+  let yValueIdx = getYValueIndex(index);
   const xValueIdx = Math.floor(index / (data.yBucketCount ?? 1));
 
   const getData = (idx: number = index) => {
@@ -182,6 +190,7 @@ const HeatmapHoverCell = ({
       if (isSparse) {
         ({ xBucketMin, xBucketMax, yBucketMin, yBucketMax } = getSparseCellMinMax(data!, idx));
       } else {
+        yValueIdx = getYValueIndex(idx);
         getData(idx);
       }
 
@@ -298,8 +307,11 @@ const HeatmapHoverCell = ({
 
   let can = useRef<HTMLCanvasElement>(null);
 
-  let histCssWidth = 264;
-  let histCssHeight = 64;
+  const theme = useTheme2();
+  const themeSpacing = parseInt(theme.spacing(1), 10);
+
+  let histCssWidth = Math.min(defaultHistogramWidth, maxWidth ? maxWidth - themeSpacing * 2 : defaultHistogramWidth);
+  let histCssHeight = defaultHistogramHeight;
   let histCanWidth = Math.round(histCssWidth * uPlot.pxRatio);
   let histCanHeight = Math.round(histCssHeight * uPlot.pxRatio);
 
@@ -348,12 +360,16 @@ const HeatmapHoverCell = ({
   }
 
   const styles = useStyles2(getStyles);
-  const theme = useTheme2();
 
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
-      <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} maxHeight={maxHeight}>
+      <VizTooltipContent
+        items={contentItems}
+        isPinned={isPinned}
+        scrollable={isTooltipScrollable({ mode, maxHeight })}
+        maxHeight={maxHeight}
+      >
         {customContent?.map((content, i) => (
           <div key={i} style={{ padding: `${theme.spacing(1)} 0` }}>
             {content}

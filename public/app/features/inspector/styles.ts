@@ -11,62 +11,66 @@ export const getPanelInspectorStyles = stylesFactory(() => {
 
 export const getPanelInspectorStyles2 = (theme: GrafanaTheme2) => {
   return {
-    wrap: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      width: 100%;
-      flex: 1 1 0;
-      min-height: 0;
-    `,
-    toolbar: css`
-      display: flex;
-      width: 100%;
-      flex-grow: 0;
-      align-items: center;
-      justify-content: flex-end;
-      margin-bottom: ${theme.v1.spacing.sm};
-    `,
-    toolbarItem: css`
-      margin-left: ${theme.v1.spacing.md};
-    `,
-    content: css`
-      flex-grow: 1;
-      height: 100%;
-    `,
-    editor: css`
-      font-family: monospace;
-      height: 100%;
-      flex-grow: 1;
-    `,
-    viewer: css`
-      overflow: scroll;
-    `,
-    dataFrameSelect: css`
-      flex-grow: 2;
-    `,
-    leftActions: css`
-      display: flex;
-      flex-grow: 1;
+    heading: css({
+      fontSize: theme.typography.body.fontSize,
+      marginBottom: theme.spacing(1),
+    }),
+    wrap: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      width: '100%',
+      flex: '1 1 0',
+      minHeight: 0,
+    }),
+    toolbar: css({
+      display: 'flex',
+      width: '100%',
+      flexGrow: 0,
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      marginBottom: theme.v1.spacing.sm,
+    }),
+    toolbarItem: css({
+      marginLeft: theme.v1.spacing.md,
+    }),
+    content: css({
+      flexGrow: 1,
+      height: '100%',
+    }),
+    editor: css({
+      fontFamily: 'monospace',
+      height: '100%',
+      flexGrow: 1,
+    }),
+    viewer: css({
+      overflow: 'scroll',
+    }),
+    dataFrameSelect: css({
+      flexGrow: 2,
+    }),
+    leftActions: css({
+      display: 'flex',
+      flexGrow: 1,
 
-      max-width: 85%;
-      @media (max-width: 1345px) {
-        max-width: 75%;
-      }
-    `,
-    options: css`
-      padding-top: ${theme.v1.spacing.sm};
-    `,
-    dataDisplayOptions: css`
-      flex-grow: 1;
-      min-width: 300px;
-      margin-right: ${theme.v1.spacing.sm};
-    `,
-    selects: css`
-      display: flex;
-      > * {
-        margin-right: ${theme.v1.spacing.sm};
-      }
-    `,
+      maxWidth: '85%',
+      '@media (max-width: 1345px)': {
+        maxWidth: '75%',
+      },
+    }),
+    options: css({
+      paddingTop: theme.v1.spacing.sm,
+    }),
+    dataDisplayOptions: css({
+      flexGrow: 1,
+      minWidth: '300px',
+      marginRight: theme.v1.spacing.sm,
+    }),
+    selects: css({
+      display: 'flex',
+      '> *': {
+        marginRight: theme.v1.spacing.sm,
+      },
+    }),
   };
 };

@@ -1,32 +1,18 @@
-import i18n, { BackendModule, InitOptions } from 'i18next';
+import i18n, { InitOptions, TFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
 import React from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import { DEFAULT_LANGUAGE, LANGUAGES, VALID_LANGUAGES } from './constants';
+import { DEFAULT_LANGUAGE, NAMESPACES, VALID_LANGUAGES } from './constants';
+import { loadTranslations } from './loadTranslations';
 
-const getLanguagePartFromCode = (code: string) => code.split('-')[0].toLowerCase();
+let tFunc: TFunction<string[], undefined> | undefined;
+let i18nInstance: typeof i18n;
 
-const loadTranslations: BackendModule = {
-  type: 'backend',
-  init() {},
-  async read(language, namespace, callback) {
-    let localeDef = LANGUAGES.find((v) => v.code === language);
-    if (!localeDef) {
-      localeDef = LANGUAGES.find((v) => getLanguagePartFromCode(v.code) === getLanguagePartFromCode(language));
-    }
-    if (!localeDef) {
-      return callback(new Error('No message loader available for ' + language), null);
-    }
-    const messages = await localeDef.loader();
-    callback(null, messages);
-  },
-};
-
-export function initializeI18n(language: string): Promise<{ language: string | undefined }> {
+export async function initializeI18n(language: string): Promise<{ language: string | undefined }> {
   // This is a placeholder so we can put a 'comment' in the message json files.
   // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
-  // t('_comment', 'This file is the source of truth for English strings. Edit this to change plurals and other phrases for the UI.');
+  // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
 
   const options: InitOptions = {
     // We don't bundle any translations, we load them async
@@ -39,8 +25,11 @@ export function initializeI18n(language: string): Promise<{ language: string | u
     // Required to ensure that `resolvedLanguage` is set property when an invalid language is passed (such as through 'detect')
     supportedLngs: VALID_LANGUAGES,
     fallbackLng: DEFAULT_LANGUAGE,
+
+    ns: NAMESPACES,
   };
-  let i18nInstance = i18n;
+
+  i18nInstance = i18n;
   if (language === 'detect') {
     i18nInstance = i18nInstance.use(LanguageDetector);
     const detection: DetectorOptions = { order: ['navigator'], caches: [] };
@@ -54,11 +43,13 @@ export function initializeI18n(language: string): Promise<{ language: string | u
     .use(initReactI18next) // passes i18n down to react-i18next
     .init(options);
 
-  return loadPromise.then(() => {
-    return {
-      language: i18nInstance.resolvedLanguage,
-    };
-  });
+  await loadPromise;
+
+  tFunc = i18n.getFixedT(null, NAMESPACES);
+
+  return {
+    language: i18nInstance.resolvedLanguage,
+  };
 }
 
 export function changeLanguage(locale: string) {
@@ -67,20 +58,42 @@ export function changeLanguage(locale: string) {
 }
 
 export const Trans: typeof I18NextTrans = (props) => {
-  return <I18NextTrans shouldUnescape {...props} />;
+  return <I18NextTrans shouldUnescape ns={NAMESPACES} {...props} />;
 };
 
-// Reassign t() so i18next-parser doesn't warn on dynamic key, and we can have 'failOnWarnings' enabled
-const tFunc = i18n.t;
-
+// Wrap t() to provide default namespaces and enforce a consistent API
 export const t = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
+  if (!tFunc) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn(
+        't() was called before i18n was initialized. This is probably caused by calling t() in the root module scope, instead of lazily on render'
+      );
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      throw new Error('t() was called before i18n was initialized');
+    }
+
+    tFunc = i18n.t;
+  }
+
   return tFunc(id, defaultMessage, values);
 };
 
-export const i18nDate = (value: number | Date | string, format: Intl.DateTimeFormatOptions = {}): string => {
-  if (typeof value === 'string') {
-    return i18nDate(new Date(value), format);
+export function getI18next() {
+  if (!tFunc) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn(
+        'An attempt to internationalize was made before it was initialized. This was probably caused by calling a locale-aware function in the root module scope, instead of in render'
+      );
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      throw new Error('getI18next was called before i18n was initialized');
+    }
+
+    return i18n;
   }
-  const dateFormatter = new Intl.DateTimeFormat(i18n.language, format);
-  return dateFormatter.format(value);
-};
+
+  return i18nInstance || i18n;
+}

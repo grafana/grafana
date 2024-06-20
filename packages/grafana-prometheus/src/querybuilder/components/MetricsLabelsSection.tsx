@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricsLabelsSection.tsx
 import React, { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
@@ -147,12 +148,12 @@ export function MetricsLabelsSection({
     if (!forLabel.label) {
       return Promise.resolve([]);
     }
-    return datasource.languageProvider.fetchSeriesValuesWithMatch(forLabel.label, promQLExpression).then((response) => {
-      return response.map((v) => ({
-        value: v,
-        label: v,
-      }));
-    });
+
+    const requestId = `[${datasource.uid}][${query.metric}][${forLabel.label}][${forLabel.op}]`;
+
+    return datasource.languageProvider
+      .fetchSeriesValuesWithMatch(forLabel.label, promQLExpression, requestId)
+      .then((response) => response.map((v) => ({ value: v, label: v })));
   };
 
   /**

@@ -11,16 +11,18 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { CustomScrollbar, useStyles2, IconButton } from '@grafana/ui';
+import { updateNavIndex } from 'app/core/actions';
 import { getConfig } from 'app/core/config';
 import { appEvents } from 'app/core/core';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
-import { setStarred } from 'app/core/reducers/navBarTree';
+import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
+import { removeNavIndex } from 'app/core/reducers/navModel';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { VariablesChanged } from 'app/features/variables/types';
-import { useDispatch } from 'app/types';
+import { useDispatch, useSelector } from 'app/types';
 
 import { Options } from './panelcfg.gen';
 import { getStyles } from './styles';
@@ -102,6 +104,7 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
 export function DashList(props: PanelProps<Options>) {
   const [dashboards, setDashboards] = useState(new Map<string, Dashboard>());
   const dispatch = useDispatch();
+  const navIndex = useSelector((state) => state.navIndex);
 
   useEffect(() => {
     fetchDashboards(props.options, props.replaceVariables).then((dashes) => {
@@ -119,6 +122,23 @@ export function DashList(props: PanelProps<Options>) {
     updatedDashboards.set(dash?.uid ?? '', { ...dash, isStarred });
     setDashboards(updatedDashboards);
     dispatch(setStarred({ id: uid ?? '', title, url, isStarred }));
+
+    const starredNavItem = navIndex['starred'];
+    if (isStarred) {
+      starredNavItem.children?.push({
+        id: ID_PREFIX + uid,
+        text: title,
+        url: url ?? '',
+        parentItem: starredNavItem,
+      });
+    } else {
+      dispatch(removeNavIndex(ID_PREFIX + uid));
+      const indexToRemove = starredNavItem.children?.findIndex((element) => element.id === ID_PREFIX + uid);
+      if (indexToRemove) {
+        starredNavItem.children?.splice(indexToRemove, 1);
+      }
+    }
+    dispatch(updateNavIndex(starredNavItem));
   };
 
   const [starredDashboards, recentDashboards, searchedDashboards] = useMemo(() => {
@@ -130,7 +150,7 @@ export function DashList(props: PanelProps<Options>) {
     ];
   }, [dashboards]);
 
-  const { showStarred, showRecentlyViewed, showHeadings, showSearch } = props.options;
+  const { showStarred, showRecentlyViewed, showHeadings, showFolderNames, showSearch } = props.options;
 
   const dashboardGroups: DashboardGroup[] = [
     {
@@ -168,7 +188,7 @@ export function DashList(props: PanelProps<Options>) {
                 <a className={css.dashlistTitle} href={url}>
                   {dash.title}
                 </a>
-                {dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
+                {showFolderNames && dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
               </div>
               <IconButton
                 tooltip={dash.isStarred ? `Unmark "${dash.title}" as favorite` : `Mark "${dash.title}" as favorite`}

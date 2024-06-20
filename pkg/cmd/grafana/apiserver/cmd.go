@@ -1,6 +1,7 @@
 package apiserver
 
 import (
+	"context"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -54,8 +55,14 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 			// TODO: Fix so that TracingOptions.ApplyTo happens before or during loadAPIGroupBuilders.
 			tracer := newLateInitializedTracingService()
 
+			ctx, cancel := context.WithCancel(c.Context())
+			go func() {
+				<-stopCh
+				cancel()
+			}()
+
 			// Load each group from the args
-			if err := o.loadAPIGroupBuilders(tracer, apis); err != nil {
+			if err := o.loadAPIGroupBuilders(ctx, tracer, apis); err != nil {
 				return err
 			}
 
@@ -72,6 +79,8 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 			if o.Options.TracingOptions.TracingService != nil {
 				tracer.InitTracer(o.Options.TracingOptions.TracingService)
 			}
+
+			defer o.factory.Shutdown()
 
 			if err := o.RunAPIServer(config, stopCh); err != nil {
 				return err

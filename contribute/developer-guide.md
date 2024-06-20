@@ -8,8 +8,8 @@ Make sure you have the following dependencies installed before setting up your d
 
 - [Git](https://git-scm.com/)
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
-- [Node.js (Long Term Support)](https://nodejs.org), with [corepack enabled](https://nodejs.org/api/corepack.html#enabling-the-feature). See [.nvmrc](../.nvmrc) for supported version. It's recommend you use a version manager such as [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or similar.
-- GCC (required for Cgo dependencies)
+- [Node.js (Long Term Support)](https://nodejs.org), with [corepack enabled](https://nodejs.org/api/corepack.html#enabling-the-feature). See [.nvmrc](../.nvmrc) for supported version. We recommend that you use a version manager such as [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or similar.
+- [GCC](https://gcc.gnu.org/) (required for Cgo] dependencies)
 
 ### macOS
 
@@ -33,61 +33,91 @@ We recommend using the Git command-line interface to download the source code fo
 1. Open a terminal and run `git clone https://github.com/grafana/grafana.git`. This command downloads Grafana to a new `grafana` directory in your current directory.
 1. Open the `grafana` directory in your favorite code editor.
 
-For alternative ways of cloning the Grafana repository, please refer to [GitHub's cloning a repository](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository) documentation.
+For alternative ways of cloning the Grafana repository, refer to [GitHub's documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository).
 
-**Warning:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
+> **Caution:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
 
 ### Configure precommit hooks
 
-We use pre-commit hooks (via [lefthook](https://github.com/evilmartians/lefthook)) to lint, fix, and format code as you commit your changes. Previously the Grafana repository automatically installed these hook when you did `yarn install`, but they are now opt in for all contributors
+We use pre-commit hooks (via [lefthook](https://github.com/evilmartians/lefthook)) to lint, fix, and format code as you commit your changes. Previously, the Grafana repository automatically installed these hook when you ran `yarn install`, but they are now opt-in for all contributors.
 
-Install the lefthook precommit hooks with:
+To install the precommit hooks:
 
 ```sh
 make lefthook-install
 ```
 
-To remove precommit hooks, run
+To remove precommit hooks:
 
 ```sh
 make lefthook-uninstall
 ```
 
-> [!NOTE]
-> Contributors working on the frontend are highly encouraged to install the precommit hooks, even if your IDE formats on save, so the `.betterer.results` file is kept up to sync.
+> We strongly encourage contributors who work on the frontend to install the precommit hooks, even if your IDE formats on save. By doing so, the `.betterer.results` file is kept in sync.
 
 ## Build Grafana
 
-Grafana consists of two components; the _frontend_, and the _backend_.
+When building Grafana, be aware that it consists of two components:
+
+- The _frontend_, and
+- The _backend_.
 
 ### Frontend
 
-Before we can build the frontend assets, we need to install the dependencies:
+Before you can build the frontend assets, you need to install the related dependencies:
 
 ```
 yarn install --immutable
 ```
 
-> Troubleshooting: if you get the error `The remote archive doesn't match the expected checksum` for a dependency pulled from a link (e.g. `"tether-drop": "https://github.com/torkelo/drop"`): this is a temporary mismatch. To work around it (while someone corrects the issue), you can prefix your `yarn install --immutable` command with [`YARN_CHECKSUM_BEHAVIOR=update`](https://yarnpkg.com/advanced/error-codes#yn0018---cache_checksum_mismatch)
+> If you get the error `The remote archive doesn't match the expected checksum` for a dependency pulled from a link (for example, `"tether-drop": "https://github.com/torkelo/drop"`): this is a temporary mismatch. To work around the error (while someone corrects the issue), you can prefix your `yarn install --immutable` command with [`YARN_CHECKSUM_BEHAVIOR=update`](https://yarnpkg.com/advanced/error-codes#yn0018---cache_checksum_mismatch).
 
-After the command has finished, we can start building our source code:
+After the command has finished, you can start building the source code:
 
 ```
 yarn start
 ```
 
-This command will generate sass theme files, build all external plugins, then build the frontend assets.
-Once `yarn start` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets every time you change the code.
+This command generates SASS theme files, builds all external plugins, and then builds the frontend assets.
 
-> Troubleshooting: if your first build works, but after pulling updates you see unexpected errors in the "Type-checking in progress..." stage, these can be caused by the [tsbuildinfo cache supporting incremental builds](https://www.typescriptlang.org/tsconfig#incremental). You can `rm tsconfig.tsbuildinfo` and re-try.
+After `yarn start` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets every time you change the code.
 
-Next, we'll build & run the web server that will serve the frontend assets we just built.
+> **Troubleshooting:** if your first build works, after pulling updates you may see unexpected errors in the "Type-checking in progress..." stage. These errors can be caused by the [tsbuildinfo cache supporting incremental builds](https://www.typescriptlang.org/tsconfig#incremental). In this case, you can enter `rm tsconfig.tsbuildinfo` and re-try.
+
+#### Plugins
+
+If you want to contribute to any of the plugins listed below (that are found within the `public/app/plugins` directory) they require running additional commands to watch and rebuild them.
+
+- azuremonitor
+- cloud-monitoring
+- grafana-postgresql-datasource
+- grafana-pyroscope-datasource
+- grafana-testdata-datasource
+- jaegar
+- mysql
+- parca
+- tempo
+- zipkin
+
+To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
+
+```
+yarn plugin:build:dev
+```
+
+If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/tempo`.
+
+```
+yarn workspace <name_of_plugin> dev
+```
+
+Next, we'll explain how to build and run the web server that serves these frontend assets.
 
 ### Backend
 
 Build and run the backend by running `make run` in the root directory of the repository. This command compiles the Go source code and starts a web server.
 
-> Are you having problems with [too many open files](#troubleshooting)?
+> **Troubleshooting:** Are you having problems with [too many open files](#troubleshooting)?
 
 By default, you can access the web server at `http://localhost:3000/`.
 
@@ -99,14 +129,14 @@ Log in using the default credentials:
 
 When you log in for the first time, Grafana asks you to change your password.
 
-#### Building on Windows
+#### Build on Windows
 
-The Grafana backend includes SQLite which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download). Eventually, if you use [Scoop](https://scoop.sh), you can install GCC through that.
+The Grafana backend includes SQLite, a database which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download). Eventually, if you use [Scoop](https://scoop.sh), you can install GCC through that.
 
 You can build the back-end as follows:
 
 1. Follow the [instructions](https://github.com/google/wire#installing) to install the Wire tool.
-2. Generate code using Wire:
+2. Generate code using Wire. For example:
 
 ```
 # Default Wire tool install path: $GOPATH/bin/wire.exe
@@ -119,8 +149,9 @@ You can build the back-end as follows:
 go run build.go build
 ```
 
-The Grafana binaries will be in bin\\windows-amd64.
-Alternately, if you wish to use the `make` command, install [Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm) and use it in a Unix shell (f.ex. Git Bash).
+The Grafana binaries will be installed in `bin\\windows-amd64`.
+
+Alternatively, if you are on Windows and want to use the `make` command, install [Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm) and use it in a UNIX shell (for example, Git Bash).
 
 ## Test Grafana
 
@@ -128,7 +159,7 @@ The test suite consists of three types of tests: _Frontend tests_, _backend test
 
 ### Run frontend tests
 
-We use [jest](https://jestjs.io/) for our frontend tests. Run them using Yarn:
+We use [Jest](https://jestjs.io/) for our frontend tests. Run them using Yarn:
 
 ```
 yarn test
@@ -144,27 +175,29 @@ go test -v ./pkg/...
 
 #### On Windows
 
-Running the backend tests on Windows currently needs some tweaking, so use the build.go script:
+Running the backend tests on Windows currently needs some tweaking, so use the `build.go` script:
 
 ```
 go run build.go test
 ```
 
-### Run SQLLite, PostgreSQL and MySQL integration tests
+### Run SQLite, PostgreSQL and MySQL integration tests
 
-By default, grafana runs SQLite, to run test with SQLite
+By default, grafana runs SQLite. To run test with SQLite:
 
 ```bash
 go test -covermode=atomic -tags=integration ./pkg/...
 ```
 
-To run PostgreSQL and MySQL integration tests locally, you need to start the docker blocks for MySQL and/or PostgreSQL test data sources by running `make devenv sources=mysql_tests,postgres_tests`. When your test data sources are running, you can execute integration tests by running:
+To run PostgreSQL and MySQL integration tests locally, start the Docker blocks for test data sources for MySQL, PostgreSQL, or both, by running `make devenv sources=mysql_tests,postgres_tests`.
+
+When your test data sources are running, you can execute integration tests by running for MySQL:
 
 ```bash
 make test-go-integration-mysql
 ```
 
-and/or
+For PostgreSQL, you could run:
 
 ```bash
 make test-go-integration-postgres
@@ -172,9 +205,9 @@ make test-go-integration-postgres
 
 ### Run end-to-end tests
 
-Grafana uses [Cypress](https://www.cypress.io/) to end-to-end test core features. Core plugins use [Playwright](https://playwright.dev/) to run automated end-to-end tests. You can find more information on how to add end-to-end tests to your core plugin [here](./style-guides/e2e-plugins.md)
+Grafana uses [Cypress](https://www.cypress.io/) to end-to-end test core features. Core plugins use [Playwright](https://playwright.dev/) to run automated end-to-end tests. You can find more information on how to add end-to-end tests to your core plugin [in our end-to-end testing style guide](./style-guides/e2e-plugins.md)
 
-#### Running Cypress tests
+#### Run Cypress tests
 
 To run all tests in a headless Chromium browser.
 
@@ -202,30 +235,24 @@ yarn e2e:dev
 
 #### To run the Playwright tests:
 
-**Note:** If you're using VS Code as your development editor, it's recommended to install the [Playwright test extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). It allows you to run, debug and generate Playwright tests from within the editor. For more information about the extension and how to install it, refer to the [Playwright documentation](https://playwright.dev/docs/getting-started-vscode).
+**Note:** If you're using VS Code as your development editor, it's recommended to install the [Playwright test extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). It allows you to run, debug and generate Playwright tests from within the editor. For more information about the extension and how to use reports to analyze failing tests, refer to the [Playwright documentation](https://playwright.dev/docs/getting-started-vscode).
 
-Each version of Playwright needs specific versions of browser binaries to operate. You will need to use the Playwright CLI to install these browsers.
+Each version of Playwright needs specific versions of browser binaries to operate. You need to use the Playwright CLI to install these browsers.
 
 ```
 yarn playwright install chromium
 ```
 
-To run all tests in a headless Chromium browser and display results in the terminal.
+To run all tests in a headless Chromium browser and display results in the terminal. This assumes you have Grafana running on port 3000.
 
 ```
 yarn e2e:playwright
 ```
 
-For a better developer experience, open the Playwright UI where you can easily walk through each step of the test and visually see what was happening before, during and after each step.
+The following script starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) (same server that is being used when running e2e tests in Drone CI) on port 3001 and runs the Playwright tests. The development server is provisioned with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources and apps.
 
 ```
-yarn e2e:playwright:ui
-```
-
-To open the HTML reporter for the last test run session.
-
-```
-yarn e2e:playwright:report
+yarn e2e:playwright:server
 ```
 
 ## Configure Grafana for development
@@ -234,7 +261,7 @@ The default configuration, `defaults.ini`, is located in the `conf` directory.
 
 To override the default configuration, create a `custom.ini` file in the `conf` directory. You only need to add the options you wish to override.
 
-Enable the development mode, by adding the following line in your `custom.ini`:
+Enable the development mode by adding the following line in your `custom.ini`:
 
 ```
 app_mode = development
@@ -264,7 +291,7 @@ make devenv sources=influxdb,loki
 
 The script generates a Docker Compose file with the databases you specify as `sources`, and runs them in the background.
 
-See the repository for all the [available data sources](/devenv/docker/blocks). Note that some data sources have specific Docker images for macOS, e.g. `nginx_proxy_mac`.
+See the repository for all the [available data sources](/devenv/docker/blocks). Note that some data sources have specific Docker images for macOS; for example, `nginx_proxy_mac`.
 
 ## Build a Docker image
 
@@ -274,9 +301,9 @@ To build a Docker image, run:
 make build-docker-full
 ```
 
-The resulting image will be tagged as grafana/grafana:dev.
+The resulting image will be tagged as `grafana/grafana:dev`.
 
-**Note:** If you are using Docker for macOS, be sure to set the memory limit to be larger than 2 GiB. Otherwise, `grunt build` may fail. The memory limit settings are available under **Docker Desktop** -> **Preferences** -> **Advanced**.
+> **Note:** If you use Docker for macOS, be sure to set the memory limit to be larger than 2 GiB. Otherwise, `grunt build` may fail. The memory limit settings are available under **Docker Desktop** -> **Preferences** -> **Advanced**.
 
 ## Troubleshooting
 
@@ -284,13 +311,13 @@ Are you having issues with setting up your environment? Here are some tips that 
 
 ### IDE configuration
 
-Configure your IDE to use the Typescript version from the Grafana repository. The version should match the Typescript version in the package.json file, and is typically at the path `node_modules/.bin/tsc`.
+Configure your IDE to use the TypeScript version from the Grafana repository. The version should match the TypeScript version in the `package.json` file, and is typically located at `node_modules/.bin/tsc`.
 
-Previously Grafana used Yarn PnP to install frontend dependencies, which required additional special IDE configuration. This is no longer the case. If you have custom paths in your IDE for ESLint, Prettier, or Typescript, you can now remove them and use the defaults from node_modules.
+Previously, Grafana used Yarn PnP to install frontend dependencies, which required additional special IDE configuration. This is no longer the case. If you have custom paths in your IDE for ESLint, Prettier, or TypeScript, you can now remove them and use the defaults from `node_modules`.
 
 ### Too many open files when running `make run`
 
-Depending on your environment, you may have to increase the maximum number of open files allowed. For the rest of this section, we will assume you are on a Unix like OS (e.g. Linux/macOS), where you can control the maximum number of open files through the [ulimit](https://ss64.com/bash/ulimit.html) shell command.
+Depending on your environment, you may have to increase the maximum number of open files allowed. For the rest of this section, we will assume you are on a UNIX-like OS (for example, Linux or macOS), where you can control the maximum number of open files through the [ulimit](https://ss64.com/bash/ulimit.html) shell command.
 
 To see how many open files are allowed, run:
 
@@ -312,7 +339,7 @@ find ./conf ./pkg ./public/views | wc -l
 
 Another alternative is to limit the files being watched. The directories that are watched for changes are listed in the `.bra.toml` file in the root directory.
 
-To retain your `ulimit` configuration, i.e. so it will be remembered for future sessions, you need to commit it to your command line shell initialization file. Which file this will be depends on the shell you are using, here are some examples:
+You can retain your `ulimit` configuration, that is, save it so it will be remembered for future sessions. To do this, commit it to your command line shell initialization file. Which file this is depends on the shell you are using. For example:
 
 - zsh -> ~/.zshrc
 - bash -> ~/.bashrc
@@ -331,11 +358,15 @@ For some people, typically using the bash shell, ulimit fails with an error simi
 ulimit: open files: cannot modify limit: Operation not permitted
 ```
 
-If that happens to you, chances are you've already set a lower limit and your shell won't let you set a higher one. Try looking in your shell initialization files (~/.bashrc typically), if there's already an ulimit command that you can tweak.
+If that happens to you, chances are you've already set a lower limit and your shell won't let you set a higher one. Try looking in your shell initialization files (`~/.bashrc`, typically), to see if there's already an `ulimit` command that you can tweak.
+
+### Getting `AggregateError` when building frontend tests
+
+If you encounter an `AggregateError` when building new tests, this is probably due to a call to our client [backend service](https://github.com/grafana/grafana/blob/main/public/app/core/services/backend_srv.ts) not being mocked. Our backend service anticipates multiple responses being returned and was built to return errors as an array. A test encountering errors from the service will group those errors as an `AggregateError` without breaking down the individual errors within. `backend_srv.processRequestError` is called once per error and is a great place to return information on what the individual errors might contain.
 
 ## Next steps
 
 - Read our [style guides](/contribute/style-guides).
-- Learn how to [Create a pull request](/contribute/create-pull-request.md).
+- Learn how to [create a pull request](/contribute/create-pull-request.md).
 - Read about the [architecture](architecture).
 - Read through the [backend documentation](/contribute/backend/README.md).

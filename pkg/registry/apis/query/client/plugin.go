@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 type pluginClient struct {
@@ -40,7 +39,7 @@ type pluginRegistry struct {
 var _ data.QueryDataClient = (*pluginClient)(nil)
 var _ query.DataSourceApiServerRegistry = (*pluginRegistry)(nil)
 
-// NewDummyTestRunner creates a runner that only works with testdata
+// NewQueryClientForPluginClient creates a client that delegates to the internal plugins.Client stack
 func NewQueryClientForPluginClient(p plugins.Client, ctx *plugincontext.Provider) data.QueryDataClient {
 	return &pluginClient{
 		pluginClient: p,
@@ -59,7 +58,7 @@ func NewDataSourceRegistryFromStore(pluginStore pluginstore.Store,
 
 // ExecuteQueryData implements QueryHelper.
 func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (int, *backend.QueryDataResponse, error) {
-	queries, dsRef, err := legacydata.ToDataSourceQueries(req)
+	queries, dsRef, err := data.ToDataSourceQueries(req)
 	if err != nil {
 		return http.StatusBadRequest, nil, err
 	}

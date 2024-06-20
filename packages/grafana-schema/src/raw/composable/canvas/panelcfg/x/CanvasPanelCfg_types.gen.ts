@@ -10,7 +10,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "11.1.0-pre";
+export const pluginVersion = "11.2.0-pre";
 
 export enum HorizontalConstraint {
   Center = 'center',
@@ -83,8 +83,10 @@ export interface CanvasConnection {
   path: ConnectionPath;
   size?: ui.ScaleDimensionConfig;
   source: ConnectionCoordinates;
+  sourceOriginal?: ConnectionCoordinates;
   target: ConnectionCoordinates;
   targetName?: string;
+  targetOriginal?: ConnectionCoordinates;
   vertices?: Array<ConnectionCoordinates>;
 }
 

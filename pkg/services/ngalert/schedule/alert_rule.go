@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -36,10 +37,10 @@ type Rule interface {
 	Update(lastVersion RuleVersionAndPauseStatus) bool
 }
 
-type ruleFactoryFunc func(context.Context) Rule
+type ruleFactoryFunc func(context.Context, *ngmodels.AlertRule) Rule
 
-func (f ruleFactoryFunc) new(ctx context.Context) Rule {
-	return f(ctx)
+func (f ruleFactoryFunc) new(ctx context.Context, rule *ngmodels.AlertRule) Rule {
+	return f(ctx, rule)
 }
 
 func newRuleFactory(
@@ -51,13 +52,28 @@ func newRuleFactory(
 	evalFactory eval.EvaluatorFactory,
 	ruleProvider ruleProvider,
 	clock clock.Clock,
+	featureToggles featuremgmt.FeatureToggles,
 	met *metrics.Scheduler,
 	logger log.Logger,
 	tracer tracing.Tracer,
+	recordingWriter RecordingWriter,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
 ) ruleFactoryFunc {
-	return func(ctx context.Context) Rule {
+	return func(ctx context.Context, rule *ngmodels.AlertRule) Rule {
+		if rule.Type() == ngmodels.RuleTypeRecording {
+			return newRecordingRule(
+				ctx,
+				maxAttempts,
+				clock,
+				evalFactory,
+				featureToggles,
+				logger,
+				met,
+				tracer,
+				recordingWriter,
+			)
+		}
 		return newAlertRule(
 			ctx,
 			appURL,
@@ -200,7 +216,6 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 	logger := a.logger.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
 
-	evalRunning := false
 	var currentFingerprint fingerprint
 	defer a.stopApplied(key)
 	for {
@@ -222,26 +237,21 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 				logger.Debug("Evaluation channel has been closed. Exiting")
 				return nil
 			}
-			if evalRunning {
-				continue
-			}
 
 			func() {
 				orgID := fmt.Sprint(key.OrgID)
 				evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
 				evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
 
-				evalRunning = true
 				evalStart := a.clock.Now()
 				defer func() {
-					evalRunning = false
 					a.evalApplied(key, ctx.scheduledAt)
 					evalDuration.Observe(a.clock.Now().Sub(evalStart).Seconds())
 				}()
 
 				for attempt := int64(1); attempt <= a.maxAttempts; attempt++ {
 					isPaused := ctx.rule.IsPaused
-					f := ruleWithFolder{ctx.rule, ctx.folderTitle}.Fingerprint()
+					f := ctx.Fingerprint()
 					// Do not clean up state if the eval loop has just started.
 					var needReset bool
 					if currentFingerprint != 0 && currentFingerprint != f {

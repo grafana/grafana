@@ -64,11 +64,6 @@ export interface ExploreState {
   panes: Record<string, ExploreItemState | undefined>;
 
   /**
-   * Is the drawer for query history showing
-   */
-  showQueryHistory: boolean;
-
-  /**
    * History of all queries
    */
   richHistory: RichHistoryQuery[];

@@ -23,7 +23,7 @@ interface Props {
 export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMode, data }) => {
   const { panel, sourcePanel, repeat } = vizManager.useState();
   const parent = sourcePanel.resolve().parent;
-  const { options, fieldConfig } = panel.useState();
+  const { options, fieldConfig, _pluginInstanceState } = panel.useState();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const panelFrameOptions = useMemo(
@@ -42,10 +42,10 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
       data,
       plugin: plugin,
       eventBus: panel.getPanelContext().eventBus,
-      instanceState: panel.getPanelContext().instanceState!,
+      instanceState: _pluginInstanceState,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panel, options, fieldConfig]);
+  }, [panel, options, fieldConfig, _pluginInstanceState]);
 
   const libraryPanelOptions = useMemo(() => {
     if (parent instanceof LibraryVizPanel) {
@@ -62,9 +62,7 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
         data?.series ?? [],
         searchQuery,
         (newConfig) => {
-          panel.setState({
-            fieldConfig: newConfig,
-          });
+          panel.onFieldConfigChange(newConfig, true);
         }
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps

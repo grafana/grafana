@@ -42,6 +42,11 @@ export function isAlertStateWithReason(
   return state !== null && state !== undefined && !propAlertingRuleStateValues.includes(state);
 }
 
+export function mapStateWithReasonToReason(state: GrafanaAlertStateWithReason): string {
+  const match = state.match(/\((.*?)\)/);
+  return match ? match[1] : '';
+}
+
 export function mapStateWithReasonToBaseState(
   state: GrafanaAlertStateWithReason | PromAlertingRuleState
 ): GrafanaAlertState | PromAlertingRuleState {
@@ -64,6 +69,8 @@ export enum PromApplication {
   Prometheus = 'Prometheus',
   Thanos = 'Thanos',
 }
+
+export type RulesSourceApplication = PromApplication | 'loki' | 'grafana';
 
 export interface PromBuildInfoResponse {
   data: {
@@ -219,6 +226,7 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;
   uid: string;
   namespace_uid: string;
+  rule_group: string;
   provenance?: string;
 }
 

@@ -60,6 +60,11 @@ export interface InfluxQueryTag {
 
 export type ResultFormat = 'time_series' | 'table' | 'logs';
 
+export interface InfluxVariableQuery extends DataQuery {
+  query: string;
+  maxDataPoints?: number;
+}
+
 export interface InfluxQuery extends DataQuery {
   policy?: string;
   measurement?: string;

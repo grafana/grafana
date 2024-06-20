@@ -580,7 +580,7 @@ func provideDynamic(t *testing.T, gcomURL string, opts ...provideDynamicOpts) *D
 	if opt.cfg == nil {
 		opt.cfg = setting.NewCfg()
 	}
-	opt.cfg.GrafanaComURL = gcomURL
+	opt.cfg.GrafanaComAPIURL = gcomURL + "/api"
 	d, err := ProvideDynamic(opt.cfg, opt.store)
 	require.NoError(t, err)
 	return d

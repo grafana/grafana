@@ -3,8 +3,8 @@ import React from 'react';
 import { PluginExtensionComponentConfig, PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { createPluginExtensionRegistry } from './createPluginExtensionRegistry';
 import { getPluginExtensions } from './getPluginExtensions';
+import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
 import { isReadOnlyProxy } from './utils';
 import { assertPluginExtensionLink } from './validators';
 
@@ -14,6 +14,19 @@ jest.mock('@grafana/runtime', () => {
     reportInteraction: jest.fn(),
   };
 });
+
+function createPluginExtensionRegistry(preloadResults: Array<{ pluginId: string; extensionConfigs: any[] }>) {
+  const registry = new ReactivePluginExtensionsRegistry();
+
+  for (const { pluginId, extensionConfigs } of preloadResults) {
+    registry.register({
+      pluginId,
+      extensionConfigs,
+    });
+  }
+
+  return registry.getRegistry();
+}
 
 describe('getPluginExtensions()', () => {
   const extensionPoint1 = 'grafana/dashboard/panel/menu';
@@ -54,8 +67,8 @@ describe('getPluginExtensions()', () => {
     jest.mocked(reportInteraction).mockReset();
   });
 
-  test('should return the extensions for the given placement', () => {
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link2] }]);
+  test('should return the extensions for the given placement', async () => {
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint1 });
 
     expect(extensions).toHaveLength(1);
@@ -70,9 +83,11 @@ describe('getPluginExtensions()', () => {
     );
   });
 
-  test('should not limit the number of extensions per plugin by default', () => {
+  test('should not limit the number of extensions per plugin by default', async () => {
     // Registering 3 extensions for the same plugin for the same placement
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link1, link1, link2] }]);
+    const registry = await createPluginExtensionRegistry([
+      { pluginId, extensionConfigs: [link1, link1, link1, link2] },
+    ]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint1 });
 
     expect(extensions).toHaveLength(3);
@@ -87,8 +102,8 @@ describe('getPluginExtensions()', () => {
     );
   });
 
-  test('should be possible to limit the number of extensions per plugin for a given placement', () => {
-    const registry = createPluginExtensionRegistry([
+  test('should be possible to limit the number of extensions per plugin for a given placement', async () => {
+    const registry = await createPluginExtensionRegistry([
       { pluginId, extensionConfigs: [link1, link1, link1, link2] },
       {
         pluginId: 'my-plugin',
@@ -116,16 +131,16 @@ describe('getPluginExtensions()', () => {
     );
   });
 
-  test('should return with an empty list if there are no extensions registered for a placement yet', () => {
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link2] }]);
+  test('should return with an empty list if there are no extensions registered for a placement yet', async () => {
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: 'placement-with-no-extensions' });
 
     expect(extensions).toEqual([]);
   });
 
-  test('should pass the context to the configure() function', () => {
+  test('should pass the context to the configure() function', async () => {
     const context = { title: 'New title from the context!' };
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
 
     getPluginExtensions({ registry, context, extensionPointId: extensionPoint2 });
 
@@ -133,7 +148,7 @@ describe('getPluginExtensions()', () => {
     expect(link2.configure).toHaveBeenCalledWith(context);
   });
 
-  test('should be possible to update the basic properties with the configure() function', () => {
+  test('should be possible to update the basic properties with the configure() function', async () => {
     link2.configure = jest.fn().mockImplementation(() => ({
       title: 'Updated title',
       description: 'Updated description',
@@ -142,7 +157,7 @@ describe('getPluginExtensions()', () => {
       category: 'Machine Learning',
     }));
 
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
 
@@ -156,7 +171,7 @@ describe('getPluginExtensions()', () => {
     expect(extension.category).toBe('Machine Learning');
   });
 
-  test('should append link tracking to path when running configure() function', () => {
+  test('should append link tracking to path when running configure() function', async () => {
     link2.configure = jest.fn().mockImplementation(() => ({
       title: 'Updated title',
       description: 'Updated description',
@@ -165,7 +180,7 @@ describe('getPluginExtensions()', () => {
       category: 'Machine Learning',
     }));
 
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
 
@@ -177,7 +192,7 @@ describe('getPluginExtensions()', () => {
     );
   });
 
-  test('should ignore restricted properties passed via the configure() function', () => {
+  test('should ignore restricted properties passed via the configure() function', async () => {
     link2.configure = jest.fn().mockImplementation(() => ({
       // The following props are not allowed to override
       type: 'unknown-type',
@@ -190,7 +205,7 @@ describe('getPluginExtensions()', () => {
       title: 'test',
     }));
 
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
 
@@ -202,9 +217,9 @@ describe('getPluginExtensions()', () => {
     //@ts-ignore
     expect(extension.testing).toBeUndefined();
   });
-  test('should pass a read only context to the configure() function', () => {
+  test('should pass a read only context to the configure() function', async () => {
     const context = { title: 'New title from the context!' };
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     const { extensions } = getPluginExtensions({ registry, context, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
     const readOnlyContext = (link2.configure as jest.Mock).mock.calls[0][0];
@@ -219,12 +234,12 @@ describe('getPluginExtensions()', () => {
     expect(context.title).toBe('New title from the context!');
   });
 
-  test('should catch errors in the configure() function and log them as warnings', () => {
+  test('should catch errors in the configure() function and log them as warnings', async () => {
     link2.configure = jest.fn().mockImplementation(() => {
       throw new Error('Something went wrong!');
     });
 
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
 
     expect(() => {
       getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
@@ -235,7 +250,7 @@ describe('getPluginExtensions()', () => {
     expect(global.console.warn).toHaveBeenCalledWith('[Plugin Extensions] Something went wrong!');
   });
 
-  test('should skip the link extension if the configure() function returns with an invalid path', () => {
+  test('should skip the link extension if the configure() function returns with an invalid path', async () => {
     link1.configure = jest.fn().mockImplementation(() => ({
       path: '/a/another-plugin/page-a',
     }));
@@ -243,7 +258,7 @@ describe('getPluginExtensions()', () => {
       path: 'invalid-path',
     }));
 
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link2] }]);
     const { extensions: extensionsAtPlacement1 } = getPluginExtensions({ registry, extensionPointId: extensionPoint1 });
     const { extensions: extensionsAtPlacement2 } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
 
@@ -255,7 +270,7 @@ describe('getPluginExtensions()', () => {
     expect(global.console.warn).toHaveBeenCalledTimes(2);
   });
 
-  test('should skip the extension if any of the updated props returned by the configure() function are invalid', () => {
+  test('should skip the extension if any of the updated props returned by the configure() function are invalid', async () => {
     const overrides = {
       title: '', // Invalid empty string for title - should be ignored
       description: 'A valid description.', // This should be updated
@@ -263,7 +278,7 @@ describe('getPluginExtensions()', () => {
 
     link2.configure = jest.fn().mockImplementation(() => overrides);
 
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
 
     expect(extensions).toHaveLength(0);
@@ -271,10 +286,10 @@ describe('getPluginExtensions()', () => {
     expect(global.console.warn).toHaveBeenCalledTimes(1);
   });
 
-  test('should skip the extension if the configure() function returns a promise', () => {
+  test('should skip the extension if the configure() function returns a promise', async () => {
     link2.configure = jest.fn().mockImplementation(() => Promise.resolve({}));
 
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
 
     expect(extensions).toHaveLength(0);
@@ -282,24 +297,24 @@ describe('getPluginExtensions()', () => {
     expect(global.console.warn).toHaveBeenCalledTimes(1);
   });
 
-  test('should skip (hide) the extension if the configure() function returns undefined', () => {
+  test('should skip (hide) the extension if the configure() function returns undefined', async () => {
     link2.configure = jest.fn().mockImplementation(() => undefined);
 
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
 
     expect(extensions).toHaveLength(0);
     expect(global.console.warn).toHaveBeenCalledTimes(0); // As this is intentional, no warning should be logged
   });
 
-  test('should pass event, context and helper to extension onClick()', () => {
+  test('should pass event, context and helper to extension onClick()', async () => {
     link2.path = undefined;
     link2.onClick = jest.fn().mockImplementation(() => {
       throw new Error('Something went wrong!');
     });
 
     const context = {};
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
 
@@ -322,7 +337,7 @@ describe('getPluginExtensions()', () => {
     link2.path = undefined;
     link2.onClick = jest.fn().mockRejectedValue(new Error('testing'));
 
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
 
@@ -335,13 +350,13 @@ describe('getPluginExtensions()', () => {
     expect(global.console.warn).toHaveBeenCalledTimes(1);
   });
 
-  test('should catch errors in the onClick() function and log them as warnings', () => {
+  test('should catch errors in the onClick() function and log them as warnings', async () => {
     link2.path = undefined;
     link2.onClick = jest.fn().mockImplementation(() => {
       throw new Error('Something went wrong!');
     });
 
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
 
@@ -353,13 +368,13 @@ describe('getPluginExtensions()', () => {
     expect(global.console.warn).toHaveBeenCalledWith('[Plugin Extensions] Something went wrong!');
   });
 
-  test('should pass a read only context to the onClick() function', () => {
+  test('should pass a read only context to the onClick() function', async () => {
     const context = { title: 'New title from the context!' };
 
     link2.path = undefined;
     link2.onClick = jest.fn();
 
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     const { extensions } = getPluginExtensions({ registry, context, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
 
@@ -375,14 +390,14 @@ describe('getPluginExtensions()', () => {
     }).toThrow();
   });
 
-  test('should not make original context read only', () => {
+  test('should not make original context read only', async () => {
     const context = {
       title: 'New title from the context!',
       nested: { title: 'title' },
       array: ['a'],
     };
 
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     getPluginExtensions({ registry, context, extensionPointId: extensionPoint2 });
 
     expect(() => {
@@ -392,10 +407,10 @@ describe('getPluginExtensions()', () => {
     }).not.toThrow();
   });
 
-  test('should report interaction when onClick is triggered', () => {
+  test('should report interaction when onClick is triggered', async () => {
     const reportInteractionMock = jest.mocked(reportInteraction);
 
-    const registry = createPluginExtensionRegistry([
+    const registry = await createPluginExtensionRegistry([
       {
         pluginId,
         extensionConfigs: [
@@ -423,9 +438,9 @@ describe('getPluginExtensions()', () => {
     });
   });
 
-  test('should be possible to register and get component type extensions', () => {
+  test('should be possible to register and get component type extensions', async () => {
     const extension = component1;
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [extension] }]);
+    const registry = await createPluginExtensionRegistry([{ pluginId, extensionConfigs: [extension] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extension.extensionPointId });
 
     expect(extensions).toHaveLength(1);

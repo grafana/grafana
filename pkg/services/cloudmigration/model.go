@@ -5,108 +5,119 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 var (
-	ErrInternalNotImplementedError = errutil.Internal("cloudmigrations.notImplemented", errutil.WithPublicMessage("Internal server error"))
-	ErrFeatureDisabledError        = errutil.Internal("cloudmigrations.disabled", errutil.WithPublicMessage("Cloud migrations are disabled on this instance"))
-	ErrMigrationNotFound           = errutil.NotFound("cloudmigrations.migrationNotFound", errutil.WithPublicMessage("Migration not found"))
-	ErrMigrationRunNotFound        = errutil.NotFound("cloudmigrations.migrationRunNotFound", errutil.WithPublicMessage("Migration run not found"))
-	ErrMigrationNotDeleted         = errutil.Internal("cloudmigrations.migrationNotDeleted", errutil.WithPublicMessage("Migration not deleted"))
+	ErrInternalNotImplementedError = errutil.Internal("cloudmigrations.notImplemented").Errorf("Internal server error")
+	ErrFeatureDisabledError        = errutil.Internal("cloudmigrations.disabled").Errorf("Cloud migrations are disabled on this instance")
+	ErrMigrationNotFound           = errutil.NotFound("cloudmigrations.sessionNotFound").Errorf("Session not found")
+	ErrMigrationRunNotFound        = errutil.NotFound("cloudmigrations.migrationRunNotFound").Errorf("Migration run not found")
+	ErrMigrationNotDeleted         = errutil.Internal("cloudmigrations.sessionNotDeleted").Errorf("Session not deleted")
+	ErrTokenNotFound               = errutil.NotFound("cloudmigrations.tokenNotFound").Errorf("Token not found")
+	ErrSnapshotNotFound            = errutil.NotFound("cloudmigrations.snapshotNotFound").Errorf("Snapshot not found")
 )
 
-// cloud migration api dtos
-type CloudMigration struct {
-	ID          int64     `json:"id" xorm:"pk autoincr 'id'"`
-	AuthToken   string    `json:"-"`
-	Stack       string    `json:"stack"`
-	StackID     int       `json:"stackID" xorm:"stack_id"`
-	RegionSlug  string    `json:"regionSlug"`
-	ClusterSlug string    `json:"clusterSlug"`
-	Created     time.Time `json:"created"`
-	Updated     time.Time `json:"updated"`
+// CloudMigration domain structs
+type CloudMigrationSession struct {
+	ID          int64  `xorm:"pk autoincr 'id'"`
+	UID         string `xorm:"uid"`
+	AuthToken   string
+	Slug        string
+	StackID     int `xorm:"stack_id"`
+	RegionSlug  string
+	ClusterSlug string
+	Created     time.Time
+	Updated     time.Time
 }
 
-type MigratedResourceResult struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
+type CloudMigrationSnapshot struct {
+	ID             int64  `xorm:"pk autoincr 'id'"`
+	UID            string `xorm:"uid"`
+	SessionUID     string `xorm:"session_uid"`
+	Status         SnapshotStatus
+	EncryptionKey  string `xorm:"encryption_key"` // stored in the unified secrets table
+	UploadURL      string `xorm:"upload_url"`
+	LocalDir       string `xorm:"local_directory"`
+	GMSSnapshotUID string `xorm:"gms_snapshot_uid"`
+	ErrorString    string `xorm:"error_string"`
+	Created        time.Time
+	Updated        time.Time
+	Finished       time.Time
+
+	// []MigrateDataResponseItem
+	Result []byte `xorm:"result"` //store raw gms response body
 }
 
-type MigrationResult struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-}
+type SnapshotStatus string
 
-type MigratedResource struct {
-	Type   string                 `json:"type"`
-	ID     string                 `json:"id"`
-	RefID  string                 `json:"refID"`
-	Name   string                 `json:"name"`
-	Result MigratedResourceResult `json:"result"`
-}
+const (
+	SnapshotStatusInitializing      = "initializing"
+	SnapshotStatusCreating          = "creating"
+	SnapshotStatusPendingUpload     = "pending_upload"
+	SnapshotStatusUploading         = "uploading"
+	SnapshotStatusPendingProcessing = "pending_processing"
+	SnapshotStatusProcessing        = "processing"
+	SnapshotStatusFinished          = "finished"
+	SnapshotStatusError             = "error"
+	SnapshotStatusUnknown           = "unknown"
+)
 
-type CloudMigrationRun struct {
-	ID                int64     `json:"id" xorm:"pk autoincr 'id'"`
-	CloudMigrationUID string    `json:"uid" xorm:"cloud_migration_uid"`
-	Result            []byte    `json:"result"` //store raw cms response body
-	Created           time.Time `json:"created"`
-	Updated           time.Time `json:"updated"`
-	Finished          time.Time `json:"finished"`
-}
-
-func (r CloudMigrationRun) ToResponse() (*MigrateDataResponseDTO, error) {
-	var result MigrateDataResponseDTO
-	err := json.Unmarshal(r.Result, &result)
+// Deprecated, use GetSnapshotResult for the async workflow
+func (s CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
+	var result MigrateDataResponse
+	err := json.Unmarshal(s.Result, &result)
 	if err != nil {
 		return nil, errors.New("could not parse result of run")
 	}
-	result.RunID = r.ID
+	result.RunUID = s.UID
 	return &result, nil
 }
 
+func (s CloudMigrationSnapshot) ShouldQueryGMS() bool {
+	return s.Status == SnapshotStatusPendingProcessing || s.Status == SnapshotStatusProcessing
+}
+
+func (s CloudMigrationSnapshot) GetSnapshotResult() ([]MigrateDataResponseItem, error) {
+	var result []MigrateDataResponseItem
+	if len(s.Result) > 0 {
+		err := json.Unmarshal(s.Result, &result)
+		if err != nil {
+			return nil, errors.New("could not parse result of run")
+		}
+	}
+	return result, nil
+}
+
 type CloudMigrationRunList struct {
-	Runs []MigrateDataResponseDTO `json:"runs"`
+	Runs []MigrateDataResponseList
 }
 
-// swagger:parameters createMigration
-type CloudMigrationRequestParams struct {
-	// required: true
-	// in: body
-	Body CloudMigrationRequest `json:"body"`
+type CloudMigrationSessionRequest struct {
+	AuthToken string
 }
 
-type CloudMigrationRequest struct {
-	AuthToken string `json:"authToken"`
+type CloudMigrationSessionResponse struct {
+	UID     string
+	Slug    string
+	Created time.Time
+	Updated time.Time
 }
 
-type CloudMigrationResponse struct {
-	ID      int64     `json:"id"`
-	Stack   string    `json:"stack"`
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
+type CloudMigrationSessionListResponse struct {
+	Sessions []CloudMigrationSessionResponse
 }
 
-type CloudMigrationListResponse struct {
-	Migrations []CloudMigrationResponse `json:"migrations"`
+type ListSnapshotsQuery struct {
+	SessionUID string
+	Offset     int
+	Limit      int
 }
 
-type MigrateDatasourcesRequest struct {
-	MigrateToPDC       bool
-	MigrateCredentials bool
-}
-
-type MigrateDatasourcesResponse struct {
-	DatasourcesMigrated int
-}
-
-type MigrateDatasourcesRequestDTO struct {
-	MigrateToPDC       bool `json:"migrateToPDC"`
-	MigrateCredentials bool `json:"migrateCredentials"`
-}
-
-type MigrateDatasourcesResponseDTO struct {
-	DatasourcesMigrated int `json:"datasourcesMigrated"`
+type UpdateSnapshotCmd struct {
+	UID    string
+	Status SnapshotStatus
+	Result []byte //store raw gms response body
 }
 
 // access token
@@ -115,19 +126,15 @@ type CreateAccessTokenResponse struct {
 	Token string
 }
 
-type CreateAccessTokenResponseDTO struct {
-	Token string `json:"token"`
-}
-
 type Base64EncodedTokenPayload struct {
 	Token    string
 	Instance Base64HGInstance
 }
 
-func (p Base64EncodedTokenPayload) ToMigration() CloudMigration {
-	return CloudMigration{
+func (p Base64EncodedTokenPayload) ToMigration() CloudMigrationSession {
+	return CloudMigrationSession{
 		AuthToken:   p.Token,
-		Stack:       p.Instance.Slug,
+		Slug:        p.Instance.Slug,
 		StackID:     p.Instance.StackID,
 		RegionSlug:  p.Instance.RegionSlug,
 		ClusterSlug: p.Instance.ClusterSlug,
@@ -141,9 +148,8 @@ type Base64HGInstance struct {
 	ClusterSlug string
 }
 
-// dtos for cms api
+// GMS domain structs
 
-// swagger:enum MigrateDataType
 type MigrateDataType string
 
 const (
@@ -152,18 +158,17 @@ const (
 	FolderDataType     MigrateDataType = "FOLDER"
 )
 
-type MigrateDataRequestDTO struct {
-	Items []MigrateDataRequestItemDTO `json:"items"`
+type MigrateDataRequest struct {
+	Items []MigrateDataRequestItem
 }
 
-type MigrateDataRequestItemDTO struct {
-	Type  MigrateDataType `json:"type"`
-	RefID string          `json:"refId"`
-	Name  string          `json:"name"`
-	Data  interface{}     `json:"data"`
+type MigrateDataRequestItem struct {
+	Type  MigrateDataType
+	RefID string
+	Name  string
+	Data  interface{}
 }
 
-// swagger:enum ItemStatus
 type ItemStatus string
 
 const (
@@ -171,17 +176,28 @@ const (
 	ItemStatusError ItemStatus = "ERROR"
 )
 
-type MigrateDataResponseDTO struct {
-	RunID int64                        `json:"id"`
-	Items []MigrateDataResponseItemDTO `json:"items"`
+type MigrateDataResponse struct {
+	RunUID string
+	Items  []MigrateDataResponseItem
 }
 
-type MigrateDataResponseItemDTO struct {
-	// required:true
-	Type MigrateDataType `json:"type"`
-	// required:true
-	RefID string `json:"refId"`
-	// required:true
-	Status ItemStatus `json:"status"`
-	Error  string     `json:"error,omitempty"`
+type MigrateDataResponseList struct {
+	RunUID string
+}
+
+type MigrateDataResponseItem struct {
+	Type   MigrateDataType
+	RefID  string
+	Status ItemStatus
+	Error  string
+}
+
+type CreateSessionResponse struct {
+	SnapshotUid string
+}
+
+type InitializeSnapshotResponse struct {
+	EncryptionKey  string
+	UploadURL      string
+	GMSSnapshotUID string
 }

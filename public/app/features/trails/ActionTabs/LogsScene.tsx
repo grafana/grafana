@@ -15,7 +15,7 @@ import {
 } from '@grafana/scenes';
 import { Stack } from '@grafana/ui';
 
-import { SelectMetricAction } from '../SelectMetricAction';
+import { SelectMetricAction } from '../MetricSelect/SelectMetricAction';
 import { LOGS_METRIC, VAR_LOGS_DATASOURCE, VAR_LOGS_DATASOURCE_EXPR } from '../shared';
 
 interface LogsSceneState extends SceneObjectState {

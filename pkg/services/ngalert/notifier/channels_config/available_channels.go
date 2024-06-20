@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
+	alertingPagerduty "github.com/grafana/alerting/receivers/pagerduty"
 	alertingTemplates "github.com/grafana/alerting/templates"
 )
 
@@ -362,6 +363,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Element:      ElementTypeKeyValueMap,
 					InputType:    InputTypeText,
 					PropertyName: "details",
+				},
+				{ //New in 11.1
+					Label:        "URL",
+					Description:  "The URL to send API requests to",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  alertingPagerduty.DefaultURL,
+					PropertyName: "url",
 				},
 			},
 		},
@@ -1281,7 +1290,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				}, {
 					Label:        "Override priority",
 					Element:      ElementTypeCheckbox,
-					Description:  "Allow the alert priority to be set using the og_priority annotation",
+					Description:  "Allow the alert priority to be set using the og_priority label.",
 					PropertyName: "overridePriority",
 				},
 				{
@@ -1381,6 +1390,119 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "message",
+				},
+			},
+		},
+		{ // Since Grafana 11.1
+			Type:        "sns",
+			Name:        "AWS SNS",
+			Description: "Sends notifications to Cisco Webex Teams",
+			Heading:     "Webex settings",
+			Info:        "Notifications can be configured for any Cisco Webex Teams",
+			Options: []NotifierOption{
+				{
+					Label:        "The Amazon SNS API URL",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "",
+					PropertyName: "api_url",
+				},
+				{
+					Label:        "SigV4 Authentication",
+					Description:  "Configures AWS's Signature Verification 4 signing process to sign requests",
+					Element:      ElementTypeSubform,
+					PropertyName: "sigv4",
+					SubformOptions: []NotifierOption{
+						{
+							Label:        "Region",
+							Description:  "The AWS region. If blank, the region from the default credentials chain is used.",
+							Element:      ElementTypeInput,
+							InputType:    InputTypeText,
+							Placeholder:  "",
+							PropertyName: "region",
+						},
+						{
+							Label:        "Access Key",
+							Description:  "The AWS API access key.",
+							Element:      ElementTypeInput,
+							InputType:    InputTypeText,
+							Placeholder:  "",
+							PropertyName: "access_key",
+							Secure:       true,
+						},
+						{
+							Label:        "Secret Key",
+							Description:  "The AWS API secret key.",
+							Element:      ElementTypeInput,
+							InputType:    InputTypeText,
+							Placeholder:  "",
+							PropertyName: "secret_key",
+							Secure:       true,
+						},
+						{
+							Label:        "Profile",
+							Description:  "Named AWS profile used to authenticate",
+							Element:      ElementTypeInput,
+							InputType:    InputTypeText,
+							Placeholder:  "",
+							PropertyName: "profile",
+						},
+						{
+							Label:        "Role ARN",
+							Description:  "AWS Role ARN, an alternative to using AWS API keys",
+							Element:      ElementTypeInput,
+							InputType:    InputTypeText,
+							Placeholder:  "",
+							PropertyName: "role_arn",
+						},
+					},
+				},
+				{
+					Label:        "SNS topic ARN",
+					Description:  "If you don't specify this value, you must specify a value for the phone_number or target_arn. If you are using a FIFO SNS topic you should set a message group interval longer than 5 minutes to prevent messages with the same group key being deduplicated by the SNS default deduplication window.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "",
+					PropertyName: "topic_arn",
+				},
+				{
+					Label:        "Phone number",
+					Description:  "Phone number if message is delivered via SMS in E.164 format. If you don't specify this value, you must specify a value for the topic_arn or target_arn",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  ``,
+					PropertyName: "phone_number",
+					Secure:       false,
+				},
+				{
+					Label:        "Target ARN",
+					Description:  "The mobile platform endpoint ARN if message is delivered via mobile notifications. If you don't specify this value, you must specify a value for the topic_arn or phone_number",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  ``,
+					PropertyName: "target_arn",
+				},
+				{
+					Label:        "Subject",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Optional subject. You can use templates to customize this field",
+					PropertyName: "subject",
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
+				},
+				{
+					Label:        "Message",
+					Description:  "Optional message. You can use templates to customize this field. Using a custom message will replace the default message",
+					Element:      ElementTypeTextArea,
+					PropertyName: "message",
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
+				},
+				{
+					Label:        "Attributes",
+					Description:  "SNS message attributes",
+					Element:      ElementTypeKeyValueMap,
+					InputType:    InputTypeText,
+					PropertyName: "attributes",
 				},
 			},
 		},

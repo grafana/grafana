@@ -625,7 +625,10 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 		require.NoError(t, err)
 		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
-		require.Equal(t, `invalid panel_id: strconv.ParseInt: parsing "invalid": invalid syntax`, res["message"])
+		// These APIs return Prometheus-like errors.
+		require.Equal(t, "error", res["status"])
+		require.Equal(t, "bad_data", res["errorType"])
+		require.Equal(t, `invalid panel_id: strconv.ParseInt: parsing "invalid": invalid syntax`, res["error"])
 	}
 
 	// Now, let's check a panel_id without dashboard_uid returns a 400 Bad Request response
@@ -643,7 +646,10 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 		require.NoError(t, err)
 		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
-		require.Equal(t, "panel_id must be set with dashboard_uid", res["message"])
+		// These APIs return Prometheus-like errors.
+		require.Equal(t, "error", res["status"])
+		require.Equal(t, "bad_data", res["errorType"])
+		require.Equal(t, "panel_id must be set with dashboard_uid", res["error"])
 	}
 }
 
@@ -669,7 +675,7 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
 	// access control permissions store
-	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures())
+	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "folder1", "folder1")

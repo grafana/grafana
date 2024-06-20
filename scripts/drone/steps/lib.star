@@ -35,8 +35,6 @@ def yarn_install_step():
         "name": "yarn-install",
         "image": images["node"],
         "commands": [
-            # Python is needed to build `esfx`, which is needed by `msagl`
-            "apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python",
             "yarn install --immutable || yarn install --immutable",
         ],
         "depends_on": [],
@@ -200,24 +198,6 @@ def enterprise_downstream_step(ver_mode):
         step["settings"]["params"].append("OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}")
 
     return step
-
-def lint_backend_step():
-    return {
-        "name": "lint-backend",
-        "image": images["go"],
-        "environment": {
-            # We need CGO because of go-sqlite3
-            "CGO_ENABLED": "1",
-        },
-        "depends_on": [
-            "wire-install",
-        ],
-        "commands": [
-            "apk add --update make build-base",
-            # Don't use Make since it will re-download the linters
-            "make lint-go",
-        ],
-    }
 
 def validate_modfile_step():
     return {
@@ -641,17 +621,15 @@ def lint_frontend_step():
 
 def verify_i18n_step():
     extract_error_message = "\nExtraction failed. Make sure that you have no dynamic translation phrases, such as 't(\\`preferences.theme.\\$${themeID}\\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file."
-    uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'yarn i18n:extract', commit the changes and push again."
+    uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'make i18n-extract', commit the changes and push again."
     return {
         "name": "verify-i18n",
-        "image": images["node"],
+        "image": images["node_deb"],
         "depends_on": [
             "yarn-install",
         ],
-        "failure": "ignore",
         "commands": [
-            "apk add --update git",
-            "yarn run i18n:extract || (echo \"{}\" && false)".format(extract_error_message),
+            "make i18n-extract || (echo \"{}\" && false)".format(extract_error_message),
             # Verify that translation extraction has been committed
             '''
             file_diff=$(git diff --dirstat public/locales)
@@ -835,7 +813,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
         "name": "end-to-end-tests-{}-{}".format(suite, cloud),
-        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:3.0.0",
+        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.10.0:1.0.0",
         "depends_on": [
             "grafana-server",
         ],
@@ -853,12 +831,13 @@ def playwright_e2e_tests_step():
             "PROV_DIR": "/grafana/scripts/grafana-server/tmp/conf/provisioning",
         },
         "name": "playwright-plugin-e2e",
-        "image": images["playwright"],
+        "image": images["node_deb"],
         "depends_on": [
             "grafana-server",
         ],
         "commands": [
-            "sleep 10s",  # it seems sometimes that grafana-server is not actually ready when the step starts, so waiting for a few seconds before running the tests
+            "npx wait-on@7.0.1 http://$HOST:$PORT",
+            "yarn playwright install --with-deps chromium",
             "yarn e2e:playwright",
         ],
     }

@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"slices"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -68,10 +69,12 @@ mainloop:
 		}
 		if existing == nil {
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
+			title := "TEST-FOLDER-" + util.GenerateShortUID()
 			folders = append(folders, &folder.Folder{
-				ID:    rand.Int63(), // nolint:staticcheck
-				UID:   r.NamespaceUID,
-				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
+				ID:       rand.Int63(), // nolint:staticcheck
+				UID:      r.NamespaceUID,
+				Title:    title,
+				Fullpath: "fullpath_" + title,
 			})
 			f.Folders[r.OrgID] = folders
 		}
@@ -138,7 +141,7 @@ func (f *RuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleB
 			return rule, nil
 		}
 	}
-	return nil, nil
+	return nil, models.ErrAlertRuleNotFound
 }
 
 func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error) {
@@ -196,33 +199,21 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 		return true
 	}
 
-	hasNamespace := func(r *models.AlertRule, namespaceUIDs []string) bool {
-		if len(namespaceUIDs) > 0 {
-			var ok bool
-			for _, uid := range q.NamespaceUIDs {
-				if uid == r.NamespaceUID {
-					ok = true
-					break
-				}
-			}
-			if !ok {
-				return false
-			}
-		}
-		return true
-	}
-
 	ruleList := models.RulesGroup{}
 	for _, r := range f.Rules[q.OrgID] {
 		if !hasDashboard(r, q.DashboardUID, q.PanelID) {
 			continue
 		}
-		if !hasNamespace(r, q.NamespaceUIDs) {
+		if len(q.NamespaceUIDs) > 0 && !slices.Contains(q.NamespaceUIDs, r.NamespaceUID) {
 			continue
 		}
-		if q.RuleGroup != "" && r.RuleGroup != q.RuleGroup {
+		if len(q.RuleGroups) > 0 && !slices.Contains(q.RuleGroups, r.RuleGroup) {
 			continue
 		}
+		if len(q.RuleUIDs) > 0 && !slices.Contains(q.RuleUIDs, r.UID) {
+			continue
+		}
+
 		ruleList = append(ruleList, r)
 	}
 
@@ -350,4 +341,29 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 
 func (f *RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
 	return 0, nil
+}
+
+func (f *RuleStore) GetNamespacesByRuleUID(ctx context.Context, orgID int64, uids ...string) (map[string]string, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	namespacesMap := make(map[string]string)
+
+	rules, ok := f.Rules[orgID]
+	if !ok {
+		return namespacesMap, nil
+	}
+
+	uidFilter := make(map[string]struct{}, len(uids))
+	for _, uid := range uids {
+		uidFilter[uid] = struct{}{}
+	}
+
+	for _, rule := range rules {
+		if _, ok := uidFilter[rule.UID]; ok {
+			namespacesMap[rule.UID] = rule.NamespaceUID
+		}
+	}
+
+	return namespacesMap, nil
 }

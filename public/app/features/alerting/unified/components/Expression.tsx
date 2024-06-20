@@ -4,9 +4,9 @@ import React, { FC, useMemo } from 'react';
 import { Editor } from 'slate-react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { promqlGrammar } from '@grafana/prometheus';
 import { makeValue, SlatePrism, useStyles2 } from '@grafana/ui';
 import LogqlSyntax from 'app/plugins/datasource/loki/syntax';
-import PromqlSyntax from 'app/plugins/datasource/prometheus/promql';
 import { RulesSource } from 'app/types/unified-alerting';
 
 import { DataSourceType, isCloudRulesSource } from '../utils/datasource';
@@ -26,7 +26,7 @@ export const HighlightedQuery: FC<{ language: 'promql' | 'logql'; expr: string }
           onlyIn: (node) => 'type' in node && node.type === 'code_block',
           getSyntax: () => language,
         },
-        { ...prismLanguages, [language]: language === 'logql' ? LogqlSyntax : PromqlSyntax }
+        { ...prismLanguages, [language]: language === 'logql' ? LogqlSyntax : promqlGrammar }
       ),
     ],
     [language]
@@ -53,7 +53,7 @@ export const Expression: FC<Props> = ({ expression: query, rulesSource }) => {
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  well: css`
-    font-family: ${theme.typography.fontFamilyMonospace};
-  `,
+  well: css({
+    fontFamily: theme.typography.fontFamilyMonospace,
+  }),
 });

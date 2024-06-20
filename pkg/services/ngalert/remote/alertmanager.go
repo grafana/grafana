@@ -9,17 +9,22 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/go-openapi/strfmt"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
-	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
+	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
+	"github.com/prometheus/client_golang/prometheus"
 
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	alertingNotify "github.com/grafana/alerting/notify"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -33,19 +38,33 @@ type stateStore interface {
 	GetNotificationLog(ctx context.Context) (string, error)
 }
 
+// AutogenFn is a function that adds auto-generated routes to a configuration.
+type AutogenFn func(ctx context.Context, logger log.Logger, orgId int64, config *apimodels.PostableApiAlertingConfig, skipInvalid bool) error
+
+// NoopAutogenFn is used to skip auto-generating routes.
+func NoopAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *apimodels.PostableApiAlertingConfig, _ bool) error {
+	return nil
+}
+
 // DecryptFn is a function that takes in an encrypted value and returns it decrypted.
 type DecryptFn func(ctx context.Context, payload []byte) ([]byte, error)
 
 type Alertmanager struct {
-	decrypt  DecryptFn
-	log      log.Logger
-	metrics  *metrics.RemoteAlertmanager
-	orgID    int64
-	ready    bool
-	sender   *sender.ExternalAlertmanager
-	state    stateStore
-	tenantID string
-	url      string
+	autogenFn         AutogenFn
+	decrypt           DecryptFn
+	defaultConfig     string
+	defaultConfigHash string
+	log               log.Logger
+	metrics           *metrics.RemoteAlertmanager
+	orgID             int64
+	ready             bool
+	sender            *sender.ExternalAlertmanager
+	state             stateStore
+	tenantID          string
+	url               string
+
+	lastConfigSync time.Time
+	syncInterval   time.Duration
 
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
@@ -56,6 +75,14 @@ type AlertmanagerConfig struct {
 	URL               string
 	TenantID          string
 	BasicAuthPassword string
+
+	DefaultConfig string
+	// PromoteConfig is a flag that determines whether the configuration should be used in the remote Alertmanager.
+	// The same flag is used for promoting state.
+	PromoteConfig bool
+
+	// SyncInterval determines how often we should attempt to synchronize configuration.
+	SyncInterval time.Duration
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -73,7 +100,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -85,12 +112,13 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	logger := log.New("ngalert.remote.alertmanager")
 
 	mcCfg := &remoteClient.Config{
-		URL:      u,
-		TenantID: cfg.TenantID,
-		Password: cfg.BasicAuthPassword,
-		Logger:   logger,
+		Logger:        logger,
+		Password:      cfg.BasicAuthPassword,
+		TenantID:      cfg.TenantID,
+		URL:           u,
+		PromoteConfig: cfg.PromoteConfig,
 	}
-	mc, err := remoteClient.New(mcCfg, metrics)
+	mc, err := remoteClient.New(mcCfg, metrics, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +129,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		Password: cfg.BasicAuthPassword,
 		Logger:   logger,
 	}
-	amc, err := remoteClient.NewAlertmanager(amcCfg, metrics)
+	amc, err := remoteClient.NewAlertmanager(amcCfg, metrics, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -111,9 +139,24 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	doFunc := func(ctx context.Context, _ *http.Client, req *http.Request) (*http.Response, error) {
 		return c.Do(req.WithContext(ctx))
 	}
-	s := sender.NewExternalAlertmanagerSender(sender.WithDoFunc(doFunc))
+	senderLogger := log.New("ngalert.sender.external-alertmanager")
+	s, err := sender.NewExternalAlertmanagerSender(senderLogger, prometheus.NewRegistry(), sender.WithDoFunc(doFunc))
+	if err != nil {
+		return nil, err
+	}
 	s.Run()
 	err = s.ApplyConfig(cfg.OrgID, 0, []sender.ExternalAMcfg{{URL: cfg.URL + "/alertmanager"}})
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse the default configuration into a postable config.
+	pCfg, err := notifier.Load([]byte(cfg.DefaultConfig))
+	if err != nil {
+		return nil, err
+	}
+
+	rawCfg, err := json.Marshal(pCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -122,51 +165,54 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	metrics.LastReadinessCheck.Set(0)
 
 	return &Alertmanager{
-		amClient:    amc,
-		decrypt:     decryptFn,
-		log:         logger,
-		metrics:     metrics,
-		mimirClient: mc,
-		orgID:       cfg.OrgID,
-		state:       store,
-		sender:      s,
-		tenantID:    cfg.TenantID,
-		url:         cfg.URL,
+		amClient:          amc,
+		autogenFn:         autogenFn,
+		decrypt:           decryptFn,
+		defaultConfig:     string(rawCfg),
+		defaultConfigHash: fmt.Sprintf("%x", md5.Sum(rawCfg)),
+		log:               logger,
+		metrics:           metrics,
+		mimirClient:       mc,
+		orgID:             cfg.OrgID,
+		state:             store,
+		sender:            s,
+		syncInterval:      cfg.SyncInterval,
+		tenantID:          cfg.TenantID,
+		url:               cfg.URL,
 	}, nil
 }
 
-// ApplyConfig is called everytime we've determined we need to apply an existing configuration to the Alertmanager,
-// including the first time the Alertmanager is started. In the context of a "remote Alertmanager" it's as good of a heuristic,
-// for "a function that gets called when the Alertmanager starts". As a result we do two things:
+// ApplyConfig is called by the multi-org Alertmanager on startup and on every sync loop iteration (1m default).
+// We do two things on startup:
 // 1. Execute a readiness check to make sure the remote Alertmanager we're about to communicate with is up and ready.
 // 2. Upload the configuration and state we currently hold.
+// On each subsequent call to ApplyConfig we compare and upload only the configuration.
 func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	if am.ready {
-		am.log.Debug("Alertmanager previously marked as ready, skipping readiness check and config + state update")
+		am.log.Debug("Alertmanager previously marked as ready, skipping readiness check and state sync")
+	} else {
+		am.log.Debug("Start readiness check for remote Alertmanager", "url", am.url)
+		if err := am.checkReadiness(ctx); err != nil {
+			return fmt.Errorf("unable to pass the readiness check: %w", err)
+		}
+		am.log.Debug("Completed readiness check for remote Alertmanager, starting state upload", "url", am.url)
+
+		if err := am.CompareAndSendState(ctx); err != nil {
+			return fmt.Errorf("unable to upload the state to the remote Alertmanager: %w", err)
+		}
+		am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
+	}
+
+	if time.Since(am.lastConfigSync) < am.syncInterval {
+		am.log.Debug("Not syncing configuration to remote Alertmanager, last sync was too recent")
 		return nil
 	}
 
-	// First, execute a readiness check to make sure the remote Alertmanager is ready.
-	am.log.Debug("Start readiness check for remote Alertmanager", "url", am.url)
-	if err := am.checkReadiness(ctx); err != nil {
-		am.log.Error("Unable to pass the readiness check", "err", err)
-		return err
-	}
-	am.log.Debug("Completed readiness check for remote Alertmanager", "url", am.url)
-
-	// Send configuration and base64-encoded state if necessary.
 	am.log.Debug("Start configuration upload to remote Alertmanager", "url", am.url)
 	if err := am.CompareAndSendConfiguration(ctx, config); err != nil {
-		am.log.Error("Unable to upload the configuration to the remote Alertmanager", "err", err)
+		return fmt.Errorf("unable to upload the configuration to the remote Alertmanager: %w", err)
 	}
 	am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
-
-	am.log.Debug("Start state upload to remote Alertmanager", "url", am.url)
-	if err := am.CompareAndSendState(ctx); err != nil {
-		am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
-	}
-	am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
-
 	return nil
 }
 
@@ -194,36 +240,48 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return err
 	}
 
-	// Decrypt the configuration before comparing.
-	fn := func(payload []byte) ([]byte, error) {
-		return am.decrypt(ctx, payload)
-	}
-	decrypted, err := c.Decrypt(fn)
-	if err != nil {
+	// Add auto-generated routes and decrypt before comparing.
+	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig, true); err != nil {
 		return err
 	}
-	rawDecrypted, err := json.Marshal(decrypted)
+	decrypted, err := am.decryptConfiguration(ctx, c)
 	if err != nil {
 		return err
 	}
 
 	// Send the configuration only if we need to.
-	if !am.shouldSendConfig(ctx, rawDecrypted) {
+	if !am.shouldSendConfig(ctx, decrypted) {
 		return nil
 	}
+	return am.sendConfiguration(ctx, decrypted, config.ConfigurationHash, config.CreatedAt, config.Default)
+}
 
+func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels.PostableUserConfig) (*apimodels.PostableUserConfig, error) {
+	fn := func(payload []byte) ([]byte, error) {
+		return am.decrypt(ctx, payload)
+	}
+	decrypted, err := cfg.Decrypt(fn)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt the configuration: %w", err)
+	}
+
+	return &decrypted, nil
+}
+
+func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error {
 	am.metrics.ConfigSyncsTotal.Inc()
 	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 		ctx,
-		string(rawDecrypted),
-		config.ConfigurationHash,
-		config.CreatedAt,
-		config.Default,
+		decrypted,
+		hash,
+		createdAt,
+		isDefault,
 	); err != nil {
 		am.metrics.ConfigSyncErrorsTotal.Inc()
 		return err
 	}
 	am.metrics.LastConfigSync.SetToCurrentTime()
+	am.lastConfigSync = time.Now()
 	return nil
 }
 
@@ -246,12 +304,50 @@ func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
 	return nil
 }
 
+// SaveAndApplyConfig decrypts and sends a configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	return nil
+	// Get the hash for the encrypted configuration.
+	rawCfg, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
+
+	// Add auto-generated routes and decrypt before sending.
+	if err := am.autogenFn(ctx, am.log, am.orgID, &cfg.AlertmanagerConfig, false); err != nil {
+		return err
+	}
+	decrypted, err := am.decryptConfiguration(ctx, cfg)
+	if err != nil {
+		return err
+	}
+
+	return am.sendConfiguration(ctx, decrypted, hash, time.Now().Unix(), false)
 }
 
+// SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	return nil
+	c, err := notifier.Load([]byte(am.defaultConfig))
+	if err != nil {
+		return fmt.Errorf("unable to parse the default configuration: %w", err)
+	}
+
+	// Add auto-generated routes and decrypt before sending.
+	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig, true); err != nil {
+		return err
+	}
+	decrypted, err := am.decryptConfiguration(ctx, c)
+	if err != nil {
+		return err
+	}
+
+	return am.sendConfiguration(
+		ctx,
+		decrypted,
+		am.defaultConfigHash,
+		time.Now().Unix(),
+		true,
+	)
 }
 
 func (am *Alertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
@@ -367,22 +463,30 @@ func (am *Alertmanager) PutAlerts(ctx context.Context, alerts apimodels.Postable
 	return nil
 }
 
-func (am *Alertmanager) GetStatus() apimodels.GettableStatus {
-	return apimodels.GettableStatus{}
+// GetStatus retrieves the remote Alertmanager configuration.
+func (am *Alertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			am.log.Error("Panic while getting status", "err", r)
+		}
+	}()
+
+	params := amgeneral.NewGetStatusParamsWithContext(ctx)
+	res, err := am.amClient.General.GetStatus(params)
+	if err != nil {
+		return apimodels.GettableStatus{}, err
+	}
+
+	var cfg apimodels.PostableApiAlertingConfig
+	if err := yaml.Unmarshal([]byte(*res.Payload.Config.Original), &cfg); err != nil {
+		return apimodels.GettableStatus{}, err
+	}
+
+	return *apimodels.NewGettableStatus(&cfg), nil
 }
 
 func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
-	params := amreceiver.NewGetReceiversParamsWithContext(ctx)
-	res, err := am.amClient.Receiver.GetReceivers(params)
-	if err != nil {
-		return []apimodels.Receiver{}, err
-	}
-
-	var rcvs []apimodels.Receiver
-	for _, rcv := range res.Payload {
-		rcvs = append(rcvs, *rcv)
-	}
-	return rcvs, nil
+	return am.mimirClient.GetReceivers(ctx)
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
@@ -447,15 +551,29 @@ func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 
 // shouldSendConfig compares the remote Alertmanager configuration with our local one.
 // It returns true if the configurations are different.
-func (am *Alertmanager) shouldSendConfig(ctx context.Context, rawConfig []byte) bool {
+func (am *Alertmanager) shouldSendConfig(ctx context.Context, config *apimodels.PostableUserConfig) bool {
 	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 	if err != nil {
 		// Log the error and return true so we try to upload our config anyway.
-		am.log.Error("Unable to get the remote Alertmanager Configuration for comparison", "err", err)
+		am.log.Error("Unable to get the remote Alertmanager configuration for comparison", "err", err)
 		return true
 	}
 
-	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) != md5.Sum(rawConfig)
+	if rc.Promoted != am.mimirClient.ShouldPromoteConfig() {
+		return true
+	}
+
+	rawRemote, err := json.Marshal(rc.GrafanaAlertmanagerConfig)
+	if err != nil {
+		am.log.Error("Unable to marshal the remote Alertmanager configuration for comparison", "err", err)
+		return true
+	}
+	rawInternal, err := json.Marshal(config)
+	if err != nil {
+		am.log.Error("Unable to marshal the internal Alertmanager configuration for comparison", "err", err)
+		return true
+	}
+	return md5.Sum(rawRemote) != md5.Sum(rawInternal)
 }
 
 // shouldSendState compares the remote Alertmanager state with our local one.
