@@ -10,7 +10,7 @@ import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/han
 import { AlertManagerCortexConfig, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 
-import { updateRulerRuleNamespaceHandler } from './handlers/alertRules';
+import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from './handlers/alertRules';
 
 export type HandlerOptions = {
   delay?: number;
@@ -44,10 +44,20 @@ export const setGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) =
 };
 
 /**
- * Makes rule namespace update slow down
+ * Makes the mock server respond with different responses for updating a ruler namespace
  */
 export const setUpdateRulerRuleNamespaceHandler = (options?: HandlerOptions) => {
   const handler = updateRulerRuleNamespaceHandler(options);
+  server.use(handler);
+
+  return handler;
+};
+
+/**
+ * Makes the mock server response with different responses for a ruler rule group
+ */
+export const setRulerRuleGroupHandler = (options?: HandlerOptions) => {
+  const handler = rulerRuleGroupHandler(options);
   server.use(handler);
 
   return handler;

@@ -8,7 +8,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import server, { setupMswServer } from '../mockApi';
+import { setupMswServer } from '../mockApi';
 import {
   mockCombinedRule,
   mockCombinedRuleGroup,
@@ -18,7 +18,7 @@ import {
   mockRulerRuleGroup,
 } from '../mocks';
 import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '../mocks/alertRuleApi';
-import { setUpdateRulerRuleNamespaceHandler } from '../mocks/server/configure';
+import { setRulerRuleGroupHandler, setUpdateRulerRuleNamespaceHandler } from '../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from '../mocks/server/handlers/alertRules';
 import { stringifyErrorLike } from '../utils/misc';
@@ -26,7 +26,7 @@ import { getRuleGroupLocationFromCombinedRule } from '../utils/rules';
 
 import { useDeleteRuleFromGroup, usePauseRuleInGroup } from './useProduceNewRuleGroup';
 
-setupMswServer();
+const server = setupMswServer();
 
 beforeAll(() => {
   setBackendSrv(backendSrv);
@@ -126,6 +126,10 @@ describe('delete rule', () => {
   });
 
   it('should be able to delete a Data source managed rule', async () => {
+    setUpdateRulerRuleNamespaceHandler({
+      response: new HttpResponse(undefined, { status: 200 }),
+    });
+
     const rules = [
       mockCombinedRule({
         name: 'r1',
@@ -142,16 +146,10 @@ describe('delete rule', () => {
       rules: [rules[0].rulerRule!, rules[1].rulerRule!],
     });
 
-    const getGroup = rulerRuleGroupHandler({
+    setRulerRuleGroupHandler({
       delay: 1000,
       response: HttpResponse.json(group),
     });
-
-    const updateNamespace = updateRulerRuleNamespaceHandler({
-      response: new HttpResponse(undefined, { status: 200 }),
-    });
-
-    server.use(getGroup, updateNamespace);
 
     const capture = captureRequests();
 

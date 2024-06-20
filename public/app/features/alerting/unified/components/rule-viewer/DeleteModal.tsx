@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { useHistory } from 'react-router-dom';
 
+import { locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
 import { CombinedRule } from 'app/types/unified-alerting';
@@ -12,7 +12,6 @@ import { getRuleGroupLocationFromCombinedRule } from '../../utils/rules';
 type DeleteModalHook = [JSX.Element, (rule: CombinedRule) => void, () => void];
 
 export const useDeleteModal = (): DeleteModalHook => {
-  const history = useHistory();
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule | undefined>();
   const [deleteRuleFromGroup, _deleteState] = useDeleteRuleFromGroup();
 
@@ -40,9 +39,9 @@ export const useDeleteModal = (): DeleteModalHook => {
       dismissModal();
 
       // @TODO implement redirect yes / no
-      history.replace('/alerting/list');
+      locationService.replace('/alerting/list');
     },
-    [deleteRuleFromGroup, dismissModal, history]
+    [deleteRuleFromGroup, dismissModal]
   );
 
   const modal = useMemo(

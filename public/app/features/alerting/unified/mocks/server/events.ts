@@ -37,7 +37,7 @@ export async function captureRequests(): Promise<Request[]> {
     requests.push(request);
   });
 
-  return new Promise(async (resolve) => {
+  return new Promise((resolve) => {
     resolve(requests);
   });
 }

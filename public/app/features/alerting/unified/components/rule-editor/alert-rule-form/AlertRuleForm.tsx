@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
-import { Link, useHistory, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Button, ConfirmModal, CustomScrollbar, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -60,7 +60,6 @@ type Props = {
 export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-  const history = useHistory();
   const notifyApp = useAppNotification();
   const [queryParams] = useQueryParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
@@ -162,7 +161,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(existing);
 
       await deleteRuleFromGroup(ruleGroupIdentifier, existing.rule);
-      history.replace(returnTo);
+      locationService.replace(returnTo);
     }
   };
 

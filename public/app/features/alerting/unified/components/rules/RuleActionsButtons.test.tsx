@@ -24,6 +24,7 @@ jest.mock('app/core/services/context_srv');
 const mockContextSrv = jest.mocked(contextSrv);
 
 const ui = {
+  menu: byRole('menu'),
   moreButton: byLabelText(/More/),
   pauseButton: byRole('menuitem', { name: /Pause evaluation/ }),
 };
@@ -86,6 +87,8 @@ describe('RuleActionsButtons', () => {
 
     await user.click(await ui.moreButton.find());
     await user.click(await ui.pauseButton.find());
+
+    expect(ui.menu.query()).not.toBeInTheDocument();
   });
 
   it('renders correct options for Cloud rule', async () => {
