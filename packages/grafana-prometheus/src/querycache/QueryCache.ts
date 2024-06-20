@@ -10,7 +10,7 @@ import {
   parseDuration,
 } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 import { amendTable, Table, trimTable } from '../gcopypaste/app/features/live/data/amendTimeSeries';
 import { PromQuery } from '../types';
@@ -120,10 +120,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
 
-    if (
-      (config.grafanaJavascriptAgent.enabled || config.featureToggles?.prometheusIncrementalQueryInstrumentation) &&
-      options.profileFunction !== undefined
-    ) {
+    if (config.grafanaJavascriptAgent.enabled && options.profileFunction !== undefined) {
       this.profile();
       this.shouldProfile = true;
     } else {
@@ -131,80 +128,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
     }
     this.getProfileData = options.profileFunction;
     this.getTargetSignature = options.getTargetSignature;
-  }
-
-  private profile() {
-    // Check if PerformanceObserver is supported, and if we have Faro enabled for internal profiling
-    if (typeof PerformanceObserver === 'function') {
-      this.perfObeserver = new PerformanceObserver((list: PerformanceObserverEntryList) => {
-        list.getEntries().forEach((entry) => {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const entryTypeCast: PerformanceResourceTiming = entry as PerformanceResourceTiming;
-
-          // Safari support for this is coming in 16.4:
-          // https://caniuse.com/mdn-api_performanceresourcetiming_transfersize
-          // Gating that this exists to prevent runtime errors
-          const isSupported = typeof entryTypeCast?.transferSize === 'number';
-
-          if (entryTypeCast?.initiatorType === 'fetch' && isSupported) {
-            let fetchUrl = entryTypeCast.name;
-
-            if (fetchUrl.includes('/api/ds/query')) {
-              let match = fetchUrl.match(/requestId=([a-z\d]+)/i);
-
-              if (match) {
-                let requestId = match[1];
-
-                const requestTransferSize = Math.round(entryTypeCast.transferSize);
-                const currentRequest = this.pendingRequestIdsToTargSigs.get(requestId);
-
-                if (currentRequest) {
-                  const entries = this.pendingRequestIdsToTargSigs.entries();
-
-                  for (let [, value] of entries) {
-                    if (value.identity === currentRequest.identity && value.bytes !== null) {
-                      const previous = this.pendingAccumulatedEvents.get(value.identity);
-
-                      const savedBytes = value.bytes - requestTransferSize;
-
-                      this.pendingAccumulatedEvents.set(value.identity, {
-                        datasource: value.datasource ?? 'N/A',
-                        requestCount: (previous?.requestCount ?? 0) + 1,
-                        savedBytesTotal: (previous?.savedBytesTotal ?? 0) + savedBytes,
-                        initialRequestSize: value.bytes,
-                        lastRequestSize: requestTransferSize,
-                        panelId: currentRequest.panelId?.toString() ?? '',
-                        dashId: currentRequest.dashboardUID ?? '',
-                        expr: currentRequest.expr ?? '',
-                        refreshIntervalMs: currentRequest.refreshIntervalMs ?? 0,
-                        sent: false,
-                        from: currentRequest.from ?? '',
-                        queryRangeSeconds: currentRequest.queryRangeSeconds ?? 0,
-                      });
-
-                      // We don't need to save each subsequent request, only the first one
-                      this.pendingRequestIdsToTargSigs.delete(requestId);
-
-                      return;
-                    }
-                  }
-
-                  // If we didn't return above, this should be the first request, let's save the observed size
-                  this.pendingRequestIdsToTargSigs.set(requestId, { ...currentRequest, bytes: requestTransferSize });
-                }
-              }
-            }
-          }
-        });
-      });
-
-      this.perfObeserver.observe({ type: 'resource', buffered: false });
-
-      setInterval(this.sendPendingTrackingEvents, this.sendEventsInterval);
-
-      // Send any pending profile information when the user navigates away
-      window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
-    }
   }
 
   sendPendingTrackingEvents = () => {
@@ -226,9 +149,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
           queryRangeSeconds: value.queryRangeSeconds.toString(),
         };
 
-        if (config.featureToggles.prometheusIncrementalQueryInstrumentation) {
-          reportInteraction('grafana_incremental_queries_profile', event);
-        } else if (faro.api.pushEvent) {
+        if (faro.api.pushEvent) {
           faro.api.pushEvent('incremental query response size', event, 'no-interaction', {
             skipDedupe: true,
           });
@@ -245,6 +166,82 @@ export class QueryCache<T extends SupportedQueryTypes> {
       }
     }
   };
+
+  private profile() {
+    // Check if PerformanceObserver is supported, and if we have Faro enabled for internal profiling
+    if (typeof PerformanceObserver !== 'function') {
+      return;
+    }
+
+    this.perfObeserver = new PerformanceObserver((list: PerformanceObserverEntryList) => {
+      list.getEntries().forEach((entry) => {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const entryTypeCast: PerformanceResourceTiming = entry as PerformanceResourceTiming;
+
+        // Safari support for this is coming in 16.4:
+        // https://caniuse.com/mdn-api_performanceresourcetiming_transfersize
+        // Gating that this exists to prevent runtime errors
+        const isSupported = typeof entryTypeCast?.transferSize === 'number';
+
+        if (entryTypeCast?.initiatorType === 'fetch' && isSupported) {
+          let fetchUrl = entryTypeCast.name;
+
+          if (fetchUrl.includes('/api/ds/query')) {
+            let match = fetchUrl.match(/requestId=([a-z\d]+)/i);
+
+            if (match) {
+              let requestId = match[1];
+
+              const requestTransferSize = Math.round(entryTypeCast.transferSize);
+              const currentRequest = this.pendingRequestIdsToTargSigs.get(requestId);
+
+              if (currentRequest) {
+                const entries = this.pendingRequestIdsToTargSigs.entries();
+
+                for (let [, value] of entries) {
+                  if (value.identity === currentRequest.identity && value.bytes !== null) {
+                    const previous = this.pendingAccumulatedEvents.get(value.identity);
+
+                    const savedBytes = value.bytes - requestTransferSize;
+
+                    this.pendingAccumulatedEvents.set(value.identity, {
+                      datasource: value.datasource ?? 'N/A',
+                      requestCount: (previous?.requestCount ?? 0) + 1,
+                      savedBytesTotal: (previous?.savedBytesTotal ?? 0) + savedBytes,
+                      initialRequestSize: value.bytes,
+                      lastRequestSize: requestTransferSize,
+                      panelId: currentRequest.panelId?.toString() ?? '',
+                      dashId: currentRequest.dashboardUID ?? '',
+                      expr: currentRequest.expr ?? '',
+                      refreshIntervalMs: currentRequest.refreshIntervalMs ?? 0,
+                      sent: false,
+                      from: currentRequest.from ?? '',
+                      queryRangeSeconds: currentRequest.queryRangeSeconds ?? 0,
+                    });
+
+                    // We don't need to save each subsequent request, only the first one
+                    this.pendingRequestIdsToTargSigs.delete(requestId);
+
+                    return;
+                  }
+                }
+
+                // If we didn't return above, this should be the first request, let's save the observed size
+                this.pendingRequestIdsToTargSigs.set(requestId, { ...currentRequest, bytes: requestTransferSize });
+              }
+            }
+          }
+        }
+      });
+    });
+
+    this.perfObeserver.observe({ type: 'resource', buffered: false });
+
+    setInterval(this.sendPendingTrackingEvents, this.sendEventsInterval);
+
+    // Send any pending profile information when the user navigates away
+    window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
+  }
 
   // can be used to change full range request to partial, split into multiple requests
   requestInfo(request: DataQueryRequest<T>): CacheRequestInfo<T> {
