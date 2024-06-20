@@ -19,17 +19,17 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
   json-fields:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/view-dashboard-json-model/#json-fields
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/view-dashboard-json-model/#json-fields
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/view-dashboard-json-model/#json-fields
   data-source:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
 ---
 
 # Modify dashboard settings
