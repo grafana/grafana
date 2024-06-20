@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/klog"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -56,6 +57,8 @@ func WithRequester(handler http.Handler) http.Handler {
 
 				if requester != nil {
 					req = req.WithContext(identity.WithRequester(ctx, requester))
+				} else {
+					klog.V(5).Info("unable to map the k8s user to grafana requester", "user", info)
 				}
 			}
 		}

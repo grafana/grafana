@@ -19,7 +19,7 @@ func WithUser(ctx context.Context, usr *user.SignedInUser) context.Context {
 
 // User extracts the SignedInUser from the supplied context.
 // Supports context set by appcontext.WithUser, gRPC server context, and HTTP ReqContext.
-// Deprecated: use identity.GetRequester(ctx)` when possible
+// Deprecated: use identity.GetRequester(ctx) when possible
 func User(ctx context.Context) (*user.SignedInUser, error) {
 	// Set by appcontext.WithUser
 	u, ok := ctx.Value(ctxUserKey{}).(*user.SignedInUser)
