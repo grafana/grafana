@@ -481,13 +481,6 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:         "prometheusIncrementalQueryInstrumentation",
-			Description:  "Adds RudderStack events to incremental queries",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
 			Name:         "logsExploreTableVisualisation",
 			Description:  "A table visualisation for logs in Explore",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1223,12 +1216,6 @@ var (
 			AllowSelfServe: false,
 		},
 		{
-			Name:        "autofixDSUID",
-			Description: "Automatically migrates invalid datasource UIDs",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:         "logsExploreTableDefaultVisualization",
 			Description:  "Sets the logs table as default visualisation in logs explore",
 			Stage:        FeatureStageExperimental,
@@ -1335,6 +1322,12 @@ var (
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:        "failWrongDSUID",
+			Description: "Throws an error if a datasource has an invalid UIDs",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:        "databaseReadReplica",

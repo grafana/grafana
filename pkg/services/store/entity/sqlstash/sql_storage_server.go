@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const entityTable = "entity"
@@ -75,7 +76,7 @@ type sqlEntityServer struct {
 	db          db.EntityDBInterface // needed to keep xorm engine in scope
 	sess        *session.SessionDB
 	dialect     migrator.Dialect
-	broadcaster Broadcaster[*entity.EntityWatchResponse]
+	broadcaster resource.Broadcaster[*entity.EntityWatchResponse]
 	ctx         context.Context // TODO: remove
 	cancel      context.CancelFunc
 	tracer      trace.Tracer
@@ -141,7 +142,7 @@ func (s *sqlEntityServer) init() error {
 	s.dialect = migrator.NewDialect(engine.DriverName())
 
 	// set up the broadcaster
-	s.broadcaster, err = NewBroadcaster(s.ctx, func(stream chan<- *entity.EntityWatchResponse) error {
+	s.broadcaster, err = resource.NewBroadcaster(s.ctx, func(stream chan<- *entity.EntityWatchResponse) error {
 		// start the poller
 		go s.poller(stream)
 
