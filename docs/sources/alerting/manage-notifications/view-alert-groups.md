@@ -38,7 +38,7 @@ refs:
 
 The Groups view page lists grouped alerts that are actively triggering notifications.
 
-By default, Alerting groups similar firing alerts (or alert instances) to prevent notification overload. For details on how notification grouping works, refer to [Group alert notifications](ref:grouping).
+By default, Grafana Alerting groups similar firing alerts (or alert instances) to prevent notification overload. For details on how notification grouping works, refer to [Group alert notifications](ref:grouping).
 
 In the Groups view, you can see alert groups, check the state of their notifications, and also filter for alert instances that match specific criteria. This view is useful for debugging and verifying your grouping of notification policies.
 
