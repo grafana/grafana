@@ -21,6 +21,7 @@ import (
 
 	// Pull in sqlite driver.
 	"github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/openfga/openfga/pkg/logger"
 	"github.com/openfga/openfga/pkg/storage"
@@ -87,6 +88,7 @@ func New(uri string, cfg *sqlcommon.Config) (*SQLite, error) {
 	return NewWithDB(db, cfg)
 }
 
+// NewWithDB creates a new [SQLite] storage using provided [*sql.DB]
 func NewWithDB(db *sql.DB, cfg *sqlcommon.Config) (*SQLite, error) {
 	var collector prometheus.Collector
 	if cfg.ExportMetrics {
