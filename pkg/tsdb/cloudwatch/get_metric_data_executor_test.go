@@ -31,7 +31,7 @@ func TestGetMetricDataExecutorTestRequest_should_round_up_endTime(t *testing.T) 
 
 func TestGetMetricDataExecutorTestResponse(t *testing.T) {
 	executor := &cloudWatchExecutor{}
-	inputs := &cloudwatch.GetMetricDataInput{MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
+	inputs := &cloudwatch.GetMetricDataInput{EndTime: aws.Time(time.Now()), MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
 	mockMetricClient := &mocks.MetricsAPI{}
 	mockMetricClient.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(
 		&cloudwatch.GetMetricDataOutput{
