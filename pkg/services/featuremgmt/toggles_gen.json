@@ -1832,7 +1832,8 @@
       "metadata": {
         "name": "prometheusIncrementalQueryInstrumentation",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-07-05T19:39:49Z"
+        "creationTimestamp": "2023-07-05T19:39:49Z",
+        "deletionTimestamp": "2024-06-20T11:30:37Z"
       },
       "spec": {
         "description": "Adds RudderStack events to incremental queries",
