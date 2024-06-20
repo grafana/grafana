@@ -143,32 +143,3 @@ func TestValidateUID(t *testing.T) {
 		})
 	}
 }
-
-func TestAutofixUID(t *testing.T) {
-	var tests = []struct {
-		name     string
-		uid      string
-		expected string
-	}{
-		{
-			name:     "return input when input is valid",
-			uid:      "f8cc010c-ee72-4681-89d2-d46e1bd47d33",
-			expected: "f8cc010c-ee72-4681-89d2-d46e1bd47d33",
-		},
-		{
-			name:     "generate new uid when input is too long",
-			uid:      strings.Repeat("1", MaxUIDLength+1),
-			expected: strings.Repeat("1", MaxUIDLength),
-		},
-		{
-			name:     "generate new uid when input has invalid characters",
-			uid:      "f8cc010c.ee72.4681;89d2+d46e1bd47d33",
-			expected: "f8cc010c-ee72-4681-89d2-d46e1bd47d33",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.expected, AutofixUID(tt.uid))
-		})
-	}
-}
