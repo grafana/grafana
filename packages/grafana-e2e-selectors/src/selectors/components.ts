@@ -607,4 +607,7 @@ export const Components = {
     headerOrderSwitch: 'data-testid header-order-switch',
     headerPreviewSwitch: 'data-testid header-preview-switch',
   },
+  EntityNotFound: {
+    container: 'data-testid entity-not-found',
+  },
 };

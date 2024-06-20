@@ -92,7 +92,8 @@ pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,tru
 idForwarding,experimental,@grafana/identity-access-team,false,false,false
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
-enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,false,false,false
+enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
+disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 formatString,preview,@grafana/dataviz-squad,false,false,true
 transformationsVariableSupport,GA,@grafana/dataviz-squad,false,false,true
 kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false
@@ -150,7 +151,6 @@ tlsMemcached,experimental,@grafana/grafana-operator-experience-squad,false,false
 kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 expressionParser,experimental,@grafana/grafana-app-platform-squad,false,true,false
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
-betterPageScrolling,GA,@grafana/grafana-frontend-platform,false,false,true
 authAPIAccessTokenAuth,experimental,@grafana/identity-access-team,false,false,false
 scopeFilters,experimental,@grafana/dashboards-squad,false,false,false
 ssoSettingsSAML,preview,@grafana/identity-access-team,false,false,false
@@ -176,3 +176,7 @@ sqlQuerybuilderFunctionParameters,experimental,@grafana/oss-big-tent,false,false
 azureMonitorPrometheusExemplars,experimental,@grafana/partner-datasources,false,false,false
 pinNavItems,experimental,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
+openSearchBackendFlowEnabled,preview,@grafana/aws-datasources,false,false,false
+ssoSettingsLDAP,experimental,@grafana/identity-access-team,false,false,false
+databaseReadReplica,experimental,@grafana/grafana-backend-services-squad,false,false,false
+zanzana,experimental,@grafana/identity-access-team,false,false,false
