@@ -536,9 +536,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         if (!response.data.summaries) {
           return {
             error: {
-              message: getErrorMessage(
-                `No summary data for '${groupBy}'. Note: the metrics summary API only considers spans of kind = server. You can check if the attributes exist by running a TraceQL query like { attr_key = attr_value && kind = server }`
-              ),
+              message: getErrorMessage(`No summary data for '${groupBy}'.`),
             },
             data: emptyResponse,
           };
