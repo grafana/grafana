@@ -354,6 +354,7 @@ function makeDeletedRemainingColumn(
   return {
     id: 'column-delete-age',
     field: deletedField,
+    width,
     Header: t('search.results-table.deleted-remaining-header', 'Time remaining'),
     Cell: (p) => {
       const i = p.row.index;
@@ -367,7 +368,7 @@ function makeDeletedRemainingColumn(
         );
       }
 
-      const duration = calcCourseDuration(new Date(), deletedDate);
+      const duration = calcCoarseDuration(new Date(), deletedDate);
       const isDeletingSoon = !Object.values(duration).some((v) => v > 0);
       const formatted = isDeletingSoon
         ? t('search.results-table.deleted-less-than-1-min', '< 1 min')
@@ -500,36 +501,20 @@ function getDisplayValue({
 }
 
 /**
- * Calculates the rough duration between two dates, keeping only the most significant unit e.g:
- *  - 20 days, 13 hours, 43 minutes apart, 35 seconds - returns { days: 20, hours: 0, minutes: 0 }
- *  - 13 hours, 43 minutes apart, 35 seconds - returns { days: 0, hours: 13, minutes: 0 }
- *  - 43 minutes apart, 35 seconds - returns { days: 0, hours: 0, minutes: 43 }
- *  - 35 seconds - returns { days: 0, hours: 0, minutes: 0 }
+ * Calculates the rough duration between two dates, keeping only the most significant unit
  */
-function calcCourseDuration(start: Date, end: Date) {
+function calcCoarseDuration(start: Date, end: Date) {
   let { years = 0, months = 0, days = 0, hours = 0, minutes = 0 } = intervalToDuration({ start, end });
 
   if (years > 0) {
-    months = 0;
-    days = 0;
-    hours = 0;
-    minutes = 0;
+    return { years };
   } else if (months > 0) {
-    days = 0;
-    hours = 0;
-    minutes = 0;
+    return { months };
   } else if (days > 0) {
-    hours = 0;
-    minutes = 0;
+    return { days };
   } else if (hours > 0) {
-    minutes = 0;
+    return { hours };
   }
 
-  return {
-    years,
-    months,
-    days,
-    hours,
-    minutes,
-  };
+  return { minutes };
 }
