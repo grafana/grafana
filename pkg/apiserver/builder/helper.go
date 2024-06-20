@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/mod/semver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -22,8 +23,6 @@ import (
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	k8stracing "k8s.io/component-base/tracing"
 	"k8s.io/kube-openapi/pkg/common"
-
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
