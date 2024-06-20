@@ -8,42 +8,27 @@ import (
 
 const masking = "hidden"
 
-var sensitiveQueryChecks = map[string]func(v map[string]string) bool{
-	"auth_token": func(v map[string]string) bool {
-		if _, ok := v["auth_token"]; ok {
-			return true
+var sensitiveQueryChecks = map[string]func(key string, urlValues url.Values) bool{
+	"auth_token": func(key string, urlValues url.Values) bool {
+		return true
+	},
+	"x-amz-signature": func(key string, urlValues url.Values) bool {
+		return true
+	},
+	"x-goog-signature": func(key string, urlValues url.Values) bool {
+		return true
+	},
+	"sig": func(key string, urlValues url.Values) bool {
+		for k := range urlValues {
+			if k == key {
+				continue
+			}
+			if strings.ToLower(k) == "sv" {
+				return true
+			}
 		}
 		return false
 	},
-	"x-amz-signature": func(v map[string]string) bool {
-		if _, ok := v["x-amz-signature"]; ok {
-			return true
-		}
-		return false
-	},
-	"x-goog-signature": func(v map[string]string) bool {
-		if _, ok := v["x-goog-signature"]; ok {
-			return true
-		}
-		return false
-	},
-	"sig": func(v map[string]string) bool {
-		if _, ok := v["sig"]; !ok {
-			return false
-		}
-		if _, ok := v["sv"]; ok {
-			return true
-		}
-		return false
-	},
-}
-
-func lowerToKeyMap(values url.Values) map[string]string {
-	lm := make(map[string]string)
-	for key := range values {
-		lm[strings.ToLower((key))] = key
-	}
-	return lm
 }
 
 func SanitizeURI(s string) (string, error) {
@@ -58,9 +43,10 @@ func SanitizeURI(s string) (string, error) {
 
 	// strip out sensitive query strings
 	urlValues := u.Query()
-	for key, values := range urlValues {
-		if checker, ok := sensitiveQueryChecks[strings.ToLower(key)]; ok {
-			if checker(values, urlValues) {
+	for key := range urlValues {
+		lk := strings.ToLower(key)
+		if checker, ok := sensitiveQueryChecks[lk]; ok {
+			if checker(key, urlValues) {
 				urlValues.Set(key, masking)
 			}
 		}
