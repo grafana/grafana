@@ -16,9 +16,22 @@ weight: 90
 
 # Explore
 
-Grafana's dashboard UI is all about building dashboards for visualizations. Explore is your starting point for exploring data and building queries. It helps you iterate until you have a working query with which to start building a dashboard.
+Explore is your starting point for analyzing, querying and aggregating data in Grafana. It helps you visually explore and iterate until you have a working query or set of queries with which to start building visualizations and doing data analysis. You don't need to create a dashboard if your data source supports graph and table data, as Explore shows the results as both graph or table. This allows for detailed real-time data analysis. 
 
-If you just want to explore your data and don't want to create a dashboard, Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time. See also:
+Explore consists of a toolbar, a query editor, the ability to add multiple queries, a query history and a query inspector that provides detailed statistics about your query.
+
+**Toolbar** - Provides quick access to frequently used tools and settings.
+
+**Query editor** - Interface where you construct the query for a specific data source. Query editor elements differ based on data source. In order to run queries across multiple data sources you need to select **Mixed** from the data source picker.
+
+**+ Add query** - Add additional queries.
+
+**Query inspector** - Provides detailed statistics regarding your query. Inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**.
+
+
+
+
+See also:
 
 - [Query management in Explore]({{< relref "query-management/" >}})
 - [Logs integration in Explore]({{< relref "logs-integration/" >}})
@@ -27,39 +40,15 @@ If you just want to explore your data and don't want to create a dashboard, Expl
 - [Correlations Editor in Explore]({{< relref "correlations-editor-in-explore/" >}})
 - [Inspector in Explore]({{< relref "explore-inspector/" >}})
 
-Explore consists of a toolbar, a query editor, the ability to add multiple queries, a query history and a query inspector that provides detailed statistics about your query.
+
+
 
 
 Insert screenshot 
 
 
-**Toolbar** - Provides quick access to frequently used tools and settings.
 
-**Query editor** - Where you construct the query for a specific data source. Query editor elements differ based on data source.
-
-**Options** - 
-
-The query editor toolbar contains the following elements:
-
-**Kick start your query** - Click to see a list of operation patterns that help you quickly get started adding multiple operations to your query. These include:
-
-  - Rate query starters
-  - Histogram query starters
-  - Binary query starters
-
-Click the arrow next to each to see available options to add to your query.
-
-**Explain** - Toggle to display a step-by-step explanation of all query components and operations.
-
-{{< figure src="/static/img/docs/prometheus/explain-results.png" max-width="500px" class="docs-image--no-shadow" caption="Explain results" >}}
-
-- **Builder/Code** - Click the corresponding **Builder** or **Code** tab on the toolbar to select a editor mode.
-
-
-
-
-
-## Start exploring
+## Get started with Explore
 
 {{< youtube id="1q3YzX2DDM4" >}}
 
