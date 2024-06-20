@@ -2938,18 +2938,9 @@ services: []
 steps:
 - commands:
   - apk add curl
-  - curl -L -o /usr/local/bin/gcom https://github.com/grafana/gcom/releases/latest/download/gcom-linux-amd64
-  - chmod +x /usr/local/bin/gcom
-  - printenv GCP_KEY > /tmp/key.json
-  - gcloud auth activate-service-account --key-file=/tmp/key.json
   - chmod +x ./drone/verify-grafanacom.sh
   - for i in {{1..5}}; do ./drone/verify-grafanacom.sh && break || sleep 60; done
   depends_on: []
-  environment:
-    GCOM_API_KEY:
-      from_secret: grafana_api_key
-    GCP_KEY:
-      from_secret: gcp_grafanauploads
   image: node:20.9.0-alpine
   name: verify-grafanacom
 trigger:
@@ -3044,19 +3035,10 @@ steps:
   name: publish-grafanacom
 - commands:
   - apk add curl
-  - curl -L -o /usr/local/bin/gcom https://github.com/grafana/gcom/releases/latest/download/gcom-linux-amd64
-  - chmod +x /usr/local/bin/gcom
-  - printenv GCP_KEY > /tmp/key.json
-  - gcloud auth activate-service-account --key-file=/tmp/key.json
   - chmod +x ./drone/verify-grafanacom.sh
   - for i in {{1..5}}; do ./drone/verify-grafanacom.sh && break || sleep 60; done
   depends_on:
   - publish-grafanacom
-  environment:
-    GCOM_API_KEY:
-      from_secret: grafana_api_key
-    GCP_KEY:
-      from_secret: gcp_grafanauploads
   image: node:20.9.0-alpine
   name: verify-grafanacom
 trigger:
@@ -5010,6 +4992,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 464c0ad5caeceec47b632bffce15f1285bafb4f6088f59513a1289cd0f6611ac
+hmac: e6f8ccb8164bc58e8ef3290f7f5908b2217ede433c0c250f0d7916798f4a5279
 
 ...
