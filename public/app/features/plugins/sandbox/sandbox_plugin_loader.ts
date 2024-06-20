@@ -221,11 +221,11 @@ async function doImportPluginModuleInSandbox(meta: SandboxPluginMeta): Promise<S
  *
  */
 function resolvePluginDependencies(deps: string[], pluginMeta: SandboxPluginMeta) {
-  const exports = {};
-  const module: ModuleMeta = {
+  const pluginExports = {};
+  const pluginModuleDep: ModuleMeta = {
     id: pluginMeta.id,
     uri: pluginMeta.module,
-    exports,
+    exports: pluginExports,
   };
 
   // resolve dependencies
@@ -237,11 +237,11 @@ function resolvePluginDependencies(deps: string[], pluginMeta: SandboxPluginMeta
     }
 
     if (dep === 'module') {
-      resolvedDep = module;
+      resolvedDep = pluginModuleDep;
     }
 
     if (dep === 'exports') {
-      resolvedDep = exports;
+      resolvedDep = pluginExports;
     }
 
     if (!resolvedDep) {
