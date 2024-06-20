@@ -4,7 +4,7 @@ import { ConfirmModal, Text } from '@grafana/ui';
 
 import { Trans, t } from '../../../core/internationalization';
 
-interface Props {
+export interface Props {
   isOpen: boolean;
   onConfirm: () => Promise<void>;
   onDismiss: () => void;
