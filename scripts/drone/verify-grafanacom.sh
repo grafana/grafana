@@ -2,8 +2,6 @@
 
 version=${1:-$TAG}
 
-base_url="https://grafana.com/api/downloads/grafana/versions/$version"
-
 # Construct the URL based on the provided version and edition
 if [ "$EDITION" = "enterprise" ]; then
     url="https://grafana.com/api/downloads/grafana-enterprise/versions/$version"
