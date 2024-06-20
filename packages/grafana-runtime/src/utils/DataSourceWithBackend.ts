@@ -84,7 +84,7 @@ enum PluginRequestHeaders {
   QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query splitting
   FromExpression = 'X-Grafana-From-Expr', // used by datasources to identify expression queries
   SkipQueryCache = 'X-Cache-Skip', // used by datasources to skip the query cache
-  OriginApp = 'X-Origin-App', // what application run the query
+  RequestOrigin = 'X-Request-Origin', // what application run the query
 }
 
 /**
@@ -246,7 +246,7 @@ class DataSourceWithBackend<
       headers[PluginRequestHeaders.SkipQueryCache] = 'true';
     }
     if (request.app) {
-      headers[PluginRequestHeaders.OriginApp] = `${request.app}`;
+      headers[PluginRequestHeaders.RequestOrigin] = `${request.app}`;
     }
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
