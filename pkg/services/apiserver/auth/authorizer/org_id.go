@@ -32,6 +32,11 @@ func (auth orgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		return authorizer.DecisionDeny, fmt.Sprintf("error getting signed in user: %v", err), nil
 	}
 
+	//
+	if signedInUser.IsAnonymous {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
 	info, err := grafanarequest.ParseNamespace(a.GetNamespace())
 	if err != nil {
 		return authorizer.DecisionDeny, fmt.Sprintf("error reading namespace: %v", err), nil
@@ -68,5 +73,8 @@ func (auth orgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		}
 	}
 
-	return authorizer.DecisionDeny, fmt.Sprintf("user %d is not a member of org %d", signedInUser.UserID, info.OrgID), nil
+	fmt.Printf("XXX: %+v\n", signedInUser)
+
+	return authorizer.DecisionDeny, fmt.Sprintf("%s (%s) is not a member of org %d",
+		signedInUser.GetID().String(), signedInUser.GetDisplayName(), info.OrgID), nil
 }

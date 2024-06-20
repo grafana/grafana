@@ -12,7 +12,6 @@ import (
 	"k8s.io/apiserver/pkg/authentication/request/union"
 	k8suser "k8s.io/apiserver/pkg/authentication/user"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -81,7 +80,7 @@ func TestSignedInUser(t *testing.T) {
 
 	t.Run("should set Anonymous details", func(t *testing.T) {
 		u := &user.SignedInUser{
-			NamespacedID: identity.AnonymousNamespaceID,
+			IsAnonymous: true, // NOTE the namepaces is not set
 		}
 		ctx := appcontext.WithUser(context.Background(), u)
 		req, err := http.NewRequest("GET", "http://localhost:3000/apis", nil)

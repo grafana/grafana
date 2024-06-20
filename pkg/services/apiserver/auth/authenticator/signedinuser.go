@@ -36,13 +36,12 @@ func signedInUserAuthenticator(req *http.Request) (*authenticator.Response, bool
 	}
 
 	// Mark Anonymous users more clearly
-	if signedInUser.NamespacedID.Namespace() == identity.NamespaceAnonymous {
+	if signedInUser.GetUID().Namespace() == identity.NamespaceAnonymous {
 		// See: https://github.com/kubernetes/kubernetes/blob/v1.30.2/staging/src/k8s.io/apiserver/pkg/authentication/request/anonymous/anonymous.go#L36
 		userInfo.Name = user.Anonymous
 		userInfo.Groups = append(userInfo.Groups, user.AllUnauthenticated)
 	}
 
-	//
 	if signedInUser.IDToken != "" {
 		userInfo.Extra["id-token"] = []string{signedInUser.IDToken}
 	}
