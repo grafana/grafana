@@ -21,7 +21,7 @@ func (e *cloudWatchExecutor) executeRequest(ctx context.Context, client cloudwat
 		}
 		// GetMetricData EndTime is exclusive, so we round up to the next minute to get the last data point
 		*metricDataInput.EndTime = metricDataInput.EndTime.Truncate(time.Minute).Add(time.Minute)
-		
+
 		resp, err := client.GetMetricDataWithContext(ctx, metricDataInput)
 		if err != nil {
 			return mdo, err

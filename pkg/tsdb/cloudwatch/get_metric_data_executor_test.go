@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
 func TestGetMetricDataExecutorTestRequest_should_round_up_endTime(t *testing.T) {
 	executor := &cloudWatchExecutor{}
 	queryEndTime, _ := time.Parse("2006-01-02T15:04:05Z07:00", "2024-05-01T01:45:04Z")
