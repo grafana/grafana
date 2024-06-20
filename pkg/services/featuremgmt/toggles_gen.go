@@ -383,6 +383,10 @@ const (
 	// Enables native HTTP Histograms
 	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
 
+	// FlagDisableClassicHTTPHistogram
+	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
+	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
+
 	// FlagFormatString
 	// Enable format string transformer
 	FlagFormatString = "formatString"
@@ -718,4 +722,8 @@ const (
 	// FlagDatabaseReadReplica
 	// Use a read replica for some database queries.
 	FlagDatabaseReadReplica = "databaseReadReplica"
+
+	// FlagZanzana
+	// Use openFGA as authorization engine.
+	FlagZanzana = "zanzana"
 )

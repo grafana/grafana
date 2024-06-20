@@ -700,11 +700,24 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "enableNativeHTTPHistogram",
-			Description:  "Enables native HTTP Histograms",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        hostedGrafanaTeam,
+			Name:              "enableNativeHTTPHistogram",
+			Description:       "Enables native HTTP Histograms",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      false,
+			Owner:             grafanaBackendServicesSquad,
+			HideFromAdminPage: true,
+			AllowSelfServe:    false,
+			RequiresRestart:   true,
+		},
+		{
+			Name:              "disableClassicHTTPHistogram",
+			Description:       "Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      false,
+			Owner:             grafanaBackendServicesSquad,
+			HideFromAdminPage: true,
+			AllowSelfServe:    false,
+			RequiresRestart:   true,
 		},
 		{
 			Name:         "formatString",
@@ -1329,6 +1342,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaBackendServicesSquad,
 			Expression:  "false", // enabled by default
+		},
+		{
+			Name:              "zanzana",
+			Description:       "Use openFGA as authorization engine.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 	}
 )
