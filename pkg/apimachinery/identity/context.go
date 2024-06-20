@@ -19,24 +19,5 @@ func GetRequester(ctx context.Context) (Requester, error) {
 	if ok && u != nil {
 		return u, nil
 	}
-
-	// HACK for now...
-	if true {
-		return &StaticRequester{
-			OrgID:          1,
-			IsGrafanaAdmin: true,
-			UserID:         1,
-			Namespace:      NamespaceUser,
-			UserUID:        "abc",
-			Name:           "hello",
-			Login:          "justme",
-			Permissions: map[int64]map[string][]string{
-				1: {
-					"*": {"*"}, // all resources, all scopes
-				},
-			},
-		}, nil
-	}
-
 	return nil, fmt.Errorf("a Requester was not found in the context")
 }
