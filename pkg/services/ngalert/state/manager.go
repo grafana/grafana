@@ -335,7 +335,7 @@ func (st *Manager) ProcessEvalResults(
 	// the LastSentAt field to the store.
 	var statesToSend StateTransitions
 	if send != nil {
-		statesToSend = allChanges.UpdateLastSentAt(evaluatedAt)
+		statesToSend = allChanges.UpdateLastSentAt(evaluatedAt, st.ResendDelay, st.ResolvedRetention)
 	}
 
 	st.persister.Sync(ctx, span, allChanges)

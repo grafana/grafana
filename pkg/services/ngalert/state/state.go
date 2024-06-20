@@ -180,11 +180,11 @@ func (c StateTransitions) StaleStates() StateTransitions {
 
 // UpdateLastSentAt returns the subset StateTransitions that need sending and updates their LastSentAt field.
 // Note: This is not idempotent, running this twice can (and usually will) return different results.
-func (c StateTransitions) UpdateLastSentAt(evaluatedAt time.Time) StateTransitions {
+func (c StateTransitions) UpdateLastSentAt(evaluatedAt time.Time, resendDelay, resolvedRetention time.Duration) StateTransitions {
 	var result StateTransitions
 	for _, t := range c {
-		if t.NeedsSending(ResendDelay) {
-			t.LastSentAt = evaluatedAt
+		if t.NeedsSending(resendDelay, resolvedRetention) {
+			t.LastSentAt = &evaluatedAt
 			result = append(result, t)
 		}
 	}

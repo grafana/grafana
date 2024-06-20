@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"net/url"
 	"sort"
 	"strings"
 	"testing"
