@@ -9,7 +9,6 @@ import {
   isValidDuration,
   parseDuration,
 } from '@grafana/data';
-import { faro } from '@grafana/faro-web-sdk';
 
 import { amendTable, Table, trimTable } from '../gcopypaste/app/features/live/data/amendTimeSeries';
 import { PromQuery } from '../types';
@@ -17,8 +16,6 @@ import { PromQuery } from '../types';
 // dashboardUID + panelId + refId
 // (must be stable across query changes, time range changes / interval changes / panel resizes / template variable changes)
 type TargetIdent = string;
-
-type RequestID = string;
 
 // query + template variables + interval + raw time range
 // used for full target cache busting -> full range re-query
@@ -43,22 +40,6 @@ export interface CacheRequestInfo<T extends SupportedQueryTypes> {
   shouldCache: boolean;
 }
 
-export interface DatasourceProfileData {
-  interval?: string;
-  expr: string;
-  datasource: string;
-}
-
-interface ProfileData extends DatasourceProfileData {
-  identity: string;
-  bytes: number | null;
-  dashboardUID: string;
-  panelId?: number;
-  from: string;
-  queryRangeSeconds: number;
-  refreshIntervalMs: number;
-}
-
 /**
  * Get field identity
  * This is the string used to uniquely identify a field within a "target"
@@ -75,34 +56,12 @@ export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JS
 export class QueryCache<T extends SupportedQueryTypes> {
   private overlapWindowMs: number;
   private getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
-  private getProfileData?: (request: DataQueryRequest<T>, target: T) => DatasourceProfileData;
-
-  pendingRequestIdsToTargSigs = new Map<RequestID, ProfileData>();
-
-  pendingAccumulatedEvents = new Map<
-    string,
-    {
-      requestCount: number;
-      savedBytesTotal: number;
-      initialRequestSize: number;
-      lastRequestSize: number;
-      panelId: string;
-      dashId: string;
-      expr: string;
-      refreshIntervalMs: number;
-      sent: boolean;
-      datasource: string;
-      from: string;
-      queryRangeSeconds: number;
-    }
-  >();
 
   cache = new Map<TargetIdent, TargetCache>();
 
   constructor(options: {
     getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
     overlapString: string;
-    profileFunction?: (request: DataQueryRequest<T>, target: T) => DatasourceProfileData;
   }) {
     const unverifiedOverlap = options.overlapString;
     if (isValidDuration(unverifiedOverlap)) {
@@ -113,46 +72,8 @@ export class QueryCache<T extends SupportedQueryTypes> {
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
 
-    this.getProfileData = options.profileFunction;
     this.getTargetSignature = options.getTargetSignature;
   }
-
-  sendPendingTrackingEvents = () => {
-    const entries = this.pendingAccumulatedEvents.entries();
-
-    for (let [key, value] of entries) {
-      if (!value.sent) {
-        const event = {
-          datasource: value.datasource.toString(),
-          requestCount: value.requestCount.toString(),
-          savedBytesTotal: value.savedBytesTotal.toString(),
-          initialRequestSize: value.initialRequestSize.toString(),
-          lastRequestSize: value.lastRequestSize.toString(),
-          panelId: value.panelId.toString(),
-          dashId: value.dashId.toString(),
-          expr: value.expr.toString(),
-          refreshIntervalMs: value.refreshIntervalMs.toString(),
-          from: value.from.toString(),
-          queryRangeSeconds: value.queryRangeSeconds.toString(),
-        };
-
-        if (faro.api.pushEvent) {
-          faro.api.pushEvent('incremental query response size', event, 'no-interaction', {
-            skipDedupe: true,
-          });
-        }
-
-        this.pendingAccumulatedEvents.set(key, {
-          ...value,
-          sent: true,
-          requestCount: 0,
-          savedBytesTotal: 0,
-          initialRequestSize: 0,
-          lastRequestSize: 0,
-        });
-      }
-    }
-  };
 
   // can be used to change full range request to partial, split into multiple requests
   requestInfo(request: DataQueryRequest<T>): CacheRequestInfo<T> {
@@ -168,27 +89,11 @@ export class QueryCache<T extends SupportedQueryTypes> {
     let doPartialQuery = shouldCache;
     let prevTo: TimestampMs | undefined = undefined;
 
-    const refreshIntervalMs = request.intervalMs;
-
     // pre-compute reqTargSigs
     const reqTargSigs = new Map<TargetIdent, TargetSig>();
     request.targets.forEach((targ) => {
       let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
       let targSig = this.getTargetSignature(request, targ); // ${request.maxDataPoints} ?
-
-      if (this.getProfileData) {
-        this.pendingRequestIdsToTargSigs.set(request.requestId, {
-          ...this.getProfileData(request, targ),
-          identity: targIdent + '|' + targSig,
-          bytes: null,
-          panelId: request.panelId,
-          dashboardUID: request.dashboardUID ?? '',
-          from: request.rangeRaw?.from.toString() ?? '',
-          queryRangeSeconds: request.range.to.diff(request.range.from, 'seconds') ?? '',
-          refreshIntervalMs: refreshIntervalMs ?? 0,
-        });
-      }
-
       reqTargSigs.set(targIdent, targSig);
     });
 
