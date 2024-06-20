@@ -2820,6 +2820,40 @@ volumes:
 ---
 clone:
   retries: 3
+depends_on: []
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: verify-grafanacom-artifacts
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - apk add curl bash
+  - "\n            for i in {1..5}; do\n                if ./scripts/drone/verify-grafanacom.sh;
+    then\n                    exit 0\n                elif [ $i -eq 5 ]; then\n                    exit
+    1\n                else\n                    sleep 60\n                fi\n            done\n
+    \           "
+  depends_on: []
+  image: node:20.9.0-alpine
+  name: verify-grafanacom
+trigger:
+  event:
+  - promote
+  target: verify-grafanacom-artifacts
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
 depends_on:
 - publish-artifacts-public
 - publish-docker-public
@@ -2898,6 +2932,16 @@ steps:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-grafanacom
+- commands:
+  - apk add curl bash
+  - "\n            for i in {1..5}; do\n                if ./scripts/drone/verify-grafanacom.sh;
+    then\n                    exit 0\n                elif [ $i -eq 5 ]; then\n                    exit
+    1\n                else\n                    sleep 60\n                fi\n            done\n
+    \           "
+  depends_on:
+  - publish-grafanacom
+  image: node:20.9.0-alpine
+  name: verify-grafanacom
 trigger:
   event:
   - promote
@@ -4745,6 +4789,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 889eb67f136c2c45e8ad0f4876bbdcf45ecefa35481e24f79f98a0323103029e
+hmac: 7f46ee5a7c2ab525435e5a017b509696f06ccfc023a04abb0b4aba04e1838218
 
 ...
