@@ -2,9 +2,14 @@
 
 version=${1:-$TAG}
 
+base_url="/downloads/grafana/versions/$version"
+
+# Construct the URL based on the provided version and edition
+url="/downloads/grafana${EDITION:+-$EDITION}/versions/$version"
+
 # Make a request to the GCOM API to retrieve the artifacts for the specified version. Exit if the request fails.
-if ! artifacts=$(gcom /downloads/grafana/versions/$version); then
-  echo "Failed to retrieve artifact URLs from Grafana.com API. Please check the API key, authentication, and version."
+if ! artifacts=$(gcom "$url"); then
+  echo "Failed to retrieve artifact URLs from Grafana.com API. Please check the API key, authentication, edition, and version."
   exit 1
 fi
 
@@ -15,7 +20,7 @@ url_string=$(node -e "
   console.log(downloadUrls.join(' '));
 ")
 
-# Convert the url_string to a Bash array.
+# Convert the url_string to a Bash array
 read -r -a urls <<< "$url_string"
 
 # If empty, no artifact URLs were found for the specified version. Exit with an error.
