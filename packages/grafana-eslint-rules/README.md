@@ -133,16 +133,15 @@ Check if strings are marked for translation.
 
 ```tsx
 // Bad ❌
-const SearchTitle = ({ term }) => (
-  <div>
-    Results for <em>{term}</em>
-  </div>
-);
+const SearchTitle = ({ term }) => <div>Results for {term}</div>;
 
-//Good ✅
+// Good ✅
+const SearchTitle = ({ term }) => <Trans i18nKey="search-page.results-title">Results for {{ term }}</Trans>;
+
+// Good ✅ (if you need to interpolate variables inside other components)
 const SearchTitle = ({ term }) => (
-  <Trans i18nKey="search-page.results-title">
-    Results for <em>{{ term }}</em>
+  <Trans i18nKey="search-page.results-title" values={{ myVariable: term }}>
+    Results for <Text color="success">{'{{ myVariable }}'}</Text>
   </Trans>
 );
 ```
