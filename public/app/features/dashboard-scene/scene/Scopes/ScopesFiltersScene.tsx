@@ -21,6 +21,7 @@ import { ScopesScene } from './ScopesScene';
 import { ScopesTreeLevel } from './ScopesTreeLevel';
 import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
 import { NodesMap, SelectedScope, TreeScope } from './types';
+import { getBasicScope } from './utils';
 
 export interface ScopesFiltersSceneState extends SceneObjectState {
   nodes: NodesMap;
@@ -180,9 +181,16 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       return;
     }
 
-    this.setState({ treeScopes, isLoadingScopes: true });
+    this.setState({
+      // Update the scopes with the basic scopes otherwise they'd be lost between URL syncs
+      scopes: treeScopes.map(({ scopeName, path }) => ({ scope: getBasicScope(scopeName), path })),
+      treeScopes,
+      isLoadingScopes: true,
+    });
 
-    this.setState({ scopes: await fetchSelectedScopes(treeScopes), isLoadingScopes: false });
+    const scopes = await fetchSelectedScopes(treeScopes);
+
+    this.setState({ scopes, isLoadingScopes: false });
   }
 
   public resetDirtyScopeNames() {
