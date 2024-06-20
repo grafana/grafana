@@ -24,11 +24,11 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect; @grafana/grafana-backend-group
 	github.com/stretchr/testify v1.9.0 // @grafana/grafana-backend-group
 	github.com/urfave/cli v1.22.15 // @grafana/grafana-backend-group
-	github.com/urfave/cli/v2 v2.25.1 // @grafana/grafana-backend-group
+	github.com/urfave/cli/v2 v2.27.1 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.51.0 // indirect; @grafana/plugins-platform-backend
-	go.opentelemetry.io/otel v1.26.0 // indirect; @grafana/grafana-backend-group
-	go.opentelemetry.io/otel/sdk v1.26.0 // indirect; @grafana/grafana-backend-group
-	go.opentelemetry.io/otel/trace v1.26.0 // indirect; @grafana/grafana-backend-group
+	go.opentelemetry.io/otel v1.27.0 // indirect; @grafana/grafana-backend-group
+	go.opentelemetry.io/otel/sdk v1.27.0 // indirect; @grafana/grafana-backend-group
+	go.opentelemetry.io/otel/trace v1.27.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/crypto v0.24.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/mod v0.18.0 // @grafana/grafana-backend-group
 	golang.org/x/net v0.26.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
@@ -77,7 +77,7 @@ require (
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.51.0 // indirect
-	go.opentelemetry.io/otel/metric v1.26.0 // indirect
+	go.opentelemetry.io/otel/metric v1.27.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect; @grafana/grafana-backend-group
@@ -86,10 +86,26 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
+require dagger.io/dagger v0.11.8
+
 require (
-	github.com/kr/pretty v0.3.1 // indirect
+	github.com/99designs/gqlgen v0.17.44 // indirect
+	github.com/Khan/genqlient v0.7.0 // indirect
+	github.com/adrg/xdg v0.4.0 // indirect
+	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
-	github.com/rogpeppe/go-internal v1.12.0 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
+	github.com/sosodev/duration v1.2.0 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.16 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.0.0-20240518090000-14441aefdf88 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.3.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.27.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.27.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.27.0 // indirect
+	go.opentelemetry.io/otel/log v0.3.0 // indirect
+	go.opentelemetry.io/otel/sdk/log v0.3.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
+	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 )
