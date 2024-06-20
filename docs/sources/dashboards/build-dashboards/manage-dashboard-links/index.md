@@ -128,19 +128,19 @@ Add a link to a URL at the top of your current dashboard. You can link to any av
 
 ### Update a dashboard link
 
-To change or update a dashboard link, follow this procedure.
+To edit, duplicate, or delete dashboard link, follow these steps:
 
-1. In the dashboard settings, on the **Links** tab, click the link that you want to edit.
-1. Change the settings and then click **Save dashboard**.
+1. In the dashboard you want to link, click **Edit**.
+1. Click **Settings**.
+1. Go to the **Links** tab.
+1. Do one of the following:
+
+   - **Edit** - Change the settings.
+   - **Duplicate** - Click the copy link icon next to the link that you want to duplicate.
+   - **Delete** - Click the red **X** next to the link that you want to delete, and then **Delete**.
+
+1. Click **Save dashboard**.
 1. Click **Back to dashboard** and then **Exit edit**.
-
-## Duplicate a dashboard link
-
-To duplicate a dashboard link, click the copy link icon next to the link that you want to duplicate.
-
-### Delete a dashboard link
-
-To delete a dashboard link, click the red **X** next to the link that you want to delete and then **Delete**.
 
 ## Panel links
 
