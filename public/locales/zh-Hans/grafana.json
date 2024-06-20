@@ -25,6 +25,14 @@
       "user": "用户"
     }
   },
+  "alert-labels": {
+    "button": {
+      "hide": "",
+      "show": {
+        "tooltip": ""
+      }
+    }
+  },
   "alert-rule-form": {
     "evaluation-behaviour": {
       "description": {
@@ -131,6 +139,16 @@
     "no-results": {
       "clear": "清除搜索和筛选条件",
       "text": ""
+    }
+  },
+  "central-alert-history": {
+    "error": "",
+    "filter": {
+      "button": {
+        "clear": ""
+      },
+      "label": "",
+      "placeholder": ""
     }
   },
   "clipboard-button": {
@@ -1160,7 +1178,7 @@
     "public": {
       "title": "公共仪表板"
     },
-    "recentlyDeleted": {
+    "recently-deleted": {
       "subtitle": "",
       "title": ""
     },
@@ -1608,6 +1626,7 @@
     "tree": {
       "collapse": "",
       "expand": "",
+      "headline": "",
       "search": ""
     }
   },
