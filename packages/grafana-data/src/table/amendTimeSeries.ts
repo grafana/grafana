@@ -1,4 +1,4 @@
-import { closestIdx } from '@grafana/data';
+import { closestIdx } from '../';
 
 export type Table = [times: number[], ...values: any[][]];
 
