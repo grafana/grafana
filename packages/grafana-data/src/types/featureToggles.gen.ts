@@ -198,4 +198,5 @@ export interface FeatureToggles {
   databaseReadReplica?: boolean;
   zanzana?: boolean;
   passScopeToDashboardApi?: boolean;
+  alertingApiServer?: boolean;
 }

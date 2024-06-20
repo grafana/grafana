@@ -71,6 +71,7 @@
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /hack/ @grafana/grafana-app-platform-squad
 
+/apps/alerting/ @grafana/alerting-backend
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/bus/ @grafana/grafana-search-and-storage
