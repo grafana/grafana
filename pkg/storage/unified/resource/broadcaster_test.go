@@ -8,7 +8,7 @@ import (
 )
 
 func TestCache(t *testing.T) {
-	c := NewCache[int](context.Background(), 10)
+	c := newChannelCache[int](context.Background(), 10)
 
 	e := []int{}
 	err := c.Range(func(i int) error {
