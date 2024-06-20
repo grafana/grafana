@@ -29,7 +29,7 @@ runs:
       uses: dagger/dagger-for-github@v5
       with:
         verb: run
-        args: go run ./pkg/build/workflows/bump-version -version=${{ inputs.version }}
+        args: go run ./pkg/build/actions/bump-version -version=${{ inputs.version }}
     - name: make gen-cue
       shell: bash
       run: make gen-cue
