@@ -422,6 +422,7 @@ describe('updateQueries with import', () => {
         [
           {
             "datasource": {
+              "pluginVersion": undefined,
               "type": "new-type",
               "uid": "new-uid",
             },
@@ -431,6 +432,7 @@ describe('updateQueries with import', () => {
           },
           {
             "datasource": {
+              "pluginVersion": undefined,
               "type": "new-type",
               "uid": "new-uid",
             },
@@ -545,6 +547,7 @@ describe('updateQueries with import', () => {
         [
           {
             "datasource": {
+              "pluginVersion": undefined,
               "type": "new-type",
               "uid": "new-uid",
             },
@@ -553,6 +556,7 @@ describe('updateQueries with import', () => {
           },
           {
             "datasource": {
+              "pluginVersion": undefined,
               "type": "new-type",
               "uid": "new-uid",
             },

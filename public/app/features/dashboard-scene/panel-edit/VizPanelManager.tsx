@@ -155,12 +155,14 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
             datasource = await getDataSourceSrv().get({
               uid: lastUsedDatasource?.datasourceUid,
               type: dsSettings.type,
+              pluginVersion: dsSettings.meta?.info?.version,
             });
 
             this.queryRunner.setState({
               datasource: {
                 uid: lastUsedDatasource?.datasourceUid,
                 type: dsSettings.type,
+                pluginVersion: dsSettings.meta?.info?.version,
               },
             });
           }
@@ -177,6 +179,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
           {
             type: dsSettings.type,
             uid: dsSettings.uid,
+            pluginVersion: dsSettings.meta?.info?.version,
           } || { default: true }
         );
       }
@@ -195,6 +198,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
           datasource: {
             uid: dsSettings.uid,
             type: dsSettings.type,
+            pluginVersion: dsSettings.meta?.info?.version,
           },
         });
       }
@@ -298,6 +302,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       datasource: {
         type: newSettings.type,
         uid: newSettings.uid,
+        pluginVersion: newSettings.meta?.info?.version,
       },
       queries,
     });

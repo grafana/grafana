@@ -28,6 +28,7 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     const dsRef: DataSourceRef = {
       uid: ds.uid,
       type: ds.type,
+      pluginVersion: ds.meta?.info?.version,
     };
 
     variable.setState({ datasource: dsRef });

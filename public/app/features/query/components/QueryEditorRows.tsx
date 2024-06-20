@@ -68,6 +68,7 @@ export class QueryEditorRows extends PureComponent<Props> {
         const dataSourceRef: DataSourceRef = {
           type: dataSource.type,
           uid: dataSource.uid,
+          pluginVersion: dataSource.meta?.info?.version,
         };
 
         if (item.datasource) {

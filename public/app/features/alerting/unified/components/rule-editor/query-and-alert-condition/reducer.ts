@@ -67,6 +67,7 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
           datasource: {
             type: datasource.type,
             uid: datasource.uid,
+            pluginVersion: datasource.meta?.info?.version,
           },
         },
       });

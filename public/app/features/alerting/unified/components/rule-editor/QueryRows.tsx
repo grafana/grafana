@@ -229,6 +229,7 @@ function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit
       datasource: {
         type: settings.type,
         uid: settings.uid,
+        pluginVersion: settings.meta?.info?.version,
       },
     },
     datasourceUid: settings.uid,
@@ -247,6 +248,7 @@ function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<
       datasource: {
         type: settings.type,
         uid: settings.uid,
+        pluginVersion: settings.meta?.info?.version,
       },
     },
   };

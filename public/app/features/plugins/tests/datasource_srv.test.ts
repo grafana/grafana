@@ -191,6 +191,7 @@ describe('datasource_srv', () => {
         expect(ds?.uid).toBe('${datasource}');
         expect(ds?.rawRef).toMatchInlineSnapshot(`
           {
+            "pluginVersion": undefined,
             "type": "test-db",
             "uid": "uid-code-BBB",
           }
@@ -203,6 +204,7 @@ describe('datasource_srv', () => {
         expect(ds?.uid).toBe('${datasourceByUid}');
         expect(ds?.rawRef).toMatchInlineSnapshot(`
           {
+            "pluginVersion": undefined,
             "type": "test-db",
             "uid": "uid-code-DDDD",
           }
@@ -227,6 +229,7 @@ describe('datasource_srv', () => {
         expect(ds?.uid).toBe('${datasourceDefault}');
         expect(ds?.rawRef).toMatchInlineSnapshot(`
           {
+            "pluginVersion": undefined,
             "type": "test-db",
             "uid": "uid-code-BBB",
           }

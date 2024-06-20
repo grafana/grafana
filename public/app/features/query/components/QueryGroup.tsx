@@ -150,6 +150,7 @@ export class QueryGroup extends PureComponent<Props, State> {
         uid: newSettings.uid,
         type: newSettings.meta.id,
         default: newSettings.isDefault,
+        pluginVersion: newSettings.meta.info?.version,
       },
     });
 
@@ -177,7 +178,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
     return {
       ...this.state.dataSource?.getDefaultQuery?.(CoreApp.PanelEditor),
-      datasource: { uid: ds?.uid, type: ds?.type },
+      datasource: { uid: ds?.uid, type: ds?.type, pluginVersion: ds?.meta?.info?.version },
     };
   }
 
@@ -240,7 +241,13 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onAddQuery = (query: Partial<DataQuery>) => {
     const { dsSettings, queries } = this.state;
-    this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
+    this.onQueriesChange(
+      addQuery(queries, query, {
+        type: dsSettings?.type,
+        uid: dsSettings?.uid,
+        pluginVersion: dsSettings?.meta?.info?.version,
+      })
+    );
     this.onScrollBottom();
   };
 

@@ -69,6 +69,7 @@ exports[`Query and expressions reducer should add query 1`] = `
       "datasourceUid": "c8eceabb-0275-4108-8f03-8f74faf4bf6d",
       "model": {
         "datasource": {
+          "pluginVersion": undefined,
           "type": "prometheus",
           "uid": "c8eceabb-0275-4108-8f03-8f74faf4bf6d",
         },

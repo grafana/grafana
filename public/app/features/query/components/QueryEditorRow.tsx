@@ -363,7 +363,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onClickExample = (query: TQuery) => {
     if (query.datasource === undefined) {
-      query.datasource = { type: this.props.dataSource.type, uid: this.props.dataSource.uid };
+      query.datasource = {
+        type: this.props.dataSource.type,
+        uid: this.props.dataSource.uid,
+        pluginVersion: this.props.dataSource.meta?.info?.version,
+      };
     }
 
     this.props.onChange({

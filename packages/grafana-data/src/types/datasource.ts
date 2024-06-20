@@ -1,6 +1,8 @@
 import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
 
+import { DataSourceRef } from '@grafana/schema';
+
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 
 import { ScopedVars } from './ScopedVars';
@@ -14,7 +16,7 @@ import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
-import { AdHocVariableFilter, DataSourceRef, Scope, WithAccessControlMetadata } from '.';
+import { AdHocVariableFilter, Scope, WithAccessControlMetadata } from '.';
 
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,
@@ -321,7 +323,7 @@ abstract class DataSourceApi<
 
   /** Get an identifier object for this datasource instance */
   getRef(): DataSourceRef {
-    return { type: this.type, uid: this.uid };
+    return { type: this.type, uid: this.uid, pluginVersion: this.meta?.info?.version };
   }
 
   /**

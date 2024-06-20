@@ -547,6 +547,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.datasource = {
       uid: dataSource.uid,
       type: dataSource.type,
+      pluginVersion: dataSource.pluginVersion,
     };
 
     this.cacheTimeout = options.cacheTimeout;
@@ -710,7 +711,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 }
 
 export function getPluginVersion(plugin: PanelPlugin): string {
-  return plugin && plugin.meta.info.version ? plugin.meta.info.version : config.buildInfo.version;
+  return plugin && plugin.meta?.info?.version ? plugin.meta.info.version : config.buildInfo.version;
 }
 
 interface PanelOptionsCache {

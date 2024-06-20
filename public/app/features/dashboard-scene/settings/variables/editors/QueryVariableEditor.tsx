@@ -35,7 +35,11 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     variable.setState({ allValue: event.currentTarget.value });
   };
   const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings) => {
-    const datasource: DataSourceRef = { uid: dsInstanceSettings.uid, type: dsInstanceSettings.type };
+    const datasource: DataSourceRef = {
+      uid: dsInstanceSettings.uid,
+      type: dsInstanceSettings.type,
+      pluginVersion: dsInstanceSettings.meta?.info?.version,
+    };
 
     if (variable.state.datasource && variable.state.datasource.type !== datasource.type) {
       variable.setState({ datasource, query: '', definition: '' });

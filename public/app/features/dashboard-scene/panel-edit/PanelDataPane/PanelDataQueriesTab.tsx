@@ -83,6 +83,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
         default: panelManager.state.dsSettings?.isDefault,
         type: panelManager.state.dsSettings?.type,
         uid: panelManager.state.dsSettings?.uid,
+        pluginVersion: panelManager.state.dsSettings?.meta.info?.version,
       },
       queries,
       maxDataPoints: queryRunner.state.maxDataPoints,
@@ -133,7 +134,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
     return {
       ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor),
-      datasource: { uid: ds?.uid, type: ds?.type },
+      datasource: { uid: ds?.uid, type: ds?.type, pluginVersion: ds?.meta?.info?.version },
     };
   }
 
@@ -145,7 +146,13 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   onAddQuery = (query: Partial<DataQuery>) => {
     const queries = this.getQueries();
     const dsSettings = this._panelManager.state.dsSettings;
-    this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
+    this.onQueriesChange(
+      addQuery(queries, query, {
+        type: dsSettings?.type,
+        uid: dsSettings?.uid,
+        pluginVersion: dsSettings?.meta?.info?.version,
+      })
+    );
   };
 
   isExpressionsSupported(dsSettings: DataSourceInstanceSettings): boolean {
