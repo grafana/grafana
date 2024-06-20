@@ -21,15 +21,11 @@ describe('HistoryEventsList', () => {
       expect(byLabelText('Loading bar').query()).not.toBeInTheDocument();
     });
     expect(ui.rowHeader.getAll()).toHaveLength(2); // 2 events for alert1
-    expect(ui.rowHeader.getAll()[0]).toHaveTextContent('June 14 at 06:38:30');
-    expect(ui.rowHeader.getAll()[1]).toHaveTextContent('June 14 at 06:39:00');
-    expect(ui.rowHeader.getAll()[0]).toHaveTextContent('alert1');
-    expect(ui.rowHeader.getAll()[1]).toHaveTextContent('alert1');
-    expect(ui.rowHeader.getAll()[0]).toHaveTextContent('alertnamealert1');
-    expect(ui.rowHeader.getAll()[1]).toHaveTextContent('alertnamealert1');
-    expect(ui.rowHeader.getAll()[0]).toHaveTextContent('grafana_folderFOLDER A');
-    expect(ui.rowHeader.getAll()[1]).toHaveTextContent('grafana_folderFOLDER A');
-    expect(ui.rowHeader.getAll()[0]).toHaveTextContent('handler/alerting/*');
-    expect(ui.rowHeader.getAll()[1]).toHaveTextContent('handler/alerting/*');
+    expect(ui.rowHeader.getAll()[0]).toHaveTextContent(
+      'June 14 at 06:39:00alert1alertnamealert1grafana_folderFOLDER Ahandler/alerting/*'
+    );
+    expect(ui.rowHeader.getAll()[1]).toHaveTextContent(
+      'June 14 at 06:38:30alert1alertnamealert1grafana_folderFOLDER Ahandler/alerting/*'
+    );
   });
 });
