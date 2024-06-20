@@ -22,6 +22,11 @@ Use the Grafana Alerting - Telegram integration to send [Telegram](https://teleg
 
 ## Before you begin
 
+### Telegram limitation
+
+Telegram messages are limited to 4096 UTF-8 characters. If you use a `parse_mode` other than `None`, truncation may result in an invalid message, causing the notification to fail.
+For longer messages, we recommend using an alternative contact method.
+
 ### Telegram bot API token and chat ID
 
 To integrate Grafana with Telegram, you need to obtain a Telegram **bot API token** and a **chat ID** (i.e., the ID of the Telegram chat where you want to receive the alert notifications).
