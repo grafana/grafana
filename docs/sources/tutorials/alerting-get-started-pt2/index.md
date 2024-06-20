@@ -19,7 +19,7 @@ weight: 50
 
 ## Introduction
 
-This is part 2 of the [Get Started with Grafana Alerting tutorial](https://grafana.com/tutorials/alerting-get-started/).
+This is part 2 of the [Get Started with Grafana Alerting tutorial](http://grafana.com/tutorials/alerting-get-started/).
 
 In part 2, we dig into more complex yet equally fundamental elements of Grafana Alerting: **alert instances** and **notification policies**.
 
@@ -65,12 +65,11 @@ Create a notification policy if you want to handle metrics returned by alert rul
 1. In the field **Label** enter `device`, and in the field **Value** enter `desktop`.
 1. From the **Contact point** drop-down, choose **Webhook**.
     {{< admonition type="note" >}}
-    If you don’t have any contact points, add a Contact point.
+    If you don’t have any contact points, add a [Contact point](http://localhost:3002/docs/grafana/latest/tutorials/alerting-get-started/#create-a-contact-point).
     {{</ admonition >}}
-
 1. Click **Save Policy**.
 
-This new child policy routes alerts that match the label `device=desktop` to the Webhook contact point.  
+    This new child policy routes alerts that match the label `device=desktop` to the Webhook contact point.  
 
 1. **Repeat the steps above to create a second child policy** to match another alert instance. For labels use: `device=mobile`. Use the Webhook integration for the contact point. Alternatively, experiment by using a different Webhook endpoint or a [different integration](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/#list-of-supported-integrations).
 
