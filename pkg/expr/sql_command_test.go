@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -46,24 +47,22 @@ func TestExecute(t *testing.T) {
 	}
 }
 
-func TestExecuteShouldTruncate(t *testing.T) {
+func TestExecuteExceedsLimit(t *testing.T) {
 	cmd, err := NewSQLCommand("a", "select a from foo, bar", &testEngine{})
 	if err != nil {
 		t.Fail()
 		return
 	}
-
 	cmd.limit = 1
 
-	ctx := context.Background()
-	res, err := cmd.Execute(ctx, time.Now(), nil, &testTracer{})
-	if err != nil {
-		t.Fail()
-		return
+	frame := data.NewFrame("a", data.NewField("a", nil, []string{"1", "2", "3"}))
+	vars := mathexp.Vars{}
+	vars["foo"] = mathexp.Results{
+		Values: mathexp.Values{mathexp.TableData{Frame: frame}},
 	}
 
-	f := res.Values.AsDataFrames("a")
-	if len(f) != 1 {
+	_, err = cmd.Execute(context.Background(), time.Now(), vars, &testTracer{})
+	if err == nil {
 		t.Fail()
 		return
 	}

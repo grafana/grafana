@@ -98,15 +98,17 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 			continue
 		}
 		frames := results.Values.AsDataFrames(ref)
+		if exceedsLimit(frames, gr.limit) {
+			logger.Warn("SQL expression results exceeded limit", "limit", gr.limit)
+			return mathexp.Results{}, fmt.Errorf("SQL expression results exceeded limit of %d", gr.limit)
+		}
 		allFrames = append(allFrames, frames...)
 	}
 
-	truncated := truncateFrames(allFrames, gr.limit)
+	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
 
 	rsp := mathexp.Results{}
 	var frame = &data.Frame{}
-
-	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
 	err := gr.engine.QueryFramesInto(gr.refID, gr.query, allFrames, frame)
 	if err != nil {
 		logger.Error("Failed to query frames", "error", err.Error())
@@ -123,17 +125,6 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		}
 	}
 
-	if truncated {
-		if frame.Meta == nil {
-			frame.Meta = &data.FrameMeta{}
-		}
-		notice := data.Notice{
-			Severity: data.NoticeSeverityWarning,
-			Text:     fmt.Sprintf("SQL expression results exceeded limit. Rows truncated to %d", gr.limit),
-		}
-		frame.Meta.Notices = append(frame.Meta.Notices, notice)
-	}
-
 	rsp.Values = mathexp.Values{
 		mathexp.TableData{Frame: frame},
 	}
@@ -145,19 +136,15 @@ func (gr *SQLCommand) Type() string {
 	return TypeSQL.String()
 }
 
-func truncateFrames(frames []*data.Frame, limit int64) bool {
-	truncated := false
+func exceedsLimit(frames []*data.Frame, limit int64) bool {
 	for _, frame := range frames {
 		if frame != nil {
 			if int64(frame.Rows()) > limit {
-				truncated = true
-				for i := int64(frame.Rows()) - 1; i >= limit; i-- {
-					frame.DeleteRow(int(i))
-				}
+				return true
 			}
 		}
 	}
-	return truncated
+	return false
 }
 
 func DefaultEngine() sql.Engine {
