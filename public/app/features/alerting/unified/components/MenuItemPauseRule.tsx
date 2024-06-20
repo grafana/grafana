@@ -42,7 +42,9 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
 
     try {
       const ruleGroupId = getRuleGroupLocationFromCombinedRule(rule);
-      await pauseRule(ruleGroupId, rule.rulerRule, newIsPaused);
+      const ruleUID = rule.rulerRule.grafana_alert.uid;
+
+      await pauseRule(ruleGroupId, ruleUID, newIsPaused);
     } catch (error) {
       notifyApp.error(`Failed to ${newIsPaused ? 'pause' : 'resume'} the rule: ${stringifyErrorLike(error)}`);
       return;

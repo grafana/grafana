@@ -195,7 +195,7 @@ const PauseTestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
 
   const onClick = () => {
     // always handle your errors!
-    pauseRule(ruleGroupID, rulerRule, true).catch(() => {});
+    pauseRule(ruleGroupID, rulerRule.grafana_alert.uid, true).catch(() => {});
   };
 
   return (

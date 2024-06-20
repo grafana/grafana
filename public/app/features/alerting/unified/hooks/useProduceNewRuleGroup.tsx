@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { dispatch, getState } from 'app/store/store';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
-import { RulerGrafanaRuleDTO, RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { AlertGroupUpdated, alertRuleApi } from '../api/alertRuleApi';
 import { deleteRuleAction, pauseRuleAction, ruleGroupReducer } from '../reducers/ruler/ruleGroups';
@@ -19,9 +19,10 @@ type ProduceResult = RulerRuleGroupDTO | AlertGroupUpdated;
  * to ensure that we always protect as best we can against accidentally overwriting changes,
  * and to guard against user concurrency issues.
  *
+ * @throws
  * @TODO the manual state tracking here is not great, but I don't have a better idea that works /shrug
  */
- function useProduceNewRuleGroup() {
+function useProduceNewRuleGroup() {
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
   const [updateRuleGroup] = alertRuleApi.endpoints.updateRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
@@ -43,6 +44,16 @@ type ProduceResult = RulerRuleGroupDTO | AlertGroupUpdated;
     error,
   };
 
+  /**
+   * This function will fetch the latest we have on the rule group, apply a diff to it via a reducer and sends
+   * the new rule group update to the correct endpoint.
+   *
+   * The API does not allow operations on a single rule and will always overwrite the existing rule group with the payload.
+   *
+   * ┌─────────────────────────┐  ┌───────────────┐  ┌───────────────────┐
+   * │ fetch latest rule group │─▶│ apply reducer │─▶│ update rule group │
+   * └─────────────────────────┘  └───────────────┘  └───────────────────┘
+   */
   const produceNewRuleGroup = async (ruleGroup: RuleGroupIdentifier, action: Action) => {
     const { dataSourceName, groupName, namespaceName } = ruleGroup;
 
@@ -54,7 +65,7 @@ type ProduceResult = RulerRuleGroupDTO | AlertGroupUpdated;
     setLoading(true);
 
     try {
-      const currentRuleGroup = await fetchRuleGroup({
+      const latestRuleGroupDefinition = await fetchRuleGroup({
         rulerConfig,
         namespace: namespaceName,
         group: groupName,
@@ -62,7 +73,7 @@ type ProduceResult = RulerRuleGroupDTO | AlertGroupUpdated;
 
       // @TODO convert rule group to postable rule group – TypeScript is not complaining here because
       // the interfaces are compatible but it _should_ complain
-      const newRuleGroup = ruleGroupReducer(currentRuleGroup, action);
+      const newRuleGroup = ruleGroupReducer(latestRuleGroupDefinition, action);
 
       // if we have no more rules left after reducing, remove the entire group
       const updateOrDeleteFunction = () => {
@@ -96,12 +107,15 @@ type ProduceResult = RulerRuleGroupDTO | AlertGroupUpdated;
   return [produceNewRuleGroup, requestState] as const;
 }
 
+/**
+ * Pause a single rule in a (ruler) group. This hook will ensure that mutations on the rule group are safe and will always
+ * use the latest definition of the ruler group identifier.
+ */
 export function usePauseRuleInGroup() {
   const [produceNewRuleGroup, produceNewRuleGroupState] = useProduceNewRuleGroup();
 
   const pauseFn = useCallback(
-    async (ruleGroup: RuleGroupIdentifier, rule: RulerGrafanaRuleDTO, pause: boolean) => {
-      const uid = rule.grafana_alert.uid;
+    async (ruleGroup: RuleGroupIdentifier, uid: string, pause: boolean) => {
       const action = pauseRuleAction({ uid, pause });
 
       return produceNewRuleGroup(ruleGroup, action);
@@ -112,6 +126,12 @@ export function usePauseRuleInGroup() {
   return [pauseFn, produceNewRuleGroupState] as const;
 }
 
+/**
+ * Delete a single rule from a (ruler) group. This hook will ensure that mutations on the rule group are safe and will always
+ * use the latest definition of the ruler group identifier.
+ *
+ * If no more rules are left in the group it will remove the entire group instead of updating.
+ */
 export function useDeleteRuleFromGroup() {
   const [produceNewRuleGroup, produceNewRuleGroupState] = useProduceNewRuleGroup();
 

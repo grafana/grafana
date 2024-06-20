@@ -30,6 +30,16 @@ interface SerializedRequest {
   headers: string[][];
 }
 
+/**
+ * Collect all requests seen by MSW and return them when the return promise is await-ed.
+ *
+ * @example
+ * const capture = captureRequests();
+ * // click a button, invoke a hook, etc.
+ * const requests = await capture;
+ *
+ * @deprecated Try not to use this 🙏 instead aim to assert against UI side effects
+ */
 export async function captureRequests(): Promise<Request[]> {
   let requests: Request[] = [];
 
@@ -37,9 +47,7 @@ export async function captureRequests(): Promise<Request[]> {
     requests.push(request);
   });
 
-  return new Promise((resolve) => {
-    resolve(requests);
-  });
+  return requests;
 }
 
 const DEVICE_ID_HEADER = 'x-grafana-device-id';
