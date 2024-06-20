@@ -72,6 +72,10 @@
             "pr": {
               "type": "number",
               "description": "GitHub pull request the plugin was built from"
+            },
+            "build": {
+              "type": "number",
+              "description": "Build job number used to build this plugin."
             }
           }
         },
