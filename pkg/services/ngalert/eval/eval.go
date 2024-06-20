@@ -52,6 +52,7 @@ type conditionEvaluator struct {
 	expressionService expressionService
 	condition         models.Condition
 	evalTimeout       time.Duration
+	evalResultLimit   int
 }
 
 func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (resp *backend.QueryDataResponse, err error) {
@@ -83,14 +84,15 @@ func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Resul
 	if err != nil {
 		return nil, err
 	}
-	return EvaluateAlert(response, r.condition, now), nil
+	return EvaluateAlert(response, r.condition, now, r.evalResultLimit), nil
 }
 
 type evaluatorImpl struct {
-	evaluationTimeout time.Duration
-	dataSourceCache   datasources.CacheService
-	expressionService *expr.Service
-	pluginsStore      pluginstore.Store
+	evaluationTimeout     time.Duration
+	evaluationResultLimit int
+	dataSourceCache       datasources.CacheService
+	expressionService     *expr.Service
+	pluginsStore          pluginstore.Store
 }
 
 func NewEvaluatorFactory(
@@ -100,17 +102,18 @@ func NewEvaluatorFactory(
 	pluginsStore pluginstore.Store,
 ) EvaluatorFactory {
 	return &evaluatorImpl{
-		evaluationTimeout: cfg.EvaluationTimeout,
-		dataSourceCache:   datasourceCache,
-		expressionService: expressionService,
-		pluginsStore:      pluginsStore,
+		evaluationTimeout:     cfg.EvaluationTimeout,
+		evaluationResultLimit: cfg.EvaluationResultLimit,
+		dataSourceCache:       datasourceCache,
+		expressionService:     expressionService,
+		pluginsStore:          pluginsStore,
 	}
 }
 
 // EvaluateAlert takes the results of an executed query and evaluates it as an alert rule, returning alert states that the query produces.
-func EvaluateAlert(queryResponse *backend.QueryDataResponse, condition models.Condition, now time.Time) Results {
+func EvaluateAlert(queryResponse *backend.QueryDataResponse, condition models.Condition, now time.Time, evalResultLimit int) Results {
 	execResults := queryDataResponseToExecutionResults(condition, queryResponse)
-	return evaluateExecutionResult(execResults, now)
+	return evaluateExecutionResult(execResults, now, evalResultLimit)
 }
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
@@ -632,7 +635,7 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 //   - Nonzero (e.g 1.2, NaN) results in Alerting.
 //   - nil results in noData.
 //   - unsupported Frame schemas results in Error.
-func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results {
+func evaluateExecutionResult(execResults ExecutionResults, ts time.Time, evalResultLimit int) Results {
 	evalResults := make([]Result, 0)
 
 	appendErrRes := func(e error) {
@@ -666,6 +669,12 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 
 	if len(execResults.Condition) == 0 {
 		appendNoData(nil)
+		return evalResults
+	}
+
+	if evalResultLimit > 0 && len(execResults.Condition) > evalResultLimit {
+		logger.Error("Query evaluation returned too many results", "results", len(execResults.Condition), "limit", evalResultLimit)
+		appendErrRes(fmt.Errorf("query evaluation returned too many results: %d (limit: %d)", len(execResults.Condition), evalResultLimit))
 		return evalResults
 	}
 
@@ -849,6 +858,7 @@ func (e *evaluatorImpl) create(condition models.Condition, req *expr.Request) (C
 				expressionService: e.expressionService,
 				condition:         condition,
 				evalTimeout:       e.evaluationTimeout,
+				evalResultLimit:   e.evaluationResultLimit,
 			}, nil
 		}
 		conditions = append(conditions, node.RefID())

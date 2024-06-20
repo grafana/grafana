@@ -32,6 +32,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 		execResults        ExecutionResults
 		expectResultLength int
 		expectResults      Results
+		evalResultLimit    int
 	}{
 		{
 			desc: "zero valued single instance is single Normal state result",
@@ -72,6 +73,86 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			expectResults: Results{
 				{
 					State: NoData,
+				},
+			},
+		},
+		{
+			desc: "zero valued two instances are two Normal state results",
+			execResults: ExecutionResults{
+				Condition: []*data.Frame{
+					data.NewFrame("", data.NewField("", data.Labels{"a": "b"}, []*float64{util.Pointer(0.0)})),
+					data.NewFrame("", data.NewField("", data.Labels{"c": "d"}, []*float64{util.Pointer(0.0)})),
+				},
+			},
+			evalResultLimit:    2,
+			expectResultLength: 2,
+			expectResults: Results{
+				{
+					State:    Normal,
+					Instance: data.Labels{"a": "b"},
+				},
+				{
+					State:    Normal,
+					Instance: data.Labels{"c": "d"},
+				},
+			},
+		},
+		{
+			desc: "zero valued two instances with an eval limit of 1 return an Error result",
+			execResults: ExecutionResults{
+				Condition: []*data.Frame{
+					data.NewFrame("", data.NewField("", data.Labels{"a": "b"}, []*float64{util.Pointer(0.0)})),
+					data.NewFrame("", data.NewField("", data.Labels{"c": "d"}, []*float64{util.Pointer(0.0)})),
+				},
+			},
+			evalResultLimit:    1,
+			expectResultLength: 1,
+			expectResults: Results{
+				{
+					State: Error,
+					Error: fmt.Errorf("query evaluation returned too many results: 2 (limit: 1)"),
+				},
+			},
+		},
+		{
+			desc: "zero valued two instances with an eval limit of 0 return two results",
+			execResults: ExecutionResults{
+				Condition: []*data.Frame{
+					data.NewFrame("", data.NewField("", data.Labels{"a": "b"}, []*float64{util.Pointer(0.0)})),
+					data.NewFrame("", data.NewField("", data.Labels{"c": "d"}, []*float64{util.Pointer(0.0)})),
+				},
+			},
+			evalResultLimit:    0,
+			expectResultLength: 2,
+			expectResults: Results{
+				{
+					State:    Normal,
+					Instance: data.Labels{"a": "b"},
+				},
+				{
+					State:    Normal,
+					Instance: data.Labels{"c": "d"},
+				},
+			},
+		},
+		{
+			desc: "zero valued two instances with an eval limit of -1 return two results",
+			execResults: ExecutionResults{
+				Condition: []*data.Frame{
+					data.NewFrame("", data.NewField("", data.Labels{"a": "b"}, []*float64{util.Pointer(0.0)})),
+					data.NewFrame("", data.NewField("", data.Labels{"c": "d"}, []*float64{util.Pointer(0.0)})),
+				},
+			},
+			evalResultLimit:    -1,
+			expectResultLength: 2,
+			expectResults: Results{
+				{
+					State:    Normal,
+					Instance: data.Labels{"a": "b"},
+				},
+				{
+					State:    Normal,
+					Instance: data.Labels{"c": "d"},
 				},
 			},
 		},
@@ -296,7 +377,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			res := evaluateExecutionResult(tc.execResults, time.Time{})
+			res := evaluateExecutionResult(tc.execResults, time.Time{}, tc.evalResultLimit)
 
 			require.Equal(t, tc.expectResultLength, len(res))
 
@@ -318,7 +399,7 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 				"A": "1",
 			},
 		}
-		v := evaluateExecutionResult(results, time.Time{})
+		v := evaluateExecutionResult(results, time.Time{}, -1)
 		require.Len(t, v, 1)
 		require.Equal(t, data.Labels{"datasource_uid": "1", "ref_id": "A"}, v[0].Instance)
 		require.Equal(t, NoData, v[0].State)
@@ -332,7 +413,7 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 				"C": "2",
 			},
 		}
-		v := evaluateExecutionResult(results, time.Time{})
+		v := evaluateExecutionResult(results, time.Time{}, -1)
 		require.Len(t, v, 2)
 
 		datasourceUIDs := make([]string, 0, len(v))
