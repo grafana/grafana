@@ -10,10 +10,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/mod/semver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -25,7 +27,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // TODO: this is a temporary hack to make rest.Connecter work with resource level routes
@@ -95,10 +96,13 @@ func SetupConfig(
 
 		// Needs to run last in request chain to function as expected, hence we register it first.
 		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+		handler = filters.WithRequester(handler)
 		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, pathRewriters)
 		handler = k8stracing.WithTracing(handler, serverConfig.TracerProvider, "KubernetesAPI")
+		// Configure filters.WithPanicRecovery to not crash on panic
+		utilruntime.ReallyCrash = false
 
 		return handler
 	}
