@@ -532,6 +532,12 @@
       "scan-for-older-logs": "Ŝčäŉ ƒőř őľđęř ľőģş",
       "stop-scan": "Ŝŧőp şčäŉ"
     },
+    "query-library": {
+      "delete-query": "Đęľęŧę qūęřy",
+      "delete-query-text": "Ÿőū'řę äþőūŧ ŧő řęmővę ŧĥįş qūęřy ƒřőm ŧĥę qūęřy ľįþřäřy. Ŧĥįş äčŧįőŉ čäŉŉőŧ þę ūŉđőŉę. Đő yőū ŵäŉŧ ŧő čőŉŧįŉūę?",
+      "delete-query-title": "Đęľęŧę qūęřy",
+      "query-deleted": "Qūęřy đęľęŧęđ"
+    },
     "rich-history": {
       "close-tooltip": "Cľőşę qūęřy ĥįşŧőřy",
       "datasource-a-z": "Đäŧä şőūřčę Å-Ż",
@@ -1558,6 +1564,9 @@
       "origin-label": "Øřįģįŉ",
       "role-label": "Ŗőľę"
     }
+  },
+  "query-library": {
+    "delete-query-button": "Đęľęŧę qūęřy"
   },
   "query-operation": {
     "header": {

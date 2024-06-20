@@ -26,7 +26,7 @@ const columns: Array<Column<QueryTemplateRow>> = [
     id: 'actions',
     header: '',
     cell: ({ row: { original } }) => (
-      <ActionsCell query={original.query} rootDatasourceUid={original.datasourceRef?.uid} />
+      <ActionsCell query={original.query} rootDatasourceUid={original.datasourceRef?.uid} queryUid={original.uid} />
     ),
   },
 ];
