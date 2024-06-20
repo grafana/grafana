@@ -29,21 +29,12 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefiniti
 	}
 }
 
+// HACK to cleanup the hand crafted schemas from the SDK
 func cleanAll(v map[string]common.OpenAPIDefinition) map[string]common.OpenAPIDefinition {
-	out := make(map[string]common.OpenAPIDefinition)
-	for k, s := range v {
-		clean := &s.Schema
-		clean.Schema = ""
-		clean.SchemaProps.Schema = ""
-		queryschema.DoSchemaCleanup(clean)
-		s.Schema = *clean
-		out[k] = s
-
-		// if k == "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.DataQuery" {
-		// 	fmt.Printf("%+v\n", s.Schema)
-		// }
+	for _, s := range v {
+		queryschema.DoSchemaCleanup(&s.Schema)
 	}
-	return out
+	return v
 }
 
 // Modify the OpenAPI spec to include the additional routes.
