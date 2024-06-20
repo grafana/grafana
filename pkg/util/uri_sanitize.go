@@ -58,11 +58,10 @@ func SanitizeURI(s string) (string, error) {
 
 	// strip out sensitive query strings
 	urlValues := u.Query()
-	keys := lowerToKeyMap(urlValues)
-	for key, checker := range sensitiveQueryChecks {
-		if originalKey, ok := keys[key]; ok {
-			if checker(keys) {
-				urlValues.Set(originalKey, masking)
+	for key, values := range urlValues {
+		if checker, ok := sensitiveQueryChecks[strings.ToLower(key)]; ok {
+			if checker(values, urlValues) {
+				urlValues.Set(key, masking)
 			}
 		}
 	}
