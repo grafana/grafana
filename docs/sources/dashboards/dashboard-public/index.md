@@ -149,7 +149,7 @@ If a Grafana user has read access to the parent dashboard, they can view the pub
 
 You can check usage analytics about your public dashboard by clicking the insights icon in the dashboard header:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights-11.2.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
 
 Learn more about the kind of information provided in the [dashboard insights documentation](ref:dashboard-insights-documentation).
 
