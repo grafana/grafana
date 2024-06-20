@@ -88,3 +88,10 @@ export function getDashboardAPI() {
   }
   return instance;
 }
+
+export function setDashboardAPI(override: DashboardAPI | undefined) {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('dashboardAPI can be only overridden in test environment');
+  }
+  instance = override;
+}

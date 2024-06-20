@@ -1,8 +1,9 @@
 import { act, cleanup, waitFor } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
+import { getDashboardAPI, setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { ScopesFiltersScene } from './ScopesFiltersScene';
@@ -33,8 +34,7 @@ import {
   getDashboardsContainer,
   getDashboardsExpand,
   getDashboardsSearch,
-  mocksNodes,
-  mocksScopeDashboardBindings,
+  getMock,
   mocksScopes,
   queryAllDashboard,
   queryFiltersApply,
@@ -52,32 +52,14 @@ jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
-    get: jest.fn().mockImplementation((url: string, params: { parent: string; scope: string[]; query?: string }) => {
-      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_node_children')) {
-        return {
-          items: mocksNodes.filter(
-            ({ parent, spec: { title } }) => parent === params.parent && title.includes(params.query ?? '')
-          ),
-        };
-      }
-
-      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/')) {
-        const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/', '');
-
-        return mocksScopes.find((scope) => scope.metadata.name === name) ?? {};
-      }
-
-      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_dashboard_bindings')) {
-        return {
-          items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) =>
-            params.scope.includes(bindingScope)
-          ),
-        };
-      }
-
-      return {};
-    }),
+    get: getMock,
   }),
+}));
+
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  __esModule: true,
+  ...jest.requireActual('app/features/dashboard/api/dashboard_api'),
+  instance: undefined,
 }));
 
 describe('ScopesScene', () => {
@@ -109,6 +91,7 @@ describe('ScopesScene', () => {
       fetchScopeSpy.mockClear();
       fetchSelectedScopesSpy.mockClear();
       fetchSuggestedDashboardsSpy.mockClear();
+      getMock.mockClear();
 
       dashboardScene = buildTestScene();
       scopesScene = dashboardScene.state.scopes!;
@@ -415,6 +398,56 @@ describe('ScopesScene', () => {
             mocksScopes.filter(({ metadata: { name } }) => name === 'slothVoteTracker')
           );
         });
+      });
+    });
+  });
+
+  describe('Dashboards API', () => {
+    describe('Feature flag off', () => {
+      beforeAll(() => {
+        config.featureToggles.scopeFilters = true;
+        config.featureToggles.passScopeToDashboardApi = false;
+      });
+
+      beforeEach(() => {
+        setDashboardAPI(undefined);
+        locationService.push('/?scopes=scope1&scopes=scope2&scopes=scope3');
+      });
+
+      it('Legacy API should not pass the scopes', () => {
+        config.featureToggles.kubernetesDashboards = false;
+        getDashboardAPI().getDashboardDTO('1');
+        expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', undefined);
+      });
+
+      it('K8s API should not pass the scopes', () => {
+        config.featureToggles.kubernetesDashboards = true;
+        getDashboardAPI().getDashboardDTO('1');
+        expect(getMock).toHaveBeenCalledWith('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1');
+      });
+    });
+
+    describe('Feature flag on', () => {
+      beforeAll(() => {
+        config.featureToggles.scopeFilters = true;
+        config.featureToggles.passScopeToDashboardApi = true;
+      });
+
+      beforeEach(() => {
+        setDashboardAPI(undefined);
+        locationService.push('/?scopes=scope1&scopes=scope2&scopes=scope3');
+      });
+
+      it('Legacy API should pass the scopes', () => {
+        config.featureToggles.kubernetesDashboards = false;
+        getDashboardAPI().getDashboardDTO('1');
+        expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', { scopes: ['scope1', 'scope2', 'scope3'] });
+      });
+
+      it('K8s API should not pass the scopes', () => {
+        config.featureToggles.kubernetesDashboards = true;
+        getDashboardAPI().getDashboardDTO('1');
+        expect(getMock).toHaveBeenCalledWith('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1');
       });
     });
   });
