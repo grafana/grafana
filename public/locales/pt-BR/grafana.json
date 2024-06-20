@@ -25,6 +25,14 @@
       "user": "Usuário"
     }
   },
+  "alert-labels": {
+    "button": {
+      "hide": "",
+      "show": {
+        "tooltip": ""
+      }
+    }
+  },
   "alert-rule-form": {
     "evaluation-behaviour": {
       "description": {
@@ -136,6 +144,16 @@
     "no-results": {
       "clear": "Limpar busca e filtros",
       "text": ""
+    }
+  },
+  "central-alert-history": {
+    "error": "",
+    "filter": {
+      "button": {
+        "clear": ""
+      },
+      "label": "",
+      "placeholder": ""
     }
   },
   "clipboard-button": {
@@ -1166,7 +1184,7 @@
     "public": {
       "title": "Painéis de controle públicos"
     },
-    "recentlyDeleted": {
+    "recently-deleted": {
       "subtitle": "",
       "title": ""
     },
@@ -1615,6 +1633,7 @@
     "tree": {
       "collapse": "",
       "expand": "",
+      "headline": "",
       "search": ""
     }
   },
