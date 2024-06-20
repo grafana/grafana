@@ -129,7 +129,7 @@ replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240523142
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240422145632-c33c6b5b6e6b
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240605141526-70d9d63f74fc
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
