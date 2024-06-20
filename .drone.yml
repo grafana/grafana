@@ -2937,10 +2937,11 @@ platform:
 services: []
 steps:
 - commands:
-  - apk add curl
-  - chmod +x ./scripts/drone/verify-grafanacom.sh
-  - for i in {{1..5}}; do ./scripts/drone/verify-grafanacom.sh && break || sleep 60;
-    done
+  - apk add curl bash
+  - "\n            for i in {1..5}; do\n                if ./scripts/drone/verify-grafanacom.sh;
+    then\n                    exit 0\n                elif [ $i -eq 5 ]; then\n                    exit
+    1\n                else\n                    sleep 60\n                fi\n            done\n
+    \           "
   depends_on: []
   image: node:20.9.0-alpine
   name: verify-grafanacom
@@ -3035,10 +3036,11 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-grafanacom
 - commands:
-  - apk add curl
-  - chmod +x ./scripts/drone/verify-grafanacom.sh
-  - for i in {{1..5}}; do ./scripts/drone/verify-grafanacom.sh && break || sleep 60;
-    done
+  - apk add curl bash
+  - "\n            for i in {1..5}; do\n                if ./scripts/drone/verify-grafanacom.sh;
+    then\n                    exit 0\n                elif [ $i -eq 5 ]; then\n                    exit
+    1\n                else\n                    sleep 60\n                fi\n            done\n
+    \           "
   depends_on:
   - publish-grafanacom
   image: node:20.9.0-alpine
@@ -4994,6 +4996,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 3e889a7dae2864c9b698758ca9162f064dcffa1dc8e2695b0bdef2330344a365
+hmac: 06f574902baa67d8885abb48e48987f675d7637e30d4b783b3bb84e51b46cdaf
 
 ...
