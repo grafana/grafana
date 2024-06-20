@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/generated/clientset/versioned"
@@ -65,6 +66,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		actual, err := client.Create(ctx, newInterval, v1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotEmptyf(t, actual.Name, "Resource name should not be empty")
+		require.NotEmptyf(t, actual.UID, "Resource UID should not be empty")
 		resourceID = actual.Name
 	})
 
@@ -462,5 +464,70 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
+	})
+}
+
+func TestIntegrationTimeIntervalPatch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+
+	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().TimeIntervals("default")
+
+	interval := v0alpha1.TimeInterval{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.TimeIntervalSpec{
+			Name:          "time-interval",
+			TimeIntervals: v0alpha1.IntervalGenerator{}.GenerateMany(2),
+		},
+	}
+
+	current, err := adminClient.Create(ctx, &interval, v1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, current)
+	require.NotEmpty(t, current.ResourceVersion)
+
+	t.Run("should patch with merge patch", func(t *testing.T) {
+		patch := `{
+             "spec": {
+                 "time_intervals" : []
+             }
+		 }`
+
+		result, err := adminClient.Patch(ctx, current.Name, types.MergePatchType, []byte(patch), v1.PatchOptions{})
+		require.NoError(t, err)
+		require.Empty(t, result.Spec.TimeIntervals)
+		current = result
+	})
+
+	t.Run("should patch with json patch", func(t *testing.T) {
+		expected := v0alpha1.IntervalGenerator{}.Generate()
+
+		patch := []map[string]interface{}{
+			{
+				"op":    "add",
+				"path":  "/spec/time_intervals/-",
+				"value": expected,
+			},
+		}
+
+		patchData, err := json.Marshal(patch)
+		require.NoError(t, err)
+
+		result, err := adminClient.Patch(ctx, current.Name, types.JSONPatchType, patchData, v1.PatchOptions{})
+		require.NoError(t, err)
+		expectedSpec := *current.Spec.DeepCopy()
+		expectedSpec.TimeIntervals = []v0alpha1.Interval{
+			expected,
+		}
+		require.EqualValues(t, expectedSpec, result.Spec)
+		current = result
 	})
 }
