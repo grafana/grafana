@@ -3,7 +3,7 @@ Feedback Link: https://github.com/grafana/tutorials/issues/new
 categories:
   - alerting
 description: Get started with Grafana Alerting by creating your first alert in just a few minutes. Learn how to set up an alert, send alert notifications to a public webhook, and generate sample data to observe your alert in action.
-id: alerting-get-started
+id: alerting-get-started-pt1
 labels:
   products:
     - enterprise
@@ -11,11 +11,11 @@ labels:
     - cloud
 tags:
   - beginner
-title: Get started with Grafana Alerting
+title: Get started with Grafana Alerting - Part 1
 weight: 50
 ---
 
-# Get Started with Grafana Alerting
+# Get Started with Grafana Alerting - Part 1
 
 In this guide, we'll walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as sending alert notifications.
 
