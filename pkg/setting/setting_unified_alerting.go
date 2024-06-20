@@ -6,10 +6,11 @@ import (
 	"strings"
 	"time"
 
-	alertingCluster "github.com/grafana/alerting/cluster"
 	dstls "github.com/grafana/dskit/crypto/tls"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"gopkg.in/ini.v1"
+
+	alertingCluster "github.com/grafana/alerting/cluster"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -113,6 +114,9 @@ type UnifiedAlertingSettings struct {
 
 	// Retention period for Alertmanager notification log entries.
 	NotificationLogRetention time.Duration
+
+	// Duration for which a resolved alert state transition will continue to be sent to the Alertmanager.
+	ResolvedAlertRetention time.Duration
 }
 
 type RecordingRuleSettings struct {
@@ -431,6 +435,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 
 	uaCfg.NotificationLogRetention, err = gtime.ParseDuration(valueAsString(ua, "notification_log_retention", (5 * 24 * time.Hour).String()))
+	if err != nil {
+		return err
+	}
+
+	uaCfg.ResolvedAlertRetention, err = gtime.ParseDuration(valueAsString(ua, "resolved_alert_retention", (15 * time.Minute).String()))
 	if err != nil {
 		return err
 	}

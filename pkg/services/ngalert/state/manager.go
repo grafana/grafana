@@ -39,9 +39,10 @@ type Manager struct {
 	metrics *metrics.State
 	tracer  tracing.Tracer
 
-	clock       clock.Clock
-	cache       *cache
-	ResendDelay time.Duration
+	clock             clock.Clock
+	cache             *cache
+	ResendDelay       time.Duration
+	ResolvedRetention time.Duration
 
 	instanceStore InstanceStore
 	images        ImageCapturer
@@ -73,6 +74,9 @@ type ManagerCfg struct {
 
 	DisableExecution bool
 
+	// Duration for which a resolved alert state transition will continue to be sent to the Alertmanager.
+	ResolvedRetention time.Duration
+
 	Tracer tracing.Tracer
 	Log    log.Logger
 }
@@ -88,6 +92,7 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 	m := &Manager{
 		cache:                          c,
 		ResendDelay:                    ResendDelay, // TODO: make this configurable
+		ResolvedRetention:              cfg.ResolvedRetention,
 		log:                            cfg.Log,
 		metrics:                        cfg.Metrics,
 		instanceStore:                  cfg.InstanceStore,
@@ -245,7 +250,11 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 		s.SetNormal(reason, startsAt, now)
 		// Set Resolved property so the scheduler knows to send a postable alert
 		// to Alertmanager.
-		s.Resolved = oldState == eval.Alerting || oldState == eval.Error || oldState == eval.NoData
+		if oldState == eval.Alerting || oldState == eval.Error || oldState == eval.NoData {
+			s.ResolvedAt = &now
+		} else {
+			s.ResolvedAt = nil
+		}
 		s.LastEvaluationTime = now
 		s.Values = map[string]float64{}
 		transitions = append(transitions, StateTransition{
@@ -418,9 +427,15 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	// Set Resolved property so the scheduler knows to send a postable alert
 	// to Alertmanager.
-	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
+	newlyResolved := false
+	if oldState == eval.Alerting && currentState.State == eval.Normal {
+		currentState.ResolvedAt = &result.EvaluatedAt
+		newlyResolved = true
+	} else if currentState.State != eval.Normal && currentState.State != eval.Pending { // Retain the last resolved time for Normal->Normal and Normal->Pending.
+		currentState.ResolvedAt = nil
+	}
 
-	if shouldTakeImage(currentState.State, oldState, currentState.Image, currentState.Resolved) {
+	if shouldTakeImage(currentState.State, oldState, currentState.Image, newlyResolved) {
 		image, err := takeImage(ctx, st.images, alertRule)
 		if err != nil {
 			logger.Warn("Failed to take an image",
@@ -505,7 +520,7 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 		s.LastEvaluationTime = evaluatedAt
 
 		if oldState == eval.Alerting {
-			s.Resolved = true
+			s.ResolvedAt = &evaluatedAt
 			image, err := takeImage(ctx, st.images, alertRule)
 			if err != nil {
 				logger.Warn("Failed to take an image",
