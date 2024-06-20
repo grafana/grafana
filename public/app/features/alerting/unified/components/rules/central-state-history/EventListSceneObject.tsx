@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
+import { DataFrameJSON, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, TextBoxVariable, VariableValue, sceneGraph } from '@grafana/scenes';
 import { Alert, Icon, LoadingBar, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
@@ -17,13 +17,14 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
+import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { hashLabelsOrAnnotations } from '../../../utils/rule-id';
 import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
 import { LogRecord } from '../state-history/common';
-import { useRuleHistoryRecords } from '../state-history/useRuleHistoryRecords';
+import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
 import { LABELS_FILTER } from './CentralAlertHistoryScene';
 
@@ -56,7 +57,12 @@ export const HistoryEventsList = ({
     limit: LIMIT_EVENTS,
   });
 
-  const { historyRecords } = useRuleHistoryRecords(stateHistory, valueInfilterTextBox.toString());
+  const { historyRecords: historyRecordsNotSorted } = useRuleHistoryRecords(
+    stateHistory,
+    valueInfilterTextBox.toString()
+  );
+
+  const historyRecords = historyRecordsNotSorted.sort((a, b) => b.timestamp - a.timestamp);
 
   if (isError) {
     return <HistoryErrorMessage error={error} />;
@@ -321,4 +327,27 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
     : filtersVariable.getValue();
 
   return <HistoryEventsList timeRange={timeRange} valueInfilterTextBox={valueInfilterTextBox} />;
+}
+
+function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: string) {
+  return useMemo(() => {
+    const tsValues = stateHistory?.data?.values[0] ?? [];
+    const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
+    const lines = stateHistory?.data?.values[1] ?? [];
+    // merge timestamp with "line"
+    const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
+      const line = lines[index];
+      // values property can be undefined for some instance states (e.g. NoData)
+      if (isLine(line)) {
+        acc.push({ timestamp, line });
+      }
+      return acc;
+    }, []);
+
+    const filterMatchers = filter ? parseMatchers(filter) : [];
+
+    return {
+      historyRecords: logRecords.filter(({ line }) => line.labels && labelsMatchMatchers(line.labels, filterMatchers)),
+    };
+  }, [stateHistory, filter]);
 }
