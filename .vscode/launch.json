@@ -44,7 +44,12 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
-      "env": { "GF_GRAFANA_APISERVER_STORAGE_TYPE": "unified-grpc" },
+      "env": {
+        "GF_GRAFANA_APISERVER_STORAGE_TYPE": "unified-grpc",
+        "GF_GRPC_SERVER_ADDRESS": "localhost:10001",
+        "GF_AUTHORIZATION_MODE": "grpc",
+        "GF_AUTHORIZATION_LISTEN": "true"
+      },
       "cwd": "${workspaceFolder}",
       "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
     },
@@ -54,7 +59,14 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
-      "env": { "GF_DEFAULT_TARGET": "storage-server", "GF_SERVER_HTTP_PORT": "3001" },
+      "env": {
+        "GF_DEFAULT_TARGET": "storage-server",
+        "GF_SERVER_HTTP_PORT": "3001",
+        "GF_AUTHORIZATION_REMOTE_ADDRESS": "localhost:10001",
+        "GF_AUTHORIZATION_MODE": "grpc",
+        "GF_GRPC_AUTHENTICATION_MODE": "remote",
+        "GF_GRPC_AUTHENTICATION_SIGNING_KEYS_URL": "https://localhost:3000/api/signing-keys/keys",
+      },
       "cwd": "${workspaceFolder}",
       "args": ["server", "target", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
     },

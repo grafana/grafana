@@ -1,10 +1,7 @@
 package grpc
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type mode string
@@ -40,14 +37,7 @@ type authCfg struct {
 func readAuthConfig(cfg *setting.Cfg) (*authCfg, error) {
 	section := cfg.SectionWithEnvOverrides("grpc_authentication")
 
-	mode := mode(section.Key("mode").MustString(string(inProcessMode)))
-	if !mode.isValid() {
-		return nil, fmt.Errorf("invalid mode: %s", mode)
-	}
-
 	return &authCfg{
-		mode:             mode,
-		signingKeysURL:   section.Key("signing_keys_url").MustString(""),
-		allowedAudiences: util.SplitString(section.Key("allowed_audiences").MustString("")),
+		signingKeysURL: section.Key("signing_keys_url").MustString(""),
 	}, nil
 }

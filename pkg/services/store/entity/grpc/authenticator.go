@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,6 +38,7 @@ type Authenticator struct {
 	atVerifier authnlib.Verifier[authnlib.AccessTokenClaims]
 	authCfg    *authCfg
 	cfg        *setting.Cfg
+	features   featuremgmt.FeatureToggles
 	idVerifier authnlib.Verifier[authnlib.IDTokenClaims]
 	logger     log.Logger
 }
@@ -61,20 +63,31 @@ func (k *keyServiceWrapper) Get(ctx context.Context, keyID string) (*jose.JSONWe
 	return nil, fmt.Errorf("key not found")
 }
 
-func ProvideAuthenticator(cfg *setting.Cfg) (*Authenticator, error) {
-	return provideAuthenticator(cfg, nil)
-}
-
-func ProvideInProcessAuthenticator(cfg *setting.Cfg, keysService signingkeys.Service) (*Authenticator, error) {
-	return provideAuthenticator(cfg, keysService)
-}
-
-func provideAuthenticator(cfg *setting.Cfg, keysService signingkeys.Service) (*Authenticator, error) {
+func ProvideAuthenticator(cfg *setting.Cfg, audience string) (*Authenticator, error) {
 	authCfg, err := readAuthConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read auth config: %w", err)
 	}
+	authCfg.mode = remoteMode
+	if authCfg.signingKeysURL == "" {
+		return nil, fmt.Errorf("missing grpc_authentication.signing_keys_url in configuration file")
+	}
+	authCfg.allowedAudiences = []string{audience}
+	return provideAuthenticator(cfg, authCfg, nil)
+}
 
+func ProvideInProcessAuthenticator(cfg *setting.Cfg, keysService signingkeys.Service) (*Authenticator, error) {
+	authCfg, err := readAuthConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read auth config: %w", err)
+	}
+	authCfg.mode = inProcessMode
+	// In-process mode does not require an audience
+	authCfg.allowedAudiences = []string{}
+	return provideAuthenticator(cfg, authCfg, keysService)
+}
+
+func provideAuthenticator(cfg *setting.Cfg, authCfg *authCfg, keysService signingkeys.Service) (*Authenticator, error) {
 	// Create a key retriever based on the authentication mode
 	var retriever authnlib.KeyRetriever
 	if authCfg.mode == inProcessMode {
@@ -127,9 +140,13 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 		return ctx, fmt.Errorf("invalid org id: %w", err)
 	}
 
-	// FIXME (gamab): once Grafana can sign access tokens we can use them in dev mode.
-	// In-process mode and dev env do not require an access token
-	if f.authCfg.mode == inProcessMode || f.cfg.Env == setting.Dev {
+	// In-process mode does not require an access token check
+	if f.authCfg.mode == inProcessMode {
+		return f.inProcAuthentication(ctx, orgID, md)
+	}
+	// FIXME: Once we have access-token support on-prem, we can remove this
+	if f.cfg.Env == setting.Dev {
+		f.logger.FromContext(ctx).Info("skipping access token verification in dev mode")
 		return f.inProcAuthentication(ctx, orgID, md)
 	}
 

@@ -74,7 +74,7 @@ func ProvideAuthZClient(
 	var client *LegacyClient
 
 	// Register the server
-	server, err := newLegacyServer(acSvc, features, grpcServer, tracer, authCfg)
+	server, err := newLegacyServer(cfg, authCfg, acSvc, features, grpcServer, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -112,12 +112,7 @@ func ProvideStandaloneAuthZClient(
 func newInProcLegacyClient(tracer tracing.Tracer, server *legacyServer) *LegacyClient {
 	channel := &inprocgrpc.Channel{}
 
-	// TODO (gamab): change this once it's clear how to authenticate the client
-	// Choices are:
-	// - noAuth given it's in proc and we don't need the user
-	// - access_token verif only as it's consistent with when it's remote (we check the service is allowed to call the authz service)
-	// - access_token and id_token ? the id_token being only necessary when the user is trying to access the service straight away
-	// auth := grpcUtils.ProvideAuthenticator(cfg)
+	// In-process we don't have to authenticate the service making the request
 	noAuth := func(ctx context.Context) (context.Context, error) {
 		return ctx, nil
 	}

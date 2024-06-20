@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ authzv1.AuthzServiceServer = (*legacyServer)(nil)
@@ -23,8 +24,9 @@ type legacyServer struct {
 }
 
 func newLegacyServer(
+	cfg *setting.Cfg, authCfg *Cfg,
 	acSvc accesscontrol.Service, features featuremgmt.FeatureToggles,
-	grpcServer grpcserver.Provider, tracer tracing.Tracer, cfg *Cfg,
+	grpcServer grpcserver.Provider, tracer tracing.Tracer,
 ) (*legacyServer, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
@@ -36,11 +38,21 @@ func newLegacyServer(
 		tracer: tracer,
 	}
 
-	if cfg.listen {
-		grpcServer.GetServer().RegisterService(&authzv1.AuthzService_ServiceDesc, s)
+	if authCfg.listen {
+		if cfg.Env == setting.Dev {
+			grpcServer.GetServer().RegisterService(&authzv1.AuthzService_ServiceDesc, s)
+		} else {
+			// FIXME: Once we have access-token support, we can enable this in production
+			s.logger.Warn("authz grpc server is disabled in production mode as authentication cannot yet be performed")
+		}
 	}
 
 	return s, nil
+}
+
+// FIXME: Hack to override the authentication given we don't have access tokens yet
+func (s *legacyServer) AuthFuncOverride(ctx context.Context, _ string) (context.Context, error) {
+	return ctx, nil
 }
 
 func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*authzv1.ReadResponse, error) {

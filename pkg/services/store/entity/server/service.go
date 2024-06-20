@@ -21,6 +21,8 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
+const EntityStoreServerAudience = "entityStoreServer"
+
 var (
 	_ Service                    = (*service)(nil)
 	_ registry.BackgroundService = (*service)(nil)
@@ -73,7 +75,7 @@ func ProvideService(
 		return nil, err
 	}
 
-	authn, err := grpc.ProvideAuthenticator(cfg)
+	authn, err := grpc.ProvideAuthenticator(cfg, EntityStoreServerAudience)
 	if err != nil {
 		return nil, err
 	}
