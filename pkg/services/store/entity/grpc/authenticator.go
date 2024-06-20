@@ -38,7 +38,6 @@ type Authenticator struct {
 	atVerifier      authnlib.Verifier[authnlib.AccessTokenClaims]
 	authCfg         *authCfg
 	cfg             *setting.Cfg
-	defaultOrgID    int64
 	idVerifier      authnlib.Verifier[authnlib.IDTokenClaims]
 	logger          log.Logger
 	namespaceMapper func(orgID int64) string
@@ -113,16 +112,10 @@ func provideAuthenticator(cfg *setting.Cfg, authCfg *authCfg, keysService signin
 		AllowedAudiences: authCfg.allowedAudiences,
 	}, retriever)
 
-	defaultOrgID := int64(1)
-	if cfg.AutoAssignOrg && cfg.AutoAssignOrgId > 0 {
-		defaultOrgID = int64(cfg.AutoAssignOrgId)
-	}
-
 	return &Authenticator{
 		atVerifier:      atVerifier,
 		authCfg:         authCfg,
 		cfg:             cfg,
-		defaultOrgID:    defaultOrgID,
 		idVerifier:      idVerifier,
 		logger:          log.New("grpc-authenticator"),
 		namespaceMapper: request.GetNamespaceMapper(cfg),
@@ -185,7 +178,7 @@ func (f *Authenticator) inProcAuthentication(ctx context.Context, orgID int64, m
 
 	ctxLogger.Info("user authenticated", "subject", idClaims.Subject, "org_id", orgID)
 	ctx = appcontext.WithUser(ctx, usr.SignedInUser()) // TODO: I don't think it's necessary to have a requester since we have the claims
-	return identity.WithIDClaims(ctx, idClaims), nil
+	return identity.WithAuthCtx(ctx, &identity.AuthCtx{OrgID: orgID, IDClaims: idClaims}), nil
 }
 
 func (f *Authenticator) remoteAuthentication(ctx context.Context, orgID int64, md metadata.MD) (context.Context, error) {
@@ -215,7 +208,7 @@ func (f *Authenticator) remoteAuthentication(ctx context.Context, orgID int64, m
 
 		ctxLogger.Info("service authenticated", "service", atClaims.Subject, "org_id", orgID)
 		ctx = appcontext.WithUser(ctx, usr.SignedInUser()) // TODO: I don't think it's necessary to have a requester since we have the claims
-		return identity.WithAccessClaims(ctx, atClaims), nil
+		return identity.WithAuthCtx(ctx, &identity.AuthCtx{OrgID: orgID, AccessClaims: atClaims}), nil
 	}
 
 	// Validate ID token
@@ -234,13 +227,12 @@ func (f *Authenticator) remoteAuthentication(ctx context.Context, orgID int64, m
 
 	ctxLogger.Info("impersonated user authenticated", "service", atClaims.Subject, "subject", idClaims.Subject, "org_id", orgID)
 	ctx = appcontext.WithUser(ctx, usr.SignedInUser()) // TODO: I don't think it's necessary to have a requester since we have the claims
-	ctx = identity.WithIDClaims(ctx, idClaims)
-	return identity.WithAccessClaims(ctx, atClaims), nil
+	return identity.WithAuthCtx(ctx, &identity.AuthCtx{OrgID: orgID, AccessClaims: atClaims, IDClaims: idClaims}), nil
 }
 
 func (f *Authenticator) authenticateUser(orgID int64, idClaims *authnlib.Claims[authnlib.IDTokenClaims]) (*authn.Identity, error) {
 	// Only allow id tokens signed for namespace configured for this instance.
-	if allowedNamespace := f.namespaceMapper(f.defaultOrgID); idClaims.Rest.Namespace != allowedNamespace {
+	if allowedNamespace := f.namespaceMapper(orgID); idClaims.Rest.Namespace != allowedNamespace {
 		return nil, fmt.Errorf("unexpected id token namespace: %s", idClaims.Rest.Namespace)
 	}
 
@@ -267,7 +259,7 @@ func (f *Authenticator) authenticateImpersonatedUser(
 	atClaims *authnlib.Claims[authnlib.AccessTokenClaims],
 ) (*authn.Identity, error) {
 	// Only allow id tokens signed for namespace configured for this instance.
-	if allowedNamespace := f.namespaceMapper(f.defaultOrgID); idClaims.Rest.Namespace != allowedNamespace {
+	if allowedNamespace := f.namespaceMapper(orgID); idClaims.Rest.Namespace != allowedNamespace {
 		return nil, fmt.Errorf("unexpected id token namespace: %s", idClaims.Rest.Namespace)
 	}
 
@@ -310,7 +302,7 @@ func (f *Authenticator) authenticateImpersonatedUser(
 
 func (a *Authenticator) authenticateService(orgID int64, claims *authnlib.Claims[authnlib.AccessTokenClaims]) (*authn.Identity, error) {
 	// Allow access tokens with that has a wildcard namespace or a namespace matching this instance.
-	if allowedNamespace := a.namespaceMapper(a.defaultOrgID); !claims.Rest.NamespaceMatches(allowedNamespace) {
+	if allowedNamespace := a.namespaceMapper(orgID); !claims.Rest.NamespaceMatches(allowedNamespace) {
 		return nil, fmt.Errorf("unexpected access token namespace: %s", claims.Rest.Namespace)
 	}
 

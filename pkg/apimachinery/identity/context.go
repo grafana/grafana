@@ -24,34 +24,27 @@ func GetRequester(ctx context.Context) (Requester, error) {
 	return nil, fmt.Errorf("a Requester was not found in the context")
 }
 
-type idClaimsKey struct{}
+type AuthCtx struct {
+	// OrgID is the organization ID of the request.
+	OrgID int64
+	// IDClaims identify the user for which the service is making the request.
+	IDClaims *authnlib.Claims[authnlib.IDTokenClaims]
+	// AccessClaims identify the service making the request.
+	AccessClaims *authnlib.Claims[authnlib.AccessTokenClaims]
+}
+
+type requestCtxKey struct{}
 
 // WithIDClaims attaches the id claims to the context.
-func WithIDClaims(ctx context.Context, claims *authnlib.Claims[authnlib.IDTokenClaims]) context.Context {
-	return context.WithValue(ctx, idClaimsKey{}, claims)
+func WithAuthCtx(ctx context.Context, authNCtx *AuthCtx) context.Context {
+	return context.WithValue(ctx, requestCtxKey{}, authNCtx)
 }
 
 // GetIDClaims gets the id claims from the context.
-func GetIDClaims(ctx context.Context) (*authnlib.Claims[authnlib.IDTokenClaims], error) {
-	u, ok := ctx.Value(idClaimsKey{}).(*authnlib.Claims[authnlib.IDTokenClaims])
-	if ok && u != nil {
-		return u, nil
-	}
-	return nil, fmt.Errorf("id claims were not found in the context")
-}
-
-type accessClaimsKey struct{}
-
-// WithIDClaims attaches the id claims to the context.
-func WithAccessClaims(ctx context.Context, claims *authnlib.Claims[authnlib.AccessTokenClaims]) context.Context {
-	return context.WithValue(ctx, accessClaimsKey{}, claims)
-}
-
-// GetIDClaims gets the id claims from the context.
-func GetAccessClaims(ctx context.Context) (*authnlib.Claims[authnlib.AccessTokenClaims], error) {
-	u, ok := ctx.Value(accessClaimsKey{}).(*authnlib.Claims[authnlib.AccessTokenClaims])
-	if ok && u != nil {
-		return u, nil
+func GetAuthCtx(ctx context.Context) (*AuthCtx, error) {
+	v, ok := ctx.Value(requestCtxKey{}).(*AuthCtx)
+	if ok && v != nil {
+		return v, nil
 	}
 	return nil, fmt.Errorf("id claims were not found in the context")
 }

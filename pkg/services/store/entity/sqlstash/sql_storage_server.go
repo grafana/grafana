@@ -19,6 +19,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	foldersapi "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -314,26 +315,31 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 
 	// Check access
 	if s.features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
-		usr, err := appcontext.User(ctx)
+		authCtx, err := identity.GetAuthCtx(ctx)
 		if err != nil {
 			ctxLogger.Error("error getting user from ctx", "error", err)
 			return nil, err
 		}
-		stackID, err := StackID(s.cfg.StackID, usr.GetOrgID())
+		// TODO (gamab) put the stackID in ctx ?
+		stackID, err := StackID(s.cfg.StackID, authCtx.OrgID)
 		if err != nil {
 			ctxLogger.Error("error parsing stack id", "error", err)
 			return nil, err
 		}
+		subject := ""
+		if authCtx.IDClaims != nil {
+			subject = authCtx.IDClaims.Subject
+		}
 
 		if hasAccess, err := s.authorizer.HasAccess(ctx, &authz.HasAccessRequest{
 			StackID: stackID,
-			Subject: usr.NamespacedID.String(),
+			Subject: subject,
 			Method:  authz.MethodRead,
 			Object:  authzlib.Resource{Kind: res.Resource, ID: res.Key},
 			Parent:  authzlib.Resource{Kind: foldersapi.RESOURCE, ID: res.Folder}, // Assuming parents are always folders
 		}); err != nil || !hasAccess {
 			ctxLogger.Error("access denied",
-				"user", usr.NamespacedID.String(),
+				"user", subject,
 				"method", authz.MethodRead,
 				"key", res.Key,
 				"error", err)
