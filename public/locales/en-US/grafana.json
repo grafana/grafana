@@ -25,6 +25,14 @@
       "user": "User"
     }
   },
+  "alert-labels": {
+    "button": {
+      "hide": "Hide common labels",
+      "show": {
+        "tooltip": "Show common labels"
+      }
+    }
+  },
   "alert-rule-form": {
     "evaluation-behaviour": {
       "description": {
@@ -85,15 +93,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
+      "alertRule_other": "{{count}} alert rule",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
+      "dashboard_other": "{{count}} dashboard",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
+      "folder_other": "{{count}} folder",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
+      "libraryPanel_other": "{{count}} library panel",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
+      "total_other": "{{count}} item"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -137,6 +145,16 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
+    }
+  },
+  "central-alert-history": {
+    "error": "Something went wrong loading the alert state history",
+    "filter": {
+      "button": {
+        "clear": "Clear"
+      },
+      "label": "Filter events",
+      "placeholder": "Filter events in the list with labels"
     }
   },
   "clipboard-button": {
@@ -759,7 +777,7 @@
     },
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "button-cancel": "Cancel",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
@@ -1167,7 +1185,7 @@
     "public": {
       "title": "Public dashboards"
     },
-    "recentlyDeleted": {
+    "recently-deleted": {
       "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
       "title": "Recently Deleted"
     },
@@ -1616,7 +1634,7 @@
     },
     "suggestedDashboards": {
       "loading": "Loading dashboards",
-      "search": "Filter",
+      "search": "Search",
       "toggle": {
         "collapse": "Collapse scope filters",
         "expand": "Expand scope filters"
@@ -1625,7 +1643,8 @@
     "tree": {
       "collapse": "Collapse",
       "expand": "Expand",
-      "search": "Filter"
+      "headline": "Recommended",
+      "search": "Search"
     }
   },
   "search": {

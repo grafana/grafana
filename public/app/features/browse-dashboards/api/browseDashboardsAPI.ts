@@ -385,11 +385,6 @@ export const browseDashboardsAPI = createApi({
         url: `/dashboards/uid/${dashboardUID}/trash`,
         method: 'PATCH',
       }),
-      onQueryStarted: ({ dashboardUID }, { queryFulfilled, dispatch }) => {
-        queryFulfilled.then(() => {
-          dispatch(refreshParents([dashboardUID]));
-        });
-      },
     }),
 
     // permanently delete a dashboard. used in PermanentlyDeleteModal.

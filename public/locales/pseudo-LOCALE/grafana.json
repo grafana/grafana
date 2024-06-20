@@ -25,6 +25,14 @@
       "user": "Ůşęř"
     }
   },
+  "alert-labels": {
+    "button": {
+      "hide": "Ħįđę čőmmőŉ ľäþęľş",
+      "show": {
+        "tooltip": "Ŝĥőŵ čőmmőŉ ľäþęľş"
+      }
+    }
+  },
   "alert-rule-form": {
     "evaluation-behaviour": {
       "description": {
@@ -85,15 +93,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} äľęřŧ řūľę",
-      "alertRule_other": "{{count}} äľęřŧ řūľęş",
+      "alertRule_other": "{{count}} äľęřŧ řūľę",
       "dashboard_one": "{{count}} đäşĥþőäřđ",
-      "dashboard_other": "{{count}} đäşĥþőäřđş",
+      "dashboard_other": "{{count}} đäşĥþőäřđ",
       "folder_one": "{{count}} ƒőľđęř",
-      "folder_other": "{{count}} ƒőľđęřş",
+      "folder_other": "{{count}} ƒőľđęř",
       "libraryPanel_one": "{{count}} ľįþřäřy päŉęľ",
-      "libraryPanel_other": "{{count}} ľįþřäřy päŉęľş",
+      "libraryPanel_other": "{{count}} ľįþřäřy päŉęľ",
       "total_one": "{{count}} įŧęm",
-      "total_other": "{{count}} įŧęmş"
+      "total_other": "{{count}} įŧęm"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Cőľľäpşę ƒőľđęř {{title}}",
@@ -137,6 +145,16 @@
     "no-results": {
       "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
       "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy"
+    }
+  },
+  "central-alert-history": {
+    "error": "Ŝőmęŧĥįŉģ ŵęŉŧ ŵřőŉģ ľőäđįŉģ ŧĥę äľęřŧ şŧäŧę ĥįşŧőřy",
+    "filter": {
+      "button": {
+        "clear": "Cľęäř"
+      },
+      "label": "Fįľŧęř ęvęŉŧş",
+      "placeholder": "Fįľŧęř ęvęŉŧş įŉ ŧĥę ľįşŧ ŵįŧĥ ľäþęľş"
     }
   },
   "clipboard-button": {
@@ -759,7 +777,7 @@
     },
     "modal": {
       "body_one": "Ŧĥįş päŉęľ įş þęįŉģ ūşęđ įŉ {{count}} đäşĥþőäřđ. Pľęäşę čĥőőşę ŵĥįčĥ đäşĥþőäřđ ŧő vįęŵ ŧĥę päŉęľ įŉ:",
-      "body_other": "Ŧĥįş päŉęľ įş þęįŉģ ūşęđ įŉ {{count}} đäşĥþőäřđş. Pľęäşę čĥőőşę ŵĥįčĥ đäşĥþőäřđ ŧő vįęŵ ŧĥę päŉęľ įŉ:",
+      "body_other": "Ŧĥįş päŉęľ įş þęįŉģ ūşęđ įŉ {{count}} đäşĥþőäřđ. Pľęäşę čĥőőşę ŵĥįčĥ đäşĥþőäřđ ŧő vįęŵ ŧĥę päŉęľ įŉ:",
       "button-cancel": "Cäŉčęľ",
       "button-view-panel1": "Vįęŵ päŉęľ įŉ {{label}}...",
       "button-view-panel2": "Vįęŵ päŉęľ įŉ đäşĥþőäřđ...",
@@ -1167,7 +1185,7 @@
     "public": {
       "title": "Pūþľįč đäşĥþőäřđş"
     },
-    "recentlyDeleted": {
+    "recently-deleted": {
       "subtitle": "Åŉy įŧęmş ľįşŧęđ ĥęřę ƒőř mőřę ŧĥäŉ 30 đäyş ŵįľľ þę äūŧőmäŧįčäľľy đęľęŧęđ.",
       "title": "Ŗęčęŉŧľy Đęľęŧęđ"
     },
@@ -1616,7 +1634,7 @@
     },
     "suggestedDashboards": {
       "loading": "Ŀőäđįŉģ đäşĥþőäřđş",
-      "search": "Fįľŧęř",
+      "search": "Ŝęäřčĥ",
       "toggle": {
         "collapse": "Cőľľäpşę şčőpę ƒįľŧęřş",
         "expand": "Ēχpäŉđ şčőpę ƒįľŧęřş"
@@ -1625,7 +1643,8 @@
     "tree": {
       "collapse": "Cőľľäpşę",
       "expand": "Ēχpäŉđ",
-      "search": "Fįľŧęř"
+      "headline": "Ŗęčőmmęŉđęđ",
+      "search": "Ŝęäřčĥ"
     }
   },
   "search": {
