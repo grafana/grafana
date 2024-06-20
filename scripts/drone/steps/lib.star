@@ -1152,7 +1152,7 @@ def publish_grafanacom_step(ver_mode):
         ],
     }
 
-def verify_grafanacom_step(depends_on=["publish-grafanacom"]):
+def verify_grafanacom_step(depends_on = ["publish-grafanacom"]):
     return {
         "name": "verify-grafanacom",
         "image": images["node"],

@@ -16,12 +16,12 @@ load(
     "mysql_integration_tests_steps",
     "postgres_integration_tests_steps",
     "publish_grafanacom_step",
-    "verify_grafanacom_step",
     "publish_linux_packages_step",
     "redis_integration_tests_steps",
     "remote_alertmanager_integration_tests_steps",
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
+    "verify_grafanacom_step",
     "wire_install_step",
     "yarn_install_step",
 )
@@ -214,13 +214,13 @@ def publish_packages_pipeline():
 
     return [
         pipeline(
-            name="verify-grafanacom-artifacts",
-            trigger={
+            name = "verify-grafanacom-artifacts",
+            trigger = {
                 "event": ["promote"],
-                "target": "verify-grafanacom-artifacts"
+                "target": "verify-grafanacom-artifacts",
             },
-            steps=[
-                verify_grafanacom_step(depends_on=[]),
+            steps = [
+                verify_grafanacom_step(depends_on = []),
             ],
         ),
         pipeline(
