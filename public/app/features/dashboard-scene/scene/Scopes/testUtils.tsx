@@ -252,6 +252,46 @@ export const fetchScopeSpy = jest.spyOn(api, 'fetchScope');
 export const fetchSelectedScopesSpy = jest.spyOn(api, 'fetchSelectedScopes');
 export const fetchSuggestedDashboardsSpy = jest.spyOn(api, 'fetchSuggestedDashboards');
 
+export const getMock = jest
+  .fn()
+  .mockImplementation((url: string, params: { parent: string; scope: string[]; query?: string }) => {
+    if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_node_children')) {
+      return {
+        items: mocksNodes.filter(
+          ({ parent, spec: { title } }) => parent === params.parent && title.includes(params.query ?? '')
+        ),
+      };
+    }
+
+    if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/')) {
+      const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/', '');
+
+      return mocksScopes.find((scope) => scope.metadata.name === name) ?? {};
+    }
+
+    if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_dashboard_bindings')) {
+      return {
+        items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) =>
+          params.scope.includes(bindingScope)
+        ),
+      };
+    }
+
+    if (url.startsWith('/api/dashboards/uid/')) {
+      return {};
+    }
+
+    if (url.startsWith('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/')) {
+      return {
+        metadata: {
+          name: '1',
+        },
+      };
+    }
+
+    return {};
+  });
+
 const selectors = {
   tree: {
     search: (nodeId: string) => `scopes-tree-${nodeId}-search`,

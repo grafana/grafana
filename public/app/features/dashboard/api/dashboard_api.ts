@@ -6,6 +6,8 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
+import { getScopesFromUrl } from '../utils/getScopesFromUrl';
+
 export interface DashboardAPI {
   /** Get a dashboard with the access control metadata */
   getDashboardDTO(uid: string): Promise<DashboardDTO>;
@@ -35,7 +37,11 @@ class LegacyDashboardAPI implements DashboardAPI {
   }
 
   getDashboardDTO(uid: string): Promise<DashboardDTO> {
-    return getBackendSrv().get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
+    const scopesSearchParams = getScopesFromUrl();
+    const scopes = scopesSearchParams?.getAll('scopes') ?? [];
+    const queryParams = scopes.length > 0 ? { scopes } : undefined;
+
+    return getBackendSrv().get<DashboardDTO>(`/api/dashboards/uid/${uid}`, queryParams);
   }
 }
 
@@ -81,4 +87,11 @@ export function getDashboardAPI() {
     instance = config.featureToggles.kubernetesDashboards ? new K8sDashboardAPI(legacy) : legacy;
   }
   return instance;
+}
+
+export function setDashboardAPI(override: DashboardAPI | undefined) {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('dashboardAPI can be only overridden in test environment');
+  }
+  instance = override;
 }
