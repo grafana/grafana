@@ -22,6 +22,7 @@ on:
         description: Branch to backport these changes to
       dry_run:
         required: false
+        default: false
         type: bool
 
 jobs:
