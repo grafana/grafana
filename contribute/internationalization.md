@@ -27,7 +27,24 @@ const SearchTitle = ({ term }) => <Trans i18nKey="search-page.results-title">Res
 
 Prefer using `<Trans />` for JSX children, and `t()` for props and other JavaScript usage.
 
-There may be cases where you need to interpolate variables inside other components in the translation. In this case, you can use the `values` prop to explicitly pass variables to the translation, and reference them as templated strings in the markup. For example:
+There may be cases where you need to interpolate variables inside other components in the translation.
+
+If the nested component is displaying the variable only (e.g. to add emphasis or color), the best solution is to create a new wrapping component:
+
+```jsx
+import { Trans } from 'app/core/internationalization';
+import { Text } from '@grafana/ui';
+
+const SearchTerm = ({ term }) => <Text color="success">{term}</Text>;
+
+const SearchTitle = ({ term }) => (
+  <Trans i18nKey="search-page.results-title">
+    Results for <SearchTerm term={term} />
+  </Trans>
+);
+```
+
+However there are also cases where the nested component might be displaying additional text which also needs to be translated. In this case, you can use the `values` prop to explicitly pass variables to the translation, and reference them as templated strings in the markup. For example:
 
 ```jsx
 import { Trans } from 'app/core/internationalization';
@@ -35,7 +52,7 @@ import { Text } from '@grafana/ui';
 
 const SearchTitle = ({ term }) => (
   <Trans i18nKey="search-page.results-title" values={{ myVariable: term }}>
-    Results for <Text color="success">{'{{ myVariable }}'}</Text>
+    Results for <Text color="success">{'{{ myVariable }}'} and this translated text is also in green</Text>
   </Trans>
 );
 ```

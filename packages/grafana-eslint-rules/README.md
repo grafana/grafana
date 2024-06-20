@@ -138,10 +138,18 @@ const SearchTitle = ({ term }) => <div>Results for {term}</div>;
 // Good ✅
 const SearchTitle = ({ term }) => <Trans i18nKey="search-page.results-title">Results for {{ term }}</Trans>;
 
-// Good ✅ (if you need to interpolate variables inside other components)
+// Good ✅ (if you need to interpolate variables inside nested components)
+const SearchTerm = ({ term }) => <Text color="success">{term}</Text>;
+const SearchTitle = ({ term }) => (
+  <Trans i18nKey="search-page.results-title">
+    Results for <SearchTerm term={term} />
+  </Trans>
+);
+
+// Good ✅ (if you need to interpolate variables and additional translated strings inside nested components)
 const SearchTitle = ({ term }) => (
   <Trans i18nKey="search-page.results-title" values={{ myVariable: term }}>
-    Results for <Text color="success">{'{{ myVariable }}'}</Text>
+    Results for <Text color="success">{'{{ myVariable }}'} and this translated text is also in green</Text>
   </Trans>
 );
 ```
