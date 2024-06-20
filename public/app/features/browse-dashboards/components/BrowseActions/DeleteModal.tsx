@@ -19,19 +19,14 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
   const { data } = useGetAffectedItemsQuery(selectedItems);
   const deleteIsInvalid = Boolean(data && (data.alertRule || data.libraryPanel));
   const [isDeleting, setIsDeleting] = useState(false);
-  console.log('DeleteModal', { deleteIsInvalid });
   const onDelete = async () => {
-    if (deleteIsInvalid) {
-      return;
-    } else {
-      setIsDeleting(true);
-      try {
-        await onConfirm();
-        setIsDeleting(false);
-        onDismiss();
-      } catch {
-        setIsDeleting(false);
-      }
+    setIsDeleting(true);
+    try {
+      await onConfirm();
+      setIsDeleting(false);
+      onDismiss();
+    } catch {
+      setIsDeleting(false);
     }
   };
 
@@ -62,7 +57,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
           ) : null}
         </>
       }
-      confirmationText={deleteIsInvalid ? ' ' : 'Delete'}
+      confirmationText="Delete"
       confirmText={
         isDeleting
           ? t('browse-dashboards.action.deleting', 'Deleting...')
@@ -72,6 +67,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
       onConfirm={onDelete}
       title={t('browse-dashboards.action.delete-modal-title', 'Delete')}
       {...props}
+      isConfirmButtonDissabled={deleteIsInvalid}
     />
   );
 };
