@@ -1,6 +1,7 @@
 import React, { CSSProperties } from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
+import { LinkModel } from '@grafana/data';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
@@ -551,10 +552,18 @@ export class ElementState implements LayerElement {
 
   handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
     const scene = this.getScene();
-    if (!scene?.isEditingEnabled && !scene?.tooltip?.isOpen) {
+
+    if (!scene?.isEditingEnabled && !scene?.tooltip?.isOpen && !this.options.oneClickLinks) {
       this.handleTooltip(event);
     } else if (!isSelected) {
       scene?.connections.handleMouseEnter(event);
+    }
+
+    if (this.options.oneClickLinks && this.div && this.data.links.length > 0) {
+      const primaryDataLink = this.data.links.find((link: LinkModel) => link.sortIndex === 0);
+      const dataLinkTitle = primaryDataLink ? primaryDataLink.title : this.data.links[0].title;
+      this.div.style.cursor = 'pointer';
+      this.div.title = `Navigate to ${dataLinkTitle === '' ? 'data link' : dataLinkTitle}`;
     }
   };
 
@@ -572,14 +581,31 @@ export class ElementState implements LayerElement {
 
   handleMouseLeave = (event: React.MouseEvent) => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen) {
+    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen && !this.options.oneClickLinks) {
       scene.tooltipCallback(undefined);
+    }
+
+    if (this.options.oneClickLinks && this.div) {
+      this.div.style.cursor = 'auto';
+      this.div.title = '';
     }
   };
 
   onElementClick = (event: React.MouseEvent) => {
-    this.handleTooltip(event);
-    this.onTooltipCallback();
+    const scene = this.getScene();
+
+    // If one-link access is enabled, open the primary link
+    if (!scene?.isEditingEnabled && this.options.oneClickLinks && this.data.links.length > 0) {
+      let primaryDataLink = this.data.links.find((link: LinkModel) => link.sortIndex === 0);
+      if (!primaryDataLink) {
+        primaryDataLink = this.data.links[0];
+      }
+
+      window.open(primaryDataLink.href, primaryDataLink.target);
+    } else {
+      this.handleTooltip(event);
+      this.onTooltipCallback();
+    }
   };
 
   onElementKeyDown = (event: React.KeyboardEvent) => {
