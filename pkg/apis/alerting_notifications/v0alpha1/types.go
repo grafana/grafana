@@ -97,8 +97,7 @@ type TimeIntervalList struct {
 type Receiver struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
-	Spec              Spec   `json:"spec"`
-	Status            Status `json:"status"`
+	Spec              Spec `json:"spec"`
 }
 
 func (o *Receiver) GetSpec() any {
@@ -112,35 +111,6 @@ func (o *Receiver) SetSpec(spec any) error {
 	}
 	o.Spec = cast
 	return nil
-}
-
-func (o *Receiver) GetSubresources() map[string]any {
-	return map[string]any{
-		"status": o.Status,
-	}
-}
-
-func (o *Receiver) GetSubresource(name string) (any, bool) {
-	switch name {
-	case "status":
-		return o.Status, true
-	default:
-		return nil, false
-	}
-}
-
-func (o *Receiver) SetSubresource(name string, value any) error {
-	switch name {
-	case "status":
-		cast, ok := value.(Status)
-		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type Status", value)
-		}
-		o.Status = cast
-		return nil
-	default:
-		return fmt.Errorf("subresource '%s' does not exist", name)
-	}
 }
 
 func (o *Receiver) GetStaticMetadata() resource.StaticMetadata {
