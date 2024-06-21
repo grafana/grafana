@@ -17,7 +17,7 @@ type store interface {
 	GetMigrationStatusList(ctx context.Context, migrationUID string) ([]*cloudmigration.CloudMigrationSnapshot, error)
 
 	CreateSnapshot(ctx context.Context, snapshot cloudmigration.CloudMigrationSnapshot) (string, error)
-	UpdateSnapshot(ctx context.Context, snapshotUid string, snapshot cloudmigration.UpdateSnapshotCmd) error
+	UpdateSnapshot(ctx context.Context, snapshot cloudmigration.UpdateSnapshotCmd) error
 	GetSnapshotByUID(ctx context.Context, uid string, resultOffset int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error)
 	GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error)
 

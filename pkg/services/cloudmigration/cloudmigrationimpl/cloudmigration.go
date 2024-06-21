@@ -531,7 +531,7 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 
 		if snapshotMeta.Status == cloudmigration.SnapshotStatusFinished {
 			// we need to update the snapshot in our db before reporting anything finished to the client
-			if err := s.store.UpdateSnapshot(ctx, snapshotUid, cloudmigration.UpdateSnapshotCmd{
+			if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
 				UID:       snapshot.UID,
 				Status:    cloudmigration.SnapshotStatusFinished,
 				Resources: snapshot.Resources,

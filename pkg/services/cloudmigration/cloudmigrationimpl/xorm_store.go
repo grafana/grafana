@@ -173,7 +173,7 @@ func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.
 }
 
 // UpdateSnapshot takes a snapshot object containing a uid and updates a subset of features in the database.
-func (ss *sqlStore) UpdateSnapshot(ctx context.Context, snapshotUid string, update cloudmigration.UpdateSnapshotCmd) error {
+func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.UpdateSnapshotCmd) error {
 	if update.UID == "" {
 		return fmt.Errorf("missing snapshot uid")
 	}
@@ -193,7 +193,7 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, snapshotUid string, upda
 
 		// Update resources if set
 		if len(update.Resources) > 0 {
-			if err := ss.CreateUpdateSnapshotResources(ctx, snapshotUid, update.Resources); err != nil {
+			if err := ss.CreateUpdateSnapshotResources(ctx, update.UID, update.Resources); err != nil {
 				return err
 			}
 		}

@@ -44,7 +44,7 @@ type CloudMigrationSnapshot struct {
 	Finished       time.Time
 
 	// Stored in the cloud_migration_resource table
-	Resources []CloudMigrationResource `xorm:"-"` //store raw gms response body
+	Resources []CloudMigrationResource `xorm:"-"`
 }
 
 type SnapshotStatus string
