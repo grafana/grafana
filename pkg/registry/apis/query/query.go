@@ -87,9 +87,9 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 	b := r.builder
 
 	return http.HandlerFunc(func(w http.ResponseWriter, httpreq *http.Request) {
-		ctx := request.WithNamespace(httpreq.Context(), request.NamespaceValue(connectCtx))
-		ctx, span := b.tracer.Start(ctx, "QueryService.Query")
+		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
 		defer span.End()
+		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
 
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode int, obj runtime.Object) {
