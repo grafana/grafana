@@ -74,7 +74,7 @@ You can control a playlist in **Normal** or **TV** mode after it's started, usin
 
 You can create a playlist to present dashboards in a sequence, with a set order and time interval between dashboards.
 
-1. Click **Dashboards** in the main menu.
+1. Click **Dashboards** in the left-side menu.
 1. Click **Playlists** to see a list of existing playlists.
 1. Click **New playlist**. The New playlist page opens.
 1. In the **Name** text box, enter a descriptive name.
