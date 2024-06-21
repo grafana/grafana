@@ -17,7 +17,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	pluginac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -94,7 +94,7 @@ func removeForceLoginParams(str string) string {
 func CanAdminPlugins(cfg *setting.Cfg, accessControl ac.AccessControl) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
 		hasAccess := ac.HasAccess(accessControl, c)
-		if !pluginaccesscontrol.ReqCanAdminPlugins(cfg)(c) && !hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
+		if !pluginac.ReqCanAdminPlugins(cfg)(c) && !hasAccess(pluginac.AdminAccessEvaluator) {
 			accessForbidden(c)
 			return
 		}
@@ -128,10 +128,10 @@ func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, fea
 			if normalizeIncludePath(u.Path) == path {
 				useRBAC := features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && i.RequiresRBACAction()
 				eval := ac.EvalPermission(i.Action)
-				if i.Action == pluginaccesscontrol.ActionAppAccess {
+				if i.Action == pluginac.ActionAppAccess {
 					// We technically don't really need to check again given we already checked this upper in the middleware tree
 					// but better safe than sorry
-					eval = ac.EvalPermission(i.Action, pluginaccesscontrol.ScopeProvider.GetResourceScope(pluginID))
+					eval = ac.EvalPermission(i.Action, pluginac.ScopeProvider.GetResourceScope(pluginID))
 				}
 				if useRBAC && !hasAccess(eval) {
 					logger.Debug("Plugin include is covered by RBAC, user doesn't have access", "plugin", pluginID, "include", i.Name)

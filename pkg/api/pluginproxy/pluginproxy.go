@@ -133,7 +133,7 @@ func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
 	if useRBAC {
 		routeEval := ac.EvalPermission(route.ReqAction)
 		if route.ReqAction == pluginac.ActionAppAccess {
-			routeEval = ac.EvalPermission(pluginac.ActionAppAccess, proxy.ps.PluginID)
+			routeEval = ac.EvalPermission(pluginac.ActionAppAccess, pluginac.ScopeProvider.GetResourceScope(proxy.ps.PluginID))
 		}
 		hasAccess := ac.HasAccess(proxy.accessControl, proxy.ctx)(routeEval)
 		if !hasAccess {

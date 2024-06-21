@@ -346,7 +346,7 @@ func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 	if useRBAC {
 		routeEval := ac.EvalPermission(route.ReqAction)
 		if route.ReqAction == pluginac.ActionAppAccess {
-			routeEval = ac.EvalPermission(pluginac.ActionAppAccess, proxy.pluginID)
+			routeEval = ac.EvalPermission(pluginac.ActionAppAccess, pluginac.ScopeProvider.GetResourceScope(proxy.pluginID))
 		}
 		ok := routeEval.Evaluate(proxy.ctx.GetPermissions())
 		if !ok {
