@@ -41,7 +41,7 @@ If the query returns more than one time-series, each time-series represents a di
 
 {{< figure src="/media/docs/alerting/get-started-digram-instance-grey.png" max-width="1200px" caption="Alert Instances in the Context of an Alert Rule" >}}
 
-In this scenario, each time-series is evaluated independently against the alert rule. It results in the creation of an alert instance for each time-series. The time-series corresponding to the desktop page views meets the threshold and, therefore, results in an alert instance in **Firing** state for which an alert notification will be sent. The mobile alert instance state remains **Normal**.
+In this scenario, each time-series is evaluated independently against the alert rule. It results in the creation of an alert instance for each time-series. The time-series corresponding to the desktop page views meets the threshold and, therefore, results in an alert instance in **Firing** state for which an alert notification is sent. The mobile alert instance state remains **Normal**.
 
 ## Notification policies
 
