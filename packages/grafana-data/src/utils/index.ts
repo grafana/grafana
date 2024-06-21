@@ -27,3 +27,4 @@ export { convertOldAngularValueMappings, LegacyMappingType } from './valueMappin
 export { containsSearchFilter, type SearchFilterOptions, getSearchFilterScopedVar } from './variables';
 export { renderLegendFormat } from './legend';
 export { matchPluginId } from './matchPluginId';
+export { LocalStorageValueProvider } from './LocalStorageValueProvider';

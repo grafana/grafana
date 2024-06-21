@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { LocalStorageValueProvider } from '@grafana/o11y-ds-frontend';
+import { LocalStorageValueProvider } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Alert, Button } from '@grafana/ui';
 

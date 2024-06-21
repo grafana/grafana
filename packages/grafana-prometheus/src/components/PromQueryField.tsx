@@ -2,13 +2,19 @@
 import { css, cx } from '@emotion/css';
 import React, { ReactNode } from 'react';
 
-import { isDataFrame, QueryEditorProps, QueryHint, TimeRange, toLegacyResponseData } from '@grafana/data';
+import {
+  isDataFrame,
+  LocalStorageValueProvider,
+  QueryEditorProps,
+  QueryHint,
+  TimeRange,
+  toLegacyResponseData,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { clearButtonStyles, Icon, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
-import { LocalStorageValueProvider } from '../gcopypaste/app/core/components/LocalStorageValueProvider';
 import {
   CancelablePromise,
   isCancelablePromiseRejection,

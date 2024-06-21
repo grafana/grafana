@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { store } from '../store';
+import { store } from '@grafana/o11y-ds-frontend/src/store';
 
 export interface Props<T> {
   storageKey: string;

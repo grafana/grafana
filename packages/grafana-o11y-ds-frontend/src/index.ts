@@ -14,5 +14,4 @@ export * from './TraceToMetrics/TraceToMetricsSettings';
 export * from './TraceToProfiles/TraceToProfilesSettings';
 export * from './utils';
 export * from './store';
-export * from './LocalStorageValueProvider/LocalStorageValueProvider';
 export * from './combineResponses';
