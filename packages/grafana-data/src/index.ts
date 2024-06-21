@@ -7,7 +7,6 @@
 export * from './types';
 export * from './datetime';
 export * from './text';
-export * from './valueFormats';
 export * from './events';
 export * from './themes';
 export * from './monaco';
@@ -272,6 +271,29 @@ export { ensureTimeField } from './transformations/transformers/convertFieldType
 // Required for Sparklines util to work in @grafana/data, but ideally kept internal
 export { applyNullInsertThreshold } from './transformations/transformers/nulls/nullInsertThreshold';
 export { nullToValue } from './transformations/transformers/nulls/nullToValue';
+
+// ValueFormats
+
+export {
+  type FormattedValue,
+  type ValueFormatter,
+  type ValueFormat,
+  type ValueFormatCategory,
+  type ValueFormatterIndex,
+  formattedValueToString,
+  toFixed,
+  toFixedScaled,
+  toFixedUnit,
+  isBooleanUnit,
+  booleanValueFormatter,
+  scaledUnits,
+  locale,
+  simpleCountUnit,
+  stringFormater,
+  getValueFormat,
+  getValueFormatterIndex,
+  getValueFormats,
+} from './valueFormats/valueFormats';
 
 export {
   type ValueMatcherOptions,
