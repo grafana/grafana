@@ -99,15 +99,18 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     let maxYOfRows = 0;
 
-    const rowPlaceholder = ['Repeat Placeholder'];
+    const emptyVariablePlaceholderOption = {
+      values: ['placeholder'],
+      texts: variable.hasAllValue() ? ['All'] : ['None'],
+    };
 
-    const testValues = values.length ? values : rowPlaceholder;
-    const defaultVarText = texts.length ? texts : variable.hasAllValue() ? ['All'] : ['None'];
+    const variableValues = values.length ? values : emptyVariablePlaceholderOption.values;
+    const variableTexts = texts.length ? texts : emptyVariablePlaceholderOption.texts;
 
     // Loop through variable values and create repeates
-    for (let index = 0; index < testValues.length; index++) {
+    for (let index = 0; index < variableValues.length; index++) {
       const children: SceneGridItemLike[] = [];
-      const localValue = testValues[index];
+      const localValue = variableValues[index];
 
       // Loop through panels inside row
       for (const source of rowContent) {
@@ -132,7 +135,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         rowToRepeat,
         index,
         localValue,
-        defaultVarText[index],
+        variableTexts[index],
         rowContentHeight,
         children
       );
