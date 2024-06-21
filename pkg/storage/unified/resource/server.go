@@ -149,7 +149,13 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	// Make this cancelable
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(identity.WithRequester(context.Background(),
+		&identity.StaticRequester{
+			Namespace:      identity.NamespaceServiceAccount,
+			Login:          "watcher", // admin user for watch
+			UserID:         1,
+			IsGrafanaAdmin: true,
+		}))
 	return &server{
 		tracer:      opts.Tracer,
 		log:         slog.Default().With("logger", "resource-server"),
@@ -179,7 +185,7 @@ type server struct {
 	lifecycle   LifecycleHooks
 	now         func() int64
 
-	// Background watch task
+	// Background watch task -- this has permissions for everything
 	ctx         context.Context
 	cancel      context.CancelFunc
 	broadcaster Broadcaster[*WrittenEvent]
@@ -200,8 +206,14 @@ func (s *server) Init() error {
 			}
 		}
 
-		// Start listening for changes
-		s.initWatcher()
+		// Start watching for changes
+		if s.initErr == nil {
+			s.initErr = s.initWatcher()
+		}
+
+		if s.initErr != nil {
+			s.log.Error("error initializing resource server", "error", s.initErr)
+		}
 	})
 	return s.initErr
 }
@@ -579,9 +591,10 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 
 			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
 				// Currently sending *every* event
-				if req.Options.Labels != nil {
-					// match *either* the old or new object
-				}
+				// if req.Options.Labels != nil {
+				// 	// match *either* the old or new object
+				// }
+				// TODO: return values that match either the old or the new
 
 				srv.Send(&WatchEvent{
 					Timestamp: event.Timestamp,

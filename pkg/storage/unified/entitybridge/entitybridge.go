@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"gocloud.dev/blob/fileblob"
+	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -193,7 +194,42 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event resource.WriteEvent
 }
 
 func (b *entityBridge) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
-	return nil, resource.ErrNotImplementedYet
+	client, err := b.client.Watch(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &entity.EntityWatchRequest{
+		Action:            entity.EntityWatchRequest_START,
+		Labels:            map[string]string{},
+		WithBody:          true,
+		WithStatus:        true,
+		SendInitialEvents: false,
+	}
+
+	err = client.Send(req)
+	if err != nil {
+		err2 := client.CloseSend()
+		if err2 != nil {
+			klog.Errorf("watch close failed: %s\n", err2)
+		}
+		return nil, err
+	}
+
+	reader := &decoder{client}
+	stream := make(chan *resource.WrittenEvent, 10)
+	go func() {
+		for {
+			evt, err := reader.next()
+			if err != nil {
+				reader.close()
+				close(stream)
+				return
+			}
+			stream <- evt
+		}
+	}()
+	return stream, nil
 }
 
 // IsHealthy implements ResourceServer.
