@@ -299,6 +299,9 @@ func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotU
 
 func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string, offset int, limit int) ([]cloudmigration.CloudMigrationResource, error) {
 	var resources []cloudmigration.CloudMigrationResource
+	if limit == 0 {
+		return resources, nil
+	}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.Limit(limit, offset)
 		return sess.Find(&resources, &cloudmigration.CloudMigrationResource{
