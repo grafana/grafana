@@ -148,7 +148,7 @@ Grafana Alerting does not support the following syntaxes at this time:
 
 The dashboard and panel time controls have a common UI.
 
-<img class="no-shadow" src="/static/img/docs/time-range-controls/common-time-controls-7-0.png" max-width="700px">
+![Common time controls](/media/docs/grafana/dashboards/screenshot-common-time-controls-11.2.png)
 
 The following sections define common time range controls.
 
@@ -158,11 +158,11 @@ The current time range, also called the _time picker_, shows the time range curr
 
 Hover your cursor over the field to see the exact time stamps in the range and their source (such as the local browser).
 
-<img class="no-shadow" src="/static/img/docs/time-range-controls/time-picker-7-0.png" max-width="300px">
+![Time picker](/media/docs/grafana/dashboards/screenshot-time-picker-11.2.png)
 
 Click the current time range to change it. You can change the current time using a _relative time range_, such as the last 15 minutes, or an _absolute time range_, such as `2020-05-14 00:00:00 to 2020-05-15 23:59:59`.
 
-<img class="no-shadow" src="/media/docs/grafana/dashboards/screenshot-change-current-time-range-10.3.png" max-width="900px">
+![Current time range](/media/docs/grafana/dashboards/screenshot-current-time-range-11.2.png)
 
 #### Relative time range
 
