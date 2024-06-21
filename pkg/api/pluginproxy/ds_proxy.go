@@ -19,7 +19,6 @@ import (
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -344,10 +343,7 @@ func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	useRBAC := proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagAccessControlOnCall) && route.ReqAction != ""
 	if useRBAC {
-		routeEval := ac.EvalPermission(route.ReqAction)
-		if route.ReqAction == pluginac.ActionAppAccess {
-			routeEval = ac.EvalPermission(pluginac.ActionAppAccess, pluginac.ScopeProvider.GetResourceScope(proxy.pluginID))
-		}
+		routeEval := pluginac.GetRouteEvaluator(proxy.pluginID, route.ReqAction)
 		ok := routeEval.Evaluate(proxy.ctx.GetPermissions())
 		if !ok {
 			ctxLogger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path, "action", route.ReqAction, "path", route.Path, "method", route.Method)

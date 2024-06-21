@@ -6,12 +6,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	pluginsac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
 
 var (
+	// Core Actions that the plugins can use in their roles as long as the scope is suffixed with the plugin ID
 	allowedCoreActions = map[string]string{
-		"plugins.app:access":        "plugins:id:",
+		pluginsac.ActionAppAccess:   "plugins:id:",
 		"folders:create":            "folders:uid:",
 		"folders:read":              "folders:uid:",
 		"folders:write":             "folders:uid:",
@@ -37,7 +38,7 @@ func ValidatePluginPermissions(pluginID string, permissions []ac.Permission) err
 		if !strings.HasPrefix(permissions[i].Action, pluginID+":") &&
 			!strings.HasPrefix(permissions[i].Action, pluginID+".") {
 			return &ac.ErrorActionPrefixMissing{Action: permissions[i].Action,
-				Prefixes: []string{pluginaccesscontrol.ActionAppAccess, pluginID + ":", pluginID + "."}}
+				Prefixes: []string{pluginsac.ActionAppAccess, pluginID + ":", pluginID + "."}}
 		}
 	}
 
