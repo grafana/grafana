@@ -25,18 +25,6 @@ jest.mock('../../components/monaco-query-field/MonacoQueryFieldWrapper', () => {
   };
 });
 
-jest.mock('app/core/store', () => {
-  return {
-    get() {
-      return undefined;
-    },
-    set() {},
-    getObject(key: string, defaultValue: unknown) {
-      return defaultValue;
-    },
-  };
-});
-
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
