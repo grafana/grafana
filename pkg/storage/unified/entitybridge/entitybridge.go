@@ -27,7 +27,7 @@ func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.Feat
 	}
 
 	supportBlobs := true
-	useEntitySQL := false
+	useEntitySQL := true // save in SQL (but watch not working)
 
 	// Create a local blob filesystem blob store
 	if supportBlobs {
@@ -156,7 +156,7 @@ func (b *entityBridge) WriteEvent(ctx context.Context, event resource.WriteEvent
 		Namespace:    event.Key.Namespace,
 		Name:         event.Key.Name,
 		Guid:         string(event.Object.GetUID()),
-		GroupVersion: gvr.GroupVersion().String(),
+		GroupVersion: gvr.Version,
 
 		Folder:  obj.GetFolder(),
 		Body:    event.Value,
