@@ -3,7 +3,7 @@
  *
  * @packageDocumentation
  */
-export * from './utils';
+
 export * from './types';
 export * from './transformations';
 export * from './datetime';
@@ -164,6 +164,65 @@ export {
   FieldNamePickerBaseNameMode,
 } from './field/overrides/processors';
 
+// Utils
+
+export { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from './utils/OptionsUIBuilders';
+export { getFlotPairs, getFlotPairsConstant } from './utils/flotPairs';
+export { locationUtil } from './utils/location';
+export { urlUtil, type UrlQueryMap, type UrlQueryValue, serializeStateToUrlParam, toURLRange } from './utils/url';
+export { DataLinkBuiltInVars, mapInternalLinkToExplore } from './utils/dataLinks';
+export { DocsId } from './utils/docs';
+export { makeClassES5Compatible } from './utils/makeClassES5Compatible';
+export { anyToNumber } from './utils/anyToNumber';
+export { withLoadingIndicator, type WithLoadingIndicatorOptions } from './utils/withLoadingIndicator';
+export { convertOldAngularValueMappings, LegacyMappingType } from './utils/valueMappings';
+export { containsSearchFilter, type SearchFilterOptions, getSearchFilterScopedVar } from './utils/variables';
+export { renderLegendFormat } from './utils/legend';
+export { matchPluginId } from './utils/matchPluginId';
+
+export { type RegistryItem, type RegistryItemWithOptions, Registry } from './utils/Registry';
+export {
+  getDataSourceRef,
+  isDataSourceRef,
+  getDataSourceUID,
+  onUpdateDatasourceOption,
+  onUpdateDatasourceJsonDataOption,
+  onUpdateDatasourceSecureJsonDataOption,
+  onUpdateDatasourceJsonDataOptionSelect,
+  onUpdateDatasourceJsonDataOptionChecked,
+  onUpdateDatasourceSecureJsonDataOptionSelect,
+  onUpdateDatasourceResetOption,
+  updateDatasourcePluginOption,
+  updateDatasourcePluginJsonDataOption,
+  updateDatasourcePluginSecureJsonDataOption,
+  updateDatasourcePluginResetOption,
+} from './utils/datasource';
+
+export { deprecationWarning } from './utils/deprecationWarning';
+
+export {
+  CSVHeaderStyle,
+  type CSVConfig,
+  type CSVParseCallbacks,
+  type CSVOptions,
+  readCSV,
+  CSVReader,
+  toCSV,
+} from './utils/csv';
+
+export { parseLabels, findCommonLabels, findUniqueLabels, matchAllLabels, formatLabels } from './utils/labels';
+export { roundDecimals, guessDecimals } from './utils/numbers';
+export { objRemoveUndefined, isEmptyObject } from './utils/object';
+export { classicColors } from './utils/namedColorsPalette';
+export { getSeriesTimeStep, hasMsResolution } from './utils/series';
+export { BinaryOperationID, type BinaryOperation, binaryOperators } from './utils/binaryOperators';
+export { UnaryOperationID, type UnaryOperation, unaryOperators } from './utils/unaryOperators';
+export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
+export { toOption } from './utils/selectUtils';
+export * as arrayUtils from './utils/arrayUtils';
+export { store } from './utils/store';
+export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
+
 export {
   type ValueMatcherOptions,
   type BasicValueMatcherOptions,
@@ -196,7 +255,7 @@ export { getLinksSupplier } from './field/fieldOverrides';
 export { CircularVector } from './vector/CircularVector';
 export { vectorator } from './vector/FunctionalVector';
 export { ArrayVector } from './vector/ArrayVector';
-export * from './dataframe/CircularDataFrame';
+export { CircularDataFrame } from './dataframe/CircularDataFrame';
 export {
   type CurrentUser,
   userHasPermission,

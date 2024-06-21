@@ -2,7 +2,7 @@ import { defaultsDeep } from 'lodash';
 
 import { EventBus } from '../events';
 import { StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
-import { Registry } from '../utils';
+import { Registry } from '../utils/Registry';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { ScopedVars } from './ScopedVars';

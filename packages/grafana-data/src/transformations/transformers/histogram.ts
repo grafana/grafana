@@ -4,7 +4,7 @@ import { getDisplayProcessor } from '../../field/displayProcessor';
 import { createTheme, GrafanaTheme2 } from '../../themes';
 import { DataFrameType, DataTransformContext, SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
-import { roundDecimals } from '../../utils';
+import { roundDecimals } from '../../utils/numbers';
 
 import { DataTransformerID } from './ids';
 import { AlignedData, join } from './joinDataFrames';

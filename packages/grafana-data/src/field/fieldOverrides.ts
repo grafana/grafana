@@ -36,8 +36,8 @@ import {
   ValueLinkConfig,
 } from '../types';
 import { FieldMatcher } from '../types/transformations';
-import { locationUtil } from '../utils';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
+import { locationUtil } from '../utils/location';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';

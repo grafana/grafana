@@ -16,7 +16,8 @@ import {
   ScopedVars,
   ThresholdsMode,
 } from '../types';
-import { locationUtil, Registry } from '../utils';
+import { Registry } from '../utils/Registry';
+import { locationUtil } from '../utils/location';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
