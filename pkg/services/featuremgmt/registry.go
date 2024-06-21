@@ -1366,6 +1366,10 @@ var (
 			Name:        "alwaysSendUsageInisghts",
 			Description: "Forces sending usage insights data no matter what if config.analytics.enabled is enabled",
 			Stage:       FeatureStageExperimental,
+			FrontendOnly:      true,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 			Owner:       grafanaSharingSquad,
 		},
 	}
