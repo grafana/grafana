@@ -28,7 +28,7 @@ import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
 import { LABELS_FILTER } from './CentralAlertHistoryScene';
 
-export const LIMIT_EVENTS = 9000;
+export const LIMIT_EVENTS = 5000; // limit is hard-capped at 5000 at the BE level.
 
 /**
  *
