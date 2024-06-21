@@ -33,6 +33,7 @@ func WithRequester(handler http.Handler) http.Handler {
 					slices.Contains(info.GetGroups(), user.SystemPrivilegedGroup) {
 					orgId := int64(1)
 					requester = &identity.StaticRequester{
+						Namespace:      identity.NamespaceServiceAccount, // system:apiserver
 						UserID:         1,
 						OrgID:          orgId,
 						Name:           info.GetName(),
