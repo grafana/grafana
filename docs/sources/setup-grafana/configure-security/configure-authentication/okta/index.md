@@ -79,7 +79,8 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 1. Click **Save**.
 1. Click the **Back to applications** link at the top of the page.
 1. From the **More** button dropdown menu, click **Refresh Application Data**.
-1. Ensure the `groups` scope is included in the `Scopes` (`scopes` in Terraform and config file) configuration of the Okta integration.
+1. Include the `groups` scope in the **Scopes** field in Grafana of the Okta integration.
+   For Terraform or in the Grafana configuration file, include the `groups` scope in `scopes` field.
 
 #### Optional: Add the role attribute to the User (default) Okta profile
 
