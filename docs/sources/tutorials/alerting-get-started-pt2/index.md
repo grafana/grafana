@@ -21,7 +21,7 @@ weight: 50
 
 This is part 2 of the [Get Started with Grafana Alerting tutorial](http://grafana.com/tutorials/alerting-get-started/).
 
-In part 2, we dig into more complex yet equally fundamental elements of Grafana Alerting: **alert instances** and **notification policies**.
+In this guide, we dig into more complex yet equally fundamental elements of Grafana Alerting: **alert instances** and **notification policies**.
 
 After introducing each component, you will learn how to:
 
