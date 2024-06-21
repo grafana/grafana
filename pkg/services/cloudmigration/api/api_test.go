@@ -3,7 +3,6 @@ package api
 import (
 	"io"
 	"net/http"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -25,9 +24,7 @@ type TestCase struct {
 	// if the CloudMigrationService should return an error
 	serviceReturnError bool
 	expectedHttpResult int
-	// expectedBody can be tested as a string or using regex, e.g.:
-	///  expectedBody: `regexp:\{"snapshot_uid":"([a-zA-Z0-9]+)"\}`
-	expectedBody string
+	expectedBody       string
 }
 
 func TestCloudMigrationAPI_GetToken(t *testing.T) {
@@ -661,11 +658,7 @@ func runSimpleApiTest(tt TestCase) func(t *testing.T) {
 			require.NotNil(t, t, res.Body)
 			b, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
-			if strings.Index(tt.expectedBody, "regexp:") == 0 {
-				require.Regexp(t, regexp.MustCompile(tt.expectedBody[len("regexp:"):]), string(b))
-			} else {
-				require.Equal(t, tt.expectedBody, string(b))
-			}
+			require.Equal(t, tt.expectedBody, string(b))
 		}
 	}
 }

@@ -263,7 +263,7 @@ type CreateSnapshotResponse struct {
 }
 
 type CreateSnapshotResponseDTO struct {
-	SnapshotUID string `json:"snapshot_uid"`
+	SnapshotUID string `json:"uid"`
 }
 
 // swagger:parameters getSnapshot
