@@ -75,15 +75,19 @@ type RemoteLokiBackend struct {
 	clock          clock.Clock
 	metrics        *metrics.Historian
 	log            log.Logger
+	ac             AccessControl
+	ruleStore      RuleStore
 }
 
-func NewRemoteLokiBackend(logger log.Logger, cfg LokiConfig, req client.Requester, metrics *metrics.Historian, tracer tracing.Tracer) *RemoteLokiBackend {
+func NewRemoteLokiBackend(logger log.Logger, cfg LokiConfig, req client.Requester, metrics *metrics.Historian, tracer tracing.Tracer, ruleStore RuleStore, ac AccessControl) *RemoteLokiBackend {
 	return &RemoteLokiBackend{
 		client:         NewLokiClient(cfg, req, metrics, logger, tracer),
 		externalLabels: cfg.ExternalLabels,
 		clock:          clock.New(),
 		metrics:        metrics,
 		log:            logger,
+		ac:             ac,
+		ruleStore:      ruleStore,
 	}
 }
 
