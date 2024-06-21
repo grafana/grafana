@@ -1362,6 +1362,12 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:        "alwaysSendUsageInisghts",
+			Description: "Forces sending usage insights data no matter what if config.analytics.enabled is enabled",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+		},
 	}
 )
 

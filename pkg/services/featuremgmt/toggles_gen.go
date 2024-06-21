@@ -730,4 +730,8 @@ const (
 	// FlagAlertingApiServer
 	// Register Alerting APIs with the K8s API server
 	FlagAlertingApiServer = "alertingApiServer"
+
+	// FlagAlwaysSendUsageInisghts
+	// Forces sending usage insights data no matter what if config.analytics.enabled is enabled
+	FlagAlwaysSendUsageInisghts = "alwaysSendUsageInisghts"
 )

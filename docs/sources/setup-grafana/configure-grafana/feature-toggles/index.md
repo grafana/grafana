@@ -192,6 +192,7 @@ Experimental features might be changed or removed without prior notice.
 | `failWrongDSUID`                            | Throws an error if a datasource has an invalid UIDs                                                                                                                                                                                                                               |
 | `databaseReadReplica`                       | Use a read replica for some database queries.                                                                                                                                                                                                                                     |
 | `alertingApiServer`                         | Register Alerting APIs with the K8s API server                                                                                                                                                                                                                                    |
+| `alwaysSendUsageInisghts`                   | Forces sending usage insights data no matter what if config.analytics.enabled is enabled                                                                                                                                                                                          |
 
 ## Development feature toggles
 

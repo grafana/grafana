@@ -180,3 +180,4 @@ databaseReadReplica,experimental,@grafana/grafana-backend-services-squad,false,f
 zanzana,experimental,@grafana/identity-access-team,false,false,false
 passScopeToDashboardApi,experimental,@grafana/dashboards-squad,false,false,false
 alertingApiServer,experimental,@grafana/alerting-squad,false,true,false
+alwaysSendUsageInisghts,experimental,@grafana/sharing-squad,false,false,false

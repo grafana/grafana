@@ -269,6 +269,18 @@
     },
     {
       "metadata": {
+        "name": "alwaysSendUsageInisghts",
+        "resourceVersion": "1718968306014",
+        "creationTimestamp": "2024-06-21T11:11:46Z"
+      },
+      "spec": {
+        "description": "Forces sending usage insights data no matter what if config.analytics.enabled is enabled",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "angularDeprecationUI",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-08-29T14:05:47Z"
