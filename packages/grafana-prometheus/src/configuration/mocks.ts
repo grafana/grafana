@@ -1,8 +1,36 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/mocks.ts
-import { DataSourceSettings } from '@grafana/data';
+import { merge } from 'lodash';
 
-import { getMockDataSource } from '../gcopypaste/app/features/datasources/__mocks__/dataSourcesMocks';
+import { DataSourceJsonData, DataSourceSettings } from '@grafana/data';
+
 import { PromOptions } from '../types';
+
+export const getMockDataSource = <T extends DataSourceJsonData>(
+  overrides?: Partial<DataSourceSettings<T>>
+): DataSourceSettings<T> =>
+  merge(
+    {
+      access: '',
+      basicAuth: false,
+      basicAuthUser: '',
+      withCredentials: false,
+      database: '',
+      id: 13,
+      uid: 'x',
+      isDefault: false,
+      jsonData: { authType: 'credentials', defaultRegion: 'eu-west-2' },
+      name: 'gdev-prometheus',
+      typeName: 'Prometheus',
+      orgId: 1,
+      readOnly: false,
+      type: 'prometheus',
+      typeLogoUrl: 'packages/grafana-prometheus/src/img/prometheus_logo.svg',
+      url: '',
+      user: '',
+      secureJsonFields: {},
+    },
+    overrides
+  );
 
 export function createDefaultConfigOptions(): DataSourceSettings<PromOptions> {
   return getMockDataSource<PromOptions>({
