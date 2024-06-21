@@ -101,6 +101,8 @@ To replace a library panel with a different one, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save** and **Exit edit**.
 
+Alternatively, if you know where the library panel that you want to replace is being used, you can go directly to that dashboard and start at step 7.
+
 ## View a list of library panels
 
 You can view a list of available library panels and search for a library panel.
