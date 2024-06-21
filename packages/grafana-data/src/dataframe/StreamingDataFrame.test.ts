@@ -1,4 +1,6 @@
-import { DataFrame, FieldType, getFieldDisplayName, reduceField, ReducerID } from '..';
+import { getFieldDisplayName } from '../field/fieldState';
+import { reduceField, ReducerID } from '../transformations/fieldReducer';
+import { FieldType, DataFrame } from '../types';
 
 import { DataFrameJSON } from './DataFrameJSON';
 import {
