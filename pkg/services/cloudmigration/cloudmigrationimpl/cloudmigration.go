@@ -582,6 +582,10 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 	return nil
 }
 
+func (s *Service) CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
+	panic("not implemented")
+}
+
 func (s *Service) parseCloudMigrationConfig() (string, error) {
 	if s.cfg == nil {
 		return "", fmt.Errorf("cfg cannot be nil")
