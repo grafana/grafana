@@ -17,6 +17,7 @@ import { getMarkdownStyles } from './markdownStyles';
 import { getPageStyles } from './page';
 import { getRcTimePickerStyles } from './rcTimePicker';
 import { getSkeletonStyles } from './skeletonStyles';
+import { getSlateStyles } from './slate';
 import { getUplotStyles } from './uPlot';
 
 /** @internal */
@@ -38,6 +39,7 @@ export function GlobalStyles() {
         getAgularPanelStyles(theme),
         getMarkdownStyles(theme),
         getSkeletonStyles(theme),
+        getSlateStyles(theme),
         getRcTimePickerStyles(theme),
         getUplotStyles(theme),
         getLegacySelectStyles(theme),
