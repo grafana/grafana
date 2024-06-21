@@ -244,6 +244,50 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 	return runs, nil
 }
 
+func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.MigrationResource) error {
+	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Insert(resources)
+		return err
+	})
+}
+
+func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string, offset int, limit int) ([]cloudmigration.MigrationResource, error) {
+	var resources []cloudmigration.MigrationResource
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		sess.Limit(limit, offset)
+		return sess.Find(&resources, &cloudmigration.MigrationResource{
+			SnapshotUID: snapshotUid,
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resources, nil
+}
+
+// Updates only mutable fields of cloudmigration.MigrationResource
+func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.MigrationResource) error {
+	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		sql := "UPDATE cloud_migration_resource SET status=?, error_string=? WHERE uid=? AND snapshot_uid=?"
+		for _, r := range resources {
+			_, err := sess.Exec(sql, r.Status, r.Error, r.UID, snapshotUid)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func (ss *sqlStore) DeleteSnapshotResources(ctx context.Context, snapshotUid string) error {
+	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Delete(cloudmigration.MigrationResource{
+			SnapshotUID: snapshotUid,
+		})
+		return err
+	})
+}
+
 func (ss *sqlStore) encryptToken(ctx context.Context, cm *cloudmigration.CloudMigrationSession) error {
 	s, err := ss.secretsService.Encrypt(ctx, []byte(cm.AuthToken), secrets.WithoutScope())
 	if err != nil {
