@@ -434,7 +434,7 @@ func TestCloudMigrationAPI_CreateSnapshot(t *testing.T) {
 		{
 			desc:               "should return 403 if no used is not admin",
 			requestHttpMethod:  http.MethodPost,
-			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot",
 			basicRole:          org.RoleEditor,
 			expectedHttpResult: http.StatusForbidden,
 			expectedBody:       "",
@@ -442,7 +442,7 @@ func TestCloudMigrationAPI_CreateSnapshot(t *testing.T) {
 		{
 			desc:               "should return 500 if service returns an error",
 			requestHttpMethod:  http.MethodPost,
-			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot",
 			basicRole:          org.RoleAdmin,
 			serviceReturnError: true,
 			expectedHttpResult: http.StatusInternalServerError,
@@ -451,7 +451,7 @@ func TestCloudMigrationAPI_CreateSnapshot(t *testing.T) {
 		{
 			desc:               "should return 400 if uid is invalid",
 			requestHttpMethod:  http.MethodPost,
-			requestUrl:         "/api/cloudmigration/migration/***/run",
+			requestUrl:         "/api/cloudmigration/migration/***/snapshot",
 			basicRole:          org.RoleAdmin,
 			serviceReturnError: true,
 			expectedHttpResult: http.StatusBadRequest,
