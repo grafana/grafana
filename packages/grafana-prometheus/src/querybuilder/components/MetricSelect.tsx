@@ -17,12 +17,12 @@ import {
   Icon,
   InlineField,
   InlineFieldRow,
+  SelectMenuOptions,
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
-import { SelectMenuOptions } from '../../gcopypaste/packages/grafana-ui/src/components/Select/SelectBase';
 import { truncateResult } from '../../language_utils';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
