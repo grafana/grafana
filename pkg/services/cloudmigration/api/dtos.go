@@ -270,6 +270,18 @@ type CreateSnapshotResponseDTO struct {
 
 // swagger:parameters getSnapshot
 type GetSnapshotParams struct {
+	// Offset is used for pagination with limit
+	// in:query
+	// required:false
+	// default: 0
+	ResultOffset int `json:"resultOffset"`
+
+	// Max limit for snapshot results returned.
+	// in:query
+	// required:false
+	// default: 100
+	ResultLimit int `json:"resultLimit"`
+
 	// Session UID of a session
 	// in: path
 	UID string `json:"uid"`
@@ -297,11 +309,13 @@ type GetSnapshotListParams struct {
 	// required:false
 	// default: 0
 	Offset int `json:"offset"`
+
 	// Max limit for results returned.
 	// in:query
 	// required:false
 	// default: 100
 	Limit int `json:"limit"`
+
 	// Session UID of a session
 	// in: path
 	UID string `json:"uid"`
