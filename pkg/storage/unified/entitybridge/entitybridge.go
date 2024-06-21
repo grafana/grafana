@@ -22,15 +22,12 @@ import (
 // Creates a ResourceServer using the existing entity tables
 // NOTE: most of the field values are ignored
 func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceServer, error) {
-	bridge := &entityBridge{}
 	opts := resource.ResourceServerOptions{
-		Tracer:    tracer,
-		NodeID:    0, // From config?  defaults to random
-		Lifecycle: bridge,
+		Tracer: tracer,
 	}
 
 	supportBlobs := true
-	useEntitySQL := true
+	useEntitySQL := false
 
 	// Create a local blob filesystem blob store
 	if supportBlobs {
@@ -62,15 +59,20 @@ func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.Feat
 			return nil, err
 		}
 
-		bridge.server, err = sqlstash.ProvideSQLEntityServer(eDB, tracer)
+		server, err := sqlstash.ProvideSQLEntityServer(eDB, tracer)
 		if err != nil {
 			return nil, err
 		}
-		bridge.client = entity.NewEntityStoreClientLocal(bridge.server)
+		client := entity.NewEntityStoreClientLocal(server)
 
 		// Use this bridge as the resource store
+		bridge := &entityBridge{
+			server: server,
+			client: client,
+		}
 		opts.Store = bridge
 		opts.Diagnostics = bridge
+		opts.Lifecycle = bridge
 	} else {
 		dir := filepath.Join(cfg.DataPath, "unistore", "resource")
 		if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -95,6 +97,7 @@ func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.Feat
 	return resource.NewResourceServer(opts)
 }
 
+// This is only created if we use the entity implementation
 type entityBridge struct {
 	client entity.EntityStoreClient
 
