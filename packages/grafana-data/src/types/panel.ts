@@ -1,7 +1,7 @@
 import { defaultsDeep } from 'lodash';
 
 import { EventBus } from '../events';
-import { StandardEditorProps } from '../field';
+import { StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
 import { Registry } from '../utils';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';

@@ -9,7 +9,6 @@ export * from './transformations';
 export * from './datetime';
 export * from './text';
 export * from './valueFormats';
-export * from './field';
 export * from './events';
 export * from './themes';
 export * from './monaco';
@@ -86,6 +85,84 @@ export {
 } from './dataframe/DataFrameJSON';
 
 export { compareDataFrameStructures, compareArrayValues, shallowCompare } from './dataframe/frameComparisons';
+
+// Field
+
+export {
+  getFieldColorModeForField,
+  getFieldColorMode,
+  fieldColorModeRegistry,
+  type FieldColorMode,
+  getFieldSeriesColor,
+} from './field/fieldColor';
+export { FieldConfigOptionsRegistry } from './field/FieldConfigOptionsRegistry';
+export { sortThresholds, getActiveThreshold } from './field/thresholds';
+export {
+  applyFieldOverrides,
+  validateFieldConfig,
+  applyRawFieldOverrides,
+  useFieldOverrides,
+} from './field/fieldOverrides';
+export { getFieldDisplayValuesProxy } from './field/getFieldDisplayValuesProxy';
+export {
+  getFieldDisplayName,
+  getFrameDisplayName,
+  cacheFieldDisplayNames,
+  getUniqueFieldName,
+} from './field/fieldState';
+export { getScaleCalculator, getFieldConfigWithMinMax, getMinMaxAndDelta } from './field/scale';
+
+export {
+  type ReduceDataOptions,
+  VAR_SERIES_NAME,
+  VAR_FIELD_NAME,
+  VAR_FIELD_LABELS,
+  VAR_CALC,
+  VAR_CELL_PREFIX,
+  type FieldSparkline,
+  type FieldDisplay,
+  type GetFieldDisplayValuesOptions,
+  DEFAULT_FIELD_DISPLAY_VALUES_LIMIT,
+  getFieldDisplayValues,
+  hasLinks,
+  getDisplayValueAlignmentFactors,
+  fixCellTemplateExpressions,
+} from './field/fieldDisplay';
+
+export { getDisplayProcessor, getRawDisplayProcessor } from './field/displayProcessor';
+
+export {
+  type StandardEditorContext,
+  type StandardEditorProps,
+  type StandardEditorsRegistryItem,
+  standardFieldConfigEditorRegistry,
+  standardEditorsRegistry,
+} from './field/standardFieldConfigEditorRegistry';
+
+export {
+  identityOverrideProcessor,
+  numberOverrideProcessor,
+  displayNameOverrideProcessor,
+  type NumberFieldConfigSettings,
+  type SliderFieldConfigSettings,
+  type DataLinksFieldConfigSettings,
+  type ValueMappingFieldConfigSettings,
+  type SelectFieldConfigSettings,
+  type StringFieldConfigSettings,
+  type ThresholdsFieldConfigSettings,
+  type UnitFieldConfigSettings,
+  type FieldColorConfigSettings,
+  type StatsPickerConfigSettings,
+  type FieldNamePickerConfigSettings,
+  dataLinksOverrideProcessor,
+  valueMappingsOverrideProcessor,
+  selectOverrideProcessor,
+  stringOverrideProcessor,
+  thresholdsOverrideProcessor,
+  unitOverrideProcessor,
+  booleanOverrideProcessor,
+  FieldNamePickerBaseNameMode,
+} from './field/overrides/processors';
 
 export {
   type ValueMatcherOptions,

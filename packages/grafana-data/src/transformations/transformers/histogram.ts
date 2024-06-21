@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import { getDisplayProcessor } from '../../field';
+import { getDisplayProcessor } from '../../field/displayProcessor';
 import { createTheme, GrafanaTheme2 } from '../../themes';
 import { DataFrameType, DataTransformContext, SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';

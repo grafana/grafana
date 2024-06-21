@@ -3,7 +3,7 @@ import fs from 'fs';
 
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
 import { getDataFrameRow, toDataFrameDTO } from '../dataframe/processDataFrame';
-import { getDisplayProcessor } from '../field';
+import { getDisplayProcessor } from '../field/displayProcessor';
 import { createTheme } from '../themes';
 
 import { CSVHeaderStyle, readCSV, toCSV } from './csv';

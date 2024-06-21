@@ -1,7 +1,8 @@
 import { set } from 'lodash';
 import { ComponentClass, ComponentType } from 'react';
 
-import { FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
+import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
+import { StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
 import {
   FieldConfigProperty,
   FieldConfigSource,
