@@ -33,7 +33,7 @@ Learning about alert instances and notification policies is useful if you have m
 
 ## Alert instances
 
-An [alert instance](https://grafana.com/docs/grafana/latest/alerting/fundamentals/#alert-instances) is an event that matches a metric returned by a query of an alert rule.
+An [alert instance](https://grafana.com/docs/grafana/latest/alerting/fundamentals/#alert-instances) is an event that matches a metric returned by an alert rule query.
 
 Let's consider a scenario where you're monitoring website traffic using Grafana. You've set up an alert rule to trigger an alert instance if the number of page views exceeds a certain threshold (more than `1000` page views) within a specific time period, say, over the past `5` minutes.
 
