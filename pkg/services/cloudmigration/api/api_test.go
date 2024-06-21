@@ -3,6 +3,7 @@ package api
 import (
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -24,7 +25,9 @@ type TestCase struct {
 	// if the CloudMigrationService should return an error
 	serviceReturnError bool
 	expectedHttpResult int
-	expectedBody       string
+	// expectedBody can be tested as a string or using regex, e.g.:
+	///  expectedBody: `regexp:\{"snapshot_uid":"([a-zA-Z0-9]+)"\}`
+	expectedBody string
 }
 
 func TestCloudMigrationAPI_GetToken(t *testing.T) {
@@ -421,6 +424,216 @@ func TestCloudMigrationAPI_DeleteMigration(t *testing.T) {
 	}
 }
 
+func TestCloudMigrationAPI_CreateSnapshot(t *testing.T) {
+	tests := []TestCase{
+		{
+			desc:               "should return 200 if everything is ok",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshot",
+			basicRole:          org.RoleAdmin,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       `regexp:\{"snapshot_uid":"([a-zA-Z0-9]+)"\}`,
+		},
+		{
+			desc:               "should return 403 if no used is not admin",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			basicRole:          org.RoleEditor,
+			expectedHttpResult: http.StatusForbidden,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 500 if service returns an error",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusInternalServerError,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 400 if uid is invalid",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/***/run",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, runSimpleApiTest(tt))
+	}
+}
+
+func TestCloudMigrationAPI_GetSnapshot(t *testing.T) {
+	tests := []TestCase{
+		{
+			desc:               "should return 200 if everything is ok",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			basicRole:          org.RoleAdmin,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       `{"uid":"fake_uid","items":[{"type":"type","refId":"make_refid","status":"ok","error":"none"}]}`,
+		},
+		{
+			desc:               "should return 403 if no used is not admin",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			basicRole:          org.RoleEditor,
+			expectedHttpResult: http.StatusForbidden,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 500 if service returns an error",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusInternalServerError,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 400 if uid is invalid",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/***/run",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, runSimpleApiTest(tt))
+	}
+}
+
+func TestCloudMigrationAPI_GetSnapshotList(t *testing.T) {
+	tests := []TestCase{
+		{
+			desc:               "should return 200 if everything is ok",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			basicRole:          org.RoleAdmin,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       `{"uid":"fake_uid","items":[{"type":"type","refId":"make_refid","status":"ok","error":"none"}]}`,
+		},
+		{
+			desc:               "should return 403 if no used is not admin",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			basicRole:          org.RoleEditor,
+			expectedHttpResult: http.StatusForbidden,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 500 if service returns an error",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusInternalServerError,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 400 if uid is invalid",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/***/run",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, runSimpleApiTest(tt))
+	}
+}
+
+func TestCloudMigrationAPI_UploadSnapshot(t *testing.T) {
+	tests := []TestCase{
+		{
+			desc:               "should return 200 if everything is ok",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			basicRole:          org.RoleAdmin,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       `{"uid":"fake_uid","items":[{"type":"type","refId":"make_refid","status":"ok","error":"none"}]}`,
+		},
+		{
+			desc:               "should return 403 if no used is not admin",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			basicRole:          org.RoleEditor,
+			expectedHttpResult: http.StatusForbidden,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 500 if service returns an error",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusInternalServerError,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 400 if uid is invalid",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/***/run",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, runSimpleApiTest(tt))
+	}
+}
+
+func TestCloudMigrationAPI_CancelSnapshot(t *testing.T) {
+	tests := []TestCase{
+		{
+			desc:               "should return 200 if everything is ok",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			basicRole:          org.RoleAdmin,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       `{"uid":"fake_uid","items":[{"type":"type","refId":"make_refid","status":"ok","error":"none"}]}`,
+		},
+		{
+			desc:               "should return 403 if no used is not admin",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			basicRole:          org.RoleEditor,
+			expectedHttpResult: http.StatusForbidden,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 500 if service returns an error",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/1234/run",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusInternalServerError,
+			expectedBody:       "",
+		},
+		{
+			desc:               "should return 400 if uid is invalid",
+			requestHttpMethod:  http.MethodPost,
+			requestUrl:         "/api/cloudmigration/migration/***/run",
+			basicRole:          org.RoleAdmin,
+			serviceReturnError: true,
+			expectedHttpResult: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, runSimpleApiTest(tt))
+	}
+}
+
 func runSimpleApiTest(tt TestCase) func(t *testing.T) {
 	return func(t *testing.T) {
 		// setup server
@@ -448,7 +661,11 @@ func runSimpleApiTest(tt TestCase) func(t *testing.T) {
 			require.NotNil(t, t, res.Body)
 			b, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
-			require.Equal(t, tt.expectedBody, string(b))
+			if strings.Index(tt.expectedBody, "regexp:") == 0 {
+				require.Regexp(t, regexp.MustCompile(tt.expectedBody[len("regexp:"):]), string(b))
+			} else {
+				require.Equal(t, tt.expectedBody, string(b))
+			}
 		}
 	}
 }
