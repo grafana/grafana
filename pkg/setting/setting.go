@@ -16,7 +16,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -474,6 +473,8 @@ type Cfg struct {
 	RBACResetBasicRoles bool
 	// RBAC single organization. This configuration option is subject to change.
 	RBACSingleOrganization bool
+
+	Zanzana ZanzanaSettings
 
 	// GRPC Server.
 	GRPCServerNetwork        string
@@ -1022,9 +1023,9 @@ func (cfg *Cfg) validateStaticRootPath() error {
 func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.setHomePath(args)
 
-	// Fix for missing IANA db on Windows
+	// Fix for missing IANA db on Windows or Alpine
 	_, zoneInfoSet := os.LookupEnv(zoneInfo)
-	if runtime.GOOS == "windows" && !zoneInfoSet {
+	if !zoneInfoSet {
 		if err := os.Setenv(zoneInfo, filepath.Join(cfg.HomePath, "tools", "zoneinfo.zip")); err != nil {
 			cfg.Logger.Error("Can't set ZONEINFO environment variable", "err", err)
 		}
@@ -1113,6 +1114,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	readOAuth2ServerSettings(cfg)
 
 	readAccessControlSettings(iniFile, cfg)
+
+	cfg.readZanzanaSettings()
+
 	if err := cfg.readRenderingSettings(iniFile); err != nil {
 		return err
 	}

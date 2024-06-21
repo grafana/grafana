@@ -435,7 +435,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     config.featureToggles.dashboardRestore && {
-      path: '/dashboard/recentlyDeleted',
+      path: '/dashboard/recently-deleted',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsDelete]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')

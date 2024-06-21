@@ -18,7 +18,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { withTheme2, Themeable2, Icon, Tooltip, PopoverContent } from '@grafana/ui';
 
-import { checkLogsError, escapeUnescapedString } from '../utils';
+import { checkLogsError, escapeUnescapedString, checkLogsSampled } from '../utils';
 
 import { LogDetails } from './LogDetails';
 import { LogLabels } from './LogLabels';
@@ -223,6 +223,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const { showDetails, showingContext, permalinked } = this.state;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
+    const { sampleMessage, isSampled } = checkLogsSampled(row);
     const logRowBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
       [styles.highlightBackground]: showingContext || permalinked,
@@ -256,11 +257,20 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             </td>
           )}
           <td
-            className={hasError ? styles.logsRowWithError : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`}
+            className={
+              hasError || isSampled
+                ? styles.logsRowWithError
+                : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`
+            }
           >
             {hasError && (
               <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
                 <Icon className={styles.logIconError} name="exclamation-triangle" size="xs" />
+              </Tooltip>
+            )}
+            {isSampled && (
+              <Tooltip content={`${sampleMessage}`} placement="right" theme="info">
+                <Icon className={styles.logIconInfo} name="info-circle" size="xs" />
               </Tooltip>
             )}
           </td>

@@ -69,9 +69,7 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
           <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
 
           {config.secureSocksDSProxyEnabled && (
-            <>
-              <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-            </>
+            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
           )}
 
           <ConfigSubSection
@@ -124,7 +122,6 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    label: 'container',
     marginBottom: theme.spacing(2),
     maxWidth: '900px',
   }),

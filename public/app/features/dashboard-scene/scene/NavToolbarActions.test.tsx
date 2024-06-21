@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { DashboardMeta } from 'app/types';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 
@@ -162,9 +163,27 @@ describe('NavToolbarActions', () => {
       expect(newShareButton).toBeInTheDocument();
     });
   });
+
+  describe('Snapshot', () => {
+    it('should show link button when is a snapshot', () => {
+      setup({
+        isSnapshot: true,
+      });
+
+      expect(screen.queryByTestId('button-snapshot')).toBeInTheDocument();
+    });
+    it('should not show link button when is not found dashboard', () => {
+      setup({
+        isSnapshot: true,
+        dashboardNotFound: true,
+      });
+
+      expect(screen.queryByTestId('button-snapshot')).not.toBeInTheDocument();
+    });
+  });
 });
 
-function setup() {
+function setup(meta?: DashboardMeta) {
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     meta: {
@@ -176,6 +195,7 @@ function setup() {
       canStar: true,
       canAdmin: true,
       canDelete: true,
+      ...meta,
     },
     title: 'hello',
     uid: 'dash-1',

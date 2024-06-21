@@ -91,7 +91,13 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
             content="If you skip you will be prompted to change password next time you log in."
             placement="bottom"
           >
-            <Button fill="text" onClick={onSkip} type="button" data-testid={selectors.pages.Login.skip}>
+            <Button
+              className={styles.skipButton}
+              fill="text"
+              onClick={onSkip}
+              type="button"
+              data-testid={selectors.pages.Login.skip}
+            >
               Skip
             </Button>
           </Tooltip>

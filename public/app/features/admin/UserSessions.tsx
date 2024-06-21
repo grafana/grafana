@@ -2,7 +2,7 @@ import { createRef, PureComponent } from 'react';
 
 import { ConfirmButton, ConfirmModal, Button, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { i18nDate } from 'app/core/internationalization';
+import { formatDate } from 'app/core/internationalization/dates';
 import { AccessControlAction, UserSession } from 'app/types';
 
 interface Props {
@@ -68,7 +68,7 @@ class BaseUserSessions extends PureComponent<Props, State> {
                   sessions.map((session, index) => (
                     <tr key={`${session.id}-${index}`}>
                       <td>{session.isActive ? 'Now' : session.seenAt}</td>
-                      <td>{i18nDate(session.createdAt, { dateStyle: 'long' })}</td>
+                      <td>{formatDate(session.createdAt, { dateStyle: 'long' })}</td>
                       <td>{session.clientIp}</td>
                       <td>{`${session.browser} on ${session.os} ${session.osVersion}`}</td>
                       <td>

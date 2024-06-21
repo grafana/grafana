@@ -1,35 +1,57 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 import { Card, IconButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
+import { getTrailStore, DataTrailBookmark } from './TrailStore/TrailStore';
 import { VAR_FILTERS } from './shared';
 import { getDataSource, getDataSourceName, getMetricName } from './utils';
 
-export interface Props {
-  trail: DataTrail;
-  onSelect: (trail: DataTrail) => void;
+export type Props = {
+  trail?: DataTrail;
+  bookmark?: DataTrailBookmark;
+  onSelect: () => void;
   onDelete?: () => void;
-}
+};
 
-export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
+export function DataTrailCard(props: Props) {
+  const { onSelect, onDelete, bookmark } = props;
   const styles = useStyles2(getStyles);
 
-  const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail)!;
-  if (!(filtersVariable instanceof AdHocFiltersVariable)) {
+  const values = useMemo(() => {
+    let trail = props.trail || (bookmark && getTrailStore().getTrailForBookmark(bookmark));
+
+    if (!trail) {
+      return null;
+    }
+
+    const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail)!;
+    if (!(filtersVariable instanceof AdHocFiltersVariable)) {
+      return null;
+    }
+
+    const createdAt = bookmark?.createdAt || trail.state.createdAt;
+
+    return {
+      dsValue: getDataSource(trail),
+      filters: filtersVariable.state.filters,
+      metric: trail.state.metric,
+      createdAt,
+    };
+  }, [props.trail, bookmark]);
+
+  if (!values) {
     return null;
   }
 
-  const filters = filtersVariable.state.filters;
-  const dsValue = getDataSource(trail);
-
-  const onClick = () => onSelect(trail);
+  const { dsValue, filters, metric, createdAt } = values;
 
   return (
-    <Card onClick={onClick} className={styles.card}>
-      <Card.Heading>{getMetricName(trail.state.metric)}</Card.Heading>
+    <Card onClick={onSelect} className={styles.card}>
+      <Card.Heading>{getMetricName(metric)}</Card.Heading>
       <div className={styles.description}>
         <Stack gap={1.5} wrap="wrap">
           {filters.map((f) => (
@@ -42,9 +64,9 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
           <div className={styles.secondary}>
             <b>Datasource:</b> {getDataSourceName(dsValue)}
           </div>
-          {trail.state.createdAt && (
+          {createdAt && (
             <i className={styles.secondary}>
-              <b>Created:</b> {dateTimeFormat(trail.state.createdAt, { format: 'LL' })}
+              <b>Created:</b> {dateTimeFormat(createdAt, { format: 'LL' })}
             </i>
           )}
         </Stack>

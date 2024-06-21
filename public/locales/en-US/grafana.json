@@ -25,6 +25,14 @@
       "user": "User"
     }
   },
+  "alert-labels": {
+    "button": {
+      "hide": "Hide common labels",
+      "show": {
+        "tooltip": "Show common labels"
+      }
+    }
+  },
   "alert-rule-form": {
     "evaluation-behaviour": {
       "description": {
@@ -70,6 +78,7 @@
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
       "delete-modal-invalid-title": "Cannot delete folder",
+      "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately but the selected dashboards will be marked for deletion in 30 days. You can restore the dashboards anytime before the 30 days expires. Folders cannot be restored.",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
       "deleting": "Deleting...",
@@ -84,15 +93,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
+      "alertRule_other": "{{count}} alert rule",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
+      "dashboard_other": "{{count}} dashboard",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
+      "folder_other": "{{count}} folder",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
+      "libraryPanel_other": "{{count}} library panel",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
+      "total_other": "{{count}} item"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -136,6 +145,16 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query"
+    }
+  },
+  "central-alert-history": {
+    "error": "Something went wrong loading the alert state history",
+    "filter": {
+      "button": {
+        "clear": "Clear"
+      },
+      "label": "Filter events",
+      "placeholder": "Filter events in the list with labels"
     }
   },
   "clipboard-button": {
@@ -513,6 +532,12 @@
       "scan-for-older-logs": "Scan for older logs",
       "stop-scan": "Stop scan"
     },
+    "query-library": {
+      "delete-query": "Delete query",
+      "delete-query-text": "You're about to remove this query from the query library. This action cannot be undone. Do you want to continue?",
+      "delete-query-title": "Delete query",
+      "query-deleted": "Query deleted"
+    },
     "rich-history": {
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
@@ -758,7 +783,7 @@
     },
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "button-cancel": "Cancel",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
@@ -1166,7 +1191,7 @@
     "public": {
       "title": "Public dashboards"
     },
-    "recentlyDeleted": {
+    "recently-deleted": {
       "subtitle": "Any items listed here for more than 30 days will be automatically deleted.",
       "title": "Recently Deleted"
     },
@@ -1540,6 +1565,9 @@
       "role-label": "Role"
     }
   },
+  "query-library": {
+    "delete-query-button": "Delete query"
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Collapse query row",
@@ -1556,7 +1584,16 @@
   },
   "recently-deleted": {
     "buttons": {
+      "delete": "Delete permanently",
       "restore": "Restore"
+    },
+    "permanently-delete-modal": {
+      "confirm-text": "Delete",
+      "delete-button": "Delete",
+      "delete-loading": "Deleting...",
+      "text_one": "This action will delete {{numberOfDashboards}} dashboards.",
+      "text_other": "This action will delete {{numberOfDashboards}} dashboards.",
+      "title": "Permanently Delete Dashboards"
     },
     "restore-modal": {
       "restore-button": "Restore",
@@ -1636,6 +1673,8 @@
     },
     "results-table": {
       "datasource-header": "Data source",
+      "deleted-less-than-1-min": "< 1 min",
+      "deleted-remaining-header": "Time remaining",
       "location-header": "Location",
       "name-header": "Name",
       "tags-header": "Tags",

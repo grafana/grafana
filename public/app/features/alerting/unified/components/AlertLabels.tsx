@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, getTagColorsFromName, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { isPrivateLabel } from '../utils/labels';
 
@@ -28,6 +29,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
 
   const commonLabelsCount = Object.keys(commonLabels).length;
   const hasCommonLabels = commonLabelsCount > 0;
+  const tooltip = t('alert-labels.button.show.tooltip', 'Show common labels');
 
   return (
     <div className={styles.wrapper} role="list" aria-label="Labels">
@@ -39,7 +41,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
           variant="secondary"
           fill="text"
           onClick={() => setShowCommonLabels(true)}
-          tooltip="Show common labels"
+          tooltip={tooltip}
           tooltipPlacement="top"
           size="sm"
         >
@@ -54,7 +56,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
           tooltipPlacement="top"
           size="sm"
         >
-          Hide common labels
+          <Trans i18nKey="alert-labels.button.hide">Hide common labels</Trans>
         </Button>
       )}
     </div>

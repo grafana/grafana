@@ -1,5 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryField.tsx
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { PureComponent, ReactNode } from 'react';
 
 import { isDataFrame, QueryEditorProps, QueryHint, TimeRange, toLegacyResponseData } from '@grafana/data';
@@ -265,8 +265,12 @@ class PromQueryFieldClass extends PureComponent<PromQueryFieldProps, PromQueryFi
 
               {ExtraFieldElement}
               {hint ? (
-                <div className="query-row-break">
-                  <div className="prom-query-field-info text-warning">
+                <div
+                  className={css({
+                    flexBasis: '100%',
+                  })}
+                >
+                  <div className="text-warning">
                     {hint.label}{' '}
                     {hint.fix ? (
                       <button
