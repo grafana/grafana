@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	AllowedCoreActions = map[string]string{
+	allowedCoreActions = map[string]string{
 		"plugins.app:access":        "plugins:id:",
 		"folders:create":            "folders:uid:",
 		"folders:read":              "folders:uid:",
@@ -24,7 +24,7 @@ var (
 // ValidatePluginPermissions errors when a permission does not match expected pattern for plugins
 func ValidatePluginPermissions(pluginID string, permissions []ac.Permission) error {
 	for i := range permissions {
-		scopePrefix, isCore := AllowedCoreActions[permissions[i].Action]
+		scopePrefix, isCore := allowedCoreActions[permissions[i].Action]
 		if isCore {
 			if permissions[i].Scope != scopePrefix+pluginID {
 				return &ac.ErrorScopeTarget{Action: permissions[i].Action, Scope: permissions[i].Scope,
