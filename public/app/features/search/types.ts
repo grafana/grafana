@@ -30,6 +30,8 @@ export interface DashboardSearchHit extends WithAccessControlMetadata {
   url: string;
   sortMeta?: number;
   sortMetaName?: string;
+  isDeleted?: boolean;
+  permanentlyDeleteDate?: string;
 }
 
 /**
