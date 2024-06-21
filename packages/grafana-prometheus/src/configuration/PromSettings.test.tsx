@@ -6,7 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 
-import { createDefaultConfigOptions } from '../__mocks__/datasource';
+import { createDefaultConfigOptions } from '../test/__mocks__/datasource';
 
 import { countError, getValueFromEventItem, PromSettings } from './PromSettings';
 

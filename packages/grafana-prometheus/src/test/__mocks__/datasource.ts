@@ -10,7 +10,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 
-import { PromOptions, PromQuery } from '../types';
+import { PromOptions, PromQuery } from '../../types';
 
 export const getMockDataSource = <T extends DataSourceJsonData>(
   overrides?: Partial<DataSourceSettings<T>>
