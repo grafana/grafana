@@ -41,6 +41,8 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 	}
 	user, err := f.DecodeMetadata(ctx, md)
 	if err != nil {
+
+		fmt.Printf("???? %v\n", err)
 		return nil, err
 	}
 	return identity.WithRequester(ctx, user), nil
