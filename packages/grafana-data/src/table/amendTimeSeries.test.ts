@@ -1,4 +1,4 @@
-import { Table, amendTable } from "./amendTimeSeries";
+import { Table, amendTable } from './amendTimeSeries';
 
 describe('amendTable', () => {
   it('should append nextTable when there is no overlap (nextTable after prevTable)', () => {

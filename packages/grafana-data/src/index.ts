@@ -16,6 +16,7 @@ export * from './themes';
 export * from './monaco';
 export * from './geo/layer';
 export * from './query';
+export { amendTable, trimTable, type Table } from './table/amendTimeSeries';
 export {
   type ValueMatcherOptions,
   type BasicValueMatcherOptions,
