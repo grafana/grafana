@@ -496,6 +496,18 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	})
 
 	t.Run("With plugin RBAC - Enforce action first", func(t *testing.T) {
+		t.Run("Should add no include when the user has no role and cannot access the app", func(t *testing.T) {
+			treeRoot := navtree.NavTreeRoot{}
+			user.Permissions = map[int64]map[string][]string{
+				1: {pluginac.ActionAppAccess: []string{"plugins:id:not-the-test-app"}},
+			}
+			user.OrgRole = identity.RoleNone
+			service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
+
+			err := service.addAppLinks(&treeRoot, reqCtx)
+			require.NoError(t, err)
+			require.Len(t, treeRoot.Children, 0)
+		})
 		t.Run("Should add one include when the user has no role but can access the app", func(t *testing.T) {
 			treeRoot := navtree.NavTreeRoot{}
 			user.Permissions = map[int64]map[string][]string{
