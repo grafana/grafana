@@ -17,9 +17,9 @@ import { withTimeZone } from '../src/utils/storybook/withTimeZone';
 import { ThemedDocsContainer } from '../src/utils/storybook/ThemedDocsContainer';
 
 // @ts-ignore
-import lightTheme from './grafana.light.scss';
+import lightTheme from '../../../grafana.light.scss';
 // @ts-ignore
-import darkTheme from './grafana.dark.scss';
+import darkTheme from '../../../grafana.dark.scss';
 import { GrafanaDark, GrafanaLight } from './storybookTheme';
 
 const handleThemeChange = (theme: any) => {
