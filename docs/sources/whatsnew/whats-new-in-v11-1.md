@@ -52,7 +52,7 @@ Sometimes less is more! The **Standard** behavior for percent change in the [sta
 
 ![Stat percent change color options](/media/docs/grafana/gif-grafana-11-1-stat-percent-change-color-options.gif)
 
-### XY Chart is GA
+### XY chart is GA
 
 <!-- Leon Sorokin -->
 
@@ -143,6 +143,14 @@ Manage silences through Role-Based Access Control (RBAC). In addition to the Gra
 - Users with the **alert.silences:create permission**, scoped within a folder, are able to create silences for rules contained within that folder and its subfolders
 - Users with the **alert.silences:read permission**, scoped within a folder, are able to read silences for rules contained within that folder and its subfolders, and general silences
 - Users with the **alert.silences:write permission**, scoped within a folder, are able to expire and recreate silences for rules contained within that folder and its subfolders
+
+### Support for AWS SNS integration in Grafana-managed alerts
+
+<!-- Yuri Tseretyan -->
+
+_Generally available in all editions of Grafana_
+
+Send alerts notifications to AWS simple notifications service.
 
 ## Recent accessibility improvements
 
