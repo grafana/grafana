@@ -423,6 +423,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       top: 0,
       width: '100%',
+      zIndex: 1,
     }),
     containNone: css({
       contain: 'none',
