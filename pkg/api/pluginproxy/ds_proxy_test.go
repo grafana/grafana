@@ -108,6 +108,14 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				Path: "mypath",
 				URL:  "https://example.com/api/v1/",
 			},
+			{
+				Path:      "api/rbac-home",
+				ReqAction: "plugins.app:access",
+			},
+			{
+				Path:      "api/rbac-restricted",
+				ReqAction: "test-app.settings:read",
+			},
 		}
 
 		ds := &datasources.DataSource{
@@ -247,6 +255,51 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				require.NoError(t, err)
 				err = proxy.validateRequest()
 				require.NoError(t, err)
+			})
+
+			t.Run("plugin route with RBAC protection user is allowed", func(t *testing.T) {
+				ctx, _ := setUp()
+				ctx.SignedInUser.OrgID = int64(1)
+				ctx.SignedInUser.OrgRole = identity.RoleNone
+				ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"test-app.settings:read": nil}}
+				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-restricted")
+				require.NoError(t, err)
+				err = proxy.validateRequest()
+				require.NoError(t, err)
+			})
+
+			t.Run("plugin route with RBAC protection user is not allowed", func(t *testing.T) {
+				ctx, _ := setUp()
+				ctx.SignedInUser.OrgID = int64(1)
+				ctx.SignedInUser.OrgRole = identity.RoleNone
+				ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"test-app:read": nil}}
+				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-restricted")
+				require.NoError(t, err)
+				err = proxy.validateRequest()
+				require.Error(t, err)
+			})
+
+			t.Run("plugin route with RBAC app access protection user is allowed", func(t *testing.T) {
+				ctx, _ := setUp()
+				ctx.SignedInUser.OrgID = int64(1)
+				ctx.SignedInUser.OrgRole = identity.RoleNone
+				ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"plugins.app:access": {"plugins:id:test-app"}}}
+				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-home")
+				require.NoError(t, err)
+				err = proxy.validateRequest()
+				require.NoError(t, err)
+			})
+
+			t.Run("plugin route with RBAC app access protection user is not allowed", func(t *testing.T) {
+				ctx, _ := setUp()
+				ctx.SignedInUser.OrgID = int64(1)
+				ctx.SignedInUser.OrgRole = identity.RoleNone
+				// Has access but to another app
+				ctx.SignedInUser.Permissions = map[int64]map[string][]string{1: {"plugins.app:access": {"plugins:id:not-the-test-app"}}}
+				proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/rbac-home")
+				require.NoError(t, err)
+				err = proxy.validateRequest()
+				require.Error(t, err)
 			})
 		})
 	})
@@ -1021,7 +1074,7 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	cfg := setting.NewCfg()
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(dbtest.NewFakeDB(), secretsService, log.NewNopLogger())
-	features := featuremgmt.WithFeatures()
+	features := featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
 		&actest.FakePermissionsService{}, quotatest.New(false, nil), &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
 		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
@@ -1029,7 +1082,7 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 
 	tracer := tracing.InitializeTracerForTest()
 
-	proxy, err := NewDataSourceProxy(ds, routes, ctx, path, cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, features, "")
+	proxy, err := NewDataSourceProxy(ds, routes, ctx, path, cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer, features, "test-app")
 	if err != nil {
 		return nil, err
 	}
