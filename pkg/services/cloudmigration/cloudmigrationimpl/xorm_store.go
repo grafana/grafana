@@ -244,7 +244,6 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 		return nil, err
 	}
 	for i, snapshot := range snapshots {
-		snapshot := snapshot
 		if err := ss.decryptKey(ctx, &snapshot); err != nil {
 			return nil, err
 		}
