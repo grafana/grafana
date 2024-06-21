@@ -9,19 +9,35 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
 
+var (
+	AllowedCoreActions = map[string]string{
+		"plugins.app:access":        "plugins:id:",
+		"folders:create":            "folders:uid:",
+		"folders:read":              "folders:uid:",
+		"folders:write":             "folders:uid:",
+		"folders:delete":            "folders:uid:",
+		"folders.permissions:read":  "folders:uid:",
+		"folders.permissions:write": "folders:uid:",
+	}
+)
+
 // ValidatePluginPermissions errors when a permission does not match expected pattern for plugins
 func ValidatePluginPermissions(pluginID string, permissions []ac.Permission) error {
 	for i := range permissions {
-		if permissions[i].Action != pluginaccesscontrol.ActionAppAccess &&
-			!strings.HasPrefix(permissions[i].Action, pluginID+":") &&
+		scopePrefix, isCore := AllowedCoreActions[permissions[i].Action]
+		if isCore {
+			if permissions[i].Scope != scopePrefix+pluginID {
+				return &ac.ErrorScopeTarget{Action: permissions[i].Action, Scope: permissions[i].Scope,
+					ExpectedScope: scopePrefix + pluginID}
+			}
+			// Prevent any unlickely injection
+			permissions[i].Scope = scopePrefix + pluginID
+			continue
+		}
+		if !strings.HasPrefix(permissions[i].Action, pluginID+":") &&
 			!strings.HasPrefix(permissions[i].Action, pluginID+".") {
 			return &ac.ErrorActionPrefixMissing{Action: permissions[i].Action,
 				Prefixes: []string{pluginaccesscontrol.ActionAppAccess, pluginID + ":", pluginID + "."}}
-		}
-		if strings.HasPrefix(permissions[i].Action, pluginaccesscontrol.ActionAppAccess) &&
-			permissions[i].Scope != pluginaccesscontrol.ScopeProvider.GetResourceScope(pluginID) {
-			return &ac.ErrorScopeTarget{Action: permissions[i].Action, Scope: permissions[i].Scope,
-				ExpectedScope: pluginaccesscontrol.ScopeProvider.GetResourceScope(pluginID)}
 		}
 	}
 
