@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
@@ -77,7 +78,7 @@ func (r *queryREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
-func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Object, incomingResponder rest.Responder) (http.Handler, error) {
+func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.Object, incomingResponder rest.Responder) (http.Handler, error) {
 	// See: /pkg/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {
@@ -86,7 +87,8 @@ func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Objec
 	b := r.builder
 
 	return http.HandlerFunc(func(w http.ResponseWriter, httpreq *http.Request) {
-		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
+		ctx := request.WithNamespace(httpreq.Context(), request.NamespaceValue(connectCtx))
+		ctx, span := b.tracer.Start(ctx, "QueryService.Query")
 		defer span.End()
 
 		responder := newResponderWrapper(incomingResponder,
@@ -116,7 +118,6 @@ func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Objec
 			responder.Error(err)
 			return
 		}
-
 		// Parses the request and splits it into multiple sub queries (if necessary)
 		req, err := b.parser.parseRequest(ctx, raw)
 		if err != nil {
