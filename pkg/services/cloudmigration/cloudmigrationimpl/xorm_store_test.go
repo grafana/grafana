@@ -170,12 +170,12 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 
 	// insert cloud migration test data
 	_, err := testDB.GetSqlxSession().Exec(ctx, `
- 			INSERT INTO
- 			    cloud_migration_session (id, uid, auth_token, slug, stack_id, region_slug, cluster_slug, created, updated)
- 			VALUES
- 			    (1,'qwerty', ?, '11111', 11111, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-  				(2,'asdfgh', ?, '22222', 22222, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-  				(3,'zxcvbn', ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000');
+		INSERT INTO
+			cloud_migration_session (id, uid, auth_token, slug, stack_id, region_slug, cluster_slug, created, updated)
+		VALUES
+			(1,'qwerty', ?, '11111', 11111, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			(2,'asdfgh', ?, '22222', 22222, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			(3,'zxcvbn', ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000');
  		`,
 		encodeToken("12345"),
 		encodeToken("6789"),
@@ -185,16 +185,24 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 
 	// insert cloud migration run test data
 	_, err = testDB.GetSqlxSession().Exec(ctx, `
- 			INSERT INTO
- 			    cloud_migration_snapshot (session_uid, uid, result, created, updated, finished, status)
- 			VALUES
- 			    ('qwerty', 'poiuy', ?, '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
-  				('qwerty', 'lkjhg', ?, '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
-  				('zxcvbn', 'mnbvvc', ?, '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished");
- 		`,
-		[]byte("ERROR"),
-		[]byte("OK"),
-		[]byte("OK"),
+		INSERT INTO
+			cloud_migration_snapshot (session_uid, uid, created, updated, finished, status)
+		VALUES
+			('qwerty', 'poiuy', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
+			('qwerty', 'lkjhg', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
+			('zxcvbn', 'mnbvvc', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished");
+		`,
+	)
+	require.NoError(t, err)
+
+	_, err = testDB.GetSqlxSession().Exec(ctx, `
+		INSERT INTO
+			cloud_migration_resource (uid, snapshot_uid, resource_type, resource_uid, status, error_string)
+		VALUES
+			('mnbvde', 'poiuy', 'DATASOURCE', 'jf38gh', 'OK', ''),
+			('qwerty', 'poiuy', 'DASHBOARD', 'ejcx4d', 'ERROR', 'fake error'),
+			('zxcvbn', 'poiuy', 'FOLDER', 'fi39fj', 'PENDING', '');
+		`,
 	)
 	require.NoError(t, err)
 
