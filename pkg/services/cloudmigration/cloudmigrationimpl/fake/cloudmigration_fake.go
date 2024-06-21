@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/gcom"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var fixedDate = time.Date(2024, 6, 5, 17, 30, 40, 0, time.UTC)
@@ -140,7 +139,7 @@ func (m FakeServiceImpl) CreateSnapshot(ctx context.Context, sessionUid string) 
 		return nil, fmt.Errorf("mock error")
 	}
 	return &cloudmigration.CloudMigrationSnapshot{
-		UID:        util.GenerateShortUID(),
+		UID:        "fake_uid",
 		SessionUID: sessionUid,
 		Status:     cloudmigration.SnapshotStatusUnknown,
 	}, nil
@@ -151,8 +150,8 @@ func (m FakeServiceImpl) GetSnapshot(ctx context.Context, sessionUid string, sna
 		return nil, fmt.Errorf("mock error")
 	}
 	return &cloudmigration.CloudMigrationSnapshot{
-		UID:        util.GenerateShortUID(),
-		SessionUID: sessionUid,
+		UID:        "fake_uid",
+		SessionUID: "fake_uid",
 		Status:     cloudmigration.SnapshotStatusUnknown,
 	}, nil
 }
@@ -163,12 +162,12 @@ func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrati
 	}
 	return []cloudmigration.CloudMigrationSnapshot{
 		{
-			UID:        util.GenerateShortUID(),
+			UID:        "fake_uid",
 			SessionUID: query.SessionUID,
 			Status:     cloudmigration.SnapshotStatusUnknown,
 		},
 		{
-			UID:        util.GenerateShortUID(),
+			UID:        "fake_uid",
 			SessionUID: query.SessionUID,
 			Status:     cloudmigration.SnapshotStatusUnknown,
 		},
@@ -176,6 +175,13 @@ func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrati
 }
 
 func (m FakeServiceImpl) UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
+	if m.ReturnError {
+		return fmt.Errorf("mock error")
+	}
+	return nil
+}
+
+func (m FakeServiceImpl) CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
 	if m.ReturnError {
 		return fmt.Errorf("mock error")
 	}
