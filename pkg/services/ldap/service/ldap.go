@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -108,6 +109,27 @@ func (s *LDAPImpl) Reload(ctx context.Context, settings models.SSOSettings) erro
 }
 
 func (s *LDAPImpl) Validate(ctx context.Context, settings models.SSOSettings, oldSettings models.SSOSettings, requester identity.Requester) error {
+	ldapCfg, err := resolveServerConfig(settings.Settings["config"])
+	if err != nil {
+		return err
+	}
+
+	enabled := resolveBool(settings.Settings["enabled"], false)
+	if !enabled {
+		return nil
+	}
+
+	if len(ldapCfg.Servers) == 0 {
+		return fmt.Errorf("no servers configured for LDAP")
+	}
+
+	for i, server := range ldapCfg.Servers {
+		// host is required for every LDAP server config
+		if server.Host == "" {
+			return fmt.Errorf("no host configured for server with index %d", i)
+		}
+	}
+
 	return nil
 }
 
