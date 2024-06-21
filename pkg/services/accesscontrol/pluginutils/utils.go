@@ -30,7 +30,7 @@ func ValidatePluginPermissions(pluginID string, permissions []ac.Permission) err
 				return &ac.ErrorScopeTarget{Action: permissions[i].Action, Scope: permissions[i].Scope,
 					ExpectedScope: scopePrefix + pluginID}
 			}
-			// Prevent any unlickely injection
+			// Prevent any unlikely injection
 			permissions[i].Scope = scopePrefix + pluginID
 			continue
 		}
