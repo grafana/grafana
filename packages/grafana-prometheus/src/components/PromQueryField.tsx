@@ -9,15 +9,11 @@ import { clearButtonStyles, Icon, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
 import { LocalStorageValueProvider } from '../gcopypaste/app/core/components/LocalStorageValueProvider';
-import {
-  CancelablePromise,
-  isCancelablePromiseRejection,
-  makePromiseCancelable,
-} from '../gcopypaste/app/core/utils/CancelablePromise';
 import { roundMsToMin } from '../language_utils';
 import { PromOptions, PromQuery } from '../types';
 
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
+import { CancelablePromise, isCancelablePromiseRejection, makePromiseCancelable } from './cancelable-promise';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 
 const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
