@@ -2,7 +2,6 @@ package gmsclient
 
 import (
 	"context"
-	"encoding/json"
 	"math/rand"
 	"time"
 
@@ -60,15 +59,7 @@ func (c *memoryClientImpl) InitializeSnapshot(context.Context, cloudmigration.Cl
 }
 
 func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (*cloudmigration.CloudMigrationSnapshot, error) {
-	// just fake an entire response
-	gmsSnapshot := cloudmigration.CloudMigrationSnapshot{
-		Status:         cloudmigration.SnapshotStatusFinished,
-		GMSSnapshotUID: util.GenerateShortUID(),
-		Result:         []byte{},
-		Finished:       time.Now(),
-	}
-
-	result := []cloudmigration.MigrationResource{
+	results := []cloudmigration.MigrationResource{
 		{
 			Type:   cloudmigration.DashboardDataType,
 			RefID:  util.GenerateShortUID(),
@@ -87,11 +78,13 @@ func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudm
 		},
 	}
 
-	b, err := json.Marshal(result)
-	if err != nil {
-		return nil, err
+	// just fake an entire response
+	gmsSnapshot := cloudmigration.CloudMigrationSnapshot{
+		Status:         cloudmigration.SnapshotStatusFinished,
+		GMSSnapshotUID: util.GenerateShortUID(),
+		Results:        results,
+		Finished:       time.Now(),
 	}
-	gmsSnapshot.Result = b
 
 	return &gmsSnapshot, nil
 }

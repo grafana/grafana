@@ -404,16 +404,10 @@ func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration
 		return nil, fmt.Errorf("migrate data error: %w", err)
 	}
 
-	respData, err := json.Marshal(resp)
-	if err != nil {
-		s.log.Error("error marshalling migration response data: %w", err)
-		return nil, fmt.Errorf("marshalling migration response data: %w", err)
-	}
-
 	// save the result of the migration
 	runUID, err := s.createMigrationRun(ctx, cloudmigration.CloudMigrationSnapshot{
 		SessionUID: migration.UID,
-		Result:     respData,
+		Results:    resp.Items,
 	})
 	if err != nil {
 		response.Error(http.StatusInternalServerError, "migration run save error", err)
@@ -536,14 +530,14 @@ func (s *Service) GetSnapshot(ctx context.Context, sessionUid string, snapshotUi
 
 		// grab any result available
 		// TODO: figure out a more intelligent way to do this, will depend on GMS apis
-		snapshot.Result = snapshotMeta.Result
+		//snapshot.Results = snapshotMeta.Result
 
 		if snapshotMeta.Status == cloudmigration.SnapshotStatusFinished {
 			// we need to update the snapshot in our db before reporting anything finished to the client
 			if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
-				UID:    snapshot.UID,
-				Status: cloudmigration.SnapshotStatusFinished,
-				Result: snapshot.Result,
+				UID:       snapshot.UID,
+				Status:    cloudmigration.SnapshotStatusFinished,
+				Resources: snapshot.Results,
 			}); err != nil {
 				return nil, fmt.Errorf("error updating snapshot status: %w", err)
 			}

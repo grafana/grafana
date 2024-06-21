@@ -2,7 +2,6 @@ package fake
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -108,15 +107,11 @@ func (m FakeServiceImpl) GetMigrationStatus(_ context.Context, _ string) (*cloud
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
-	result, err := json.Marshal(fakeMigrateDataResponseDTO())
-	if err != nil {
-		return nil, err
-	}
 	return &cloudmigration.CloudMigrationSnapshot{
 		ID:         0,
 		UID:        "fake_uid",
 		SessionUID: "fake_mig_uid",
-		Result:     result,
+		Results:    fakeMigrateDataResponseDTO().Items,
 		Created:    fixedDate,
 		Updated:    fixedDate,
 		Finished:   fixedDate,

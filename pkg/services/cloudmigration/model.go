@@ -1,8 +1,6 @@
 package cloudmigration
 
 import (
-	"encoding/json"
-	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -45,8 +43,8 @@ type CloudMigrationSnapshot struct {
 	Updated        time.Time
 	Finished       time.Time
 
-	// []MigrateDataResponseItem
-	Result []byte `xorm:"result"` //store raw gms response body
+	// Stored in the cloud_migration_resource table
+	Results []MigrationResource `xorm:"-"` //store raw gms response body
 }
 
 type SnapshotStatus string
@@ -77,28 +75,15 @@ type MigrationResource struct {
 
 // Deprecated, use GetSnapshotResult for the async workflow
 func (s CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
-	var result MigrateDataResponse
-	err := json.Unmarshal(s.Result, &result)
-	if err != nil {
-		return nil, errors.New("could not parse result of run")
+	result := MigrateDataResponse{
+		RunUID: s.UID,
+		Items:  s.Results,
 	}
-	result.RunUID = s.UID
 	return &result, nil
 }
 
 func (s CloudMigrationSnapshot) ShouldQueryGMS() bool {
 	return s.Status == SnapshotStatusPendingProcessing || s.Status == SnapshotStatusProcessing
-}
-
-func (s CloudMigrationSnapshot) GetSnapshotResult() ([]MigrationResource, error) {
-	var result []MigrationResource
-	if len(s.Result) > 0 {
-		err := json.Unmarshal(s.Result, &result)
-		if err != nil {
-			return nil, errors.New("could not parse result of run")
-		}
-	}
-	return result, nil
 }
 
 type CloudMigrationRunList struct {
@@ -127,9 +112,9 @@ type ListSnapshotsQuery struct {
 }
 
 type UpdateSnapshotCmd struct {
-	UID    string
-	Status SnapshotStatus
-	Result []byte //store raw gms response body
+	UID       string
+	Status    SnapshotStatus
+	Resources []MigrationResource
 }
 
 // access token
@@ -184,8 +169,10 @@ type MigrateDataRequestItem struct {
 type ItemStatus string
 
 const (
-	ItemStatusOK    ItemStatus = "OK"
-	ItemStatusError ItemStatus = "ERROR"
+	ItemStatusOK      ItemStatus = "OK"
+	ItemStatusError   ItemStatus = "ERROR"
+	ItemStatusPending ItemStatus = "PENDING"
+	ItemStatusUnknown ItemStatus = "UNKNOWN"
 )
 
 type MigrateDataResponse struct {

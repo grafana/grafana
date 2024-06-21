@@ -128,8 +128,10 @@ const (
 type ItemStatus string
 
 const (
-	ItemStatusOK    ItemStatus = "OK"
-	ItemStatusError ItemStatus = "ERROR"
+	ItemStatusOK      ItemStatus = "OK"
+	ItemStatusError   ItemStatus = "ERROR"
+	ItemStatusPending ItemStatus = "PENDING"
+	ItemStatusUnknown ItemStatus = "UNKNOWN"
 )
 
 // swagger:parameters getCloudMigrationRun

@@ -150,9 +150,7 @@ func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.
 	if err := ss.encryptKey(ctx, &snapshot); err != nil {
 		return "", err
 	}
-	if snapshot.Result == nil {
-		snapshot.Result = make([]byte, 0)
-	}
+
 	if snapshot.UID == "" {
 		snapshot.UID = util.GenerateShortUID()
 	}
@@ -193,14 +191,14 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 			return err
 		}
 
-		// Update result if set
+		// Update resources if set
 		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			if len(update.Result) > 0 {
-				rawSQL := "UPDATE cloud_migration_snapshot SET result=? WHERE uid=?"
-				if _, err := sess.Exec(rawSQL, update.Result, update.UID); err != nil {
-					return fmt.Errorf("updating snapshot result for uid %s: %w", update.UID, err)
-				}
-			}
+			// if len(update.Resources) > 0 {
+			// 	rawSQL := "UPDATE cloud_migration_snapshot SET result=? WHERE uid=?"
+			// 	if _, err := sess.Exec(rawSQL, update.Result, update.UID); err != nil {
+			// 		return fmt.Errorf("updating snapshot result for uid %s: %w", update.UID, err)
+			// 	}
+			// }
 			return nil
 		}); err != nil {
 			return err

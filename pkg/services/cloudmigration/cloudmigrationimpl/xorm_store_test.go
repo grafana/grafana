@@ -110,10 +110,9 @@ func Test_CreateMigrationRun(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("creates a session run and retrieves it from db", func(t *testing.T) {
-		result := []byte("OK")
 		cmr := cloudmigration.CloudMigrationSnapshot{
 			SessionUID: "asdfg",
-			Result:     result,
+			Status:     cloudmigration.SnapshotStatusFinished,
 		}
 
 		createResp, err := s.CreateMigrationRun(ctx, cmr)
@@ -122,7 +121,7 @@ func Test_CreateMigrationRun(t *testing.T) {
 
 		getMRResp, err := s.GetMigrationStatus(ctx, createResp)
 		require.NoError(t, err)
-		require.Equal(t, result, getMRResp.Result)
+		require.Equal(t, cmr.Status, getMRResp.Status)
 	})
 }
 

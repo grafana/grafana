@@ -417,18 +417,15 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 		return response.ErrOrFallback(http.StatusInternalServerError, "error retrieving snapshot", err)
 	}
 
-	result, err := snapshot.GetSnapshotResult()
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "error snapshot reading snapshot results", err)
-	}
+	results := snapshot.Results
 
-	dtoResults := make([]MigrateDataResponseItemDTO, len(result))
-	for i := 0; i < len(result); i++ {
+	dtoResults := make([]MigrateDataResponseItemDTO, len(results))
+	for i := 0; i < len(results); i++ {
 		dtoResults[i] = MigrateDataResponseItemDTO{
-			Type:   MigrateDataType(result[i].Type),
-			RefID:  result[i].RefID,
-			Status: ItemStatus(result[i].Status),
-			Error:  result[i].Error,
+			Type:   MigrateDataType(results[i].Type),
+			RefID:  results[i].RefID,
+			Status: ItemStatus(results[i].Status),
+			Error:  results[i].Error,
 		}
 	}
 
