@@ -201,7 +201,7 @@ func TestEntityToResource(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.entity.Key+" to resource conversion should succeed", func(t *testing.T) {
 			var p v0alpha1.Playlist
-			err := entityToResource(tc.entity, &p, Codecs.LegacyCodec(v0alpha1.PlaylistResourceInfo.GroupVersion()))
+			err := EntityToRuntimeObject(tc.entity, &p, Codecs.LegacyCodec(v0alpha1.PlaylistResourceInfo.GroupVersion()))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedApiVersion, p.TypeMeta.APIVersion)
 			assert.Equal(t, tc.expectedCreationTimestamp.Unix(), p.ObjectMeta.CreationTimestamp.Unix())

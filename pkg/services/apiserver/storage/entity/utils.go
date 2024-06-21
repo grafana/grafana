@@ -19,7 +19,7 @@ import (
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
 
-func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime.Codec) error {
+func EntityToRuntimeObject(rsp *entityStore.Entity, res runtime.Object, codec runtime.Codec) error {
 	var err error
 
 	// Read the body first -- it includes old resourceVersion!
