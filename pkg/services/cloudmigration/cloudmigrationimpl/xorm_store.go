@@ -179,38 +179,31 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 	}
 	err := ss.db.InTransaction(ctx, func(ctx context.Context) error {
 		// Update status if set
-		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			if update.Status != "" {
+		if update.Status != "" {
+			if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 				rawSQL := "UPDATE cloud_migration_snapshot SET status=? WHERE uid=?"
 				if _, err := sess.Exec(rawSQL, update.Status, update.UID); err != nil {
 					return fmt.Errorf("updating snapshot status for uid %s: %w", update.UID, err)
 				}
+				return nil
+			}); err != nil {
+				return err
 			}
-			return nil
-		}); err != nil {
-			return err
 		}
 
 		// Update resources if set
-		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			// if len(update.Resources) > 0 {
-			// 	rawSQL := "UPDATE cloud_migration_snapshot SET result=? WHERE uid=?"
-			// 	if _, err := sess.Exec(rawSQL, update.Result, update.UID); err != nil {
-			// 		return fmt.Errorf("updating snapshot result for uid %s: %w", update.UID, err)
-			// 	}
-			// }
-			return nil
-		}); err != nil {
-			return err
+		if len(update.Resources) > 0 {
+			if err := ss.UpdateSnapshotResources(ctx, update.Resources); err != nil {
+				return err
+			}
 		}
-
 		return nil
 	})
 
 	return err
 }
 
-func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string, resultOffset int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error) {
 	var snapshot cloudmigration.CloudMigrationSnapshot
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exist, err := sess.Where("uid=?", uid).Get(&snapshot)
@@ -222,14 +215,23 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string) (*cloudmig
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	if err := ss.decryptKey(ctx, &snapshot); err != nil {
 		return &snapshot, err
 	}
 
+	resources, err := ss.GetSnapshotResources(ctx, uid, resultOffset, resultLimit)
+	if err != nil {
+		snapshot.Resources = resources
+	}
+
 	return &snapshot, err
 }
 
+// GetSnapshotList returns snapshots without resources included. Use GetSnapshotByUID to get individual snapshot results.
 func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
 	var runs = make([]cloudmigration.CloudMigrationSnapshot, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
@@ -245,6 +247,10 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 }
 
 func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.MigrationResource) error {
+	// ensure snapshot_uids are consistent
+	for i := 0; i < len(resources); i++ {
+		resources[i].SnapshotUID = snapshotUid
+	}
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Insert(resources)
 		return err
@@ -266,11 +272,18 @@ func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string
 }
 
 // Updates only mutable fields of cloudmigration.MigrationResource
-func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.MigrationResource) error {
+func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, resources []cloudmigration.MigrationResource) error {
+	// ensure uids are set on each resources
+	for i := 0; i < len(resources); i++ {
+		if err := util.ValidateUID(resources[i].UID); err != nil {
+			return fmt.Errorf("missing or invalid uids: %w", err)
+		}
+	}
+
+	sql := "UPDATE cloud_migration_resource SET status=?, error_string=? WHERE uid=?"
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		sql := "UPDATE cloud_migration_resource SET status=?, error_string=? WHERE uid=? AND snapshot_uid=?"
 		for _, r := range resources {
-			_, err := sess.Exec(sql, r.Status, r.Error, r.UID, snapshotUid)
+			_, err := sess.Exec(sql, r.Status, r.Error, r.UID)
 			if err != nil {
 				return err
 			}

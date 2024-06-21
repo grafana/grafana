@@ -18,11 +18,11 @@ type store interface {
 
 	CreateSnapshot(ctx context.Context, snapshot cloudmigration.CloudMigrationSnapshot) (string, error)
 	UpdateSnapshot(ctx context.Context, snapshot cloudmigration.UpdateSnapshotCmd) error
-	GetSnapshotByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSnapshot, error)
+	GetSnapshotByUID(ctx context.Context, uid string, resultOffset int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error)
 	GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error)
 
 	CreateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.MigrationResource) error
 	GetSnapshotResources(ctx context.Context, snapshotUid string, offset int, limit int) ([]cloudmigration.MigrationResource, error)
-	UpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.MigrationResource) error
+	UpdateSnapshotResources(ctx context.Context, resources []cloudmigration.MigrationResource) error
 	DeleteSnapshotResources(ctx context.Context, snapshotUid string) error
 }

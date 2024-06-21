@@ -111,7 +111,7 @@ func (m FakeServiceImpl) GetMigrationStatus(_ context.Context, _ string) (*cloud
 		ID:         0,
 		UID:        "fake_uid",
 		SessionUID: "fake_mig_uid",
-		Results:    fakeMigrateDataResponseDTO().Items,
+		Resources:  fakeMigrateDataResponseDTO().Items,
 		Created:    fixedDate,
 		Updated:    fixedDate,
 		Finished:   fixedDate,
@@ -141,13 +141,13 @@ func (m FakeServiceImpl) CreateSnapshot(ctx context.Context, sessionUid string) 
 	}, nil
 }
 
-func (m FakeServiceImpl) GetSnapshot(ctx context.Context, sessionUid string, snapshotUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+func (m FakeServiceImpl) GetSnapshot(ctx context.Context, query cloudmigration.GetSnapshotsQuery) (*cloudmigration.CloudMigrationSnapshot, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
 	return &cloudmigration.CloudMigrationSnapshot{
 		UID:        util.GenerateShortUID(),
-		SessionUID: sessionUid,
+		SessionUID: query.SessionUID,
 		Status:     cloudmigration.SnapshotStatusUnknown,
 	}, nil
 }

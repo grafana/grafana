@@ -407,7 +407,7 @@ func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration
 	// save the result of the migration
 	runUID, err := s.createMigrationRun(ctx, cloudmigration.CloudMigrationSnapshot{
 		SessionUID: migration.UID,
-		Results:    resp.Items,
+		Resources:  resp.Items,
 	})
 	if err != nil {
 		response.Error(http.StatusInternalServerError, "migration run save error", err)
@@ -507,11 +507,12 @@ func (s *Service) CreateSnapshot(ctx context.Context, sessionUid string) (*cloud
 }
 
 // GetSnapshot returns the on-prem version of a snapshot, supplemented with processing status from GMS
-func (s *Service) GetSnapshot(ctx context.Context, sessionUid string, snapshotUid string) (*cloudmigration.CloudMigrationSnapshot, error) {
+func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnapshotsQuery) (*cloudmigration.CloudMigrationSnapshot, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetSnapshot")
 	defer span.End()
 
-	snapshot, err := s.store.GetSnapshotByUID(ctx, snapshotUid)
+	sessionUid, snapshotUid := query.SessionUID, query.SnapshotUID
+	snapshot, err := s.store.GetSnapshotByUID(ctx, snapshotUid, 0, 1000)
 	if err != nil {
 		return nil, fmt.Errorf("fetching snapshot for uid %s: %w", snapshotUid, err)
 	}
@@ -528,16 +529,12 @@ func (s *Service) GetSnapshot(ctx context.Context, sessionUid string, snapshotUi
 			return nil, fmt.Errorf("error fetching snapshot status from GMS: sessionUid: %s, snapshotUid: %s", sessionUid, snapshotUid)
 		}
 
-		// grab any result available
-		// TODO: figure out a more intelligent way to do this, will depend on GMS apis
-		//snapshot.Results = snapshotMeta.Result
-
 		if snapshotMeta.Status == cloudmigration.SnapshotStatusFinished {
 			// we need to update the snapshot in our db before reporting anything finished to the client
 			if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
 				UID:       snapshot.UID,
 				Status:    cloudmigration.SnapshotStatusFinished,
-				Resources: snapshot.Results,
+				Resources: snapshot.Resources,
 			}); err != nil {
 				return nil, fmt.Errorf("error updating snapshot status: %w", err)
 			}
@@ -562,7 +559,10 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.UploadSnapshot")
 	defer span.End()
 
-	snapshot, err := s.GetSnapshot(ctx, sessionUid, snapshotUid)
+	snapshot, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
+		SnapshotUID: snapshotUid,
+		SessionUID:  sessionUid,
+	})
 	if err != nil {
 		return fmt.Errorf("fetching snapshot with uid %s: %w", snapshotUid, err)
 	}

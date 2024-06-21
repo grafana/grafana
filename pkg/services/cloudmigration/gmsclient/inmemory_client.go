@@ -82,7 +82,7 @@ func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudm
 	gmsSnapshot := cloudmigration.CloudMigrationSnapshot{
 		Status:         cloudmigration.SnapshotStatusFinished,
 		GMSSnapshotUID: util.GenerateShortUID(),
-		Results:        results,
+		Resources:      results,
 		Finished:       time.Now(),
 	}
 

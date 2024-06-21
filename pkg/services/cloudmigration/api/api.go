@@ -412,12 +412,17 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
 	}
 
-	snapshot, err := cma.cloudMigrationService.GetSnapshot(ctx, sessUid, snapshotUid)
+	snapshot, err := cma.cloudMigrationService.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
+		SnapshotUID:  snapshotUid,
+		SessionUID:   sessUid,
+		ResultOffset: 0,
+		ResultLimit:  1000,
+	})
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "error retrieving snapshot", err)
 	}
 
-	results := snapshot.Results
+	results := snapshot.Resources
 
 	dtoResults := make([]MigrateDataResponseItemDTO, len(results))
 	for i := 0; i < len(results); i++ {

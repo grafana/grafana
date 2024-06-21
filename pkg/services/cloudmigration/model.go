@@ -44,7 +44,7 @@ type CloudMigrationSnapshot struct {
 	Finished       time.Time
 
 	// Stored in the cloud_migration_resource table
-	Results []MigrationResource `xorm:"-"` //store raw gms response body
+	Resources []MigrationResource `xorm:"-"` //store raw gms response body
 }
 
 type SnapshotStatus string
@@ -77,7 +77,7 @@ type MigrationResource struct {
 func (s CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
 	result := MigrateDataResponse{
 		RunUID: s.UID,
-		Items:  s.Results,
+		Items:  s.Resources,
 	}
 	return &result, nil
 }
@@ -103,6 +103,13 @@ type CloudMigrationSessionResponse struct {
 
 type CloudMigrationSessionListResponse struct {
 	Sessions []CloudMigrationSessionResponse
+}
+
+type GetSnapshotsQuery struct {
+	SnapshotUID  string
+	SessionUID   string
+	ResultOffset int
+	ResultLimit  int
 }
 
 type ListSnapshotsQuery struct {
