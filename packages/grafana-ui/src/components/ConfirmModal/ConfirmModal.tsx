@@ -44,8 +44,8 @@ export interface ConfirmModalProps {
   onDismiss(): void;
   /** Alternative action callback */
   onAlternative?(): void;
-  /** Disable the confirm button if needed */
-  isConfirmButtonDissabled?: boolean;
+  /** Disable the confirm button and the confirm text input if needed */
+  disabled?: boolean;
 }
 
 export const ConfirmModal = ({
@@ -64,7 +64,7 @@ export const ConfirmModal = ({
   onDismiss,
   onAlternative,
   confirmButtonVariant = 'destructive',
-  isConfirmButtonDissabled,
+  disabled,
 }: ConfirmModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
 
@@ -82,7 +82,7 @@ export const ConfirmModal = ({
         onConfirm={onConfirm}
         onDismiss={onDismiss}
         onAlternative={onAlternative}
-        isConfirmButtonDissabled={isConfirmButtonDissabled}
+        disabled={disabled}
       />
     </Modal>
   );
