@@ -270,16 +270,16 @@
     {
       "metadata": {
         "name": "alwaysSendUsageInisghts",
-        "resourceVersion": "1718969832408",
+        "resourceVersion": "1718969996875",
         "creationTimestamp": "2024-06-21T11:11:46Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-06-21 11:37:12.408705 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-06-21 11:39:56.875558 +0000 UTC"
         }
       },
       "spec": {
         "description": "Forces sending usage insights data no matter what if config.analytics.enabled is enabled",
         "stage": "experimental",
-        "codeowner": "@grafana/sharing-squad",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromAdminPage": true,
         "hideFromDocs": true
