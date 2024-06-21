@@ -139,4 +139,20 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 
 	errorStringColumn := Column{Name: "error_string", Type: DB_Text, Nullable: true}
 	mg.AddMigration("add snapshot error_string column", NewAddColumnMigration(migrationSnapshotTable, &errorStringColumn))
+
+	// --- create table for tracking resource migrations
+	migrationResourceTable := Table{
+		Name: "cloud_migration_resource",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "resource_type", Type: DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "resource_uid", Type: DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "status", Type: DB_NVarchar, Length: 20, Nullable: false},
+			{Name: "error_string", Type: DB_Text, Nullable: true},
+			{Name: "snapshot_uid", Type: DB_NVarchar, Length: 40, Nullable: false},
+		},
+	}
+
+	mg.AddMigration("create cloud_migration_resource table v1", NewAddTableMigration(migrationResourceTable))
 }

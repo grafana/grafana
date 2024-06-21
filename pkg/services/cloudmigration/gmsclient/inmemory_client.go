@@ -29,11 +29,11 @@ func (c *memoryClientImpl) MigrateData(
 	request cloudmigration.MigrateDataRequest,
 ) (*cloudmigration.MigrateDataResponse, error) {
 	result := cloudmigration.MigrateDataResponse{
-		Items: make([]cloudmigration.MigrateDataResponseItem, len(request.Items)),
+		Items: make([]cloudmigration.MigrationResource, len(request.Items)),
 	}
 
 	for i, v := range request.Items {
-		result.Items[i] = cloudmigration.MigrateDataResponseItem{
+		result.Items[i] = cloudmigration.MigrationResource{
 			Type:   v.Type,
 			RefID:  v.RefID,
 			Status: cloudmigration.ItemStatusOK,
@@ -68,7 +68,7 @@ func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudm
 		Finished:       time.Now(),
 	}
 
-	result := []cloudmigration.MigrateDataResponseItem{
+	result := []cloudmigration.MigrationResource{
 		{
 			Type:   cloudmigration.DashboardDataType,
 			RefID:  util.GenerateShortUID(),

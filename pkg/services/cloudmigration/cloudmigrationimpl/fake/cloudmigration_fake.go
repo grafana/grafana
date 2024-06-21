@@ -94,7 +94,7 @@ func (m FakeServiceImpl) RunMigration(_ context.Context, _ string) (*cloudmigrat
 func fakeMigrateDataResponseDTO() cloudmigration.MigrateDataResponse {
 	return cloudmigration.MigrateDataResponse{
 		RunUID: "fake_uid",
-		Items: []cloudmigration.MigrateDataResponseItem{
+		Items: []cloudmigration.MigrationResource{
 			{Type: "type", RefID: "make_refid", Status: "ok", Error: "none"},
 		},
 	}

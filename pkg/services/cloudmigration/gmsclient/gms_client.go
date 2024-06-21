@@ -137,10 +137,10 @@ func convertRequestToDTO(request cloudmigration.MigrateDataRequest) MigrateDataR
 }
 
 func convertResponseFromDTO(result MigrateDataResponseDTO) cloudmigration.MigrateDataResponse {
-	items := make([]cloudmigration.MigrateDataResponseItem, len(result.Items))
+	items := make([]cloudmigration.MigrationResource, len(result.Items))
 	for i := 0; i < len(result.Items); i++ {
 		item := result.Items[i]
-		items[i] = cloudmigration.MigrateDataResponseItem{
+		items[i] = cloudmigration.MigrationResource{
 			Type:   cloudmigration.MigrateDataType(item.Type),
 			RefID:  item.RefID,
 			Status: cloudmigration.ItemStatus(item.Status),

@@ -63,6 +63,18 @@ const (
 	SnapshotStatusUnknown           = "unknown"
 )
 
+type MigrationResource struct {
+	ID  int64  `xorm:"pk autoincr 'id'"`
+	UID string `xorm:"uid"`
+
+	Type   MigrateDataType `xorm:"resource_type"`
+	RefID  string          `xorm:"resource_uid"`
+	Status ItemStatus      `xorm:"status"`
+	Error  string          `xorm:"error_string"`
+
+	SnapshotUID string `xorm:"snapshot_uid"`
+}
+
 // Deprecated, use GetSnapshotResult for the async workflow
 func (s CloudMigrationSnapshot) GetResult() (*MigrateDataResponse, error) {
 	var result MigrateDataResponse
@@ -78,8 +90,8 @@ func (s CloudMigrationSnapshot) ShouldQueryGMS() bool {
 	return s.Status == SnapshotStatusPendingProcessing || s.Status == SnapshotStatusProcessing
 }
 
-func (s CloudMigrationSnapshot) GetSnapshotResult() ([]MigrateDataResponseItem, error) {
-	var result []MigrateDataResponseItem
+func (s CloudMigrationSnapshot) GetSnapshotResult() ([]MigrationResource, error) {
+	var result []MigrationResource
 	if len(s.Result) > 0 {
 		err := json.Unmarshal(s.Result, &result)
 		if err != nil {
@@ -178,18 +190,11 @@ const (
 
 type MigrateDataResponse struct {
 	RunUID string
-	Items  []MigrateDataResponseItem
+	Items  []MigrationResource
 }
 
 type MigrateDataResponseList struct {
 	RunUID string
-}
-
-type MigrateDataResponseItem struct {
-	Type   MigrateDataType
-	RefID  string
-	Status ItemStatus
-	Error  string
 }
 
 type CreateSessionResponse struct {
