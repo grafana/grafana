@@ -102,6 +102,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     const rowPlaceholder = ['Repeat Placeholder'];
 
     const testValues = values.length ? values : rowPlaceholder;
+    const testText = texts.length ? texts : variable.hasAllValue() ? 'All' : 'None';
 
     // Loop through variable values and create repeates
     for (let index = 0; index < testValues.length; index++) {
@@ -127,7 +128,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         }
       }
 
-      const rowClone = this.getRowClone(rowToRepeat, index, localValue, texts[index], rowContentHeight, children);
+      const rowClone = this.getRowClone(rowToRepeat, index, localValue, testText[index], rowContentHeight, children);
       rows.push(rowClone);
     }
 
