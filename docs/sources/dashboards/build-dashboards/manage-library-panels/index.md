@@ -74,7 +74,7 @@ Unlink a library panel when you want to make a change to the panel and not affec
 1. Select a library panel that is being used in dashboards.
 1. Click the panel you want to unlink.
 1. In the dialog box, select the dashboard from which you want to unlink the panel.
-1. Click **View panel in dashboard**.
+1. Click **View panel in \<dashboard name\>**.
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Hover over any part of the panel you want to unlink to display the menu icon on the top-right corner.
 1. Click the menu icon and select **More > Unlink library panel**.
@@ -92,7 +92,7 @@ To replace a library panel with a different one, follow these steps:
 1. Select a library panel that is being used in different dashboards.
 1. Click the panel you want to unlink.
 1. In the dialog box, select the dashboard from which you want to unlink the panel.
-1. Click **View panel in dashboard**.
+1. Click **View panel in \<dashboard name\>**.
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Hover over any part of the panel you want to unlink to display the menu icon on the top-right corner.
 1. Click the menu icon and select **More > Replace library panel**.
@@ -119,7 +119,7 @@ You can view a list of available library panels and see where those panels are b
 
 1. Click the panel to see if it's being used in any dashboards.
 1. (Optional) If the library panel is in use, select one of the dashboards using it.
-1. (Optional) Click **View panel in dashboard** to see the panel in context.
+1. (Optional) Click **View panel in \<dashboard name\>** to see the panel in context.
 
 ## Delete a library panel
 
