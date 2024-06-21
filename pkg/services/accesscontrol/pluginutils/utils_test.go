@@ -167,7 +167,7 @@ func TestValidatePluginRole(t *testing.T) {
 				Name:        "plugins:test-app:reader",
 				DisplayName: "Plugin Folder Reader",
 				Permissions: []ac.Permission{
-					{Action: "folders:read", Scope: "plugins:id:other-app"},
+					{Action: "folders:read", Scope: "folders:uid:other-app"},
 				},
 			},
 			wantErr: &ac.ErrorInvalidRole{},
