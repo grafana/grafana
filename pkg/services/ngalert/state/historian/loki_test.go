@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,16 +16,24 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/folder"
+	rulesAuthz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 func TestRemoteLokiBackend(t *testing.T) {
@@ -197,12 +206,17 @@ func TestRemoteLokiBackend(t *testing.T) {
 	t.Run("selector string", func(t *testing.T) {
 		selectors := []Selector{{"name", "=", "Bob"}, {"age", "=~", "30"}}
 		expected := "{name=\"Bob\",age=~\"30\"}"
-		result := selectorString(selectors)
+		result := selectorString(selectors, nil)
+		require.Equal(t, expected, result)
+
+		selectors = []Selector{{"name", "=", "quoted\"string"}, {"age", "=~", "30"}}
+		expected = "{name=\"quoted\\\"string\",age=~\"30\",folderUID~=`some\\\\d\\.r\\$|normal_string`}"
+		result = selectorString(selectors, []string{`some\d.r$`, "normal_string"})
 		require.Equal(t, expected, result)
 
 		selectors = []Selector{}
 		expected = "{}"
-		result = selectorString(selectors)
+		result = selectorString(selectors, nil)
 		require.Equal(t, expected, result)
 	})
 
@@ -221,10 +235,11 @@ func TestRemoteLokiBackend(t *testing.T) {
 func TestBuildLogQuery(t *testing.T) {
 	maxQuerySize := 110
 	cases := []struct {
-		name   string
-		query  models.HistoryQuery
-		exp    string
-		expErr error
+		name       string
+		query      models.HistoryQuery
+		folderUIDs []string
+		exp        string
+		expErr     error
 	}{
 		{
 			name:  "default includes state history label and orgID label",
@@ -282,8 +297,7 @@ func TestBuildLogQuery(t *testing.T) {
 					"customlabel": "customvalue",
 				},
 			},
-			exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`,
-		},
+			exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`},
 		{
 			name: "should return if query does not exceed max limit",
 			query: models.HistoryQuery{
@@ -306,11 +320,23 @@ func TestBuildLogQuery(t *testing.T) {
 			},
 			expErr: ErrLokiQueryTooLong,
 		},
+		{
+			name: "filters by all namespaces",
+			query: models.HistoryQuery{
+				OrgID:   123,
+				RuleUID: "rule-uid",
+				Labels: map[string]string{
+					"customlabel": "customvalue",
+				},
+			},
+			folderUIDs: []string{"folder-1", "folder-2", "folder\\d"},
+			exp:        `{orgID="123",from="state-history",folderUID~=` + "`folder-1|folder-2|folder\\\\d`" + `} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`,
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := BuildLogQuery(tc.query, maxQuerySize)
+			res, err := BuildLogQuery(tc.query, tc.folderUIDs, maxQuerySize)
 			if tc.expErr != nil {
 				require.ErrorIs(t, err, tc.expErr)
 				return
@@ -434,7 +460,7 @@ func TestMerge(t *testing.T) {
 func TestRecordStates(t *testing.T) {
 	t.Run("writes state transitions to loki", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
+		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State:  eval.Alerting,
@@ -450,8 +476,8 @@ func TestRecordStates(t *testing.T) {
 	t.Run("emits expected write metrics", func(t *testing.T) {
 		reg := prometheus.NewRegistry()
 		met := metrics.NewHistorianMetrics(reg, metrics.Subsystem)
-		loki := createTestLokiBackend(NewFakeRequester(), met)
-		errLoki := createTestLokiBackend(NewFakeRequester().WithResponse(badResponse()), met) //nolint:bodyclose
+		loki := createTestLokiBackend(t, NewFakeRequester(), met)
+		errLoki := createTestLokiBackend(t, NewFakeRequester().WithResponse(badResponse()), met) //nolint:bodyclose
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State:  eval.Alerting,
@@ -486,7 +512,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 
 	t.Run("elides request if nothing to send", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
+		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := []state.StateTransition{}
 
@@ -498,7 +524,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 
 	t.Run("succeeds with special chars in labels", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
+		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State: eval.Alerting,
@@ -521,7 +547,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 
 	t.Run("adds external labels to log lines", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
+		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State: eval.Alerting,
@@ -537,7 +563,153 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 	})
 }
 
-func createTestLokiBackend(req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
+func TestGetFolderUIDsForFilter(t *testing.T) {
+	orgID := int64(1)
+	rule := models.RuleGen.With(models.RuleMuts.WithNamespaceUID("folder-1")).GenerateRef()
+	folders := []string{
+		"folder-1",
+		"folder-2",
+		"folder-3",
+	}
+	usr := accesscontrol.BackgroundUser("test", 1, org.RoleNone, nil)
+
+	createLoki := func(ac AccessControl) *RemoteLokiBackend {
+		req := NewFakeRequester()
+		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
+		rules := fakes.NewRuleStore(t)
+		f := make([]*folder.Folder, 0, len(folders))
+		for _, uid := range folders {
+			f = append(f, &folder.Folder{UID: uid, OrgID: orgID})
+		}
+		rules.Folders = map[int64][]*folder.Folder{
+			orgID: f,
+		}
+		rules.Rules = map[int64][]*models.AlertRule{
+			orgID: {rule},
+		}
+		loki.ruleStore = rules
+		loki.ac = ac
+		return loki
+	}
+
+	t.Run("when rule UID is specified", func(t *testing.T) {
+		t.Run("should bypass authorization if user can read all rules", func(t *testing.T) {
+			ac := &acfakes.FakeRuleService{}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, requester identity.Requester) (bool, error) {
+				return true, nil
+			}
+			result, err := createLoki(ac).getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
+			assert.NoError(t, err)
+			assert.Empty(t, result)
+
+			assert.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].MethodName)
+			assert.Equal(t, usr, ac.Calls[0].Arguments[1])
+
+			t.Run("even if rule does not exist", func(t *testing.T) {
+				result, err := createLoki(ac).getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: "not-found", SignedInUser: usr})
+				assert.NoError(t, err)
+				assert.Empty(t, result)
+			})
+		})
+
+		t.Run("should authorize access to the rule", func(t *testing.T) {
+			ac := &acfakes.FakeRuleService{}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, requester identity.Requester) (bool, error) {
+				return false, nil
+			}
+			ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, namespaced models.Namespaced) error {
+				return nil
+			}
+			loki := createLoki(ac)
+
+			result, err := loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
+			assert.NoError(t, err)
+			assert.Empty(t, result)
+
+			assert.Len(t, ac.Calls, 2)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].MethodName)
+			assert.Equal(t, usr, ac.Calls[0].Arguments[1])
+			assert.Equal(t, "AuthorizeAccessInFolder", ac.Calls[1].MethodName)
+			assert.Equal(t, usr, ac.Calls[1].Arguments[1])
+			assert.Equal(t, rule, ac.Calls[1].Arguments[2])
+
+			t.Run("should fail if unauthorized", func(t *testing.T) {
+				authzErr := errors.New("generic error")
+				ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, namespaced models.Namespaced) error {
+					return authzErr
+				}
+				result, err = loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
+				require.ErrorIs(t, err, authzErr)
+			})
+
+			t.Run("should fail if rule does not exist", func(t *testing.T) {
+				result, err = loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: "not-found", SignedInUser: usr})
+				require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
+			})
+		})
+	})
+
+	t.Run("when rule UID is empty", func(t *testing.T) {
+		t.Run("should bypass authorization if user can read all rules", func(t *testing.T) {
+			ac := &acfakes.FakeRuleService{}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, requester identity.Requester) (bool, error) {
+				return true, nil
+			}
+			result, err := createLoki(ac).getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
+			assert.NoError(t, err)
+			assert.Empty(t, result)
+
+			assert.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].MethodName)
+			assert.Equal(t, usr, ac.Calls[0].Arguments[1])
+		})
+
+		t.Run("should return only folders user has access to", func(t *testing.T) {
+			ac := &acfakes.FakeRuleService{}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, requester identity.Requester) (bool, error) {
+				return false, nil
+			}
+			ac.HasAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, namespaced models.Namespaced) (bool, error) {
+				return true, nil
+			}
+			loki := createLoki(ac)
+
+			result, err := loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
+			assert.NoError(t, err)
+			assert.EqualValues(t, folders, result)
+
+			assert.Len(t, ac.Calls, len(folders)+1)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].MethodName)
+			assert.Equal(t, usr, ac.Calls[0].Arguments[1])
+			for i, folderUID := range folders {
+				assert.Equal(t, "HasAccessInFolder", ac.Calls[i+1].MethodName)
+				assert.Equal(t, usr, ac.Calls[i+1].Arguments[1])
+				assert.Equal(t, folderUID, ac.Calls[i+1].Arguments[2].(models.Namespaced).GetNamespaceUID())
+			}
+
+			t.Run("should fail if no folders to read", func(t *testing.T) {
+				loki := createLoki(ac)
+				loki.ruleStore = fakes.NewRuleStore(t)
+
+				result, err = loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
+				require.ErrorIs(t, err, rulesAuthz.ErrAuthorizationBase)
+				require.Empty(t, result)
+			})
+
+			t.Run("should fail if no folders to read alert rules in", func(t *testing.T) {
+				ac.HasAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, namespaced models.Namespaced) (bool, error) {
+					return false, nil
+				}
+				result, err = loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
+				require.ErrorIs(t, err, rulesAuthz.ErrAuthorizationBase)
+				require.Empty(t, result)
+			})
+		})
+	})
+}
+
+func createTestLokiBackend(t *testing.T, req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
 	url, _ := url.Parse("http://some.url")
 	cfg := LokiConfig{
 		WritePathURL:   url,
@@ -546,7 +718,9 @@ func createTestLokiBackend(req client.Requester, met *metrics.Historian) *Remote
 		ExternalLabels: map[string]string{"externalLabelKey": "externalLabelValue"},
 	}
 	lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")
-	return NewRemoteLokiBackend(lokiBackendLogger, cfg, req, met, tracing.InitializeTracerForTest())
+	rules := fakes.NewRuleStore(t)
+	ac := &acfakes.FakeRuleService{}
+	return NewRemoteLokiBackend(lokiBackendLogger, cfg, req, met, tracing.InitializeTracerForTest(), rules, ac)
 }
 
 func singleFromNormal(st *state.State) []state.StateTransition {
