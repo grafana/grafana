@@ -42,7 +42,7 @@ To compare two dashboard versions, follow these steps:
 
 When you're comparing versions, if one of the versions you've selected is the latest version, a button to restore the previous version is also displayed, so you can restore a version from the compare view:
 
-![Dashboards versions diff](/media/docs/grafana/dashboards/screenshot-dashboard-versions-diff-basic-11.2.png)
+![Dashboards versions diff](/media/docs/grafana/dashboards/screenshot-dashboard-compare-versions-restore-11.2.png)
 
 ## Restore a previously dashboard version
 

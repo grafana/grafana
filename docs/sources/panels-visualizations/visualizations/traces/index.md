@@ -106,7 +106,7 @@ This procedure uses dashboard variables and templates to allow you to enter trac
 1. Click **Settings** and go to the **Variables** tab.
 1. Add a new variable called `traceId`, of variable type **Custom**, giving it a label if required.
 
-   {{< figure  src="/static/img/docs/panels/traces/screenshot-traces-custom-variable.png" max-width="50%" caption="Add a Custom variable" >}}
+   {{< figure  src="/media/docs/grafana/dashboards/screenshot-traces-custom-variable-11.2.png" max-width="50%" caption="Add a Custom variable" >}}
 
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
