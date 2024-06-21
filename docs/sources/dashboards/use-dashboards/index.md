@@ -44,9 +44,29 @@ refs:
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows
   variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+  dashboard-folders:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/
+  sharing:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/
+  dashboard-links:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/manage-dashboard-links/
+  panel-overview:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-overview/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-overview/
 ---
 
 # Use dashboards
@@ -63,28 +83,28 @@ The following image and descriptions highlight all dashboard features.
 
 ![An annotated image of a dashboard](/media/docs/grafana/dashboards/screenshot-dashboard-annotated-11.2.png)
 
-- (1) **Grafana home** - Click **Home** in the breadcrumb to go to the home page configured in the Grafana instance.
-- (2) **Dashboard folder** - When you click the dashboard title, you can search for dashboards contained in the current folder.
-- (3) **Dashboard title** - You can create your own dashboard titles or have Grafana create them for you using [generative AI features](ref:generative-ai-features).
-- (4) **Mark as favorite** - Mark the dashboard as one of your favorites so it's included in your list of **Starred** dashboards in the main menu.
-- (5) **Dashboard insights** - Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics](ref:dashboard-analytics).
-- (6) **Share dashboard** - Use this option to share the current dashboard.
-- (7) **Edit** - Click to leave view-only mode and enter edit mode, where you can make changes directly to the dashboard, access dashboard settings, and several panel editing functions.
-- (8) **View mode** - Click to display the dashboard on a large screen such as a TV or a kiosk. View mode hides elements such as navigation menus. Learn more about view mode in our [How to Create Kiosks to Display Dashboards on a TV blog post](https://grafana.com/blog/2019/05/02/grafana-tutorial-how-to-create-kiosks-to-display-dashboards-on-a-tv/).
-- (9) **Variables** - Use [variables](ref:variables) to make your dashboards more dynamic.
-- (10) **Dashboard links** - Link to other dashboards, panels, and external websites.
-- (11) **Current dashboard time range and time picker** Click to select relative time range options and set custom absolute time ranges.
-  - You can change the **Timezone** and **Fiscal year** settings from the time range controls by clicking the **Change time settings** button.
-  - Time settings are saved on a per-dashboard basis.
-- (12) **Time range zoom out**: Click to zoom out the time range. Learn more about how to use [common time range controls](#common-time-range-controls).
-- (13) **Refresh dashboard**: Click to immediately trigger queries and refresh dashboard data.
-- (14) **Auto refresh control**: Click to select a dashboard auto refresh time interval.
-- (15) **Dashboard row**: A dashboard row is a logical divider within a dashboard that groups panels together.
-  - Rows can be collapsed or expanded allowing you to hide parts of the dashboard.
-  - Panels inside a collapsed row do not issue queries.
-  - Use [repeating rows](ref:repeating-rows) to dynamically create rows based on a template variable.
-- (16) **Dashboard panel**: The primary building block of a dashboard is the panel.
-- (17) **Panel legend**: Change series colors, y-axis and series visibility directly from the legend.
+1. **Grafana home** - Click **Home** in the breadcrumb to go to the home page configured in the Grafana instance.
+1. **Dashboard folder** - When you click the dashboard folder name, you can search for other dashboards contained in the folder and perform other [folder management tasks](ref:dashboard-folders).
+1. **Dashboard title** - You can create your own dashboard titles or have Grafana create them for you using [generative AI features](ref:generative-ai-features).
+1. **Mark as favorite** - Mark the dashboard as one of your favorites so it's included in your list of **Starred** dashboards in the main menu.
+1. **Dashboard insights** - Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics](ref:dashboard-analytics).
+1. **Share dashboard** - Access several [dashboard sharing](ref:sharing) options.
+1. **Edit** - Click to leave view-only mode and enter edit mode, where you can make changes directly to the dashboard and access dashboard settings, as well as several panel editing functions.
+1. **Kiosk mode** - Click to display the dashboard on a large screen such as a TV or a kiosk. Kiosk mode hides elements such as navigation menus. Learn more about kiosk mode in our [How to Create Kiosks to Display Dashboards on a TV blog post](https://grafana.com/blog/2019/05/02/grafana-tutorial-how-to-create-kiosks-to-display-dashboards-on-a-tv/). Press `Enter` to leave kiosk mode.
+1. **Variables** - Use [variables](ref:variables) to create more interactive and dynamic dashboards.
+1. **Dashboard links** - Link to other dashboards, panels, and external websites. Learn more about [dashboard links](ref:dashboard-links).
+1. **Current dashboard time range and time picker** - Click to select [relative time range](#relative-time-range) options and set custom [absolute time ranges](#absolute-time-range).
+   - You can change the **Timezone** and **Fiscal year** settings from the time range controls by clicking the **Change time settings** button.
+   - Time settings are saved on a per-dashboard basis.
+1. **Time range zoom out** - Click to zoom out the time range. Learn more about how to use [common time range controls](#common-time-range-controls).
+1. **Refresh dashboard** - Click to immediately trigger queries and refresh dashboard data.
+1. **Auto refresh control** - Click to select a dashboard auto refresh time interval.
+1. **Dashboard row** - A dashboard row is a logical divider within a dashboard that groups panels together.
+   - Rows can be collapsed or expanded allowing you to hide parts of the dashboard.
+   - Panels inside a collapsed row do not issue queries.
+   - Use [repeating rows](ref:repeating-rows) to dynamically create rows based on a template variable.
+1. **Dashboard panel** - The [panel](ref:panel-overview) is the primary building block of a dashboard.
+1. **Panel legend** - Change series colors as well as y-axis and series visibility directly from the legend.
 
 ## Keyboard shortcuts
 
