@@ -92,6 +92,19 @@
     },
     {
       "metadata": {
+        "name": "alertingApiServer",
+        "resourceVersion": "1718908755156",
+        "creationTimestamp": "2024-06-20T18:39:15Z"
+      },
+      "spec": {
+        "description": "Register Alerting APIs with the K8s API server",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingBacktesting",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2022-12-14T14:44:14Z"
@@ -1676,6 +1689,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "requiresDevMode": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "passScopeToDashboardApi",
+        "resourceVersion": "1718290335877",
+        "creationTimestamp": "2024-06-13T14:52:15Z"
+      },
+      "spec": {
+        "description": "Enables the passing of scopes to dashboards fetching in Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {

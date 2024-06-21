@@ -197,4 +197,6 @@ export interface FeatureToggles {
   failWrongDSUID?: boolean;
   databaseReadReplica?: boolean;
   zanzana?: boolean;
+  passScopeToDashboardApi?: boolean;
+  alertingApiServer?: boolean;
 }
