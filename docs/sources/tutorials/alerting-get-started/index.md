@@ -93,7 +93,7 @@ Next, let's configure a contact point in Grafana's Alerting UI to send notificat
 1. Click **Test**, and then click **Send test notification** to send a test alert to your webhook endpoint.
 1. Navigate back to [Webhook.site](https://webhook.site/). On the left side, there's now a `POST /` entry. Click it to see what information Grafana sent.
 
-   {{< figure src="/media/docs/alerting/alerting-webhook-detail.png" max-width="1200px" caption="A POST entry in Webhook.site" >}}
+   {{< figure alt="Screenshot showing a POST entry in Webhook.site, detailing the headers and payload of an incoming webhook request"  src="/media/docs/alerting/alerting-webhook-detail.png" max-width="1200px" caption="A POST entry in Webhook.site" >}}
 
 1. Return to Grafana and click **Save contact point**.
 
@@ -134,7 +134,7 @@ In this section, we define queries, expressions (used to manipulate the data), a
 
    It should return a single sample with the value 1 at the current timestamp. And, since `1` is above `0`, the alert condition has been met, and the alert rule state is `Firing`.
 
-   {{< figure src="/media/docs/alerting/alerting-always-firing-alert.png" max-width="1200px" caption="A preview of a firing alert" >}}
+   {{< figure alt="Screenshot displaying a preview of a firing alert, including the alert name, severity level, and brief description" src="/media/docs/alerting/alerting-always-firing-alert.png" max-width="1200px" caption="A preview of a firing alert" >}}
 
 ### Set evaluation behavior
 
@@ -166,7 +166,7 @@ Now that the alert rule has been configured, you should receive alert [notificat
 
 Since the alert rule that you have created has been configured to always fire, once the evaluation interval has concluded, you should receive an alert notification in the Webhook endpoint.
 
-{{< figure src="/media/docs/alerting/alerting-webhook-firing-alert.png" max-width="1200px" caption="Firing alert notification details" >}}
+{{< figure alt= "Screenshot showing the detailed notification of a firing alert, with specifics about the alert's status, affected systems, and timestamps" src="/media/docs/alerting/alerting-webhook-firing-alert.png" max-width="1200px" caption="Firing alert notification details" >}}
 
 The alert notification details show that the alert rule state is Firing , and it includes the value that made the rule trigger by exceeding the threshold of the alert rule condition. The notification also includes links to see the alert rule details, and another link to add a [Silence](http://grafana.com/docs/grafana/next/alerting/configure-notifications/create-silence/) to it.
 
