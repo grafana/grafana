@@ -170,7 +170,6 @@ message Sort {
 
 message ListOptions {
   // Namespace+Group+Resource+etc
-  // This must *not* include the resource version
   ResourceKey key = 1;
 
   // (best effort) Match label
