@@ -72,12 +72,34 @@ Unlink a library panel when you want to make a change to the panel and not affec
 1. Click **Dashboards** in the main menu.
 1. Click **Library panels**.
 1. Select a library panel that is being used in different dashboards.
-1. Select the panel you want to unlink.
-1. Hover over any part of the panel to display the actions menu on the top right corner.
-<!--is this workflow still correct or do you have to go to the dashboard and unlink it there?-->
-1. Click the menu and select **Edit**.
-1. Click **Unlink** on the top right corner of the page.
+1. Click the panel you want to unlink.
+1. In the dialog box, select the dashboard from which you want to unlink the panel.
+1. Click **View panel in <dashboard>**.
+1. Click **Edit** in the top-right corner of the dashboard.
+1. Hover over any part of the panel you want to unlink to display the menu on the top right corner.
+1. Click the menu and select **More > Unlink library panel**.
 1. Click **Yes, unlink**.
+1. Click **Save dashboard** and **Exit edit**.
+
+Alternatively, if you know where the library panel is being used, you can go directly to that dashboard and start at step 7.
+
+## Replace a library panel
+
+To replace a library panel with a different one, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Click **Library panels**.
+1. Select a library panel that is being used in different dashboards.
+1. Click the panel you want to unlink.
+1. In the dialog box, select the dashboard from which you want to unlink the panel.
+1. Click **View panel in <dashboard>**.
+1. Click **Edit** in the top-right corner of the dashboard.
+1. Hover over any part of the panel you want to unlink to display the menu on the top right corner.
+1. Click the menu and select **More > Replace library panel**.
+1. Select the replacement library panel.
+1. Click **Save dashboard**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save** and **Exit edit**.
 
 ## View a list of library panels
 
@@ -92,6 +114,10 @@ You can view a list of available library panels and search for a library panel.
 1. Search for a specific library panel if you know its name.
 
    You can also filter the panels by folder or type.
+
+1. Click the panel to see if it's being used in any dashboards.
+1. (Optional) If the library panel is in use, select one of the dashboards using it.
+1. (Optional) Click **View panel in <dashboard>** to see the panel in context.
 
 ## Delete a library panel
 
