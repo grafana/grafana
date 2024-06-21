@@ -24,7 +24,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
-  const isHomePage = !meta.url && !meta.slug && !meta.isNew && !meta.isSnapshot;
   const hasControls = controls?.hasControls();
 
   if (editview) {
@@ -84,7 +83,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             className={styles.scrollbarContainer}
             testId={selectors.pages.Dashboard.DashNav.scrollContainer}
           >
-            <div className={cx(styles.canvasContent, isHomePage && styles.homePagePadding)}>{body}</div>
+            <div className={cx(styles.canvasContent)}>{body}</div>
           </CustomScrollbar>
         </div>
       )}
@@ -136,9 +135,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     controlsWrapperWithScopes: css({
       padding: theme.spacing(2, 2, 2, 0),
-    }),
-    homePagePadding: css({
-      padding: theme.spacing(2, 2),
     }),
     canvasContent: css({
       label: 'canvas-content',
