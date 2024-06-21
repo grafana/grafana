@@ -157,6 +157,27 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 		}
 	}
 
+	var filterByUID map[string]struct{}
+	if q.AdditionalAction != "" {
+		// request all parent's UID to be able to resolve permissions correctly.
+		qry.WithFullpathUIDs = true
+
+		actionPermissions := permissions[q.AdditionalAction]
+		filterByUID = make(map[string]struct{}, len(actionPermissions))
+		if len(actionPermissions) == 0 && !q.SignedInUser.GetIsGrafanaAdmin() {
+			return nil, nil
+		}
+		for _, p := range folderPermissions {
+			if p == dashboards.ScopeFoldersAll {
+				filterByUID = nil // nil is not empty, it bypasses the check downstream
+				break
+			}
+			if folderUid, found := strings.CutPrefix(p, dashboards.ScopeFoldersPrefix); found {
+				filterByUID[folderUid] = struct{}{}
+			}
+		}
+	}
+
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		qry.WithFullpath = false // do not request full path if nested folders are disabled
 		qry.WithFullpathUIDs = false
@@ -186,6 +207,19 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 	for _, folder := range dashFolders {
 		if (folder.UID == accesscontrol.K6FolderUID || folder.ParentUID == accesscontrol.K6FolderUID) && !requesterIsSvcAccount {
 			continue
+		}
+		if filterByUID != nil {
+			_, found := filterByUID[folder.UID]
+			if !found && len(folder.FullpathUIDs) > 0 && folder.FullpathUIDs != folder.UID {
+				for _, parentUID := range strings.Split(folder.FullpathUIDs, "/") {
+					if _, found = filterByUID[parentUID]; found {
+						break
+					}
+				}
+			}
+			if !found {
+				continue
+			}
 		}
 		result = append(result, folder)
 	}
