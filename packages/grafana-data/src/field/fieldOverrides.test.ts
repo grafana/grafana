@@ -1,4 +1,5 @@
-import { ArrayDataFrame, createDataFrame, toDataFrame } from '../dataframe';
+import { ArrayDataFrame } from '../dataframe/ArrayDataFrame';
+import { createDataFrame, toDataFrame } from '../dataframe/processDataFrame';
 import { rangeUtil } from '../datetime';
 import { createTheme } from '../themes';
 import { FieldMatcherID } from '../transformations';

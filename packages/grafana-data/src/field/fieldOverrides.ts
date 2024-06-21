@@ -4,7 +4,8 @@ import usePrevious from 'react-use/lib/usePrevious';
 
 import { VariableFormatID } from '@grafana/schema';
 
-import { compareArrayValues, compareDataFrameStructures, guessFieldTypeForField } from '../dataframe';
+import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
+import { guessFieldTypeForField } from '../dataframe/processDataFrame';
 import { PanelPlugin } from '../panel/PanelPlugin';
 import { GrafanaTheme2 } from '../themes';
 import { asHexString } from '../themes/colorManipulator';

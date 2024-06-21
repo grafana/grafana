@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import { sortDataFrame } from '../../dataframe';
+import { sortDataFrame } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field';
 import { DataFrame } from '../../types';
 import { DataTransformContext, DataTransformerInfo } from '../../types/transformations';

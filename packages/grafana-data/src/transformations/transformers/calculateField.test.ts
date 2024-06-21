@@ -1,4 +1,4 @@
-import { DataFrameView } from '../../dataframe';
+import { DataFrameView } from '../../dataframe/DataFrameView';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { DataTransformContext, ScopedVars } from '../../types';
 import { FieldType } from '../../types/dataFrame';

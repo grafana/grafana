@@ -4,13 +4,8 @@ import { DataFrame, Field, FieldDTO, FieldType, Labels, parseLabels, QueryResult
 import { join } from '../transformations/transformers/joinDataFrames';
 import { renderLegendFormat } from '../utils/legend';
 
-import {
-  DataFrameJSON,
-  decodeFieldValueEntities,
-  FieldSchema,
-  guessFieldTypeFromValue,
-  toFilteredDataFrameDTO,
-} from '.';
+import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
+import { guessFieldTypeFromValue, toFilteredDataFrameDTO } from './processDataFrame';
 
 /**
  * Indicate if the frame is appened or replace

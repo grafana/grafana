@@ -1,7 +1,7 @@
 // Test with local CSV files
 import fs from 'fs';
 
-import { MutableDataFrame } from '../dataframe';
+import { MutableDataFrame } from '../dataframe/MutableDataFrame';
 import { getDataFrameRow, toDataFrameDTO } from '../dataframe/processDataFrame';
 import { getDisplayProcessor } from '../field';
 import { createTheme } from '../themes';

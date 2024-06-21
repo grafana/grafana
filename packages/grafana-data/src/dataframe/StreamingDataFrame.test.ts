@@ -1,5 +1,6 @@
-import { DataFrame, DataFrameJSON, FieldType, getFieldDisplayName, reduceField, ReducerID } from '..';
+import { DataFrame, FieldType, getFieldDisplayName, reduceField, ReducerID } from '..';
 
+import { DataFrameJSON } from './DataFrameJSON';
 import {
   closestIdx,
   getStreamingFrameOptions,

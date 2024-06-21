@@ -5,7 +5,6 @@
  */
 export * from './utils';
 export * from './types';
-export * from './dataframe';
 export * from './transformations';
 export * from './datetime';
 export * from './text';
@@ -17,6 +16,77 @@ export * from './monaco';
 export * from './geo/layer';
 export * from './query';
 export { amendTable, trimTable, type Table } from './table/amendTimeSeries';
+
+// DataFrames
+export { DataFrameView } from './dataframe/DataFrameView';
+export { type FieldWithIndex, FieldCache } from './dataframe/FieldCache';
+export { type MutableField, MISSING_VALUE, MutableDataFrame } from './dataframe/MutableDataFrame';
+export {
+  guessFieldTypeFromNameAndValue,
+  getFieldTypeFromValue,
+  guessFieldTypeFromValue,
+  guessFieldTypeForField,
+  guessFieldTypes,
+  isTableData,
+  isDataFrame,
+  isDataFrameWithValue,
+  toDataFrame,
+  toLegacyResponseData,
+  sortDataFrame,
+  reverseDataFrame,
+  getDataFrameRow,
+  toDataFrameDTO,
+  toFilteredDataFrameDTO,
+  getTimeField,
+  getProcessedDataFrames,
+  preProcessPanelData,
+  type PartialDataFrame,
+  createDataFrame,
+} from './dataframe/processDataFrame';
+
+export {
+  type Dimension,
+  type Dimensions,
+  createDimension,
+  getColumnsFromDimension,
+  getColumnFromDimension,
+  getValueFromDimension,
+  getAllValuesFromDimension,
+  getDimensionByName,
+} from './dataframe/dimensions';
+
+export {
+  anySeriesWithTimeField,
+  hasTimeField,
+  isTimeSeriesFrame,
+  isTimeSeriesFrames,
+  isTimeSeriesField,
+  getRowUniqueId,
+  addRow,
+} from './dataframe/utils';
+export {
+  StreamingDataFrame,
+  StreamingFrameAction,
+  type StreamingFrameOptions,
+  closestIdx,
+} from './dataframe/StreamingDataFrame';
+
+export { ArrayDataFrame, arrayToDataFrame } from './dataframe/ArrayDataFrame';
+
+export {
+  type DataFrameJSON,
+  type DataFrameData,
+  type DataFrameSchema,
+  type FieldSchema,
+  type FieldValueEntityLookup,
+  decodeFieldValueEntities,
+  decodeFieldValueEnums,
+  dataFrameFromJSON,
+  dataFrameToJSON,
+} from './dataframe/DataFrameJSON';
+
+export { compareDataFrameStructures, compareArrayValues, shallowCompare } from './dataframe/frameComparisons';
+
 export {
   type ValueMatcherOptions,
   type BasicValueMatcherOptions,
