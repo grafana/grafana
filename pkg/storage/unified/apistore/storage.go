@@ -211,9 +211,6 @@ func (s *Storage) Watch(ctx context.Context, _ string, opts storage.ListOptions)
 	if listopts == nil {
 		return watch.NewEmptyWatch(), nil
 	}
-	if len(listopts.Sort) > 0 {
-		return nil, apierrors.NewBadRequest("sorting not supported in watch")
-	}
 
 	cmd := &resource.WatchRequest{
 		Since:               listopts.ResourceVersion,
@@ -298,6 +295,8 @@ func toListRequest(ctx context.Context, opts storage.ListOptions) (*resource.Lis
 
 		for _, r := range requirements {
 			v := r.Key()
+
+			// TODO?? sorting in list not supported
 			if v == SortByKey {
 				if r.Operator() != selection.Equals {
 					return nil, predicate, apierrors.NewBadRequest("invalid sort operation // " + r.String())
@@ -315,7 +314,6 @@ func toListRequest(ctx context.Context, opts storage.ListOptions) (*resource.Lis
 				default:
 					return nil, predicate, apierrors.NewBadRequest("invalid sort order // " + r.String())
 				}
-				req.Sort = append(req.Sort, sort)
 				// TODO! Must update the predicate!
 				continue
 			}

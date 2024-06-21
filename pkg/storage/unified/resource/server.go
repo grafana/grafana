@@ -559,6 +559,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	since := req.Since
 	if req.SendInitialEvents {
 		fmt.Printf("TODO... query\n")
+		// All initial events are CREATE
 
 		if req.AllowWatchBookmarks {
 			fmt.Printf("TODO... send bookmark\n")
@@ -577,6 +578,11 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 			}
 
 			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
+				// Currently sending *every* event
+				if req.Options.Labels != nil {
+					// match *either* the old or new object
+				}
+
 				srv.Send(&WatchEvent{
 					Timestamp: event.Timestamp,
 					Type:      event.Type,

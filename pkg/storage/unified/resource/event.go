@@ -20,6 +20,9 @@ type WriteEvent struct {
 
 	// Access real fields
 	Object utils.GrafanaMetaAccessor
+
+	// Access to the old metadata
+	ObjectOld utils.GrafanaMetaAccessor
 }
 
 // WriteEvents after they include a resource version
@@ -84,6 +87,7 @@ func (b *writeEventBuilder) toEvent() (event WriteEvent, err error) {
 	event.EventID = b.EventID
 	event.Key = b.Key
 	event.Type = b.Type
+	event.ObjectOld = b.OldMeta
 	event.Object = b.Meta
 	event.Value, err = b.Object.MarshalJSON()
 	return // includes the named values

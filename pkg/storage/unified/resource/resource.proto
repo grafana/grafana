@@ -173,11 +173,16 @@ message ListOptions {
   // This must *not* include the resource version
   ResourceKey key = 1;
 
-  // Match label
+  // (best effort) Match label
+  // Allowed to send more results than actually match because the filter will be appled
+  // to the resutls agin in the client.  That time with the full field selector
   repeated Requirement labels = 2;
 
+  // TODO (later!) once we have a blob > search doc 
   // Match fields (not yet supported)
-  repeated Requirement fields = 3;
+  // metadata.name
+  // metadata.namespace
+  // repeated Requirement fields = 3;
 }
 
 enum ResourceVersionMatch {
@@ -201,9 +206,6 @@ message ListRequest {
 
   // Filtering
   ListOptions options = 5;
-
-  // Sorting instructions `field ASC/DESC`
-  repeated Sort sort = 6;
 }
 
 message ListResponse {
