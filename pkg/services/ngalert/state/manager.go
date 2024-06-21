@@ -335,7 +335,7 @@ func (st *Manager) ProcessEvalResults(
 	// the LastSentAt field to the store.
 	var statesToSend StateTransitions
 	if send != nil {
-		statesToSend = allChanges.UpdateLastSentAt(evaluatedAt, st.ResendDelay, st.ResolvedRetention)
+		statesToSend = st.updateLastSentAt(allChanges, evaluatedAt)
 	}
 
 	st.persister.Sync(ctx, span, allChanges)
@@ -350,6 +350,19 @@ func (st *Manager) ProcessEvalResults(
 	}
 
 	return allChanges
+}
+
+// updateLastSentAt returns the subset StateTransitions that need sending and updates their LastSentAt field.
+// Note: This is not idempotent, running this twice can (and usually will) return different results.
+func (st *Manager) updateLastSentAt(states StateTransitions, evaluatedAt time.Time) StateTransitions {
+	var result StateTransitions
+	for _, t := range states {
+		if t.NeedsSending(st.ResendDelay, st.ResolvedRetention) {
+			t.LastSentAt = &evaluatedAt
+			result = append(result, t)
+		}
+	}
+	return result
 }
 
 func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger) []StateTransition {
