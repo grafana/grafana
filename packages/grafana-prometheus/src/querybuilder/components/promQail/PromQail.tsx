@@ -4,11 +4,11 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import React, { useEffect, useReducer, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { store } from '@grafana/o11y-ds-frontend';
 import { reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
-import store from '../../../gcopypaste/app/core/store';
 import { PromVisualQuery } from '../../types';
 
 import { QuerySuggestionContainer } from './QuerySuggestionContainer';
