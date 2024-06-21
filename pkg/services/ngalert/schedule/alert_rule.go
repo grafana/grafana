@@ -420,7 +420,7 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 		func(ctx context.Context, statesToSend state.StateTransitions) {
 			start := a.clock.Now()
 			alerts := a.send(ctx, key, statesToSend)
-			span.AddEvent("results processed", trace.WithAttributes(
+			span.AddEvent("results sent", trace.WithAttributes(
 				attribute.Int64("alerts_sent", int64(len(alerts.PostableAlerts))),
 			))
 			sendDuration.Observe(a.clock.Now().Sub(start).Seconds())
