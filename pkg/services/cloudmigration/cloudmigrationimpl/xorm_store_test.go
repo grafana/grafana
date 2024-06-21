@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -180,16 +181,16 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NotEmpty(t, snapshotUid)
 
 		//retrieve it from the db
-		snapshot, err := s.GetSnapshotByUID(ctx, snapshotUid)
+		snapshot, err := s.GetSnapshotByUID(ctx, snapshotUid, 0, 0)
 		require.NoError(t, err)
 		require.Equal(t, cloudmigration.SnapshotStatusInitializing, string(snapshot.Status))
 
 		// update its status
-		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating})
+		err = s.UpdateSnapshot(ctx, snapshotUid, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating})
 		require.NoError(t, err)
 
 		//retrieve it again
-		snapshot, err = s.GetSnapshotByUID(ctx, snapshotUid)
+		snapshot, err = s.GetSnapshotByUID(ctx, snapshotUid, 0, 0)
 		require.NoError(t, err)
 		require.Equal(t, cloudmigration.SnapshotStatusCreating, string(snapshot.Status))
 
@@ -198,6 +199,59 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, snapshots, 1)
 		require.Equal(t, *snapshot, snapshots[0])
+	})
+}
+
+func Test_SnapshotResources(t *testing.T) {
+	_, s := setUpTest(t)
+	ctx := context.Background()
+
+	t.Run("tests CRUD of snapshot resources", func(t *testing.T) {
+		// Get the default rows from the test
+		resources, err := s.GetSnapshotResources(ctx, "poiuy", 0, 100)
+		assert.NoError(t, err)
+		assert.Len(t, resources, 3)
+
+		// create a new resource and update an existing resource
+		err = s.CreateUpdateSnapshotResources(ctx, "poiuy", []cloudmigration.CloudMigrationResource{
+			{
+				Type:   cloudmigration.DatasourceDataType,
+				RefID:  "mi39fj",
+				Status: cloudmigration.ItemStatusOK,
+			},
+			{
+				UID:    "qwerty",
+				Status: cloudmigration.ItemStatusOK,
+			},
+		})
+		assert.NoError(t, err)
+
+		// Get resources again
+		resources, err = s.GetSnapshotResources(ctx, "poiuy", 0, 100)
+		assert.NoError(t, err)
+		assert.Len(t, resources, 4)
+		// ensure existing resource was updated
+		for _, r := range resources {
+			if r.UID == "querty" {
+				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
+				break
+			}
+		}
+		// ensure a new one was made
+		for _, r := range resources {
+			if r.UID == "mi39fj" {
+				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
+				break
+			}
+		}
+
+		// delete snapshot resources
+		err = s.DeleteSnapshotResources(ctx, "poiuy")
+		assert.NoError(t, err)
+		// make sure they're gone
+		resources, err = s.GetSnapshotResources(ctx, "poiuy", 0, 100)
+		assert.NoError(t, err)
+		assert.Len(t, resources, 0)
 	})
 }
 
@@ -242,7 +296,8 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 		VALUES
 			('mnbvde', 'poiuy', 'DATASOURCE', 'jf38gh', 'OK', ''),
 			('qwerty', 'poiuy', 'DASHBOARD', 'ejcx4d', 'ERROR', 'fake error'),
-			('zxcvbn', 'poiuy', 'FOLDER', 'fi39fj', 'PENDING', '');
+			('zxcvbn', 'poiuy', 'FOLDER', 'fi39fj', 'PENDING', ''),
+			('4fi9sd', '39fi39', 'FOLDER', 'fi39fj', 'OK', '');
 		`,
 	)
 	require.NoError(t, err)

@@ -224,7 +224,7 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string, resultOffs
 	}
 
 	resources, err := ss.GetSnapshotResources(ctx, uid, resultOffset, resultLimit)
-	if err != nil {
+	if err == nil {
 		snapshot.Resources = resources
 	}
 
@@ -252,9 +252,9 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 	return snapshots, nil
 }
 
-func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.MigrationResource) error {
-	updates := make([]cloudmigration.MigrationResource, 0)
-	creates := make([]cloudmigration.MigrationResource, 0)
+func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
+	updates := make([]cloudmigration.CloudMigrationResource, 0)
+	creates := make([]cloudmigration.CloudMigrationResource, 0)
 
 	// ensure snapshot_uids are consistent
 	for i := 0; i < len(resources); i++ {
@@ -297,11 +297,11 @@ func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotU
 	})
 }
 
-func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string, offset int, limit int) ([]cloudmigration.MigrationResource, error) {
-	var resources []cloudmigration.MigrationResource
+func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string, offset int, limit int) ([]cloudmigration.CloudMigrationResource, error) {
+	var resources []cloudmigration.CloudMigrationResource
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.Limit(limit, offset)
-		return sess.Find(&resources, &cloudmigration.MigrationResource{
+		return sess.Find(&resources, &cloudmigration.CloudMigrationResource{
 			SnapshotUID: snapshotUid,
 		})
 	})
@@ -313,7 +313,7 @@ func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string
 
 func (ss *sqlStore) DeleteSnapshotResources(ctx context.Context, snapshotUid string) error {
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Delete(cloudmigration.MigrationResource{
+		_, err := sess.Delete(cloudmigration.CloudMigrationResource{
 			SnapshotUID: snapshotUid,
 		})
 		return err

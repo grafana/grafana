@@ -44,7 +44,7 @@ type CloudMigrationSnapshot struct {
 	Finished       time.Time
 
 	// Stored in the cloud_migration_resource table
-	Resources []MigrationResource `xorm:"-"` //store raw gms response body
+	Resources []CloudMigrationResource `xorm:"-"` //store raw gms response body
 }
 
 type SnapshotStatus string
@@ -61,7 +61,7 @@ const (
 	SnapshotStatusUnknown           = "unknown"
 )
 
-type MigrationResource struct {
+type CloudMigrationResource struct {
 	ID  int64  `xorm:"pk autoincr 'id'"`
 	UID string `xorm:"uid"`
 
@@ -121,7 +121,7 @@ type ListSnapshotsQuery struct {
 type UpdateSnapshotCmd struct {
 	UID       string
 	Status    SnapshotStatus
-	Resources []MigrationResource
+	Resources []CloudMigrationResource
 }
 
 // access token
@@ -184,7 +184,7 @@ const (
 
 type MigrateDataResponse struct {
 	RunUID string
-	Items  []MigrationResource
+	Items  []CloudMigrationResource
 }
 
 type MigrateDataResponseList struct {
