@@ -104,9 +104,16 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     this.props.onOpenContext(row, this.debouncedContextClose);
   };
 
-  onRowClick = (e: MouseEvent<HTMLTableRowElement>) => {
+  onContextMenu = (e: MouseEvent<HTMLTableRowElement>) => {
     if (this.props.handleTextSelection?.(e, this.props.row)) {
       // Event handled by the parent.
+      e.preventDefault();
+    }
+  }
+
+  onRowClick = (e: MouseEvent<HTMLTableRowElement>) => {
+    if (document.getSelection()?.toString()) {
+      // Prevent toggling details when the user painted text
       return;
     }
 
@@ -249,6 +256,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
            * using the keyboard.
            */
           onFocus={this.onMouseEnter}
+          onContextMenu={this.onContextMenu}
         >
           {showDuplicates && (
             <td className={styles.logsRowDuplicates}>

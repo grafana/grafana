@@ -245,7 +245,7 @@ describe('Popover menu', () => {
   });
   it('Appears after selecting test', async () => {
     setup();
-    await userEvent.click(screen.getByText('log message 1'));
+    await userEvent.pointer({keys: '[MouseRight>]', target: screen.getByText('log message 1')})
     expect(screen.getByText('Copy selection')).toBeInTheDocument();
     expect(screen.getByText('Add as line contains filter')).toBeInTheDocument();
     expect(screen.getByText('Add as line does not contain filter')).toBeInTheDocument();
@@ -255,21 +255,21 @@ describe('Popover menu', () => {
       onClickFilterOutString: undefined,
       onClickFilterString: undefined,
     });
-    await userEvent.click(screen.getByText('log message 1'));
+    await userEvent.pointer({keys: '[MouseRight>]', target: screen.getByText('log message 1')})
     expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
   });
-  it('Appears after selecting test', async () => {
+  it('Calls the expected callbacks', async () => {
     const onClickFilterOutString = jest.fn();
     const onClickFilterString = jest.fn();
     setup({
       onClickFilterOutString,
       onClickFilterString,
     });
-    await userEvent.click(screen.getByText('log message 1'));
+    await userEvent.pointer({keys: '[MouseRight>]', target: screen.getByText('log message 1')})
     expect(screen.getByText('Copy selection')).toBeInTheDocument();
     await userEvent.click(screen.getByText('Add as line contains filter'));
 
-    await userEvent.click(screen.getByText('log message 1'));
+    await userEvent.pointer({keys: '[MouseRight>]', target: screen.getByText('log message 1')})
     expect(screen.getByText('Copy selection')).toBeInTheDocument();
     await userEvent.click(screen.getByText('Add as line does not contain filter'));
 
