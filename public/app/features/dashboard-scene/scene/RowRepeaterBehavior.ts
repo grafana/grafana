@@ -99,10 +99,14 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     let maxYOfRows = 0;
 
+    const rowPlaceholder = ['Repeat Placeholder'];
+
+    const testValues = values.length ? values : rowPlaceholder;
+
     // Loop through variable values and create repeates
-    for (let index = 0; index < values.length; index++) {
+    for (let index = 0; index < testValues.length; index++) {
       const children: SceneGridItemLike[] = [];
-      const localValue = values[index];
+      const localValue = testValues[index];
 
       // Loop through panels inside row
       for (const source of rowContent) {
