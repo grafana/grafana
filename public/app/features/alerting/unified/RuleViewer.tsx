@@ -21,10 +21,12 @@ type RuleViewerProps = GrafanaRouteComponentProps<{
 const RuleViewer = (props: RuleViewerProps): JSX.Element => {
   const id = getRuleIdFromPathname(props.match.params);
 
-  // we'll use this to fetch all instances only when on the "instances" tab
   const [activeTab] = useActiveTab();
   const instancesTab = activeTab === ActiveTab.Instances;
-  const limitAlerts = instancesTab ? undefined : 0;
+
+  // We will fetch no instances by default to speed up loading times and reduce memory footprint _unless_ we are visiting
+  // the "instances" tab. This optimization is only available for the Grafana-managed ruler.
+  const limitAlerts = instancesTab ? undefined : 0; // "0" means "do not include alert rule instances in the response"
 
   // we convert the stringified ID to a rule identifier object which contains additional
   // type and source information
