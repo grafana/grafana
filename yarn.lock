@@ -8000,13 +8000,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/add@npm:^2":
-  version: 2.0.3
-  resolution: "@types/add@npm:2.0.3"
-  checksum: 10/c15815ef0e4903113f7fda84b4c2704a1b694fd6f53a6e3c9327b5b7067aba676c75e696b950401de45be7646b37b7059303a7bb5c4363de3eb3e0c06d25f565
-  languageName: node
-  linkType: hard
-
 "@types/angular-route@npm:1.7.6":
   version: 1.7.6
   resolution: "@types/angular-route@npm:1.7.6"
@@ -17148,7 +17141,6 @@ __metadata:
     "@testing-library/react": "npm:15.0.2"
     "@testing-library/react-hooks": "npm:^8.0.1"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/add": "npm:^2"
     "@types/angular": "npm:1.8.9"
     "@types/angular-route": "npm:1.7.6"
     "@types/babel__core": "npm:^7"
@@ -17408,7 +17400,6 @@ __metadata:
     xlsx: "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
     yaml: "npm:^2.0.0"
     yargs: "npm:^17.5.1"
-    yarn: "npm:^1.22.22"
   dependenciesMeta:
     prettier@3.3.1:
       unplugged: true
@@ -31155,16 +31146,6 @@ __metadata:
     y18n: "npm:^5.0.5"
     yargs-parser: "npm:^20.2.2"
   checksum: 10/807fa21211d2117135d557f95fcd3c3d390530cda2eca0c840f1d95f0f40209dcfeb5ec18c785a1f3425896e623e3b2681e8bb7b6600060eda1c3f4804e7957e
-  languageName: node
-  linkType: hard
-
-"yarn@npm:^1.22.22":
-  version: 1.22.22
-  resolution: "yarn@npm:1.22.22"
-  bin:
-    yarn: bin/yarn.js
-    yarnpkg: bin/yarn.js
-  checksum: 10/98d80230beaa81f186b2256dff5ef9dce2dd6073c94299209f8e562da9018cff4275c95c27c788aaa4a9c3c186ea8a9aee9a5b83570696a4c8a9d1fff2d4da3a
   languageName: node
   linkType: hard
 
