@@ -140,7 +140,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. To add more panels to the dashboard, click **Back to dashboard**.
    Then click **Add** in the dashboard header and select **Visualization** in the drop-down.
 
-   ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
+   ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-11.2.png)
 
    When you add additional panels to the dashboard, you're taken straight to the **Edit panel** view.
 
@@ -203,7 +203,12 @@ You can place a panel on a dashboard in any location.
 
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to work on.
+1. Click **Edit** in the top-right corner.
 1. Click the panel title and drag the panel to the new location.
+1. Click **Save dashboard**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 ## Resize a panel
 
@@ -211,4 +216,9 @@ You can size a dashboard panel to suits your needs.
 
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to work on.
+1. Click **Edit** in the top-right corner.
 1. To adjust the size of the panel, click and drag the lower-right corner of the panel.
+1. Click **Save dashboard**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.

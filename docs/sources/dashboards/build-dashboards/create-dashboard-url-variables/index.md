@@ -21,28 +21,28 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters
   manage-dashboard-links:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/manage-dashboard-links/
   linking-overview:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/
   template-and-variables:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
 ---
 
 # Dashboard URL variables
 
 Grafana can apply variable values passed as query parameters in dashboard URLs.
-For more information, refer to [Manage dashboard links](ref:manage-dashboard-links) and [Templates and variables][].
+For more information, refer to [Manage dashboard links](ref:manage-dashboard-links) and [Templates and variables](ref:template-and-variables).
 
 ## Passing variables as query parameters
 
