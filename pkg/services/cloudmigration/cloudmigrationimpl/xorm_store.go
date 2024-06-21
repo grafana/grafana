@@ -233,17 +233,23 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string, resultOffs
 
 // GetSnapshotList returns snapshots without resources included. Use GetSnapshotByUID to get individual snapshot results.
 func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
-	var runs = make([]cloudmigration.CloudMigrationSnapshot, 0)
+	var snapshots = make([]cloudmigration.CloudMigrationSnapshot, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.Limit(query.Limit, query.Offset)
-		return sess.Find(&runs, &cloudmigration.CloudMigrationSnapshot{
+		return sess.Find(&snapshots, &cloudmigration.CloudMigrationSnapshot{
 			SessionUID: query.SessionUID,
 		})
 	})
 	if err != nil {
 		return nil, err
 	}
-	return runs, nil
+	for i, snapshot := range snapshots {
+		if err := ss.decryptKey(ctx, &snapshot); err != nil {
+			return nil, err
+		}
+		snapshots[i] = snapshot
+	}
+	return snapshots, nil
 }
 
 func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.MigrationResource) error {

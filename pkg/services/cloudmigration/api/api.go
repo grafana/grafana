@@ -541,7 +541,7 @@ func (cma *CloudMigrationAPI) UploadSnapshot(c *contextmodel.ReqContext) respons
 // 403: forbiddenError
 // 500: internalServerError
 func (cma *CloudMigrationAPI) CancelSnapshot(c *contextmodel.ReqContext) response.Response {
-	_, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.CancelSnapshot")
+	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.CancelSnapshot")
 	defer span.End()
 
 	sessUid, snapshotUid := web.Params(c.Req)[":uid"], web.Params(c.Req)[":snapshotUid"]
@@ -552,7 +552,9 @@ func (cma *CloudMigrationAPI) CancelSnapshot(c *contextmodel.ReqContext) respons
 		return response.ErrOrFallback(http.StatusBadRequest, "invalid snapshot uid", err)
 	}
 
-	// Implement
+	if err := cma.cloudMigrationService.CancelSnapshot(ctx, sessUid, snapshotUid); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "error canceling snapshot", err)
+	}
 
 	return response.JSON(http.StatusOK, nil)
 }

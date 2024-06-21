@@ -1,4 +1,4 @@
-import { closestIdx } from '@grafana/data';
+import { closestIdx } from '../';
 
 export type Table = [times: number[], ...values: any[][]];
 
@@ -98,7 +98,7 @@ export function trimTable(table: Table, fromTime: number, toTime: number): Table
 
   if (fromIdx != null || toIdx != null) {
     times = times.slice(fromIdx ?? 0, toIdx);
-    vals = vals.map(vals2 => vals2.slice(fromIdx ?? 0, toIdx));
+    vals = vals.map((vals2) => vals2.slice(fromIdx ?? 0, toIdx));
   }
 
   return [times, ...vals];

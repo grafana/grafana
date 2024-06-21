@@ -11,6 +11,7 @@ import (
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,7 +19,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func Test_GetAllCloudMigrations(t *testing.T) {
+func Test_GetAllCloudMigrationSessions(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
@@ -44,11 +45,11 @@ func Test_GetAllCloudMigrations(t *testing.T) {
 	})
 }
 
-func Test_CreateMigration(t *testing.T) {
+func Test_CreateMigrationSession(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
-	t.Run("creates migrations and reads it from the db", func(t *testing.T) {
+	t.Run("creates a session and reads it from the db", func(t *testing.T) {
 		cm := cloudmigration.CloudMigrationSession{
 			AuthToken:   encodeToken("token"),
 			Slug:        "fake_stack",
@@ -56,15 +57,15 @@ func Test_CreateMigration(t *testing.T) {
 			RegionSlug:  "fake_slug",
 			ClusterSlug: "fake_cluster_slug",
 		}
-		mig, err := s.CreateMigrationSession(ctx, cm)
+		sess, err := s.CreateMigrationSession(ctx, cm)
 		require.NoError(t, err)
-		require.NotEmpty(t, mig.ID)
-		require.NotEmpty(t, mig.UID)
+		require.NotEmpty(t, sess.ID)
+		require.NotEmpty(t, sess.UID)
 
-		getRes, err := s.GetMigrationSessionByUID(ctx, mig.UID)
+		getRes, err := s.GetMigrationSessionByUID(ctx, sess.UID)
 		require.NoError(t, err)
-		require.Equal(t, mig.ID, getRes.ID)
-		require.Equal(t, mig.UID, getRes.UID)
+		require.Equal(t, sess.ID, getRes.ID)
+		require.Equal(t, sess.UID, getRes.UID)
 		require.Equal(t, cm.AuthToken, getRes.AuthToken)
 		require.Equal(t, cm.Slug, getRes.Slug)
 		require.Equal(t, cm.StackID, getRes.StackID)
@@ -73,7 +74,7 @@ func Test_CreateMigration(t *testing.T) {
 	})
 }
 
-func Test_GetMigrationByUID(t *testing.T) {
+func Test_GetMigrationSessionByUID(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
 	t.Run("find session by uid", func(t *testing.T) {
@@ -89,7 +90,7 @@ func Test_GetMigrationByUID(t *testing.T) {
 	})
 }
 
-func Test_DeleteMigration(t *testing.T) {
+func Test_DeleteMigrationSession(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
@@ -157,6 +158,46 @@ func Test_GetMigrationStatusList(t *testing.T) {
 		list, err := s.GetMigrationStatusList(ctx, "fake_migration")
 		require.NoError(t, err)
 		require.Equal(t, 0, len(list))
+	})
+}
+
+func Test_SnapshotManagement(t *testing.T) {
+	_, s := setUpTest(t)
+	ctx := context.Background()
+
+	t.Run("tests the snapshot lifecycle", func(t *testing.T) {
+		var snapshotUid string
+		sessionUid := util.GenerateShortUID()
+
+		// create a snapshot
+		cmr := cloudmigration.CloudMigrationSnapshot{
+			SessionUID: sessionUid,
+			Status:     "initializing",
+		}
+
+		snapshotUid, err := s.CreateSnapshot(ctx, cmr)
+		require.NoError(t, err)
+		require.NotEmpty(t, snapshotUid)
+
+		//retrieve it from the db
+		snapshot, err := s.GetSnapshotByUID(ctx, snapshotUid)
+		require.NoError(t, err)
+		require.Equal(t, cloudmigration.SnapshotStatusInitializing, string(snapshot.Status))
+
+		// update its status
+		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating})
+		require.NoError(t, err)
+
+		//retrieve it again
+		snapshot, err = s.GetSnapshotByUID(ctx, snapshotUid)
+		require.NoError(t, err)
+		require.Equal(t, cloudmigration.SnapshotStatusCreating, string(snapshot.Status))
+
+		// lists snapshots and ensures it's in there
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUid, Offset: 0, Limit: 100})
+		require.NoError(t, err)
+		require.Len(t, snapshots, 1)
+		require.Equal(t, *snapshot, snapshots[0])
 	})
 }
 
