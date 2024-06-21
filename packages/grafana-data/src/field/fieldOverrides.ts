@@ -9,7 +9,8 @@ import { guessFieldTypeForField } from '../dataframe/processDataFrame';
 import { PanelPlugin } from '../panel/PanelPlugin';
 import { GrafanaTheme2 } from '../themes';
 import { asHexString } from '../themes/colorManipulator';
-import { fieldMatchers, reduceField, ReducerID } from '../transformations';
+import { ReducerID, reduceField } from '../transformations/fieldReducer';
+import { fieldMatchers } from '../transformations/matchers';
 import {
   ApplyFieldOverrideOptions,
   DataContextScopedVar,

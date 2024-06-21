@@ -2,7 +2,7 @@ import { ArrayDataFrame } from '../dataframe/ArrayDataFrame';
 import { createDataFrame, toDataFrame } from '../dataframe/processDataFrame';
 import { rangeUtil } from '../datetime';
 import { createTheme } from '../themes';
-import { FieldMatcherID } from '../transformations';
+import { FieldMatcherID } from '../transformations/matchers/ids';
 import {
   DataFrame,
   Field,

@@ -5,7 +5,6 @@
  */
 
 export * from './types';
-export * from './transformations';
 export * from './datetime';
 export * from './text';
 export * from './valueFormats';
@@ -222,6 +221,57 @@ export { toOption } from './utils/selectUtils';
 export * as arrayUtils from './utils/arrayUtils';
 export { store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
+
+// Tranformations
+
+export { standardTransformers } from './transformations/transformers';
+export {
+  fieldMatchers,
+  frameMatchers,
+  valueMatchers,
+  getFieldMatcher,
+  getFrameMatchers,
+  getValueMatcher,
+} from './transformations/matchers';
+export { type FieldValueMatcherConfig } from './transformations/matchers/fieldValueMatcher';
+
+export { DataTransformerID } from './transformations/transformers/ids';
+export { MatcherID, FieldMatcherID, FrameMatcherID, ValueMatcherID } from './transformations/matchers/ids';
+
+export {
+  ReducerID,
+  isReducerID,
+  type FieldReducerInfo,
+  reduceField,
+  fieldReducers,
+  defaultCalcs,
+  doStandardCalcs,
+} from './transformations/fieldReducer';
+
+export { transformDataFrame } from './transformations/transformDataFrame';
+export {
+  type TransformerRegistryItem,
+  type TransformerUIProps,
+  TransformerCategory,
+  standardTransformersRegistry,
+} from './transformations/standardTransformersRegistry';
+export {
+  type RegexpOrNamesMatcherOptions,
+  type ByNamesMatcherOptions,
+  ByNamesMatcherMode,
+} from './transformations/matchers/nameMatcher';
+export type { RenameByRegexTransformerOptions } from './transformations/transformers/renameByRegex';
+/** @deprecated -- will be removed in future versions */
+export {
+  joinDataFrames as outerJoinDataFrames,
+  isLikelyAscendingVector,
+} from './transformations/transformers/joinDataFrames';
+export * from './transformations/transformers/histogram';
+export { ensureTimeField } from './transformations/transformers/convertFieldType';
+
+// Required for Sparklines util to work in @grafana/data, but ideally kept internal
+export { applyNullInsertThreshold } from './transformations/transformers/nulls/nullInsertThreshold';
+export { nullToValue } from './transformations/transformers/nulls/nullToValue';
 
 export {
   type ValueMatcherOptions,
