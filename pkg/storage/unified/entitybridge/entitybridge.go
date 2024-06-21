@@ -295,18 +295,3 @@ func (b *entityBridge) List(ctx context.Context, req *resource.ListRequest) (*re
 	}
 	return rsp, nil
 }
-
-// GetBlob implements ResourceServer.
-func (b *entityBridge) GetBlob(context.Context, *resource.GetBlobRequest) (*resource.GetBlobResponse, error) {
-	return nil, resource.ErrNotImplementedYet
-}
-
-// History implements ResourceServer.
-func (b *entityBridge) History(context.Context, *resource.HistoryRequest) (*resource.HistoryResponse, error) {
-	return nil, resource.ErrNotImplementedYet
-}
-
-// Origin implements ResourceServer.
-func (b *entityBridge) Origin(context.Context, *resource.OriginRequest) (*resource.OriginResponse, error) {
-	return nil, resource.ErrNotImplementedYet
-}
