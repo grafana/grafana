@@ -173,7 +173,7 @@ func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.
 }
 
 // UpdateSnapshot takes a snapshot object containing a uid and updates a subset of features in the database.
-func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.UpdateSnapshotCmd) error {
+func (ss *sqlStore) UpdateSnapshot(ctx context.Context, snapshotUid string, update cloudmigration.UpdateSnapshotCmd) error {
 	if update.UID == "" {
 		return fmt.Errorf("missing snapshot uid")
 	}
@@ -193,7 +193,7 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 
 		// Update resources if set
 		if len(update.Resources) > 0 {
-			if err := ss.UpdateSnapshotResources(ctx, update.Resources); err != nil {
+			if err := ss.CreateUpdateSnapshotResources(ctx, snapshotUid, update.Resources); err != nil {
 				return err
 			}
 		}
@@ -246,14 +246,48 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 	return runs, nil
 }
 
-func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.MigrationResource) error {
+func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.MigrationResource) error {
+	updates := make([]cloudmigration.MigrationResource, 0)
+	creates := make([]cloudmigration.MigrationResource, 0)
+
 	// ensure snapshot_uids are consistent
 	for i := 0; i < len(resources); i++ {
-		resources[i].SnapshotUID = snapshotUid
+		r := resources[i]
+		r.SnapshotUID = snapshotUid
+		if r.UID == "" {
+			creates = append(creates, r)
+		} else {
+			if err := util.ValidateUID(r.UID); err != nil {
+				return fmt.Errorf("missing or invalid uids: %w", err)
+			}
+			updates = append(updates, r)
+		}
 	}
-	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Insert(resources)
-		return err
+
+	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
+		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			_, err := sess.Insert(creates)
+			return err
+		})
+		if err != nil {
+			return fmt.Errorf("inserting resources: %w", err)
+		}
+
+		sql := "UPDATE cloud_migration_resource SET status=?, error_string=? WHERE uid=?"
+		err = ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			for _, r := range updates {
+				_, err := sess.Exec(sql, r.Status, r.Error, r.UID)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("updating resources: %w", err)
+		}
+
+		return nil
 	})
 }
 
@@ -269,27 +303,6 @@ func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string
 		return nil, err
 	}
 	return resources, nil
-}
-
-// Updates only mutable fields of cloudmigration.MigrationResource
-func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, resources []cloudmigration.MigrationResource) error {
-	// ensure uids are set on each resources
-	for i := 0; i < len(resources); i++ {
-		if err := util.ValidateUID(resources[i].UID); err != nil {
-			return fmt.Errorf("missing or invalid uids: %w", err)
-		}
-	}
-
-	sql := "UPDATE cloud_migration_resource SET status=?, error_string=? WHERE uid=?"
-	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		for _, r := range resources {
-			_, err := sess.Exec(sql, r.Status, r.Error, r.UID)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
 }
 
 func (ss *sqlStore) DeleteSnapshotResources(ctx context.Context, snapshotUid string) error {

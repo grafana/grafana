@@ -151,7 +151,7 @@ func (s *Service) buildSnapshot(ctx context.Context, snapshotMeta cloudmigration
 
 	// update snapshot status to creating, add some retries since this is a background task
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
-		err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+		err := s.store.UpdateSnapshot(ctx, snapshotMeta.UID, cloudmigration.UpdateSnapshotCmd{
 			UID:    snapshotMeta.UID,
 			Status: cloudmigration.SnapshotStatusCreating,
 		})
@@ -173,7 +173,7 @@ func (s *Service) buildSnapshot(ctx context.Context, snapshotMeta cloudmigration
 
 	// update snapshot status to pending upload with retry
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
-		err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+		err := s.store.UpdateSnapshot(ctx, snapshotMeta.UID, cloudmigration.UpdateSnapshotCmd{
 			UID:    snapshotMeta.UID,
 			Status: cloudmigration.SnapshotStatusPendingUpload,
 		})
@@ -193,7 +193,7 @@ func (s *Service) uploadSnapshot(ctx context.Context, snapshotMeta cloudmigratio
 
 	// update snapshot status to uploading, add some retries since this is a background task
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
-		err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+		err := s.store.UpdateSnapshot(ctx, snapshotMeta.UID, cloudmigration.UpdateSnapshotCmd{
 			UID:    snapshotMeta.UID,
 			Status: cloudmigration.SnapshotStatusUploading,
 		})
@@ -211,7 +211,7 @@ func (s *Service) uploadSnapshot(ctx context.Context, snapshotMeta cloudmigratio
 
 	// update snapshot status to pending processing with retry
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
-		err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+		err := s.store.UpdateSnapshot(ctx, snapshotMeta.UID, cloudmigration.UpdateSnapshotCmd{
 			UID:    snapshotMeta.UID,
 			Status: cloudmigration.SnapshotStatusPendingProcessing,
 		})
@@ -224,7 +224,7 @@ func (s *Service) uploadSnapshot(ctx context.Context, snapshotMeta cloudmigratio
 	// simulate the rest
 	// processing
 	time.Sleep(3 * time.Second)
-	if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+	if err := s.store.UpdateSnapshot(ctx, snapshotMeta.UID, cloudmigration.UpdateSnapshotCmd{
 		UID:    snapshotMeta.UID,
 		Status: cloudmigration.SnapshotStatusProcessing,
 	}); err != nil {
