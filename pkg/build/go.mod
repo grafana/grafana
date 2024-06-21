@@ -53,9 +53,6 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect; @grafana/plugins-platform-backend
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-squad-backend
-)
-
-require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect; @grafana/backend-platform
@@ -67,21 +64,12 @@ require (
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20231012201019-e917dd12ba7a // indirect; @grafana/backend-platform
-)
-
-require (
 	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-release-guild
 	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-release-guild
 	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-release-guild
 	github.com/urfave/cli v1.22.14 // @grafana/backend-platform
-)
-
-require (
 	github.com/Masterminds/semver/v3 v3.1.1 // @grafana/grafana-release-guild
 	golang.org/x/mod v0.12.0 // @grafana/backend-platform
-)
-
-require (
 	cloud.google.com/go v0.110.8 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
@@ -106,9 +94,6 @@ require (
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231002182017-d307bd883b97 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231016165738-49dd2c1f3d0b // indirect
-)
-
-require (
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/iam v1.1.2 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
