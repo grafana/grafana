@@ -582,26 +582,7 @@ export const ConnectionSVG = ({
         <circle ref={setVertexRef} stroke={defaultArrowColor} r={4} className={styles.vertex} />
       </svg>
 
-      <svg
-        ref={setConnectionsSVGRef}
-        className={styles.connection}
-        // key={idx}
-        // viewBox={`0 0 ${Math.abs(x1 - x2)} ${Math.abs(y1 - y2)}`}
-        // viewBox={`${Math.min(x1, x2)} ${Math.min(y1, y2)} ${Math.abs(x1 - x2)} ${Math.abs(y1 - y2)}`}
-        viewBox={`0 0 ${scene.width} ${scene.height}`}
-        // style={{
-        //   top: Math.min(y1, y2),
-        //   left: Math.min(x1, x2),
-        //   width: Math.abs(x1 - x2),
-        //   height: Math.abs(y1 - y2),
-        // }}
-        style={{
-          top: 0,
-          left: 0,
-          width: scene.width,
-          height: scene.height,
-        }}
-      >
+      <svg ref={setConnectionsSVGRef} className={styles.connection}>
         {renderConnections()}
       </svg>
     </>

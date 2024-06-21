@@ -2,11 +2,10 @@ import { css } from '@emotion/css';
 import InfiniteViewer from 'infinite-viewer';
 // import InfiniteViewer from "react-infinite-viewer";
 import Moveable from 'moveable';
-import React, {
-  // createRef,
-  CSSProperties,
-  // RefObject,
-} from 'react';
+import React from // createRef,
+// CSSProperties,
+// RefObject,
+'react';
 // import { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -74,10 +73,12 @@ export class Scene {
   width = 0;
   height = 0;
   // scale = 1;
-  style: CSSProperties = {};
+  // style doesn't seem to be used anywhere
+  // style: CSSProperties = {};
   data?: PanelData;
   selecto?: Selecto;
   moveable?: Moveable;
+  infiniteViewer?: InfiniteViewer;
   // div?: HTMLDivElement;
   viewerDiv?: HTMLDivElement;
   viewportDiv?: HTMLDivElement;
@@ -192,6 +193,8 @@ export class Scene {
         this.selection.next([]);
         this.connections.select(undefined);
         this.connections.updateState();
+        // update initial connections svg size
+        this.updateConnectionsSize();
       }
     });
     return this.root;
@@ -212,12 +215,35 @@ export class Scene {
   }
 
   updateSize(width: number, height: number) {
+    console.log('updateSize', width, height);
     this.width = width;
     this.height = height;
-    this.style = { width, height };
+    // this.style doesn't seem to be used anywhere
+    // this.style = { width, height };
 
     if (this.selecto?.getSelectedTargets().length) {
       this.clearCurrentSelection();
+    }
+
+    this.updateConnectionsSize();
+  }
+
+  updateConnectionsSize() {
+    const svgConnections = this.connections.connectionsSVG;
+
+    if (svgConnections) {
+      const scale = this.infiniteViewer!.getZoom();
+      const left = this.infiniteViewer!.getScrollLeft();
+      const top = this.infiniteViewer!.getScrollTop();
+      const width = this.width;
+      const height = this.height;
+
+      svgConnections.style.left = `${left}px`;
+      svgConnections.style.top = `${top}px`;
+      svgConnections.style.width = `${width / scale}px`;
+      svgConnections.style.height = `${height / scale}px`;
+
+      svgConnections.setAttribute('viewBox', `${left} ${top} ${width / scale} ${height / scale}`);
     }
   }
 
@@ -766,7 +792,7 @@ export class Scene {
     /******************/
     /* infiniteViewer */
     /******************/
-    const infiniteViewer = new InfiniteViewer(this.viewerDiv!, this.viewportDiv!, {
+    this.infiniteViewer = new InfiniteViewer(this.viewerDiv!, this.viewportDiv!, {
       useAutoZoom: true,
       // margin: 0,
       // threshold: 0,
@@ -776,27 +802,7 @@ export class Scene {
       useWheelScroll: true,
     });
 
-    infiniteViewer.on('scroll', () => {
-      const svgConnections = this.connections.connectionsSVG;
-      // const wrapper = infiniteViewer.getWrapper();
-      // console.log(wrapper);
-      if (svgConnections) {
-        const scale = infiniteViewer.getZoom();
-        const left = infiniteViewer.getScrollLeft();
-        const top = infiniteViewer.getScrollTop();
-        // const width = infiniteViewer.getContainerWidth();
-        // const height = infiniteViewer.getContainerHeight();
-        const width = this.width;
-        const height = this.height;
-
-        svgConnections.style.left = `${left}px`;
-        svgConnections.style.top = `${top}px`;
-        svgConnections.style.width = `${width / scale}px`;
-        svgConnections.style.height = `${height / scale}px`;
-
-        svgConnections.setAttribute('viewBox', `${left} ${top} ${width / scale} ${height / scale}`);
-      }
-    });
+    this.infiniteViewer.on('scroll', () => this.updateConnectionsSize());
   };
 
   reorderElements = (src: ElementState, dest: ElementState, dragToGap: boolean, destPosition: number) => {
