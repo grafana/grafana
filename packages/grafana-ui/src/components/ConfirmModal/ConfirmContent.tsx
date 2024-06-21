@@ -40,7 +40,7 @@ export interface ConfirmContentProps {
   onDismiss(): void;
   /** Alternative action callback */
   onAlternative?(): void;
-  /** Disable the confirm button if needed */
+  /** Disable the confirm button and the confirm text input if needed */
   disabled?: boolean;
 }
 
