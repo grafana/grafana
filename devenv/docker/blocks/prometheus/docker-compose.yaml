@@ -25,7 +25,11 @@
       FD_DATASOURCE: prom
 
   alertmanager:
-    image: quay.io/prometheus/alertmanager
+    image: prom/alertmanager 
+    volumes:
+    - ${PWD}/docker/blocks/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    command: >
+      --config.file=/etc/alertmanager/alertmanager.yml
     ports:
       - "9093:9093"
 
