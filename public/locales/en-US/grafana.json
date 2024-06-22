@@ -532,6 +532,12 @@
       "scan-for-older-logs": "Scan for older logs",
       "stop-scan": "Stop scan"
     },
+    "query-library": {
+      "delete-query": "Delete query",
+      "delete-query-text": "You're about to remove this query from the query library. This action cannot be undone. Do you want to continue?",
+      "delete-query-title": "Delete query",
+      "query-deleted": "Query deleted"
+    },
     "rich-history": {
       "close-tooltip": "Close query history",
       "datasource-a-z": "Data source A-Z",
@@ -1559,6 +1565,9 @@
       "role-label": "Role"
     }
   },
+  "query-library": {
+    "delete-query-button": "Delete query"
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Collapse query row",
@@ -1664,6 +1673,8 @@
     },
     "results-table": {
       "datasource-header": "Data source",
+      "deleted-less-than-1-min": "< 1 min",
+      "deleted-remaining-header": "Time remaining",
       "location-header": "Location",
       "name-header": "Name",
       "tags-header": "Tags",
