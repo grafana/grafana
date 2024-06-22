@@ -571,7 +571,7 @@ The keys may be in a different format (PKCS#1 or PKCS#12); in that case, it may 
 The following command creates a pkcs8 key file.
 
 ```bash
-$ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes​
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
 ```
 
 #### **Convert** the private key format to base64

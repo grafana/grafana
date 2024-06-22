@@ -15,11 +15,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
 
-func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime.Codec) error {
+func EntityToRuntimeObject(rsp *entityStore.Entity, res runtime.Object, codec runtime.Codec) error {
 	var err error
 
 	// Read the body first -- it includes old resourceVersion!
@@ -73,7 +73,7 @@ func entityToResource(rsp *entityStore.Entity, res runtime.Object, codec runtime
 		originTime := time.UnixMilli(rsp.Origin.Time).UTC()
 		grafanaAccessor.SetOriginInfo(&utils.ResourceOriginInfo{
 			Name: rsp.Origin.Source,
-			Key:  rsp.Origin.Key,
+			Path: rsp.Origin.Key, // Using "key" in the
 			// Path: rsp.Origin.Path,
 			Timestamp: &originTime,
 		})
@@ -136,8 +136,8 @@ func resourceToEntity(res runtime.Object, requestInfo *request.RequestInfo, code
 		Title:           grafanaAccessor.FindTitle(metaAccessor.GetName()),
 		Origin: &entityStore.EntityOriginInfo{
 			Source: grafanaAccessor.GetOriginName(),
-			Key:    grafanaAccessor.GetOriginKey(),
-			// Path: 	grafanaAccessor.GetOriginPath(),
+			// Deprecated: Keeping "key" in the protobuf to avoid migrations while a bigger one is in place
+			Key: grafanaAccessor.GetOriginPath(),
 		},
 		Labels: metaAccessor.GetLabels(),
 	}

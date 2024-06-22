@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
+import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -18,7 +19,9 @@ export interface Props extends GrafanaRouteComponentProps<DashboardPageRoutePara
 
 export function DashboardScenePage({ match, route, queryParams, history }: Props) {
   const stateManager = getDashboardScenePageStateManager();
+
   const { dashboard, isLoading, loadError } = stateManager.useState();
+
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (history.location.state as any)?.routeReloadCounter;
 
@@ -73,15 +76,20 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
   }
 
   // Do not render anything when transitioning from one dashboard to another
-  if (match.params.type !== 'snapshot' && dashboard.state.uid && dashboard.state.uid !== match.params.uid) {
+  if (
+    match.params.type !== 'snapshot' &&
+    dashboard.state.uid &&
+    dashboard.state.uid !== match.params.uid &&
+    route.routeName !== DashboardRoutes.Home
+  ) {
     return null;
   }
 
   return (
-    <>
+    <UrlSyncContextProvider scene={dashboard}>
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
-    </>
+    </UrlSyncContextProvider>
   );
 }
 

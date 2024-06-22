@@ -3,7 +3,7 @@ package datasources
 import (
 	"errors"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 var (
@@ -18,4 +18,5 @@ var (
 	ErrDataSourceNameInvalid             = errutil.ValidationFailed("datasource.nameInvalid", errutil.WithPublicMessage("Invalid datasource name."))
 	ErrDataSourceURLInvalid              = errutil.ValidationFailed("datasource.urlInvalid", errutil.WithPublicMessage("Invalid datasource url."))
 	ErrDataSourceAPIVersionInvalid       = errutil.ValidationFailed("datasource.apiVersionInvalid", errutil.WithPublicMessage("Invalid datasource apiVersion."))
+	ErrDataSourceUIDInvalid              = errutil.ValidationFailed("datasource.uidInvalid", errutil.WithPublicMessage("Invalid datasource UID."))
 )

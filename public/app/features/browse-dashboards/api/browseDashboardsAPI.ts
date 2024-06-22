@@ -7,6 +7,7 @@ import { Dashboard } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import {
@@ -50,6 +51,14 @@ interface ImportOptions {
   overwrite: boolean;
   inputs: ImportInputs[];
   folderUid: string;
+}
+
+interface RestoreDashboardArgs {
+  dashboardUID: string;
+}
+
+interface HardDeleteDashboardArgs {
+  dashboardUID: string;
 }
 
 function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
@@ -147,6 +156,7 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
+
     // move an *individual* folder. used in the folder actions menu.
     moveFolder: builder.mutation<void, { folder: FolderDTO; destinationUID: string }>({
       invalidatesTags: ['getFolder'],
@@ -173,6 +183,7 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
+
     // delete an *individual* folder. used in the folder actions menu.
     deleteFolder: builder.mutation<void, FolderDTO>({
       query: ({ uid }) => ({
@@ -195,6 +206,7 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
+
     // gets the descendant counts for a folder. used in the move/delete modals.
     getAffectedItems: builder.query<DescendantCount, DashboardTreeSelection>({
       queryFn: async (selectedItems) => {
@@ -224,6 +236,7 @@ export const browseDashboardsAPI = createApi({
         return { data: totalCounts };
       },
     }),
+
     // move *multiple* items (folders and dashboards). used in the move modal.
     moveItems: builder.mutation<void, MoveItemsArgs>({
       invalidatesTags: ['getFolder'],
@@ -244,7 +257,7 @@ export const browseDashboardsAPI = createApi({
         // Move all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const fullDash: DashboardDTO = await getBackendSrv().get(`/api/dashboards/uid/${dashboardUID}`);
+          const fullDash: DashboardDTO = await getDashboardAPI().getDashboardDTO(dashboardUID);
 
           const options = {
             dashboard: fullDash.dashboard,
@@ -275,6 +288,7 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
+
     // delete *multiple* items (folders and dashboards). used in the delete modal.
     deleteItems: builder.mutation<void, DeleteItemsArgs>({
       queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
@@ -312,6 +326,7 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
+
     // save an existing dashboard
     saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand>({
       query: ({ dashboard, folderUid, message, overwrite, showErrorAlert }) => ({
@@ -338,6 +353,7 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
+
     importDashboard: builder.mutation<ImportDashboardResponseDTO, ImportOptions>({
       query: ({ dashboard, overwrite, inputs, folderUid }) => ({
         method: 'POST',
@@ -362,6 +378,27 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
+
+    // restore a dashboard that got soft deleted
+    restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
+      query: ({ dashboardUID }) => ({
+        url: `/dashboards/uid/${dashboardUID}/trash`,
+        method: 'PATCH',
+      }),
+    }),
+
+    // permanently delete a dashboard. used in PermanentlyDeleteModal.
+    hardDeleteDashboard: builder.mutation<void, HardDeleteDashboardArgs>({
+      query: ({ dashboardUID }) => ({
+        url: `/dashboards/uid/${dashboardUID}/trash`,
+        method: 'DELETE',
+      }),
+      onQueryStarted: ({ dashboardUID }, { queryFulfilled, dispatch }) => {
+        queryFulfilled.then(() => {
+          dispatch(refreshParents([dashboardUID]));
+        });
+      },
+    }),
   }),
 });
 
@@ -376,6 +413,8 @@ export const {
   useNewFolderMutation,
   useSaveDashboardMutation,
   useSaveFolderMutation,
+  useRestoreDashboardMutation,
+  useHardDeleteDashboardMutation,
 } = browseDashboardsAPI;
 
 export { skipToken } from '@reduxjs/toolkit/query/react';

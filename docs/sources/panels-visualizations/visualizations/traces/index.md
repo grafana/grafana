@@ -41,10 +41,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/
   configure-panel-options-documentation:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/
@@ -64,6 +60,8 @@ For more information about traces and how to use them, refer to the following do
 - [Getting started with Tempo](/docs/tempo/latest/getting-started)
 
 {{< figure src="/static/img/docs/explore/trace-view-9-4.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
+
+{{< docs/play title="Traces Panel" url="https://play.grafana.org/d/edodkfmj0tce8f/" >}}
 
 ## Add a panel with tracing visualizations
 
@@ -88,20 +86,30 @@ For more information on the panel editor, refer to the [Panel editor documentati
 This procedure uses dashboard variables and templates to allow you to enter trace IDs which can then be visualized. You'll use a variable called `traceId` and add it as a template query.
 
 1. From your Grafana stack, create a new dashboard or go to an existing dashboard where you'd like to add traces visualizations.
-1. Select **Add visualization** from a new dashboard or select **Add Panel** on an existing dashboard.
+1. Do one of the following:
+
+   - New dashboard - Click **+ Add visualization**.
+   - Existing dashboard - Click **Edit** in the top-right corner and then select **Visualization** in the **Add** drop-down.
+
 1. Search for and select the appropriate tracing data source.
-1. In the top-right of the panel editor, select the **Visualizations** tab, search for, and select **Traces**.
-1. Under the **Panel options**, enter a **Title** for your trace panel or have Grafana create one using [generative AI features](ref:generative-ai-features). For more information on the panel editor, refer to the [Configure panel options documentation](ref:configure-panel-options-documentation).
-1. In the query editor, select the **TraceQL** query type tab.
+1. In the top-right corner of the panel editor, select the **Visualizations** tab, search for, and select **Traces**.
+1. Under the **Panel options**, enter a **Title** for your trace panel or have Grafana create one using [generative AI features](ref:generative-ai-features).
+
+   For more information on the panel editor, refer to the [Configure panel options documentation](ref:configure-panel-options-documentation).
+
+1. In the query editor, click the **TraceQL** query type tab.
 1. Enter `${traceId}` in the TraceQL query field to create a dashboard variable. This variable is used as the template query.
 
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-template-query.png" caption="Add a template query" >}}
 
-1. Select **Apply** in the panel editor to add the panel to the dashboard.
-1. Go to the dashboard **Settings** and add a new variable called `traceId`, of variable type **Custom**, giving it a label if required. Select **Apply** to add the variable to the dashboard.
+1. Click **Back to dashboard**.
+1. Click **Settings** and go to the **Variables** tab.
+1. Add a new variable called `traceId`, of variable type **Custom**, giving it a label if required.
 
-   {{< figure  src="/static/img/docs/panels/traces/screenshot-traces-custom-variable.png" max-width="50%" caption="Add a Custom variable" >}}
+   {{< figure  src="/media/docs/grafana/dashboards/screenshot-traces-custom-variable-11.2.png" max-width="50%" caption="Add a Custom variable" >}}
 
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and **Exit edit**.
 1. Verify that the panel works by using a valid trace ID for the data source used for the trace panel and editing the ID in the dashboard variable.
 
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-traceid-panel.png" caption="Results of query in trace panel" >}}
@@ -111,14 +119,18 @@ This procedure uses dashboard variables and templates to allow you to enter trac
 While you can add a trace visualization to a dashboard, having to manually add trace IDs as a dashboard variable is cumbersome.
 It’s more useful to instead be able to use TraceQL queries to search for specific types of traces and then select appropriate traces from matching results.
 
-1. In the same dashboard where you added the trace visualization, select **Add panel** to add a new visualization panel.
+1. In the same dashboard where you added the trace visualization, click **Edit** in the top-right corner.
+1. In the **Add** drop-down, select **Visualization**.
 1. Select the same trace data source you used in the previous section.
-1. In the top-right of the panel editor, select the **Visualizations** tab, search for, and select **Table**.
+1. In the top-right corner of the panel editor, select the **Visualizations** tab, search for, and select **Table**.
 1. In the query editor, select the **TraceQL** tab.
 1. Under the **Panel options**, enter a **Title** for your trace panel or have Grafana create one using [generative AI features](ref:generative-ai-features).
 1. Add an appropriate TraceQL query to search for traces that you would like to visualize in the dashboard. This example uses a simple, static query. You can write the TraceQL query as a template query to take advantage of other dashboard variables, if they exist. This lets you create dynamic queries based on these variables.
 
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-dynamic-query.png" caption="Create a dynamic query" >}}
+
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and **Exit edit**.
 
 When results are returned from a query, the results are rendered in the panel’s table.
 
@@ -130,7 +142,7 @@ The results in the traces visualization include links to the **Explore** page th
 
 To create a set of data links in the panel, use the following steps:
 
-1. In the right-side menu, under **Data links**, select **Add link**.
+1. In the panel editor menu, under **Data links**, click **Add link**.
 1. Add a **Title** for the data link.
 1. Find the UUID of the dashboard by looking in your browser’s address bar when the full dashboard is being rendered. Because this is a link to a dashboard in the same Grafana stack, only the path of the dashboard is required.
 
@@ -142,8 +154,8 @@ To create a set of data links in the panel, use the following steps:
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-edit-link.png" caption="Edit link and add the Trace link" >}}
 
 1. Select **Save** to save the data link.
-1. Select **Apply** from the panel editor to apply the panel to the dashboard.
-1. Save the dashboard.
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and **Exit edit**.
 
 You should now see a list of matching traces in the table visualization. While selecting the **TraceID** or **SpanID** fields will give you the option to either open the **Explore** page to visualize the trace or following the data link, selecting any other field (such as **Start time**, **Name** or **Duration**) automatically follows the data link, filling in the `traceId` dashboard variable, and then shows the relevant trace in the trace panel.
 

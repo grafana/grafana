@@ -1555,7 +1555,7 @@ func Test_ProviderService(t *testing.T) {
 				"azuread",
 				"okta",
 			},
-			strategiesLength: 1,
+			strategiesLength: 2,
 		},
 		{
 			name:             "should return all fallback strategies and it should return all OAuth providers but not SAML because the licensing feature is enabled but the configurable provider is not setup",
@@ -1569,7 +1569,7 @@ func Test_ProviderService(t *testing.T) {
 				"azuread",
 				"okta",
 			},
-			strategiesLength: 2,
+			strategiesLength: 3,
 		},
 		{
 			name:             "should return all fallback strategies and it should return all OAuth providers and SAML because the licensing feature is enabled and the provider is setup",
@@ -1585,7 +1585,7 @@ func Test_ProviderService(t *testing.T) {
 				"okta",
 				"saml",
 			},
-			strategiesLength: 2,
+			strategiesLength: 3,
 		},
 	}
 	for _, tc := range tests {

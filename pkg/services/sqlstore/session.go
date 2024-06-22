@@ -12,10 +12,10 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/retryer"
 )
 

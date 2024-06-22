@@ -8,6 +8,10 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -16,13 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // Rule represents a single piece of work that is executed periodically by the ruler.
@@ -57,12 +57,12 @@ func newRuleFactory(
 	met *metrics.Scheduler,
 	logger log.Logger,
 	tracer tracing.Tracer,
-	recordingWriter writer.Writer,
+	recordingWriter RecordingWriter,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
 ) ruleFactoryFunc {
 	return func(ctx context.Context, rule *ngmodels.AlertRule) Rule {
-		if rule.IsRecordingRule() {
+		if rule.Type() == ngmodels.RuleTypeRecording {
 			return newRecordingRule(
 				ctx,
 				maxAttempts,
@@ -217,7 +217,6 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 	logger := a.logger.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
 
-	evalRunning := false
 	var currentFingerprint fingerprint
 	defer a.stopApplied(key)
 	for {
@@ -239,19 +238,14 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 				logger.Debug("Evaluation channel has been closed. Exiting")
 				return nil
 			}
-			if evalRunning {
-				continue
-			}
 
 			func() {
 				orgID := fmt.Sprint(key.OrgID)
 				evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
 				evalTotal := a.metrics.EvalTotal.WithLabelValues(orgID)
 
-				evalRunning = true
 				evalStart := a.clock.Now()
 				defer func() {
-					evalRunning = false
 					a.evalApplied(key, ctx.scheduledAt)
 					evalDuration.Observe(a.clock.Now().Sub(evalStart).Seconds())
 				}()
@@ -425,7 +419,7 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 	processDuration.Observe(a.clock.Now().Sub(start).Seconds())
 
 	start = a.clock.Now()
-	alerts := state.FromStateTransitionToPostableAlerts(processedStates, a.stateManager, a.appURL)
+	alerts := state.FromStateTransitionToPostableAlerts(e.scheduledAt, processedStates, a.stateManager, a.appURL)
 	span.AddEvent("results processed", trace.WithAttributes(
 		attribute.Int64("state_transitions", int64(len(processedStates))),
 		attribute.Int64("alerts_to_send", int64(len(alerts.PostableAlerts))),

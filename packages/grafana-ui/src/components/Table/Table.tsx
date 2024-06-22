@@ -25,7 +25,14 @@ import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks
 import { getInitialState, useTableStateReducer } from './reducer';
 import { useTableStyles } from './styles';
 import { FooterItem, GrafanaTableState, Props } from './types';
-import { getColumns, sortCaseInsensitive, sortNumber, getFooterItems, createFooterCalculationValues } from './utils';
+import {
+  getColumns,
+  sortCaseInsensitive,
+  sortNumber,
+  getFooterItems,
+  createFooterCalculationValues,
+  guessLongestField,
+} from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
@@ -208,7 +215,7 @@ export const Table = memo((props: Props) => {
 
     if (isCountRowsSet) {
       const footerItemsCountRows: FooterItem[] = [];
-      footerItemsCountRows[0] = headerGroups[0]?.headers[0]?.filteredRows.length.toString() ?? data.length.toString();
+      footerItemsCountRows[0] = rows.length.toString() ?? data.length.toString();
       setFooterItems(footerItemsCountRows);
       return;
     }
@@ -280,12 +287,15 @@ export const Table = memo((props: Props) => {
         />
         {isSmall ? null : (
           <div className={tableStyles.paginationSummary}>
-            {itemsRangeStart} - {itemsRangeEnd} of {data.length} rows
+            {itemsRangeStart} - {itemsRangeEnd < rows.length ? itemsRangeEnd : rows.length} of {rows.length} rows
           </div>
         )}
       </div>
     );
   }
+
+  // Try to determine the longet field
+  const longestField = guessLongestField(fieldConfig, data);
 
   return (
     <div
@@ -304,6 +314,7 @@ export const Table = memo((props: Props) => {
           {itemCount > 0 ? (
             <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
               <RowsList
+                headerGroups={headerGroups}
                 data={data}
                 rows={rows}
                 width={width}
@@ -323,6 +334,7 @@ export const Table = memo((props: Props) => {
                 footerPaginationEnabled={Boolean(enablePagination)}
                 enableSharedCrosshair={enableSharedCrosshair}
                 initialRowIndex={initialRowIndex}
+                longestField={longestField}
               />
             </div>
           ) : (

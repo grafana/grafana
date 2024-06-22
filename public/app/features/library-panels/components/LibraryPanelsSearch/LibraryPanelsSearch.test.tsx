@@ -31,7 +31,7 @@ jest.mock('debounce-promise', () => {
   const debounce = () => {
     const debounced = () =>
       Promise.resolve([
-        { label: 'General', value: { uid: '', title: 'General' } },
+        { label: 'Dashboards', value: { uid: '', title: 'Dashboards' } },
         { label: 'Folder1', value: { id: 'xMsQdBfWz', title: 'Folder1' } },
         { label: 'Folder2', value: { id: 'wfTJJL5Wz', title: 'Folder2' } },
       ]);
@@ -207,7 +207,7 @@ describe('LibraryPanelsSearch', () => {
                 type: 'timeseries',
                 version: 1,
                 meta: {
-                  folderName: 'General',
+                  folderName: 'Dashboards',
                   folderUid: '',
                   connectedDashboards: 0,
                   created: '2021-01-01 12:00:00',
@@ -259,7 +259,7 @@ describe('LibraryPanelsSearch', () => {
               type: 'timeseries',
               version: 1,
               meta: {
-                folderName: 'General',
+                folderName: 'Dashboards',
                 folderUid: '',
                 connectedDashboards: 0,
                 created: '2021-01-01 12:00:00',
@@ -300,7 +300,7 @@ describe('LibraryPanelsSearch', () => {
               type: 'timeseries',
               version: 1,
               meta: {
-                folderName: 'General',
+                folderName: 'Dashboards',
                 folderUid: '',
                 connectedDashboards: 0,
                 created: '2021-01-01 12:00:00',
@@ -339,7 +339,7 @@ describe('LibraryPanelsSearch', () => {
                 type: 'timeseries',
                 version: 1,
                 meta: {
-                  folderName: 'General',
+                  folderName: 'Dashboards',
                   folderUid: '',
                   connectedDashboards: 0,
                   created: '2021-01-01 12:00:00',

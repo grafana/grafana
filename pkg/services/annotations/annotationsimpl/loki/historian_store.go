@@ -8,14 +8,16 @@ import (
 	"sort"
 	"time"
 
+	"golang.org/x/exp/constraints"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
-	"golang.org/x/exp/constraints"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -24,9 +26,9 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -52,7 +54,7 @@ type LokiHistorianStore struct {
 	log    log.Logger
 }
 
-func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, db db.DB, log log.Logger) *LokiHistorianStore {
+func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, db db.DB, log log.Logger, tracer tracing.Tracer) *LokiHistorianStore {
 	if !useStore(cfg, ft) {
 		return nil
 	}
@@ -63,7 +65,7 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft f
 	}
 
 	return &LokiHistorianStore{
-		client: historian.NewLokiClient(lokiCfg, historian.NewRequester(), ngmetrics.NewHistorianMetrics(prometheus.DefaultRegisterer, subsystem), log),
+		client: historian.NewLokiClient(lokiCfg, historian.NewRequester(), ngmetrics.NewHistorianMetrics(prometheus.DefaultRegisterer, subsystem), log, tracer),
 		db:     db,
 		log:    log,
 	}

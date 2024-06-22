@@ -63,6 +63,14 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
     [amSourceName, matchers]
   );
 
+  if (isError) {
+    return (
+      <Alert title="Preview not available" severity="error">
+        Error occured when generating preview of affected alerts. Are your matchers valid?
+      </Alert>
+    );
+  }
+
   const tableItemAlerts = alerts.map<DynamicTableItemProps<AlertmanagerAlert>>((alert) => ({
     id: alert.fingerprint,
     data: alert,
@@ -77,11 +85,7 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
         ) : null}
       </h4>
       {!hasValidMatchers && <span>Add a valid matcher to see affected alerts</span>}
-      {isError && (
-        <Alert title="Preview not available" severity="error">
-          Error occured when generating preview of affected alerts. Are your matchers valid?
-        </Alert>
-      )}
+
       {isFetching && <LoadingPlaceholder text="Loading affected alert rule instances..." />}
       {!isFetching && !isError && hasValidMatchers && (
         <div className={styles.table}>

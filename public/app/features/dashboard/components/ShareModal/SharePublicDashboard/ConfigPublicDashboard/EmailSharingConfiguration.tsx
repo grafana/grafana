@@ -13,7 +13,7 @@ import {
   useDeleteRecipientMutation,
   useGetPublicDashboardQuery,
   useReshareAccessToRecipientMutation,
-  useUpdatePublicDashboardMutation,
+  useUpdatePublicDashboardAccessMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -101,7 +101,7 @@ export const EmailSharingConfiguration = ({ dashboard }: { dashboard: DashboardM
 
   const dashboardUid = dashboard instanceof DashboardScene ? dashboard.state.uid : dashboard.uid;
   const { data: publicDashboard } = useGetPublicDashboardQuery(dashboardUid);
-  const [updateShareType] = useUpdatePublicDashboardMutation();
+  const [updateShareType] = useUpdatePublicDashboardAccessMutation();
   const [addEmail, { isLoading: isAddEmailLoading }] = useAddRecipientMutation();
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);

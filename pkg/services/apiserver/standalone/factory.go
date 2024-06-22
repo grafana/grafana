@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
-	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/query/client"
@@ -36,6 +35,8 @@ type APIServerFactory interface {
 
 	// Make an API server for a given group+version
 	MakeAPIServer(ctx context.Context, tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
+
+	Shutdown()
 }
 
 // Zero dependency provider for testing
@@ -73,9 +74,6 @@ func (p *DummyAPIFactory) MakeAPIServer(_ context.Context, tracer tracing.Tracer
 	}
 
 	switch gv.Group {
-	case "example.grafana.app":
-		return example.NewTestingAPIBuilder(), nil
-
 	// Only works with testdata
 	case "query.grafana.app":
 		return query.NewQueryAPIBuilder(
@@ -113,6 +111,8 @@ func (p *DummyAPIFactory) MakeAPIServer(_ context.Context, tracer tracing.Tracer
 
 	return nil, fmt.Errorf("unsupported group")
 }
+
+func (p *DummyAPIFactory) Shutdown() {}
 
 // Simple stub for standalone datasource testing
 type pluginDatasourceImpl struct {

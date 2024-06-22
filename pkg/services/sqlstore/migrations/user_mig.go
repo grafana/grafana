@@ -161,6 +161,8 @@ func addUserMigrations(mg *Migrator) {
 
 	// Users login and email should be in lower case
 	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail, &usermig.UsersLowerCaseLoginAndEmail{})
+	// Users login and email should be in lower case - 2, fix for creating users not lowering login and email
+	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail+"2", &usermig.UsersLowerCaseLoginAndEmail{})
 }
 
 const migSQLITEisServiceAccountNullable = `ALTER TABLE user ADD COLUMN tmp_service_account BOOLEAN DEFAULT 0;

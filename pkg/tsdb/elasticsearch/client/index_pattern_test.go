@@ -90,6 +90,10 @@ func TestIndexPattern(t *testing.T) {
 			require.Equal(t, indices[0], "data-2018-moredata-05.15")
 		})
 
+		indexPatternScenario(t, noInterval, "", timeRange, func(indices []string) {
+			require.Len(t, indices, 0)
+		})
+
 		t.Run("Should return 01 week", func(t *testing.T) {
 			from = time.Date(2018, 1, 15, 17, 50, 0, 0, time.UTC)
 			to = time.Date(2018, 1, 15, 17, 55, 0, 0, time.UTC)
