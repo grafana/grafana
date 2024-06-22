@@ -7009,7 +7009,9 @@
           "status": {
             "enum": [
               "OK",
-              "ERROR"
+              "ERROR",
+              "PENDING",
+              "UNKNOWN"
             ],
             "type": "string"
           },
@@ -15527,6 +15529,26 @@
       "get": {
         "operationId": "getSnapshot",
         "parameters": [
+          {
+            "description": "Offset is used for pagination with limit",
+            "in": "query",
+            "name": "resultOffset",
+            "schema": {
+              "default": 0,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Max limit for snapshot results returned.",
+            "in": "query",
+            "name": "resultLimit",
+            "schema": {
+              "default": 100,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
           {
             "description": "Session UID of a session",
             "in": "path",
