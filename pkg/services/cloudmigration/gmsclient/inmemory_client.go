@@ -62,18 +62,18 @@ func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudm
 	results := []cloudmigration.CloudMigrationResource{
 		{
 			Type:   cloudmigration.DashboardDataType,
-			RefID:  util.GenerateShortUID(),
+			RefID:  "dash1",
 			Status: cloudmigration.ItemStatusOK,
 		},
 		{
 			Type:   cloudmigration.DatasourceDataType,
-			RefID:  util.GenerateShortUID(),
+			RefID:  "ds1",
 			Status: cloudmigration.ItemStatusError,
 			Error:  "fake error",
 		},
 		{
 			Type:   cloudmigration.FolderDataType,
-			RefID:  util.GenerateShortUID(),
+			RefID:  "folder1",
 			Status: cloudmigration.ItemStatusOK,
 		},
 	}
@@ -81,7 +81,7 @@ func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudm
 	// just fake an entire response
 	gmsSnapshot := cloudmigration.CloudMigrationSnapshot{
 		Status:         cloudmigration.SnapshotStatusFinished,
-		GMSSnapshotUID: util.GenerateShortUID(),
+		GMSSnapshotUID: "gmssnapshotuid",
 		Resources:      results,
 		Finished:       time.Now(),
 	}

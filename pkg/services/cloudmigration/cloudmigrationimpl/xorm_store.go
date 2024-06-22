@@ -253,38 +253,30 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 }
 
 func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
-	updates := make([]cloudmigration.CloudMigrationResource, 0)
-	creates := make([]cloudmigration.CloudMigrationResource, 0)
-
-	// ensure snapshot_uids are consistent
+	// ensure snapshot_uids are consistent so that we can use them to query when uid isn't known
 	for i := 0; i < len(resources); i++ {
-		r := resources[i]
-		r.SnapshotUID = snapshotUid
-		if r.UID == "" {
-			creates = append(creates, r)
-		} else {
-			if err := util.ValidateUID(r.UID); err != nil {
-				return fmt.Errorf("missing or invalid uids: %w", err)
-			}
-			updates = append(updates, r)
-		}
+		resources[i].SnapshotUID = snapshotUid
 	}
 
 	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
+		sql := "UPDATE cloud_migration_resource SET status=?, error_string=? WHERE uid=? OR (snapshot_uid=? AND resource_uid=?)"
 		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			_, err := sess.Insert(creates)
-			return err
-		})
-		if err != nil {
-			return fmt.Errorf("inserting resources: %w", err)
-		}
-
-		sql := "UPDATE cloud_migration_resource SET status=?, error_string=? WHERE uid=?"
-		err = ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			for _, r := range updates {
-				_, err := sess.Exec(sql, r.Status, r.Error, r.UID)
+			for _, r := range resources {
+				// try an update first
+				result, err := sess.Exec(sql, r.Status, r.Error, r.UID, snapshotUid, r.RefID)
 				if err != nil {
 					return err
+				}
+				// if this had no effect, assign a uid and insert instead
+				n, err := result.RowsAffected()
+				if err != nil {
+					return err
+				} else if n == 0 {
+					r.UID = util.GenerateShortUID()
+					_, err := sess.Insert(r)
+					if err != nil {
+						return err
+					}
 				}
 			}
 			return nil
