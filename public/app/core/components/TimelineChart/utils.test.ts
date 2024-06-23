@@ -32,6 +32,7 @@ describe('prepare timeline graph', () => {
       to: dateTime(3),
     },
   };
+
   it('errors with no time fields', () => {
     const frames = [
       toDataFrame({
@@ -87,6 +88,7 @@ describe('prepare timeline graph', () => {
       ]
     `);
   });
+
   it('should try to sort time fields', () => {
     const frames = [
       toDataFrame({
@@ -266,6 +268,12 @@ describe('prepare timeline graph', () => {
       [undefined, 'ERROR', undefined, null, undefined, 'WARNING', null, undefined],
     ]);
   });
+
+  // TODO kputera: Add the following tests:
+  // 1. Frames being broken up correctly (order preserved)
+  // 2. Frames without any value fields?
+  // 3. Frames with >2 time fields?
+  // 4. Hiding from viz
 });
 
 describe('findNextStateIndex', () => {

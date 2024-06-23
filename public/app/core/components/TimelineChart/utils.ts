@@ -289,9 +289,9 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
   };
 }
 
-// This will return a set of frames with only graphable values included
-// TODO kputera: Explain what will happen in terms of normalization
-// TODO kputera: I'll need extra eyes on this function. Also, add more tests?
+// - Normalize the frames such that each one contains only a time field and a value field.
+//   To do this, we might break up bigger frames containing >1 value fields into multiple ones.
+// - Only return graphable fields/values.
 export function prepareTimelineFields(
   series: DataFrame[] | undefined,
   mergeValues: boolean,

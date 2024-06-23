@@ -46,10 +46,18 @@ export const StateTimelinePanel = ({
   const { sync, eventsScope, canAddAnnotations, dataLinkPostProcessor, eventBus } = usePanelContext();
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
-  let { frames, warn } = useMemo(
-    () => prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme),
-    [data.series, options.mergeValues, timeRange, theme]
-  );
+  const [pageNumber, setPageNumber] = useState(1);
+
+  const { frames, warn, pageCount } = useMemo(() => {
+    const { frames, warn } = prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme);
+    if (frames !== undefined && options.maxPageSize !== undefined && options.maxPageSize > 0) {
+      const pageCount = Math.ceil(frames.length / options.maxPageSize);
+      const pageOffset = (pageNumber - 1) * options.maxPageSize;
+      const paginatedFrames = frames.slice(pageOffset, pageOffset + options.maxPageSize);
+      return { frames: paginatedFrames, warn, pageCount };
+    }
+    return { frames, warn, pageCount: undefined };
+  }, [data.series, options.mergeValues, timeRange, theme, pageNumber, options.maxPageSize]);
 
   const legendItems = useMemo(
     () => prepareTimelineLegendItems(frames, options.legend, theme),
@@ -58,31 +66,11 @@ export const StateTimelinePanel = ({
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
-  const [pageNumber, setPageNumber] = useState(1);
-
   if (!frames || warn) {
     return (
       <div className="panel-empty">
         <p>{warn ?? 'No data found in response'}</p>
       </div>
-    );
-  }
-
-  let paginationRev = undefined;
-  let paginationEl = undefined;
-  if (options.maxPageSize !== undefined && options.maxPageSize > 0) {
-    const pageCount = Math.ceil(frames.length / options.maxPageSize);
-    const pageOffset = (pageNumber - 1) * options.maxPageSize;
-    frames = frames.slice(pageOffset, pageOffset + options.maxPageSize);
-    paginationRev = `${pageOffset}/${options.maxPageSize}`;
-    paginationEl = (
-      <Pagination
-        currentPage={pageNumber}
-        numberOfPages={pageCount}
-        // TODO kputera: Should we make [showSmallVersion] be dynamic?
-        showSmallVersion={false}
-        onNavigate={setPageNumber}
-      />
     );
   }
 
@@ -106,7 +94,7 @@ export const StateTimelinePanel = ({
         theme={theme}
         frames={frames}
         structureRev={data.structureRev}
-        paginationRev={paginationRev}
+        paginationRev={`${pageNumber}/${options.maxPageSize}`}
         timeRange={timeRange}
         timeZone={timezones}
         width={width}
@@ -179,7 +167,15 @@ export const StateTimelinePanel = ({
           );
         }}
       </TimelineChart>
-      {paginationEl}
+      {pageCount && (
+        <Pagination
+          currentPage={pageNumber}
+          numberOfPages={pageCount}
+          // TODO kputera: Should we make [showSmallVersion] be dynamic?
+          showSmallVersion={false}
+          onNavigate={setPageNumber}
+        />
+      )}
     </div>
   );
 };
