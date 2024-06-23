@@ -302,10 +302,6 @@ export function prepareTimelineFields(
     return { warn: 'No data in response' };
   }
 
-  // TODO kputera: Consider adding more checks
-  // 1. Either between 1 or 2 time fields
-  // 2. Time field cannot be hidden from viz
-
   cacheFieldDisplayNames(series);
 
   let hasTimeseries = false;
