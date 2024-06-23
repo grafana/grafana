@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
 import { DashboardCursorSync, PanelProps } from '@grafana/data';
-import { getLastStreamingDataFramePacket } from '@grafana/data/src/dataframe/StreamingDataFrame';
 import {
   EventBusPlugin,
   Pagination,
@@ -85,13 +84,6 @@ export const StateTimelinePanel = ({
     );
   }
 
-  // TODO kputera: Is this still correct?
-  if (frames.length === 1) {
-    const packet = getLastStreamingDataFramePacket(frames[0]);
-    if (packet) {
-      // console.log('STREAM Packet', packet);
-    }
-  }
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   // TODO kputera: Change this to use emotion or whatever that is, rather than hardcoding the style
