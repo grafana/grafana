@@ -99,6 +99,7 @@ export const StateTimelinePanel = ({
         flexDirection: 'column',
         alignItems: 'center',
         overflow: 'auto',
+        justifyContent: 'space-around',
       }}
     >
       <TimelineChart
