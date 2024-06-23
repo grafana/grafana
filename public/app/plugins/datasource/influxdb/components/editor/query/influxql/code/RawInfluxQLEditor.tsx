@@ -34,7 +34,7 @@ export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.E
   };
 
   return (
-    <div>
+    <Stack direction={"column"}>
       <TextArea
         aria-label="query"
         rows={3}
@@ -72,6 +72,6 @@ export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.E
           />
         </InlineField>
       </Stack>
-    </div>
+    </Stack>
   );
 };
