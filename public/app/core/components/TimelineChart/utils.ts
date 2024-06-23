@@ -47,7 +47,7 @@ interface UPlotConfigOptions {
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   mergeValues?: boolean;
-  getValueColor: (allFrames: DataFrame[], frameIdx: number, fieldIdx: number, value: unknown) => string;
+  getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
 }
 
@@ -71,7 +71,6 @@ const defaultConfig: PanelFieldConfig = {
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = ({
   frame,
-  allFrames,
   theme,
   timeZones,
   getTimeRange,
@@ -109,7 +108,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
       field.state?.origin?.frameIndex !== undefined &&
       getValueColor
     ) {
-      return getValueColor(allFrames, field.state?.origin?.frameIndex, field.state?.origin?.fieldIndex, value);
+      return getValueColor(field.state?.origin?.frameIndex, field.state?.origin?.fieldIndex, value);
     }
 
     return FALLBACK_COLOR;
@@ -291,6 +290,8 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
 }
 
 // This will return a set of frames with only graphable values included
+// TODO kputera: Explain what will happen in terms of normalization
+// TODO kputera: I'll need extra eyes on this function. Also, add more tests?
 export function prepareTimelineFields(
   series: DataFrame[] | undefined,
   mergeValues: boolean,
@@ -300,6 +301,10 @@ export function prepareTimelineFields(
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
+
+  // TODO kputera: Consider adding more checks
+  // 1. Either between 1 or 2 time fields
+  // 2. Time field cannot be hidden from viz
 
   cacheFieldDisplayNames(series);
 
@@ -324,7 +329,7 @@ export function prepareTimelineFields(
     }
 
     let isTimeseries = startFieldIdx !== -1;
-    let changed = false;
+    hasTimeseries = hasTimeseries || isTimeseries;
     frame = maybeSortFrame(frame, startFieldIdx);
 
     // if we have a second time field, assume it is state end timestamps
@@ -356,8 +361,6 @@ export function prepareTimelineFields(
           }
         }
       });
-
-      changed = true;
     }
 
     let nulledFrame = applyNullInsertThreshold({
@@ -366,37 +369,29 @@ export function prepareTimelineFields(
       refFieldPseudoMax: timeRange.to.valueOf(),
     });
 
-    if (nulledFrame !== frame) {
-      changed = true;
-    }
-
     frame = nullToValue(nulledFrame);
 
-    const fields: Field[] = [];
     for (let field of frame.fields) {
       if (field.config.custom?.hideFrom?.viz) {
         continue;
       }
       switch (field.type) {
-        case FieldType.time:
-          isTimeseries = true;
-          hasTimeseries = true;
-          fields.push(field);
-          break;
         case FieldType.enum:
         case FieldType.number:
           if (mergeValues && field.config.color?.mode === FieldColorModeId.Thresholds) {
             const f = mergeThresholdValues(field, theme);
             if (f) {
-              fields.push(f);
-              changed = true;
+              frames.push({
+                fields: [frame.fields[startFieldIdx], f],
+                length: frame.length,
+              });
               continue;
             }
           }
 
         case FieldType.boolean:
         case FieldType.string:
-          field = {
+          const f = {
             ...field,
             config: {
               ...field.config,
@@ -406,22 +401,14 @@ export function prepareTimelineFields(
               },
             },
           };
-          changed = true;
-          fields.push(field);
+          frames.push({
+            fields: [frame.fields[startFieldIdx], f],
+            length: frame.length,
+          });
           break;
         default:
-          changed = true;
-      }
-    }
-    if (isTimeseries && fields.length > 1) {
-      hasTimeseries = true;
-      if (changed) {
-        frames.push({
-          ...frame,
-          fields,
-        });
-      } else {
-        frames.push(frame);
+          // TODO kputera: Explain more
+          break;
       }
     }
   }
