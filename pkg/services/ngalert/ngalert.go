@@ -3,7 +3,6 @@ package ngalert
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -249,11 +248,14 @@ func (ng *AlertNG) init() error {
 		return fmt.Errorf("failed to initialize alerting because multiorg alertmanager manager failed to warm up: %w", err)
 	}
 
-	appUrl, err := url.Parse(ng.Cfg.AppURL)
-	if err != nil {
-		ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
-		appUrl = nil
-	}
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43657 - Set APP url to logzio grafana for alert notification URLs
+	//appUrl, err := url.Parse(ng.Cfg.AppURL)
+	//if err != nil {
+	//	ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
+	//	appUrl = nil
+	//}
+	appUrl := ng.Cfg.ParsedAppURL
+	// LOGZ.IO GRAFANA CHANGE :: End
 
 	clk := clock.New()
 

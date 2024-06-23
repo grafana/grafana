@@ -12,6 +12,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
 	alertingModels "github.com/grafana/alerting/models"
+	alertingReceivers "github.com/grafana/alerting/receivers" // LOGZ.IO GRAFANA CHANGE :: DEV-43657 - Set APP url to logzio grafana for alert notification URLs
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
@@ -72,6 +73,7 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 	} else {
 		urlStr = ""
 	}
+	urlStr = alertingReceivers.ToLogzioAppPath(urlStr) // LOGZ.IO GRAFANA CHANGE :: DEV-43657 - Set APP url to logzio grafana for alert notification URLs
 
 	state := alertState.State
 	if alertState.Resolved {

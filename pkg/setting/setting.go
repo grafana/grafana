@@ -97,6 +97,7 @@ type Cfg struct {
 	HTTPPort         string
 	Env              string
 	AppURL           string
+	ParsedAppURL     *url.URL // LOGZ.IO GRAFANA CHANGE :: DEV-43657 - Set APP url to logzio grafana for alert notification URLs
 	AppSubURL        string
 	InstanceName     string
 	ServeFromSubPath bool
@@ -1860,7 +1861,17 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		return err
 	}
 
-	cfg.AppURL = AppUrl
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43657 - Set APP url to logzio grafana for alert notification URLs
+	parsedUrl, err := url.Parse(AppUrl)
+	additionalPath := valueAsString(server, "root_url_additional_path", "")
+	if err != nil {
+		cfg.Logger.Error("Invalid root_url.", "url", AppUrl, "error", err)
+		return err
+	}
+	parsedUrl.Path += additionalPath
+	cfg.AppURL = AppUrl + additionalPath
+	cfg.ParsedAppURL = parsedUrl
+	// LOGZ.IO GRAFANA CHANGE :: end
 	cfg.AppSubURL = AppSubUrl
 	cfg.Protocol = HTTPScheme
 	cfg.ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
