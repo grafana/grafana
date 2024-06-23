@@ -406,7 +406,6 @@ export function prepareTimelineFields(
           });
           break;
         default:
-          // TODO kputera: Explain more
           break;
       }
     }
