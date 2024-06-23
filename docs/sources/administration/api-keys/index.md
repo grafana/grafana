@@ -45,7 +45,7 @@ To follow these instructions, you need at least one of the following:
 
 ### Steps
 
-To create an API, complete the following steps:
+To create an API key, complete the following steps:
 
 1. Sign in to Grafana.
 1. Click **Administration** in the left-side menu and select **API Keys**.
