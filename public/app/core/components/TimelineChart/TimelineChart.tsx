@@ -38,17 +38,14 @@ const propsToDiff = [
 ];
 
 export class TimelineChart extends React.Component<TimelineProps, TimelineState> {
-  // TODO: I think we need to be careful about this.props.frames usages in other non-render
-  // functions. It feels wrong that e.g. getValueColor directly uses this.props.frames
-
   constructor(props: TimelineProps) {
     super(props);
-    // TODO: Test what happens if data is empty. Is 1 correct?
+    // TODO kputera: Test what happens if data is empty. Is 1 correct?
     this.state = { currentPageNumber: 1 };
   }
 
-  getValueColor = (frameIdx: number, fieldIdx: number, value: unknown) => {
-    const field = this.props.frames[frameIdx].fields[fieldIdx];
+  getValueColor = (allFrames: DataFrame[], frameIdx: number, fieldIdx: number, value: unknown) => {
+    const field = allFrames[frameIdx].fields[fieldIdx];
 
     if (field.display) {
       const disp = field.display(value); // will apply color modes
@@ -61,11 +58,11 @@ export class TimelineChart extends React.Component<TimelineProps, TimelineState>
   };
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
-    // TODO: Is splitting frame sufficient? Will e.g. data links carry over?
+    // TODO kputera: Is splitting frame sufficient? Will e.g. data links carry over?
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       getTimeRange,
-      allFrames: this.props.frames,
+      allFrames,
       ...this.props,
 
       // Ensure timezones is passed as an array
@@ -94,7 +91,7 @@ export class TimelineChart extends React.Component<TimelineProps, TimelineState>
   };
 
   render() {
-    // TODO: What happens when there is one big query instead of many singular queries?
+    // TODO kputera: What happens when there is one big query instead of many singular queries?
 
     let props: TimelineProps & { currentPageNumber?: number } = this.props;
     let paginationEl = undefined;
@@ -112,7 +109,7 @@ export class TimelineChart extends React.Component<TimelineProps, TimelineState>
         <Pagination
           currentPage={this.state.currentPageNumber}
           numberOfPages={pageCount}
-          // TODO: Should we make [showSmallVersion] be dynamic?
+          // TODO kputera: Should we make [showSmallVersion] be dynamic?
           showSmallVersion={false}
           onNavigate={(currentPageNumber) => this.setState({ currentPageNumber })}
         />
@@ -120,8 +117,8 @@ export class TimelineChart extends React.Component<TimelineProps, TimelineState>
     }
 
     return (
-      // TODO: Change this to use emotion or whatever that is, rather than hardcoding the style
-      // TODO: Don't hardcode pagination element height. Find a way to make it better.
+      // TODO kputera: Change this to use emotion or whatever that is, rather than hardcoding the style
+      // TODO kputera: Don't hardcode pagination element height. Find a way to make it better.
       <div
         style={{
           height: this.props.height,
@@ -129,11 +126,12 @@ export class TimelineChart extends React.Component<TimelineProps, TimelineState>
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          overflow: 'auto',
         }}
       >
         <GraphNG
           {...props}
-          height={this.props.height - 24}
+          height={this.props.height - 40}
           fields={{
             x: (f) => f.type === FieldType.time,
             y: (f) =>

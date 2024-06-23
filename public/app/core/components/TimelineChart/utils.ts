@@ -47,7 +47,7 @@ interface UPlotConfigOptions {
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   mergeValues?: boolean;
-  getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
+  getValueColor: (allFrames: DataFrame[], frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
 }
 
@@ -71,6 +71,7 @@ const defaultConfig: PanelFieldConfig = {
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = ({
   frame,
+  allFrames,
   theme,
   timeZones,
   getTimeRange,
@@ -108,7 +109,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
       field.state?.origin?.frameIndex !== undefined &&
       getValueColor
     ) {
-      return getValueColor(field.state?.origin?.frameIndex, field.state?.origin?.fieldIndex, value);
+      return getValueColor(allFrames, field.state?.origin?.frameIndex, field.state?.origin?.fieldIndex, value);
     }
 
     return FALLBACK_COLOR;
