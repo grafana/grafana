@@ -310,18 +310,21 @@ export function prepareTimelineFields(
   for (let frame of series) {
     let startFieldIdx = -1;
     let endFieldIdx = -1;
-
+    let timeFieldCount = 0;
     for (let i = 0; i < frame.fields.length; i++) {
       let f = frame.fields[i];
-
       if (f.type === FieldType.time) {
+        timeFieldCount += 1;
         if (startFieldIdx === -1) {
           startFieldIdx = i;
-        } else if (endFieldIdx === -1) {
+        } else {
           endFieldIdx = i;
-          break;
         }
       }
+    }
+
+    if (timeFieldCount > 2) {
+      return { warn: 'Data has too many time fields, expected at most two' };
     }
 
     let isTimeseries = startFieldIdx !== -1;

@@ -46,6 +46,21 @@ describe('prepare timeline graph', () => {
     expect(info.warn).toEqual('Data does not have a time field');
   });
 
+  it('errors if more than 2 time fields', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'a', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'b', type: FieldType.string, values: ['a', 'b', 'c'] },
+          { name: 'c', type: FieldType.time, values: [2, 4, 6] },
+          { name: 'd', type: FieldType.time, values: [3, 6, 9] },
+        ],
+      }),
+    ];
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
+    expect(info.warn).toEqual('Data has too many time fields, expected at most two');
+  });
+
   it('requires a number, string, or boolean value', () => {
     const frames = [
       toDataFrame({
@@ -270,10 +285,9 @@ describe('prepare timeline graph', () => {
   });
 
   // TODO kputera: Add the following tests:
-  // 1. Frames being broken up correctly (order preserved)
-  // 2. Frames without any value fields?
-  // 3. Frames with >2 time fields?
-  // 4. Hiding from viz
+  // - Frames being broken up correctly (order preserved)
+  // - Frames without any value fields?
+  // - Hiding from viz interacting with time fields.
 });
 
 describe('findNextStateIndex', () => {
