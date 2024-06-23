@@ -19,22 +19,11 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   colWidth?: number;
   legendItems?: VizLegendItem[];
   tooltip?: VizTooltipOptions;
-
-  // TODO kputera: Explain what these props are, consider dropping them
-  pageNumber?: number;
-  maxPageSize?: number;
+  // Whenever `paginationRev` changes, the graph will be fully re-configured/rendered.
+  paginationRev?: string;
 }
 
-const propsToDiff = [
-  'rowHeight',
-  'colWidth',
-  'showValue',
-  'mergeValues',
-  'alignValue',
-  'tooltip',
-  'pageNumber',
-  'maxPageSize',
-];
+const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip', 'paginationRev'];
 
 export class TimelineChart extends React.Component<TimelineProps> {
   getValueColor = (frameIdx: number, fieldIdx: number, value: unknown) => {

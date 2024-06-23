@@ -68,11 +68,13 @@ export const StateTimelinePanel = ({
     );
   }
 
+  let paginationRev = undefined;
   let paginationEl = undefined;
   if (options.maxPageSize !== undefined && options.maxPageSize > 0) {
     const pageCount = Math.ceil(frames.length / options.maxPageSize);
     const pageOffset = (pageNumber - 1) * options.maxPageSize;
     frames = frames.slice(pageOffset, pageOffset + options.maxPageSize);
+    paginationRev = `${pageOffset}/${options.maxPageSize}`;
     paginationEl = (
       <Pagination
         currentPage={pageNumber}
@@ -103,6 +105,7 @@ export const StateTimelinePanel = ({
         theme={theme}
         frames={frames}
         structureRev={data.structureRev}
+        paginationRev={paginationRev}
         timeRange={timeRange}
         timeZone={timezones}
         width={width}
@@ -113,9 +116,6 @@ export const StateTimelinePanel = ({
         replaceVariables={replaceVariables}
         dataLinkPostProcessor={dataLinkPostProcessor}
         cursorSync={cursorSync}
-        // TODO kputera: Why is this necessary?
-        pageNumber={pageNumber}
-        maxPageSize={options.maxPageSize}
       >
         {(builder, alignedFrame) => {
           return (
