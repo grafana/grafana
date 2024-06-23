@@ -74,6 +74,27 @@ describe('prepare timeline graph', () => {
     expect(info.warn).toEqual('No graphable fields');
   });
 
+  it('ignore any frame without any number, string, or boolean value', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'a', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'b', type: FieldType.other, values: [{}, {}, {}] },
+        ],
+      }),
+      toDataFrame({
+        fields: [
+          { name: 'c', type: FieldType.time, values: [4, 5, 6] },
+          { name: 'd', type: FieldType.string, values: ['a', 'b', 'c'] },
+        ],
+      }),
+    ];
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
+    expect(info.warn).toBeUndefined();
+    expect(info.frames!.length).toEqual(1);
+    expect(info.frames![0].fields[0].name).toEqual('c');
+  });
+
   it('will merge duplicate values', () => {
     const frames = [
       toDataFrame({
@@ -284,10 +305,47 @@ describe('prepare timeline graph', () => {
     ]);
   });
 
-  // TODO kputera: Add the following tests:
-  // - Frames being broken up correctly (order preserved)
-  // - Frames without any value fields?
-  // - Hiding from viz interacting with time fields.
+  it('normalize frames correctly (break them up)', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'a', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'b', type: FieldType.number, values: [100, 200, 300] },
+          { name: 'c', type: FieldType.string, values: ['h', 'i', 'j'] },
+        ],
+      }),
+      toDataFrame({
+        fields: [
+          { name: 'x', type: FieldType.time, values: [10, 20, 30] },
+          { name: 'y', type: FieldType.string, values: ['e', 'f', 'g'] },
+          { name: 'z', type: FieldType.time, values: [15, 25, 35] },
+        ],
+      }),
+    ];
+    const result = prepareTimelineFields(frames, true, timeRange, theme);
+    expect(result.warn).toBeUndefined();
+    expect(result.frames!.length).toEqual(3);
+    expect(result.frames).toMatchObject([
+      {
+        fields: [
+          { name: 'a', values: [1, 2, 3] },
+          { name: 'b', values: [100, 200, 300] },
+        ],
+      },
+      {
+        fields: [
+          { name: 'a', values: [1, 2, 3] },
+          { name: 'c', values: ['h', 'i', 'j'] },
+        ],
+      },
+      {
+        fields: [
+          { name: 'x', values: [10, 15, 20, 25, 30, 35] },
+          { name: 'y', values: ['e', null, 'f', null, 'g', null] },
+        ],
+      },
+    ]);
+  });
 });
 
 describe('findNextStateIndex', () => {
