@@ -20,7 +20,7 @@ weight: -43
 
 # What’s new in Grafana v11.1
 
-Welcome to Grafana 11.1! This release contains some major improvements. Most notably, we've adding cell text wrapping to table visualizations, a much-requested feature. We've made redesigned the Alerting settings page and made it easier to set rule-specific silences. A number of accessibility improvements are included in this release, making Grafana easier to use for everyone. And lastly, XY charts are now generally available.
+Welcome to Grafana 11.1! This release contains some minor improvements following on the big announcements in Grafana 11.0. We've adding cell text wrapping to table visualizations, a much-requested feature. We've also redesigned the Alerting settings page and made it easier to set rule-specific silences. A number of accessibility improvements are included in this release, making Grafana easier to use for everyone. And lastly, the XY chart is now generally available.
 
 <!-- {{< youtube id=" " >}} -->
 
