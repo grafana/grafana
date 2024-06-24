@@ -297,3 +297,114 @@ func TestReload(t *testing.T) {
 		})
 	}
 }
+
+func TestValidate(t *testing.T) {
+	testCases := []struct {
+		description   string
+		settings      models.SSOSettings
+		isValid       bool
+		containsError string
+	}{
+		{
+			description: "successfully validate basic settings",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host": "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			isValid: true,
+		},
+		{
+			description: "successfully validate settings that are not enabled",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": false,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"port": 123,
+							},
+						},
+					},
+				},
+			},
+			isValid: true,
+		},
+		{
+			description: "validation fails for invalid settings",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": "invalid server config",
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "cannot unmarshal",
+		},
+		{
+			description: "validation fails when no servers are configured",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{},
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "no servers configured",
+		},
+		{
+			description: "validation fails if one server does not have a host configured",
+			settings: models.SSOSettings{
+				Provider: "ldap",
+				Settings: map[string]any{
+					"enabled": true,
+					"config": map[string]any{
+						"servers": []any{
+							map[string]any{
+								"host": "127.0.0.1",
+							},
+							map[string]any{
+								"port": 123,
+							},
+						},
+					},
+				},
+			},
+			isValid:       false,
+			containsError: "no host configured",
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.description, func(t *testing.T) {
+			ldapImpl := &LDAPImpl{
+				features:     featuremgmt.WithManager(featuremgmt.FlagSsoSettingsApi),
+				loadingMutex: &sync.Mutex{},
+			}
+
+			err := ldapImpl.Validate(context.Background(), tt.settings, models.SSOSettings{}, nil)
+
+			if tt.isValid {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.ErrorContains(t, err, tt.containsError)
+			}
+		})
+	}
+}

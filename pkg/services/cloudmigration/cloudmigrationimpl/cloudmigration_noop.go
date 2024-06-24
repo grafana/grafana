@@ -75,3 +75,7 @@ func (s *NoopServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrat
 func (s *NoopServiceImpl) UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
 	return cloudmigration.ErrFeatureDisabledError
 }
+
+func (s *NoopServiceImpl) CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
+	return cloudmigration.ErrFeatureDisabledError
+}

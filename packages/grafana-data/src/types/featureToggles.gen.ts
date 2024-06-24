@@ -82,7 +82,6 @@ export interface FeatureToggles {
   sqlDatasourceDatabaseSelection?: boolean;
   recordedQueriesMulti?: boolean;
   vizAndWidgetSplit?: boolean;
-  prometheusIncrementalQueryInstrumentation?: boolean;
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
@@ -180,7 +179,6 @@ export interface FeatureToggles {
   disableNumericMetricsSortingInExpressions?: boolean;
   grafanaManagedRecordingRules?: boolean;
   queryLibrary?: boolean;
-  autofixDSUID?: boolean;
   logsExploreTableDefaultVisualization?: boolean;
   newDashboardSharingComponent?: boolean;
   alertingListViewV2?: boolean;
@@ -196,6 +194,9 @@ export interface FeatureToggles {
   authZGRPCServer?: boolean;
   openSearchBackendFlowEnabled?: boolean;
   ssoSettingsLDAP?: boolean;
+  failWrongDSUID?: boolean;
   databaseReadReplica?: boolean;
   zanzana?: boolean;
+  passScopeToDashboardApi?: boolean;
+  alertingApiServer?: boolean;
 }
