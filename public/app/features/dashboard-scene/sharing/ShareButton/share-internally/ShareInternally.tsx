@@ -8,14 +8,13 @@ import { t, Trans } from 'app/core/internationalization';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
 
 import { ShareLinkTab } from '../../ShareLinkTab';
-import { DEFAULT_SHARE_LINK_CONFIGURATION, getShareLinkConfigurationFromStorage } from '../utils';
+import { getShareLinkConfiguration } from '../utils';
 
 export class ShareInternally extends ShareLinkTab {
   static Component = ShareInternallyRenderer;
 
   constructor(state: { panelRef?: SceneObjectRef<VizPanel> }) {
-    const { useAbsoluteTimeRange, useShortUrl, theme } =
-      getShareLinkConfigurationFromStorage() || DEFAULT_SHARE_LINK_CONFIGURATION;
+    const { useAbsoluteTimeRange, useShortUrl, theme } = getShareLinkConfiguration();
     super({
       ...state,
       useLockedTime: useAbsoluteTimeRange,
@@ -40,7 +39,7 @@ function ShareInternallyRenderer({ model }: SceneComponentProps<ShareInternally>
         <Text variant="body">
           <Trans i18nKey="link.share.config-description">
             Create a personalized, direct link to share your dashboard within your organization, with the following
-            customization options:
+            customization settings:
           </Trans>
         </Text>
       </div>

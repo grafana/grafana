@@ -12,15 +12,14 @@ export type ShareLinkConfiguration = {
   theme: string;
 };
 
-export const DEFAULT_SHARE_LINK_CONFIGURATION: ShareLinkConfiguration = {
+const DEFAULT_SHARE_LINK_CONFIGURATION: ShareLinkConfiguration = {
   useAbsoluteTimeRange: true,
   useShortUrl: true,
   theme: 'current',
 };
 
 export const buildShareUrl = async (dashboard: DashboardScene, panel?: VizPanel) => {
-  const { useAbsoluteTimeRange, useShortUrl, theme } =
-    getShareLinkConfigurationFromStorage() || DEFAULT_SHARE_LINK_CONFIGURATION;
+  const { useAbsoluteTimeRange, useShortUrl, theme } = getShareLinkConfiguration();
   DashboardInteractions.shareLinkCopied({
     currentTimeRange: useAbsoluteTimeRange,
     theme,
@@ -34,17 +33,16 @@ export const buildShareUrl = async (dashboard: DashboardScene, panel?: VizPanel)
   });
 };
 
-type ShareLinkStoreConfiguration = ShareLinkConfiguration | undefined;
-const SHARE_LINK_CONFIGURATION = 'grafana.link.shareConfiguration';
+const SHARE_LINK_CONFIGURATION = 'grafana.dashboard.link.shareConfiguration';
 // Function that returns share link configuration from local storage
-export function getShareLinkConfigurationFromStorage(): ShareLinkStoreConfiguration | undefined {
+export function getShareLinkConfiguration(): ShareLinkConfiguration {
   if (store.exists(SHARE_LINK_CONFIGURATION)) {
-    return store.getObject(SHARE_LINK_CONFIGURATION);
+    return store.getObject(SHARE_LINK_CONFIGURATION) || DEFAULT_SHARE_LINK_CONFIGURATION;
   }
 
-  return undefined;
+  return DEFAULT_SHARE_LINK_CONFIGURATION;
 }
 
-export function updateShareLinkConfigurationFromStorage(config: ShareLinkStoreConfiguration) {
+export function updateShareLinkConfiguration(config: ShareLinkConfiguration) {
   store.setObject(SHARE_LINK_CONFIGURATION, config);
 }
