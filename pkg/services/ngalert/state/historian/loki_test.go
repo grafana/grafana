@@ -361,9 +361,10 @@ func TestBuildLogQuery(t *testing.T) {
 
 func TestMerge(t *testing.T) {
 	testCases := []struct {
-		name     string
-		res      QueryRes
-		expected *data.Frame
+		name       string
+		res        QueryRes
+		expected   *data.Frame
+		folderUIDs []string
 	}{
 		{
 			name: "Should return values from multiple streams in right order",
@@ -506,13 +507,125 @@ func TestMerge(t *testing.T) {
 				}),
 			),
 		},
+		{
+			name:       "should filter streams by folder UID",
+			folderUIDs: []string{"test-folder-1"},
+			res: QueryRes{
+				Data: QueryData{
+					Result: []Stream{
+						{
+							Stream: map[string]string{
+								"from":      "state-history",
+								"orgID":     "1",
+								"group":     "test-group-1",
+								"folderUID": "test-folder-1",
+							},
+							Values: []Sample{
+								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+							},
+						},
+						{
+							Stream: map[string]string{
+								"from":      "state-history",
+								"orgID":     "1",
+								"group":     "test-group-2",
+								"folderUID": "test-folder-2",
+							},
+							Values: []Sample{
+								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
+							},
+						},
+					},
+				},
+			},
+			expected: data.NewFrame("states",
+				data.NewField(dfTime, data.Labels{}, []time.Time{
+					time.Unix(1, 0),
+					time.Unix(5, 0),
+				}),
+				data.NewField(dfLine, data.Labels{}, []json.RawMessage{
+					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-2", SchemaVersion: 1, Previous: "pending", Current: "normal", Values: jsonifyValues(map[string]float64{"a": 0.5})}),
+				}),
+				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{
+					toJson(map[string]string{
+						StateHistoryLabelKey: "state-history",
+						OrgIDLabel:           "1",
+						GroupLabel:           "test-group-1",
+						FolderUIDLabel:       "test-folder-1",
+					}),
+					toJson(map[string]string{
+						StateHistoryLabelKey: "state-history",
+						OrgIDLabel:           "1",
+						GroupLabel:           "test-group-1",
+						FolderUIDLabel:       "test-folder-1",
+					}),
+				}),
+			),
+		},
+		{
+			name:       "should skip streams without folder UID if filter is specified",
+			folderUIDs: []string{"test-folder-1"},
+			res: QueryRes{
+				Data: QueryData{
+					Result: []Stream{
+						{
+							Stream: map[string]string{
+								"group": "test-group-1",
+							},
+							Values: []Sample{
+								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+							},
+						},
+					},
+				},
+			},
+			expected: data.NewFrame("states",
+				data.NewField(dfTime, data.Labels{}, []time.Time{}),
+				data.NewField(dfLine, data.Labels{}, []json.RawMessage{}),
+				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{}),
+			),
+		},
+		{
+			name:       "should return streams without folder UID if filter is not specified",
+			folderUIDs: []string{},
+			res: QueryRes{
+				Data: QueryData{
+					Result: []Stream{
+						{
+							Stream: map[string]string{
+								"group": "test-group-1",
+							},
+							Values: []Sample{
+								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+							},
+						},
+					},
+				},
+			},
+			expected: data.NewFrame("states",
+				data.NewField(dfTime, data.Labels{}, []time.Time{
+					time.Unix(1, 0),
+				}),
+				data.NewField(dfLine, data.Labels{}, []json.RawMessage{
+					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
+				}),
+				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{
+					toJson(map[string]string{
+						GroupLabel: "test-group-1",
+					}),
+				}),
+			),
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			expectedJson, err := tc.expected.MarshalJSON()
 			require.NoError(t, err)
-			m, err := merge(tc.res, tc.namespacesUID)
+			m, err := merge(tc.res, tc.folderUIDs)
 			require.NoError(t, err)
 			actualJson, err := m.MarshalJSON()
 			assert.NoError(t, err)

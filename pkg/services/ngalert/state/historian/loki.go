@@ -166,7 +166,7 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 	if err != nil {
 		return nil, err
 	}
-	return merge(res)
+	return merge(res, uids)
 }
 
 func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
@@ -191,7 +191,12 @@ func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 }
 
 // merge will put all the results in one array sorted by timestamp.
-func merge(res QueryRes) (*data.Frame, error) {
+func merge(res QueryRes, folderUIDToFilter []string) (*data.Frame, error) {
+	filterByFolderUIDMap := make(map[string]struct{}, len(folderUIDToFilter))
+	for _, uid := range folderUIDToFilter {
+		filterByFolderUIDMap[uid] = struct{}{}
+	}
+
 	// Find the total number of elements in all arrays.
 	totalLen := 0
 	for _, arr := range res.Data.Result {
@@ -225,6 +230,18 @@ func merge(res QueryRes) (*data.Frame, error) {
 			if len(stream.Values) == pointers[i] {
 				continue
 			}
+			// check if stream should be in the results
+			if len(filterByFolderUIDMap) > 0 {
+				folderLbl, ok := stream.Stream[FolderUIDLabel]
+				if !ok {
+					continue // skip entries without folder UID, only if needs filtering
+				}
+				_, ok = filterByFolderUIDMap[folderLbl]
+				if !ok {
+					continue
+				}
+			}
+
 			curTime := stream.Values[pointers[i]].T.UnixNano()
 			if pointers[i] < len(stream.Values) && curTime < minTime {
 				minTime = curTime
