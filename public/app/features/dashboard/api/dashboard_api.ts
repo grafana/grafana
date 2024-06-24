@@ -58,11 +58,11 @@ class K8sDashboardAPI implements DashboardAPI {
   }
 
   saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO> {
-    return this.legacy.saveDashboard(options); 
+    return this.legacy.saveDashboard(options);
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
-    return this.client.delete(uid).then(v => ({
+    return this.client.delete(uid).then((v) => ({
       id: 123,
       message: v.message,
       title: 'deleted',
