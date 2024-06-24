@@ -43,7 +43,7 @@ const (
 const defaultQueryRange = 6 * time.Hour
 
 var (
-	ErrLokiQueryTooLong = errutil.BadRequest("alerting.state-history.loki.requestTooLong").MustTemplate(
+	ErrLokiQueryTooLong = errutil.BadRequest("loki.requestTooLong").MustTemplate(
 		"Request to Loki exceeded ({{.Public.QuerySize}} bytes) configured maximum size of {{.Public.MaxLimit}} bytes",
 		errutil.WithPublic("Query for Loki exceeded the configured limit of {{.Public.MaxLimit}} bytes. Remove some filters and try again."),
 	)
