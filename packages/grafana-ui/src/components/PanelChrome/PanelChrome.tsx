@@ -423,6 +423,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       top: 0,
       width: '100%',
+      // this is to force the loading bar container to create a new stacking context
+      // otherwise, in webkit browsers on windows/linux, the aliasing of panel text changes when the loading bar is shown
+      // see https://github.com/grafana/grafana/issues/88104
+      zIndex: 1,
     }),
     containNone: css({
       contain: 'none',
