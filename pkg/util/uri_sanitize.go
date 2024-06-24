@@ -20,9 +20,6 @@ var sensitiveQueryChecks = map[string]func(key string, urlValues url.Values) boo
 	},
 	"sig": func(key string, urlValues url.Values) bool {
 		for k := range urlValues {
-			if k == key {
-				continue
-			}
 			if strings.ToLower(k) == "sv" {
 				return true
 			}
