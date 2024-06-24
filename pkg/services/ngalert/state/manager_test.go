@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -236,7 +237,8 @@ func TestDashboardAnnotations(t *testing.T) {
 	historianMetrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 	store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, historianMetrics)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
-	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, historianMetrics)
+	ac := &acfakes.FakeRuleService{}
+	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, historianMetrics, ac)
 	cfg := state.ManagerCfg{
 		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
 		ExternalURL:   nil,
@@ -1387,7 +1389,8 @@ func TestProcessEvalResults(t *testing.T) {
 			m := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 			store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, m)
 			annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
-			hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, m)
+			ac := &acfakes.FakeRuleService{}
+			hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, m, ac)
 			clk := clock.NewMock()
 			cfg := state.ManagerCfg{
 				Metrics:       stateMetrics,
