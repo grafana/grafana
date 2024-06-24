@@ -87,6 +87,7 @@ The new settings page provides you with a holistic view of where Grafana-managed
 {{< figure src="/media/docs/alerting/alert-settings.png" alt="Alert settings page" >}}
 
 Learn more in the [Alertmanager configuration documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/).
+
 ### Alerting template selector
 
 <!-- Sonia Aguilar -->
