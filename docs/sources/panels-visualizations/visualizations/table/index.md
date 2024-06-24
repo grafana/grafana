@@ -123,10 +123,6 @@ You can temporarily change how column data is displayed. For example, you can or
 
 Use this option to enable or disable pagination. It is a front-end option that does not affect queries. When enabled, the page size automatically adjusts to the height of the table.
 
-### Filter table columns
-
-If you turn on the **Column filter**, then you can filter table options.
-
 ## Cell options
 
 ### Cell type
