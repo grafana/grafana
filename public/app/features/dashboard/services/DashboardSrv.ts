@@ -26,7 +26,6 @@ export interface SaveDashboardOptions {
   refresh?: string;
 }
 
-
 export class DashboardSrv {
   dashboard?: DashboardModel;
 

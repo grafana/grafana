@@ -1,6 +1,12 @@
 import { config, getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { AnnoKeyFolder, AnnoKeyMessage, Resource, ResourceClient, ResourceForCreate } from 'app/features/apiserver/types';
+import {
+  AnnoKeyFolder,
+  AnnoKeyMessage,
+  Resource,
+  ResourceClient,
+  ResourceForCreate,
+} from 'app/features/apiserver/types';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -65,8 +71,8 @@ class K8sDashboardAPI implements DashboardAPI {
       },
       spec: {
         ...dashboard,
-      }
-    }
+      },
+    };
     if (options.message) {
       obj.metadata.annotations = {
         ...obj.metadata.annotations,
@@ -82,9 +88,9 @@ class K8sDashboardAPI implements DashboardAPI {
 
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
-      return this.client.update(obj).then(v => this.asSaveDashboardResponseDTO(v))
-    } 
-    return this.client.create(obj).then(v => this.asSaveDashboardResponseDTO(v))
+      return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+    }
+    return this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardDataDTO>): SaveDashboardResponseDTO {
@@ -95,11 +101,11 @@ class K8sDashboardAPI implements DashboardAPI {
       status: 'success',
       slug: '',
       url: '',
-    }
+    };
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
-    return this.client.delete(uid).then(v => ({
+    return this.client.delete(uid).then((v) => ({
       id: 123,
       message: v.message,
       title: 'deleted',

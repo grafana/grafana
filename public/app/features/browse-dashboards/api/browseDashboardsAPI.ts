@@ -333,13 +333,13 @@ export const browseDashboardsAPI = createApi({
     saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand>({
       queryFn: async (cmd) => {
         try {
-          const rsp = await getDashboardAPI().saveDashboard(cmd)
+          const rsp = await getDashboardAPI().saveDashboard(cmd);
           return { data: rsp };
         } catch (error) {
           return { error };
         }
       },
-      
+
       onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
         dashboardWatcher.ignoreNextSave();
         queryFulfilled.then(async () => {

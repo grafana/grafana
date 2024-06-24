@@ -25,7 +25,7 @@ export interface SaveDashboardCommand {
   showErrorAlert?: boolean;
 
   // When loading dashboards from k8s, we need to have access to the metadata wrapper
-  k8s?: Partial<ObjectMeta>
+  k8s?: Partial<ObjectMeta>;
 }
 
 export interface SaveDashboardFormProps {

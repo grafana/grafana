@@ -72,7 +72,7 @@ export interface DashboardMeta {
   // When loaded from kubernetes, we stick the raw metadata here
   // yes weird, but this means all the editor structures can exist unchanged
   // until we use the resource as the main container
-  k8s?: Partial<ObjectMeta>
+  k8s?: Partial<ObjectMeta>;
 }
 
 export interface AnnotationActions {
