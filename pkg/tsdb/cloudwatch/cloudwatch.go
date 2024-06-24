@@ -80,7 +80,7 @@ type CloudWatchService struct {
 }
 
 type SessionCache interface {
-	GetSession(c awsds.SessionConfig) (*session.Session, error)
+	GetSessionWithAuthSettings(c awsds.GetSessionConfig, as awsds.AuthSettings) (*session.Session, error)
 }
 
 func newExecutor(im instancemgmt.InstanceManager, logger log.Logger) *cloudWatchExecutor {
@@ -299,7 +299,7 @@ func (ds *DataSource) newSession(region string) (*session.Session, error) {
 		}
 		region = ds.Settings.Region
 	}
-	sess, err := ds.sessions.GetSession(awsds.SessionConfig{
+	sess, err := ds.sessions.GetSessionWithAuthSettings(awsds.GetSessionConfig{
 		// https://github.com/grafana/grafana/issues/46365
 		// HTTPClient: instance.HTTPClient,
 		Settings: awsds.AWSDatasourceSettings{
@@ -313,9 +313,8 @@ func (ds *DataSource) newSession(region string) (*session.Session, error) {
 			AccessKey:     ds.Settings.AccessKey,
 			SecretKey:     ds.Settings.SecretKey,
 		},
-		UserAgentName: aws.String("Cloudwatch"),
-		AuthSettings:  &ds.Settings.GrafanaSettings,
-	})
+		UserAgentName: aws.String("Cloudwatch")},
+		ds.Settings.GrafanaSettings)
 	if err != nil {
 		return nil, err
 	}
