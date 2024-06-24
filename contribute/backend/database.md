@@ -75,7 +75,7 @@ For transactions, use the `WithTransactionalDbSession` method instead.
 
 ## Migrations
 
-As your use of Grafana evolves, it may become necessary to create _schema migrations_ for one or more database tables.
+As your use of Grafana evolves, you may need to create _schema migrations_ for one or more database tables.
 
 To see all the types of migrations you can add, refer to [migrations.go](/pkg/services/sqlstore/migrator/migrations.go).
 

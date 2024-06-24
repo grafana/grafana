@@ -93,7 +93,7 @@ func Look(id int) (*Thing, error) {
 
 Errors are considered to be part of `errutil.Base` and
 `errutil.Template`, and whatever errors are wrapped for the purposes of the
-`errors.Is` function.
+`errors.Is` function.a
 
 Refer to the package and method documentation for
 `github.com/grafana/grafana/pkg/util/errutil` for details on how to
