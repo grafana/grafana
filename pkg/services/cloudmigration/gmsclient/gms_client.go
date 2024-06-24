@@ -111,6 +111,14 @@ func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.Cloud
 	return &result, nil
 }
 
+func (c *gmsClientImpl) InitializeSnapshot(context.Context, cloudmigration.CloudMigrationSession) (*cloudmigration.InitializeSnapshotResponse, error) {
+	panic("not implemented")
+}
+
+func (c *gmsClientImpl) GetSnapshotStatus(context.Context, cloudmigration.CloudMigrationSession, cloudmigration.CloudMigrationSnapshot) (*cloudmigration.CloudMigrationSnapshot, error) {
+	panic("not implemented")
+}
+
 func convertRequestToDTO(request cloudmigration.MigrateDataRequest) MigrateDataRequestDTO {
 	items := make([]MigrateDataRequestItemDTO, len(request.Items))
 	for i := 0; i < len(request.Items); i++ {

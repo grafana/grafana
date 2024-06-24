@@ -25,6 +25,14 @@
       "user": "Usuário"
     }
   },
+  "alert-labels": {
+    "button": {
+      "hide": "",
+      "show": {
+        "tooltip": ""
+      }
+    }
+  },
   "alert-rule-form": {
     "evaluation-behaviour": {
       "description": {
@@ -70,6 +78,7 @@
       "delete-button": "Excluir",
       "delete-modal-invalid-text": "Uma ou mais pastas contêm painéis de biblioteca, ou regras de alerta. Exclua-as primeiro para prosseguir.",
       "delete-modal-invalid-title": "Não é possível excluir pasta",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Esta ação apagará o seguinte conteúdo:",
       "delete-modal-title": "Excluir",
       "deleting": "Excluindo...",
@@ -136,6 +145,16 @@
     "no-results": {
       "clear": "Limpar busca e filtros",
       "text": ""
+    }
+  },
+  "central-alert-history": {
+    "error": "",
+    "filter": {
+      "button": {
+        "clear": ""
+      },
+      "label": "",
+      "placeholder": ""
     }
   },
   "clipboard-button": {
@@ -512,6 +531,12 @@
       "no-logs-found": "",
       "scan-for-older-logs": "",
       "stop-scan": ""
+    },
+    "query-library": {
+      "delete-query": "",
+      "delete-query-text": "",
+      "delete-query-title": "",
+      "query-deleted": ""
     },
     "rich-history": {
       "close-tooltip": "Fechar histórico de consultas",
@@ -1166,7 +1191,7 @@
     "public": {
       "title": "Painéis de controle públicos"
     },
-    "recentlyDeleted": {
+    "recently-deleted": {
       "subtitle": "",
       "title": ""
     },
@@ -1540,6 +1565,9 @@
       "role-label": "Função"
     }
   },
+  "query-library": {
+    "delete-query-button": ""
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Recolher linha de consulta",
@@ -1556,7 +1584,16 @@
   },
   "recently-deleted": {
     "buttons": {
+      "delete": "",
       "restore": ""
+    },
+    "permanently-delete-modal": {
+      "confirm-text": "",
+      "delete-button": "",
+      "delete-loading": "",
+      "title": "",
+      "text_one": "",
+      "text_other": ""
     },
     "restore-modal": {
       "restore-button": "",
@@ -1615,6 +1652,7 @@
     "tree": {
       "collapse": "",
       "expand": "",
+      "headline": "",
       "search": ""
     }
   },
@@ -1635,6 +1673,8 @@
     },
     "results-table": {
       "datasource-header": "Fonte de dados",
+      "deleted-less-than-1-min": "",
+      "deleted-remaining-header": "",
       "location-header": "Localização",
       "name-header": "Nome",
       "tags-header": "Tags",
