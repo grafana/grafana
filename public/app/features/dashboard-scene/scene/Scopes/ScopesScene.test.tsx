@@ -417,7 +417,7 @@ describe('ScopesScene', () => {
       it('K8s API should not pass the scopes', () => {
         config.featureToggles.kubernetesDashboards = true;
         getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1');
+        expect(getMock).toHaveBeenCalledWith('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto');
       });
     });
 
