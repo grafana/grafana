@@ -13,20 +13,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetMetricDataExecutorTestRequest_should_round_up_endTime(t *testing.T) {
-	executor := &cloudWatchExecutor{}
-	queryEndTime, _ := time.Parse("2006-01-02T15:04:05Z07:00", "2024-05-01T01:45:04Z")
-	inputs := &cloudwatch.GetMetricDataInput{EndTime: &queryEndTime, MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
-	mockMetricClient := &mocks.MetricsAPI{}
-	mockMetricClient.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(
-		&cloudwatch.GetMetricDataOutput{
-			MetricDataResults: []*cloudwatch.MetricDataResult{{Values: []*float64{}}},
-		}, nil).Once()
-	_, err := executor.executeRequest(context.Background(), mockMetricClient, inputs)
-	require.NoError(t, err)
-	expectedTime, _ := time.Parse("2006-01-02T15:04:05Z07:00", "2024-05-01T01:46:00Z")
-	expectedInput := &cloudwatch.GetMetricDataInput{EndTime: &expectedTime, MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
-	mockMetricClient.AssertCalled(t, "GetMetricDataWithContext", mock.Anything, expectedInput, mock.Anything)
+func TestGetMetricDataExecutorTestRequest(t *testing.T) {
+	t.Run("Should round up end time", func(t *testing.T) {
+		executor := &cloudWatchExecutor{}
+		queryEndTime, _ := time.Parse("2006-01-02T15:04:05Z07:00", "2024-05-01T01:45:04Z")
+		inputs := &cloudwatch.GetMetricDataInput{EndTime: &queryEndTime, MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
+		mockMetricClient := &mocks.MetricsAPI{}
+		mockMetricClient.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(
+			&cloudwatch.GetMetricDataOutput{
+				MetricDataResults: []*cloudwatch.MetricDataResult{{Values: []*float64{}}},
+			}, nil).Once()
+		_, err := executor.executeRequest(context.Background(), mockMetricClient, inputs)
+		require.NoError(t, err)
+		expectedTime, _ := time.Parse("2006-01-02T15:04:05Z07:00", "2024-05-01T01:46:00Z")
+		expectedInput := &cloudwatch.GetMetricDataInput{EndTime: &expectedTime, MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
+		mockMetricClient.AssertCalled(t, "GetMetricDataWithContext", mock.Anything, expectedInput, mock.Anything)
+	})
 }
 
 func TestGetMetricDataExecutorTestResponse(t *testing.T) {
