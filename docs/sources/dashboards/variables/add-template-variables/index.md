@@ -135,9 +135,12 @@ Query expressions are different for each data source. For more information, refe
    - **On Dashboard Load:** Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
    - **On Time Range Change:** Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
 1. In the **Query** field, enter a query.
+
    - The query field varies according to your data source. Some data sources have custom query editors.
-   - Make sure that the query returns values named `__text` and `__value` as appropriate in your query syntax. For example, in SQL, you can use a query such as `SELECT hostname AS __text, id AS __value FROM MyTable`. Queries for other languages will vary depending on syntax.
+   - Each data source defines how the variable values are extracted. The typical implementation uses every string value returned from the data source response as a variable value. Make sure to double-check the documentation for the data source.
+   - Some data sources let you provide custom "display names" for the values. For instance, the PostgreSQL, MySQL, and Microsoft SQL Server plugins handle this by looking for fields named `__text` and `__value` in the result. Other data sources may look for `text` and `value` or use a different approach. Always remember to double-check the documentation for the data source.
    - If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
+
 1. (Optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with regex](#filter-variables-with-regex).
 1. In the **Sort** list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query will be used.
 1. (Optional) Enter [Selection Options](#configure-variable-selection-options).
