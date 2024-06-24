@@ -13,7 +13,7 @@ describe('Create a public dashboard with template variables shows a template var
     e2e.components.NavToolbar.shareDashboard().click();
 
     // Select public dashboards tab
-    e2e.components.Tab.title('Public Dashboard').click();
+    e2e.components.Tab.title('Public dashboard').click();
 
     // Warning Alert dashboard cannot be made public because it has template variables
     e2e.pages.ShareDashboardModal.PublicDashboard.TemplateVariablesWarningAlert().should('be.visible');
