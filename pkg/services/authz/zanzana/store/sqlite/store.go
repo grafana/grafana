@@ -102,6 +102,7 @@ func NewWithDB(db *sql.DB, cfg *Config) (*SQLite, error) {
 	dbInfo := sqlcommon.NewDBInfo(db, stbl, sqlTime)
 
 	return &SQLite{
+		cfg:              cfg,
 		stbl:             stbl,
 		db:               db,
 		sqlTime:          sqlTime,
