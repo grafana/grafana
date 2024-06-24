@@ -11,7 +11,7 @@ import { getRuleGroupLocationFromCombinedRule } from '../../utils/rules';
 
 type DeleteModalHook = [JSX.Element, (rule: CombinedRule) => void, () => void];
 
-export const useDeleteModal = (): DeleteModalHook => {
+export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule | undefined>();
   const [deleteRuleFromGroup, _deleteState] = useDeleteRuleFromGroup();
 
@@ -38,10 +38,11 @@ export const useDeleteModal = (): DeleteModalHook => {
 
       dismissModal();
 
-      // @TODO implement redirect yes / no
-      locationService.replace('/alerting/list');
+      if (redirectToListView) {
+        locationService.replace('/alerting/list');
+      }
     },
-    [deleteRuleFromGroup, dismissModal]
+    [deleteRuleFromGroup, dismissModal, redirectToListView]
   );
 
   const modal = useMemo(
