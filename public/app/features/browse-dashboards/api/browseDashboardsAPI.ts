@@ -57,6 +57,10 @@ interface RestoreDashboardArgs {
   dashboardUID: string;
 }
 
+interface HardDeleteDashboardArgs {
+  dashboardUID: string;
+}
+
 function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
     try {
@@ -205,6 +209,8 @@ export const browseDashboardsAPI = createApi({
 
     // gets the descendant counts for a folder. used in the move/delete modals.
     getAffectedItems: builder.query<DescendantCount, DashboardTreeSelection>({
+      // don't cache this data for now, since library panel/alert rule creation isn't done through rtk query
+      keepUnusedDataFor: 0,
       queryFn: async (selectedItems) => {
         const folderUIDs = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
@@ -382,6 +388,19 @@ export const browseDashboardsAPI = createApi({
         method: 'PATCH',
       }),
     }),
+
+    // permanently delete a dashboard. used in PermanentlyDeleteModal.
+    hardDeleteDashboard: builder.mutation<void, HardDeleteDashboardArgs>({
+      query: ({ dashboardUID }) => ({
+        url: `/dashboards/uid/${dashboardUID}/trash`,
+        method: 'DELETE',
+      }),
+      onQueryStarted: ({ dashboardUID }, { queryFulfilled, dispatch }) => {
+        queryFulfilled.then(() => {
+          dispatch(refreshParents([dashboardUID]));
+        });
+      },
+    }),
   }),
 });
 
@@ -397,6 +416,7 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
   useRestoreDashboardMutation,
+  useHardDeleteDashboardMutation,
 } = browseDashboardsAPI;
 
 export { skipToken } from '@reduxjs/toolkit/query/react';

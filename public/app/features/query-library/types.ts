@@ -14,3 +14,7 @@ export type AddQueryTemplateCommand = {
   title: string;
   targets: DataQuery[];
 };
+
+export type DeleteQueryTemplateCommand = {
+  uid: string;
+};

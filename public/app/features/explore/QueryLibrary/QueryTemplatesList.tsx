@@ -41,6 +41,7 @@ export function QueryTemplatesList() {
     const datasourceType = getDatasourceSrv().getInstanceSettings(datasourceRef)?.meta.name || '';
     return {
       index: index.toString(),
+      uid: queryTemplate.uid,
       datasourceRef,
       datasourceType,
       createdAtTimestamp: queryTemplate?.createdAtTimestamp || 0,

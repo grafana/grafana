@@ -171,7 +171,7 @@ describe('contact points', () => {
       }
 
       // check buttons in Notification Templates
-      const notificationTemplatesTab = screen.getByRole('tab', { name: 'Tab Notification Templates' });
+      const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });
       await userEvent.click(notificationTemplatesTab);
       expect(screen.getByRole('link', { name: 'Add notification template' })).toHaveAttribute('aria-disabled', 'true');
     });
@@ -388,7 +388,7 @@ describe('contact points', () => {
       expect(viewProvisioned).not.toBeDisabled();
 
       // check buttons in Notification Templates
-      const notificationTemplatesTab = screen.getByRole('tab', { name: 'Tab Notification Templates' });
+      const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });
       await userEvent.click(notificationTemplatesTab);
       expect(screen.queryByRole('link', { name: 'Add notification template' })).not.toBeInTheDocument();
     });
