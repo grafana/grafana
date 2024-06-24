@@ -53,7 +53,7 @@ Refer to the table at the end of this page for a list of contact points and thei
 
 7. If Grafana is configured to upload screenshots to its internal web server, and accessing Grafana requires logging into a VPN or corporate network; image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN. If this happens, we recommend using [integrations which support uploading images](#supported-contact-points) or [disabling images in notifications](#configuration) altogether.
 
-8. Grafana does not delete screenshots uploaded to its internal web server. To delete screenshots from `static_root_path/images/attachments` after a certain amount of time, it is recommended that you set up a CRON job.
+8. Grafana does not delete screenshots uploaded to its internal web server. To delete screenshots from `static_root_path/images/attachments` after a certain amount of time, we recommend setting up a CRON job.
 
 ## Configuration
 
