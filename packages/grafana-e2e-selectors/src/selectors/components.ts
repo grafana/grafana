@@ -266,7 +266,7 @@ export const Components = {
     },
   },
   Tab: {
-    title: (title: string) => `Tab ${title}`,
+    title: (title: string) => `data-testid Tab ${title}`,
     active: () => '[class*="-activeTabStyle"]',
   },
   RefreshPicker: {

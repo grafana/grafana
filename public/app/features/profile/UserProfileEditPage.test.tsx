@@ -134,7 +134,7 @@ enum ExtensionPointComponentTabs {
   Two = '2',
 }
 
-const _createTabName = (tab: ExtensionPointComponentTabs) => `Tab ${tab}`;
+const _createTabName = (tab: ExtensionPointComponentTabs) => tab;
 const _createTabContent = (tabId: ExtensionPointComponentId) => `this is settings for component ${tabId}`;
 
 const generalTabName = 'General';

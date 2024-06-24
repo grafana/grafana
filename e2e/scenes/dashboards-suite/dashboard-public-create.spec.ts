@@ -17,7 +17,7 @@ describe.skip('Public dashboards', () => {
     e2e.components.NavToolbar.shareDashboard().click();
 
     // Select public dashboards tab
-    e2e.pages.ShareDashboardModal.PublicDashboardScene.Tab().click();
+    e2e.components.Tab.title('Public dashboard').click();
 
     // Create button should be disabled
     e2e.pages.ShareDashboardModal.PublicDashboard.CreateButton().should('be.disabled');
@@ -78,7 +78,7 @@ describe.skip('Public dashboards', () => {
 
     // Select public dashboards tab
     cy.intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
-    e2e.pages.ShareDashboardModal.PublicDashboardScene.Tab().click();
+    e2e.components.Tab.title('Public dashboard').click();
     cy.wait('@query-public-dashboard');
 
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput().should('exist');
@@ -118,7 +118,7 @@ describe.skip('Public dashboards', () => {
 
     // Select public dashboards tab
     cy.intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
-    e2e.pages.ShareDashboardModal.PublicDashboardScene.Tab().click();
+    e2e.components.Tab.title('Public dashboard').click();
     cy.wait('@query-public-dashboard');
 
     // save url before disabling public dashboard

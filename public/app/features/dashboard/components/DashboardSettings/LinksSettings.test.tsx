@@ -89,7 +89,7 @@ describe('LinksSettings', () => {
     const linklessDashboard = createDashboardModelFixture({ links: [] });
     setup(linklessDashboard);
 
-    const linksTab = screen.getByRole('tab', { name: 'Tab Links' });
+    const linksTab = screen.getByRole('tab', { name: 'Links' });
     expect(linksTab).toBeInTheDocument();
     expect(linksTab).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('button', { name: 'Add dashboard link' })).toBeInTheDocument();
