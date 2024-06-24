@@ -2,7 +2,13 @@ import { css } from '@emotion/css';
 import React, { ReactNode } from 'react';
 
 import { AdHocVariableFilter, GrafanaTheme2, VariableHide, urlUtil, PluginExtensionLink } from '@grafana/data';
-import { locationService, UsePluginExtensionsResult, usePluginLinkExtensions } from '@grafana/runtime';
+import {
+  getAppEvents,
+  locationService,
+  TimeRangeUpdatedEvent,
+  UsePluginExtensionsResult,
+  usePluginLinkExtensions,
+} from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   DataSourceVariable,
@@ -104,6 +110,12 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     // Save the current trail as a recent if the browser closes or reloads
     const saveRecentTrail = () => getTrailStore().setRecentTrail(this);
     window.addEventListener('unload', saveRecentTrail);
+
+    if (this.state.$timeRange) {
+      this.state.$timeRange.subscribeToState((state) => {
+        getAppEvents().publish(new TimeRangeUpdatedEvent(state.value));
+      });
+    }
 
     return () => {
       this.disableUrlSync();
@@ -227,7 +239,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history, settings } = model.useState();
+    const { controls, topScene, history, settings, $timeRange } = model.useState();
     const styles = useStyles2(getStyles);
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
@@ -240,7 +252,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             const labelVar = model.useState().$variables?.useState().variables[1].useState();
             // @ts-ignore seems like there isn't typing for the state
             const filters =
-              labelVar && labelVar.filters.length === 2
+              labelVar && labelVar.filters.length > 0
                 ? {
                     // @ts-ignore
                     key: labelVar.filters[0].key,
