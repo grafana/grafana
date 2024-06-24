@@ -1864,3 +1864,74 @@ $easing: cubic-bezier(0, 0, 0.265, 1);
   background: transparent;
   display: block;
 }
+
+.add-data-source-item {
+  padding: $space-md;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  background: $card-background;
+  border-radius: 3px;
+  margin-bottom: $space-xxs;
+
+  &:hover {
+    background: $card-background-hover;
+
+    .add-data-source-item-actions {
+      opacity: 1;
+      transition: 0.15s opacity ease-in-out;
+    }
+  }
+}
+
+.add-data-source-item-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.add-data-source-item-logo {
+  margin-right: $space-lg;
+  margin-left: $space-sm;
+  width: 55px;
+  max-height: 55px;
+}
+
+.add-data-source-item-desc {
+  font-size: $font-size-sm;
+  color: $text-color-weak;
+}
+
+.add-data-source-item-actions {
+  opacity: 0;
+  padding-left: $space-md;
+  display: flex;
+  align-items: center;
+
+  > button {
+    margin-left: $space-md;
+    cursor: pointer;
+  }
+}
+
+.add-data-source-item-badge {
+  margin-top: 6px;
+}
+
+.add-data-source-item-text {
+  font-size: $font-size-h5;
+}
+
+.panel-empty {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+
+  p {
+    text-align: center;
+    color: $text-muted;
+    font-size: $font-size-lg;
+    width: 100%;
+  }
+}
