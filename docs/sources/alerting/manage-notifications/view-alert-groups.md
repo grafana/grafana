@@ -40,7 +40,7 @@ The Groups view page lists grouped alerts that are actively triggering notificat
 
 By default, Grafana Alerting groups similar firing alerts (or alert instances) to prevent notification overload. For details on how notification grouping works, refer to [Group alert notifications](ref:grouping).
 
-In the Groups view, you can see alert groups, check the state of their notifications, and also filter for alert instances that match specific criteria. This view is useful for debugging and verifying your grouping of notification policies.
+In the Groups view, you can see alert groups, check the state of their notifications, and also filter for alert instances that match specific criteria. This view is useful for debugging and verifying your grouping settings of notification policies.
 
 ## View alert groups and notification state
 
@@ -75,7 +75,7 @@ You can filter by label, state, or Alertmanager:
 
 ### Custom group
 
-From **Custom group by** dropdown, select a combination of labels to view a grouping other than the default. This helps validate the [grouping of your notification policies](ref:grouping).
+From **Custom group by** dropdown, select a combination of labels to view a grouping other than the default. This helps validate the [grouping settings of your notification policies](ref:grouping).
 
 If an alert does not contain labels specified either in the grouping of the default policy or the custom grouping, then the alert is added to a catch all group with a header of `No grouping`.
 
