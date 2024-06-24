@@ -73,7 +73,7 @@ class K8sDashboardAPI implements DashboardAPI {
     const dto = await this.client.subresource<DashboardWithAccessInfo>(uid, 'dto');
     return {
       meta: {
-        ...dto.access, 
+        ...dto.access,
         isNew: false,
         isFolder: false,
         uid: dto.metadata.name,
