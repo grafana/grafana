@@ -127,8 +127,6 @@ If you set these in the Field tab, then the type will apply to all fields, inclu
 
 The **Auto** cell type automatically displays values, with sensible defaults applied.
 
-#### Wrap text
-
 Toggle the **Wrap text** switch to wrap text in the cell with the longest content in your table. To wrap the text in a specific column only, use the Wrap Text option in a [field override](ref:field-override).
 
 ### Color text
@@ -136,6 +134,8 @@ Toggle the **Wrap text** switch to wrap text in the cell with the longest conten
 If thresholds are set, then the field text is displayed in the appropriate threshold color.
 
 {{< figure src="/static/img/docs/tables/color-text.png" max-width="500px" caption="Color text" class="docs-image--no-shadow" >}}
+
+Toggle the **Wrap text** switch to wrap text in the cell with the longest content in your table. To wrap the text in a specific column only, use the Wrap Text option in a [field override](ref:field-override).
 
 ### Color background (gradient or solid)
 
@@ -147,7 +147,7 @@ Toggle the **Apply to entire row** switch, to apply the background color that's 
 
 {{< figure src="/static/img/docs/tables/colored-rows.png" max-width="500px" alt="Colored row background" class="docs-image--no-shadow" >}}
 
-Toggle the **Wrap text** switch to wrap text in the cell with the longest content or the matched, if field you've set a field override.
+Toggle the **Wrap text** switch to wrap text in the cell with the longest content in your table. To wrap the text in a specific column only, use the Wrap Text option in a [field override](ref:field-override).
 
 ### Gauge
 
