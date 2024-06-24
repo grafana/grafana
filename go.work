@@ -1,9 +1,10 @@
-go 1.21.10
+go 1.22.4
 
 use (
 	.
 	./pkg/apimachinery
 	./pkg/apiserver
+	./pkg/build
 	./pkg/build/wire
 	./pkg/promlib
 	./pkg/util/xorm
