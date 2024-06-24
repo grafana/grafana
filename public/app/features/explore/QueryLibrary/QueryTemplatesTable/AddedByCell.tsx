@@ -12,7 +12,7 @@ export function AddedByCell(props: AddedByCellProps) {
 
   return (
     <div>
-      <span className={styles.otherText}>{props.user?.login || 'Unknown'}</span>
+      <span className={styles.otherText}>{props.user?.login || `UserId: ${props.user?.userId}` || 'Unknown'}</span>
     </div>
   );
 }

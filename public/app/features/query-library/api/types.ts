@@ -27,7 +27,7 @@ export type DataQuerySpecResponse = {
 };
 
 export type User = {
-  userId?: number;
+  userId?: string;
   login?: string;
 };
 

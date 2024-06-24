@@ -12,7 +12,7 @@ export const parseCreatedByValue = (value?: string) => {
         return undefined;
       } else {
         return {
-          userId: Number(vals[1]),
+          userId: vals[1],
           login: vals[2],
         };
       }

@@ -9,4 +9,5 @@ export type QueryTemplateRow = {
   datasourceType?: string;
   createdAtTimestamp?: number;
   user?: User;
+  uid?: string;
 };
