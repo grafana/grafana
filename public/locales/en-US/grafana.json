@@ -55,6 +55,14 @@
     },
     "pause": "Pause evaluation"
   },
+  "alerting": {
+    "contact-points": {
+      "telegram": {
+        "parse-mode-warning-body": "If you use a <1>parse_mode</1> other than <3>None</3> or <6>plain text</6>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
+        "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
+      }
+    }
+  },
   "annotations": {
     "empty-state": {
       "button-title": "Add annotation query",
