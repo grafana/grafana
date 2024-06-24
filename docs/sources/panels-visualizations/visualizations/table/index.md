@@ -49,6 +49,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
+  field-override:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/
 ---
 
 # Table
@@ -124,7 +129,7 @@ The **Auto** cell type automatically displays values, with sensible defaults app
 
 ### Wrap text
 
-Toggle the **Wrap text** switch to wrap text in the cell with the longest content in your table. To wrap the text in a specific column only, use the Wrap Text option in a [field override](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-overrides/).
+Toggle the **Wrap text** switch to wrap text in the cell with the longest content in your table. To wrap the text in a specific column only, use the Wrap Text option in a [field override](ref:field-override).
 
 ### Color text
 
