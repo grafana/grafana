@@ -49,7 +49,7 @@ Refer to the table at the end of this page for a list of contact points and thei
 
 5. When uploading screenshots to a cloud storage service Grafana uses a random 20 character (30 characters for Azure Blob Storage) filename for each image. This makes URLs hard to guess but not impossible.
 
-6. Grafana does not delete screenshots from cloud storage. It is recommended that you configure a retention policy with your cloud storage service to delete screenshots older than 1 month.
+6. Grafana does not delete screenshots from cloud storage. We recommend configuring a retention policy with your cloud storage service to delete screenshots older than 1 month.
 
 7. If Grafana is configured to upload screenshots to its internal web server, and accessing Grafana requires logging into a VPN or corporate network; image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN. If this happens, it is recommended that you use [integrations which support uploading images](#supported-contact-points) or [disabling images in notifications](#configuration) altogether.
 
