@@ -11,9 +11,7 @@ can be streamlined. The error carries information about public messaging,
 structured data related to the error, localization metadata, log level, 
 HTTP status code, and so on.
 
-## Basic use
-
-### Declare errors
+## Declare errors
 
 For a service, declare the different categories of errors that may occur
 from your service (this corresponds to categories for which you might want 
@@ -100,14 +98,14 @@ Refer to the package and method documentation for
 construct and use Grafana style errors. 
 This documentation isn't readily available on `pkg.go.dev`, but it can be viewed using [godoc](https://go.dev/cmd/godoc/) from the Grafana directory.
 
-### Error source
+## Error source
 
 You can optionally specify an error source that describes an error's origin.
 By default, it's `_server_` and means the error originates from within the application, for example, Grafana. 
 The `errutil.WithDownstream()` option may be appended to the `NewBase` function call to denote an error originates from a _downstream_ server or service. 
 The error source information is used in the API layer to distinguish between Grafana errors and non-Grafana errors. Error source information is given for use when instrumenting the application, allowing Grafana operators to define SLOs based on actual Grafana errors.
 
-### Handling errors in the API
+## Handling errors in the API
 
 API handlers use the `github.com/grafana/grafana/pkg/api/response.Err`
 or `github.com/grafana/grafana/pkg/api/response.ErrWithFallback`
