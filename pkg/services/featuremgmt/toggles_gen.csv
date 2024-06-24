@@ -63,7 +63,6 @@ frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,
 sqlDatasourceDatabaseSelection,preview,@grafana/dataviz-squad,false,false,true
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false
 vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,true
-prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-metrics,false,false,true
 logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
 awsDatasourcesTempCredentials,experimental,@grafana/aws-datasources,false,false,false
 transformationsRedesign,GA,@grafana/observability-metrics,false,false,true
@@ -161,7 +160,6 @@ accessActionSets,experimental,@grafana/identity-access-team,false,false,false
 disableNumericMetricsSortingInExpressions,experimental,@grafana/observability-metrics,false,true,false
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 queryLibrary,experimental,@grafana/explore-squad,false,false,false
-autofixDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 newDashboardSharingComponent,experimental,@grafana/sharing-squad,false,false,true
 alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
@@ -177,5 +175,8 @@ pinNavItems,experimental,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
 openSearchBackendFlowEnabled,preview,@grafana/aws-datasources,false,false,false
 ssoSettingsLDAP,experimental,@grafana/identity-access-team,false,false,false
+failWrongDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
 databaseReadReplica,experimental,@grafana/grafana-backend-services-squad,false,false,false
 zanzana,experimental,@grafana/identity-access-team,false,false,false
+passScopeToDashboardApi,experimental,@grafana/dashboards-squad,false,false,false
+alertingApiServer,experimental,@grafana/alerting-squad,false,true,false

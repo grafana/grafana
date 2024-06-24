@@ -231,6 +231,7 @@ export { FieldArray } from './Forms/FieldArray';
 // Select
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
+export { SelectMenuOptions } from './Select/SelectMenu';
 export { getSelectStyles } from './Select/getSelectStyles';
 export * from './Select/types';
 
