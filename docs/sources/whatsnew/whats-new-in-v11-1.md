@@ -117,6 +117,8 @@ _Generally available in all editions of Grafana_
 
 Pause and resume alert rule evaluation directly from the Alert rules list and details view. This helps Improve visibility of when alert rules have been paused by displaying “Paused” as the alert rule state.
 
+Learn more in the [alert rules documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-alert-rules/).
+
 ### Removes requirement of datasources:query permission for reading rules
 
 <!-- William Wernert -->
@@ -126,6 +128,8 @@ _Generally available in Grafana Enterprise and Cloud_
 Fetching a rule group no longer requires the **datasources:query** permission for every data source used by the rules within that group. Now, the only requirements are **alert.rules:read** and **folders:read** for the folder the group is contained in.
 
 Note: **datasources:query** is still required to preview an alert rule, regardless of alert rules and folders permissions.
+
+Learn more in the [RBAC configuration documentation](https://grafana.com/docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-rbac/).
 
 ### Rule-specific silences with permissions
 
