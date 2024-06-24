@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"path"
 	"strings"
 
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -27,6 +29,8 @@ type MimirClient interface {
 	GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error)
 	CreateGrafanaAlertmanagerConfig(ctx context.Context, configuration *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error
 	DeleteGrafanaAlertmanagerConfig(ctx context.Context) error
+
+	TestReceivers(ctx context.Context, c alertingNotify.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, error)
 
 	ShouldPromoteConfig() bool
 
@@ -193,4 +197,27 @@ func (mc *Mimir) doOK(ctx context.Context, p, method string, payload io.Reader) 
 	default:
 		return fmt.Errorf("received an unknown status from the request body: %s", sr.Status)
 	}
+}
+
+func (mc *Mimir) TestReceivers(ctx context.Context, c alertingNotify.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, error) {
+	payload, err := json.Marshal(c)
+	if err != nil {
+		return nil, err
+	}
+
+	trResult := &alertingNotify.TestReceiversResult{}
+	response := successResponse{
+		Data: trResult,
+	}
+
+	_, err = mc.do(ctx, "api/v1/grafana/receivers/test", http.MethodPost, bytes.NewBuffer(payload), &response)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.Status != "success" {
+		return nil, fmt.Errorf("returned non-success `status` from the MimirAPI: %s", response.Status)
+	}
+
+	return trResult, nil
 }
