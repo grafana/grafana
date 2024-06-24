@@ -78,6 +78,7 @@
       "delete-button": "Löschen",
       "delete-modal-invalid-text": "Ein oder mehrere Ordner enthalten Bibliotheksfenster oder Alarmierungsregeln. Löschen Sie diese zuerst, um fortzufahren.",
       "delete-modal-invalid-title": "Ordner kann nicht gelöscht werden",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Diese Aktion wird folgenden Inhalt löschen:",
       "delete-modal-title": "Löschen",
       "deleting": "Löschen...",
@@ -530,6 +531,12 @@
       "no-logs-found": "",
       "scan-for-older-logs": "",
       "stop-scan": ""
+    },
+    "query-library": {
+      "delete-query": "",
+      "delete-query-text": "",
+      "delete-query-title": "",
+      "query-deleted": ""
     },
     "rich-history": {
       "close-tooltip": "Abfrageverlauf schließen",
@@ -1558,6 +1565,9 @@
       "role-label": "Rolle"
     }
   },
+  "query-library": {
+    "delete-query-button": ""
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Abfragezeile einklappen",
@@ -1574,7 +1584,16 @@
   },
   "recently-deleted": {
     "buttons": {
+      "delete": "",
       "restore": ""
+    },
+    "permanently-delete-modal": {
+      "confirm-text": "",
+      "delete-button": "",
+      "delete-loading": "",
+      "title": "",
+      "text_one": "",
+      "text_other": ""
     },
     "restore-modal": {
       "restore-button": "",
@@ -1654,6 +1673,8 @@
     },
     "results-table": {
       "datasource-header": "Datenquelle",
+      "deleted-less-than-1-min": "",
+      "deleted-remaining-header": "",
       "location-header": "Standort",
       "name-header": "Name",
       "tags-header": "Tags",

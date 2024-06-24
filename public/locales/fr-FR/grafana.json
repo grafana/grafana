@@ -78,6 +78,7 @@
       "delete-button": "Supprimer",
       "delete-modal-invalid-text": "Un ou plusieurs dossiers contiennent des panneaux Bibliothèque ou des règles d'alerte. Vous devez d'abord les supprimer.",
       "delete-modal-invalid-title": "Impossible de supprimer le dossier",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Cette action supprimera le contenu suivant :",
       "delete-modal-title": "Supprimer",
       "deleting": "Suppression...",
@@ -530,6 +531,12 @@
       "no-logs-found": "",
       "scan-for-older-logs": "",
       "stop-scan": ""
+    },
+    "query-library": {
+      "delete-query": "",
+      "delete-query-text": "",
+      "delete-query-title": "",
+      "query-deleted": ""
     },
     "rich-history": {
       "close-tooltip": "Fermer l'historique des requêtes",
@@ -1558,6 +1565,9 @@
       "role-label": "Rôle"
     }
   },
+  "query-library": {
+    "delete-query-button": ""
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Réduire la ligne de requête",
@@ -1574,7 +1584,16 @@
   },
   "recently-deleted": {
     "buttons": {
+      "delete": "",
       "restore": ""
+    },
+    "permanently-delete-modal": {
+      "confirm-text": "",
+      "delete-button": "",
+      "delete-loading": "",
+      "title": "",
+      "text_one": "",
+      "text_other": ""
     },
     "restore-modal": {
       "restore-button": "",
@@ -1654,6 +1673,8 @@
     },
     "results-table": {
       "datasource-header": "Source de données",
+      "deleted-less-than-1-min": "",
+      "deleted-remaining-header": "",
       "location-header": "Emplacement",
       "name-header": "Nom",
       "tags-header": "Étiquettes",

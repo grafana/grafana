@@ -78,6 +78,7 @@
       "delete-button": "删除",
       "delete-modal-invalid-text": "一个或多个文件夹包含库面板或警报规则。请首先删除这些以便继续。",
       "delete-modal-invalid-title": "无法删除文件夹",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "此操作将删除以下内容：",
       "delete-modal-title": "删除",
       "deleting": "正在删除...",
@@ -525,6 +526,12 @@
       "no-logs-found": "",
       "scan-for-older-logs": "",
       "stop-scan": ""
+    },
+    "query-library": {
+      "delete-query": "",
+      "delete-query-text": "",
+      "delete-query-title": "",
+      "query-deleted": ""
     },
     "rich-history": {
       "close-tooltip": "关闭查询历史记录",
@@ -1552,6 +1559,9 @@
       "role-label": "角色"
     }
   },
+  "query-library": {
+    "delete-query-button": ""
+  },
   "query-operation": {
     "header": {
       "collapse-row": "折叠查询行",
@@ -1568,7 +1578,15 @@
   },
   "recently-deleted": {
     "buttons": {
+      "delete": "",
       "restore": ""
+    },
+    "permanently-delete-modal": {
+      "confirm-text": "",
+      "delete-button": "",
+      "delete-loading": "",
+      "title": "",
+      "text_other": ""
     },
     "restore-modal": {
       "restore-button": "",
@@ -1647,6 +1665,8 @@
     },
     "results-table": {
       "datasource-header": "数据源",
+      "deleted-less-than-1-min": "",
+      "deleted-remaining-header": "",
       "location-header": "位置",
       "name-header": "名称",
       "tags-header": "标签",
