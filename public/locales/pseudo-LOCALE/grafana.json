@@ -1673,6 +1673,8 @@
     },
     "results-table": {
       "datasource-header": "Đäŧä şőūřčę",
+      "deleted-less-than-1-min": "< 1 mįŉ",
+      "deleted-remaining-header": "Ŧįmę řęmäįŉįŉģ",
       "location-header": "Ŀőčäŧįőŉ",
       "name-header": "Ńämę",
       "tags-header": "Ŧäģş",
