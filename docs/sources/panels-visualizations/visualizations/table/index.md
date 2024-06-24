@@ -122,15 +122,15 @@ If you set these in the Field tab, then the type will apply to all fields, inclu
 
 The **Auto** cell type automatically displays values, with sensible defaults applied.
 
-Toggle the **Wrap text** switch to wrap text in the cell with the longest content or the matched field, if you've set a field override.
+### Wrap text
+
+Toggle the **Wrap text** switch to wrap text in the cell with the longest content in your table. To wrap the text in a specific column only, use the Wrap Text option in a [field override](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-overrides/).
 
 ### Color text
 
 If thresholds are set, then the field text is displayed in the appropriate threshold color.
 
 {{< figure src="/static/img/docs/tables/color-text.png" max-width="500px" caption="Color text" class="docs-image--no-shadow" >}}
-
-Toggle the **Wrap text** switch to wrap text in the cell with the longest content or the matched field, if you've set a field override.
 
 ### Color background (gradient or solid)
 
