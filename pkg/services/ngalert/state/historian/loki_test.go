@@ -240,6 +240,7 @@ func TestBuildLogQuery(t *testing.T) {
 		folderUIDs []string
 		exp        string
 		expErr     error
+		expDropped bool
 	}{
 		{
 			name:  "default includes state history label and orgID label",
@@ -323,6 +324,14 @@ func TestBuildLogQuery(t *testing.T) {
 		{
 			name: "filters by all namespaces",
 			query: models.HistoryQuery{
+				OrgID: 123,
+			},
+			folderUIDs: []string{"folder-1", "folder\\d"},
+			exp:        `{orgID="123",from="state-history",folderUID~=` + "`folder-1|folder\\\\d`" + `}`,
+		},
+		{
+			name: "should drop folders if it's too long",
+			query: models.HistoryQuery{
 				OrgID:   123,
 				RuleUID: "rule-uid",
 				Labels: map[string]string{
@@ -330,18 +339,20 @@ func TestBuildLogQuery(t *testing.T) {
 				},
 			},
 			folderUIDs: []string{"folder-1", "folder-2", "folder\\d"},
-			exp:        `{orgID="123",from="state-history",folderUID~=` + "`folder-1|folder-2|folder\\\\d`" + `} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`,
+			exp:        `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`,
+			expDropped: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := BuildLogQuery(tc.query, tc.folderUIDs, maxQuerySize)
+			res, dropped, err := BuildLogQuery(tc.query, tc.folderUIDs, maxQuerySize)
 			if tc.expErr != nil {
 				require.ErrorIs(t, err, tc.expErr)
 				return
 			}
 			require.LessOrEqual(t, len(res), maxQuerySize)
+			require.Equal(t, tc.expDropped, dropped)
 			require.NoError(t, err)
 			require.Equal(t, tc.exp, res)
 		})

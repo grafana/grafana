@@ -145,9 +145,12 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 		return nil, err
 	}
 
-	logQL, err := BuildLogQuery(query, uids, h.client.MaxQuerySize())
+	logQL, filterByFolderSkipped, err := BuildLogQuery(query, uids, h.client.MaxQuerySize())
 	if err != nil {
 		return nil, err
+	}
+	if filterByFolderSkipped {
+		h.log.FromContext(ctx).Warn("Filter by folder skipped because it's too long. Use in-memory filtering", "folders", len(uids))
 	}
 
 	now := time.Now().UTC()
@@ -415,11 +418,15 @@ func isValidOperator(op string) bool {
 }
 
 // BuildLogQuery converts models.HistoryQuery and a list of folder UIDs to a Loki query.
-// Returns a Loki query or error if log query cannot be constructed. If user-defined query exceeds maximum allowed size returns ErrLokiQueryTooLong
-func BuildLogQuery(query models.HistoryQuery, folderUIDs []string, maxQuerySize int) (string, error) {
+// If query size exceeds the `maxQuerySize` then it re-builds query ignoring the folderUIDs. If it's still bigger - returns ErrQueryTooLong.
+// Returns a tuple:
+// - loki query
+// - true if filter by folder UID was not added to the query ignored
+// - error if log query cannot be constructed, and ErrQueryTooLong if user-defined query exceeds maximum allowed size
+func BuildLogQuery(query models.HistoryQuery, folderUIDs []string, maxQuerySize int) (string, bool, error) {
 	selectors, err := buildSelectors(query)
 	if err != nil {
-		return "", fmt.Errorf("failed to build the provided selectors: %w", err)
+		return "", false, fmt.Errorf("failed to build the provided selectors: %w", err)
 	}
 
 	logQL := selectorString(selectors, folderUIDs)
@@ -451,10 +458,22 @@ func BuildLogQuery(query models.HistoryQuery, folderUIDs []string, maxQuerySize 
 	logQL += labelFilters
 
 	if len(logQL) > maxQuerySize {
+		// if request is too long, try to drop filter by folder UIDs.
+		if len(folderUIDs) > 0 {
+			logQL, tooLong, err := BuildLogQuery(query, nil, maxQuerySize)
+			if err != nil {
+				return "", false, err
+			}
+			if tooLong {
+				return "", false, NewErrLokiQueryTooLong(logQL, maxQuerySize)
+			}
+			return logQL, true, nil
+		}
 		// if the query is too long even without filter by folders, then fail
-		return "", NewErrLokiQueryTooLong(logQL, maxQuerySize)
+		return "", false, NewErrLokiQueryTooLong(logQL, maxQuerySize)
 	}
-	return logQL, nil
+
+	return logQL, false, nil
 }
 
 func queryHasLogFilters(query models.HistoryQuery) bool {
