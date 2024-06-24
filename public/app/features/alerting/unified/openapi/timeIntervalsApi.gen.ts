@@ -6,16 +6,19 @@ const injectedRtkApi = api
   })
   .injectEndpoints({
     endpoints: (build) => ({
-      listNamespacedTimeInterval: build.query<ListNamespacedTimeIntervalApiResponse, ListNamespacedTimeIntervalApiArg>({
+      listTimeIntervalForAllNamespaces: build.query<
+        ListTimeIntervalForAllNamespacesApiResponse,
+        ListTimeIntervalForAllNamespacesApiArg
+      >({
         query: (queryArg) => ({
-          url: `/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/timeintervals`,
+          url: `/apis/notifications.alerting.grafana.app/v0alpha1/timeintervals`,
           params: {
-            pretty: queryArg.pretty,
             allowWatchBookmarks: queryArg.allowWatchBookmarks,
             continue: queryArg['continue'],
             fieldSelector: queryArg.fieldSelector,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
+            pretty: queryArg.pretty,
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
@@ -29,13 +32,9 @@ const injectedRtkApi = api
     overrideExisting: false,
   });
 export { injectedRtkApi as generatedTimeIntervalsApi };
-export type ListNamespacedTimeIntervalApiResponse =
+export type ListTimeIntervalForAllNamespacesApiResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeIntervalList;
-export type ListNamespacedTimeIntervalApiArg = {
-  /** object name and auth scope, such as for teams and projects */
-  namespace: string;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
+export type ListTimeIntervalForAllNamespacesApiArg = {
   /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
   allowWatchBookmarks?: boolean;
   /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
@@ -50,6 +49,8 @@ export type ListNamespacedTimeIntervalApiArg = {
     
     The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
   limit?: number;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
   /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
     
     Defaults to unset */
