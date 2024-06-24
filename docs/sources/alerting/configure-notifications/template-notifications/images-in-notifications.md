@@ -79,7 +79,7 @@ Restart Grafana for the changes to take effect.
 
 ## Advanced configuration
 
-It is recommended that `max_concurrent_screenshots` is less than or equal to `concurrent_render_request_limit`. The default value for both `max_concurrent_screenshots` and `concurrent_render_request_limit` is `5`:
+We recommend that `max_concurrent_screenshots` is less than or equal to `concurrent_render_request_limit`. The default value for both `max_concurrent_screenshots` and `concurrent_render_request_limit` is `5`:
 
     # The maximum number of screenshots that can be taken at the same time. This option is different from
     # concurrent_render_request_limit as max_concurrent_screenshots sets the number of concurrent screenshots
