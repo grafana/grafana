@@ -2,9 +2,15 @@
 import { css, cx } from '@emotion/css';
 import React, { ReactNode } from 'react';
 
-import { isDataFrame, QueryEditorProps, QueryHint, TimeRange, toLegacyResponseData } from '@grafana/data';
+import {
+  isDataFrame,
+  LocalStorageValueProvider,
+  QueryEditorProps,
+  QueryHint,
+  TimeRange,
+  toLegacyResponseData,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { LocalStorageValueProvider } from '@grafana/o11y-ds-frontend';
 import { reportInteraction } from '@grafana/runtime';
 import { clearButtonStyles, Icon, Themeable2, withTheme2 } from '@grafana/ui';
 
