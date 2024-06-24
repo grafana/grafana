@@ -127,7 +127,7 @@ If you set these in the Field tab, then the type will apply to all fields, inclu
 
 The **Auto** cell type automatically displays values, with sensible defaults applied.
 
-### Wrap text
+#### Wrap text
 
 Toggle the **Wrap text** switch to wrap text in the cell with the longest content in your table. To wrap the text in a specific column only, use the Wrap Text option in a [field override](ref:field-override).
 
