@@ -209,6 +209,8 @@ export const browseDashboardsAPI = createApi({
 
     // gets the descendant counts for a folder. used in the move/delete modals.
     getAffectedItems: builder.query<DescendantCount, DashboardTreeSelection>({
+      // don't cache this data for now, since library panel/alert rule creation isn't done through rtk query
+      keepUnusedDataFor: 0,
       queryFn: async (selectedItems) => {
         const folderUIDs = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
