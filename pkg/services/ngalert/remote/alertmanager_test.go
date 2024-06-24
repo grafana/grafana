@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/alerting/definition"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -105,7 +106,7 @@ func TestNewAlertmanager(t *testing.T) {
 				DefaultConfig:     defaultGrafanaConfig,
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
+			am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -177,7 +178,7 @@ func TestApplyConfig(t *testing.T) {
 
 	// An error response from the remote Alertmanager should result in the readiness check failing.
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m)
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	config := &ngmodels.AlertConfiguration{
@@ -305,6 +306,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				decryptFn,
 				test.autogenFn,
 				m,
+				tracing.InitializeTracerForTest(),
 			)
 			require.NoError(t, err)
 
@@ -364,7 +366,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m)
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	encodedFullState, err := am.getFullState(ctx)
@@ -521,7 +523,7 @@ func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should get the default Cloud Alertmanager configuration.
@@ -555,7 +557,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -640,7 +642,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// Wait until the Alertmanager is ready to send alerts.
@@ -709,13 +711,19 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should start with the default config.
 	rcvs, err := am.GetReceivers(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, "empty-receiver", rcvs[0].Name)
+	require.Equal(t, []apimodels.Receiver{
+		{
+			Active:       true,
+			Name:         "empty-receiver",
+			Integrations: []apimodels.Integration{},
+		},
+	}, rcvs)
 }
 
 func genAlert(active bool, labels map[string]string) amv2.PostableAlert {

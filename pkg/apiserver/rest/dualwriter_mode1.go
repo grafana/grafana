@@ -24,10 +24,8 @@ const mode1Str = "1"
 
 // NewDualWriterMode1 returns a new DualWriter in mode 1.
 // Mode 1 represents writing to and reading from LegacyStorage.
-func newDualWriterMode1(legacy LegacyStorage, storage Storage) *DualWriterMode1 {
-	metrics := &dualWriterMetrics{}
-	metrics.init()
-	return &DualWriterMode1{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode1"), dualWriterMetrics: metrics}
+func newDualWriterMode1(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics) *DualWriterMode1 {
+	return &DualWriterMode1{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode1"), dualWriterMetrics: dwm}
 }
 
 // Mode returns the mode of the dual writer.
@@ -56,13 +54,12 @@ func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, c
 		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage create timeout"))
 		defer cancel()
 
-		objStorage, errEnrichObj := enrichLegacyObject(original, createdCopy, true)
-		if errEnrichObj != nil {
+		if err := enrichLegacyObject(original, createdCopy); err != nil {
 			cancel()
 		}
 
 		startStorage := time.Now()
-		_, errObjectSt := d.Storage.Create(ctx, objStorage, createValidation, options)
+		_, errObjectSt := d.Storage.Create(ctx, createdCopy, createValidation, options)
 		d.recordStorageDuration(errObjectSt != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
@@ -204,8 +201,7 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 
 		// if the object is found, create a new updateWrapper with the object found
 		if foundObj != nil {
-			resCopy, err := enrichLegacyObject(foundObj, resCopy, false)
-			if err != nil {
+			if err := enrichLegacyObject(foundObj, resCopy); err != nil {
 				log.Error(err, "could not enrich object")
 				cancel()
 			}

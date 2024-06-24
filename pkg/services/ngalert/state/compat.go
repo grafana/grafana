@@ -10,10 +10,11 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
-	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
+
+	alertingModels "github.com/grafana/alerting/models"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -73,7 +74,7 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 	}
 
 	state := alertState.State
-	if alertState.Resolved {
+	if alertState.ResolvedAt != nil {
 		// If this is a resolved alert, we need to send an alert with the correct labels such that they will expire the previous alert.
 		// In most cases the labels on the state will be correct, however when the previous alert was a NoData or Error alert, we need to
 		// ensure to modify it appropriately.
@@ -139,13 +140,12 @@ func errorAlert(labels, annotations data.Labels, alertState *State, urlStr strin
 	}
 }
 
-func FromStateTransitionToPostableAlerts(firingStates []StateTransition, stateManager *Manager, appURL *url.URL) apimodels.PostableAlerts {
+func FromStateTransitionToPostableAlerts(evaluatedAt time.Time, firingStates []StateTransition, stateManager *Manager, appURL *url.URL) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
-	var sentAlerts []*State
-	ts := time.Now()
 
+	sentAlerts := make([]*State, 0, len(firingStates))
 	for _, alertState := range firingStates {
-		if !alertState.NeedsSending(stateManager.ResendDelay) {
+		if !alertState.NeedsSending(stateManager.ResendDelay, stateManager.ResolvedRetention) {
 			continue
 		}
 		alert := StateToPostableAlert(alertState, appURL)
@@ -153,7 +153,7 @@ func FromStateTransitionToPostableAlerts(firingStates []StateTransition, stateMa
 		if alertState.StateReason == ngModels.StateReasonMissingSeries { // do not put stale state back to state manager
 			continue
 		}
-		alertState.LastSentAt = ts
+		alertState.LastSentAt = &evaluatedAt
 		sentAlerts = append(sentAlerts, alertState.State)
 	}
 	stateManager.Put(sentAlerts)

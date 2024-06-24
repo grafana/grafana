@@ -23,11 +23,10 @@ jobs:
       - run: CODEGEN_VERIFY=1 make gen-cue
       - run: make gen-go
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v5
+        uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.59.0
+          version: v1.59.1
           args: |
-            --config .golangci.toml --max-same-issues=0 --max-issues-per-linter=0 --verbose ./pkg/... ./pkg/apimachinery/... ./pkg/apiserver/... ./pkg/build/wire/... ./pkg/promlib/... ./pkg/util/xorm/...
-          only-new-issues: true
+            --config .golangci.toml --max-same-issues=0 --max-issues-per-linter=0 --verbose ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
           skip-cache: true
           install-mode: binary

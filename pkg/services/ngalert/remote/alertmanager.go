@@ -15,7 +15,6 @@ import (
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
-	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -25,6 +24,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -100,7 +100,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		URL:           u,
 		PromoteConfig: cfg.PromoteConfig,
 	}
-	mc, err := remoteClient.New(mcCfg, metrics)
+	mc, err := remoteClient.New(mcCfg, metrics, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		Password: cfg.BasicAuthPassword,
 		Logger:   logger,
 	}
-	amc, err := remoteClient.NewAlertmanager(amcCfg, metrics)
+	amc, err := remoteClient.NewAlertmanager(amcCfg, metrics, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -486,20 +486,7 @@ func (am *Alertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus
 }
 
 func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
-	params := amreceiver.NewGetReceiversParamsWithContext(ctx)
-	res, err := am.amClient.Receiver.GetReceivers(params)
-	if err != nil {
-		return []apimodels.Receiver{}, err
-	}
-
-	var rcvs []apimodels.Receiver
-	for _, rcv := range res.Payload {
-		rcvs = append(rcvs, apimodels.Receiver{
-			Name:         *rcv.Name,
-			Integrations: []apimodels.Integration{},
-		})
-	}
-	return rcvs, nil
+	return am.mimirClient.GetReceivers(ctx)
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {

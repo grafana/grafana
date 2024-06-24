@@ -3,7 +3,6 @@ import { Route, Switch } from 'react-router-dom';
 
 import { withErrorBoundary } from '@grafana/ui';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 
@@ -12,7 +11,7 @@ const EditContactPoint = SafeDynamicImport(() => import('./components/contact-po
 const NewContactPoint = SafeDynamicImport(() => import('./components/contact-points/NewContactPoint'));
 const GlobalConfig = SafeDynamicImport(() => import('./components/contact-points/components/GlobalConfig'));
 
-const ContactPoints = (_props: GrafanaRouteComponentProps): JSX.Element => (
+const ContactPoints = (): JSX.Element => (
   <AlertmanagerPageWrapper navId="receivers" accessType="notification">
     <Switch>
       <Route exact={true} path="/alerting/notifications" component={ContactPointsV2} />

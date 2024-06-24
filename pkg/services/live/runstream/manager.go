@@ -116,17 +116,21 @@ func (s *Manager) handleDatasourceEvent(orgID int64, dsUID string, resubmit bool
 		s.mu.RUnlock()
 		return nil
 	}
-	var resubmitRequests []streamRequest
-	var waitChannels []chan struct{}
+
+	resubmitRequests := make([]streamRequest, 0, len(dsStreams))
+	waitChannels := make([]chan struct{}, 0, len(dsStreams))
 	for channel := range dsStreams {
 		streamCtx, ok := s.streams[channel]
 		if !ok {
 			continue
 		}
+
 		streamCtx.cancelFn()
+
 		waitChannels = append(waitChannels, streamCtx.CloseCh)
 		resubmitRequests = append(resubmitRequests, streamCtx.streamRequest)
 	}
+
 	s.mu.RUnlock()
 
 	// Wait for all streams to stop.
