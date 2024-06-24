@@ -88,12 +88,11 @@ class K8sDashboardAPI implements DashboardAPI {
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardDataDTO>): SaveDashboardResponseDTO {
-    // console.log("RAW", v);
     return {
       uid: v.metadata.name,
       version: v.spec.version ?? 0,
       id: v.spec.id ?? 0,
-      status: '',
+      status: 'success',
       slug: '',
       url: '',
     }
