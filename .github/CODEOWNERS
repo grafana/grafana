@@ -58,6 +58,8 @@
 # Backend code
 /go.mod @grafana/backend-platform
 /go.sum @grafana/backend-platform
+/go.work @grafana/grafana-app-platform-squad
+/go.work.sum @grafana/grafana-app-platform-squad
 /.bingo/ @grafana/backend-platform
 /pkg/README.md @grafana/backend-platform
 /pkg/ruleguard.rules.go @grafana/backend-platform
@@ -638,6 +640,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/backport.yml @grafana/grafana-release-guild
 /.github/workflows/bump-version.yml @grafana/grafana-release-guild
 /.github/workflows/close-milestone.yml @grafana/grafana-release-guild
+/.github/workflows/release-pr.yml @grafana/grafana-release-guild
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo

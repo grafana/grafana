@@ -506,7 +506,7 @@ def test_backend_step():
             # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
             # mime.TypeByExtension function.
             "apk add --update build-base shared-mime-info shared-mime-info-lang",
-            "go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...",
+            "go list -f '{{.Dir}}/...' -m | xargs go test -tags requires_buildifer -short -covermode=atomic -timeout=5m",
         ],
     }
 
@@ -958,7 +958,7 @@ def mysql_integration_tests_steps(hostname, version):
 def redis_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...",
+        "go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
     ]
 
     environment = {
@@ -983,7 +983,7 @@ def remote_alertmanager_integration_tests_steps():
 def memcached_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...",
+        "go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
     ]
 
     environment = {
@@ -1094,6 +1094,34 @@ def publish_grafanacom_step(ver_mode):
         "commands": [
             cmd,
         ],
+    }
+
+def verify_grafanacom_step(depends_on = ["publish-grafanacom"]):
+    return {
+        "name": "verify-grafanacom",
+        "image": images["node"],
+        "commands": [
+            # Download and install `curl` and `bash` - both of which aren't available inside of the `node:{version}-alpine` docker image.
+            "apk add curl bash",
+
+            # There may be a slight lag between when artifacts are uploaded to Google Storage,
+            # and when they become available on the website. This `for` loop sould account for that discrepancy.
+            # We attempt the verification up to 5 times. If successful, exit the loop with a success (0) status.
+            # If any attempt fails, but it's not the final attempt, wait 60 seconds before the next attempt.
+            # If the 5th (final) attempt fails, exit with error (1) status.
+            """
+            for i in {1..5}; do
+                if ./scripts/drone/verify-grafanacom.sh; then
+                    exit 0
+                elif [ $i -eq 5 ]; then
+                    exit 1
+                else
+                    sleep 60
+                fi
+            done
+            """,
+        ],
+        "depends_on": depends_on,
     }
 
 def publish_linux_packages_step(package_manager = "deb"):
