@@ -86,6 +86,7 @@ The new settings page provides you with a holistic view of where Grafana-managed
 
 {{< figure src="/media/docs/alerting/alert-settings.png" alt="Alert settings page" >}}
 
+Learn more in the [Alertmanager configuration documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/).
 ### Alerting template selector
 
 <!-- Sonia Aguilar -->
@@ -96,7 +97,7 @@ Enables you to easily choose which templates you want to use in your alert notif
 
 Select from existing templates or enter a custom one for your specific needs. You can switch between the two tabs to access the list of available templates and copy them across to the customized version.
 
-Learn more in [Use notification templates](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/use-notification-templates/)
+Learn more in the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/).
 
 ### Add OAuth2 to HTTP settings for vanilla Alertmanager / Mimir
 
@@ -104,9 +105,9 @@ Learn more in [Use notification templates](https://grafana.com/docs/grafana/<GRA
 
 _Generally available in all editions of Grafana_
 
-Configure OAuth2 authentication for any Alertmanager or Mimir receiver (called Contact Points in Grafana) through the user interface.
+Configure OAuth2 authentication for any Alertmanager or Mimir receiver (called Contact Points in Grafana) through the user interface. Learn more about alerting contact points in [supported contact point integrations](https://grafana.com/docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/#list-of-supported-integrations) and find the reference for Oauth2 fields in the [Prometheus Alertmanager docs for Oauth2](https://prometheus.io/docs/alerting/latest/configuration/#oauth2).
 
-OAuth2 is not implemented for the Grafana built-in Alertmanager.
+Note that OAuth2 is not yet implemented for the Grafana built-in Alertmanager.
 
 ### Improved paused alert visibility
 
@@ -148,7 +149,7 @@ Manage silences through Role-Based Access Control (RBAC). In addition to the Gra
 - Users with the **alert.silences:read permission**, scoped within a folder, are able to read silences for rules contained within that folder and its subfolders, and general silences
 - Users with the **alert.silences:write permission**, scoped within a folder, are able to expire and recreate silences for rules contained within that folder and its subfolders
 
-Learn more about [managing access using roles](https://grafana.com/docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-rbac/access-roles/)
+Learn more about [managing access using roles](https://grafana.com/docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-rbac/access-roles/).
 
 ### Support for AWS SNS integration in Grafana-managed alerts
 
