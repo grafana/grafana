@@ -152,7 +152,7 @@
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
 /pkg/tests/api/correlations/ @grafana/explore-squad
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
-/pkg/tsdb/opentsdb/ @grafana/grafana-backend-group
+/pkg/tsdb/opentsdb/ @grafana/partner-datasources
 /pkg/util/ @grafana/grafana-backend-group
 /pkg/web/ @grafana/grafana-backend-group
 
@@ -253,9 +253,7 @@
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/observability-metrics
-/pkg/tsdb/influxdb/ @grafana/observability-metrics
 /pkg/tsdb/elasticsearch/ @grafana/observability-logs
-/pkg/tsdb/graphite/ @grafana/observability-metrics
 /pkg/tsdb/loki/ @grafana/observability-logs
 /pkg/tsdb/tempo/ @grafana/observability-traces-and-profiling
 /pkg/tsdb/grafana-pyroscope-datasource/ @grafana/observability-traces-and-profiling
@@ -267,6 +265,8 @@
 
 # Partner Datasources backend code
 /pkg/tsdb/mssql/ @grafana/partner-datasources
+/pkg/tsdb/influxdb/ @grafana/partner-datasources
+/pkg/tsdb/graphite/ @grafana/partner-datasources
 
 # Database migrations
 /pkg/services/sqlstore/migrations/ @grafana/grafana-search-and-storage
@@ -573,14 +573,14 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/azuremonitor/ @grafana/partner-datasources
-/public/app/plugins/datasource/graphite/ @grafana/observability-metrics
-/public/app/plugins/datasource/influxdb/ @grafana/observability-metrics
+/public/app/plugins/datasource/graphite/ @grafana/partner-datasources
+/public/app/plugins/datasource/influxdb/ @grafana/partner-datasources
 /public/app/plugins/datasource/jaeger/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/loki/ @grafana/observability-logs
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mssql/ @grafana/partner-datasources
 /public/app/plugins/datasource/mysql/ @grafana/oss-big-tent
-/public/app/plugins/datasource/opentsdb/ @grafana/observability-metrics
+/public/app/plugins/datasource/opentsdb/ @grafana/partner-datasources
 /public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/oss-big-tent
 /public/app/plugins/datasource/prometheus/ @grafana/observability-metrics
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources
