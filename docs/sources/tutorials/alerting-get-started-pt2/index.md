@@ -17,8 +17,6 @@ weight: 50
 
 # Get started with Grafana Alerting - Part 2
 
-## Introduction
-
 This is part 2 of the [Get Started with Grafana Alerting tutorial](http://grafana.com/tutorials/alerting-get-started/).
 
 In this guide, we dig into more complex yet equally fundamental elements of Grafana Alerting: **alert instances** and **notification policies**.
@@ -65,7 +63,7 @@ Create a notification policy if you want to handle metrics returned by alert rul
 1. In the field **Label** enter `device`, and in the field **Value** enter `desktop`.
 1. From the **Contact point** drop-down, choose **Webhook**.
    {{< admonition type="note" >}}
-   If you don’t have any contact points, add a [Contact point](http://localhost:3002/docs/grafana/latest/tutorials/alerting-get-started/#create-a-contact-point).
+   If you don’t have any contact points, add a [Contact point](https://grafana.com/tutorials/alerting-get-started/#create-a-contact-point).
    {{</ admonition >}}
 1. Click **Save Policy**.
 

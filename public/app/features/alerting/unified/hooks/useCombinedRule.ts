@@ -80,7 +80,7 @@ export function useCloudCombinedRulesMatching(
     groupName: filter?.groupName,
   });
 
-  const [fetchRulerRuleGroup] = alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
+  const [fetchRulerRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
 
   const { loading, error, value } = useAsync(async () => {
     if (!dsSettings) {
@@ -210,7 +210,7 @@ export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdenti
       error: rulerRuleGroupError,
       isUninitialized: rulerRuleGroupUninitialized,
     },
-  ] = alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
+  ] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
 
   useEffect(() => {
     if (!dsFeatures?.rulerConfig || !ruleLocation) {
@@ -345,7 +345,7 @@ export function useRuleWithLocation({
       isUninitialized: isUninitializedRulerGroup,
       error: rulerRuleGroupError,
     },
-  ] = alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
+  ] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
 
   useEffect(() => {
     if (!dsFeatures?.rulerConfig || !ruleLocation) {

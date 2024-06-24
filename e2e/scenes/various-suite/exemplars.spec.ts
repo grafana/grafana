@@ -17,8 +17,8 @@ const addDataSource = () => {
     },
   });
 };
-
-describe('Exemplars', () => {
+// Skipping due to race conditions with same old arch test e2e/various-suite/exemplars.spec.ts
+describe.skip('Exemplars', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 
