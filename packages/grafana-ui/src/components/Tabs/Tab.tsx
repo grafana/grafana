@@ -43,9 +43,9 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
 
     const commonProps = {
       className: linkClass,
+      'data-testid': selectors.components.Tab.title(label),
       ...otherProps,
       onClick: onChangeTab,
-      'aria-label': otherProps['aria-label'] || selectors.components.Tab.title(label),
       role: 'tab',
       'aria-selected': active,
     };
