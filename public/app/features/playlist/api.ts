@@ -71,7 +71,9 @@ class K8sAPI implements PlaylistAPI {
 
   async createPlaylist(playlist: Playlist): Promise<void> {
     const body = this.playlistAsK8sResource(playlist);
-    await withErrorHandling(() => this.server.create(body) as any);
+    await withErrorHandling(async () => {
+      await this.server.create(body);
+    });
   }
 
   async updatePlaylist(playlist: Playlist): Promise<void> {

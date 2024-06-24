@@ -33,7 +33,7 @@ describe('SaveDashboardDrawer', () => {
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.pages.SaveDashboardModal.saveTimerange)).not.toBeInTheDocument();
       expect(screen.getByText('No changes to save')).toBeInTheDocument();
-      expect(screen.queryByLabelText('Tab Changes')).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
     });
 
     it('When there are no changes', async () => {
@@ -61,11 +61,11 @@ describe('SaveDashboardDrawer', () => {
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.pages.SaveDashboardModal.saveTimerange)).toBeInTheDocument();
-      expect(screen.queryByLabelText('Tab Changes')).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByTestId(selectors.pages.SaveDashboardModal.saveTimerange));
 
-      expect(await screen.findByLabelText('Tab Changes')).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: /Changes/ })).toBeInTheDocument();
     });
 
     it('When refresh changed show save refresh option', async () => {
@@ -94,11 +94,11 @@ describe('SaveDashboardDrawer', () => {
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
       expect(screen.getByTestId(selectors.pages.SaveDashboardModal.saveRefresh)).toBeInTheDocument();
-      expect(screen.queryByLabelText('Tab Changes')).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByTestId(selectors.pages.SaveDashboardModal.saveRefresh));
 
-      expect(await screen.findByLabelText('Tab Changes')).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: /Changes/ })).toBeInTheDocument();
     });
 
     it('Can show changes', async () => {
@@ -108,7 +108,7 @@ describe('SaveDashboardDrawer', () => {
 
       openAndRender();
 
-      await userEvent.click(await screen.findByLabelText('Tab Changes'));
+      await userEvent.click(await screen.findByRole('tab', { name: /Changes/ }));
 
       expect(await screen.findByText('Full JSON diff')).toBeInTheDocument();
     });

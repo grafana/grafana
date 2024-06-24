@@ -6,32 +6,43 @@ import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
+import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { useDispatch } from 'app/types';
 import { DashboardSavedEvent } from 'app/types/events';
 
-import { getDashboardAPI } from '../../api/dashboard_api';
 import { updateDashboardUidLastUsedDatasource } from '../../utils/dashboard';
 
-import { SaveDashboardCommand, SaveDashboardOptions } from './types';
+import { SaveDashboardOptions } from './types';
+
+const saveDashboard = async (
+  saveModel: any,
+  options: SaveDashboardOptions,
+  dashboard: DashboardModel,
+  saveDashboardRtkQuery: ReturnType<typeof useSaveDashboardMutation>[0]
+) => {
+  const query = await saveDashboardRtkQuery({
+    dashboard: saveModel,
+    folderUid: options.folderUid ?? dashboard.meta.folderUid ?? saveModel.meta?.folderUid,
+    message: options.message,
+    overwrite: options.overwrite,
+  });
+
+  if ('error' in query) {
+    throw query.error;
+  }
+
+  return query.data;
+};
 
 export const useDashboardSave = (isCopy = false) => {
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
+  const [saveDashboardRtkQuery] = useSaveDashboardMutation();
   const [state, onDashboardSave] = useAsyncFn(
     async (clone: Dashboard, options: SaveDashboardOptions, dashboard: DashboardModel) => {
       try {
-        const cmd: SaveDashboardCommand = {
-          dashboard: clone,
-          folderUid: options.folderUid ?? dashboard.meta.folderUid,
-          message: options.message,
-          overwrite: options.overwrite,
-          k8s: dashboard.meta.k8s, // stashed on load
-        }
-        // Note in k8s the response does not have URL or slug
-        const result = await getDashboardAPI().saveDashboard(cmd);
-        console.log("RESULT", result);
-
+        const result = await saveDashboard(clone, options, dashboard, saveDashboardRtkQuery);
         dashboard.version = result.version;
 
         clone.version = result.version;
@@ -50,7 +61,7 @@ export const useDashboardSave = (isCopy = false) => {
             url: result.url,
           });
         } else {
-          reportInteraction(`grafana_dashboard_${dashboard.uid ? 'saved' : 'created'}`, {
+          reportInteraction(`grafana_dashboard_${dashboard.id ? 'saved' : 'created'}`, {
             name: dashboard.title,
             url: result.url,
           });
