@@ -321,7 +321,7 @@ export function ToolbarActions({ dashboard }: Props) {
         fill="outline"
         onClick={() => {
           DashboardInteractions.toolbarShareClick();
-          dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
+          dashboard.showModal(new ShareModal({}));
         }}
         data-testid={selectors.components.NavToolbar.shareDashboard}
       >

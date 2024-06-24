@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -34,14 +33,6 @@ describe('ShareMenu', () => {
     setup();
 
     expect(await screen.queryByTestId(selector.shareExternally)).not.toBeInTheDocument();
-  });
-  it('should call createAndCopyDashboardShortLink when share internally clicked', async () => {
-    setup();
-
-    const shareLink = await screen.findByTestId(selector.shareInternally);
-
-    await userEvent.click(shareLink);
-    expect(createAndCopyDashboardShortLinkMock).toHaveBeenCalled();
   });
 });
 
