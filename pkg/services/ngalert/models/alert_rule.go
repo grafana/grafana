@@ -269,6 +269,11 @@ type AlertRule struct {
 	NotificationSettings []NotificationSettings `xorm:"notification_settings"` // we use slice to workaround xorm mapping that does not serialize a struct to JSON unless it's a slice
 }
 
+// Namespaced describes a class of resources that are stored in a specific namespace.
+type Namespaced interface {
+	GetNamespaceUID() string
+}
+
 // AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule
 // object is created in an early validation step without knowledge about current alert rule fields or if they need to be
 // overridden. This is done in a later step and, in that step, we did not have knowledge about if a field was optional

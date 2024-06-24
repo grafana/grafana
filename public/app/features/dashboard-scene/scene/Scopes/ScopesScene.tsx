@@ -30,9 +30,9 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
     this.addActivationHandler(() => {
       this._subs.add(
         this.state.filters.subscribeToState((newState, prevState) => {
-          if (newState.scopes !== prevState.scopes) {
+          if (!newState.isLoadingScopes && newState.scopes !== prevState.scopes) {
             if (this.state.isExpanded) {
-              this.state.dashboards.fetchDashboards(newState.scopes);
+              this.state.dashboards.fetchDashboards(this.state.filters.getSelectedScopes());
             }
 
             sceneGraph.getTimeRange(this.parent!).onRefresh();

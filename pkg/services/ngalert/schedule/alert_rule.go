@@ -8,6 +8,10 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -19,9 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // Rule represents a single piece of work that is executed periodically by the ruler.
@@ -418,7 +419,7 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 	processDuration.Observe(a.clock.Now().Sub(start).Seconds())
 
 	start = a.clock.Now()
-	alerts := state.FromStateTransitionToPostableAlerts(processedStates, a.stateManager, a.appURL)
+	alerts := state.FromStateTransitionToPostableAlerts(e.scheduledAt, processedStates, a.stateManager, a.appURL)
 	span.AddEvent("results processed", trace.WithAttributes(
 		attribute.Int64("state_transitions", int64(len(processedStates))),
 		attribute.Int64("alerts_to_send", int64(len(alerts.PostableAlerts))),

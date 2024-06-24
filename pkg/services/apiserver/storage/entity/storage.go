@@ -100,7 +100,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return fmt.Errorf("this was not a create operation... (%s)", rsp.Status.String())
 	}
 
-	err = entityToResource(rsp.Entity, out, s.codec)
+	err = EntityToRuntimeObject(rsp.Entity, out, s.codec)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -140,7 +140,7 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 		return err
 	}
 
-	err = entityToResource(rsp.Entity, out, s.codec)
+	err = EntityToRuntimeObject(rsp.Entity, out, s.codec)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -328,7 +328,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		return apierrors.NewNotFound(s.gr, k.Name)
 	}
 
-	err = entityToResource(rsp, objPtr, s.codec)
+	err = EntityToRuntimeObject(rsp, objPtr, s.codec)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -394,7 +394,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		for _, r := range rsp.Versions {
 			res := s.newFunc()
 
-			err := entityToResource(r, res, s.codec)
+			err := EntityToRuntimeObject(r, res, s.codec)
 			if err != nil {
 				return apierrors.NewInternalError(err)
 			}
@@ -442,9 +442,6 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if len(requirements.SortBy) > 0 {
 		req.Sort = requirements.SortBy
 	}
-	if len(requirements.ListOriginKeys) > 0 {
-		req.OriginKeys = requirements.ListOriginKeys
-	}
 	if requirements.ListDeleted {
 		req.Deleted = true
 	}
@@ -469,7 +466,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	for _, r := range rsp.Results {
 		res := s.newFunc()
 
-		err := entityToResource(r, res, s.codec)
+		err := EntityToRuntimeObject(r, res, s.codec)
 		if err != nil {
 			return apierrors.NewInternalError(err)
 		}
@@ -585,7 +582,7 @@ func (s *Storage) GuaranteedUpdate(
 			return err
 		}
 
-		err = entityToResource(rsp.Entity, destination, s.codec)
+		err = EntityToRuntimeObject(rsp.Entity, destination, s.codec)
 		if err != nil {
 			return apierrors.NewInternalError(err)
 		}
@@ -608,7 +605,7 @@ func (s *Storage) GuaranteedUpdate(
 		return nil // destination is already set
 	}
 
-	err = entityToResource(rsp.Entity, destination, s.codec)
+	err = EntityToRuntimeObject(rsp.Entity, destination, s.codec)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -679,7 +676,7 @@ decode:
 			return watch.Bookmark, obj, nil
 		}
 
-		err = entityToResource(resp.Entity, obj, d.codec)
+		err = EntityToRuntimeObject(resp.Entity, obj, d.codec)
 		if err != nil {
 			klog.Errorf("error decoding entity: %s", err)
 			return watch.Error, nil, err
@@ -713,7 +710,7 @@ decode:
 			prevMatches := false
 			prevObj := d.newFunc()
 			if resp.Previous != nil {
-				err = entityToResource(resp.Previous, prevObj, d.codec)
+				err = EntityToRuntimeObject(resp.Previous, prevObj, d.codec)
 				if err != nil {
 					klog.Errorf("error decoding entity: %s", err)
 					return watch.Error, nil, err
@@ -754,7 +751,7 @@ decode:
 
 			// if we have a previous object, return that in the deleted event
 			if resp.Previous != nil {
-				err = entityToResource(resp.Previous, obj, d.codec)
+				err = EntityToRuntimeObject(resp.Previous, obj, d.codec)
 				if err != nil {
 					klog.Errorf("error decoding entity: %s", err)
 					return watch.Error, nil, err

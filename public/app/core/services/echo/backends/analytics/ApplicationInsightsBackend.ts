@@ -7,8 +7,6 @@ import {
   PageviewEchoEvent,
 } from '@grafana/runtime';
 
-import { loadScript } from '../../utils';
-
 interface ApplicationInsights {
   trackPageView: () => void;
   trackEvent: (event: { name: string; properties?: Record<string, unknown> }) => void;
@@ -39,10 +37,12 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
     };
 
     const url = 'https://js.monitor.azure.com/scripts/b/ai.2.min.js';
-    loadScript(url).then(() => {
-      const init = new (window as any).Microsoft.ApplicationInsights.ApplicationInsights(applicationInsightsOpts);
-      window.applicationInsights = init.loadAppInsights();
-    });
+    System.import(url)
+      .then((m) => (m.default ? m.default : m))
+      .then(({ ApplicationInsights }) => {
+        const init = new ApplicationInsights(applicationInsightsOpts);
+        window.applicationInsights = init.loadAppInsights();
+      });
   }
 
   addEvent = (e: PageviewEchoEvent | InteractionEchoEvent) => {
