@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -17,7 +18,10 @@ import (
 	"github.com/openfga/openfga/pkg/tuple"
 	"github.com/openfga/openfga/pkg/typesystem"
 
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/store/textfixtures"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/store/migration"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -27,7 +31,7 @@ func TestMain(m *testing.M) {
 
 // TestIntegrationDatastore runs open fga default datastore test suite
 func TestIntegrationDatastore(t *testing.T) {
-	db := textfixtures.SQLiteIntegrationTest(t)
+	db := sqliteIntegrationTest(t)
 	ds, err := NewWithDB(db, NewConfig())
 	require.NoError(t, err)
 	test.RunAllTests(t, ds)
@@ -35,7 +39,7 @@ func TestIntegrationDatastore(t *testing.T) {
 
 // TestIntegrationReadEnsureNoOrder asserts that the read response is not ordered by ulid.
 func TestIntegrationReadEnsureNoOrder(t *testing.T) {
-	db := textfixtures.SQLiteIntegrationTest(t)
+	db := sqliteIntegrationTest(t)
 
 	ds, err := NewWithDB(db, NewConfig())
 	require.NoError(t, err)
@@ -81,7 +85,7 @@ func TestIntegrationReadEnsureNoOrder(t *testing.T) {
 
 // TestIntegrationReadPageEnsureNoOrder asserts that the read page is ordered by ulid.
 func TestIntegrationReadPageEnsureOrder(t *testing.T) {
-	db := textfixtures.SQLiteIntegrationTest(t)
+	db := sqliteIntegrationTest(t)
 
 	ds, err := NewWithDB(db, NewConfig())
 	require.NoError(t, err)
@@ -122,7 +126,7 @@ func TestIntegrationReadPageEnsureOrder(t *testing.T) {
 }
 
 func TestIntegrationReadAuthorizationModelUnmarshallError(t *testing.T) {
-	db := textfixtures.SQLiteIntegrationTest(t)
+	db := sqliteIntegrationTest(t)
 
 	ds, err := NewWithDB(db, NewConfig())
 	require.NoError(t, err)
@@ -147,7 +151,7 @@ func TestIntegrationReadAuthorizationModelUnmarshallError(t *testing.T) {
 // TestIntegrationAllowNullCondition tests that tuple and changelog rows existing before
 // migration 005_add_conditions_to_tuples can be successfully read.
 func TestIntegrationAllowNullCondition(t *testing.T) {
-	db := textfixtures.SQLiteIntegrationTest(t)
+	db := sqliteIntegrationTest(t)
 
 	ds, err := NewWithDB(db, NewConfig())
 	require.NoError(t, err)
@@ -244,7 +248,7 @@ func TestIntegrationAllowNullCondition(t *testing.T) {
 // assertions can be read back. In any case where the Assertions proto model
 // needs to change, we'll likely need to introduce a series of data migrations.
 func TestIntegrationMarshalledAssertions(t *testing.T) {
-	db := textfixtures.SQLiteIntegrationTest(t)
+	db := sqliteIntegrationTest(t)
 
 	ds, err := NewWithDB(db, NewConfig())
 	require.NoError(t, err)
@@ -273,4 +277,18 @@ func TestIntegrationMarshalledAssertions(t *testing.T) {
 		},
 	}
 	require.Equal(t, expectedAssertions, assertions)
+}
+
+func sqliteIntegrationTest(tb testing.TB) *sql.DB {
+	if testing.Short() || !db.IsTestDbSQLite() {
+		tb.Skip("skipping integration test")
+	}
+
+	db, cfg := db.InitTestDBWithCfg(tb)
+
+	m := migrator.NewMigrator(db.GetEngine(), cfg)
+	err := migration.RunWithMigrator(m, cfg, store.EmbedMigrations, store.SQLiteMigrationDir)
+	require.NoError(tb, err)
+
+	return db.GetEngine().DB().DB
 }
