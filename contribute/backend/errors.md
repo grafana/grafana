@@ -9,7 +9,7 @@ rely on bespoke solutions in API handlers to communicate informative
 messages to the end-user. With the new `errutil.Error`, the API handlers
 can be streamlined. The error carries information about public messaging, 
 structured data related to the error, localization metadata, log level, 
-HTTP status code, and so forth.
+HTTP status code, and so on.
 
 ## Basic use
 
