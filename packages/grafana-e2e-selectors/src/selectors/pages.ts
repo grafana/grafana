@@ -245,7 +245,6 @@ export const Pages = {
   },
   ShareDashboardModal: {
     PublicDashboard: {
-      Tab: 'Public dashboard',
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
       LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
       CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
@@ -269,9 +268,6 @@ export const Pages = {
         DeleteEmail: 'data-testid public dashboard delete email button',
         ReshareLink: 'data-testid public dashboard reshare link button',
       },
-    },
-    PublicDashboardScene: {
-      Tab: 'Public Dashboard',
     },
     SnapshotScene: {
       url: (key: string) => `/dashboard/snapshot/${key}`,
