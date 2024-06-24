@@ -54,6 +54,7 @@ export const ConfirmModal = ({
   body,
   description,
   confirmText,
+  confirmVariant = 'destructive',
   confirmationText,
   dismissText = 'Cancel',
   dismissVariant = 'secondary',
