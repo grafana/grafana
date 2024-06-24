@@ -57,26 +57,26 @@ To set up the Grafana OnCall integration using the Grafana Alerting application,
 1. Enter a contact point name.
 1. From the Integration list, select Grafana OnCall.
 
-   **Note:**
-
-   The Grafana OnCall integration is only available for Grafana Alertmanager.
+{{< admonition type="note" >}}
+The Grafana OnCall integration is only available for Grafana Alertmanager.
+{{< /admonition >}}
 
 1. Choose whether to add a new OnCall integration or add an existing one.
 
    - If you add a new one, enter an Integration name.
    - If you add an existing one, choose from the list of available integrations
 
-1. Click **Save contact point**.
+2. Click **Save contact point**.
 
-1. On the Contact points list view page, you can see the contact point with the Grafana OnCall icon.
+3. On the Contact points list view page, you can see the contact point with the Grafana OnCall icon.
 
    If the integration is not yet being used anywhere in the notification policies tree, it will have **Unused** as its status in the **Health** column. It won’t receive any notifications, because there are no notifications using that integration.
 
-1. Connect your contact point to a notification policy.
+4. Connect your contact point to a notification policy.
 
    For more information on connecting your contact point to a notification policy, see
    [Create notification policy](ref:create-notification-policy).
 
-1. To view your integration in the Grafana OnCall application and set up routes and escalation chains, click the Link next to the integration on the Contact points list view page in the **Type** column.
+5. To view your integration in the Grafana OnCall application and set up routes and escalation chains, click the Link next to the integration on the Contact points list view page in the **Type** column.
 
    This redirects you to the Grafana OnCall integration page in the Grafana OnCall application. From there, you can add [routes and escalation chains](ref:escalation-chain).
