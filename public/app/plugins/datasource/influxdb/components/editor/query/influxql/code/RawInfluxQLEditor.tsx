@@ -47,7 +47,7 @@ export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.E
         value={currentQuery ?? ''}
       />
       <Stack>
-        <InlineField htmlFor={selectElementId} label="Format as">
+        <InlineField htmlFor={aliasElementId} label="Format as">
           <Select
             inputId={selectElementId}
             onChange={(v) => {
@@ -58,7 +58,7 @@ export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.E
             options={RESULT_FORMATS}
           />
         </InlineField>
-        <InlineField htmlFor={selectElementId} label="Alias by">
+        <InlineField htmlFor={aliasElementId} label="Alias by">
           <Input
             id={aliasElementId}
             type="text"
