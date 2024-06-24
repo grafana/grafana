@@ -7,8 +7,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/store/migration"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 func SQLiteIntegrationTest(tb testing.TB) *sql.DB {
@@ -16,9 +17,11 @@ func SQLiteIntegrationTest(tb testing.TB) *sql.DB {
 		tb.Skip("skipping integration test")
 	}
 
-	sql, cfg := db.InitTestDBWithCfg(tb)
-	// We create a new embedded store so all migrations are triggered
-	_, err := zanzana.NewEmbeddedStore(cfg, sql, log.NewNopLogger())
+	db, cfg := db.InitTestDBWithCfg(tb)
+
+	m := migrator.NewMigrator(db.GetEngine(), cfg)
+	err := migration.RunWithMigrator(m, cfg, store.EmbedMigrations, store.SQLiteMigrationDir)
 	require.NoError(tb, err)
-	return sql.GetEngine().DB().DB
+
+	return db.GetEngine().DB().DB
 }

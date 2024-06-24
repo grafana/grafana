@@ -1,4 +1,4 @@
-package sqlite
+package store
 
 import "embed"
 
@@ -7,4 +7,4 @@ import "embed"
 //go:embed migrations/*
 var EmbedMigrations embed.FS
 
-const SQLiteMigrationDir = "migrations"
+const SQLiteMigrationDir = "migrations/sqlite"

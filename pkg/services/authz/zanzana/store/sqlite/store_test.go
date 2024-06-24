@@ -6,8 +6,6 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/textfixtures"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/oklog/ulid/v2"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
@@ -18,6 +16,9 @@ import (
 	"github.com/openfga/openfga/pkg/storage/test"
 	"github.com/openfga/openfga/pkg/tuple"
 	"github.com/openfga/openfga/pkg/typesystem"
+
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/store/textfixtures"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
@@ -25,27 +26,30 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDatastore(t *testing.T) {
-	ds := textfixtures.SQLiteIntegrationTest(t)
-	defer ds.Close()
+	db := textfixtures.SQLiteIntegrationTest(t)
+	ds, err := NewWithDB(db, sqlcommon.NewConfig())
+	require.NoError(t, err)
 	test.RunAllTests(t, ds)
 }
 
-func TestSQLiteDatastoreAfterCloseIsNotReady(t *testing.T) {
-	ds := textfixtures.SQLiteIntegrationTest(t)
+func TestIntegrationDatastoreAfterCloseIsNotReady(t *testing.T) {
+	db := textfixtures.SQLiteIntegrationTest(t)
+
+	ds, err := NewWithDB(db, sqlcommon.NewConfig())
+	require.NoError(t, err)
+
 	ds.Close()
 	status, err := ds.IsReady(context.Background())
 	require.Error(t, err)
 	require.False(t, status.IsReady)
 }
 
-// TestReadEnsureNoOrder asserts that the read response is not ordered by ulid.
-func TestReadEnsureNoOrder(t *testing.T) {
-	testDatastore := storagefixtures.RunDatastoreTestContainer(t, "sqlite")
+// TestIntegrationReadEnsureNoOrder asserts that the read response is not ordered by ulid.
+func TestIntegrationReadEnsureNoOrder(t *testing.T) {
+	db := textfixtures.SQLiteIntegrationTest(t)
 
-	uri := testDatastore.GetConnectionURI(true)
-	ds, err := New(uri, sqlcommon.NewConfig())
+	ds, err := NewWithDB(db, sqlcommon.NewConfig())
 	require.NoError(t, err)
-	defer ds.Close()
 
 	ctx := context.Background()
 	store := "store"
@@ -86,14 +90,12 @@ func TestReadEnsureNoOrder(t *testing.T) {
 	require.Equal(t, secondTuple, curTuple.GetKey())
 }
 
-// TestReadPageEnsureNoOrder asserts that the read page is ordered by ulid.
-func TestReadPageEnsureOrder(t *testing.T) {
-	testDatastore := storagefixtures.RunDatastoreTestContainer(t, "sqlite")
+// TestIntegrationReadPageEnsureNoOrder asserts that the read page is ordered by ulid.
+func TestIntegrationReadPageEnsureOrder(t *testing.T) {
+	db := textfixtures.SQLiteIntegrationTest(t)
 
-	uri := testDatastore.GetConnectionURI(true)
-	ds, err := New(uri, sqlcommon.NewConfig())
+	ds, err := NewWithDB(db, sqlcommon.NewConfig())
 	require.NoError(t, err)
-	defer ds.Close()
 
 	ctx := context.Background()
 
@@ -130,11 +132,10 @@ func TestReadPageEnsureOrder(t *testing.T) {
 	require.Equal(t, firstTuple, tuples[1].GetKey())
 }
 
-func TestReadAuthorizationModelUnmarshallError(t *testing.T) {
-	testDatastore := storagefixtures.RunDatastoreTestContainer(t, "sqlite")
+func TestIntegrationReadAuthorizationModelUnmarshallError(t *testing.T) {
+	db := textfixtures.SQLiteIntegrationTest(t)
 
-	uri := testDatastore.GetConnectionURI(true)
-	ds, err := New(uri, sqlcommon.NewConfig())
+	ds, err := NewWithDB(db, sqlcommon.NewConfig())
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -155,16 +156,15 @@ func TestReadAuthorizationModelUnmarshallError(t *testing.T) {
 	require.Contains(t, err.Error(), "cannot parse invalid wire-format data")
 }
 
-// TestAllowNullCondition tests that tuple and changelog rows existing before
+// TestIntegrationAllowNullCondition tests that tuple and changelog rows existing before
 // migration 005_add_conditions_to_tuples can be successfully read.
-func TestAllowNullCondition(t *testing.T) {
-	ctx := context.Background()
-	testDatastore := storagefixtures.RunDatastoreTestContainer(t, "sqlite")
+func TestIntegrationAllowNullCondition(t *testing.T) {
+	db := textfixtures.SQLiteIntegrationTest(t)
 
-	uri := testDatastore.GetConnectionURI(true)
-	ds, err := New(uri, sqlcommon.NewConfig())
+	ds, err := NewWithDB(db, sqlcommon.NewConfig())
 	require.NoError(t, err)
-	defer ds.Close()
+
+	ctx := context.Background()
 
 	stmt := `
 		INSERT INTO tuple (
@@ -252,18 +252,16 @@ func TestAllowNullCondition(t *testing.T) {
 	require.Equal(t, tk, changes[1].GetTupleKey())
 }
 
-// TestMarshalledAssertions tests that previously persisted marshalled
+// TestIntegrationMarshalledAssertions tests that previously persisted marshalled
 // assertions can be read back. In any case where the Assertions proto model
 // needs to change, we'll likely need to introduce a series of data migrations.
-func TestMarshalledAssertions(t *testing.T) {
-	ctx := context.Background()
-	testDatastore := storagefixtures.RunDatastoreTestContainer(t, "sqlite")
+func TestIntegrationMarshalledAssertions(t *testing.T) {
+	db := textfixtures.SQLiteIntegrationTest(t)
 
-	uri := testDatastore.GetConnectionURI(true)
-	ds, err := New(uri, sqlcommon.NewConfig())
+	ds, err := NewWithDB(db, sqlcommon.NewConfig())
 	require.NoError(t, err)
-	defer ds.Close()
 
+	ctx := context.Background()
 	// Note: this represents an assertion written on v1.3.7.
 	stmt := `
 		INSERT INTO assertion (
