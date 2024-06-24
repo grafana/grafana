@@ -1550,7 +1550,7 @@ func TestGenerateConnectionString(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			connStr, err := generateConnectionString(tc.dataSource, nil, nil, tc.kerberosCfg, logger)
+			connStr, err := generateConnectionString(tc.dataSource, "", nil, tc.kerberosCfg, logger)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expConnStr, connStr)
 		})

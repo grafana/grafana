@@ -138,10 +138,15 @@ func newMSSQL(ctx context.Context, driverName string, userFacingDefaultError str
 
 func NewInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		grafCfg := backend.GrafanaConfigFromContext(ctx)
+		sqlCfg, err := grafCfg.SQL()
+		if err != nil {
+			return nil, err
+		}
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:      cfg.SqlDatasourceMaxOpenConnsDefault,
-			MaxIdleConns:      cfg.SqlDatasourceMaxIdleConnsDefault,
-			ConnMaxLifetime:   cfg.SqlDatasourceMaxConnLifetimeDefault,
+			MaxOpenConns:      sqlCfg.DefaultMaxOpenConns,
+			MaxIdleConns:      sqlCfg.DefaultMaxIdleConns,
+			ConnMaxLifetime:   sqlCfg.DefaultMaxConnLifetimeSeconds,
 			Encrypt:           "false",
 			ConnectionTimeout: 0,
 			SecureDSProxy:     false,
@@ -176,20 +181,22 @@ func NewInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			UID:                     settings.UID,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}
-		cnnstr, err := generateConnectionString(dsInfo, cfg, azureCredentials, kerberosAuth, logger)
+		cnnstr, err := generateConnectionString(dsInfo, cfg.Azure.ManagedIdentityClientId, azureCredentials, kerberosAuth, logger)
 		if err != nil {
 			return nil, err
 		}
 
-		if cfg.Env == setting.Dev {
-			logger.Debug("GetEngine", "connection", cnnstr)
-		}
 		driverName := "mssql"
 		if jsonData.AuthenticationType == azureAuthentication {
 			driverName = "azuresql"
 		}
 
-		_, handler, err := newMSSQL(ctx, driverName, cfg.UserFacingDefaultError, cfg.DataProxyRowLimit, dsInfo, cnnstr, logger, settings)
+		userFacingDefaultError, err := grafCfg.UserFacingDefaultError()
+		if err != nil {
+			return nil, err
+		}
+
+		_, handler, err := newMSSQL(ctx, driverName, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
 
 		if err != nil {
 			logger.Error("Failed connecting to MSSQL", "err", err)
@@ -230,7 +237,7 @@ func ParseURL(u string, logger DebugOnlyLogger) (*url.URL, error) {
 	}, nil
 }
 
-func generateConnectionString(dsInfo sqleng.DataSourceInfo, cfg *setting.Cfg, azureCredentials azcredentials.AzureCredentials, kerberosAuth kerberos.KerberosAuth, logger log.Logger) (string, error) {
+func generateConnectionString(dsInfo sqleng.DataSourceInfo, azureManagedIdentityClientId string, azureCredentials azcredentials.AzureCredentials, kerberosAuth kerberos.KerberosAuth, logger log.Logger) (string, error) {
 	const dfltPort = "0"
 	var addr util.NetworkAddress
 	if dsInfo.URL != "" {
@@ -268,7 +275,7 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo, cfg *setting.Cfg, az
 
 	switch dsInfo.JsonData.AuthenticationType {
 	case azureAuthentication:
-		azureCredentialDSNFragment, err := getAzureCredentialDSNFragment(azureCredentials, cfg)
+		azureCredentialDSNFragment, err := getAzureCredentialDSNFragment(azureCredentials, azureManagedIdentityClientId)
 		if err != nil {
 			return "", err
 		}
@@ -305,12 +312,12 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo, cfg *setting.Cfg, az
 	return connStr, nil
 }
 
-func getAzureCredentialDSNFragment(azureCredentials azcredentials.AzureCredentials, cfg *setting.Cfg) (string, error) {
+func getAzureCredentialDSNFragment(azureCredentials azcredentials.AzureCredentials, azureManagedIdentityClientId string) (string, error) {
 	connStr := ""
 	switch c := azureCredentials.(type) {
 	case *azcredentials.AzureManagedIdentityCredentials:
-		if cfg.Azure.ManagedIdentityClientId != "" {
-			connStr += fmt.Sprintf("user id=%s;", cfg.Azure.ManagedIdentityClientId)
+		if azureManagedIdentityClientId != "" {
+			connStr += fmt.Sprintf("user id=%s;", azureManagedIdentityClientId)
 		}
 		connStr += fmt.Sprintf("fedauth=%s;",
 			"ActiveDirectoryManagedIdentity")
@@ -349,13 +356,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		return nil, err
 	}
 
-	err = dsHandler.Ping()
-
-	if err != nil {
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(s.logger, err).Error()}, nil
-	}
-
-	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
+	return dsHandler.CheckHealth(ctx, req)
 }
 
 func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
