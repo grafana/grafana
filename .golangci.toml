@@ -181,6 +181,10 @@ text = "SA1019: strings.Title"
 
 [[issues.exclude-rules]]
 linters = ["staticcheck"]
+text = "SA1019: grpc.Dial"
+
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
 text = "use fake service and real access control evaluator instead"
 
 [[issues.exclude-rules]]
