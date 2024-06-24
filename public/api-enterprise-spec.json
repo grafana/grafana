@@ -3159,6 +3159,17 @@
         }
       }
     },
+    "CloudMigrationRunListDTO": {
+      "type": "object",
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseListDTO"
+          }
+        }
+      }
+    },
     "CloudMigrationSessionListResponseDTO": {
       "type": "object",
       "properties": {
@@ -3629,6 +3640,14 @@
             "Admin"
           ],
           "example": "Admin"
+        }
+      }
+    },
+    "CreateSnapshotResponseDTO": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -4725,6 +4744,45 @@
           }
         }
       ]
+    },
+    "GetSnapshotResponseDTO": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseItemDTO"
+          }
+        },
+        "sessionUid": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "INITIALIZING",
+            "CREATING",
+            "PENDING_UPLOAD",
+            "UPLOADING",
+            "PENDING_PROCESSING",
+            "PROCESSING",
+            "FINISHED",
+            "ERROR",
+            "UNKNOWN"
+          ]
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
     },
     "Hit": {
       "type": "object",
@@ -7084,13 +7142,47 @@
       "type": "integer",
       "format": "int64"
     },
-    "SnapshotListDTO": {
+    "SnapshotDTO": {
+      "description": "Base snapshot without results",
       "type": "object",
       "properties": {
-        "runs": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sessionUid": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "INITIALIZING",
+            "CREATING",
+            "PENDING_UPLOAD",
+            "UPLOADING",
+            "PENDING_PROCESSING",
+            "PROCESSING",
+            "FINISHED",
+            "ERROR",
+            "UNKNOWN"
+          ]
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "SnapshotListResponseDTO": {
+      "type": "object",
+      "properties": {
+        "snapshots": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/MigrateDataResponseListDTO"
+            "$ref": "#/definitions/SnapshotDTO"
           }
         }
       }
@@ -8394,7 +8486,7 @@
     "cloudMigrationRunListResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/SnapshotListDTO"
+        "$ref": "#/definitions/CloudMigrationRunListDTO"
       }
     },
     "cloudMigrationRunResponse": {
@@ -8557,6 +8649,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/ServiceAccountDTO"
+      }
+    },
+    "createSnapshotResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/CreateSnapshotResponseDTO"
       }
     },
     "createTeamResponse": {
@@ -9126,6 +9224,12 @@
         }
       }
     },
+    "getSnapshotResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/GetSnapshotResponseDTO"
+      }
+    },
     "getStatusResponse": {
       "description": ""
     },
@@ -9580,6 +9684,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/RoleAssignmentsDTO"
+      }
+    },
+    "snapshotListResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SnapshotListResponseDTO"
       }
     },
     "unauthorisedError": {
