@@ -1,21 +1,11 @@
 module github.com/grafana/grafana/pkg/build
 
-go 1.22
-
-toolchain go1.22.4
+go 1.21.10
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
 replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible
-
-// contains openapi encoder fixes. remove ASAP
-replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014e3f // @grafana/grafana-as-code
-
-// Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
-// that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
-// import that instead of v0.X even though v0.X is newer.
-replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.49.0
 
 require (
 	cloud.google.com/go/storage v1.38.0 // @grafana/backend-platform
@@ -129,22 +119,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gotest.tools/v3 v3.0.3 // indirect
 )
-
-// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
-replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20231025143828-a6c0e9b86a4c
-
-// replace github.com/google/cel-go => github.com/google/cel-go v0.16.1
-
-// Thema's thema CLI requires cobra, which eventually works its way down to go-hclog@v1.0.0.
-// Upgrading affects backend plugins: https://github.com/grafana/grafana/pull/47653#discussion_r850508593
-// No harm to Thema because it's only a dependency in its main package.
-replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
-
-// Use our fork of the upstream alertmanagers.
-// This is required in order to get notification delivery errors from the receivers API.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240208102907-e82436ce63e6
-
-exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
-
-// Use our fork xorm. go.work currently overrides this and points to the local ./pkg/util/xorm directory.
-replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
