@@ -4,6 +4,7 @@ import { useAsyncFn } from 'react-use';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { VizPanel } from '@grafana/scenes';
 import { Button, ButtonGroup, Dropdown } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
@@ -32,8 +33,13 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
 
   return (
     <ButtonGroup data-testid={newShareButtonSelector.container}>
-      <Button data-testid={newShareButtonSelector.shareLink} size="sm" tooltip="Copy shortened URL" onClick={buildUrl}>
-        Share
+      <Button
+        data-testid={newShareButtonSelector.shareLink}
+        size="sm"
+        tooltip={t('share-dashboard.share-button-tooltip', 'Copy shortened link')}
+        onClick={buildUrl}
+      >
+        <Trans i18nKey="share-dashboard.share-button">Share</Trans>
       </Button>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
         <Button data-testid={newShareButtonSelector.arrowMenu} size="sm" icon={isOpen ? 'angle-up' : 'angle-down'} />

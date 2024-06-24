@@ -9,6 +9,9 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/urlBuilders';
 import { dispatch } from 'app/store/store';
 
+import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
+import { t } from '../internationalization';
+
 import { copyStringToClipboard } from './explore';
 
 function buildHostUrl() {
@@ -42,20 +45,21 @@ export const createAndCopyShortLink = async (path: string) => {
   }
 };
 
-export const createAndCopyDashboardShortLink = async (
+export const createAndCopyShareDashboardLink = async (
   dashboard: DashboardScene,
-  opts: { useAbsoluteTimeRange: boolean; theme: string },
+  opts: ShareLinkConfiguration,
   panel?: VizPanel
 ) => {
-  const shareUrl = await createDashboardShareUrl(dashboard, opts, panel);
-  await createAndCopyShortLink(shareUrl);
+  const shareUrl = createDashboardShareUrl(dashboard, opts, panel);
+  if (opts.useShortUrl) {
+    return await createAndCopyShortLink(shareUrl);
+  } else {
+    copyStringToClipboard(shareUrl);
+    dispatch(notifyApp(createSuccessNotification(t('link.share.copy-to-clipboard', 'Link copied to clipboard'))));
+  }
 };
 
-export const createDashboardShareUrl = async (
-  dashboard: DashboardScene,
-  opts: { useAbsoluteTimeRange: boolean; theme: string },
-  panel?: VizPanel
-) => {
+export const createDashboardShareUrl = (dashboard: DashboardScene, opts: ShareLinkConfiguration, panel?: VizPanel) => {
   const location = locationService.getLocation();
   const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);
 

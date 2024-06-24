@@ -60,7 +60,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'p s',
     onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-      scene.showModal(new ShareModal({ panelRef: vizPanel.getRef(), dashboardRef: scene.getRef() }));
+      scene.showModal(new ShareModal({ panelRef: vizPanel.getRef() }));
     }),
   });
 

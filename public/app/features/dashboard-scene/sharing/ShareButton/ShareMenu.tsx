@@ -1,5 +1,4 @@
 import React from 'react';
-import { useAsyncFn } from 'react-use';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { VizPanel } from '@grafana/scenes';
@@ -11,15 +10,20 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { ShareDrawer } from '../ShareDrawer/ShareDrawer';
 
 import { ShareExternally } from './share-externally/ShareExternally';
+import { ShareInternally } from './share-internally/ShareInternally';
 import { ShareSnapshot } from './share-snapshot/ShareSnapshot';
-import { buildShareUrl } from './utils';
 
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
 
 export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
-  const [_, buildUrl] = useAsyncFn(async () => {
-    return await buildShareUrl(dashboard, panel);
-  }, [dashboard]);
+  const onShareInternallyClick = () => {
+    const drawer = new ShareDrawer({
+      title: t('share-dashboard.menu.share-internally-title', 'Share internally'),
+      body: new ShareInternally({ panelRef: panel?.getRef() }),
+    });
+
+    dashboard.showModal(drawer);
+  };
 
   const onShareExternallyClick = () => {
     const drawer = new ShareDrawer({
@@ -46,7 +50,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
         label={t('share-dashboard.menu.share-internally-title', 'Share internally')}
         description={t('share-dashboard.menu.share-internally-description', 'Advanced settings')}
         icon="building"
-        onClick={buildUrl}
+        onClick={onShareInternallyClick}
       />
       {isPublicDashboardsEnabled() && (
         <Menu.Item
