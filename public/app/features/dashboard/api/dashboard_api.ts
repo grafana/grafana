@@ -1,10 +1,10 @@
 import { config, getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { ResourceClient } from 'app/features/apiserver/types';
+import { Resource, ResourceClient } from 'app/features/apiserver/types';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { DashboardDTO, DashboardDataDTO } from 'app/types';
+import { DashboardDTO, DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types';
 
 import { getScopesFromUrl } from '../utils/getScopesFromUrl';
 
@@ -12,7 +12,7 @@ export interface DashboardAPI {
   /** Get a dashboard with the access control metadata */
   getDashboardDTO(uid: string): Promise<DashboardDTO>;
   /** Save dashboard */
-  saveDashboard(options: SaveDashboardCommand): Promise<unknown>;
+  saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO>;
   /** Delete a dashboard */
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse>;
 }
@@ -21,10 +21,10 @@ export interface DashboardAPI {
 class LegacyDashboardAPI implements DashboardAPI {
   constructor() {}
 
-  saveDashboard(options: SaveDashboardCommand): Promise<unknown> {
+  saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO> {
     dashboardWatcher.ignoreNextSave();
 
-    return getBackendSrv().post('/api/dashboards/db/', {
+    return getBackendSrv().post<SaveDashboardResponseDTO>('/api/dashboards/db/', {
       dashboard: options.dashboard,
       message: options.message ?? '',
       overwrite: options.overwrite ?? false,
@@ -48,6 +48,7 @@ class LegacyDashboardAPI implements DashboardAPI {
 // Implemented using /apis/dashboards.grafana.app/*
 class K8sDashboardAPI implements DashboardAPI {
   private client: ResourceClient<DashboardDataDTO>;
+
   constructor(private legacy: DashboardAPI) {
     this.client = new ScopedResourceClient<DashboardDataDTO>({
       group: 'dashboard.grafana.app',
@@ -56,12 +57,28 @@ class K8sDashboardAPI implements DashboardAPI {
     });
   }
 
-  saveDashboard(options: SaveDashboardCommand): Promise<unknown> {
-    return this.legacy.saveDashboard(options);
+  saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO> {
+    return this.legacy.saveDashboard(options); 
+  }
+
+  asSaveDashboardResponseDTO(v: Resource<DashboardDataDTO>): SaveDashboardResponseDTO {
+    console.log("RAW", v);
+    return {
+      uid: v.metadata.name,
+      version: v.spec.version ?? 0,
+      id: v.spec.id ?? 0,
+      status: '',
+      slug: '',
+      url: '',
+    }
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
-    return this.legacy.deleteDashboard(uid, showSuccessAlert);
+    return this.client.delete(uid).then(v => ({
+      id: 123,
+      message: v.message,
+      title: 'deleted',
+    }));
   }
 
   async getDashboardDTO(uid: string): Promise<DashboardDTO> {
