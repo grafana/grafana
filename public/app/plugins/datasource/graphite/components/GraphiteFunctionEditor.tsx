@@ -42,7 +42,7 @@ export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
       onMouseOver={() => setIsMouseOver(true)}
       onMouseOut={() => setIsMouseOver(false)}
     >
-      <Stack gap={0} alignItems={"baseline"}>
+      <Stack gap={0} alignItems={'baseline'}>
         <FunctionEditor
           func={func}
           onMoveLeft={() => {
@@ -55,7 +55,9 @@ export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
             dispatch(actions.removeFunction({ func }));
           }}
         />
-        <InlineLabel className={styles.label} width={"auto"}>(</InlineLabel>
+        <InlineLabel className={styles.label} width={'auto'}>
+          (
+        </InlineLabel>
         {params.map((editableParam: EditableParam, index: number) => {
           return (
             <React.Fragment key={index}>
@@ -75,7 +77,9 @@ export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
             </React.Fragment>
           );
         })}
-        <InlineLabel className={styles.label} width={"auto"}>)</InlineLabel>
+        <InlineLabel className={styles.label} width={'auto'}>
+          )
+        </InlineLabel>
       </Stack>
     </div>
   );

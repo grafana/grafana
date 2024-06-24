@@ -34,7 +34,7 @@ export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.E
   };
 
   return (
-    <Stack direction={"column"}>
+    <Stack direction={'column'}>
       <TextArea
         aria-label="query"
         rows={3}
