@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/codejen"
 	tsast "github.com/grafana/cuetsy/ts/ast"
-	"github.com/grafana/grafana/pkg/build"
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
@@ -92,7 +91,7 @@ func getGrafanaVersion() string {
 		return ""
 	}
 
-	pkg, err := build.OpenPackageJSON(path.Join(dir, "../../../"))
+	pkg, err := OpenPackageJSON(path.Join(dir, "../../../"))
 	if err != nil {
 		return ""
 	}
