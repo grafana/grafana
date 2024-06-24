@@ -16,43 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func Test_sanitizeURL(t *testing.T) {
-	tests := []struct {
-		name        string
-		input       string
-		want        string
-		expectError bool
-	}{
-		{
-			name:  "Receiving empty string should return it",
-			input: "",
-			want:  "",
-		},
-		{
-			name:  "Receiving valid URL string should return it parsed",
-			input: "https://grafana.com/",
-			want:  "https://grafana.com/",
-		},
-		{
-			name:        "Receiving invalid URL string should return empty string",
-			input:       "this is not a valid URL",
-			want:        "",
-			expectError: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			url, err := SanitizeURL(tt.input)
-			if tt.expectError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-			assert.Equalf(t, tt.want, url, "SanitizeURL(%v)", tt.input)
-		})
-	}
-}
-
 func Test_prepareLog(t *testing.T) {
 	type opts struct {
 		Features      []any

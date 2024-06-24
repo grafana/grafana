@@ -19,11 +19,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 
@@ -113,7 +113,7 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 		"size", rw.Size(),
 	}
 
-	referer, err := SanitizeURL(r.Referer())
+	referer, err := util.SanitizeURI(r.Referer())
 	// We add an empty referer when there's a parsing error, hence this is before the err check.
 	logParams = append(logParams, "referer", referer)
 	if err != nil {
@@ -152,28 +152,4 @@ func errorLogParams(err error) []any {
 		"errorMessageID", gfErr.MessageID,
 		"error", gfErr.LogMessage,
 	}
-}
-
-var sensitiveQueryStrings = [...]string{
-	"auth_token",
-}
-
-func SanitizeURL(s string) (string, error) {
-	if s == "" {
-		return s, nil
-	}
-
-	u, err := url.ParseRequestURI(s)
-	if err != nil {
-		return "", fmt.Errorf("failed to sanitize URL")
-	}
-
-	// strip out sensitive query strings
-	values := u.Query()
-	for _, query := range sensitiveQueryStrings {
-		values.Del(query)
-	}
-	u.RawQuery = values.Encode()
-
-	return u.String(), nil
 }
