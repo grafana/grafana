@@ -152,7 +152,7 @@ export class QueryEditorRows extends PureComponent<Props> {
 
     return (
       <DragDropContext onDragStart={this.onDragStart} onDragEnd={this.onDragEnd}>
-        <Droppable droppableId="transformations-list" direction="vertical">
+        <Droppable key={'transformations-list'} droppableId="transformations-list" direction="vertical">
           {(provided) => {
             return (
               <div data-testid="query-editor-rows" ref={provided.innerRef} {...provided.droppableProps}>
