@@ -20,7 +20,6 @@ import (
 
 	// Pull in sqlite driver.
 	"github.com/mattn/go-sqlite3"
-	_ "github.com/mattn/go-sqlite3"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/openfga/openfga/pkg/logger"
@@ -117,7 +116,7 @@ func (m *SQLite) Close() {
 	if m.dbStatsCollector != nil {
 		prometheus.Unregister(m.dbStatsCollector)
 	}
-	m.db.Close()
+	_ = m.db.Close()
 }
 
 // Read see [storage.RelationshipTupleReader].Read.
@@ -187,7 +186,6 @@ func (m *SQLite) read(ctx context.Context, store string, tupleKey *openfgav1.Tup
 
 	rows, err := sb.QueryContext(ctx)
 	if err != nil {
-
 		return nil, handleSQLError(err)
 	}
 
@@ -319,7 +317,7 @@ func (m *SQLite) ReadStartingWithUser(
 	ctx, span := tracer.Start(ctx, "sqlite.ReadStartingWithUser")
 	defer span.End()
 
-	var targetUsersArg []string
+	targetUsersArg := make([]string, 0, len(opts.UserFilter))
 	for _, u := range opts.UserFilter {
 		targetUser := u.GetObject()
 		if u.GetRelation() != "" {
@@ -390,7 +388,7 @@ func (m *SQLite) ReadAuthorizationModels(
 	if err != nil {
 		return nil, nil, handleSQLError(err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var modelIDs []string
 	var modelID string
@@ -569,7 +567,7 @@ func (m *SQLite) ListStores(ctx context.Context, opts storage.PaginationOptions)
 	if err != nil {
 		return nil, nil, handleSQLError(err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var stores []*openfgav1.Store
 	var id string
@@ -719,7 +717,7 @@ func (m *SQLite) ReadChanges(
 	if err != nil {
 		return nil, nil, handleSQLError(err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var changes []*openfgav1.TupleChange
 	var ulid string
@@ -807,7 +805,6 @@ func (m *SQLite) busyRetry(fn func() error) error {
 
 		return err
 	}
-
 }
 
 func handleSQLError(err error, args ...any) error {
