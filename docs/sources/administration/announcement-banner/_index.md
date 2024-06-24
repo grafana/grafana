@@ -1,5 +1,5 @@
 ---
-draft: draft
+draft: true
 keywords:
   - grafana
   - announcement
