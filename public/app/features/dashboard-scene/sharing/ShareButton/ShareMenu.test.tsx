@@ -25,6 +25,7 @@ describe('ShareMenu', () => {
 
     expect(await screen.findByTestId(selector.shareInternally)).toBeInTheDocument();
     expect(await screen.findByTestId(selector.shareExternally)).toBeInTheDocument();
+    expect(await screen.findByTestId(selector.shareSnapshot)).toBeInTheDocument();
   });
   it('should no share externally when public dashboard is disabled', async () => {
     config.featureToggles.publicDashboards = false;
