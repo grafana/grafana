@@ -4,21 +4,20 @@
  */
 
 import { ConfigFile } from '@rtk-query/codegen-openapi';
-import fs from 'fs';
+import { accessSync } from 'fs';
 
 const schemaFile = '../data/alerting/openapi.json';
 
 try {
   // Check we have the OpenAPI before generating alerting RTK APIs,
   // as this is currently a manual process
-  fs.existsSync(schemaFile);
+  accessSync(schemaFile);
 } catch (e) {
-  console.error(e);
-  console.error('Could not find OpenAPI definition.');
+  console.error('\nCould not find OpenAPI definition.\n');
   console.error(
-    'Please visit /openapi/v3/apis/notifications.alerting.grafana.app/v0alpha1 and save the OpenAPI definition to data/alerting/openapi.json'
+    'Please visit /openapi/v3/apis/notifications.alerting.grafana.app/v0alpha1 and save the OpenAPI definition to data/alerting/openapi.json\n'
   );
-  process.exit(1);
+  throw e;
 }
 
 const config: ConfigFile = {
