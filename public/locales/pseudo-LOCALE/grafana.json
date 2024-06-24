@@ -89,6 +89,7 @@
       "delete-button": "Đęľęŧę",
       "delete-modal-invalid-text": "Øŉę őř mőřę ƒőľđęřş čőŉŧäįŉ ľįþřäřy päŉęľş őř äľęřŧ řūľęş. Đęľęŧę ŧĥęşę ƒįřşŧ įŉ őřđęř ŧő přőčęęđ.",
       "delete-modal-invalid-title": "Cäŉŉőŧ đęľęŧę ƒőľđęř",
+      "delete-modal-restore-dashboards-text": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę ŧĥę şęľęčŧęđ ƒőľđęřş įmmęđįäŧęľy þūŧ ŧĥę şęľęčŧęđ đäşĥþőäřđş ŵįľľ þę mäřĸęđ ƒőř đęľęŧįőŉ įŉ 30 đäyş. Ÿőū čäŉ řęşŧőřę ŧĥę đäşĥþőäřđş äŉyŧįmę þęƒőřę ŧĥę 30 đäyş ęχpįřęş. Főľđęřş čäŉŉőŧ þę řęşŧőřęđ.",
       "delete-modal-text": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę ŧĥę ƒőľľőŵįŉģ čőŉŧęŉŧ:",
       "delete-modal-title": "Đęľęŧę",
       "deleting": "Đęľęŧįŉģ...",
@@ -541,6 +542,12 @@
       "no-logs-found": "Ńő ľőģş ƒőūŉđ.",
       "scan-for-older-logs": "Ŝčäŉ ƒőř őľđęř ľőģş",
       "stop-scan": "Ŝŧőp şčäŉ"
+    },
+    "query-library": {
+      "delete-query": "Đęľęŧę qūęřy",
+      "delete-query-text": "Ÿőū'řę äþőūŧ ŧő řęmővę ŧĥįş qūęřy ƒřőm ŧĥę qūęřy ľįþřäřy. Ŧĥįş äčŧįőŉ čäŉŉőŧ þę ūŉđőŉę. Đő yőū ŵäŉŧ ŧő čőŉŧįŉūę?",
+      "delete-query-title": "Đęľęŧę qūęřy",
+      "query-deleted": "Qūęřy đęľęŧęđ"
     },
     "rich-history": {
       "close-tooltip": "Cľőşę qūęřy ĥįşŧőřy",
@@ -1569,6 +1576,9 @@
       "role-label": "Ŗőľę"
     }
   },
+  "query-library": {
+    "delete-query-button": "Đęľęŧę qūęřy"
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Cőľľäpşę qūęřy řőŵ",
@@ -1585,7 +1595,16 @@
   },
   "recently-deleted": {
     "buttons": {
+      "delete": "Đęľęŧę pęřmäŉęŉŧľy",
       "restore": "Ŗęşŧőřę"
+    },
+    "permanently-delete-modal": {
+      "confirm-text": "Đęľęŧę",
+      "delete-button": "Đęľęŧę",
+      "delete-loading": "Đęľęŧįŉģ...",
+      "text_one": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę {{numberOfDashboards}} đäşĥþőäřđş.",
+      "text_other": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę {{numberOfDashboards}} đäşĥþőäřđş.",
+      "title": "Pęřmäŉęŉŧľy Đęľęŧę Đäşĥþőäřđş"
     },
     "restore-modal": {
       "restore-button": "Ŗęşŧőřę",
@@ -1665,6 +1684,8 @@
     },
     "results-table": {
       "datasource-header": "Đäŧä şőūřčę",
+      "deleted-less-than-1-min": "< 1 mįŉ",
+      "deleted-remaining-header": "Ŧįmę řęmäįŉįŉģ",
       "location-header": "Ŀőčäŧįőŉ",
       "name-header": "Ńämę",
       "tags-header": "Ŧäģş",
