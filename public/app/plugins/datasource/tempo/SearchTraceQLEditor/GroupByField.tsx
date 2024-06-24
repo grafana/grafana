@@ -71,10 +71,7 @@ export const GroupByField = (props: Props) => {
   const scopeOptions = Object.values(TraceqlSearchScope).map((t) => ({ label: t, value: t }));
 
   return (
-    <InlineSearchField
-      label="Aggregate by"
-      tooltip="Select one or more tags to see the metrics summary. Note: the metrics summary API only considers spans of kind = server."
-    >
+    <InlineSearchField label="Aggregate by" tooltip="Select one or more tags to see the metrics summary.">
       <>
         {query.groupBy?.map((f, i) => {
           const tags = getTags(f)
