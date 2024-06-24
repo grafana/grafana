@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -218,10 +219,12 @@ func TestRemoteLokiBackend(t *testing.T) {
 }
 
 func TestBuildLogQuery(t *testing.T) {
+	maxQuerySize := 110
 	cases := []struct {
-		name  string
-		query models.HistoryQuery
-		exp   string
+		name   string
+		query  models.HistoryQuery
+		exp    string
+		expErr error
 	}{
 		{
 			name:  "default includes state history label and orgID label",
@@ -281,11 +284,38 @@ func TestBuildLogQuery(t *testing.T) {
 			},
 			exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`,
 		},
+		{
+			name: "should return if query does not exceed max limit",
+			query: models.HistoryQuery{
+				OrgID:   123,
+				RuleUID: "rule-uid",
+				Labels: map[string]string{
+					"customlabel": strings.Repeat("!", 24),
+				},
+			},
+			exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="!!!!!!!!!!!!!!!!!!!!!!!!"`,
+		},
+		{
+			name: "should return error if query is too long",
+			query: models.HistoryQuery{
+				OrgID:   123,
+				RuleUID: "rule-uid",
+				Labels: map[string]string{
+					"customlabel": strings.Repeat("!", 25),
+				},
+			},
+			expErr: ErrLokiQueryTooLong,
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := BuildLogQuery(tc.query)
+			res, err := BuildLogQuery(tc.query, maxQuerySize)
+			if tc.expErr != nil {
+				require.ErrorIs(t, err, tc.expErr)
+				return
+			}
+			require.LessOrEqual(t, len(res), maxQuerySize)
 			require.NoError(t, err)
 			require.Equal(t, tc.exp, res)
 		})
