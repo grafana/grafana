@@ -8,6 +8,7 @@ on:
 
 permissions:
   pull-requests: write
+  contents: write
 
 # Note: this action runs with write permissions on GITHUB_TOKEN even from forks
 # so it must not run untrusted code (such as checking out the pull request)
