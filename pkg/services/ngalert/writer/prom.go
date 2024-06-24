@@ -12,12 +12,16 @@ import (
 	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
+
+const backendType = "prometheus"
 
 const (
 	// Fixed error messages
@@ -88,20 +92,22 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 	return points, nil
 }
 
-type httpClientProvider interface {
+type HttpClientProvider interface {
 	New(options ...httpclient.Options) (*http.Client, error)
 }
 
 type PrometheusWriter struct {
-	client promremote.Client
-	logger log.Logger
+	client  promremote.Client
+	logger  log.Logger
+	metrics *metrics.RemoteWriter
 }
 
 func NewPrometheusWriter(
 	settings setting.RecordingRuleSettings,
-	httpClientProvider httpClientProvider,
+	httpClientProvider HttpClientProvider,
 	tracer tracing.Tracer,
 	l log.Logger,
+	metrics *metrics.RemoteWriter,
 ) (*PrometheusWriter, error) {
 	if err := validateSettings(settings); err != nil {
 		return nil, err
@@ -138,8 +144,9 @@ func NewPrometheusWriter(
 	}
 
 	return &PrometheusWriter{
-		client: client,
-		logger: l,
+		client:  client,
+		logger:  l,
+		metrics: metrics,
 	}, nil
 }
 
@@ -174,6 +181,11 @@ func createAuthOpts(username, password string) *httpclient.BasicAuthOptions {
 // Write writes the given frames to the Prometheus remote write endpoint.
 func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, extraLabels map[string]string) error {
 	l := w.logger.FromContext(ctx)
+	ruleKey, found := models.RuleKeyFromContext(ctx)
+	if !found {
+		// sanity check, this should never happen
+		return fmt.Errorf("rule key not found in context")
+	}
 
 	points, err := PointsFromFrames(name, t, frames, extraLabels)
 	if err != nil {
@@ -192,9 +204,18 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 	}
 
 	l.Debug("Writing metric", "name", name)
-	_, writeErr := w.client.WriteTimeSeries(ctx, series, promremote.WriteOptions{})
-	if err := checkWriteError(writeErr); err != nil {
+
+	writeStart := time.Now()
+	res, writeErr := w.client.WriteTimeSeries(ctx, series, promremote.WriteOptions{})
+
+	lvs := []string{fmt.Sprint(ruleKey.OrgID), backendType, fmt.Sprint(res.StatusCode)}
+	w.metrics.WriteDuration.WithLabelValues(lvs...).Observe(time.Since(writeStart).Seconds())
+	w.metrics.WritesTotal.WithLabelValues(lvs...).Inc()
+
+	if err, ignored := checkWriteError(writeErr); err != nil {
 		return fmt.Errorf("failed to write time series: %w", err)
+	} else if ignored {
+		l.Debug("Ignored write error", "error", err, "status_code", res.StatusCode)
 	}
 
 	return nil
@@ -215,20 +236,22 @@ func promremoteLabelsFromPoint(point Point) []promremote.Label {
 	return labels
 }
 
-func checkWriteError(writeErr promremote.WriteError) error {
+func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 	if writeErr == nil {
-		return nil
+		return nil, false
 	}
 
 	// special case for 400 status code
 	if writeErr.StatusCode() == 400 {
 		msg := writeErr.Error()
+		// HA may potentially write different values for the same timestamp, so we ignore this error
+		// TODO: this may not be needed, further testing needed
 		for _, e := range DuplicateTimestampErrors {
 			if strings.Contains(msg, e) {
-				return nil
+				return nil, true
 			}
 		}
 	}
 
-	return writeErr
+	return writeErr, false
 }
