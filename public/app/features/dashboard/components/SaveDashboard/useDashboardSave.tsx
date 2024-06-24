@@ -23,13 +23,15 @@ export const useDashboardSave = (isCopy = false) => {
       try {
         const cmd: SaveDashboardCommand = {
           dashboard: clone,
-          folderUid: options.folderUid,
+          folderUid: options.folderUid ?? dashboard.meta.folderUid,
           message: options.message,
+          overwrite: options.overwrite,
           k8s: dashboard.meta.k8s, // stashed on load
         }
-
-        // TODO... response format not yet right
+        // Note in k8s the response does not have URL or slug
         const result = await getDashboardAPI().saveDashboard(cmd);
+        console.log("RESULT", result);
+
         dashboard.version = result.version;
 
         clone.version = result.version;
@@ -48,7 +50,7 @@ export const useDashboardSave = (isCopy = false) => {
             url: result.url,
           });
         } else {
-          reportInteraction(`grafana_dashboard_${dashboard.id ? 'saved' : 'created'}`, {
+          reportInteraction(`grafana_dashboard_${dashboard.uid ? 'saved' : 'created'}`, {
             name: dashboard.title,
             url: result.url,
           });
@@ -57,7 +59,7 @@ export const useDashboardSave = (isCopy = false) => {
         const currentPath = locationService.getLocation().pathname;
         const newUrl = locationUtil.stripBaseFromUrl(result.url);
 
-        if (newUrl !== currentPath) {
+        if (newUrl !== currentPath && result.url) {
           setTimeout(() => locationService.replace(newUrl));
         }
         if (dashboard.meta.isStarred) {

@@ -22,6 +22,7 @@ export function useSaveDashboard(isCopy = false) {
   const [state, onSaveDashboard] = useAsyncFn(
     async (scene: DashboardScene, saveModel: Dashboard, options: SaveDashboardOptions) => {
       {
+        // NOTE!  this does not yet use the k8s hooks
         const result = await saveDashboardRtkQuery({
           dashboard: saveModel,
           folderUid: options.folderUid,

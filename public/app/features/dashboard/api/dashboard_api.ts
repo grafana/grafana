@@ -1,6 +1,6 @@
 import { config, getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { AnnoKeyFolder, AnnoKeyMessage, ResourceClient, ResourceForCreate } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, AnnoKeyMessage, Resource, ResourceClient, ResourceForCreate } from 'app/features/apiserver/types';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -58,10 +58,10 @@ class K8sDashboardAPI implements DashboardAPI {
   }
 
   saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO> {
-    const dashboard = options.dashboard as DashboardDataDTO;
+    const dashboard = options.dashboard as DashboardDataDTO; // type for the uid property
     const obj: ResourceForCreate<DashboardDataDTO> = {
       metadata: {
-        ...options.k8s,
+        ...options?.k8s,
       },
       spec: {
         ...dashboard,
@@ -82,24 +82,21 @@ class K8sDashboardAPI implements DashboardAPI {
 
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
-      
-      return this.client.update(obj).then(v => ({
-        uid: v.metadata.name,
-        version: 123,
-        id: 123,
-        status: 'x',
-        slug: 'a',
-        url: 'xx',
-      }))
+      return this.client.update(obj).then(v => this.asSaveDashboardResponseDTO(v))
     } 
-    return this.client.create(obj).then(v => ({
+    return this.client.create(obj).then(v => this.asSaveDashboardResponseDTO(v))
+  }
+
+  asSaveDashboardResponseDTO(v: Resource<DashboardDataDTO>): SaveDashboardResponseDTO {
+    console.log("RAW", v);
+    return {
       uid: v.metadata.name,
-      version: 123,
-      id: 123,
-      status: 'x',
-      slug: 'a',
-      url: 'xx',
-    }))
+      version: v.spec.version ?? 0,
+      id: v.spec.id ?? 0,
+      status: '',
+      slug: '',
+      url: '',
+    }
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
