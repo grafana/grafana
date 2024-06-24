@@ -59,9 +59,9 @@
     "policies": {
       "metadata": {
         "timingOptions": {
-          "groupInterval": "<0>{{groupInterval}}</0> þęƒőřę şęŉđįŉģ ūpđäŧęş",
-          "groupWait": "Ŵäįŧ <1>{{groupWait}}</1> ŧő ģřőūp įŉşŧäŉčęş",
-          "repeatInterval": "řępęäŧęđ ęvęřy <1>{{repeatInterval}}</1>"
+          "groupInterval": "<0></0> þęƒőřę şęŉđįŉģ ūpđäŧęş",
+          "groupWait": "Ŵäįŧ <1></1> ŧő ģřőūp įŉşŧäŉčęş",
+          "repeatInterval": "řępęäŧęđ ęvęřy <1></1>"
         }
       }
     }

@@ -744,8 +744,7 @@ export const TimingOptionsMeta = ({ timingOptions }: TimingOptionsMetaProps) => 
       >
         <span>
           <Trans i18nKey="alerting.policies.metadata.timingOptions.groupWait">
-            {/* @ts-expect-error */}
-            Wait <Text color="primary">{{ groupWait }}</Text> to group instances
+            Wait <PrimaryText content={groupWait} /> to group instances
           </Trans>
         </span>
       </Tooltip>
@@ -760,8 +759,7 @@ export const TimingOptionsMeta = ({ timingOptions }: TimingOptionsMetaProps) => 
       >
         <span>
           <Trans i18nKey="alerting.policies.metadata.timingOptions.groupInterval">
-            {/* @ts-expect-error */}
-            <Text color="primary">{{ groupInterval }}</Text> before sending updates
+            <PrimaryText content={groupInterval} /> before sending updates
           </Trans>
         </span>
       </Tooltip>
@@ -776,8 +774,7 @@ export const TimingOptionsMeta = ({ timingOptions }: TimingOptionsMetaProps) => 
       >
         <span>
           <Trans i18nKey="alerting.policies.metadata.timingOptions.repeatInterval">
-            {/* @ts-expect-error */}
-            repeated every <Text color="primary">{{ repeatInterval }}</Text>
+            repeated every <PrimaryText content={repeatInterval} />
           </Trans>
         </span>
       </Tooltip>
@@ -1013,5 +1010,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(1.5),
   }),
 });
+
+// This is a convencience component to deal with I18n shenanigans
+// see https://github.com/grafana/grafana/blob/main/contribute/internationalization.md#jsx
+const PrimaryText = ({ content }: { content: string }) => <Text color="primary">{content}</Text>;
 
 export { Policy };
