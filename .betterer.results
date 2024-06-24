@@ -3992,10 +3992,6 @@ exports[`better eslint`] = {
     "public/app/features/explore/QueryLibrary/QueryTemplatesTable/QueryDescriptionCell.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
-    "public/app/features/explore/RichHistory/RichHistoryAddToLibraryForm.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
-    ],
     "public/app/features/explore/RichHistory/RichHistoryCard.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],

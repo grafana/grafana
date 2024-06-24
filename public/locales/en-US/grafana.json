@@ -533,10 +533,17 @@
       "stop-scan": "Stop scan"
     },
     "query-library": {
+      "cancel": "Cancel",
+      "default-description": "Public",
       "delete-query": "Delete query",
       "delete-query-text": "You're about to remove this query from the query library. This action cannot be undone. Do you want to continue?",
       "delete-query-title": "Delete query",
-      "query-deleted": "Query deleted"
+      "private": "Private",
+      "public": "Public",
+      "query-deleted": "Query deleted",
+      "query-template-added": "Query template successfully added to the library",
+      "query-template-error": "Error attempting to add this query to the library",
+      "save": "Save"
     },
     "rich-history": {
       "close-tooltip": "Close query history",
@@ -637,10 +644,6 @@
     "rich-history-utils-notification": {
       "saving-failed": "Saving rich history failed",
       "update-failed": "Rich History update failed"
-    },
-    "query-library": {
-      "query-template-added": "Query template successfully added to the library",
-      "query-template-error": "Error attempting to add this query to the library"
     },
     "run-query": {
       "left-pane": "Left pane",
@@ -1592,9 +1595,9 @@
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
+      "save-to-query-library": "Save to query library",
       "show-response": "Show response",
-      "toggle-edit-mode": "Toggle text edit mode",
-      "save-to-query-library": "Save to query library"
+      "toggle-edit-mode": "Toggle text edit mode"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },

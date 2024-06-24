@@ -533,10 +533,17 @@
       "stop-scan": "Ŝŧőp şčäŉ"
     },
     "query-library": {
+      "cancel": "Cäŉčęľ",
+      "default-description": "Pūþľįč",
       "delete-query": "Đęľęŧę qūęřy",
       "delete-query-text": "Ÿőū'řę äþőūŧ ŧő řęmővę ŧĥįş qūęřy ƒřőm ŧĥę qūęřy ľįþřäřy. Ŧĥįş äčŧįőŉ čäŉŉőŧ þę ūŉđőŉę. Đő yőū ŵäŉŧ ŧő čőŉŧįŉūę?",
       "delete-query-title": "Đęľęŧę qūęřy",
-      "query-deleted": "Qūęřy đęľęŧęđ"
+      "private": "Přįväŧę",
+      "public": "Pūþľįč",
+      "query-deleted": "Qūęřy đęľęŧęđ",
+      "query-template-added": "Qūęřy ŧęmpľäŧę şūččęşşƒūľľy äđđęđ ŧő ŧĥę ľįþřäřy",
+      "query-template-error": "Ēřřőř äŧŧęmpŧįŉģ ŧő äđđ ŧĥįş qūęřy ŧő ŧĥę ľįþřäřy",
+      "save": "Ŝävę"
     },
     "rich-history": {
       "close-tooltip": "Cľőşę qūęřy ĥįşŧőřy",
@@ -567,7 +574,6 @@
       "edit-comment-tooltip": "Ēđįŧ čőmmęŉŧ",
       "optional-description": "Åŉ őpŧįőŉäľ đęşčřįpŧįőŉ őƒ ŵĥäŧ ŧĥę qūęřy đőęş.",
       "query-comment-label": "Qūęřy čőmmęŉŧ",
-      "query-template-added": "Qūęřy ŧęmpľäŧę şūččęşşƒūľľy äđđęđ ŧő ŧĥę ľįþřäřy",
       "query-text-label": "Qūęřy ŧęχŧ",
       "save-comment": "Ŝävę čőmmęŉŧ",
       "star-query-tooltip": "Ŝŧäř qūęřy",
@@ -1589,6 +1595,7 @@
       "expand-row": "Ēχpäŉđ qūęřy řőŵ",
       "hide-response": "Ħįđę řęşpőŉşę",
       "remove-query": "Ŗęmővę qūęřy",
+      "save-to-query-library": "Ŝävę ŧő qūęřy ľįþřäřy",
       "show-response": "Ŝĥőŵ řęşpőŉşę",
       "toggle-edit-mode": "Ŧőģģľę ŧęχŧ ęđįŧ mőđę"
     },

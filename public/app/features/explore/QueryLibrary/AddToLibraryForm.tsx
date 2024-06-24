@@ -7,7 +7,7 @@ import { DataQuery } from '@grafana/schema';
 import { Button, InlineSwitch, Modal, RadioButtonGroup, TextArea } from '@grafana/ui';
 import { Field } from '@grafana/ui/';
 import { Input } from '@grafana/ui/src/components/Input/Input';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { getQueryDisplayText } from 'app/core/utils/richHistory';
 import { useAddQueryTemplateMutation } from 'app/features/query-library';
 import { AddQueryTemplateCommand } from 'app/features/query-library/types';
@@ -25,8 +25,8 @@ export type QueryDetails = {
 };
 
 const VisibilityOptions = [
-  { value: 'Public', label: 'Public' },
-  { value: 'Private', label: 'Private' },
+  { value: 'Public', label: t('explore.query-library.public', 'Public') },
+  { value: 'Private', label: t('explore.query-library.private', 'Private') },
 ];
 
 const info = t(
@@ -70,7 +70,8 @@ export const AddToLibraryForm = ({ onCancel, onSave, query }: Props) => {
 
   const onSubmit = async (data: QueryDetails) => {
     const timestamp = dateTime().toISOString();
-    const temporaryDefaultTitle = data.description || `Imported from Explore - ${timestamp}`;
+    const temporaryDefaultTitle =
+      data.description || t('explore.query-library.default-description', 'Public', { timestamp: timestamp });
     handleAddQueryTemplate({ title: temporaryDefaultTitle, targets: [query] }).then((isSuccess) => {
       onSave(isSuccess);
     });
@@ -104,10 +105,10 @@ export const AddToLibraryForm = ({ onCancel, onSave, query }: Props) => {
       />
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={() => onCancel()} fill="outline">
-          Cancel
+          <Trans i18nKey="explore.query-library.cancel">Cancel</Trans>
         </Button>
         <Button variant="primary" type="submit">
-          Save
+          <Trans i18nKey="explore.query-library.save">Save</Trans>
         </Button>
       </Modal.ButtonRow>
     </form>
