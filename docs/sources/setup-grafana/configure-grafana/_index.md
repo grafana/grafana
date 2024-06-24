@@ -1144,6 +1144,13 @@ Refer to [Auth proxy authentication]({{< relref "../configure-security/configure
 
 Refer to [LDAP authentication]({{< relref "../configure-security/configure-authentication/ldap" >}}) for detailed instructions.
 
+<hr />
+
+## [auth.saml]
+
+Refer to [SAML authentication]({{< relref "../configure-security/configure-authentication/saml" >}}) for detailed instructions.
+
+
 ## [aws]
 
 You can configure core and external AWS plugins.
