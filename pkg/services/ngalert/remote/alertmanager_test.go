@@ -717,7 +717,13 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 	// We should start with the default config.
 	rcvs, err := am.GetReceivers(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, "empty-receiver", rcvs[0].Name)
+	require.Equal(t, []apimodels.Receiver{
+		{
+			Active:       true,
+			Name:         "empty-receiver",
+			Integrations: []apimodels.Integration{},
+		},
+	}, rcvs)
 }
 
 func genAlert(active bool, labels map[string]string) amv2.PostableAlert {
