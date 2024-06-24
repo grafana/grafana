@@ -4,7 +4,7 @@ import { setupServer, SetupServer } from 'msw/node';
 
 import { DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
-import { AlertRuleUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
+import { AlertGroupUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
 import { DashboardDTO, FolderDTO, NotifierDTO, OrgUser } from 'app/types';
 import {
@@ -276,7 +276,7 @@ export function mockAlertRuleApi(server: SetupServer) {
     rulerRules: (dsName: string, response: RulerRulesConfigDTO) => {
       server.use(http.get(`/api/ruler/${dsName}/api/v1/rules`, () => HttpResponse.json(response)));
     },
-    updateRule: (dsName: string, response: AlertRuleUpdated) => {
+    updateRule: (dsName: string, response: AlertGroupUpdated) => {
       server.use(http.post(`/api/ruler/${dsName}/api/v1/rules/:namespaceUid`, () => HttpResponse.json(response)));
     },
     rulerRuleGroup: (dsName: string, namespace: string, group: string, response: RulerRuleGroupDTO) => {

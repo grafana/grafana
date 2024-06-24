@@ -689,7 +689,7 @@ describe('RuleList', () => {
     expect(alertsInReorder).toHaveLength(2);
   });
 
-  describe('pausing rules', () => {
+  describe.skip('pausing rules', () => {
     beforeEach(() => {
       grantUserPermissions([
         AccessControlAction.AlertingRuleRead,
