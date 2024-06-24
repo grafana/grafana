@@ -29,25 +29,24 @@ import (
 	tupleUtils "github.com/openfga/openfga/pkg/tuple"
 )
 
-// TODO: Add tests
 var tracer = otel.Tracer("openfga/pkg/storage/sqlite")
 
 // SQLite provides a SQLite based implementation of [storage.OpenFGADatastore].
 type SQLite struct {
-	stbl                   sq.StatementBuilderType
-	db                     *sql.DB
-	dbInfo                 *sqlcommon.DBInfo
-	logger                 logger.Logger
-	dbStatsCollector       prometheus.Collector
-	maxTuplesPerWriteField int
-	maxTypesPerModelField  int
+	stbl             sq.StatementBuilderType
+	cfg              *Config
+	db               *sql.DB
+	dbInfo           *sqlcommon.DBInfo
+	sqlTime          sq.Sqlizer
+	logger           logger.Logger
+	dbStatsCollector prometheus.Collector
 }
 
 // Ensures that SQLite implements the OpenFGADatastore interface.
 var _ storage.OpenFGADatastore = (*SQLite)(nil)
 
 // New creates a new [SQLite] storage.
-func New(uri string, cfg *sqlcommon.Config) (*SQLite, error) {
+func New(uri string, cfg *Config) (*SQLite, error) {
 	// Set journal mode and busy timeout pragmas if not specified.
 	query := url.Values{}
 	var err error
@@ -89,7 +88,7 @@ func New(uri string, cfg *sqlcommon.Config) (*SQLite, error) {
 }
 
 // NewWithDB creates a new [SQLite] storage using provided [*sql.DB]
-func NewWithDB(db *sql.DB, cfg *sqlcommon.Config) (*SQLite, error) {
+func NewWithDB(db *sql.DB, cfg *Config) (*SQLite, error) {
 	var collector prometheus.Collector
 	if cfg.ExportMetrics {
 		collector = collectors.NewDBStatsCollector(db, "openfga")
@@ -98,17 +97,17 @@ func NewWithDB(db *sql.DB, cfg *sqlcommon.Config) (*SQLite, error) {
 		}
 	}
 
+	sqlTime := sq.Expr("datetime('subsec')")
 	stbl := sq.StatementBuilder.RunWith(db)
-	dbInfo := sqlcommon.NewDBInfo(db, stbl, sq.Expr("datetime('subsec')"))
+	dbInfo := sqlcommon.NewDBInfo(db, stbl, sqlTime)
 
 	return &SQLite{
-		stbl:                   stbl,
-		db:                     db,
-		dbInfo:                 dbInfo,
-		logger:                 cfg.Logger,
-		dbStatsCollector:       collector,
-		maxTuplesPerWriteField: cfg.MaxTuplesPerWriteField,
-		maxTypesPerModelField:  cfg.MaxTypesPerModelField,
+		stbl:             stbl,
+		db:               db,
+		sqlTime:          sqlTime,
+		dbInfo:           dbInfo,
+		logger:           cfg.Logger,
+		dbStatsCollector: collector,
 	}, nil
 }
 
@@ -187,6 +186,7 @@ func (m *SQLite) read(ctx context.Context, store string, tupleKey *openfgav1.Tup
 
 	rows, err := sb.QueryContext(ctx)
 	if err != nil {
+
 		return nil, handleSQLError(err)
 	}
 
@@ -202,9 +202,9 @@ func (m *SQLite) Write(ctx context.Context, store string, deletes storage.Delete
 		return storage.ErrExceededWriteBatchLimit
 	}
 
-	return busyRetry(func() error {
+	return m.busyRetry(func() error {
 		now := time.Now().UTC()
-		return sqlcommon.Write(ctx, m.dbInfo, store, deletes, writes, now)
+		return write(ctx, m.db, m.stbl, m.sqlTime, store, deletes, writes, now)
 	})
 }
 
@@ -348,7 +348,7 @@ func (m *SQLite) ReadStartingWithUser(
 
 // MaxTuplesPerWrite see [storage.RelationshipTupleWriter].MaxTuplesPerWrite.
 func (m *SQLite) MaxTuplesPerWrite() int {
-	return m.maxTuplesPerWriteField
+	return m.cfg.MaxTuplesPerWriteField
 }
 
 // ReadAuthorizationModel see [storage.AuthorizationModelReadBackend].ReadAuthorizationModel.
@@ -442,7 +442,7 @@ func (m *SQLite) FindLatestAuthorizationModel(ctx context.Context, store string)
 
 // MaxTypesPerAuthorizationModel see [storage.TypeDefinitionWriteBackend].MaxTypesPerAuthorizationModel.
 func (m *SQLite) MaxTypesPerAuthorizationModel() int {
-	return m.maxTypesPerModelField
+	return m.cfg.MaxTypesPerModelField
 }
 
 // WriteAuthorizationModel see [storage.TypeDefinitionWriteBackend].WriteAuthorizationModel.
@@ -453,10 +453,10 @@ func (m *SQLite) WriteAuthorizationModel(ctx context.Context, store string, mode
 	typeDefinitions := model.GetTypeDefinitions()
 
 	if len(typeDefinitions) > m.MaxTypesPerAuthorizationModel() {
-		return storage.ExceededMaxTypeDefinitionsLimitError(m.maxTypesPerModelField)
+		return storage.ExceededMaxTypeDefinitionsLimitError(m.MaxTypesPerAuthorizationModel())
 	}
 
-	return busyRetry(func() error {
+	return m.busyRetry(func() error {
 		return sqlcommon.WriteAuthorizationModel(ctx, m.dbInfo, store, model)
 	})
 }
@@ -630,7 +630,7 @@ func (m *SQLite) WriteAssertions(ctx context.Context, store, modelID string, ass
 		return err
 	}
 
-	return busyRetry(func() error {
+	return m.busyRetry(func() error {
 		_, err = m.stbl.
 			Insert("assertion").
 			Columns("store", "authorization_model_id", "assertions").
@@ -780,24 +780,27 @@ func (m *SQLite) ReadChanges(
 	return changes, contToken, nil
 }
 
-// IsReady see [sqlcommon.IsReady].
 func (m *SQLite) IsReady(ctx context.Context) (storage.ReadinessStatus, error) {
-	return sqlcommon.IsReady(ctx, m.db)
+	if err := m.db.PingContext(ctx); err != nil {
+		return storage.ReadinessStatus{}, err
+	}
+	return storage.ReadinessStatus{
+		IsReady: true,
+	}, nil
 }
 
 // SQLite will return an SQLITE_BUSY error when the database is locked rather than waiting for the lock.
 // This function retries the operation up to 5 times before returning the error.
-func busyRetry(fn func() error) error {
-	const maxRetries = 5
+func (m *SQLite) busyRetry(fn func() error) error {
 	for retries := 0; ; retries++ {
 		err := fn()
-		if err == nil || retries == maxRetries {
+		if err == nil || retries == m.cfg.QueryRetries {
 			return err
 		}
 
 		var sqliteErr *sqlite3.Error
-		if errors.As(err, &sqliteErr) && sqliteErr.Code == sqlite3.ErrBusy {
-			time.Sleep(50 * time.Millisecond)
+		if errors.As(err, &sqliteErr) && (sqliteErr.Code == sqlite3.ErrLocked || sqliteErr.Code == sqlite3.ErrBusy) {
+			time.Sleep(10 * time.Millisecond)
 			continue
 		}
 

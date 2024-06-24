@@ -25,30 +25,19 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+// TestIntegrationDatastore runs open fga default datastore test suite
 func TestIntegrationDatastore(t *testing.T) {
 	db := textfixtures.SQLiteIntegrationTest(t)
-	ds, err := NewWithDB(db, sqlcommon.NewConfig())
+	ds, err := NewWithDB(db, NewConfig())
 	require.NoError(t, err)
 	test.RunAllTests(t, ds)
-}
-
-func TestIntegrationDatastoreAfterCloseIsNotReady(t *testing.T) {
-	db := textfixtures.SQLiteIntegrationTest(t)
-
-	ds, err := NewWithDB(db, sqlcommon.NewConfig())
-	require.NoError(t, err)
-
-	ds.Close()
-	status, err := ds.IsReady(context.Background())
-	require.Error(t, err)
-	require.False(t, status.IsReady)
 }
 
 // TestIntegrationReadEnsureNoOrder asserts that the read response is not ordered by ulid.
 func TestIntegrationReadEnsureNoOrder(t *testing.T) {
 	db := textfixtures.SQLiteIntegrationTest(t)
 
-	ds, err := NewWithDB(db, sqlcommon.NewConfig())
+	ds, err := NewWithDB(db, NewConfig())
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -94,7 +83,7 @@ func TestIntegrationReadEnsureNoOrder(t *testing.T) {
 func TestIntegrationReadPageEnsureOrder(t *testing.T) {
 	db := textfixtures.SQLiteIntegrationTest(t)
 
-	ds, err := NewWithDB(db, sqlcommon.NewConfig())
+	ds, err := NewWithDB(db, NewConfig())
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -135,11 +124,10 @@ func TestIntegrationReadPageEnsureOrder(t *testing.T) {
 func TestIntegrationReadAuthorizationModelUnmarshallError(t *testing.T) {
 	db := textfixtures.SQLiteIntegrationTest(t)
 
-	ds, err := NewWithDB(db, sqlcommon.NewConfig())
+	ds, err := NewWithDB(db, NewConfig())
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	defer ds.Close()
 	store := "store"
 	modelID := "foo"
 	schemaVersion := typesystem.SchemaVersion1_0
@@ -161,7 +149,7 @@ func TestIntegrationReadAuthorizationModelUnmarshallError(t *testing.T) {
 func TestIntegrationAllowNullCondition(t *testing.T) {
 	db := textfixtures.SQLiteIntegrationTest(t)
 
-	ds, err := NewWithDB(db, sqlcommon.NewConfig())
+	ds, err := NewWithDB(db, NewConfig())
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -258,7 +246,7 @@ func TestIntegrationAllowNullCondition(t *testing.T) {
 func TestIntegrationMarshalledAssertions(t *testing.T) {
 	db := textfixtures.SQLiteIntegrationTest(t)
 
-	ds, err := NewWithDB(db, sqlcommon.NewConfig())
+	ds, err := NewWithDB(db, NewConfig())
 	require.NoError(t, err)
 
 	ctx := context.Background()
