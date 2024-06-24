@@ -12,7 +12,6 @@ import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
 import { LabelsEditor } from './LabelsEditor';
 import { ProfileTypesCascader, useProfileTypes } from './ProfileTypesCascader';
-import { PyroscopeQueryLinkExtensions } from './QueryLinkExtension';
 import { QueryOptions } from './QueryOptions';
 
 export type Props = QueryEditorProps<PyroscopeDataSource, Query, PyroscopeDataSourceOptions>;
@@ -62,7 +61,6 @@ export function QueryEditor(props: Props) {
           labels={labels}
           getLabelValues={getLabelValues}
         />
-        <PyroscopeQueryLinkExtensions {...props} />
       </EditorRow>
       <EditorRow>
         <QueryOptions query={query} onQueryChange={props.onChange} app={props.app} labels={labels} />
