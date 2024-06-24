@@ -66,6 +66,7 @@ export const Pages = {
           container: 'data-testid new share button menu',
           shareInternally: 'data-testid new share button share internally',
           shareExternally: 'data-testid new share button share externally',
+          shareSnapshot: 'data-testid new share button share snapshot',
         },
       },
       playlistControls: {
@@ -282,6 +283,9 @@ export const Pages = {
       container: 'data-testid share externally drawer container',
       copyUrlButton: 'data-testid share externally copy url button',
       shareTypeSelect: 'data-testid share externally share type select',
+    },
+    ShareSnapshot: {
+      container: 'data-testid share snapshot drawer container',
     },
   },
   PublicDashboard: {
