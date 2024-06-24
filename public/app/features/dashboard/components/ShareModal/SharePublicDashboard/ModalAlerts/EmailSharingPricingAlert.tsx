@@ -10,8 +10,8 @@ export function EmailSharingPricingAlert() {
     <Alert title="" severity="info" bottomSpacing={0}>
       <Stack justifyContent="space-between" gap={2} alignItems="center">
         <Trans i18nKey="public-dashboard.email-sharing.alert-text">
-          Effective immediately, sharing public dashboards by email incurs a cost per active user. Going forward, you’ll
-          be prompted for payment whenever you add new users to your dashboard.
+          Sharing a dashboard via email incurs charges for the 30-day token duration, based on the number of people,
+          regardless of the number of dashboards shared. Charges continue to apply only if token renewed.
         </Trans>
         <Button variant="secondary" onClick={() => window.open(EMAIL_SHARING_URL, '_blank')} type="button">
           <Trans i18nKey="public-dashboard.email-sharing.learn-more-button">Learn more</Trans>

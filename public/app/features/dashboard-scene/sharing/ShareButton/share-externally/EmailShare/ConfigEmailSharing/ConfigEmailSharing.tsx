@@ -76,10 +76,7 @@ export const ConfigEmailSharing = () => {
           >
             <Stack direction="row">
               <Input
-                placeholder={t(
-                  'public-dashboard.email-sharing.recipient-email-placeholder',
-                  'Type in the recipient email address and press Enter'
-                )}
+                placeholder={t('public-dashboard.email-sharing.recipient-email-placeholder', 'Email')}
                 autoCapitalize="none"
                 loading={isAddEmailLoading}
                 {...register('email', {
