@@ -300,7 +300,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       }),
       keepUnusedDataFor: 0,
     }),
-    updateRuleGroupForNamespace: build.mutation<
+    upsertRuleGroupForNamespace: build.mutation<
       AlertGroupUpdated,
       { rulerConfig: RulerDataSourceConfig; namespace: string; payload: PostableRulerRuleGroupDTO }
     >({

@@ -673,6 +673,7 @@ export const rulesInSameGroupHaveInvalidFor = (rules: RulerRuleDTO[], everyDurat
 };
 
 // allows renaming namespace, renaming group and changing group interval, all in one go
+// @TODO remove this action
 export const updateLotexNamespaceAndGroupAction: AsyncThunk<
   void,
   UpdateNamespaceAndGroupOptions,
@@ -699,10 +700,12 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
 
           const existingNamespace = Boolean(rulesResult[namespaceName]);
 
+          // why check if namespace exists, GMA doesn't allow changing folder and DSM doesn't care
           if (!existingNamespace) {
             throw new Error(`Namespace "${namespaceName}" not found.`);
           }
 
+          // why check if group exists, do we care?
           const existingGroup = rulesResult[namespaceName].find((group) => group.name === groupName);
           if (!existingGroup) {
             throw new Error(`Group "${groupName}" not found.`);

@@ -6,10 +6,25 @@ import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { AlertGroupUpdated, alertRuleApi } from '../api/alertRuleApi';
-import { deleteRuleAction, pauseRuleAction, ruleGroupReducer } from '../reducers/ruler/ruleGroups';
+import {
+  deleteRuleAction,
+  moveRuleGroupAction,
+  pauseRuleAction,
+  renameRuleGroupAction,
+  ruleGroupReducer,
+  updateRuleGroupAction,
+} from '../reducers/ruler/ruleGroups';
 import { fetchRulesSourceBuildInfoAction, getDataSourceRulerConfig } from '../state/actions';
 
 type ProduceResult = RulerRuleGroupDTO | AlertGroupUpdated;
+type RequestState = {
+  isUninitialized: boolean;
+  isPending: boolean;
+  isSuccess: boolean;
+  isError: boolean;
+  result?: ProduceResult;
+  error?: unknown;
+};
 
 /**
  * Hook for reuse that handles freshly fetching a rule group's definition, applying an action to it,
@@ -24,20 +39,20 @@ type ProduceResult = RulerRuleGroupDTO | AlertGroupUpdated;
  */
 function useProduceNewRuleGroup() {
   const [fetchRuleGroup] = alertRuleApi.endpoints.getRuleGroupForNamespace.useLazyQuery();
-  const [updateRuleGroup] = alertRuleApi.endpoints.updateRuleGroupForNamespace.useMutation();
+  const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
 
-  const [isLoading, setLoading] = useState<boolean>(false);
+  const [isPending, setPending] = useState<boolean>(false);
   const [isUninitialized, setUninitialized] = useState<boolean>(true);
   const [result, setResult] = useState<ProduceResult | undefined>();
   const [error, setError] = useState<unknown | undefined>();
 
   const isError = Boolean(error);
-  const isSuccess = !isUninitialized && !isLoading && !isError;
+  const isSuccess = !isUninitialized && !isPending && !isError;
 
-  const requestState = {
+  const requestState: RequestState = {
     isUninitialized,
-    isLoading,
+    isPending,
     isSuccess,
     isError,
     result,
@@ -62,7 +77,7 @@ function useProduceNewRuleGroup() {
     const rulerConfig = getDataSourceRulerConfig(getState, dataSourceName);
 
     setUninitialized(false);
-    setLoading(true);
+    setPending(true);
 
     try {
       const latestRuleGroupDefinition = await fetchRuleGroup({
@@ -76,7 +91,16 @@ function useProduceNewRuleGroup() {
       const newRuleGroup = ruleGroupReducer(latestRuleGroupDefinition, action);
 
       // if we have no more rules left after reducing, remove the entire group
-      const updateOrDeleteFunction = () => {
+      let updateRuleGroupDeferred: () => Promise<ProduceResult> = () => {
+        return upsertRuleGroup({
+          rulerConfig,
+          namespace: namespaceName,
+          payload: newRuleGroup,
+        }).unwrap();
+      };
+
+      // if we are deleting a rule, check if we need to delete the entire group instead
+      if (deleteRuleAction.match(action)) {
         if (newRuleGroup.rules.length === 0) {
           return deleteRuleGroup({
             rulerConfig,
@@ -85,14 +109,50 @@ function useProduceNewRuleGroup() {
           }).unwrap();
         }
 
-        return updateRuleGroup({
-          rulerConfig,
-          namespace: namespaceName,
-          payload: newRuleGroup,
-        }).unwrap();
-      };
+        return updateRuleGroupDeferred();
+      }
 
-      const result = await updateOrDeleteFunction();
+      // if we are renaming a rule:
+      // 1. create the new rule group
+      // 2. delete the old rule group
+      if (renameRuleGroupAction.match(action)) {
+        updateRuleGroupDeferred = async () => {
+          const result = await upsertRuleGroup({
+            rulerConfig,
+            namespace: namespaceName,
+            payload: newRuleGroup,
+          }).unwrap();
+
+          await deleteRuleGroup({
+            rulerConfig,
+            namespace: namespaceName,
+            group: groupName,
+          }).unwrap();
+
+          return result;
+        };
+      }
+
+      if (moveRuleGroupAction.match(action)) {
+        updateRuleGroupDeferred = async () => {
+          // @todo create new namespace
+          // await updateRuleGroup({
+          //   rulerConfig,
+          //   namespace: namespaceName,
+          //   payload: newRuleGroup,
+          // }).unwrap();
+
+          const result = await deleteRuleGroup({
+            rulerConfig,
+            namespace: namespaceName,
+            group: groupName,
+          }).unwrap();
+
+          return result;
+        };
+      }
+
+      const result = await updateRuleGroupDeferred();
       setResult(result);
 
       return result;
@@ -100,7 +160,7 @@ function useProduceNewRuleGroup() {
       setError(error);
       throw error;
     } finally {
-      setLoading(false);
+      setPending(false);
     }
   };
 
@@ -145,4 +205,68 @@ export function useDeleteRuleFromGroup() {
   );
 
   return [deleteFn, produceNewRuleGroupState] as const;
+}
+
+/**
+ * Update an existing rule group
+ */
+export function useUpdateRuleGroupConfiguration() {
+  const [produceNewRuleGroup, produceNewRuleGroupState] = useProduceNewRuleGroup();
+
+  const updateFn = useCallback(
+    (ruleGroup: RuleGroupIdentifier, interval: string) => {
+      const action = updateRuleGroupAction({ interval });
+
+      return produceNewRuleGroup(ruleGroup, action);
+    },
+    [produceNewRuleGroup]
+  );
+
+  return [updateFn, produceNewRuleGroupState] as const;
+}
+
+/**
+ * Move a rule group to either another namespace with (optionally) a different name
+ * @todo re-implement "unifiedalerting/updateLotexNamespaceAndGroup" action
+ */
+export function useMoveRuleGroup() {
+  const [produceNewRuleGroup, produceNewRuleGroupState] = useProduceNewRuleGroup();
+
+  const moveFn = useCallback(
+    async (ruleGroup: RuleGroupIdentifier, namespaceName: string, groupName?: string, interval?: string) => {
+      const action = moveRuleGroupAction({ namespaceName, groupName, interval });
+      return produceNewRuleGroup(ruleGroup, action);
+    },
+    [produceNewRuleGroup]
+  );
+
+  return [moveFn, produceNewRuleGroupState] as const;
+}
+
+/**
+ * Rename a rule group within the same namespace
+ */
+export function useRenameRuleGroup() {
+  const [produceNewRuleGroup, produceNewRuleGroupState] = useProduceNewRuleGroup();
+
+  const renameFn = useCallback(
+    async (ruleGroup: RuleGroupIdentifier, groupName: string, interval?: string) => {
+      const action = renameRuleGroupAction({ groupName, interval });
+      return produceNewRuleGroup(ruleGroup, action);
+    },
+    [produceNewRuleGroup]
+  );
+
+  return [renameFn, produceNewRuleGroupState] as const;
+}
+
+export function anyRequestState(...states: RequestState[]): RequestState {
+  return {
+    isUninitialized: states.every((s) => s.isUninitialized),
+    isPending: states.some((s) => s.isPending),
+    isSuccess: states.some((s) => s.isSuccess),
+    isError: states.some((s) => s.isError),
+    result: states.find((s) => s.result)?.result,
+    error: states.find((s) => s.error)?.error,
+  };
 }

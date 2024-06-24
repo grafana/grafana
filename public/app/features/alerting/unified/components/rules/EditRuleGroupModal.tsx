@@ -7,12 +7,16 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Button, Field, Input, Label, LinkButton, Modal, useStyles2, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { useDispatch } from 'app/types';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { rulesInSameGroupHaveInvalidFor, updateLotexNamespaceAndGroupAction } from '../../state/actions';
+import {
+  anyRequestState,
+  useMoveRuleGroup,
+  useRenameRuleGroup,
+  useUpdateRuleGroupConfiguration,
+} from '../../hooks/useProduceNewRuleGroup';
+import { rulesInSameGroupHaveInvalidFor } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
@@ -175,10 +179,21 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const { namespace, group, onClose, intervalEditOnly, folderUid } = props;
 
   const styles = useStyles2(getStyles);
-  const dispatch = useDispatch();
-  const { loading, error, dispatched } =
-    useUnifiedAlertingSelector((state) => state.updateLotexNamespaceAndGroup) ?? initialAsyncRequestState;
   const notifyApp = useAppNotification();
+
+  // this modal can take 3 different actions, depending on what fields were updated.
+  // 1. update the rule group details without renaming either the namespace or group
+  // 2. rename the rule group, but keeping it in the same namespace
+  // 3. move the rule group to a new namespace, optionally with a different group name
+  const [updateRuleGroup, updateRuleGroupState] = useUpdateRuleGroupConfiguration();
+  const [moveRuleGroup, moveRuleGroupState] = useMoveRuleGroup();
+  const [renameRuleGroup, renameRuleGroupState] = useRenameRuleGroup();
+
+  const { isPending, isSuccess, isUninitialized } = anyRequestState(
+    updateRuleGroupState,
+    moveRuleGroupState,
+    renameRuleGroupState
+  );
 
   const defaultValues = useMemo(
     (): FormValues => ({
@@ -199,29 +214,38 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
 
   // close modal if successfully saved
   useEffect(() => {
-    if (dispatched && !loading && !error) {
+    if (!isUninitialized && isSuccess) {
       onClose(true);
     }
-  }, [dispatched, loading, onClose, error]);
+  }, [onClose, isUninitialized, isSuccess]);
 
   useCleanup((state) => (state.unifiedAlerting.updateLotexNamespaceAndGroup = initialAsyncRequestState));
-  const onSubmit = (values: FormValues) => {
+  const onSubmit = async (values: FormValues) => {
+    const ruleGroupIdentifier: RuleGroupIdentifier = {
+      dataSourceName: rulesSourceName,
+      groupName: group.name,
+      namespaceName: isGrafanaManagedGroup ? folderUid! : namespace.name,
+    };
+
     // make sure that when dealing with a nested folder for Grafana managed rules we encode the folder properly
-    const newNamespaceName = isGrafanaManagedGroup
+    const updatedNamespaceName = isGrafanaManagedGroup
       ? encodeGrafanaNamespace(values.namespaceName, nestedFolderParents)
       : values.namespaceName;
+    const updatedGroupName = values.groupName;
+    const updatedInterval = values.groupInterval;
 
-    dispatch(
-      updateLotexNamespaceAndGroupAction({
-        rulesSourceName: rulesSourceName,
-        groupName: group.name,
-        newGroupName: values.groupName,
-        namespaceName: namespace.name,
-        newNamespaceName: newNamespaceName,
-        groupInterval: values.groupInterval || undefined,
-        folderUid,
-      })
-    );
+    // GMA alert rules cannot be moved to another folder, for some reason?
+    // @todo support this maybe?
+    const shouldMove = isGrafanaManagedGroup ? false : updatedNamespaceName !== ruleGroupIdentifier.namespaceName;
+    const shouldRename = updatedGroupName !== ruleGroupIdentifier.groupName;
+
+    if (shouldMove) {
+      await moveRuleGroup(ruleGroupIdentifier, updatedNamespaceName, updatedGroupName, updatedInterval);
+    } else if (shouldRename) {
+      await renameRuleGroup(ruleGroupIdentifier, updatedGroupName, updatedInterval);
+    } else {
+      await updateRuleGroup(ruleGroupIdentifier, updatedInterval);
+    }
   };
 
   const formAPI = useForm<FormValues>({
@@ -359,7 +383,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 <Button
                   variant="secondary"
                   type="button"
-                  disabled={loading}
+                  disabled={isPending}
                   onClick={() => onClose(false)}
                   fill="outline"
                 >
@@ -367,10 +391,10 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 </Button>
                 <Button
                   type="button"
-                  disabled={!isDirty || !isValid || loading}
+                  disabled={!isDirty || !isValid || isPending}
                   onClick={handleSubmit((values) => onSubmit(values), onInvalid)}
                 >
-                  {loading ? 'Saving...' : 'Save'}
+                  {isPending ? 'Saving...' : 'Save'}
                 </Button>
               </Modal.ButtonRow>
             </div>
