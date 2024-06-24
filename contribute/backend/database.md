@@ -89,7 +89,7 @@ Add a migration using one of the following methods:
 - Add migrations in the `migrations` package.
 - Implement the `DatabaseMigrator` for the service.
 
-**Important:** If there are previous migrations for a service, use that method. Don't add migrations using both methods or you risk running migrations in the wrong order.
+> **Important:** If there are previous migrations for a service, use that method. Don't add migrations using both methods or you risk running migrations in the wrong order.
 
 ### Add migrations in `migrations` package
 
