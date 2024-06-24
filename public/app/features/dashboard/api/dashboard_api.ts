@@ -1,6 +1,6 @@
 import { config, getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { ResourceClient } from 'app/features/apiserver/types';
+import { Resource, ResourceClient } from 'app/features/apiserver/types';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -45,6 +45,10 @@ class LegacyDashboardAPI implements DashboardAPI {
   }
 }
 
+interface DashboardWithAccessInfo extends Resource<DashboardDataDTO, 'DashboardWithAccessInfo'> {
+  access: Object; // TODO...
+}
+
 // Implemented using /apis/dashboards.grafana.app/*
 class K8sDashboardAPI implements DashboardAPI {
   private client: ResourceClient<DashboardDataDTO>;
@@ -66,16 +70,15 @@ class K8sDashboardAPI implements DashboardAPI {
   }
 
   async getDashboardDTO(uid: string): Promise<DashboardDTO> {
-    const d = await this.client.get(uid);
-    const m = await this.client.subresource<object>(uid, 'access');
+    const dto = await this.client.subresource<DashboardWithAccessInfo>(uid, 'dto');
     return {
       meta: {
-        ...m,
+        ...dto.access, 
         isNew: false,
         isFolder: false,
-        uid: d.metadata.name,
+        uid: dto.metadata.name,
       },
-      dashboard: d.spec,
+      dashboard: dto.spec,
     };
   }
 }
