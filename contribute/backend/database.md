@@ -50,7 +50,7 @@ Here, `inTransactionCtx` is a helper function in the `sqlstore` package that pro
 
 ## `SQLStore`
 
-As opposed to a `sqlstore` handler, the `SQLStore` is a service itself. Like the handler, the `SQLStore` is responsible to store and retrieve objects, to and from the database.
+As opposed to a `sqlstore` handler, the `SQLStore` is a service itself. Like the handler, the `SQLStore` is responsible for storing and retrieving objects, to and from the database.
 
 To use the `SQLStore`, inject it in your service struct:
 
