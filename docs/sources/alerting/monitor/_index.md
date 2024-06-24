@@ -80,7 +80,7 @@ This metric is a gauge that shows you the number of seconds that the scheduler i
 
 #### grafana_alerting_notification_latency_seconds_bucket
 
-This metric is a histogram that shows you the number of seconds taken to send notifications for firing and resolved alerts. This metric will let you observe slow or over-utilized integrations, such as an SMTP server that is being given emails faster than it can send them.
+This metric is a histogram that shows you the number of seconds taken to send notifications for firing and resolved alerts. This metric lets you observe slow or over-utilized integrations, such as an SMTP server that is being given emails faster than it can send them.
 
 ## Metrics for Mimir-managed alerts
 
@@ -121,7 +121,7 @@ This metric is a counter that shows you the number of active, suppressed, and un
 
 #### alertmanager_alerts_invalid_total
 
-This metric is a counter that shows you the number of invalid alerts that were sent to Alertmanager. This counter should not exceed 0, and so in most cases you will want to create an alert that fires if whenever this metric increases.
+This metric is a counter that shows you the number of invalid alerts that were sent to Alertmanager. This counter should not exceed 0, and so in most cases, create an alert that fires if whenever this metric increases.
 
 #### alertmanager_notifications_total
 
@@ -129,7 +129,7 @@ This metric is a counter that shows you how many notifications have been sent by
 
 #### alertmanager_notifications_failed_total
 
-This metric is a counter that shows you how many notifications have failed in total. This metric also uses a label "integration" to show the number of failed notifications by integration, such as failed emails. In most cases you will want to use the `rate` function to understand how often notifications are failing to be sent.
+This metric is a counter that shows you how many notifications have failed in total. This metric also uses a label "integration" to show the number of failed notifications by integration, such as failed emails. In most cases, use the `rate` function to understand how often notifications are failing to be sent.
 
 #### alertmanager_notification_latency_seconds_bucket
 
@@ -157,4 +157,4 @@ This metric is a gauge. It has a constant value `1`, and contains a label called
 
 #### alertmanager_cluster_reconnections_failed_total
 
-This metric is a counter that shows you the number of failed peer connection attempts. In most cases you will want to use the `rate` function to understand how often reconnections fail as this may be indicative of an issue or instability in your network.
+This metric is a counter that shows you the number of failed peer connection attempts. In most cases you should use the `rate` function to understand how often reconnections fail as this may be indicative of an issue or instability in your network.
