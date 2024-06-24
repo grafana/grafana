@@ -106,7 +106,7 @@ describe('Policy', () => {
 
     // for timing options
     expect(within(defaultPolicy).getByTestId('timing-options')).toHaveTextContent(
-      'Wait30s to group instances,5m before sending updates'
+      'Wait 30s to group instances, 5m before sending updates, repeated every 4h'
     );
 
     // should have custom policies
