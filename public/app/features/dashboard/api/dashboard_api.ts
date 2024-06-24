@@ -106,7 +106,7 @@ class K8sDashboardAPI implements DashboardAPI {
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
     return this.client.delete(uid).then((v) => ({
-      id: 123,
+      id: 0,
       message: v.message,
       title: 'deleted',
     }));
