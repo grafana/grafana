@@ -17,8 +17,6 @@ jobs:
     if: github.event.pull_request.draft == false
     steps:
       - uses: actions/setup-go@v4
-        with:
-          go-version-file: go.mod
       # Note: Github will not trigger other actions from this because it uses
       # the GITHUB_TOKEN token
       - name: Run auto-milestone
