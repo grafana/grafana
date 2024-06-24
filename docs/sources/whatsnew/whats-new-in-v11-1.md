@@ -22,7 +22,7 @@ weight: -43
 
 Welcome to Grafana 11.1! This release contains some minor improvements following on the big announcements in Grafana 11.0. We've adding cell text wrapping to table visualizations, a much-requested feature. We've also redesigned the Alerting settings page and made it easier to set rule-specific silences. A number of accessibility improvements are included in this release, making Grafana easier to use for everyone. And lastly, the XY chart is now generally available.
 
-<!-- {{< youtube id=" " >}} -->
+<!-- {{< youtube id="gjQX9-7Hsfs" >}} -->
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.1, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.1/).
 
