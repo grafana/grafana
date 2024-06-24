@@ -139,7 +139,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: meta.isSnapshot && !isEditing,
+    condition: meta.isSnapshot && !meta.dashboardNotFound && !isEditing,
     render: () => (
       <GoToSnapshotOriginButton
         key="go-to-snapshot-origin"
