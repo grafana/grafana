@@ -12,12 +12,6 @@ import (
 // - action should be in allowlist
 // - actions should have the pluginID prefix
 func ValidateActionSet(pluginID string, actionset ActionSet) error {
-	// if actionset action does not have the pluginID prefix return err
-	if !strings.HasPrefix(actionset.Action, pluginID+":") &&
-		!strings.HasPrefix(actionset.Action, pluginID+".") {
-		return &accesscontrol.ErrorActionPrefixMissing{Action: actionset.Action,
-			Prefixes: []string{pluginID + ":", pluginID + "."}}
-	}
 	// takeout the pluginID prefix
 	action := ""
 	if strings.Contains(actionset.Action, pluginID+":") {
@@ -27,6 +21,20 @@ func ValidateActionSet(pluginID string, actionset ActionSet) error {
 	}
 	if !isFolderOrDashboardAction(action) {
 		return &accesscontrol.ErrorActionNotAllowed{Action: actionset.Action, AllowList: []string{dashboards.ScopeDashboardsRoot, dashboards.ScopeFoldersRoot}}
+	}
+	// verify that actions have the pluginID prefix
+	// plugin.json - actionset.ActionSets - actions "k6testid:folders:edit"
+	for _, action := range actionset.Actions {
+		// contains two or more colons , error out
+		if strings.Count(action, ":") > 1 {
+			return &accesscontrol.ErrorActionPrefixMissing{Action: action,
+				Prefixes: []string{pluginID + ":", pluginID + "."}}
+		}
+		if !strings.HasPrefix(action, pluginID+":") &&
+			!strings.HasPrefix(action, pluginID+".") {
+			return &accesscontrol.ErrorActionPrefixMissing{Action: action,
+				Prefixes: []string{pluginID + ":", pluginID + "."}}
+		}
 	}
 
 	return nil

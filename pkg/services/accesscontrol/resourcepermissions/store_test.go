@@ -812,30 +812,43 @@ func TestStore_DeclareActionSet(t *testing.T) {
 	pluginID := "k6testid"
 	tests := []actionSetTest{
 		{
-			desc:       "should not be able to declare action set without prefix for action",
+			desc:       "should not be able to declare action outside of allowlist",
 			pluginID:   pluginID,
 			pluginName: "k6testname",
 			actionsets: []plugins.ActionSetRegistration{{
 				ActionSet: plugins.ActionSet{
-					Action:  "wrongprefix:k6-app:edit",
-					Actions: []string{"folders:read", "folders:write"},
+					Action:  "k6-app:edit",
+					Actions: []string{pluginID + ":k6tests.read", pluginID + ":k6tests.write"},
+				},
+			},
+			},
+			expectedErr: &accesscontrol.ErrorActionNotAllowed{},
+		},
+		{
+			desc:       "should not be able to declare action set without prefix for actions",
+			pluginID:   pluginID,
+			pluginName: "k6testname",
+			actionsets: []plugins.ActionSetRegistration{{
+				ActionSet: plugins.ActionSet{
+					Action:  "folders:edit",
+					Actions: []string{"noprefix:folders.read"},
 				},
 			},
 			},
 			expectedErr: &accesscontrol.ErrorActionPrefixMissing{},
 		},
 		{
-			desc:       "should not be able to declare action set outside of allowlist",
+			desc:       "should not be able to declare action set with two colons for actions",
 			pluginID:   pluginID,
 			pluginName: "k6testname",
 			actionsets: []plugins.ActionSetRegistration{{
 				ActionSet: plugins.ActionSet{
-					Action:  pluginID + ":k6-app:edit",
-					Actions: []string{"folders:read", "folders:write"},
+					Action:  "folders:edit",
+					Actions: []string{pluginID + ":folders:read"}, // here the two colons is the issue
 				},
 			},
 			},
-			expectedErr: &accesscontrol.ErrorActionNotAllowed{},
+			expectedErr: &accesscontrol.ErrorActionPrefixMissing{},
 		},
 		{
 			desc:       "should be able to declare action set to extend existing action set",
@@ -844,8 +857,14 @@ func TestStore_DeclareActionSet(t *testing.T) {
 			actionsets: []plugins.ActionSetRegistration{
 				{
 					ActionSet: plugins.ActionSet{
-						Action:  pluginID + ":folders:view",
-						Actions: []string{"k6tests:read"},
+						Action:  "folders:view",
+						Actions: []string{pluginID + ".tests:read"},
+					},
+				},
+				{
+					ActionSet: plugins.ActionSet{
+						Action:  "folders:view",
+						Actions: []string{pluginID + ":read"},
 					},
 				},
 			},
@@ -854,8 +873,22 @@ func TestStore_DeclareActionSet(t *testing.T) {
 				actions []string
 			}{
 				action:  "folders:view",
-				actions: []string{"folders:read", "k6tests:read"},
+				actions: []string{"folders:read", pluginID + ".tests:read", pluginID + ":read"},
 			},
+		},
+		{
+			desc:       "should not be able to declare action set with two colons",
+			pluginID:   pluginID,
+			pluginName: "k6testname",
+			actionsets: []plugins.ActionSetRegistration{
+				{
+					ActionSet: plugins.ActionSet{
+						Action:  "folders:view",
+						Actions: []string{pluginID + ":" + "tests:read"},
+					},
+				},
+			},
+			expectedErr: &accesscontrol.ErrorActionPrefixMissing{},
 		},
 	}
 	for _, tt := range tests {

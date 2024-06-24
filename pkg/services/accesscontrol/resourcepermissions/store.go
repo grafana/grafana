@@ -870,6 +870,9 @@ func (s *InMemoryActionSets) DeclareActionSets(ctx context.Context, ID, name str
 		} else {
 			actionWithoutPluginPrefix = strings.TrimPrefix(r.Action, ID+".")
 		}
+
+		// actionset - folders:edit
+
 		// check if actionset exists
 		// if it does, we should not overwrite it
 		// we should append the actions to the existing actionset
