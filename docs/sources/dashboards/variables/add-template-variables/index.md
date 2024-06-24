@@ -133,7 +133,7 @@ Query expressions can contain references to other variables and in effect create
 1. In the **Query** field, enter a query.
 
    - The query field varies according to your data source. Some data sources have custom query editors.
-   - Each data source defines how the variable values are extracted. The common implementation is to use every string value returned from the data source response as a variable value. Make sure to double-check the data source documentation.
+   - Each data source defines how the variable values are extracted. The typical implementation uses every string value returned from the data source response as a variable value. Make sure to double-check the documentation for the data source.
    - Some data sources allow providing custom "display names" for the values. For instance, the PostgreSQL, MySQL, and Microsoft SQL Server plugins handle this by looking for fields named `__text` and `__value` in the result. Other data sources may look for `text` and `value` or use a different approach. Always remember to double-check the data source documentation.
    - If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
 
