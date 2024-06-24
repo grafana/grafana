@@ -68,15 +68,15 @@ This metric is a gauge that shows you the number of alert rules scheduled. An al
 
 #### grafana_alerting_schedule_periodic_duration_seconds_bucket
 
-This metric is a histogram that shows you the time it takes to process an individual tick in the scheduler that evaluates alert rules. If the scheduler takes longer than 10 seconds to process a tick then pending evaluations will start to accumulate such that alert rules might later than expected.
+This metric is a histogram that shows you the time it takes to process an individual tick in the scheduler that evaluates alert rules. If the scheduler takes longer than 10 seconds to process a tick then pending evaluations start to accumulate such that alert rules might later than expected.
 
 #### grafana_alerting_schedule_query_alert_rules_duration_seconds_bucket
 
-This metric is a histogram that shows you how long it takes the scheduler to fetch the latest rules from the database. If this metric is elevated then so will `schedule_periodic_duration_seconds`.
+This metric is a histogram that shows you how long it takes the scheduler to fetch the latest rules from the database. If this metric is elevated, `schedule_periodic_duration_seconds` is also evaluated.
 
 #### grafana_alerting_scheduler_behind_seconds
 
-This metric is a gauge that shows you the number of seconds that the scheduler is behind where it should be. This number will increase if `schedule_periodic_duration_seconds` is longer than 10 seconds, and decrease when it is less than 10 seconds. The smallest possible value of this metric is 0.
+This metric is a gauge that shows you the number of seconds that the scheduler is behind where it should be. This number increases if `schedule_periodic_duration_seconds` is longer than 10 seconds, and decrease when it is less than 10 seconds. The smallest possible value of this metric is 0.
 
 #### grafana_alerting_notification_latency_seconds_bucket
 
