@@ -1840,10 +1840,6 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 		},
 	}
 
-	for _, instance := range instances {
-		_ = dbstore.SaveAlertInstance(ctx, instance)
-	}
-
 	testCases := []struct {
 		desc          string
 		instanceStore state.InstanceStore
@@ -1854,6 +1850,9 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 		finalStateCacheCount    int
 		startingInstanceDBCount int
 		finalInstanceDBCount    int
+
+		doNotDeleteFromStoreOnRuleDeletion bool
+		reason                             string
 	}{
 		{
 			desc:          "all states/instances are removed from cache and DB",
@@ -1881,9 +1880,69 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 			startingInstanceDBCount: 2,
 			finalInstanceDBCount:    0,
 		},
+		{
+			desc:          "all states/instances are removed from cache but not from DB when doNotDeleteFromStoreOnRuleDeletion is true and the reason is RuleDeleted",
+			instanceStore: dbstore,
+			expectedStates: []*state.State{
+				{
+					AlertRuleUID:       rule.UID,
+					OrgID:              1,
+					Labels:             data.Labels{"test1": "testValue1"},
+					State:              eval.Normal,
+					EvaluationDuration: 0,
+					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+				},
+				{
+					AlertRuleUID:       rule.UID,
+					OrgID:              1,
+					Labels:             data.Labels{"test2": "testValue2"},
+					State:              eval.Alerting,
+					EvaluationDuration: 0,
+					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+				},
+			},
+			startingStateCacheCount:            2,
+			finalStateCacheCount:               0,
+			startingInstanceDBCount:            2,
+			finalInstanceDBCount:               2,
+			doNotDeleteFromStoreOnRuleDeletion: true,
+			reason:                             models.StateReasonRuleDeleted,
+		},
+		{
+			desc:          "all states/instances are removed from cache and DB when doNotDeleteFromStoreOnRuleDeletion is true but the reason is not RuleDeleted",
+			instanceStore: dbstore,
+			expectedStates: []*state.State{
+				{
+					AlertRuleUID:       rule.UID,
+					OrgID:              1,
+					Labels:             data.Labels{"test1": "testValue1"},
+					State:              eval.Normal,
+					EvaluationDuration: 0,
+					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+				},
+				{
+					AlertRuleUID:       rule.UID,
+					OrgID:              1,
+					Labels:             data.Labels{"test2": "testValue2"},
+					State:              eval.Alerting,
+					EvaluationDuration: 0,
+					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+				},
+			},
+			startingStateCacheCount:            2,
+			finalStateCacheCount:               0,
+			startingInstanceDBCount:            2,
+			finalInstanceDBCount:               0,
+			doNotDeleteFromStoreOnRuleDeletion: true,
+			reason:                             util.GenerateShortUID(),
+		},
 	}
 
 	for _, tc := range testCases {
+		for _, instance := range instances {
+			_ = dbstore.SaveAlertInstance(ctx, instance)
+		}
+
 		expectedStatesMap := make(map[data.Fingerprint]*state.State, len(tc.expectedStates))
 		for _, expectedState := range tc.expectedStates {
 			s := setCacheID(expectedState)
@@ -1895,14 +1954,15 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 			clk := clock.NewMock()
 			clk.Set(time.Now())
 			cfg := state.ManagerCfg{
-				Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
-				ExternalURL:   nil,
-				InstanceStore: dbstore,
-				Images:        &state.NoopImageService{},
-				Clock:         clk,
-				Historian:     &state.FakeHistorian{},
-				Tracer:        tracing.InitializeTracerForTest(),
-				Log:           log.New("ngalert.state.manager"),
+				Metrics:                            metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+				ExternalURL:                        nil,
+				InstanceStore:                      dbstore,
+				Images:                             &state.NoopImageService{},
+				Clock:                              clk,
+				Historian:                          &state.FakeHistorian{},
+				Tracer:                             tracing.InitializeTracerForTest(),
+				Log:                                log.New("ngalert.state.manager"),
+				DoNotDeleteFromStoreOnRuleDeletion: tc.doNotDeleteFromStoreOnRuleDeletion,
 			}
 			st := state.NewManager(cfg, state.NewNoopPersister())
 			st.Warm(ctx, dbstore)
@@ -1914,8 +1974,11 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 			assert.Equal(t, tc.startingStateCacheCount, len(existingStatesForRule))
 			assert.Equal(t, tc.startingInstanceDBCount, len(alerts))
 
-			expectedReason := util.GenerateShortUID()
-			transitions := st.DeleteStateByRuleUID(ctx, rule.GetKey(), expectedReason)
+			reason := tc.reason
+			if reason == "" {
+				reason = util.GenerateShortUID()
+			}
+			transitions := st.DeleteStateByRuleUID(ctx, rule.GetKey(), reason)
 
 			// Check that the deleted states are the same as the ones that were in cache
 			assert.Equal(t, tc.startingStateCacheCount, len(transitions))
@@ -1925,7 +1988,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 				assert.Equal(t, oldState.State, s.PreviousState)
 				assert.Equal(t, oldState.StateReason, s.PreviousStateReason)
 				assert.Equal(t, eval.Normal, s.State.State)
-				assert.Equal(t, expectedReason, s.StateReason)
+				assert.Equal(t, reason, s.StateReason)
 				if oldState.State == eval.Normal {
 					assert.Equal(t, oldState.StartsAt, s.StartsAt)
 					assert.Zero(t, s.ResolvedAt)

@@ -49,9 +49,10 @@ type Manager struct {
 	historian     Historian
 	externalURL   *url.URL
 
-	doNotSaveNormalState           bool
-	applyNoDataAndErrorToAllStates bool
-	rulesPerRuleGroupLimit         int64
+	doNotSaveNormalState               bool
+	doNotDeleteFromStoreOnRuleDeletion bool
+	applyNoDataAndErrorToAllStates     bool
+	rulesPerRuleGroupLimit             int64
 
 	persister StatePersister
 }
@@ -65,6 +66,9 @@ type ManagerCfg struct {
 	Historian     Historian
 	// DoNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods
 	DoNotSaveNormalState bool
+	// DoNotDeleteFromStoreOnRuleDeletion controls whether the state manager should delete the states from the instance store
+	// when the alert rule is deleted.
+	DoNotDeleteFromStoreOnRuleDeletion bool
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency int
 	// ApplyNoDataAndErrorToAllStates makes state manager to apply exceptional results (NoData and Error)
@@ -90,21 +94,22 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 	}
 
 	m := &Manager{
-		cache:                          c,
-		ResendDelay:                    ResendDelay, // TODO: make this configurable
-		ResolvedRetention:              cfg.ResolvedRetention,
-		log:                            cfg.Log,
-		metrics:                        cfg.Metrics,
-		instanceStore:                  cfg.InstanceStore,
-		images:                         cfg.Images,
-		historian:                      cfg.Historian,
-		clock:                          cfg.Clock,
-		externalURL:                    cfg.ExternalURL,
-		doNotSaveNormalState:           cfg.DoNotSaveNormalState,
-		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
-		rulesPerRuleGroupLimit:         cfg.RulesPerRuleGroupLimit,
-		persister:                      statePersister,
-		tracer:                         cfg.Tracer,
+		cache:                              c,
+		ResendDelay:                        ResendDelay, // TODO: make this configurable
+		ResolvedRetention:                  cfg.ResolvedRetention,
+		log:                                cfg.Log,
+		metrics:                            cfg.Metrics,
+		instanceStore:                      cfg.InstanceStore,
+		images:                             cfg.Images,
+		historian:                          cfg.Historian,
+		clock:                              cfg.Clock,
+		externalURL:                        cfg.ExternalURL,
+		doNotSaveNormalState:               cfg.DoNotSaveNormalState,
+		doNotDeleteFromStoreOnRuleDeletion: cfg.DoNotDeleteFromStoreOnRuleDeletion,
+		applyNoDataAndErrorToAllStates:     cfg.ApplyNoDataAndErrorToAllStates,
+		rulesPerRuleGroupLimit:             cfg.RulesPerRuleGroupLimit,
+		persister:                          statePersister,
+		tracer:                             cfg.Tracer,
 	}
 
 	if m.applyNoDataAndErrorToAllStates {
@@ -264,7 +269,10 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 		})
 	}
 
-	if st.instanceStore != nil {
+	// doNotDeleteFromStoreOnRuleDeletion controls whether the state manager should stop deleting the states from the instance store
+	// when the reason is StateReasonRuleDeleted.
+	keepInStore := st.doNotDeleteFromStoreOnRuleDeletion && reason == ngModels.StateReasonRuleDeleted
+	if st.instanceStore != nil && !keepInStore {
 		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
 		if err != nil {
 			logger.Error("Failed to delete states that belong to a rule from database", "error", err)
