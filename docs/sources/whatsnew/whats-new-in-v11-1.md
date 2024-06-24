@@ -42,7 +42,9 @@ We’ve made a number of small improvements to the data visualization experience
 
 #### Table cell text wrapping
 
-A long standing feature request for the table visualization is to allow wrapping of text within cells. In Grafana 11.1 we've added this long requested capability! By default, the column with the longest text is selected for wrapping or you can configure this manually using field overrides.
+A longstanding feature request for the table visualization is to allow wrapping of text within cells. In Grafana 11.1 we've added this capability! By default, the column with the longest text is selected for wrapping. You can also configure wrapping manually using field overrides.
+
+Learn more about the table panel in our [table panel documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/).
 
 ![Text wrapping in the table visualization](/media/docs/grafana/gif-grafana-11-1-text-wrapping.gif)
 
