@@ -15,8 +15,9 @@ HTTP status code, and so on.
 
 For a service, declare the different categories of errors that may occur
 from your service (this corresponds to categories for which you might want 
-to have specific public error messages or templates). To do so, globally
-construct variables using the `errutil.<status>(status, messageID, opts...)`
+to have specific public error messages or templates). 
+
+Globally construct variables using the `errutil.<status>(status, messageID, opts...)
 functions. For example: 
 
 - `errutil.NotFound(messageID, opts...)`
@@ -43,7 +44,7 @@ the `<servicename>` corresponds to the root service directory per
 is a camelCased short identifier that identifies the specific category
 of errors within the service.
 
-Errors should be grouped together (that is, share `errutil.Base`) based on
+Group errors together (that is, share `errutil.Base`) based on
 their public-facing properties. A single `messageID` should represent a
 translatable string and its metadata.
 `_service.MissingRequiredFields_` and `_service.MessageTooLong_` are likely
@@ -64,7 +65,7 @@ To set a static message sent to the client when the error occurs, append the
 the `NewBase` function call. For dynamic messages or more options, refer
 to the `errutil` package's GoDocs.
 
-Errors are then constructed using the `Base.Errorf` method, which
+You can then construct errors using the `Base.Errorf` method, which
 functions like the [fmt.Errorf](https://pkg.go.dev/fmt#Errorf) method
 except that it creates an `errutil.Error`.
 
@@ -105,11 +106,11 @@ By default, it's `_server_` and means the error originates from within the appli
 The `errutil.WithDownstream()` option may be appended to the `NewBase` function call to denote an error originates from a _downstream_ server or service. 
 The error source information is used in the API layer to distinguish between Grafana errors and non-Grafana errors. Error source information is given for use when instrumenting the application, allowing Grafana operators to define SLOs based on actual Grafana errors.
 
-## Handling errors in the API
+## Handle errors in the API
 
 API handlers use the `github.com/grafana/grafana/pkg/api/response.Err`
 or `github.com/grafana/grafana/pkg/api/response.ErrWithFallback`
 (same signature as `response.Error`) function to create responses based
 on `errutil.Error`.
 
-Using `response.Err` requires all errors to be Grafana style errors.
+> **Note:** Using `response.Err` requires all errors to be Grafana style errors.
