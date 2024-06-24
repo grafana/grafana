@@ -33,6 +33,7 @@ export const AnnoKeyCreatedBy = 'grafana.app/createdBy';
 export const AnnoKeyUpdatedTimestamp = 'grafana.app/updatedTimestamp';
 export const AnnoKeyUpdatedBy = 'grafana.app/updatedBy';
 export const AnnoKeyFolder = 'grafana.app/folder';
+export const AnnoKeyMessage = 'grafana.app/message';
 export const AnnoKeySlug = 'grafana.app/slug';
 
 // Identify where values came from
@@ -142,7 +143,7 @@ export interface MetaStatus {
 }
 
 export interface ResourceClient<T = object, K = string> {
-  create(obj: ResourceForCreate<T, K>): Promise<void>;
+  create(obj: ResourceForCreate<T, K>): Promise<Resource<T, K>>;
   get(name: string): Promise<Resource<T, K>>;
   subresource<S>(name: string, path: string): Promise<S>;
   list(opts?: ListOptions): Promise<ResourceList<T, K>>;

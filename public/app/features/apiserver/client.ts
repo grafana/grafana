@@ -44,7 +44,7 @@ export class ScopedResourceClient<T = object, K = string> implements ResourceCli
     return getBackendSrv().get<ResourceList<T, K>>(this.url, opts);
   }
 
-  public async create(obj: ResourceForCreate<T, K>): Promise<void> {
+  public async create(obj: ResourceForCreate<T, K>): Promise<Resource<T, K>> {
     if (!obj.metadata.name && !obj.metadata.generateName) {
       const login = contextSrv.user.login
       // GenerateName lets the apiserver create a new uid for the name

@@ -1,5 +1,3 @@
-import { lastValueFrom } from 'rxjs';
-
 import { AppEvents } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
@@ -28,14 +26,6 @@ export interface SaveDashboardOptions {
   refresh?: string;
 }
 
-interface SaveDashboardResponse {
-  id: number;
-  slug: string;
-  status: string;
-  uid: string;
-  url: string;
-  version: number;
-}
 
 export class DashboardSrv {
   dashboard?: DashboardModel;
@@ -75,17 +65,12 @@ export class DashboardSrv {
     data: SaveDashboardOptions,
     requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>
   ) {
-    return lastValueFrom(
-      getBackendSrv().fetch<SaveDashboardResponse>({
-        url: '/api/dashboards/db/',
-        method: 'POST',
-        data: {
-          ...data,
-          dashboard: data.dashboard.getSaveModelClone(),
-        },
-        ...requestOptions,
-      })
-    );
+    return getDashboardAPI().saveDashboard({
+      message: data.message,
+      folderUid: data.folderUid,
+      dashboard: data.dashboard.getSaveModelClone(),
+      showErrorAlert: requestOptions?.showErrorAlert,
+    });
   }
 
   starDashboard(dashboardUid: string, isStarred: boolean) {

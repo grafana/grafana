@@ -68,6 +68,11 @@ export interface DashboardMeta {
   dashboardNotFound?: boolean;
   isEmbedded?: boolean;
   isNew?: boolean;
+
+  // When loaded from kubernetes, we stick the raw metadata here
+  // yes weird, but this means all the editor structures can exist unchanged
+  // until we use the resource as the main container
+  k8s?: Partial<ObjectMeta>
 }
 
 export interface AnnotationActions {
@@ -86,9 +91,6 @@ export interface DashboardDataDTO extends Dashboard {
   title: string;
   uid: string;
   panels?: any[];
-
-  // When loaded from kubernetes, this is the raw metadata
-  k8s?: Partial<ObjectMeta>
 }
 
 export enum DashboardRoutes {

@@ -1,10 +1,10 @@
 import { config, getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { Resource, ResourceClient, ResourceForCreate } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, AnnoKeyMessage, ResourceClient, ResourceForCreate } from 'app/features/apiserver/types';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { DashboardDTO, DashboardDataDTO } from 'app/types';
+import { DashboardDTO, DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types';
 
 import { getScopesFromUrl } from '../utils/getScopesFromUrl';
 
@@ -12,7 +12,7 @@ export interface DashboardAPI {
   /** Get a dashboard with the access control metadata */
   getDashboardDTO(uid: string): Promise<DashboardDTO>;
   /** Save dashboard */
-  saveDashboard(options: SaveDashboardCommand): Promise<unknown>;
+  saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO>;
   /** Delete a dashboard */
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse>;
 }
@@ -21,10 +21,10 @@ export interface DashboardAPI {
 class LegacyDashboardAPI implements DashboardAPI {
   constructor() {}
 
-  saveDashboard(options: SaveDashboardCommand): Promise<unknown> {
+  saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO> {
     dashboardWatcher.ignoreNextSave();
 
-    return getBackendSrv().post('/api/dashboards/db/', {
+    return getBackendSrv().post<SaveDashboardResponseDTO>('/api/dashboards/db/', {
       dashboard: options.dashboard,
       message: options.message ?? '',
       overwrite: options.overwrite ?? false,
@@ -48,7 +48,8 @@ class LegacyDashboardAPI implements DashboardAPI {
 // Implemented using /apis/dashboards.grafana.app/*
 class K8sDashboardAPI implements DashboardAPI {
   private client: ResourceClient<DashboardDataDTO>;
-  constructor(private legacy: DashboardAPI) {
+
+  constructor() {
     this.client = new ScopedResourceClient<DashboardDataDTO>({
       group: 'dashboard.grafana.app',
       version: 'v0alpha1',
@@ -56,22 +57,57 @@ class K8sDashboardAPI implements DashboardAPI {
     });
   }
 
-  saveDashboard(options: SaveDashboardCommand): Promise<unknown> {
+  saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO> {
     const dashboard = options.dashboard as DashboardDataDTO;
     const obj: ResourceForCreate<DashboardDataDTO> = {
       metadata: {
-        name: dashboard.uid,
+        ...options.k8s,
       },
       spec: {
         ...dashboard,
       }
     }
+    if (options.message) {
+      obj.metadata.annotations = {
+        ...obj.metadata.annotations,
+        [AnnoKeyMessage]: options.message,
+      };
+    }
+    if (options.folderUid) {
+      obj.metadata.annotations = {
+        ...obj.metadata.annotations,
+        [AnnoKeyFolder]: options.folderUid,
+      };
+    }
 
-    return this.legacy.saveDashboard(options);
+    if (dashboard.uid) {
+      obj.metadata.name = dashboard.uid;
+      
+      return this.client.update(obj).then(v => ({
+        uid: v.metadata.name,
+        version: 123,
+        id: 123,
+        status: 'x',
+        slug: 'a',
+        url: 'xx',
+      }))
+    } 
+    return this.client.create(obj).then(v => ({
+      uid: v.metadata.name,
+      version: 123,
+      id: 123,
+      status: 'x',
+      slug: 'a',
+      url: 'xx',
+    }))
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
-    return this.legacy.deleteDashboard(uid, showSuccessAlert);
+    return this.client.delete(uid).then(v => ({
+      id: 123,
+      message: v.message,
+      title: 'deleted',
+    }));
   }
 
   async getDashboardDTO(uid: string): Promise<DashboardDTO> {
@@ -83,9 +119,9 @@ class K8sDashboardAPI implements DashboardAPI {
         isNew: false,
         isFolder: false,
         uid: d.metadata.name,
+        k8s: d.metadata,
       },
       dashboard: d.spec,
-      k8s: d.metadata,
     };
   }
 }
@@ -95,7 +131,7 @@ let instance: DashboardAPI | undefined = undefined;
 export function getDashboardAPI() {
   if (!instance) {
     const legacy = new LegacyDashboardAPI();
-    instance = config.featureToggles.kubernetesDashboards ? new K8sDashboardAPI(legacy) : legacy;
+    instance = config.featureToggles.kubernetesDashboards ? new K8sDashboardAPI() : legacy;
   }
   return instance;
 }
