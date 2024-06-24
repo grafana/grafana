@@ -89,18 +89,8 @@ Notification errors are only available with [pre-configured Grafana Alertmanager
 
 Notification errors provide information about why they failed to be sent or were not received.
 
-To view notification errors, complete the following steps.
+To view notification errors, navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+Each contact point displays a message about the status of their latest notification deliveries.
 
-   If any contact points are failing, a message at the right-hand corner of the screen alerts the user to the fact that there are errors and how many.
-
-1. Click on the contact point to view the details of errors for each contact point.
-
-   Error details are displayed if you hover over the Error icon.
-
-   If a contact point has more than one integration, you see all errors for each of the integrations listed.
-
-1. In the **Health** column, check the status of the notification.
-
-   This can be either OK, No attempts, or Error.
+If a contact point is failing, a red message indicates that there are errors delivering notifications. Hover over the error message to see the notification error details.
