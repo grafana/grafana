@@ -96,6 +96,8 @@ Enables you to easily choose which templates you want to use in your alert notif
 
 Select from existing templates or enter a custom one for your specific needs. You can switch between the two tabs to access the list of available templates and copy them across to the customized version.
 
+Learn more in [Use notification templates](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/use-notification-templates/)
+
 ### Add OAuth2 to HTTP settings for vanilla Alertmanager / Mimir
 
 <!-- Gilles -->
@@ -145,6 +147,8 @@ Manage silences through Role-Based Access Control (RBAC). In addition to the Gra
 - Users with the **alert.silences:create permission**, scoped within a folder, are able to create silences for rules contained within that folder and its subfolders
 - Users with the **alert.silences:read permission**, scoped within a folder, are able to read silences for rules contained within that folder and its subfolders, and general silences
 - Users with the **alert.silences:write permission**, scoped within a folder, are able to expire and recreate silences for rules contained within that folder and its subfolders
+
+Learn more about [managing access using roles](https://grafana.com/docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-rbac/access-roles/)
 
 ### Support for AWS SNS integration in Grafana-managed alerts
 
