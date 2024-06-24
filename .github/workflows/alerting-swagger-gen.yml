@@ -16,7 +16,7 @@ jobs:
       - name: Set go version
         uses: actions/setup-go@v4
         with:
-          go-version: '1.21.10'
+          go-version: '1.22.4'
       - name: Build swagger
         run: |
           make -C pkg/services/ngalert/api/tooling post.json api.json
@@ -34,4 +34,3 @@ jobs:
           labels: 'area/alerting,type/docs,no-changelog'
           team-reviewers: 'grafana/alerting-backend-product'
           draft: false
-
