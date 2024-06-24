@@ -13,7 +13,7 @@ HTTP status code, and so on.
 
 ## Basic use
 
-### Declaring errors
+### Declare errors
 
 For a service, declare the different categories of errors that may occur
 from your service (this corresponds to categories for which you might want 
