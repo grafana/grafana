@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { store } from '../store';
+import { store } from './store';
 
 export interface Props<T> {
   storageKey: string;
