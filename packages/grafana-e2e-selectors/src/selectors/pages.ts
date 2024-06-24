@@ -272,7 +272,6 @@ export const Pages = {
     },
     SnapshotScene: {
       url: (key: string) => `/dashboard/snapshot/${key}`,
-      Tab: 'Snapshot',
       PublishSnapshot: 'data-testid publish snapshot button',
       CopyUrlButton: 'data-testid snapshot copy url button',
       CopyUrlInput: 'data-testid snapshot copy url input',
