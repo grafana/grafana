@@ -2,9 +2,9 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Menu } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 
-import { contextSrv } from '../../../../core/services/context_srv';
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { ShareDrawer } from '../ShareDrawer/ShareDrawer';
