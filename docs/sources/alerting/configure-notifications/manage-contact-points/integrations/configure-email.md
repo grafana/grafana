@@ -80,7 +80,7 @@ To set up email integration, complete the following steps.
 
 ## Next steps
 
-The Email contact point is ready to receive alert notifications.
+The email contact point is ready to receive alert notifications.
 
 To add this contact point to your alert, complete the following steps.
 
