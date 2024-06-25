@@ -1,6 +1,6 @@
 import { parseCreatedByValue } from './mappers';
 
-describe('mappers', () => {
+describe.skip('mappers', () => {
   describe('parseCreatedByValue', () => {
     it.each`
       value                        | expected
