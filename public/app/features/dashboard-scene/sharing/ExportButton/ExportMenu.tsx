@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
@@ -15,7 +13,7 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
   const onExportAsJsonClick = () => {
     const drawer = new ShareDrawer({
       title: t('export.json.title', 'Save dashboard JSON'),
-      body: new ExportAsJson({ dashboardRef: dashboard.getRef() }),
+      body: new ExportAsJson({}),
     });
 
     dashboard.showModal(drawer);

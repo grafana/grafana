@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -9,6 +8,7 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
+import { getDashboardSceneFor } from '../../utils/utils';
 import { ShareExportTab } from '../ShareExportTab';
 
 const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
@@ -18,13 +18,10 @@ export class ExportAsJson extends ShareExportTab {
 }
 
 function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
+  const dashboard = getDashboardSceneFor(model);
   const styles = useStyles2(getStyles);
 
-  const { isSharingExternally, dashboardRef } = model.useState();
-
-  const onCancelClick = () => {
-    dashboardRef.resolve().closeModal();
-  };
+  const { isSharingExternally } = model.useState();
 
   const dashboardJson = useAsync(async () => {
     const json = await model.getExportableDashboardJson();
@@ -86,7 +83,12 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
           >
             <Trans i18nKey="export.json.copy-button">Copy to clipboard</Trans>
           </ClipboardButton>
-          <Button data-testid={selector.cancelButton} variant="secondary" onClick={onCancelClick} fill="outline">
+          <Button
+            data-testid={selector.cancelButton}
+            variant="secondary"
+            onClick={() => dashboard.closeModal()}
+            fill="outline"
+          >
             <Trans i18nKey="export.json.cancel-button">Cancel</Trans>
           </Button>
         </Stack>
