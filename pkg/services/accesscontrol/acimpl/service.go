@@ -246,6 +246,7 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	}
 
 	permissions = append(permissions, userPermissions...)
+span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
 
 	return permissions, nil
 }
