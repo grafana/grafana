@@ -231,8 +231,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Group:       "Organizations",
 			Permissions: ac.ConcatPermissions(orgReaderRole.Role.Permissions, []ac.Permission{
 				{Action: ac.ActionOrgsPreferencesRead},
-				{Action: ac.ActionOrgsWrite},
-				{Action: ac.ActionOrgsPreferencesWrite},
+				// {Action: ac.ActionOrgsWrite},
+				// {Action: ac.ActionOrgsPreferencesWrite},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},
