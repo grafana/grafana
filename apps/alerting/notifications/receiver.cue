@@ -20,6 +20,7 @@ receiver: {
 					type: string
 					disableResolveMessage?: bool
 					settings: bytes
+					secureFields?: [string]: bool
 				}
 				spec: {
 					title: string
