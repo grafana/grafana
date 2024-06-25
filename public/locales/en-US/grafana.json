@@ -680,7 +680,8 @@
       "title": "Save dashboard JSON"
     },
     "menu": {
-      "export-as-json-label": "Export"
+      "export-as-json-label": "Export",
+      "export-as-json-tooltip": "Export"
     }
   },
   "folder-picker": {

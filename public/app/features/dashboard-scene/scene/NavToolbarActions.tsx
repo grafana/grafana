@@ -371,7 +371,13 @@ export function ToolbarActions({ dashboard }: Props) {
   });
 
   toolbarActions.push({
-    group: 'new-share-dashboard-button',
+    group: 'new-share-dashboard-buttons',
+    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    render: () => <ExportButton key="new-export-dashboard-button" dashboard={dashboard} />,
+  });
+
+  toolbarActions.push({
+    group: 'new-share-dashboard-buttons',
     condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
     render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
@@ -577,12 +583,6 @@ export function ToolbarActions({ dashboard }: Props) {
         </ButtonGroup>
       );
     },
-  });
-
-  toolbarActions.push({
-    group: 'new-export-dashboard-button',
-    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
-    render: () => <ExportButton key="new-export-dashboard-button" dashboard={dashboard} />,
   });
 
   const actionElements: React.ReactNode[] = [];

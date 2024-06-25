@@ -680,7 +680,8 @@
       "title": "Ŝävę đäşĥþőäřđ ĴŜØŃ"
     },
     "menu": {
-      "export-as-json-label": "Ēχpőřŧ"
+      "export-as-json-label": "Ēχpőřŧ",
+      "export-as-json-tooltip": "Ēχpőřŧ"
     }
   },
   "folder-picker": {

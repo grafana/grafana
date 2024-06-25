@@ -6,7 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useTheme2 } from '@grafana/ui';
+import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { ShareExportTab } from '../ShareExportTab';
@@ -18,8 +18,7 @@ export class ExportAsJson extends ShareExportTab {
 }
 
 function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   const { isSharingExternally, dashboardRef } = model.useState();
 
@@ -39,7 +38,6 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
           Copy or download a JSON file containing the JSON of your dashboard
         </Trans>
       </p>
-
       <Stack gap={1} alignItems="center">
         <Switch
           data-testid={selector.exportExternallyToggle}
@@ -51,7 +49,6 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
           <Trans i18nKey="export.json.export-externally-label">Export the dashboard to use in another instance</Trans>
         </Label>
       </Stack>
-
       <AutoSizer disableHeight className={styles.codeEditorBox} data-testid={selector.codeEditor}>
         {({ width }) => {
           if (dashboardJson.value) {
@@ -70,29 +67,30 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
           return dashboardJson.loading && <Spinner />;
         }}
       </AutoSizer>
-
-      <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
-        <Button
-          data-testid={selector.saveToFileButton}
-          variant="primary"
-          icon="download-alt"
-          onClick={model.onSaveAsFile}
-        >
-          <Trans i18nKey="export.json.download-button">Download file</Trans>
-        </Button>
-        <ClipboardButton
-          data-testid={selector.copyToClipboardButton}
-          variant="secondary"
-          icon="copy"
-          disabled={dashboardJson.loading}
-          getText={() => dashboardJson.value ?? ''}
-        >
-          <Trans i18nKey="export.json.copy-button">Copy to clipboard</Trans>
-        </ClipboardButton>
-        <Button data-testid={selector.cancelButton} variant="secondary" onClick={onCancelClick} fill="outline">
-          <Trans i18nKey="export.json.cancel-button">Cancel</Trans>
-        </Button>
-      </Stack>
+      <div className={styles.container}>
+        <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
+          <Button
+            data-testid={selector.saveToFileButton}
+            variant="primary"
+            icon="download-alt"
+            onClick={model.onSaveAsFile}
+          >
+            <Trans i18nKey="export.json.download-button">Download file</Trans>
+          </Button>
+          <ClipboardButton
+            data-testid={selector.copyToClipboardButton}
+            variant="secondary"
+            icon="copy"
+            disabled={dashboardJson.loading}
+            getText={() => dashboardJson.value ?? ''}
+          >
+            <Trans i18nKey="export.json.copy-button">Copy to clipboard</Trans>
+          </ClipboardButton>
+          <Button data-testid={selector.cancelButton} variant="secondary" onClick={onCancelClick} fill="outline">
+            <Trans i18nKey="export.json.cancel-button">Cancel</Trans>
+          </Button>
+        </Stack>
+      </div>
     </>
   );
 }
@@ -101,6 +99,9 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     codeEditorBox: css({
       margin: `${theme.spacing(2)} 0`,
+    }),
+    container: css({
+      paddingBottom: theme.spacing(2),
     }),
   };
 }
