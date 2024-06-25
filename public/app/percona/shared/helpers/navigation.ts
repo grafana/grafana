@@ -1,7 +1,7 @@
 import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 
 export const useLinkWithVariables = (url?: string) => {
-  if (url?.match('/d/')) {
+  if (url && isDashboardUrl(url) && isDashboardUrl(window.location.pathname)) {
     return getLinkSrv().getLinkUrl({
       url: url,
       keepTime: true,
@@ -13,9 +13,11 @@ export const useLinkWithVariables = (url?: string) => {
   }
 };
 
-const checkDbType = (url: string): boolean => {
-  const currentDB = window.location.pathname.split('/')[3].split('-')[0];
-  const urlDB = url.split('/')[3].split('-')[0];
+const isDashboardUrl = (url?: string) => url?.includes('/d/');
 
-  return currentDB === urlDB;
+const checkDbType = (url: string): boolean => {
+  const currentDB = window.location.pathname?.split('/')[3]?.split('-')[0];
+  const urlDB = url?.split('/')[3]?.split('-')[0];
+
+  return currentDB !== undefined && currentDB === urlDB;
 };
