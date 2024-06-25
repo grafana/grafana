@@ -104,6 +104,20 @@ def release_npm_packages_step():
         "commands": ["./bin/build artifacts npm release --tag ${DRONE_TAG}"],
     }
 
+def verify_npm_packages_step():
+    return {
+        "name": "verify-npm-packages",
+        "image": images["publish"],
+        "depends_on": ["release-npm-packages"],
+        "environment": {
+            "DRONE_TAG": "${DRONE_TAG}",
+        },
+        "commands": [
+            # JEV: do i want to use grafana-release here, or write a script that does the work, avoiding adding another dep?
+            "grafana-release verify-release npm --version ${DRONE_TAG} || (echo 'ERROR: NPM package verification failed for version ${DRONE_TAG}' >&2; exit 1)",
+        ],
+    }
+
 def publish_artifacts_step():
     return {
         "name": "publish-artifacts",
