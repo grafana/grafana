@@ -20,13 +20,13 @@ Explore is your starting point for analyzing, querying and aggregating data in G
 
 Explore consists of a toolbar, a query editor, the ability to add multiple queries, a query history and a query inspector that provides detailed statistics about your query.
 
-**Toolbar** - Provides quick access to frequently used tools and settings.
+- **Toolbar** - Provides an Outline and quick access to frequently used tools and settings.
 
-**Query editor** - Interface where you construct the query for a specific data source. Query editor elements differ based on data source. In order to run queries across multiple data sources you need to select **Mixed** from the data source picker.
+- **Query editor** - Interface where you construct the query for a specific data source. Query editor elements differ based on data source. In order to run queries across multiple data sources you need to select **Mixed** from the data source picker.
 
-**+ Add query** - Add additional queries.
+- **+Add query** - Add additional queries.
 
-**Query inspector** - Provides detailed statistics regarding your query. Inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**.
+- **Query inspector** - Provides detailed statistics regarding your query. Inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**.
 
 
 
@@ -64,21 +64,17 @@ Refer to [Role-based access Control]({{< relref "../administration/roles-and-per
 
 To access Explore:
 
-1. Click on the Explore icon on the menu bar.
+1. Click on **Explore** in the left side menu.
 
-   An empty Explore tab opens.
+   An empty Explore page opens.
 
-   Alternately to start with an existing query in a panel, choose the Explore option from the Panel menu. This opens an Explore tab with the query from the panel and allows you to tweak or iterate in the query outside of your dashboard.
+   Alternately to start with an existing query in a dashboard panel, choose the Explore option from the Panel menu in the upper right. This opens an Explore page with the query from the panel and allows you to tweak or iterate the query outside of your dashboard.
 
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-panel-menu-10.1.png" class="docs-image--no-shadow" max-width= "650px" caption="Screenshot of the panel menu including the Explore option" >}}
 
-1. Choose your data source from the drop-down in the top left.
-
-   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
-
-1. Write the query using a query editor provided by the selected data source. Please check [data sources documentation]({{< relref "../datasources" >}}) to see how to use various query editors.
-1. For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../panels-visualizations/query-transform-data" >}}).
-1. Run the query using the button in the top right corner.
+1. Select a data source from the drop-down in the upper left.
+1. Using the query editor provided for the specific data source, begin writing your query. Each query editor differs based on each data source's unique elements. Some query editors provide a **Kick start your query** option, which gives you a list of basic pre-written queries. Refer to [Use query editors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#use-query-editors) to see how to use various query editors. For general information on querying data sources in Grafana, refer to [Query and transform data](/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
+1. Click **Run query** in the upper right to run your query.
 
 ## Split and compare
 
