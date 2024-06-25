@@ -65,7 +65,7 @@ jobs:
           ref: main
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: '16'
+          node-version: '18'
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: "Generate token"
