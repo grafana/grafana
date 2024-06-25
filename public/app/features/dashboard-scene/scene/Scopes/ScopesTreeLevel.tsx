@@ -85,7 +85,7 @@ export function ScopesTreeLevel({
                         checked={isSelected}
                         label=""
                         data-testid={`scopes-tree-${childNode.name}-radio`}
-                        onChange={() => {
+                        onClick={() => {
                           onNodeSelectToggle(childNodePath);
                         }}
                       />
