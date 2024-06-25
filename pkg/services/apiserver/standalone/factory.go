@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
-	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/query/client"
@@ -75,9 +74,6 @@ func (p *DummyAPIFactory) MakeAPIServer(_ context.Context, tracer tracing.Tracer
 	}
 
 	switch gv.Group {
-	case "example.grafana.app":
-		return example.NewTestingAPIBuilder(), nil
-
 	// Only works with testdata
 	case "query.grafana.app":
 		return query.NewQueryAPIBuilder(

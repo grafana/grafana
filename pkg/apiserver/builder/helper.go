@@ -10,10 +10,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/mod/semver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -94,10 +96,13 @@ func SetupConfig(
 
 		// Needs to run last in request chain to function as expected, hence we register it first.
 		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+		handler = filters.WithRequester(handler)
 		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, pathRewriters)
 		handler = k8stracing.WithTracing(handler, serverConfig.TracerProvider, "KubernetesAPI")
+		// Configure filters.WithPanicRecovery to not crash on panic
+		utilruntime.ReallyCrash = false
 
 		return handler
 	}
@@ -128,6 +133,7 @@ func InstallAPIs(
 	optsGetter generic.RESTOptionsGetter,
 	builders []APIGroupBuilder,
 	storageOpts *options.StorageOptions,
+	reg prometheus.Registerer,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
@@ -136,7 +142,7 @@ func InstallAPIs(
 
 	for _, b := range builders {
 		mode := b.GetDesiredDualWriterMode(dualWriteEnabled, storageOpts.DualWriterDesiredModes)
-		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, mode)
+		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, mode, reg)
 		if err != nil {
 			return err
 		}

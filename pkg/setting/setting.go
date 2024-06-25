@@ -16,7 +16,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -307,6 +306,7 @@ type Cfg struct {
 	UserInviteMaxLifetime        time.Duration
 	HiddenUsers                  map[string]struct{}
 	CaseInsensitiveLogin         bool // Login and Email will be considered case insensitive
+	UserLastSeenUpdateInterval   time.Duration
 	VerificationEmailMaxLifetime time.Duration
 
 	// Service Accounts
@@ -474,6 +474,8 @@ type Cfg struct {
 	RBACResetBasicRoles bool
 	// RBAC single organization. This configuration option is subject to change.
 	RBACSingleOrganization bool
+
+	Zanzana ZanzanaSettings
 
 	// GRPC Server.
 	GRPCServerNetwork        string
@@ -1022,9 +1024,9 @@ func (cfg *Cfg) validateStaticRootPath() error {
 func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.setHomePath(args)
 
-	// Fix for missing IANA db on Windows
+	// Fix for missing IANA db on Windows or Alpine
 	_, zoneInfoSet := os.LookupEnv(zoneInfo)
-	if runtime.GOOS == "windows" && !zoneInfoSet {
+	if !zoneInfoSet {
 		if err := os.Setenv(zoneInfo, filepath.Join(cfg.HomePath, "tools", "zoneinfo.zip")); err != nil {
 			cfg.Logger.Error("Can't set ZONEINFO environment variable", "err", err)
 		}
@@ -1113,6 +1115,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	readOAuth2ServerSettings(cfg)
 
 	readAccessControlSettings(iniFile, cfg)
+
+	cfg.readZanzanaSettings()
+
 	if err := cfg.readRenderingSettings(iniFile); err != nil {
 		return err
 	}
@@ -1691,6 +1696,19 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
 	}
 
+	cfg.UserLastSeenUpdateInterval, err = gtime.ParseDuration(valueAsString(users, "last_seen_update_interval", "15m"))
+	if err != nil {
+		return err
+	}
+
+	if cfg.UserLastSeenUpdateInterval < time.Minute*5 {
+		cfg.Logger.Warn("the minimum supported value for the `last_seen_update_interval` configuration is 5m (5 minutes)")
+		cfg.UserLastSeenUpdateInterval = time.Minute * 5
+	} else if cfg.UserLastSeenUpdateInterval > time.Hour*1 {
+		cfg.Logger.Warn("the maximum supported value for the `last_seen_update_interval` configuration is 1h (1 hour)")
+		cfg.UserLastSeenUpdateInterval = time.Hour * 1
+	}
+
 	cfg.HiddenUsers = make(map[string]struct{})
 	hiddenUsers := users.Key("hidden_users").MustString("")
 	for _, user := range strings.Split(hiddenUsers, ",") {
@@ -1986,19 +2004,23 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	cfg.LiveHAEngineAddress = section.Key("ha_engine_address").MustString("127.0.0.1:6379")
 	cfg.LiveHAEnginePassword = section.Key("ha_engine_password").MustString("")
 
-	var originPatterns []string
 	allowedOrigins := section.Key("allowed_origins").MustString("")
-	for _, originPattern := range strings.Split(allowedOrigins, ",") {
+	origins := strings.Split(allowedOrigins, ",")
+
+	originPatterns := make([]string, 0, len(origins))
+	for _, originPattern := range origins {
 		originPattern = strings.TrimSpace(originPattern)
 		if originPattern == "" {
 			continue
 		}
 		originPatterns = append(originPatterns, originPattern)
 	}
+
 	_, err := GetAllowedOriginGlobs(originPatterns)
 	if err != nil {
 		return err
 	}
+
 	cfg.LiveAllowedOrigins = originPatterns
 	return nil
 }

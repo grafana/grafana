@@ -9,7 +9,7 @@ import 'vendor/bootstrap/bootstrap';
 import 'app/features/all';
 
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
-import React from 'react';
+import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import {
@@ -42,7 +42,6 @@ import {
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
 import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
-import { getScrollbarWidth } from '@grafana/ui';
 import config, { updateConfig } from 'app/core/config';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
@@ -135,10 +134,6 @@ export class GrafanaApp {
       initIconCache();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
-
-      if (!config.featureToggles.betterPageScrolling) {
-        addClassIfNoOverlayScrollbar();
-      }
 
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
@@ -261,7 +256,7 @@ export class GrafanaApp {
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(
-        React.createElement(AppWrapper, {
+        createElement(AppWrapper, {
           app: this,
         })
       );
@@ -364,12 +359,6 @@ function initEchoSrv() {
         endpointUrl: config.applicationInsightsEndpointUrl,
       })
     );
-  }
-}
-
-function addClassIfNoOverlayScrollbar() {
-  if (getScrollbarWidth() > 0) {
-    document.body.classList.add('no-overlay-scrollbar');
   }
 }
 

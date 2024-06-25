@@ -126,7 +126,7 @@ func TestMetaAccessor(t *testing.T) {
 	originInfo := &utils.ResourceOriginInfo{
 		Name: "test",
 		Path: "a/b/c",
-		Key:  "kkk",
+		Hash: "kkk",
 	}
 
 	t.Run("fails for non resource objects", func(t *testing.T) {
@@ -158,13 +158,18 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, map[string]string{
 			"grafana.app/originName": "test",
 			"grafana.app/originPath": "a/b/c",
-			"grafana.app/originKey":  "kkk",
+			"grafana.app/originHash": "kkk",
 			"grafana.app/folder":     "folderUID",
 		}, res.GetAnnotations())
 
 		meta.SetNamespace("aaa")
+		meta.SetResourceVersionInt64(12345)
 		require.Equal(t, "aaa", res.GetNamespace())
 		require.Equal(t, "aaa", meta.GetNamespace())
+
+		rv, err := meta.GetResourceVersionInt64()
+		require.NoError(t, err)
+		require.Equal(t, int64(12345), rv)
 	})
 
 	t.Run("find titles", func(t *testing.T) {
@@ -187,7 +192,7 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, map[string]string{
 			"grafana.app/originName": "test",
 			"grafana.app/originPath": "a/b/c",
-			"grafana.app/originKey":  "kkk",
+			"grafana.app/originHash": "kkk",
 			"grafana.app/folder":     "folderUID",
 		}, obj.GetAnnotations())
 
@@ -210,7 +215,7 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, map[string]string{
 			"grafana.app/originName": "test",
 			"grafana.app/originPath": "a/b/c",
-			"grafana.app/originKey":  "kkk",
+			"grafana.app/originHash": "kkk",
 			"grafana.app/folder":     "folderUID",
 		}, obj2.GetAnnotations())
 

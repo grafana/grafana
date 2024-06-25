@@ -1,19 +1,19 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, IconButton, Input, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
-import { NodesMap } from './types';
+import { NodesMap, TreeScope } from './types';
 
 export interface ScopesTreeLevelProps {
   nodes: NodesMap;
   nodePath: string[];
   loadingNodeName: string | undefined;
-  scopeNames: string[];
+  scopes: TreeScope[];
   onNodeUpdate: (path: string[], isExpanded: boolean, query: string) => void;
   onNodeSelectToggle: (path: string[]) => void;
 }
@@ -22,7 +22,7 @@ export function ScopesTreeLevel({
   nodes,
   nodePath,
   loadingNodeName,
-  scopeNames,
+  scopes,
   onNodeUpdate,
   onNodeSelectToggle,
 }: ScopesTreeLevelProps) {
@@ -34,6 +34,7 @@ export function ScopesTreeLevel({
   const childNodesArr = Object.values(childNodes);
   const isNodeLoading = loadingNodeName === nodeId;
 
+  const scopeNames = scopes.map(({ scopeName }) => scopeName);
   const anyChildExpanded = childNodesArr.some(({ isExpanded }) => isExpanded);
   const anyChildSelected = childNodesArr.some(({ linkId }) => linkId && scopeNames.includes(linkId!));
 
@@ -45,11 +46,17 @@ export function ScopesTreeLevel({
         <Input
           prefix={<Icon name="filter" />}
           className={styles.searchInput}
-          placeholder={t('scopes.tree.search', 'Filter')}
+          placeholder={t('scopes.tree.search', 'Search')}
           defaultValue={node.query}
           data-testid={`scopes-tree-${nodeId}-search`}
           onInput={(evt) => onQueryUpdate(nodePath, true, evt.currentTarget.value)}
         />
+      )}
+
+      {!anyChildExpanded && !node.query && (
+        <h6 className={styles.headline}>
+          <Trans i18nKey="scopes.tree.headline">Recommended</Trans>
+        </h6>
       )}
 
       <div role="tree">
@@ -102,7 +109,7 @@ export function ScopesTreeLevel({
                       nodes={node.nodes}
                       nodePath={childNodePath}
                       loadingNodeName={loadingNodeName}
-                      scopeNames={scopeNames}
+                      scopes={scopes}
                       onNodeUpdate={onNodeUpdate}
                       onNodeSelectToggle={onNodeSelectToggle}
                     />
@@ -119,6 +126,10 @@ export function ScopesTreeLevel({
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     searchInput: css({
+      margin: theme.spacing(1, 0),
+    }),
+    headline: css({
+      color: theme.colors.text.secondary,
       margin: theme.spacing(1, 0),
     }),
     loader: css({

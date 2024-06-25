@@ -1,5 +1,5 @@
 // Libraries
-import React, { memo } from 'react';
+import { memo } from 'react';
 
 import { AnnotationQuery } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';

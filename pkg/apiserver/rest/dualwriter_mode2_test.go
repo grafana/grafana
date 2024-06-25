@@ -67,7 +67,7 @@ func TestMode2_Create(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode2, ls, us)
+			dw := NewDualWriter(Mode2, ls, us, p)
 
 			obj, err := dw.Create(context.Background(), tt.input, createFn, &metav1.CreateOptions{})
 
@@ -79,7 +79,7 @@ func TestMode2_Create(t *testing.T) {
 			assert.Equal(t, exampleObj, obj)
 			accessor, err := meta.Accessor(obj)
 			assert.NoError(t, err)
-			assert.Equal(t, accessor.GetResourceVersion(), "")
+			assert.Equal(t, accessor.GetResourceVersion(), "1")
 		})
 	}
 }
@@ -143,7 +143,7 @@ func TestMode2_Get(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode2, ls, us)
+			dw := NewDualWriter(Mode2, ls, us, p)
 
 			obj, err := dw.Get(context.Background(), tt.input, &metav1.GetOptions{})
 
@@ -196,7 +196,7 @@ func TestMode2_List(t *testing.T) {
 				tt.setupStorageFn(m)
 			}
 
-			dw := NewDualWriter(Mode2, ls, us)
+			dw := NewDualWriter(Mode2, ls, us, p)
 
 			obj, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
 
@@ -289,7 +289,7 @@ func TestMode2_Delete(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode2, ls, us)
+			dw := NewDualWriter(Mode2, ls, us, p)
 
 			obj, _, err := dw.Delete(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 
@@ -361,7 +361,7 @@ func TestMode2_DeleteCollection(t *testing.T) {
 				tt.setupStorageFn(m)
 			}
 
-			dw := NewDualWriter(Mode2, ls, us)
+			dw := NewDualWriter(Mode2, ls, us, p)
 
 			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: tt.input}}, &metainternalversion.ListOptions{})
 
@@ -469,7 +469,7 @@ func TestMode2_Update(t *testing.T) {
 				tt.setupStorageFn(m, tt.input)
 			}
 
-			dw := NewDualWriter(Mode2, ls, us)
+			dw := NewDualWriter(Mode2, ls, us, p)
 
 			obj, _, err := dw.Update(context.Background(), tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 
@@ -493,83 +493,7 @@ func TestEnrichReturnedObject(t *testing.T) {
 		wantErr        bool
 	}{
 		{
-			name: "create: original object does not have labels and annotations",
-			inputOriginal: &example.Pod{
-				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5")},
-				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-			},
-			inputReturned: &example.Pod{
-				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
-				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-			},
-			isCreated: true,
-			expectedObject: &example.Pod{
-				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "", UID: types.UID("")},
-				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-			},
-		},
-		{
-			name: "create: returned object does not have labels and annotations",
-			inputOriginal: &example.Pod{
-				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
-				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-			},
-			inputReturned: &example.Pod{
-				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6")},
-				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-			},
-			isCreated: true,
-			expectedObject: &example.Pod{
-				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "", UID: types.UID(""), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
-				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-			},
-		},
-		{
-			name: "create: both objects have labels and annotations",
-			inputOriginal: &example.Pod{
-				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
-				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-			},
-			inputReturned: &example.Pod{
-				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6"), Labels: map[string]string{"label2": "2"}, Annotations: map[string]string{"annotation2": "2"}},
-				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-			},
-			isCreated: true,
-			expectedObject: &example.Pod{
-				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "", UID: types.UID(""), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
-				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-			},
-		},
-		{
-			name: "create: both objects have labels and annotations with duplicated keys",
-			inputOriginal: &example.Pod{
-				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
-				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-			},
-			inputReturned: &example.Pod{
-				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6"), Labels: map[string]string{"label1": "11"}, Annotations: map[string]string{"annotation1": "11"}},
-				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-			},
-			isCreated: true,
-			expectedObject: &example.Pod{
-				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
-				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "", UID: types.UID(""), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
-				Spec:       example.PodSpec{}, Status: example.PodStatus{},
-			},
-		},
-		{
-			name: "update: original object does not have labels and annotations",
+			name: "original object does not have labels and annotations",
 			inputOriginal: &example.Pod{
 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5")},
@@ -587,7 +511,7 @@ func TestEnrichReturnedObject(t *testing.T) {
 			},
 		},
 		{
-			name: "update: returned object does not have labels and annotations",
+			name: "returned object does not have labels and annotations",
 			inputOriginal: &example.Pod{
 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
@@ -605,7 +529,7 @@ func TestEnrichReturnedObject(t *testing.T) {
 			},
 		},
 		{
-			name: "update: both objects have labels and annotations",
+			name: "both objects have labels and annotations",
 			inputOriginal: &example.Pod{
 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
@@ -623,7 +547,7 @@ func TestEnrichReturnedObject(t *testing.T) {
 			},
 		},
 		{
-			name: "update: both objects have labels and annotations with duplicated keys",
+			name: "both objects have labels and annotations with duplicated keys",
 			inputOriginal: &example.Pod{
 				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
 				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
@@ -658,13 +582,13 @@ func TestEnrichReturnedObject(t *testing.T) {
 
 	for _, tt := range testCase {
 		t.Run(tt.name, func(t *testing.T) {
-			returned, err := enrichLegacyObject(tt.inputOriginal, tt.inputReturned, tt.isCreated)
+			err := enrichLegacyObject(tt.inputOriginal, tt.inputReturned)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
 
-			accessorReturned, err := meta.Accessor(returned)
+			accessorReturned, err := meta.Accessor(tt.inputReturned)
 			assert.NoError(t, err)
 
 			accessorExpected, err := meta.Accessor(tt.expectedObject)

@@ -1,13 +1,13 @@
 import { screen, render, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
-import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { config, locationService } from '@grafana/runtime';
+import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { DashboardMeta } from 'app/types';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 
@@ -103,9 +103,8 @@ describe('NavToolbarActions', () => {
     });
 
     it('Should show correct buttons when in settings menu', async () => {
-      const { dashboard } = setup();
+      setup();
 
-      dashboard.startUrlSync();
       await userEvent.click(await screen.findByText('Edit'));
       await userEvent.click(await screen.findByText('Settings'));
 
@@ -118,6 +117,7 @@ describe('NavToolbarActions', () => {
 
     it('Should show correct buttons when editing a new panel', async () => {
       const { dashboard } = setup();
+
       await act(() => {
         dashboard.onEnterEditMode();
         const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
@@ -163,9 +163,27 @@ describe('NavToolbarActions', () => {
       expect(newShareButton).toBeInTheDocument();
     });
   });
+
+  describe('Snapshot', () => {
+    it('should show link button when is a snapshot', () => {
+      setup({
+        isSnapshot: true,
+      });
+
+      expect(screen.queryByTestId('button-snapshot')).toBeInTheDocument();
+    });
+    it('should not show link button when is not found dashboard', () => {
+      setup({
+        isSnapshot: true,
+        dashboardNotFound: true,
+      });
+
+      expect(screen.queryByTestId('button-snapshot')).not.toBeInTheDocument();
+    });
+  });
 });
 
-function setup() {
+function setup(meta?: DashboardMeta) {
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     meta: {
@@ -177,6 +195,7 @@ function setup() {
       canStar: true,
       canAdmin: true,
       canDelete: true,
+      ...meta,
     },
     title: 'hello',
     uid: 'dash-1',
@@ -205,9 +224,13 @@ function setup() {
 
   const context = getGrafanaContextMock();
 
+  locationService.push('/');
+
   render(
     <TestProvider grafanaContext={context}>
-      <ToolbarActions dashboard={dashboard} />
+      <UrlSyncContextProvider scene={dashboard}>
+        <ToolbarActions dashboard={dashboard} />
+      </UrlSyncContextProvider>
     </TestProvider>
   );
 

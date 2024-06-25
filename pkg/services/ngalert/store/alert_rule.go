@@ -787,7 +787,8 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 	if len(rules) == 0 {
 		return 0, nil
 	}
-	var updates []ngmodels.UpdateRule
+
+	updates := make([]ngmodels.UpdateRule, 0, len(rules))
 	for _, rule := range rules {
 		r := ngmodels.CopyRule(rule)
 		for idx := range r.NotificationSettings {
@@ -795,6 +796,7 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 				r.NotificationSettings[idx].Receiver = newReceiver
 			}
 		}
+
 		updates = append(updates, ngmodels.UpdateRule{
 			Existing: rule,
 			New:      *r,

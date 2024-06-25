@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { Alert, CellProps, Column, Icon, InteractiveTable, Stack, Text, Tooltip } from '@grafana/ui';
 import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
@@ -32,7 +32,7 @@ export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
           return serverInfo.cell.value ? (
             <Stack justifyContent="end">
               <Tooltip content="Connection is available">
-                <Icon name="check" className="pull-right" />
+                <Icon name="check" />
               </Tooltip>
             </Stack>
           ) : (

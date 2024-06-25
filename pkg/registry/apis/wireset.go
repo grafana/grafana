@@ -3,10 +3,10 @@ package apiregistry
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
-	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/peakq"
@@ -28,7 +28,6 @@ var WireSet = wire.NewSet(
 	// Each must be added here *and* in the ServiceSink above
 	playlist.RegisterAPIService,
 	dashboard.RegisterAPIService,
-	example.RegisterAPIService,
 	dashboardsnapshot.RegisterAPIService,
 	featuretoggle.RegisterAPIService,
 	datasource.RegisterAPIService,
@@ -37,4 +36,5 @@ var WireSet = wire.NewSet(
 	service.RegisterAPIService,
 	query.RegisterAPIService,
 	scope.RegisterAPIService,
+	notifications.RegisterAPIService,
 )

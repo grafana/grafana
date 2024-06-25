@@ -1,4 +1,3 @@
-import React from 'react';
 import { Redirect, RouteComponentProps } from 'react-router-dom';
 
 import { isTruthy } from '@grafana/data';
@@ -436,10 +435,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     config.featureToggles.dashboardRestore && {
-      path: '/dashboard/recentlyDeleted',
+      path: '/dashboard/recently-deleted',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsDelete]),
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/manage-dashboards/RecentlyDeletedPage')
+        () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
       ),
     },
     {

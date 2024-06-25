@@ -1,18 +1,18 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { GrafanaTheme2, Scope, ScopeDashboardBinding, urlUtil } from '@grafana/data';
+import { GrafanaTheme2, Scope, urlUtil } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { CustomScrollbar, Icon, Input, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, Icon, IconButton, Input, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t } from 'app/core/internationalization';
 
-import { fetchDashboards } from './api';
+import { fetchSuggestedDashboards } from './api';
+import { SuggestedDashboard } from './types';
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
-  dashboards: ScopeDashboardBinding[];
-  filteredDashboards: ScopeDashboardBinding[];
+  dashboards: SuggestedDashboard[];
+  filteredDashboards: SuggestedDashboard[];
   isLoading: boolean;
   searchQuery: string;
 }
@@ -36,7 +36,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 
     this.setState({ isLoading: true });
 
-    const dashboards = await fetchDashboards(scopes);
+    const dashboards = await fetchSuggestedDashboards(scopes);
 
     this.setState({
       dashboards,
@@ -54,17 +54,15 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
   }
 
-  private filterDashboards(dashboards: ScopeDashboardBinding[], searchQuery: string) {
+  private filterDashboards(dashboards: SuggestedDashboard[], searchQuery: string): SuggestedDashboard[] {
     const lowerCasedSearchQuery = searchQuery.toLowerCase();
 
-    return dashboards.filter(({ spec: { dashboardTitle } }) =>
-      dashboardTitle.toLowerCase().includes(lowerCasedSearchQuery)
-    );
+    return dashboards.filter(({ dashboardTitle }) => dashboardTitle.toLowerCase().includes(lowerCasedSearchQuery));
   }
 }
 
 export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<ScopesDashboardsScene>) {
-  const { filteredDashboards, isLoading } = model.useState();
+  const { filteredDashboards, isLoading, searchQuery } = model.useState();
   const styles = useStyles2(getStyles);
 
   const [queryParams] = useQueryParams();
@@ -74,9 +72,20 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
       <div className={styles.searchInputContainer}>
         <Input
           prefix={<Icon name="search" />}
-          placeholder={t('scopes.suggestedDashboards.search', 'Filter')}
+          placeholder={t('scopes.suggestedDashboards.search', 'Search')}
           disabled={isLoading}
           data-testid="scopes-dashboards-search"
+          value={searchQuery}
+          suffix={
+            searchQuery && !isLoading ? (
+              <IconButton
+                aria-label={t('scopes.suggestedDashboards.clear', 'Clear search')}
+                name="times"
+                data-testid="scopes-dashboards-clear"
+                onClick={() => model.changeSearchQuery('')}
+              />
+            ) : undefined
+          }
           onChange={(evt) => model.changeSearchQuery(evt.currentTarget.value)}
         />
       </div>
@@ -89,7 +98,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
         />
       ) : (
         <CustomScrollbar>
-          {filteredDashboards.map(({ spec: { dashboard, dashboardTitle } }) => (
+          {filteredDashboards.map(({ dashboard, dashboardTitle }) => (
             <Link
               key={dashboard}
               to={urlUtil.renderUrl(`/d/${dashboard}/`, queryParams)}

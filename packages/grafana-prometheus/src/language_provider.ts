@@ -219,11 +219,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const searchParams = new URLSearchParams({ ...timeParams });
     queries?.forEach((q) => {
       const visualQuery = buildVisualQueryFromString(q.expr);
-      searchParams.append('match[]', visualQuery.query.metric);
-      if (visualQuery.query.binaryQueries) {
-        visualQuery.query.binaryQueries.forEach((bq) => {
-          searchParams.append('match[]', bq.query.metric);
-        });
+      if (visualQuery.query.metric !== '') {
+        searchParams.append('match[]', visualQuery.query.metric);
+        if (visualQuery.query.binaryQueries) {
+          visualQuery.query.binaryQueries.forEach((bq) => {
+            searchParams.append('match[]', bq.query.metric);
+          });
+        }
       }
     });
 

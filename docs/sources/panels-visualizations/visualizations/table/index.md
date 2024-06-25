@@ -120,9 +120,9 @@ If you set these in the Field tab, then the type will apply to all fields, inclu
 
 ### Auto
 
-The Auto cell type will automatically display values with sensible defaults applied.
+The **Auto** cell type automatically displays values, with sensible defaults applied.
 
-Toggle the **Wrap text** switch, to wrap text in the cell with the longest content or the matched field in the case of field overrides.
+Toggle the **Wrap text** switch to wrap text in the cell with the longest content or the matched field, if you've set a field override.
 
 ### Color text
 
@@ -130,7 +130,7 @@ If thresholds are set, then the field text is displayed in the appropriate thres
 
 {{< figure src="/static/img/docs/tables/color-text.png" max-width="500px" caption="Color text" class="docs-image--no-shadow" >}}
 
-Toggle the **Wrap text** switch, to wrap text in the cell with the longest content or the matched field in the case of field overrides.
+Toggle the **Wrap text** switch to wrap text in the cell with the longest content or the matched field, if you've set a field override.
 
 ### Color background (gradient or solid)
 
@@ -142,7 +142,7 @@ Toggle the **Apply to entire row** switch, to apply the background color that's 
 
 {{< figure src="/static/img/docs/tables/colored-rows.png" max-width="500px" alt="Colored row background" class="docs-image--no-shadow" >}}
 
-Toggle the **Wrap text** switch, to wrap text in the cell with the longest content or the matched field in the case of field overrides.
+Toggle the **Wrap text** switch to wrap text in the cell with the longest content or the matched, if field you've set a field override.
 
 ### Gauge
 
