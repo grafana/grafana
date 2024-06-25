@@ -399,7 +399,7 @@ function getQueryForLoki(
 
 function getLinkForFeO11y(span: TraceSpan): string | undefined {
   const feO11yAppId = span.process.tags.find((tag) => tag.key === feO11yTagKey)?.value;
-  const feO11ySessionId = span.tags.find((tag) => tag.key === 'session_id')?.value;
+  const feO11ySessionId = span.tags.find((tag) => tag.key === 'session_id' || tag.key === 'session.id')?.value;
 
   return feO11yAppId && feO11ySessionId
     ? `/a/grafana-kowalski-app/apps/${feO11yAppId}/sessions/${feO11ySessionId}`
