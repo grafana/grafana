@@ -727,7 +727,7 @@ const (
 	// Register Alerting APIs with the K8s API server
 	FlagAlertingApiServer = "alertingApiServer"
 
-	// FlagRestoreDashboards
-	// Enables the option to restore a recently deleted dashboard
-	FlagRestoreDashboards = "restoreDashboards"
+	// FlagDashboardRestoreUI
+	// Enables the frontend to be able to restore a recently deleted dashboard
+	FlagDashboardRestoreUI = "dashboardRestoreUI"
 )

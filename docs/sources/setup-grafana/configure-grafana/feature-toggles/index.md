@@ -191,7 +191,7 @@ Experimental features might be changed or removed without prior notice.
 | `failWrongDSUID`                            | Throws an error if a datasource has an invalid UIDs                                                                                                                                                                                                                               |
 | `databaseReadReplica`                       | Use a read replica for some database queries.                                                                                                                                                                                                                                     |
 | `alertingApiServer`                         | Register Alerting APIs with the K8s API server                                                                                                                                                                                                                                    |
-| `restoreDashboards`                         | Enables the option to restore a recently deleted dashboard                                                                                                                                                                                                                        |
+| `dashboardRestoreUI`                        | Enables the frontend to be able to restore a recently deleted dashboard                                                                                                                                                                                                           |
 
 ## Development feature toggles
 

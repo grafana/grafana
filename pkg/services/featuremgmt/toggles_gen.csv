@@ -179,4 +179,4 @@ databaseReadReplica,experimental,@grafana/grafana-backend-services-squad,false,f
 zanzana,experimental,@grafana/identity-access-team,false,false,false
 passScopeToDashboardApi,experimental,@grafana/dashboards-squad,false,false,false
 alertingApiServer,experimental,@grafana/alerting-squad,false,true,false
-restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
+dashboardRestoreUI,experimental,@grafana/grafana-frontend-platform,false,false,false
