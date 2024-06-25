@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
-import React, { useReducer } from 'react';
+import { useReducer } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, RawTimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';

@@ -1,6 +1,5 @@
 import { screen, render, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 

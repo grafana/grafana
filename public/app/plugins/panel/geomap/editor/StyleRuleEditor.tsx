@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { FeatureLike } from 'ol/Feature';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 

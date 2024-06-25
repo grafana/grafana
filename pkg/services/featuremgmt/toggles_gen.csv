@@ -10,7 +10,6 @@ lokiExperimentalStreaming,experimental,@grafana/observability-logs,false,false,f
 featureHighlights,GA,@grafana/grafana-as-code,false,false,false
 storage,experimental,@grafana/grafana-app-platform-squad,false,false,false
 correlations,GA,@grafana/explore-squad,false,false,false
-exploreContentOutline,GA,@grafana/explore-squad,false,false,true
 datasourceQueryMultiStatus,experimental,@grafana/plugins-platform-backend,false,false,false
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateGraphPanel,preview,@grafana/dataviz-squad,false,false,true
