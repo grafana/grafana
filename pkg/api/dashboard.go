@@ -50,7 +50,6 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashI
 	}
 
 	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
-
 	if err != nil {
 		return false, err
 	}
@@ -83,8 +82,12 @@ func dashboardGuardianResponse(err error) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response {
+	// START span here
+	ctx, span := hs.tracer.Start(c.Req.Context(), "httpserver.GetDashboard")
+	defer span.End()
+
 	uid := web.Params(c.Req)[":uid"]
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, uid)
+	dash, rsp := hs.getDashboardHelper(ctx, c.SignedInUser.GetOrgID(), 0, uid)
 	if rsp != nil {
 		return rsp
 	}
@@ -96,7 +99,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 
 	// If public dashboards is enabled and we have a public dashboard, update meta values
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) && hs.Cfg.PublicDashboardsEnabled {
-		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.SignedInUser.GetOrgID(), dash.UID)
+		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(ctx, c.SignedInUser.GetOrgID(), dash.UID)
 		if err != nil && !errors.Is(err, publicdashboardModels.ErrPublicDashboardNotFound) {
 			return response.Error(http.StatusInternalServerError, "Error while retrieving public dashboards", err)
 		}
@@ -119,7 +122,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 			return response.Error(http.StatusInternalServerError, "Error while loading dashboard, dashboard data is invalid", nil)
 		}
 	}
-	guardian, err := guardian.NewByDashboard(c.Req.Context(), dash, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	guardian, err := guardian.NewByDashboard(ctx, dash, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -139,14 +142,14 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	// Finding creator and last updater of the dashboard
 	updater, creator := anonString, anonString
 	if dash.UpdatedBy > 0 {
-		updater = hs.getUserLogin(c.Req.Context(), dash.UpdatedBy)
+		updater = hs.getUserLogin(ctx, dash.UpdatedBy)
 	}
 	if dash.CreatedBy > 0 {
-		creator = hs.getUserLogin(c.Req.Context(), dash.CreatedBy)
+		creator = hs.getUserLogin(ctx, dash.CreatedBy)
 	}
 
 	annotationPermissions := &dashboardsV0.AnnotationPermission{}
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
+	if hs.Features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
 		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
 	} else {
 		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
@@ -182,7 +185,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		// nolint:staticcheck
 		query := dashboards.GetDashboardQuery{ID: dash.FolderID, OrgID: c.SignedInUser.GetOrgID()}
 		metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetDashboard).Inc()
-		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+		queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
 		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
 				return response.Error(http.StatusNotFound, "Folder not found", err)
@@ -194,7 +197,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		meta.FolderUrl = queryResult.GetURL()
 	}
 
-	provisioningData, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(c.Req.Context(), dash.ID)
+	provisioningData, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(ctx, dash.ID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error while checking if dashboard is provisioned", err)
 	}
@@ -1004,7 +1007,6 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *contextmodel.ReqContext) respons
 	newData := newVersionRes.Data
 
 	result, err := dashdiffs.CalculateDiff(c.Req.Context(), &options, baseData, newData)
-
 	if err != nil {
 		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
 			return response.Error(http.StatusNotFound, "Dashboard version not found", err)
