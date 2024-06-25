@@ -206,11 +206,9 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 
 	l.Debug("Writing metric", "name", name)
 	writeStart := time.Now()
-	defer func() {
-		w.metrics.WriteDuration.WithLabelValues(lvs...).Observe(time.Since(writeStart).Seconds())
-	}()
-
 	res, writeErr := w.client.WriteTimeSeries(ctx, series, promremote.WriteOptions{})
+	w.metrics.WriteDuration.WithLabelValues(lvs...).Observe(time.Since(writeStart).Seconds())
+
 	lvs = append(lvs, fmt.Sprint(res.StatusCode))
 	w.metrics.WritesTotal.WithLabelValues(lvs...).Inc()
 

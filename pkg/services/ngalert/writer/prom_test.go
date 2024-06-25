@@ -14,8 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestValidateSettings(t *testing.T) {
@@ -135,16 +139,19 @@ func TestPointsFromFrames(t *testing.T) {
 func TestPrometheusWriter_Write(t *testing.T) {
 	client := &testClient{}
 	writer := &PrometheusWriter{
-		client: client,
-		logger: log.New("test"),
+		client:  client,
+		logger:  log.New("test"),
+		metrics: metrics.NewRemoteWriterMetrics(prometheus.NewRegistry()),
 	}
 	now := time.Now()
 	series := []map[string]string{{"foo": "1"}, {"foo": "2"}, {"foo": "3"}, {"foo": "4"}}
 	frames := frameGenFromLabels(t, data.FrameTypeNumericWide, series)
 	emptyFrames := data.Frames{data.NewFrame("test")}
 
+	ctx := ngmodels.WithRuleKey(context.Background(), ngmodels.GenerateRuleKey(1))
+
 	t.Run("error when frames are empty", func(t *testing.T) {
-		err := writer.Write(context.Background(), "test", now, emptyFrames, map[string]string{})
+		err := writer.Write(ctx, "test", now, emptyFrames, map[string]string{})
 		require.Error(t, err)
 	})
 
@@ -154,7 +161,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 			return promremote.WriteResult{}, clientErr
 		}
 
-		err := writer.Write(context.Background(), "test", now, frames, map[string]string{})
+		err := writer.Write(ctx, "test", now, frames, map[string]string{})
 		require.Error(t, err)
 		require.ErrorIs(t, err, clientErr)
 	})
@@ -175,7 +182,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 			return promremote.WriteResult{}, nil
 		}
 
-		err := writer.Write(context.Background(), "test", now, frames, map[string]string{"extra": "label"})
+		err := writer.Write(ctx, "test", now, frames, map[string]string{"extra": "label"})
 		require.NoError(t, err)
 	})
 
@@ -190,7 +197,7 @@ func TestPrometheusWriter_Write(t *testing.T) {
 					return promremote.WriteResult{}, clientErr
 				}
 
-				err := writer.Write(context.Background(), "test", now, frames, map[string]string{"extra": "label"})
+				err := writer.Write(ctx, "test", now, frames, map[string]string{"extra": "label"})
 				require.NoError(t, err)
 			})
 		}
