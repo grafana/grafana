@@ -137,6 +137,7 @@ const formatDefaultKeys = (keys: string[]) => {
 const defaultKeys = formatDefaultKeys(['cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace']);
 export const defaultProfilingKeys = formatDefaultKeys(['service.name', 'service.namespace']);
 export const pyroscopeProfileIdTagKey = 'pyroscope.profile.id';
+export const feO11yTagKey = 'gf.feo11y.app.id';
 
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
@@ -348,6 +349,18 @@ function legacyCreateSpanLinkFactory(
       }
     }
 
+    // Get session links
+    const feO11yLink = getLinkForFeO11y(span);
+    if (feO11yLink) {
+      links.push({
+        title: 'Session for this span',
+        href: feO11yLink,
+        content: <Icon name="frontend-observability" title="Session for this span" />,
+        field,
+        type: SpanLinkType.Session,
+      });
+    }
+
     return links;
   };
 }
@@ -380,6 +393,15 @@ function getQueryForLoki(
     expr: expr,
     refId: '',
   };
+}
+
+function getLinkForFeO11y(span: TraceSpan): string | undefined {
+  const feO11yAppId = span.process.tags.find((tag) => tag.key === feO11yTagKey)?.value;
+  const feO11ySessionId = span.tags.find((tag) => tag.key === 'session_id' || tag.key === 'session.id')?.value;
+
+  return feO11yAppId && feO11ySessionId
+    ? `/a/grafana-kowalski-app/apps/${feO11yAppId}/sessions/${feO11ySessionId}`
+    : undefined;
 }
 
 // we do not have access to the dataquery type for opensearch,
