@@ -6,7 +6,6 @@ import { Button, Field, Select, Input } from '@grafana/ui/src/components';
 import { AzureCredentialsType, AzureAuthType } from '../types';
 
 export interface Props {
-  managedIdentityEnabled: boolean;
   credentials: AzureCredentialsType;
   azureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentialsType) => void;
@@ -22,10 +21,14 @@ const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
     value: AzureAuthType.CLIENT_SECRET,
     label: 'App Registration',
   },
+  {
+    value: AzureAuthType.AD_PASSWORD,
+    label: 'Password'
+  },
 ];
 
 export const AzureCredentialsForm = (props: Props) => {
-  const { managedIdentityEnabled, credentials, azureCloudOptions, onCredentialsChange, disabled } = props;
+  const { credentials, azureCloudOptions, onCredentialsChange, disabled } = props;
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
     if (onCredentialsChange) {
@@ -38,7 +41,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   const onInputChange = ({ property, value }: { property: keyof AzureCredentialsType; value: string }) => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
+    if (onCredentialsChange) {
       const updated: AzureCredentialsType = {
         ...credentials,
         [property]: value,
@@ -49,22 +52,20 @@ export const AzureCredentialsForm = (props: Props) => {
 
   return (
     <div>
-      {managedIdentityEnabled && (
-        <Field
-          label="Authentication"
-          description="Choose the type of authentication to Azure services"
-          htmlFor="authentication-type"
-        >
-          <Select
-            width={20}
-            value={authTypeOptions.find((opt) => opt.value === credentials.authType)}
-            options={authTypeOptions}
-            onChange={onAuthTypeChange}
-            disabled={disabled}
-          />
-        </Field>
-      )}
-      {credentials.authType === 'clientsecret' && (
+      <Field
+        label="Authentication"
+        description="Choose the type of authentication to Azure services"
+        htmlFor="authentication-type"
+      >
+        <Select
+          width={20}
+          value={authTypeOptions.find((opt) => opt.value === credentials.authType)}
+          options={authTypeOptions}
+          onChange={onAuthTypeChange}
+          disabled={disabled}
+        />
+      </Field>
+      {credentials.authType === AzureAuthType.CLIENT_SECRET && (
         <>
           {azureCloudOptions && (
             <Field label="Azure Cloud" htmlFor="azure-cloud-type" disabled={disabled}>
@@ -166,6 +167,90 @@ export const AzureCredentialsForm = (props: Props) => {
               </Field>
             ))}
         </>
+      )}
+      {credentials.authType === AzureAuthType.AD_PASSWORD && (
+        <>
+        <Field
+          label="User Id"
+          required
+          htmlFor="user-id"
+          invalid={!credentials.userId}
+          error={'User ID is required'}
+        >
+          <Input
+            width={45}
+            value={credentials.userId || ''}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => {
+              const value = event.target.value;
+              onInputChange({ property: 'userId', value });
+            }}
+            disabled={disabled}
+            aria-label="User ID"
+          />
+        </Field>
+        <Field
+          label="Application Client ID"
+          required
+          htmlFor="application-client-id"
+          invalid={!credentials.applicationClientId}
+          error={'Application Client ID is required'}
+        >
+          <Input
+            width={45}
+            value={credentials.applicationClientId || ''}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => {
+              const value = event.target.value;
+              onInputChange({ property: 'applicationClientId', value });
+            }}
+            disabled={disabled}
+            aria-label="Application Client ID"
+          />
+        </Field>
+        {!disabled &&
+          (typeof credentials.password === 'symbol' ? (
+            <Field label="Password" htmlFor="password" required>
+              <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
+                <Input
+                  aria-label="Password"
+                  placeholder="configured"
+                  disabled={true}
+                  data-testid={'password'}
+                  width={45}
+                />
+                <Button
+                  variant="secondary"
+                  type="button"
+                  onClick={() => {
+                    onInputChange({ property: 'password', value: '' });
+                  }}
+                  disabled={disabled}
+                >
+                  Reset
+                </Button>
+              </div>
+            </Field>
+          ) : (
+            <Field
+              label="Password"
+              required
+              htmlFor="password"
+              invalid={!credentials.password}
+              error={'Password is required'}
+            >
+              <Input
+                width={45}
+                aria-label="Password"
+                value={credentials.password || ''}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                  const value = event.target.value;
+                  onInputChange({ property: 'password', value });
+                }}
+                id="password"
+                disabled={disabled}
+              />
+            </Field>
+          ))}
+      </>
       )}
     </div>
   );

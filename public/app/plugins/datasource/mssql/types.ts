@@ -28,6 +28,7 @@ export type ConcealedSecretType = symbol;
 export enum AzureAuthType {
   MSI = 'msi',
   CLIENT_SECRET = 'clientsecret',
+  AD_PASSWORD = 'ad-password',
 }
 
 export interface AzureCredentialsType {
@@ -36,6 +37,9 @@ export interface AzureCredentialsType {
   tenantId?: string;
   clientId?: string;
   clientSecret?: string | ConcealedSecretType;
+  userId?: string;
+  password?: string | ConcealedSecretType;
+  applicationClientId?: string;
 }
 
 export interface MssqlOptions extends SQLOptions {
@@ -63,6 +67,7 @@ export type AzureAuthJSONDataType = DataSourceJsonData & {
 
 export type AzureAuthSecureJSONDataType = {
   azureClientSecret: undefined | string | ConcealedSecretType;
+  azurePassword: undefined | string | ConcealedSecretType;
 };
 
 export type AzureAuthConfigType = {

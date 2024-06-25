@@ -321,6 +321,13 @@ func getAzureCredentialDSNFragment(azureCredentials azcredentials.AzureCredentia
 			c.ClientSecret,
 			"ActiveDirectoryApplication",
 		)
+	case *azcredentials.AzureClientPasswordCredentials:
+		connStr += fmt.Sprintf("user id=%s;password=%s;applicationclientid=%s;fedauth=%s;",
+			c.UserId,
+			c.Password,
+			c.ApplicationClientId,
+			"ActiveDirectoryPassword",
+		)
 	default:
 		return "", fmt.Errorf("unsupported azure authentication type")
 	}
