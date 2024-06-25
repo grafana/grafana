@@ -1353,6 +1353,13 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:        "restoreDashboards",
+			Description: "Enables the option to restore a recently deleted dashboard",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "false", // enabled by default
+		},
 	}
 )
 
