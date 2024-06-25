@@ -85,13 +85,15 @@ To create your Slack integration in Grafana Alerting, complete the following ste
 The Slack contact point is ready to receive alert notifications.
 
 <<<<<<< HEAD
+
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification policies**.
 1. In the **Default policy**, click the ellipsis icon (…) and then **Edit**,
 1. Change the default policy to the contact point you created.
-1. Click **Update default policy**.
-=======
-To add this contact point to your alert, complete the following steps.
->>>>>>> 891cc0512fc (alerting: teams contact point + updates (#89695))
+1. # Click **Update default policy**.
+
+   To add this contact point to your alert, complete the following steps.
+
+   > > > > > > > 891cc0512fc (alerting: teams contact point + updates (#89695))
 
 1. In Grafana, navigate to **Alerting** > **Alert rules**.
 1. Edit or create a new alert rule.
