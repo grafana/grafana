@@ -4,14 +4,14 @@ description: Configure Microsoft Teams integration to receive notifications when
 keywords:
   - grafana
   - alerting
-  - microsoft-teams
+  - Microsoft Teams
   - integration
 labels:
   products:
     - cloud
     - enterprise
     - oss
-menuTitle: Microsft-Teams
+menuTitle: Microsoft Teams
 title: Configure Microsoft Teams for Alerting
 weight: 300
 ---
