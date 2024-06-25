@@ -45,6 +45,7 @@ export interface TimeRangePickerProps {
   widthOverride?: number;
   isOnCanvas?: boolean;
   onToolbarTimePickerClick?: () => void;
+  weekStart?: string;
 }
 
 export interface State {
@@ -71,6 +72,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     widthOverride,
     isOnCanvas,
     onToolbarTimePickerClick,
+    weekStart,
   } = props;
 
   const onChange = (timeRange: TimeRange) => {
@@ -168,6 +170,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                 onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
                 hideQuickRanges={hideQuickRanges}
                 onError={onError}
+                weekStart={weekStart}
               />
             </section>
           </FocusScope>

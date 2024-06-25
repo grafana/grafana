@@ -58,6 +58,7 @@ export interface TimePickerCalendarProps {
   onClose: () => void;
   onApply: (e: FormEvent<HTMLButtonElement>) => void;
   onChange: (from: DateTime, to: DateTime) => void;
+  weekStart?: string;
 
   /**
    * When true, the calendar is rendered as a floating "tooltip" next to the input.

@@ -28,6 +28,7 @@ export interface TimeRangeInputProps {
   hideQuickRanges?: boolean;
   disabled?: boolean;
   showIcon?: boolean;
+  weekStart?: string;
 }
 
 const noop = () => {};
@@ -37,6 +38,7 @@ export const TimeRangeInput = ({
   onChange,
   onChangeTimeZone = noop,
   clearable,
+  weekStart,
   hideTimeZone = true,
   timeZone = 'browser',
   placeholder = 'Select time range',
@@ -106,6 +108,7 @@ export const TimeRangeInput = ({
             hideTimeZone={hideTimeZone}
             isReversed={isReversed}
             hideQuickRanges={hideQuickRanges}
+            weekStart={weekStart}
           />
         </ClickOutsideWrapper>
       )}
