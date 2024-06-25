@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, Scope, urlUtil } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { CustomScrollbar, Icon, Input, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, Icon, IconButton, Input, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t } from 'app/core/internationalization';
 
@@ -62,7 +62,7 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 }
 
 export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<ScopesDashboardsScene>) {
-  const { filteredDashboards, isLoading } = model.useState();
+  const { filteredDashboards, isLoading, searchQuery } = model.useState();
   const styles = useStyles2(getStyles);
 
   const [queryParams] = useQueryParams();
@@ -75,6 +75,17 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
           placeholder={t('scopes.suggestedDashboards.search', 'Search')}
           disabled={isLoading}
           data-testid="scopes-dashboards-search"
+          value={searchQuery}
+          suffix={
+            searchQuery && !isLoading ? (
+              <IconButton
+                aria-label={t('scopes.suggestedDashboards.clear', 'Clear search')}
+                name="times"
+                data-testid="scopes-dashboards-clear"
+                onClick={() => model.changeSearchQuery('')}
+              />
+            ) : undefined
+          }
           onChange={(evt) => model.changeSearchQuery(evt.currentTarget.value)}
         />
       </div>

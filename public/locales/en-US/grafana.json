@@ -1654,6 +1654,7 @@
       "title": "Select scopes"
     },
     "suggestedDashboards": {
+      "clear": "Clear search",
       "loading": "Loading dashboards",
       "search": "Search",
       "toggle": {
