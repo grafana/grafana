@@ -63,19 +63,13 @@ describe('Keyboard shortcuts', () => {
     e2e.components.TimePicker.openButton().should('have.attr', 'aria-label', expectedRange);
 
     cy.log('Trying two shift-lefts');
-    cy.get('body').type('t{leftarrow}');
-    e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
-    cy.get('body').type('t{leftarrow}');
+    cy.get('body').type('t{leftarrow}{leftarrow}');
     e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
     expectedRange = `Time range selected: 2024-06-05 10:02:00 to 2024-06-05 10:03:00`; // 2 mins back
     e2e.components.TimePicker.openButton().should('have.attr', 'aria-label', expectedRange);
 
     cy.log('Trying two shift-lefts and a shift-right');
-    cy.get('body').type('t{leftarrow}');
-    e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
-    cy.get('body').type('t{leftarrow}');
-    e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
-    cy.get('body').type('t{rightarrow}');
+    cy.get('body').type('t{leftarrow}{leftarrow}{rightarrow}');
     e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
     expectedRange = `Time range selected: 2024-06-05 10:01:00 to 2024-06-05 10:02:00`; // 2 mins back, 1 min forward (1 min back total)
     e2e.components.TimePicker.openButton().should('have.attr', 'aria-label', expectedRange);
