@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import { CSSProperties, UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 import { Cell, Row, TableState, HeaderGroup } from 'react-table';
 import { VariableSizeList } from 'react-window';
 import { Subscription, debounceTime } from 'rxjs';

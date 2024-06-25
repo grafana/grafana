@@ -1,6 +1,5 @@
 import { render, screen, fireEvent, createEvent } from '@testing-library/react';
 import { cloneDeep, defaultsDeep } from 'lodash';
-import React from 'react';
 
 import { PluginMeta, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

@@ -447,9 +447,6 @@ exports[`better eslint`] = {
     "packages/grafana-prometheus/src/components/PromQueryField.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "packages/grafana-prometheus/src/components/PrometheusMetricsBrowser.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
-    ],
     "packages/grafana-prometheus/src/datasource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -2889,6 +2886,9 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/dashboard-scene/scene/Scopes/ScopesInput.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/dashboard-scene/scene/row-actions/RowActions.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
@@ -3066,9 +3066,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`./VersionHistoryHeader\`)", "2"],
       [0, 0, 0, "Do not re-export imported variable (\`./VersionHistoryButtons\`)", "3"],
       [0, 0, 0, "Do not re-export imported variable (\`./VersionHistoryComparison\`)", "4"]
-    ],
-    "public/app/features/dashboard-scene/sharing/ShareButton/ShareButton.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/dashboard-scene/sharing/ShareExportTab.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -6412,8 +6409,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/plugins/datasource/graphite/components/GraphiteFunctionEditor.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
+      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/plugins/datasource/graphite/components/GraphiteQueryEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -6552,9 +6548,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/influxdb/components/editor/query/fsql/FSQLEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
-    "public/app/plugins/datasource/influxdb/components/editor/query/influxql/code/RawInfluxQLEditor.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/plugins/datasource/influxdb/components/editor/query/influxql/visual/VisualInfluxQLEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]

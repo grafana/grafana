@@ -1,5 +1,4 @@
 import { cx } from '@emotion/css';
-import React from 'react';
 
 import { Input } from '@grafana/ui';
 

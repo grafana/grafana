@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { getDashboardSrv } from '../../services/DashboardSrv';
 
 import { GenAIButton } from './GenAIButton';
