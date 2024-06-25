@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/flamegraph",
-  "version": "11.0.0",
+  "version": "11.1.1",
   "description": "Grafana flamegraph visualization component",
   "keywords": [
     "grafana",
@@ -44,8 +44,8 @@
   ],
   "dependencies": {
     "@emotion/css": "11.11.2",
-    "@grafana/data": "11.0.0",
-    "@grafana/ui": "11.0.0",
+    "@grafana/data": "11.1.1",
+    "@grafana/ui": "11.1.1",
     "@leeoniya/ufuzzy": "1.0.14",
     "d3": "^7.8.5",
     "lodash": "4.17.21",
