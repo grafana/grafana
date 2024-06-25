@@ -63,7 +63,7 @@ func (s *sqlStore) List(ctx context.Context, query *pref.Preference) ([]*pref.Pr
 }
 
 func (s *sqlStore) Update(ctx context.Context, cmd *pref.Preference) error {
-	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	return s.db.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.ID(cmd.ID).AllCols().Update(cmd)
 		return err
 	})
@@ -72,7 +72,7 @@ func (s *sqlStore) Update(ctx context.Context, cmd *pref.Preference) error {
 func (s *sqlStore) Insert(ctx context.Context, cmd *pref.Preference) (int64, error) {
 	var ID int64
 	var err error
-	err = s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err = s.db.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err = sess.Insert(cmd)
 		ID = cmd.ID
 		return err
