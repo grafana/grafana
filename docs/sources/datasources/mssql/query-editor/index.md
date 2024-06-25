@@ -182,8 +182,6 @@ To simplify syntax and to allow for dynamic components, such as date range filte
 | `$__unixEpochGroup(dateColumn,'5m', [fillmode])`      | Same as `$__timeGroup` but for times stored as Unix timestamp (only available in Grafana 5.3+).                                                                                                                                                                        |
 | `$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])` | Same as above but also adds a column alias (only available in Grafana 5.3+).                                                                                                                                                                                           |
 
-To suggest more macros, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
-
 ### View the interpolated query
 
 The query editor also includes a link named **Generated SQL** that appears after running a query while in panel edit mode.
