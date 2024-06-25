@@ -45,6 +45,7 @@ export interface TimeRangePickerProps {
   widthOverride?: number;
   isOnCanvas?: boolean;
   onToolbarTimePickerClick?: () => void;
+  /** Which day of the week the calendar should start on. Possible values: "saturday", "sunday" or "monday") */
   weekStart?: string;
 }
 
