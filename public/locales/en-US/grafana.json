@@ -1727,6 +1727,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
       "share-internally-description": "Advanced settings",
       "share-internally-title": "Share internally",
