@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
-import React from 'react';
 
 import { createDataFrame } from '@grafana/data';
 

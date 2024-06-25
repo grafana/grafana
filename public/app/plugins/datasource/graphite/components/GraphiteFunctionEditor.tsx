@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import { Fragment, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack, InlineLabel, useStyles2 } from '@grafana/ui';
@@ -60,7 +60,7 @@ export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
         </InlineLabel>
         {params.map((editableParam: EditableParam, index: number) => {
           return (
-            <React.Fragment key={index}>
+            <Fragment key={index}>
               <FunctionParamEditor
                 autofocus={index === 0 && func.added}
                 editableParam={editableParam}
@@ -74,7 +74,7 @@ export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
                 onExpandedChange={setIsExpanded}
               />
               {index !== params.length - 1 ? ',' : ''}
-            </React.Fragment>
+            </Fragment>
           );
         })}
         <InlineLabel className={styles.label} width={'auto'}>

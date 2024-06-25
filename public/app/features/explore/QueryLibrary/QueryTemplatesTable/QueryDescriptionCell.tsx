@@ -1,5 +1,4 @@
 import { cx } from '@emotion/css';
-import React from 'react';
 import { CellProps } from 'react-table';
 
 import { Spinner } from '@grafana/ui';
