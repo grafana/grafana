@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/grafana/dskit/services"
@@ -17,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -40,7 +38,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 			return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
 		}
 
-		client, err = zanzana.NewClient(conn, tenantID)
+		client, err = zanzana.NewClient(conn)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}
@@ -58,7 +56,7 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		channel := &inprocgrpc.Channel{}
 		openfgav1.RegisterOpenFGAServiceServer(channel, srv)
 
-		client, err = zanzana.NewClient(channel, tenantID)
+		client, err = zanzana.NewClient(channel)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}
@@ -132,20 +130,6 @@ func (z *Zanzana) start(ctx context.Context) error {
 	if _, err := grpcserver.ProvideReflectionService(z.cfg, z.handle); err != nil {
 		return fmt.Errorf("failed to register reflection for zanzana: %w", err)
 	}
-
-	b, err := os.ReadFile("./pkg/services/authz/zanzana/schema/schema.fga")
-	modelDSL, err := schema.TransformToModel(string(b))
-	if err != nil {
-		return err
-	}
-
-	tenantID := 1
-	storeName := fmt.Sprintf("store-%v", tenantID)
-	authorizationModelId, err := zanzana.LoadModel(ctx, modelDSL, srv, storeName)
-	if err != nil {
-		return fmt.Errorf("failed to load schema: %w", err)
-	}
-	z.logger.Info("openfga schema loaded", "authorizationModelId", authorizationModelId)
 
 	return nil
 }
