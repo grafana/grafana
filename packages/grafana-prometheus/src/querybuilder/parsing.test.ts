@@ -746,6 +746,43 @@ describe('buildVisualQueryFromString', () => {
       },
     });
   });
+
+  it('strips enclosing quotes', () => {
+    expect(buildVisualQueryFromString("counters_logins{app='frontend', host=`localhost`}")).toEqual(
+      noErrors({
+        metric: 'counters_logins',
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+          {
+            op: '=',
+            value: 'localhost',
+            label: 'host',
+          },
+        ],
+        operations: [],
+      })
+    );
+  });
+
+  it('leaves escaped quotes inside string', () => {
+    expect(buildVisualQueryFromString('counters_logins{app="fron\\"\\"tend"}')).toEqual(
+      noErrors({
+        metric: 'counters_logins',
+        labels: [
+          {
+            op: '=',
+            value: 'fron\\"\\"tend',
+            label: 'app',
+          },
+        ],
+        operations: [],
+      })
+    );
+  });
 });
 
 function noErrors(query: PromVisualQuery) {
