@@ -306,6 +306,7 @@ type Cfg struct {
 	UserInviteMaxLifetime        time.Duration
 	HiddenUsers                  map[string]struct{}
 	CaseInsensitiveLogin         bool // Login and Email will be considered case insensitive
+	UserLastSeenUpdateInterval   time.Duration
 	VerificationEmailMaxLifetime time.Duration
 
 	// Service Accounts
@@ -1693,6 +1694,19 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.UserInviteMaxLifetime = userInviteMaxLifetimeDuration
 	if cfg.UserInviteMaxLifetime < time.Minute*15 {
 		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
+	}
+
+	cfg.UserLastSeenUpdateInterval, err = gtime.ParseDuration(valueAsString(users, "last_seen_update_interval", "15m"))
+	if err != nil {
+		return err
+	}
+
+	if cfg.UserLastSeenUpdateInterval < time.Minute*5 {
+		cfg.Logger.Warn("the minimum supported value for the `last_seen_update_interval` configuration is 5m (5 minutes)")
+		cfg.UserLastSeenUpdateInterval = time.Minute * 5
+	} else if cfg.UserLastSeenUpdateInterval > time.Hour*1 {
+		cfg.Logger.Warn("the maximum supported value for the `last_seen_update_interval` configuration is 1h (1 hour)")
+		cfg.UserLastSeenUpdateInterval = time.Hour * 1
 	}
 
 	cfg.HiddenUsers = make(map[string]struct{})

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
 import { useBeforeUnload, useUnmount } from 'react-use';
 

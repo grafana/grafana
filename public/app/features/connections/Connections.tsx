@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { Redirect, Route, Switch, useLocation } from 'react-router-dom';
 
 import { DataSourcesRoutesContext } from 'app/features/datasources/state';

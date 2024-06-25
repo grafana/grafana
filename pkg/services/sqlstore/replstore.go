@@ -118,7 +118,7 @@ func (ss *SQLStore) initReadOnlyEngine(engine *xorm.Engine) error {
 	ss.dbCfg = dbCfg
 
 	if ss.cfg.DatabaseInstrumentQueries {
-		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
+		ss.dbCfg.Type = WrapDatabaseReplDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
 	if engine == nil {

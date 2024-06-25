@@ -1,6 +1,6 @@
 ﻿import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { MutableRefObject } from 'react';
+import { MutableRefObject } from 'react';
 
 import { Tooltip } from './Tooltip';
 

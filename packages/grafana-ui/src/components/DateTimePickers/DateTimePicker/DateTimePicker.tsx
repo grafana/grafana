@@ -3,7 +3,8 @@ import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 import Calendar from 'react-calendar';
 import { useMedia } from 'react-use';
 

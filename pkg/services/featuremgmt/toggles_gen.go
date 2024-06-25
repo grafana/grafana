@@ -51,10 +51,6 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
-	// FlagExploreContentOutline
-	// Content outline sidebar
-	FlagExploreContentOutline = "exploreContentOutline"
-
 	// FlagDatasourceQueryMultiStatus
 	// Introduce HTTP 207 Multi Status for api/ds/query
 	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
@@ -262,10 +258,6 @@ const (
 	// FlagVizAndWidgetSplit
 	// Split panels between visualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
-
-	// FlagPrometheusIncrementalQueryInstrumentation
-	// Adds RudderStack events to incremental queries
-	FlagPrometheusIncrementalQueryInstrumentation = "prometheusIncrementalQueryInstrumentation"
 
 	// FlagLogsExploreTableVisualisation
 	// A table visualisation for logs in Explore
@@ -655,10 +647,6 @@ const (
 	// Enables Query Library feature in Explore
 	FlagQueryLibrary = "queryLibrary"
 
-	// FlagAutofixDSUID
-	// Automatically migrates invalid datasource UIDs
-	FlagAutofixDSUID = "autofixDSUID"
-
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
 	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
@@ -719,6 +707,10 @@ const (
 	// Use the new SSO Settings API to configure LDAP
 	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
 
+	// FlagFailWrongDSUID
+	// Throws an error if a datasource has an invalid UIDs
+	FlagFailWrongDSUID = "failWrongDSUID"
+
 	// FlagDatabaseReadReplica
 	// Use a read replica for some database queries.
 	FlagDatabaseReadReplica = "databaseReadReplica"
@@ -726,6 +718,14 @@ const (
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
+
+	// FlagPassScopeToDashboardApi
+	// Enables the passing of scopes to dashboards fetching in Grafana
+	FlagPassScopeToDashboardApi = "passScopeToDashboardApi"
+
+	// FlagAlertingApiServer
+	// Register Alerting APIs with the K8s API server
+	FlagAlertingApiServer = "alertingApiServer"
 
 	// FlagCloudWatchRoundUpEndTime
 	// Round up end time for metric queries to the next minute to avoid missing data
