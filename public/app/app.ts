@@ -9,7 +9,7 @@ import 'vendor/bootstrap/bootstrap';
 import 'app/features/all';
 
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
-import React from 'react';
+import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import {
@@ -256,7 +256,7 @@ export class GrafanaApp {
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(
-        React.createElement(AppWrapper, {
+        createElement(AppWrapper, {
           app: this,
         })
       );

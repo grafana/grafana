@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, MappingType, StandardEditorProps, ValueMapping } from '@grafana/data';
 import { useStyles2, VerticalGroup, Icon, ColorPicker, Button, Modal } from '@grafana/ui';
@@ -13,7 +13,7 @@ export interface Props extends StandardEditorProps<ValueMapping[]> {
   showIcon?: boolean;
 }
 
-export const ValueMappingsEditor = React.memo((props: Props) => {
+export const ValueMappingsEditor = memo((props: Props) => {
   const { value, onChange, item } = props;
 
   const styles = useStyles2(getStyles);
