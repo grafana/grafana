@@ -3643,6 +3643,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									StartsAt:           t1,
 									EndsAt:             t1.Add(ResendDelay * 4),
 									LastEvaluationTime: t1,
+									LastSentAt:         &t1,
 									Annotations: mergeLabels(baseRule.Annotations, data.Labels{
 										"Error": datasourceError.Error(),
 									}),
@@ -3661,6 +3662,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									StartsAt:           t1,
 									EndsAt:             t2.Add(ResendDelay * 4),
 									LastEvaluationTime: t2,
+									LastSentAt:         &t1,
 									Annotations: mergeLabels(baseRule.Annotations, data.Labels{
 										"Error": genericError.Error(),
 									}),
@@ -3681,6 +3683,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									StartsAt:           t1,
 									EndsAt:             t1.Add(ResendDelay * 4),
 									LastEvaluationTime: t1,
+									LastSentAt:         &t1,
 								},
 							},
 						},
@@ -3697,6 +3700,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 									StartsAt:           t1,
 									EndsAt:             t2.Add(ResendDelay * 4),
 									LastEvaluationTime: t2,
+									LastSentAt:         &t1,
 								},
 							},
 						},
