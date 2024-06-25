@@ -239,7 +239,7 @@ type kv struct {
 	key   string
 }
 
-func sortUnstructeredMap(obj map[string]any) []kv {
+func sortUnstructuredMap(obj map[string]any) []kv {
 	ret := make([]kv, 0, len(obj))
 
 	for k, v := range obj {
