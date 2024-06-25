@@ -114,6 +114,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     LinkIcon: css`
       font-size: 1.5em;
     `,
+    linkList: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: '10px',
+    }),
   };
 };
 
@@ -303,6 +308,7 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   let logLinkButton: JSX.Element | null = null;
   let profileLinkButton: JSX.Element | null = null;
+  let sessionLinkButton: JSX.Element | null = null;
   if (createSpanLink) {
     const links = createSpanLink(span);
     const logsLink = links?.filter((link) => link.type === SpanLinkType.Logs);
@@ -315,6 +321,15 @@ export default function SpanDetail(props: SpanDetailProps) {
     if (links && profilesLink && profilesLink.length > 0) {
       profileLinkButton = createLinkButton(profilesLink[0], SpanLinkType.Profiles, 'Profiles for this span', 'link');
     }
+    const sessionLink = links?.filter((link) => link.type === SpanLinkType.Session);
+    if (links && sessionLink && sessionLink.length > 0) {
+      sessionLinkButton = createLinkButton(
+        sessionLink[0],
+        SpanLinkType.Session,
+        'Session for this span',
+        'frontend-observability'
+      );
+    }
   }
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
@@ -326,8 +341,11 @@ export default function SpanDetail(props: SpanDetailProps) {
           <LabeledList className={styles.list} divider={true} items={overviewItems} />
         </div>
       </div>
-      <span style={{ marginRight: '10px' }}>{logLinkButton}</span>
-      {profileLinkButton}
+      <div className={styles.linkList}>
+        {logLinkButton}
+        {profileLinkButton}
+        {sessionLinkButton}
+      </div>
       <Divider spacing={1} />
       <div>
         <div>
