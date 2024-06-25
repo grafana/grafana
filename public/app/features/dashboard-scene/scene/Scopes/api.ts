@@ -37,7 +37,7 @@ export async function fetchNodes(parent: string, query: string): Promise<NodesMa
       isSelectable: spec.linkType === 'scope',
       isExpanded: false,
       query: '',
-      persistedNodes: {},
+      type: 'result',
       nodes: {},
     };
     return acc;

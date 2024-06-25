@@ -2,11 +2,11 @@ import { Scope, ScopeDashboardBinding, ScopeNodeSpec } from '@grafana/data';
 
 export interface Node extends ScopeNodeSpec {
   name: string;
+  type: 'persisted' | 'result';
   isExpandable: boolean;
   isSelectable: boolean;
   isExpanded: boolean;
   query: string;
-  persistedNodes: NodesMap;
   nodes: NodesMap;
 }
 
