@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, waitFor } from 'test/test-utils';
 import { byLabelText, byTestId } from 'testing-library-selector';
 
