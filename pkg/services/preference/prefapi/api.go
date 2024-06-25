@@ -46,6 +46,7 @@ func UpdatePreferencesFor(ctx context.Context,
 		HomeDashboardID:   dtoCmd.HomeDashboardID,
 		QueryHistory:      dtoCmd.QueryHistory,
 		CookiePreferences: dtoCmd.Cookies,
+		Navbar:            dtoCmd.Navbar,
 	}
 
 	if err := preferenceService.Save(ctx, &saveCmd); err != nil {
@@ -94,6 +95,21 @@ func GetPreferencesFor(ctx context.Context,
 	if preference.JSONData != nil {
 		if preference.JSONData.Language != "" {
 			dto.Language = &preference.JSONData.Language
+		}
+
+		if preference.JSONData.Navbar.SavedItems != nil {
+			dto.Navbar = &preferences.NavbarPreference{
+				SavedItems: []preferences.NavLink{},
+			}
+
+			for _, item := range preference.JSONData.Navbar.SavedItems {
+				dto.Navbar.SavedItems = append(dto.Navbar.SavedItems, preferences.NavLink{
+					Id:     item.Id,
+					Target: item.Target,
+					Text:   item.Text,
+					Url:    item.Url,
+				})
+			}
 		}
 
 		if preference.JSONData.QueryHistory.HomeTab != "" {
