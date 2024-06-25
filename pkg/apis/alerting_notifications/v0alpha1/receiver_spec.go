@@ -11,9 +11,9 @@ type Integration struct {
 	Uid      *string `json:"uid,omitempty"`
 }
 
-// Spec defines model for Spec.
+// ReceiverSpec defines model for Spec.
 // +k8s:openapi-gen=true
-type Spec struct {
+type ReceiverSpec struct {
 	// +listType=atomic
 	Integrations []Integration `json:"integrations"`
 	Title        string        `json:"title"`

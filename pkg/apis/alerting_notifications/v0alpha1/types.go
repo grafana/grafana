@@ -94,7 +94,7 @@ type TimeIntervalList struct {
 type Receiver struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
-	Spec              Spec `json:"spec"`
+	Spec              ReceiverSpec `json:"spec"`
 }
 
 func (o *Receiver) GetSpec() any {
@@ -102,7 +102,7 @@ func (o *Receiver) GetSpec() any {
 }
 
 func (o *Receiver) SetSpec(spec any) error {
-	cast, ok := spec.(Spec)
+	cast, ok := spec.(ReceiverSpec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
