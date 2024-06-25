@@ -1,3 +1,13 @@
+<!-- 10.3.7 START -->
+
+# 10.3.7 (2024-06-21)
+
+### Bug fixes
+
+- **Echo:** Suppress errors from frontend-metrics API call failing. [#89497](https://github.com/grafana/grafana/issues/89497), [@joshhunt](https://github.com/joshhunt)
+
+<!-- 10.3.7 END -->
+
 <!-- 10.3.6 START -->
 
 # 10.3.6 (2024-05-13)
