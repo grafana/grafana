@@ -112,7 +112,7 @@ describe('Tempo data source', () => {
       config.liveEnabled = true;
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
-      expect(handleStreamingSearch).toHaveBeenCalledTimes(2);
+      expect(handleStreamingSearch).toHaveBeenCalledTimes(1);
       expect(request).toHaveBeenCalledTimes(0);
     });
 
@@ -120,7 +120,7 @@ describe('Tempo data source', () => {
       config.liveEnabled = false;
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
-      expect(handleStreamingSearch).toHaveBeenCalledTimes(2);
+      expect(handleStreamingSearch).toHaveBeenCalledTimes(1);
       expect(request).toHaveBeenCalledTimes(1);
     });
 
@@ -128,8 +128,8 @@ describe('Tempo data source', () => {
       config.liveEnabled = false;
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
-      expect(handleStreamingSearch).toHaveBeenCalledTimes(2);
-      expect(request).toHaveBeenCalledTimes(2);
+      expect(handleStreamingSearch).toHaveBeenCalledTimes(1);
+      expect(request).toHaveBeenCalledTimes(1);
     });
   });
 
