@@ -84,7 +84,7 @@ To create your Slack integration in Grafana Alerting, complete the following ste
 
 The Slack contact point is ready to receive alert notifications.
 
-To add this contact point to your alert:
+To add this contact point to your alert, complete the following steps.
 
 1. In Grafana, **navigate to Alerting** > **Alert rules**. Edit or create a new alert rule.
 1. Scroll down to the **Configure labels and notifications** section.
