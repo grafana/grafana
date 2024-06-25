@@ -110,7 +110,7 @@ require (
 	github.com/hashicorp/go-version v1.6.0 // @grafana/grafana-backend-group
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // @grafana/alerting-backend
 	github.com/hashicorp/hcl/v2 v2.17.0 // @grafana/alerting-backend
-	github.com/huandu/xstrings v1.3.3 // @grafana/partner-datasources
+	github.com/huandu/xstrings v1.5.0 // @grafana/partner-datasources
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0 // @grafana/observability-metrics
 	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf // @grafana/grafana-app-platform-squad
 	github.com/jmespath/go-jmespath v0.4.0 // @grafana/grafana-backend-group
