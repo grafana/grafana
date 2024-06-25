@@ -64,6 +64,6 @@ func (a *AsyncStatePersister) fullSync(ctx context.Context, cache *cache) error 
 	return nil
 }
 
-func (a *AsyncStatePersister) Sync(_ context.Context, _ trace.Span, _, _ []StateTransition) {
+func (a *AsyncStatePersister) Sync(_ context.Context, _ trace.Span, _ StateTransitions) {
 	a.log.Debug("Sync: No-Op")
 }

@@ -100,3 +100,6 @@ type NoopImageService struct{}
 func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
 	return &models.Image{}, nil
 }
+
+// NoopSender is a no-op sender. Used when you want state manager to update LastSentAt without sending any alerts.
+var NoopSender = func(_ context.Context, _ StateTransitions) {}

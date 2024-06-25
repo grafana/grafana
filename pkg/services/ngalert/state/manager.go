@@ -31,8 +31,11 @@ type AlertInstanceManager interface {
 
 type StatePersister interface {
 	Async(ctx context.Context, cache *cache)
-	Sync(ctx context.Context, span trace.Span, states, staleStates []StateTransition)
+	Sync(ctx context.Context, span trace.Span, states StateTransitions)
 }
+
+// Sender is an optional callback intended for sending the states to an alertmanager.
+type Sender func(context.Context, StateTransitions)
 
 type Manager struct {
 	log     log.Logger
@@ -298,9 +301,17 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
-func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
+// This will update the states in cache/store and return the state transitions that need to be sent to the alertmanager.
+func (st *Manager) ProcessEvalResults(
+	ctx context.Context,
+	evaluatedAt time.Time,
+	alertRule *ngModels.AlertRule,
+	results eval.Results,
+	extraLabels data.Labels,
+	send Sender,
+) StateTransitions {
 	utcTick := evaluatedAt.UTC().Format(time.RFC3339Nano)
-	tracingCtx, span := st.tracer.Start(ctx, "alert rule state calculation", trace.WithAttributes(
+	ctx, span := st.tracer.Start(ctx, "alert rule state calculation", trace.WithAttributes(
 		attribute.String("rule_uid", alertRule.UID),
 		attribute.Int64("org_id", alertRule.OrgID),
 		attribute.Int64("rule_version", alertRule.Version),
@@ -308,21 +319,50 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		attribute.Int("results", len(results))))
 	defer span.End()
 
-	logger := st.log.FromContext(tracingCtx)
+	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	states := st.setNextStateForRule(tracingCtx, alertRule, results, extraLabels, logger)
-	span.AddEvent("results processed", trace.WithAttributes(
-		attribute.Int64("state_transitions", int64(len(states))),
-	))
+	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger)
 
 	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
-	st.persister.Sync(tracingCtx, span, states, staleStates)
+	span.AddEvent("results processed", trace.WithAttributes(
+		attribute.Int64("state_transitions", int64(len(states))),
+		attribute.Int64("stale_states", int64(len(staleStates))),
+	))
 
-	allChanges := append(states, staleStates...)
-	if st.historian != nil {
-		st.historian.Record(tracingCtx, history_model.NewRuleMeta(alertRule, logger), allChanges)
+	allChanges := StateTransitions(append(states, staleStates...))
+
+	// It's important that this is done *before* we sync the states to the persister. Otherwise, we will not persist
+	// the LastSentAt field to the store.
+	var statesToSend StateTransitions
+	if send != nil {
+		statesToSend = st.updateLastSentAt(allChanges, evaluatedAt)
 	}
+
+	st.persister.Sync(ctx, span, allChanges)
+	if st.historian != nil {
+		st.historian.Record(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
+	}
+
+	// Optional callback intended for sending the states to an alertmanager.
+	// Some uses ,such as backtesting or the testing api, do not send.
+	if send != nil {
+		send(ctx, statesToSend)
+	}
+
 	return allChanges
+}
+
+// updateLastSentAt returns the subset StateTransitions that need sending and updates their LastSentAt field.
+// Note: This is not idempotent, running this twice can (and usually will) return different results.
+func (st *Manager) updateLastSentAt(states StateTransitions, evaluatedAt time.Time) StateTransitions {
+	var result StateTransitions
+	for _, t := range states {
+		if t.NeedsSending(st.ResendDelay, st.ResolvedRetention) {
+			t.LastSentAt = &evaluatedAt
+			result = append(result, t)
+		}
+	}
+	return result
 }
 
 func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger) []StateTransition {

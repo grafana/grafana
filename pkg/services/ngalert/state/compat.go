@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"path"
 	"strconv"
-	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
@@ -18,7 +17,6 @@ import (
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const (
@@ -138,26 +136,6 @@ func errorAlert(labels, annotations data.Labels, alertState *State, urlStr strin
 			GeneratorURL: strfmt.URI(urlStr),
 		},
 	}
-}
-
-func FromStateTransitionToPostableAlerts(evaluatedAt time.Time, firingStates []StateTransition, stateManager *Manager, appURL *url.URL) apimodels.PostableAlerts {
-	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
-
-	sentAlerts := make([]*State, 0, len(firingStates))
-	for _, alertState := range firingStates {
-		if !alertState.NeedsSending(stateManager.ResendDelay, stateManager.ResolvedRetention) {
-			continue
-		}
-		alert := StateToPostableAlert(alertState, appURL)
-		alerts.PostableAlerts = append(alerts.PostableAlerts, *alert)
-		if alertState.StateReason == ngModels.StateReasonMissingSeries { // do not put stale state back to state manager
-			continue
-		}
-		alertState.LastSentAt = &evaluatedAt
-		sentAlerts = append(sentAlerts, alertState.State)
-	}
-	stateManager.Put(sentAlerts)
-	return alerts
 }
 
 // FromAlertsStateToStoppedAlert selects only transitions from firing states (states eval.Alerting, eval.NoData, eval.Error)
