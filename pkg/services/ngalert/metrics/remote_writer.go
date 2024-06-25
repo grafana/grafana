@@ -25,6 +25,6 @@ func NewRemoteWriterMetrics(r prometheus.Registerer) *RemoteWriter {
 				Name:      "remote_writer_write_duration_seconds",
 				Help:      "Histogram of remote write durations.",
 				Buckets:   prometheus.DefBuckets,
-			}, []string{"org", "backend", "status_code"}),
+			}, []string{"org", "backend"}),
 	}
 }

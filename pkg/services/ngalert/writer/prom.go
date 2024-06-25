@@ -186,6 +186,7 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 		// sanity check, this should never happen
 		return fmt.Errorf("rule key not found in context")
 	}
+	lvs := []string{fmt.Sprint(ruleKey.OrgID), backendType}
 
 	points, err := PointsFromFrames(name, t, frames, extraLabels)
 	if err != nil {
@@ -204,12 +205,13 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 	}
 
 	l.Debug("Writing metric", "name", name)
-
 	writeStart := time.Now()
-	res, writeErr := w.client.WriteTimeSeries(ctx, series, promremote.WriteOptions{})
+	defer func() {
+		w.metrics.WriteDuration.WithLabelValues(lvs...).Observe(time.Since(writeStart).Seconds())
+	}()
 
-	lvs := []string{fmt.Sprint(ruleKey.OrgID), backendType, fmt.Sprint(res.StatusCode)}
-	w.metrics.WriteDuration.WithLabelValues(lvs...).Observe(time.Since(writeStart).Seconds())
+	res, writeErr := w.client.WriteTimeSeries(ctx, series, promremote.WriteOptions{})
+	lvs = append(lvs, fmt.Sprint(res.StatusCode))
 	w.metrics.WritesTotal.WithLabelValues(lvs...).Inc()
 
 	if err, ignored := checkWriteError(writeErr); err != nil {
