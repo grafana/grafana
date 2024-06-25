@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {

@@ -19,7 +19,7 @@ export function mockPromRulesApiResponse(server: SetupServer, result: PromRulesR
   server.use(http.get(PROM_RULES_URL, () => HttpResponse.json(result)));
 }
 
-const grafanaRulerGroupName = 'grafana-group-1';
+export const grafanaRulerGroupName = 'grafana-group-1';
 export const grafanaRulerNamespace = { name: 'test-folder-1', uid: 'uuid020c61ef' };
 export const grafanaRulerNamespace2 = { name: 'test-folder-2', uid: '6abdb25bc1eb' };
 

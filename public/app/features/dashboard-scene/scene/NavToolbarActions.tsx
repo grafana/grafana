@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -38,7 +39,9 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const actions = <ToolbarActions dashboard={dashboard} />;
+  const id = useId();
+
+  const actions = <ToolbarActions dashboard={dashboard} key={id} />;
   return <AppChromeUpdate actions={actions} />;
 });
 
@@ -140,7 +143,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: meta.isSnapshot && !isEditing,
+    condition: meta.isSnapshot && !meta.dashboardNotFound && !isEditing,
     render: () => (
       <GoToSnapshotOriginButton
         key="go-to-snapshot-origin"
@@ -320,7 +323,7 @@ export function ToolbarActions({ dashboard }: Props) {
         fill="outline"
         onClick={() => {
           DashboardInteractions.toolbarShareClick();
-          dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
+          dashboard.showModal(new ShareModal({}));
         }}
         data-testid={selectors.components.NavToolbar.shareDashboard}
       >

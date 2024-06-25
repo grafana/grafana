@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data/src';
 import { getTemplateSrv } from '@grafana/runtime/src';

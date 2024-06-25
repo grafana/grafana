@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react';
-import React from 'react';
 import { render } from 'test/test-utils';
 
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
@@ -252,10 +251,51 @@ export const fetchScopeSpy = jest.spyOn(api, 'fetchScope');
 export const fetchSelectedScopesSpy = jest.spyOn(api, 'fetchSelectedScopes');
 export const fetchSuggestedDashboardsSpy = jest.spyOn(api, 'fetchSuggestedDashboards');
 
+export const getMock = jest
+  .fn()
+  .mockImplementation((url: string, params: { parent: string; scope: string[]; query?: string }) => {
+    if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_node_children')) {
+      return {
+        items: mocksNodes.filter(
+          ({ parent, spec: { title } }) => parent === params.parent && title.includes(params.query ?? '')
+        ),
+      };
+    }
+
+    if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/')) {
+      const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/', '');
+
+      return mocksScopes.find((scope) => scope.metadata.name === name) ?? {};
+    }
+
+    if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_dashboard_bindings')) {
+      return {
+        items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) =>
+          params.scope.includes(bindingScope)
+        ),
+      };
+    }
+
+    if (url.startsWith('/api/dashboards/uid/')) {
+      return {};
+    }
+
+    if (url.startsWith('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/')) {
+      return {
+        metadata: {
+          name: '1',
+        },
+      };
+    }
+
+    return {};
+  });
+
 const selectors = {
   tree: {
     search: (nodeId: string) => `scopes-tree-${nodeId}-search`,
     select: (nodeId: string) => `scopes-tree-${nodeId}-checkbox`,
+    radio: (nodeId: string) => `scopes-tree-${nodeId}-radio`,
     expand: (nodeId: string) => `scopes-tree-${nodeId}-expand`,
     title: (nodeId: string) => `scopes-tree-${nodeId}-title`,
   },
@@ -270,6 +310,7 @@ const selectors = {
     expand: 'scopes-dashboards-expand',
     container: 'scopes-dashboards-container',
     search: 'scopes-dashboards-search',
+    clear: 'scopes-dashboards-clear',
     loading: 'scopes-dashboards-loading',
     dashboard: (uid: string) => `scopes-dashboards-${uid}`,
   },
@@ -284,7 +325,8 @@ export const queryDashboardsExpand = () => screen.queryByTestId(selectors.dashbo
 export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
 export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
-export const getDashboardsSearch = () => screen.getByTestId(selectors.dashboards.search);
+export const getDashboardsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.dashboards.search);
+export const getDashboardsClear = () => screen.getByTestId(selectors.dashboards.clear);
 export const queryAllDashboard = (uid: string) => screen.queryAllByTestId(selectors.dashboards.dashboard(uid));
 export const queryDashboard = (uid: string) => screen.queryByTestId(selectors.dashboards.dashboard(uid));
 export const getDashboard = (uid: string) => screen.getByTestId(selectors.dashboards.dashboard(uid));
@@ -313,10 +355,10 @@ export const getApplicationsClustersSlothClusterSouthSelect = () =>
 
 export const getClustersSelect = () => screen.getByTestId(selectors.tree.select('clusters'));
 export const getClustersExpand = () => screen.getByTestId(selectors.tree.expand('clusters'));
-export const getClustersSlothClusterNorthSelect = () =>
-  screen.getByTestId(selectors.tree.select('clusters-slothClusterNorth'));
-export const getClustersSlothClusterSouthSelect = () =>
-  screen.getByTestId(selectors.tree.select('clusters-slothClusterSouth'));
+export const getClustersSlothClusterNorthRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterNorth'));
+export const getClustersSlothClusterSouthRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterSouth'));
 
 export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
   return new DashboardScene({

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { SortByFn } from 'react-table';
 
 import { Column, InteractiveTable } from '@grafana/ui';
@@ -26,7 +25,7 @@ const columns: Array<Column<QueryTemplateRow>> = [
     id: 'actions',
     header: '',
     cell: ({ row: { original } }) => (
-      <ActionsCell query={original.query} rootDatasourceUid={original.datasourceRef?.uid} />
+      <ActionsCell query={original.query} rootDatasourceUid={original.datasourceRef?.uid} queryUid={original.uid} />
     ),
   },
 ];

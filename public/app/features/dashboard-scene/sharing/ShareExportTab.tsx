@@ -1,5 +1,4 @@
 import saveAs from 'file-saver';
-import React from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -13,6 +12,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { SceneShareTabState } from './types';
 
@@ -56,8 +56,8 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
   }
 
   public getExportableDashboardJson = async () => {
-    const { dashboardRef, isSharingExternally } = this.state;
-    const saveModel = transformSceneToSaveModel(dashboardRef.resolve());
+    const { isSharingExternally } = this.state;
+    const saveModel = transformSceneToSaveModel(getDashboardSceneFor(this));
 
     const exportable = isSharingExternally
       ? await this._exporter.makeExportable(

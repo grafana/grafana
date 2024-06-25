@@ -1,4 +1,4 @@
-import React from 'react';
+import { Fragment } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { Text } from '@grafana/ui';
@@ -15,7 +15,7 @@ const AdminSettingsTableComponent = ({ settings }: Props) => {
     <table className="filter-table">
       <tbody>
         {Object.entries(settings).map(([sectionName, sectionSettings], i) => (
-          <React.Fragment key={`section-${i}`}>
+          <Fragment key={`section-${i}`}>
             <tr>
               <td>
                 <Text color="info" weight="bold">
@@ -30,7 +30,7 @@ const AdminSettingsTableComponent = ({ settings }: Props) => {
                 <td style={{ whiteSpace: 'break-spaces' }}>{settingValue}</td>
               </tr>
             ))}
-          </React.Fragment>
+          </Fragment>
         ))}
       </tbody>
     </table>
@@ -48,7 +48,7 @@ const AdminSettingsTableSkeleton: SkeletonComponent = ({ rootProps }) => {
           const isSection = index === 0 || randomValue > 0.9;
 
           return (
-            <React.Fragment key={index}>
+            <Fragment key={index}>
               {isSection && (
                 <tr>
                   <td className="admin-settings-section">
@@ -65,7 +65,7 @@ const AdminSettingsTableSkeleton: SkeletonComponent = ({ rootProps }) => {
                   <Skeleton width={getRandomInRange(80, 320, randomValue)} />
                 </td>
               </tr>
-            </React.Fragment>
+            </Fragment>
           );
         })}
       </tbody>

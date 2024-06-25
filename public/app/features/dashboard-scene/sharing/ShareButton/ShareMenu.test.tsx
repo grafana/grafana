@@ -1,6 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
@@ -26,6 +24,7 @@ describe('ShareMenu', () => {
 
     expect(await screen.findByTestId(selector.shareInternally)).toBeInTheDocument();
     expect(await screen.findByTestId(selector.shareExternally)).toBeInTheDocument();
+    expect(await screen.findByTestId(selector.shareSnapshot)).toBeInTheDocument();
   });
   it('should no share externally when public dashboard is disabled', async () => {
     config.featureToggles.publicDashboards = false;
@@ -33,14 +32,6 @@ describe('ShareMenu', () => {
     setup();
 
     expect(await screen.queryByTestId(selector.shareExternally)).not.toBeInTheDocument();
-  });
-  it('should call createAndCopyDashboardShortLink when share internally clicked', async () => {
-    setup();
-
-    const shareLink = await screen.findByTestId(selector.shareInternally);
-
-    await userEvent.click(shareLink);
-    expect(createAndCopyDashboardShortLinkMock).toHaveBeenCalled();
   });
 });
 

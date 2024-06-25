@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { CoreApp, findHighlightChunksInText, LogRowContextOptions, LogRowModel } from '@grafana/data';
@@ -79,7 +79,7 @@ const restructureLog = (
   return line;
 };
 
-export const LogRowMessage = React.memo((props: Props) => {
+export const LogRowMessage = memo((props: Props) => {
   const {
     row,
     wrapLogMessage,

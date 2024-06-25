@@ -111,6 +111,14 @@ func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.Cloud
 	return &result, nil
 }
 
+func (c *gmsClientImpl) InitializeSnapshot(context.Context, cloudmigration.CloudMigrationSession) (*cloudmigration.InitializeSnapshotResponse, error) {
+	panic("not implemented")
+}
+
+func (c *gmsClientImpl) GetSnapshotStatus(context.Context, cloudmigration.CloudMigrationSession, cloudmigration.CloudMigrationSnapshot) (*cloudmigration.CloudMigrationSnapshot, error) {
+	panic("not implemented")
+}
+
 func convertRequestToDTO(request cloudmigration.MigrateDataRequest) MigrateDataRequestDTO {
 	items := make([]MigrateDataRequestItemDTO, len(request.Items))
 	for i := 0; i < len(request.Items); i++ {
@@ -129,10 +137,10 @@ func convertRequestToDTO(request cloudmigration.MigrateDataRequest) MigrateDataR
 }
 
 func convertResponseFromDTO(result MigrateDataResponseDTO) cloudmigration.MigrateDataResponse {
-	items := make([]cloudmigration.MigrateDataResponseItem, len(result.Items))
+	items := make([]cloudmigration.CloudMigrationResource, len(result.Items))
 	for i := 0; i < len(result.Items); i++ {
 		item := result.Items[i]
-		items[i] = cloudmigration.MigrateDataResponseItem{
+		items[i] = cloudmigration.CloudMigrationResource{
 			Type:   cloudmigration.MigrateDataType(item.Type),
 			RefID:  item.RefID,
 			Status: cloudmigration.ItemStatus(item.Status),
