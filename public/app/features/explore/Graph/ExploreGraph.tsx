@@ -1,4 +1,4 @@
-import { identity } from 'lodash';
+import { identity, max, min } from 'lodash';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 import { usePrevious } from 'react-use';
@@ -102,12 +102,18 @@ export function ExploreGraph({
     () => createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore'),
     []
   );
+  const minVal = min(data[0].fields.find((field) => field.name === 'Value')?.values);
+  const maxVal = max(data[0].fields.find((field) => field.name === 'Value')?.values);
+  const range = maxVal - minVal;
+  const rangePerTick = Math.ceil(range / 10); // explore will have under 10 ticks;
+  const enbiggen = Math.pow(rangePerTick, 10);
+  const disableShort = enbiggen < maxVal;
 
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource<GraphFieldConfig>>({
     defaults: {
       min: anchorToZero ? 0 : undefined,
       max: yAxisMaximum || undefined,
-      unit: 'short',
+      unit: disableShort ? undefined : 'short',
       color: {
         mode: FieldColorModeId.PaletteClassic,
       },
