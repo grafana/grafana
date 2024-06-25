@@ -26,10 +26,6 @@ Welcome to Grafana 11.1! This release contains some minor improvements following
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.1, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.1/).
 
-<!-- ## Breaking changes
-
-For Grafana v11.0, we've also provided a list of [breaking changes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v11.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0/).-->
-
 ## Dashboards and visualizations
 
 ### Visualization ease of use improvements
@@ -46,7 +42,7 @@ A longstanding feature request for the table visualization is to allow wrapping 
 
 Learn more about the table panel in our [table panel documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/).
 
-![Text wrapping in the table visualization](/media/docs/grafana/gif-grafana-11-1-text-wrapping.gif)
+{{< youtube id="wBLxYp2BLAU" >}}
 
 #### Stat visualization percent change color mode options
 
@@ -54,7 +50,7 @@ _Generally available in all editions of Grafana_
 
 Sometimes less is more! The **Standard** behavior for percent change in the [stat visualization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/stat/#show-percent-change) is to color positive percent changes green and negative percent changes red. Depending on your use case however, you may want to customize how percent change color is set. We've added the options to have percent change color mode **Inverted** (with positive red and negative green) or match the **Same as value**.
 
-![Stat percent change color options](/media/docs/grafana/gif-grafana-11-1-stat-percent-change-color-options.gif)
+{{< youtube id="LrkR6_hcqPc" >}}
 
 ### XY chart is GA
 
@@ -71,6 +67,8 @@ XY charts provide a way to visualize arbitrary x and y values in a graph so that
 Over the past several months we’ve introduced multiple enhancements to the visualizations like auto mode, which now handles most scenarios that previously required manual configuration. Additionally, we've added better control over point styling and further improved performance. We’re excited to include XY chart as a first class citizen in the core Grafana visualization library. To learn more about the panel, refer to [the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/xy-chart/).
 
 To use the new XY chart visualization, you must first enable the `autoMigrateXYChartPanel` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
+
+{{< youtube id="3d3Lx-Jz_kM" >}}
 
 ## Alerting
 
@@ -180,7 +178,7 @@ The GeoMap panel can now be used with a keyboard! Focus the map area, move aroun
 
 We have [panel shortcuts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#keyboard-shortcuts), which previously only worked on whichever panel you hovered over. It now also takes into account the keyboard focus.
 
-{{< video-embed src="/media/docs/grafana/2024-06-10-Keyboard-Improvements-Enablement-Video.mp4" >}}
+{{< youtube id="Tc0pTXtCsKQ" >}}
 
 ### Heading improvements
 
