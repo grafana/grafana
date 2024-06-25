@@ -5,7 +5,7 @@ import { CREATED_BY_KEY, DataQuerySpec, DataQuerySpecResponse, DataQueryTarget }
 
 export const parseCreatedByValue = (value?: string) => {
   // https://github.com/grafana/grafana/blob/main/pkg/services/user/identity.go#L194
-  if (value !== undefined && value !== '') {
+  /*if (value !== undefined && value !== '') {
     const vals = value.split(':');
     if (vals.length >= 2) {
       if (vals[0] === 'anonymous' || vals[0] === 'render' || vals[0] === '') {
@@ -21,7 +21,8 @@ export const parseCreatedByValue = (value?: string) => {
     }
   } else {
     return undefined;
-  }
+  }*/
+  return !!value ? value : undefined;
 };
 
 export const convertDataQueryResponseToQueryTemplates = (result: DataQuerySpecResponse): QueryTemplate[] => {
