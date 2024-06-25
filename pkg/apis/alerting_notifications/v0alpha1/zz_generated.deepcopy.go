@@ -19,6 +19,13 @@ func (in *Integration) DeepCopyInto(out *Integration) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.SecureFields != nil {
+		in, out := &in.SecureFields, &out.SecureFields
+		*out = make(map[string]bool, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.Settings != nil {
 		in, out := &in.Settings, &out.Settings
 		*out = make([]byte, len(*in))

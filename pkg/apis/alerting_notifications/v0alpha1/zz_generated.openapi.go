@@ -41,6 +41,26 @@ func schema_pkg_apis_alerting_notifications_v0alpha1_Integration(ref common.Refe
 							Format: "",
 						},
 					},
+					"SecureFields": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-map-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: false,
+										Type:    []string{"boolean"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 					"settings": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
