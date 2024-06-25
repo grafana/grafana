@@ -30,9 +30,9 @@ export class Connections {
   scene: Scene;
 
   connectionAnchorDiv?: HTMLDivElement;
-  connectionSVG?: SVGElement;
+  // connectionSVG?: SVGElement;
   connectionLine?: SVGLineElement;
-  connectionSVGVertex?: SVGElement;
+  // connectionSVGVertex?: SVGElement;
   connectionVertexPath?: SVGPathElement;
   connectionVertex?: SVGCircleElement;
   connectionsSVG?: SVGElement;
@@ -77,9 +77,9 @@ export class Connections {
     this.connectionAnchorDiv = anchorElement;
   };
 
-  setConnectionSVGRef = (connectionSVG: SVGSVGElement) => {
-    this.connectionSVG = connectionSVG;
-  };
+  // setConnectionSVGRef = (connectionSVG: SVGSVGElement) => {
+  //   this.connectionSVG = connectionSVG;
+  // };
 
   setConnectionsSVGRef = (connectionsSVG: SVGElement) => {
     this.connectionsSVG = connectionsSVG;
@@ -89,9 +89,9 @@ export class Connections {
     this.connectionLine = connectionLine;
   };
 
-  setConnectionSVGVertexRef = (connectionSVG: SVGSVGElement) => {
-    this.connectionSVGVertex = connectionSVG;
-  };
+  // setConnectionSVGVertexRef = (connectionSVG: SVGSVGElement) => {
+  //   this.connectionSVGVertex = connectionSVG;
+  // };
 
   setConnectionVertexRef = (connectionVertex: SVGCircleElement) => {
     this.connectionVertex = connectionVertex;
@@ -185,73 +185,94 @@ export class Connections {
     if (!(this.connectionLine && this.scene.viewportDiv && this.scene.viewportDiv.parentElement)) {
       return;
     }
-
-    // const transformScale = this.scene.scale;
-    const transformScale = 1;
+    const { scale } = this.scene;
+    // const transformScale = 1;
     const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
     if (!parentBoundingRect) {
       return;
     }
 
-    const x = event.pageX - parentBoundingRect.x ?? 0;
-    const y = event.pageY - parentBoundingRect.y ?? 0;
+    const x = (event.pageX - parentBoundingRect.x) / scale ?? 0;
+    const y = (event.pageY - parentBoundingRect.y) / scale ?? 0;
 
-    this.connectionLine.setAttribute('x2', `${x / transformScale}`);
-    this.connectionLine.setAttribute('y2', `${y / transformScale}`);
+    this.connectionLine.setAttribute('x2', `${x}`);
+    this.connectionLine.setAttribute('y2', `${y}`);
 
     const connectionLineX1 = this.connectionLine.x1.baseVal.value;
     const connectionLineY1 = this.connectionLine.y1.baseVal.value;
+
     if (!this.didConnectionLeaveHighlight) {
       const connectionLength = Math.hypot(x - connectionLineX1, y - connectionLineY1);
-      if (connectionLength > CONNECTION_ANCHOR_HIGHLIGHT_OFFSET && this.connectionSVG) {
+      // if (connectionLength > CONNECTION_ANCHOR_HIGHLIGHT_OFFSET && this.connectionSVG) {
+      if (connectionLength > CONNECTION_ANCHOR_HIGHLIGHT_OFFSET) {
         this.didConnectionLeaveHighlight = true;
-        this.connectionSVG.style.display = 'block';
+        // this.connectionSVG.style.display = 'block';
+        this.connectionLine.style.display = 'block';
         this.isDrawingConnection = true;
       }
     }
 
+    //
+    // SAVING CONNECTION
+    //
     if (!event.buttons) {
       if (this.connectionSource && this.connectionSource.div && this.connectionSource.div.parentElement) {
+        // const sourceDiv = source.div;
+        // const { left, top, width, height } = getElementTransformAndDimensions(sourceDiv!);
+        // const sourceHorizontalCenter = left + width / 2;
+        // const sourceVerticalCenter = top + height / 2;
+        // const x1 = sourceHorizontalCenter + (info.source.x * width) / 2;
+        // const y1 = sourceVerticalCenter - (info.source.y * height) / 2;
+
         // const sourceRect = this.connectionSource.div.getBoundingClientRect();
         const sourceRect = getElementTransformAndDimensions(this.connectionSource.div);
 
         // const transformScale = this.scene.scale;
-        const transformScale = 1;
-        const parentRect = getParentBoundingClientRect(this.scene);
+        // const transformScale = 1;
+        // const parentRect = getParentBoundingClientRect(this.scene);
+        const parentRect = this.scene.viewerDiv?.getBoundingClientRect();
 
         if (!parentRect) {
           return;
         }
 
-        const sourceVerticalCenter = (sourceRect.top - parentRect.top + sourceRect.height / 2) / transformScale;
-        const sourceHorizontalCenter = (sourceRect.left - parentRect.left + sourceRect.width / 2) / transformScale;
+        // const sourceVerticalCenter = (sourceRect.top - parentRect.top + sourceRect.height / 2) / transformScale;
+        // const sourceHorizontalCenter = (sourceRect.left - parentRect.left + sourceRect.width / 2) / transformScale;
+        const sourceVerticalCenter = sourceRect.top + sourceRect.height / 2;
+        const sourceHorizontalCenter = sourceRect.left + sourceRect.width / 2;
 
         // Convert from DOM coords to connection coords
         // TODO: Break this out into util function and add tests
-        const sourceX = (connectionLineX1 - sourceHorizontalCenter) / (sourceRect.width / 2 / transformScale);
-        const sourceY = (sourceVerticalCenter - connectionLineY1) / (sourceRect.height / 2 / transformScale);
+        const sourceX = (connectionLineX1 - sourceHorizontalCenter) / (sourceRect.width / 2);
+        const sourceY = (sourceVerticalCenter - connectionLineY1) / (sourceRect.height / 2);
 
         let targetX;
         let targetY;
         let targetName;
 
         if (this.connectionTarget && this.connectionTarget.div) {
+          // if target exists
           // const targetRect = this.connectionTarget.div.getBoundingClientRect();
           const targetRect = getElementTransformAndDimensions(this.connectionTarget.div);
 
-          const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
-          const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
+          // const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
+          // const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
+          const targetVerticalCenter = targetRect.top + targetRect.height / 2;
+          const targetHorizontalCenter = targetRect.left + targetRect.width / 2;
 
           targetX = (x - targetHorizontalCenter) / (targetRect.width / 2);
           targetY = (targetVerticalCenter - y) / (targetRect.height / 2);
           targetName = this.connectionTarget.options.name;
         } else {
-          const parentVerticalCenter = parentRect.height / 2;
-          const parentHorizontalCenter = parentRect.width / 2;
+          // if there is no target (open connection)
+          // const parentVerticalCenter = parentRect.height / 2;
+          // const parentHorizontalCenter = parentRect.width / 2;
 
-          targetX = (x - parentHorizontalCenter) / (parentRect.width / 2);
-          targetY = (parentVerticalCenter - y) / (parentRect.height / 2);
+          // targetX = (x - parentHorizontalCenter) / (parentRect.width / 2);
+          // targetY = (parentVerticalCenter - y) / (parentRect.height / 2);
+          targetX = x;
+          targetY = y;
         }
 
         const connection = {
@@ -285,8 +306,11 @@ export class Connections {
         }
       }
 
-      if (this.connectionSVG) {
-        this.connectionSVG.style.display = 'none';
+      // if (this.connectionSVG) {
+      //   this.connectionSVG.style.display = 'none';
+      // }
+      if (this.connectionLine) {
+        this.connectionLine.style.display = 'none';
       }
 
       if (this.scene.selecto && this.scene.selecto.rootContainer) {
@@ -310,16 +334,16 @@ export class Connections {
       return;
     }
 
-    // const transformScale = this.scene.scale;
-    const transformScale = 1;
+    const { scale } = this.scene;
+    // const transformScale = 1;
     const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
     if (!parentBoundingRect) {
       return;
     }
 
-    const x = (event.pageX - parentBoundingRect.x) / transformScale ?? 0;
-    const y = (event.pageY - parentBoundingRect.y) / transformScale ?? 0;
+    const x = (event.pageX - parentBoundingRect.x) / scale ?? 0;
+    const y = (event.pageY - parentBoundingRect.y) / scale ?? 0;
 
     this.connectionVertex?.setAttribute('cx', `${x}`);
     this.connectionVertex?.setAttribute('cy', `${y}`);
@@ -406,12 +430,14 @@ export class Connections {
     if (deleteVertex) {
       // Display temporary vertex removal
       this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${vx2} ${vy2}`);
-      this.connectionSVGVertex!.style.display = 'block';
+      // this.connectionSVGVertex!.style.display = 'block';
+      this.connectionVertexPath!.style.display = 'block';
       this.connectionVertex.style.display = 'none';
     } else {
       // Display temporary vertex during drag
       this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${xSnap} ${ySnap} L${vx2} ${vy2}`);
-      this.connectionSVGVertex!.style.display = 'block';
+      // this.connectionSVGVertex!.style.display = 'block';
+      this.connectionVertexPath!.style.display = 'block';
       this.connectionVertex.style.display = 'block';
     }
 
@@ -421,7 +447,9 @@ export class Connections {
       this.scene.selecto?.rootContainer?.removeEventListener('mousemove', this.vertexListener);
       this.scene.selecto?.rootContainer?.removeEventListener('mouseup', this.vertexListener);
       this.scene.selecto!.rootContainer!.style.cursor = 'auto';
-      this.connectionSVGVertex!.style.display = 'none';
+      // this.connectionSVGVertex!.style.display = 'none';
+      this.connectionVertexPath!.style.display = 'none';
+      this.connectionVertex.style.display = 'none';
 
       // call onChange here and update appropriate index of connection vertices array
       const connectionIndex = selectedValue?.index;
@@ -471,8 +499,8 @@ export class Connections {
       return;
     }
 
-    // const transformScale = this.scene.scale;
-    const transformScale = 1;
+    const transformScale = this.scene.scale;
+    // const transformScale = 1;
     const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
     if (!parentBoundingRect) {
@@ -561,7 +589,8 @@ export class Connections {
     }
 
     this.connectionVertexPath?.setAttribute('d', `M${vx1} ${vy1} L${xSnap} ${ySnap} L${vx2} ${vy2}`);
-    this.connectionSVGVertex!.style.display = 'block';
+    // this.connectionSVGVertex!.style.display = 'block';
+    this.connectionVertexPath!.style.display = 'block';
     this.connectionVertex.style.display = 'block';
 
     // Handle mouseup
@@ -570,7 +599,9 @@ export class Connections {
       this.scene.selecto?.rootContainer?.removeEventListener('mousemove', this.vertexAddListener);
       this.scene.selecto?.rootContainer?.removeEventListener('mouseup', this.vertexAddListener);
       this.scene.selecto!.rootContainer!.style.cursor = 'auto';
-      this.connectionSVGVertex!.style.display = 'none';
+      // this.connectionSVGVertex!.style.display = 'none';
+      this.connectionVertexPath!.style.display = 'none';
+      this.connectionVertex.style.display = 'none';
 
       // call onChange here and insert new vertex at appropriate index of connection vertices array
       const connectionIndex = selectedValue?.index;
@@ -618,14 +649,14 @@ export class Connections {
   };
 
   handleConnectionDragStart = (selectedTarget: HTMLElement, clientX: number, clientY: number) => {
-    console.log('handleConnectionDragStart');
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
-    if (this.connectionSVG && this.connectionLine && this.scene.viewportDiv && this.scene.viewportDiv.parentElement) {
-      // const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
-      const connectionStartTargetBox = getElementTransformAndDimensions(selectedTarget);
 
-      // const transformScale = this.scene.scale;
-      const transformScale = 1;
+    // if (this.connectionSVG && this.connectionLine && this.scene.viewportDiv && this.scene.viewportDiv.parentElement) {
+    if (this.connectionLine && this.scene.viewportDiv && this.scene.viewportDiv.parentElement) {
+      const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
+      // const connectionStartTargetBox = getElementTransformAndDimensions(selectedTarget);
+
+      const { scale } = this.scene;
       const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
       if (!parentBoundingRect) {
@@ -633,11 +664,13 @@ export class Connections {
       }
 
       // Multiply by transform scale to calculate the correct scaled offset
-      const connectionAnchorOffsetX = CONNECTION_ANCHOR_HIGHLIGHT_OFFSET * transformScale;
-      const connectionAnchorOffsetY = CONNECTION_ANCHOR_HIGHLIGHT_OFFSET * transformScale;
+      const connectionAnchorOffsetX = CONNECTION_ANCHOR_HIGHLIGHT_OFFSET * scale;
+      const connectionAnchorOffsetY = CONNECTION_ANCHOR_HIGHLIGHT_OFFSET * scale;
 
-      const x = (connectionStartTargetBox.x - parentBoundingRect.x + connectionAnchorOffsetX) / transformScale;
-      const y = (connectionStartTargetBox.y - parentBoundingRect.y + connectionAnchorOffsetY) / transformScale;
+      const x = (connectionStartTargetBox.x - parentBoundingRect.x + connectionAnchorOffsetX) / scale;
+      const y = (connectionStartTargetBox.y - parentBoundingRect.y + connectionAnchorOffsetY) / scale;
+      // const x = connectionStartTargetBox.left;
+      // const y = connectionStartTargetBox.top;
 
       const mouseX = clientX - parentBoundingRect.x;
       const mouseY = clientY - parentBoundingRect.y;
@@ -687,9 +720,9 @@ export class Connections {
       <>
         <ConnectionAnchors setRef={this.setConnectionAnchorRef} handleMouseLeave={this.handleMouseLeave} />
         <ConnectionSVG
-          setSVGRef={this.setConnectionSVGRef}
+          // setSVGRef={this.setConnectionSVGRef}
           setLineRef={this.setConnectionLineRef}
-          setSVGVertexRef={this.setConnectionSVGVertexRef}
+          // setSVGVertexRef={this.setConnectionSVGVertexRef}
           setVertexPathRef={this.setConnectionVertexPathRef}
           setVertexRef={this.setConnectionVertexRef}
           setConnectionsSVGRef={this.setConnectionsSVGRef}

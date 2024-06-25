@@ -375,13 +375,11 @@ export const calculateCoordinates2 = (source: ElementState, target: ElementState
   const x1 = sourceHorizontalCenter + (info.source.x * width) / 2;
   const y1 = sourceVerticalCenter - (info.source.y * height) / 2;
 
-  let x2: number;
-  let y2: number;
+  let x2 = 0;
+  let y2 = 0;
   const targetDiv = target.div;
   if (info.targetName && targetDiv) {
     // calculate closed connection x2, y2
-    // const targetDivWidth = parseFloat(targetDiv.style.width);
-    // const targetDivHeight = parseFloat(targetDiv.style.height);
     const { left, top, width, height } = getElementTransformAndDimensions(targetDiv);
     const targetHorizontalCenter = left + width / 2;
     const targetVerticalCenter = top + height / 2;
@@ -389,13 +387,8 @@ export const calculateCoordinates2 = (source: ElementState, target: ElementState
     y2 = targetVerticalCenter - (info.target.y * height) / 2;
   } else {
     // calculate open connection x2, y2
-    // const parentHorizontalCenter = parentRect.width / 2;
-    // const parentVerticalCenter = parentRect.height / 2;
-
-    // x2 = parentHorizontalCenter + (info.target.x * parentRect.width) / 2;
-    // y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
-    x2 = 0;
-    y2 = 0;
+    x2 = info.target.x;
+    y2 = info.target.y;
   }
 
   return { x1, y1, x2, y2 };

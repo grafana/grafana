@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import InfiniteViewer from 'infinite-viewer';
 // import InfiniteViewer from "react-infinite-viewer";
 import Moveable from 'moveable';
-import React from // createRef,
-// CSSProperties,
+import React from // CSSProperties, // createRef,
 // RefObject,
 'react';
 // import { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
@@ -72,7 +71,7 @@ export class Scene {
 
   width = 0;
   height = 0;
-  // scale = 1;
+  scale = 1;
   // style doesn't seem to be used anywhere
   // style: CSSProperties = {};
   data?: PanelData;
@@ -215,7 +214,6 @@ export class Scene {
   }
 
   updateSize(width: number, height: number) {
-    console.log('updateSize', width, height);
     this.width = width;
     this.height = height;
     // this.style doesn't seem to be used anywhere
@@ -541,6 +539,7 @@ export class Scene {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
       })
       .on('dragStart', (event) => {
+        console.log('moveable: dragStart');
         this.ignoreDataUpdate = true;
         this.setNonTargetPointerEvents(event.target, true);
 
@@ -717,6 +716,8 @@ export class Scene {
     /***********/
     let targets: Array<HTMLElement | SVGElement> = [];
     this.selecto!.on('dragStart', (event) => {
+      console.log(event);
+      console.log('selecto: dragStart');
       const selectedTarget = event.inputEvent.target;
 
       // If selected target is a connection control, eject to handle connection event
@@ -802,7 +803,10 @@ export class Scene {
       useWheelScroll: true,
     });
 
-    this.infiniteViewer.on('scroll', () => this.updateConnectionsSize());
+    this.infiniteViewer.on('scroll', () => {
+      this.updateConnectionsSize();
+      this.scale = this.infiniteViewer!.getZoom();
+    });
   };
 
   reorderElements = (src: ElementState, dest: ElementState, dragToGap: boolean, destPosition: number) => {

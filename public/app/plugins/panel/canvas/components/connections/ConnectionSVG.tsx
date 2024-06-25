@@ -22,9 +22,9 @@ import {
 import { CONNECTION_VERTEX_ADD_ID, CONNECTION_VERTEX_ID } from './Connections';
 
 type Props = {
-  setSVGRef: (anchorElement: SVGSVGElement) => void;
+  // setSVGRef: (anchorElement: SVGSVGElement) => void;
   setLineRef: (anchorElement: SVGLineElement) => void;
-  setSVGVertexRef: (anchorElement: SVGSVGElement) => void;
+  // setSVGVertexRef: (anchorElement: SVGSVGElement) => void;
   setVertexPathRef: (anchorElement: SVGPathElement) => void;
   setVertexRef: (anchorElement: SVGCircleElement) => void;
   setConnectionsSVGRef: (anchorElement: SVGSVGElement) => void;
@@ -35,9 +35,9 @@ let idCounter = 0;
 const htmlElementTypes = ['input', 'textarea'];
 
 export const ConnectionSVG = ({
-  setSVGRef,
+  // setSVGRef,
   setLineRef,
-  setSVGVertexRef,
+  // setSVGVertexRef,
   setVertexPathRef,
   setVertexRef,
   setConnectionsSVGRef,
@@ -126,7 +126,6 @@ export const ConnectionSVG = ({
 
   // Figure out target and then target's relative coordinates drawing (if no target do parent)
   const renderConnections = () => {
-    console.log('renderConnections');
     return (
       scene.connections.state
         // Render selected connection last, ensuring it is above other connections
@@ -148,7 +147,6 @@ export const ConnectionSVG = ({
 
           // let { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
           let { x1, y1, x2, y2 } = calculateCoordinates2(source, target, info);
-          // console.log('x1, y1, x2, y2', x1, y1, x2, y2);
           // x1 = x1 - Math.min(x1, x2);
           // y1 = y1 - Math.min(y1, y2);
           // x2 = x2 - Math.min(x1, x2);
@@ -552,7 +550,7 @@ export const ConnectionSVG = ({
   return (
     <>
       {/* svg line for connection creation */}
-      <svg ref={setSVGRef} className={styles.editorSVG}>
+      {/* <svg ref={setSVGRef} className={styles.editorSVG}>
         <defs>
           <marker
             id={EDITOR_HEAD_ID}
@@ -567,11 +565,11 @@ export const ConnectionSVG = ({
           </marker>
         </defs>
         <line ref={setLineRef} stroke={defaultArrowColor} strokeWidth={2} markerEnd={`url(#${EDITOR_HEAD_ID})`} />
-      </svg>
+      </svg> */}
 
       {/* svg circle for initial vertex?
           path? is it for the line drag handling? */}
-      <svg ref={setSVGVertexRef} className={styles.editorSVG}>
+      {/* <svg ref={setSVGVertexRef} className={styles.editorSVG}>
         <path
           ref={setVertexPathRef}
           stroke={defaultArrowColor}
@@ -580,9 +578,49 @@ export const ConnectionSVG = ({
           fill={'none'}
         />
         <circle ref={setVertexRef} stroke={defaultArrowColor} r={4} className={styles.vertex} />
-      </svg>
+      </svg> */}
 
       <svg ref={setConnectionsSVGRef} className={styles.connection}>
+        <defs>
+          <marker
+            id={EDITOR_HEAD_ID}
+            markerWidth="10"
+            markerHeight="7"
+            refX="10"
+            refY="3.5"
+            orient="auto"
+            stroke={defaultArrowColor}
+          >
+            <polygon points="0 0, 10 3.5, 0 7" fill={defaultArrowColor} />
+          </marker>
+        </defs>
+        {/* svg line for connection creation */}
+        <line
+          ref={setLineRef}
+          stroke={defaultArrowColor}
+          strokeWidth={2}
+          markerEnd={`url(#${EDITOR_HEAD_ID})`}
+          style={{ display: 'none' }}
+        />
+
+        {/* svg circle for initial vertex?
+          path? is it for the line drag handling? */}
+        <path
+          ref={setVertexPathRef}
+          stroke={defaultArrowColor}
+          strokeWidth={2}
+          strokeDasharray={'5, 5'}
+          fill={'none'}
+          style={{ display: 'none' }}
+        />
+        <circle
+          ref={setVertexRef}
+          stroke={defaultArrowColor}
+          r={4}
+          className={styles.vertex}
+          style={{ display: 'none' }}
+        />
+
         {renderConnections()}
       </svg>
     </>
@@ -590,17 +628,20 @@ export const ConnectionSVG = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  editorSVG: css({
-    position: 'absolute',
-    pointerEvents: 'none',
-    // width: '100%',
-    // height: '100%',
-    width: '1000px',
-    height: '1000px',
-    zIndex: 1000,
-    display: 'none',
-    border: '2px solid red',
-  }),
+  // editorSVG: css({
+  //   position: 'absolute',
+  //   pointerEvents: 'none',
+  //   // width: '100%',
+  //   // height: '100%',
+  //   width: '1000px',
+  //   height: '1000px',
+  //   zIndex: 1000,
+  //   display: 'none',
+  //   border: '2px solid red',
+  // }),
+  // line: css({
+  //   display: 'none',
+  // }),
   connection: css({
     position: 'absolute',
     // width: '100%',
