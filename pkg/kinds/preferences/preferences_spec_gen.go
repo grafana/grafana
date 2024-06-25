@@ -16,6 +16,19 @@ type CookiePreferences struct {
 	Performance map[string]any `json:"performance,omitempty"`
 }
 
+// NavLink defines model for NavLink.
+type NavLink struct {
+	Id     *string `json:"id,omitempty"`
+	Target *string `json:"target,omitempty"`
+	Text   *string `json:"text,omitempty"`
+	Url    *string `json:"url,omitempty"`
+}
+
+// NavbarPreference defines model for NavbarPreference.
+type NavbarPreference struct {
+	SavedItems []NavLink `json:"savedItems"`
+}
+
 // QueryHistoryPreference defines model for QueryHistoryPreference.
 type QueryHistoryPreference struct {
 	// HomeTab one of: '' | 'query' | 'starred';
@@ -32,6 +45,7 @@ type Spec struct {
 
 	// Selected language (beta)
 	Language     *string                 `json:"language,omitempty"`
+	Navbar       *NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory *QueryHistoryPreference `json:"queryHistory,omitempty"`
 
 	// Theme light, dark, empty is default
