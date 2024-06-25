@@ -1,5 +1,4 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import alertmanagerMock from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';

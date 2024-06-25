@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { compact } from 'lodash';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';

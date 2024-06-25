@@ -13,6 +13,7 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
 
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
@@ -107,7 +108,7 @@ func TestQueries(t *testing.T) {
 				Name: "single path",
 				Data: &sqlEntityDeleteRequest{
 					SQLTemplate: new(sqltemplate.SQLTemplate),
-					Key:         new(entity.Key),
+					Key:         new(grafanaregistry.Key),
 				},
 				Expected: expected{
 					"entity_delete_mysql_sqlite.sql": dialects{
@@ -173,7 +174,7 @@ func TestQueries(t *testing.T) {
 				Name: "with resource version and select for update",
 				Data: &sqlEntityReadRequest{
 					SQLTemplate:     new(sqltemplate.SQLTemplate),
-					Key:             new(entity.Key),
+					Key:             new(grafanaregistry.Key),
 					ResourceVersion: 1,
 					SelectForUpdate: true,
 					returnsEntitySet: returnsEntitySet{
@@ -190,7 +191,7 @@ func TestQueries(t *testing.T) {
 				Name: "without resource version and select for update",
 				Data: &sqlEntityReadRequest{
 					SQLTemplate: new(sqltemplate.SQLTemplate),
-					Key:         new(entity.Key),
+					Key:         new(grafanaregistry.Key),
 					returnsEntitySet: returnsEntitySet{
 						Entity: newReturnsEntity(),
 					},
@@ -547,7 +548,7 @@ func TestReadEntity(t *testing.T) {
 	// readonly, shared data for all subtests
 	expectedEntity := newEmptyEntity()
 	testdataJSON(t, `grpc-res-entity.json`, expectedEntity)
-	key, err := entity.ParseKey(expectedEntity.Key)
+	key, err := grafanaregistry.ParseKey(expectedEntity.Key)
 	require.NoErrorf(t, err, "provided key: %#v", expectedEntity)
 
 	t.Run("happy path - entity table, optimistic locking", func(t *testing.T) {
@@ -567,7 +568,7 @@ func TestReadEntity(t *testing.T) {
 		db, mock := newMockDBMatchWords(t)
 		readReq := sqlEntityReadRequest{ // used to generate mock results
 			SQLTemplate:      sqltemplate.New(sqltemplate.MySQL),
-			Key:              new(entity.Key),
+			Key:              new(grafanaregistry.Key),
 			returnsEntitySet: newReturnsEntitySet(),
 		}
 		readReq.Entity.Entity = cloneEntity(expectedEntity)
@@ -592,7 +593,7 @@ func TestReadEntity(t *testing.T) {
 		db, mock := newMockDBMatchWords(t)
 		readReq := sqlEntityReadRequest{ // used to generate mock results
 			SQLTemplate:      sqltemplate.New(sqltemplate.MySQL),
-			Key:              new(entity.Key),
+			Key:              new(grafanaregistry.Key),
 			returnsEntitySet: newReturnsEntitySet(),
 		}
 		readReq.Entity.Entity = cloneEntity(expectedEntity)
@@ -627,7 +628,7 @@ func TestReadEntity(t *testing.T) {
 		db, mock := newMockDBMatchWords(t)
 		readReq := sqlEntityReadRequest{ // used to generate mock results
 			SQLTemplate:      sqltemplate.New(sqltemplate.MySQL),
-			Key:              new(entity.Key),
+			Key:              new(grafanaregistry.Key),
 			returnsEntitySet: newReturnsEntitySet(),
 		}
 		results := newMockResults(t, mock, sqlEntityRead, readReq)
@@ -652,7 +653,7 @@ func TestReadEntity(t *testing.T) {
 		db, mock := newMockDBMatchWords(t)
 		readReq := sqlEntityReadRequest{ // used to generate mock results
 			SQLTemplate:      sqltemplate.New(sqltemplate.MySQL),
-			Key:              new(entity.Key),
+			Key:              new(grafanaregistry.Key),
 			returnsEntitySet: newReturnsEntitySet(),
 		}
 		readReq.Entity.Entity = cloneEntity(expectedEntity)
@@ -684,7 +685,7 @@ func expectReadEntity(t *testing.T, mock sqlmock.Sqlmock, e *entity.Entity) func
 	// test declarations
 	readReq := sqlEntityReadRequest{ // used to generate mock results
 		SQLTemplate:      sqltemplate.New(sqltemplate.MySQL),
-		Key:              new(entity.Key),
+		Key:              new(grafanaregistry.Key),
 		returnsEntitySet: newReturnsEntitySet(),
 	}
 	results := newMockResults(t, mock, sqlEntityRead, readReq)

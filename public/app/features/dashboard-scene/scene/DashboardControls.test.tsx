@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneDataLayerControls, SceneVariableSet, TextBoxVariable, VariableValueSelectors } from '@grafana/scenes';

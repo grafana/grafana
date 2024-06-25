@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 

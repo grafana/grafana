@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useObservable } from 'react-use';
 
 import { LoadingState, PanelData } from '@grafana/data';

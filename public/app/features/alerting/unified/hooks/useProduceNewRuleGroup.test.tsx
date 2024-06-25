@@ -1,5 +1,4 @@
 import { HttpResponse } from 'msw';
-import React from 'react';
 import { render, userEvent } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 

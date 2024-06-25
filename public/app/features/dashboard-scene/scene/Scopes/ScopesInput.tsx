@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { groupBy } from 'lodash';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, Input, Tooltip } from '@grafana/ui';
@@ -35,13 +35,20 @@ export function ScopesInput({
       let titles: string[];
 
       if (path.length > 0) {
-        titles = path.map((nodeName) => {
-          const { title, nodes } = currentLevel[nodeName];
+        titles = path
+          .map((nodeName) => {
+            const cl = currentLevel[nodeName];
+            if (!cl) {
+              return null;
+            }
 
-          currentLevel = nodes;
+            const { title, nodes } = cl;
 
-          return title;
-        });
+            currentLevel = nodes;
+
+            return title;
+          })
+          .filter((title) => title !== null) as string[];
 
         if (titles[0] === '') {
           titles.splice(0, 1);

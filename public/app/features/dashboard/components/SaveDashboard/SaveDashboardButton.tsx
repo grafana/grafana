@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, ButtonVariant, ComponentSize, ModalsController } from '@grafana/ui';
