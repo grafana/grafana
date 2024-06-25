@@ -28,8 +28,8 @@ import {
   getFiltersInput,
   getClustersExpand,
   getClustersSelect,
-  getClustersSlothClusterNorthSelect,
-  getClustersSlothClusterSouthSelect,
+  getClustersSlothClusterNorthRadio,
+  getClustersSlothClusterSouthRadio,
   getDashboard,
   getDashboardsContainer,
   getDashboardsExpand,
@@ -38,7 +38,6 @@ import {
   mocksScopes,
   queryAllDashboard,
   queryFiltersApply,
-  queryApplicationsClustersSlothClusterNorthTitle,
   queryApplicationsClustersTitle,
   queryApplicationsSlothPictureFactoryTitle,
   queryApplicationsSlothVoteTrackerTitle,
@@ -137,12 +136,14 @@ describe('ScopesScene', () => {
         expect(getFiltersInput().value).toBe('slothVoteTracker, slothPictureFactory, Cluster Index Helper');
       });
 
-      it("Can't navigate deeper than the level where scopes are selected", async () => {
+      it('Can select a node from an inner level', async () => {
         await userEvents.click(getFiltersInput());
         await userEvents.click(getApplicationsExpand());
         await userEvents.click(getApplicationsSlothVoteTrackerSelect());
         await userEvents.click(getApplicationsClustersExpand());
-        expect(queryApplicationsClustersSlothClusterNorthTitle()).not.toBeInTheDocument();
+        await userEvents.click(getApplicationsClustersSlothClusterNorthSelect());
+        await userEvents.click(getFiltersApply());
+        expect(getFiltersInput().value).toBe('slothClusterNorth');
       });
 
       it('Can select a node from an upper level', async () => {
@@ -158,8 +159,12 @@ describe('ScopesScene', () => {
       it('Respects only one select per container', async () => {
         await userEvents.click(getFiltersInput());
         await userEvents.click(getClustersExpand());
-        await userEvents.click(getClustersSlothClusterNorthSelect());
-        expect(getClustersSlothClusterSouthSelect()).toBeDisabled();
+        await userEvents.click(getClustersSlothClusterNorthRadio());
+        expect(getClustersSlothClusterNorthRadio().checked).toBe(true);
+        expect(getClustersSlothClusterSouthRadio().checked).toBe(false);
+        await userEvents.click(getClustersSlothClusterSouthRadio());
+        expect(getClustersSlothClusterNorthRadio().checked).toBe(false);
+        expect(getClustersSlothClusterSouthRadio().checked).toBe(true);
       });
 
       it('Search works', async () => {
