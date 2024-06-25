@@ -477,6 +477,9 @@ func (s *Service) CreateSnapshot(ctx context.Context, sessionUid string) (*cloud
 		return nil, fmt.Errorf("initializing snapshot with GMS for session %s: %w", sessionUid, err)
 	}
 
+	if s.cfg.CloudMigration.SnapshotFolder == "" {
+		return nil, fmt.Errorf("snapshot folder is not set")
+	}
 	// save snapshot to the db
 	snapshot := cloudmigration.CloudMigrationSnapshot{
 		UID:            util.GenerateShortUID(),
