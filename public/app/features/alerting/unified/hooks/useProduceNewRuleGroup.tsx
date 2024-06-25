@@ -15,7 +15,7 @@ import {
   ruleGroupReducer,
   updateRuleGroupAction,
 } from '../reducers/ruler/ruleGroups';
-import { fetchRulesSourceBuildInfoAction, getDataSourceRulerConfig } from '../state/actions';
+import { fetchRulerRulesAction, fetchRulesSourceBuildInfoAction, getDataSourceRulerConfig } from '../state/actions';
 import { isGrafanaRulesSource } from '../utils/datasource';
 
 type ProduceResult = RulerRuleGroupDTO | AlertGroupUpdated;
@@ -158,7 +158,6 @@ function useProduceNewRuleGroup() {
 
       /**
        * MOVE: only supported for data source managed rule groups for now
-       * @todo merge alert rules with the new target group if it already exists?
        * 1. create the new rule group
        * 2. delete the old one
        */
@@ -278,15 +277,22 @@ export function useMoveRuleGroup() {
 
   const moveFn = useCallback(
     async (ruleGroup: RuleGroupIdentifier, namespaceName: string, groupName?: string, interval?: string) => {
+      const { dataSourceName } = ruleGroup;
+
       // we could technically support moving rule groups to another folder, though we don't have a "move" wizard yet.
       // Here's what we'd need to do to support this:
       //  1.
-      if (isGrafanaRulesSource(ruleGroup.dataSourceName)) {
+      if (isGrafanaRulesSource(dataSourceName)) {
         throw new Error('Moving a Grafana-managed rule group to another folder is currently not supported.');
       }
 
       const action = moveRuleGroupAction({ namespaceName, groupName, interval });
-      return produceNewRuleGroup(ruleGroup, action);
+      const result = produceNewRuleGroup(ruleGroup, action);
+
+      // @TODO deprecate this once we've moved everything to RTKQ
+      await dispatch(fetchRulerRulesAction({ rulesSourceName: dataSourceName }));
+
+      return result;
     },
     [produceNewRuleGroup]
   );

@@ -6,7 +6,6 @@ import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-ho
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Button, Field, Input, Label, LinkButton, Modal, useStyles2, Stack, Alert } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { useCleanup } from 'app/core/hooks/useCleanup';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -20,7 +19,6 @@ import { rulesInSameGroupHaveInvalidFor } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { stringifyErrorLike } from '../../utils/misc';
-import { initialAsyncRequestState } from '../../utils/redux';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import { AlertInfo, getAlertInfo, isRecordingRulerRule } from '../../utils/rules';
 import { formatPrometheusDuration, parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
@@ -223,7 +221,6 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     }
   }, [onClose, isUninitialized, isSuccess]);
 
-  useCleanup((state) => (state.unifiedAlerting.updateLotexNamespaceAndGroup = initialAsyncRequestState));
   const onSubmit = async (values: FormValues) => {
     const ruleGroupIdentifier: RuleGroupIdentifier = {
       dataSourceName: rulesSourceName,
