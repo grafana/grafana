@@ -118,6 +118,22 @@ def verify_npm_packages_step():
         ],
     }
 
+# JEV: clean CDN cache no matter what???
+def clear_cdn_cache_step():
+    return {
+        "name": "clear-cdn-cache",
+        "image": images["alpine"],
+        "commands": [
+            "apk add --no-cache curl",
+            # JEV: better way to handle this?
+            "curl -X POST 'https://api.fastly.com/service/3A0sfNaosp6pk788OnZQ5H/purge_all' -H 'Fastly-Key: ${FASTLY_API_TOKEN}' || (echo 'Failed to clear CDN cache' >&2; exit 1)",
+        ],
+        "environment": {
+            # JEV: i assume this doesn't exist. How to add secrets?
+            "FASTLY_API_TOKEN": from_secret("fastly_api_token"),
+        },
+    }
+
 def publish_artifacts_step():
     return {
         "name": "publish-artifacts",
