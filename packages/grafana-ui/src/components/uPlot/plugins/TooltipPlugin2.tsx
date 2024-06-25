@@ -463,7 +463,10 @@ export const TooltipPlugin2 = ({
     config.addHook('setData', (u) => {
       yZoomed = false;
       yDrag = false;
-      dismiss();
+
+      if (_isPinned) {
+        dismiss();
+      }
     });
 
     // fires on series focus/proximity changes
