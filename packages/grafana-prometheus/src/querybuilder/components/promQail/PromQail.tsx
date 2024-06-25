@@ -3,8 +3,7 @@ import { css, cx } from '@emotion/css';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { useEffect, useReducer, useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { store } from '@grafana/o11y-ds-frontend';
+import { GrafanaTheme2, store } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
 

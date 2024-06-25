@@ -1,7 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/hooks/useFlag.ts
 import { useCallback, useState } from 'react';
 
-import { store } from '@grafana/o11y-ds-frontend';
+import { store } from '@grafana/data';
 
 export const promQueryEditorExplainKey = 'PrometheusQueryEditorExplainDefault';
 
