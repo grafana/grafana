@@ -3,8 +3,9 @@ package zanzana
 import (
 	"context"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/grpc"
+
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
