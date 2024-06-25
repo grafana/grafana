@@ -7,11 +7,11 @@ import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { isLocalDevEnv } from '../utils/misc';
 
 import GettingStarted, { WelcomeHeader } from './GettingStarted';
-import { getInsightsScenes, insigthsIsAvailable } from './Insights';
+import { getInsightsScenes, insightsIsAvailable } from './Insights';
 import { PluginIntegrations } from './PluginIntegrations';
 
 export default function Home() {
-  const insightsEnabled = (insigthsIsAvailable() || isLocalDevEnv()) && Boolean(config.featureToggles.alertingInsights);
+  const insightsEnabled = (insightsIsAvailable() || isLocalDevEnv()) && Boolean(config.featureToggles.alertingInsights);
 
   const [activeTab, setActiveTab] = useState<'insights' | 'overview'>(insightsEnabled ? 'insights' : 'overview');
   const insightsScene = getInsightsScenes();

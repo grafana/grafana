@@ -107,7 +107,7 @@ export const getInsightsDataSources = () => {
   return [ashDs, cloudUsageDs, grafanaCloudPromDs];
 };
 
-export const insigthsIsAvailable = () => {
+export const insightsIsAvailable = () => {
   const [_, cloudUsageDs, __] = getInsightsDataSources();
   return cloudUsageDs.settings;
 };
