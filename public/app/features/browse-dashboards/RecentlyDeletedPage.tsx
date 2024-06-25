@@ -40,7 +40,7 @@ const RecentlyDeletedPage = memo(() => {
       <Page navId="dashboards/recently-deleted">
         <Page.Contents>
           <EmptyState
-            variant="call-to-action"
+            variant="completed"
             message={t('recently-deleted.page.empty-state', "You haven't deleted any dashboards recently.")}
           />
         </Page.Contents>
@@ -51,30 +51,34 @@ const RecentlyDeletedPage = memo(() => {
   return (
     <Page navId="dashboards/recently-deleted">
       <Page.Contents>
-        <ActionRow
-          state={searchState}
-          getTagOptions={stateManager.getTagOptions}
-          getSortOptions={getGrafanaSearcher().getSortOptions}
-          sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
-          onLayoutChange={stateManager.onLayoutChange}
-          onSortChange={stateManager.onSortChange}
-          onTagFilterChange={stateManager.onTagFilterChange}
-          onDatasourceChange={stateManager.onDatasourceChange}
-          onPanelTypeChange={stateManager.onPanelTypeChange}
-          onSetIncludePanels={stateManager.onSetIncludePanels}
-        />
-        <RecentlyDeletedActions />
-        <AutoSizer>
-          {({ width, height }) => (
-            <SearchView
-              canSelect={canSelect}
-              width={width}
-              height={height}
-              searchStateManager={stateManager}
-              searchState={searchState}
+        {searchState.result && (
+          <>
+            <ActionRow
+              state={searchState}
+              getTagOptions={stateManager.getTagOptions}
+              getSortOptions={getGrafanaSearcher().getSortOptions}
+              sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
+              onLayoutChange={stateManager.onLayoutChange}
+              onSortChange={stateManager.onSortChange}
+              onTagFilterChange={stateManager.onTagFilterChange}
+              onDatasourceChange={stateManager.onDatasourceChange}
+              onPanelTypeChange={stateManager.onPanelTypeChange}
+              onSetIncludePanels={stateManager.onSetIncludePanels}
             />
-          )}
-        </AutoSizer>
+            <RecentlyDeletedActions />
+            <AutoSizer>
+              {({ width, height }) => (
+                <SearchView
+                  canSelect={canSelect}
+                  width={width}
+                  height={height}
+                  searchStateManager={stateManager}
+                  searchState={searchState}
+                />
+              )}
+            </AutoSizer>
+          </>
+        )}
       </Page.Contents>
     </Page>
   );
