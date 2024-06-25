@@ -1146,9 +1146,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "8"],
       [0, 0, 0, "Do not use any type assertions.", "9"]
     ],
-    "public/app/core/components/LocalStorageValueProvider/index.tsx:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./LocalStorageValueProvider\`)", "0"]
-    ],
     "public/app/core/components/Login/LoginLayout.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
