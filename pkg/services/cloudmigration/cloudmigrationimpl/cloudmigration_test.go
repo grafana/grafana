@@ -150,10 +150,10 @@ func Test_ExecuteAsyncWorkflow(t *testing.T) {
 	assert.NoError(t, err)
 
 	snapshot, err := s.GetSnapshot(ctxWithSignedInUser(), cloudmigration.GetSnapshotsQuery{
-		SnapshotUID:  snapshotUid,
-		SessionUID:   sessionUid,
-		ResultOffset: 0,
-		ResultLimit:  100,
+		SnapshotUID: snapshotUid,
+		SessionUID:  sessionUid,
+		ResultPage:  1,
+		ResultLimit: 100,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, snapshotResp.UID, snapshot.UID)
@@ -161,7 +161,7 @@ func Test_ExecuteAsyncWorkflow(t *testing.T) {
 	assert.Len(t, snapshot.Resources, 1)
 	assert.Equal(t, "qwerty", snapshot.Resources[0].RefID)
 
-	snapshots, err := s.GetSnapshotList(ctxWithSignedInUser(), cloudmigration.ListSnapshotsQuery{SessionUID: sessionUid, Limit: 100})
+	snapshots, err := s.GetSnapshotList(ctxWithSignedInUser(), cloudmigration.ListSnapshotsQuery{SessionUID: sessionUid, Page: 1, Limit: 100})
 	require.NoError(t, err)
 	assert.Len(t, snapshots, 1)
 	assert.Equal(t, snapshotResp.UID, snapshots[0].UID)

@@ -106,15 +106,15 @@ type CloudMigrationSessionListResponse struct {
 }
 
 type GetSnapshotsQuery struct {
-	SnapshotUID  string
-	SessionUID   string
-	ResultOffset int
-	ResultLimit  int
+	SnapshotUID string
+	SessionUID  string
+	ResultPage  int
+	ResultLimit int
 }
 
 type ListSnapshotsQuery struct {
 	SessionUID string
-	Offset     int
+	Page       int
 	Limit      int
 }
 

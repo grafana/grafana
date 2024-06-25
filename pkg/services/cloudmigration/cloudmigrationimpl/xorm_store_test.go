@@ -195,7 +195,7 @@ func Test_SnapshotManagement(t *testing.T) {
 		require.Equal(t, cloudmigration.SnapshotStatusCreating, string(snapshot.Status))
 
 		// lists snapshots and ensures it's in there
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUid, Offset: 0, Limit: 100})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUid, Page: 1, Limit: 100})
 		require.NoError(t, err)
 		require.Len(t, snapshots, 1)
 		require.Equal(t, *snapshot, snapshots[0])

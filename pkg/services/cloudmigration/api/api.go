@@ -413,13 +413,16 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	}
 
 	q := cloudmigration.GetSnapshotsQuery{
-		SnapshotUID:  snapshotUid,
-		SessionUID:   sessUid,
-		ResultOffset: c.QueryInt("resultOffset"),
-		ResultLimit:  c.QueryInt("resultLimit"),
+		SnapshotUID: snapshotUid,
+		SessionUID:  sessUid,
+		ResultPage:  c.QueryInt("resultPage"),
+		ResultLimit: c.QueryInt("resultLimit"),
 	}
 	if q.ResultLimit == 0 {
 		q.ResultLimit = 100
+	}
+	if q.ResultPage < 1 {
+		q.ResultPage = 1
 	}
 	snapshot, err := cma.cloudMigrationService.GetSnapshot(ctx, q)
 	if err != nil {
@@ -473,10 +476,13 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 	q := cloudmigration.ListSnapshotsQuery{
 		SessionUID: uid,
 		Limit:      c.QueryInt("limit"),
-		Offset:     c.QueryInt("offset"),
+		Page:       c.QueryInt("page"),
 	}
 	if q.Limit == 0 {
 		q.Limit = 100
+	}
+	if q.Page < 1 {
+		q.Page = 1
 	}
 
 	snapshotList, err := cma.cloudMigrationService.GetSnapshotList(ctx, q)

@@ -203,7 +203,7 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 	return err
 }
 
-func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string, resultOffset int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error) {
+func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string, resultPage int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error) {
 	var snapshot cloudmigration.CloudMigrationSnapshot
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exist, err := sess.Where("uid=?", uid).Get(&snapshot)
@@ -223,7 +223,7 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string, resultOffs
 		return &snapshot, err
 	}
 
-	resources, err := ss.GetSnapshotResources(ctx, uid, resultOffset, resultLimit)
+	resources, err := ss.GetSnapshotResources(ctx, uid, resultPage, resultLimit)
 	if err == nil {
 		snapshot.Resources = resources
 	}
@@ -235,7 +235,8 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, uid string, resultOffs
 func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
 	var snapshots = make([]cloudmigration.CloudMigrationSnapshot, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		sess.Limit(query.Limit, query.Offset)
+		offset := (query.Page - 1) * query.Limit
+		sess.Limit(query.Limit, offset)
 		return sess.Find(&snapshots, &cloudmigration.CloudMigrationSnapshot{
 			SessionUID: query.SessionUID,
 		})
@@ -289,12 +290,13 @@ func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotU
 	})
 }
 
-func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string, offset int, limit int) ([]cloudmigration.CloudMigrationResource, error) {
+func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string, page int, limit int) ([]cloudmigration.CloudMigrationResource, error) {
 	var resources []cloudmigration.CloudMigrationResource
 	if limit == 0 {
 		return resources, nil
 	}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		offset := (page - 1) * limit
 		sess.Limit(limit, offset)
 		return sess.Find(&resources, &cloudmigration.CloudMigrationResource{
 			SnapshotUID: snapshotUid,
