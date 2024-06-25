@@ -8,6 +8,8 @@ on:
       dry_run:
         required: false
         default: true
+      version:
+        required: true
   pull_request:
     types:
       - closed
