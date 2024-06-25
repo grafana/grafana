@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -478,23 +477,15 @@ func (s *Service) CreateSnapshot(ctx context.Context, sessionUid string) (*cloud
 		return nil, fmt.Errorf("initializing snapshot with GMS for session %s: %w", sessionUid, err)
 	}
 
-	// create new directory for snapshot writing
-	snapshotUid := util.GenerateShortUID()
-	dir := filepath.Join("cloudmigration.snapshots", fmt.Sprintf("snapshot-%s-%s", snapshotUid, initResp.SnapshotID))
-	err = os.MkdirAll(dir, 0750)
-	if err != nil {
-		return nil, fmt.Errorf("creating snapshot directory: %w", err)
-	}
-
 	// save snapshot to the db
 	snapshot := cloudmigration.CloudMigrationSnapshot{
-		UID:            snapshotUid,
+		UID:            util.GenerateShortUID(),
 		SessionUID:     sessionUid,
 		Status:         cloudmigration.SnapshotStatusInitializing,
 		EncryptionKey:  initResp.EncryptionKey,
 		UploadURL:      initResp.UploadURL,
 		GMSSnapshotUID: initResp.SnapshotID,
-		LocalDir:       dir,
+		LocalDir:       filepath.Join(s.cfg.CloudMigration.SnapshotFolder, "grafana", "snapshots", initResp.SnapshotID),
 	}
 
 	uid, err := s.store.CreateSnapshot(ctx, snapshot)

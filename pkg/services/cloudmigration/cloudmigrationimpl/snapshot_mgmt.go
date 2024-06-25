@@ -3,7 +3,6 @@ package cloudmigrationimpl
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
@@ -163,7 +162,7 @@ func (s *Service) buildSnapshot(ctx context.Context, maxItemsPerPartition uint32
 		return fmt.Errorf("setting snapshot status to creating: snapshotUID=%s %w", snapshotMeta.UID, err)
 	}
 
-	snapshot, err := NewSnapshotWriter(filepath.Join(s.cfg.CloudMigration.SnapshotFolder, "grafana", "snapshots", snapshotMeta.GMSSnapshotUID))
+	snapshot, err := NewSnapshotWriter(snapshotMeta.LocalDir)
 	if err != nil {
 		return fmt.Errorf("instantiating snapshot writer: %w", err)
 	}
