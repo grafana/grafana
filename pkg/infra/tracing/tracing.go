@@ -73,6 +73,9 @@ type Tracer interface {
 	// Both the context and span must be derived from the same call to
 	// [Tracer.Start].
 	Inject(context.Context, http.Header, trace.Span)
+
+	// GetTracingConfig returns the tracing config.
+	GetTracingConfig() *TracingConfig
 }
 
 func ProvideService(tracingCfg *TracingConfig) (*TracingService, error) {
@@ -101,6 +104,10 @@ func ProvideService(tracingCfg *TracingConfig) (*TracingService, error) {
 
 func (ots *TracingService) GetTracerProvider() tracerProvider {
 	return ots.tracerProvider
+}
+
+func (ots *TracingService) GetTracingConfig() *TracingConfig {
+	return ots.cfg
 }
 
 func TraceIDFromContext(ctx context.Context, requireSampled bool) string {

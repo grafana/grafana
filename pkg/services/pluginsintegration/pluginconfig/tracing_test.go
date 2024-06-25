@@ -3,6 +3,7 @@ package pluginconfig
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -11,12 +12,14 @@ import (
 func TestNewTracingCfg(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		cfg := setting.NewCfg()
-
-		tracingCfg, err := newTracingCfg(cfg)
+		tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 		require.NoError(t, err)
-		assert.False(t, tracingCfg.IsEnabled(), "tracing should be disabled")
-		assert.Empty(t, tracingCfg.OpenTelemetry.Address)
-		assert.Empty(t, tracingCfg.OpenTelemetry.Propagation)
+
+		pluginTracingCfg, err := NewTracingCfg(tracingCfg)
+		require.NoError(t, err)
+		assert.False(t, pluginTracingCfg.IsEnabled(), "tracing should be disabled")
+		assert.Empty(t, pluginTracingCfg.OpenTelemetry.Address)
+		assert.Empty(t, pluginTracingCfg.OpenTelemetry.Propagation)
 	})
 
 	t.Run("enabled", func(t *testing.T) {
@@ -39,11 +42,14 @@ func TestNewTracingCfg(t *testing.T) {
 					otlpSect.Key("propagation").SetValue(tc.propagation)
 				}
 
-				tracingCfg, err := newTracingCfg(cfg)
+				tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 				require.NoError(t, err)
-				assert.True(t, tracingCfg.IsEnabled(), "tracing should be enabled")
-				assert.Equal(t, address, tracingCfg.OpenTelemetry.Address)
-				assert.Equal(t, tc.propagation, tracingCfg.OpenTelemetry.Propagation)
+
+				pluginTracingCfg, err := NewTracingCfg(tracingCfg)
+				require.NoError(t, err)
+				assert.True(t, pluginTracingCfg.IsEnabled(), "tracing should be enabled")
+				assert.Equal(t, address, pluginTracingCfg.OpenTelemetry.Address)
+				assert.Equal(t, tc.propagation, pluginTracingCfg.OpenTelemetry.Propagation)
 			})
 		}
 	})

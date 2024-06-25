@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
@@ -81,7 +82,7 @@ type PluginInstanceCfg struct {
 }
 
 // ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
-func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provider, features featuremgmt.FeatureToggles) (*PluginInstanceCfg, error) {
+func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provider, features featuremgmt.FeatureToggles, tracingCfg *tracing.TracingConfig) (*PluginInstanceCfg, error) {
 	aws := settingProvider.Section("aws")
 	allowedAuth := cfg.AWSAllowedAuthProviders
 	if len(aws.KeyValue("allowed_auth_providers").Value()) > 0 {
@@ -92,9 +93,9 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		awsForwardSettingsPlugins = util.SplitString(aws.KeyValue("forward_settings_to_plugins").Value())
 	}
 
-	tracingCfg, err := newTracingCfg(cfg)
+	pluginTracingCfg, err := NewTracingCfg(tracingCfg)
 	if err != nil {
-		return nil, fmt.Errorf("new opentelemetry cfg: %w", err)
+		return nil, fmt.Errorf("failed to create tracing configuration: %w", err)
 	}
 
 	if cfg.Azure == nil {
@@ -104,7 +105,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 	return &PluginInstanceCfg{
 		GrafanaAppURL:                       cfg.AppURL,
 		Features:                            features,
-		Tracing:                             tracingCfg,
+		Tracing:                             pluginTracingCfg,
 		PluginSettings:                      extractPluginSettings(settingProvider),
 		AWSAllowedAuthProviders:             allowedAuth,
 		AWSAssumeRoleEnabled:                aws.KeyValue("assume_role_enabled").MustBool(cfg.AWSAssumeRoleEnabled),

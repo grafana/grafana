@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 )
 
@@ -144,19 +145,24 @@ func (p *EnvVarsProvider) secureSocksProxyEnvVars() []string {
 }
 
 func (p *EnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string {
-	if !p.cfg.Tracing.IsEnabled() {
+	return GetTracingEnvironmentVariables(p.cfg.Tracing, plugin.Info.Version)
+}
+
+func GetTracingEnvironmentVariables(tracingCfg config.Tracing, pluginVersion string) []string {
+	if !tracingCfg.IsEnabled() {
 		return nil
 	}
 
 	vars := []string{
-		p.envVar("GF_INSTANCE_OTLP_ADDRESS", p.cfg.Tracing.OpenTelemetry.Address),
-		p.envVar("GF_INSTANCE_OTLP_PROPAGATION", p.cfg.Tracing.OpenTelemetry.Propagation),
-		p.envVar("GF_INSTANCE_OTLP_SAMPLER_TYPE", p.cfg.Tracing.OpenTelemetry.Sampler),
-		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_PARAM=%.6f", p.cfg.Tracing.OpenTelemetry.SamplerParam),
-		p.envVar("GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL", p.cfg.Tracing.OpenTelemetry.SamplerRemoteURL),
+		fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", tracingCfg.OpenTelemetry.Address),
+		fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", tracingCfg.OpenTelemetry.Propagation),
+		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_TYPE=%s", tracingCfg.OpenTelemetry.Sampler),
+		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_PARAM=%.6f", tracingCfg.OpenTelemetry.SamplerParam),
+		fmt.Sprintf("GF_INSTANCE_OTLP_SAMPLER_REMOTE_URL=%s", tracingCfg.OpenTelemetry.SamplerRemoteURL),
 	}
-	if plugin.Info.Version != "" {
-		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
+
+	if pluginVersion != "" {
+		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", pluginVersion))
 	}
 	return vars
 }

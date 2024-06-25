@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -75,7 +76,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 
 	t.Run("without FlagPluginsSkipHostEnvVars should not populate host env vars", func(t *testing.T) {
 		cfg := setting.NewCfg()
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), tracing.NewEmptyTracingConfig())
 		require.NoError(t, err)
 
 		provider := NewEnvVarsProvider(pCfg, nil)
@@ -92,7 +93,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 		p.SkipHostEnvVars = true
 
 		cfg := setting.NewCfg()
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), tracing.NewEmptyTracingConfig())
 		require.NoError(t, err)
 		provider := NewEnvVarsProvider(pCfg, nil)
 
@@ -471,7 +472,7 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 			AppURL: "https://myorg.com/",
 		}
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), tracing.NewEmptyTracingConfig())
 		require.NoError(t, err)
 
 		provider := NewEnvVarsProvider(pCfg, nil)
@@ -589,7 +590,7 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 			},
 		}
 
-		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures(), tracing.NewEmptyTracingConfig())
 		require.NoError(t, err)
 
 		provider := NewEnvVarsProvider(pCfg, nil)
