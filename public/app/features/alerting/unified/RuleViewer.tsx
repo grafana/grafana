@@ -8,7 +8,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleProvider } from './components/rule-viewer/RuleContext';
-import DetailView from './components/rule-viewer/RuleViewer';
+import DetailView, { ActiveTab, useActiveTab } from './components/rule-viewer/RuleViewer';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { stringifyErrorLike } from './utils/misc';
 import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
@@ -21,6 +21,13 @@ type RuleViewerProps = GrafanaRouteComponentProps<{
 const RuleViewer = (props: RuleViewerProps): JSX.Element => {
   const id = getRuleIdFromPathname(props.match.params);
 
+  const [activeTab] = useActiveTab();
+  const instancesTab = activeTab === ActiveTab.Instances;
+
+  // We will fetch no instances by default to speed up loading times and reduce memory footprint _unless_ we are visiting
+  // the "instances" tab. This optimization is only available for the Grafana-managed ruler.
+  const limitAlerts = instancesTab ? undefined : 0; // "0" means "do not include alert rule instances in the response"
+
   // we convert the stringified ID to a rule identifier object which contains additional
   // type and source information
   const identifier = useMemo(() => {
@@ -32,7 +39,7 @@ const RuleViewer = (props: RuleViewerProps): JSX.Element => {
   }, [id]);
 
   // we then fetch the rule from the correct API endpoint(s)
-  const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
+  const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier, limitAlerts });
 
   if (error) {
     return (
