@@ -778,6 +778,7 @@ func NewFakeLokiClient() *FakeLokiClient {
 			ReadPathURL:    url,
 			Encoder:        historian.JsonEncoder{},
 			MaxQueryLength: 721 * time.Hour,
+			MaxQuerySize:   65536,
 		},
 		metrics: metrics,
 		log:     log.New("ngalert.state.historian", "backend", "loki"),
@@ -810,6 +811,10 @@ func (c *FakeLokiClient) RangeQuery(ctx context.Context, query string, from, to,
 	// reset expected streams on read
 	c.rangeQueryRes = []historian.Stream{}
 	return res, nil
+}
+
+func (c *FakeLokiClient) MaxQuerySize() int {
+	return c.cfg.MaxQuerySize
 }
 
 func TestUseStore(t *testing.T) {

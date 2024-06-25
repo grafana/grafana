@@ -8,10 +8,15 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
@@ -20,9 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRemoteLokiBackend(t *testing.T) {
@@ -214,81 +216,110 @@ func TestRemoteLokiBackend(t *testing.T) {
 		selector, err = NewSelector("label", "invalid", "value")
 		require.Error(t, err)
 	})
+}
 
-	t.Run("buildLogQuery", func(t *testing.T) {
-		cases := []struct {
-			name  string
-			query models.HistoryQuery
-			exp   string
-		}{
-			{
-				name:  "default includes state history label and orgID label",
-				query: models.HistoryQuery{},
-				exp:   `{orgID="0",from="state-history"}`,
+func TestBuildLogQuery(t *testing.T) {
+	maxQuerySize := 110
+	cases := []struct {
+		name   string
+		query  models.HistoryQuery
+		exp    string
+		expErr error
+	}{
+		{
+			name:  "default includes state history label and orgID label",
+			query: models.HistoryQuery{},
+			exp:   `{orgID="0",from="state-history"}`,
+		},
+		{
+			name: "adds stream label filter for orgID",
+			query: models.HistoryQuery{
+				OrgID: 123,
 			},
-			{
-				name: "adds stream label filter for orgID",
-				query: models.HistoryQuery{
-					OrgID: 123,
+			exp: `{orgID="123",from="state-history"}`,
+		},
+		{
+			name: "filters ruleUID in log line",
+			query: models.HistoryQuery{
+				OrgID:   123,
+				RuleUID: "rule-uid",
+			},
+			exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid"`,
+		},
+		{
+			name: "filters dashboardUID in log line",
+			query: models.HistoryQuery{
+				OrgID:        123,
+				DashboardUID: "dash-uid",
+			},
+			exp: `{orgID="123",from="state-history"} | json | dashboardUID="dash-uid"`,
+		},
+		{
+			name: "filters panelID in log line",
+			query: models.HistoryQuery{
+				OrgID:   123,
+				PanelID: 456,
+			},
+			exp: `{orgID="123",from="state-history"} | json | panelID=456`,
+		},
+		{
+			name: "filters instance labels in log line",
+			query: models.HistoryQuery{
+				OrgID: 123,
+				Labels: map[string]string{
+					"customlabel": "customvalue",
+					"labeltwo":    "labelvaluetwo",
 				},
-				exp: `{orgID="123",from="state-history"}`,
 			},
-			{
-				name: "filters ruleUID in log line",
-				query: models.HistoryQuery{
-					OrgID:   123,
-					RuleUID: "rule-uid",
+			exp: `{orgID="123",from="state-history"} | json | labels_customlabel="customvalue" | labels_labeltwo="labelvaluetwo"`,
+		},
+		{
+			name: "filters both instance labels + ruleUID",
+			query: models.HistoryQuery{
+				OrgID:   123,
+				RuleUID: "rule-uid",
+				Labels: map[string]string{
+					"customlabel": "customvalue",
 				},
-				exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid"`,
 			},
-			{
-				name: "filters dashboardUID in log line",
-				query: models.HistoryQuery{
-					OrgID:        123,
-					DashboardUID: "dash-uid",
+			exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`,
+		},
+		{
+			name: "should return if query does not exceed max limit",
+			query: models.HistoryQuery{
+				OrgID:   123,
+				RuleUID: "rule-uid",
+				Labels: map[string]string{
+					"customlabel": strings.Repeat("!", 24),
 				},
-				exp: `{orgID="123",from="state-history"} | json | dashboardUID="dash-uid"`,
 			},
-			{
-				name: "filters panelID in log line",
-				query: models.HistoryQuery{
-					OrgID:   123,
-					PanelID: 456,
+			exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="!!!!!!!!!!!!!!!!!!!!!!!!"`,
+		},
+		{
+			name: "should return error if query is too long",
+			query: models.HistoryQuery{
+				OrgID:   123,
+				RuleUID: "rule-uid",
+				Labels: map[string]string{
+					"customlabel": strings.Repeat("!", 25),
 				},
-				exp: `{orgID="123",from="state-history"} | json | panelID=456`,
 			},
-			{
-				name: "filters instance labels in log line",
-				query: models.HistoryQuery{
-					OrgID: 123,
-					Labels: map[string]string{
-						"customlabel": "customvalue",
-						"labeltwo":    "labelvaluetwo",
-					},
-				},
-				exp: `{orgID="123",from="state-history"} | json | labels_customlabel="customvalue" | labels_labeltwo="labelvaluetwo"`,
-			},
-			{
-				name: "filters both instance labels + ruleUID",
-				query: models.HistoryQuery{
-					OrgID:   123,
-					RuleUID: "rule-uid",
-					Labels: map[string]string{
-						"customlabel": "customvalue",
-					},
-				},
-				exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`,
-			},
-		}
+			expErr: ErrLokiQueryTooLong,
+		},
+	}
 
-		for _, tc := range cases {
-			t.Run(tc.name, func(t *testing.T) {
-				res, err := BuildLogQuery(tc.query)
-				require.NoError(t, err)
-				require.Equal(t, tc.exp, res)
-			})
-		}
-	})
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := BuildLogQuery(tc.query, maxQuerySize)
+			if tc.expErr != nil {
+				require.ErrorIs(t, err, tc.expErr)
+				return
+			}
+			require.LessOrEqual(t, len(res), maxQuerySize)
+			require.NoError(t, err)
+			require.Equal(t, tc.exp, res)
+		})
+	}
 }
 
 func TestMerge(t *testing.T) {

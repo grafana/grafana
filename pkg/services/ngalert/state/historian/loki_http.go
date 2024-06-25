@@ -42,6 +42,7 @@ type LokiConfig struct {
 	ExternalLabels    map[string]string
 	Encoder           encoder
 	MaxQueryLength    time.Duration
+	MaxQuerySize      int
 }
 
 func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig, error) {
@@ -77,6 +78,7 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 		TenantID:          cfg.LokiTenantID,
 		ExternalLabels:    cfg.ExternalLabels,
 		MaxQueryLength:    cfg.LokiMaxQueryLength,
+		MaxQuerySize:      cfg.LokiMaxQuerySize,
 		// Snappy-compressed protobuf is the default, same goes for Promtail.
 		Encoder: SnappyProtoEncoder{},
 	}, nil
@@ -279,6 +281,10 @@ func (c *HttpLokiClient) RangeQuery(ctx context.Context, logQL string, start, en
 	}
 
 	return result, nil
+}
+
+func (c *HttpLokiClient) MaxQuerySize() int {
+	return c.cfg.MaxQuerySize
 }
 
 type QueryRes struct {
