@@ -1,30 +1,30 @@
 # Communication
 
-Grafana use dependency injection and method calls on Go interfaces to
+Grafana uses dependency injection and method calls on Go interfaces to
 communicate between different parts of the backend.
 
 ## Commands and queries
 
-Grafana structures arguments to [services](services.md) using a command/query
+Grafana structures arguments to [services](services.md) using a "command/query"
 separation where commands are instructions for a mutation and queries retrieve
 records from a service.
 
-Services should define their methods as `func[T, U any](ctx context.Context, args T) (U, error)`.
+Services should define their methods as follows:
+
+- `func[T, U any](ctx context.Context, args T) (U, error)`
 
 Each function should take two arguments. First, a `context.Context` that
 carries information about the tracing span, cancellation, and similar
-runtime information that might be relevant to the call. Secondly, `T` is
-a `struct` defined in the service's root package (see the instructions
-for [package hierarchy](package-hierarchy.md)) that contains zero or
+runtime information that might be relevant to the call. Secondly, `T`,
+a struct defined in the service's root package. Refer to the instructions
+for [package hierarchy](package-hierarchy.md) that contains zero or
 more arguments that can be passed to the method.
 
-The return values is more flexible, and may consist of none, one, or two
-values. If there are two values returned, the second value should be
-either an `bool` or `error` indicating the success or failure of the
-call. The first value `U` carries a value of any exported type that
-makes sense for the service.
+The return values are more flexible, and these may consist of none, one, or two values.
+If the function returns two values, the second value should be either a `bool` or `error` to indicate the success or failure of the call.
+The first value `U` carries a value of any exported type appropriate for the service.
 
-Following is an example of an interface providing method signatures for
+The following example shows an interface that provides method signatures for
 some calls adhering to these guidelines:
 
 ```
@@ -39,23 +39,20 @@ type Alphabetical interface {
 }
 ```
 
-> Because we request an operation to be performed, command are written in imperative mood, such as `CreateFolderCommand`, `GetDashboardQuery` and `DeletePlaylistCommand`.
+> **Note:** Because we request an operation to be performed, command are written in imperative mood, such as `CreateFolderCommand`, `GetDashboardQuery` and `DeletePlaylistCommand`.
 
 The use of complex types for arguments in Go means a few different
-things for us, it provides us with the equivalent of named parameters
-from other languages, and it reduces the headache of figuring out which
-argument is which that often occurs with three or more arguments.
+things for us. Most importantly, it provides us with the equivalent of named parameters from other languages, and it reduces the headache of figuring out which argument is which that often occurs with three or more arguments.
 
-On the flip-side, it means that all input parameters are optional and
-that it is up to the programmer to make sure that the zero value is
-useful or at least safe for all fields and that while it's easy to add
-another field, if that field must be set for the correct function of the
-service that is not detectable at compile time.
+However, it means that all input parameters are optional and
+that it's up to the developer to make sure that the zero value is
+useful or at least safe for all fields.
+Also, although it's easy to add another field, the field must be set for the correct function of the service that isn't detectable at compile time.
 
 ### Queries with Result fields
 
-Some queries have a Result field that is mutated and populated by the
-method being called. This is a remainder from when the _bus_ was used
+Some queries have a `Result` field that is mutated and populated by the
+method being called. This is a remainder from when the `_bus_` was used
 for sending commands and queries as well as for events.
 
 All bus commands and queries had to implement the Go type
@@ -63,8 +60,8 @@ All bus commands and queries had to implement the Go type
 and mutation of the `msg` variable or returning structured information in
 `error` were the two most convenient ways to communicate with the caller.
 
-All `Result` fields should be refactored so that they are returned from
-the query method:
+You should refactor all `Result` fields so that they are returned from
+the query method. For example:
 
 ```
 type GetQuery struct {
@@ -95,9 +92,9 @@ func (s *Service) Get(ctx context.Context, cmd GetQuery) (ResultType, error) {
 
 ## Events
 
-An event is something that happened in the past. Since an event has already happened, you can't change it. Instead, you can react to events by triggering additional application logic to be run, whenever they occur.
+An _event_ is something that happened in the past. Since an event has already happened, you can't change it. Instead, you can react to events by triggering additional application logic to be run, whenever they occur.
 
-> Because they happened in the past, event names are written in past tense, such as `UserCreated`, and `OrgUpdated`.
+> **Note:** Because events happened in the past, their names are written in the past tense, such as `UserCreated` and `OrgUpdated`.
 
 ### Subscribe to an event
 
@@ -116,11 +113,11 @@ func (s *MyService) UserCreated(event *events.UserCreated) error {
 }
 ```
 
-**Tip:** Browse the available events in the `events` package.
+> **Tip:** To learn about the available events, refer to the documentation in the `events` package.
 
 ### Publish an event
 
-If you want to let other parts of the application react to changes in a service, you can publish your own events:
+If you want to let other parts of the application react to changes in a service, you can publish your own events. For example:
 
 ```go
 event := &events.StickersSentEvent {

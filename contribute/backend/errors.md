@@ -1,26 +1,24 @@
 # Errors
 
-Grafana introduced its own error type [github.com/grafana/grafana/pkg/util/errutil.Error](../../pkg/util/errutil/errors.go)
-in June 2022. It's built on top of the Go `error` interface extended to
-contain all the information necessary by Grafana to handle errors in an
-informative and safe way.
+Grafana includes its own error type [github.com/grafana/grafana/pkg/util/errutil.Error](../../pkg/util/errutil/errors.go).
+Introduced in June 2022, the type is built on top of the Go `error` interface.
+It extends the interface to contain all the information necessary by Grafana to handle errors in an informative and safe way.
 
-Previously, Grafana has passed around regular Go errors and have had to
+Previously, Grafana passed around regular Go errors and therefore had to
 rely on bespoke solutions in API handlers to communicate informative
 messages to the end-user. With the new `errutil.Error`, the API handlers
-can be slimmed as information about public messaging, structured data
-related to the error, localization metadata, log level, HTTP status
-code, and so forth are carried by the error.
+can be streamlined. The error carries information about public messaging,
+structured data related to the error, localization metadata, log level,
+HTTP status code, and so on.
 
-## Basic use
-
-### Declaring errors
+## Declare errors
 
 For a service, declare the different categories of errors that may occur
-from your service (this corresponds to what you might want to have
-specific public error messages or their templates for) by globally
-constructing variables using the `errutil.<status>(status, messageID, opts...)`
-functions, e.g.
+from your service (this corresponds to categories for which you might want
+to have specific public error messages or templates).
+
+Globally construct variables using the `errutil.<status>(status, messageID, opts...)
+functions. For example:
 
 - `errutil.NotFound(messageID, opts...)`
 - `errutil.BadRequest(messageID, opts...)`
@@ -33,44 +31,41 @@ functions, e.g.
 - `errutil.NotImplemented(messageID, opts...)`
 - `errutil.ClientClosedRequest(messageID, opts...)`
 
-Above functions uses `errutil.NewBase(status, messageID, opts...)` under the covers, and that function should in general only be used outside the `errutil` package for `errutil.StatusUnknown`, e.g. when there are no accurate status code available/provided.
+The previous functions use `errutil.NewBase(status, messageID, opts...)` under the covers, and that function should in general only be used outside the `errutil` package for `errutil.StatusUnknown`. For example, you can use that function when there are no accurate status code available.
 
 The status code loosely corresponds to HTTP status codes and provides a
-default log level for errors to ensure that the request logging is
-properly informing administrators about various errors occurring in
-Grafana (e.g. `StatusBadRequest` is generally speaking not as relevant
-as `StatusInternal`). All available status codes live in the `errutil`
-package and have names starting with `Status`.
+default log level for errors.
+The default log levels ensure that the request logging is properly informing administrators about various errors occurring in Grafana (for example, `StatusBadRequest` isn't usually as relevant as `StatusInternal`).
+All available status codes live in the `errutil` package and have names starting with `Status`.
 
-The messageID is constructed as `<servicename>.<errorIdentifier>` where
+The `messageID` is constructed as `<servicename>.<errorIdentifier>` where
 the `<servicename>` corresponds to the root service directory per
 [the package hierarchy](package-hierarchy.md) and `<errorIdentifier>`
 is a camelCased short identifier that identifies the specific category
 of errors within the service.
 
-Errors should be grouped together (i.e. share `errutil.Base`) based on
-their public facing properties, a single messageID should represent a
-translatable string and what metadata is carried with it.
-_service.MissingRequiredFields_ and _service.MessageTooLong_ are likely
+Group errors together (that is, share `errutil.Base`) based on
+their public-facing properties. A single `messageID` should represent a
+translatable string and its metadata.
+`_service.MissingRequiredFields_` and `_service.MessageTooLong_` are likely
 to be two different errors that are both validation failures, as their
-user-friendly expansions are likely different. This is the maximization
-rule of declaring as many `errutil.Error`s as you need public message
-structures.
+user-friendly expansions are likely different.
+This is the maximization rule of declaring as many errors with `errutil.Error` as you need public message structures.
 
-The other side of this is that even though a login service's
-"user is ratelimited", "user does not exist", "wrong username", and
-"wrong password" are reasonable errors to separate between internally,
-for security reasons the end-user should not be told which particular
+The other side of the coin is that even though such messages as
+"user is rate limited", "user doesn't exist", "wrong username", and
+"wrong password" are reasonable errors to distinguish internally,
+for security reasons the end-user shouldn't be told which particular
 error they struck. This means that they should share the same base (such
-as _login.Failed_). This is the minimization rule of grouping together
-distinct logged errors that provide the same information via the API.
+as _login.Failed_).
+This is the minimization rule of grouping together distinct logged errors that provide the same information via the API.
 
-To set a static message sent to the client when the error occurs, the
-`errutil.WithPublicMessage(message string)` option may be appended to
-the NewBase function call. For dynamic messages or more options, refer
+To set a static message sent to the client when the error occurs, append the
+`errutil.WithPublicMessage(message string)` option to
+the `NewBase` function call. For dynamic messages or more options, refer
 to the `errutil` package's GoDocs.
 
-Errors are then constructed using the `Base.Errorf` method, which
+You can then construct errors using the `Base.Errorf` method, which
 functions like the [fmt.Errorf](https://pkg.go.dev/fmt#Errorf) method
 except that it creates an `errutil.Error`.
 
@@ -95,34 +90,27 @@ func Look(id int) (*Thing, error) {
 }
 ```
 
-Errors consider themselves to be both its `errutil.Base` or
-`errutil.Template` and whatever errors it wraps for the purposes of the
-`errors.Is` function.
+Errors are considered to be part of `errutil.Base` and
+`errutil.Template`, and whatever errors are wrapped for the purposes of the
+`errors.Is` function.a
 
-Check out the package and method documentation for
-github.com/grafana/grafana/pkg/util/errutil for details on how to
-construct and use Grafana style errors. This documentation is
-unfortunately not readily available on pkg.go.dev because Grafana is not
-fully Go modules compatible, but can be viewed using
-[godoc](https://go.dev/cmd/godoc/) from the Grafana directory.
+Refer to the package and method documentation for
+`github.com/grafana/grafana/pkg/util/errutil` for details on how to
+construct and use Grafana style errors.
+This documentation isn't readily available on `pkg.go.dev`, but it can be viewed using [godoc](https://go.dev/cmd/godoc/) from the Grafana directory.
 
-### Error source
+## Error source
 
-You can optionally specify an error source that describes from where an
-error originates. By default, it's _server_ and means the error originates
-from within the application, e.g. Grafana. The `errutil.WithDownstream()`
-option may be appended to the NewBase function call to denote an error
-originates from a _downstream_ server/service. The error source information
-is used in the API layer to distinguish between Grafana errors and
-non-Grafana errors to include this information when instrumenting the
-application and by that allowing Grafana operators to define SLO's
-based on actual Grafana errors.
+You can optionally specify an error source that describes an error's origin.
+By default, it's `_server_` and means the error originates from within the application, for example, Grafana.
+The `errutil.WithDownstream()` option may be appended to the `NewBase` function call to denote an error originates from a _downstream_ server or service.
+The error source information is used in the API layer to distinguish between Grafana errors and non-Grafana errors. Error source information is given for use when instrumenting the application, allowing Grafana operators to define SLOs based on actual Grafana errors.
 
-### Handling errors in the API
+## Handle errors in the API
 
 API handlers use the `github.com/grafana/grafana/pkg/api/response.Err`
 or `github.com/grafana/grafana/pkg/api/response.ErrWithFallback`
 (same signature as `response.Error`) function to create responses based
 on `errutil.Error`.
 
-Using `response.Err` requires all errors to be Grafana style errors.
+> **Note:** Using `response.Err` requires all errors to be Grafana style errors.
