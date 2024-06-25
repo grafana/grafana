@@ -1,5 +1,4 @@
 import { uniqBy } from 'lodash';
-import React from 'react';
 
 import { AppEvents, LocalStorageValueProvider, TimeRange, isDateTime, rangeUtil } from '@grafana/data';
 import { TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';

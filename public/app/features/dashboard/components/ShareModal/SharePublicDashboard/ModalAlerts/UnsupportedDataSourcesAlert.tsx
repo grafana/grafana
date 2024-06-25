@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';

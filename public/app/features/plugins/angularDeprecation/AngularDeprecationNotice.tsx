@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { LocalStorageValueProvider } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Alert, Button } from '@grafana/ui';

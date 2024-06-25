@@ -797,6 +797,18 @@
       "success": "Library panel saved"
     }
   },
+  "link": {
+    "share": {
+      "config-alert-description": "Updating your settings will modify the default copy link to include these changes.",
+      "config-alert-title": "Link configuration",
+      "config-description": "Create a personalized, direct link to share your dashboard within your organization, with the following customization settings:",
+      "copy-link-button": "Copy link",
+      "copy-to-clipboard": "Link copied to clipboard",
+      "short-url-label": "Shorten link",
+      "time-range-description": "Change the current relative time range to an absolute time range",
+      "time-range-label": "Lock time range"
+    }
+  },
   "login": {
     "error": {
       "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
@@ -1701,7 +1713,9 @@
       "share-internally-description": "Advanced settings",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
-    }
+    },
+    "share-button": "Share",
+    "share-button-tooltip": "Copy shortened link"
   },
   "share-drawer": {
     "confirm-action": {
