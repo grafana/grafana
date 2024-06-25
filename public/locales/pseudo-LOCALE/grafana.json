@@ -1599,6 +1599,9 @@
       "delete": "Đęľęŧę pęřmäŉęŉŧľy",
       "restore": "Ŗęşŧőřę"
     },
+    "page": {
+      "empty-state": "Ÿőū ĥävęŉ'ŧ đęľęŧęđ äŉy đäşĥþőäřđş řęčęŉŧľy."
+    },
     "permanently-delete-modal": {
       "confirm-text": "Đęľęŧę",
       "delete-button": "Đęľęŧę",
@@ -1654,6 +1657,7 @@
       "title": "Ŝęľęčŧ şčőpęş"
     },
     "suggestedDashboards": {
+      "clear": "Cľęäř şęäřčĥ",
       "loading": "Ŀőäđįŉģ đäşĥþőäřđş",
       "search": "Ŝęäřčĥ",
       "toggle": {
