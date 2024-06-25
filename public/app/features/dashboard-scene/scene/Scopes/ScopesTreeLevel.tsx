@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, IconButton, RadioButtonDot, useStyles2 } from '@grafana/ui';
@@ -25,7 +24,6 @@ export interface ScopesTreeLevelProps {
 export function ScopesTreeLevel({
   anyChildExpanded,
   anyChildSelected,
-  isNodeLoading,
   loadingNodeName,
   node,
   nodePath,
@@ -39,85 +37,80 @@ export function ScopesTreeLevel({
 
   return (
     <div role="tree">
-      {isNodeLoading && <Skeleton count={5} className={styles.loader} />}
-      {!isNodeLoading &&
-        nodes.map((childNode) => {
-          const isSelected = childNode.isSelectable && scopeNames.includes(childNode.linkId!);
+      {nodes.map((childNode) => {
+        const isSelected = childNode.isSelectable && scopeNames.includes(childNode.linkId!);
 
-          if (anyChildExpanded && !childNode.isExpanded && !isSelected) {
-            return null;
-          }
+        if (anyChildExpanded && !childNode.isExpanded && !isSelected) {
+          return null;
+        }
 
-          const childNodePath = [...nodePath, childNode.name];
+        const childNodePath = [...nodePath, childNode.name];
 
-          const radioName = childNodePath.join('.');
+        const radioName = childNodePath.join('.');
 
-          return (
-            <div key={childNode.name} role="treeitem" aria-selected={childNode.isExpanded}>
-              <div className={styles.itemTitle}>
-                {childNode.isSelectable && !childNode.isExpanded ? (
-                  node.disableMultiSelect ? (
-                    <RadioButtonDot
-                      id={radioName}
-                      name={radioName}
-                      checked={isSelected}
-                      label=""
-                      data-testid={`scopes-tree-${childNode.name}-radio`}
-                      onClick={() => {
-                        onNodeSelectToggle(childNodePath);
-                      }}
-                    />
-                  ) : (
-                    <Checkbox
-                      checked={isSelected}
-                      data-testid={`scopes-tree-${childNode.name}-checkbox`}
-                      onChange={() => {
-                        onNodeSelectToggle(childNodePath);
-                      }}
-                    />
-                  )
-                ) : null}
-
-                {childNode.isExpandable && (
-                  <IconButton
-                    name={!childNode.isExpanded ? 'angle-right' : 'angle-down'}
-                    aria-label={
-                      childNode.isExpanded ? t('scopes.tree.collapse', 'Collapse') : t('scopes.tree.expand', 'Expand')
-                    }
-                    data-testid={`scopes-tree-${childNode.name}-expand`}
+        return (
+          <div key={childNode.name} role="treeitem" aria-selected={childNode.isExpanded}>
+            <div className={styles.itemTitle}>
+              {childNode.isSelectable && !childNode.isExpanded ? (
+                node.disableMultiSelect ? (
+                  <RadioButtonDot
+                    id={radioName}
+                    name={radioName}
+                    checked={isSelected}
+                    label=""
+                    data-testid={`scopes-tree-${childNode.name}-radio`}
                     onClick={() => {
-                      onNodeUpdate(childNodePath, !childNode.isExpanded, childNode.query);
+                      onNodeSelectToggle(childNodePath);
                     }}
                   />
-                )}
-
-                <span data-testid={`scopes-tree-${childNode.name}-title`}>{childNode.title}</span>
-              </div>
-
-              <div className={styles.itemChildren}>
-                {childNode.isExpanded && (
-                  <ScopesTree
-                    nodes={node.nodes}
-                    nodePath={childNodePath}
-                    loadingNodeName={loadingNodeName}
-                    scopes={scopes}
-                    onNodeUpdate={onNodeUpdate}
-                    onNodeSelectToggle={onNodeSelectToggle}
+                ) : (
+                  <Checkbox
+                    checked={isSelected}
+                    data-testid={`scopes-tree-${childNode.name}-checkbox`}
+                    onChange={() => {
+                      onNodeSelectToggle(childNodePath);
+                    }}
                   />
-                )}
-              </div>
+                )
+              ) : null}
+
+              {childNode.isExpandable && (
+                <IconButton
+                  name={!childNode.isExpanded ? 'angle-right' : 'angle-down'}
+                  aria-label={
+                    childNode.isExpanded ? t('scopes.tree.collapse', 'Collapse') : t('scopes.tree.expand', 'Expand')
+                  }
+                  data-testid={`scopes-tree-${childNode.name}-expand`}
+                  onClick={() => {
+                    onNodeUpdate(childNodePath, !childNode.isExpanded, childNode.query);
+                  }}
+                />
+              )}
+
+              <span data-testid={`scopes-tree-${childNode.name}-title`}>{childNode.title}</span>
             </div>
-          );
-        })}
+
+            <div className={styles.itemChildren}>
+              {childNode.isExpanded && (
+                <ScopesTree
+                  nodes={node.nodes}
+                  nodePath={childNodePath}
+                  loadingNodeName={loadingNodeName}
+                  scopes={scopes}
+                  onNodeUpdate={onNodeUpdate}
+                  onNodeSelectToggle={onNodeSelectToggle}
+                />
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    loader: css({
-      margin: theme.spacing(0.5, 0),
-    }),
     itemTitle: css({
       alignItems: 'center',
       display: 'flex',

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { useMemo } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Input, useStyles2 } from '@grafana/ui';
@@ -73,43 +74,49 @@ export function ScopesTree({
         />
       )}
 
-      <ScopesTreeLevel
-        anyChildExpanded={anyChildExpanded}
-        anyChildSelected={anyChildSelected}
-        isNodeLoading={isNodeLoading}
-        loadingNodeName={loadingNodeName}
-        node={node}
-        nodePath={nodePath}
-        nodes={persistedNodes}
-        scopes={scopes}
-        scopeNames={scopeNames}
-        onNodeSelectToggle={onNodeSelectToggle}
-        onNodeUpdate={onNodeUpdate}
-      />
+      {isNodeLoading ? (
+        <Skeleton count={5} className={styles.loader} />
+      ) : (
+        <>
+          <ScopesTreeLevel
+            anyChildExpanded={anyChildExpanded}
+            anyChildSelected={anyChildSelected}
+            isNodeLoading={isNodeLoading}
+            loadingNodeName={loadingNodeName}
+            node={node}
+            nodePath={nodePath}
+            nodes={persistedNodes}
+            scopes={scopes}
+            scopeNames={scopeNames}
+            onNodeSelectToggle={onNodeSelectToggle}
+            onNodeUpdate={onNodeUpdate}
+          />
 
-      {!anyChildExpanded ? (
-        <h6 className={styles.headline}>
-          {!node.query ? (
-            <Trans i18nKey="scopes.tree.headline.recommended">Recommended</Trans>
-          ) : (
-            <Trans i18nKey="scopes.tree.headline.results">Results</Trans>
-          )}
-        </h6>
-      ) : null}
+          {!anyChildExpanded ? (
+            <h6 className={styles.headline}>
+              {!node.query ? (
+                <Trans i18nKey="scopes.tree.headline.recommended">Recommended</Trans>
+              ) : (
+                <Trans i18nKey="scopes.tree.headline.results">Results</Trans>
+              )}
+            </h6>
+          ) : null}
 
-      <ScopesTreeLevel
-        anyChildExpanded={anyChildExpanded}
-        anyChildSelected={anyChildSelected}
-        isNodeLoading={isNodeLoading}
-        loadingNodeName={loadingNodeName}
-        node={node}
-        nodePath={nodePath}
-        nodes={resultsNodes}
-        scopes={scopes}
-        scopeNames={scopeNames}
-        onNodeSelectToggle={onNodeSelectToggle}
-        onNodeUpdate={onNodeUpdate}
-      />
+          <ScopesTreeLevel
+            anyChildExpanded={anyChildExpanded}
+            anyChildSelected={anyChildSelected}
+            isNodeLoading={isNodeLoading}
+            loadingNodeName={loadingNodeName}
+            node={node}
+            nodePath={nodePath}
+            nodes={resultsNodes}
+            scopes={scopes}
+            scopeNames={scopeNames}
+            onNodeSelectToggle={onNodeSelectToggle}
+            onNodeUpdate={onNodeUpdate}
+          />
+        </>
+      )}
     </>
   );
 }
@@ -122,6 +129,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     headline: css({
       color: theme.colors.text.secondary,
       margin: theme.spacing(1, 0),
+    }),
+    loader: css({
+      margin: theme.spacing(0.5, 0),
     }),
   };
 };
