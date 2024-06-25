@@ -4,7 +4,8 @@ package v0alpha1
 // +k8s:openapi-gen=true
 type Integration struct {
 	DisableResolveMessage *bool `json:"disableResolveMessage,omitempty"`
-
+	// +mapType=atomic
+	SecureFields map[string]bool `json:"SecureFields,omitempty"`
 	// +listType=atomic
 	Settings []byte  `json:"settings"`
 	Type     string  `json:"type"`
