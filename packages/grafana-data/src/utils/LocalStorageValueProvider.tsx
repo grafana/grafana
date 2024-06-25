@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import * as React from 'react';
 
-import { store } from '../store';
+import { store } from './store';
 
 export interface Props<T> {
   storageKey: string;

@@ -201,9 +201,9 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       render(<BrowseDashboardsPage {...props} />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
 
-      expect(screen.queryByRole('tab', { name: 'Tab Dashboards' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: 'Tab Panels' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: 'Tab Alert rules' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Dashboards' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Panels' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Alert rules' })).not.toBeInTheDocument();
     });
 
     it('displays the filters and hides the actions initially', async () => {
@@ -328,14 +328,14 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
     it('displays all the folder tabs and shows the "Dashboards" tab as selected', async () => {
       render(<BrowseDashboardsPage {...props} />);
-      expect(await screen.findByRole('tab', { name: 'Tab Dashboards' })).toBeInTheDocument();
-      expect(await screen.findByRole('tab', { name: 'Tab Dashboards' })).toHaveAttribute('aria-selected', 'true');
+      expect(await screen.findByRole('tab', { name: 'Dashboards' })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'Dashboards' })).toHaveAttribute('aria-selected', 'true');
 
-      expect(await screen.findByRole('tab', { name: 'Tab Panels' })).toBeInTheDocument();
-      expect(await screen.findByRole('tab', { name: 'Tab Panels' })).toHaveAttribute('aria-selected', 'false');
+      expect(await screen.findByRole('tab', { name: 'Panels' })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'Panels' })).toHaveAttribute('aria-selected', 'false');
 
-      expect(await screen.findByRole('tab', { name: 'Tab Alert rules' })).toBeInTheDocument();
-      expect(await screen.findByRole('tab', { name: 'Tab Alert rules' })).toHaveAttribute('aria-selected', 'false');
+      expect(await screen.findByRole('tab', { name: 'Alert rules' })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'Alert rules' })).toHaveAttribute('aria-selected', 'false');
     });
 
     it('displays the filters and hides the actions initially', async () => {

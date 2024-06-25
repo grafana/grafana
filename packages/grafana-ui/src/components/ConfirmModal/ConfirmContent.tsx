@@ -8,8 +8,8 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
 import { Button, ButtonVariant } from '../Button';
+import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
-import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { JustifyContent } from '../Layout/types';
 import { ResponsiveProp } from '../Layout/utils/responsiveness';
@@ -41,6 +41,8 @@ export interface ConfirmContentProps {
   onDismiss(): void;
   /** Alternative action callback */
   onAlternative?(): void;
+  /** Disable the confirm button and the confirm text input if needed */
+  disabled?: boolean;
 }
 
 export const ConfirmContent = ({
@@ -56,13 +58,14 @@ export const ConfirmContent = ({
   alternativeButtonLabel,
   description,
   justifyButtons = 'flex-end',
+  disabled,
 }: ConfirmContentProps) => {
-  const [disabled, setDisabled] = useState(Boolean(confirmPromptText));
+  const [isDisabled, setIsDisabled] = useState(disabled);
   const styles = useStyles2(getStyles);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setDisabled(confirmPromptText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
+    setIsDisabled(confirmPromptText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
   };
 
   useEffect(() => {
@@ -70,15 +73,15 @@ export const ConfirmContent = ({
   }, []);
 
   useEffect(() => {
-    setDisabled(Boolean(confirmPromptText));
-  }, [confirmPromptText]);
+    setIsDisabled(disabled ? true : Boolean(confirmPromptText));
+  }, [confirmPromptText, disabled]);
 
   const onConfirmClick = async () => {
-    setDisabled(true);
+    setIsDisabled(true);
     try {
       await onConfirm();
     } finally {
-      setDisabled(false);
+      setIsDisabled(false);
     }
   };
 
@@ -92,9 +95,9 @@ export const ConfirmContent = ({
         {confirmPromptText ? (
           <div className={styles.confirmationInput}>
             <Stack alignItems="flex-start">
-              <Box>
+              <Field disabled={disabled}>
                 <Input placeholder={`Type "${confirmPromptText}" to confirm`} onChange={onConfirmationTextChange} />
-              </Box>
+              </Field>
             </Stack>
           </div>
         ) : null}
@@ -107,7 +110,7 @@ export const ConfirmContent = ({
           <Button
             type="submit"
             variant={confirmButtonVariant}
-            disabled={disabled}
+            disabled={isDisabled}
             ref={buttonRef}
             data-testid={selectors.pages.ConfirmModal.delete}
           >

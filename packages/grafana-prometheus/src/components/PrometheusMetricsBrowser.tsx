@@ -9,7 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import {
   BrowserLabel as PromLabel,
   Button,
-  HorizontalGroup,
+  Stack,
   Input,
   Label,
   LoadingPlaceholder,
@@ -489,7 +489,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
 
     return (
       <div className={styles.wrapper}>
-        <HorizontalGroup align="flex-start" spacing="lg">
+        <Stack gap={3}>
           <div>
             <div className={styles.section}>
               <Label description="Once a metric is selected only possible labels are shown.">1. Select a metric</Label>
@@ -632,7 +632,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
               </div>
             </div>
           </div>
-        </HorizontalGroup>
+        </Stack>
 
         <div className={styles.section}>
           <Label>4. Resulting selector</Label>
@@ -640,7 +640,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
             {selector}
           </div>
           {validationStatus && <div className={styles.validationStatus}>{validationStatus}</div>}
-          <HorizontalGroup>
+          <Stack>
             <Button
               data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.useQuery}
               aria-label="Use selector for query button"
@@ -678,7 +678,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
             <div className={cx(styles.status, (status || error) && styles.statusShowing)}>
               <span className={error ? styles.error : ''}>{error || status}</span>
             </div>
-          </HorizontalGroup>
+          </Stack>
         </div>
       </div>
     );

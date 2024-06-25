@@ -25,7 +25,7 @@ describe('Snapshots', () => {
     e2e.components.NavToolbar.shareDashboard().click();
 
     // Select the snapshot tab
-    e2e.pages.ShareDashboardModal.SnapshotScene.Tab().click();
+    e2e.components.Tab.title('Snapshot').click();
 
     // Publish snapshot
     cy.intercept('POST', '/api/snapshots').as('save');

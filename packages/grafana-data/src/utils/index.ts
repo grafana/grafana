@@ -13,6 +13,8 @@ export * from './binaryOperators';
 export * from './unaryOperators';
 export * from './nodeGraph';
 export * from './selectUtils';
+export * from './store';
+export * from './LocalStorageValueProvider';
 export { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from './OptionsUIBuilders';
 export { arrayUtils };
 export { getFlotPairs, getFlotPairsConstant } from './flotPairs';

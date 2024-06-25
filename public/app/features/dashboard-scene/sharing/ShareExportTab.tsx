@@ -12,6 +12,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { SceneShareTabState } from './types';
 
@@ -55,8 +56,8 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
   }
 
   public async getExportableDashboardJson() {
-    const { dashboardRef, isSharingExternally } = this.state;
-    const saveModel = transformSceneToSaveModel(dashboardRef.resolve());
+    const { isSharingExternally } = this.state;
+    const saveModel = transformSceneToSaveModel(getDashboardSceneFor(this));
 
     const exportable = isSharingExternally
       ? await this._exporter.makeExportable(

@@ -9,6 +9,8 @@ import { ConfigPublicDashboardBase } from 'app/features/dashboard/components/Sha
 import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { AccessControlAction } from 'app/types';
 
+import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { ShareModal } from '../ShareModal';
 
 import { ConfirmModal } from './ConfirmModal';
@@ -24,8 +26,8 @@ export function ConfigPublicDashboard({ model, publicDashboard, isGetLoading }: 
   const styles = useStyles2(getStyles);
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
-  const { dashboardRef } = model.useState();
-  const dashboard = dashboardRef.resolve();
+
+  const dashboard = getDashboardSceneFor(model);
   const { isDirty } = dashboard.useState();
   const [deletePublicDashboard] = useDeletePublicDashboardMutation();
   const hasTemplateVariables = (dashboard.state.$variables?.state.variables.length ?? 0) > 0;
@@ -51,7 +53,7 @@ export function ConfigPublicDashboard({ model, publicDashboard, isGetLoading }: 
               </p>
             ),
             onDismiss: () => {
-              dashboard.showModal(new ShareModal({ dashboardRef, activeTab: 'Public Dashboard' }));
+              dashboard.showModal(new ShareModal({ activeTab: shareDashboardType.publicDashboard }));
             },
             onConfirm: () => {
               deletePublicDashboard({ dashboard, dashboardUid: dashboard.state.uid!, uid: publicDashboard!.uid });
