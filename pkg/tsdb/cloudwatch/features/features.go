@@ -10,7 +10,7 @@ const (
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
 	FlagCloudWatchBatchQueries         = "cloudWatchBatchQueries"
 	FlagCloudWatchNewLabelParsing      = "cloudWatchNewLabelParsing"
-	FlagCloudWatchRoundUpEndTime = "cloudWatchRoundUpEndTime"
+	FlagCloudWatchRoundUpEndTime       = "cloudWatchRoundUpEndTime"
 )
 
 func IsEnabled(ctx context.Context, feature string) bool {
