@@ -55,5 +55,5 @@ To add this contact point to your alert, complete the following steps.
 1. Edit or create a new alert rule.
 1. Scroll down to the **Configure labels and notifications** section.
 1. Under Notifications click **Select contact point**.
-1. From the drop-down menu select the previously created contact point.
+1. From the drop-down menu, select the previously created contact point.
 1. **Click Save rule and exit**.
