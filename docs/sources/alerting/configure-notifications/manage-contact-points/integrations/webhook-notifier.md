@@ -144,7 +144,7 @@ Alert rules are not coupled to dashboards anymore therefore the fields related t
 
 ## Procedure
 
-To create your webhook integration in Grafana Alerting, complete the following steps:
+To create your Webhook integration in Grafana Alerting, complete the following steps.
 
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
 1. Click **+ Add contact point**.
