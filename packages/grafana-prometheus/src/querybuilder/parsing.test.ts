@@ -748,7 +748,7 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('strips enclosing quotes', () => {
-    expect(buildVisualQueryFromString('counters_logins{app=\'frontend\', host=`localhost`}')).toEqual(
+    expect(buildVisualQueryFromString("counters_logins{app='frontend', host=`localhost`}")).toEqual(
       noErrors({
         metric: 'counters_logins',
         labels: [
@@ -760,8 +760,8 @@ describe('buildVisualQueryFromString', () => {
           {
             op: '=',
             value: 'localhost',
-            label: 'host'
-          }
+            label: 'host',
+          },
         ],
         operations: [],
       })
@@ -769,13 +769,13 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('leaves escaped quotes inside string', () => {
-    expect(buildVisualQueryFromString('counters_logins{app="fron\"\"tend"}')).toEqual(
+    expect(buildVisualQueryFromString('counters_logins{app="fron\\"\\"tend"}')).toEqual(
       noErrors({
         metric: 'counters_logins',
         labels: [
           {
             op: '=',
-            value: 'fron\"\"tend',
+            value: 'fron\\"\\"tend',
             label: 'app',
           },
         ],
