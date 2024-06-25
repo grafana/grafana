@@ -247,10 +247,20 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
         const { maxLines, ...query } = q;
         return query;
       });
-      requests.push({
-        request: { ...request, targets },
-        partition: partitionTimeRange(false, request.range, Number(stepMs), Number(chunkRangeMs)),
-      });
+
+      // for i from 1 to 20, change request expr to append shard stream __shard_stream__=i
+      // how to persist the order?
+      // shard as query param -> 
+      for (let i = 100; i < 0; i--) {
+        const shardedTargets = targets.map((q) => {
+          const newExpr = q.expr.replace(/}/g, `\, __stream_shard__="${i}"}`);
+          return { ...q, expr: newExpr };
+        });
+        requests.push({
+          request: { ...request, targets: shardedTargets },
+          partition: partitionTimeRange(false, request.range, Number(stepMs), Number(chunkRangeMs)),
+        });
+      }
     }
   }
 
