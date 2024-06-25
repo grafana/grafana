@@ -1443,7 +1443,7 @@
     },
     "email-sharing": {
       "accept-button": "Åččępŧ",
-      "alert-text": "Ēƒƒęčŧįvę įmmęđįäŧęľy, şĥäřįŉģ pūþľįč đäşĥþőäřđş þy ęmäįľ įŉčūřş ä čőşŧ pęř äčŧįvę ūşęř. Ğőįŉģ ƒőřŵäřđ, yőū’ľľ þę přőmpŧęđ ƒőř päymęŉŧ ŵĥęŉęvęř yőū äđđ ŉęŵ ūşęřş ŧő yőūř đäşĥþőäřđ.",
+      "alert-text": "Ŝĥäřįŉģ đäşĥþőäřđş þy ęmäįľ įş þįľľęđ pęř ūşęř ƒőř ŧĥę đūřäŧįőŉ őƒ ŧĥę 30-đäy ŧőĸęŉ, řęģäřđľęşş őƒ ĥőŵ mäŉy đäşĥþőäřđş äřę şĥäřęđ. ßįľľįŉģ şŧőpş äƒŧęř 30 đäyş ūŉľęşş yőū řęŉęŵ ŧĥę ŧőĸęŉ.",
       "bill-ack": "Ĩ ūŉđęřşŧäŉđ ŧĥäŧ äđđįŉģ ūşęřş řęqūįřęş päymęŉŧ.*",
       "cancel-button": "Cäŉčęľ",
       "input-invalid-email-text": "Ĩŉväľįđ ęmäįľ",
@@ -1452,7 +1452,7 @@
       "invite-field-desc": "Ĩŉvįŧę pęőpľę þy ęmäįľ",
       "invite-field-label": "Ĩŉvįŧę",
       "learn-more-button": "Ŀęäřŉ mőřę",
-      "recipient-email-placeholder": "Ŧypę įŉ ŧĥę řęčįpįęŉŧ ęmäįľ äđđřęşş äŉđ přęşş Ēŉŧęř",
+      "recipient-email-placeholder": "Ēmäįľ",
       "recipient-invalid-email-text": "Ĩŉväľįđ ęmäįľ",
       "recipient-invitation-button": "Ĩŉvįŧę",
       "recipient-invitation-description": "Ĩŉvįŧę şőmęőŉę þy ęmäįľ",
@@ -1512,16 +1512,15 @@
       "success-delete-old": "Pūþľįč đäşĥþőäřđ đęľęŧęđ!"
     },
     "share-configuration": {
-      "access-label": "čäŉ äččęşş",
       "share-type-label": "Ŀįŉĸ äččęşş"
     },
     "share-externally": {
       "copy-link-button": "Cőpy ęχŧęřŉäľ ľįŉĸ",
-      "email-share-type-option-description": "Øŉľy pęőpľę ŵįŧĥ äččęşş čäŉ őpęŉ ŵįŧĥ ŧĥę ľįŉĸ",
+      "email-share-type-option-description": "Øŉľy pęőpľę ŵįŧĥ ŧĥę ľįŉĸ čäŉ äččęşş đäşĥþőäřđ",
       "email-share-type-option-label": "Øŉľy şpęčįƒįč pęőpľę",
       "pause-access-button": "Päūşę äččęşş",
       "pause-access-tooltip": "Päūşįŉģ ŵįľľ ŧęmpőřäřįľy đįşäþľę äččęşş ŧő ŧĥįş đäşĥþőäřđ ƒőř äľľ ūşęřş",
-      "public-share-type-option-description": "Åŉyőŉę ŵįŧĥ ŧĥę ľįŉĸ čäŉ äččęşş",
+      "public-share-type-option-description": "Åŉyőŉę ŵįŧĥ ŧĥę ľįŉĸ čäŉ äččęşş đäşĥþőäřđ",
       "public-share-type-option-label": "Åŉyőŉę ŵįŧĥ ŧĥę ľįŉĸ",
       "resume-access-button": "Ŗęşūmę äččęşş",
       "revoke-access-button": "Ŗęvőĸę äččęşş",
