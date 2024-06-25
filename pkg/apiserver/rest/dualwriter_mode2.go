@@ -50,7 +50,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 	}
 	d.recordLegacyDuration(false, mode2Str, options.Kind, method, startLegacy)
 
-	if err := enrichLegacyObject(original, created, true); err != nil {
+	if err := enrichLegacyObject(original, created); err != nil {
 		return created, err
 	}
 
@@ -261,7 +261,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 
 	// if the object is found, create a new updateWrapper with the object found
 	if foundObj != nil {
-		err = enrichLegacyObject(foundObj, obj, false)
+		err = enrichLegacyObject(foundObj, obj)
 		if err != nil {
 			return obj, false, err
 		}
@@ -328,7 +328,7 @@ func parseList(legacyList []runtime.Object) (metainternalversion.ListOptions, ma
 	return options, indexMap, nil
 }
 
-func enrichLegacyObject(originalObj, returnedObj runtime.Object, created bool) error {
+func enrichLegacyObject(originalObj, returnedObj runtime.Object) error {
 	accessorReturned, err := meta.Accessor(returnedObj)
 	if err != nil {
 		return err
@@ -350,13 +350,6 @@ func enrichLegacyObject(originalObj, returnedObj runtime.Object, created bool) e
 	}
 	accessorReturned.SetAnnotations(ac)
 
-	// if the object is created, we need to reset the resource version and UID
-	// create method expects an empty resource version
-	if created {
-		accessorReturned.SetResourceVersion("")
-		accessorReturned.SetUID("")
-		return nil
-	}
 	// otherwise, we propagate the original RV and UID
 	accessorReturned.SetResourceVersion(accessorOriginal.GetResourceVersion())
 	accessorReturned.SetUID(accessorOriginal.GetUID())

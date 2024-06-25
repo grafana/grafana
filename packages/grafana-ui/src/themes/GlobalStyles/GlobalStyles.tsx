@@ -1,5 +1,4 @@
 import { Global } from '@emotion/react';
-import React from 'react';
 
 import { useTheme2 } from '../ThemeContext';
 
@@ -9,6 +8,7 @@ import { getCardStyles } from './card';
 import { getCodeStyles } from './code';
 import { getElementStyles } from './elements';
 import { getExtraStyles } from './extra';
+import { getFontAwesomeStyles } from './fontAwesome';
 import { getFontStyles } from './fonts';
 import { getFormElementStyles } from './forms';
 import { getJsonFormatterStyles } from './jsonFormatter';
@@ -31,6 +31,7 @@ export function GlobalStyles() {
         getCodeStyles(theme),
         getElementStyles(theme),
         getExtraStyles(theme),
+        getFontAwesomeStyles(theme),
         getFontStyles(theme),
         getFormElementStyles(theme),
         getJsonFormatterStyles(theme),

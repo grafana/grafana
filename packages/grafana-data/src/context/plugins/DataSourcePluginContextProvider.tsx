@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, ReactElement, useMemo } from 'react';
+import { PropsWithChildren, ReactElement, useMemo } from 'react';
 
 import { DataSourceInstanceSettings } from '../../types';
 

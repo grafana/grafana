@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { clamp, throttle } from 'lodash';
-import React, { useCallback, useId, useLayoutEffect, useRef } from 'react';
+import { useCallback, useId, useLayoutEffect, useRef } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 

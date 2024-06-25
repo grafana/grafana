@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
