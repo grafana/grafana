@@ -14,6 +14,7 @@ import {
   FieldColorModeId,
   FieldConfigSource,
   getFrameDisplayName,
+  getValueFormat,
   LoadingState,
   SplitOpen,
   ThresholdsConfig,
@@ -102,18 +103,17 @@ export function ExploreGraph({
     () => createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore'),
     []
   );
+  const formatFunc = getValueFormat('short');
   const minVal = min(data[0].fields.find((field) => field.name === 'Value')?.values);
   const maxVal = max(data[0].fields.find((field) => field.name === 'Value')?.values);
-  const range = maxVal - minVal;
-  const rangePerTick = Math.ceil(range / 10); // explore will have under 10 ticks;
-  const enbiggen = Math.pow(rangePerTick, 10);
-  const disableShort = enbiggen < maxVal;
+  const isShortFormatted = formatFunc(minVal).text !== (minVal || 0).toString();
+  const disableShort = Math.abs(maxVal - minVal) < 100 && isShortFormatted;
 
   const [fieldConfig, setFieldConfig] = useState<FieldConfigSource<GraphFieldConfig>>({
     defaults: {
       min: anchorToZero ? 0 : undefined,
       max: yAxisMaximum || undefined,
-      unit: disableShort ? undefined : 'short',
+      unit: disableShort ? 'none' : 'short',
       color: {
         mode: FieldColorModeId.PaletteClassic,
       },
