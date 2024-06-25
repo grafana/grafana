@@ -53,6 +53,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
           isSelectable: false,
           isExpanded: true,
           query: '',
+          persistedNodes: {},
           nodes: {},
         },
       },
@@ -119,6 +120,15 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
           })
         )
         .subscribe((childNodes) => {
+          currentNode.persistedNodes = this.state.treeScopes
+            .map(({ path }) => path[path.length - 1])
+            .filter((nodeName) => nodeName in currentNode.nodes && !(nodeName in childNodes))
+            .reduce<NodesMap>((acc, nodeName) => {
+              acc[nodeName] = currentNode.nodes[nodeName];
+
+              return acc;
+            }, {});
+
           currentNode.nodes = childNodes;
 
           this.setState({ nodes });

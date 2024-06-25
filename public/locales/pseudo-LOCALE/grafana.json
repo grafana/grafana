@@ -1670,7 +1670,10 @@
     "tree": {
       "collapse": "Cőľľäpşę",
       "expand": "Ēχpäŉđ",
-      "headline": "Ŗęčőmmęŉđęđ",
+      "headline": {
+        "recommended": "Ŗęčőmmęŉđęđ",
+        "results": "Ŗęşūľŧş"
+      },
       "search": "Ŝęäřčĥ"
     }
   },

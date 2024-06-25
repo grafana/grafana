@@ -58,11 +58,28 @@ export function ScopesTreeLevel({
         />
       )}
 
-      {!anyChildExpanded && !node.query && (
-        <h6 className={styles.headline}>
-          <Trans i18nKey="scopes.tree.headline">Recommended</Trans>
-        </h6>
+      {Object.keys(node.persistedNodes).length > 0 && (
+        <div className={styles.itemChildren}>
+          <ScopesTreeLevel
+            nodes={node.persistedNodes}
+            nodePath={nodePath}
+            loadingNodeName={loadingNodeName}
+            scopes={scopes}
+            onNodeUpdate={onNodeUpdate}
+            onNodeSelectToggle={onNodeSelectToggle}
+          />
+        </div>
       )}
+
+      {!anyChildExpanded ? (
+        <h6 className={styles.headline}>
+          {!node.query ? (
+            <Trans i18nKey="scopes.tree.headline.recommended">Recommended</Trans>
+          ) : (
+            <Trans i18nKey="scopes.tree.headline.results">Results</Trans>
+          )}
+        </h6>
+      ) : null}
 
       <div role="tree">
         {isNodeLoading && <Skeleton count={5} className={styles.loader} />}

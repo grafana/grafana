@@ -6,6 +6,7 @@ export interface Node extends ScopeNodeSpec {
   isSelectable: boolean;
   isExpanded: boolean;
   query: string;
+  persistedNodes: NodesMap;
   nodes: NodesMap;
 }
 
