@@ -1,5 +1,6 @@
 import { cx, css } from '@emotion/css';
-import React, { ButtonHTMLAttributes, useEffect, useRef, useState } from 'react';
+import { ButtonHTMLAttributes, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 
 import { IconName, isIconName, GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';

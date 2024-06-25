@@ -1,5 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, Fragment } from 'react';
 
 import { CoreApp, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -100,7 +100,7 @@ export const QueryRows = ({ exploreId }: Props) => {
       queryRowWrapper={(children, refId) => {
         const query = queries.find((q) => q.refId === refId);
         return (
-          <React.Fragment key={refId}>
+          <Fragment key={refId}>
             <ContentOutlineItem
               title={refId}
               icon="arrow"
@@ -130,7 +130,7 @@ export const QueryRows = ({ exploreId }: Props) => {
                 />
               </Modal>
             )}
-          </React.Fragment>
+          </Fragment>
         );
       }}
     />

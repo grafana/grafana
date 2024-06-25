@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { IconName, Tooltip, LinkButton, Button } from '@grafana/ui';
 import { PopoverContent, TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 

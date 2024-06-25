@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { DataQuery } from '@grafana/schema';
 import { Button, Modal } from '@grafana/ui';
