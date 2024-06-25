@@ -215,13 +215,13 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	}
 
 	writeStart := r.clock.Now()
-	err = r.writer.Write(ctx, ev.rule.Record.Metric, writeStart, frames, ev.rule.Labels)
+	err = r.writer.Write(ctx, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.Labels)
 	writeDur := r.clock.Now().Sub(writeStart)
 
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to write metrics")
 		span.RecordError(err)
-		return fmt.Errorf("metric remote write failed: %w", err)
+		return fmt.Errorf("remote write failed: %w", err)
 	}
 
 	logger.Debug("Metrics written", "duration", writeDur)
