@@ -64,6 +64,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingQueryOptimization`        | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
 | `cloudWatchNewLabelParsing`        | Updates CloudWatch label parsing to be more accurate                                                                                                                                                                         | Yes                |
 | `pluginProxyPreserveTrailingSlash` | Preserve plugin proxy trailing slash.                                                                                                                                                                                        |                    |
+| `cloudWatchRoundUpEndTime`         | Round up end time for metric queries to the next minute to avoid missing data                                                                                                                                                | Yes                |
 
 ## Public preview feature toggles
 

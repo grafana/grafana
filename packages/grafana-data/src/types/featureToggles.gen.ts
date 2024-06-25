@@ -198,4 +198,5 @@ export interface FeatureToggles {
   ssoSettingsLDAP?: boolean;
   databaseReadReplica?: boolean;
   zanzana?: boolean;
+  cloudWatchRoundUpEndTime?: boolean;
 }

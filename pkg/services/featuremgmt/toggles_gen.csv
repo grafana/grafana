@@ -179,3 +179,4 @@ openSearchBackendFlowEnabled,preview,@grafana/aws-datasources,false,false,false
 ssoSettingsLDAP,experimental,@grafana/identity-access-team,false,false,false
 databaseReadReplica,experimental,@grafana/grafana-backend-services-squad,false,false,false
 zanzana,experimental,@grafana/identity-access-team,false,false,false
+cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false

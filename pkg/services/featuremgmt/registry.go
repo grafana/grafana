@@ -1351,6 +1351,13 @@ var (
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
+		{
+			Name:        "cloudWatchRoundUpEndTime",
+			Description: "Round up end time for metric queries to the next minute to avoid missing data",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       awsDatasourcesSquad,
+			Expression:  "true",
+		},
 	}
 )
 
