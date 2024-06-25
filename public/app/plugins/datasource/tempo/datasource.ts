@@ -34,7 +34,11 @@ import {
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 
-import { generateQueryFromAdHocFilters, generateQueryFromFilters } from './SearchTraceQLEditor/utils';
+import {
+  generateQueryFromAdHocFilters,
+  generateQueryFromFilters,
+  interpolateFilters,
+} from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { PrometheusDatasource, PromQuery } from './_importedDependencies/datasources/prometheus/types';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
@@ -470,21 +474,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const expandedQuery = { ...query };
 
     if (query.filters) {
-      expandedQuery.filters = query.filters.map((filter) => {
-        const updatedFilter = {
-          ...filter,
-          tag: this.templateSrv.replace(filter.tag ?? '', scopedVars),
-        };
-
-        if (filter.value) {
-          updatedFilter.value =
-            typeof filter.value === 'string'
-              ? this.templateSrv.replace(filter.value ?? '', scopedVars, VariableFormatID.Pipe)
-              : filter.value.map((v) => this.templateSrv.replace(v ?? '', scopedVars, VariableFormatID.Pipe));
-        }
-
-        return updatedFilter;
-      });
+      expandedQuery.filters = interpolateFilters(query.filters, scopedVars);
     }
 
     if (query.groupBy) {
