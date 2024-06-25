@@ -39,7 +39,7 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 
 	var ans []state.StateTransition
 	for i := 0; i < b.N; i++ {
-		ans = sut.ProcessEvalResults(context.Background(), now, &rule, results, labels)
+		ans = sut.ProcessEvalResults(context.Background(), now, &rule, results, labels, nil)
 	}
 
 	b.StopTimer()

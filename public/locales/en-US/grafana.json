@@ -1598,6 +1598,9 @@
       "delete": "Delete permanently",
       "restore": "Restore"
     },
+    "page": {
+      "empty-state": "You haven't deleted any dashboards recently."
+    },
     "permanently-delete-modal": {
       "confirm-text": "Delete",
       "delete-button": "Delete",
