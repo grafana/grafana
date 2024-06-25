@@ -641,6 +641,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/bump-version.yml @grafana/grafana-release-guild
 /.github/workflows/close-milestone.yml @grafana/grafana-release-guild
 /.github/workflows/release-pr.yml @grafana/grafana-release-guild
+/.github/workflows/release-comms.yml @grafana/grafana-release-guild
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
