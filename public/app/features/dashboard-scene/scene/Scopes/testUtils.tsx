@@ -295,6 +295,7 @@ const selectors = {
   tree: {
     search: (nodeId: string) => `scopes-tree-${nodeId}-search`,
     select: (nodeId: string) => `scopes-tree-${nodeId}-checkbox`,
+    radio: (nodeId: string) => `scopes-tree-${nodeId}-radio`,
     expand: (nodeId: string) => `scopes-tree-${nodeId}-expand`,
     title: (nodeId: string) => `scopes-tree-${nodeId}-title`,
   },
@@ -354,10 +355,10 @@ export const getApplicationsClustersSlothClusterSouthSelect = () =>
 
 export const getClustersSelect = () => screen.getByTestId(selectors.tree.select('clusters'));
 export const getClustersExpand = () => screen.getByTestId(selectors.tree.expand('clusters'));
-export const getClustersSlothClusterNorthSelect = () =>
-  screen.getByTestId(selectors.tree.select('clusters-slothClusterNorth'));
-export const getClustersSlothClusterSouthSelect = () =>
-  screen.getByTestId(selectors.tree.select('clusters-slothClusterSouth'));
+export const getClustersSlothClusterNorthRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterNorth'));
+export const getClustersSlothClusterSouthRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterSouth'));
 
 export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
   return new DashboardScene({
