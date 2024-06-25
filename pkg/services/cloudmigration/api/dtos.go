@@ -128,8 +128,10 @@ const (
 type ItemStatus string
 
 const (
-	ItemStatusOK    ItemStatus = "OK"
-	ItemStatusError ItemStatus = "ERROR"
+	ItemStatusOK      ItemStatus = "OK"
+	ItemStatusError   ItemStatus = "ERROR"
+	ItemStatusPending ItemStatus = "PENDING"
+	ItemStatusUnknown ItemStatus = "UNKNOWN"
 )
 
 // swagger:parameters getCloudMigrationRun
@@ -268,6 +270,18 @@ type CreateSnapshotResponseDTO struct {
 
 // swagger:parameters getSnapshot
 type GetSnapshotParams struct {
+	// ResultPage is used for pagination with ResultLimit
+	// in:query
+	// required:false
+	// default: 1
+	ResultPage int `json:"resultPage"`
+
+	// Max limit for snapshot results returned.
+	// in:query
+	// required:false
+	// default: 100
+	ResultLimit int `json:"resultLimit"`
+
 	// Session UID of a session
 	// in: path
 	UID string `json:"uid"`
@@ -290,16 +304,18 @@ type GetSnapshotResponseDTO struct {
 
 // swagger:parameters getShapshotList
 type GetSnapshotListParams struct {
-	// Offset is used for pagination with limit
+	// Page is used for pagination with limit
 	// in:query
 	// required:false
-	// default: 0
-	Offset int `json:"offset"`
+	// default: 1
+	Page int `json:"page"`
+
 	// Max limit for results returned.
 	// in:query
 	// required:false
 	// default: 100
 	Limit int `json:"limit"`
+
 	// Session UID of a session
 	// in: path
 	UID string `json:"uid"`
