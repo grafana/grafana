@@ -636,6 +636,16 @@ The deprecated `email` field to send a report via `/api/reports/email` endpoint 
 - **Grafana UI:** Add code variant to Text component. [#82318](https://github.com/grafana/grafana/issues/82318), [@tskarhed](https://github.com/tskarhed)
 
 <!-- 11.0.0-preview END -->
+<!-- 10.4.5 START -->
+
+# 10.4.5 (2024-06-21)
+
+### Bug fixes
+
+- **Echo:** Suppress errors from frontend-metrics API call failing. [#89498](https://github.com/grafana/grafana/issues/89498), [@joshhunt](https://github.com/joshhunt)
+- **Azure Monitor:** Add validation for namespace field in AdvancedResourcePicker when entering a forward slash. [#89313](https://github.com/grafana/grafana/issues/89313), [@adamyeats](https://github.com/adamyeats)
+
+<!-- 10.4.5 END -->
 <!-- 10.4.4 START -->
 
 # 10.4.4 (2024-06-13)
