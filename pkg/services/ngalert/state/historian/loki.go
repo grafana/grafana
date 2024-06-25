@@ -411,7 +411,7 @@ func selectorString(selectors []Selector, folderUIDs []string) string {
 		b := strings.Builder{}
 		b.Grow(len(folderUIDs)*40 + len(FolderUIDLabel)) // rough estimate of the length
 		b.WriteString(FolderUIDLabel)
-		b.WriteString("~=`")
+		b.WriteString("=~`")
 		b.WriteString(regexp.QuoteMeta(folderUIDs[0]))
 		for _, uid := range folderUIDs[1:] {
 			b.WriteString("|")

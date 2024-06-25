@@ -210,7 +210,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 		require.Equal(t, expected, result)
 
 		selectors = []Selector{{"name", "=", "quoted\"string"}, {"age", "=~", "30"}}
-		expected = "{name=\"quoted\\\"string\",age=~\"30\",folderUID~=`some\\\\d\\.r\\$|normal_string`}"
+		expected = "{name=\"quoted\\\"string\",age=~\"30\",folderUID=~`some\\\\d\\.r\\$|normal_string`}"
 		result = selectorString(selectors, []string{`some\d.r$`, "normal_string"})
 		require.Equal(t, expected, result)
 
@@ -327,7 +327,7 @@ func TestBuildLogQuery(t *testing.T) {
 				OrgID: 123,
 			},
 			folderUIDs: []string{"folder-1", "folder\\d"},
-			exp:        `{orgID="123",from="state-history",folderUID~=` + "`folder-1|folder\\\\d`" + `}`,
+			exp:        `{orgID="123",from="state-history",folderUID=~` + "`folder-1|folder\\\\d`" + `}`,
 		},
 		{
 			name: "should drop folders if it's too long",
