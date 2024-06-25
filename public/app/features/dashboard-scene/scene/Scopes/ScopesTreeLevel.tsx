@@ -36,7 +36,6 @@ export function ScopesTreeLevel({
 
   const scopeNames = scopes.map(({ scopeName }) => scopeName);
   const anyChildExpanded = childNodesArr.some(({ isExpanded }) => isExpanded);
-  const anyChildSelected = childNodesArr.some(({ linkId }) => linkId && scopeNames.includes(linkId!));
 
   const onQueryUpdate = useMemo(() => debounce(onNodeUpdate, 500), [onNodeUpdate]);
 
@@ -102,7 +101,6 @@ export function ScopesTreeLevel({
 
                   {childNode.isExpandable && (
                     <IconButton
-                      disabled={anyChildSelected && !childNode.isExpanded}
                       name={!childNode.isExpanded ? 'angle-right' : 'angle-down'}
                       aria-label={
                         childNode.isExpanded ? t('scopes.tree.collapse', 'Collapse') : t('scopes.tree.expand', 'Expand')
