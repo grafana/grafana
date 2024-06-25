@@ -2,9 +2,12 @@ package cloudmigrationimpl
 
 import (
 	"context"
+	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/slicesext"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -143,11 +146,10 @@ func (s *Service) getDashboards(ctx context.Context) ([]dashboards.Dashboard, er
 }
 
 // asynchronous process for writing the snapshot to the filesystem and updating the snapshot status
-func (s *Service) buildSnapshot(ctx context.Context, snapshotMeta cloudmigration.CloudMigrationSnapshot) {
+func (s *Service) buildSnapshot(ctx context.Context, maxItemsPerPartition uint32, snapshotMeta cloudmigration.CloudMigrationSnapshot) error {
 	// TODO -- make sure we can only build one snapshot at a time
 	s.buildSnapshotMutex.Lock()
 	defer s.buildSnapshotMutex.Unlock()
-	s.buildSnapshotError = false
 
 	// update snapshot status to creating, add some retries since this is a background task
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
@@ -158,18 +160,40 @@ func (s *Service) buildSnapshot(ctx context.Context, snapshotMeta cloudmigration
 		return retryer.FuncComplete, err
 	}, 10, time.Millisecond*100, time.Second*10); err != nil {
 		s.log.Error("failed to set snapshot status to 'creating'", "err", err)
-		s.buildSnapshotError = true
-		return
+		return fmt.Errorf("setting snapshot status to creating: snapshotUID=%s %w", snapshotMeta.UID, err)
 	}
 
-	// build snapshot
-	// just sleep for now to simulate snapshot creation happening
-	// need to do a couple of fancy things when we implement this:
-	//   - some sort of regular check-in so we know we haven't timed out
-	//   - a channel to listen for cancel events
-	//   - retries baked into the snapshot writing process?
-	s.log.Debug("snapshot meta", "snapshot", snapshotMeta)
-	time.Sleep(3 * time.Second)
+	snapshot, err := NewSnapshotWriter(filepath.Join(s.cfg.CloudMigration.SnapshotFolder, "grafana", "snapshots", snapshotMeta.GMSSnapshotUID))
+	if err != nil {
+		return fmt.Errorf("instantiating snapshot writer: %w", err)
+	}
+
+	migrationData, err := s.getMigrationDataJSON(ctx)
+	if err != nil {
+		return fmt.Errorf("fetching migration data: %w", err)
+	}
+
+	resourcesGroupedByType := make(map[cloudmigration.MigrateDataType][]cloudmigration.MigrateDataRequestItem, 0)
+	for _, item := range migrationData.Items {
+		resourcesGroupedByType[item.Type] = append(resourcesGroupedByType[item.Type], item)
+	}
+
+	for _, resourceType := range []cloudmigration.MigrateDataType{
+		cloudmigration.DatasourceDataType,
+		cloudmigration.FolderDataType,
+		cloudmigration.DashboardDataType,
+	} {
+		for _, chunk := range slicesext.Chunks(int(maxItemsPerPartition), resourcesGroupedByType[resourceType]) {
+			if err := snapshot.Write(string(resourceType), chunk); err != nil {
+				return fmt.Errorf("writing resources to snapshot writer: resourceType=%s %w", resourceType, err)
+			}
+		}
+	}
+
+	_, err = snapshot.Finish()
+	if err != nil {
+		return fmt.Errorf("finishing writing snapshot files and generating index file: %w", err)
+	}
 
 	// update snapshot status to pending upload with retry
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
@@ -180,8 +204,10 @@ func (s *Service) buildSnapshot(ctx context.Context, snapshotMeta cloudmigration
 		return retryer.FuncComplete, err
 	}, 10, time.Millisecond*100, time.Second*10); err != nil {
 		s.log.Error("failed to set snapshot status to 'pending upload'", "err", err)
-		s.buildSnapshotError = true
+		return fmt.Errorf("setting snapshot status to pending upload: snapshotID=%s %w", snapshotMeta.UID, err)
 	}
+
+	return nil
 }
 
 // asynchronous process for and updating the snapshot status
@@ -189,7 +215,6 @@ func (s *Service) uploadSnapshot(ctx context.Context, snapshotMeta cloudmigratio
 	// TODO -- make sure we can only upload one snapshot at a time
 	s.buildSnapshotMutex.Lock()
 	defer s.buildSnapshotMutex.Unlock()
-	s.buildSnapshotError = false
 
 	// update snapshot status to uploading, add some retries since this is a background task
 	if err := retryer.Retry(func() (retryer.RetrySignal, error) {
@@ -200,7 +225,6 @@ func (s *Service) uploadSnapshot(ctx context.Context, snapshotMeta cloudmigratio
 		return retryer.FuncComplete, err
 	}, 10, time.Millisecond*100, time.Second*10); err != nil {
 		s.log.Error("failed to set snapshot status to 'creating'", "err", err)
-		s.buildSnapshotError = true
 		return
 	}
 
@@ -218,7 +242,6 @@ func (s *Service) uploadSnapshot(ctx context.Context, snapshotMeta cloudmigratio
 		return retryer.FuncComplete, err
 	}, 10, time.Millisecond*100, time.Second*10); err != nil {
 		s.log.Error("failed to set snapshot status to 'pending upload'", "err", err)
-		s.buildSnapshotError = true
 	}
 
 	// simulate the rest

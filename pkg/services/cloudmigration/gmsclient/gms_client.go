@@ -111,7 +111,7 @@ func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.Cloud
 	return &result, nil
 }
 
-func (c *gmsClientImpl) InitializeSnapshot(context.Context, cloudmigration.CloudMigrationSession) (*cloudmigration.InitializeSnapshotResponse, error) {
+func (c *gmsClientImpl) StartSnapshot(context.Context, cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error) {
 	panic("not implemented")
 }
 

@@ -564,7 +564,3 @@ func (cma *CloudMigrationAPI) CancelSnapshot(c *contextmodel.ReqContext) respons
 
 	return response.JSON(http.StatusOK, nil)
 }
-
-// swagger:parameters createSnapshot
-type CreateSnapshotRequest struct {
-}

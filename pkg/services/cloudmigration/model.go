@@ -195,18 +195,12 @@ type CreateSessionResponse struct {
 	SnapshotUid string
 }
 
-type InitializeSnapshotResponse struct {
-	EncryptionKey  string
-	UploadURL      string
-	GMSSnapshotUID string
-}
-
 type StartSnapshotResponse struct {
 	SnapshotID           string            `json:"snapshotID"`
 	MaxItemsPerPartition uint32            `json:"maxItemsPerPartition"`
 	Algo                 string            `json:"algo"`
 	UploadURL            string            `json:"uploadURL"`
 	PresignedURLFormData map[string]string `json:"presignedURLFormData"`
-	EncryptionKey        []byte            `json:"encryptionKey"`
-	Nonce                []byte            `json:"nonce"`
+	EncryptionKey        string            `json:"encryptionKey"`
+	Nonce                string            `json:"nonce"`
 }

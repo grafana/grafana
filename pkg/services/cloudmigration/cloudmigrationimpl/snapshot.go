@@ -61,7 +61,7 @@ func NewSnapshotWriter(folder string) (writer *SnapshotWriter, err error) {
 }
 
 // TODO: make it parallel
-func (writer *SnapshotWriter) Write(resourceType string, items []cloudmigration.MigrateDataRequestItemDTO) (err error) {
+func (writer *SnapshotWriter) Write(resourceType string, items []cloudmigration.MigrateDataRequestItem) (err error) {
 	if _, ok := writer.index[resourceType]; !ok {
 		writer.index[resourceType] = &resourceIndex{partitionNumber: 0, filePaths: make([]string, 0)}
 	}
@@ -156,7 +156,7 @@ type compressedPartition struct {
 // partition is the same as compressedPartition except that `Data` has been uncompressed and renamed to `Items`.
 type partition struct {
 	Checksum string
-	Items    []cloudmigration.MigrateDataRequestItemDTO
+	Items    []cloudmigration.MigrateDataRequestItem
 }
 
 func computeBufferChecksum(buffer []byte) (string, error) {
@@ -286,7 +286,7 @@ func ReadFile(reader io.Reader) (partition partition, err error) {
 		}
 	}()
 
-	items := make([]cloudmigration.MigrateDataRequestItemDTO, 0)
+	items := make([]cloudmigration.MigrateDataRequestItem, 0)
 	if err := json.NewDecoder(gzipReader).Decode(&items); err != nil {
 		return partition, fmt.Errorf("unmarshalling []MigrateDataRequestItemDTO: %w", err)
 	}
