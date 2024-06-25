@@ -1,7 +1,6 @@
 import { render, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import React from 'react';
 import { Props } from 'react-virtualized-auto-sizer';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 

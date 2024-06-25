@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { fromPairs, isEmpty, sortBy, take, uniq } from 'lodash';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataFrame, dateTime, GrafanaTheme2, TimeRange } from '@grafana/data';

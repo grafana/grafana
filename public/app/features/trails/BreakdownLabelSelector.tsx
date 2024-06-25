@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useResizeObserver } from '@react-aria/utils';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Select, RadioButtonGroup, useStyles2, useTheme2, measureText } from '@grafana/ui';

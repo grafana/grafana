@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Text, Box, Button, useStyles2, Space } from '@grafana/ui';

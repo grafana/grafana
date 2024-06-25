@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Permissions } from 'app/core/components/AccessControl';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';

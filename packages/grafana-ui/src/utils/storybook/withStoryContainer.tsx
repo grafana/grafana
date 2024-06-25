@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { Args, Decorator } from '@storybook/react';
-import React from 'react';
+import * as React from 'react';
 
 interface Props {
   width?: number;

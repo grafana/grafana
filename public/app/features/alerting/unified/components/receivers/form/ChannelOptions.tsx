@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { useFormContext, FieldError, FieldErrors, DeepMap } from 'react-hook-form';
 
 import { Button, Field, Input } from '@grafana/ui';

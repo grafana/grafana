@@ -1,5 +1,5 @@
 import { uniqueId } from 'lodash';
-import React, { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
+import { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
 
 import { ContentOutlineItemBaseProps, ITEM_TYPES } from './ContentOutlineItem';
 

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
 import { SegmentAsync, useStyles2 } from '@grafana/ui';

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { arrayUtils } from '@grafana/data';
 import { DashboardLink } from '@grafana/schema';

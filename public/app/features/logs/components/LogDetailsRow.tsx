@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent, useEffect, useState } from 'react';
+import { PureComponent, useEffect, useState } from 'react';
+import * as React from 'react';
 
 import {
   CoreApp,

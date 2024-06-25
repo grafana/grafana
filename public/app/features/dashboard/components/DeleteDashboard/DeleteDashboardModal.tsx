@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 

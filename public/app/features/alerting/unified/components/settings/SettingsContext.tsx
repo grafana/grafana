@@ -1,5 +1,5 @@
 import { debounce, union, without } from 'lodash';
-import React, { PropsWithChildren, useEffect, useRef } from 'react';
+import { createContext, useContext, PropsWithChildren, useEffect, useRef } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { config, getAppEvents } from '@grafana/runtime';
@@ -39,7 +39,7 @@ interface Context {
   forwardingDisabled: boolean;
 }
 
-const SettingsContext = React.createContext<Context | undefined>(undefined);
+const SettingsContext = createContext<Context | undefined>(undefined);
 const isInternalAlertmanager = (uid: string) => uid === GRAFANA_RULES_SOURCE_NAME;
 
 export const SettingsProvider = (props: PropsWithChildren) => {
@@ -163,7 +163,7 @@ function determineDeliveryMode(interestedAlertmanagers: string[]): AlertmanagerC
 }
 
 export function useSettings() {
-  const context = React.useContext(SettingsContext);
+  const context = useContext(SettingsContext);
 
   if (context === undefined) {
     throw new Error('useSettings must be used within a SettingsContext');

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import * as H from 'history';
-import React, { useContext, useEffect, useMemo } from 'react';
+import { memo, useContext, useEffect, useMemo } from 'react';
 import { Prompt } from 'react-router';
 
 import { locationService } from '@grafana/runtime';
@@ -14,7 +14,7 @@ interface DashboardPromptProps {
   dashboard: DashboardScene;
 }
 
-export const DashboardPrompt = React.memo(({ dashboard }: DashboardPromptProps) => {
+export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const originalPath = useMemo(() => locationService.getLocation().pathname, [dashboard]);
   const { showModal, hideModal } = useContext(ModalsContext);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { InlineField, Input } from '@grafana/ui';

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
-import React, { createRef } from 'react';
+import { createRef } from 'react';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data/src';
 import { LinkButton, Portal, Stack, useStyles2, VizTooltipContainer } from '@grafana/ui';

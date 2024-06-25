@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { DataFrame, EnumFieldConfig, GrafanaTheme2 } from '@grafana/data';

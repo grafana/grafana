@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { Placement } from '@popperjs/core';
 import { uniqueId } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 

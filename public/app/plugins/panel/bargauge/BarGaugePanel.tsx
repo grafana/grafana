@@ -1,5 +1,5 @@
 import { isNumber } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import {
   DisplayValueAlignmentFactors,

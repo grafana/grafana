@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { RefObject, useMemo, useState } from 'react';
+import { RefObject, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {

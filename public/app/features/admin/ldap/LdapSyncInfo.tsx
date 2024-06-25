@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { dateTimeFormat } from '@grafana/data';
 import { InteractiveTable, Text } from '@grafana/ui';
 import { SyncInfo } from 'app/types';

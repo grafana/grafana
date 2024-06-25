@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue, DataFrame, PanelData, Labels } from '@grafana/data';
 import { EditorList, AccessoryButton } from '@grafana/experimental';

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { Modal, ModalTabsHeader, TabContent, Themeable2, withTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';

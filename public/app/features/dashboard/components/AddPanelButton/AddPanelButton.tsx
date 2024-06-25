@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Dropdown, Button, Icon } from '@grafana/ui';

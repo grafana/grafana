@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';

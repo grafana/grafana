@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { LinkModel, PanelData, PanelPlugin, renderMarkdown } from '@grafana/data';
 import { config, getTemplateSrv, locationService } from '@grafana/runtime';

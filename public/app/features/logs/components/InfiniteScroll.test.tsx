@@ -1,5 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { LogRowModel, dateTimeForTimeZone } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';

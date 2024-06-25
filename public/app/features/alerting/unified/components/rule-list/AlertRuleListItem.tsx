@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import pluralize from 'pluralize';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Stack, Text, TextLink, Dropdown, Button, Menu, Alert } from '@grafana/ui';

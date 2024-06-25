@@ -1,4 +1,3 @@
-import React from 'react';
 import { CellProps } from 'react-table';
 
 import { useDatasource } from '../utils/useDatasource';

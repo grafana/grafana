@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 

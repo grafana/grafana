@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react';
-import React from 'react';
 import { render } from 'test/test-utils';
 
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';

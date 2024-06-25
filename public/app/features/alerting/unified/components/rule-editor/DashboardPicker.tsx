@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { noop } from 'lodash';
-import React, { CSSProperties, useCallback, useMemo, useState } from 'react';
+import { CSSProperties, useCallback, useMemo, useState } from 'react';
 import { useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';

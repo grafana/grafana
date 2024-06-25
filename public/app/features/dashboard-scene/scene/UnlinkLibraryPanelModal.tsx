@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
 
 import { ModalSceneObjectLike } from '../sharing/types';

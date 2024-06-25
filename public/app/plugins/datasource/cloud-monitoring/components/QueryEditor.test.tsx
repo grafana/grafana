@@ -1,5 +1,4 @@
 import { render, waitFor, screen } from '@testing-library/react';
-import React from 'react';
 import { select } from 'react-select-event';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';

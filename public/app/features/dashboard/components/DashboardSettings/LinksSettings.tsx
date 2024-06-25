@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';

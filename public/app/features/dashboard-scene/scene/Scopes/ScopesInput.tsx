@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { groupBy } from 'lodash';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, Input, Tooltip } from '@grafana/ui';

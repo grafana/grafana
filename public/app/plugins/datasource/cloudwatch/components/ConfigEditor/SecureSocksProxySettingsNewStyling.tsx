@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { Field, Switch } from '@grafana/ui';

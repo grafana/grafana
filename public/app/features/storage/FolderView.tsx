@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';

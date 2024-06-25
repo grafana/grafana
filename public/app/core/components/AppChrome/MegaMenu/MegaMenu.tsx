@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
-import React, { forwardRef } from 'react';
+import { memo, forwardRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -19,7 +19,7 @@ export interface Props extends DOMAttributes {
   onClose: () => void;
 }
 
-export const MegaMenu = React.memo(
+export const MegaMenu = memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
     const navTree = useSelector((state) => state.navBarTree);
     const styles = useStyles2(getStyles);

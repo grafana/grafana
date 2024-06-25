@@ -3,7 +3,8 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import { SerializedError } from '@reduxjs/toolkit';
 import { groupBy, size, uniq, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
-import React, { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
+import { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
+import * as React from 'react';
 import { useToggle } from 'react-use';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';

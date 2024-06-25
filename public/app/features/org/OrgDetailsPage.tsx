@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { ConnectedProps, connect } from 'react-redux';
 
 import { Stack } from '@grafana/ui';

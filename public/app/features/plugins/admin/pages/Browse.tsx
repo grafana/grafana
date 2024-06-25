@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';

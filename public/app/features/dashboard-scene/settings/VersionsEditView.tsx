@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';

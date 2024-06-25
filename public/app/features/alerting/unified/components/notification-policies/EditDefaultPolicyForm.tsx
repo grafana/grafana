@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 
 import { Collapse, Field, Link, MultiSelect, Select, useStyles2 } from '@grafana/ui';

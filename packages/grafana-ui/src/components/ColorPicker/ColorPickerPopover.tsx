@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
-import React, { Component } from 'react';
+import { Component } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 

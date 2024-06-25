@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import {
   DataSourceApi,

@@ -1,5 +1,5 @@
 import moment from 'moment';
-import React from 'react';
+import { Fragment } from 'react';
 
 import { AlertmanagerConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
@@ -63,12 +63,12 @@ function renderTimeIntervals(muteTiming: MuteTimeInterval) {
     const yearsString = getYearsString(years);
 
     return (
-      <React.Fragment key={JSON.stringify(interval) + index}>
+      <Fragment key={JSON.stringify(interval) + index}>
         {`${timeString} ${weekdayString}`}
         <br />
         {[daysString, monthsString, yearsString].join(' | ')}
         <br />
-      </React.Fragment>
+      </Fragment>
     );
   });
 }

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { StandardEditorProps, GrafanaTheme2, UnitFieldConfigSettings } from '@grafana/data';
 import { IconButton, UnitPicker, useStyles2 } from '@grafana/ui';

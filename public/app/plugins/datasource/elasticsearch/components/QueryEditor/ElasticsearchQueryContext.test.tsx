@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
-import React, { PropsWithChildren } from 'react';
+import { PropsWithChildren } from 'react';
 
 import { getDefaultTimeRange } from '@grafana/data';
 

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';

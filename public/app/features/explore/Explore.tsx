@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { get, groupBy } from 'lodash';
-import React from 'react';
+import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer, { HorizontalSize } from 'react-virtualized-auto-sizer';
 
@@ -139,7 +139,7 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
 
-export class Explore extends React.PureComponent<Props, ExploreState> {
+export class Explore extends PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
   logsEventBus: EventBus;

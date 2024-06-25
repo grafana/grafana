@@ -1,4 +1,4 @@
-import React, { FormEvent, useMemo } from 'react';
+import { FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';

@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React from 'react';
 import { finalize, from, Subscription } from 'rxjs';
 
 import { GrafanaTheme2, Scope } from '@grafana/data';

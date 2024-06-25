@@ -1,4 +1,3 @@
-import React from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 
 import { Alert, Button, Stack, LinkButton } from '@grafana/ui';

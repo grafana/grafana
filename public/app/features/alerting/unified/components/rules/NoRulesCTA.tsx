@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src/themes';
 import { CallToActionCard, useStyles2, Stack } from '@grafana/ui';

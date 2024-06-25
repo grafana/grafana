@@ -1,7 +1,7 @@
 // Libraries
 import { css } from '@emotion/css';
 import { cloneDeep, extend } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { PluginMeta, AppPlugin, deprecationWarning } from '@grafana/data';
 import { AngularComponent, getAngularLoader, getBackendSrv } from '@grafana/runtime';

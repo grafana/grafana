@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React from 'react';
+import { memo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
@@ -21,7 +21,7 @@ import { TopNavBarMenu } from './TopNavBarMenu';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { TopSearchBarSection } from './TopSearchBarSection';
 
-export const TopSearchBar = React.memo(function TopSearchBar() {
+export const TopSearchBar = memo(function TopSearchBar() {
   const styles = useStyles2(getStyles);
   const navIndex = useSelector((state) => state.navIndex);
   const location = useLocation();

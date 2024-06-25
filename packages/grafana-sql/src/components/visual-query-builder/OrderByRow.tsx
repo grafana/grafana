@@ -1,5 +1,6 @@
 import { uniqueId } from 'lodash';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
+import * as React from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { EditorField, InputGroup } from '@grafana/experimental';

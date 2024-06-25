@@ -1,5 +1,5 @@
 import { saveAs } from 'file-saver';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { Button, Field, Modal, Switch } from '@grafana/ui';
 import { appEvents } from 'app/core/core';

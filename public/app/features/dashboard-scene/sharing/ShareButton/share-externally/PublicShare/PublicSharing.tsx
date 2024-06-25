@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 
 import { useShareDrawerContext } from '../../../ShareDrawer/ShareDrawerContext';

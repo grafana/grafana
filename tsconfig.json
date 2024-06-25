@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "jsx": "react",
+    "jsx": "react-jsx",
     "baseUrl": "public/",
     "outDir": "public/dist",
     "rootDirs": ["public/"],

@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLProps } from 'react';
+import { HTMLProps } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

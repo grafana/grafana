@@ -1,5 +1,4 @@
 import { StoryFn } from '@storybook/react';
-import React from 'react';
 
 import { useDelayedSwitch } from './useDelayedSwitch';
 

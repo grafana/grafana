@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { AdHocVariableFilter } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneTimeRangeLike } from '@grafana/scenes';
 

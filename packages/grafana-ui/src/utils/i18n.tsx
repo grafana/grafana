@@ -1,5 +1,4 @@
 import i18next from 'i18next';
-import React from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
 // We want to translate grafana-ui without introducing any breaking changes for consumers

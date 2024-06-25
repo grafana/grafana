@@ -1,6 +1,7 @@
 // Libraries
 import classNames from 'classnames';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 import { default as ReactSelect, components, MenuListProps } from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/async';
 import Creatable from 'react-select/creatable';

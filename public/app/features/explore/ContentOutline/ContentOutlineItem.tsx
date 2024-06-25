@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, ReactNode } from 'react';
+import { useEffect, useRef, ReactNode } from 'react';
+import * as React from 'react';
 
 import { useContentOutlineContext } from './ContentOutlineContext';
 

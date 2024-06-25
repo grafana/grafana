@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import Moveable from 'moveable';
-import React, { createRef, CSSProperties, RefObject } from 'react';
+import { createRef, CSSProperties, RefObject } from 'react';
 import { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import Selecto from 'selecto';

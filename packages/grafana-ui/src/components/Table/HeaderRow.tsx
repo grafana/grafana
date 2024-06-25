@@ -1,4 +1,3 @@
-import React from 'react';
 import { HeaderGroup, Column } from 'react-table';
 
 import { Field } from '@grafana/data';

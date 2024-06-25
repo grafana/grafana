@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
+import { PureComponent } from 'react';
 
 import { TNil } from '../../../types';
 
@@ -27,7 +27,7 @@ export type DraggableManagerDemoState = {
   regionDragging: [number, number] | TNil;
 };
 
-export default class DraggableManagerDemo extends React.PureComponent<{}, DraggableManagerDemoState> {
+export default class DraggableManagerDemo extends PureComponent<{}, DraggableManagerDemoState> {
   state: DraggableManagerDemoState;
 
   constructor(props: {}) {

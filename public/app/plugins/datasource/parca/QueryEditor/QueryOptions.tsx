@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 import { useToggle } from 'react-use';
 
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';

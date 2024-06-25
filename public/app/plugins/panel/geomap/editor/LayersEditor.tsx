@@ -1,4 +1,3 @@
-import React from 'react';
 import { DropResult } from 'react-beautiful-dnd';
 
 import { StandardEditorProps } from '@grafana/data';

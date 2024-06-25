@@ -1,5 +1,4 @@
 import { screen, render } from '@testing-library/react';
-import React from 'react';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';

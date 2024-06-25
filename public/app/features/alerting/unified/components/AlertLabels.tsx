@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { chain } from 'lodash';
 import pluralize from 'pluralize';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, getTagColorsFromName, useStyles2 } from '@grafana/ui';

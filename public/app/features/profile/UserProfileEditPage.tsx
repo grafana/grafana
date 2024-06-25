@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 
@@ -140,11 +140,11 @@ export function UserProfileEditPage({
 
             if (activeTab === tabId) {
               return (
-                <React.Fragment key={tabId}>
+                <Fragment key={tabId}>
                   {pluginExtensionComponents.map(({ component: Component }, index) => (
                     <Component key={`${tabId}-${index}`} />
                   ))}
-                </React.Fragment>
+                </Fragment>
               );
             }
             return null;

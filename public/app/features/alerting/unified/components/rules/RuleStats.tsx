@@ -1,6 +1,7 @@
 import { isUndefined, omitBy, pick, sum } from 'lodash';
 import pluralize from 'pluralize';
-import React, { Fragment } from 'react';
+import { Fragment } from 'react';
+import * as React from 'react';
 
 import { Badge, Stack } from '@grafana/ui';
 import {

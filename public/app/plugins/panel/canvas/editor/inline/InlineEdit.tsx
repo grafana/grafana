@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { SyntheticEvent, useEffect, useRef, useState } from 'react';
+import { SyntheticEvent, useEffect, useRef, useState } from 'react';
 import Draggable, { DraggableEventHandler } from 'react-draggable';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 

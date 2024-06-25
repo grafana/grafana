@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { MouseEventHandler } from 'react';
+import { MouseEventHandler } from 'react';
+import * as React from 'react';
 import { DraggableProvided } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';

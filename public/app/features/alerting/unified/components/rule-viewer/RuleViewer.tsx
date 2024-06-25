@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { chain, isEmpty, truncate } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Alert, LinkButton, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';

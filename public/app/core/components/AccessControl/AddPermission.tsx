@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Button, Select, Stack } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';

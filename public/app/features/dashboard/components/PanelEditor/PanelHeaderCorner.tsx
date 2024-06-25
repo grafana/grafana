@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { Component } from 'react';
+import { Component } from 'react';
 
 import { renderMarkdown, LinkModelSupplier, ScopedVars, IconName } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';

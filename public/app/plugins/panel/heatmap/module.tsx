@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {

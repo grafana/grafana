@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FormEvent, MouseEvent, useState } from 'react';
+import { FormEvent, MouseEvent, useState } from 'react';
 
 import { dateTime, getDefaultTimeRange, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React, { FormEventHandler, KeyboardEventHandler, ReactNode, useCallback } from 'react';
+import { FormEventHandler, KeyboardEventHandler, ReactNode, useCallback } from 'react';
 
 import {
   DataFrame,

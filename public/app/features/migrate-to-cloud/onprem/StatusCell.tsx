@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { CellProps, Text, Stack, Button } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 

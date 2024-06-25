@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { config } from '@grafana/runtime';

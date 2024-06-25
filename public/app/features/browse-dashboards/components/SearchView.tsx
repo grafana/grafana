@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { DataFrameView, toDataFrame } from '@grafana/data';
 import { Button, EmptyState } from '@grafana/ui';

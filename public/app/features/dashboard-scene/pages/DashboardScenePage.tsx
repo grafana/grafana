@@ -1,5 +1,5 @@
 // Libraries
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { UrlSyncContextProvider } from '@grafana/scenes';

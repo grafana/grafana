@@ -1,6 +1,5 @@
 import { queryByTestId, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourcePluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';

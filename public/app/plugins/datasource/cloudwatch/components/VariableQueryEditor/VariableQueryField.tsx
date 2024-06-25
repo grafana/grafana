@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';

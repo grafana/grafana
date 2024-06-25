@@ -1,4 +1,3 @@
-import React from 'react';
 import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 

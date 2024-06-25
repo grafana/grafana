@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { useState, useEffect } from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data';
 import { Label, TextLink, useStyles2 } from '@grafana/ui';
@@ -19,7 +19,7 @@ interface Props {
 export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
-  const [roles, setRoleOptions] = React.useState<Role[]>([]);
+  const [roles, setRoleOptions] = useState<Role[]>([]);
 
   const onRoleChange = (role: OrgRole) => {
     onChange({ ...serviceAccount, role: role });
@@ -29,7 +29,7 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
     onChange({ ...serviceAccount, name: newValue });
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     async function fetchOptions() {
       try {
         if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {

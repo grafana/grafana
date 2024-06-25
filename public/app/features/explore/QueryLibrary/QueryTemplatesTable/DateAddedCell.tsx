@@ -1,4 +1,3 @@
-import React from 'react';
 import { CellProps } from 'react-table';
 
 import { dateTime } from '@grafana/data';

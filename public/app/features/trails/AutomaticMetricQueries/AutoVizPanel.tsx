@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SceneObjectState, SceneObjectBase, SceneComponentProps, VizPanel, SceneQueryRunner } from '@grafana/scenes';
 import { RadioButtonGroup } from '@grafana/ui';
 

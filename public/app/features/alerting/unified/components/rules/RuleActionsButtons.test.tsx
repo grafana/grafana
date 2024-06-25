@@ -1,5 +1,4 @@
 import { produce } from 'immer';
-import React from 'react';
 import { render, screen, userEvent } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 

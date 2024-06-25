@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { ConfirmModal } from '@grafana/ui';
 
 interface Props {

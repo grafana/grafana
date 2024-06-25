@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
-import React, { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';

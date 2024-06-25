@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
 import { Button, Icon, Input, Modal, useStyles2 } from '@grafana/ui';

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { InteractiveTable } from '@grafana/ui';
 
 import { MigrateDataResponseItemDto } from '../api';

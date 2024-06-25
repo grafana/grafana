@@ -1,5 +1,4 @@
 import { BooleanFieldSettings } from '@react-awesome-query-builder/ui';
-import React from 'react';
 
 import {
   FieldConfigPropertyItem,

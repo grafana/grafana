@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { SyntheticEvent } from 'react';
+import { SyntheticEvent } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,

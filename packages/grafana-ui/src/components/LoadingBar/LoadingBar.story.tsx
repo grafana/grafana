@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LoadingBar, LoadingBarProps, useStyles2 } from '@grafana/ui';

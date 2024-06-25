@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { DataFrame, InterpolateFunction, TimeRange } from '@grafana/data';
@@ -15,7 +15,7 @@ interface LogTimelineViewerProps {
 // noop
 const replaceVariables: InterpolateFunction = (v) => v;
 
-export const LogTimelineViewer = React.memo(({ frames, timeRange }: LogTimelineViewerProps) => {
+export const LogTimelineViewer = memo(({ frames, timeRange }: LogTimelineViewerProps) => {
   const theme = useTheme2();
 
   return (

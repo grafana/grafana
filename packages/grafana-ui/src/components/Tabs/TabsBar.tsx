@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import { forwardRef, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -13,7 +13,7 @@ export interface Props {
   hideBorder?: boolean;
 }
 
-export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({ children, className, hideBorder = false }, ref) => {
+export const TabsBar = forwardRef<HTMLDivElement, Props>(({ children, className, hideBorder = false }, ref) => {
   const styles = useStyles2(getStyles);
 
   return (

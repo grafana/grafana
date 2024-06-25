@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import { Fragment } from 'react';
 
 import { textUtil } from '@grafana/data';
 import { useReturnToPrevious } from '@grafana/runtime';

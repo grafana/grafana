@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { EmbeddedDashboardProps } from '@grafana/runtime';

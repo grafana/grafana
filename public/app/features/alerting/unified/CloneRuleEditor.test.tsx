@@ -1,5 +1,5 @@
 import { render, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
-import React from 'react';
+import * as React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';

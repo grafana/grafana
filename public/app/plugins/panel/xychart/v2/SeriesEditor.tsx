@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { Fragment, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import {

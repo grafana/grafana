@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, PanelProps, renderTextPanelMarkdown, textUtil, InterpolateFunction } from '@grafana/data';

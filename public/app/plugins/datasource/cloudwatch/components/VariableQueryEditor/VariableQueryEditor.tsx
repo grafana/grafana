@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';
 import { config } from '@grafana/runtime';

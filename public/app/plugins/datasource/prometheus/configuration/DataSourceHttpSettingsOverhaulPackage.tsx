@@ -1,4 +1,5 @@
-import React, { ReactElement, useState } from 'react';
+import { ReactElement, useState } from 'react';
+import * as React from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
 import { Auth, ConnectionSettings, convertLegacyAuthProps, AuthMethod } from '@grafana/experimental';

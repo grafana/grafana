@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
+import * as React from 'react';
 
 import {
   FieldMatcherID,

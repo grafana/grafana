@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';

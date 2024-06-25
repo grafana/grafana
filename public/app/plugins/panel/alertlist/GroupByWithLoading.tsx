@@ -1,5 +1,5 @@
 import { isEmpty, uniq } from 'lodash';
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Icon, MultiSelect } from '@grafana/ui';

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { DataSourcePluginMeta } from '@grafana/data';
 import { List } from '@grafana/ui';

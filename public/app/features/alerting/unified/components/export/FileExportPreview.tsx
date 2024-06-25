@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import saveAs from 'file-saver';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';

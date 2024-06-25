@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
 import Prism, { Grammar, LanguageMap } from 'prismjs';
-import React, { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';

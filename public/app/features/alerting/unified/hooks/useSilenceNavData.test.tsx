@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import React from 'react';
 import { useRouteMatch } from 'react-router-dom';
 
 import { useSilenceNavData } from './useSilenceNavData';

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, SegmentAsync, useStyles2 } from '@grafana/ui';

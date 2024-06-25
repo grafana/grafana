@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { getCellLinks } from '../../utils';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';

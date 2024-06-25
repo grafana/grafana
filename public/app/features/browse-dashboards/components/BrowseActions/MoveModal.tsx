@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Alert, Button, Field, Modal, Text, Space } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';

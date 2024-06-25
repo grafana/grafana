@@ -1,5 +1,5 @@
 import debounce from 'debounce-promise';
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';

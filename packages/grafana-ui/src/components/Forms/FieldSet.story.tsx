@@ -1,5 +1,4 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
 
 import { Input, Form, FieldSet, Field } from '@grafana/ui';
 

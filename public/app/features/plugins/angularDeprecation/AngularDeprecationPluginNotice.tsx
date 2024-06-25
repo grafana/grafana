@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 
 import { PluginType } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';

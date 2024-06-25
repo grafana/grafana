@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { ReducerID } from '@grafana/data';
 import {
   CalculateFieldTransformerOptions,

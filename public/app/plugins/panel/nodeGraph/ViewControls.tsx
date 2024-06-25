@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Button, HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
 

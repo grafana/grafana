@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, InternalTimeZones, StandardEditorProps } from '@grafana/data';
 import { OptionsWithTimezones } from '@grafana/schema';

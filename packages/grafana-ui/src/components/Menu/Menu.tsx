@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useImperativeHandle, useRef } from 'react';
+import { useImperativeHandle, useRef } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 

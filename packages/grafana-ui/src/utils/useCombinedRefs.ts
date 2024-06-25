@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 export function useCombinedRefs<T>(
   ...refs: Array<React.MutableRefObject<T | null> | React.ForwardedRef<T | null> | ((instance: T | null) => void)>

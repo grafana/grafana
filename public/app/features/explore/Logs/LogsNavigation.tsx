@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AbsoluteTimeRange, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';

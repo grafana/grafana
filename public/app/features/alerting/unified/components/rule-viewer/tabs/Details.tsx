@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Text, Stack, useStyles2, ClipboardButton, TextLink } from '@grafana/ui';

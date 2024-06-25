@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { AnnotationQuery, NavModel, NavModelItem, PageLayoutType, getDataSourceRef } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, VizPanel, dataLayers } from '@grafana/scenes';

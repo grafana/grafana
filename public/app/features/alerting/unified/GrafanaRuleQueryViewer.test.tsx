@@ -1,5 +1,4 @@
 import { render, waitFor } from '@testing-library/react';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceRef } from '@grafana/schema';

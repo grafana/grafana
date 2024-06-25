@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import { forwardRef, useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMeasure } from 'react-use';
 
@@ -133,7 +133,7 @@ interface SearchFieldInputProps {
   showClearFilterSuffix: boolean;
   onClearFilterClick: () => void;
 }
-const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProps>(
+const SearchFieldInput = forwardRef<HTMLInputElement, SearchFieldInputProps>(
   ({ showClearFilterSuffix, onClearFilterClick, ...rest }: SearchFieldInputProps, ref) => {
     const placeholder = t('central-alert-history.filter.placeholder', 'Filter events in the list with labels');
     return (

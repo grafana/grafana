@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
-import React, { ReactElement, useState } from 'react';
+import { ReactElement, useState } from 'react';
+import * as React from 'react';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';

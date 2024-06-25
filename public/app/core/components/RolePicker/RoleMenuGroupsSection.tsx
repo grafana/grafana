@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import { forwardRef, useCallback, useState } from 'react';
 
 import { useStyles2, getSelectStyles, useTheme2 } from '@grafana/ui';
 import { Role } from 'app/types';
@@ -29,7 +29,7 @@ interface RoleMenuGroupsSectionProps {
   showOnLeftSubMenu?: boolean;
 }
 
-export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGroupsSectionProps>(
+export const RoleMenuGroupsSection = forwardRef<HTMLDivElement, RoleMenuGroupsSectionProps>(
   (
     {
       roles,

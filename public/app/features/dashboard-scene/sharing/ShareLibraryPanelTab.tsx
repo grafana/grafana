@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { t } from 'app/core/internationalization';

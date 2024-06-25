@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FormEvent, useState, KeyboardEvent, useRef, useEffect } from 'react';
+import { FormEvent, useState, KeyboardEvent, useRef, useEffect } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';

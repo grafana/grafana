@@ -20,7 +20,7 @@ Here's how to use Grafana themes in React components.
 `useStyles2` memoizes the function and provides access to the theme.
 
 ```tsx
-import React, { FC } from 'react';
+import { FC } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -39,7 +39,7 @@ const getStyles = (theme: GrafanaTheme2) =>
 #### Get the theme object
 
 ```tsx
-import React, { FC } from 'react';
+import { FC } from 'react';
 import { useTheme2 } from '@grafana/ui';
 
 const Foo: FC<FooProps> = () => {

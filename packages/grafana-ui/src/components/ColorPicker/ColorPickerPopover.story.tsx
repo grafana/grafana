@@ -1,5 +1,5 @@
 import { Meta } from '@storybook/react';
-import React from 'react';
+import { useState } from 'react';
 
 import { useTheme2 } from '../../themes';
 
@@ -32,7 +32,7 @@ export const Basic = () => {
 
 export const SeriesColorPickerPopoverExample = () => {
   const theme = useTheme2();
-  const [yAxis, setYAxis] = React.useState(0);
+  const [yAxis, setYAxis] = useState(0);
 
   return (
     <div style={{ position: 'absolute' }}>

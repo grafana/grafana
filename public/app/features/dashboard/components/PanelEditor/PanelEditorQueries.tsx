@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { DataQuery, getDataSourceRef } from '@grafana/data';
 import { locationService } from '@grafana/runtime';

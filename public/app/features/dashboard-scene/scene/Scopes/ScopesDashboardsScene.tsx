@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, Scope, urlUtil } from '@grafana/data';

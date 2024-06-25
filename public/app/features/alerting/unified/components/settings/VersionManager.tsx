@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { chain, omit } from 'lodash';
 import moment from 'moment';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {

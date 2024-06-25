@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { PromMetricsMetadataItem } from '@grafana/prometheus';
 import {
   QueryVariable,

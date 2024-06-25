@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import Slider, { SliderProps } from 'rc-slider';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 

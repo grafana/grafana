@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { Field, SelectableValue, valueMatchers } from '@grafana/data';
 import { FilterByValueFilter } from '@grafana/data/src/transformations/transformers/filterByValue';

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { LinkButton, Stack } from '@grafana/ui';
 
 import { createSuccessNotification } from '../../../core/copy/appNotification';

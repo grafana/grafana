@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
@@ -214,27 +214,25 @@ interface GrafanaRuleDesignExporterProps {
   uid: string;
 }
 
-export const GrafanaRuleDesignExporter = React.memo(
-  ({ onClose, exportValues, uid }: GrafanaRuleDesignExporterProps) => {
-    const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
+export const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: GrafanaRuleDesignExporterProps) => {
+  const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
-    return (
-      <GrafanaExportDrawer
-        title={'Export Group'}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
+  return (
+    <GrafanaExportDrawer
+      title={'Export Group'}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      onClose={onClose}
+      formatProviders={Object.values(allGrafanaExportProviders)}
+    >
+      <GrafanaRuleDesignExportPreview
+        exportFormat={activeTab}
         onClose={onClose}
-        formatProviders={Object.values(allGrafanaExportProviders)}
-      >
-        <GrafanaRuleDesignExportPreview
-          exportFormat={activeTab}
-          onClose={onClose}
-          exportValues={exportValues}
-          uid={uid}
-        />
-      </GrafanaExportDrawer>
-    );
-  }
-);
+        exportValues={exportValues}
+        uid={uid}
+      />
+    </GrafanaExportDrawer>
+  );
+});
 
 GrafanaRuleDesignExporter.displayName = 'GrafanaRuleDesignExporter';

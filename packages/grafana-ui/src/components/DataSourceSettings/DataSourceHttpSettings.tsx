@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useState, useCallback, useId } from 'react';
+import { useState, useCallback, useId } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

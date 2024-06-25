@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { StandardEditorProps, StatsPickerConfigSettings } from '@grafana/data';
 import { StatsPicker } from '@grafana/ui';
 

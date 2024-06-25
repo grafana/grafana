@@ -1,6 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromCheatSheet.tsx
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, QueryEditorHelpProps } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';

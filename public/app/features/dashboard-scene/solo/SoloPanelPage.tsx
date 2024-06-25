@@ -1,5 +1,5 @@
 // Libraries
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { Alert, Spinner } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';

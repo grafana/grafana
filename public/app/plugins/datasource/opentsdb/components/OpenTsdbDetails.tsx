@@ -1,4 +1,4 @@
-import React, { SyntheticEvent, useId } from 'react';
+import { SyntheticEvent, useId } from 'react';
 
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { Select, Input, Field, FieldSet } from '@grafana/ui';

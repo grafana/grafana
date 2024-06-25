@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { OrgRole } from '@grafana/data';
 import { Select } from '@grafana/ui';
 

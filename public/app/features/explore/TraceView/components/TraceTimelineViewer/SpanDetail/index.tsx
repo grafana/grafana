@@ -15,7 +15,7 @@
 import { css } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
-import React from 'react';
+import * as React from 'react';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, IconName, LinkModel } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
@@ -41,7 +41,7 @@ type Props = {
   colorScheme: ColorScheme | ColorSchemeDiff;
 };
 
-const FlameGraphTopTableContainer = React.memo(
+const FlameGraphTopTableContainer = memo(
   ({
     data,
     onSymbolClick,

@@ -1,5 +1,5 @@
 import { omit } from 'lodash';
-import React, { PureComponent, useState } from 'react';
+import { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {

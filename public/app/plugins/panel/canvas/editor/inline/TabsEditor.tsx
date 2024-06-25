@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Tab, TabsBar } from '@grafana/ui/src';
 

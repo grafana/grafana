@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { RefreshEvent } from '@grafana/runtime';
 import { PanelChrome } from '@grafana/ui';

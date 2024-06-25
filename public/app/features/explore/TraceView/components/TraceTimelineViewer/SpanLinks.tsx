@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, MenuItem, Icon, ContextMenu } from '@grafana/ui';

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { ClipboardButton, CodeEditor, Modal } from '@grafana/ui';

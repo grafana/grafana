@@ -1,6 +1,5 @@
 import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { MetricFindValue, VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

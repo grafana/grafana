@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
+import * as React from 'react';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, DataSourceInstanceSettings, VariableSuggestion } from '@grafana/data';

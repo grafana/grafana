@@ -1,4 +1,4 @@
-import React, { useCallback, useId, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { dateMath, GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';

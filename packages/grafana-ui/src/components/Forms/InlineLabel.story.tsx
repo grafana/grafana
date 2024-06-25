@@ -1,5 +1,4 @@
 import { Meta } from '@storybook/react';
-import React from 'react';
 
 import { InlineLabel, Props } from './InlineLabel';
 import mdx from './InlineLabel.mdx';

@@ -1,6 +1,6 @@
 // Libraries
 import { css, cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';

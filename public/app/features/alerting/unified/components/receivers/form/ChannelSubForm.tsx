@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 import { Controller, FieldErrors, FieldValues, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -192,7 +193,7 @@ export function ChannelSubForm<R extends ChannelValues>({
         <div className={styles.innerContent}>
           {isTelegram && !isParseModeNone && (
             <Alert
-              title="Telegram messages are limited to 4096 UTF-8 characters. 
+              title="Telegram messages are limited to 4096 UTF-8 characters.
               If you use a `parse_mode` other than 'None', truncation may result in an invalid message, causing the notification to fail.
               For longer messages, we recommend using an alternative contact method."
               severity="warning"

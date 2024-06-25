@@ -1,6 +1,5 @@
 // Libraries
 import { css } from '@emotion/css';
-import React from 'react';
 
 // Components
 import { GrafanaTheme2 } from '@grafana/data';

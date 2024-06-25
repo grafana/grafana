@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, ReactElement, useMemo } from 'react';
+import { PropsWithChildren, ReactElement, useMemo } from 'react';
 
 import { TypedVariableModel, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

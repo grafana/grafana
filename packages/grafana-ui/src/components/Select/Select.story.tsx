@@ -2,7 +2,7 @@ import { auto } from '@popperjs/core';
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 import Chance from 'chance';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';

@@ -1,5 +1,5 @@
 import { partial } from 'lodash';
-import React, { type ReactElement, useEffect, useState } from 'react';
+import { type ReactElement, useEffect, useState } from 'react';
 import { DeepMap, FieldError, FieldErrors, useForm, Controller } from 'react-hook-form';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
