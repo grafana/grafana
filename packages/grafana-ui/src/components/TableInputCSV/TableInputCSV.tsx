@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
 import { DataFrame, CSVConfig, readCSV, GrafanaTheme2 } from '@grafana/data';
 

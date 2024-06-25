@@ -11,7 +11,8 @@
 
 import angular, { auto } from 'angular';
 import { kebabCase } from 'lodash';
-import React, { ComponentType } from 'react';
+import { ComponentType } from 'react';
+import * as React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 
 // get a react component from name (components can be an angular injectable e.g. value, factory or
