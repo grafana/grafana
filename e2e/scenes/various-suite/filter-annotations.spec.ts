@@ -1,7 +1,8 @@
 import { e2e } from '../utils';
 const DASHBOARD_ID = 'ed155665';
 
-describe('Annotations filtering', () => {
+// Skipping due to race conditions with same old arch test e2e/various-suite/filter-annotations.spec.ts
+describe.skip('Annotations filtering', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
