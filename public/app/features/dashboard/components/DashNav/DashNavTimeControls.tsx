@@ -100,6 +100,7 @@ export class DashNavTimeControls extends Component<Props> {
     const timeZone = dashboard.getTimezone();
     const fiscalYearStartMonth = dashboard.fiscalYearStartMonth;
     const hideIntervalPicker = dashboard.panelInEdit?.isEditing;
+    const weekStart = dashboard.weekStart;
 
     let text: string | undefined = undefined;
     if (dashboard.refresh === AutoRefreshInterval) {
@@ -120,6 +121,7 @@ export class DashNavTimeControls extends Component<Props> {
           onChangeFiscalYearStartMonth={this.onChangeFiscalYearStartMonth}
           isOnCanvas={isOnCanvas}
           onToolbarTimePickerClick={this.props.onToolbarTimePickerClick}
+          weekStart={weekStart}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}
