@@ -1238,7 +1238,7 @@ var (
 			Name:              "dashboardRestore",
 			Description:       "Enables deleted dashboard restore feature (backend only)",
 			Stage:             FeatureStageExperimental,
-			Owner:             grafanaFrontendPlatformSquad,
+			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 		},
 		{
