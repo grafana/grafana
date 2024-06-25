@@ -11,6 +11,7 @@ import { getInputStyles } from '../Input/Input';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeRangeLabel } from './TimeRangePicker/TimeRangeLabel';
+import { WeekStart } from './WeekStartPicker';
 import { quickOptions } from './options';
 import { isValidTimeRange } from './utils';
 
@@ -28,6 +29,8 @@ export interface TimeRangeInputProps {
   hideQuickRanges?: boolean;
   disabled?: boolean;
   showIcon?: boolean;
+  /** Which day of the week the calendar should start on. Possible values: "saturday", "sunday" or "monday" */
+  weekStart?: WeekStart;
 }
 
 const noop = () => {};
@@ -37,6 +40,7 @@ export const TimeRangeInput = ({
   onChange,
   onChangeTimeZone = noop,
   clearable,
+  weekStart,
   hideTimeZone = true,
   timeZone = 'browser',
   placeholder = 'Select time range',
@@ -106,6 +110,7 @@ export const TimeRangeInput = ({
             hideTimeZone={hideTimeZone}
             isReversed={isReversed}
             hideQuickRanges={hideQuickRanges}
+            weekStart={weekStart}
           />
         </ClickOutsideWrapper>
       )}
