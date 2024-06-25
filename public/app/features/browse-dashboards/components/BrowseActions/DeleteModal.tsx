@@ -18,7 +18,7 @@ export interface Props {
 
 export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const { data } = useGetAffectedItemsQuery(selectedItems);
-  const deleteIsInvalid = !config.featureToggles.nestedFolders && data && (data.alertRule || data.libraryPanel);
+  const deleteIsInvalid = Boolean(data && (data.alertRule || data.libraryPanel));
   const [isDeleting, setIsDeleting] = useState(false);
   const onDelete = async () => {
     setIsDeleting(true);
@@ -80,6 +80,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
       onConfirm={onDelete}
       title={t('browse-dashboards.action.delete-modal-title', 'Delete')}
       {...props}
+      disabled={deleteIsInvalid}
     />
   );
 };
