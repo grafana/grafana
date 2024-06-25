@@ -16,11 +16,59 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Integration":      schema_pkg_apis_alerting_notifications_v0alpha1_Integration(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Interval":         schema_pkg_apis_alerting_notifications_v0alpha1_Interval(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Receiver":         schema_pkg_apis_alerting_notifications_v0alpha1_Receiver(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.ReceiverList":     schema_pkg_apis_alerting_notifications_v0alpha1_ReceiverList(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.ReceiverSpec":     schema_pkg_apis_alerting_notifications_v0alpha1_ReceiverSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeInterval":     schema_pkg_apis_alerting_notifications_v0alpha1_TimeInterval(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeIntervalList": schema_pkg_apis_alerting_notifications_v0alpha1_TimeIntervalList(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeIntervalSpec": schema_pkg_apis_alerting_notifications_v0alpha1_TimeIntervalSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeRange":        schema_pkg_apis_alerting_notifications_v0alpha1_TimeRange(ref),
+	}
+}
+
+func schema_pkg_apis_alerting_notifications_v0alpha1_Integration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Integration defines model for Integration.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"disableResolveMessage": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"settings": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"settings", "type"},
+			},
+		},
 	}
 }
 
@@ -141,6 +189,136 @@ func schema_pkg_apis_alerting_notifications_v0alpha1_Interval(ref common.Referen
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.TimeRange"},
+	}
+}
+
+func schema_pkg_apis_alerting_notifications_v0alpha1_Receiver(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.ReceiverSpec"),
+						},
+					},
+				},
+				Required: []string{"metadata", "spec"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.ReceiverSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_alerting_notifications_v0alpha1_ReceiverList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Receiver"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Receiver", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_alerting_notifications_v0alpha1_ReceiverSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ReceiverSpec defines model for Spec.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"integrations": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Integration"),
+									},
+								},
+							},
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"integrations", "title"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1.Integration"},
 	}
 }
 
