@@ -35,7 +35,7 @@ const RecentlyDeletedPage = memo(() => {
     );
   }, [dispatch, stateManager]);
 
-  if (searchState.loading === false && searchState.result && searchState.result.totalRows === 0) {
+  if (searchState.loading === false && searchState.result?.totalRows === 0) {
     return (
       <Page navId="dashboards/recently-deleted">
         <Page.Contents>
