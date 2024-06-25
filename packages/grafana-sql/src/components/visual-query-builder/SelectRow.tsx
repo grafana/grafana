@@ -113,6 +113,22 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
     onSqlChange(newSql);
   }, [onSqlChange, query.sql]);
 
+  const aggregateOptions = () => {
+    const options: Array<SelectableValue<string>> = [
+      { label: 'Aggregations', options: [] },
+      { label: 'Macros', options: [] },
+    ];
+    for (const func of db.functions()) {
+      // Create groups for macros
+      if (func.name.startsWith('$__')) {
+        options[1].options.push({ label: func.name, value: func.name });
+      } else {
+        options[0].options.push({ label: func.name, value: func.name });
+      }
+    }
+    return options;
+  };
+
   return (
     <Stack gap={2} wrap="wrap" direction="column">
       {query.sql?.columns?.map((item, index) => (
@@ -126,7 +142,7 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
               />
             )}
             <EditorField
-              label={config.featureToggles.sqlQuerybuilderFunctionParameters ? 'Aggregation / Macro' : 'Aggregation'}
+              label={config.featureToggles.sqlQuerybuilderFunctionParameters ? 'Data operations' : 'Aggregation'}
               optional
               width={25}
             >
@@ -137,7 +153,7 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
                 isClearable
                 menuShouldPortal
                 allowCustomValue
-                options={db.functions().map((f) => toOption(f.name))}
+                options={aggregateOptions()}
                 onChange={onAggregationChange(item, index)}
               />
             </EditorField>

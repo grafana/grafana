@@ -30,7 +30,7 @@ export function SelectCustomFunctionParameters({
   const macroOrFunction = query.sql?.columns?.[currentColumnIndex];
 
   const addParameter = useCallback(
-    (index: number) => () => {
+    (index: number) => {
       const item = query.sql?.columns?.[index];
       if (!item) {
         return;
@@ -51,7 +51,7 @@ export function SelectCustomFunctionParameters({
   );
 
   const removeParameter = useCallback(
-    (columnIndex: number, index: number) => () => {
+    (columnIndex: number, index: number) => {
       const item = query.sql?.columns?.[columnIndex];
       if (!item?.parameters) {
         return;
@@ -94,7 +94,7 @@ export function SelectCustomFunctionParameters({
                 icon="times"
                 variant="secondary"
                 size="md"
-                onClick={removeParameter(columnIndex, index)}
+                onClick={() => removeParameter(columnIndex, index)}
               />
             }
           />
@@ -115,7 +115,7 @@ export function SelectCustomFunctionParameters({
       {renderParameters(currentColumnIndex)}
       <Button
         type="button"
-        onClick={addParameter(currentColumnIndex)}
+        onClick={() => addParameter(currentColumnIndex)}
         variant="secondary"
         size="md"
         icon="plus"
