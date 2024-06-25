@@ -44,10 +44,7 @@ func ProvideIdentitySynchronizer(s *Service) authn.IdentitySynchronizer {
 	return s
 }
 
-func ProvideService(
-	cfg *setting.Cfg, tracer tracing.Tracer,
-	sessionService auth.UserTokenService, usageStats usagestats.Service, registerer prometheus.Registerer,
-) *Service {
+func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, sessionService auth.UserTokenService, usageStats usagestats.Service, registerer prometheus.Registerer) *Service {
 	s := &Service{
 		log:                    log.New("authn.service"),
 		cfg:                    cfg,
@@ -373,7 +370,8 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID a
 				AllowGlobalOrg:  true,
 				FetchSyncedUser: true,
 				SyncPermissions: true,
-			}}, nil
+			},
+		}, nil
 	}
 
 	if namespaceID.IsNamespace(authn.NamespaceServiceAccount) {
@@ -384,7 +382,8 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID a
 				AllowGlobalOrg:  true,
 				FetchSyncedUser: true,
 				SyncPermissions: true,
-			}}, nil
+			},
+		}, nil
 	}
 
 	resolver, ok := s.idenityResolverClients[namespaceID.Namespace().String()]

@@ -47,7 +47,8 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
 
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (*Service, error) {
+	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
+) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
@@ -210,7 +211,6 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 		UserID:       userID,
 		RolePrefixes: OSSRolesPrefixes,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +246,7 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	}
 
 	permissions = append(permissions, userPermissions...)
-span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
+	span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
 
 	return permissions, nil
 }
@@ -267,6 +267,9 @@ func (s *Service) getCachedBasicRolesPermissions(ctx context.Context, user ident
 }
 
 func (s *Service) getCachedBasicRolePermissions(ctx context.Context, role string, orgID int64, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	ctx, span := s.tracer.Start(ctx, "authz.getCachedBasicRolePermissions")
+	defer span.End()
+
 	key := accesscontrol.GetBasicRolePermissionCacheKey(role, orgID)
 	getPermissionsFn := func(ctx context.Context) ([]accesscontrol.Permission, error) {
 		return s.getBasicRolePermissions(ctx, role, orgID)
@@ -288,8 +291,8 @@ func (s *Service) getCachedUserDirectPermissions(ctx context.Context, user ident
 type getPermissionsFunc = func(ctx context.Context) ([]accesscontrol.Permission, error)
 
 // Generic method for getting various permissions from cache
-func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermissionsFn GetPermissionsFn, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
-	_, span := s.tracer.Start(ctx, "authz.getCachedTeamsPermissions")
+func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermissionsFn getPermissionsFunc, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	_, span := s.tracer.Start(ctx, "authz.getCachedPermissions")
 	defer span.End()
 
 	if !options.ReloadCache {
@@ -436,7 +439,8 @@ func GetActionFilter(options accesscontrol.SearchOptions) func(action string) bo
 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
-	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	options accesscontrol.SearchOptions,
+) (map[int64][]accesscontrol.Permission, error) {
 	// Limit roles to available in OSS
 	options.RolePrefixes = OSSRolesPrefixes
 	if options.NamespacedID != "" {

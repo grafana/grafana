@@ -82,6 +82,7 @@ func dashboardGuardianResponse(err error) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response {
+	// START span here
 	ctx, span := hs.tracer.Start(c.Req.Context(), "httpserver.GetDashboard")
 	defer span.End()
 
