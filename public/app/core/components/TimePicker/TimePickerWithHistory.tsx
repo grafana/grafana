@@ -2,6 +2,7 @@ import { uniqBy } from 'lodash';
 import React from 'react';
 
 import { AppEvents, TimeRange, isDateTime, rangeUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
 import { t } from '@grafana/ui/src/utils/i18n';
 import appEvents from 'app/core/app_events';
@@ -32,6 +33,7 @@ export const TimePickerWithHistory = (props: Props) => {
           <TimeRangePicker
             {...props}
             history={history}
+            weekStart={config.bootData.user.weekStart}
             onChange={(value) => {
               onAppendToHistory(value, values, onSaveToStore);
               props.onChange(value);
