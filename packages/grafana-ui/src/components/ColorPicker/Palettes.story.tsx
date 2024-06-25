@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
 import { Meta, StoryFn } from '@storybook/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import mdx from './ColorPicker.mdx';
 import { NamedColorsPalette } from './NamedColorsPalette';

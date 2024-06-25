@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { isIconName } from '@grafana/data';
 import { Badge, Card, Icon } from '@grafana/ui';
 

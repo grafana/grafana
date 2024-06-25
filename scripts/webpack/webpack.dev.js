@@ -18,6 +18,7 @@ const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTarg
 const esbuildOptions = {
   target: esbuildTargets,
   format: undefined,
+  jsx: 'automatic',
 };
 
 // To speed up webpack and prevent unnecessary rebuilds we ignore decoupled packages
@@ -45,7 +46,7 @@ module.exports = (env = {}) => {
     resolve: {
       alias: {
         // Packages linked for development need react to be resolved from the same location
-        react: require.resolve('react'),
+        react: path.resolve('./node_modules/react'),
 
         // Also Grafana packages need to be resolved from the same location so they share
         // the same singletons

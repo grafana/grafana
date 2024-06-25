@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {

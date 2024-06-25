@@ -44,6 +44,13 @@ export interface Datasource {
 export const PREVIEW_URL = '/api/v1/rule/test/grafana';
 export const PROM_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
 
+export enum PrometheusAPIFilters {
+  RuleGroup = 'rule_group',
+  Namespace = 'file',
+  FolderUID = 'folder_uid',
+  LimitAlerts = 'limit_alerts',
+}
+
 export interface Data {
   refId: string;
   relativeTimeRange: RelativeTimeRange;
@@ -137,12 +144,12 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         // if we're fetching for Grafana managed rules, we should add a limit to the number of alert instances
         // we do this because the response is large otherwise and we don't show all of them in the UI anyway.
         if (limitAlerts) {
-          searchParams.set('limit_alerts', String(limitAlerts));
+          searchParams.set(PrometheusAPIFilters.LimitAlerts, String(limitAlerts));
         }
 
         if (identifier && (isPrometheusRuleIdentifier(identifier) || isCloudRuleIdentifier(identifier))) {
-          searchParams.set('file', identifier.namespace);
-          searchParams.set('rule_group', identifier.groupName);
+          searchParams.set(PrometheusAPIFilters.Namespace, identifier.namespace);
+          searchParams.set(PrometheusAPIFilters.RuleGroup, identifier.groupName);
         }
 
         const params = prepareRulesFilterQueryParams(searchParams, filter);
@@ -163,9 +170,10 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         ruleName?: string;
         dashboardUid?: string;
         panelId?: number;
+        limitAlerts?: number;
       }
     >({
-      query: ({ ruleSourceName, namespace, groupName, ruleName, dashboardUid, panelId }) => {
+      query: ({ ruleSourceName, namespace, groupName, ruleName, dashboardUid, panelId, limitAlerts }) => {
         const queryParams: Record<string, string | undefined> = {
           rule_group: groupName,
           rule_name: ruleName,
@@ -175,10 +183,14 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
         if (namespace) {
           if (isGrafanaRulesSource(ruleSourceName)) {
-            set(queryParams, 'folder_uid', namespace);
+            set(queryParams, PrometheusAPIFilters.FolderUID, namespace);
           } else {
-            set(queryParams, 'file', namespace);
+            set(queryParams, PrometheusAPIFilters.Namespace, namespace);
           }
+        }
+
+        if (limitAlerts !== undefined) {
+          set(queryParams, PrometheusAPIFilters.LimitAlerts, String(limitAlerts));
         }
 
         return {

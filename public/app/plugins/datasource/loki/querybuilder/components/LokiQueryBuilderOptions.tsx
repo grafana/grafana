@@ -1,5 +1,6 @@
 import { trim } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import * as React from 'react';
 
 import { CoreApp, isValidDuration, isValidGrafanaDuration, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, QueryOptionGroup } from '@grafana/experimental';

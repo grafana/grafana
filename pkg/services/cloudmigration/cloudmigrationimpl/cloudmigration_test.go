@@ -145,18 +145,28 @@ func Test_ExecuteAsyncWorkflow(t *testing.T) {
 	require.Equal(t, sessionUid, snapshotResp.SessionUID)
 	snapshotUid := snapshotResp.UID
 
-	snapshot, err := s.GetSnapshot(ctxWithSignedInUser(), sessionUid, snapshotUid)
+	// Service doesn't currently expose updating a snapshot externally, so we will just manually add a resource
+	err = (s.(*Service)).store.CreateUpdateSnapshotResources(context.Background(), snapshotUid, []cloudmigration.CloudMigrationResource{{Type: cloudmigration.DashboardDataType, RefID: "qwerty", Status: cloudmigration.ItemStatusOK}})
+	assert.NoError(t, err)
+
+	snapshot, err := s.GetSnapshot(ctxWithSignedInUser(), cloudmigration.GetSnapshotsQuery{
+		SnapshotUID: snapshotUid,
+		SessionUID:  sessionUid,
+		ResultPage:  1,
+		ResultLimit: 100,
+	})
 	require.NoError(t, err)
 	assert.Equal(t, snapshotResp.UID, snapshot.UID)
 	assert.Equal(t, snapshotResp.EncryptionKey, snapshot.EncryptionKey)
-	assert.Empty(t, snapshot.Result) // will change once we create a new table for migration items
+	assert.Len(t, snapshot.Resources, 1)
+	assert.Equal(t, "qwerty", snapshot.Resources[0].RefID)
 
-	snapshots, err := s.GetSnapshotList(ctxWithSignedInUser(), cloudmigration.ListSnapshotsQuery{SessionUID: sessionUid, Limit: 100})
+	snapshots, err := s.GetSnapshotList(ctxWithSignedInUser(), cloudmigration.ListSnapshotsQuery{SessionUID: sessionUid, Page: 1, Limit: 100})
 	require.NoError(t, err)
 	assert.Len(t, snapshots, 1)
 	assert.Equal(t, snapshotResp.UID, snapshots[0].UID)
 	assert.Equal(t, snapshotResp.EncryptionKey, snapshots[0].EncryptionKey)
-	assert.Empty(t, snapshots[0].Result) // should remain this way even after we create a new table
+	assert.Empty(t, snapshots[0].Resources)
 
 	err = s.UploadSnapshot(ctxWithSignedInUser(), sessionUid, snapshotUid)
 	require.NoError(t, err)

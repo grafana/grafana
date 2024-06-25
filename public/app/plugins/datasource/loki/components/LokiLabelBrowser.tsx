@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { sortBy } from 'lodash';
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
+import * as React from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { CoreApp, GrafanaTheme2, TimeRange } from '@grafana/data';

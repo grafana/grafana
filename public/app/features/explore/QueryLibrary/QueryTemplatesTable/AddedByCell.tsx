@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { useQueryLibraryListStyles } from './styles';
 
 type AddedByCellProps = {
