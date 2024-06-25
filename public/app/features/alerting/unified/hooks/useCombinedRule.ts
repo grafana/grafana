@@ -171,10 +171,15 @@ interface RequestState<T> {
   error?: unknown;
 }
 
+interface Props {
+  ruleIdentifier: RuleIdentifier;
+  limitAlerts?: number;
+}
+
 // Many places still use the old way of fetching code so synchronizing cache expiration is difficult
 // Hence, this hook fetches a fresh version of a rule most of the time
 // Due to enabled filtering for Prometheus and Ruler rules it shouldn't be a problem
-export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }): RequestState<CombinedRule> {
+export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): RequestState<CombinedRule> {
   const { ruleSourceName } = ruleIdentifier;
   const ruleSource = getRulesSourceFromIdentifier(ruleIdentifier);
 
@@ -195,6 +200,7 @@ export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdenti
       namespace: ruleLocation?.namespace,
       groupName: ruleLocation?.group,
       ruleName: ruleLocation?.ruleName,
+      limitAlerts,
     },
     {
       skip: !ruleLocation || isLoadingRuleLocation,
