@@ -23,6 +23,7 @@ import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
+import { WeekStart } from './WeekStartPicker';
 import { quickOptions } from './options';
 
 /** @public */
@@ -46,7 +47,7 @@ export interface TimeRangePickerProps {
   isOnCanvas?: boolean;
   onToolbarTimePickerClick?: () => void;
   /** Which day of the week the calendar should start on. Possible values: "saturday", "sunday" or "monday" */
-  weekStart?: string;
+  weekStart?: WeekStart;
 }
 
 export interface State {

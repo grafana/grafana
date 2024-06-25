@@ -9,6 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { getModalStyles } from '../../Modal/getModalStyles';
+import { WeekStart } from '../WeekStartPicker';
 
 import { Body } from './CalendarBody';
 import { Footer } from './CalendarFooter';
@@ -58,7 +59,7 @@ export interface TimePickerCalendarProps {
   onClose: () => void;
   onApply: (e: FormEvent<HTMLButtonElement>) => void;
   onChange: (from: DateTime, to: DateTime) => void;
-  weekStart?: string;
+  weekStart?: WeekStart;
 
   /**
    * When true, the calendar is rendered as a floating "tooltip" next to the input.

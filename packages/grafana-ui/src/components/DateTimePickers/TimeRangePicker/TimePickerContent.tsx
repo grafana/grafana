@@ -9,6 +9,7 @@ import { getFocusStyles } from '../../../themes/mixins';
 import { t, Trans } from '../../../utils/i18n';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
+import { WeekStart } from '../WeekStartPicker';
 
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
@@ -33,7 +34,7 @@ interface Props {
   isReversed?: boolean;
   hideQuickRanges?: boolean;
   widthOverride?: number;
-  weekStart?: string;
+  weekStart?: WeekStart;
 }
 
 export interface PropsWithScreenSize extends Props {

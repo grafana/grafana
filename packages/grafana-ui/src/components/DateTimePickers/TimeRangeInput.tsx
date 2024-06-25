@@ -11,6 +11,7 @@ import { getInputStyles } from '../Input/Input';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeRangeLabel } from './TimeRangePicker/TimeRangeLabel';
+import { WeekStart } from './WeekStartPicker';
 import { quickOptions } from './options';
 import { isValidTimeRange } from './utils';
 
@@ -29,7 +30,7 @@ export interface TimeRangeInputProps {
   disabled?: boolean;
   showIcon?: boolean;
   /** Which day of the week the calendar should start on. Possible values: "saturday", "sunday" or "monday" */
-  weekStart?: string;
+  weekStart?: WeekStart;
 }
 
 const noop = () => {};

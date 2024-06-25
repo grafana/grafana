@@ -21,6 +21,7 @@ import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
 import { Tooltip } from '../../Tooltip/Tooltip';
+import { WeekStart } from '../WeekStartPicker';
 import { isValid } from '../utils';
 
 import TimePickerCalendar from './TimePickerCalendar';
@@ -34,7 +35,7 @@ interface Props {
   roundup?: boolean;
   isReversed?: boolean;
   onError?: (error?: string) => void;
-  weekStart?: string;
+  weekStart?: WeekStart;
 }
 
 interface InputState {

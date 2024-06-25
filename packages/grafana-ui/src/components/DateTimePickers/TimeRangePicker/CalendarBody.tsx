@@ -8,11 +8,12 @@ import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone } from '@grafana/data'
 import { useStyles2 } from '../../../themes';
 import { t } from '../../../utils/i18n';
 import { Icon } from '../../Icon/Icon';
+import { WeekStart } from '../WeekStartPicker';
 import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
 
 import { TimePickerCalendarProps } from './TimePickerCalendar';
 
-const weekStartMap: Record<string, CalendarType> = {
+const weekStartMap: Record<WeekStart, CalendarType> = {
   saturday: 'islamic',
   sunday: 'gregory',
   monday: 'iso8601',
