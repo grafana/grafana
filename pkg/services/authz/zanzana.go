@@ -32,7 +32,6 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 
 	logger := log.New("zanzana")
 
-	tenantID := "1"
 	var client zanzana.Client
 	switch cfg.Zanzana.Mode {
 	case setting.ZanzanaModeClient:
@@ -40,7 +39,11 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
 		}
-		client = zanzana.NewClient(conn, tenantID)
+
+		client, err = zanzana.NewClient(conn, tenantID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
+		}
 	case setting.ZanzanaModeEmbedded:
 		store, err := zanzana.NewEmbeddedStore(cfg, db, logger)
 		if err != nil {
@@ -55,22 +58,11 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		channel := &inprocgrpc.Channel{}
 		openfgav1.RegisterOpenFGAServiceServer(channel, srv)
 
-		client = zanzana.NewClient(channel, tenantID)
-
-		b, err := os.ReadFile("./pkg/services/authz/zanzana/schema/schema.fga")
-		modelDSL, err := schema.TransformToModel(string(b))
+		client, err = zanzana.NewClient(channel, tenantID)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}
 
-		tenantID := 1
-		storeName := fmt.Sprintf("store-%v", tenantID)
-		// FIXME: client should be initialized with authorizationModelId, otherwise it cannot call store
-		authorizationModelId, err := zanzana.LoadModel(context.Background(), modelDSL, srv, storeName)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load schema: %w", err)
-		}
-		logger.Info("openfga schema loaded", "authorizationModelId", authorizationModelId)
 	default:
 		return nil, fmt.Errorf("unsupported zanzana mode: %s", cfg.Zanzana.Mode)
 	}
