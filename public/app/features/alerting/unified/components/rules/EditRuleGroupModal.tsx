@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { compact } from 'lodash';
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -191,11 +191,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const [moveRuleGroup, moveRuleGroupState] = useMoveRuleGroup();
   const [renameRuleGroup, renameRuleGroupState] = useRenameRuleGroup();
 
-  const { isPending, isSuccess, isUninitialized, isError, error } = anyOfRequestState(
-    updateRuleGroupState,
-    moveRuleGroupState,
-    renameRuleGroupState
-  );
+  const { loading, error } = anyOfRequestState(updateRuleGroupState, moveRuleGroupState, renameRuleGroupState);
 
   const defaultValues = useMemo(
     (): FormValues => ({
@@ -213,13 +209,6 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const nestedFolderParents = decodeGrafanaNamespace(namespace).parents;
 
   const nameSpaceLabel = isGrafanaManagedGroup ? 'Folder' : 'Namespace';
-
-  // close modal if successfully saved
-  useEffect(() => {
-    if (!isUninitialized && isSuccess) {
-      onClose(true);
-    }
-  }, [onClose, isUninitialized, isSuccess]);
 
   const onSubmit = async (values: FormValues) => {
     const ruleGroupIdentifier: RuleGroupIdentifier = {
@@ -241,10 +230,13 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
 
     if (shouldMove) {
       await moveRuleGroup(ruleGroupIdentifier, updatedNamespaceName, updatedGroupName, updatedInterval);
+      onClose(true);
     } else if (shouldRename) {
       await renameRuleGroup(ruleGroupIdentifier, updatedGroupName, updatedInterval);
+      onClose(true);
     } else {
       await updateRuleGroup(ruleGroupIdentifier, updatedInterval);
+      onClose(true);
     }
   };
 
@@ -377,13 +369,13 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 <RulesForGroupTable rulesWithoutRecordingRules={rulesWithoutRecordingRules} />
               </>
             )}
-            {isError && <Alert title={'Failed to update rule group'}>{stringifyErrorLike(error)}</Alert>}
+            {error && <Alert title={'Failed to update rule group'}>{stringifyErrorLike(error)}</Alert>}
             <div className={styles.modalButtons}>
               <Modal.ButtonRow>
                 <Button
                   variant="secondary"
                   type="button"
-                  disabled={isPending}
+                  disabled={loading}
                   onClick={() => onClose(false)}
                   fill="outline"
                 >
@@ -391,10 +383,10 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 </Button>
                 <Button
                   type="button"
-                  disabled={!isDirty || !isValid || isPending}
+                  disabled={!isDirty || !isValid || loading}
                   onClick={handleSubmit((values) => onSubmit(values), onInvalid)}
                 >
-                  {isPending ? 'Saving...' : 'Save'}
+                  {loading ? 'Saving...' : 'Save'}
                 </Button>
               </Modal.ButtonRow>
             </div>

@@ -57,7 +57,7 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
     <Menu.Item
       label={title}
       icon={icon}
-      disabled={updateState.isPending}
+      disabled={updateState.loading}
       onClick={() => {
         setRulePause(!isPaused);
       }}

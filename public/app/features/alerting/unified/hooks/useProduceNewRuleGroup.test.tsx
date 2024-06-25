@@ -24,7 +24,7 @@ import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from '../mocks
 import { stringifyErrorLike } from '../utils/misc';
 import { getRuleGroupLocationFromCombinedRule } from '../utils/rules';
 
-import { useDeleteRuleFromGroup, usePauseRuleInGroup } from './useProduceNewRuleGroup';
+import { isSuccess, isUninitialized, useDeleteRuleFromGroup, usePauseRuleInGroup } from './useProduceNewRuleGroup';
 
 const server = setupMswServer();
 
@@ -201,11 +201,11 @@ const PauseTestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
   return (
     <>
       <button onClick={() => onClick()} />
-      {requestState.isUninitialized && 'uninitialized'}
-      {requestState.isPending && 'loading'}
-      {requestState.isSuccess && 'success'}
-      {requestState.result && 'result'}
-      {requestState.isError && `error: ${stringifyErrorLike(requestState.error)}`}
+      {isUninitialized(requestState) && 'uninitialized'}
+      {requestState.loading && 'loading'}
+      {isSuccess(requestState) && 'success'}
+      {isSuccess(requestState) && `result: ${JSON.stringify(requestState.value, null, 2)}`}
+      {requestState.error && `error: ${stringifyErrorLike(requestState.error)}`}
     </>
   );
 };
@@ -225,11 +225,11 @@ const DeleteTestComponent = ({ rule }: DeleteTestComponentProps) => {
   return (
     <>
       <button onClick={() => onClick()} />
-      {requestState.isUninitialized && 'uninitialized'}
-      {requestState.isPending && 'loading'}
-      {requestState.isSuccess && 'success'}
-      {requestState.result && `result: ${JSON.stringify(requestState.result, null, 2)}`}
-      {requestState.isError && `error: ${stringifyErrorLike(requestState.error)}`}
+      {isUninitialized(requestState) && 'uninitialized'}
+      {requestState.loading && 'loading'}
+      {isSuccess(requestState) && 'success'}
+      {isSuccess(requestState) && `result: ${JSON.stringify(requestState.value, null, 2)}`}
+      {requestState.error && `error: ${stringifyErrorLike(requestState.error)}`}
     </>
   );
 };
