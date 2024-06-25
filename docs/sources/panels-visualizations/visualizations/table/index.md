@@ -219,6 +219,10 @@ You can be customize sparklines with many of the same options as the [Time serie
 
 ### Wrap text
 
+{{< admonition type="note" >}}
+Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default. We’d love hear from you about how this new feature is working. To provide feedback, you can open an issue in the [Grafana GitHub repository](https://github.com/grafana/grafana).
+{{< /admonition >}}
+
 Toggle the **Wrap text** switch to wrap text in the cell with the longest content in your table. To wrap the text in a specific column only, use the Wrap Text option in a [field override](ref:field-override).
 
 ### Cell value inspect
