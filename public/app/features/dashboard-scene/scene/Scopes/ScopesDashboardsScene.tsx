@@ -5,7 +5,7 @@ import { GrafanaTheme2, Scope, urlUtil } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, FilterInput, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { fetchSuggestedDashboards } from './api';
 import { SuggestedDashboard } from './types';
@@ -62,10 +62,18 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 }
 
 export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<ScopesDashboardsScene>) {
-  const { filteredDashboards, isLoading, searchQuery } = model.useState();
+  const { dashboards, filteredDashboards, isLoading, searchQuery } = model.useState();
   const styles = useStyles2(getStyles);
 
   const [queryParams] = useQueryParams();
+
+  if (!isLoading && dashboards.length === 0) {
+    return (
+      <p data-testid="scopes-dashboards-notFoundForScope">
+        <Trans i18nKey="scopes.suggestedDashboards.noResults">No dashboards found</Trans>
+      </p>
+    );
+  }
 
   return (
     <>
@@ -85,7 +93,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
           text={t('scopes.suggestedDashboards.loading', 'Loading dashboards')}
           data-testid="scopes-dashboards-loading"
         />
-      ) : (
+      ) : filteredDashboards.length > 0 ? (
         <CustomScrollbar>
           {filteredDashboards.map(({ dashboard, dashboardTitle }) => (
             <Link
@@ -98,6 +106,10 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
             </Link>
           ))}
         </CustomScrollbar>
+      ) : (
+        <p data-testid="scopes-dashboards-notFoundForFilter">
+          <Trans i18nKey="scopes.suggestedDashboards.noResults">No dashboards found</Trans>
+        </p>
       )}
     </>
   );

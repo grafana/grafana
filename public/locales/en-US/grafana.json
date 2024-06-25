@@ -1657,6 +1657,7 @@
     },
     "suggestedDashboards": {
       "loading": "Loading dashboards",
+      "noResults": "No dashboards found",
       "search": "Search",
       "toggle": {
         "collapse": "Collapse scope filters",
