@@ -31,6 +31,8 @@ func newScopeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGette
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
+		KeyRootFunc:               grafanaregistry.KeyRootFunc(resourceInfo.GroupResource()),
+		KeyFunc:                   grafanaregistry.NamespaceKeyFunc(resourceInfo.GroupResource()),
 		PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
@@ -73,6 +75,8 @@ func newScopeDashboardBindingStorage(scheme *runtime.Scheme, optsGetter generic.
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
+		KeyRootFunc:               grafanaregistry.KeyRootFunc(resourceInfo.GroupResource()),
+		KeyFunc:                   grafanaregistry.NamespaceKeyFunc(resourceInfo.GroupResource()),
 		PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
@@ -115,6 +119,8 @@ func newScopeNodeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsG
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
+		KeyRootFunc:               grafanaregistry.KeyRootFunc(resourceInfo.GroupResource()),
+		KeyFunc:                   grafanaregistry.NamespaceKeyFunc(resourceInfo.GroupResource()),
 		PredicateFunc:             Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),

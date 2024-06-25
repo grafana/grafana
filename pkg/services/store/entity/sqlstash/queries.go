@@ -13,6 +13,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
@@ -218,7 +219,7 @@ func (r sqlEntityListFolderElementsRequest) Validate() error {
 // cases and proper database deserialization.
 type sqlEntityReadRequest struct {
 	*sqltemplate.SQLTemplate
-	Key             *entity.Key
+	Key             *grafanaregistry.Key
 	ResourceVersion int64
 	SelectForUpdate bool
 	returnsEntitySet
@@ -230,7 +231,7 @@ func (r sqlEntityReadRequest) Validate() error {
 
 type sqlEntityDeleteRequest struct {
 	*sqltemplate.SQLTemplate
-	Key *entity.Key
+	Key *grafanaregistry.Key
 }
 
 func (r sqlEntityDeleteRequest) Validate() error {
@@ -479,7 +480,7 @@ func readEntity(
 	ctx context.Context,
 	x db.ContextExecer,
 	d sqltemplate.Dialect,
-	k *entity.Key,
+	k *grafanaregistry.Key,
 	asOfVersion int64,
 	optimisticLocking bool,
 	selectForUpdate bool,

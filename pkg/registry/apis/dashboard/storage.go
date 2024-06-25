@@ -26,6 +26,8 @@ func newStorage(scheme *runtime.Scheme) (*storage, error) {
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,
+		KeyRootFunc:               grafanaregistry.KeyRootFunc(resourceInfo.GroupResource()),
+		KeyFunc:                   grafanaregistry.NamespaceKeyFunc(resourceInfo.GroupResource()),
 		PredicateFunc:             grafanaregistry.Matcher,
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),

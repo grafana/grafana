@@ -10,9 +10,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
 
@@ -30,7 +30,7 @@ func TestResourceToEntity(t *testing.T) {
 	Codecs := serializer.NewCodecFactory(Scheme)
 
 	testCases := []struct {
-		requestInfo          *request.RequestInfo
+		key                  grafanaregistry.Key
 		resource             runtime.Object
 		codec                runtime.Codec
 		expectedKey          string
@@ -52,14 +52,17 @@ func TestResourceToEntity(t *testing.T) {
 		expectedBody         []byte
 	}{
 		{
-			requestInfo: &request.RequestInfo{
-				APIGroup:   "playlist.grafana.app",
-				APIVersion: "v0alpha1",
-				Resource:   "playlists",
-				Namespace:  "default",
-				Name:       "test-name",
+			key: grafanaregistry.Key{
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Namespace: "default",
+				Name:      "test-name",
 			},
 			resource: &v0alpha1.Playlist{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "playlist.grafana.app/v0alpha1",
+					Kind:       "Playlist",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					CreationTimestamp: createdAt,
 					Labels:            map[string]string{"label1": "value1", "label2": "value2"},
@@ -105,7 +108,7 @@ func TestResourceToEntity(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.resource.GetObjectKind().GroupVersionKind().Kind+" to entity conversion should succeed", func(t *testing.T) {
-			entity, err := resourceToEntity(tc.resource, tc.requestInfo, Codecs.LegacyCodec(v0alpha1.PlaylistResourceInfo.GroupVersion()))
+			entity, err := resourceToEntity(tc.resource, tc.key, Codecs.LegacyCodec(v0alpha1.PlaylistResourceInfo.GroupVersion()))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedKey, entity.Key)
 			assert.Equal(t, tc.expectedName, entity.Name)

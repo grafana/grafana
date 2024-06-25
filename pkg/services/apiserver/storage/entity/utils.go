@@ -13,9 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
 
@@ -98,7 +98,7 @@ func EntityToRuntimeObject(rsp *entityStore.Entity, res runtime.Object, codec ru
 	return nil
 }
 
-func resourceToEntity(res runtime.Object, requestInfo *request.RequestInfo, codec runtime.Codec) (*entityStore.Entity, error) {
+func resourceToEntity(res runtime.Object, k grafanaregistry.Key, codec runtime.Codec) (*entityStore.Entity, error) {
 	metaAccessor, err := meta.Accessor(res)
 	if err != nil {
 		return nil, err
@@ -110,19 +110,13 @@ func resourceToEntity(res runtime.Object, requestInfo *request.RequestInfo, code
 	}
 	rv, _ := strconv.ParseInt(metaAccessor.GetResourceVersion(), 10, 64)
 
-	k := &entityStore.Key{
-		Group:       requestInfo.APIGroup,
-		Resource:    requestInfo.Resource,
-		Namespace:   requestInfo.Namespace,
-		Name:        metaAccessor.GetName(),
-		Subresource: requestInfo.Subresource,
-	}
+	// add the object's name to the provided key
+	k.Name = metaAccessor.GetName()
 
 	rsp := &entityStore.Entity{
 		Group:           k.Group,
-		GroupVersion:    requestInfo.APIVersion,
+		GroupVersion:    res.GetObjectKind().GroupVersionKind().Version,
 		Resource:        k.Resource,
-		Subresource:     k.Subresource,
 		Namespace:       k.Namespace,
 		Key:             k.String(),
 		Name:            k.Name,

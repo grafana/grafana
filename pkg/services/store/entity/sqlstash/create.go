@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
@@ -21,7 +22,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		return nil, err
 	}
 
-	key, err := entity.ParseKey(r.Entity.Key)
+	key, err := grafanaregistry.ParseKey(r.Entity.Key)
 	if err != nil {
 		return nil, fmt.Errorf("create entity: parse entity key: %w", err)
 	}
@@ -98,7 +99,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 
 // entityForCreate validates the given request and returns a *returnsEntity
 // populated accordingly.
-func entityForCreate(ctx context.Context, r *entity.CreateEntityRequest, key *entity.Key) (*returnsEntity, error) {
+func entityForCreate(ctx context.Context, r *entity.CreateEntityRequest, key *grafanaregistry.Key) (*returnsEntity, error) {
 	newEntity := &returnsEntity{
 		Entity: cloneEntity(r.Entity),
 	}
