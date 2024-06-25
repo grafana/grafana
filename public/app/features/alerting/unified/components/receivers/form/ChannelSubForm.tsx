@@ -204,9 +204,9 @@ export function ChannelSubForm<R extends ChannelValues>({
               severity="warning"
             >
               <Trans i18nKey="alerting.contact-points.telegram.parse-mode-warning-body">
-                If you use a <Text variant="code">parse_mode</Text> other than <Text variant="code">None</Text> or{' '}
-                <Text variant="code">plain text</Text>, truncation may result in an invalid message, causing the
-                notification to fail. For longer messages, we recommend using an alternative contact method.
+                If you use a <Text variant="code">parse_mode</Text> option other than <Text variant="code">None</Text>,
+                truncation may result in an invalid message, causing the notification to fail. For longer messages, we
+                recommend using an alternative contact method.
               </Trans>
             </Alert>
           )}
