@@ -36,7 +36,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
     <>
       <p>
         <Trans i18nKey="export.json.info-text">
-          Copy or download a JSON file containing the JSON of your dashboard.
+          Copy or download a JSON file containing the JSON of your dashboard
         </Trans>
       </p>
 
