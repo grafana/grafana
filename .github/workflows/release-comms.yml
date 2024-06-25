@@ -19,6 +19,7 @@ on:
 jobs:
   post_release:
     name: Post-release comms
+    runs-on: ubuntu-latest
     env:
     steps:
       - if: github.event.workflow_dispatch
