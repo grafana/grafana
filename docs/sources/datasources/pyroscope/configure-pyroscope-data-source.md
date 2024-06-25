@@ -61,7 +61,7 @@ If you make any changes, select **Save & test** to preserve those changes.
 : Enter a name to specify the data source in panels, queries, and Explore.
 
 **Default**
-: The default data source will be pre-selected for new panels.
+: The default data source is pre-selected for new panels.
 
 ### HTTP
 
@@ -96,7 +96,7 @@ The Auth section is shown in number 2 in the screenshot.
 : When activated, it bypasses TLS certificate verification.
 
 **Forward OAuth Identity**
-: When activated, the user’s upstream OAuth identity is forwarded to the data source along with their access token.
+: When activated, the user’s upstream OAuth 2.0 identity is forwarded to the data source along with their access token.
 
 **Custom HTTP Headers**
 : Select Add header to add Header and Value fields.
@@ -111,7 +111,7 @@ The Auth section is shown in number 2 in the screenshot.
 
 The **Querying** section is shown in number 3 in the screenshot.
 
-**Minimum step** is used for queries returning timeseries data. The default value is 15 seconds.
+**Minimum step** is used for queries returning time-series data. The default value is 15 seconds.
 
 The Pyroscope backend, similar to Prometheus, scrapes profiles at certain intervals. To prevent querying at smaller interval, use Minimal step same or higher than your Pyroscope scrape interval. This prevents returning too many data points to the frontend.
 
