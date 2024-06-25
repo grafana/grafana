@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
-import React, { useCallback } from 'react';
+import { debounce, isEqual } from 'lodash';
+import { useReducer } from 'react';
+import * as React from 'react';
 
-import { GrafanaTheme2, VariableRefresh } from '@grafana/data';
+import { GrafanaTheme2, RawTimeRange } from '@grafana/data';
+import { isFetchError } from '@grafana/runtime';
 import {
+  AdHocFiltersVariable,
   PanelBuilders,
-  QueryVariable,
   SceneComponentProps,
   SceneCSSGridItem,
   SceneCSSGridLayout,
@@ -15,12 +17,13 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  SceneObjectStateChangedEvent,
+  SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { VariableHide } from '@grafana/schema';
-import { Input, InlineSwitch, Field, Alert, Icon, useStyles2 } from '@grafana/ui';
+import { InlineSwitch, Field, Alert, Icon, useStyles2, Tooltip, Input } from '@grafana/ui';
 
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
@@ -29,16 +32,17 @@ import { reportExploreMetrics } from '../interactions';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
-  trailDS,
   VAR_DATASOURCE,
-  VAR_FILTERS_EXPR,
-  VAR_METRIC_NAMES,
+  VAR_DATASOURCE_EXPR,
+  VAR_FILTERS,
 } from '../shared';
-import { getFilters, getTrailFor } from '../utils';
+import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
 import { SelectMetricAction } from './SelectMetricAction';
+import { getMetricNames } from './api';
 import { getPreviewPanelFor } from './previewPanel';
 import { sortRelatedMetrics } from './relatedMetrics';
+import { createJSRegExpFromSearchTerms, createPromRegExp, deriveSearchTermsFromInput } from './util';
 
 interface MetricPanel {
   name: string;
@@ -51,13 +55,17 @@ interface MetricPanel {
 
 export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneCSSGridLayout;
-  searchQuery?: string;
   showPreviews?: boolean;
-  metricsAfterSearch?: string[];
+  metricNames?: string[];
+  metricNamesLoading?: boolean;
+  metricNamesError?: string;
+  metricNamesWarning?: string;
 }
 
 const ROW_PREVIEW_HEIGHT = '175px';
 const ROW_CARD_HEIGHT = '64px';
+
+const MAX_METRIC_NAMES = 20000;
 
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   private previewCache: Record<string, MetricPanel> = {};
@@ -65,7 +73,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
   constructor(state: Partial<MetricSelectSceneState>) {
     super({
-      $variables: state.$variables ?? getMetricNamesVariableSet(),
+      $variables: state.$variables,
       body:
         state.body ??
         new SceneCSSGridLayout({
@@ -82,19 +90,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
-    variableNames: [VAR_METRIC_NAMES, VAR_DATASOURCE],
+    variableNames: [VAR_DATASOURCE, VAR_FILTERS],
     onReferencedVariableValueChanged: (variable: SceneVariable) => {
-      const { name } = variable.state;
-
-      if (name === VAR_DATASOURCE) {
-        // Clear all panels for the previous data source
-        this.state.body.setState({ children: [] });
-      } else if (name === VAR_METRIC_NAMES) {
-        this.onMetricNamesChange();
-        // Entire pipeline must be performed
-        this.updateMetrics();
-        this.buildLayout();
-      }
+      // In all cases, we want to reload the metric names
+      this._debounceRefreshMetricNames();
     },
   });
 
@@ -108,24 +107,111 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     const trail = getTrailFor(this);
 
-    const metricChangeSubscription = trail.subscribeToEvent(MetricSelectedEvent, (event) => {
-      const { steps, currentStep } = trail.state.history.state;
-      const prevStep = steps[currentStep].parentIndex;
-      const previousMetric = steps[prevStep].trailState.metric;
-      const isRelatedMetricSelector = previousMetric !== undefined;
+    this._subs.add(
+      trail.subscribeToEvent(MetricSelectedEvent, (event) => {
+        const { steps, currentStep } = trail.state.history.state;
+        const prevStep = steps[currentStep].parentIndex;
+        const previousMetric = steps[prevStep].trailState.metric;
+        const isRelatedMetricSelector = previousMetric !== undefined;
 
-      const terms = this.state.searchQuery?.split(splitSeparator).filter((part) => part.length > 0);
-      if (event.payload !== undefined) {
-        reportExploreMetrics('metric_selected', {
-          from: isRelatedMetricSelector ? 'related_metrics' : 'metric_list',
-          searchTermCount: terms?.length || 0,
-        });
+        if (event.payload !== undefined) {
+          const metricSearch = getMetricSearch(trail);
+          const searchTermCount = deriveSearchTermsFromInput(metricSearch).length;
+
+          reportExploreMetrics('metric_selected', {
+            from: isRelatedMetricSelector ? 'related_metrics' : 'metric_list',
+            searchTermCount,
+          });
+        }
+      })
+    );
+
+    this._subs.add(
+      trail.subscribeToEvent(SceneObjectStateChangedEvent, (evt) => {
+        if (evt.payload.changedObject instanceof SceneTimeRange) {
+          const { prevState, newState } = evt.payload;
+
+          if (isSceneTimeRangeState(prevState) && isSceneTimeRangeState(newState)) {
+            if (prevState.from === newState.from && prevState.to === newState.to) {
+              return;
+            }
+          }
+        }
+      })
+    );
+
+    this._subs.add(
+      trail.subscribeToState(({ metricSearch }, oldState) => {
+        const oldSearchTerms = deriveSearchTermsFromInput(oldState.metricSearch);
+        const newSearchTerms = deriveSearchTermsFromInput(metricSearch);
+        if (!isEqual(oldSearchTerms, newSearchTerms)) {
+          this._debounceRefreshMetricNames();
+        }
+      })
+    );
+
+    this.subscribeToState((newState, prevState) => {
+      if (newState.metricNames !== prevState.metricNames) {
+        this.onMetricNamesChanged();
       }
     });
 
-    return () => {
-      metricChangeSubscription.unsubscribe();
-    };
+    this._debounceRefreshMetricNames();
+  }
+
+  private _debounceRefreshMetricNames = debounce(() => this._refreshMetricNames(), 1000);
+
+  private async _refreshMetricNames() {
+    const trail = getTrailFor(this);
+    const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
+
+    if (!timeRange) {
+      return;
+    }
+
+    const matchTerms = [];
+
+    const filtersVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
+    const hasFilters = filtersVar instanceof AdHocFiltersVariable && filtersVar.getValue()?.valueOf();
+    if (hasFilters) {
+      matchTerms.push(sceneGraph.interpolate(trail, '${filters}'));
+    }
+
+    const metricSearchRegex = createPromRegExp(trail.state.metricSearch);
+    if (metricSearchRegex) {
+      matchTerms.push(`__name__=~"${metricSearchRegex}"`);
+    }
+
+    const match = `{${matchTerms.join(',')}}`;
+    const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
+    this.setState({ metricNamesLoading: true, metricNamesError: undefined, metricNamesWarning: undefined });
+
+    try {
+      const response = await getMetricNames(datasourceUid, timeRange, match, MAX_METRIC_NAMES);
+      const searchRegex = createJSRegExpFromSearchTerms(getMetricSearch(this));
+      const metricNames = searchRegex
+        ? response.data.filter((metric) => !searchRegex || searchRegex.test(metric))
+        : response.data;
+
+      const metricNamesWarning = response.limitReached
+        ? `This feature will only return up to ${MAX_METRIC_NAMES} metric names for performance reasons. ` +
+          `This limit is being exceeded for the current data source. ` +
+          `Add search terms or label filters to narrow down the number of metric names returned.`
+        : undefined;
+
+      this.setState({ metricNames, metricNamesLoading: false, metricNamesWarning, metricNamesError: response.error });
+    } catch (err: unknown) {
+      let error = 'Unknown error';
+      if (isFetchError(err)) {
+        if (err.cancelled) {
+          error = 'Request cancelled';
+        } else if (err.statusText) {
+          error = err.statusText;
+        }
+      }
+
+      this.setState({ metricNames: undefined, metricNamesLoading: false, metricNamesError: error });
+    }
   }
 
   private sortedPreviewMetrics() {
@@ -143,22 +229,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     });
   }
 
-  private currentMetricNames = new Set<string>();
+  private onMetricNamesChanged() {
+    const metricNames = this.state.metricNames || [];
 
-  private onMetricNamesChange() {
-    // Get the datasource metrics list from the VAR_METRIC_NAMES variable
-    const variable = sceneGraph.lookupVariable(VAR_METRIC_NAMES, this);
-
-    if (!(variable instanceof QueryVariable)) {
-      return;
-    }
-
-    if (variable.state.loading) {
-      return;
-    }
-
-    const nameList = variable.state.options.map((option) => option.value.toString());
-    const nameSet = new Set(nameList);
+    const nameSet = new Set(metricNames);
 
     Object.values(this.previewCache).forEach((panel) => {
       if (!nameSet.has(panel.name)) {
@@ -166,35 +240,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       }
     });
 
-    this.currentMetricNames = nameSet;
-    this.buildLayout();
-  }
-
-  private applyMetricSearch() {
-    // This should only occur when the `searchQuery` changes, of if the `metricNames` change
-    const metricNames = Array.from(this.currentMetricNames);
-    if (metricNames == null) {
-      return;
-    }
-    const searchRegex = createSearchRegExp(this.state.searchQuery);
-
-    if (!searchRegex) {
-      this.setState({ metricsAfterSearch: metricNames });
-    } else {
-      const metricsAfterSearch = metricNames.filter((metric) => !searchRegex || searchRegex.test(metric));
-      this.setState({ metricsAfterSearch });
-    }
-  }
-
-  private updateMetrics(applySearchAndFilter = true) {
-    if (applySearchAndFilter) {
-      // Set to false if these are not required (because they can be assumed to have been suitably called).
-      this.applyMetricSearch();
-    }
-
-    const { metricsAfterSearch } = this.state;
-
-    const metricNames = metricsAfterSearch || [];
     const trail = getTrailFor(this);
     const sortedMetricNames =
       trail.state.metric !== undefined ? sortRelatedMetrics(metricNames, trail.state.metric) : metricNames;
@@ -203,7 +248,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     // Clear absent metrics from cache
     Object.keys(this.previewCache).forEach((metric) => {
-      if (!this.currentMetricNames.has(metric)) {
+      if (!nameSet.has(metric)) {
         delete this.previewCache[metric];
       }
     });
@@ -231,6 +276,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     }
 
     this.previewCache = metricsMap;
+    this.buildLayout();
   }
 
   private async buildLayout() {
@@ -238,20 +284,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     if (this.ignoreNextUpdate) {
       this.ignoreNextUpdate = false;
       return;
-    }
-
-    const variable = sceneGraph.lookupVariable(VAR_METRIC_NAMES, this);
-
-    if (!(variable instanceof QueryVariable)) {
-      return;
-    }
-
-    if (variable.state.loading) {
-      return;
-    }
-
-    if (!Object.keys(this.previewCache).length) {
-      this.updateMetrics();
     }
 
     const children: SceneFlexItem[] = [];
@@ -309,14 +341,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   };
 
   public onSearchQueryChange = (evt: React.SyntheticEvent<HTMLInputElement>) => {
-    this.setState({ searchQuery: evt.currentTarget.value });
-    this.searchQueryChangedDebounced();
+    const metricSearch = evt.currentTarget.value;
+    const trail = getTrailFor(this);
+    // Update the variable
+    trail.setState({ metricSearch });
   };
-
-  private searchQueryChangedDebounced = debounce(() => {
-    this.updateMetrics(); // Need to repeat entire pipeline
-    this.buildLayout();
-  }, 500);
 
   public onTogglePreviews = () => {
     this.setState({ showPreviews: !this.state.showPreviews });
@@ -324,15 +353,20 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const { searchQuery, showPreviews, body } = model.useState();
+    const { showPreviews, body, metricNames, metricNamesError, metricNamesLoading, metricNamesWarning } =
+      model.useState();
     const { children } = body.useState();
+    const trail = getTrailFor(model);
     const styles = useStyles2(getStyles);
 
-    const metricNamesStatus = useVariableStatus(VAR_METRIC_NAMES, model);
-    const tooStrict = children.length === 0 && searchQuery;
-    const noMetrics = !metricNamesStatus.isLoading && model.currentMetricNames.size === 0;
+    const [warningDismissed, dismissWarning] = useReducer(() => true, false);
 
-    const isLoading = metricNamesStatus.isLoading && children.length === 0;
+    const { metricSearch } = trail.useState();
+
+    const tooStrict = children.length === 0 && metricSearch;
+    const noMetrics = !metricNamesLoading && metricNames && metricNames.length === 0;
+
+    const isLoading = metricNamesLoading && children.length === 0;
 
     const blockingMessage = isLoading
       ? undefined
@@ -340,7 +374,18 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         (tooStrict && 'There are no results found. Try adjusting your search or filters.') ||
         undefined;
 
-    const disableSearch = metricNamesStatus.error || metricNamesStatus.isLoading;
+    const metricNamesWarningIcon = metricNamesWarning ? (
+      <Tooltip
+        content={
+          <>
+            <h4>Unable to retrieve metric names</h4>
+            <p>{metricNamesWarning}</p>
+          </>
+        }
+      >
+        <Icon className={styles.warningIcon} name="exclamation-triangle" />
+      </Tooltip>
+    ) : undefined;
 
     return (
       <div className={styles.container}>
@@ -349,23 +394,27 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
             <Input
               placeholder="Search metrics"
               prefix={<Icon name={'search'} />}
-              value={searchQuery}
+              value={metricSearch}
               onChange={model.onSearchQueryChange}
-              disabled={disableSearch}
+              suffix={metricNamesWarningIcon}
             />
           </Field>
-          <InlineSwitch
-            showLabel={true}
-            label="Show previews"
-            value={showPreviews}
-            onChange={model.onTogglePreviews}
-            disabled={disableSearch}
-          />
+          <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
-        {metricNamesStatus.error && (
+        {metricNamesError && (
           <Alert title="Unable to retrieve metric names" severity="error">
             <div>We are unable to connect to your data source. Double check your data source URL and credentials.</div>
-            <div>({metricNamesStatus.error})</div>
+            <div>({metricNamesError})</div>
+          </Alert>
+        )}
+        {metricNamesWarning && !warningDismissed && (
+          <Alert
+            title="Unable to retrieve all metric names"
+            severity="warning"
+            onSubmit={dismissWarning}
+            onRemove={dismissWarning}
+          >
+            <div>{metricNamesWarning}</div>
           </Alert>
         )}
         <StatusWrapper {...{ isLoading, blockingMessage }}>
@@ -374,23 +423,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       </div>
     );
   };
-}
-
-function getMetricNamesVariableSet() {
-  return new SceneVariableSet({
-    variables: [
-      new QueryVariable({
-        name: VAR_METRIC_NAMES,
-        datasource: trailDS,
-        hide: VariableHide.hideVariable,
-        includeAll: true,
-        defaultToAll: true,
-        skipUrlSync: true,
-        refresh: VariableRefresh.onTimeRangeChanged,
-        query: { query: `label_values(${VAR_FILTERS_EXPR},__name__)`, refId: 'A' },
-      }),
-    ],
-  });
 }
 
 function getCardPanelFor(metric: string, description?: string) {
@@ -423,43 +455,13 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       marginBottom: 0,
     }),
+    warningIcon: css({
+      color: theme.colors.warning.main,
+    }),
   };
 }
 
-// Consider any sequence of characters not permitted for metric names as a sepratator
-const splitSeparator = /[^a-z0-9_:]+/;
-
-function createSearchRegExp(spaceSeparatedMetricNames?: string) {
-  if (!spaceSeparatedMetricNames) {
-    return null;
-  }
-  const searchParts = spaceSeparatedMetricNames
-    ?.toLowerCase()
-    .split(splitSeparator)
-    .filter((part) => part.length > 0)
-    .map((part) => `(?=(.*${part}.*))`);
-
-  if (searchParts.length === 0) {
-    return null;
-  }
-
-  const regex = searchParts.join('');
-  //  (?=(.*expr1.*))(?=().*expr2.*))...
-  // The ?=(...) lookahead allows us to match these in any order.
-  return new RegExp(regex, 'igy');
-}
-
-function useVariableStatus(name: string, sceneObject: SceneObject) {
-  const variable = sceneGraph.lookupVariable(name, sceneObject);
-
-  const useVariableState = useCallback(() => {
-    if (variable) {
-      return variable.useState();
-    }
-    return undefined;
-  }, [variable]);
-
-  const { error, loading } = useVariableState() || {};
-
-  return { isLoading: !!loading, error };
+function getMetricSearch(scene: SceneObject) {
+  const trail = getTrailFor(scene);
+  return trail.state.metricSearch || '';
 }

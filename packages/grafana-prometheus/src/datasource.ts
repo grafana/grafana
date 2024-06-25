@@ -139,7 +139,6 @@ export class PrometheusDatasource
     this.cache = new QueryCache({
       getTargetSignature: this.getPrometheusTargetSignature.bind(this),
       overlapString: instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow,
-      profileFunction: this.getPrometheusProfileData.bind(this),
     });
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
@@ -160,14 +159,6 @@ export class PrometheusDatasource
 
   getQueryDisplayText(query: PromQuery) {
     return query.expr;
-  }
-
-  getPrometheusProfileData(request: DataQueryRequest<PromQuery>, targ: PromQuery) {
-    return {
-      interval: targ.interval ?? request.interval,
-      expr: this.interpolateString(targ.expr),
-      datasource: 'Prometheus',
-    };
   }
 
   /**
@@ -659,14 +650,19 @@ export class PrometheusDatasource
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
         const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
+        const replacedInterpolatedQuery = config.featureToggles.promQLScope
+          ? interpolatedQuery
+          : this.templateSrv.replace(
+              this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
+              scopedVars,
+              this.interpolateQueryExpr
+            );
 
         const expandedQuery = {
           ...query,
           ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
           datasource: this.getRef(),
-          expr: config.featureToggles.promQLScope
-            ? interpolatedQuery
-            : this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
+          expr: replacedInterpolatedQuery,
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
 
@@ -824,7 +820,11 @@ export class PrometheusDatasource
       return [];
     }
 
-    return filters.map((f) => ({ ...f, operator: scopeFilterOperatorMap[f.operator] }));
+    return filters.map((f) => ({
+      ...f,
+      value: this.templateSrv.replace(f.value, {}, this.interpolateQueryExpr),
+      operator: scopeFilterOperatorMap[f.operator],
+    }));
   }
 
   enhanceExprWithAdHocFilters(filters: AdHocVariableFilter[] | undefined, expr: string) {
@@ -865,12 +865,21 @@ export class PrometheusDatasource
     };
 
     // interpolate expression
+
+    // We need a first replace to evaluate variables before applying adhoc filters
+    // This is required for an expression like `metric > $VAR` where $VAR is a float to which we must not add adhoc filters
     const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
+
+    // Apply ad-hoc filters
+    // When ad-hoc filters are applied, we replace again the variables in case the ad-hoc filters also reference a variable
+    const exprWithAdhoc = config.featureToggles.promQLScope
+      ? expr
+      : this.templateSrv.replace(this.enhanceExprWithAdHocFilters(filters, expr), variables, this.interpolateQueryExpr);
 
     return {
       ...target,
       ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
-      expr: config.featureToggles.promQLScope ? expr : this.enhanceExprWithAdHocFilters(filters, expr),
+      expr: exprWithAdhoc,
       interval: this.templateSrv.replace(target.interval, variables),
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),
     };

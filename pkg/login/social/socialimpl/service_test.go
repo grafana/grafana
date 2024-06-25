@@ -182,7 +182,18 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	sqlStore := db.InitTestDB(t)
 
-	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets, &usagestats.UsageStatsMock{}, nil, nil, &licensing.OSSLicensingService{})
+	ssoSettingsSvc := ssosettingsimpl.ProvideService(
+		cfg,
+		sqlStore,
+		accessControl,
+		routing.NewRouteRegister(),
+		featuremgmt.WithFeatures(),
+		secrets,
+		&usagestats.UsageStatsMock{},
+		nil,
+		nil,
+		&licensing.OSSLicensingService{},
+	)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

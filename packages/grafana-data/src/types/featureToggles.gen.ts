@@ -29,7 +29,6 @@ export interface FeatureToggles {
   featureHighlights?: boolean;
   storage?: boolean;
   correlations?: boolean;
-  exploreContentOutline?: boolean;
   datasourceQueryMultiStatus?: boolean;
   autoMigrateOldPanels?: boolean;
   autoMigrateGraphPanel?: boolean;
@@ -82,7 +81,6 @@ export interface FeatureToggles {
   sqlDatasourceDatabaseSelection?: boolean;
   recordedQueriesMulti?: boolean;
   vizAndWidgetSplit?: boolean;
-  prometheusIncrementalQueryInstrumentation?: boolean;
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
@@ -112,6 +110,7 @@ export interface FeatureToggles {
   externalServiceAccounts?: boolean;
   panelMonitoring?: boolean;
   enableNativeHTTPHistogram?: boolean;
+  disableClassicHTTPHistogram?: boolean;
   formatString?: boolean;
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
@@ -169,7 +168,6 @@ export interface FeatureToggles {
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
-  betterPageScrolling?: boolean;
   authAPIAccessTokenAuth?: boolean;
   scopeFilters?: boolean;
   ssoSettingsSAML?: boolean;
@@ -180,7 +178,6 @@ export interface FeatureToggles {
   disableNumericMetricsSortingInExpressions?: boolean;
   grafanaManagedRecordingRules?: boolean;
   queryLibrary?: boolean;
-  autofixDSUID?: boolean;
   logsExploreTableDefaultVisualization?: boolean;
   newDashboardSharingComponent?: boolean;
   alertingListViewV2?: boolean;
@@ -192,4 +189,14 @@ export interface FeatureToggles {
   alertingCentralAlertHistory?: boolean;
   pluginProxyPreserveTrailingSlash?: boolean;
   azureMonitorPrometheusExemplars?: boolean;
+  pinNavItems?: boolean;
+  authZGRPCServer?: boolean;
+  openSearchBackendFlowEnabled?: boolean;
+  ssoSettingsLDAP?: boolean;
+  failWrongDSUID?: boolean;
+  databaseReadReplica?: boolean;
+  zanzana?: boolean;
+  passScopeToDashboardApi?: boolean;
+  alertingApiServer?: boolean;
+  dashboardRestoreUI?: boolean;
 }

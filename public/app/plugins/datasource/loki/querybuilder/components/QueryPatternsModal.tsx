@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { CoreApp, GrafanaTheme2, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';

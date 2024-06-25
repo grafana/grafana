@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -72,12 +71,12 @@ func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashbo
 	isParentFolderChanged := false
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		isParentFolderChanged, err = getExistingDashboardByIDOrUIDForUpdate(sess, dashboard, d.store.GetDialect(), overwrite)
+		isParentFolderChanged, err = getExistingDashboardByIDOrUIDForUpdate(sess, dashboard, overwrite)
 		if err != nil {
 			return err
 		}
 
-		isParentFolderChanged, err = getExistingDashboardByTitleAndFolder(sess, dashboard, d.store.GetDialect(), overwrite,
+		isParentFolderChanged, err = getExistingDashboardByTitleAndFolder(sess, dashboard, overwrite,
 			isParentFolderChanged)
 		if err != nil {
 			return err
@@ -94,7 +93,7 @@ func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashbo
 
 func (d *dashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*dashboards.DashboardProvisioning, error) {
 	var data dashboards.DashboardProvisioning
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Where("dashboard_id = ?", dashboardID).Get(&data)
 		return err
 	})
@@ -107,7 +106,7 @@ func (d *dashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, da
 
 func (d *dashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*dashboards.DashboardProvisioning, error) {
 	var provisionedDashboard dashboards.DashboardProvisioning
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		var dashboard dashboards.Dashboard
 		exists, err := sess.Where("org_id = ? AND uid = ?", orgID, dashboardUID).Get(&dashboard)
 		if err != nil {
@@ -130,7 +129,7 @@ func (d *dashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, o
 
 func (d *dashboardStore) GetProvisionedDashboardData(ctx context.Context, name string) ([]*dashboards.DashboardProvisioning, error) {
 	var result []*dashboards.DashboardProvisioning
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Where("name = ?", name).Find(&result)
 	})
 	return result, err
@@ -248,7 +247,7 @@ func (d *dashboardStore) Count(ctx context.Context, scopeParams *quota.ScopePara
 	return u, nil
 }
 
-func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.Dashboard, dialect migrator.Dialect, overwrite bool) (bool, error) {
+func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.Dashboard, overwrite bool) (bool, error) {
 	dashWithIdExists := false
 	isParentFolderChanged := false
 	var existingById dashboards.Dashboard
@@ -323,7 +322,7 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 }
 
 // getExistingDashboardByTitleAndFolder returns a boolean (on whether the parent folder changed) and an error for if the dashboard already exists.
-func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Dashboard, dialect migrator.Dialect, overwrite,
+func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Dashboard, overwrite,
 	isParentFolderChanged bool) (bool, error) {
 	var existing dashboards.Dashboard
 	condition := "org_id=? AND title=?"
@@ -537,6 +536,10 @@ func (d *dashboardStore) GetSoftDeletedDashboard(ctx context.Context, orgID int6
 
 func (d *dashboardStore) RestoreDashboard(ctx context.Context, orgID int64, dashboardUID string, folder *folder.Folder) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if folder == nil || folder.UID == "" {
+			_, err := sess.Exec("UPDATE dashboard SET deleted=NULL, folder_id=0, folder_uid=NULL WHERE org_id=? AND uid=?", orgID, dashboardUID)
+			return err
+		}
 		// nolint:staticcheck
 		_, err := sess.Exec("UPDATE dashboard SET deleted=NULL, folder_id = ?, folder_uid=? WHERE org_id=? AND uid=?", folder.ID, folder.UID, orgID, dashboardUID)
 		return err

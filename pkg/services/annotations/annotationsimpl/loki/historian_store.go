@@ -8,14 +8,16 @@ import (
 	"sort"
 	"time"
 
+	"golang.org/x/exp/constraints"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
-	"golang.org/x/exp/constraints"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -24,9 +26,9 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -43,6 +45,7 @@ var (
 
 type lokiQueryClient interface {
 	RangeQuery(ctx context.Context, query string, start, end, limit int64) (historian.QueryRes, error)
+	MaxQuerySize() int
 }
 
 // LokiHistorianStore is a read store that queries Loki for alert state history.
@@ -52,7 +55,7 @@ type LokiHistorianStore struct {
 	log    log.Logger
 }
 
-func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, db db.DB, log log.Logger) *LokiHistorianStore {
+func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, db db.DB, log log.Logger, tracer tracing.Tracer) *LokiHistorianStore {
 	if !useStore(cfg, ft) {
 		return nil
 	}
@@ -63,7 +66,7 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft f
 	}
 
 	return &LokiHistorianStore{
-		client: historian.NewLokiClient(lokiCfg, historian.NewRequester(), ngmetrics.NewHistorianMetrics(prometheus.DefaultRegisterer, subsystem), log),
+		client: historian.NewLokiClient(lokiCfg, historian.NewRequester(), ngmetrics.NewHistorianMetrics(prometheus.DefaultRegisterer, subsystem), log, tracer),
 		db:     db,
 		log:    log,
 	}
@@ -96,8 +99,12 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 		}
 	}
 
-	logQL, err := historian.BuildLogQuery(buildHistoryQuery(query, accessResources.Dashboards, rule.UID))
+	logQL, err := historian.BuildLogQuery(buildHistoryQuery(query, accessResources.Dashboards, rule.UID), r.client.MaxQuerySize())
 	if err != nil {
+		grafanaErr := errutil.Error{}
+		if errors.As(err, &grafanaErr) {
+			return make([]*annotations.ItemDTO, 0), err
+		}
 		return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to build loki query: %w", err)
 	}
 

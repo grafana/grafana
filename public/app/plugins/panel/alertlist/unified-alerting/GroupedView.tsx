@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 import { AlertLabel } from 'app/features/alerting/unified/components/AlertLabel';

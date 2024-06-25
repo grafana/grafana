@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { merge } from 'lodash';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { TableCellOptions } from '@grafana/schema';
 import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
+import { AutoCellOptionsEditor } from './cells/AutoCellOptionsEditor';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
@@ -60,6 +61,9 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       <Field>
         <Select options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
+      {(cellType === TableCellDisplayMode.Auto || cellType === TableCellDisplayMode.ColorText) && (
+        <AutoCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
       {cellType === TableCellDisplayMode.Gauge && (
         <BarGaugeCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}

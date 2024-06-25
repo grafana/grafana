@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Box, Button, Icon, Select, Tooltip, useStyles2 } from '@grafana/ui';
@@ -60,7 +59,7 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
           />
         ) : (
           <Tooltip content={item.isInherited ? 'Inherited Permission' : 'Provisioned Permission'}>
-            <Button size="sm" icon="lock" />
+            <Button size="sm" icon="lock" aria-label="Locked permission indicator" />
           </Tooltip>
         )}
       </td>

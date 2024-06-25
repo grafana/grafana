@@ -103,6 +103,17 @@ const (
 	KeepLastErrState ExecutionErrorState = "KeepLast"
 )
 
+type RuleType string
+
+const (
+	RuleTypeAlerting  = "alerting"
+	RuleTypeRecording = "recording"
+)
+
+func (r RuleType) String() string {
+	return string(r)
+}
+
 const (
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation = "__dashboardUid__"
@@ -258,6 +269,11 @@ type AlertRule struct {
 	NotificationSettings []NotificationSettings `xorm:"notification_settings"` // we use slice to workaround xorm mapping that does not serialize a struct to JSON unless it's a slice
 }
 
+// Namespaced describes a class of resources that are stored in a specific namespace.
+type Namespaced interface {
+	GetNamespaceUID() string
+}
+
 // AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule
 // object is created in an early validation step without knowledge about current alert rule fields or if they need to be
 // overridden. This is done in a later step and, in that step, we did not have knowledge about if a field was optional
@@ -344,7 +360,7 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 }
 
 func (alertRule *AlertRule) GetEvalCondition() Condition {
-	if alertRule.IsRecordingRule() {
+	if alertRule.Type() == RuleTypeRecording {
 		return Condition{
 			Condition: alertRule.Record.From,
 			Data:      alertRule.Data,
@@ -512,7 +528,7 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 	}
 
 	var err error
-	if alertRule.IsRecordingRule() {
+	if alertRule.Type() == RuleTypeRecording {
 		err = validateRecordingRuleFields(alertRule)
 	} else {
 		err = validateAlertRuleFields(alertRule)
@@ -586,8 +602,11 @@ func (alertRule *AlertRule) GetFolderKey() FolderKey {
 	}
 }
 
-func (alertRule *AlertRule) IsRecordingRule() bool {
-	return alertRule.Record != nil
+func (alertRule *AlertRule) Type() RuleType {
+	if alertRule.Record != nil {
+		return RuleTypeRecording
+	}
+	return RuleTypeAlerting
 }
 
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
@@ -676,18 +695,6 @@ type ListNamespaceAlertRulesQuery struct {
 	OrgID int64
 	// Namespace is the folder slug
 	NamespaceUID string
-}
-
-// ListOrgRuleGroupsQuery is the query for listing unique rule groups
-// for an organization
-type ListOrgRuleGroupsQuery struct {
-	OrgID         int64
-	NamespaceUIDs []string
-
-	// DashboardUID and PanelID are optional and allow filtering rules
-	// to return just those for a dashboard and panel.
-	DashboardUID string
-	PanelID      int64
 }
 
 type UpdateRule struct {

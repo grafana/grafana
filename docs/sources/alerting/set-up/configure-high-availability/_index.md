@@ -147,4 +147,5 @@ The following metrics can be used for meta monitoring, exposed by the `/metrics`
    ha_peers = "grafana-alerting.grafana:9094"
    ha_advertise_address = "${POD_IP}:9094"
    ha_peer_timeout = 15s
+   ha_reconnect_timeout = 2m
    ```

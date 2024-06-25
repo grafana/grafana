@@ -1,4 +1,5 @@
-import React, { FC, HTMLAttributes, RefCallback } from 'react';
+import { FC, HTMLAttributes, RefCallback } from 'react';
+import * as React from 'react';
 
 import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 

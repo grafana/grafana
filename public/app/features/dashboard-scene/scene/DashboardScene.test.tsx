@@ -200,6 +200,20 @@ describe('DashboardScene', () => {
         expect(resoredLayout.state.children.map((c) => c.state.key)).toEqual(originalPanelOrder);
       });
 
+      it('Should exit edit mode and discard panel changes if leaving the dashboard while in panel edit', () => {
+        const panel = findVizPanelByKey(scene, 'panel-1');
+        const editPanel = buildPanelEditScene(panel!);
+        scene.setState({
+          editPanel,
+        });
+
+        expect(scene.state.editPanel!['_discardChanges']).toBe(false);
+
+        scene.exitEditMode({ skipConfirm: true });
+
+        expect(scene.state.editPanel!['_discardChanges']).toBe(true);
+      });
+
       it.each`
         prop             | value
         ${'title'}       | ${'new title'}
@@ -751,6 +765,20 @@ describe('DashboardScene', () => {
 
         expect(body.state.children.length).toBe(6);
         expect(gridItem.state.body!.state.key).toBe('panel-7');
+      });
+
+      it('Should maintain size of duplicated panel', () => {
+        const gItem = (scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem;
+        gItem.setState({ height: 1 });
+        const vizPanel = gItem.state.body;
+        scene.duplicatePanel(vizPanel as VizPanel);
+
+        const body = scene.state.body as SceneGridLayout;
+        const newGridItem = body.state.children[5] as DashboardGridItem;
+
+        expect(body.state.children.length).toBe(6);
+        expect(newGridItem.state.body!.state.key).toBe('panel-7');
+        expect(newGridItem.state.height).toBe(1);
       });
 
       it('Should duplicate a library panel', () => {

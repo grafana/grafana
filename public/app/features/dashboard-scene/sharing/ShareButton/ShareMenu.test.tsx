@@ -1,10 +1,9 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 
+import { config } from '../../../../core/config';
 import { DashboardGridItem } from '../../scene/DashboardGridItem';
 import { DashboardScene } from '../../scene/DashboardScene';
 
@@ -18,13 +17,21 @@ jest.mock('app/core/utils/shortLinks', () => ({
 
 const selector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
 describe('ShareMenu', () => {
-  it('should call createAndCopyDashboardShortLink when share internally clicked', async () => {
+  it('should render menu items', async () => {
+    config.featureToggles.publicDashboards = true;
+    config.publicDashboardsEnabled = true;
     setup();
 
-    const shareLink = await screen.findByTestId(selector.shareInternally);
+    expect(await screen.findByTestId(selector.shareInternally)).toBeInTheDocument();
+    expect(await screen.findByTestId(selector.shareExternally)).toBeInTheDocument();
+    expect(await screen.findByTestId(selector.shareSnapshot)).toBeInTheDocument();
+  });
+  it('should no share externally when public dashboard is disabled', async () => {
+    config.featureToggles.publicDashboards = false;
+    config.publicDashboardsEnabled = false;
+    setup();
 
-    await userEvent.click(shareLink);
-    expect(createAndCopyDashboardShortLinkMock).toHaveBeenCalled();
+    expect(await screen.queryByTestId(selector.shareExternally)).not.toBeInTheDocument();
   });
 });
 

@@ -894,6 +894,85 @@ func TestEvaluate(t *testing.T) {
 			},
 			EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={bar=baz, foo=bar} value=1 ]",
 		}},
+	}, {
+		name: "results contains error if condition frame has error",
+		cond: models.Condition{
+			Condition: "B",
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{{
+						RefID: "A",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(10.0)},
+							),
+						},
+					}},
+				},
+				"B": {
+					Frames: []*data.Frame{{
+						RefID: "B",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar", "bar": "baz"},
+								[]*float64{util.Pointer(1.0)},
+							),
+						},
+					}},
+					Error: errors.New("some frame error"),
+				},
+			},
+		},
+		expected: Results{{
+			State:            Error,
+			Error:            errors.New("some frame error"),
+			EvaluationString: "",
+		}},
+	}, {
+		name: "results contain underlying error if condition frame has error that depends on another node",
+		cond: models.Condition{
+			Condition: "B",
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{{
+						RefID: "A",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(10.0)},
+							),
+						},
+					}},
+					Error: errors.New("another error depends on me"),
+				},
+				"B": {
+					Frames: []*data.Frame{{
+						RefID: "B",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar", "bar": "baz"},
+								[]*float64{util.Pointer(1.0)},
+							),
+						},
+					}},
+					Error: expr.MakeDependencyError("B", "A"),
+				},
+			},
+		},
+		expected: Results{{
+			State:            Error,
+			Error:            errors.New("another error depends on me"),
+			EvaluationString: "",
+		}},
 	}}
 
 	for _, tc := range cases {

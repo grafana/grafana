@@ -4,16 +4,15 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 type DualWriterMode2 struct {
@@ -27,10 +26,8 @@ const mode2Str = "2"
 
 // NewDualWriterMode2 returns a new DualWriter in mode 2.
 // Mode 2 represents writing to LegacyStorage and Storage and reading from LegacyStorage.
-func newDualWriterMode2(legacy LegacyStorage, storage Storage) *DualWriterMode2 {
-	metrics := &dualWriterMetrics{}
-	metrics.init()
-	return &DualWriterMode2{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode2"), dualWriterMetrics: metrics}
+func newDualWriterMode2(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics) *DualWriterMode2 {
+	return &DualWriterMode2{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode2"), dualWriterMetrics: dwm}
 }
 
 // Mode returns the mode of the dual writer.
@@ -53,9 +50,8 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 	}
 	d.recordLegacyDuration(false, mode2Str, options.Kind, method, startLegacy)
 
-	createdLegacy, err := enrichLegacyObject(original, created, true)
-	if err != nil {
-		return createdLegacy, err
+	if err := enrichLegacyObject(original, created); err != nil {
+		return created, err
 	}
 
 	startStorage := time.Now()
@@ -265,7 +261,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 
 	// if the object is found, create a new updateWrapper with the object found
 	if foundObj != nil {
-		obj, err = enrichLegacyObject(foundObj, obj, false)
+		err = enrichLegacyObject(foundObj, obj)
 		if err != nil {
 			return obj, false, err
 		}
@@ -320,41 +316,27 @@ func parseList(legacyList []runtime.Object) (metainternalversion.ListOptions, ma
 	indexMap := map[string]int{}
 
 	for i, obj := range legacyList {
-		metaAccessor, err := utils.MetaAccessor(obj)
-		if err != nil {
-			return options, nil, err
-		}
-		originKeys = append(originKeys, metaAccessor.GetOriginKey())
-
-		accessor, err := meta.Accessor(obj)
+		accessor, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return options, nil, err
 		}
 		indexMap[accessor.GetName()] = i
 	}
-
 	if len(originKeys) == 0 {
 		return options, nil, nil
 	}
-
-	r, err := labels.NewRequirement(utils.AnnoKeyOriginKey, selection.In, originKeys)
-	if err != nil {
-		return options, nil, err
-	}
-	options.LabelSelector = labels.NewSelector().Add(*r)
-
 	return options, indexMap, nil
 }
 
-func enrichLegacyObject(originalObj, returnedObj runtime.Object, created bool) (runtime.Object, error) {
+func enrichLegacyObject(originalObj, returnedObj runtime.Object) error {
 	accessorReturned, err := meta.Accessor(returnedObj)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	accessorOriginal, err := meta.Accessor(originalObj)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	accessorReturned.SetLabels(accessorOriginal.GetLabels())
@@ -368,15 +350,8 @@ func enrichLegacyObject(originalObj, returnedObj runtime.Object, created bool) (
 	}
 	accessorReturned.SetAnnotations(ac)
 
-	// if the object is created, we need to reset the resource version and UID
-	// create method expects an empty resource version
-	if created {
-		accessorReturned.SetResourceVersion("")
-		accessorReturned.SetUID("")
-		return returnedObj, nil
-	}
 	// otherwise, we propagate the original RV and UID
 	accessorReturned.SetResourceVersion(accessorOriginal.GetResourceVersion())
 	accessorReturned.SetUID(accessorOriginal.GetUID())
-	return returnedObj, nil
+	return nil
 }
