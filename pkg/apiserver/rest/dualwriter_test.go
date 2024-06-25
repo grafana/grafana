@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestSetDualWritingMode(t *testing.T) {
@@ -59,78 +60,25 @@ func TestSetDualWritingMode(t *testing.T) {
 	}
 }
 
-func TestSortUnstructeredMap(t *testing.T) {
+func TestCompare(t *testing.T) {
 	testCase := []struct {
 		name     string
-		input    map[string]any
-		expected []kv
+		input    runtime.Object
+		expected bool
 	}{
 		{
-			name: "sorts a map by key",
-			input: map[string]any{
-				"a": 1,
-				"g": []any{[]string{"a", "b"}, []int{1, 5}},
-				"c": map[string]any{"f": map[string]string{"e": "b"}},
-				"d": []string{"a", "b"},
-				"b": "b",
-			},
-			expected: []kv{
-				{value: 1, key: "a"},
-				{value: "b", key: "b"},
-				{value: []kv{{value: map[string]string{"e": "b"}, key: "f"}}, key: "c"},
-				{value: []string{"a", "b"}, key: "d"},
-				{value: []any{[]string{"a", "b"}, []int{1, 5}}, key: "g"},
-			},
+			name:     "should return true when both objects are the same",
+			input:    exampleObj,
+			expected: true,
 		},
 		{
-			name:     "handles empty cases",
-			input:    map[string]any{},
-			expected: []kv{},
+			name:  "should return false when objects are different",
+			input: anotherObj,
 		},
 	}
-
 	for _, tt := range testCase {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := sortUnstructeredMap(tt.input)
-			assert.Equal(t, tt.expected, actual)
-		})
-	}
-}
-
-func TestUnstructuredSlices(t *testing.T) {
-	testCase := []struct {
-		name     string
-		input    []any
-		expected []any
-	}{
-		{
-			name: "sorts a slice of unstructured objects",
-			input: []any{
-				map[string]any{"f": map[string]string{"e": "b"}},
-				[]string{"a", "b"},
-				[]any{map[int]string{3: "b"}, []map[string]string{{"z": "a"}, {"d": "e"}}},
-				[]int{3, 7, 5, 3},
-				[]string{"b", "a", "t", "a"},
-			},
-			expected: []any{
-				[]kv{{value: map[string]string{"e": "b"}, key: "f"}},
-				[]string{"a", "b"}, []interface{}{map[int]string{3: "b"},
-					[]map[string]string{{"z": "a"}, {"d": "e"}}},
-				[]int{3, 7, 5, 3},
-				[]string{"b", "a", "t", "a"},
-			},
-		},
-		{
-			name:     "handles empty cases",
-			input:    []any{},
-			expected: []any{},
-		},
-	}
-
-	for _, tt := range testCase {
-		t.Run(tt.name, func(t *testing.T) {
-			actual := sortUnstructuredSlice(tt.input)
-			assert.Equal(t, tt.expected, actual)
+			assert.Equal(t, tt.expected, Compare(tt.input, exampleObj))
 		})
 	}
 }
