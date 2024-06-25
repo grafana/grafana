@@ -15530,11 +15530,11 @@
         "operationId": "getSnapshot",
         "parameters": [
           {
-            "description": "Offset is used for pagination with limit",
+            "description": "ResultPage is used for pagination with ResultLimit",
             "in": "query",
-            "name": "resultOffset",
+            "name": "resultPage",
             "schema": {
-              "default": 0,
+              "default": 1,
               "format": "int64",
               "type": "integer"
             }
@@ -15689,11 +15689,11 @@
         "operationId": "getShapshotList",
         "parameters": [
           {
-            "description": "Offset is used for pagination with limit",
+            "description": "Page is used for pagination with limit",
             "in": "query",
-            "name": "offset",
+            "name": "page",
             "schema": {
-              "default": 0,
+              "default": 1,
               "format": "int64",
               "type": "integer"
             }

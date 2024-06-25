@@ -2567,9 +2567,9 @@
           {
             "type": "integer",
             "format": "int64",
-            "default": 0,
-            "description": "Offset is used for pagination with limit",
-            "name": "resultOffset",
+            "default": 1,
+            "description": "ResultPage is used for pagination with ResultLimit",
+            "name": "resultPage",
             "in": "query"
           },
           {
@@ -2710,9 +2710,9 @@
           {
             "type": "integer",
             "format": "int64",
-            "default": 0,
-            "description": "Offset is used for pagination with limit",
-            "name": "offset",
+            "default": 1,
+            "description": "Page is used for pagination with limit",
+            "name": "page",
             "in": "query"
           },
           {
