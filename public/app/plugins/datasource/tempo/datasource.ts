@@ -438,7 +438,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   isTraceQlMetricsQuery(query: string): boolean {
     // Check whether this is a metrics query by checking if it contains a metrics function
     const metricsFnRegex =
-      /\|\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|quantile_over_time|histogram_over_time)\s*\(/;
+      /\|\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|quantile_over_time|histogram_over_time|compare)\s*\(/;
     return !!query.trim().match(metricsFnRegex);
   }
 
@@ -536,9 +536,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         if (!response.data.summaries) {
           return {
             error: {
-              message: getErrorMessage(
-                `No summary data for '${groupBy}'. Note: the metrics summary API only considers spans of kind = server. You can check if the attributes exist by running a TraceQL query like { attr_key = attr_value && kind = server }`
-              ),
+              message: getErrorMessage(`No summary data for '${groupBy}'.`),
             },
             data: emptyResponse,
           };
@@ -645,11 +643,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     options: DataQueryRequest<TempoQuery>,
     queryValue: string
   ): Observable<DataQueryResponse> => {
-    return this._request('/api/metrics/query_range', {
+    const requestData = {
       query: queryValue,
       start: options.range.from.unix(),
       end: options.range.to.unix(),
-    }).pipe(
+      step: options.targets[0].step,
+    };
+
+    if (!requestData.step) {
+      delete requestData.step;
+    }
+
+    return this._request('/api/metrics/query_range', requestData).pipe(
       map((response) => {
         return {
           data: formatTraceQLMetrics(queryValue, response.data),

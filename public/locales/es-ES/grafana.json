@@ -25,6 +25,14 @@
       "user": "Usuario"
     }
   },
+  "alert-labels": {
+    "button": {
+      "hide": "",
+      "show": {
+        "tooltip": ""
+      }
+    }
+  },
   "alert-rule-form": {
     "evaluation-behaviour": {
       "description": {
@@ -70,6 +78,7 @@
       "delete-button": "Eliminar",
       "delete-modal-invalid-text": "Una o más carpetas contienen paneles de biblioteca o reglas de alerta. Para continuar, primero elimínelas.",
       "delete-modal-invalid-title": "No se puede eliminar la carpeta",
+      "delete-modal-restore-dashboards-text": "",
       "delete-modal-text": "Esta acción eliminará el siguiente contenido:",
       "delete-modal-title": "Eliminar",
       "deleting": "Eliminando...",
@@ -136,6 +145,16 @@
     "no-results": {
       "clear": "Borrar la búsqueda y los filtros",
       "text": ""
+    }
+  },
+  "central-alert-history": {
+    "error": "",
+    "filter": {
+      "button": {
+        "clear": ""
+      },
+      "label": "",
+      "placeholder": ""
     }
   },
   "clipboard-button": {
@@ -512,6 +531,12 @@
       "no-logs-found": "",
       "scan-for-older-logs": "",
       "stop-scan": ""
+    },
+    "query-library": {
+      "delete-query": "",
+      "delete-query-text": "",
+      "delete-query-title": "",
+      "query-deleted": ""
     },
     "rich-history": {
       "close-tooltip": "Cerrar el historial de consultas",
@@ -1166,7 +1191,7 @@
     "public": {
       "title": "Paneles de control públicos"
     },
-    "recentlyDeleted": {
+    "recently-deleted": {
       "subtitle": "",
       "title": ""
     },
@@ -1540,6 +1565,9 @@
       "role-label": "Rol"
     }
   },
+  "query-library": {
+    "delete-query-button": ""
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Contraer la fila de la consulta",
@@ -1556,7 +1584,16 @@
   },
   "recently-deleted": {
     "buttons": {
+      "delete": "",
       "restore": ""
+    },
+    "permanently-delete-modal": {
+      "confirm-text": "",
+      "delete-button": "",
+      "delete-loading": "",
+      "title": "",
+      "text_one": "",
+      "text_other": ""
     },
     "restore-modal": {
       "restore-button": "",
@@ -1615,6 +1652,7 @@
     "tree": {
       "collapse": "",
       "expand": "",
+      "headline": "",
       "search": ""
     }
   },
@@ -1635,6 +1673,8 @@
     },
     "results-table": {
       "datasource-header": "Fuente de datos",
+      "deleted-less-than-1-min": "",
+      "deleted-remaining-header": "",
       "location-header": "Ubicación",
       "name-header": "Nombre",
       "tags-header": "Etiquetas",

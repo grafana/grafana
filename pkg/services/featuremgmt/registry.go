@@ -100,15 +100,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:           "exploreContentOutline",
-			Description:    "Content outline sidebar",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaExploreSquad,
-			Expression:     "true", // enabled by default
-			FrontendOnly:   true,
-			AllowSelfServe: true,
-		},
-		{
 			Name:        "datasourceQueryMultiStatus",
 			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
 			Stage:       FeatureStageExperimental,
@@ -481,13 +472,6 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:         "prometheusIncrementalQueryInstrumentation",
-			Description:  "Adds RudderStack events to incremental queries",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
 			Name:         "logsExploreTableVisualisation",
 			Description:  "A table visualisation for logs in Explore",
 			Stage:        FeatureStageGeneralAvailability,
@@ -709,7 +693,7 @@ var (
 			AllowSelfServe:    false,
 			RequiresRestart:   true,
 		},
-		FeatureFlag{
+		{
 			Name:              "disableClassicHTTPHistogram",
 			Description:       "Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)",
 			Stage:             FeatureStageExperimental,
@@ -1223,12 +1207,6 @@ var (
 			AllowSelfServe: false,
 		},
 		{
-			Name:        "autofixDSUID",
-			Description: "Automatically migrates invalid datasource UIDs",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:         "logsExploreTableDefaultVisualization",
 			Description:  "Sets the logs table as default visualisation in logs explore",
 			Stage:        FeatureStageExperimental,
@@ -1337,11 +1315,43 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:        "failWrongDSUID",
+			Description: "Throws an error if a datasource has an invalid UIDs",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:        "databaseReadReplica",
 			Description: "Use a read replica for some database queries.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaBackendServicesSquad,
 			Expression:  "false", // enabled by default
+		},
+		{
+			Name:              "zanzana",
+			Description:       "Use openFGA as authorization engine.",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "passScopeToDashboardApi",
+			Description:       "Enables the passing of scopes to dashboards fetching in Grafana",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:            "alertingApiServer",
+			Description:     "Register Alerting APIs with the K8s API server",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
 		},
 	}
 )

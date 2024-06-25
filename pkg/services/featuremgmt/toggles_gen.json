@@ -92,6 +92,19 @@
     },
     {
       "metadata": {
+        "name": "alertingApiServer",
+        "resourceVersion": "1718908755156",
+        "creationTimestamp": "2024-06-20T18:39:15Z"
+      },
+      "spec": {
+        "description": "Register Alerting APIs with the K8s API server",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingBacktesting",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2022-12-14T14:44:14Z"
@@ -401,8 +414,9 @@
     {
       "metadata": {
         "name": "autofixDSUID",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-05-03T11:32:07Z"
+        "resourceVersion": "1717578796182",
+        "creationTimestamp": "2024-05-03T11:32:07Z",
+        "deletionTimestamp": "2024-06-18T14:28:32Z"
       },
       "spec": {
         "description": "Automatically migrates invalid datasource UIDs",
@@ -827,8 +841,9 @@
     {
       "metadata": {
         "name": "exploreContentOutline",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-10-13T16:57:13Z"
+        "resourceVersion": "1717578796182",
+        "creationTimestamp": "2023-10-13T16:57:13Z",
+        "deletionTimestamp": "2024-06-17T09:45:00Z"
       },
       "spec": {
         "description": "Content outline sidebar",
@@ -913,6 +928,18 @@
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "failWrongDSUID",
+        "resourceVersion": "1718721033692",
+        "creationTimestamp": "2024-06-18T14:30:33Z"
+      },
+      "spec": {
+        "description": "Throws an error if a datasource has an invalid UIDs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
       }
     },
     {
@@ -1667,6 +1694,20 @@
     },
     {
       "metadata": {
+        "name": "passScopeToDashboardApi",
+        "resourceVersion": "1718290335877",
+        "creationTimestamp": "2024-06-13T14:52:15Z"
+      },
+      "spec": {
+        "description": "Enables the passing of scopes to dashboards fetching in Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "pdfTables",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-11-06T13:39:22Z"
@@ -1819,7 +1860,8 @@
       "metadata": {
         "name": "prometheusIncrementalQueryInstrumentation",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-07-05T19:39:49Z"
+        "creationTimestamp": "2023-07-05T19:39:49Z",
+        "deletionTimestamp": "2024-06-20T11:30:37Z"
       },
       "spec": {
         "description": "Adds RudderStack events to incremental queries",
@@ -2304,6 +2346,20 @@
         "description": "Placeholder feature flag for internal testing",
         "stage": "experimental",
         "codeowner": "@grafana/hosted-grafana-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "zanzana",
+        "resourceVersion": "1718787304727",
+        "creationTimestamp": "2024-06-19T08:55:04Z"
+      },
+      "spec": {
+        "description": "Use openFGA as authorization engine.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     }
   ]
