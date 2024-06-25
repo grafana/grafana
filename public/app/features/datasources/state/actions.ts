@@ -1,5 +1,3 @@
-import { error } from 'console';
-
 import {
   DataSourcePluginMeta,
   DataSourceSettings,
