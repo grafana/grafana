@@ -235,9 +235,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
 
-// TODO: Refactor this function to reduce the cylomatic complexity
-//
-
 func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
@@ -361,27 +358,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		}
 
 		if len(withStates) > 0 {
-			// Filtering is weird but firing, pending, and normal filters also need to be
-			// applied to the rule. Others such as nodata and error should have no effect.
-			// This is to match the current behavior in the UI.
-			filteredRules := make([]apimodels.AlertingRule, 0, len(ruleGroup.Rules))
-			for _, rule := range ruleGroup.Rules {
-				var state *eval.State
-				switch rule.State {
-				case "normal", "inactive":
-					state = util.Pointer(eval.Normal)
-				case "alerting", "firing":
-					state = util.Pointer(eval.Alerting)
-				case "pending":
-					state = util.Pointer(eval.Pending)
-				}
-				if state != nil {
-					if _, ok := withStatesFast[*state]; ok {
-						filteredRules = append(filteredRules, rule)
-					}
-				}
-			}
-			ruleGroup.Rules = filteredRules
+			filterRules(ruleGroup, withStatesFast)
 		}
 
 		if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
@@ -409,7 +386,6 @@ func processGroupRules(groupedRules map[ngmodels.AlertRuleGroupKey][]*ngmodels.A
 				continue
 			}
 		}
-
 		groupKey := rule.GetGroupKey()
 		ruleGroup := groupedRules[groupKey]
 		ruleGroup = append(ruleGroup, rule)
@@ -420,6 +396,30 @@ func processGroupRules(groupedRules map[ngmodels.AlertRuleGroupKey][]*ngmodels.A
 	for _, groupRules := range groupedRules {
 		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(groupRules)
 	}
+}
+
+func filterRules(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.State]struct{}) {
+	// Filtering is weird but firing, pending, and normal filters also need to be
+	// applied to the rule. Others such as nodata and error should have no effect.
+	// This is to match the current behavior in the UI.
+	filteredRules := make([]apimodels.AlertingRule, 0, len(ruleGroup.Rules))
+	for _, rule := range ruleGroup.Rules {
+		var state *eval.State
+		switch rule.State {
+		case "normal", "inactive":
+			state = util.Pointer(eval.Normal)
+		case "alerting", "firing":
+			state = util.Pointer(eval.Alerting)
+		case "pending":
+			state = util.Pointer(eval.Pending)
+		}
+		if state != nil {
+			if _, ok := withStatesFast[*state]; ok {
+				filteredRules = append(filteredRules, rule)
+			}
+		}
+	}
+	ruleGroup.Rules = filteredRules
 }
 
 // This is the same as matchers.Matches but avoids the need to create a LabelSet
