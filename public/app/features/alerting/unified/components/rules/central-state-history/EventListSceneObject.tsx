@@ -89,7 +89,12 @@ function HistoryLogEvents({ logRecords }: HistoryLogEventsProps) {
   return (
     <ul>
       {logRecords.map((record) => {
-        return <EventRow key={record.timestamp + hashLabelsOrAnnotations(record.line.labels ?? {})} record={record} />;
+        return (
+          <EventRow
+            key={record.timestamp + hashLabelsOrAnnotations(record.line.labels ?? {}) + record.line.current}
+            record={record}
+          />
+        );
       })}
     </ul>
   );
