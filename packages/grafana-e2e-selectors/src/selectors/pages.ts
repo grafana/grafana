@@ -104,7 +104,7 @@ export const Pages = {
          * @deprecated use components.TimeZonePicker.containerV2 from Grafana 8.3 instead
          */
         timezone: 'Time zone picker select container',
-        title: 'Tab General',
+        title: 'General',
       },
       Annotations: {
         List: {
@@ -246,7 +246,6 @@ export const Pages = {
   },
   ShareDashboardModal: {
     PublicDashboard: {
-      Tab: 'Tab Public dashboard',
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
       LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
       CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
@@ -271,12 +270,8 @@ export const Pages = {
         ReshareLink: 'data-testid public dashboard reshare link button',
       },
     },
-    PublicDashboardScene: {
-      Tab: 'Tab Public Dashboard',
-    },
     SnapshotScene: {
       url: (key: string) => `/dashboard/snapshot/${key}`,
-      Tab: 'Tab Snapshot',
       PublishSnapshot: 'data-testid publish snapshot button',
       CopyUrlButton: 'data-testid snapshot copy url button',
       CopyUrlInput: 'data-testid snapshot copy url input',

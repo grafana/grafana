@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Button, ClipboardButton, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 

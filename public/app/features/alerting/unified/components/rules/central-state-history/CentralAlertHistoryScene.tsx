@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   EmbeddedScene,

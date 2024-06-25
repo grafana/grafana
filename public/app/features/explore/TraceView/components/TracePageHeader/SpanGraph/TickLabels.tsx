@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 

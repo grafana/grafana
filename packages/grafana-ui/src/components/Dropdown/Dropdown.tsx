@@ -10,7 +10,8 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import React, { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import * as React from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { GrafanaTheme2 } from '@grafana/data';

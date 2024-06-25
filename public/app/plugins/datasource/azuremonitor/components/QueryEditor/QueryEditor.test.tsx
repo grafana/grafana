@@ -1,5 +1,4 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { config } from '@grafana/runtime';

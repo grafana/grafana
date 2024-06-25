@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { EditorField, EditorRow } from '@grafana/experimental';
 import { AutoSizeInput, RadioButtonGroup } from '@grafana/ui';
