@@ -28,7 +28,7 @@ export interface TimeRangeInputProps {
   hideQuickRanges?: boolean;
   disabled?: boolean;
   showIcon?: boolean;
-  /** Which day of the week the calendar should start on. Possible values: "saturday", "sunday" or "monday") */
+  /** Which day of the week the calendar should start on. Possible values: "saturday", "sunday" or "monday" */
   weekStart?: string;
 }
 
