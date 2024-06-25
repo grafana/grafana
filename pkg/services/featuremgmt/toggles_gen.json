@@ -605,18 +605,6 @@
     },
     {
       "metadata": {
-        "name": "dashboardRestoreUI",
-        "resourceVersion": "1719314180817",
-        "creationTimestamp": "2024-06-25T11:16:20Z"
-      },
-      "spec": {
-        "description": "Enables the frontend to be able to restore a recently deleted dashboard",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
-      }
-    },
-    {
-      "metadata": {
         "name": "dashboardScene",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-11-13T08:51:21Z"
