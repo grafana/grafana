@@ -1244,6 +1244,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             tn(6).Add(state.ResendDelay * 4),
 					LastEvaluationTime: tn(6),
 					LastSentAt:         util.Pointer(tn(6)), // After 30s resend delay, last sent at is t6.
+					Annotations:        map[string]string{"annotation": "test", "Error": "with_state_error"},
 				},
 			},
 		},
