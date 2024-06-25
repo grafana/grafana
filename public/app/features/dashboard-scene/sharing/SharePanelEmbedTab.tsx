@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { TimeRange } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { DataFrameJSON, GrafanaTheme2, TimeRange } from '@grafana/data';

@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React from 'react';
+import { cloneElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -70,7 +70,7 @@ export const InlineField = ({
     <div className={cx(styles.container, className)} {...htmlProps}>
       {labelElement}
       <div className={styles.childContainer}>
-        {React.cloneElement(children, { invalid, disabled, loading })}
+        {cloneElement(children, { invalid, disabled, loading })}
         {invalid && error && (
           <div className={cx(styles.fieldValidationWrapper)}>
             <FieldValidationMessage>{error}</FieldValidationMessage>

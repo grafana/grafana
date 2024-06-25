@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { Resizable, ResizeCallback } from 're-resizable';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 
 import {
   DataFrame,

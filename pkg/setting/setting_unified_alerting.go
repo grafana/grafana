@@ -64,6 +64,7 @@ const (
 	stateHistoryDefaultEnabled     = true
 	lokiDefaultMaxQueryLength      = 721 * time.Hour // 30d1h, matches the default value in Loki
 	defaultRecordingRequestTimeout = 10 * time.Second
+	lokiDefaultMaxQuerySize        = 65536 // 64kb
 )
 
 type UnifiedAlertingSettings struct {
@@ -160,6 +161,7 @@ type UnifiedAlertingStateHistorySettings struct {
 	LokiBasicAuthPassword string
 	LokiBasicAuthUsername string
 	LokiMaxQueryLength    time.Duration
+	LokiMaxQuerySize      int
 	MultiPrimary          string
 	MultiSecondaries      []string
 	ExternalLabels        map[string]string
@@ -404,6 +406,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
 		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
 		LokiMaxQueryLength:    stateHistory.Key("loki_max_query_length").MustDuration(lokiDefaultMaxQueryLength),
+		LokiMaxQuerySize:      stateHistory.Key("loki_max_query_size").MustInt(lokiDefaultMaxQuerySize),
 		MultiPrimary:          stateHistory.Key("primary").MustString(""),
 		MultiSecondaries:      splitTrim(stateHistory.Key("secondaries").MustString(""), ","),
 		ExternalLabels:        stateHistoryLabels.KeysHash(),

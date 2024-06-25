@@ -176,7 +176,6 @@ Here's how the test would look like for this [OrgPicker](https://github.com/graf
 ```tsx
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { OrgPicker } from './OrgPicker';
 

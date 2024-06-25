@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { PopValueActionMeta, RemoveValueActionMeta } from 'react-select';
 
 import {

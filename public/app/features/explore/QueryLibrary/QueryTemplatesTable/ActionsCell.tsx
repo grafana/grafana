@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { reportInteraction, getAppEvents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { IconButton } from '@grafana/ui';
