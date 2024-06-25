@@ -153,6 +153,8 @@ Using the dropdown, select a column to include in the data. You can also specify
 
 Add further value columns by clicking the plus button and another column dropdown appears.
 
+{{< docs/shared source="grafana" lookup="datasources/sql-query-builder-macros.md" version="<GRAFANA_VERSION>" >}}
+
 ### Filter data (WHERE)
 
 To add a filter, toggle the **Filter** switch at the top of the editor.
@@ -247,8 +249,6 @@ Macros can be used within a query to simplify syntax and allow for dynamic parts
 | `$__unixEpochNanoTo()`                                | Will be replaced by the end of the currently active time selection as nanosecond timestamp. For example, _1494497183142514872_                                                                               |
 | `$__unixEpochGroup(dateColumn,'5m', [fillmode])`      | Same as $\_\_timeGroup but for times stored as Unix timestamp (`fillMode` only works with time series queries).                                                                                              |
 | `$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])` | Same as above but also adds a column alias (`fillMode` only works with time series queries).                                                                                                                 |
-
-We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
 ## Table queries
 

@@ -129,6 +129,8 @@ You can select an optional aggregation function for the column in the **Aggregat
 
 To add more value columns, click the plus (`+`) button to the right of the column's row.
 
+{{< docs/shared source="grafana" lookup="datasources/sql-query-builder-macros.md" version="<GRAFANA_VERSION>" >}}
+
 ### Filter data (WHERE)
 
 To add a filter, toggle the **Filter** switch at the top of the editor.

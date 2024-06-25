@@ -247,6 +247,8 @@ Using the dropdown, select a column to include in the data. You can also specify
 
 Add further value columns by clicking the plus button and another column dropdown appears.
 
+{{< docs/shared source="grafana" lookup="datasources/sql-query-builder-macros.md" version="<GRAFANA_VERSION>" >}}
+
 ### Filter data (WHERE)
 
 To add a filter, toggle the **Filter** switch at the top of the editor.
