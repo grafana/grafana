@@ -699,8 +699,6 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
           const rulesResult = await fetchRulerRules(rulerConfig);
 
           const existingNamespace = Boolean(rulesResult[namespaceName]);
-
-          // why check if namespace exists, GMA doesn't allow changing folder and DSM doesn't care
           if (!existingNamespace) {
             throw new Error(`Namespace "${namespaceName}" not found.`);
           }

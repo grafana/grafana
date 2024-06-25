@@ -202,7 +202,7 @@ const PauseTestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
     <>
       <button onClick={() => onClick()} />
       {requestState.isUninitialized && 'uninitialized'}
-      {requestState.isPending && 'pending'}
+      {requestState.isPending && 'loading'}
       {requestState.isSuccess && 'success'}
       {requestState.result && 'result'}
       {requestState.isError && `error: ${stringifyErrorLike(requestState.error)}`}
@@ -226,7 +226,7 @@ const DeleteTestComponent = ({ rule }: DeleteTestComponentProps) => {
     <>
       <button onClick={() => onClick()} />
       {requestState.isUninitialized && 'uninitialized'}
-      {requestState.isPending && 'pending'}
+      {requestState.isPending && 'loading'}
       {requestState.isSuccess && 'success'}
       {requestState.result && `result: ${JSON.stringify(requestState.result, null, 2)}`}
       {requestState.isError && `error: ${stringifyErrorLike(requestState.error)}`}

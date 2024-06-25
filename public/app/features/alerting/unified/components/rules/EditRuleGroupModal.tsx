@@ -4,14 +4,14 @@ import React, { useEffect, useMemo } from 'react';
 import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Button, Field, Input, Label, LinkButton, Modal, useStyles2, Stack } from '@grafana/ui';
+import { Badge, Button, Field, Input, Label, LinkButton, Modal, useStyles2, Stack, Alert } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
-  anyRequestState,
+  anyOfRequestState,
   useMoveRuleGroup,
   useRenameRuleGroup,
   useUpdateRuleGroupConfiguration,
@@ -19,6 +19,7 @@ import {
 import { rulesInSameGroupHaveInvalidFor } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { stringifyErrorLike } from '../../utils/misc';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import { AlertInfo, getAlertInfo, isRecordingRulerRule } from '../../utils/rules';
@@ -181,15 +182,18 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
 
-  // this modal can take 3 different actions, depending on what fields were updated.
-  // 1. update the rule group details without renaming either the namespace or group
-  // 2. rename the rule group, but keeping it in the same namespace
-  // 3. move the rule group to a new namespace, optionally with a different group name
+  /**
+   * This modal can take 3 different actions, depending on what fields were updated.
+   *
+   *  1. update the rule group details without renaming either the namespace or group
+   *  2. rename the rule group, but keeping it in the same namespace
+   *  3. move the rule group to a new namespace, optionally with a different group name
+   */
   const [updateRuleGroup, updateRuleGroupState] = useUpdateRuleGroupConfiguration();
   const [moveRuleGroup, moveRuleGroupState] = useMoveRuleGroup();
   const [renameRuleGroup, renameRuleGroupState] = useRenameRuleGroup();
 
-  const { isPending, isSuccess, isUninitialized } = anyRequestState(
+  const { isPending, isSuccess, isUninitialized, isError, error } = anyOfRequestState(
     updateRuleGroupState,
     moveRuleGroupState,
     renameRuleGroupState
@@ -234,8 +238,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     const updatedGroupName = values.groupName;
     const updatedInterval = values.groupInterval;
 
-    // GMA alert rules cannot be moved to another folder, for some reason?
-    // @todo support this maybe?
+    // GMA alert rules cannot be moved to another folder, we currently do not support it but it should be doable (with caveats).
     const shouldMove = isGrafanaManagedGroup ? false : updatedNamespaceName !== ruleGroupIdentifier.namespaceName;
     const shouldRename = updatedGroupName !== ruleGroupIdentifier.groupName;
 
@@ -377,7 +380,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 <RulesForGroupTable rulesWithoutRecordingRules={rulesWithoutRecordingRules} />
               </>
             )}
-
+            {isError && <Alert title={'Failed to update rule group'}>{stringifyErrorLike(error)}</Alert>}
             <div className={styles.modalButtons}>
               <Modal.ButtonRow>
                 <Button

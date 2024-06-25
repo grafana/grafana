@@ -6,6 +6,7 @@ import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { AlertGroupUpdated, alertRuleApi } from '../api/alertRuleApi';
+import { notFoundToNull } from '../api/util';
 import {
   deleteRuleAction,
   moveRuleGroupAction,
@@ -15,6 +16,7 @@ import {
   updateRuleGroupAction,
 } from '../reducers/ruler/ruleGroups';
 import { fetchRulesSourceBuildInfoAction, getDataSourceRulerConfig } from '../state/actions';
+import { isGrafanaRulesSource } from '../utils/datasource';
 
 type ProduceResult = RulerRuleGroupDTO | AlertGroupUpdated;
 type RequestState = {
@@ -90,8 +92,7 @@ function useProduceNewRuleGroup() {
       // the interfaces are compatible but it _should_ complain
       const newRuleGroup = ruleGroupReducer(latestRuleGroupDefinition, action);
 
-      // if we have no more rules left after reducing, remove the entire group
-      let updateRuleGroupDeferred: () => Promise<ProduceResult> = () => {
+      let actionsDeferred: () => Promise<ProduceResult> = () => {
         return upsertRuleGroup({
           rulerConfig,
           namespace: namespaceName,
@@ -99,8 +100,11 @@ function useProduceNewRuleGroup() {
         }).unwrap();
       };
 
-      // if we are deleting a rule, check if we need to delete the entire group instead
+      /*
+       * DELETE: if we are deleting a rule, check if we need to delete the entire group instead
+       */
       if (deleteRuleAction.match(action)) {
+        // if we have no more rules left after reducing, remove the entire group
         if (newRuleGroup.rules.length === 0) {
           return deleteRuleGroup({
             rulerConfig,
@@ -109,14 +113,33 @@ function useProduceNewRuleGroup() {
           }).unwrap();
         }
 
-        return updateRuleGroupDeferred();
+        // otherwise just update the rule group
+        return actionsDeferred();
       }
 
-      // if we are renaming a rule:
-      // 1. create the new rule group
-      // 2. delete the old rule group
+      /**
+       * RENAME
+       * 1. check if we are overwriting a target group
+       * 2. if not, create the new rule group
+       * 3. delete the old rule group
+       */
       if (renameRuleGroupAction.match(action)) {
-        updateRuleGroupDeferred = async () => {
+        const oldGroupName = groupName;
+        const newGroupName = action.payload.groupName;
+
+        actionsDeferred = async () => {
+          const targetGroup = await fetchRuleGroup({
+            rulerConfig,
+            namespace: namespaceName,
+            group: newGroupName,
+          })
+            .unwrap()
+            .catch(notFoundToNull);
+
+          if (targetGroup?.rules?.length) {
+            throw new Error('Target group has existing rules, merging rule groups is currently not supported.');
+          }
+
           const result = await upsertRuleGroup({
             rulerConfig,
             namespace: namespaceName,
@@ -126,25 +149,47 @@ function useProduceNewRuleGroup() {
           await deleteRuleGroup({
             rulerConfig,
             namespace: namespaceName,
-            group: groupName,
+            group: oldGroupName,
           }).unwrap();
 
           return result;
         };
       }
 
+      /**
+       * MOVE: only supported for data source managed rule groups for now
+       * @todo merge alert rules with the new target group if it already exists?
+       * 1. create the new rule group
+       * 2. delete the old one
+       */
       if (moveRuleGroupAction.match(action)) {
-        updateRuleGroupDeferred = async () => {
-          // @todo create new namespace
-          // await updateRuleGroup({
-          //   rulerConfig,
-          //   namespace: namespaceName,
-          //   payload: newRuleGroup,
-          // }).unwrap();
+        actionsDeferred = async () => {
+          const oldNamespace = namespaceName;
+
+          const targetNamespace = action.payload.namespaceName;
+          const targetGroupName = action.payload.groupName ?? groupName;
+
+          const targetGroup = await fetchRuleGroup({
+            rulerConfig,
+            namespace: targetNamespace,
+            group: targetGroupName,
+          })
+            .unwrap()
+            .catch(notFoundToNull);
+
+          if (targetGroup?.rules?.length) {
+            throw new Error('Target group already has rules, merging rule groups is currently not supported.');
+          }
+
+          await upsertRuleGroup({
+            rulerConfig,
+            namespace: targetNamespace,
+            payload: newRuleGroup,
+          }).unwrap();
 
           const result = await deleteRuleGroup({
             rulerConfig,
-            namespace: namespaceName,
+            namespace: oldNamespace,
             group: groupName,
           }).unwrap();
 
@@ -152,7 +197,7 @@ function useProduceNewRuleGroup() {
         };
       }
 
-      const result = await updateRuleGroupDeferred();
+      const result = await actionsDeferred();
       setResult(result);
 
       return result;
@@ -227,13 +272,19 @@ export function useUpdateRuleGroupConfiguration() {
 
 /**
  * Move a rule group to either another namespace with (optionally) a different name
- * @todo re-implement "unifiedalerting/updateLotexNamespaceAndGroup" action
  */
 export function useMoveRuleGroup() {
   const [produceNewRuleGroup, produceNewRuleGroupState] = useProduceNewRuleGroup();
 
   const moveFn = useCallback(
     async (ruleGroup: RuleGroupIdentifier, namespaceName: string, groupName?: string, interval?: string) => {
+      // we could technically support moving rule groups to another folder, though we don't have a "move" wizard yet.
+      // Here's what we'd need to do to support this:
+      //  1.
+      if (isGrafanaRulesSource(ruleGroup.dataSourceName)) {
+        throw new Error('Moving a Grafana-managed rule group to another folder is currently not supported.');
+      }
+
       const action = moveRuleGroupAction({ namespaceName, groupName, interval });
       return produceNewRuleGroup(ruleGroup, action);
     },
@@ -244,7 +295,7 @@ export function useMoveRuleGroup() {
 }
 
 /**
- * Rename a rule group within the same namespace
+ * Rename a rule group but keep it within the same namespace
  */
 export function useRenameRuleGroup() {
   const [produceNewRuleGroup, produceNewRuleGroupState] = useProduceNewRuleGroup();
@@ -260,7 +311,7 @@ export function useRenameRuleGroup() {
   return [renameFn, produceNewRuleGroupState] as const;
 }
 
-export function anyRequestState(...states: RequestState[]): RequestState {
+export function anyOfRequestState(...states: RequestState[]): RequestState {
   return {
     isUninitialized: states.every((s) => s.isUninitialized),
     isPending: states.some((s) => s.isPending),
