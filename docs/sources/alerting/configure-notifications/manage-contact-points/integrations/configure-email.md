@@ -80,13 +80,13 @@ To set up email integration, complete the following steps.
 
 ## Next steps
 
-To add the contact point and integration you created to your default notification policy, complete the following steps.
+The email contact point is ready to receive alert notifications.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification policies**.
-1. In the **Default policy**, click the ellipsis icon (…) and then **Edit**.
-1. Change the default policy to the contact point you created.
-1. Click **Update default policy**.
+To add this contact point to your alert, complete the following steps.
 
-{{% admonition type="note" %}}
-If you have more than one contact point, add a new child notification policy rather than edit the default one, so you can route specific alerts to one or multiple email addresses.
-{{% /admonition %}}
+1. In Grafana, navigate to **Alerting** > **Alert rules**.
+1. Edit or create a new alert rule.
+1. Scroll down to the **Configure labels and notifications** section.
+1. Under Notifications click **Select contact point**.
+1. From the drop-down menu, select the previously created contact point.
+1. **Click Save rule and exit**.
