@@ -664,7 +664,7 @@ const (
 	FlagNotificationBanner = "notificationBanner"
 
 	// FlagDashboardRestore
-	// Enables deleted dashboard restore feature
+	// Enables deleted dashboard restore feature (backend only)
 	FlagDashboardRestore = "dashboardRestore"
 
 	// FlagDatasourceProxyDisableRBAC
@@ -726,4 +726,8 @@ const (
 	// FlagAlertingApiServer
 	// Register Alerting APIs with the K8s API server
 	FlagAlertingApiServer = "alertingApiServer"
+
+	// FlagDashboardRestoreUI
+	// Enables the frontend to be able to restore a recently deleted dashboard
+	FlagDashboardRestoreUI = "dashboardRestoreUI"
 )

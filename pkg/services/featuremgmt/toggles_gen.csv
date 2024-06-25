@@ -163,7 +163,7 @@ logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,fa
 newDashboardSharingComponent,experimental,@grafana/sharing-squad,false,false,true
 alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
 notificationBanner,experimental,@grafana/grafana-frontend-platform,false,false,false
-dashboardRestore,experimental,@grafana/grafana-frontend-platform,false,false,false
+dashboardRestore,experimental,@grafana/search-and-storage,false,false,false
 datasourceProxyDisableRBAC,GA,@grafana/identity-access-team,false,false,false
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
@@ -179,3 +179,4 @@ databaseReadReplica,experimental,@grafana/grafana-backend-services-squad,false,f
 zanzana,experimental,@grafana/identity-access-team,false,false,false
 passScopeToDashboardApi,experimental,@grafana/dashboards-squad,false,false,false
 alertingApiServer,experimental,@grafana/alerting-squad,false,true,false
+dashboardRestoreUI,experimental,@grafana/grafana-frontend-platform,false,false,false
