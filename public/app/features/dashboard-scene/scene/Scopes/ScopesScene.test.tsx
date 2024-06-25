@@ -46,6 +46,7 @@ import {
   queryDashboardsExpand,
   renderDashboard,
   getDashboardsClear,
+  getApplicationsClear,
 } from './testUtils';
 
 jest.mock('@grafana/runtime', () => ({
@@ -181,6 +182,22 @@ describe('ScopesScene', () => {
         expect(getApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
         expect(getApplicationsSlothVoteTrackerSelect()).toBeInTheDocument();
         expect(queryApplicationsClustersTitle()).not.toBeInTheDocument();
+      });
+
+      it('Clear search works', async () => {
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.type(getApplicationsSearch(), 'Clusters');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
+        expect(queryApplicationsSlothPictureFactoryTitle()).not.toBeInTheDocument();
+        expect(queryApplicationsSlothVoteTrackerTitle()).not.toBeInTheDocument();
+        expect(getApplicationsClustersSelect()).toBeInTheDocument();
+        await userEvents.click(getApplicationsClear());
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(4));
+        expect(getApplicationsSearch().value).toBe('');
+        expect(queryApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+        expect(queryApplicationsSlothVoteTrackerTitle()).toBeInTheDocument();
+        expect(getApplicationsClustersSelect()).toBeInTheDocument();
       });
     });
 

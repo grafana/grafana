@@ -1665,6 +1665,7 @@
       }
     },
     "tree": {
+      "clear": "Clear search",
       "collapse": "Collapse",
       "expand": "Expand",
       "headline": "Recommended",

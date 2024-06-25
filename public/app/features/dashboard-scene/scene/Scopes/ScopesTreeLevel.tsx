@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -37,6 +37,10 @@ export function ScopesTreeLevel({
   const scopeNames = scopes.map(({ scopeName }) => scopeName);
   const anyChildExpanded = childNodesArr.some(({ isExpanded }) => isExpanded);
 
+  const [queryValue, setQueryValue] = useState(node.query);
+  useEffect(() => {
+    setQueryValue(node.query);
+  }, [node.query]);
   const onQueryUpdate = useMemo(() => debounce(onNodeUpdate, 500), [onNodeUpdate]);
 
   return (
@@ -46,9 +50,25 @@ export function ScopesTreeLevel({
           prefix={<Icon name="filter" />}
           className={styles.searchInput}
           placeholder={t('scopes.tree.search', 'Search')}
-          defaultValue={node.query}
+          value={queryValue}
           data-testid={`scopes-tree-${nodeId}-search`}
-          onInput={(evt) => onQueryUpdate(nodePath, true, evt.currentTarget.value)}
+          suffix={
+            queryValue ? (
+              <IconButton
+                aria-label={t('scopes.tree.clear', 'Clear search')}
+                name="times"
+                data-testid={`scopes-tree-${nodeId}-clear`}
+                onClick={() => {
+                  setQueryValue('');
+                  onQueryUpdate(nodePath, true, '');
+                }}
+              />
+            ) : undefined
+          }
+          onInput={(evt) => {
+            setQueryValue(evt.currentTarget.value);
+            onQueryUpdate(nodePath, true, evt.currentTarget.value);
+          }}
         />
       )}
 

@@ -294,6 +294,7 @@ export const getMock = jest
 const selectors = {
   tree: {
     search: (nodeId: string) => `scopes-tree-${nodeId}-search`,
+    clear: (nodeId: string) => `scopes-tree-${nodeId}-clear`,
     select: (nodeId: string) => `scopes-tree-${nodeId}-checkbox`,
     radio: (nodeId: string) => `scopes-tree-${nodeId}-radio`,
     expand: (nodeId: string) => `scopes-tree-${nodeId}-expand`,
@@ -332,7 +333,8 @@ export const queryDashboard = (uid: string) => screen.queryByTestId(selectors.da
 export const getDashboard = (uid: string) => screen.getByTestId(selectors.dashboards.dashboard(uid));
 
 export const getApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
-export const getApplicationsSearch = () => screen.getByTestId(selectors.tree.search('applications'));
+export const getApplicationsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search('applications'));
+export const getApplicationsClear = () => screen.getByTestId(selectors.tree.clear('applications'));
 export const queryApplicationsSlothPictureFactoryTitle = () =>
   screen.queryByTestId(selectors.tree.title('applications-slothPictureFactory'));
 export const getApplicationsSlothPictureFactoryTitle = () =>
