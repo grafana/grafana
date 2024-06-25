@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/cmsclient"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/slicesext"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -586,6 +588,55 @@ func (s *Service) DeleteMigration(ctx context.Context, uid string) (*cloudmigrat
 		return c, fmt.Errorf("deleting migration from db: %w", err)
 	}
 	return c, nil
+}
+
+func (s *Service) CreateSnapshot(ctx context.Context, migrationUID string) error {
+	// Get migration to read the auth token
+	migration, err := s.GetMigration(ctx, migrationUID)
+	if err != nil {
+		return fmt.Errorf("migration get error: %w", err)
+	}
+
+	migrationData, err := s.getMigrationDataJSON(ctx)
+	if err != nil {
+		return fmt.Errorf("fetching migration data: %w", err)
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, s.cfg.CloudMigration.StartSnapshotTimeout)
+	defer cancel()
+	snapshotInfo, err := s.cmsClient.StartSnapshot(timeoutCtx, migration)
+	if err != nil {
+		return fmt.Errorf("sending request to gms to start snapshot: %w", err)
+	}
+
+	snapshot, err := NewSnapshotWriter(filepath.Join(s.cfg.CloudMigration.SnapshotFolder, "grafana", "snapshots", snapshotInfo.SnapshotID))
+	if err != nil {
+		return fmt.Errorf("instantiating snapshot writer: %w", err)
+	}
+
+	resourcesGroupedByType := make(map[cloudmigration.MigrateDataType][]cloudmigration.MigrateDataRequestItemDTO, 0)
+	for _, item := range migrationData.Items {
+		resourcesGroupedByType[item.Type] = append(resourcesGroupedByType[item.Type], item)
+	}
+
+	for _, resourceType := range []cloudmigration.MigrateDataType{
+		cloudmigration.DatasourceDataType,
+		cloudmigration.FolderDataType,
+		cloudmigration.DashboardDataType,
+	} {
+		for _, chunk := range slicesext.Chunks(int(snapshotInfo.MaxItemsPerPartition), resourcesGroupedByType[resourceType]) {
+			if err := snapshot.Write(string(resourceType), chunk); err != nil {
+				return fmt.Errorf("writing resources to snapshot writer: resourceType=%s %w", resourceType, err)
+			}
+		}
+	}
+
+	_, err = snapshot.Finish()
+	if err != nil {
+		return fmt.Errorf("finishing writing snapshot files and generating index file: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) parseCloudMigrationConfig() (string, error) {

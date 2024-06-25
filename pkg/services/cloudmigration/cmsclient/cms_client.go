@@ -106,3 +106,42 @@ func (c *cmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.Cloud
 
 	return &result, nil
 }
+
+func (c *cmsClientImpl) StartSnapshot(ctx context.Context, cm *cloudmigration.CloudMigration) (cloudmigration.StartSnapshotResponse, error) {
+	logger := c.log.FromContext(ctx)
+
+	path := fmt.Sprintf("https://cms-%s.%s/cloud-migrations/api/v1/start-snapshot", cm.ClusterSlug, c.domain)
+
+	// Send the request to cms with the associated auth token
+	req, err := http.NewRequest(http.MethodPost, path, nil)
+	if err != nil {
+		c.log.Error("error creating http request to start snapshot", "err", err.Error())
+		return cloudmigration.StartSnapshotResponse{}, fmt.Errorf("http request error: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", cm.StackID, cm.AuthToken))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.log.Error("error sending http request to start snapshot", "err", err.Error())
+		return cloudmigration.StartSnapshotResponse{}, fmt.Errorf("http request error: %w", err)
+	} else if resp.StatusCode >= 400 {
+		c.log.Error("received error response to start snapshot", "statusCode", resp.StatusCode)
+		return cloudmigration.StartSnapshotResponse{}, fmt.Errorf("http request error: %w", err)
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Error("closing request body: %w", err)
+		}
+	}()
+
+	var result cloudmigration.StartSnapshotResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		logger.Error("unmarshalling response body: %w", err)
+		return cloudmigration.StartSnapshotResponse{}, fmt.Errorf("unmarshalling start snapshot response: %w", err)
+	}
+
+	return result, nil
+}

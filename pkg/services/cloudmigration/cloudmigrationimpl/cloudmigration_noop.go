@@ -63,3 +63,7 @@ func (s *NoopServiceImpl) CreateMigrationRun(context.Context, cloudmigration.Clo
 func (s *NoopServiceImpl) RunMigration(context.Context, string) (*cloudmigration.MigrateDataResponseDTO, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
+
+func (s *NoopServiceImpl) CreateSnapshot(context.Context, string) error {
+	return cloudmigration.ErrFeatureDisabledError
+}

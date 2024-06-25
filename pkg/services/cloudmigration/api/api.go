@@ -51,6 +51,7 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 		cloudMigrationRoute.Get("/token", routing.Wrap(cma.GetToken))
 		cloudMigrationRoute.Post("/token", routing.Wrap(cma.CreateToken))
 		cloudMigrationRoute.Delete("/token/:uid", routing.Wrap(cma.DeleteToken))
+		cloudMigrationRoute.Post("/snapshot", routing.Wrap(cma.CreateSnapshot))
 	}, middleware.ReqOrgAdmin)
 }
 
@@ -356,6 +357,31 @@ func (cma *CloudMigrationAPI) DeleteMigration(c *contextmodel.ReqContext) respon
 	return response.Empty(http.StatusOK)
 }
 
+// swagger:route POST /cloudmigration/snapshot migrations createSnapshot
+//
+// Creates a snapshot.
+//
+// Responses:
+// 204: description: Snapshot created
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (cma *CloudMigrationAPI) CreateSnapshot(c *contextmodel.ReqContext) response.Response {
+	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.CreateSnapshot")
+	defer span.End()
+
+	uid := web.Params(c.Req)[":uid"]
+	if err := util.ValidateUID(uid); err != nil {
+		return response.ErrOrFallback(http.StatusBadRequest, "invalid migration uid", err)
+	}
+
+	if err := cma.cloudMigrationService.CreateSnapshot(ctx, uid); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "create snapshot error", err)
+	}
+
+	return response.Empty(http.StatusNoContent)
+}
+
 // swagger:parameters deleteCloudMigration
 type DeleteMigrationRequest struct {
 	// UID of a migration
@@ -434,4 +460,8 @@ type DeleteCloudMigrationToken struct {
 
 // swagger:response cloudMigrationDeleteTokenResponse
 type CloudMigrationDeleteTokenResponse struct {
+}
+
+// swagger:parameters createSnapshot
+type CreateSnapshotRequest struct {
 }

@@ -10,6 +10,7 @@ import (
 type Client interface {
 	ValidateKey(context.Context, cloudmigration.CloudMigration) error
 	MigrateData(context.Context, cloudmigration.CloudMigration, cloudmigration.MigrateDataRequestDTO) (*cloudmigration.MigrateDataResponseDTO, error)
+	StartSnapshot(context.Context, *cloudmigration.CloudMigration) (cloudmigration.StartSnapshotResponse, error)
 }
 
 const logPrefix = "cloudmigration.cmsclient"

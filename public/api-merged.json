@@ -2503,6 +2503,29 @@
         }
       }
     },
+    "/cloudmigration/snapshot": {
+      "post": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Creates a snapshot.",
+        "operationId": "createSnapshot",
+        "responses": {
+          "204": {
+            "description": " Snapshot created"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/cloudmigration/token": {
       "get": {
         "tags": [

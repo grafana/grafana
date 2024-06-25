@@ -46,3 +46,7 @@ func (c *memoryClientImpl) MigrateData(
 
 	return &result, nil
 }
+
+func (c *memoryClientImpl) StartSnapshot(ctx context.Context, cm *cloudmigration.CloudMigration) (cloudmigration.StartSnapshotResponse, error) {
+	return cloudmigration.StartSnapshotResponse{}, nil
+}

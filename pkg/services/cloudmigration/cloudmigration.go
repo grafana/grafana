@@ -25,4 +25,6 @@ type Service interface {
 	CreateMigrationRun(context.Context, CloudMigrationRun) (string, error)
 	GetMigrationStatus(ctx context.Context, runUID string) (*CloudMigrationRun, error)
 	GetMigrationRunList(context.Context, string) (*CloudMigrationRunList, error)
+
+	CreateSnapshot(ctx context.Context, migrationUID string) error
 }

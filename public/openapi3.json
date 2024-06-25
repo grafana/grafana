@@ -15265,6 +15265,29 @@
         ]
       }
     },
+    "/cloudmigration/snapshot": {
+      "post": {
+        "operationId": "createSnapshot",
+        "responses": {
+          "204": {
+            "description": " Snapshot created"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Creates a snapshot.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
     "/cloudmigration/token": {
       "get": {
         "operationId": "getCloudMigrationToken",

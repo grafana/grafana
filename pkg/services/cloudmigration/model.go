@@ -145,3 +145,13 @@ type MigrateDataResponseItemDTO struct {
 	Status ItemStatus `json:"status"`
 	Error  string     `json:"error,omitempty"`
 }
+
+type StartSnapshotResponse struct {
+	SnapshotID           string            `json:"snapshotID"`
+	MaxItemsPerPartition uint32            `json:"maxItemsPerPartition"`
+	Algo                 string            `json:"algo"`
+	UploadURL            string            `json:"uploadURL"`
+	PresignedURLFormData map[string]string `json:"presignedURLFormData"`
+	EncryptionKey        []byte            `json:"encryptionKey"`
+	Nonce                []byte            `json:"nonce"`
+}
