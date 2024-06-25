@@ -1266,6 +1266,38 @@ describe('createSpanLinkFactory', () => {
     });
   });
 
+  describe('should return session link', () => {
+    beforeAll(() => {
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('does not add link when no ids are present', () => {
+      const createLink = setupSpanLinkFactory();
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+      const sessionLink = links?.find((link) => link.type === SpanLinkType.Session);
+      expect(sessionLink).toBe(undefined);
+    });
+
+    it('adds link when fe o11y ids are present', () => {
+      const createLink = setupSpanLinkFactory();
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'feo11y-service',
+            tags: [{ key: 'gf.feo11y.app.id', value: 'appId' }],
+          },
+          tags: [{ key: 'session_id', value: 'the-session-id' }],
+        })
+      );
+      const sessionLink = links?.find((link) => link.type === SpanLinkType.Session);
+      expect(sessionLink).toBeDefined();
+      expect(sessionLink!.href).toBe('/a/grafana-kowalski-app/apps/appId/sessions/the-session-id');
+    });
+  });
+
   describe('should return pyroscope link', () => {
     beforeAll(() => {
       setDataSourceSrv({
