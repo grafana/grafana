@@ -22,7 +22,7 @@
 - **Alerting:** Make regex notification routing preview consistent with notification policies implementation. [#88413](https://github.com/grafana/grafana/issues/88413), [@tomratcliffe](https://github.com/tomratcliffe)
 - **DateTimePicker:** Return cleared value in onChange. [#88377](https://github.com/grafana/grafana/issues/88377), [@Clarity-89](https://github.com/Clarity-89)
 - **NodeGraph:** Add msagl and the layered layout code. [#88375](https://github.com/grafana/grafana/issues/88375), [@aocenas](https://github.com/aocenas)
-- **API:** Add in theme support to /render/* endpoint. [#88304](https://github.com/grafana/grafana/issues/88304), [@timlevett](https://github.com/timlevett)
+- **API:** Add in theme support to /render/\* endpoint. [#88304](https://github.com/grafana/grafana/issues/88304), [@timlevett](https://github.com/timlevett)
 - **Alerting:** Add filters for RouteGetRuleStatuses. [#88295](https://github.com/grafana/grafana/issues/88295), [@fayzal-g](https://github.com/fayzal-g)
 - **Plugins:** Update the `plugin.json` schema with UI extensions meta-data. [#88288](https://github.com/grafana/grafana/issues/88288), [@leventebalogh](https://github.com/leventebalogh)
 - **Auth:** Update SAML lib to improve HTTP-Post binding. [#88287](https://github.com/grafana/grafana/issues/88287), [@mgyongyosi](https://github.com/mgyongyosi)
