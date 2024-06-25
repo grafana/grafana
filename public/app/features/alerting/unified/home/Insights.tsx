@@ -98,7 +98,7 @@ const namespace = config.bootData.settings.namespace;
 
 export const INSTANCE_ID = namespace.includes('stack-') ? namespace.replace('stack-', '') : undefined;
 
-export const getInsightsDataSources = () => {
+const getInsightsDataSources = () => {
   const dataSourceSrv = getDataSourceSrv();
 
   [ashDs, cloudUsageDs, grafanaCloudPromDs].forEach((ds) => {
