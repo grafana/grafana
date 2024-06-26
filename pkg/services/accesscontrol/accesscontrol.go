@@ -258,7 +258,7 @@ func GroupScopesByActionContext(ctx context.Context, permissions []Permission) m
 	for i := range permissions {
 		if _, ok := m[permissions[i].Action]; !ok {
 			actionCount++
-			m[permissions[i].Action] = make(map[string]struct{})
+			m[permissions[i].Action] = make(map[string]struct{}, len(permissions)/100)
 		}
 		m[permissions[i].Action][permissions[i].Scope] = struct{}{}
 	}
