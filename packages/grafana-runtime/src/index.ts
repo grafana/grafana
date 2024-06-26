@@ -52,3 +52,4 @@ export {
 export { usePluginInteractionReporter } from './analytics/plugins/usePluginInteractionReporter';
 export { setReturnToPreviousHook, useReturnToPrevious } from './utils/returnToPrevious';
 export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } from './components/EmbeddedDashboard';
+export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermission } from './utils/rbac';
