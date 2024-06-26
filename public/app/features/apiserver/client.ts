@@ -11,6 +11,9 @@ import {
   ResourceList,
   ResourceClient,
   ObjectMeta,
+  AnnoKeyOriginPath,
+  AnnoKeyOriginHash,
+  AnnoKeyOriginName,
 } from './types';
 
 export interface GroupVersionResource {
@@ -103,7 +106,7 @@ function setOriginAsUI(meta: Partial<ObjectMeta>) {
   if (!meta.annotations) {
     meta.annotations = {};
   }
-  meta.annotations.AnnoKeyOriginName = 'UI';
-  meta.annotations.AnnoKeyOriginPath = window.location.pathname;
-  meta.annotations.AnnoKeyOriginHash = config.buildInfo.versionString;
+  meta.annotations[AnnoKeyOriginName] = 'UI';
+  meta.annotations[AnnoKeyOriginPath] = window.location.pathname;
+  meta.annotations[AnnoKeyOriginHash] = config.buildInfo.versionString;
 }

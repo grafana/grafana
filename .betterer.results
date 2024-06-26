@@ -3100,6 +3100,9 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/utils/PanelModelCompatibilityWrapper.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/dashboard/api/dashboard_api.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/dashboard/components/AddLibraryPanelWidget/index.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./AddLibraryPanelWidget\`)", "0"]
     ],
