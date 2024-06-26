@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { StandardEditorProps, DataLink } from '@grafana/data';
 import { DataLinksInlineEditor } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
