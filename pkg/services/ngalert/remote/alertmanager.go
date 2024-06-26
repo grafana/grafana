@@ -78,8 +78,8 @@ type AlertmanagerConfig struct {
 
 	DefaultConfig string
 
-	// AppURL is used in notifications sent by the remote Alertmanager.
-	AppURL string
+	// ExternalURL is used in notifications sent by the remote Alertmanager.
+	ExternalURL string
 	// PromoteConfig is a flag that determines whether the configuration should be used in the remote Alertmanager.
 	// The same flag is used for promoting state.
 	PromoteConfig bool
@@ -119,7 +119,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		TenantID:      cfg.TenantID,
 		URL:           u,
 		PromoteConfig: cfg.PromoteConfig,
-		ExternalURL:   cfg.AppURL,
+		ExternalURL:   cfg.ExternalURL,
 	}
 	mc, err := remoteClient.New(mcCfg, metrics, tracer)
 	if err != nil {

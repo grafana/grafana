@@ -168,7 +168,7 @@ func TestApplyConfig(t *testing.T) {
 		DefaultConfig: defaultGrafanaConfig,
 		PromoteConfig: true,
 		SyncInterval:  1 * time.Hour,
-		AppURL:        "https://test.grafana.com",
+		ExternalURL:   "https://test.grafana.com",
 	}
 
 	ctx := context.Background()
@@ -200,7 +200,7 @@ func TestApplyConfig(t *testing.T) {
 	require.True(t, configSent.Promoted)
 
 	// Grafana's URL should be sent alongside the configuration.
-	require.Equal(t, cfg.AppURL, configSent.ExternalURL)
+	require.Equal(t, cfg.ExternalURL, configSent.ExternalURL)
 
 	// If we already got a 200 status code response and the sync interval hasn't elapsed,
 	// we shouldn't send the state/configuration again.
