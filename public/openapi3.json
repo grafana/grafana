@@ -1755,7 +1755,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/receiver"
+                "$ref": "#/components/schemas/Receiver"
               },
               "type": "array"
             }
@@ -2421,10 +2421,10 @@
             "type": "string"
           },
           "annotations": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "labels": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "state": {
             "type": "string"
@@ -2837,7 +2837,7 @@
             "type": "array"
           },
           "annotations": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "duration": {
             "format": "double",
@@ -2851,7 +2851,7 @@
             "type": "string"
           },
           "labels": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "lastError": {
             "type": "string"
@@ -9597,7 +9597,7 @@
             "type": "string"
           },
           "labels": {
-            "$ref": "#/components/schemas/overrideLabels"
+            "$ref": "#/components/schemas/Labels"
           },
           "lastError": {
             "type": "string"
@@ -12306,10 +12306,53 @@
             },
             "type": "object"
           },
+          "comment": {
+            "description": "comment",
+            "type": "string"
+          },
+          "createdBy": {
+            "description": "created by",
+            "type": "string"
+          },
+          "endsAt": {
+            "description": "ends at",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "id",
+            "type": "string"
+          },
+          "matchers": {
+            "$ref": "#/components/schemas/matchers"
+          },
           "metadata": {
             "$ref": "#/components/schemas/SilenceMetadata"
+          },
+          "startsAt": {
+            "description": "starts at",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/silenceStatus"
+          },
+          "updatedAt": {
+            "description": "updated at",
+            "format": "date-time",
+            "type": "string"
           }
         },
+        "required": [
+          "comment",
+          "createdBy",
+          "endsAt",
+          "matchers",
+          "startsAt",
+          "id",
+          "status",
+          "updatedAt"
+        ],
         "type": "object"
       },
       "gettableGrafanaSilences": {
@@ -12444,14 +12487,6 @@
           "$ref": "#/components/schemas/matcher"
         },
         "type": "array"
-      },
-      "overrideLabels": {
-        "additionalProperties": {
-          "type": "string"
-        },
-        "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
-        "title": "override the labels type with a map for generation.",
-        "type": "object"
       },
       "peerStatus": {
         "description": "PeerStatus peer status",
