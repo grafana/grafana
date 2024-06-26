@@ -58,7 +58,6 @@ export function ScopesTree({
     <>
       <ScopesTreeSearch
         anyChildExpanded={anyChildExpanded}
-        nodeId={nodeId}
         nodePath={nodePath}
         query={node.query}
         onNodeUpdate={onNodeUpdate}
@@ -74,6 +73,7 @@ export function ScopesTree({
           nodes={persistedNodes}
           scopes={scopes}
           scopeNames={scopeNames}
+          type="persisted"
           onNodeSelectToggle={onNodeSelectToggle}
           onNodeUpdate={onNodeUpdate}
         />
@@ -89,6 +89,7 @@ export function ScopesTree({
           nodes={resultsNodes}
           scopes={scopes}
           scopeNames={scopeNames}
+          type="result"
           onNodeSelectToggle={onNodeSelectToggle}
           onNodeUpdate={onNodeUpdate}
         />

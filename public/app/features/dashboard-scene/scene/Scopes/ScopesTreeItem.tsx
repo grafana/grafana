@@ -16,6 +16,7 @@ export interface ScopesTreeItemProps {
   nodes: Node[];
   scopeNames: string[];
   scopes: TreeScope[];
+  type: 'persisted' | 'result';
   onNodeUpdate: (path: string[], isExpanded: boolean, query: string) => void;
   onNodeSelectToggle: (path: string[]) => void;
 }
@@ -28,6 +29,7 @@ export function ScopesTreeItem({
   nodes,
   scopeNames,
   scopes,
+  type,
   onNodeSelectToggle,
   onNodeUpdate,
 }: ScopesTreeItemProps) {
@@ -56,7 +58,7 @@ export function ScopesTreeItem({
                     name={radioName}
                     checked={isSelected}
                     label=""
-                    data-testid={`scopes-tree-${childNode.name}-radio`}
+                    data-testid={`scopes-tree-${type}-${childNode.name}-radio`}
                     onClick={() => {
                       onNodeSelectToggle(childNodePath);
                     }}
@@ -64,7 +66,7 @@ export function ScopesTreeItem({
                 ) : (
                   <Checkbox
                     checked={isSelected}
-                    data-testid={`scopes-tree-${childNode.name}-checkbox`}
+                    data-testid={`scopes-tree-${type}-${childNode.name}-checkbox`}
                     onChange={() => {
                       onNodeSelectToggle(childNodePath);
                     }}
@@ -75,7 +77,7 @@ export function ScopesTreeItem({
               {childNode.isExpandable ? (
                 <button
                   className={styles.expand}
-                  data-testid={`scopes-tree-${childNode.name}-expand`}
+                  data-testid={`scopes-tree-${type}-${childNode.name}-expand`}
                   aria-label={
                     childNode.isExpanded ? t('scopes.tree.collapse', 'Collapse') : t('scopes.tree.expand', 'Expand')
                   }
@@ -88,7 +90,7 @@ export function ScopesTreeItem({
                   {childNode.title}
                 </button>
               ) : (
-                <span data-testid={`scopes-tree-${childNode.name}-title`}>{childNode.title}</span>
+                <span data-testid={`scopes-tree-${type}-${childNode.name}-title`}>{childNode.title}</span>
               )}
             </div>
 
