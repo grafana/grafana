@@ -11,43 +11,45 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	dashboardssvc "github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-type AccessREST struct {
+// The DTO returns everything the UI needs in a single request
+type DTOConnector struct {
 	builder *DashboardsAPIBuilder
 }
 
-var _ = rest.Connecter(&AccessREST{})
-var _ = rest.StorageMetadata(&AccessREST{})
+var _ = rest.Connecter(&DTOConnector{})
+var _ = rest.StorageMetadata(&DTOConnector{})
 
-func (r *AccessREST) New() runtime.Object {
-	return &dashboard.DashboardAccessInfo{}
+func (r *DTOConnector) New() runtime.Object {
+	return &dashboard.DashboardWithAccessInfo{}
 }
 
-func (r *AccessREST) Destroy() {
+func (r *DTOConnector) Destroy() {
 }
 
-func (r *AccessREST) ConnectMethods() []string {
+func (r *DTOConnector) ConnectMethods() []string {
 	return []string{"GET"}
 }
 
-func (r *AccessREST) NewConnectOptions() (runtime.Object, bool, string) {
+func (r *DTOConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return &dashboard.VersionsQueryOptions{}, false, ""
 }
 
-func (r *AccessREST) ProducesMIMETypes(verb string) []string {
+func (r *DTOConnector) ProducesMIMETypes(verb string) []string {
 	return nil
 }
 
-func (r *AccessREST) ProducesObject(verb string) interface{} {
-	return &dashboard.DashboardAccessInfo{}
+func (r *DTOConnector) ProducesObject(verb string) interface{} {
+	return &dashboard.DashboardWithAccessInfo{}
 }
 
-func (r *AccessREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -58,7 +60,7 @@ func (r *AccessREST) Connect(ctx context.Context, name string, opts runtime.Obje
 		return nil, err
 	}
 
-	dto, err := r.builder.dashboardService.GetDashboard(ctx, &dashboardssvc.GetDashboardQuery{
+	dto, err := r.builder.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
 		UID:   name,
 		OrgID: info.OrgID,
 	})
@@ -75,7 +77,7 @@ func (r *AccessREST) Connect(ctx context.Context, name string, opts runtime.Obje
 		return nil, fmt.Errorf("not allowed to view")
 	}
 
-	access := &dashboard.DashboardAccessInfo{}
+	access := dashboard.DashboardAccess{}
 	access.CanEdit, _ = guardian.CanEdit()
 	access.CanSave, _ = guardian.CanSave()
 	access.CanAdmin, _ = guardian.CanAdmin()
@@ -86,12 +88,22 @@ func (r *AccessREST) Connect(ctx context.Context, name string, opts runtime.Obje
 	r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
 	r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
+	dash, err := r.builder.access.GetDashboard(ctx, info.OrgID, name)
+	if err != nil {
+		return nil, err
+	}
+	access.Slug = slugify.Slugify(dash.Spec.GetNestedString("title"))
+	access.Url = dashboards.GetDashboardFolderURL(false, name, access.Slug)
+
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		responder.Object(http.StatusOK, access)
+		responder.Object(http.StatusOK, &dashboard.DashboardWithAccessInfo{
+			Dashboard: *dash,
+			Access:    access,
+		})
 	}), nil
 }
 
-func (r *AccessREST) getAnnotationPermissionsByScope(ctx context.Context, user identity.Requester, actions *dashboard.AnnotationActions, scope string) {
+func (r *DTOConnector) getAnnotationPermissionsByScope(ctx context.Context, user identity.Requester, actions *dashboard.AnnotationActions, scope string) {
 	var err error
 
 	evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, scope)

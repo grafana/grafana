@@ -11,6 +11,8 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -25,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ builder.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
@@ -84,7 +85,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&v0alpha1.Dashboard{},
 		&v0alpha1.DashboardList{},
-		&v0alpha1.DashboardAccessInfo{},
+		&v0alpha1.DashboardWithAccessInfo{},
 		&v0alpha1.DashboardVersionList{},
 		&v0alpha1.DashboardSummary{},
 		&v0alpha1.DashboardSummaryList{},
@@ -135,7 +136,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 
 	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = legacyStore
-	storage[resourceInfo.StoragePath("access")] = &AccessREST{
+	storage[resourceInfo.StoragePath("dto")] = &DTOConnector{
 		builder: b,
 	}
 	storage[resourceInfo.StoragePath("versions")] = &VersionsREST{
