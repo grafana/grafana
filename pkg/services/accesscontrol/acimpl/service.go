@@ -249,7 +249,7 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	return permissions, nil
 }
 
-func (s *Service) getCachedBasicRolesPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options, basicRolesPermissions []accesscontrol.Permission) ([]accesscontrol.Permission, error) {
+func (s *Service) getCachedBasicRolesPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options, permissions []accesscontrol.Permission) ([]accesscontrol.Permission, error) {
 	ctx, span := s.tracer.Start(ctx, "authz.getCachedBasicRolesPermissions")
 	defer span.End()
 
@@ -259,9 +259,9 @@ func (s *Service) getCachedBasicRolesPermissions(ctx context.Context, user ident
 		if err != nil {
 			return nil, err
 		}
-		basicRolesPermissions = append(basicRolesPermissions, permissions...)
+		permissions = append(permissions, perms...)
 	}
-	return basicRolesPermissions, nil
+	return permissions, nil
 }
 
 func (s *Service) getCachedBasicRolePermissions(ctx context.Context, role string, orgID int64, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -436,9 +436,7 @@ func GetActionFilter(options accesscontrol.SearchOptions) func(action string) bo
 }
 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
-func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
-	options accesscontrol.SearchOptions,
-) (map[int64][]accesscontrol.Permission, error) {
+func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	// Limit roles to available in OSS
 	options.RolePrefixes = OSSRolesPrefixes
 	if options.NamespacedID != "" {
