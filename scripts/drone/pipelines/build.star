@@ -94,7 +94,6 @@ def build_e2e(trigger, ver_mode):
 
     build_steps.extend(
         [
-            e2e_storybook_step(),
             grafana_server_step(),
             e2e_tests_step("dashboards-suite"),
             e2e_tests_step("scenes/dashboards-suite"),
@@ -104,6 +103,7 @@ def build_e2e(trigger, ver_mode):
             e2e_tests_step("scenes/panels-suite"),
             e2e_tests_step("various-suite"),
             e2e_tests_step("scenes/various-suite"),
+            e2e_storybook_step(),
             cloud_plugins_e2e_tests_step(
                 "cloud-plugins-suite",
                 cloud = "azure",

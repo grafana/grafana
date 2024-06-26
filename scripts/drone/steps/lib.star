@@ -310,6 +310,7 @@ def e2e_tests_artifacts():
             "end-to-end-tests-panels-suite",
             "end-to-end-tests-smoke-tests-suite",
             "end-to-end-tests-various-suite",
+            "end-to-end-tests-storybook-suite",
         ],
         "failure": "ignore",
         "when": {
@@ -778,6 +779,12 @@ def e2e_storybook_step():
     return {
         "name": "end-to-end-tests-storybook-suite",
         "image": images["cypress"],
+        "depends_on": [
+            "grafana-server",
+        ],
+        "environment": {
+            "HOST": "grafana-server",
+        },
         "commands": [
             "yarn e2e:storybook",
         ],
