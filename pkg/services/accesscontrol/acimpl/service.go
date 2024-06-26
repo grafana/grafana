@@ -103,6 +103,7 @@ func (s *Service) GetUsageStats(_ context.Context) map[string]any {
 func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	ctx, span := s.tracer.Start(ctx, "authz.GetUserPermissionsOSS")
 	defer span.End()
+
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
@@ -114,6 +115,9 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 }
 
 func (s *Service) getUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	ctx, span := s.tracer.Start(ctx, "authz.getUserPermissions")
+	defer span.End()
+
 	permissions := make([]accesscontrol.Permission, 0)
 	for _, builtin := range accesscontrol.GetOrgRoles(user) {
 		if basicRole, ok := s.roles[builtin]; ok {
@@ -254,8 +258,10 @@ func (s *Service) getCachedBasicRolesPermissions(ctx context.Context, user ident
 	defer span.End()
 
 	basicRoles := accesscontrol.GetOrgRoles(user)
+	span.SetAttributes(attribute.Int("roles", len(basicRoles)))
 	for _, role := range basicRoles {
 		perms, err := s.getCachedBasicRolePermissions(ctx, role, user.GetOrgID(), options)
+		span.SetAttributes(attribute.Int(fmt.Sprintf("role_%s_permissions", role), len(perms)))
 		if err != nil {
 			return nil, err
 		}
@@ -290,12 +296,13 @@ type getPermissionsFunc = func(ctx context.Context) ([]accesscontrol.Permission,
 
 // Generic method for getting various permissions from cache
 func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermissionsFn getPermissionsFunc, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
-	_, span := s.tracer.Start(ctx, "authz.getCachedPermissions")
+	ctx, span := s.tracer.Start(ctx, "authz.getCachedPermissions")
 	defer span.End()
 
 	if !options.ReloadCache {
 		permissions, ok := s.cache.Get(key)
 		if ok {
+			span.SetAttributes(attribute.Int("num_permissions_cached", len(permissions.([]accesscontrol.Permission))))
 			metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
 			return permissions.([]accesscontrol.Permission), nil
 		}
@@ -304,6 +311,7 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 	span.AddEvent("cache miss")
 	metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
 	permissions, err := getPermissionsFn(ctx)
+	span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
 	if err != nil {
 		return nil, err
 	}
@@ -327,6 +335,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 			teamPermissions, ok := s.cache.Get(key)
 			if ok {
 				metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
+				span.SetAttributes(attribute.Int("num_permissions_cached", len(teamPermissions.([]accesscontrol.Permission))))
 				permissions = append(permissions, teamPermissions.([]accesscontrol.Permission)...)
 			} else {
 				miss = append(miss, teamID)
@@ -338,6 +347,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 		span.AddEvent("cache miss")
 		metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
 		teamsPermissions, err := s.getTeamsPermissions(ctx, miss, orgID)
+		span.SetAttributes(attribute.Int("num_permissions_fetched", len(teamsPermissions)))
 		if err != nil {
 			return nil, err
 		}
@@ -358,10 +368,16 @@ func (s *Service) ClearUserPermissionCache(user identity.Requester) {
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
+	ctx, span := s.tracer.Start(ctx, "authz.DeleteUserPermissions")
+	defer span.End()
+
 	return s.store.DeleteUserPermissions(ctx, orgID, userID)
 }
 
 func (s *Service) DeleteTeamPermissions(ctx context.Context, orgID int64, teamID int64) error {
+	ctx, span := s.tracer.Start(ctx, "authz.DeleteTeamPermissions")
+	defer span.End()
+
 	return s.store.DeleteTeamPermissions(ctx, orgID, teamID)
 }
 
@@ -387,6 +403,9 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 
 // RegisterFixedRoles registers all declared roles in RAM
 func (s *Service) RegisterFixedRoles(ctx context.Context) error {
+	ctx, span := s.tracer.Start(ctx, "authz.RegisterFixedRoles")
+	defer span.End()
+
 	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
 		for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 			if basicRole, ok := s.roles[br]; ok {
@@ -403,6 +422,9 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs []plugins.RoleRegistration) error {
+	ctx, span := s.tracer.Start(ctx, "authz.DeclarePluginRoles")
+	defer span.End()
+
 	// Protect behind feature toggle
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) {
 		return nil
@@ -437,6 +459,9 @@ func GetActionFilter(options accesscontrol.SearchOptions) func(action string) bo
 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	ctx, span := s.tracer.Start(ctx, "authz.SearchUserPermissions")
+	defer span.End()
+
 	// Limit roles to available in OSS
 	options.RolePrefixes = OSSRolesPrefixes
 	if options.NamespacedID != "" {
@@ -548,6 +573,9 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 }
 
 func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+	ctx, span := s.tracer.Start(ctx, "authz.SearchUserPermissions")
+	defer span.End()
+
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
@@ -555,13 +583,16 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 		return nil, fmt.Errorf("expected namespaced ID to be specified")
 	}
 
-	if permissions, success := s.searchUserPermissionsFromCache(orgID, searchOptions); success {
+	if permissions, success := s.searchUserPermissionsFromCache(ctx, orgID, searchOptions); success {
 		return permissions, nil
 	}
 	return s.searchUserPermissions(ctx, orgID, searchOptions)
 }
 
 func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+	ctx, span := s.tracer.Start(ctx, "authz.searchUserPermissions")
+	defer span.End()
+
 	userID, err := searchOptions.ComputeUserID()
 	if err != nil {
 		return nil, err
@@ -611,7 +642,10 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	return permissions, nil
 }
 
-func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, bool) {
+func (s *Service) searchUserPermissionsFromCache(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, bool) {
+	ctx, span := s.tracer.Start(ctx, "authz.searchUserPermissionsFromCache")
+	defer span.End()
+
 	userID, err := searchOptions.ComputeUserID()
 	if err != nil {
 		return nil, false
@@ -651,6 +685,9 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 }
 
 func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
+	ctx, span := s.tracer.Start(ctx, "authz.SaveExternalServiceRole")
+	defer span.End()
+
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
@@ -664,6 +701,9 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 }
 
 func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
+	ctx, span := s.tracer.Start(ctx, "authz.DeleteExternalServiceRole")
+	defer span.End()
+
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
@@ -679,6 +719,9 @@ func (*Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontro
 }
 
 func (s *Service) GetRoleByName(ctx context.Context, orgID int64, roleName string) (*accesscontrol.RoleDTO, error) {
+	ctx, span := s.tracer.Start(ctx, "authz.GetRoleByName")
+	defer span.End()
+
 	err := accesscontrol.ErrRoleNotFound
 	if _, ok := s.roles[roleName]; ok {
 		return nil, err
