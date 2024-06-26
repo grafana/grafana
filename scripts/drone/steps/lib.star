@@ -786,6 +786,8 @@ def e2e_storybook_step():
             "HOST": "grafana-server",
         },
         "commands": [
+            "apt-get update",
+            "apt-get install -yq netcat",
             "yarn e2e:storybook",
         ],
     }

@@ -650,6 +650,8 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-scenes/various-suite
 - commands:
+  - apt-get update
+  - apt-get install -yq netcat
   - yarn e2e:storybook
   depends_on:
   - grafana-server
@@ -2006,6 +2008,8 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-scenes/various-suite
 - commands:
+  - apt-get update
+  - apt-get install -yq netcat
   - yarn e2e:storybook
   depends_on:
   - grafana-server
@@ -5081,6 +5085,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: f389842daa285abab174be58fccec5c160a74d2a1229e58d7196e4c1ef57e50c
+hmac: ca1b0877c97975c84c5bdbb76f51bb1eb6d8a1204b34d2380677860639bb7676
 
 ...
