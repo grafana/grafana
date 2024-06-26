@@ -216,6 +216,9 @@ var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructured
 
 // Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
 func Compare(storageObj, legacyObj runtime.Object) bool {
+	if storageObj == nil || legacyObj == nil {
+		return false
+	}
 	return bytes.Equal(removeMeta(storageObj), removeMeta(legacyObj))
 }
 
@@ -226,7 +229,8 @@ func removeMeta(obj runtime.Object) []byte {
 		return nil
 	}
 	// we don't want to compare meta fields
-	delete(unstObj, "meta")
+	delete(unstObj, "metadata")
+
 	jsonObj, err := json.Marshal(cpy)
 	if err != nil {
 		return nil
