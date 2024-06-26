@@ -13,6 +13,7 @@ import {
   rangeUtil,
   TimeRange,
   LoadingState,
+  Field,
 } from '@grafana/data';
 import { combineResponses } from '@grafana/o11y-ds-frontend';
 
@@ -118,9 +119,22 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
     if (group.request.requestId) {
       subRequest.requestId = `${group.request.requestId}_${requestN}`;
     }
-
+    console.log("Executing subquery ::", subRequest.targets[0].expr);
     subquerySubsciption = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse) => {
+        // log all values of partialResponse.data[i].fields[i].values if they are greater than 1719397800000 or less than 1719396900000
+        partialResponse.data.forEach((frame) => { 
+          frame.fields.forEach((field: Field) => {
+            if (field.type === 'time') {
+              field.values.forEach((value) => {
+                if (value < 1719396900000 || value > 1719397800000) {
+                  console.log("subquery response:: ", partialResponse);
+                  console.log("value:: ", value);
+                }
+              });
+            }
+          });
+        }),
         mergedResponse = combineResponses(mergedResponse, partialResponse);
         mergedResponse = updateLoadingFrame(mergedResponse, subRequest, longestPartition, requestN);
         if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
@@ -251,7 +265,7 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
       // for i from 1 to 20, change request expr to append shard stream __shard_stream__=i
       // how to persist the order?
       // shard as query param -> 
-      for (let i = 100; i < 0; i--) {
+      for (let i = 50; i > 0; i--) {
         const shardedTargets = targets.map((q) => {
           const newExpr = q.expr.replace(/}/g, `\, __stream_shard__="${i}"}`);
           return { ...q, expr: newExpr };
