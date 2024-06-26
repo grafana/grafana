@@ -11,6 +11,8 @@ import (
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,7 +20,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func Test_GetAllCloudMigrations(t *testing.T) {
+func Test_GetAllCloudMigrationSessions(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
@@ -44,11 +46,11 @@ func Test_GetAllCloudMigrations(t *testing.T) {
 	})
 }
 
-func Test_CreateMigration(t *testing.T) {
+func Test_CreateMigrationSession(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
-	t.Run("creates migrations and reads it from the db", func(t *testing.T) {
+	t.Run("creates a session and reads it from the db", func(t *testing.T) {
 		cm := cloudmigration.CloudMigrationSession{
 			AuthToken:   encodeToken("token"),
 			Slug:        "fake_stack",
@@ -56,15 +58,15 @@ func Test_CreateMigration(t *testing.T) {
 			RegionSlug:  "fake_slug",
 			ClusterSlug: "fake_cluster_slug",
 		}
-		mig, err := s.CreateMigrationSession(ctx, cm)
+		sess, err := s.CreateMigrationSession(ctx, cm)
 		require.NoError(t, err)
-		require.NotEmpty(t, mig.ID)
-		require.NotEmpty(t, mig.UID)
+		require.NotEmpty(t, sess.ID)
+		require.NotEmpty(t, sess.UID)
 
-		getRes, err := s.GetMigrationSessionByUID(ctx, mig.UID)
+		getRes, err := s.GetMigrationSessionByUID(ctx, sess.UID)
 		require.NoError(t, err)
-		require.Equal(t, mig.ID, getRes.ID)
-		require.Equal(t, mig.UID, getRes.UID)
+		require.Equal(t, sess.ID, getRes.ID)
+		require.Equal(t, sess.UID, getRes.UID)
 		require.Equal(t, cm.AuthToken, getRes.AuthToken)
 		require.Equal(t, cm.Slug, getRes.Slug)
 		require.Equal(t, cm.StackID, getRes.StackID)
@@ -73,7 +75,7 @@ func Test_CreateMigration(t *testing.T) {
 	})
 }
 
-func Test_GetMigrationByUID(t *testing.T) {
+func Test_GetMigrationSessionByUID(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
 	t.Run("find session by uid", func(t *testing.T) {
@@ -89,7 +91,7 @@ func Test_GetMigrationByUID(t *testing.T) {
 	})
 }
 
-func Test_DeleteMigration(t *testing.T) {
+func Test_DeleteMigrationSession(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()
 
@@ -110,10 +112,9 @@ func Test_CreateMigrationRun(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("creates a session run and retrieves it from db", func(t *testing.T) {
-		result := []byte("OK")
 		cmr := cloudmigration.CloudMigrationSnapshot{
 			SessionUID: "asdfg",
-			Result:     result,
+			Status:     cloudmigration.SnapshotStatusFinished,
 		}
 
 		createResp, err := s.CreateMigrationRun(ctx, cmr)
@@ -122,7 +123,7 @@ func Test_CreateMigrationRun(t *testing.T) {
 
 		getMRResp, err := s.GetMigrationStatus(ctx, createResp)
 		require.NoError(t, err)
-		require.Equal(t, result, getMRResp.Result)
+		require.Equal(t, cmr.Status, getMRResp.Status)
 	})
 }
 
@@ -152,13 +153,105 @@ func Test_GetMigrationStatusList(t *testing.T) {
 		list, err := s.GetMigrationStatusList(ctx, "qwerty")
 		require.NoError(t, err)
 		require.Equal(t, 2, len(list))
-		// TODO validate that this is ok
 	})
 
 	t.Run("returns no error if migration was not found, just empty list", func(t *testing.T) {
 		list, err := s.GetMigrationStatusList(ctx, "fake_migration")
 		require.NoError(t, err)
 		require.Equal(t, 0, len(list))
+	})
+}
+
+func Test_SnapshotManagement(t *testing.T) {
+	_, s := setUpTest(t)
+	ctx := context.Background()
+
+	t.Run("tests the snapshot lifecycle", func(t *testing.T) {
+		var snapshotUid string
+		sessionUid := util.GenerateShortUID()
+
+		// create a snapshot
+		cmr := cloudmigration.CloudMigrationSnapshot{
+			SessionUID: sessionUid,
+			Status:     "initializing",
+		}
+
+		snapshotUid, err := s.CreateSnapshot(ctx, cmr)
+		require.NoError(t, err)
+		require.NotEmpty(t, snapshotUid)
+
+		//retrieve it from the db
+		snapshot, err := s.GetSnapshotByUID(ctx, snapshotUid, 0, 0)
+		require.NoError(t, err)
+		require.Equal(t, cloudmigration.SnapshotStatusInitializing, string(snapshot.Status))
+
+		// update its status
+		err = s.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{UID: snapshotUid, Status: cloudmigration.SnapshotStatusCreating})
+		require.NoError(t, err)
+
+		//retrieve it again
+		snapshot, err = s.GetSnapshotByUID(ctx, snapshotUid, 0, 0)
+		require.NoError(t, err)
+		require.Equal(t, cloudmigration.SnapshotStatusCreating, string(snapshot.Status))
+
+		// lists snapshots and ensures it's in there
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUid, Page: 1, Limit: 100})
+		require.NoError(t, err)
+		require.Len(t, snapshots, 1)
+		require.Equal(t, *snapshot, snapshots[0])
+	})
+}
+
+func Test_SnapshotResources(t *testing.T) {
+	_, s := setUpTest(t)
+	ctx := context.Background()
+
+	t.Run("tests CRUD of snapshot resources", func(t *testing.T) {
+		// Get the default rows from the test
+		resources, err := s.GetSnapshotResources(ctx, "poiuy", 0, 100)
+		assert.NoError(t, err)
+		assert.Len(t, resources, 3)
+
+		// create a new resource and update an existing resource
+		err = s.CreateUpdateSnapshotResources(ctx, "poiuy", []cloudmigration.CloudMigrationResource{
+			{
+				Type:   cloudmigration.DatasourceDataType,
+				RefID:  "mi39fj",
+				Status: cloudmigration.ItemStatusOK,
+			},
+			{
+				UID:    "qwerty",
+				Status: cloudmigration.ItemStatusOK,
+			},
+		})
+		assert.NoError(t, err)
+
+		// Get resources again
+		resources, err = s.GetSnapshotResources(ctx, "poiuy", 0, 100)
+		assert.NoError(t, err)
+		assert.Len(t, resources, 4)
+		// ensure existing resource was updated
+		for _, r := range resources {
+			if r.UID == "querty" {
+				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
+				break
+			}
+		}
+		// ensure a new one was made
+		for _, r := range resources {
+			if r.UID == "mi39fj" {
+				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
+				break
+			}
+		}
+
+		// delete snapshot resources
+		err = s.DeleteSnapshotResources(ctx, "poiuy")
+		assert.NoError(t, err)
+		// make sure they're gone
+		resources, err = s.GetSnapshotResources(ctx, "poiuy", 0, 100)
+		assert.NoError(t, err)
+		assert.Len(t, resources, 0)
 	})
 }
 
@@ -172,12 +265,12 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 
 	// insert cloud migration test data
 	_, err := testDB.GetSqlxSession().Exec(ctx, `
- 			INSERT INTO
- 			    cloud_migration_session (id, uid, auth_token, slug, stack_id, region_slug, cluster_slug, created, updated)
- 			VALUES
- 			    (1,'qwerty', ?, '11111', 11111, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-  				(2,'asdfgh', ?, '22222', 22222, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
-  				(3,'zxcvbn', ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000');
+		INSERT INTO
+			cloud_migration_session (id, uid, auth_token, slug, stack_id, region_slug, cluster_slug, created, updated)
+		VALUES
+			(1,'qwerty', ?, '11111', 11111, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			(2,'asdfgh', ?, '22222', 22222, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000'),
+			(3,'zxcvbn', ?, '33333', 33333, 'test', 'test', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000');
  		`,
 		encodeToken("12345"),
 		encodeToken("6789"),
@@ -187,16 +280,25 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 
 	// insert cloud migration run test data
 	_, err = testDB.GetSqlxSession().Exec(ctx, `
- 			INSERT INTO
- 			    cloud_migration_snapshot (session_uid, uid, result, created, updated, finished)
- 			VALUES
- 			    ('qwerty', 'poiuy', ?, '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000'),
-  				('qwerty', 'lkjhg', ?, '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000'),
-  				('zxcvbn', 'mnbvvc', ?, '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000');
- 		`,
-		[]byte("ERROR"),
-		[]byte("OK"),
-		[]byte("OK"),
+		INSERT INTO
+			cloud_migration_snapshot (session_uid, uid, created, updated, finished, status)
+		VALUES
+			('qwerty', 'poiuy', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
+			('qwerty', 'lkjhg', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
+			('zxcvbn', 'mnbvvc', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished");
+		`,
+	)
+	require.NoError(t, err)
+
+	_, err = testDB.GetSqlxSession().Exec(ctx, `
+		INSERT INTO
+			cloud_migration_resource (uid, snapshot_uid, resource_type, resource_uid, status, error_string)
+		VALUES
+			('mnbvde', 'poiuy', 'DATASOURCE', 'jf38gh', 'OK', ''),
+			('qwerty', 'poiuy', 'DASHBOARD', 'ejcx4d', 'ERROR', 'fake error'),
+			('zxcvbn', 'poiuy', 'FOLDER', 'fi39fj', 'PENDING', ''),
+			('4fi9sd', '39fi39', 'FOLDER', 'fi39fj', 'OK', '');
+		`,
 	)
 	require.NoError(t, err)
 

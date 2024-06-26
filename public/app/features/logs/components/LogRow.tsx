@@ -1,7 +1,8 @@
 import { cx } from '@emotion/css';
 import { debounce } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent, MouseEvent } from 'react';
+import { PureComponent, MouseEvent } from 'react';
+import * as React from 'react';
 
 import {
   Field,

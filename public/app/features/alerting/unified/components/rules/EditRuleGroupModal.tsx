@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { compact } from 'lodash';
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import * as React from 'react';
 import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -338,7 +339,8 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               </Stack>
             </Field>
 
-            {checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
+            {/* if we're dealing with a Grafana-managed group, check if the evaluation interval is valid / permitted */}
+            {isGrafanaManagedGroup && checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
               <EvaluationIntervalLimitExceeded />
             )}
 

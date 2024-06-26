@@ -1,10 +1,15 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
-import React, { useState } from 'react';
+import { Meta, StoryFn, StoryObj } from '@storybook/react';
+import { Chance } from 'chance';
+import { ComponentProps, useMemo, useState } from 'react';
 
-import { Combobox } from './Combobox';
+import { Combobox, Option, Value } from './Combobox';
 
-const meta: Meta<typeof Combobox> = {
+const chance = new Chance();
+
+type PropsAndCustomArgs = ComponentProps<typeof Combobox> & { numberOfOptions: number };
+
+const meta: Meta<PropsAndCustomArgs> = {
   title: 'Forms/Combobox',
   component: Combobox,
   args: {
@@ -28,9 +33,11 @@ const meta: Meta<typeof Combobox> = {
     ],
     value: 'banana',
   },
+
+  render: (args) => <BasicWithState {...args} />,
 };
 
-export const Basic: StoryFn<typeof Combobox> = (args) => {
+const BasicWithState: StoryFn<typeof Combobox> = (args) => {
   const [value, setValue] = useState(args.value);
   return (
     <Combobox
@@ -42,6 +49,45 @@ export const Basic: StoryFn<typeof Combobox> = (args) => {
       }}
     />
   );
+};
+
+type Story = StoryObj<typeof Combobox>;
+
+export const Basic: Story = {};
+
+function generateOptions(amount: number): Option[] {
+  return Array.from({ length: amount }, () => ({
+    label: chance.name(),
+    value: chance.guid(),
+    description: chance.sentence(),
+  }));
+}
+
+const manyOptions = generateOptions(1e5);
+manyOptions.push({ label: 'Banana', value: 'banana', description: 'A yellow fruit' });
+
+const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions }) => {
+  const [value, setValue] = useState<Value>(manyOptions[5].value);
+  const options = useMemo(() => generateOptions(numberOfOptions), [numberOfOptions]);
+  return (
+    <Combobox
+      options={options}
+      value={value}
+      onChange={(val) => {
+        setValue(val.value);
+        action('onChange')(val);
+      }}
+    />
+  );
+};
+
+export const ManyOptions: StoryObj<PropsAndCustomArgs> = {
+  args: {
+    numberOfOptions: 1e5,
+    options: undefined,
+    value: undefined,
+  },
+  render: ManyOptionsStory,
 };
 
 export default meta;

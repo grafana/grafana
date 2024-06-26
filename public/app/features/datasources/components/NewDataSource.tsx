@@ -1,4 +1,3 @@
-import React from 'react';
 import { AnyAction } from 'redux';
 
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';

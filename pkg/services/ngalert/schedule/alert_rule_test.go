@@ -2,7 +2,7 @@ package schedule
 
 import (
 	"bytes"
-	context "context"
+	"context"
 	"fmt"
 	"math"
 	"math/rand"
@@ -11,19 +11,21 @@ import (
 	"testing"
 	"time"
 
-	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	prometheusModel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
-	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	alertingModels "github.com/grafana/alerting/models"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	definitions "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -454,7 +456,7 @@ func TestRuleRoutine(t *testing.T) {
 			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
 
 			rule := gen.GenerateRef()
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil)
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil, nil)
 			expectedStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.NotEmpty(t, expectedStates)
 
@@ -476,7 +478,7 @@ func TestRuleRoutine(t *testing.T) {
 			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
 
 			rule := gen.GenerateRef()
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil)
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil, nil)
 			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 
 			factory := ruleFactoryFromScheduler(sch)
@@ -762,8 +764,94 @@ func TestRuleRoutine(t *testing.T) {
 
 		require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 	})
+
+	t.Run("when there are resolved alerts they should keep sending until retention period is over", func(t *testing.T) {
+		rule := gen.With(withQueryForState(t, eval.Normal), models.RuleMuts.WithInterval(time.Second)).GenerateRef()
+
+		evalAppliedChan := make(chan time.Time)
+
+		sender := NewSyncAlertsSenderMock()
+		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
+
+		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
+		sch.stateManager.ResolvedRetention = 4 * time.Second
+		sch.stateManager.ResendDelay = 2 * time.Second
+		sch.stateManager.Put([]*state.State{
+			stateForRule(rule, sch.clock.Now(), eval.Alerting), // Add existing Alerting state so evals will resolve.
+		})
+
+		ruleStore.PutRule(context.Background(), rule)
+		factory := ruleFactoryFromScheduler(sch)
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+		ruleInfo := factory.new(ctx, rule)
+
+		go func() {
+			_ = ruleInfo.Run(rule.GetKey())
+		}()
+
+		// Evaluate 10 times:
+		// 1. Send resolve #1.
+		// 2. 2s resend delay.
+		// 3. Send resolve #2.
+		// 4. 2s resend delay.
+		// 5. Send resolve #3.
+		// 6. No more sends, 4s retention period is over.
+		expectedResolves := map[time.Time]struct{}{
+			sch.clock.Now().Add(1 * time.Second): {},
+			sch.clock.Now().Add(3 * time.Second): {},
+			sch.clock.Now().Add(5 * time.Second): {},
+		}
+		calls := 0
+		for i := 1; i < 10; i++ {
+			ts := sch.clock.Now().Add(time.Duration(int64(i)*rule.IntervalSeconds) * time.Second)
+			ruleInfo.Eval(&Evaluation{
+				scheduledAt: ts,
+				rule:        rule,
+			})
+			waitForTimeChannel(t, evalAppliedChan)
+
+			if _, ok := expectedResolves[ts]; ok {
+				calls++
+				prevCallAlerts, ok := sender.Calls()[calls-1].Arguments[2].(definitions.PostableAlerts)
+				assert.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls()[calls-1].Arguments[2]))
+				assert.Len(t, prevCallAlerts.PostableAlerts, 1)
+			}
+			sender.AssertNumberOfCalls(t, "Send", calls)
+		}
+	})
 }
 
 func ruleFactoryFromScheduler(sch *schedule) ruleFactory {
 	return newRuleFactory(sch.appURL, sch.disableGrafanaFolder, sch.maxAttempts, sch.alertsSender, sch.stateManager, sch.evaluatorFactory, &sch.schedulableAlertRules, sch.clock, sch.featureToggles, sch.metrics, sch.log, sch.tracer, sch.recordingWriter, sch.evalAppliedFunc, sch.stopAppliedFunc)
+}
+
+func stateForRule(rule *models.AlertRule, ts time.Time, evalState eval.State) *state.State {
+	s := &state.State{
+		OrgID:              rule.OrgID,
+		AlertRuleUID:       rule.UID,
+		CacheID:            0,
+		State:              evalState,
+		Annotations:        make(map[string]string),
+		Labels:             make(map[string]string),
+		StartsAt:           ts,
+		EndsAt:             ts,
+		ResolvedAt:         &ts,
+		LastSentAt:         &ts,
+		LastEvaluationTime: ts,
+	}
+	for k, v := range rule.Labels {
+		s.Labels[k] = v
+	}
+	for k, v := range state.GetRuleExtraLabels(&logtest.Fake{}, rule, "", true) {
+		if _, ok := s.Labels[k]; !ok {
+			s.Labels[k] = v
+		}
+	}
+	il := models.InstanceLabels(s.Labels)
+	s.Labels = data.Labels(il)
+	id := il.Fingerprint()
+	s.CacheID = id
+
+	return s
 }
