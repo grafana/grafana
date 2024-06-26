@@ -48,11 +48,11 @@ This allows different users, teams, or service accounts to have customized acces
 
 Refer to the following table for details on the additional access provided by folder permissions:
 
-| Folder permission | Additional Access                                                                                         |
-| ----------------- | --------------------------------------------------------------------------------------------------------- |
-| View              | No additional access: all permissions already contained in Viewer role.                                   |
+| Folder permission | Additional Access                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------------------- |
+| View              | No additional access: all permissions already contained in Viewer role.                                 |
 | Edit              | Write access to alert rules and their rule-specific silences _only_ in the given folder and subfolders. |
-| Admin             | Same additional access as Edit.                                                                           |
+| Admin             | Same additional access as Edit.                                                                         |
 
 {{< admonition type="note" >}}
 You can't use folders to customize access to notification resources.

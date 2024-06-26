@@ -28,11 +28,11 @@ This allows different users, teams, or service accounts to have customized acces
 
 Details on the additional access provided by folder permissions are below.
 
-| Folder permission | Additional Access                                                                                                                             |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Folder permission | Additional Access                                                                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | View              | Read access to all general silences. Read access to alert rules and their rule-specific silences _only_ in the given folder and subfolders. |
-| Edit              | View access and write access to alert rules and their rule-specific silences _only_ in the given folder and subfolders.                   |
-| Admin             | Same additional access as Edit.                                                                                                               |
+| Edit              | View access and write access to alert rules and their rule-specific silences _only_ in the given folder and subfolders.                     |
+| Admin             | Same additional access as Edit.                                                                                                             |
 
 Some example combinations:
 
@@ -43,7 +43,7 @@ Some example combinations:
 | No Basic Role | Edit              | Above access and write access to alert rules (given necessary data source query permissions) and their rule-specific silences _only_ in the given folder and subfolders. |
 | Viewer        | -                 | Read access to alert rules and silences in all folders.                                                                                                                  |
 | Viewer        | Edit              | Read access to alert rules and silences in all folders. Write access to alert rules and their rule-specific silences _only_ in the given folder and subfolders.          |
-| Editor        | View              | Read and write access to alert rules and silences in all folders. Access can only be extended.                                                                             |
+| Editor        | View              | Read and write access to alert rules and silences in all folders. Access can only be extended.                                                                           |
 
 {{< admonition type="note" >}}
 You can't use folders to customize access to notification resources.
