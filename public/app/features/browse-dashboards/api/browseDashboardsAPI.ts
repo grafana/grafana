@@ -331,17 +331,15 @@ export const browseDashboardsAPI = createApi({
 
     // save an existing dashboard
     saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand>({
-      query: ({ dashboard, folderUid, message, overwrite, showErrorAlert }) => ({
-        url: `/dashboards/db`,
-        method: 'POST',
-        showErrorAlert,
-        data: {
-          dashboard,
-          folderUid,
-          message: message ?? '',
-          overwrite: Boolean(overwrite),
-        },
-      }),
+      queryFn: async (cmd) => {
+        try {
+          const rsp = await getDashboardAPI().saveDashboard(cmd);
+          return { data: rsp };
+        } catch (error) {
+          return { error };
+        }
+      },
+
       onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
         dashboardWatcher.ignoreNextSave();
         queryFulfilled.then(async () => {

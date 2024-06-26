@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,16 +16,24 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/folder"
+	rulesAuthz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 func TestRemoteLokiBackend(t *testing.T) {
@@ -197,12 +206,17 @@ func TestRemoteLokiBackend(t *testing.T) {
 	t.Run("selector string", func(t *testing.T) {
 		selectors := []Selector{{"name", "=", "Bob"}, {"age", "=~", "30"}}
 		expected := "{name=\"Bob\",age=~\"30\"}"
-		result := selectorString(selectors)
+		result := selectorString(selectors, nil)
+		require.Equal(t, expected, result)
+
+		selectors = []Selector{{"name", "=", "quoted\"string"}, {"age", "=~", "30"}}
+		expected = "{name=\"quoted\\\"string\",age=~\"30\",folderUID=~`some\\\\d\\.r\\$|normal_string`}"
+		result = selectorString(selectors, []string{`some\d.r$`, "normal_string"})
 		require.Equal(t, expected, result)
 
 		selectors = []Selector{}
 		expected = "{}"
-		result = selectorString(selectors)
+		result = selectorString(selectors, nil)
 		require.Equal(t, expected, result)
 	})
 
@@ -221,10 +235,12 @@ func TestRemoteLokiBackend(t *testing.T) {
 func TestBuildLogQuery(t *testing.T) {
 	maxQuerySize := 110
 	cases := []struct {
-		name   string
-		query  models.HistoryQuery
-		exp    string
-		expErr error
+		name       string
+		query      models.HistoryQuery
+		folderUIDs []string
+		exp        string
+		expErr     error
+		expDropped bool
 	}{
 		{
 			name:  "default includes state history label and orgID label",
@@ -282,8 +298,7 @@ func TestBuildLogQuery(t *testing.T) {
 					"customlabel": "customvalue",
 				},
 			},
-			exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`,
-		},
+			exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`},
 		{
 			name: "should return if query does not exceed max limit",
 			query: models.HistoryQuery{
@@ -306,16 +321,38 @@ func TestBuildLogQuery(t *testing.T) {
 			},
 			expErr: ErrLokiQueryTooLong,
 		},
+		{
+			name: "filters by all namespaces",
+			query: models.HistoryQuery{
+				OrgID: 123,
+			},
+			folderUIDs: []string{"folder-1", "folder\\d"},
+			exp:        `{orgID="123",from="state-history",folderUID=~` + "`folder-1|folder\\\\d`" + `}`,
+		},
+		{
+			name: "should drop folders if it's too long",
+			query: models.HistoryQuery{
+				OrgID:   123,
+				RuleUID: "rule-uid",
+				Labels: map[string]string{
+					"customlabel": "customvalue",
+				},
+			},
+			folderUIDs: []string{"folder-1", "folder-2", "folder\\d"},
+			exp:        `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`,
+			expDropped: true,
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			res, err := BuildLogQuery(tc.query, maxQuerySize)
+			res, dropped, err := BuildLogQuery(tc.query, tc.folderUIDs, maxQuerySize)
 			if tc.expErr != nil {
 				require.ErrorIs(t, err, tc.expErr)
 				return
 			}
 			require.LessOrEqual(t, len(res), maxQuerySize)
+			require.Equal(t, tc.expDropped, dropped)
 			require.NoError(t, err)
 			require.Equal(t, tc.exp, res)
 		})
@@ -324,10 +361,10 @@ func TestBuildLogQuery(t *testing.T) {
 
 func TestMerge(t *testing.T) {
 	testCases := []struct {
-		name         string
-		res          QueryRes
-		ruleID       string
-		expectedTime []time.Time
+		name       string
+		res        QueryRes
+		expected   *data.Frame
+		folderUIDs []string
 	}{
 		{
 			name: "Should return values from multiple streams in right order",
@@ -336,28 +373,55 @@ func TestMerge(t *testing.T) {
 					Result: []Stream{
 						{
 							Stream: map[string]string{
-								"current": "pending",
+								"from":      "state-history",
+								"orgID":     "1",
+								"group":     "test-group-1",
+								"folderUID": "test-folder-1",
+								"extra":     "label",
 							},
 							Values: []Sample{
-								{time.Unix(0, 1), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": "b"}}`},
+								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
 							},
 						},
 						{
 							Stream: map[string]string{
-								"current": "firing",
+								"from":      "state-history",
+								"orgID":     "1",
+								"group":     "test-group-2",
+								"folderUID": "test-folder-1",
 							},
 							Values: []Sample{
-								{time.Unix(0, 2), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": "b"}}`},
+								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-2"}`},
 							},
 						},
 					},
 				},
 			},
-			ruleID: "123456",
-			expectedTime: []time.Time{
-				time.Unix(0, 1),
-				time.Unix(0, 2),
-			},
+			expected: data.NewFrame("states",
+				data.NewField(dfTime, data.Labels{}, []time.Time{
+					time.Unix(1, 0),
+					time.Unix(2, 0),
+				}),
+				data.NewField(dfLine, data.Labels{}, []json.RawMessage{
+					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-2", SchemaVersion: 1, Previous: "pending", Current: "firing", Values: jsonifyValues(map[string]float64{"a": 2.5})}),
+				}),
+				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{
+					toJson(map[string]string{
+						StateHistoryLabelKey: "state-history",
+						OrgIDLabel:           "1",
+						GroupLabel:           "test-group-1",
+						FolderUIDLabel:       "test-folder-1",
+						"extra":              "label",
+					}),
+					toJson(map[string]string{
+						StateHistoryLabelKey: "state-history",
+						OrgIDLabel:           "1",
+						GroupLabel:           "test-group-2",
+						FolderUIDLabel:       "test-folder-1",
+					}),
+				}),
+			),
 		},
 		{
 			name: "Should handle empty values",
@@ -366,15 +430,18 @@ func TestMerge(t *testing.T) {
 					Result: []Stream{
 						{
 							Stream: map[string]string{
-								"current": "normal",
+								"extra": "labels",
 							},
 							Values: []Sample{},
 						},
 					},
 				},
 			},
-			ruleID:       "123456",
-			expectedTime: []time.Time{},
+			expected: data.NewFrame("states",
+				data.NewField(dfTime, data.Labels{}, []time.Time{}),
+				data.NewField(dfLine, data.Labels{}, []json.RawMessage{}),
+				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{}),
+			),
 		},
 		{
 			name: "Should handle multiple values in one stream",
@@ -383,50 +450,188 @@ func TestMerge(t *testing.T) {
 					Result: []Stream{
 						{
 							Stream: map[string]string{
-								"current": "normal",
+								"from":      "state-history",
+								"orgID":     "1",
+								"group":     "test-group-1",
+								"folderUID": "test-folder-1",
 							},
 							Values: []Sample{
-								{time.Unix(0, 1), `{"schemaVersion": 1, "previous": "firing", "current": "normal", "values":{"a": "b"}}`},
-								{time.Unix(0, 2), `{"schemaVersion": 1, "previous": "firing", "current": "normal", "values":{"a": "b"}}`},
+								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
 							},
 						},
 						{
 							Stream: map[string]string{
-								"current": "firing",
+								"from":      "state-history",
+								"orgID":     "1",
+								"group":     "test-group-2",
+								"folderUID": "test-folder-1",
 							},
 							Values: []Sample{
-								{time.Unix(0, 3), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": "b"}}`},
+								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
 							},
 						},
 					},
 				},
 			},
-			ruleID: "123456",
-			expectedTime: []time.Time{
-				time.Unix(0, 1),
-				time.Unix(0, 2),
-				time.Unix(0, 3),
+			expected: data.NewFrame("states",
+				data.NewField(dfTime, data.Labels{}, []time.Time{
+					time.Unix(1, 0),
+					time.Unix(2, 0),
+					time.Unix(5, 0),
+				}),
+				data.NewField(dfLine, data.Labels{}, []json.RawMessage{
+					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-3", SchemaVersion: 1, Previous: "pending", Current: "firing", Values: jsonifyValues(map[string]float64{"a": 2.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-2", SchemaVersion: 1, Previous: "pending", Current: "normal", Values: jsonifyValues(map[string]float64{"a": 0.5})}),
+				}),
+				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{
+					toJson(map[string]string{
+						StateHistoryLabelKey: "state-history",
+						OrgIDLabel:           "1",
+						GroupLabel:           "test-group-1",
+						FolderUIDLabel:       "test-folder-1",
+					}),
+					toJson(map[string]string{
+						StateHistoryLabelKey: "state-history",
+						OrgIDLabel:           "1",
+						GroupLabel:           "test-group-2",
+						FolderUIDLabel:       "test-folder-1",
+					}),
+					toJson(map[string]string{
+						StateHistoryLabelKey: "state-history",
+						OrgIDLabel:           "1",
+						GroupLabel:           "test-group-1",
+						FolderUIDLabel:       "test-folder-1",
+					}),
+				}),
+			),
+		},
+		{
+			name:       "should filter streams by folder UID",
+			folderUIDs: []string{"test-folder-1"},
+			res: QueryRes{
+				Data: QueryData{
+					Result: []Stream{
+						{
+							Stream: map[string]string{
+								"from":      "state-history",
+								"orgID":     "1",
+								"group":     "test-group-1",
+								"folderUID": "test-folder-1",
+							},
+							Values: []Sample{
+								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+							},
+						},
+						{
+							Stream: map[string]string{
+								"from":      "state-history",
+								"orgID":     "1",
+								"group":     "test-group-2",
+								"folderUID": "test-folder-2",
+							},
+							Values: []Sample{
+								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
+							},
+						},
+					},
+				},
 			},
+			expected: data.NewFrame("states",
+				data.NewField(dfTime, data.Labels{}, []time.Time{
+					time.Unix(1, 0),
+					time.Unix(5, 0),
+				}),
+				data.NewField(dfLine, data.Labels{}, []json.RawMessage{
+					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
+					toJson(LokiEntry{RuleUID: "test-rule-2", SchemaVersion: 1, Previous: "pending", Current: "normal", Values: jsonifyValues(map[string]float64{"a": 0.5})}),
+				}),
+				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{
+					toJson(map[string]string{
+						StateHistoryLabelKey: "state-history",
+						OrgIDLabel:           "1",
+						GroupLabel:           "test-group-1",
+						FolderUIDLabel:       "test-folder-1",
+					}),
+					toJson(map[string]string{
+						StateHistoryLabelKey: "state-history",
+						OrgIDLabel:           "1",
+						GroupLabel:           "test-group-1",
+						FolderUIDLabel:       "test-folder-1",
+					}),
+				}),
+			),
+		},
+		{
+			name:       "should skip streams without folder UID if filter is specified",
+			folderUIDs: []string{"test-folder-1"},
+			res: QueryRes{
+				Data: QueryData{
+					Result: []Stream{
+						{
+							Stream: map[string]string{
+								"group": "test-group-1",
+							},
+							Values: []Sample{
+								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+							},
+						},
+					},
+				},
+			},
+			expected: data.NewFrame("states",
+				data.NewField(dfTime, data.Labels{}, []time.Time{}),
+				data.NewField(dfLine, data.Labels{}, []json.RawMessage{}),
+				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{}),
+			),
+		},
+		{
+			name:       "should return streams without folder UID if filter is not specified",
+			folderUIDs: []string{},
+			res: QueryRes{
+				Data: QueryData{
+					Result: []Stream{
+						{
+							Stream: map[string]string{
+								"group": "test-group-1",
+							},
+							Values: []Sample{
+								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+							},
+						},
+					},
+				},
+			},
+			expected: data.NewFrame("states",
+				data.NewField(dfTime, data.Labels{}, []time.Time{
+					time.Unix(1, 0),
+				}),
+				data.NewField(dfLine, data.Labels{}, []json.RawMessage{
+					toJson(LokiEntry{RuleUID: "test-rule-1", SchemaVersion: 1, Previous: "normal", Current: "pending", Values: jsonifyValues(map[string]float64{"a": 1.5})}),
+				}),
+				data.NewField(dfLabels, data.Labels{}, []json.RawMessage{
+					toJson(map[string]string{
+						GroupLabel: "test-group-1",
+					}),
+				}),
+			),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			m, err := merge(tc.res, tc.ruleID)
+			expectedJson, err := tc.expected.MarshalJSON()
 			require.NoError(t, err)
+			m, err := merge(tc.res, tc.folderUIDs)
+			require.NoError(t, err)
+			actualJson, err := m.MarshalJSON()
+			assert.NoError(t, err)
 
-			var dfTimeColumn *data.Field
-			for _, f := range m.Fields {
-				if f.Name == dfTime {
-					dfTimeColumn = f
-				}
-			}
-
-			require.NotNil(t, dfTimeColumn)
-
-			for i := 0; i < len(tc.expectedTime); i++ {
-				require.Equal(t, tc.expectedTime[i], dfTimeColumn.At(i))
-			}
+			assert.Equal(t, tc.expected.Rows(), m.Rows())
+			assert.JSONEq(t, string(expectedJson), string(actualJson))
 		})
 	}
 }
@@ -434,7 +639,7 @@ func TestMerge(t *testing.T) {
 func TestRecordStates(t *testing.T) {
 	t.Run("writes state transitions to loki", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
+		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State:  eval.Alerting,
@@ -450,8 +655,8 @@ func TestRecordStates(t *testing.T) {
 	t.Run("emits expected write metrics", func(t *testing.T) {
 		reg := prometheus.NewRegistry()
 		met := metrics.NewHistorianMetrics(reg, metrics.Subsystem)
-		loki := createTestLokiBackend(NewFakeRequester(), met)
-		errLoki := createTestLokiBackend(NewFakeRequester().WithResponse(badResponse()), met) //nolint:bodyclose
+		loki := createTestLokiBackend(t, NewFakeRequester(), met)
+		errLoki := createTestLokiBackend(t, NewFakeRequester().WithResponse(badResponse()), met) //nolint:bodyclose
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State:  eval.Alerting,
@@ -486,7 +691,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 
 	t.Run("elides request if nothing to send", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
+		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := []state.StateTransition{}
 
@@ -498,7 +703,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 
 	t.Run("succeeds with special chars in labels", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
+		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State: eval.Alerting,
@@ -521,7 +726,7 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 
 	t.Run("adds external labels to log lines", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
+		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State: eval.Alerting,
@@ -537,7 +742,153 @@ grafana_alerting_state_history_writes_total{backend="loki",org="1"} 2
 	})
 }
 
-func createTestLokiBackend(req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
+func TestGetFolderUIDsForFilter(t *testing.T) {
+	orgID := int64(1)
+	rule := models.RuleGen.With(models.RuleMuts.WithNamespaceUID("folder-1")).GenerateRef()
+	folders := []string{
+		"folder-1",
+		"folder-2",
+		"folder-3",
+	}
+	usr := accesscontrol.BackgroundUser("test", 1, org.RoleNone, nil)
+
+	createLoki := func(ac AccessControl) *RemoteLokiBackend {
+		req := NewFakeRequester()
+		loki := createTestLokiBackend(t, req, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
+		rules := fakes.NewRuleStore(t)
+		f := make([]*folder.Folder, 0, len(folders))
+		for _, uid := range folders {
+			f = append(f, &folder.Folder{UID: uid, OrgID: orgID})
+		}
+		rules.Folders = map[int64][]*folder.Folder{
+			orgID: f,
+		}
+		rules.Rules = map[int64][]*models.AlertRule{
+			orgID: {rule},
+		}
+		loki.ruleStore = rules
+		loki.ac = ac
+		return loki
+	}
+
+	t.Run("when rule UID is specified", func(t *testing.T) {
+		t.Run("should bypass authorization if user can read all rules", func(t *testing.T) {
+			ac := &acfakes.FakeRuleService{}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, requester identity.Requester) (bool, error) {
+				return true, nil
+			}
+			result, err := createLoki(ac).getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
+			assert.NoError(t, err)
+			assert.Empty(t, result)
+
+			assert.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].MethodName)
+			assert.Equal(t, usr, ac.Calls[0].Arguments[1])
+
+			t.Run("even if rule does not exist", func(t *testing.T) {
+				result, err := createLoki(ac).getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: "not-found", SignedInUser: usr})
+				assert.NoError(t, err)
+				assert.Empty(t, result)
+			})
+		})
+
+		t.Run("should authorize access to the rule", func(t *testing.T) {
+			ac := &acfakes.FakeRuleService{}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, requester identity.Requester) (bool, error) {
+				return false, nil
+			}
+			ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, namespaced models.Namespaced) error {
+				return nil
+			}
+			loki := createLoki(ac)
+
+			result, err := loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
+			assert.NoError(t, err)
+			assert.Empty(t, result)
+
+			assert.Len(t, ac.Calls, 2)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].MethodName)
+			assert.Equal(t, usr, ac.Calls[0].Arguments[1])
+			assert.Equal(t, "AuthorizeAccessInFolder", ac.Calls[1].MethodName)
+			assert.Equal(t, usr, ac.Calls[1].Arguments[1])
+			assert.Equal(t, rule, ac.Calls[1].Arguments[2])
+
+			t.Run("should fail if unauthorized", func(t *testing.T) {
+				authzErr := errors.New("generic error")
+				ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, namespaced models.Namespaced) error {
+					return authzErr
+				}
+				result, err = loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: rule.UID, SignedInUser: usr})
+				require.ErrorIs(t, err, authzErr)
+			})
+
+			t.Run("should fail if rule does not exist", func(t *testing.T) {
+				result, err = loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, RuleUID: "not-found", SignedInUser: usr})
+				require.ErrorIs(t, err, models.ErrAlertRuleNotFound)
+			})
+		})
+	})
+
+	t.Run("when rule UID is empty", func(t *testing.T) {
+		t.Run("should bypass authorization if user can read all rules", func(t *testing.T) {
+			ac := &acfakes.FakeRuleService{}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, requester identity.Requester) (bool, error) {
+				return true, nil
+			}
+			result, err := createLoki(ac).getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
+			assert.NoError(t, err)
+			assert.Empty(t, result)
+
+			assert.Len(t, ac.Calls, 1)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].MethodName)
+			assert.Equal(t, usr, ac.Calls[0].Arguments[1])
+		})
+
+		t.Run("should return only folders user has access to", func(t *testing.T) {
+			ac := &acfakes.FakeRuleService{}
+			ac.CanReadAllRulesFunc = func(ctx context.Context, requester identity.Requester) (bool, error) {
+				return false, nil
+			}
+			ac.HasAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, namespaced models.Namespaced) (bool, error) {
+				return true, nil
+			}
+			loki := createLoki(ac)
+
+			result, err := loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
+			assert.NoError(t, err)
+			assert.EqualValues(t, folders, result)
+
+			assert.Len(t, ac.Calls, len(folders)+1)
+			assert.Equal(t, "CanReadAllRules", ac.Calls[0].MethodName)
+			assert.Equal(t, usr, ac.Calls[0].Arguments[1])
+			for i, folderUID := range folders {
+				assert.Equal(t, "HasAccessInFolder", ac.Calls[i+1].MethodName)
+				assert.Equal(t, usr, ac.Calls[i+1].Arguments[1])
+				assert.Equal(t, folderUID, ac.Calls[i+1].Arguments[2].(models.Namespaced).GetNamespaceUID())
+			}
+
+			t.Run("should fail if no folders to read", func(t *testing.T) {
+				loki := createLoki(ac)
+				loki.ruleStore = fakes.NewRuleStore(t)
+
+				result, err = loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
+				require.ErrorIs(t, err, rulesAuthz.ErrAuthorizationBase)
+				require.Empty(t, result)
+			})
+
+			t.Run("should fail if no folders to read alert rules in", func(t *testing.T) {
+				ac.HasAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, namespaced models.Namespaced) (bool, error) {
+					return false, nil
+				}
+				result, err = loki.getFolderUIDsForFilter(context.Background(), models.HistoryQuery{OrgID: orgID, SignedInUser: usr})
+				require.ErrorIs(t, err, rulesAuthz.ErrAuthorizationBase)
+				require.Empty(t, result)
+			})
+		})
+	})
+}
+
+func createTestLokiBackend(t *testing.T, req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
 	url, _ := url.Parse("http://some.url")
 	cfg := LokiConfig{
 		WritePathURL:   url,
@@ -546,7 +897,9 @@ func createTestLokiBackend(req client.Requester, met *metrics.Historian) *Remote
 		ExternalLabels: map[string]string{"externalLabelKey": "externalLabelValue"},
 	}
 	lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")
-	return NewRemoteLokiBackend(lokiBackendLogger, cfg, req, met, tracing.InitializeTracerForTest())
+	rules := fakes.NewRuleStore(t)
+	ac := &acfakes.FakeRuleService{}
+	return NewRemoteLokiBackend(lokiBackendLogger, cfg, req, met, tracing.InitializeTracerForTest(), rules, ac)
 }
 
 func singleFromNormal(st *state.State) []state.StateTransition {
@@ -601,4 +954,12 @@ func readBody(t *testing.T, req *http.Request) []byte {
 	val, err := io.ReadAll(req.Body)
 	require.NoError(t, err)
 	return val
+}
+
+func toJson[T any](entry T) json.RawMessage {
+	b, err := json.Marshal(entry)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
