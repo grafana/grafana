@@ -1,14 +1,16 @@
 import { Action, KBarProvider } from 'kbar';
 import React, { ComponentType } from 'react';
+import { DragDropContext, DropResult } from 'react-beautiful-dnd';
 import { Provider } from 'react-redux';
 import { Router, Redirect, Switch, RouteComponentProps, MemoryRouter } from 'react-router-dom';
 import { CompatRouter, CompatRoute } from 'react-router-dom-v5-compat';
 
+import { DataQuery, getNextRefId } from '@grafana/data';
 import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer } from '@grafana/ui';
 import { IconButton } from '@grafana/ui/';
 import { getAppRoutes } from 'app/routes/routes';
-import { store } from 'app/store/store';
+import { dispatch, getState, store } from 'app/store/store';
 
 import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
@@ -24,6 +26,7 @@ import { RouteDescriptor } from './core/navigation/types';
 import windowSplit from './core/reducers/windowSplit';
 import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
+import { changeQueries } from './features/explore/state/query';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import AppRootPage from './features/plugins/components/AppRootPage';
 import { useDispatch, useSelector } from './types';
@@ -87,6 +90,33 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     return <Switch>{getAppRoutes().map((r) => this.renderRoute(r))}</Switch>;
   }
 
+  onChangeQueries = (newQueries: DataQuery[]) => {
+    const exploreId = Object.keys(getState().explore.panes)[0];
+    dispatch(changeQueries({ exploreId, queries: newQueries }));
+  };
+
+  onDragEnd = (result: DropResult) => {
+    // TODO: This is a temporary solution to add a query to the explore pane
+    // Currently DragDropContext doesn't have ability to send a payload with the drop event
+    // For now, regardless of what is sent from query library app, we always add a flame_graph
+    if (result.source.droppableId === 'query-history-app') {
+      const payload = {
+        datasource: {
+          type: 'grafana-testdata-datasource',
+          uid: 'PD8C576611E62080A',
+        },
+        scenarioId: 'flame_graph',
+      };
+
+      const exploreId = Object.keys(getState().explore.panes)[0];
+      const queries = getState().explore.panes[exploreId]?.queries;
+
+      if (queries) {
+        this.onChangeQueries([...queries, { ...payload, refId: getNextRefId(queries) }]);
+      }
+    }
+  };
+
   render() {
     const { app } = this.props;
     const { ready } = this.state;
@@ -101,22 +131,24 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     };
 
     return (
-      <Provider store={store}>
-        <ErrorBoundaryAlert style="page">
-          <GrafanaContext.Provider value={app.context}>
-            <ThemeProvider value={config.theme2}>
-              <KBarProvider
-                actions={[]}
-                options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-              >
-                <div className="grafana-app">
-                  <WindowSplitWrapper routes={ready && this.renderRoutes()} />
-                </div>
-              </KBarProvider>
-            </ThemeProvider>
-          </GrafanaContext.Provider>
-        </ErrorBoundaryAlert>
-      </Provider>
+      <DragDropContext onDragEnd={this.onDragEnd}>
+        <Provider store={store}>
+          <ErrorBoundaryAlert style="page">
+            <GrafanaContext.Provider value={app.context}>
+              <ThemeProvider value={config.theme2}>
+                <KBarProvider
+                  actions={[]}
+                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                >
+                  <div className="grafana-app">
+                    <WindowSplitWrapper routes={ready && this.renderRoutes()} />
+                  </div>
+                </KBarProvider>
+              </ThemeProvider>
+            </GrafanaContext.Provider>
+          </ErrorBoundaryAlert>
+        </Provider>
+      </DragDropContext>
     );
   }
 }

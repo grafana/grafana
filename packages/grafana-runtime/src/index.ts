@@ -52,3 +52,5 @@ export {
 export { usePluginInteractionReporter } from './analytics/plugins/usePluginInteractionReporter';
 export { setReturnToPreviousHook, useReturnToPrevious } from './utils/returnToPrevious';
 export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } from './components/EmbeddedDashboard';
+// Exporting react-beautiful-dnd here so that grafana and plugins can have shared DragDropContext
+export * from 'react-beautiful-dnd';

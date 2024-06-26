@@ -149,48 +149,46 @@ export class QueryEditorRows extends PureComponent<Props> {
     } = this.props;
 
     return (
-      <DragDropContext onDragStart={this.onDragStart} onDragEnd={this.onDragEnd}>
-        <Droppable droppableId="transformations-list" direction="vertical">
-          {(provided) => {
-            return (
-              <div data-testid="query-editor-rows" ref={provided.innerRef} {...provided.droppableProps}>
-                {queries.map((query, index) => {
-                  const dataSourceSettings = getDataSourceSettings(query, dsSettings);
-                  const onChangeDataSourceSettings = dsSettings.meta.mixed
-                    ? (settings: DataSourceInstanceSettings) => this.onDataSourceChange(settings, index)
-                    : undefined;
+      <Droppable droppableId="transformations-list" direction="vertical">
+        {(provided) => {
+          return (
+            <div data-testid="query-editor-rows" ref={provided.innerRef} {...provided.droppableProps}>
+              {queries.map((query, index) => {
+                const dataSourceSettings = getDataSourceSettings(query, dsSettings);
+                const onChangeDataSourceSettings = dsSettings.meta.mixed
+                  ? (settings: DataSourceInstanceSettings) => this.onDataSourceChange(settings, index)
+                  : undefined;
 
-                  const queryEditorRow = (
-                    <QueryEditorRow
-                      id={query.refId}
-                      index={index}
-                      key={query.refId}
-                      data={data}
-                      query={query}
-                      dataSource={dataSourceSettings}
-                      onChangeDataSource={onChangeDataSourceSettings}
-                      onChange={(query) => this.onChangeQuery(query, index)}
-                      onRemoveQuery={this.onRemoveQuery}
-                      onAddQuery={onAddQuery}
-                      onRunQuery={onRunQueries}
-                      onQueryCopied={onQueryCopied}
-                      onQueryRemoved={onQueryRemoved}
-                      onQueryToggled={onQueryToggled}
-                      queries={queries}
-                      app={app}
-                      history={history}
-                      eventBus={eventBus}
-                    />
-                  );
+                const queryEditorRow = (
+                  <QueryEditorRow
+                    id={query.refId}
+                    index={index}
+                    key={query.refId}
+                    data={data}
+                    query={query}
+                    dataSource={dataSourceSettings}
+                    onChangeDataSource={onChangeDataSourceSettings}
+                    onChange={(query) => this.onChangeQuery(query, index)}
+                    onRemoveQuery={this.onRemoveQuery}
+                    onAddQuery={onAddQuery}
+                    onRunQuery={onRunQueries}
+                    onQueryCopied={onQueryCopied}
+                    onQueryRemoved={onQueryRemoved}
+                    onQueryToggled={onQueryToggled}
+                    queries={queries}
+                    app={app}
+                    history={history}
+                    eventBus={eventBus}
+                  />
+                );
 
-                  return queryRowWrapper ? queryRowWrapper(queryEditorRow, query.refId) : queryEditorRow;
-                })}
-                {provided.placeholder}
-              </div>
-            );
-          }}
-        </Droppable>
-      </DragDropContext>
+                return queryRowWrapper ? queryRowWrapper(queryEditorRow, query.refId) : queryEditorRow;
+              })}
+              {provided.placeholder}
+            </div>
+          );
+        }}
+      </Droppable>
     );
   }
 }
