@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useId, useMemo, useRef } from 'react';
+import { useCallback, useId, useMemo, useRef } from 'react';
+import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';

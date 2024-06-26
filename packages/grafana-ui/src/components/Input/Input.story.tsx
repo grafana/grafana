@@ -1,5 +1,5 @@
 import { StoryFn, Meta } from '@storybook/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { KeyValue } from '@grafana/data';
 import { Field, Button, Input } from '@grafana/ui';

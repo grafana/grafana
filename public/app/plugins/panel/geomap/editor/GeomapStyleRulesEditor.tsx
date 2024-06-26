@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import { Button, useTheme2 } from '@grafana/ui';

@@ -51,6 +51,10 @@ class LegacyDashboardAPI implements DashboardAPI {
   }
 }
 
+interface DashboardWithAccessInfo extends Resource<DashboardDataDTO, 'DashboardWithAccessInfo'> {
+  access: Object; // TODO...
+}
+
 // Implemented using /apis/dashboards.grafana.app/*
 class K8sDashboardAPI implements DashboardAPI {
   private client: ResourceClient<DashboardDataDTO>;
@@ -73,12 +77,16 @@ class K8sDashboardAPI implements DashboardAPI {
         ...dashboard,
       },
     };
+
     if (options.message) {
       obj.metadata.annotations = {
         ...obj.metadata.annotations,
         [AnnoKeyMessage]: options.message,
       };
+    } else if (obj.metadata.annotations) {
+      delete obj.metadata.annotations[AnnoKeyMessage]
     }
+
     if (options.folderUid) {
       obj.metadata.annotations = {
         ...obj.metadata.annotations,
@@ -113,17 +121,16 @@ class K8sDashboardAPI implements DashboardAPI {
   }
 
   async getDashboardDTO(uid: string): Promise<DashboardDTO> {
-    const d = await this.client.get(uid);
-    const m = await this.client.subresource<object>(uid, 'access');
+    const dash = await this.client.subresource<DashboardWithAccessInfo>(uid, 'dto');
     return {
       meta: {
-        ...m,
+        ...dash.access,
         isNew: false,
         isFolder: false,
-        uid: d.metadata.name,
-        k8s: d.metadata,
+        uid: dash.metadata.name,
+        k8s: dash.metadata,
       },
-      dashboard: d.spec,
+      dashboard: dash.spec,
     };
   }
 }

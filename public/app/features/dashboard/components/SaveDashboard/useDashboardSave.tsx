@@ -26,6 +26,7 @@ const saveDashboard = async (
     folderUid: options.folderUid ?? dashboard.meta.folderUid ?? saveModel.meta?.folderUid,
     message: options.message,
     overwrite: options.overwrite,
+    k8s: dashboard.meta.k8s,
   });
 
   if ('error' in query) {

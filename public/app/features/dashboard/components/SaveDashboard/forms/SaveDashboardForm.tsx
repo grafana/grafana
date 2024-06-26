@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -48,6 +48,7 @@ export const SaveDashboardForm = ({
         }
         setSaving(true);
         options = { ...options, message };
+        debugger;
         const result = await onSubmit(saveModel.clone, options, dashboard);
         if (result.status === 'success') {
           onSuccess();

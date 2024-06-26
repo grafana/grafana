@@ -443,11 +443,10 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
 }
 
 export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
-  const repeatDirection: RepeatDirection = panel.repeatDirection === 'h' ? 'h' : 'v';
-  const repeatOptions = panel.repeat
+  const repeatOptions: Partial<{ variableName: string; repeatDirection: RepeatDirection }> = panel.repeat
     ? {
         variableName: panel.repeat,
-        repeatDirection,
+        repeatDirection: panel.repeatDirection === 'h' ? 'h' : 'v',
       }
     : {};
 
@@ -501,7 +500,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     key: `grid-item-${panel.id}`,
     x: panel.gridPos.x,
     y: panel.gridPos.y,
-    width: repeatDirection === 'h' ? 24 : panel.gridPos.w,
+    width: repeatOptions.repeatDirection === 'h' ? 24 : panel.gridPos.w,
     height: panel.gridPos.h,
     itemHeight: panel.gridPos.h,
     body,

@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React from 'react';
 import { finalize, from, Subscription } from 'rxjs';
 
 import { GrafanaTheme2, Scope } from '@grafana/data';
@@ -132,14 +131,14 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   public toggleNodeSelect(path: string[]) {
     let treeScopes = [...this.state.treeScopes];
 
-    let siblings = this.state.nodes;
+    let parentNode = this.state.nodes[''];
 
-    for (let idx = 0; idx < path.length - 1; idx++) {
-      siblings = siblings[path[idx]].nodes;
+    for (let idx = 1; idx < path.length - 1; idx++) {
+      parentNode = parentNode.nodes[path[idx]];
     }
 
     const nodeName = path[path.length - 1];
-    const { linkId } = siblings[nodeName];
+    const { linkId } = parentNode.nodes[nodeName];
 
     const selectedIdx = treeScopes.findIndex(({ scopeName }) => scopeName === linkId);
 
@@ -147,14 +146,17 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       fetchScope(linkId!);
 
       const selectedFromSameNode =
-        treeScopes.length === 0 || Object.values(siblings).some(({ linkId }) => linkId === treeScopes[0].scopeName);
+        treeScopes.length === 0 ||
+        Object.values(parentNode.nodes).some(({ linkId }) => linkId === treeScopes[0].scopeName);
 
       const treeScope = {
         scopeName: linkId!,
         path,
       };
 
-      this.setState({ treeScopes: !selectedFromSameNode ? [treeScope] : [...treeScopes, treeScope] });
+      this.setState({
+        treeScopes: parentNode?.disableMultiSelect || !selectedFromSameNode ? [treeScope] : [...treeScopes, treeScope],
+      });
     } else {
       treeScopes.splice(selectedIdx, 1);
 
