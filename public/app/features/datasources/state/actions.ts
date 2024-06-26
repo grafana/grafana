@@ -299,12 +299,11 @@ export function updateDataSource(dataSource: DataSourceSettings) {
   ) => {
     try {
       if (config.featureToggles.grafanaAPIServerWithExperimentalAPIs) {
+        // TODO: Store response
         const apiVersions = await getDatasourceAPIVersions();
-        console.log('apiVersions', apiVersions);
         if (apiVersions[dataSource.type]) {
           dataSource.apiVersion = apiVersions[dataSource.type];
         }
-        console.log('submitting datasource', dataSource);
       }
       await api.updateDataSource(dataSource);
     } catch (err) {
