@@ -1,6 +1,8 @@
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Menu } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
@@ -58,12 +60,14 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
           onClick={onShareExternallyClick}
         />
       )}
-      <Menu.Item
-        testId={newShareButtonSelector.shareSnapshot}
-        label={t('share-dashboard.menu.share-snapshot-title', 'Share snapshot')}
-        icon="camera"
-        onClick={onShareSnapshotClick}
-      />
+      {contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard() && (
+        <Menu.Item
+          testId={newShareButtonSelector.shareSnapshot}
+          label={t('share-dashboard.menu.share-snapshot-title', 'Share snapshot')}
+          icon="camera"
+          onClick={onShareSnapshotClick}
+        />
+      )}
     </Menu>
   );
 }
