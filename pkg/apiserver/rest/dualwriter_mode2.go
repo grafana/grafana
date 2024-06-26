@@ -82,20 +82,31 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	d.recordStorageDuration(err != nil, mode2Str, options.Kind, method, startStorage)
 	if err != nil {
 		// if it errors because it's not found, we try to fetch it from the legacy storage
-		if apierrors.IsNotFound(err) {
-			// d.recordStorageDuration(false, mode2Str, options.Kind, method, startStorage)
-
-			log.Info("object not found in storage, fetching from legacy")
-			startLegacy := time.Now()
-			objLegacy, err := d.Legacy.Get(ctx, name, options)
-			if err != nil {
-				log.Error(err, "unable to fetch object from legacy")
-				d.recordLegacyDuration(true, mode2Str, options.Kind, method, startLegacy)
-				return objLegacy, err
-			}
-			d.recordLegacyDuration(false, mode2Str, options.Kind, method, startLegacy)
+		if !apierrors.IsNotFound(err) {
+			log.Error(err, "unable to fetch object from storage")
+			return objStorage, err
 		}
-		log.Error(err, "unable to fetch object from storage")
+		log.Info("object not found in storage, fetching from legacy")
+	}
+
+	startLegacy := time.Now()
+	objLegacy, err := d.Legacy.Get(ctx, name, options)
+	if err != nil {
+		log.Error(err, "unable to fetch object from legacy")
+		d.recordLegacyDuration(true, mode2Str, options.Kind, method, startLegacy)
+		return objLegacy, err
+	}
+	d.recordLegacyDuration(false, mode2Str, options.Kind, method, startLegacy)
+
+	areEqual := Compare(objStorage, objLegacy)
+	d.recordOutcome(mode2Str, name, areEqual, method)
+	if !areEqual {
+		log.Info("object from legacy and storage are not equal")
+	}
+
+	// if there is no object in storage, we return the object from legacy
+	if objStorage == nil {
+		return objLegacy, nil
 	}
 	return objStorage, err
 }
