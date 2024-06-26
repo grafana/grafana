@@ -9,6 +9,7 @@ import { PromQueryField } from '../../components/PromQueryField';
 import { PromQueryEditorProps } from '../../components/types';
 
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
+import { QueryEditorHints } from '../shared/QueryEditorHints';
 
 type PromQueryCodeEditorProps = PromQueryEditorProps & {
   showExplain: boolean;
@@ -33,8 +34,8 @@ export function PromQueryCodeEditor(props: PromQueryCodeEditorProps) {
         data={data}
         app={app}
       />
-
       {showExplain && <PromQueryBuilderExplained query={query.expr} />}
+      <QueryEditorHints query={query} datasource={datasource} data={data} onChange={onChange} onRunQuery={onRunQuery} />
     </div>
   );
 }
