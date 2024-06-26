@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, Scope, urlUtil } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { CustomScrollbar, Icon, IconButton, Input, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, FilterInput, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t } from 'app/core/internationalization';
 
@@ -70,23 +70,12 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
   return (
     <>
       <div className={styles.searchInputContainer}>
-        <Input
-          prefix={<Icon name="search" />}
-          placeholder={t('scopes.suggestedDashboards.search', 'Search')}
+        <FilterInput
           disabled={isLoading}
-          data-testid="scopes-dashboards-search"
+          placeholder={t('scopes.suggestedDashboards.search', 'Search')}
           value={searchQuery}
-          suffix={
-            searchQuery && !isLoading ? (
-              <IconButton
-                aria-label={t('scopes.suggestedDashboards.clear', 'Clear search')}
-                name="times"
-                data-testid="scopes-dashboards-clear"
-                onClick={() => model.changeSearchQuery('')}
-              />
-            ) : undefined
-          }
-          onChange={(evt) => model.changeSearchQuery(evt.currentTarget.value)}
+          data-testid="scopes-dashboards-search"
+          onChange={(value) => model.changeSearchQuery(value)}
         />
       </div>
 

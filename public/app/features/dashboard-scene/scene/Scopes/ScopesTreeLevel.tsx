@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Checkbox, Icon, IconButton, Input, RadioButtonDot, useStyles2 } from '@grafana/ui';
+import { Checkbox, FilterInput, IconButton, RadioButtonDot, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { NodesMap, TreeScope } from './types';
@@ -46,28 +46,14 @@ export function ScopesTreeLevel({
   return (
     <>
       {!anyChildExpanded && (
-        <Input
-          prefix={<Icon name="filter" />}
-          className={styles.searchInput}
+        <FilterInput
           placeholder={t('scopes.tree.search', 'Search')}
           value={queryValue}
+          className={styles.searchInput}
           data-testid={`scopes-tree-${nodeId}-search`}
-          suffix={
-            queryValue ? (
-              <IconButton
-                aria-label={t('scopes.tree.clear', 'Clear search')}
-                name="times"
-                data-testid={`scopes-tree-${nodeId}-clear`}
-                onClick={() => {
-                  setQueryValue('');
-                  onQueryUpdate(nodePath, true, '');
-                }}
-              />
-            ) : undefined
-          }
-          onInput={(evt) => {
-            setQueryValue(evt.currentTarget.value);
-            onQueryUpdate(nodePath, true, evt.currentTarget.value);
+          onChange={(value) => {
+            setQueryValue(value);
+            onQueryUpdate(nodePath, true, value);
           }}
         />
       )}
