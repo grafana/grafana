@@ -163,23 +163,29 @@ func (p *EnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string {
 
 func (p *EnvVarsProvider) pluginSettingsEnvVars(pluginID string) []string {
 	const customConfigPrefix = "GF_PLUGIN"
-	var env []string
-	for k, v := range p.cfg.PluginSettings[pluginID] {
+
+	pluginSettings := p.cfg.PluginSettings[pluginID]
+
+	env := make([]string, 0, len(pluginSettings))
+	for k, v := range pluginSettings {
 		if k == "path" || strings.ToLower(k) == "id" {
 			continue
 		}
+
 		key := fmt.Sprintf("%s_%s", customConfigPrefix, strings.ToUpper(k))
 		if value := os.Getenv(key); value != "" {
 			v = value
 		}
+
 		env = append(env, fmt.Sprintf("%s=%s", key, v))
 	}
+
 	return env
 }
 
 func (p *EnvVarsProvider) envVar(key, value string) string {
 	if strings.Contains(value, "\x00") {
-		p.logger.Error("Variable with key '%s' contains a nil character", key)
+		p.logger.Error("Variable with key '%s' contains NUL", key)
 	}
 	return fmt.Sprintf("%s=%s", key, value)
 }

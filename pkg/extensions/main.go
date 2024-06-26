@@ -28,7 +28,6 @@ import (
 	_ "github.com/robfig/cron/v3"
 	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/stretchr/testify/require"
-	_ "github.com/vectordotdev/go-datemath"
 	_ "golang.org/x/time/rate"
 	_ "xorm.io/builder"
 )

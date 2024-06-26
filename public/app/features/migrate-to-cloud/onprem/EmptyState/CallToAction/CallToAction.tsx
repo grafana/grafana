@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Box, Button, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { useCreateMigrationMutation } from '../../../api';
+import { useCreateSessionMutation } from '../../../api';
 
 import { ConnectModal } from './ConnectModal';
 
 export const CallToAction = () => {
   const [modalOpen, setModalOpen] = useState(false);
-  const [createMigration, createMigrationResponse] = useCreateMigrationMutation();
+  const [createMigration, createMigrationResponse] = useCreateSessionMutation();
 
   return (
     <>

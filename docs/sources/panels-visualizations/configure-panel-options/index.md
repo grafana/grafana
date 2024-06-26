@@ -23,23 +23,35 @@ description: Add titles, descriptions, repeating rows and panel links
 weight: 50
 refs:
   global-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#global-variables
   links-to-the-panel:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/#panel-links
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/manage-dashboard-links/#panel-links
-  grafana-llm-plugin:
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin/
-  variables-you-have-defined:
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
   configure-repeating-rows:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows
   set-up-generative-ai-features-for-dashboards:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
+  variables-you-have-defined:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+  grafana-llm-plugin:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin/
 ---
 
 # Configure panel options
@@ -83,7 +95,8 @@ To configure repeating panels, follow these steps:
    - **Vertical** - Arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
 
 1. If you selected **Horizontal** in the previous step, select a value in the **Max per row** drop-down list to control the maximum number of panels that can be in a row.
-1. Click **Save**.
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and then **Exit edit**.
 1. To propagate changes to all panels, reload the dashboard.
 
 You can stop a panel from repeating by selecting **Disable repeating** in the **Repeat by variable** drop-down list.

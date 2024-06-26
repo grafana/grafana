@@ -1,13 +1,11 @@
-import React from 'react';
 import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { Field, Icon, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
-import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
 
-import { Options } from '../../panelcfg.gen';
+import { HorizontalConstraint, Options, Placement, VerticalConstraint } from '../../panelcfg.gen';
 
 import { ConstraintSelectionBox } from './ConstraintSelectionBox';
 import { QuickPositioning } from './QuickPositioning';

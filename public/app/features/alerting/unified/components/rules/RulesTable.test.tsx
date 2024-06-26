@@ -1,6 +1,5 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
@@ -30,7 +29,7 @@ const ui = {
   actionButtons: {
     edit: byRole('link', { name: 'Edit' }),
     view: byRole('link', { name: 'View' }),
-    more: byRole('button', { name: /more-actions/i }),
+    more: byRole('button', { name: /More/ }),
   },
   moreActionItems: {
     delete: byRole('menuitem', { name: 'Delete' }),

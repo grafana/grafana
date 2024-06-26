@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -189,7 +189,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
 
   return (
-    <>
+    <div data-testid={selectors.components.QueryTab.content}>
       <QueryGroupTopSection
         data={data}
         dsSettings={dsSettings}
@@ -232,7 +232,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         )}
         {model.renderExtraActions()}
       </Stack>
-    </>
+    </div>
   );
 }
 

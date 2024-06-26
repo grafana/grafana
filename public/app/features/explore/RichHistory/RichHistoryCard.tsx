@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, DataSourceApi } from '@grafana/data';
@@ -20,6 +21,8 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import ExploreRunQueryButton from '../ExploreRunQueryButton';
+
+import { RichHistoryAddToLibrary } from './RichHistoryAddToLibrary';
 
 const mapDispatchToProps = {
   changeDatasource,
@@ -342,6 +345,7 @@ export function RichHistoryCard(props: Props) {
           )}
           {activeUpdateComment && updateComment}
         </div>
+        {!activeUpdateComment && <RichHistoryAddToLibrary query={queryHistoryItem?.queries[0]} />}
         {!activeUpdateComment && (
           <div className={styles.runButton}>
             <ExploreRunQueryButton queries={queryHistoryItem.queries} rootDatasourceUid={cardRootDatasource?.uid} />

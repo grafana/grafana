@@ -1,9 +1,7 @@
-import React from 'react';
 import { Route, Switch } from 'react-router-dom';
 
 import { withErrorBoundary } from '@grafana/ui';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 
@@ -13,7 +11,7 @@ const DuplicateMessageTemplate = SafeDynamicImport(
   () => import('./components/contact-points/DuplicateMessageTemplate')
 );
 
-const NotificationTemplates = (_props: GrafanaRouteComponentProps): JSX.Element => (
+const NotificationTemplates = (): JSX.Element => (
   <AlertmanagerPageWrapper
     navId="receivers"
     accessType="notification"

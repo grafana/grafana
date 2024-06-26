@@ -1,8 +1,8 @@
 import { isNumber } from 'lodash';
 import { FeatureLike } from 'ol/Feature';
 import Map from 'ol/Map';
-import VectorLayer from 'ol/layer/Vector';
-import React, { ReactNode } from 'react';
+import VectorImage from 'ol/layer/VectorImage';
+import { ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 
 import {
@@ -74,8 +74,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     const style = await getStyleConfigState(config.style);
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
-    const vectorLayer = new VectorLayer({
+    const vectorLayer = new VectorImage({
       source,
+      declutter: false // TODO consider making this an option or explore grouping strategies
     });
 
     const legendProps = new ReplaySubject<MarkersLegendProps>(1);

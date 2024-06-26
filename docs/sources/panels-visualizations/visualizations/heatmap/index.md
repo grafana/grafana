@@ -17,6 +17,8 @@ title: Heatmap
 weight: 100
 refs:
   introduction-to-histograms-and-heatmaps:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-histograms/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-histograms/
 ---

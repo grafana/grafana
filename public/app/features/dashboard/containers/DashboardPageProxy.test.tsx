@@ -1,5 +1,4 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { Props } from 'react-virtualized-auto-sizer';
@@ -77,6 +76,12 @@ jest.mock('react-virtualized-auto-sizer', () => {
       width: 1,
     });
 });
+
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: () => ({
+    getDashboardDTO: jest.fn().mockResolvedValue(dashMock),
+  }),
+}));
 
 function setup(props: Partial<DashboardPageProxyProps>) {
   const context = getGrafanaContextMock();

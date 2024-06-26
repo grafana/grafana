@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
-import React, { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Button, Field, Icon, Input, Label, Select, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
@@ -63,8 +63,8 @@ const NotificationPoliciesFilter = ({
               <Tooltip
                 content={
                   <div>
-                    Filter silences by matchers using a comma separated list of matchers, ie:
-                    <pre>{`severity=critical, instance=~cluster-us-.+`}</pre>
+                    Filter notification policies by using a comma separated list of matchers, e.g.:
+                    <pre>severity=critical, region=EMEA</pre>
                   </div>
                 }
               >

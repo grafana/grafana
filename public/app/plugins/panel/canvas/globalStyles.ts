@@ -45,7 +45,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
             bottom: 0,
             left: 0,
             boxShadow: 'inset 0 0 0 2px blue',
-            content: '',
+            content: '""',
           },
           '& ~ .rc-tree-treenode': {
             borderLeft: `2px solid ${theme.components.input.borderColor}`,
@@ -89,6 +89,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
           },
         },
         span: {
+          height: '100%',
           '&.rc-tree-checkbox, &.rc-tree-iconEle': {
             display: 'inline-block',
             width: '16px',
@@ -167,7 +168,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
                 borderLeft: 0,
                 WebkitTransform: 'scale(1)',
                 transform: 'scale(1)',
-                content: ' ',
+                content: '" "',
               },
             },
           },

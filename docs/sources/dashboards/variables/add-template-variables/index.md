@@ -40,8 +40,8 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Manage variables
-title: Add and manage variables
+menuTitle: Add variables
+title: Add variables
 description: Learn about the types of variables you can add to dashboards and how
 weight: 100
 refs:
@@ -49,32 +49,32 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/
   inspect:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/inspect-variable/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/inspect-variable/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/inspect-variable/
   prometheus-query-variables:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/#use-**rate_interval
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/#use-**rate_interval
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/template-variables/#use-**rate_interval
   raw-variable-format:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#raw
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#raw
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax/#raw
   data-source:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
   raw-format:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#raw
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#raw
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax/#raw
   add-a-data-source:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
@@ -82,7 +82,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
 ---
 
-# Add and manage variables
+# Add variables
 
 The following table lists the types of variables shipped with Grafana.
 
@@ -102,18 +102,20 @@ The following table lists the types of variables shipped with Grafana.
 
 You must enter general options for any type of variable that you create.
 
-1. Navigate to the dashboard you want to make a variable for and click the **Dashboard settings** (gear) icon at the top of the page.
-1. On the **Variables** tab, click **New variable**.
+1. Click **Edit** in the top-right corner of the dashboard.
+1. Click **Settings**.
+1. Go to the **Variables** tab.
+1. Click **Add variable**.
 1. Enter a **Name** for the variable.
-1. In the **Type** list, select **Query**.
+1. In the **Select variable type** drop-down, choose **Query**.
 1. (Optional) In **Label**, enter the display name of the variable dropdown.
 
    If you don't enter a display name, then the dropdown label is the variable name.
 
-1. Choose a **Hide** option:
-   - **No selection (blank):** The variable dropdown displays the variable **Name** or **Label** value. This is the default.
-   - **Label:** The variable dropdown only displays the selected variable value and a down arrow.
-   - **Variable:** No variable dropdown is displayed on the dashboard.
+1. Choose a **Show on dashboard** option:
+   - **Label and value** - The variable drop-down displays the variable **Name** or **Label** value. This is the default.
+   - **Value:** The variable drop-down only displays the selected variable value and a down arrow.
+   - **Nothing:** No variable drop-down is displayed on the dashboard.
 
 ## Add a query variable
 
@@ -123,7 +125,9 @@ Query variables are generally only supported for strings. If your query returns 
 
 Query expressions can contain references to other variables and in effect create linked variables. Grafana detects this and automatically refreshes a variable when one of its linked variables change.
 
-> **Note:** Query expressions are different for each data source. For more information, refer to the documentation for your [data source](ref:data-source).
+{{< admonition type="note" >}}
+Query expressions are different for each data source. For more information, refer to the documentation for your [data source](ref:data-source).
+{{< /admonition >}}
 
 1. [Enter general options](#enter-general-options).
 1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
@@ -131,14 +135,18 @@ Query expressions can contain references to other variables and in effect create
    - **On Dashboard Load:** Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
    - **On Time Range Change:** Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
 1. In the **Query** field, enter a query.
+
    - The query field varies according to your data source. Some data sources have custom query editors.
-   - Make sure that the query returns values named `__text` and `__value` as appropriate in your query syntax. For example, in SQL, you can use a query such as `SELECT hostname AS __text, id AS __value FROM MyTable`. Queries for other languages will vary depending on syntax.
+   - Each data source defines how the variable values are extracted. The typical implementation uses every string value returned from the data source response as a variable value. Make sure to double-check the documentation for the data source.
+   - Some data sources let you provide custom "display names" for the values. For instance, the PostgreSQL, MySQL, and Microsoft SQL Server plugins handle this by looking for fields named `__text` and `__value` in the result. Other data sources may look for `text` and `value` or use a different approach. Always remember to double-check the documentation for the data source.
    - If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
+
 1. (Optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with regex](#filter-variables-with-regex).
 1. In the **Sort** list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query will be used.
 1. (Optional) Enter [Selection Options](#configure-variable-selection-options).
 1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
-1. Click **Add** to add the variable to the dashboard.
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and **Exit edit**.
 
 ## Add a custom variable
 
@@ -150,7 +158,8 @@ For example, if you have server names or region names that never change, then yo
 1. In the **Values separated by comma** list, enter the values for this variable in a comma-separated list. You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.
 1. (Optional) Enter [Selection Options](#configure-variable-selection-options).
 1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
-1. Click **Add** to add the variable to the dashboard.
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and **Exit edit**.
 
 ## Add a text box variable
 
@@ -161,7 +170,8 @@ For more information about cardinality, refer to [What are cardinality spikes an
 1. [Enter general options](#enter-general-options).
 1. (Optional) In the **Default value** field, select the default value for the variable. If you do not enter anything in this field, then Grafana displays an empty text box for users to type text into.
 1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
-1. Click **Add** to add the variable to the dashboard.
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and **Exit edit**.
 
 ## Add a constant variable
 
@@ -174,7 +184,8 @@ Constant variables are useful when you have complex values that you need to incl
 1. [Enter general options](#enter-general-options).
 1. In the **Value** field, enter the variable value. You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format](ref:raw-format).
 1. In **Preview of values**, Grafana displays the current variable value. Review it to ensure it matches what you expect.
-1. Click **Add** to add the variable to the dashboard.
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and **Exit edit**.
 
 ## Add a data source variable
 
@@ -188,7 +199,8 @@ _Data source_ variables enable you to quickly change the data source for an enti
 1. (Optional) In **Instance name filter**, enter a regex filter for which data source instances to choose from in the variable value drop-down list. Leave this field empty to display all instances.
 1. (Optional) Enter [Selection Options](#configure-variable-selection-options).
 1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
-1. Click **Add** to add the variable to the dashboard.
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and **Exit edit**.
 
 ## Add an interval variable
 
@@ -202,7 +214,8 @@ You can use an interval variable as a parameter to group by time (for InfluxDB),
    - **Step count -** Select the number of times the current time range will be divided to calculate the value, similar to the **Max data points** query option. For example, if the current visible time range is 30 minutes, then the `auto` interval groups the data into 30 one-minute increments. The default value is 30 steps.
    - **Min Interval -** The minimum threshold below which the step count intervals will not divide the time. To continue the 30 minute example, if the minimum interval is set to 2m, then Grafana would group the data into 15 two-minute increments.
 1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
-1. Click **Add** to add the variable to the dashboard.
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and **Exit edit**.
 
 ### Interval variable examples
 
@@ -231,7 +244,8 @@ Ad hoc filter variables only work with Prometheus, Loki, InfluxDB, and Elasticse
 
    You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
 
-1. Click **Add** to add the variable to the dashboard.
+1. Click **Save dashboard**.
+1. Click **Back to dashboard** and **Exit edit**.
 
 ### Create ad hoc filters
 
@@ -392,7 +406,8 @@ Extremely complex linked templated dashboards are possible, 5 or 10 levels deep.
 
 ### Grafana Play dashboard examples
 
-The following Grafana Play dashboards contain fairly simple chained variables, only two layers deep. To view the variables and their settings, click **Dashboard settings** (gear icon) and then click **Variables**. Both examples are expanded in the following section.
+The following Grafana Play dashboards contain fairly simple chained variables, only two layers deep. To view the variables and their settings, click **Edit**
+and then **Settings**; then go to the **Variables** tab. Both examples are expanded in the following section.
 
 - [Graphite Templated Nested](https://play.grafana.org/d/000000056/graphite-templated-nested?orgId=1&var-app=country&var-server=All&var-interval=1h)
 - [InfluxDB Templated](https://play.grafana.org/d/e7bad3ef-db0c-4bbd-8245-b85c0b2ca2b9/influx-2-73a-hourly-electric-grid-monitor-for-us?orgId=1&refresh=1m)
@@ -553,16 +568,6 @@ The more layers of dependency you have in variables, the longer it will take to 
 
 For example, if you have a series of four linked variables (country, region, server, metric) and you change a root variable value (country), then Grafana must run queries for all the dependent variables before it updates the visualizations in the dashboard.
 
-## Manage variables
-
-The variables page lets you [add](ref:add) variables and manage existing variables. It also allows you to [inspect](ref:inspect) variables and identify whether a variable is being referenced (or used) in other variables or dashboard.
-
-**Move:** You can move a variable up or down the list using drag and drop.
-
-**Clone:** To clone a variable, click the clone icon from the set of icons on the right. This creates a copy of the variable with the name of the original variable prefixed with `copy_of_`.
-
-**Delete:** To delete a variable, click the trash icon from the set of icons on the right.
-
 ## Filter variables with regex
 
 Using the Regex Query option, you filter the list of options returned by the variable query or modify the options returned.
@@ -668,4 +673,6 @@ enp216s0f0np2         0000:d7:00_0_0000:d8:00_2
 enp216s0f0np3         0000:d7:00_0_0000:d8:00_3
 ```
 
-**Note:** Only `text` and `value` capture group names are supported.
+{{< admonition type="note" >}}
+Only `text` and `value` capture group names are supported.
+{{< /admonition >}}

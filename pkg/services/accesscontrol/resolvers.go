@@ -16,9 +16,15 @@ type ScopeAttributeResolver interface {
 }
 
 type ActionResolver interface {
-	ResolveAction(action string) []string
-	ResolveActionSet(actionSet string) []string
+	// ExpandActionSets takes a set of permissions that might include some action set permissions, and returns a set of permissions with action sets expanded into underlying permissions
 	ExpandActionSets(permissions []Permission) []Permission
+	// ExpandActionSetsWithFilter works like ExpandActionSets, but it also takes a function for action filtering. When action sets are expanded into the underlying permissions,
+	// only those permissions whose action is matched by actionMatcher are included.
+	ExpandActionSetsWithFilter(permissions []Permission, actionMatcher func(action string) bool) []Permission
+	// ResolveAction returns all action sets that include the given action
+	ResolveAction(action string) []string
+	// ResolveActionPrefix returns all action sets that include at least one action with the specified prefix
+	ResolveActionPrefix(prefix string) []string
 }
 
 // ScopeAttributeResolverFunc is an adapter to allow functions to implement ScopeAttributeResolver interface
@@ -29,8 +35,6 @@ func (f ScopeAttributeResolverFunc) Resolve(ctx context.Context, orgID int64, sc
 }
 
 type ScopeAttributeMutator func(context.Context, string) ([]string, error)
-
-type ActionSetResolver func(context.Context, string) []string
 
 const (
 	ttl           = 30 * time.Second
@@ -49,16 +53,11 @@ type Resolvers struct {
 	log                log.Logger
 	cache              *localcache.CacheService
 	attributeResolvers map[string]ScopeAttributeResolver
-	actionResolver     ActionResolver
 }
 
 func (s *Resolvers) AddScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver) {
 	s.log.Debug("Adding scope attribute resolver", "prefix", prefix)
 	s.attributeResolvers[prefix] = resolver
-}
-
-func (s *Resolvers) SetActionResolver(resolver ActionResolver) {
-	s.actionResolver = resolver
 }
 
 func (s *Resolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMutator {
@@ -89,16 +88,4 @@ func (s *Resolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMutator 
 // getScopeCacheKey creates an identifier to fetch and store resolution of scopes in the cache
 func getScopeCacheKey(orgID int64, scope string) string {
 	return fmt.Sprintf("%s-%v", scope, orgID)
-}
-
-func (s *Resolvers) GetActionSetResolver() ActionSetResolver {
-	return func(ctx context.Context, action string) []string {
-		if s.actionResolver == nil {
-			return []string{action}
-		}
-		actionSetActions := s.actionResolver.ResolveAction(action)
-		actions := append(actionSetActions, action)
-		s.log.Debug("Resolved action", "action", action, "resolved_actions", actions)
-		return actions
-	}
 }

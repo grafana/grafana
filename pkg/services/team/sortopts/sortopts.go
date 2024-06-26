@@ -5,10 +5,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
 var (

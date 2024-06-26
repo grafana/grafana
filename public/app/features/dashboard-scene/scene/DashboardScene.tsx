@@ -1,22 +1,31 @@
 import * as H from 'history';
 
-import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
+import {
+  AppEvents,
+  CoreApp,
+  DataQueryRequest,
+  NavIndex,
+  NavModelItem,
+  locationUtil,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
+} from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
-  getUrlSyncManager,
   SceneFlexLayout,
   sceneGraph,
   SceneGridLayout,
   SceneGridRow,
   SceneObject,
   SceneObjectBase,
+  SceneObjectRef,
   SceneObjectState,
   sceneUtils,
   SceneVariable,
   SceneVariableDependencyConfigLike,
   VizPanel,
 } from '@grafana/scenes';
-import { Dashboard, DashboardLink } from '@grafana/schema';
+import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -26,7 +35,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
@@ -65,7 +74,7 @@ import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
-import { ScopesScene } from './ScopesScene';
+import { ScopesScene } from './Scopes/ScopesScene';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
@@ -116,6 +125,8 @@ export interface DashboardSceneState extends SceneObjectState {
   isEmpty?: boolean;
   /** Scene object that handles the scopes selector */
   scopes?: ScopesScene;
+  /** Kiosk mode */
+  kioskMode?: KioskMode;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -202,27 +213,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
-      this.stopUrlSync();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
     };
-  }
-
-  public startUrlSync() {
-    if (!this.state.meta.isEmbedded) {
-      getUrlSyncManager().initSync(this);
-    }
-  }
-
-  public stopUrlSync() {
-    getUrlSyncManager().cleanUp(this);
   }
 
   public onEnterEditMode = (fromExplore = false) => {
     this._fromExplore = fromExplore;
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
-
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
@@ -293,10 +292,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   private exitEditModeConfirmed(restoreInitialState = true) {
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
-    // Stop url sync before updating url
-    this.stopUrlSync();
 
-    // Now we can update urls
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
     // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.
@@ -320,8 +316,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       // Do not restore
       this.setState({ isEditing: false });
     }
-    // and start url sync again
-    this.startUrlSync();
+
+    // if we are in edit panel, we need to onDiscard()
+    // so the useEffect cleanup comes later and
+    // doesn't try to commit the changes
+    if (this.state.editPanel) {
+      this.state.editPanel.onDiscard();
+    }
+
     // Disable grid dragging
     this.propagateEditModeChange();
   }
@@ -389,6 +391,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanelScene, editPanel } = this.state;
+
+    if (meta.dashboardNotFound) {
+      return { text: 'Not found' };
+    }
 
     let pageNav: NavModelItem = {
       text: this.state.title,
@@ -510,6 +516,31 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     });
   }
 
+  public createLibraryPanel(panelToReplace: VizPanel, libPanel: LibraryPanel) {
+    const layout = this.state.body;
+
+    if (!(layout instanceof SceneGridLayout)) {
+      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
+    }
+
+    const panelKey = panelToReplace.state.key;
+
+    const body = new LibraryVizPanel({
+      title: libPanel.model?.title ?? 'Panel',
+      uid: libPanel.uid,
+      name: libPanel.name,
+      panelKey: panelKey ?? getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(this)),
+    });
+
+    const gridItem = panelToReplace.parent;
+
+    if (!(gridItem instanceof DashboardGridItem)) {
+      throw new Error("Trying to replace a panel that doesn't have a parent grid item");
+    }
+
+    gridItem.setState({ body });
+  }
+
   public duplicatePanel(vizPanel: VizPanel) {
     if (!vizPanel.parent) {
       return;
@@ -559,8 +590,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       newGridItem = new DashboardGridItem({
         x: gridItem.state.x,
         y: gridItem.state.y,
-        height: NEW_PANEL_HEIGHT,
-        width: NEW_PANEL_WIDTH,
+        height: gridItem.state.height,
+        width: gridItem.state.width,
         body: new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) }),
       });
     }
@@ -765,9 +796,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.partial({ editview: 'settings' });
   };
 
-  public onShowAddLibraryPanelDrawer() {
+  public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<LibraryVizPanel>) {
     this.setState({
-      overlay: new AddLibraryPanelDrawer({}),
+      overlay: new AddLibraryPanelDrawer({ panelToReplaceRef }),
     });
   }
 
@@ -779,7 +810,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return getPanelIdForVizPanel(row);
   }
 
-  public onCreateNewPanel(): number {
+  public onCreateNewPanel(): VizPanel {
     if (!this.state.isEditing) {
       this.onEnterEditMode();
     }
@@ -788,7 +819,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     this.addPanel(vizPanel);
 
-    return getPanelIdForVizPanel(vizPanel);
+    return vizPanel;
   }
 
   /**
@@ -818,6 +849,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardUID: this.state.uid,
       panelId,
       panelPluginId: panel?.state.pluginId,
+      scopes: this.state.scopes?.getSelectedScopes(),
+    };
+  }
+
+  public enrichFiltersRequest(): Partial<DataSourceGetTagKeysOptions | DataSourceGetTagValuesOptions> {
+    return {
       scopes: this.state.scopes?.getSelectedScopes(),
     };
   }

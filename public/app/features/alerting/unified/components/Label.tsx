@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 import tinycolor2 from 'tinycolor2';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 
-export type LabelSize = 'md' | 'sm';
+export type LabelSize = 'md' | 'sm' | 'xs';
 
 interface Props {
   icon?: IconName;
@@ -33,11 +33,9 @@ const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
             )}
           </Stack>
         </div>
-        {value && (
-          <div className={styles.value} title={value.toString()}>
-            {value}
-          </div>
-        )}
+        <div className={styles.value} title={value?.toString()}>
+          {value ?? '-'}
+        </div>
       </Stack>
     </div>
   );
@@ -58,8 +56,18 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
     ? tinycolor2.mostReadable(backgroundColor, ['#000', '#fff']).toString()
     : theme.colors.text.primary;
 
-  const padding =
-    size === 'md' ? `${theme.spacing(0.33)} ${theme.spacing(1)}` : `${theme.spacing(0.2)} ${theme.spacing(0.6)}`;
+  let padding: CSSProperties['padding'] = theme.spacing(0.33, 1);
+
+  switch (size) {
+    case 'sm':
+      padding = theme.spacing(0.2, 0.6);
+      break;
+    case 'xs':
+      padding = theme.spacing(0, 0.5);
+      break;
+    default:
+      break;
+  }
 
   return {
     wrapper: css({

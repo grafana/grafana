@@ -26,16 +26,7 @@ The Alert rules list view page lists all existing alert rules. By default, alert
 
 When managing large volumes of alerts, you can use extended alert rule search capabilities to filter on folders, evaluation groups, and rules. Additionally, you can filter alert rules by their properties like labels, state, type, and health.
 
-From the Alert rule list page, you can also duplicate alert rules to help you reuse existing alert rules.
-
-## View alert rules
-
-To view your alert rules, complete the following steps.
-
-1. Click **Alerts & IRM** -> **Alert rules**.
-1. In **View as**, toggle between Grouped, List, or State views.
-1. Expand each alert rule row to view the state, health, evaluation details, as well as a list of alert instances resulting from the alert rule.
-1. Use **Search by data sources** to view alert rules that query the selected data source.
+From the Alert rule list page, you can duplicate alert rules, silence notifications and pause or resume evaluation. If you pause evaluation, the alert rule state shows as **Paused**.
 
 ### Grouped view
 

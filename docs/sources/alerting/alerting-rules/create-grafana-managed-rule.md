@@ -64,6 +64,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
+  alert-list:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/alert-list/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/alert-list/
+  time-series:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
 ---
 
 # Configure Grafana-managed alert rules
@@ -227,6 +237,10 @@ Annotations add metadata to provide more information on the alert in your alert 
 
    Links alerts to panels in a dashboard.
 
+   {{% admonition type="note" %}}
+   At the moment, alerts are only supported in the [time series](ref:time-series) and [alert list](ref:alert-list) visualizations.
+   {{% /admonition %}}
+
    {{< docs/play title="visualizations with linked alerts in Grafana" url="https://play.grafana.org/d/000000074/" >}}
 
 1. Click **Save rule**.
@@ -235,7 +249,7 @@ Annotations add metadata to provide more information on the alert in your alert 
 
 In **Configure no data and error handling**, you can define the alerting behavior when the evaluation returns no data or an error.
 
-For details about alert states, refer to [lifecycle of alert instances.](ref:alert-instance-state)
+For details about alert states, refer to [lifecycle of alert instances](ref:alert-instance-state).
 
 You can configure the alert instance state when its evaluation returns no data:
 

@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { LoadingState } from '@grafana/data';
 import {
   SceneComponentProps,
@@ -81,8 +79,8 @@ function hasTransformations(dataProvider: SceneDataProvider) {
 }
 
 function getDataProviderToSubscribeTo(dataProvider: SceneDataProvider, withTransforms: boolean) {
-  if (withTransforms && dataProvider instanceof SceneDataTransformer) {
-    return dataProvider.state.$data!;
+  if (!withTransforms && dataProvider instanceof SceneDataTransformer && dataProvider.state.$data) {
+    return dataProvider.state.$data;
   }
 
   return dataProvider;

@@ -12,9 +12,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
@@ -35,7 +35,7 @@ type backtestingEvaluator interface {
 }
 
 type stateManager interface {
-	ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *models.AlertRule, results eval.Results, extraLabels data.Labels) []state.StateTransition
+	ProcessEvalResults(context.Context, time.Time, *models.AlertRule, eval.Results, data.Labels, state.Sender) state.StateTransitions
 	schedule.RuleStateProvider
 }
 
@@ -90,14 +90,14 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 	start := time.Now()
 
 	tsField := data.NewField("Time", nil, make([]time.Time, length))
-	valueFields := make(map[string]*data.Field)
+	valueFields := make(map[data.Fingerprint]*data.Field)
 
 	err = evaluator.Eval(ruleCtx, from, time.Duration(rule.IntervalSeconds)*time.Second, length, func(idx int, currentTime time.Time, results eval.Results) error {
 		if idx >= length {
 			logger.Info("Unexpected evaluation. Skipping", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluationTime", currentTime, "evaluationIndex", idx, "expectedEvaluations", length)
 			return nil
 		}
-		states := stateManager.ProcessEvalResults(ruleCtx, currentTime, rule, results, nil)
+		states := stateManager.ProcessEvalResults(ruleCtx, currentTime, rule, results, nil, nil)
 		tsField.Set(idx, currentTime)
 		for _, s := range states {
 			field, ok := valueFields[s.CacheID]

@@ -228,13 +228,13 @@ The **Alerting HTTP API** provides specific endpoints for exporting alerting res
 
 | Resource                 | Method / URI                                                         | Summary                                                                                      |
 | ------------------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Alert rules              | GET /api/v1/provisioning/alert-rules/export                          | [Export all alert rules in provisioning file format.](ref:export_rules)                      |
-| Alert rules              | GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [Export an alert rule group in provisioning file format.](ref:export_rule_group)             |
-| Alert rules              | GET /api/v1/provisioning/alert-rules/:uid/export                     | [Export an alert rule in provisioning file format.](ref:export_rule)                         |
-| Contact points           | GET /api/v1/provisioning/contact-points/export                       | [Export all contact points in provisioning file format.](ref:export_contacts)                |
-| Notification policy tree | GET /api/v1/provisioning/policies/export                             | [Export the notification policy tree in provisioning file format.](ref:export_notifications) |
-| Mute timings             | GET /api/v1/provisioning/mute-timings/export                         | [Export all mute timings in provisioning file format.](ref:export_mute_timings)              |
-| Mute timings             | GET /api/v1/provisioning/mute-timings/:name/export                   | [Export a mute timing in provisioning file format.](ref:export_mute_timing)                  |
+| Alert rules              | GET /api/v1/provisioning/alert-rules/export                          | [Export all alert rules in provisioning file format](ref:export_rules).                      |
+| Alert rules              | GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [Export an alert rule group in provisioning file format](ref:export_rule_group).             |
+| Alert rules              | GET /api/v1/provisioning/alert-rules/:uid/export                     | [Export an alert rule in provisioning file format](ref:export_rule).                         |
+| Contact points           | GET /api/v1/provisioning/contact-points/export                       | [Export all contact points in provisioning file format](ref:export_contacts).                |
+| Notification policy tree | GET /api/v1/provisioning/policies/export                             | [Export the notification policy tree in provisioning file format](ref:export_notifications). |
+| Mute timings             | GET /api/v1/provisioning/mute-timings/export                         | [Export all mute timings in provisioning file format](ref:export_mute_timings).              |
+| Mute timings             | GET /api/v1/provisioning/mute-timings/:name/export                   | [Export a mute timing in provisioning file format](ref:export_mute_timing).                  |
 
 These endpoints accept a `download` parameter to download a file containing the exported resources.
 

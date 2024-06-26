@@ -301,19 +301,19 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 		return err
 	}
 
-	if !shouldUpdateLastSeen(u.LastSeenAt) {
+	if !s.shouldUpdateLastSeen(u.LastSeenAt) {
 		return user.ErrLastSeenUpToDate
 	}
 
 	return s.store.UpdateLastSeenAt(ctx, cmd)
 }
 
-func shouldUpdateLastSeen(t time.Time) bool {
-	return time.Since(t) > time.Minute*5
+func (s *Service) shouldUpdateLastSeen(t time.Time) bool {
+	return time.Since(t) > s.cfg.UserLastSeenUpdateInterval
 }
 
 func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetSignedInUserWithCacheCtx", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "user.GetSignedInUser", trace.WithAttributes(
 		attribute.Int64("userID", query.UserID),
 		attribute.Int64("orgID", query.OrgID),
 	))

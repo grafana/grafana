@@ -89,11 +89,21 @@ type VersionsQueryOptions struct {
 	Version int64 `json:"version,omitempty"`
 }
 
-// Information about how the requesting user can use a given dashboard
+// This is like the legacy DTO where access and metadata are all returned in a single call
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DashboardAccessInfo struct {
-	metav1.TypeMeta `json:",inline"`
+type DashboardWithAccessInfo struct {
+	Dashboard `json:",inline"`
 
+	Access DashboardAccess `json:"access"`
+}
+
+// Information about how the requesting user can use a given dashboard
+type DashboardAccess struct {
+	// Metadata fields
+	Slug string `json:"slug,omitempty"`
+	Url  string `json:"url,omitempty"`
+
+	// The permissions part
 	CanSave                bool                  `json:"canSave"`
 	CanEdit                bool                  `json:"canEdit"`
 	CanAdmin               bool                  `json:"canAdmin"`

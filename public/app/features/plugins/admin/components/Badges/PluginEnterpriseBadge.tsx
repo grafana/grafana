@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { featureEnabled } from '@grafana/runtime';
 import { Badge, PluginSignatureBadge, Stack, useStyles2 } from '@grafana/ui';

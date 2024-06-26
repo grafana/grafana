@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { fromPairs } from 'lodash';
 import { stringify } from 'querystring';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 import { of } from 'rxjs';
@@ -53,6 +52,7 @@ type SetupOptions = {
   queryHistory?: { queryHistory: Array<Partial<RichHistoryRemoteStorageDTO>>; totalCount: number };
   urlParams?: ExploreQueryParams;
   prevUsedDatasource?: { orgId: number; datasource: string };
+  failAddToLibrary?: boolean;
 };
 
 type TearDownOptions = {

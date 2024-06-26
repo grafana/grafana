@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce, uniqueId } from 'lodash';
-import React, { FormEvent, useState } from 'react';
+import { FormEvent, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, Icon, Input, Label, Tooltip, useStyles2, Stack } from '@grafana/ui';
@@ -43,8 +43,8 @@ export const SilencesFilter = () => {
               <Tooltip
                 content={
                   <div>
-                    Filter silences by matchers using a comma separated list of matchers, ie:
-                    <pre>{`severity=critical, instance=~cluster-us-.+`}</pre>
+                    Filter silences by using a comma separated list of matchers, e.g.:
+                    <pre>severity=critical, env=production</pre>
                   </div>
                 }
               >

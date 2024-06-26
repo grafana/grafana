@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -564,7 +563,7 @@ func seedResourcePermissions(
 
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
 	sql, cfg := db.InitTestDBWithCfg(t)
-	return NewStore(sql, featuremgmt.WithFeatures()), sql, cfg
+	return NewStore(cfg, sql, featuremgmt.WithFeatures()), sql, cfg
 }
 
 func TestStore_IsInherited(t *testing.T) {
@@ -782,21 +781,18 @@ func TestStore_StoreActionSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store, _, _ := setupTestEnv(t)
-			store.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
-			ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-			asService := NewActionSetService(ac)
+			asService := NewActionSetService()
 			asService.StoreActionSet(tt.resource, tt.action, tt.actions)
 
 			actionSetName := GetActionSetName(tt.resource, tt.action)
-			actionSet := asService.GetActionSet(actionSetName)
+			actionSet := asService.ResolveActionSet(actionSetName)
 			require.Equal(t, tt.actions, actionSet)
 		})
 	}
 }
 
 func TestStore_ResolveActionSet(t *testing.T) {
-	actionSetService := NewActionSetService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
+	actionSetService := NewActionSetService()
 	actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
 	actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
 	actionSetService.StoreActionSet("dashboards", "view", []string{"dashboards:read"})
@@ -839,7 +835,7 @@ func TestStore_ResolveActionSet(t *testing.T) {
 }
 
 func TestStore_ExpandActions(t *testing.T) {
-	actionSetService := NewActionSetService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
+	actionSetService := NewActionSetService()
 	actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
 	actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
 	actionSetService.StoreActionSet("dashboards", "view", []string{"dashboards:read"})
