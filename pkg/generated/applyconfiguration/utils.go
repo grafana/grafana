@@ -17,8 +17,14 @@ import (
 func ForKind(kind schema.GroupVersionKind) interface{} {
 	switch kind {
 	// Group=notifications.alerting.grafana.app, Version=v0alpha1
+	case v0alpha1.SchemeGroupVersion.WithKind("Integration"):
+		return &alertingnotificationsv0alpha1.IntegrationApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("Interval"):
 		return &alertingnotificationsv0alpha1.IntervalApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("Receiver"):
+		return &alertingnotificationsv0alpha1.ReceiverApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ReceiverSpec"):
+		return &alertingnotificationsv0alpha1.ReceiverSpecApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TimeInterval"):
 		return &alertingnotificationsv0alpha1.TimeIntervalApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TimeIntervalSpec"):

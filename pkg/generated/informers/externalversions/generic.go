@@ -40,6 +40,8 @@ func (f *genericInformer) Lister() cache.GenericLister {
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
 	// Group=notifications.alerting.grafana.app, Version=v0alpha1
+	case v0alpha1.SchemeGroupVersion.WithResource("receivers"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Notifications().V0alpha1().Receivers().Informer()}, nil
 	case v0alpha1.SchemeGroupVersion.WithResource("timeintervals"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Notifications().V0alpha1().TimeIntervals().Informer()}, nil
 

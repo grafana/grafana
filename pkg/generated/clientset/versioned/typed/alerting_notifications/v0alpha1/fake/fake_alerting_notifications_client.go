@@ -14,6 +14,10 @@ type FakeNotificationsV0alpha1 struct {
 	*testing.Fake
 }
 
+func (c *FakeNotificationsV0alpha1) Receivers(namespace string) v0alpha1.ReceiverInterface {
+	return &FakeReceivers{c, namespace}
+}
+
 func (c *FakeNotificationsV0alpha1) TimeIntervals(namespace string) v0alpha1.TimeIntervalInterface {
 	return &FakeTimeIntervals{c, namespace}
 }
