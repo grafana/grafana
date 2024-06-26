@@ -17,7 +17,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const entityTable = "entity"
@@ -75,7 +77,7 @@ type sqlEntityServer struct {
 	db          db.EntityDBInterface // needed to keep xorm engine in scope
 	sess        *session.SessionDB
 	dialect     migrator.Dialect
-	broadcaster Broadcaster[*entity.EntityWatchResponse]
+	broadcaster resource.Broadcaster[*entity.EntityWatchResponse]
 	ctx         context.Context // TODO: remove
 	cancel      context.CancelFunc
 	tracer      trace.Tracer
@@ -141,7 +143,7 @@ func (s *sqlEntityServer) init() error {
 	s.dialect = migrator.NewDialect(engine.DriverName())
 
 	// set up the broadcaster
-	s.broadcaster, err = NewBroadcaster(s.ctx, func(stream chan<- *entity.EntityWatchResponse) error {
+	s.broadcaster, err = resource.NewBroadcaster(s.ctx, func(stream chan<- *entity.EntityWatchResponse) error {
 		// start the poller
 		go s.poller(stream)
 
@@ -301,7 +303,7 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 		return nil, fmt.Errorf("missing key")
 	}
 
-	key, err := entity.ParseKey(r.Key)
+	key, err := grafanaregistry.ParseKey(r.Key)
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +359,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		return nil, err
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		ctxLogger.Error("error getting user from ctx", "error", err)
 		return nil, err
@@ -394,7 +396,7 @@ func (s *sqlEntityServer) history(ctx context.Context, r *entity.EntityHistoryRe
 	entityQuery.AddFields(fields...)
 
 	if r.Key != "" {
-		key, err := entity.ParseKey(r.Key)
+		key, err := grafanaregistry.ParseKey(r.Key)
 		if err != nil {
 			return nil, err
 		}
@@ -572,7 +574,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		return nil, err
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		ctxLogger.Error("error getting user from ctx", "error", err)
 		return nil, err
@@ -628,7 +630,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		where := []string{}
 		args := []any{}
 		for _, k := range r.Key {
-			key, err := entity.ParseKey(k)
+			key, err := grafanaregistry.ParseKey(k)
 			if err != nil {
 				return nil, err
 			}
@@ -802,7 +804,7 @@ func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 		return err
 	}
 
-	user, err := appcontext.User(w.Context())
+	user, err := identity.GetRequester(w.Context())
 	if err != nil {
 		ctxLogger.Error("error getting user from ctx", "error", err)
 		return err
@@ -867,7 +869,7 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 		where := []string{}
 		args := []any{}
 		for _, k := range r.Key {
-			key, err := entity.ParseKey(k)
+			key, err := grafanaregistry.ParseKey(k)
 			if err != nil {
 				ctxLogger.Error("error parsing key", "error", err, "key", k)
 				return lastRv, err
@@ -1152,7 +1154,7 @@ func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
 	if len(r.Key) > 0 {
 		matched := false
 		for _, k := range r.Key {
-			key, err := entity.ParseKey(k)
+			key, err := grafanaregistry.ParseKey(k)
 			if err != nil {
 				return false
 			}
@@ -1288,7 +1290,7 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 		return nil, err
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		ctxLogger.Error("error getting user from ctx", "error", err)
 		return nil, err

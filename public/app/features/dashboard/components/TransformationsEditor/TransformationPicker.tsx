@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FormEventHandler, KeyboardEventHandler, ReactNode } from 'react';
+import { FormEventHandler, KeyboardEventHandler, ReactNode } from 'react';
 
 import { DocsId, GrafanaTheme2, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

@@ -1,4 +1,3 @@
-import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { SelectableValue, TypedVariableModel } from '@grafana/data';

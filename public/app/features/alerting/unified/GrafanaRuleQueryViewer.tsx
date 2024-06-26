@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { keyBy, startCase } from 'lodash';
-import React from 'react';
+import * as React from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
 import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';

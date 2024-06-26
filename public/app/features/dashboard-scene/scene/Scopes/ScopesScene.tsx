@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
@@ -30,7 +29,7 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
     this.addActivationHandler(() => {
       this._subs.add(
         this.state.filters.subscribeToState((newState, prevState) => {
-          if (newState.scopes !== prevState.scopes) {
+          if (!newState.isLoadingScopes && newState.scopes !== prevState.scopes) {
             if (this.state.isExpanded) {
               this.state.dashboards.fetchDashboards(this.state.filters.getSelectedScopes());
             }

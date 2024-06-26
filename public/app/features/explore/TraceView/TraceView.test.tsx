@@ -1,6 +1,6 @@
 import { render, prettyDOM, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { createRef } from 'react';
+import { createRef } from 'react';
 import { Provider } from 'react-redux';
 
 import { DataFrame, MutableDataFrame } from '@grafana/data';

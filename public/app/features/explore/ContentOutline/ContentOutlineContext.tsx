@@ -1,5 +1,5 @@
 import { uniqueId } from 'lodash';
-import React, { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
+import { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
 
 import { ContentOutlineItemBaseProps, ITEM_TYPES } from './ContentOutlineItem';
 
@@ -16,7 +16,10 @@ export interface ContentOutlineContextProps {
   outlineItems: ContentOutlineItemContextProps[];
   register: RegisterFunction;
   unregister: (id: string) => void;
-  unregisterAllChildren: (parentId: string, childType: ITEM_TYPES) => void;
+  unregisterAllChildren: (
+    parentIdGetter: (items: ContentOutlineItemContextProps[]) => string | undefined,
+    childType: ITEM_TYPES
+  ) => void;
   updateOutlineItems: (newItems: ContentOutlineItemContextProps[]) => void;
   updateItem: (id: string, properties: Partial<Omit<ContentOutlineItemContextProps, 'id'>>) => void;
 }
@@ -193,16 +196,23 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
     );
   }, []);
 
-  const unregisterAllChildren = useCallback((parentId: string, childType: ITEM_TYPES) => {
-    setOutlineItems((prevItems) =>
-      prevItems.map((item) => {
-        if (item.id === parentId) {
-          item.children = item.children?.filter((child) => child.type !== childType);
+  const unregisterAllChildren = useCallback(
+    (parentIdGetter: (items: ContentOutlineItemContextProps[]) => string | undefined, childType: ITEM_TYPES) => {
+      setOutlineItems((prevItems) => {
+        const parentId = parentIdGetter(prevItems);
+        if (!parentId) {
+          return prevItems;
         }
-        return item;
-      })
-    );
-  }, []);
+        return prevItems.map((item) => {
+          if (item.id === parentId) {
+            item.children = item.children?.filter((child) => child.type !== childType);
+          }
+          return item;
+        });
+      });
+    },
+    []
+  );
 
   useEffect(() => {
     setOutlineItems((prevItems) => {

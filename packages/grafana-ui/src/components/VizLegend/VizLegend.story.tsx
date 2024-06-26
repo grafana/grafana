@@ -1,5 +1,5 @@
 import { StoryFn, Meta } from '@storybook/react';
-import React, { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 import { DisplayValue, GrafanaTheme2 } from '@grafana/data';
 import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';

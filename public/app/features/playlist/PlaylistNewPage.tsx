@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';

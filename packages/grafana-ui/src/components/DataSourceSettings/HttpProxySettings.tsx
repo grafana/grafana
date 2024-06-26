@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { InlineField } from '../Forms/InlineField';
 import { InlineSwitch } from '../Switch/Switch';
 

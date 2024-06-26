@@ -6,9 +6,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"golang.org/x/exp/slices"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 )
 
 var (
@@ -106,12 +107,13 @@ type LockCfg struct {
 type dialectFunc func() Dialect
 
 var supportedDialects = map[string]dialectFunc{
-	MySQL:                  NewMysqlDialect,
-	SQLite:                 NewSQLite3Dialect,
-	Postgres:               NewPostgresDialect,
-	MySQL + "WithHooks":    NewMysqlDialect,
-	SQLite + "WithHooks":   NewSQLite3Dialect,
-	Postgres + "WithHooks": NewPostgresDialect,
+	MySQL:                      NewMysqlDialect,
+	SQLite:                     NewSQLite3Dialect,
+	Postgres:                   NewPostgresDialect,
+	MySQL + "WithHooks":        NewMysqlDialect,
+	MySQL + "ReplicaWithHooks": NewMysqlDialect,
+	SQLite + "WithHooks":       NewSQLite3Dialect,
+	Postgres + "WithHooks":     NewPostgresDialect,
 }
 
 func NewDialect(driverName string) Dialect {

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 

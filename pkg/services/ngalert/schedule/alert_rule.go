@@ -8,10 +8,16 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/prometheus/alertmanager/api/v2/models"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -19,9 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // Rule represents a single piece of work that is executed periodically by the ruler.
@@ -323,7 +326,7 @@ func (a *alertRule) Run(key ngmodels.AlertRuleKey) error {
 				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
 				defer cancelFunc()
 				states := a.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, key), key, ngmodels.StateReasonRuleDeleted)
-				a.notify(grafanaCtx, key, states)
+				a.expireAndSend(grafanaCtx, key, states)
 			}
 			logger.Debug("Stopping alert rule routine")
 			return nil
@@ -408,30 +411,41 @@ func (a *alertRule) evaluate(ctx context.Context, key ngmodels.AlertRuleKey, f f
 		))
 	}
 	start = a.clock.Now()
-	processedStates := a.stateManager.ProcessEvalResults(
+	_ = a.stateManager.ProcessEvalResults(
 		ctx,
 		e.scheduledAt,
 		e.rule,
 		results,
 		state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !a.disableGrafanaFolder),
+		func(ctx context.Context, statesToSend state.StateTransitions) {
+			start := a.clock.Now()
+			alerts := a.send(ctx, key, statesToSend)
+			span.AddEvent("results sent", trace.WithAttributes(
+				attribute.Int64("alerts_sent", int64(len(alerts.PostableAlerts))),
+			))
+			sendDuration.Observe(a.clock.Now().Sub(start).Seconds())
+		},
 	)
 	processDuration.Observe(a.clock.Now().Sub(start).Seconds())
-
-	start = a.clock.Now()
-	alerts := state.FromStateTransitionToPostableAlerts(processedStates, a.stateManager, a.appURL)
-	span.AddEvent("results processed", trace.WithAttributes(
-		attribute.Int64("state_transitions", int64(len(processedStates))),
-		attribute.Int64("alerts_to_send", int64(len(alerts.PostableAlerts))),
-	))
-	if len(alerts.PostableAlerts) > 0 {
-		a.sender.Send(ctx, key, alerts)
-	}
-	sendDuration.Observe(a.clock.Now().Sub(start).Seconds())
 
 	return nil
 }
 
-func (a *alertRule) notify(ctx context.Context, key ngmodels.AlertRuleKey, states []state.StateTransition) {
+// send sends alerts for the given state transitions.
+func (a *alertRule) send(ctx context.Context, key ngmodels.AlertRuleKey, states state.StateTransitions) definitions.PostableAlerts {
+	alerts := definitions.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(states))}
+	for _, alertState := range states {
+		alerts.PostableAlerts = append(alerts.PostableAlerts, *state.StateToPostableAlert(alertState, a.appURL))
+	}
+
+	if len(alerts.PostableAlerts) > 0 {
+		a.sender.Send(ctx, key, alerts)
+	}
+	return alerts
+}
+
+// sendExpire sends alerts to expire all previously firing alerts in the provided state transitions.
+func (a *alertRule) expireAndSend(ctx context.Context, key ngmodels.AlertRuleKey, states []state.StateTransition) {
 	expiredAlerts := state.FromAlertsStateToStoppedAlert(states, a.appURL, a.clock)
 	if len(expiredAlerts.PostableAlerts) > 0 {
 		a.sender.Send(ctx, key, expiredAlerts)
@@ -445,7 +459,7 @@ func (a *alertRule) resetState(ctx context.Context, key ngmodels.AlertRuleKey, i
 		reason = ngmodels.StateReasonPaused
 	}
 	states := a.stateManager.ResetStateByRuleUID(ctx, rule, reason)
-	a.notify(ctx, key, states)
+	a.expireAndSend(ctx, key, states)
 }
 
 // evalApplied is only used on tests.

@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React from 'react';
 import { finalize, from, Subscription } from 'rxjs';
 
 import { GrafanaTheme2, Scope } from '@grafana/data';
@@ -21,6 +20,7 @@ import { ScopesScene } from './ScopesScene';
 import { ScopesTreeLevel } from './ScopesTreeLevel';
 import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
 import { NodesMap, SelectedScope, TreeScope } from './types';
+import { getBasicScope } from './utils';
 
 export interface ScopesFiltersSceneState extends SceneObjectState {
   nodes: NodesMap;
@@ -131,14 +131,14 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   public toggleNodeSelect(path: string[]) {
     let treeScopes = [...this.state.treeScopes];
 
-    let siblings = this.state.nodes;
+    let parentNode = this.state.nodes[''];
 
-    for (let idx = 0; idx < path.length - 1; idx++) {
-      siblings = siblings[path[idx]].nodes;
+    for (let idx = 1; idx < path.length - 1; idx++) {
+      parentNode = parentNode.nodes[path[idx]];
     }
 
     const nodeName = path[path.length - 1];
-    const { linkId } = siblings[nodeName];
+    const { linkId } = parentNode.nodes[nodeName];
 
     const selectedIdx = treeScopes.findIndex(({ scopeName }) => scopeName === linkId);
 
@@ -146,14 +146,17 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       fetchScope(linkId!);
 
       const selectedFromSameNode =
-        treeScopes.length === 0 || Object.values(siblings).some(({ linkId }) => linkId === treeScopes[0].scopeName);
+        treeScopes.length === 0 ||
+        Object.values(parentNode.nodes).some(({ linkId }) => linkId === treeScopes[0].scopeName);
 
       const treeScope = {
         scopeName: linkId!,
         path,
       };
 
-      this.setState({ treeScopes: !selectedFromSameNode ? [treeScope] : [...treeScopes, treeScope] });
+      this.setState({
+        treeScopes: parentNode?.disableMultiSelect || !selectedFromSameNode ? [treeScope] : [...treeScopes, treeScope],
+      });
     } else {
       treeScopes.splice(selectedIdx, 1);
 
@@ -163,7 +166,19 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   public open() {
     if (!this.scopesParent.state.isViewing) {
-      this.setState({ isOpened: true });
+      let nodes = { ...this.state.nodes };
+
+      // First close all nodes
+      nodes = this.closeNodes(nodes);
+
+      // Extract the path of a scope
+      let path = [...(this.state.scopes[0]?.path ?? ['', ''])];
+      path.splice(path.length - 1, 1);
+
+      // Expand the nodes to the selected scope
+      nodes = this.expandNodes(nodes, path);
+
+      this.setState({ isOpened: true, nodes });
     }
   }
 
@@ -180,9 +195,16 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       return;
     }
 
-    this.setState({ treeScopes, isLoadingScopes: true });
+    this.setState({
+      // Update the scopes with the basic scopes otherwise they'd be lost between URL syncs
+      scopes: treeScopes.map(({ scopeName, path }) => ({ scope: getBasicScope(scopeName), path })),
+      treeScopes,
+      isLoadingScopes: true,
+    });
 
-    this.setState({ scopes: await fetchSelectedScopes(treeScopes), isLoadingScopes: false });
+    const scopes = await fetchSelectedScopes(treeScopes);
+
+    this.setState({ scopes, isLoadingScopes: false });
   }
 
   public resetDirtyScopeNames() {
@@ -195,6 +217,35 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   public enterViewMode() {
     this.setState({ isOpened: false });
+  }
+
+  private closeNodes(nodes: NodesMap): NodesMap {
+    return Object.entries(nodes).reduce<NodesMap>((acc, [id, node]) => {
+      acc[id] = {
+        ...node,
+        isExpanded: false,
+        nodes: this.closeNodes(node.nodes),
+      };
+
+      return acc;
+    }, {});
+  }
+
+  private expandNodes(nodes: NodesMap, path: string[]): NodesMap {
+    nodes = { ...nodes };
+    let currentNodes = nodes;
+
+    for (let i = 0; i < path.length; i++) {
+      const nodeId = path[i];
+
+      currentNodes[nodeId] = {
+        ...currentNodes[nodeId],
+        isExpanded: true,
+      };
+      currentNodes = currentNodes[nodeId].nodes;
+    }
+
+    return nodes;
   }
 
   private getTreeScopes(): TreeScope[] {
