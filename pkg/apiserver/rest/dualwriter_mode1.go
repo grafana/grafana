@@ -65,7 +65,7 @@ func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, c
 			cancel()
 		}
 		areEqual := Compare(storageObj, createdCopy)
-		d.recordOutcome(mode1Str, options.Kind, areEqual, method)
+		d.recordOutcome(mode1Str, getName(createdCopy), areEqual, method)
 		if !areEqual {
 			log.Info("object from legacy and storage are not equal")
 		}
@@ -131,7 +131,7 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 			cancel()
 		}
 		areEqual := Compare(storageObj, res)
-		d.recordOutcome(mode1Str, options.Kind, areEqual, method)
+		d.recordOutcome(mode1Str, getName(res), areEqual, method)
 		if !areEqual {
 			log.Info("object from legacy and storage are not equal")
 		}
@@ -198,7 +198,7 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 			cancel()
 		}
 		areEqual := Compare(storageObj, res)
-		d.recordOutcome(mode1Str, options.Kind, areEqual, method)
+		d.recordOutcome(mode1Str, getName(res), areEqual, method)
 		if !areEqual {
 			log.Info("object from legacy and storage are not equal")
 		}

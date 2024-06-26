@@ -64,7 +64,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 	d.recordStorageDuration(false, mode2Str, options.Kind, method, startStorage)
 
 	areEqual := Compare(rsp, created)
-	d.recordOutcome(mode2Str, options.Kind, areEqual, method)
+	d.recordOutcome(mode2Str, getName(rsp), areEqual, method)
 	if !areEqual {
 		log.Info("object from legacy and storage are not equal")
 	}
@@ -216,7 +216,7 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 	d.recordStorageDuration(false, mode2Str, options.Kind, method, startStorage)
 
 	areEqual := Compare(res, deleted)
-	d.recordOutcome(mode2Str, options.Kind, areEqual, method)
+	d.recordOutcome(mode2Str, getName(res), areEqual, method)
 	if !areEqual {
 		log.Info("object from legacy and storage are not equal")
 	}
