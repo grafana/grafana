@@ -142,7 +142,7 @@ You can only use one form of each configuration option. Using multiple forms, su
 
 ---
 
-### Example of how to generate private key for SAML authentication:
+### Generate private key for SAML authentication:
 
 An example of how to generate a self-signed certificate and private key that's valid for one year:
 
