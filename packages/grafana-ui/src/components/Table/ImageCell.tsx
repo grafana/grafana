@@ -18,7 +18,7 @@ export const ImageCell = (props: TableCellProps) => {
     <div {...cellProps} className={tableStyles.cellContainer}>
       {!hasLinks && (
         <img
-          style={{ height: tableStyles.cellHeight, width: 'auto' }}
+          style={{ height: tableStyles.cellHeight - DATALINKS_HEIGHT_OFFSET, width: 'auto' }}
           src={displayValue.text}
           className={tableStyles.imageCell}
           alt=""
