@@ -75,7 +75,7 @@ func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions
 	}
 
 	user, err := identity.GetRequester(ctx)
-	if user != nil {
+	if err != nil {
 		return nil, err
 	}
 
@@ -100,7 +100,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 	}
 
 	user, err := identity.GetRequester(ctx)
-	if user != nil {
+	if err != nil {
 		return nil, err
 	}
 

@@ -43,7 +43,7 @@ func NewStorage(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string", Format: "string", Description: "The receiver name"},
+				{Name: "Title", Type: "string", Format: "string", Description: "The receiver name"}, // TODO: Add integration types.
 			},
 			func(obj any) ([]interface{}, error) {
 				r, ok := obj.(*model.Receiver)
