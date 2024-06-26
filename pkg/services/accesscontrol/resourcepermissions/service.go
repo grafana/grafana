@@ -446,17 +446,17 @@ type ActionSet struct {
 
 // InMemoryActionSets is an in-memory implementation of the ActionSetService.
 type InMemoryActionSets struct {
-	log                log.Logger
-	features           featuremgmt.FeatureToggles
+	log log.Logger
+	// features           featuremgmt.FeatureToggles
 	actionSetToActions map[string][]string
 	actionToActionSets map[string][]string
 }
 
 // NewActionSetService returns a new instance of InMemoryActionSetService.
-func NewActionSetService(features featuremgmt.FeatureToggles) ActionSetService {
+func NewActionSetService() ActionSetService {
 	actionSets := &InMemoryActionSets{
-		log:                log.New("resourcepermissions.actionsets"),
-		features:           features,
+		log: log.New("resourcepermissions.actionsets"),
+		// features:           features,
 		actionSetToActions: make(map[string][]string),
 		actionToActionSets: make(map[string][]string),
 	}

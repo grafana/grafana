@@ -2,7 +2,6 @@ package resourcepermissions
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -853,9 +852,9 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 // we only update core actionsets for plugins
 // we do not create new actionsets for plugins
 func (s *InMemoryActionSets) DeclareActionSets(ctx context.Context, ID, name string, regs []plugins.ActionSetRegistration) error {
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) && !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		return errors.New("action sets are not enabled, please enable the feature flag")
-	}
+	// if !s.features.IsEnabled(ctx, featuremgmt.FlagAccessControlOnCall) && !s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+	// 	return errors.New("action sets are not enabled, please enable the feature flag")
+	// }
 
 	asRegs := ToActionSets(ID, name, regs)
 	for _, r := range asRegs {
