@@ -385,8 +385,6 @@ export const queryPersistedApplicationsSlothVoteTrackerTitle = () =>
   screen.queryByTestId(selectors.tree.title('applications-slothVoteTracker', 'persisted'));
 export const getPersistedApplicationsSlothVoteTrackerTitle = () =>
   screen.getByTestId(selectors.tree.title('applications-slothVoteTracker', 'persisted'));
-export const getPersistedApplicationsSlothVoteTrackerSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-slothVoteTracker', 'persisted'));
 export const queryResultApplicationsClustersTitle = () =>
   screen.queryByTestId(selectors.tree.title('applications.clusters', 'result'));
 export const getResultApplicationsClustersSelect = () =>

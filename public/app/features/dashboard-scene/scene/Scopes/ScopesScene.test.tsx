@@ -28,6 +28,7 @@ import {
   getNotFoundNoScopes,
   getPersistedApplicationsSlothPictureFactorySelect,
   getPersistedApplicationsSlothPictureFactoryTitle,
+  getPersistedApplicationsSlothVoteTrackerTitle,
   getResultApplicationsClustersExpand,
   getResultApplicationsClustersSelect,
   getResultApplicationsClustersSlothClusterNorthSelect,
@@ -225,6 +226,37 @@ describe('ScopesScene', () => {
         await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
         expect(queryPersistedApplicationsSlothPictureFactoryTitle()).not.toBeInTheDocument();
         expect(getResultApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+      });
+
+      it('Removes persisted nodes', async () => {
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
+        await userEvents.type(getTreeSearch(), 'slothVoteTracker');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
+        await userEvents.clear(getTreeSearch());
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(4));
+        expect(queryPersistedApplicationsSlothPictureFactoryTitle()).not.toBeInTheDocument();
+        expect(queryPersistedApplicationsSlothVoteTrackerTitle()).not.toBeInTheDocument();
+        expect(getResultApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+        expect(getResultApplicationsSlothVoteTrackerTitle()).toBeInTheDocument();
+      });
+
+      it('Persists nodes from search', async () => {
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getResultApplicationsExpand());
+        await userEvents.type(getTreeSearch(), 'sloth');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
+        await userEvents.click(getResultApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getResultApplicationsSlothVoteTrackerSelect());
+        await userEvents.type(getTreeSearch(), 'slothunknown');
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(4));
+        expect(getPersistedApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+        expect(getPersistedApplicationsSlothVoteTrackerTitle()).toBeInTheDocument();
+        await userEvents.clear(getTreeSearch());
+        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(5));
+        expect(getResultApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+        expect(getResultApplicationsSlothVoteTrackerTitle()).toBeInTheDocument();
       });
 
       it('Selects a persisted scope', async () => {
