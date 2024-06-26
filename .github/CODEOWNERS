@@ -591,6 +591,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
 # Grafana Sharing Squad
+/public/app/features/dashboard-scene/sharing/ @grafana/sharing-squad
 /public/app/features/dashboard/components/ShareModal/ @grafana/sharing-squad
 /public/app/features/manage-dashboards/components/PublicDashboardListTable/ @grafana/sharing-squad
 /public/app/features/dashboard/containers/PublicDashboardPage.tsx @grafana/sharing-squad
@@ -673,6 +674,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/bump-version.yml @grafana/grafana-release-guild
 /.github/workflows/close-milestone.yml @grafana/grafana-release-guild
 /.github/workflows/release-pr.yml @grafana/grafana-release-guild
+/.github/workflows/release-comms.yml @grafana/grafana-release-guild
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo

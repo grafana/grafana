@@ -127,7 +127,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 				var errResp errutil.PublicError
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, "Public dashboard not found", errResp.Message)
+				assert.Equal(t, "Dashboard not found", errResp.Message)
 				assert.Equal(t, "publicdashboards.notFound", errResp.MessageID)
 			}
 		})

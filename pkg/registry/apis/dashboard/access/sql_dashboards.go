@@ -189,58 +189,6 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 	return nil, fmt.Errorf("not found")
 }
 
-// GetDashboards implements DashboardAccess.
-func (a *dashboardSqlAccess) GetDashboardSummaries(ctx context.Context, query *DashboardQuery) (*dashboardsV0.DashboardSummaryList, error) {
-	rows, limit, err := a.getRows(ctx, query, true)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rows.Close() }()
-
-	totalSize := 0
-	list := &dashboardsV0.DashboardSummaryList{}
-	for {
-		row, err := rows.Next()
-		if err != nil || row == nil {
-			return list, err
-		}
-
-		totalSize += row.Bytes
-		if len(list.Items) > 0 && (totalSize > query.MaxBytes || len(list.Items) >= limit) {
-			if query.Requirements.Folder != nil {
-				row.token.folder = *query.Requirements.Folder
-			}
-			list.Continue = row.token.String() // will skip this one but start here next time
-			return list, err
-		}
-		list.Items = append(list.Items, toSummary(row))
-	}
-}
-
-func (a *dashboardSqlAccess) GetDashboardSummary(ctx context.Context, orgId int64, uid string) (*dashboardsV0.DashboardSummary, error) {
-	r, err := a.GetDashboardSummaries(ctx, &DashboardQuery{
-		OrgID: orgId,
-		UID:   uid,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if len(r.Items) > 0 {
-		return &r.Items[0], nil
-	}
-	return nil, fmt.Errorf("not found")
-}
-
-func toSummary(row *dashboardRow) dashboardsV0.DashboardSummary {
-	return dashboardsV0.DashboardSummary{
-		ObjectMeta: row.Dash.ObjectMeta,
-		Spec: dashboardsV0.DashboardSummarySpec{
-			Title: row.Title,
-			Tags:  row.Tags,
-		},
-	}
-}
-
 func (a *dashboardSqlAccess) doQuery(ctx context.Context, query string, args ...any) (*rowsWrapper, error) {
 	user, err := appcontext.User(ctx)
 	if err != nil {
