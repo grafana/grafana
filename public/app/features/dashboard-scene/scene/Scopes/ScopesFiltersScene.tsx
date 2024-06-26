@@ -166,7 +166,19 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   public open() {
     if (!this.scopesParent.state.isViewing) {
-      this.setState({ isOpened: true });
+      let nodes = { ...this.state.nodes };
+
+      // First close all nodes
+      nodes = this.closeNodes(nodes);
+
+      // Extract the path of a scope
+      let path = [...(this.state.scopes[0]?.path ?? ['', ''])];
+      path.splice(path.length - 1, 1);
+
+      // Expand the nodes to the selected scope
+      nodes = this.expandNodes(nodes, path);
+
+      this.setState({ isOpened: true, nodes });
     }
   }
 
@@ -205,6 +217,35 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   public enterViewMode() {
     this.setState({ isOpened: false });
+  }
+
+  private closeNodes(nodes: NodesMap): NodesMap {
+    return Object.entries(nodes).reduce<NodesMap>((acc, [id, node]) => {
+      acc[id] = {
+        ...node,
+        isExpanded: false,
+        nodes: this.closeNodes(node.nodes),
+      };
+
+      return acc;
+    }, {});
+  }
+
+  private expandNodes(nodes: NodesMap, path: string[]): NodesMap {
+    nodes = { ...nodes };
+    let currentNodes = nodes;
+
+    for (let i = 0; i < path.length; i++) {
+      const nodeId = path[i];
+
+      currentNodes[nodeId] = {
+        ...currentNodes[nodeId],
+        isExpanded: true,
+      };
+      currentNodes = currentNodes[nodeId].nodes;
+    }
+
+    return nodes;
   }
 
   private getTreeScopes(): TreeScope[] {
