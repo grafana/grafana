@@ -128,23 +128,48 @@ type CustomMeta struct {
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
 func responseToDataFrames(resp *connect.Response[v1alpha1.QueryResponse]) *data.Frame {
-	if flameResponse, ok := resp.Msg.Report.(*v1alpha1.QueryResponse_Flamegraph); ok {
-		// TODO: Remove this old response type and all of its functions
-		frame := treeToNestedSetDataFrame(flameResponse.Flamegraph)
-		frame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
-		return frame
-	} else if flameResponse, ok := resp.Msg.Report.(*v1alpha1.QueryResponse_FlamegraphArrow); ok {
-		frame := arrowToNestedSetDataFrame(flameResponse.FlamegraphArrow)
-		frame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
-		return frame
+	if flameResponse, ok := resp.Msg.Report.(*v1alpha1.QueryResponse_FlamegraphArrow); ok {
+		return arrowToNestedSetDataFrame(flameResponse.FlamegraphArrow)
 	} else {
 		// TODO: Can we be nicer about signaling users to update to have the latest APIs?
 		panic("unknown report type returned from query. update parca?")
 	}
 }
 
+func seriesToDataFrame(seriesResp *connect.Response[v1alpha1.QueryRangeResponse], profileTypeID string) []*data.Frame {
+	frames := make([]*data.Frame, 0, len(seriesResp.Msg.Series))
+
+	for _, series := range seriesResp.Msg.Series {
+		frame := data.NewFrame("series")
+		frame.Meta = &data.FrameMeta{PreferredVisualization: "graph"}
+		frames = append(frames, frame)
+
+		fields := data.Fields{}
+		timeField := data.NewField("time", nil, []time.Time{})
+		fields = append(fields, timeField)
+
+		labels := data.Labels{}
+		for _, label := range series.Labelset.Labels {
+			labels[label.Name] = label.Value
+		}
+
+		valueField := data.NewField(strings.Split(profileTypeID, ":")[1], labels, []int64{})
+
+		for _, sample := range series.Samples {
+			timeField.Append(sample.Timestamp.AsTime())
+			valueField.Append(sample.Value)
+		}
+
+		fields = append(fields, valueField)
+		frame.Fields = fields
+	}
+
+	return frames
+}
+
 func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) *data.Frame {
 	frame := data.NewFrame("response")
+	frame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
 
 	levelField := data.NewField("level", nil, []int64{})
 	valueField := data.NewField("value", nil, []int64{})
@@ -167,7 +192,6 @@ func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) *data.Frame
 	arrowTable := array.NewTableFromRecords(arrowReader.Schema(), []arrow.Record{rec})
 	defer arrowTable.Release()
 
-	// TODO: Should we use a different chunkSize?
 	reader := array.NewTableReader(arrowTable, 0)
 	defer reader.Release()
 
@@ -345,95 +369,6 @@ func uintValue(arr arrow.Array) func(i int) int64 {
 	}
 }
 
-// treeToNestedSetDataFrame walks the tree depth first and adds items into the dataframe. This is a nested set format
-// where by ordering the items in depth first order and knowing the level/depth of each item we can recreate the
-// parent - child relationship without explicitly needing parent/child column and we can later just iterate over the
-// dataFrame to again basically walking depth first over the tree/profile.
-func treeToNestedSetDataFrame(tree *v1alpha1.Flamegraph) *data.Frame {
-	frame := data.NewFrame("response")
-
-	levelField := data.NewField("level", nil, []int64{})
-	valueField := data.NewField("value", nil, []int64{})
-	valueField.Config = &data.FieldConfig{Unit: normalizeUnit(tree.Unit)}
-	selfField := data.NewField("self", nil, []int64{})
-	selfField.Config = &data.FieldConfig{Unit: normalizeUnit(tree.Unit)}
-	labelField := data.NewField("label", nil, []string{})
-	frame.Fields = data.Fields{levelField, valueField, selfField, labelField}
-
-	walkTree(tree.Root, func(level, value int64, name string, self int64) {
-		levelField.Append(level)
-		valueField.Append(value)
-		labelField.Append(name)
-		selfField.Append(self)
-	})
-	return frame
-}
-
-type Node struct {
-	Node  *v1alpha1.FlamegraphNode
-	Level int64
-}
-
-func walkTree(tree *v1alpha1.FlamegraphRootNode, fn func(level, value int64, name string, self int64)) {
-	stack := make([]*Node, 0, len(tree.Children))
-	var childrenValue int64 = 0
-
-	for _, child := range tree.Children {
-		childrenValue += child.Cumulative
-		stack = append(stack, &Node{Node: child, Level: 1})
-	}
-
-	fn(0, tree.Cumulative, "total", tree.Cumulative-childrenValue)
-
-	for {
-		if len(stack) == 0 {
-			break
-		}
-
-		// shift stack
-		node := stack[0]
-		stack = stack[1:]
-		childrenValue = 0
-
-		if node.Node.Children != nil {
-			var children []*Node
-			for _, child := range node.Node.Children {
-				childrenValue += child.Cumulative
-				children = append(children, &Node{Node: child, Level: node.Level + 1})
-			}
-			// Put the children first so we do depth first traversal
-			stack = append(children, stack...)
-		}
-		fn(node.Level, node.Node.Cumulative, nodeName(node.Node), node.Node.Cumulative-childrenValue)
-	}
-}
-
-func nodeName(node *v1alpha1.FlamegraphNode) string {
-	if node.Meta == nil {
-		return "<unknown>"
-	}
-
-	mapping := ""
-	if node.Meta.Mapping != nil && node.Meta.Mapping.File != "" {
-		mapping = "[" + getLastItem(node.Meta.Mapping.File) + "] "
-	}
-
-	if node.Meta.Function != nil && node.Meta.Function.Name != "" {
-		return mapping + node.Meta.Function.Name
-	}
-
-	address := ""
-	if node.Meta.Location != nil {
-		address = fmt.Sprintf("0x%x", node.Meta.Location.Address)
-	}
-
-	if mapping == "" && address == "" {
-		return "<unknown>"
-	} else {
-		return mapping + address
-	}
-}
-
 func getLastItem(path string) string {
 	parts := strings.Split(path, "/")
 	return parts[len(parts)-1]
@@ -447,35 +382,4 @@ func normalizeUnit(unit string) string {
 		return "short"
 	}
 	return unit
-}
-
-func seriesToDataFrame(seriesResp *connect.Response[v1alpha1.QueryRangeResponse], profileTypeID string) []*data.Frame {
-	frames := make([]*data.Frame, 0, len(seriesResp.Msg.Series))
-
-	for _, series := range seriesResp.Msg.Series {
-		frame := data.NewFrame("series")
-		frame.Meta = &data.FrameMeta{PreferredVisualization: "graph"}
-		frames = append(frames, frame)
-
-		fields := data.Fields{}
-		timeField := data.NewField("time", nil, []time.Time{})
-		fields = append(fields, timeField)
-
-		labels := data.Labels{}
-		for _, label := range series.Labelset.Labels {
-			labels[label.Name] = label.Value
-		}
-
-		valueField := data.NewField(strings.Split(profileTypeID, ":")[1], labels, []int64{})
-
-		for _, sample := range series.Samples {
-			timeField.Append(sample.Timestamp.AsTime())
-			valueField.Append(sample.Value)
-		}
-
-		fields = append(fields, valueField)
-		frame.Fields = fields
-	}
-
-	return frames
 }
