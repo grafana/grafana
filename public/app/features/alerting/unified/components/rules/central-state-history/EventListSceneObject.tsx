@@ -88,12 +88,7 @@ function HistoryLogEvents({ logRecords }: HistoryLogEventsProps) {
   return (
     <ul>
       {logRecords.map((record) => {
-        return (
-          <EventRow
-            key={record.timestamp + (record.line.fingerprint ?? '')}
-            record={record}
-          />
-        );
+        return <EventRow key={record.timestamp + (record.line.fingerprint ?? '')} record={record} />;
       })}
     </ul>
   );
