@@ -333,8 +333,10 @@ const selectors = {
     search: 'scopes-dashboards-search',
     loading: 'scopes-dashboards-loading',
     dashboard: (uid: string) => `scopes-dashboards-${uid}`,
+    notFoundNoScopes: 'scopes-dashboards-notFoundNoScopes',
     notFoundForScope: 'scopes-dashboards-notFoundForScope',
     notFoundForFilter: 'scopes-dashboards-notFoundForFilter',
+    notFoundForFilterClear: 'scopes-dashboards-notFoundForFilter-clear',
   },
 };
 
@@ -352,8 +354,10 @@ export const getDashboardsSearch = () => screen.getByTestId<HTMLInputElement>(se
 export const queryAllDashboard = (uid: string) => screen.queryAllByTestId(selectors.dashboards.dashboard(uid));
 export const queryDashboard = (uid: string) => screen.queryByTestId(selectors.dashboards.dashboard(uid));
 export const getDashboard = (uid: string) => screen.getByTestId(selectors.dashboards.dashboard(uid));
+export const getNotFoundNoScopes = () => screen.getByTestId(selectors.dashboards.notFoundNoScopes);
 export const getNotFoundForScope = () => screen.getByTestId(selectors.dashboards.notFoundForScope);
 export const getNotFoundForFilter = () => screen.getByTestId(selectors.dashboards.notFoundForFilter);
+export const getNotFoundForFilterClear = () => screen.getByTestId(selectors.dashboards.notFoundForFilterClear);
 
 export const getApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
 export const getApplicationsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search('applications'));

@@ -49,6 +49,8 @@ import {
   queryDashboardsSearch,
   getNotFoundForFilter,
   getClustersSlothClusterEastRadio,
+  getNotFoundForFilterClear,
+  getNotFoundNoScopes,
 } from './testUtils';
 
 jest.mock('@grafana/runtime', () => ({
@@ -303,6 +305,12 @@ describe('ScopesScene', () => {
         expect(queryAllDashboard('8')).toHaveLength(1);
       });
 
+      it('Does show a proper message when no scopes are selected', async () => {
+        await userEvents.click(getDashboardsExpand());
+        expect(getNotFoundNoScopes()).toBeInTheDocument();
+        expect(queryDashboardsSearch()).not.toBeInTheDocument();
+      });
+
       it('Does not show the input when there are no dashboards found for scope', async () => {
         await userEvents.click(getDashboardsExpand());
         await userEvents.click(getFiltersInput());
@@ -322,6 +330,8 @@ describe('ScopesScene', () => {
         await userEvents.type(getDashboardsSearch(), 'unknown');
         expect(queryDashboardsSearch()).toBeInTheDocument();
         expect(getNotFoundForFilter()).toBeInTheDocument();
+        await userEvents.click(getNotFoundForFilterClear());
+        expect(getDashboardsSearch().value).toBe('');
       });
     });
 

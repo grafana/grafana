@@ -1657,7 +1657,10 @@
     },
     "suggestedDashboards": {
       "loading": "Ŀőäđįŉģ đäşĥþőäřđş",
-      "noResults": "Ńő đäşĥþőäřđş ƒőūŉđ",
+      "noResultsForFilter": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy",
+      "noResultsForFilterClear": "Cľęäř şęäřčĥ",
+      "noResultsForScopes": "Ńő đäşĥþőäřđş ƒőūŉđ ƒőř ŧĥę şęľęčŧęđ şčőpęş",
+      "noResultsNoScopes": "Ńő şčőpęş şęľęčŧęđ",
       "search": "Ŝęäřčĥ",
       "toggle": {
         "collapse": "Cőľľäpşę şčőpę ƒįľŧęřş",
