@@ -6,7 +6,7 @@ import (
 
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -33,6 +33,7 @@ func WithRequester(handler http.Handler) http.Handler {
 					slices.Contains(info.GetGroups(), user.SystemPrivilegedGroup) {
 					orgId := int64(1)
 					requester = &identity.StaticRequester{
+						Namespace:      identity.NamespaceServiceAccount, // system:apiserver
 						UserID:         1,
 						OrgID:          orgId,
 						Name:           info.GetName(),

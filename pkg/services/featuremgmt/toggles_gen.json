@@ -92,6 +92,19 @@
     },
     {
       "metadata": {
+        "name": "alertingApiServer",
+        "resourceVersion": "1718908755156",
+        "creationTimestamp": "2024-06-20T18:39:15Z"
+      },
+      "spec": {
+        "description": "Register Alerting APIs with the K8s API server",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingBacktesting",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2022-12-14T14:44:14Z"
@@ -580,14 +593,29 @@
     {
       "metadata": {
         "name": "dashboardRestore",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-05-16T17:36:26Z"
+        "resourceVersion": "1719321877748",
+        "creationTimestamp": "2024-05-16T17:36:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-06-25 13:24:37.748284 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables deleted dashboard restore feature",
+        "description": "Enables deleted dashboard restore feature (backend only)",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardRestoreUI",
+        "resourceVersion": "1719321338253",
+        "creationTimestamp": "2024-06-25T13:15:38Z"
+      },
+      "spec": {
+        "description": "Enables the frontend to be able to restore a recently deleted dashboard",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
       }
     },
     {
@@ -828,8 +856,9 @@
     {
       "metadata": {
         "name": "exploreContentOutline",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-10-13T16:57:13Z"
+        "resourceVersion": "1717578796182",
+        "creationTimestamp": "2023-10-13T16:57:13Z",
+        "deletionTimestamp": "2024-06-17T09:45:00Z"
       },
       "spec": {
         "description": "Content outline sidebar",
@@ -1676,6 +1705,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "requiresDevMode": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "passScopeToDashboardApi",
+        "resourceVersion": "1718290335877",
+        "creationTimestamp": "2024-06-13T14:52:15Z"
+      },
+      "spec": {
+        "description": "Enables the passing of scopes to dashboards fetching in Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {

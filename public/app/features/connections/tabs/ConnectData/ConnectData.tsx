@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, PluginType } from '@grafana/data';
 import { useStyles2, LoadingPlaceholder, EmptyState } from '@grafana/ui';

@@ -9,7 +9,7 @@ import 'vendor/bootstrap/bootstrap';
 import 'app/features/all';
 
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
-import React from 'react';
+import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import {
@@ -38,6 +38,7 @@ import {
   setReturnToPreviousHook,
   setPluginExtensionsHook,
   setPluginComponentHook,
+  setCurrentUser,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -144,6 +145,7 @@ export class GrafanaApp {
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => config.bootData.user.timezone);
       initGrafanaLive();
+      setCurrentUser(contextSrv.user);
 
       initAuthConfig();
 
@@ -256,7 +258,7 @@ export class GrafanaApp {
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(
-        React.createElement(AppWrapper, {
+        createElement(AppWrapper, {
           app: this,
         })
       );

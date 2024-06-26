@@ -23,12 +23,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/klog/v2"
 
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
 
@@ -74,16 +74,16 @@ func NewStorage(
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
+	k, err := grafanaregistry.ParseKey(key)
+	if err != nil {
+		return err
 	}
 
 	if err := s.Versioner().PrepareObjectForStorage(obj); err != nil {
 		return err
 	}
 
-	e, err := resourceToEntity(obj, requestInfo, s.codec)
+	e, err := resourceToEntity(obj, *k, s.codec)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return fmt.Errorf("this was not a create operation... (%s)", rsp.Status.String())
 	}
 
-	err = entityToResource(rsp.Entity, out, s.codec)
+	err = EntityToRuntimeObject(rsp.Entity, out, s.codec)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -114,17 +114,9 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 // current version of the object to avoid read operation from storage to get it.
 // However, the implementations have to retry in case suggestion is stale.
 func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, preconditions *storage.Preconditions, validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object) error {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
-	}
-
-	k := &entityStore.Key{
-		Group:       requestInfo.APIGroup,
-		Resource:    requestInfo.Resource,
-		Namespace:   requestInfo.Namespace,
-		Name:        requestInfo.Name,
-		Subresource: requestInfo.Subresource,
+	k, err := grafanaregistry.ParseKey(key)
+	if err != nil {
+		return err
 	}
 
 	previousVersion := int64(0)
@@ -140,7 +132,7 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 		return err
 	}
 
-	err = entityToResource(rsp.Entity, out, s.codec)
+	err = EntityToRuntimeObject(rsp.Entity, out, s.codec)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -156,17 +148,9 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 // If resource version is "0", this interface will get current object at given key
 // and send it in an "ADDED" event, before watch starts.
 func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return nil, apierrors.NewInternalError(fmt.Errorf("could not get request info"))
-	}
-
-	k := &entityStore.Key{
-		Group:       requestInfo.APIGroup,
-		Resource:    requestInfo.Resource,
-		Namespace:   requestInfo.Namespace,
-		Name:        requestInfo.Name,
-		Subresource: requestInfo.Subresource,
+	k, err := grafanaregistry.ParseKey(key)
+	if err != nil {
+		return nil, err
 	}
 
 	if opts.Predicate.Field != nil {
@@ -288,21 +272,12 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
-	}
-
-	k := &entityStore.Key{
-		Group:       requestInfo.APIGroup,
-		Resource:    requestInfo.Resource,
-		Namespace:   requestInfo.Namespace,
-		Name:        requestInfo.Name,
-		Subresource: requestInfo.Subresource,
+	k, err := grafanaregistry.ParseKey(key)
+	if err != nil {
+		return err
 	}
 
 	resourceVersion := int64(0)
-	var err error
 	if opts.ResourceVersion != "" {
 		resourceVersion, err = strconv.ParseInt(opts.ResourceVersion, 10, 64)
 		if err != nil {
@@ -328,7 +303,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		return apierrors.NewNotFound(s.gr, k.Name)
 	}
 
-	err = entityToResource(rsp, objPtr, s.codec)
+	err = EntityToRuntimeObject(rsp, objPtr, s.codec)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -343,17 +318,9 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
-	}
-
-	k := &entityStore.Key{
-		Group:       requestInfo.APIGroup,
-		Resource:    requestInfo.Resource,
-		Namespace:   requestInfo.Namespace,
-		Name:        requestInfo.Name,
-		Subresource: requestInfo.Subresource,
+	k, err := grafanaregistry.ParseKey(key)
+	if err != nil {
+		return err
 	}
 
 	listPtr, err := meta.GetItemsPtr(listObj)
@@ -394,7 +361,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		for _, r := range rsp.Versions {
 			res := s.newFunc()
 
-			err := entityToResource(r, res, s.codec)
+			err := EntityToRuntimeObject(r, res, s.codec)
 			if err != nil {
 				return apierrors.NewInternalError(err)
 			}
@@ -466,7 +433,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	for _, r := range rsp.Results {
 		res := s.newFunc()
 
-		err := entityToResource(r, res, s.codec)
+		err := EntityToRuntimeObject(r, res, s.codec)
 		if err != nil {
 			return apierrors.NewInternalError(err)
 		}
@@ -519,17 +486,9 @@ func (s *Storage) GuaranteedUpdate(
 	tryUpdate storage.UpdateFunc,
 	cachedExistingObject runtime.Object,
 ) error {
-	requestInfo, ok := request.RequestInfoFrom(ctx)
-	if !ok {
-		return apierrors.NewInternalError(fmt.Errorf("could not get request info"))
-	}
-
-	k := &entityStore.Key{
-		Group:       requestInfo.APIGroup,
-		Resource:    requestInfo.Resource,
-		Namespace:   requestInfo.Namespace,
-		Name:        requestInfo.Name,
-		Subresource: requestInfo.Subresource,
+	k, err := grafanaregistry.ParseKey(key)
+	if err != nil {
+		return err
 	}
 
 	getErr := s.Get(ctx, k.String(), storage.GetOptions{}, destination)
@@ -565,7 +524,7 @@ func (s *Storage) GuaranteedUpdate(
 		return apierrors.NewInternalError(fmt.Errorf("could not successfully update object. key=%s, err=%s", k.String(), err.Error()))
 	}
 
-	e, err := resourceToEntity(updatedObj, requestInfo, s.codec)
+	e, err := resourceToEntity(updatedObj, *k, s.codec)
 	if err != nil {
 		return err
 	}
@@ -582,7 +541,7 @@ func (s *Storage) GuaranteedUpdate(
 			return err
 		}
 
-		err = entityToResource(rsp.Entity, destination, s.codec)
+		err = EntityToRuntimeObject(rsp.Entity, destination, s.codec)
 		if err != nil {
 			return apierrors.NewInternalError(err)
 		}
@@ -605,7 +564,7 @@ func (s *Storage) GuaranteedUpdate(
 		return nil // destination is already set
 	}
 
-	err = entityToResource(rsp.Entity, destination, s.codec)
+	err = EntityToRuntimeObject(rsp.Entity, destination, s.codec)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -676,7 +635,7 @@ decode:
 			return watch.Bookmark, obj, nil
 		}
 
-		err = entityToResource(resp.Entity, obj, d.codec)
+		err = EntityToRuntimeObject(resp.Entity, obj, d.codec)
 		if err != nil {
 			klog.Errorf("error decoding entity: %s", err)
 			return watch.Error, nil, err
@@ -710,7 +669,7 @@ decode:
 			prevMatches := false
 			prevObj := d.newFunc()
 			if resp.Previous != nil {
-				err = entityToResource(resp.Previous, prevObj, d.codec)
+				err = EntityToRuntimeObject(resp.Previous, prevObj, d.codec)
 				if err != nil {
 					klog.Errorf("error decoding entity: %s", err)
 					return watch.Error, nil, err
@@ -751,7 +710,7 @@ decode:
 
 			// if we have a previous object, return that in the deleted event
 			if resp.Previous != nil {
-				err = entityToResource(resp.Previous, obj, d.codec)
+				err = EntityToRuntimeObject(resp.Previous, obj, d.codec)
 				if err != nil {
 					klog.Errorf("error decoding entity: %s", err)
 					return watch.Error, nil, err

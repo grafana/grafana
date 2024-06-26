@@ -16,6 +16,7 @@ export * from './themes';
 export * from './monaco';
 export * from './geo/layer';
 export * from './query';
+export { amendTable, trimTable, type Table } from './table/amendTimeSeries';
 export {
   type ValueMatcherOptions,
   type BasicValueMatcherOptions,
@@ -49,3 +50,10 @@ export { CircularVector } from './vector/CircularVector';
 export { vectorator } from './vector/FunctionalVector';
 export { ArrayVector } from './vector/ArrayVector';
 export * from './dataframe/CircularDataFrame';
+export {
+  type CurrentUser,
+  userHasPermission,
+  userHasPermissionInMetadata,
+  userHasAllPermissions,
+  userHasAnyPermission,
+} from './rbac/rbac';

@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { FormEvent, HTMLProps, useEffect, useRef } from 'react';
+import { FormEvent, HTMLProps, useEffect, useRef } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, getInputStyles, sharedInputStyle, styleMixins, Tooltip, Icon, Spinner } from '@grafana/ui';

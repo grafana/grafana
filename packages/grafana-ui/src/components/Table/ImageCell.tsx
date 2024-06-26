@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { getCellLinks } from '../../utils';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
@@ -16,7 +16,14 @@ export const ImageCell = (props: TableCellProps) => {
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      {!hasLinks && <img src={displayValue.text} className={tableStyles.imageCell} alt="" />}
+      {!hasLinks && (
+        <img
+          style={{ height: tableStyles.cellHeight - DATALINKS_HEIGHT_OFFSET, width: 'auto' }}
+          src={displayValue.text}
+          className={tableStyles.imageCell}
+          alt=""
+        />
+      )}
       {hasLinks && (
         <DataLinksContextMenu
           style={{ height: tableStyles.cellHeight - DATALINKS_HEIGHT_OFFSET, width: 'auto' }}

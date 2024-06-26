@@ -15,7 +15,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/
+      destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/
   custom-branding:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/configure-custom-branding/
@@ -25,7 +25,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/assess-dashboard-usage/#dashboard-insights
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/assess-dashboard-usage/#dashboard-insights
+      destination: /docs/grafana-cloud/visualizations/dashboards/assess-dashboard-usage/
   caching:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
@@ -56,7 +56,7 @@ You can see a list of all your public dashboards in one place by navigating to *
 
 ## Make a dashboard public
 
-1. Click the sharing icon in the dashboard header.
+1. Click **Share** in the top-right corner of the dashboard.
 1. Click the **Public dashboard** tab.
 1. Acknowledge the implications of making the dashboard public by selecting all the checkboxes.
 1. Click **Generate public URL** to make the dashboard public and make your link live.
@@ -66,7 +66,7 @@ Once you've made the dashboard public, a **Public** tag is displayed in the head
 
 ## Pause access
 
-1. Click the sharing icon in the dashboard header.
+1. Click **Share** in the top-right corner of the dashboard.
 1. Click the **Public dashboard** tab.
 1. Enable the **Pause sharing dashboard** toggle.
 
@@ -74,7 +74,7 @@ The dashboard is no longer accessible, even with the link, until you make it sha
 
 ## Revoke access
 
-1. Click the sharing icon in the dashboard header.
+1. Click **Share** in the top-right corner of the dashboard.
 1. Click the **Public dashboard** tab.
 1. Click **Revoke public URL** to delete the public dashboard.
 
@@ -94,7 +94,7 @@ Email sharing allows you to share your public dashboard with only specific peopl
 
 ### Invite a viewer
 
-1. Click the sharing icon in the dashboard header.
+1. Click **Share** in the top-right corner of the dashboard.
 1. Click the **Public dashboard** tab.
 1. Acknowledge the implications of making the dashboard public by selecting all the checkboxes.
 1. Click **Generate public URL** to make the dashboard public and make your link live.
@@ -111,7 +111,7 @@ If the viewer doesn't have an invitation or it's been revoked, you won't be noti
 
 ### Revoke access for a viewer
 
-1. Click the sharing icon in the dashboard header.
+1. Click **Share** in the top-right corner of the dashboard.
 1. Click the **Public dashboard** tab.
 1. Click **Revoke** on the viewer you'd like to revoke access for.
 
@@ -119,7 +119,7 @@ Immediately, the viewer no longer has access to the public dashboard, nor can th
 
 ### Reinvite a viewer
 
-1. Click the sharing icon in the dashboard header.
+1. Click **Share** in the top-right corner of the dashboard.
 1. Click the **Public dashboard** tab.
 1. Click **Resend** on the viewer you'd like to re-share the public dashboard with.
 
@@ -149,7 +149,7 @@ If a Grafana user has read access to the parent dashboard, they can view the pub
 
 You can check usage analytics about your public dashboard by clicking the insights icon in the dashboard header:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights-11.2.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
 
 Learn more about the kind of information provided in the [dashboard insights documentation](ref:dashboard-insights-documentation).
 

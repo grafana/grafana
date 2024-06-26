@@ -1,4 +1,5 @@
-import React, { CSSProperties } from 'react';
+import { CSSProperties } from 'react';
+import * as React from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
 import { LinkModel } from '@grafana/data';

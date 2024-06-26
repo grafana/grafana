@@ -52,7 +52,7 @@ func ProvideStore(db db.DB, cfg *setting.Cfg) sqlStore {
 
 func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 	var err error
-	err = ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.UseBool("is_admin")
 		if cmd.UID == "" {
 			cmd.UID = util.GenerateShortUID()
@@ -416,7 +416,7 @@ func validateOneAdminLeft(sess *db.Session) error {
 }
 
 func (ss *sqlStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		userIds := cmd.UserIDs
 
 		if len(userIds) == 0 {
