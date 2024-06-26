@@ -1,9 +1,12 @@
 #!/bin/bash
+set -eo pipefail
 trap "exit" INT TERM
 trap "kill 0" EXIT
 
+. scripts/grafana-server/variables
+
 # start storybook in the background and wait for it to respond
 yarn storybook &
-HOST=localhost PORT=9001 ./scripts/grafana-server/wait-for-grafana
+PORT=9001 ./scripts/grafana-server/wait-for-grafana
 
-HOST=localhost PORT=9001 ./e2e/run-suite storybook true
+PORT=9001 ./e2e/run-suite storybook true
