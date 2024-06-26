@@ -95,7 +95,8 @@ To remove a silence, complete the following steps.
 
 ## Rule-specific silences
 
-Rule-specific silences are silences that apply only to a specific alert rule. They are created when you silence an alert rule directly using the `Silence notifications` action in the UI.
+Rule-specific silences are silences that apply only to a specific alert rule.
+They're created when you silence an alert rule directly using the **Silence notifications** action in the UI.
 
 {{< admonition type="note" >}}
 As opposed to general silences, rule-specific silence access is tied directly to the alert rule they act on. They can be created manually by including the specific label matcher: `__alert_rule_uid__=<alert rule UID>`.

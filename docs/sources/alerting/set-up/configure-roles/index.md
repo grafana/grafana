@@ -46,12 +46,12 @@ You can extend the access provided by a role to alert rules and rule-specific si
 
 This allows different users, teams, or service accounts to have customized access to modify or silence alert rules in specific folders.
 
-Details on the additional access provided by folder permissions is below.
+Refer to the following table for details on the additional access provided by folder permissions:
 
 | Folder permission | Additional Access                                                                                         |
 | ----------------- | --------------------------------------------------------------------------------------------------------- |
 | View              | No additional access: all permissions already contained in Viewer role.                                   |
-| Edit              | Write access to alert rules and their rule-specific silences **only** in the given folder and subfolders. |
+| Edit              | Write access to alert rules and their rule-specific silences _only_ in the given folder and subfolders. |
 | Admin             | Same additional access as Edit.                                                                           |
 
 {{< admonition type="note" >}}
