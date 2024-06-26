@@ -19,6 +19,7 @@ load(
     "playwright_e2e_tests_step",
     "publish_images_step",
     "release_canary_npm_packages_step",
+    "start_storybook_step",
     "store_storybook_step",
     "test_a11y_frontend_step",
     "trigger_oss",
@@ -95,6 +96,7 @@ def build_e2e(trigger, ver_mode):
     build_steps.extend(
         [
             grafana_server_step(),
+            start_storybook_step(),
             e2e_tests_step("dashboards-suite"),
             e2e_tests_step("scenes/dashboards-suite"),
             e2e_tests_step("smoke-tests-suite"),

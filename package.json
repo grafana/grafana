@@ -19,7 +19,7 @@
     "e2e:enterprise:debug": "./e2e/start-and-run-suite enterprise debug",
     "e2e:playwright": "yarn playwright test",
     "e2e:playwright:server": "./e2e/plugin-e2e/start-and-run-suite",
-    "e2e:storybook": "./e2e/start-and-verify-storybook",
+    "e2e:storybook": "PORT=9001 ./e2e/run-suite storybook true",
     "test": "jest --notify --watch",
     "test:coverage": "jest --coverage",
     "test:coverage:changes": "jest --coverage --changedSince=origin/main",

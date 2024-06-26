@@ -775,20 +775,30 @@ def e2e_tests_step(suite, port = 3001, tries = None):
         ],
     }
 
+def start_storybook_step():
+    return {
+        "name": "start-storybook",
+        "image": images["node"],
+        "depends_on": [
+            "build-frontend-packages",
+        ],
+        "commands": [
+            "yarn storybook",
+        ],
+        "detach": True,
+    }
+
 def e2e_storybook_step():
     return {
         "name": "end-to-end-tests-storybook-suite",
         "image": images["cypress"],
         "depends_on": [
-            "grafana-server",
+            "start-storybook",
         ],
         "environment": {
             "HOST": "grafana-server",
         },
         "commands": [
-            "apt-get update",
-            "apt-get install -yq netcat",
-            "yarn install",
             "yarn e2e:storybook",
         ],
     }

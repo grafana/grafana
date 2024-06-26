@@ -586,6 +586,13 @@ steps:
   image: alpine:3.19.1
   name: grafana-server
 - commands:
+  - yarn storybook
+  depends_on:
+  - build-frontend-packages
+  detach: true
+  image: node:20.9.0-alpine
+  name: start-storybook
+- commands:
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
   - grafana-server
@@ -650,12 +657,9 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-scenes/various-suite
 - commands:
-  - apt-get update
-  - apt-get install -yq netcat
-  - yarn install
   - yarn e2e:storybook
   depends_on:
-  - grafana-server
+  - start-storybook
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -1945,6 +1949,13 @@ steps:
   image: alpine:3.19.1
   name: grafana-server
 - commands:
+  - yarn storybook
+  depends_on:
+  - build-frontend-packages
+  detach: true
+  image: node:20.9.0-alpine
+  name: start-storybook
+- commands:
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
   - grafana-server
@@ -2009,12 +2020,9 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-scenes/various-suite
 - commands:
-  - apt-get update
-  - apt-get install -yq netcat
-  - yarn install
   - yarn e2e:storybook
   depends_on:
-  - grafana-server
+  - start-storybook
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
@@ -5087,6 +5095,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 17657b3c848d718fbe72d1cdfbed8ca20214fedc23ea10d501d26ea2ba247217
+hmac: 1f46f2dc4fba9c47eb6992a762df73e544687303573af1925a8118751b1f631a
 
 ...
