@@ -16,6 +16,6 @@ export interface SceneShareTab<T extends SceneShareTabState = SceneShareTabState
 }
 
 export interface SceneShareDrawerState extends SceneObjectState {
-  dashboardRef?: SceneObjectRef<DashboardScene>;
+  dashboardRef: SceneObjectRef<DashboardScene>;
   panelRef?: SceneObjectRef<VizPanel>;
 }

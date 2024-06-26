@@ -18,9 +18,9 @@ import { ShareSnapshot } from './share-snapshot/ShareSnapshot';
 
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
 
-//TODO change name
-type customDashboardTabType = new (...args: SceneShareDrawerState[]) => SceneObject;
-interface ShareDrawerMenuItem {
+type CustomDashboardDrawer = new (...args: SceneShareDrawerState[]) => SceneObject;
+
+export interface ShareDrawerMenuItem {
   testId: string;
   label: string;
   description?: string;
@@ -36,6 +36,18 @@ export function addDashboardShareDrawerItem(item: ShareDrawerMenuItem) {
 }
 
 export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
+  const onMenuItemClick = useCallback(
+    (title: string, component: CustomDashboardDrawer) => {
+      const drawer = new ShareDrawer({
+        title,
+        body: new component({ dashboardRef: dashboard.getRef(), panelRef: panel?.getRef() }),
+      });
+
+      dashboard.showModal(drawer);
+    },
+    [dashboard, panel]
+  );
+
   const buildMenuItems = useCallback(() => {
     const menuItems: ShareDrawerMenuItem[] = [];
 
@@ -67,22 +79,12 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       label: t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'),
       condition: contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard(),
       onClick: () => {
-        // @ts-ignore
         onMenuItemClick(t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'), ShareSnapshot);
       },
     });
 
     return menuItems.filter((item) => item.condition);
-  }, [dashboard, panel]);
-
-  const onMenuItemClick = (title: string, component: customDashboardTabType) => {
-    const drawer = new ShareDrawer({
-      title,
-      body: new component({ dashboardRef: dashboard.getRef(), panelRef: panel?.getRef() }),
-    });
-
-    dashboard.showModal(drawer);
-  };
+  }, [onMenuItemClick, dashboard, panel]);
 
   return (
     <Menu data-testid={newShareButtonSelector.container}>
