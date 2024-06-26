@@ -51,6 +51,7 @@ import {
   getClustersSlothClusterEastRadio,
   getNotFoundForFilterClear,
   getNotFoundNoScopes,
+  getTreeHeadline,
 } from './testUtils';
 
 jest.mock('@grafana/runtime', () => ({
@@ -197,6 +198,19 @@ describe('ScopesScene', () => {
         await userEvents.click(getFiltersApply());
         await userEvents.click(getFiltersInput());
         expect(queryApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+      });
+
+      it('Shows the proper headline', async () => {
+        await userEvents.click(getFiltersInput());
+        expect(getTreeHeadline()).toHaveTextContent('Recommended');
+        await userEvents.type(getTreeSearch(), 'Applications');
+        await waitFor(() => {
+          expect(getTreeHeadline()).toHaveTextContent('Results');
+        });
+        await userEvents.type(getTreeSearch(), 'unknown');
+        await waitFor(() => {
+          expect(getTreeHeadline()).toHaveTextContent('No results found for your query');
+        });
       });
     });
 
