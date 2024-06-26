@@ -10,6 +10,7 @@ import { t } from 'app/core/internationalization';
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { ShareDrawer } from '../ShareDrawer/ShareDrawer';
+import { SceneShareDrawerState } from '../types';
 
 import { ShareExternally } from './share-externally/ShareExternally';
 import { ShareInternally } from './share-internally/ShareInternally';
@@ -17,14 +18,15 @@ import { ShareSnapshot } from './share-snapshot/ShareSnapshot';
 
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
 
+//TODO change name
+type customDashboardTabType = new (...args: SceneShareDrawerState[]) => SceneObject;
 interface ShareDrawerMenuItem {
   testId: string;
   label: string;
   description?: string;
   icon: IconName;
-  title: string;
-  component: SceneObject;
   condition: boolean;
+  onClick: (d: DashboardScene) => void;
 }
 
 const customShareDrawerItem: ShareDrawerMenuItem[] = [];
@@ -42,18 +44,19 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       icon: 'building',
       label: t('share-dashboard.menu.share-internally-title', 'Share internally'),
       description: t('share-dashboard.menu.share-internally-description', 'Advanced settings'),
-      title: t('share-dashboard.menu.share-internally-title', 'Share internally'),
-      component: new ShareInternally({ panelRef: panel?.getRef() }),
       condition: true,
+      onClick: () =>
+        onMenuItemClick(t('share-dashboard.menu.share-internally-title', 'Share internally'), ShareInternally),
     });
 
     menuItems.push({
       testId: newShareButtonSelector.shareExternally,
       icon: 'share-alt',
       label: t('share-dashboard.menu.share-externally-title', 'Share externally'),
-      title: t('share-dashboard.menu.share-externally-title', 'Share externally'),
-      component: new ShareExternally({}),
       condition: !panel && isPublicDashboardsEnabled(),
+      onClick: () => {
+        onMenuItemClick(t('share-dashboard.menu.share-externally-title', 'Share externally'), ShareExternally);
+      },
     });
 
     customShareDrawerItem.forEach((d) => menuItems.push(d));
@@ -62,18 +65,20 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       testId: newShareButtonSelector.shareSnapshot,
       icon: 'camera',
       label: t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'),
-      title: t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'),
-      component: new ShareSnapshot({ dashboardRef: dashboard.getRef() }),
       condition: contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard(),
+      onClick: () => {
+        // @ts-ignore
+        onMenuItemClick(t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'), ShareSnapshot);
+      },
     });
 
     return menuItems.filter((item) => item.condition);
   }, [dashboard, panel]);
 
-  const onMenuItemClick = (title: string, component: SceneObject) => {
+  const onMenuItemClick = (title: string, component: customDashboardTabType) => {
     const drawer = new ShareDrawer({
       title,
-      body: component,
+      body: new component({ dashboardRef: dashboard.getRef(), panelRef: panel?.getRef() }),
     });
 
     dashboard.showModal(drawer);
@@ -88,7 +93,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
           label={item.label}
           icon={item.icon}
           description={item.description}
-          onClick={() => onMenuItemClick(item.title, item.component)}
+          onClick={() => item.onClick(dashboard)}
         />
       ))}
     </Menu>
