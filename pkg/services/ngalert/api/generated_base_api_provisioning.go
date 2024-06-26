@@ -42,6 +42,7 @@ type ProvisioningApi interface {
 	RouteGetTemplate(*contextmodel.ReqContext) response.Response
 	RouteGetTemplates(*contextmodel.ReqContext) response.Response
 	RoutePostAlertRule(*contextmodel.ReqContext) response.Response
+	RoutePostAlertRuleGroup(*contextmodel.ReqContext) response.Response
 	RoutePostContactpoints(*contextmodel.ReqContext) response.Response
 	RoutePostMuteTiming(*contextmodel.ReqContext) response.Response
 	RoutePutAlertRule(*contextmodel.ReqContext) response.Response
@@ -150,6 +151,16 @@ func (f *ProvisioningApiHandler) RoutePostAlertRule(ctx *contextmodel.ReqContext
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return f.handleRoutePostAlertRule(ctx, conf)
+}
+func (f *ProvisioningApiHandler) RoutePostAlertRuleGroup(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	folderUIDParam := web.Params(ctx.Req)[":FolderUID"]
+	// Parse Request Body
+	conf := apimodels.AlertRuleGroup{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.handleRoutePostAlertRuleGroup(ctx, conf, folderUIDParam)
 }
 func (f *ProvisioningApiHandler) RoutePostContactpoints(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body
@@ -493,6 +504,18 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 				http.MethodPost,
 				"/api/v1/provisioning/alert-rules",
 				api.Hooks.Wrap(srv.RoutePostAlertRule),
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/v1/provisioning/folder/{FolderUID}/rule-groups"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPost, "/api/v1/provisioning/folder/{FolderUID}/rule-groups"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/v1/provisioning/folder/{FolderUID}/rule-groups",
+				api.Hooks.Wrap(srv.RoutePostAlertRuleGroup),
 				m,
 			),
 		)
