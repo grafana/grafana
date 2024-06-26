@@ -89,8 +89,6 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.DashboardList{},
 		&v0alpha1.DashboardWithAccessInfo{},
 		&v0alpha1.DashboardVersionList{},
-		&v0alpha1.DashboardSummary{},
-		&v0alpha1.DashboardSummaryList{},
 		&v0alpha1.VersionsQueryOptions{},
 	)
 }
@@ -159,14 +157,6 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 			reg)
 	}
 
-	// Summary
-	resourceInfo2 := v0alpha1.DashboardSummaryResourceInfo
-	storage[resourceInfo2.StoragePath()] = &summaryStorage{
-		resource:       resourceInfo2,
-		access:         b.access,
-		tableConverter: store.TableConvertor,
-	}
-
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
 	return &apiGroupInfo, nil
 }
@@ -185,7 +175,6 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	// Hide the ability to list or watch across all tenants
 	delete(oas.Paths.Paths, root+v0alpha1.DashboardResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+"watch/"+v0alpha1.DashboardResourceInfo.GroupResource().Resource)
-	delete(oas.Paths.Paths, root+v0alpha1.DashboardSummaryResourceInfo.GroupResource().Resource)
 
 	// The root API discovery list
 	sub := oas.Paths.Paths[root]
