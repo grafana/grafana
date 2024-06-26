@@ -327,12 +327,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		ruleNamesSet[rn] = struct{}{}
 	}
 
-	// Group rules together by Namespace and Rule Group. Rules are also grouped by Org ID,
-	// but in this API all rules belong to the same organization. Also filter by rule name if
-	// it was provided as a query param.
-	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
-
-	processGroupRules(groupedRules, ruleList, ruleNamesSet)
+	groupedRules := getGroupedRules(ruleList, ruleNamesSet)
 	rulesTotals := make(map[string]int64, len(groupedRules))
 	for groupKey, rules := range groupedRules {
 		folder, ok := opts.Namespaces[groupKey.NamespaceUID]
@@ -379,7 +374,11 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	return ruleResponse
 }
 
-func processGroupRules(groupedRules map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule, ruleList ngmodels.RulesGroup, ruleNamesSet map[string]struct{}) {
+func getGroupedRules(ruleList ngmodels.RulesGroup, ruleNamesSet map[string]struct{}) map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule {
+	// Group rules together by Namespace and Rule Group. Rules are also grouped by Org ID,
+	// but in this API all rules belong to the same organization. Also filter by rule name if
+	// it was provided as a query param.
+	groupedRules := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
 	for _, rule := range ruleList {
 		if len(ruleNamesSet) > 0 {
 			if _, exists := ruleNamesSet[rule.Title]; !exists {
@@ -396,6 +395,7 @@ func processGroupRules(groupedRules map[ngmodels.AlertRuleGroupKey][]*ngmodels.A
 	for _, groupRules := range groupedRules {
 		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(groupRules)
 	}
+	return groupedRules
 }
 
 func filterRules(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.State]struct{}) {
