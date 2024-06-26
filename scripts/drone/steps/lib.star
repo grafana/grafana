@@ -774,6 +774,15 @@ def e2e_tests_step(suite, port = 3001, tries = None):
         ],
     }
 
+def e2e_storybook_step():
+    return {
+        "name": "end-to-end-tests-storybook-suite",
+        "image": images["cypress"],
+        "commands": [
+            "yarn e2e:storybook",
+        ],
+    }
+
 def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     """Run cloud plugins end-to-end tests.
 
@@ -1234,6 +1243,7 @@ def end_to_end_tests_deps():
         "end-to-end-tests-panels-suite",
         "end-to-end-tests-smoke-tests-suite",
         "end-to-end-tests-various-suite",
+        "end-to-end-tests-storybook-suite",
     ]
 
 def compile_build_cmd():
