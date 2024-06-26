@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -11,12 +12,19 @@ export interface Props {
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   url: string;
+  id?: string;
 }
 
-export function MegaMenuItemText({ children, isActive, onClick, target, url }: Props) {
+export function MegaMenuItemText({ children, isActive, onClick, target, url, id }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
+  const [pinnedItems, setPinnedItems] = useState<string[]>([]);
+
+  const addPinnedItem = (item: string) => {
+    const items = pinnedItems.includes(item) ? pinnedItems.filter((i) => i !== item) : [...pinnedItems, item];
+    setPinnedItems(items);
+  };
 
   const linkContent = (
     <div className={styles.linkContent}>
@@ -27,12 +35,12 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url }: P
         target === '_blank' && <Icon data-testid="external-link-icon" name="external-link-alt" />
       }
       <Icon
-        name={'star'}
+        name={pinnedItems.includes(id || '') ? 'favorite' : 'star'}
         className={'pin-icon'}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log('Pin clicked');
+          addPinnedItem(id!);
         }}
       />
     </div>
