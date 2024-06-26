@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react';
-import React from 'react';
 import { render } from 'test/test-utils';
 
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
@@ -48,6 +47,16 @@ export const mocksScopes: Scope[] = [
       description: 'slothClusterSouth',
       category: 'clusters',
       filters: [{ key: 'cluster', value: 'slothClusterSouth', operator: 'equals' }],
+    },
+  },
+  {
+    metadata: { name: 'slothClusterEast' },
+    spec: {
+      title: 'slothClusterEast',
+      type: 'cluster',
+      description: 'slothClusterEast',
+      category: 'clusters',
+      filters: [{ key: 'cluster', value: 'slothClusterEast', operator: 'equals' }],
     },
   },
   {
@@ -216,6 +225,17 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
   },
   {
     parent: 'clusters',
+    metadata: { name: 'clusters-slothClusterEast' },
+    spec: {
+      nodeType: 'leaf',
+      title: 'slothClusterEast',
+      description: 'slothClusterEast',
+      linkType: 'scope',
+      linkId: 'slothClusterEast',
+    },
+  },
+  {
+    parent: 'clusters',
     metadata: { name: 'clusters.applications' },
     spec: {
       nodeType: 'container',
@@ -296,6 +316,7 @@ const selectors = {
   tree: {
     search: (nodeId: string) => `scopes-tree-${nodeId}-search`,
     select: (nodeId: string) => `scopes-tree-${nodeId}-checkbox`,
+    radio: (nodeId: string) => `scopes-tree-${nodeId}-radio`,
     expand: (nodeId: string) => `scopes-tree-${nodeId}-expand`,
     title: (nodeId: string) => `scopes-tree-${nodeId}-title`,
   },
@@ -312,6 +333,10 @@ const selectors = {
     search: 'scopes-dashboards-search',
     loading: 'scopes-dashboards-loading',
     dashboard: (uid: string) => `scopes-dashboards-${uid}`,
+    notFoundNoScopes: 'scopes-dashboards-notFoundNoScopes',
+    notFoundForScope: 'scopes-dashboards-notFoundForScope',
+    notFoundForFilter: 'scopes-dashboards-notFoundForFilter',
+    notFoundForFilterClear: 'scopes-dashboards-notFoundForFilter-clear',
   },
 };
 
@@ -324,13 +349,18 @@ export const queryDashboardsExpand = () => screen.queryByTestId(selectors.dashbo
 export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
 export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
-export const getDashboardsSearch = () => screen.getByTestId(selectors.dashboards.search);
+export const queryDashboardsSearch = () => screen.queryByTestId(selectors.dashboards.search);
+export const getDashboardsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.dashboards.search);
 export const queryAllDashboard = (uid: string) => screen.queryAllByTestId(selectors.dashboards.dashboard(uid));
 export const queryDashboard = (uid: string) => screen.queryByTestId(selectors.dashboards.dashboard(uid));
 export const getDashboard = (uid: string) => screen.getByTestId(selectors.dashboards.dashboard(uid));
+export const getNotFoundNoScopes = () => screen.getByTestId(selectors.dashboards.notFoundNoScopes);
+export const getNotFoundForScope = () => screen.getByTestId(selectors.dashboards.notFoundForScope);
+export const getNotFoundForFilter = () => screen.getByTestId(selectors.dashboards.notFoundForFilter);
+export const getNotFoundForFilterClear = () => screen.getByTestId(selectors.dashboards.notFoundForFilterClear);
 
 export const getApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
-export const getApplicationsSearch = () => screen.getByTestId(selectors.tree.search('applications'));
+export const getApplicationsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search('applications'));
 export const queryApplicationsSlothPictureFactoryTitle = () =>
   screen.queryByTestId(selectors.tree.title('applications-slothPictureFactory'));
 export const getApplicationsSlothPictureFactoryTitle = () =>
@@ -353,10 +383,12 @@ export const getApplicationsClustersSlothClusterSouthSelect = () =>
 
 export const getClustersSelect = () => screen.getByTestId(selectors.tree.select('clusters'));
 export const getClustersExpand = () => screen.getByTestId(selectors.tree.expand('clusters'));
-export const getClustersSlothClusterNorthSelect = () =>
-  screen.getByTestId(selectors.tree.select('clusters-slothClusterNorth'));
-export const getClustersSlothClusterSouthSelect = () =>
-  screen.getByTestId(selectors.tree.select('clusters-slothClusterSouth'));
+export const getClustersSlothClusterNorthRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterNorth'));
+export const getClustersSlothClusterSouthRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterSouth'));
+export const getClustersSlothClusterEastRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterEast'));
 
 export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
   return new DashboardScene({

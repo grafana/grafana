@@ -112,7 +112,7 @@
     "name":"datasource/InfluxDB",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/112"
+      "url":"https://github.com/orgs/grafana/projects/190"
     }
   },
   {
@@ -120,7 +120,7 @@
     "name":"datasource/Graphite",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/112"
+      "url":"https://github.com/orgs/grafana/projects/190"
     }
   },
   {
@@ -128,7 +128,7 @@
     "name":"datasource/OpenTSDB",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/112"
+      "url":"https://github.com/orgs/grafana/projects/190"
     }
   },
   {

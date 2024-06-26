@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { AbsoluteTimeRange, DataFrame, dateTime, EventBus, LoadingState, SplitOpen } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';

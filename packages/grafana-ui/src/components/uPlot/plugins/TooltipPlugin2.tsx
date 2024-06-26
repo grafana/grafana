@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
+import { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
+import * as React from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
@@ -462,7 +463,10 @@ export const TooltipPlugin2 = ({
     config.addHook('setData', (u) => {
       yZoomed = false;
       yDrag = false;
-      dismiss();
+
+      if (_isPinned) {
+        dismiss();
+      }
     });
 
     // fires on series focus/proximity changes

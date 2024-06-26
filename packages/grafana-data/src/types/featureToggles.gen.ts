@@ -29,7 +29,6 @@ export interface FeatureToggles {
   featureHighlights?: boolean;
   storage?: boolean;
   correlations?: boolean;
-  exploreContentOutline?: boolean;
   datasourceQueryMultiStatus?: boolean;
   autoMigrateOldPanels?: boolean;
   autoMigrateGraphPanel?: boolean;
@@ -199,4 +198,5 @@ export interface FeatureToggles {
   zanzana?: boolean;
   passScopeToDashboardApi?: boolean;
   alertingApiServer?: boolean;
+  dashboardRestoreUI?: boolean;
 }

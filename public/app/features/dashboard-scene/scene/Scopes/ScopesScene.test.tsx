@@ -28,8 +28,8 @@ import {
   getFiltersInput,
   getClustersExpand,
   getClustersSelect,
-  getClustersSlothClusterNorthSelect,
-  getClustersSlothClusterSouthSelect,
+  getClustersSlothClusterNorthRadio,
+  getClustersSlothClusterSouthRadio,
   getDashboard,
   getDashboardsContainer,
   getDashboardsExpand,
@@ -38,7 +38,6 @@ import {
   mocksScopes,
   queryAllDashboard,
   queryFiltersApply,
-  queryApplicationsClustersSlothClusterNorthTitle,
   queryApplicationsClustersTitle,
   queryApplicationsSlothPictureFactoryTitle,
   queryApplicationsSlothVoteTrackerTitle,
@@ -46,6 +45,12 @@ import {
   queryDashboardsContainer,
   queryDashboardsExpand,
   renderDashboard,
+  getNotFoundForScope,
+  queryDashboardsSearch,
+  getNotFoundForFilter,
+  getClustersSlothClusterEastRadio,
+  getNotFoundForFilterClear,
+  getNotFoundNoScopes,
 } from './testUtils';
 
 jest.mock('@grafana/runtime', () => ({
@@ -136,12 +141,14 @@ describe('ScopesScene', () => {
         expect(getFiltersInput().value).toBe('slothVoteTracker, slothPictureFactory, Cluster Index Helper');
       });
 
-      it("Can't navigate deeper than the level where scopes are selected", async () => {
+      it('Can select a node from an inner level', async () => {
         await userEvents.click(getFiltersInput());
         await userEvents.click(getApplicationsExpand());
         await userEvents.click(getApplicationsSlothVoteTrackerSelect());
         await userEvents.click(getApplicationsClustersExpand());
-        expect(queryApplicationsClustersSlothClusterNorthTitle()).not.toBeInTheDocument();
+        await userEvents.click(getApplicationsClustersSlothClusterNorthSelect());
+        await userEvents.click(getFiltersApply());
+        expect(getFiltersInput().value).toBe('slothClusterNorth');
       });
 
       it('Can select a node from an upper level', async () => {
@@ -157,8 +164,12 @@ describe('ScopesScene', () => {
       it('Respects only one select per container', async () => {
         await userEvents.click(getFiltersInput());
         await userEvents.click(getClustersExpand());
-        await userEvents.click(getClustersSlothClusterNorthSelect());
-        expect(getClustersSlothClusterSouthSelect()).toBeDisabled();
+        await userEvents.click(getClustersSlothClusterNorthRadio());
+        expect(getClustersSlothClusterNorthRadio().checked).toBe(true);
+        expect(getClustersSlothClusterSouthRadio().checked).toBe(false);
+        await userEvents.click(getClustersSlothClusterSouthRadio());
+        expect(getClustersSlothClusterNorthRadio().checked).toBe(false);
+        expect(getClustersSlothClusterSouthRadio().checked).toBe(true);
       });
 
       it('Search works', async () => {
@@ -175,6 +186,17 @@ describe('ScopesScene', () => {
         expect(getApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
         expect(getApplicationsSlothVoteTrackerSelect()).toBeInTheDocument();
         expect(queryApplicationsClustersTitle()).not.toBeInTheDocument();
+      });
+
+      it('Opens to a selected scope', async () => {
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getClustersExpand());
+        await userEvents.click(getFiltersApply());
+        await userEvents.click(getFiltersInput());
+        expect(queryApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
       });
     });
 
@@ -292,6 +314,35 @@ describe('ScopesScene', () => {
         expect(queryAllDashboard('6')).toHaveLength(1);
         expect(queryAllDashboard('7')).toHaveLength(1);
         expect(queryAllDashboard('8')).toHaveLength(1);
+      });
+
+      it('Does show a proper message when no scopes are selected', async () => {
+        await userEvents.click(getDashboardsExpand());
+        expect(getNotFoundNoScopes()).toBeInTheDocument();
+        expect(queryDashboardsSearch()).not.toBeInTheDocument();
+      });
+
+      it('Does not show the input when there are no dashboards found for scope', async () => {
+        await userEvents.click(getDashboardsExpand());
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getClustersExpand());
+        await userEvents.click(getClustersSlothClusterEastRadio());
+        await userEvents.click(getFiltersApply());
+        expect(getNotFoundForScope()).toBeInTheDocument();
+        expect(queryDashboardsSearch()).not.toBeInTheDocument();
+      });
+
+      it('Does show the input and a message when there are no dashboards found for filter', async () => {
+        await userEvents.click(getDashboardsExpand());
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getFiltersApply());
+        await userEvents.type(getDashboardsSearch(), 'unknown');
+        expect(queryDashboardsSearch()).toBeInTheDocument();
+        expect(getNotFoundForFilter()).toBeInTheDocument();
+        await userEvents.click(getNotFoundForFilterClear());
+        expect(getDashboardsSearch().value).toBe('');
       });
     });
 
@@ -417,7 +468,9 @@ describe('ScopesScene', () => {
       it('K8s API should not pass the scopes', () => {
         config.featureToggles.kubernetesDashboards = true;
         getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1');
+        expect(getMock).toHaveBeenCalledWith(
+          '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto'
+        );
       });
     });
 
@@ -441,7 +494,9 @@ describe('ScopesScene', () => {
       it('K8s API should not pass the scopes', () => {
         config.featureToggles.kubernetesDashboards = true;
         getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1');
+        expect(getMock).toHaveBeenCalledWith(
+          '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto'
+        );
       });
     });
   });

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
