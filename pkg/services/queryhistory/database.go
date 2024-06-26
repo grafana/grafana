@@ -2,7 +2,6 @@ package queryhistory
 
 import (
 	"context"
-	"encoding/json"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -12,10 +11,6 @@ import (
 
 type Datasource struct {
 	UID string `json:"uid"`
-}
-
-type DataQuery struct {
-	Datasource Datasource `json:"datasource"`
 }
 
 type QueryHistoryDatasourceIndex struct {
@@ -44,34 +39,24 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *user.SignedI
 		return QueryHistoryDTO{}, err
 	}
 
-	// update index
-	queries := []DataQuery{}
-	bytes, err := cmd.Queries.ToDB()
+	dsUids, err := FindDataSourceUIDs(cmd.Queries)
 
-	if err != nil {
-		return QueryHistoryDTO{}, err
-	}
+	if err == nil {
+		var indexItems []QueryHistoryDatasourceIndex
+		for _, uid := range dsUids {
+			indexItems = append(indexItems, QueryHistoryDatasourceIndex{
+				QueryHistoryItemUID: queryHistory.UID,
+				DatasourceUID:       uid,
+			})
+		}
 
-	err = json.Unmarshal(bytes, &queries)
-
-	if err != nil {
-		return QueryHistoryDTO{}, err
-	}
-
-	var indexItems []QueryHistoryDatasourceIndex
-	for _, query := range queries {
-		indexItems = append(indexItems, QueryHistoryDatasourceIndex{
-			QueryHistoryItemUID: queryHistory.UID,
-			DatasourceUID:       query.Datasource.UID,
+		err = s.store.WithDbSession(ctx, func(session *db.Session) error {
+			for _, indexItem := range indexItems {
+				_, err = session.Insert(indexItem)
+			}
+			return nil
 		})
 	}
-
-	err = s.store.WithDbSession(ctx, func(session *db.Session) error {
-		for _, indexItem := range indexItems {
-			_, err = session.Insert(indexItem)
-		}
-		return nil
-	})
 
 	dto := QueryHistoryDTO{
 		UID:           queryHistory.UID,
