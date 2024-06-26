@@ -20,6 +20,7 @@ import (
 
 	alertingModels "github.com/grafana/alerting/models"
 
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/cmputil"
@@ -272,6 +273,12 @@ type AlertRule struct {
 // Namespaced describes a class of resources that are stored in a specific namespace.
 type Namespaced interface {
 	GetNamespaceUID() string
+}
+
+type Namespace folder.Folder
+
+func (n Namespace) GetNamespaceUID() string {
+	return n.UID
 }
 
 // AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule

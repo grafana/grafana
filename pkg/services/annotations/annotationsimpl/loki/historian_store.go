@@ -99,7 +99,7 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 		}
 	}
 
-	logQL, err := historian.BuildLogQuery(buildHistoryQuery(query, accessResources.Dashboards, rule.UID), r.client.MaxQuerySize())
+	logQL, _, err := historian.BuildLogQuery(buildHistoryQuery(query, accessResources.Dashboards, rule.UID), nil, r.client.MaxQuerySize())
 	if err != nil {
 		grafanaErr := errutil.Error{}
 		if errors.As(err, &grafanaErr) {
