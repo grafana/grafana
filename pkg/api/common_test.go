@@ -274,6 +274,7 @@ func setupSimpleHTTPServer(features featuremgmt.FeatureToggles) *HTTPServer {
 		authInfoService: &authinfotest.FakeService{
 			ExpectedLabels: map[int64]string{int64(1): login.GetAuthProviderLabel(login.LDAPAuthModule)},
 		},
+		tracer: tracing.InitializeTracerForTest(),
 	}
 }
 
@@ -299,6 +300,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 		Features:           featuremgmt.WithFeatures(),
 		QuotaService:       quotatest.New(false, nil),
 		searchUsersService: &searchusers.OSSService{},
+		tracer:             tracing.InitializeTracerForTest(),
 	}
 
 	for _, opt := range opts {
