@@ -797,8 +797,10 @@ def e2e_storybook_step():
         ],
         "environment": {
             "HOST": "grafana-server",
+            "PORT": "9001",
         },
         "commands": [
+            "npx wait-on@7.0.1 http://$HOST:$PORT",
             "yarn e2e:storybook",
         ],
     }

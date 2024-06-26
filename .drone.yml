@@ -657,11 +657,13 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-scenes/various-suite
 - commands:
+  - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn e2e:storybook
   depends_on:
   - start-storybook
   environment:
     HOST: grafana-server
+    PORT: "9001"
   image: cypress/included:13.10.0
   name: end-to-end-tests-storybook-suite
 - commands:
@@ -2020,11 +2022,13 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-scenes/various-suite
 - commands:
+  - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn e2e:storybook
   depends_on:
   - start-storybook
   environment:
     HOST: grafana-server
+    PORT: "9001"
   image: cypress/included:13.10.0
   name: end-to-end-tests-storybook-suite
 - commands:
@@ -5095,6 +5099,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 1f46f2dc4fba9c47eb6992a762df73e544687303573af1925a8118751b1f631a
+hmac: d88df44dbcdd15fb70a885c3ace1ec83bc375494250a8334763906360cd57404
 
 ...
