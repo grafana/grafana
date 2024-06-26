@@ -40,7 +40,9 @@ export function ScopesTreeItem({
       {nodes.map((childNode) => {
         const isSelected = childNode.isSelectable && scopeNames.includes(childNode.linkId!);
 
-        if (anyChildExpanded && !childNode.isExpanded && !isSelected) {
+        console.log(childNode.title, anyChildExpanded, childNode.isExpanded, isSelected);
+
+        if (anyChildExpanded && !childNode.isExpanded) {
           return null;
         }
 
