@@ -9,6 +9,7 @@ import {
   GrafanaTheme2,
   PanelModel,
   filterFieldConfigOverrides,
+  getPanelOptionsWithDefaults,
   isStandardFieldProp,
   restoreCustomOverrideRules,
 } from '@grafana/data';
@@ -203,6 +204,18 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
   }
 
+  public applyPluginOptionDefaults(plugin: PanelPlugin, isAfterPluginChange: boolean) {
+    const options = getPanelOptionsWithDefaults({
+      plugin,
+      currentOptions: this.options,
+      currentFieldConfig: this.fieldConfig,
+      isAfterPluginChange: isAfterPluginChange,
+    });
+
+    this.fieldConfig = options.fieldConfig;
+    this.options = options.options;
+  }
+
   public changePluginType(pluginId: string) {
     const {
       options: prevOptions,
@@ -267,8 +280,9 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     };
 
     const newOptions = newPlugin?.onPanelTypeChanged?.(panel, prevPluginId, prevOptions, prevFieldConfig);
+
     if (newOptions) {
-      newPanel.onOptionsChange(newOptions, true);
+      newPanel.onOptionsChange(newOptions, true, true);
     }
 
     if (newPlugin?.onPanelMigration) {
