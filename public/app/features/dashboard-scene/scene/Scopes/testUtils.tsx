@@ -294,7 +294,6 @@ export const getMock = jest
 const selectors = {
   tree: {
     search: (nodeId: string) => `scopes-tree-${nodeId}-search`,
-    clear: (nodeId: string) => `scopes-tree-${nodeId}-clear`,
     select: (nodeId: string) => `scopes-tree-${nodeId}-checkbox`,
     radio: (nodeId: string) => `scopes-tree-${nodeId}-radio`,
     expand: (nodeId: string) => `scopes-tree-${nodeId}-expand`,
@@ -311,7 +310,6 @@ const selectors = {
     expand: 'scopes-dashboards-expand',
     container: 'scopes-dashboards-container',
     search: 'scopes-dashboards-search',
-    clear: 'scopes-dashboards-clear',
     loading: 'scopes-dashboards-loading',
     dashboard: (uid: string) => `scopes-dashboards-${uid}`,
   },
@@ -327,14 +325,12 @@ export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
 export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
 export const getDashboardsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.dashboards.search);
-export const getDashboardsClear = () => screen.getByTestId(selectors.dashboards.clear);
 export const queryAllDashboard = (uid: string) => screen.queryAllByTestId(selectors.dashboards.dashboard(uid));
 export const queryDashboard = (uid: string) => screen.queryByTestId(selectors.dashboards.dashboard(uid));
 export const getDashboard = (uid: string) => screen.getByTestId(selectors.dashboards.dashboard(uid));
 
 export const getApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
 export const getApplicationsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search('applications'));
-export const getApplicationsClear = () => screen.getByTestId(selectors.tree.clear('applications'));
 export const queryApplicationsSlothPictureFactoryTitle = () =>
   screen.queryByTestId(selectors.tree.title('applications-slothPictureFactory'));
 export const getApplicationsSlothPictureFactoryTitle = () =>

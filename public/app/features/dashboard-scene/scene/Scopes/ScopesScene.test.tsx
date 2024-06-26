@@ -45,8 +45,6 @@ import {
   queryDashboardsContainer,
   queryDashboardsExpand,
   renderDashboard,
-  getDashboardsClear,
-  getApplicationsClear,
 } from './testUtils';
 
 jest.mock('@grafana/runtime', () => ({
@@ -183,22 +181,6 @@ describe('ScopesScene', () => {
         expect(getApplicationsSlothVoteTrackerSelect()).toBeInTheDocument();
         expect(queryApplicationsClustersTitle()).not.toBeInTheDocument();
       });
-
-      it('Clear search works', async () => {
-        await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.type(getApplicationsSearch(), 'Clusters');
-        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
-        expect(queryApplicationsSlothPictureFactoryTitle()).not.toBeInTheDocument();
-        expect(queryApplicationsSlothVoteTrackerTitle()).not.toBeInTheDocument();
-        expect(getApplicationsClustersSelect()).toBeInTheDocument();
-        await userEvents.click(getApplicationsClear());
-        await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(4));
-        expect(getApplicationsSearch().value).toBe('');
-        expect(queryApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
-        expect(queryApplicationsSlothVoteTrackerTitle()).toBeInTheDocument();
-        expect(getApplicationsClustersSelect()).toBeInTheDocument();
-      });
     });
 
     describe('Filters', () => {
@@ -301,22 +283,6 @@ describe('ScopesScene', () => {
         expect(getDashboard('2')).toBeInTheDocument();
         await userEvents.type(getDashboardsSearch(), '1');
         expect(queryDashboard('2')).not.toBeInTheDocument();
-      });
-
-      it('Clears the filter', async () => {
-        await userEvents.click(getDashboardsExpand());
-        await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getApplicationsSlothPictureFactorySelect());
-        await userEvents.click(getFiltersApply());
-        expect(getDashboard('1')).toBeInTheDocument();
-        expect(getDashboard('2')).toBeInTheDocument();
-        await userEvents.type(getDashboardsSearch(), '1');
-        expect(queryDashboard('2')).not.toBeInTheDocument();
-        await userEvents.click(getDashboardsClear());
-        expect(getDashboardsSearch().value).toBe('');
-        expect(getDashboard('1')).toBeInTheDocument();
-        expect(getDashboard('2')).toBeInTheDocument();
       });
 
       it('Deduplicates the dashboards list', async () => {
