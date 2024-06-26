@@ -69,15 +69,16 @@ In terms of initiation, Grafana supports:
 By default, SP-initiated requests are enabled. For instructions on how to enable IdP-initiated logins, see [IdP-initiated Single Sign-On (SSO)]({{< relref "#idp-initiated-single-sign-on-sso" >}}).
 
 {{% admonition type="note" %}}
-It is possible to setup Grafana with SAML authentication using Azure AD. However, Azure AD limits the number of groups that can be sent in the SAML assertion to 150. If you have users that belong  to more than 150 groups, Azure AD provides a Graph API link to retrieve the groups which only works for OIDC/OAuth workflows.
+It is possible to setup Grafana with SAML authentication using Azure AD. However, Azure AD limits the number of groups that can be sent in the SAML assertion to 150. If you have users that belong to more than 150 groups, Azure AD provides a Graph API link to retrieve the groups which only works for OIDC/OAuth workflows.
 
 As of Grafana 11.2, the SAML integration offers interaction with Azure Graph API to retrieve the groups.
 
 Related links:
+
 - [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
 - [Set up SAML with Azure AD]({{< relref "#set-up-saml-with-azure-ad" >}})
 - [Configure a Graph API application in Azure AD]({{< relref "#configure-a-graph-api-application-in-azure-ad" >}})
-{{% /admonition %}}
+  {{% /admonition %}}
 
 ### Edit SAML options in the Grafana config file
 
@@ -165,6 +166,7 @@ The key you provide should look like:
 Grafana supports user authentication through Azure AD, which is useful when you want users to access Grafana using single sign-on. This guide will guide you through the steps of configuring SAML authentication in Grafana with [Azure AD](https://azure.microsoft.com/en-us/services/active-directory/).
 
 **Requirements**
+
 - You need to be an admin in your Azure AD organization to access Azure AD and create SAML integration.
 - You need permissions to edit Grafana config file and restart Grafana server.
 
@@ -188,11 +190,9 @@ $ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -no
 
 This will generate a `key.pem` and `cert.pem` file that you can use for the `private_key` and `certificate` configuration options.
 
-
 ### Add Microsoft Entra SAML Toolkit from the gallery
 
 > Taken from https://learn.microsoft.com/en-us/entra/identity/saas-apps/saml-toolkit-tutorial#add-microsoft-entra-saml-toolkit-from-the-gallery
-
 
 1. Go to the [Azure portal](https://portal.azure.com/#home) and sign in with your Azure AD account.
 1. Search for `Enterprise Applications`.
@@ -201,6 +201,7 @@ This will generate a `key.pem` and `cert.pem` file that you can use for the `pri
 1. Add a descriptive name and select `Create`.
 
 ### Configure the SAML Toolkit application endpoints
+
 In order to validate Azure AD users with Grafana, you need to configure the SAML Toolkit application endpoints by creating a new SAML integration in the Azure AD organization.
 
 > For the following configuration, we will use `https://localhost` as the Grafana URL. Replace it with your Grafana URL.
@@ -209,17 +210,18 @@ In order to validate Azure AD users with Grafana, you need to configure the SAML
 1. In the `Single sign-on` pane, select `SAML`.
 1. In the Set up `Single Sign-On with SAML` pane, select the pencil icon for Basic SAML Configuration to edit the settings.
 1. In the `Basic SAML Configuration` pane, update the following fields:
-    - In the `Identifier (Entity ID)` field, enter `https://localhost/saml/metadata`.
-    - In the `Identifier (Entity ID)` field, remove the default value.
-    - In the `Reply URL (Assertion Consumer Service URL)` field, enter `https://localhost/saml/acs`.
-    - In the `Sign on URL` field, enter `https://localhost/saml/auth`.
-    - In the `Relay State` field, enter `https://localhost/saml/slo`.
-    - In the `Logout URL` field, enter `https://localhost/logout`.
+   - In the `Identifier (Entity ID)` field, enter `https://localhost/saml/metadata`.
+   - In the `Identifier (Entity ID)` field, remove the default value.
+   - In the `Reply URL (Assertion Consumer Service URL)` field, enter `https://localhost/saml/acs`.
+   - In the `Sign on URL` field, enter `https://localhost/saml/auth`.
+   - In the `Relay State` field, enter `https://localhost/saml/slo`.
+   - In the `Logout URL` field, enter `https://localhost/logout`.
 1. Select `Save`.
 1. At the `SAML Certificate` section, copy the `App Federation Metadata Url`.
-    - Use this URL in the `idp_metadata_url` field in the `custom.ini` file.
+   - Use this URL in the `idp_metadata_url` field in the `custom.ini` file.
 
 ### Configure a Graph API application in Azure AD
+
 While an Azure AD tenant can be configured in Grafana via SAML, some additional information is only accessible via the Graph API. To retrieve this information, you need to create a new application in Azure AD and grant it the necessary permissions.
 
 > [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
@@ -227,6 +229,7 @@ While an Azure AD tenant can be configured in Grafana via SAML, some additional 
 > For the following configuration, we will use `https://localhost` as the Grafana URL. Replace it with your Grafana URL.
 
 #### Create a new Application registration
+
 1. Go to the [Azure portal](https://portal.azure.com/#home) and sign in with your Azure AD account.
 1. In the left-hand navigation pane, select the Azure Active Directory service, and then select `App registrations`.
 1. Select `New registration`.
@@ -236,6 +239,7 @@ While an Azure AD tenant can be configured in Grafana via SAML, some additional 
 1. Select `Register`.
 
 #### Set up permissions for the application
+
 1. In the overview pane, look for `API permissions` section and select `Add a permission`.
 1. In the `Request API permissions` pane, select `Microsoft Graph`.
 1. In the `Select permissions` pane, under the `GroupMember` section, select `GroupMember.Read.All`.
@@ -244,6 +248,7 @@ While an Azure AD tenant can be configured in Grafana via SAML, some additional 
 1. In the `API permissions` section, select `Grant admin consent for <your-organization>`.
 
 #### Generate a client secret
+
 1. In the `Overview` pane, select `Certificates & secrets`.
 1. Select `New client secret`.
 1. In the `Add a client secret` pane, enter a description for the secret.
