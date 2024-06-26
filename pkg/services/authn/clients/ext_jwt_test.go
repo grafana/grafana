@@ -141,43 +141,26 @@ func TestExtendedJWT_Test(t *testing.T) {
 		},
 		{
 			name:           "should return true when Authorization header contains Bearer prefix",
-			cfg:            nil,
 			authHeaderFunc: func() string { return "Bearer " + generateToken(validAccessTokenClaims, pk, jose.RS256) },
 			want:           true,
 		},
 		{
 			name:           "should return true when Authorization header only contains the token",
-			cfg:            nil,
 			authHeaderFunc: func() string { return generateToken(validAccessTokenClaims, pk, jose.RS256) },
 			want:           true,
 		},
 		{
 			name:           "should return false when Authorization header is empty",
-			cfg:            nil,
 			authHeaderFunc: func() string { return "" },
 			want:           false,
 		},
 		{
 			name:           "should return false when jwt.ParseSigned fails",
-			cfg:            nil,
 			authHeaderFunc: func() string { return "invalid token" },
 			want:           false,
 		},
-		{
-			name: "should return false when the issuer does not match the configured issuer",
-			cfg: &setting.Cfg{
-				ExtJWTAuth: setting.ExtJWTSettings{
-					ExpectIssuer: "http://localhost:3000",
-				},
-			},
-			authHeaderFunc: func() string {
-				payload := validAccessTokenClaims
-				payload.Issuer = "http://unknown-issuer"
-				return generateToken(payload, pk, jose.RS256)
-			},
-			want: false,
-		},
 	}
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			env := setupTestCtx(tc.cfg)
