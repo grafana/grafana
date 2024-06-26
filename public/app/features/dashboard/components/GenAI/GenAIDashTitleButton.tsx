@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { getDashboardSrv } from '../../services/DashboardSrv';
 
 import { GenAIButton } from './GenAIButton';
@@ -44,7 +42,7 @@ function getMessages(): Message[] {
     },
     {
       content: `The panels in the dashboard are: ${getDashboardPanelPrompt(dashboard)}`,
-      role: Role.system,
+      role: Role.user,
     },
   ];
 }

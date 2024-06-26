@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -76,6 +76,7 @@ type Options struct {
 type SearchOptions struct {
 	ActionPrefix string // Needed for the PoC v1, it's probably going to be removed.
 	Action       string
+	ActionSets   []string
 	Scope        string
 	NamespacedID string    // ID of the identity (ex: user:3, service-account:4)
 	wildcards    Wildcards // private field computed based on the Scope
@@ -232,11 +233,29 @@ func BuildPermissionsMap(permissions []Permission) map[string]bool {
 
 // GroupScopesByAction will group scopes on action
 func GroupScopesByAction(permissions []Permission) map[string][]string {
-	m := make(map[string][]string)
+	// Use a map to deduplicate scopes.
+	// User can have the same permission from multiple sources (e.g. team, basic role, directly assigned etc).
+	// User will also have duplicate permissions if action sets are used, as we will be double writing permissions for a while.
+	m := make(map[string]map[string]struct{})
 	for i := range permissions {
-		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
+		if _, ok := m[permissions[i].Action]; !ok {
+			m[permissions[i].Action] = make(map[string]struct{})
+		}
+		m[permissions[i].Action][permissions[i].Scope] = struct{}{}
 	}
-	return m
+
+	res := make(map[string][]string, len(m))
+	for action, scopes := range m {
+		scopeList := make([]string, len(scopes))
+		i := 0
+		for scope := range scopes {
+			scopeList[i] = scope
+			i++
+		}
+		res[action] = scopeList
+	}
+
+	return res
 }
 
 // Reduce will reduce a list of permissions to its minimal form, grouping scopes by action

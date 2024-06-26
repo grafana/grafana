@@ -1,6 +1,5 @@
 import { Meta, StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
-import React from 'react';
 
 import {
   DataFrame,

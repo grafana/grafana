@@ -1,11 +1,13 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/packages/grafana-ui/src/components/Select/SelectBase.tsx
 import { cx } from '@emotion/css';
 import { max } from 'lodash';
-import React, { RefCallback } from 'react';
+import { RefCallback } from 'react';
+import * as React from 'react';
 import { MenuListProps } from 'react-select';
 import { FixedSizeList as List } from 'react-window';
 
 import { SelectableValue, toIconName } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, Icon, getSelectStyles, useTheme2 } from '@grafana/ui';
 
 interface SelectMenuProps {
@@ -110,7 +112,7 @@ export const SelectMenuOptions = ({
         data.isDisabled && styles.optionDisabled
       )}
       {...rest}
-      aria-label="Select option"
+      data-testid={selectors.components.Select.option}
       title={data.title}
     >
       {icon && <Icon name={icon} className={styles.optionIcon} />}

@@ -1,15 +1,11 @@
 package dashboard
 
 import (
-	"fmt"
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/registry/generic"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
@@ -24,12 +20,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/access"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ builder.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
@@ -54,6 +50,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl,
 	provisioning provisioning.ProvisioningService,
 	dashStore dashboards.Store,
+	reg prometheus.Registerer,
 	sql db.DB,
 ) *DashboardsAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
@@ -76,6 +73,11 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 
 func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return v0alpha1.DashboardResourceInfo.GroupVersion()
+}
+
+func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
+	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
+	return grafanarest.Mode0
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
@@ -114,48 +116,16 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
-	dualWrite bool,
+	desiredMode grafanarest.DualWriterMode,
+	reg prometheus.Registerer,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
 	resourceInfo := v0alpha1.DashboardResourceInfo
-	strategy := grafanaregistry.NewStrategy(scheme)
-	store := &genericregistry.Store{
-		NewFunc:                   resourceInfo.NewFunc,
-		NewListFunc:               resourceInfo.NewListFunc,
-		PredicateFunc:             grafanaregistry.Matcher,
-		DefaultQualifiedResource:  resourceInfo.GroupResource(),
-		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		CreateStrategy:            strategy,
-		UpdateStrategy:            strategy,
-		DeleteStrategy:            strategy,
+	store, err := newStorage(scheme)
+	if err != nil {
+		return nil, err
 	}
-	store.TableConvertor = utils.NewTableConverter(
-		store.DefaultQualifiedResource,
-		[]metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Format: "string", Description: "The dashboard name"},
-			{Name: "Created At", Type: "date"},
-		},
-		func(obj any) ([]interface{}, error) {
-			dash, ok := obj.(*v0alpha1.Dashboard)
-			if ok {
-				return []interface{}{
-					dash.Name,
-					dash.Spec.GetNestedString("title"),
-					dash.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			}
-			summary, ok := obj.(*v0alpha1.DashboardSummary)
-			if ok {
-				return []interface{}{
-					dash.Name,
-					summary.Spec.Title,
-					dash.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			}
-			return nil, fmt.Errorf("expected dashboard or summary")
-		})
 
 	legacyStore := &dashboardStorage{
 		resource:       resourceInfo,
@@ -173,12 +143,12 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	}
 
 	// Dual writes if a RESTOptionsGetter is provided
-	if dualWrite && optsGetter != nil {
+	if desiredMode != grafanarest.Mode0 && optsGetter != nil {
 		options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
 		if err := store.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, store)
+		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, store, reg)
 	}
 
 	// Summary

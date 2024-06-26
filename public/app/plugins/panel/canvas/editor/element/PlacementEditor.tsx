@@ -1,13 +1,11 @@
-import React from 'react';
 import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
-import { Field, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
+import { Field, Icon, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
-import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
 
-import { Options } from '../../panelcfg.gen';
+import { HorizontalConstraint, Options, Placement, VerticalConstraint } from '../../panelcfg.gen';
 
 import { ConstraintSelectionBox } from './ConstraintSelectionBox';
 import { QuickPositioning } from './QuickPositioning';
@@ -94,27 +92,27 @@ export function PlacementEditor({ item }: Props) {
       <QuickPositioning onPositionChange={onPositionChange} settings={settings} element={element} />
       <br />
       <Field label="Constraints">
-        <HorizontalGroup>
+        <Stack direction="row">
           <ConstraintSelectionBox
             onVerticalConstraintChange={onVerticalConstraintChange}
             onHorizontalConstraintChange={onHorizontalConstraintChange}
             currentConstraints={constraint}
           />
-          <VerticalGroup>
-            <HorizontalGroup>
+          <Stack direction="column">
+            <Stack direction="row">
               <Icon name="arrows-h" />
               <Select
                 options={horizontalOptions}
                 onChange={onHorizontalConstraintSelect}
                 value={constraint.horizontal}
               />
-            </HorizontalGroup>
-            <HorizontalGroup>
+            </Stack>
+            <Stack direction="row">
               <Icon name="arrows-v" />
               <Select options={verticalOptions} onChange={onVerticalConstraintSelect} value={constraint.vertical} />
-            </HorizontalGroup>
-          </VerticalGroup>
-        </HorizontalGroup>
+            </Stack>
+          </Stack>
+        </Stack>
       </Field>
 
       <br />

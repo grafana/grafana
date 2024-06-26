@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import { compact } from 'lodash';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
 import {
   DragDropContext,
   Draggable,
@@ -13,6 +14,7 @@ import {
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Icon, Modal, Tooltip, useStyles2 } from '@grafana/ui';
+import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
 import { dispatch } from 'app/store/store';
 import { CombinedRule, CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -34,8 +36,18 @@ type CombinedRuleWithUID = { uid: string } & CombinedRule;
 
 export const ReorderCloudGroupModal = (props: ModalProps) => {
   const { group, namespace, onClose, folderUid } = props;
+
+  // The list of rules might have been filtered before we get to this reordering modal
+  // We need to grab the full (unfiltered) list so we are able to reorder via the API without
+  // deleting any rules (as they otherwise would have been omitted from the payload)
+  const unfilteredNamespaces = useCombinedRuleNamespaces();
+  const matchedNamespace = unfilteredNamespaces.find(
+    (ns) => ns.rulesSource === namespace.rulesSource && ns.name === namespace.name
+  );
+  const matchedGroup = matchedNamespace?.groups.find((g) => g.name === group.name);
+
   const [pending, setPending] = useState<boolean>(false);
-  const [rulesList, setRulesList] = useState<CombinedRule[]>(group.rules);
+  const [rulesList, setRulesList] = useState<CombinedRule[]>(matchedGroup?.rules || []);
 
   const styles = useStyles2(getStyles);
 
@@ -129,6 +141,7 @@ const ListItem = ({ provided, rule, isClone = false, isDragging = false }: ListI
 
   return (
     <div
+      data-testid="reorder-alert-rule"
       className={cx(styles.listItem, isClone && 'isClone', isDragging && 'isDragging')}
       ref={provided.innerRef}
       {...provided.draggableProps}

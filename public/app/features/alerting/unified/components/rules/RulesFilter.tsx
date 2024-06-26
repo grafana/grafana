@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -148,7 +148,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
             className={styles.dsPickerContainer}
             label={
               <Label htmlFor="data-source-picker">
-                <Stack gap={0.5}>
+                <Stack gap={0.5} alignItems="center">
                   <span>Search by data sources</span>
                   <Tooltip
                     content={
@@ -249,7 +249,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               <Field
                 label={
                   <Label htmlFor="rulesSearchInput">
-                    <Stack gap={0.5}>
+                    <Stack gap={0.5} alignItems="center">
                       <span>Search</span>
                       <HoverCard content={<SearchQueryHelp />}>
                         <Icon name="info-circle" size="sm" tabIndex={0} title="Search help" />

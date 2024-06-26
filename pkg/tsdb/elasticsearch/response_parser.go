@@ -873,16 +873,16 @@ func trimDatapoints(queryResult backend.DataResponse, target *Query) {
 // we sort the label's pairs by the label-key,
 // and return the label-values
 func getSortedLabelValues(labels data.Labels) []string {
-	var keys []string
+	keys := make([]string, 0, len(labels))
 	for key := range labels {
 		keys = append(keys, key)
 	}
 
 	sort.Strings(keys)
 
-	var values []string
-	for _, key := range keys {
-		values = append(values, labels[key])
+	values := make([]string, len(keys))
+	for i, key := range keys {
+		values[i] = labels[key]
 	}
 
 	return values

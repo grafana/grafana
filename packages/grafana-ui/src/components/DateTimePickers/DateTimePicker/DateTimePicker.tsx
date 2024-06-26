@@ -3,7 +3,8 @@ import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 import Calendar from 'react-calendar';
 import { useMedia } from 'react-use';
 
@@ -35,7 +36,7 @@ export interface Props {
   /** Input date for the component */
   date?: DateTime;
   /** Callback for returning the selected date */
-  onChange: (date: DateTime) => void;
+  onChange: (date?: DateTime) => void;
   /** label for the input field */
   label?: ReactNode;
   /** Set the latest selectable date */
@@ -50,6 +51,8 @@ export interface Props {
   disabledMinutes?: () => number[];
   /** Set the seconds that can't be selected */
   disabledSeconds?: () => number[];
+  /** Can input be cleared/have empty values */
+  clearable?: boolean;
 }
 
 export const DateTimePicker = ({
@@ -62,6 +65,7 @@ export const DateTimePicker = ({
   disabledMinutes,
   disabledSeconds,
   showSeconds = true,
+  clearable = false,
 }: Props) => {
   const [isOpen, setOpen] = useState(false);
 
@@ -131,6 +135,7 @@ export const DateTimePicker = ({
         label={label}
         ref={refs.setReference}
         showSeconds={showSeconds}
+        clearable={clearable}
       />
       {isOpen ? (
         isFullscreen ? (
@@ -196,14 +201,10 @@ interface DateTimeCalendarProps {
   disabledSeconds?: () => number[];
 }
 
-interface InputProps {
-  label?: ReactNode;
-  date?: DateTime;
+type InputProps = Pick<Props, 'onChange' | 'label' | 'date' | 'showSeconds' | 'clearable'> & {
   isFullscreen: boolean;
-  onChange: (date: DateTime) => void;
   onOpen: (event: FormEvent<HTMLElement>) => void;
-  showSeconds?: boolean;
-}
+};
 
 type InputState = {
   value: string;
@@ -211,10 +212,11 @@ type InputState = {
 };
 
 const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ date, label, onChange, onOpen, showSeconds = true }, ref) => {
+  ({ date, label, onChange, onOpen, showSeconds = true, clearable = false }, ref) => {
+    const styles = useStyles2(getStyles);
     const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
     const [internalDate, setInternalDate] = useState<InputState>(() => {
-      return { value: date ? dateTimeFormat(date) : dateTimeFormat(dateTime()), invalid: false };
+      return { value: date ? dateTimeFormat(date) : !clearable ? dateTimeFormat(dateTime()) : '', invalid: false };
     });
 
     useEffect(() => {
@@ -235,21 +237,20 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
     }, []);
 
     const onBlur = useCallback(() => {
-      if (!internalDate.invalid) {
+      if (!internalDate.invalid && internalDate.value) {
         const date = dateTimeForTimeZone(getTimeZone(), internalDate.value);
         onChange(date);
       }
     }, [internalDate, onChange]);
 
+    const clearInternalDate = useCallback(() => {
+      setInternalDate({ value: '', invalid: false });
+      onChange();
+    }, [onChange]);
+
     const icon = <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />;
     return (
-      <InlineField
-        label={label}
-        invalid={!!(internalDate.value && internalDate.invalid)}
-        className={css({
-          marginBottom: 0,
-        })}
-      >
+      <InlineField label={label} invalid={!!(internalDate.value && internalDate.invalid)} className={styles.field}>
         <Input
           onChange={onChangeDate}
           addonAfter={icon}
@@ -258,6 +259,10 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
           data-testid={Components.DateTimePicker.input}
           placeholder="Select date/time"
           ref={ref}
+          suffix={
+            clearable &&
+            internalDate.value && <Icon name="times" className={styles.clearIcon} onClick={clearInternalDate} />
+          }
         />
       </InlineField>
     );
@@ -388,5 +393,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     transform: 'translate(-50%, -50%)',
     zIndex: theme.zIndex.modal,
     maxWidth: '280px',
+  }),
+  clearIcon: css({
+    cursor: 'pointer',
+  }),
+  field: css({
+    marginBottom: 0,
+    width: '100%',
   }),
 });

@@ -292,7 +292,7 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 	))
 	defer span.End()
 
-	u, err := s.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+	u, err := s.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
 		UserID: cmd.UserID,
 		OrgID:  cmd.OrgID,
 	})
@@ -301,19 +301,19 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 		return err
 	}
 
-	if !shouldUpdateLastSeen(u.LastSeenAt) {
+	if !s.shouldUpdateLastSeen(u.LastSeenAt) {
 		return user.ErrLastSeenUpToDate
 	}
 
 	return s.store.UpdateLastSeenAt(ctx, cmd)
 }
 
-func shouldUpdateLastSeen(t time.Time) bool {
-	return time.Since(t) > time.Minute*5
+func (s *Service) shouldUpdateLastSeen(t time.Time) bool {
+	return time.Since(t) > s.cfg.UserLastSeenUpdateInterval
 }
 
-func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetSignedInUserWithCacheCtx", trace.WithAttributes(
+func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	ctx, span := s.tracer.Start(ctx, "user.GetSignedInUser", trace.WithAttributes(
 		attribute.Int64("userID", query.UserID),
 		attribute.Int64("orgID", query.OrgID),
 	))
@@ -322,22 +322,27 @@ func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.G
 	var signedInUser *user.SignedInUser
 
 	// only check cache if we have a user ID and an org ID in query
-	if query.OrgID > 0 && query.UserID > 0 {
-		cacheKey := newSignedInUserCacheKey(query.OrgID, query.UserID)
-		if cached, found := s.cacheService.Get(cacheKey); found {
-			cachedUser := cached.(user.SignedInUser)
-			signedInUser = &cachedUser
-			return signedInUser, nil
+	if s.cacheService != nil {
+		if query.OrgID > 0 && query.UserID > 0 {
+			cacheKey := newSignedInUserCacheKey(query.OrgID, query.UserID)
+			if cached, found := s.cacheService.Get(cacheKey); found {
+				cachedUser := cached.(user.SignedInUser)
+				signedInUser = &cachedUser
+				return signedInUser, nil
+			}
 		}
 	}
 
-	result, err := s.GetSignedInUser(ctx, query)
+	result, err := s.getSignedInUser(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
-	cacheKey := newSignedInUserCacheKey(result.OrgID, result.UserID)
-	s.cacheService.Set(cacheKey, *result, time.Second*5)
+	if s.cacheService != nil {
+		cacheKey := newSignedInUserCacheKey(result.OrgID, result.UserID)
+		s.cacheService.Set(cacheKey, *result, time.Second*5)
+	}
+
 	return result, nil
 }
 
@@ -345,8 +350,8 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
 }
 
-func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetSignedInUser", trace.WithAttributes(
+func (s *Service) getSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	ctx, span := s.tracer.Start(ctx, "user.getSignedInUser", trace.WithAttributes(
 		attribute.Int64("userID", query.UserID),
 		attribute.Int64("orgID", query.OrgID),
 	))

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
@@ -7,8 +7,12 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AppChromeUpdate } from '../../../../../../core/components/AppChrome/AppChromeUpdate';
-import { RulerRuleDTO, RulerRuleGroupDTO } from '../../../../../../types/unified-alerting-dto';
-import { alertRuleApi, ModifyExportPayload } from '../../../api/alertRuleApi';
+import {
+  PostableRulerRuleGroupDTO,
+  RulerRuleDTO,
+  RulerRuleGroupDTO,
+} from '../../../../../../types/unified-alerting-dto';
+import { alertRuleApi } from '../../../api/alertRuleApi';
 import { fetchRulerRulesGroup } from '../../../api/ruler';
 import { useDataSourceFeatures } from '../../../hooks/useCombinedRule';
 import { RuleFormValues } from '../../../types/rule-form';
@@ -133,7 +137,7 @@ export const getPayloadToExport = (
   uid: string,
   formValues: RuleFormValues,
   existingGroup: RulerRuleGroupDTO<RulerRuleDTO> | null | undefined
-): ModifyExportPayload => {
+): PostableRulerRuleGroupDTO => {
   const grafanaRuleDto = formValuesToRulerGrafanaRuleDTO(formValues);
 
   const updatedRule = { ...grafanaRuleDto, grafana_alert: { ...grafanaRuleDto.grafana_alert, uid: uid } };
@@ -167,7 +171,7 @@ export const getPayloadToExport = (
 
 const useGetPayloadToExport = (values: RuleFormValues, uid: string) => {
   const rulerGroupDto = useGetGroup(values.folder?.uid ?? '', values.group);
-  const payload: ModifyExportPayload = useMemo(() => {
+  const payload: PostableRulerRuleGroupDTO = useMemo(() => {
     return getPayloadToExport(uid, values, rulerGroupDto?.value);
   }, [uid, rulerGroupDto, values]);
   return { payload, loadingGroup: rulerGroupDto.loading };
@@ -210,27 +214,25 @@ interface GrafanaRuleDesignExporterProps {
   uid: string;
 }
 
-export const GrafanaRuleDesignExporter = React.memo(
-  ({ onClose, exportValues, uid }: GrafanaRuleDesignExporterProps) => {
-    const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
+export const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: GrafanaRuleDesignExporterProps) => {
+  const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
-    return (
-      <GrafanaExportDrawer
-        title={'Export Group'}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
+  return (
+    <GrafanaExportDrawer
+      title={'Export Group'}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      onClose={onClose}
+      formatProviders={Object.values(allGrafanaExportProviders)}
+    >
+      <GrafanaRuleDesignExportPreview
+        exportFormat={activeTab}
         onClose={onClose}
-        formatProviders={Object.values(allGrafanaExportProviders)}
-      >
-        <GrafanaRuleDesignExportPreview
-          exportFormat={activeTab}
-          onClose={onClose}
-          exportValues={exportValues}
-          uid={uid}
-        />
-      </GrafanaExportDrawer>
-    );
-  }
-);
+        exportValues={exportValues}
+        uid={uid}
+      />
+    </GrafanaExportDrawer>
+  );
+});
 
 GrafanaRuleDesignExporter.displayName = 'GrafanaRuleDesignExporter';

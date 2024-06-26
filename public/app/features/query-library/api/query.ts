@@ -1,25 +1,46 @@
 import { BaseQueryFn } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
-import { getBackendSrv, isFetchError } from '@grafana/runtime/src/services/backendSrv';
+import { BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime/src/services/backendSrv';
 
 import { DataQuerySpecResponse } from './types';
+
+/**
+ * @alpha
+ */
+export const API_VERSION = 'peakq.grafana.app/v0alpha1';
+
+/**
+ * @alpha
+ */
+export enum QueryTemplateKinds {
+  QueryTemplate = 'QueryTemplate',
+}
 
 /**
  * Query Library is an experimental feature. API (including the URL path) will likely change.
  *
  * @alpha
  */
-export const BASE_URL = '/apis/peakq.grafana.app/v0alpha1/namespaces/default/querytemplates/';
+export const BASE_URL = `/apis/${API_VERSION}/namespaces/default/querytemplates/`;
+
+// URL is optional for these requests
+interface QueryLibraryBackendRequest extends Pick<BackendSrvRequest, 'data' | 'method'> {
+  url?: string;
+}
 
 /**
  * TODO: similar code is duplicated in many places. To be unified in #86960
  */
-export const baseQuery: BaseQueryFn<void, DataQuerySpecResponse, Error> = async () => {
+export const baseQuery: BaseQueryFn<QueryLibraryBackendRequest, DataQuerySpecResponse, Error> = async (
+  requestOptions
+) => {
   try {
     const responseObservable = getBackendSrv().fetch<DataQuerySpecResponse>({
-      url: BASE_URL,
+      url: `${BASE_URL}${requestOptions.url ?? ''}`,
       showErrorAlert: true,
+      method: requestOptions.method || 'GET',
+      data: requestOptions.data,
     });
     return await lastValueFrom(responseObservable);
   } catch (error) {

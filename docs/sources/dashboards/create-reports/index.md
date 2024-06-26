@@ -18,13 +18,84 @@ menuTitle: Reporting
 title: Create and manage reports
 description: Generate and share PDF reports from your Grafana dashboards
 weight: 85
+refs:
+  repeat-panels-or-rows:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-rows-or-panels
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options/#configure-repeating-rows-or-panels
+  http-apis:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/
+  image-rendering:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
+  rbac:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
+  role-based-access-control:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
+  configuration:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
+  image-rendering:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
+  templates-and-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+  grafana-enterprise:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
+  configuration:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#filters
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#filters
+  time-range-controls:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#set-dashboard-time-range
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/use-dashboards/#set-dashboard-time-range
+  send-report:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/
+  smtp:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#smtp
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#smtp
+  temp-data-lifetime:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#temp-data-lifetime
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#temp-data-lifetime
 ---
 
 # Create and manage reports
 
 Reporting enables you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule. This is available in Grafana Cloud and in Grafana Enterprise.
 
-> If you have [Role-based access control][] enabled, for some actions you would need to have relevant permissions.
+> If you have [Role-based access control](ref:role-based-access-control) enabled, for some actions you would need to have relevant permissions.
 > Refer to specific guides to understand what permissions are required.
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report also changes, unless you've configured a custom time range.
@@ -33,16 +104,16 @@ For information about recent improvements to the reporting UI, refer to [Grafana
 
 ## Requirements
 
-- SMTP must be configured for reports to be sent. Refer to [SMTP][] in [Configuration][] for more information.
-- The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering][] for more information.
+- SMTP must be configured for reports to be sent. Refer to [SMTP](ref:smtp) in [Configuration](ref:configuration) for more information.
+- The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering](ref:image-rendering) for more information.
 
 ## Access control
 
-When [RBAC][] is enabled, you need to have the relevant [Permissions][] to create and manage reports.
+When [RBAC](ref:rbac) is enabled, you need to have the relevant [Permissions][] to create and manage reports.
 
 ## Create or update a report
 
-Only organization administrators can create reports by default. You can customize who can create reports with [Role-based access control][].
+Only organization administrators can create reports by default. You can customize who can create reports with [Role-based access control](ref:role-based-access-control).
 
 1. Click **Dashboards > Reports** in the side navigation menu.
 
@@ -72,15 +143,15 @@ Only organization administrators can create reports by default. You can customiz
 
 ### Save as draft
 
-> **Note:** Available in [Grafana Enterprise][] version 9.1.0 and later and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) version 9.1.0 and later and [Grafana Cloud](/docs/grafana-cloud/).
 
 You can save a report as a draft at any point during the report creation or update process. You can save a report as a draft even if it's missing required fields. Also, the report won't be sent according to its schedule while it's a draft.
 
 ### Choose template variables
 
-> **Note:** Available in [Grafana Enterprise][] version 7.5 and later behind the `reportVariables` feature flag, Grafana Enterprise version 8.0 and later without a feature flag, and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) version 7.5 and later behind the `reportVariables` feature flag, Grafana Enterprise version 8.0 and later without a feature flag, and [Grafana Cloud](/docs/grafana-cloud/).
 
-You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables][] section.
+You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables](ref:templates-and-variables) section.
 
 {{% admonition type="note" %}}
 The query variables saved with a report might become of date if the results of that query change. For example, if your template variable queries for a list of hostnames and a new hostname is added, then it will not be included in the report. If that occurs, the selected variables must be manually updated in the report. If you select the `All` value for the template variable or if you keep the dashboard's original variable selection, then the report stays up-to-date as new values are added.
@@ -88,9 +159,9 @@ The query variables saved with a report might become of date if the results of t
 
 ### Render a report with panels or rows set to repeat by a variable
 
-> **Note:** Available in [Grafana Enterprise][] version 8.0 and later, and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) version 8.0 and later, and [Grafana Cloud](/docs/grafana-cloud/).
 
-You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows][].
+You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows](ref:repeat-panels-or-rows).
 
 #### Caveats
 
@@ -103,7 +174,7 @@ You can include dynamic dashboards with panels or rows, set to repeat by a varia
 
 ### Report time range
 
-> **Note:** You can set custom report time ranges in [Grafana Enterprise][] 7.2+ and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** You can set custom report time ranges in [Grafana Enterprise](ref:grafana-enterprise) 7.2+ and [Grafana Cloud](/docs/grafana-cloud/).
 
 By default, reports use the saved time range of the dashboard. You can change the time range of the report by:
 
@@ -118,7 +189,7 @@ Reports use the time zone of the dashboard from which they’re generated. You c
 
 If a dashboard has the **Browser Time** setting, the reports generated from that dashboard use the time zone of the Grafana server. As a result, this time zone might not match the time zone of users creating or receiving the report.
 
-If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls][].
+If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls](ref:time-range-controls).
 
 ### Layout and orientation
 
@@ -131,20 +202,20 @@ If the time zone is set differently between your Grafana server and its remote i
 
 ### CSV export
 
-> **Note:** Available in [Grafana Enterprise][] 8+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) 8+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud](/docs/grafana-cloud/).
 
 You can attach a CSV file to the report email for each table panel on the selected dashboard, along with the PDF report. By default, CSVs larger than 10Mb are not sent which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration](#rendering-configuration).
 
-This feature relies on the same plugin that supports the [image rendering][] features.
+This feature relies on the same plugin that supports the [image rendering](ref:image-rendering) features.
 
 When the CSV file is generated, it is temporarily written to the `csv` folder in the Grafana `data` folder.
 
-A background job runs every 10 minutes and removes temporary CSV files. You can configure how long a CSV file should be stored before being removed by configuring the [temp-data-lifetime][] setting. This setting also affects how long a renderer PNG file should be stored.
+A background job runs every 10 minutes and removes temporary CSV files. You can configure how long a CSV file should be stored before being removed by configuring the [temp-data-lifetime](ref:temp-data-lifetime) setting. This setting also affects how long a renderer PNG file should be stored.
 
 ### Table data in PDF
 
 {{% admonition type="note" %}}
-Available in public preview (`pdfTables` feature toggle) in [Grafana Enterprise][] v10.3+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud](/docs/grafana-cloud/).
+Available in public preview (`pdfTables` feature toggle) in [Grafana Enterprise](ref:grafana-enterprise) v10.3+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
 
 When there's more data in your table visualizations than can be shown in the dashboard PDF, you can select one of these two options to access all table visualization data as PDF in your reports:
@@ -152,11 +223,11 @@ When there's more data in your table visualizations than can be shown in the das
 - **Include table data as PDF appendix** - Adds an appendix to the main dashboard PDF.
 - **Attach a separate PDF of table data** - Generates a separate PDF file.
 
-This feature relies on the same plugin that supports the [image rendering][] features.
+This feature relies on the same plugin that supports the [image rendering](ref:image-rendering) features.
 
 ### Scheduling
 
-> **Note:** Available in [Grafana Enterprise][] version 8.0 and later, and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) version 8.0 and later, and [Grafana Cloud](/docs/grafana-cloud/).
 > The scheduler was significantly changed in Grafana Enterprise version 8.1.
 
 Scheduled reports can be sent once, or repeated on an hourly, daily, weekly, or monthly basis, or sent at custom intervals. You can also disable scheduling by selecting **Never**, for example to send the report via the API.
@@ -177,7 +248,7 @@ When you schedule a report with a monthly frequency, and set the start date betw
 
 #### Send a test email
 
-> **Note:** Available in [Grafana Enterprise][] version 7.0 and later, and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) version 7.0 and later, and [Grafana Cloud](/docs/grafana-cloud/).
 
 1. In the report, click **Send test email**.
 1. In the **Email** field, enter the email address or addresses that you want to test, separated by a semicolon.
@@ -188,19 +259,19 @@ The last saved version of the report will be sent to selected emails. You can us
 
 ### Pause a report
 
-> **Note:** Available in [Grafana Enterprise][] version 8.0 and later, and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) version 8.0 and later, and [Grafana Cloud](/docs/grafana-cloud/).
 
 You can pause sending reports from the report list view by clicking the pause icon. The report will not be sent according to its schedule until it is resumed by clicking the resume button on the report row.
 
 ### Add multiple dashboards to a report
 
-> **Note:** Available in [Grafana Enterprise][] version 9.0 and later, and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) version 9.0 and later, and [Grafana Cloud](/docs/grafana-cloud/).
 
 You can add more than one dashboard to a report. Additional dashboards will be rendered as new pages in the same PDF file, or additional images if you chose to embed images in your report email. You cannot add the same dashboard to a report multiple times.
 
 ### Embed a dashboard as an image into a report
 
-> **Note:** Available in [Grafana Enterprise][] version 9.0 and later, and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) version 9.0 and later, and [Grafana Cloud](/docs/grafana-cloud/).
 
 You can send a report email with an image of the dashboard embedded in the email instead of attached as a PDF. In this case, the email recipients can see the dashboard at a glance instead of having to open the PDF.
 
@@ -208,7 +279,7 @@ You can send a report email with an image of the dashboard embedded in the email
 
 You can generate and save PDF files of any dashboard.
 
-> **Note:** Available in [Grafana Enterprise][] version 6.7 and later, and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) version 6.7 and later, and [Grafana Cloud](/docs/grafana-cloud/).
 
 1. In the dashboard that you want to export as PDF, click the **Share** button.
 1. On the PDF tab, select a layout option for the exported dashboard: **Portrait** or **Landscape**.
@@ -218,7 +289,7 @@ You can generate and save PDF files of any dashboard.
 
 ## Send a report via the API
 
-You can send reports programmatically with the [send report][] endpoint in the [HTTP APIs][].
+You can send reports programmatically with the [send report](ref:send-report) endpoint in the [HTTP APIs](ref:http-apis).
 
 ## Rendering configuration
 
@@ -228,7 +299,7 @@ To make a panel more legible, you can set a scale factor for the rendered images
 
 You can also specify custom fonts that support different Unicode scripts. The DejaVu font is the default used for PDF rendering.
 
-These options are available in the [configuration][] file.
+These options are available in the [configuration](ref:configuration) file.
 
 ```ini
 [reporting]
@@ -255,7 +326,7 @@ font_italic = DejaVuSansCondensed-Oblique.ttf
 
 ## Report settings
 
-> **Note:** Available in [Grafana Enterprise][] version 7.2 and later, and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) version 7.2 and later, and [Grafana Cloud](/docs/grafana-cloud/).
 
 You can configure organization-wide report settings in the **Settings** under **Dashboards > Reporting**. Settings are applied to all the reports for current organization.
 
@@ -276,53 +347,9 @@ Currently, the API does not allow for the simultaneous upload of files with iden
 
 ## Troubleshoot reporting
 
-To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration][] for more information.
+To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration](ref:configuration) for more information.
 
 ```bash
 [log]
 filters = report:debug
 ```
-
-{{% docs/reference %}}
-[time range controls]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/use-dashboards#set-dashboard-time-range"
-[time range controls]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/use-dashboards#set-dashboard-time-range"
-
-[image rendering]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
-[image rendering]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
-
-[configuration]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
-[configuration]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
-
-[Grafana Enterprise]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
-[Grafana Enterprise]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
-
-[Image rendering]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
-[Image rendering]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
-
-[send report]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>"
-[send report]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>"
-
-[SMTP]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#smtp"
-[SMTP]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#smtp"
-
-[Repeat panels or rows]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options#configure-repeating-rows-or-panels"
-[Repeat panels or rows]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options#configure-repeating-rows-or-panels"
-
-[Templates and variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[Templates and variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables"
-
-[temp-data-lifetime]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#temp-data-lifetime"
-[temp-data-lifetime]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#temp-data-lifetime"
-
-[RBAC]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control"
-[RBAC]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control"
-
-[Role-based access control]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control"
-[Role-based access control]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control"
-
-[Configuration]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#filters"
-[Configuration]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#filters"
-
-[HTTP APIs]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api"
-[HTTP APIs]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api"
-{{% /docs/reference %}}

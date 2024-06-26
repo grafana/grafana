@@ -18,6 +18,62 @@ labels:
     - oss
 title: Configure Grafana-managed alert rules
 weight: 100
+refs:
+  time-units-and-relative-ranges:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#time-units-and-relative-ranges
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/use-dashboards/#time-units-and-relative-ranges
+  fundamentals:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/
+  alert-instance-state:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-instance-state
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-instance-state
+  keep-last-state:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#keep-last-state
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#keep-last-state
+  add-a-query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#add-a-query
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#add-a-query
+  pending-period:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#pending-period
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/#pending-period
+  alerting-on-numeric-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#alert-on-numeric-data
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/#alert-on-numeric-data
+  expression-queries:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/
+  annotation-label:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
+  alert-list:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/alert-list/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/alert-list/
+  time-series:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
 ---
 
 # Configure Grafana-managed alert rules
@@ -56,7 +112,7 @@ To get started quickly, refer to our [tutorial on getting started with Grafana a
 Define a query to get the data you want to measure and a condition that needs to be met before an alert rule fires.
 
 1. Select a data source.
-1. From the **Options** dropdown, specify a [time range][time-units-and-relative-ranges].
+1. From the **Options** dropdown, specify a [time range](ref:time-units-and-relative-ranges).
 
    **Note:**
 
@@ -66,11 +122,11 @@ Define a query to get the data you want to measure and a condition that needs to
 
 1. Add a query.
 
-   To add multiple [queries][add-a-query], click **Add query**.
+   To add multiple [queries](ref:add-a-query), click **Add query**.
 
    All alert rules are managed by Grafana by default. If you want to switch to a data source-managed alert rule, click **Switch to data source-managed alert rule**.
 
-1. Add one or more [expressions][expression-queries].
+1. Add one or more [expressions](ref:expression-queries).
 
    a. For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, and **Resample** options to generate separate alert for each series.
 
@@ -160,26 +216,30 @@ Complete the following steps to set up labels and notifications.
 
 ## Add annotations
 
-Add [annotations][annotation-label]. to provide more context on the alert in your alert notification message.
+Add [annotations](ref:annotation-label). to provide more context on the alert in your alert notification message.
 
 Annotations add metadata to provide more information on the alert in your alert notification message. For example, add a **Summary** annotation to tell you which value caused the alert to fire or which server it happened on.
 
-1. [Optional] Add a summary.
+1. Optional: Add a summary.
 
    Short summary of what happened and why.
 
-1. [Optional] Add a description.
+1. Optional: Add a description.
 
    Description of what the alert rule does.
 
-1. [Optional] Add a Runbook URL.
+1. Optional: Add a Runbook URL.
 
    Webpage where you keep your runbook for the alert
 
-1. [Optional] Add a custom annotation
-1. [Optional] Add a **dashboard and panel link**.
+1. Optional: Add a custom annotation
+1. Optional: Add a **dashboard and panel link**.
 
    Links alerts to panels in a dashboard.
+
+   {{% admonition type="note" %}}
+   At the moment, alerts are only supported in the [time series](ref:time-series) and [alert list](ref:alert-list) visualizations.
+   {{% /admonition %}}
 
    {{< docs/play title="visualizations with linked alerts in Grafana" url="https://play.grafana.org/d/000000074/" >}}
 
@@ -189,25 +249,25 @@ Annotations add metadata to provide more information on the alert in your alert 
 
 In **Configure no data and error handling**, you can define the alerting behavior when the evaluation returns no data or an error.
 
-For details about alert states, refer to [lifecycle of alert instances.][alert-instance-state]
+For details about alert states, refer to [lifecycle of alert instances](ref:alert-instance-state).
 
 You can configure the alert instance state when its evaluation returns no data:
 
 | No Data configuration | Description                                                                                                                                                                                                                               |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | No Data               | The default option. Sets alert instance state to `No data`. <br/> The alert rule also creates a new alert instance `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
-| Alerting              | Sets alert instance state to `Alerting`. It waits until the [pending period][pending-period] has finished.                                                                                                                                |
-| Ok                    | Sets alert instance state to `Normal`.                                                                                                                                                                                                    |
-| Keep Last State       | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state][keep-last-state].                                                                                                      |
+| Alerting              | Sets alert instance state to `Alerting`. It waits until the [pending period](ref:pending-period) has finished.                                                                                                                            |
+| Normal                | Sets alert instance state to `Normal`.                                                                                                                                                                                                    |
+| Keep Last State       | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state](ref:keep-last-state).                                                                                                  |
 
 You can also configure the alert instance state when its evaluation returns an error or timeout.
 
 | Error configuration | Description                                                                                                                                                                                                                            |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Error               | The default option. Sets alert instance state to `Error`. <br/> The alert rule also creates a new alert instance `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
-| Alerting            | Sets alert instance state to `Alerting`. It waits until the [pending period][pending-period] has finished.                                                                                                                             |
-| Ok                  | Sets alert instance state to `Normal`.                                                                                                                                                                                                 |
-| Keep Last State     | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state][keep-last-state].                                                                                                   |
+| Alerting            | Sets alert instance state to `Alerting`. It waits until the [pending period](ref:pending-period) has finished.                                                                                                                         |
+| Normal              | Sets alert instance state to `Normal`.                                                                                                                                                                                                 |
+| Keep Last State     | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state](ref:keep-last-state).                                                                                               |
 
 ## Create alerts from panels
 
@@ -218,33 +278,3 @@ Create alerts from any panel type. This means you can reuse the queries in the p
 3. From the dropdown menu, select **More...** and then choose **New alert rule**.
 
 This will open the alert rule form, allowing you to configure and create your alert based on the current panel's query.
-
-{{% docs/reference %}}
-[add-a-query]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data#add-a-query"
-[add-a-query]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data#add-a-query"
-
-[alerting-on-numeric-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions#alert-on-numeric-data"
-[alerting-on-numeric-data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions#alert-on-numeric-data"
-
-[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label"
-[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label"
-
-[expression-queries]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries"
-[expression-queries]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries"
-
-[fundamentals]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals"
-[fundamentals]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals"
-
-[time-units-and-relative-ranges]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards#time-units-and-relative-ranges"
-[time-units-and-relative-ranges]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/use-dashboards#time-units-and-relative-ranges"
-
-[pending-period]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation#pending-period"
-[pending-period]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation#pending-period"
-
-[keep-last-state]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health#keep-last-state"
-[keep-last-state]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health#keep-last-state"
-
-[alert-instance-state]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health#alert-instance-state"
-[alert-instance-state]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health#alert-instance-state"
-
-{{% /docs/reference %}}

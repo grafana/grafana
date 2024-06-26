@@ -32,6 +32,7 @@ type AzureLogAnalyticsQuery struct {
 	AppInsightsQuery        bool
 	DashboardTime           bool
 	TimeColumn              string
+	BasicLogs               bool
 }
 
 // Error definition has been inferred from real data and other model definitions like
@@ -72,4 +73,13 @@ type AzureCorrelationAPIResponse struct {
 type AzureCorrelationAPIResponseProperties struct {
 	Resources []string `json:"resources"`
 	NextLink  *string  `json:"nextLink,omitempty"`
+}
+
+// BasicLogsUsagePayload is the payload that the frontend resourcerequest will send to the backend to calculate the basic logs query usage
+type BasicLogsUsagePayload struct {
+	Table     string `json:"table"`
+	Resource  string `json:"resource"`
+	QueryType string `json:"queryType"`
+	From      string `json:"from"`
+	To        string `json:"to"`
 }

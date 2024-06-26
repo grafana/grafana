@@ -1,6 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -89,7 +88,7 @@ describe('LinksSettings', () => {
     const linklessDashboard = createDashboardModelFixture({ links: [] });
     setup(linklessDashboard);
 
-    const linksTab = screen.getByRole('tab', { name: 'Tab Links' });
+    const linksTab = screen.getByRole('tab', { name: 'Links' });
     expect(linksTab).toBeInTheDocument();
     expect(linksTab).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('button', { name: 'Add dashboard link' })).toBeInTheDocument();

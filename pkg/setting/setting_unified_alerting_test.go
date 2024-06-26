@@ -25,6 +25,7 @@ func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
 		require.Len(t, cfg.UnifiedAlerting.HAPeers, 0)
 		require.Equal(t, 200*time.Millisecond, cfg.UnifiedAlerting.HAGossipInterval)
 		require.Equal(t, time.Minute, cfg.UnifiedAlerting.HAPushPullInterval)
+		require.Equal(t, 6*time.Hour, cfg.UnifiedAlerting.HAReconnectTimeout)
 	}
 
 	// With peers set, it correctly parses them.

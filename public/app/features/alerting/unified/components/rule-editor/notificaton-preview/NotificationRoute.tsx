@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -68,8 +68,7 @@ function NotificationRouteHeader({
         <Spacer />
         <Stack gap={2} direction="row" alignItems="center">
           <MetaText icon="layers-alt" data-testid="matching-instances">
-            {instancesCount ?? '-'}
-            <span>{pluralize('instance', instancesCount)}</span>
+            {instancesCount ?? '-'} {pluralize('instance', instancesCount)}
           </MetaText>
           <Stack gap={1} direction="row" alignItems="center">
             <div>

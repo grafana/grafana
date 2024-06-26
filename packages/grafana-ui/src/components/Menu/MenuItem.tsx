@@ -1,13 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, {
-  ReactElement,
-  useCallback,
-  useState,
-  useRef,
-  useImperativeHandle,
-  CSSProperties,
-  AriaRole,
-} from 'react';
+import { ReactElement, useCallback, useState, useRef, useImperativeHandle, CSSProperties, AriaRole } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 
@@ -59,6 +52,8 @@ export interface MenuItemProps<T = unknown> {
   shortcut?: string;
   /** Test id for e2e tests and fullstory*/
   testId?: string;
+  /* Optional component that will be shown together with other options. Does not get passed any props. */
+  component?: React.ComponentType;
 }
 
 /** @internal */
@@ -202,6 +197,7 @@ export const MenuItem = React.memo(
             {description}
           </div>
         )}
+        {props.component ? <props.component /> : null}
       </ItemElement>
     );
   })

@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { produce } from 'immer';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
@@ -90,7 +90,7 @@ const AnnotationsStep = () => {
 
   function getAnnotationsSectionDescription() {
     return (
-      <Stack direction="row" gap={0.5} alignItems="baseline">
+      <Stack direction="row" gap={0.5} alignItems="center">
         <Text variant="bodySmall" color="secondary">
           Add more context in your notification messages.
         </Text>

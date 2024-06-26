@@ -1,0 +1,73 @@
+# This workflow creates a new PR in Grafana which is triggered after a release is completed.
+# It should include all code changes that are needed after a release is done. This includes the changelog update and
+# version bumps, but could include more in the future.
+# Please refrain from including any processes that do not result in code changes in this workflow. Instead, they should
+# either be triggered in the release promotion process or in the release comms process (that is triggered by merging
+# this PR).
+name: Complete a Grafana release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: The version of Grafana that is being released
+      target:
+        required: true
+        type: string
+        description: The base branch that these changes are being merged into
+      backport:
+        required: false
+        type: string
+        description: Branch to backport these changes to
+      dry_run:
+        required: false
+        default: false
+        type: bool
+
+jobs:
+  create-prs:
+    name: Create Release PR
+    runs-on: ubuntu-latest
+    if: github.repository == 'grafana/grafana'
+    steps:
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+      - name: Checkout Grafana
+        uses: actions/checkout@v4
+      - name: Configure git user
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local --add --bool push.autoSetupRemote true
+      - name: Create branch
+        run: git checkout -b "release/${{ github.run_id }}/${{ inputs.version }}"
+      - name: Generate changelog
+        run: git commit --allow-empty -m "Update changelog placeholder"
+      - name: Update package.json versions
+        uses: ./pkg/build/actions/bump-version
+        with:
+          version: ${{ inputs.version }}
+      - name: add package.json changes
+        run: |
+          git add .
+          git commit -m "Update version to ${{ inputs.version }}"
+      - name: git push
+        if: ${{ inputs.dry_run }} != true
+        run: git push
+      - name: Create PR without backports
+        if: "${{ inputs.backport == '' }}"
+        run: >
+          gh pr create --dry-run=${{ inputs.dry_run }} -B "${{ inputs.target }}" --title "Release: ${{ inputs.version }}" --body "These code changes must be merged after a release is complete"
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+      - name: Create PR with backports
+        if: "${{ inputs.backport != '' }}"
+        run: >
+          gh pr create -l "backport ${{ inputs.backport }}" -l "product-approved" --dry-run=${{ inputs.dry_run }} -B "${{ inputs.target }}" --title "Release: ${{ inputs.version }}" --body "These code changes must be merged after a release is complete"
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}

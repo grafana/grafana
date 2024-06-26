@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -200,7 +200,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
                   // Specifics per step type
                   styles.stepTypes[stepType],
                   // To highlight selected step
-                  model.state.currentStep === index ? styles.stepSelected : '',
+                  currentStep === index ? styles.stepSelected : '',
                   // To alter the look of steps with distant non-directly preceding parent
                   alternatePredecessorStyle.get(index) ?? '',
                   // To remove direct link for steps that don't have a direct parent

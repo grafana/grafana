@@ -48,6 +48,7 @@ import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
+import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { DashboardInteractions } from '../utils/interactions';
 import {
   getCurrentValueForOldIntervalModel,
@@ -278,6 +279,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       registerDashboardMacro,
       registerPanelInteractionsReporter,
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
+      preserveDashboardSceneStateInLocalStorage,
     ],
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
     controls: new DashboardControls({
@@ -441,11 +443,10 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
 }
 
 export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
-  const repeatDirection: RepeatDirection = panel.repeatDirection === 'h' ? 'h' : 'v';
-  const repeatOptions = panel.repeat
+  const repeatOptions: Partial<{ variableName: string; repeatDirection: RepeatDirection }> = panel.repeat
     ? {
         variableName: panel.repeat,
-        repeatDirection,
+        repeatDirection: panel.repeatDirection === 'h' ? 'h' : 'v',
       }
     : {};
 
@@ -499,7 +500,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     key: `grid-item-${panel.id}`,
     x: panel.gridPos.x,
     y: panel.gridPos.y,
-    width: repeatDirection === 'h' ? 24 : panel.gridPos.w,
+    width: repeatOptions.repeatDirection === 'h' ? 24 : panel.gridPos.w,
     height: panel.gridPos.h,
     itemHeight: panel.gridPos.h,
     body,

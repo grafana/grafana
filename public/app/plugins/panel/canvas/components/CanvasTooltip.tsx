@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
-import React, { createRef } from 'react';
+import { createRef } from 'react';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data/src';
-import { LinkButton, Portal, useStyles2, VerticalGroup, VizTooltipContainer } from '@grafana/ui';
+import { LinkButton, Portal, Stack, useStyles2, VizTooltipContainer } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
@@ -34,7 +34,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
     element.data?.links &&
     element.data?.links.length > 0 && (
       <div>
-        <VerticalGroup>
+        <Stack direction={'column'}>
           {element.data?.links?.map((link: LinkModel, i: number) => (
             <LinkButton
               key={i}
@@ -48,7 +48,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
               {link.title}
             </LinkButton>
           ))}
-        </VerticalGroup>
+        </Stack>
       </div>
     );
 

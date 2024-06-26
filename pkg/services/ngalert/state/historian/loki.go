@@ -12,8 +12,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -40,10 +42,30 @@ const (
 
 const defaultQueryRange = 6 * time.Hour
 
+var (
+	ErrLokiQueryTooLong = errutil.BadRequest("loki.requestTooLong").MustTemplate(
+		"Request to Loki exceeded ({{.Public.QuerySize}} bytes) configured maximum size of {{.Public.MaxLimit}} bytes",
+		errutil.WithPublic("Query for Loki exceeded the configured limit of {{.Public.MaxLimit}} bytes. Remove some filters and try again."),
+	)
+)
+
+func NewErrLokiQueryTooLong(query string, maxLimit int) error {
+	return ErrLokiQueryTooLong.Build(errutil.TemplateData{
+		Private: map[string]any{
+			"query": query,
+		},
+		Public: map[string]any{
+			"MaxLimit":  maxLimit,
+			"QuerySize": len(query),
+		},
+	})
+}
+
 type remoteLokiClient interface {
 	Ping(context.Context) error
 	Push(context.Context, []Stream) error
 	RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (QueryRes, error)
+	MaxQuerySize() int
 }
 
 // RemoteLokibackend is a state.Historian that records state history to an external Loki instance.
@@ -55,9 +77,9 @@ type RemoteLokiBackend struct {
 	log            log.Logger
 }
 
-func NewRemoteLokiBackend(logger log.Logger, cfg LokiConfig, req client.Requester, metrics *metrics.Historian) *RemoteLokiBackend {
+func NewRemoteLokiBackend(logger log.Logger, cfg LokiConfig, req client.Requester, metrics *metrics.Historian, tracer tracing.Tracer) *RemoteLokiBackend {
 	return &RemoteLokiBackend{
-		client:         NewLokiClient(cfg, req, metrics, logger),
+		client:         NewLokiClient(cfg, req, metrics, logger, tracer),
 		externalLabels: cfg.ExternalLabels,
 		clock:          clock.New(),
 		metrics:        metrics,
@@ -111,7 +133,7 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 
 // Query retrieves state history entries from an external Loki instance and formats the results into a dataframe.
 func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
-	logQL, err := BuildLogQuery(query)
+	logQL, err := BuildLogQuery(query, h.client.MaxQuerySize())
 	if err != nil {
 		return nil, err
 	}
@@ -365,7 +387,9 @@ func isValidOperator(op string) bool {
 	return false
 }
 
-func BuildLogQuery(query models.HistoryQuery) (string, error) {
+// BuildLogQuery converts models.HistoryQuery and a list of folder UIDs to a Loki query.
+// Returns a Loki query or error if log query cannot be constructed. If user-defined query exceeds maximum allowed size returns ErrLokiQueryTooLong
+func BuildLogQuery(query models.HistoryQuery, maxQuerySize int) (string, error) {
 	selectors, err := buildSelectors(query)
 	if err != nil {
 		return "", fmt.Errorf("failed to build the provided selectors: %w", err)
@@ -399,6 +423,10 @@ func BuildLogQuery(query models.HistoryQuery) (string, error) {
 	}
 	logQL += labelFilters
 
+	if len(logQL) > maxQuerySize {
+		// if the query is too long even without filter by folders, then fail
+		return "", NewErrLokiQueryTooLong(logQL, maxQuerySize)
+	}
 	return logQL, nil
 }
 

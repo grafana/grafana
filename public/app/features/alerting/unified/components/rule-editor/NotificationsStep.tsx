@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -54,7 +54,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       stepNo={4}
       title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Configure labels and notifications'}
       description={
-        <Stack direction="row" gap={0.5} alignItems="baseline">
+        <Stack direction="row" gap={0.5} alignItems="center">
           {type === RuleFormType.cloudRecording ? (
             <Text variant="bodySmall" color="secondary">
               Add labels to help you better manage your recording rules
@@ -122,7 +122,7 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
   };
 
   return (
-    <Stack direction="column">
+    <Stack direction="column" gap={2}>
       <Stack direction="column">
         <RadioButtonGroup
           options={routingOptions}
@@ -243,35 +243,25 @@ interface NotificationsStepDescriptionProps {
 }
 
 export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
-  const styles = useStyles2(getStyles);
   return (
-    <div className={styles.notificationsOptionDescription}>
+    <Stack alignItems="center">
       <Text variant="bodySmall" color="secondary">
         {manualRouting
           ? 'Notifications for firing alerts are routed to a selected contact point.'
           : 'Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.'}
       </Text>
       {manualRouting ? <NeedHelpInfoForContactpoint /> : <NeedHelpInfoForNotificationPolicy />}
-    </div>
+    </Stack>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
   routingOptions: css({
-    marginTop: theme.spacing(2),
     width: 'fit-content',
   }),
   configureNotifications: css({
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(1),
     marginTop: theme.spacing(2),
-  }),
-  notificationsOptionDescription: css({
-    marginTop: theme.spacing(1),
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: theme.spacing(0.5),
   }),
 });

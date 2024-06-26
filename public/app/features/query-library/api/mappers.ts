@@ -1,6 +1,7 @@
-import { QueryTemplate } from '../types';
+import { AddQueryTemplateCommand, QueryTemplate } from '../types';
 
-import { DataQuerySpecResponse, DataQueryTarget } from './types';
+import { API_VERSION, QueryTemplateKinds } from './query';
+import { DataQuerySpec, DataQuerySpecResponse, DataQueryTarget } from './types';
 
 export const convertDataQueryResponseToQueryTemplates = (result: DataQuerySpecResponse): QueryTemplate[] => {
   if (!result.items) {
@@ -14,4 +15,25 @@ export const convertDataQueryResponseToQueryTemplates = (result: DataQuerySpecRe
       createdAtTimestamp: new Date(spec.metadata.creationTimestamp || '').getTime(),
     };
   });
+};
+
+export const convertAddQueryTemplateCommandToDataQuerySpec = (
+  addQueryTemplateCommand: AddQueryTemplateCommand
+): DataQuerySpec => {
+  const { title, targets } = addQueryTemplateCommand;
+  return {
+    apiVersion: API_VERSION,
+    kind: QueryTemplateKinds.QueryTemplate,
+    metadata: {
+      generateName: 'A' + title,
+    },
+    spec: {
+      title: title,
+      vars: [], // TODO: Detect variables in #86838
+      targets: targets.map((dataQuery) => ({
+        variables: {},
+        properties: dataQuery,
+      })),
+    },
+  };
 };

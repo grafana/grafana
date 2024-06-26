@@ -113,7 +113,11 @@ func TestAPI_getUserPermissions(t *testing.T) {
 				var output util.DynMap
 				err := json.NewDecoder(res.Body).Decode(&output)
 				require.NoError(t, err)
-				require.Equal(t, tt.expectedOutput, output)
+				for k, v := range output {
+					scopes, ok := tt.expectedOutput[k]
+					require.True(t, ok)
+					require.ElementsMatch(t, scopes, v)
+				}
 			}
 		})
 	}

@@ -1,4 +1,5 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 // Utils

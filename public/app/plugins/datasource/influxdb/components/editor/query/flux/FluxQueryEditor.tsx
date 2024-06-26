@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data/src';
 import { getTemplateSrv } from '@grafana/runtime/src';
@@ -20,7 +20,6 @@ import { InfluxQuery } from '../../../../types';
 
 interface Props extends Themeable2 {
   onChange: (query: InfluxQuery) => void;
-  onRunQuery: () => void;
   query: InfluxQuery;
   // `datasource` is not used internally, but this component is used at some places
   // directly, where the `datasource` prop has to exist. later, when the whole
@@ -98,7 +97,6 @@ v1.tagValues(
 class UnthemedFluxQueryEditor extends PureComponent<Props> {
   onFluxQueryChange = (query: string) => {
     this.props.onChange({ ...this.props.query, query });
-    this.props.onRunQuery();
   };
 
   onSampleChange = (val: SelectableValue<string>) => {
@@ -109,7 +107,6 @@ class UnthemedFluxQueryEditor extends PureComponent<Props> {
 
     // Angular HACK: Since the target does not actually change!
     this.forceUpdate();
-    this.props.onRunQuery();
   };
 
   getSuggestions = (): CodeEditorSuggestionItem[] => {

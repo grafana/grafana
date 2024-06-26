@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import React from 'react';
 import { Route } from 'react-router-dom';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -10,6 +9,7 @@ import RuleEditor from 'app/features/alerting/unified/RuleEditor';
 import { TestProvider } from './TestProvider';
 
 export const ui = {
+  loadingIndicator: byText('Loading rule...'),
   inputs: {
     name: byRole('textbox', { name: 'name' }),
     alertType: byTestId('alert-type-picker'),

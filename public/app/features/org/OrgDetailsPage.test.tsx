@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -52,6 +51,12 @@ const setup = (propOverrides?: object) => {
     </TestProvider>
   );
 };
+
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: () => ({
+    getDashboardDTO: jest.fn().mockResolvedValue({}),
+  }),
+}));
 
 describe('Render', () => {
   beforeEach(() => {

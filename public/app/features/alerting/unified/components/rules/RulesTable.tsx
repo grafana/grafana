@@ -1,16 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { isBefore, formatDuration } from 'date-fns';
-import React, { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import {
-  GrafanaTheme2,
-  addDurationToDate,
-  isValidDate,
-  isValidDuration,
-  parseDuration,
-  dateTimeFormat,
-  dateTime,
-} from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Tooltip } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -24,6 +15,7 @@ import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { ProvisioningBadge } from '../Provisioning';
 import { RuleLocation } from '../RuleLocation';
 import { Tokenize } from '../Tokenize';
+import { calculateNextEvaluationEstimate } from '../rule-list/util';
 
 import { RuleActionsButtons } from './RuleActionsButtons';
 import { RuleConfigStatus } from './RuleConfigStatus';
@@ -116,39 +108,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
 function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNextEvaluationColumn: boolean) {
   const { hasRuler, rulerRulesLoaded } = useHasRuler();
 
-  const calculateNextEvaluationDate = useCallback((rule: CombinedRule) => {
-    const isValidLastEvaluation = rule.promRule?.lastEvaluation && isValidDate(rule.promRule.lastEvaluation);
-    const isValidIntervalDuration = rule.group.interval && isValidDuration(rule.group.interval);
-
-    if (
-      !isValidLastEvaluation ||
-      !isValidIntervalDuration ||
-      (isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule))
-    ) {
-      return;
-    }
-
-    const intervalDuration = parseDuration(rule.group.interval!);
-    const lastEvaluationDate = Date.parse(rule.promRule?.lastEvaluation || '');
-    const nextEvaluationDate = addDurationToDate(lastEvaluationDate, intervalDuration);
-
-    //when `nextEvaluationDate` is a past date it means lastEvaluation was more than one evaluation interval ago.
-    //in this case we use the interval value to show a more generic estimate.
-    //See https://github.com/grafana/grafana/issues/65125
-    const isPastDate = isBefore(nextEvaluationDate, new Date());
-    if (isPastDate) {
-      return {
-        humanized: `within ${formatDuration(intervalDuration)}`,
-        fullDate: `within ${formatDuration(intervalDuration)}`,
-      };
-    }
-
-    return {
-      humanized: `in ${dateTime(nextEvaluationDate).locale('en').fromNow(true)}`,
-      fullDate: dateTimeFormat(nextEvaluationDate, { format: 'YYYY-MM-DD HH:mm:ss' }),
-    };
-  }, []);
-
   return useMemo((): RuleTableColumnProps[] => {
     const columns: RuleTableColumnProps[] = [
       {
@@ -228,7 +187,8 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
         id: 'nextEvaluation',
         label: 'Next evaluation',
         renderCell: ({ data: rule }) => {
-          const nextEvalInfo = calculateNextEvaluationDate(rule);
+          const nextEvalInfo = calculateNextEvaluationEstimate(rule.promRule?.lastEvaluation, rule.group.interval);
+
           return (
             nextEvalInfo && (
               <Tooltip placement="top" content={`${nextEvalInfo?.fullDate}`} theme="info">
@@ -272,12 +232,5 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
     });
 
     return columns;
-  }, [
-    showSummaryColumn,
-    showGroupColumn,
-    showNextEvaluationColumn,
-    hasRuler,
-    rulerRulesLoaded,
-    calculateNextEvaluationDate,
-  ]);
+  }, [showSummaryColumn, showGroupColumn, showNextEvaluationColumn, hasRuler, rulerRulesLoaded]);
 }

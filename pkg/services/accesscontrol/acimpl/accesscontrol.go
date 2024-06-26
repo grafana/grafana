@@ -6,10 +6,10 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -48,10 +48,6 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 		return false, nil
 	}
 
-	if a.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		evaluator = evaluator.AppendActionSets(ctx, a.resolvers.GetActionSetResolver())
-	}
-
 	a.debug(ctx, user, "Evaluating permissions", evaluator)
 	// Test evaluation without scope resolver first, this will prevent 403 for wildcard scopes when resource does not exist
 	if evaluator.Evaluate(permissions) {
@@ -72,10 +68,6 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 
 func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
 	a.resolvers.AddScopeAttributeResolver(prefix, resolver)
-}
-
-func (a *AccessControl) RegisterActionResolver(resolver accesscontrol.ActionResolver) {
-	a.resolvers.SetActionResolver(resolver)
 }
 
 func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg string, eval accesscontrol.Evaluator) {

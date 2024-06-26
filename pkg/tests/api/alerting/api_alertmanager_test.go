@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -33,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type Response struct {
@@ -151,7 +151,6 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 			"template_files": null,
 			"alertmanager_config": {
 				"route": %s,
-				"templates": null,
 				"receivers": [{
 					"name": "grafana-default-email",
 					"grafana_managed_receiver_configs": [{
@@ -908,8 +907,9 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						Title: "AlwaysFiring",
-						Data:  []apimodels.AlertQuery{},
+						Title:     "AlwaysFiring",
+						Condition: "A",
+						Data:      []apimodels.AlertQuery{},
 					},
 				},
 				expectedMessage: "invalid rule specification at index [0]: invalid alert rule: no queries or expressions are found",
@@ -2057,7 +2057,6 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 	},
 	"config": {
 		"route": %s,
-		"templates": null,
 		"receivers": [{
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{
@@ -2067,8 +2066,7 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 				"disableResolveMessage": false,
 				"settings": {
 					"addresses": "\u003cexample@email.com\u003e"
-				},
-				"secureSettings": null
+				}
 			}]
 		}]
 	},

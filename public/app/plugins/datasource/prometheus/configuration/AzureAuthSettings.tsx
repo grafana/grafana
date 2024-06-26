@@ -1,13 +1,13 @@
 import { cx } from '@emotion/css';
-import React, { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { config } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, InlineSwitch, Input } from '@grafana/ui';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
-import { KnownAzureClouds, AzureCredentials } from './AzureCredentials';
-import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
+import { AzureCredentials } from './AzureCredentials';
+import { getAzureCloudOptions, getCredentials, updateCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 
 export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
@@ -60,7 +60,7 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
         managedIdentityEnabled={config.azure.managedIdentityEnabled}
         workloadIdentityEnabled={config.azure.workloadIdentityEnabled}
         credentials={credentials}
-        azureCloudOptions={KnownAzureClouds}
+        azureCloudOptions={getAzureCloudOptions()}
         onCredentialsChange={onCredentialsChange}
         disabled={dataSourceConfig.readOnly}
       />

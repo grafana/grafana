@@ -12,10 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
@@ -23,22 +24,20 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
-	provider := NewGenericOAuthProvider(&social.OAuthInfo{
-		EmailAttributePath: "email",
-	}, &setting.Cfg{},
-		&ssosettingstests.MockService{},
-		featuremgmt.WithFeatures())
-
-	tests := []struct {
+func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
+	testCases := []struct {
 		Name                    string
 		SkipOrgRoleSync         bool
 		AllowAssignGrafanaAdmin bool
 		ResponseBody            any
 		OAuth2Extra             any
+		Setup                   func(*orgtest.FakeOrgService)
 		RoleAttributePath       string
+		RoleAttributeStrict     bool
+		OrgAttributePath        string
+		OrgMapping              []string
 		ExpectedEmail           string
-		ExpectedRole            org.RoleType
+		ExpectedOrgRoles        map[int64]org.RoleType
 		ExpectedError           error
 		ExpectedGrafanaAdmin    *bool
 	}{
@@ -50,7 +49,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "role",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Admin",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
 		},
 		{
 			Name: "Given a valid id_token, no role path, no API response, use id_token",
@@ -60,7 +59,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Viewer",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
 		{
 			Name: "Given a valid id_token, an invalid role path, no API response, use id_token",
@@ -70,7 +69,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "invalid_path",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Viewer",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
 		{
 			Name: "Given no id_token, a valid role path, a valid API response, use API response",
@@ -80,7 +79,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "role",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Admin",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
 		},
 		{
 			Name: "Given no id_token, no role path, a valid API response, use API response",
@@ -89,7 +88,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Viewer",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
 		{
 			Name: "Given no id_token, a role path, a valid API response without a role, use API response",
@@ -98,13 +97,13 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "role",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Viewer",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
 		{
 			Name:              "Given no id_token, a valid role path, no API response, no data",
 			RoleAttributePath: "role",
 			ExpectedEmail:     "",
-			ExpectedRole:      "Viewer",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
 		{
 			Name: "Given a valid id_token, a valid role path, a valid API response, prefer id_token",
@@ -118,7 +117,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "role",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Admin",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
 		},
 		{
 			Name:                    "Given a valid id_token and AssignGrafanaAdmin is unchecked, don't grant Server Admin",
@@ -133,8 +132,8 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath:    "role",
 			ExpectedEmail:        "john.doe@example.com",
-			ExpectedRole:         "Admin",
 			ExpectedGrafanaAdmin: nil,
+			ExpectedOrgRoles:     map[int64]org.RoleType{2: org.RoleAdmin},
 		},
 		{
 			Name:                    "Given a valid id_token and AssignGrafanaAdmin is checked, grant Server Admin",
@@ -149,8 +148,8 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath:    "role",
 			ExpectedEmail:        "john.doe@example.com",
-			ExpectedRole:         "Admin",
 			ExpectedGrafanaAdmin: trueBoolPtr(),
+			ExpectedOrgRoles:     map[int64]org.RoleType{2: org.RoleAdmin},
 		},
 		{
 			Name: "Given a valid id_token, an invalid role path, a valid API response, prefer id_token",
@@ -164,7 +163,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "invalid_path",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Viewer",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
 		{
 			Name: "Given a valid id_token with no email, a valid role path, a valid API response with no role, merge",
@@ -177,7 +176,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "role",
 			ExpectedEmail:     "from_response@example.com",
-			ExpectedRole:      "Admin",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
 		},
 		{
 			Name: "Given a valid id_token with no role, a valid role path, a valid API response with no email, merge",
@@ -190,8 +189,8 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "role",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Viewer",
 			ExpectedError:     nil,
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
 		{
 			Name: "Given a valid id_token, a valid advanced JMESPath role path, derive the role",
@@ -202,10 +201,10 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "contains(info.roles[*], 'dev') && 'Editor'",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Editor",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleEditor},
 		},
 		{
-			Name: "Given a valid id_token without role info, a valid advanced JMESPath role path, a valid API response, derive the correct role using the userinfo API response (JMESPath warning on id_token)",
+			Name: "Given a valid id_token without role info, a valid advanced JMESPath role path, a valid API response, derive the correct org roles using the userinfo API response (JMESPath warning on id_token)",
 			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
@@ -217,7 +216,22 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin'",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Admin",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
+		},
+		{
+			Name: "Given a valid id_token without role info, a valid advanced JMESPath role path, a valid API response, derive the correct org roles using the userinfo API response (JMESPath warning on id_token)",
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
+			},
+			ResponseBody: map[string]any{
+				"info": map[string]any{
+					"roles": []string{"engineering", "SRE"},
+				},
+			},
+			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin'",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
 		},
 		{
 			Name: "Given a valid id_token, a valid advanced JMESPath role path, a valid API response, prefer ID token",
@@ -233,7 +247,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin' || contains(info.roles[*], 'dev') && 'Editor' || 'Viewer'",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Editor",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleEditor},
 		},
 		{
 			Name:            "Given skip org role sync set to true, with a valid id_token, a valid advanced JMESPath role path, a valid API response, no org role should be set",
@@ -250,17 +264,213 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin' || contains(info.roles[*], 'dev') && 'Editor' || 'Viewer'",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "",
+			ExpectedOrgRoles:  nil,
+		},
+		{
+			Name: "Given a valid id_token without role info, a valid advanced JMESPath role path, a valid org attribute path, a valid org mapping, a valid API response, derive the correct org roles using the userinfo API response (JMESPath warning on id_token)",
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
+			},
+			ResponseBody: map[string]any{
+				"info": map[string]any{
+					"roles": []string{"engineering", "SRE"},
+				},
+			},
+			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin'",
+			ExpectedEmail:     "john.doe@example.com",
+			OrgAttributePath:  "info.roles",
+			OrgMapping:        []string{"SRE:2:Viewer", "engineering:3:Editor"},
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin, 3: org.RoleAdmin},
+		},
+		{
+			Name:                    "Given a valid id_token, a role attribute path, an org roles path, an org mapping, a valid API response, prefer ID token",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath: "'Viewer'",
+			OrgAttributePath:  "info.roles",
+			OrgMapping:        []string{"dev:org_dev:Viewer", "engineering:org_engineering:Editor"},
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedOrgRoles:  map[int64]org.RoleType{4: org.RoleViewer, 5: org.RoleEditor},
+		},
+		{
+			Name:                    "Should not fail when the evaluated role is invalid, role_attribute_strict is set to true and evaluated org roles are not empty",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:   "'Invalid'",
+			RoleAttributeStrict: true,
+			OrgAttributePath:    "info.roles",
+			OrgMapping:          []string{"dev:org_dev:Viewer", "engineering:org_engineering:Editor"},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedOrgRoles:    map[int64]org.RoleType{4: org.RoleViewer, 5: org.RoleEditor},
+		},
+		{
+			Name:                    "Should not fail when the evaluated role is valid, role_attribute_strict is set to true and evaluated org roles are empty",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:   "'Editor'",
+			RoleAttributeStrict: true,
+			OrgAttributePath:    "info.roles",
+			OrgMapping:          []string{"notmatching:org_dev:Viewer", "notmatching:org_engineering:Editor"},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedOrgRoles:    map[int64]org.RoleType{2: org.RoleEditor},
+		},
+		{
+			Name:                    "Should not fail when role_attribute path is empty, role_attribute_strict is set to true and evaluated org roles are not empty",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:   "",
+			RoleAttributeStrict: true,
+			OrgAttributePath:    "info.roles",
+			OrgMapping:          []string{"dev:org_dev:Viewer", "engineering:org_engineering:Editor"},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedOrgRoles:    map[int64]org.RoleType{4: org.RoleViewer, 5: org.RoleEditor},
+		},
+		{
+			Name:                    "Should return empty when evaluated role is empty/invalid, role_attribute_strict is set to false and evaluated org roles are empty",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			Setup: func(orgSvc *orgtest.FakeOrgService) {
+				orgSvc.ExpectedError = assert.AnError
+			},
+			RoleAttributePath:   "'Invalid'",
+			RoleAttributeStrict: false,
+			OrgAttributePath:    "info.roles",
+			OrgMapping:          []string{"dev:*:Viewer"},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedOrgRoles:    nil,
+		},
+		{
+			Name:                    "Should fail when role_attribute_path is empty, role_attribute_strict is set to true and org_mapping is empty",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:   "",
+			RoleAttributeStrict: true,
+			OrgAttributePath:    "info.invalid",
+			OrgMapping:          []string{},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedError:       errRoleAttributeStrictViolation,
+		},
+		{
+			Name:                    "Should fail when role_attribute_path evaluates to invalid role, role_attribute_strict is set to true and org_mapping is empty",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:   "'Invalid'",
+			RoleAttributeStrict: true,
+			OrgAttributePath:    "info.invalid",
+			OrgMapping:          []string{},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedError:       errRoleAttributeStrictViolation,
+		},
+		{
+			Name:                    "Should fail when role_attribute path is empty, role_attribute_strict is set to true and evaluated org roles are empty",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:   "",
+			RoleAttributeStrict: true,
+			OrgAttributePath:    "info.invalid",
+			OrgMapping:          []string{"dev:org_dev:Viewer", "engineering:org_engineering:Editor"},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedError:       errRoleAttributeStrictViolation,
+		},
+		{
+			Name:         "Should get orgs from API when not in token",
+			ResponseBody: map[string]any{"anotherInfo": map[string]any{"roles": []string{"fromApiOne", "fromApiTwo"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:   "",
+			RoleAttributeStrict: true,
+			OrgAttributePath:    "anotherInfo.roles",
+			OrgMapping:          []string{"fromApiOne:org_dev:Viewer", "fromApiTwo:org_engineering:Editor"},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedOrgRoles:    map[int64]org.RoleType{4: org.RoleViewer, 5: org.RoleEditor},
+		},
+		{
+			Name:         "Give AutoAssignOrgRole in AutoAssignOrgId when OrgMapping returns no OrgRoles",
+			ResponseBody: map[string]any{},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath: "",
+			OrgAttributePath:  "info.roles",
+			OrgMapping:        []string{"foo:org_dev:Viewer", "bar:org_engineering:Editor"},
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
 	}
 
-	for _, test := range tests {
-		provider.info.RoleAttributePath = test.RoleAttributePath
-		provider.info.AllowAssignGrafanaAdmin = test.AllowAssignGrafanaAdmin
-		provider.info.SkipOrgRoleSync = test.SkipOrgRoleSync
+	cfg := &setting.Cfg{
+		AutoAssignOrg:     true,
+		AutoAssignOrgId:   2,
+		AutoAssignOrgRole: string(org.RoleViewer),
+	}
 
-		t.Run(test.Name, func(t *testing.T) {
-			body, err := json.Marshal(test.ResponseBody)
+	for _, tc := range testCases {
+		orgSvc := &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "org_dev"}, {ID: 5, Name: "org_engineering"}}}
+		if tc.Setup != nil {
+			tc.Setup(orgSvc)
+		}
+		orgRoleMapper := ProvideOrgRoleMapper(cfg, orgSvc)
+		provider := NewGenericOAuthProvider(&social.OAuthInfo{
+			EmailAttributePath: "email",
+		}, cfg,
+			orgRoleMapper,
+			&ssosettingstests.MockService{},
+			featuremgmt.WithFeatures())
+
+		provider.info.RoleAttributePath = tc.RoleAttributePath
+		provider.info.OrgAttributePath = tc.OrgAttributePath
+		provider.info.OrgMapping = tc.OrgMapping
+		provider.orgMappingCfg = orgRoleMapper.ParseOrgMappingSettings(context.Background(), tc.OrgMapping, tc.RoleAttributeStrict)
+		provider.info.AllowAssignGrafanaAdmin = tc.AllowAssignGrafanaAdmin
+		provider.info.SkipOrgRoleSync = tc.SkipOrgRoleSync
+		provider.info.RoleAttributeStrict = tc.RoleAttributeStrict
+
+		t.Run(tc.Name, func(t *testing.T) {
+			body, err := json.Marshal(tc.ResponseBody)
 			require.NoError(t, err)
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
@@ -276,283 +486,288 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				Expiry:       time.Now(),
 			}
 
-			token := staticToken.WithExtra(test.OAuth2Extra)
+			token := staticToken.WithExtra(tc.OAuth2Extra)
 			actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
-			if test.ExpectedError != nil {
-				require.ErrorIs(t, err, test.ExpectedError)
+			if tc.ExpectedError != nil {
+				require.ErrorIs(t, err, tc.ExpectedError)
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, test.ExpectedEmail, actualResult.Email)
-			require.Equal(t, test.ExpectedEmail, actualResult.Login)
-			require.Equal(t, test.ExpectedRole, actualResult.Role)
-			require.Equal(t, test.ExpectedGrafanaAdmin, actualResult.IsGrafanaAdmin)
+			require.Equal(t, tc.ExpectedEmail, actualResult.Email)
+			require.Equal(t, tc.ExpectedEmail, actualResult.Login)
+			require.Equal(t, tc.ExpectedOrgRoles, actualResult.OrgRoles)
+			require.Equal(t, tc.ExpectedGrafanaAdmin, actualResult.IsGrafanaAdmin)
 		})
 	}
 }
 
 func TestUserInfoSearchesForLogin(t *testing.T) {
-	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := NewGenericOAuthProvider(&social.OAuthInfo{
-			Extra: map[string]string{
-				"login_attribute_path": "login",
+	testCases := []struct {
+		Name               string
+		ResponseBody       any
+		OAuth2Extra        any
+		LoginAttributePath string
+		ExpectedLogin      string
+	}{
+		{
+			Name: "Given a valid id_token, a valid login path, no API response, use id_token",
+			OAuth2Extra: map[string]any{
+				// { "login": "johndoe", "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.sg4sRJCNpax_76XMgr277fdxhjjtNSWXKIOFv4_GJN8",
 			},
-		}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			LoginAttributePath: "role",
+			ExpectedLogin:      "johndoe",
+		},
+		{
+			Name: "Given a valid id_token, no login path, no API response, use id_token",
+			OAuth2Extra: map[string]any{
+				// { "login": "johndoe", "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.sg4sRJCNpax_76XMgr277fdxhjjtNSWXKIOFv4_GJN8",
+			},
+			LoginAttributePath: "",
+			ExpectedLogin:      "johndoe",
+		},
+		{
+			Name: "Given no id_token, a valid login path, a valid API response, use API response",
+			ResponseBody: map[string]any{
+				"user_uid": "johndoe",
+				"email":    "john.doe@example.com",
+			},
+			LoginAttributePath: "user_uid",
+			ExpectedLogin:      "johndoe",
+		},
+		{
+			Name: "Given no id_token, no login path, a valid API response, use API response",
+			ResponseBody: map[string]any{
+				"login": "johndoe",
+			},
+			LoginAttributePath: "",
+			ExpectedLogin:      "johndoe",
+		},
+		{
+			Name: "Given no id_token, a login path, a valid API response without a login, use API response",
+			ResponseBody: map[string]any{
+				"username": "john.doe",
+			},
+			LoginAttributePath: "login",
+			ExpectedLogin:      "john.doe",
+		},
+		{
+			Name:               "Given no id_token, a valid login path, no API response, no data",
+			LoginAttributePath: "login",
+			ExpectedLogin:      "",
+		},
+	}
 
-		tests := []struct {
-			Name               string
-			ResponseBody       any
-			OAuth2Extra        any
-			LoginAttributePath string
-			ExpectedLogin      string
-		}{
-			{
-				Name: "Given a valid id_token, a valid login path, no API response, use id_token",
-				OAuth2Extra: map[string]any{
-					// { "login": "johndoe", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.sg4sRJCNpax_76XMgr277fdxhjjtNSWXKIOFv4_GJN8",
-				},
-				LoginAttributePath: "role",
-				ExpectedLogin:      "johndoe",
-			},
-			{
-				Name: "Given a valid id_token, no login path, no API response, use id_token",
-				OAuth2Extra: map[string]any{
-					// { "login": "johndoe", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.sg4sRJCNpax_76XMgr277fdxhjjtNSWXKIOFv4_GJN8",
-				},
-				LoginAttributePath: "",
-				ExpectedLogin:      "johndoe",
-			},
-			{
-				Name: "Given no id_token, a valid login path, a valid API response, use API response",
-				ResponseBody: map[string]any{
-					"user_uid": "johndoe",
-					"email":    "john.doe@example.com",
-				},
-				LoginAttributePath: "user_uid",
-				ExpectedLogin:      "johndoe",
-			},
-			{
-				Name: "Given no id_token, no login path, a valid API response, use API response",
-				ResponseBody: map[string]any{
-					"login": "johndoe",
-				},
-				LoginAttributePath: "",
-				ExpectedLogin:      "johndoe",
-			},
-			{
-				Name: "Given no id_token, a login path, a valid API response without a login, use API response",
-				ResponseBody: map[string]any{
-					"username": "john.doe",
-				},
-				LoginAttributePath: "login",
-				ExpectedLogin:      "john.doe",
-			},
-			{
-				Name:               "Given no id_token, a valid login path, no API response, no data",
-				LoginAttributePath: "login",
-				ExpectedLogin:      "",
-			},
-		}
+	provider := NewGenericOAuthProvider(&social.OAuthInfo{
+		Extra: map[string]string{
+			"login_attribute_path": "login",
+		},
+	}, setting.NewCfg(),
+		ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
+		&ssosettingstests.MockService{},
+		featuremgmt.WithFeatures())
 
-		for _, test := range tests {
-			provider.loginAttributePath = test.LoginAttributePath
-			t.Run(test.Name, func(t *testing.T) {
-				body, err := json.Marshal(test.ResponseBody)
+	for _, tc := range testCases {
+		provider.loginAttributePath = tc.LoginAttributePath
+
+		t.Run(tc.Name, func(t *testing.T) {
+			body, err := json.Marshal(tc.ResponseBody)
+			require.NoError(t, err)
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/json")
+				t.Log("Writing fake API response body", "body", tc.ResponseBody)
+				_, err = w.Write(body)
 				require.NoError(t, err)
-				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(http.StatusOK)
-					w.Header().Set("Content-Type", "application/json")
-					t.Log("Writing fake API response body", "body", test.ResponseBody)
-					_, err = w.Write(body)
-					require.NoError(t, err)
-				}))
-				provider.info.ApiUrl = ts.URL
-				staticToken := oauth2.Token{
-					AccessToken:  "",
-					TokenType:    "",
-					RefreshToken: "",
-					Expiry:       time.Now(),
-				}
+			}))
+			provider.info.ApiUrl = ts.URL
+			staticToken := oauth2.Token{
+				AccessToken:  "",
+				TokenType:    "",
+				RefreshToken: "",
+				Expiry:       time.Now(),
+			}
 
-				token := staticToken.WithExtra(test.OAuth2Extra)
-				actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
-				require.NoError(t, err)
-				require.Equal(t, test.ExpectedLogin, actualResult.Login)
-			})
-		}
-	})
+			token := staticToken.WithExtra(tc.OAuth2Extra)
+			actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
+			require.NoError(t, err)
+			require.Equal(t, tc.ExpectedLogin, actualResult.Login)
+		})
+	}
 }
 
 func TestUserInfoSearchesForName(t *testing.T) {
-	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := NewGenericOAuthProvider(&social.OAuthInfo{
-			Extra: map[string]string{
-				"name_attribute_path": "name",
+	testCases := []struct {
+		Name              string
+		ResponseBody      any
+		OAuth2Extra       any
+		NameAttributePath string
+		ExpectedName      string
+	}{
+		{
+			Name: "Given a valid id_token, a valid name path, no API response, use id_token",
+			OAuth2Extra: map[string]any{
+				// { "name": "John Doe", "login": "johndoe", "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwibmFtZSI6IkpvaG4gRG9lIn0.oMsXH0mHxUSYMXh6FonZIWh8LgNIcYbKRLSO1bwnfSI",
 			},
-		}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			NameAttributePath: "name",
+			ExpectedName:      "John Doe",
+		},
+		{
+			Name: "Given a valid id_token, no name path, no API response, use id_token",
+			OAuth2Extra: map[string]any{
+				// { "name": "John Doe", "login": "johndoe", "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwibmFtZSI6IkpvaG4gRG9lIn0.oMsXH0mHxUSYMXh6FonZIWh8LgNIcYbKRLSO1bwnfSI",
+			},
+			NameAttributePath: "",
+			ExpectedName:      "John Doe",
+		},
+		{
+			Name: "Given no id_token, a valid name path, a valid API response, use API response",
+			ResponseBody: map[string]any{
+				"user_name": "John Doe",
+				"login":     "johndoe",
+				"email":     "john.doe@example.com",
+			},
+			NameAttributePath: "user_name",
+			ExpectedName:      "John Doe",
+		},
+		{
+			Name: "Given no id_token, no name path, a valid API response, use API response",
+			ResponseBody: map[string]any{
+				"display_name": "John Doe",
+				"login":        "johndoe",
+			},
+			NameAttributePath: "",
+			ExpectedName:      "John Doe",
+		},
+		{
+			Name: "Given no id_token, a name path, a valid API response without a name, use API response",
+			ResponseBody: map[string]any{
+				"display_name": "John Doe",
+				"username":     "john.doe",
+			},
+			NameAttributePath: "name",
+			ExpectedName:      "John Doe",
+		},
+		{
+			Name:              "Given no id_token, a valid name path, no API response, no data",
+			NameAttributePath: "name",
+			ExpectedName:      "",
+		},
+	}
 
-		tests := []struct {
-			Name              string
-			ResponseBody      any
-			OAuth2Extra       any
-			NameAttributePath string
-			ExpectedName      string
-		}{
-			{
-				Name: "Given a valid id_token, a valid name path, no API response, use id_token",
-				OAuth2Extra: map[string]any{
-					// { "name": "John Doe", "login": "johndoe", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwibmFtZSI6IkpvaG4gRG9lIn0.oMsXH0mHxUSYMXh6FonZIWh8LgNIcYbKRLSO1bwnfSI",
-				},
-				NameAttributePath: "name",
-				ExpectedName:      "John Doe",
-			},
-			{
-				Name: "Given a valid id_token, no name path, no API response, use id_token",
-				OAuth2Extra: map[string]any{
-					// { "name": "John Doe", "login": "johndoe", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwibmFtZSI6IkpvaG4gRG9lIn0.oMsXH0mHxUSYMXh6FonZIWh8LgNIcYbKRLSO1bwnfSI",
-				},
-				NameAttributePath: "",
-				ExpectedName:      "John Doe",
-			},
-			{
-				Name: "Given no id_token, a valid name path, a valid API response, use API response",
-				ResponseBody: map[string]any{
-					"user_name": "John Doe",
-					"login":     "johndoe",
-					"email":     "john.doe@example.com",
-				},
-				NameAttributePath: "user_name",
-				ExpectedName:      "John Doe",
-			},
-			{
-				Name: "Given no id_token, no name path, a valid API response, use API response",
-				ResponseBody: map[string]any{
-					"display_name": "John Doe",
-					"login":        "johndoe",
-				},
-				NameAttributePath: "",
-				ExpectedName:      "John Doe",
-			},
-			{
-				Name: "Given no id_token, a name path, a valid API response without a name, use API response",
-				ResponseBody: map[string]any{
-					"display_name": "John Doe",
-					"username":     "john.doe",
-				},
-				NameAttributePath: "name",
-				ExpectedName:      "John Doe",
-			},
-			{
-				Name:              "Given no id_token, a valid name path, no API response, no data",
-				NameAttributePath: "name",
-				ExpectedName:      "",
-			},
-		}
+	provider := NewGenericOAuthProvider(&social.OAuthInfo{
+		Extra: map[string]string{
+			"name_attribute_path": "name",
+		},
+	},
+		setting.NewCfg(),
+		ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
+		&ssosettingstests.MockService{},
+		featuremgmt.WithFeatures())
 
-		for _, test := range tests {
-			provider.nameAttributePath = test.NameAttributePath
-			t.Run(test.Name, func(t *testing.T) {
-				body, err := json.Marshal(test.ResponseBody)
+	for _, tc := range testCases {
+		provider.nameAttributePath = tc.NameAttributePath
+		t.Run(tc.Name, func(t *testing.T) {
+			body, err := json.Marshal(tc.ResponseBody)
+			require.NoError(t, err)
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/json")
+				t.Log("Writing fake API response body", "body", tc.ResponseBody)
+				_, err = w.Write(body)
 				require.NoError(t, err)
-				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(http.StatusOK)
-					w.Header().Set("Content-Type", "application/json")
-					t.Log("Writing fake API response body", "body", test.ResponseBody)
-					_, err = w.Write(body)
-					require.NoError(t, err)
-				}))
-				provider.info.ApiUrl = ts.URL
-				staticToken := oauth2.Token{
-					AccessToken:  "",
-					TokenType:    "",
-					RefreshToken: "",
-					Expiry:       time.Now(),
-				}
+			}))
+			provider.info.ApiUrl = ts.URL
+			staticToken := oauth2.Token{
+				AccessToken:  "",
+				TokenType:    "",
+				RefreshToken: "",
+				Expiry:       time.Now(),
+			}
 
-				token := staticToken.WithExtra(test.OAuth2Extra)
-				actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
-				require.NoError(t, err)
-				require.Equal(t, test.ExpectedName, actualResult.Name)
-			})
-		}
-	})
+			token := staticToken.WithExtra(tc.OAuth2Extra)
+			actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
+			require.NoError(t, err)
+			require.Equal(t, tc.ExpectedName, actualResult.Name)
+		})
+	}
 }
 
 func TestUserInfoSearchesForGroup(t *testing.T) {
-	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		tests := []struct {
-			name                string
-			groupsAttributePath string
-			responseBody        any
-			expectedResult      []string
-		}{
-			{
-				name:                "If groups are not set, user groups are nil",
-				groupsAttributePath: "",
-				expectedResult:      nil,
-			},
-			{
-				name:                "If groups are empty, user groups are nil",
-				groupsAttributePath: "info.groups",
-				responseBody: map[string]any{
-					"info": map[string]any{
-						"groups": []string{},
-					},
+	testCases := []struct {
+		name                string
+		groupsAttributePath string
+		responseBody        any
+		expectedResult      []string
+	}{
+		{
+			name:                "If groups are not set, user groups are nil",
+			groupsAttributePath: "",
+			expectedResult:      nil,
+		},
+		{
+			name:                "If groups are empty, user groups are nil",
+			groupsAttributePath: "info.groups",
+			responseBody: map[string]any{
+				"info": map[string]any{
+					"groups": []string{},
 				},
-				expectedResult: nil,
 			},
-			{
-				name:                "If groups are set, user groups are set",
-				groupsAttributePath: "info.groups",
-				responseBody: map[string]any{
-					"info": map[string]any{
-						"groups": []string{"foo", "bar"},
-					},
+			expectedResult: nil,
+		},
+		{
+			name:                "If groups are set, user groups are set",
+			groupsAttributePath: "info.groups",
+			responseBody: map[string]any{
+				"info": map[string]any{
+					"groups": []string{"foo", "bar"},
 				},
-				expectedResult: []string{"foo", "bar"},
 			},
-		}
+			expectedResult: []string{"foo", "bar"},
+		},
+	}
 
-		for _, test := range tests {
-			t.Run(test.name, func(t *testing.T) {
-				body, err := json.Marshal(test.responseBody)
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			body, err := json.Marshal(test.responseBody)
+			require.NoError(t, err)
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/json")
+				t.Log("Writing fake API response body", "body", test.responseBody)
+				_, err := w.Write(body)
 				require.NoError(t, err)
-				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(http.StatusOK)
-					w.Header().Set("Content-Type", "application/json")
-					t.Log("Writing fake API response body", "body", test.responseBody)
-					_, err := w.Write(body)
-					require.NoError(t, err)
-				}))
+			}))
 
-				provider := NewGenericOAuthProvider(&social.OAuthInfo{
-					GroupsAttributePath: test.groupsAttributePath,
-					ApiUrl:              ts.URL,
-				}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			provider := NewGenericOAuthProvider(&social.OAuthInfo{
+				GroupsAttributePath: test.groupsAttributePath,
+				ApiUrl:              ts.URL,
+			}, setting.NewCfg(),
+				ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
+				&ssosettingstests.MockService{},
+				featuremgmt.WithFeatures())
 
-				token := &oauth2.Token{
-					AccessToken:  "",
-					TokenType:    "",
-					RefreshToken: "",
-					Expiry:       time.Now(),
-				}
+			token := &oauth2.Token{
+				AccessToken:  "",
+				TokenType:    "",
+				RefreshToken: "",
+				Expiry:       time.Now(),
+			}
 
-				userInfo, err := provider.UserInfo(context.Background(), ts.Client(), token)
-				assert.NoError(t, err)
-				assert.Equal(t, test.expectedResult, userInfo.Groups)
-			})
-		}
-	})
+			userInfo, err := provider.UserInfo(context.Background(), ts.Client(), token)
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedResult, userInfo.Groups)
+		})
+	}
 }
 
 func TestPayloadCompression(t *testing.T) {
 	provider := NewGenericOAuthProvider(&social.OAuthInfo{
 		EmailAttributePath: "email",
-	}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+	}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 	tests := []struct {
 		Name          string
@@ -707,7 +922,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			require.Equal(t, tc.want.nameAttributePath, s.nameAttributePath)
 			require.Equal(t, tc.want.loginAttributePath, s.loginAttributePath)
@@ -870,12 +1085,12 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
 			}
-			err := s.Validate(context.Background(), tc.settings, tc.requester)
+			err := s.Validate(context.Background(), tc.settings, ssoModels.SSOSettings{}, tc.requester)
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
 				return
@@ -950,7 +1165,7 @@ func TestSocialGenericOAuth_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -1048,7 +1263,7 @@ func TestGenericOAuth_Reload_ExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.info, setting.NewCfg(), &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.info, setting.NewCfg(), nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)

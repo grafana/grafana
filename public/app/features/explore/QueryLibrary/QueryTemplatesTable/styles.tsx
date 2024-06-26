@@ -30,8 +30,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   singleLine: css({
     display: '-webkit-box',
-    '-webkit-box-orient': 'vertical',
-    '-webkit-line-clamp': '1',
+    WebkitBoxOrient: 'vertical',
+    WebkitLineClamp: 1,
     overflow: 'hidden',
+  }),
+  cell: css({
+    display: 'flex',
+    alignItems: 'center',
+    '&:last-child': {
+      justifyContent: 'end',
+    },
+  }),
+  actionButton: css({
+    padding: theme.spacing(1),
   }),
 });

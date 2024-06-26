@@ -5,14 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
-	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/endpoints/request"
+
+	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 func TestResourceToEntity(t *testing.T) {
@@ -29,7 +30,7 @@ func TestResourceToEntity(t *testing.T) {
 	Codecs := serializer.NewCodecFactory(Scheme)
 
 	testCases := []struct {
-		requestInfo          *request.RequestInfo
+		key                  grafanaregistry.Key
 		resource             runtime.Object
 		codec                runtime.Codec
 		expectedKey          string
@@ -51,14 +52,17 @@ func TestResourceToEntity(t *testing.T) {
 		expectedBody         []byte
 	}{
 		{
-			requestInfo: &request.RequestInfo{
-				APIGroup:   "playlist.grafana.app",
-				APIVersion: "v0alpha1",
-				Resource:   "playlists",
-				Namespace:  "default",
-				Name:       "test-name",
+			key: grafanaregistry.Key{
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Namespace: "default",
+				Name:      "test-name",
 			},
 			resource: &v0alpha1.Playlist{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "playlist.grafana.app/v0alpha1",
+					Kind:       "Playlist",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					CreationTimestamp: createdAt,
 					Labels:            map[string]string{"label1": "value1", "label2": "value2"},
@@ -104,7 +108,7 @@ func TestResourceToEntity(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.resource.GetObjectKind().GroupVersionKind().Kind+" to entity conversion should succeed", func(t *testing.T) {
-			entity, err := resourceToEntity(tc.resource, tc.requestInfo, Codecs.LegacyCodec(v0alpha1.PlaylistResourceInfo.GroupVersion()))
+			entity, err := resourceToEntity(tc.resource, tc.key, Codecs.LegacyCodec(v0alpha1.PlaylistResourceInfo.GroupVersion()))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedKey, entity.Key)
 			assert.Equal(t, tc.expectedName, entity.Name)
@@ -180,7 +184,6 @@ func TestEntityToResource(t *testing.T) {
 			expectedResourceVersion:   "1",
 			expectedUid:               "test-guid",
 			expectedAnnotations: map[string]string{
-				"grafana.app/action":           "CREATED",
 				"grafana.app/createdBy":        "test-created-by",
 				"grafana.app/folder":           "test-folder",
 				"grafana.app/slug":             "test-slug",
@@ -201,7 +204,7 @@ func TestEntityToResource(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.entity.Key+" to resource conversion should succeed", func(t *testing.T) {
 			var p v0alpha1.Playlist
-			err := entityToResource(tc.entity, &p, Codecs.LegacyCodec(v0alpha1.PlaylistResourceInfo.GroupVersion()))
+			err := EntityToRuntimeObject(tc.entity, &p, Codecs.LegacyCodec(v0alpha1.PlaylistResourceInfo.GroupVersion()))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedApiVersion, p.TypeMeta.APIVersion)
 			assert.Equal(t, tc.expectedCreationTimestamp.Unix(), p.ObjectMeta.CreationTimestamp.Unix())

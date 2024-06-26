@@ -11,8 +11,10 @@ import (
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -43,6 +45,10 @@ type AlertsSender interface {
 type RulesStore interface {
 	GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error)
 	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error
+}
+
+type RecordingWriter interface {
+	Write(ctx context.Context, name string, t time.Time, frames data.Frames, extraLabels map[string]string) error
 }
 
 type schedule struct {
@@ -77,6 +83,7 @@ type schedule struct {
 	appURL               *url.URL
 	disableGrafanaFolder bool
 	jitterEvaluations    JitterStrategy
+	featureToggles       featuremgmt.FeatureToggles
 
 	metrics *metrics.Scheduler
 
@@ -90,6 +97,8 @@ type schedule struct {
 	schedulableAlertRules alertRulesRegistry
 
 	tracer tracing.Tracer
+
+	recordingWriter RecordingWriter
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -99,6 +108,7 @@ type SchedulerCfg struct {
 	C                    clock.Clock
 	MinRuleInterval      time.Duration
 	DisableGrafanaFolder bool
+	FeatureToggles       featuremgmt.FeatureToggles
 	AppURL               *url.URL
 	JitterEvaluations    JitterStrategy
 	EvaluatorFactory     eval.EvaluatorFactory
@@ -107,6 +117,7 @@ type SchedulerCfg struct {
 	AlertSender          AlertsSender
 	Tracer               tracing.Tracer
 	Log                  log.Logger
+	RecordingWriter      RecordingWriter
 }
 
 // NewScheduler returns a new scheduler.
@@ -129,11 +140,13 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		appURL:                cfg.AppURL,
 		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
 		jitterEvaluations:     cfg.JitterEvaluations,
+		featureToggles:        cfg.FeatureToggles,
 		stateManager:          stateManager,
 		minRuleInterval:       cfg.MinRuleInterval,
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
 		alertsSender:          cfg.AlertSender,
 		tracer:                cfg.Tracer,
+		recordingWriter:       cfg.RecordingWriter,
 	}
 
 	return &sch
@@ -246,16 +259,19 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.evaluatorFactory,
 		&sch.schedulableAlertRules,
 		sch.clock,
+		sch.featureToggles,
 		sch.metrics,
 		sch.log,
 		sch.tracer,
+		sch.recordingWriter,
 		sch.evalAppliedFunc,
 		sch.stopAppliedFunc,
 	)
 	for _, item := range alertRules {
+		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, item, ruleFactory)
 		key := item.GetKey()
-		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, key, ruleFactory)
 		logger := sch.log.FromContext(ctx).New(key.LogContext()...)
+
 		// enforce minimum evaluation interval
 		if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
 			logger.Debug("Interval adjusted", "originalInterval", item.IntervalSeconds, "adjustedInterval", sch.minRuleInterval.Seconds())

@@ -410,7 +410,7 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
       }),
       option('chat_id', 'Chat ID', 'ID of the chat where to send the messages', {
         required: true,
-        setValueAs: (value) => (typeof value === 'string' ? parseInt(value, 10) : 0),
+        setValueAs: (value) => (typeof value === 'string' ? parseInt(value, 10) : value),
       }),
       option('message', 'Message', 'Message template', {
         placeholder: '{{ template "webex.default.message" .}}',
@@ -462,7 +462,7 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
               'The AWS API secret_key. If blank the environment variable "AWS_ACCESS_SECRET_ID" is used'
             ),
             option('profile', 'Profile', 'Named AWS profile used to authenticate'),
-            option('role_arn', 'Rule ARN', 'AWS Role ARN, an alternative to using AWS API keys'),
+            option('role_arn', 'Role ARN', 'AWS Role ARN, an alternative to using AWS API keys'),
           ],
         }
       ),
@@ -482,7 +482,7 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
         "The  mobile platform endpoint ARN if message is delivered via mobile notifications. If you don't specify this value, you must specify a value for the topic_arn or phone_number"
       ),
 
-      option('subject', 'Subject', 'Subject line when the message is delivered to email endpoints', {
+      option('subject', 'Subject', 'Subject line when the message is delivered', {
         placeholder: '{{ template "sns.default.subject" .}}',
       }),
       option('message', 'Message', 'The message content of the SNS notification', {

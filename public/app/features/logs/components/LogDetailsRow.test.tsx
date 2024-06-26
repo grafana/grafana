@@ -1,5 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React, { ComponentProps } from 'react';
+import { ComponentProps } from 'react';
+
+import { CoreApp } from '@grafana/data';
 
 import { LogDetailsRow } from './LogDetailsRow';
 import { createLogRow } from './__mocks__/logRow';
@@ -20,6 +22,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     displayedFields: [],
     row: createLogRow(),
     disableActions: false,
+    app: CoreApp.Explore,
   };
 
   Object.assign(props, propOverrides);

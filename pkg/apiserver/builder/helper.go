@@ -10,10 +10,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/mod/semver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -24,14 +26,15 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 
 // TODO: this is a temporary hack to make rest.Connecter work with resource level routes
 var pathRewriters = []filters.PathRewriter{
 	{
-		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/v0alpha1/namespaces/.*/find$)`),
+		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/v0alpha1/namespaces/.*/)find/(.*)$`),
 		ReplaceFunc: func(matches []string) string {
-			return matches[1] + "/name" // connector requires a name
+			return matches[1] + matches[2] + "/name" // connector requires a name
 		},
 	},
 	{
@@ -91,10 +94,15 @@ func SetupConfig(
 			panic(fmt.Sprintf("could not build handler chain func: %s", err.Error()))
 		}
 
-		handler := genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
+		// Needs to run last in request chain to function as expected, hence we register it first.
+		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+		handler = filters.WithRequester(handler)
+		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, pathRewriters)
 		handler = k8stracing.WithTracing(handler, serverConfig.TracerProvider, "KubernetesAPI")
+		// Configure filters.WithPanicRecovery to not crash on panic
+		utilruntime.ReallyCrash = false
 
 		return handler
 	}
@@ -124,10 +132,17 @@ func InstallAPIs(
 	server *genericapiserver.GenericAPIServer,
 	optsGetter generic.RESTOptionsGetter,
 	builders []APIGroupBuilder,
-	dualWrite bool,
+	storageOpts *options.StorageOptions,
+	reg prometheus.Registerer,
 ) error {
+	// dual writing is only enabled when the storage type is not legacy.
+	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
+	// support the legacy storage type.
+	dualWriteEnabled := storageOpts.StorageType != options.StorageTypeLegacy
+
 	for _, b := range builders {
-		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, dualWrite)
+		mode := b.GetDesiredDualWriterMode(dualWriteEnabled, storageOpts.DualWriterDesiredModes)
+		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, mode, reg)
 		if err != nil {
 			return err
 		}
