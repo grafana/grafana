@@ -23,6 +23,7 @@ import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
+import { WeekStart } from './WeekStartPicker';
 import { quickOptions } from './options';
 
 /** @public */
@@ -45,6 +46,8 @@ export interface TimeRangePickerProps {
   widthOverride?: number;
   isOnCanvas?: boolean;
   onToolbarTimePickerClick?: () => void;
+  /** Which day of the week the calendar should start on. Possible values: "saturday", "sunday" or "monday" */
+  weekStart?: WeekStart;
 }
 
 export interface State {
@@ -71,6 +74,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     widthOverride,
     isOnCanvas,
     onToolbarTimePickerClick,
+    weekStart,
   } = props;
 
   const onChange = (timeRange: TimeRange) => {
@@ -168,6 +172,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                 onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
                 hideQuickRanges={hideQuickRanges}
                 onError={onError}
+                weekStart={weekStart}
               />
             </section>
           </FocusScope>

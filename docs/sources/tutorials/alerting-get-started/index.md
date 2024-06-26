@@ -25,6 +25,10 @@ In this tutorial you will:
 - Set up an alert rule.
 - Receive firing and resolved alert notifications in a public webhook.
 
+{{< admonition type="tip" >}}
+Check out [Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) if you want to learn more about alerts and notification routing.
+{{< /admonition >}}
+
 ## Before you begin
 
 ### Grafana Cloud users
@@ -183,6 +187,10 @@ To edit the Alert rule:
 1. Click **Save rule and exit**.
 
 By incrementing the threshold, the condition is no longer met, and after the evaluation interval has concluded (1 minute approx.), you should receive an alert notification with status **“Resolved”**.
+
+## Learn more
+
+Your learning journey continues in [Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) where you will learn about alert instances and notification routing.
 
 ## Summary
 

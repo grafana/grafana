@@ -21,6 +21,7 @@ import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
 import { Tooltip } from '../../Tooltip/Tooltip';
+import { WeekStart } from '../WeekStartPicker';
 import { isValid } from '../utils';
 
 import TimePickerCalendar from './TimePickerCalendar';
@@ -34,6 +35,7 @@ interface Props {
   roundup?: boolean;
   isReversed?: boolean;
   onError?: (error?: string) => void;
+  weekStart?: WeekStart;
 }
 
 interface InputState {
@@ -56,6 +58,7 @@ export const TimeRangeContent = (props: Props) => {
     isReversed,
     fiscalYearStartMonth,
     onError,
+    weekStart,
   } = props;
   const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
   const style = useStyles2(getStyles);
@@ -223,6 +226,7 @@ export const TimeRangeContent = (props: Props) => {
         onChange={onChange}
         timeZone={timeZone}
         isReversed={isReversed}
+        weekStart={weekStart}
       />
     </div>
   );
