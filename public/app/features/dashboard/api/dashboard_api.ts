@@ -84,7 +84,7 @@ class K8sDashboardAPI implements DashboardAPI {
         [AnnoKeyMessage]: options.message,
       };
     } else if (obj.metadata.annotations) {
-      delete obj.metadata.annotations[AnnoKeyMessage]
+      delete obj.metadata.annotations[AnnoKeyMessage];
     }
 
     if (options.folderUid) {
@@ -139,8 +139,7 @@ let instance: DashboardAPI | undefined = undefined;
 
 export function getDashboardAPI() {
   if (!instance) {
-    const legacy = new LegacyDashboardAPI();
-    instance = config.featureToggles.kubernetesDashboards ? new K8sDashboardAPI() : legacy;
+    instance = config.featureToggles.kubernetesDashboards ? new K8sDashboardAPI() : new LegacyDashboardAPI();
   }
   return instance;
 }
