@@ -29,8 +29,6 @@ import (
 )
 
 func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
-	// # TODO: Fix this test https://drone.grafana.net/grafana/grafana/184565/1/7
-	t.Skip()
 	testinfra.SQLiteIntegrationTest(t)
 
 	const disableOrgID int64 = 3
