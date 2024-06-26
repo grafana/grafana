@@ -1,11 +1,7 @@
 import { css } from '@emotion/css';
 import InfiniteViewer from 'infinite-viewer';
-// import InfiniteViewer from "react-infinite-viewer";
 import Moveable from 'moveable';
-import React from // CSSProperties, // createRef,
-// RefObject,
-'react';
-// import { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
+import React from 'react';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
@@ -39,16 +35,12 @@ import {
   CONNECTION_VERTEX_ID,
 } from 'app/plugins/panel/canvas/components/connections/Connections';
 import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
-import {
-  // getParent,
-  getTransformInstance,
-} from 'app/plugins/panel/canvas/utils';
+import { getTransformInstance, getElementTransformAndDimensions } from 'app/plugins/panel/canvas/utils';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
-// import { SceneTransformWrapper } from './SceneTransformWrapper';
 import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
 import { ElementState } from './element';
 import { FrameState } from './frame';
@@ -539,7 +531,6 @@ export class Scene {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
       })
       .on('dragStart', (event) => {
-        console.log('moveable: dragStart');
         this.ignoreDataUpdate = true;
         this.setNonTargetPointerEvents(event.target, true);
 
@@ -609,7 +600,8 @@ export class Scene {
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
-          const { top, left } = event.lastEvent;
+          // TODO: revisit this after implementing constraints system
+          const { top, left } = getElementTransformAndDimensions(targetedElement.div!);
           targetedElement.setPlacementFromGlobalCoordinates(left, top);
         }
 
@@ -716,8 +708,6 @@ export class Scene {
     /***********/
     let targets: Array<HTMLElement | SVGElement> = [];
     this.selecto!.on('dragStart', (event) => {
-      console.log(event);
-      console.log('selecto: dragStart');
       const selectedTarget = event.inputEvent.target;
 
       // If selected target is a connection control, eject to handle connection event

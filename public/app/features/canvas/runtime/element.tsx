@@ -365,10 +365,10 @@ export class ElementState implements LayerElement {
     const placement: Placement = {
       bottom: this.options.placement?.bottom,
       height: this.options.placement?.height,
-      left: (this.options.placement?.left ?? 0) + left,
+      left: left,
       right: this.options.placement?.right,
       rotation: this.options.placement?.rotation,
-      top: (this.options.placement?.top ?? 0) + top,
+      top: top,
       width: this.options.placement?.width,
     };
 
