@@ -175,10 +175,8 @@ func (sc *scenarioContext) exec() {
 	sc.m.ServeHTTP(sc.resp, sc.req)
 }
 
-type (
-	scenarioFunc func(c *scenarioContext)
-	handlerFunc  func(c *contextmodel.ReqContext) response.Response
-)
+type scenarioFunc func(c *scenarioContext)
+type handlerFunc func(c *contextmodel.ReqContext) response.Response
 
 func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHandler {
 	t.Helper()
@@ -219,7 +217,7 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 
 func setupScenarioContextSamlLogout(t *testing.T, url string) *scenarioContext {
 	cfg := setting.NewCfg()
-	// seed sections and keys
+	//seed sections and keys
 	cfg.Raw.DeleteSection("DEFAULT")
 	saml, err := cfg.Raw.NewSection("auth.saml")
 	assert.NoError(t, err)
@@ -276,6 +274,7 @@ func setupSimpleHTTPServer(features featuremgmt.FeatureToggles) *HTTPServer {
 		authInfoService: &authinfotest.FakeService{
 			ExpectedLabels: map[int64]string{int64(1): login.GetAuthProviderLabel(login.LDAPAuthModule)},
 		},
+		tracer: tracing.InitializeTracerForTest(),
 	}
 }
 
