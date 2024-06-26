@@ -213,20 +213,25 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
       const nestedScenes: NestedScene[] = [];
       rootGroupNode.groups.forEach((value, key) => {
-        const newScene = new NestedScene({
-          title: key,
-          canCollapse: true,
-          isCollapsed: true,
-          body: new SceneCSSGridLayout({
-            children: [],
-            templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
-            autoRows: ROW_PREVIEW_HEIGHT,
-            isLazy: true,
-          }),
-        });
+        // Check if we have a scene for that key already
+        // If we don't have, let's create one
+        if (!this.nestedSceneRec[key]) {
+          const newScene = new NestedScene({
+            title: key,
+            canCollapse: true,
+            isCollapsed: true,
+            body: new SceneCSSGridLayout({
+              children: [],
+              templateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
+              autoRows: ROW_PREVIEW_HEIGHT,
+              isLazy: true,
+            }),
+          });
 
-        this.nestedSceneRec[key] = newScene;
-        nestedScenes.push(newScene);
+          this.nestedSceneRec[key] = newScene;
+        }
+
+        nestedScenes.push(this.nestedSceneRec[key]);
       });
 
       this.setState({
