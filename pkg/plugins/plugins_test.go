@@ -60,10 +60,10 @@ func Test_ReadPluginJSON(t *testing.T) {
 					},
 				},
 				Includes: []*Includes{
-					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer},
-					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer},
-					{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer},
-					{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer},
+					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Action: ActionAppAccess},
+					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: ActionAppAccess},
+					{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer, Action: ActionAppAccess},
+					{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Action: ActionAppAccess},
 				},
 				Backend: false,
 			},
@@ -99,7 +99,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 					Plugins:        []Dependency{},
 				},
 				Includes: []*Includes{
-					{Name: "Pie Charts", Path: "dashboards/demo.json", Type: "dashboard", Role: org.RoleViewer},
+					{Name: "Pie Charts", Path: "dashboards/demo.json", Type: "dashboard", Role: org.RoleViewer, Action: ActionAppAccess},
 				},
 			},
 		},

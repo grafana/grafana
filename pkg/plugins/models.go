@@ -314,6 +314,7 @@ func (e Error) PublicMessage() string {
 }
 
 // Access-Control related definitions
+const ActionAppAccess = "plugins.app:access"
 
 // RoleRegistration stores a role and its assignments to basic roles
 // (Viewer, Editor, Admin, Grafana Admin)

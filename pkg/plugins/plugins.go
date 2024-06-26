@@ -178,7 +178,7 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 			include.Role = org.RoleViewer
 			// Allow includes to users with access permission.
 			if include.Action == "" {
-				include.Action = "plugins.app:access"
+				include.Action = ActionAppAccess
 			}
 		}
 	}
