@@ -26,6 +26,15 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url }: P
         // As nav links are supposed to link to internal urls this option should be used with caution
         target === '_blank' && <Icon data-testid="external-link-icon" name="external-link-alt" />
       }
+      <Icon
+        name={'star'}
+        className={'pin-icon'}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Pin clicked');
+        }}
+      />
     </div>
   );
 
@@ -90,5 +99,17 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     gap: '0.5rem',
     height: '100%',
     width: '100%',
+    justifyContent: 'space-between',
+    '.pin-icon': {
+      display: 'none',
+      padding: theme.spacing(0.5),
+      width: theme.spacing(3),
+      height: theme.spacing(3),
+    },
+    '&:hover': {
+      '.pin-icon': {
+        display: 'block',
+      },
+    },
   }),
 });
