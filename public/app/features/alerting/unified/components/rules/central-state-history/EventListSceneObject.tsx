@@ -336,23 +336,33 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
 
 function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: string) {
   return useMemo(() => {
-    const tsValues = stateHistory?.data?.values[0] ?? [];
-    const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
-    const lines = stateHistory?.data?.values[1] ?? [];
-    // merge timestamp with "line"
-    const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
-      const line = lines[index];
-      // values property can be undefined for some instance states (e.g. NoData)
-      if (isLine(line)) {
-        acc.push({ timestamp, line });
-      }
-      return acc;
-    }, []);
+    if (!stateHistory?.data) {
+      return { historyRecords: [] };
+    }
 
     const filterMatchers = filter ? parseMatchers(filter) : [];
 
+    const [tsValues, lines] = stateHistory.data.values;
+    const timestamps = isNumbers(tsValues) ? tsValues : [];
+
+    // merge timestamp with "line"
+    const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
+      const line = lines[index];
+      if (!isLine(line)) {
+        return acc;
+      }
+
+      // values property can be undefined for some instance states (e.g. NoData)
+      const filterMatch = line.labels && labelsMatchMatchers(line.labels, filterMatchers);
+      if (filterMatch) {
+        acc.push({ timestamp, line });
+      }
+
+      return acc;
+    }, []);
+
     return {
-      historyRecords: logRecords.filter(({ line }) => line.labels && labelsMatchMatchers(line.labels, filterMatchers)),
+      historyRecords: logRecords,
     };
   }, [stateHistory, filter]);
 }

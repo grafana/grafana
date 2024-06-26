@@ -28,7 +28,6 @@ export function useRegisterHistoryRuntimeDataSource() {
       // avoid showing error when the datasource is already registered
       sceneUtils.registerRuntimeDataSource({ dataSource: ds });
     } catch (e) {
-      console.log('History Scenes datasource already registered');
     }
   }, [ds]);
 }
@@ -65,8 +64,8 @@ class HistoryAPIDatasource extends RuntimeDataSource {
  * @param to the end time
  * @returns the history events only filtered by time
  */
-export const getHistory = async (from: number, to: number) => {
-  return await dispatch(
+export const getHistory =  (from: number, to: number) => {
+  return dispatch(
     stateHistoryApi.endpoints.getRuleHistory.initiate(
       {
         from: from,
