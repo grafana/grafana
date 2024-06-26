@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -32,6 +33,11 @@ const AlertRuleMaxTitleLength = 190
 
 // AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
 const AlertRuleMaxRuleGroupNameLength = 190
+
+// RuleVersionRecordLimits defines the limit of how many alert rule versions
+// should be stored in the database for each alert_rule in an organization including the current one.
+// Has to be > 0
+const RuleVersionRecordLimits = 100
 
 var (
 	ErrOptimisticLock = errors.New("version conflict while updating a record in the database with optimistic locking")
@@ -266,9 +272,64 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			if _, err := sess.Insert(&ruleVersions); err != nil {
 				return fmt.Errorf("failed to create new rule versions: %w", err)
 			}
+
+			for _, rule := range ruleVersions {
+				// delete old versions of alert rule
+				_, err = st.deleteOldAlertRuleVersions(ctx, rule.RuleUID, rule.RuleOrgID, RuleVersionRecordLimits)
+				if err != nil {
+					st.Logger.Warn("Failed to delete old alert rule versions", "org", rule.RuleOrgID, "rule", rule.RuleUID, "error", err)
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+func (st *DBstore) deleteOldAlertRuleVersions(ctx context.Context, ruleUID string, orgID int64, limit int) (int64, error) {
+	if limit < 1 {
+		return 0, fmt.Errorf("failed to delete old alert rule versions: limit is set to '%d' but needs to be > 0", limit)
+	}
+
+	if limit < 1 {
+		limit = ConfigRecordsLimit
+	}
+
+	var affectedRows int64
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		highest := &models.AlertRuleVersion{}
+		ok, err := sess.Table("alert_rule_version").Desc("id").Where("rule_org_id = ?", orgID).Where("rule_uid = ?", ruleUID).OrderBy("id").Limit(1, limit).Get(highest)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			// No alert rule versions exist. Nothing to clean up.
+			affectedRows = 0
+			return nil
+		}
+
+		res, err := sess.Exec(`
+			DELETE FROM
+				alert_rule_version
+			WHERE
+				rule_org_id = ? AND rule_uid = ?
+			AND
+				id <= ?
+		`, orgID, ruleUID, highest.ID)
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		affectedRows = rows
+		if affectedRows > 0 {
+			st.Logger.Info("Deleted old alert_rule_version(s)", "org", orgID, "limit", limit, "delete_count", affectedRows)
 		}
 		return nil
 	})
+	return affectedRows, err
 }
 
 // preventIntermediateUniqueConstraintViolations prevents unique constraint violations caused by an intermediate update.
