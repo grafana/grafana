@@ -2317,8 +2317,7 @@ github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 h1:jxJJ5z0GxqhWFbQU
 github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447/go.mod h1:IxsY6mns6Q5sAnWcrptrgUrSglTZJXH/kXr9nbpb/9I=
 github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586 h1:/of8Z8taCPftShATouOrBVy6GaTTjgQd/VfNiZp/VXQ=
 github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586/go.mod h1:PGk3RjYHpxMM8HFPhKKo+vve3DdlPUELZLSDEFehPuU=
-github.com/grafana/grafana-aws-sdk v0.26.1 h1:Q9Bb3t1UKiRU3sso4d9gLcZo/r1JxJqIF5dKohsRRWY=
-github.com/grafana/grafana-aws-sdk v0.26.1/go.mod h1:ZSVPU7IIJSi5lEg+K3Js+EUpZLXxUaBdaQWH+As1ihI=
+github.com/grafana/grafana-aws-sdk v0.28.0 h1:ShdA+msLPGJGWWS1SFUYnF+ch1G3gUOlAdGJi6h4sgU=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.0.4 h1:z6amQ286IJSBctHf6c+ibJq/v0+TvmEjVkrdMNBd4uY=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.0.4/go.mod h1:aKlFPE36IDa8qccRg3KbgZX3MQ5xymS3RelT4j6kkVU=
 github.com/grafana/grafana-google-sdk-go v0.1.0 h1:LKGY8z2DSxKjYfr2flZsWgTRTZ6HGQbTqewE3JvRaNA=
