@@ -113,7 +113,6 @@ func TestService_AddDataSource(t *testing.T) {
 						ID:         "test",
 						Type:       plugins.TypeDataSource,
 						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
 					},
 				}},
 			}
@@ -153,7 +152,6 @@ func TestService_AddDataSource(t *testing.T) {
 						ID:         "test",
 						Type:       plugins.TypeDataSource,
 						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
 					},
 				}},
 			}
@@ -203,7 +201,6 @@ func TestService_AddDataSource(t *testing.T) {
 						ID:         "test",
 						Type:       plugins.TypeDataSource,
 						Name:       "test",
-						APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
 					},
 				}},
 			}
@@ -494,7 +491,6 @@ func TestService_UpdateDataSource(t *testing.T) {
 					ID:         "test",
 					Type:       plugins.TypeDataSource,
 					Name:       "test",
-					APIVersion: "v0alpha1", // When a value exists in plugin.json, the callbacks will be executed
 				},
 			}},
 		}

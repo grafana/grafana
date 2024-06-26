@@ -50,7 +50,6 @@ type PluginListItem struct {
 	AccessControl   accesscontrol.Metadata  `json:"accessControl,omitempty"`
 	AngularDetected bool                    `json:"angularDetected"`
 	IAM             *pfs.IAM                `json:"iam,omitempty"`
-	APIVersion      string                  `json:"apiVersion"`
 }
 
 type PluginList []PluginListItem

@@ -255,6 +255,33 @@ export function addDataSource(
   };
 }
 
+interface K8sAPIGroup {
+  name: string;
+  versions: Array<{ groupVersion: string; version: string }>;
+  preferredVersion: { groupVersion: string; version: string };
+}
+interface K8sAPIGroupList {
+  kind: 'APIGroupList';
+  groups: K8sAPIGroup[];
+}
+
+async function getDatasourceAPIVersions() {
+  const apis = await getBackendSrv().get<K8sAPIGroupList>('/apis');
+  const apiServer: { [pluginID: string]: string } = {};
+  apis.groups.forEach((group) => {
+    if (group.name.includes('datasource.grafana.app')) {
+      const id = group.name.split('.')[0];
+      apiServer[id] = group.preferredVersion.version;
+      // workaround for plugins that don't use the pluginID for the group name
+      // e.g. testdata uses testdata.datasource.grafana.app
+      if (!id.endsWith('-datasource')) {
+        apiServer['grafana-' + id + '-datasource'] = group.preferredVersion.version;
+      }
+    }
+  });
+  return apiServer;
+}
+
 export function loadDataSourcePlugins(): ThunkResult<void> {
   return async (dispatch) => {
     dispatch(dataSourcePluginsLoad());
@@ -271,6 +298,14 @@ export function updateDataSource(dataSource: DataSourceSettings) {
     ) => DataSourceSettings
   ) => {
     try {
+      if (config.featureToggles.grafanaAPIServerWithExperimentalAPIs) {
+        const apiVersions = await getDatasourceAPIVersions();
+        console.log('apiVersions', apiVersions);
+        if (apiVersions[dataSource.type]) {
+          dataSource.apiVersion = apiVersions[dataSource.type];
+        }
+        console.log('submitting datasource', dataSource);
+      }
       await api.updateDataSource(dataSource);
     } catch (err) {
       const formattedError = parseHealthCheckError(err);
