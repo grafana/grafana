@@ -98,10 +98,10 @@ type QueryHistoryPreference struct {
 }
 
 type NavLink struct {
-	Id     *string `json:"id,omitempty"`
-	Text   *string `json:"text,omitempty"`
-	Url    *string `json:"url,omitempty"`
-	Target *string `json:"target,omitempty"`
+	Id     string `json:"id,omitempty"`
+	Text   string `json:"text,omitempty"`
+	Url    string `json:"url,omitempty"`
+	Target string `json:"target,omitempty"`
 }
 
 type NavbarPreference struct {

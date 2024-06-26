@@ -18,10 +18,10 @@ type CookiePreferences struct {
 
 // NavLink defines model for NavLink.
 type NavLink struct {
-	Id     *string `json:"id,omitempty"`
-	Target *string `json:"target,omitempty"`
-	Text   *string `json:"text,omitempty"`
-	Url    *string `json:"url,omitempty"`
+	Id     string `json:"id"`
+	Target string `json:"target"`
+	Text   string `json:"text"`
+	Url    string `json:"url"`
 }
 
 // NavbarPreference defines model for NavbarPreference.
