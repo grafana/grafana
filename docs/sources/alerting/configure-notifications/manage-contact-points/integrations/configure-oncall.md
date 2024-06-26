@@ -44,9 +44,9 @@ To set up the Grafana OnCall integration using the Grafana Alerting application,
 1. Enter a contact point name.
 1. From the **Integration** list, select **Grafana OnCall**.
 
-    {{< admonition type="note" >}}
-    The Grafana OnCall integration is only available for Grafana Alertmanager.
-    {{< /admonition >}}
+   {{< admonition type="note" >}}
+   The Grafana OnCall integration is only available for Grafana Alertmanager.
+   {{< /admonition >}}
 
 1. Choose whether to add a new OnCall integration or add an existing one.
    - If you add a new one, enter an Integration name.
