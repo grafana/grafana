@@ -102,10 +102,20 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       handleZoomOut(scene);
     },
   });
+
   keybindings.addBinding({
     key: 'ctrl+z',
     onTrigger: () => {
       handleZoomOut(scene);
+    },
+  });
+
+  // Relative -> Absolute time range
+  keybindings.addBinding({
+    key: 't a',
+    onTrigger: () => {
+      const timePicker = dashboardSceneGraph.getTimePicker(scene);
+      timePicker?.toAbsolute();
     },
   });
 
