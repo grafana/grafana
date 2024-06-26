@@ -181,6 +181,17 @@ describe('ScopesScene', () => {
         expect(getApplicationsSlothVoteTrackerSelect()).toBeInTheDocument();
         expect(queryApplicationsClustersTitle()).not.toBeInTheDocument();
       });
+
+      it('Opens to a selected scope', async () => {
+        await userEvents.click(getFiltersInput());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getApplicationsSlothPictureFactorySelect());
+        await userEvents.click(getApplicationsExpand());
+        await userEvents.click(getClustersExpand());
+        await userEvents.click(getFiltersApply());
+        await userEvents.click(getFiltersInput());
+        expect(queryApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
+      });
     });
 
     describe('Filters', () => {
