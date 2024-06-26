@@ -443,7 +443,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/storage/ @grafana/grafana-app-platform-squad
 /public/app/features/teams/ @grafana/access-squad
 /public/app/features/templating/ @grafana/dashboards-squad
-/public/app/features/trails/ @torkelo
+/public/app/features/trails/ @grafana/observability-metrics
 /public/app/features/transformers/ @grafana/dataviz-squad
 /public/app/features/transformers/timeSeriesTable/ @grafana/dataviz-squad @grafana/app-o11y-visualizations
 /public/app/features/users/ @grafana/access-squad
@@ -673,6 +673,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/bump-version.yml @grafana/grafana-release-guild
 /.github/workflows/close-milestone.yml @grafana/grafana-release-guild
 /.github/workflows/release-pr.yml @grafana/grafana-release-guild
+/.github/workflows/release-comms.yml @grafana/grafana-release-guild
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo

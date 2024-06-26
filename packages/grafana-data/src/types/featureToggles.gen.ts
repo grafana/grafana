@@ -199,4 +199,5 @@ export interface FeatureToggles {
   zanzana?: boolean;
   passScopeToDashboardApi?: boolean;
   alertingApiServer?: boolean;
+  dashboardRestoreUI?: boolean;
 }
