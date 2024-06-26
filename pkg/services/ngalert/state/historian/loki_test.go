@@ -202,34 +202,6 @@ func TestRemoteLokiBackend(t *testing.T) {
 			require.Equal(t, exp, entry.Fingerprint)
 		})
 	})
-
-	t.Run("selector string", func(t *testing.T) {
-		selectors := []Selector{{"name", "=", "Bob"}, {"age", "=~", "30"}}
-		expected := "{name=\"Bob\",age=~\"30\"}"
-		result := selectorString(selectors, nil)
-		require.Equal(t, expected, result)
-
-		selectors = []Selector{{"name", "=", "quoted\"string"}, {"age", "=~", "30"}}
-		expected = "{name=\"quoted\\\"string\",age=~\"30\",folderUID=~`some\\\\d\\.r\\$|normal_string`}"
-		result = selectorString(selectors, []string{`some\d.r$`, "normal_string"})
-		require.Equal(t, expected, result)
-
-		selectors = []Selector{}
-		expected = "{}"
-		result = selectorString(selectors, nil)
-		require.Equal(t, expected, result)
-	})
-
-	t.Run("new selector", func(t *testing.T) {
-		selector, err := NewSelector("label", "=", "value")
-		require.NoError(t, err)
-		require.Equal(t, "label", selector.Label)
-		require.Equal(t, Eq, selector.Op)
-		require.Equal(t, "value", selector.Value)
-
-		selector, err = NewSelector("label", "invalid", "value")
-		require.Error(t, err)
-	})
 }
 
 func TestBuildLogQuery(t *testing.T) {

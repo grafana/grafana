@@ -7,6 +7,7 @@ import (
 	"math"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -167,27 +168,6 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 		return nil, err
 	}
 	return merge(res, uids)
-}
-
-func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
-	// OrgID and the state history label are static and will be included in all queries.
-	selectors := make([]Selector, 2)
-
-	// Set the predefined selector orgID.
-	selector, err := NewSelector(OrgIDLabel, "=", fmt.Sprintf("%d", query.OrgID))
-	if err != nil {
-		return nil, err
-	}
-	selectors[0] = selector
-
-	// Set the predefined selector for the state history label.
-	selector, err = NewSelector(StateHistoryLabelKey, "=", StateHistoryLabelValue)
-	if err != nil {
-		return nil, err
-	}
-	selectors[1] = selector
-
-	return selectors, nil
 }
 
 // merge will put all the results in one array sorted by timestamp.
@@ -382,34 +362,24 @@ func jsonifyRow(line string) (json.RawMessage, error) {
 	return json.Marshal(entry)
 }
 
-type Selector struct {
-	// Label to Select
-	Label string
-	Op    Operator
-	// Value that is expected
-	Value string
-}
+func selectorString(query models.HistoryQuery, folderUIDs []string) string {
+	orgIDstr := strconv.FormatInt(query.OrgID, 10)
+	b := strings.Builder{}
+	b.WriteString("{")
+	// Set the predefined selector orgID.
+	b.WriteString(OrgIDLabel)
+	b.WriteString("=\"")
+	b.WriteString(orgIDstr)
+	b.WriteString("\",")
+	// Set the predefined selector for the state history label.
+	b.WriteString(StateHistoryLabelKey)
+	b.WriteString("=\"")
+	b.WriteString(StateHistoryLabelValue)
+	b.WriteString("\"")
 
-func NewSelector(label, op, value string) (Selector, error) {
-	if !isValidOperator(op) {
-		return Selector{}, fmt.Errorf("'%s' is not a valid query operator", op)
-	}
-	return Selector{Label: label, Op: Operator(op), Value: value}, nil
-}
-
-func selectorString(selectors []Selector, folderUIDs []string) string {
-	if len(selectors) == 0 {
-		return "{}"
-	}
-	// Build the query selector.
-	query := ""
-	for _, s := range selectors {
-		query += fmt.Sprintf("%s%s%q,", s.Label, s.Op, s.Value)
-	}
-
+	// add filter by folders
 	if len(folderUIDs) > 0 {
-		b := strings.Builder{}
-		b.Grow(len(folderUIDs)*40 + len(FolderUIDLabel)) // rough estimate of the length
+		b.WriteString(",")
 		b.WriteString(FolderUIDLabel)
 		b.WriteString("=~`")
 		b.WriteString(regexp.QuoteMeta(folderUIDs[0]))
@@ -418,20 +388,9 @@ func selectorString(selectors []Selector, folderUIDs []string) string {
 			b.WriteString(regexp.QuoteMeta(uid))
 		}
 		b.WriteString("`")
-		query += b.String()
-	} else {
-		// Remove the last comma, as we append one to every selector.
-		query = query[:len(query)-1]
 	}
-	return "{" + query + "}"
-}
-
-func isValidOperator(op string) bool {
-	switch op {
-	case "=", "!=", "=~", "!~":
-		return true
-	}
-	return false
+	b.WriteString("}")
+	return b.String()
 }
 
 // BuildLogQuery converts models.HistoryQuery and a list of folder UIDs to a Loki query.
@@ -441,12 +400,7 @@ func isValidOperator(op string) bool {
 // - true if filter by folder UID was not added to the query ignored
 // - error if log query cannot be constructed, and ErrQueryTooLong if user-defined query exceeds maximum allowed size
 func BuildLogQuery(query models.HistoryQuery, folderUIDs []string, maxQuerySize int) (string, bool, error) {
-	selectors, err := buildSelectors(query)
-	if err != nil {
-		return "", false, fmt.Errorf("failed to build the provided selectors: %w", err)
-	}
-
-	logQL := selectorString(selectors, folderUIDs)
+	logQL := selectorString(query, folderUIDs)
 
 	if queryHasLogFilters(query) {
 		logQL = fmt.Sprintf("%s | json", logQL)
