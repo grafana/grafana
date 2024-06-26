@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -55,19 +56,25 @@ type dashboardSqlAccess struct {
 	namespacer   request.NamespaceMapper
 	dashStore    dashboards.Store
 	provisioning provisioning.ProvisioningService
+	versions     dashver.Service
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
 }
 
-func NewDashboardAccess(sql db.DB, namespacer request.NamespaceMapper, dashStore dashboards.Store, provisioning provisioning.ProvisioningService) DashboardAccess {
+func NewDashboardAccess(sql db.DB,
+	namespacer request.NamespaceMapper,
+	dashStore dashboards.Store,
+	provisioning provisioning.ProvisioningService,
+	versions dashver.Service) DashboardAccess {
 	return &dashboardSqlAccess{
 		sql:          sql,
 		sess:         sql.GetSqlxSession(),
 		namespacer:   namespacer,
 		dashStore:    dashStore,
 		provisioning: provisioning,
+		versions:     versions,
 	}
 }
 

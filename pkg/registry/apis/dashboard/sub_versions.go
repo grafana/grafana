@@ -2,7 +2,7 @@ package dashboard
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,21 +11,21 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type VersionsREST struct {
-	builder *DashboardsAPIBuilder
+	search resource.ResourceSearchServer // should be a client!
 }
 
 var _ = rest.Connecter(&VersionsREST{})
 var _ = rest.StorageMetadata(&VersionsREST{})
 
 func (r *VersionsREST) New() runtime.Object {
-	return &dashboard.DashboardVersionList{}
+	return &metav1.PartialObjectMetadataList{}
 }
 
 func (r *VersionsREST) Destroy() {
@@ -40,7 +40,7 @@ func (r *VersionsREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *VersionsREST) ProducesObject(verb string) interface{} {
-	return &dashboard.DashboardVersionList{}
+	return &metav1.PartialObjectMetadataList{}
 }
 
 func (r *VersionsREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -52,66 +52,74 @@ func (r *VersionsREST) Connect(ctx context.Context, uid string, opts runtime.Obj
 	if err != nil {
 		return nil, err
 	}
+	key := &resource.ResourceKey{
+		Namespace: info.Value,
+		Group:     dashboard.GROUP,
+		Resource:  dashboard.DashboardResourceInfo.GroupResource().Resource,
+		Name:      uid,
+	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		path := req.URL.Path
 		idx := strings.LastIndex(path, "/versions/")
 		if idx > 0 {
-			key := path[strings.LastIndex(path, "/")+1:]
-			version, err := strconv.Atoi(key)
+			vkey := path[strings.LastIndex(path, "/")+1:]
+			version, err := strconv.ParseInt(vkey, 10, 64)
 			if err != nil {
 				responder.Error(err)
 				return
 			}
 
-			dto, err := r.builder.dashboardVersionService.Get(ctx, &dashver.GetDashboardVersionQuery{
-				DashboardUID: uid,
-				OrgID:        info.OrgID,
-				Version:      version,
+			dashbytes, err := r.search.Read(ctx, &resource.ReadRequest{
+				Key:             key,
+				ResourceVersion: version,
 			})
 			if err != nil {
 				responder.Error(err)
 				return
 			}
 
-			data, _ := dto.Data.Map()
-
 			// Convert the version to a regular dashboard
-			dash := &dashboard.Dashboard{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:              uid,
-					CreationTimestamp: metav1.NewTime(dto.Created),
-				},
-				Spec: common.Unstructured{Object: data},
+			dash := &dashboard.Dashboard{}
+			json.Unmarshal(dashbytes.Value, dash)
+			meta, err := utils.MetaAccessor(dash)
+			if err != nil {
+				responder.Error(err)
+				return
 			}
+			meta.SetResourceVersionInt64(dashbytes.ResourceVersion)
 			responder.Object(100, dash)
 			return
 		}
 
-		// Or list versions
-		rsp, err := r.builder.dashboardVersionService.List(ctx, &dashver.ListDashboardVersionsQuery{
-			DashboardUID: uid,
-			OrgID:        info.OrgID,
+		rsp, err := r.search.History(ctx, &resource.HistoryRequest{
+			NextPageToken: "", // TODO!
+			Limit:         100,
+			Key:           key,
 		})
 		if err != nil {
 			responder.Error(err)
 			return
 		}
-		versions := &dashboard.DashboardVersionList{}
-		for _, v := range rsp {
-			info := dashboard.DashboardVersionInfo{
-				Version: v.Version,
-				Created: v.Created.UnixMilli(),
-				Message: v.Message,
-			}
-			if v.ParentVersion != v.Version {
-				info.ParentVersion = v.ParentVersion
-			}
-			if v.CreatedBy > 0 {
-				info.CreatedBy = fmt.Sprintf("%d", v.CreatedBy)
-			}
-			versions.Items = append(versions.Items, info)
+
+		list := &metav1.PartialObjectMetadataList{
+			ListMeta: metav1.ListMeta{
+				Continue: rsp.NextPageToken,
+			},
 		}
-		responder.Object(http.StatusOK, versions)
+		if rsp.ResourceVersion > 0 {
+			list.ResourceVersion = strconv.FormatInt(rsp.ResourceVersion, 10)
+		}
+
+		for _, v := range rsp.Items {
+			partial := metav1.PartialObjectMetadata{}
+			err = json.Unmarshal(v.PartialObjectMeta, &partial)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+			list.Items = append(list.Items, partial)
+		}
+		responder.Object(http.StatusOK, list)
 	}), nil
 }

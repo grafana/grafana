@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -241,7 +244,7 @@ func (a *dashboardSqlAccess) SupportsSignedURLs() bool {
 }
 
 func (a *dashboardSqlAccess) PutBlob(context.Context, *resource.PutBlobRequest) (*resource.PutBlobResponse, error) {
-	return nil, fmt.Errorf("not implemented yet")
+	return nil, fmt.Errorf("put blob not implemented yet")
 }
 
 func (a *dashboardSqlAccess) GetBlob(ctx context.Context, key *resource.ResourceKey, info *utils.BlobInfo, mustProxy bool) (*resource.GetBlobResponse, error) {
@@ -261,4 +264,52 @@ func (a *dashboardSqlAccess) GetBlob(ctx context.Context, key *resource.Resource
 	}
 	rsp.Value, err = json.Marshal(dash.Spec)
 	return rsp, err
+}
+
+func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
+	ns, err := request.ParseNamespace(req.Key.Namespace)
+	if err == nil {
+		err = isDashboardKey(req.Key, true)
+	}
+	if err != nil {
+		return nil, err
+	}
+	versions, err := a.versions.List(ctx, &dashver.ListDashboardVersionsQuery{
+		OrgID:        ns.OrgID,
+		DashboardUID: req.Key.Name,
+		Limit:        100,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	rsp := &resource.HistoryResponse{}
+	for _, version := range versions {
+		partial := &metav1.PartialObjectMetadata{}
+		meta, err := utils.MetaAccessor(partial)
+		if err != nil {
+			return nil, err
+		}
+		meta.SetName(version.DashboardUID)
+		meta.SetCreationTimestamp(metav1.NewTime(version.Created)) // ???
+		meta.SetUpdatedTimestampMillis(version.Created.UnixMilli())
+		meta.SetMessage(version.Message)
+		meta.SetResourceVersionInt64(version.Created.UnixMilli())
+
+		bytes, err := json.Marshal(partial)
+		if err != nil {
+			return nil, err
+		}
+		rsp.Items = append(rsp.Items, &resource.ResourceMeta{
+			ResourceVersion:   version.Created.UnixMilli(),
+			PartialObjectMeta: bytes,
+		})
+	}
+	return rsp, err
+
+}
+
+// Used for efficient provisioning
+func (a *dashboardSqlAccess) Origin(context.Context, *resource.OriginRequest) (*resource.OriginResponse, error) {
+	return nil, fmt.Errorf("not yet (origin)")
 }

@@ -23,7 +23,7 @@ import (
 
 // Package-level errors.
 var (
-	ErrNotImplementedYet = errors.New("not implemented yet")
+	ErrNotImplementedYet = errors.New("not implemented yet (sqlnext)")
 )
 
 func ProvideSQLResourceServer(db db.EntityDBInterface, tracer tracing.Tracer) (resource.ResourceServer, error) {

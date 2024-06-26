@@ -140,7 +140,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		opts.Blob = &noopService{}
 	}
 	if opts.Diagnostics == nil {
-		opts.Search = &noopService{}
+		opts.Diagnostics = &noopService{}
 	}
 	if opts.Now == nil {
 		opts.Now = func() int64 {

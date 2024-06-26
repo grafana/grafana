@@ -23,6 +23,7 @@ type DashboardQuery struct {
 type DashboardAccess interface {
 	resource.AppendingStore
 	resource.BlobStore
+	resource.ResourceSearchServer
 
 	GetDashboard(ctx context.Context, orgId int64, uid string) (*dashboardsV0.Dashboard, int64, error)
 

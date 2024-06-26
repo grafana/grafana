@@ -39,9 +39,8 @@ var _ builder.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
 type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
 
-	dashboardVersionService dashver.Service
-	accessControl           accesscontrol.AccessControl
-	store                   *dashboardStorage
+	accessControl accesscontrol.AccessControl
+	store         *dashboardStorage
 
 	log log.Logger
 }
@@ -65,13 +64,12 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	builder := &DashboardsAPIBuilder{
 		log: log.New("grafana-apiserver.dashboards"),
 
-		dashboardService:        dashboardService,
-		dashboardVersionService: dashboardVersionService,
-		accessControl:           accessControl,
+		dashboardService: dashboardService,
+		accessControl:    accessControl,
 
 		store: &dashboardStorage{
 			resource: dashboard.DashboardResourceInfo,
-			access:   access.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
+			access:   access.NewDashboardAccess(sql, namespacer, dashStore, provisioning, dashboardVersionService),
 			tableConverter: gapiutil.NewTableConverter(
 				dashboard.DashboardResourceInfo.GroupResource(),
 				[]metav1.TableColumnDefinition{
@@ -114,6 +112,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.DashboardWithAccessInfo{},
 		&v0alpha1.DashboardVersionList{},
 		&v0alpha1.VersionsQueryOptions{},
+		&metav1.PartialObjectMetadata{},
+		&metav1.PartialObjectMetadataList{},
 	)
 }
 
@@ -158,7 +158,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		builder: b,
 	}
 	storage[dash.StoragePath("versions")] = &VersionsREST{
-		builder: b,
+		search: b.store.server, // resource.NewLocalResourceSearchClient(b.store.server),
 	}
 
 	// // Dual writes if a RESTOptionsGetter is provided

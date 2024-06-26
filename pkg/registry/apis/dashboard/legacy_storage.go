@@ -17,12 +17,15 @@ type dashboardStorage struct {
 	resource       common.ResourceInfo
 	access         access.DashboardAccess
 	tableConverter rest.TableConvertor
+
+	server resource.ResourceServer
 }
 
 func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter) (rest.Storage, error) {
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Store: s.access,
-		Blob:  s.access,
+		Store:  s.access,
+		Search: s.access,
+		Blob:   s.access,
 		// WriteAccess: resource.WriteAccessHooks{
 		// 	Folder: func(ctx context.Context, user identity.Requester, uid string) bool {
 		// 		// ???
@@ -32,6 +35,7 @@ func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter ge
 	if err != nil {
 		return nil, err
 	}
+	s.server = server
 
 	resourceInfo := s.resource
 	defaultOpts, err := defaultOptsGetter.GetRESTOptions(resourceInfo.GroupResource())
