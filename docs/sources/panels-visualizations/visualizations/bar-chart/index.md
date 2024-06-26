@@ -62,6 +62,10 @@ have multiple time series and you want to compare their last and max value add t
 
 {{< figure src="/static/img/docs/bar-chart-panel/bar-chart-time-series-v8-0.png" max-width="1025px" caption="Bar chart time series example" >}}
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Bar chart options
 
 Use these options to refine your visualization.

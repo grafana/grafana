@@ -46,6 +46,10 @@ Use a text visualization when you need to:
 - Provide instructions or guidance on how to interpret different panels, configure settings, or take specific actions based on the displayed data.
 - Announce any scheduled maintenance or downtime that might impact your dashboards.
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Text options
 
 Use the following options to refine your text visualization.

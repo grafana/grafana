@@ -61,6 +61,10 @@ The following video provides beginner steps for creating geomap visualizations. 
 
 {{< docs/play title="Geomap Examples" url="https://play.grafana.org/d/panel-geomap/" >}}
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Map View
 
 The map view controls the initial view of the map when the dashboard loads.

@@ -63,6 +63,10 @@ Click a column title to change the sort order from default to descending to asce
 
 ![Sort descending](/static/img/docs/tables/sort-descending.png 'Sort descending')
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Table options
 
 {{% admonition type="note" %}}
