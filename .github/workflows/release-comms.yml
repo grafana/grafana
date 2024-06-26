@@ -19,9 +19,9 @@ on:
 jobs:
   post_release:
     name: Post-release comms
-    env:
+    runs-on: ubuntu-latest
     steps:
-      - if: github.event.workflow_dispatch
+      - if: github.event_name == 'workflow_dispatch'
         run: |
           echo "VERSION=${{ inputs.version }}" >> $GITHUB_ENV
           echo "DRY_RUN=${{ inputs.dry_run }}" >> $GITHUB_ENV
@@ -29,8 +29,13 @@ jobs:
         run: |
           echo "VERSION=$(echo ${{ github.head_ref }} | sed -e 's/release\///g')" >> $GITHUB_ENV
           echo "DRY_RUN=false" >> $GITHUB_ENV
-      - run: "echo push-grafana-tag $VERSION (dry run: $DRY_RUN)"
-      - run: "echo post changelog to forums for $VERSION (dry run: $DRY_RUN)"
-      - run: "echo create github release"
-      - run: "echo publish docs for $VERSION (dry run: $DRY_RUN)"
-      - run: "announce on slack that $VERSION has been released (dry run: $DRY_RUN)"
+      - run: |
+          echo "push-grafana-tag ${VERSION} (dry run: ${DRY_RUN})"
+      - run: |
+          echo "post changelog to forums for ${VERSION} (dry run: ${DRY_RUN})"
+      - run: |
+          echo "create github release for tag ${VERSION} (dry run: ${DRY_RUN})"
+      - run: |
+          echo "publish docs for ${VERSION} (dry run: ${DRY_RUN})"
+      - run: |
+          echo "announce on slack that ${VERSION} has been released (dry run: ${DRY_RUN})"
