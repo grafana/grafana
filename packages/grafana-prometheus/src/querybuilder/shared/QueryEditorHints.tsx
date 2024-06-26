@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { PromQueryEditorProps } from '../../components/types';
+
 import { QueryHint } from '@grafana/data';
-import { Button, Tooltip } from '@grafana/ui';
 import { reportInteraction } from '@grafana/runtime';
+import { Button, Tooltip } from '@grafana/ui';
+
+import { PromQueryEditorProps } from '../../components/types';
 
 export function QueryEditorHints(props: PromQueryEditorProps) {
   const [hints, setHints] = useState<QueryHint[]>([]);

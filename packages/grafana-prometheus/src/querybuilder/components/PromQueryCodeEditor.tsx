@@ -7,9 +7,9 @@ import { useStyles2 } from '@grafana/ui';
 
 import { PromQueryField } from '../../components/PromQueryField';
 import { PromQueryEditorProps } from '../../components/types';
+import { QueryEditorHints } from '../shared/QueryEditorHints';
 
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
-import { QueryEditorHints } from '../shared/QueryEditorHints';
 
 type PromQueryCodeEditorProps = PromQueryEditorProps & {
   showExplain: boolean;
