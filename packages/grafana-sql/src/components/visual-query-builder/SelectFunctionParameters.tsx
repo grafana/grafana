@@ -99,6 +99,7 @@ export function SelectFunctionParameters({ query, onSqlChange, currentColumnInde
                 <Select
                   value={getColumnValue(macroOrFunction?.parameters![index])}
                   options={fieldsFromFunction?.[index]}
+                  data-testid={selectors.components.SQLQueryEditor.selectFunctionParameter(funcParam.name)}
                   inputId={selectInputId}
                   menuShouldPortal
                   allowCustomValue

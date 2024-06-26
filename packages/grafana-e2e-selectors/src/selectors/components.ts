@@ -593,6 +593,7 @@ export const Components = {
   SQLQueryEditor: {
     selectColumn: 'data-testid select-column',
     selectColumnInput: 'data-testid select-column-input',
+    selectFunctionParameter: (name: string) => `data-testid select-function-parameter-${name}`,
     selectAggregation: 'data-testid select-aggregation',
     selectAggregationInput: 'data-testid select-aggregation-input',
     selectAlias: 'data-testid select-alias',
