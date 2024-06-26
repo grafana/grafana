@@ -53,10 +53,10 @@ lineage: schemas: [{
 		} @cuetsy(kind="interface")
 
 		#NavLink: {
-			id?:     string
-			text?:   string
-			url?:    string
-			target?: string
+			id:     string
+			text:   string
+			url:    string
+			target: string
 		} @cuetsy(kind="interface")
 	}
 }]

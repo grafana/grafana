@@ -30,10 +30,10 @@ export const defaultNavbarPreference: Partial<NavbarPreference> = {
 };
 
 export interface NavLink {
-  id?: string;
-  target?: string;
-  text?: string;
-  url?: string;
+  id: string;
+  target: string;
+  text: string;
+  url: string;
 }
 
 /**
