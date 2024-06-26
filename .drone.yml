@@ -652,6 +652,7 @@ steps:
 - commands:
   - apt-get update
   - apt-get install -yq netcat
+  - yarn install
   - yarn e2e:storybook
   depends_on:
   - grafana-server
@@ -2010,6 +2011,7 @@ steps:
 - commands:
   - apt-get update
   - apt-get install -yq netcat
+  - yarn install
   - yarn e2e:storybook
   depends_on:
   - grafana-server
@@ -5085,6 +5087,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: ca1b0877c97975c84c5bdbb76f51bb1eb6d8a1204b34d2380677860639bb7676
+hmac: 17657b3c848d718fbe72d1cdfbed8ca20214fedc23ea10d501d26ea2ba247217
 
 ...

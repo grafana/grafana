@@ -788,6 +788,7 @@ def e2e_storybook_step():
         "commands": [
             "apt-get update",
             "apt-get install -yq netcat",
+            "yarn install",
             "yarn e2e:storybook",
         ],
     }
