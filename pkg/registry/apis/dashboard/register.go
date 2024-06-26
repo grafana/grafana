@@ -1,6 +1,8 @@
 package dashboard
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -133,9 +135,10 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		access:         b.access,
 		tableConverter: store.TableConvertor,
 	}
+	fmt.Printf("%v\n", legacyStore)
 
 	storage := map[string]rest.Storage{}
-	storage[resourceInfo.StoragePath()] = legacyStore
+	//storage[resourceInfo.StoragePath()] = legacyStore
 	storage[resourceInfo.StoragePath("dto")] = &DTOConnector{
 		builder: b,
 	}
@@ -149,7 +152,11 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		if err := store.CompleteWithOptions(options); err != nil {
 			return nil, err
 		}
-		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, store, reg)
+		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(
+			grafanarest.Mode1,
+			store, //legacyStore,
+			store,
+			reg)
 	}
 
 	// Summary
