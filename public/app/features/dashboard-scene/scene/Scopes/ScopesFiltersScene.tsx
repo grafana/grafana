@@ -19,7 +19,7 @@ import { ScopesInput } from './ScopesInput';
 import { ScopesScene } from './ScopesScene';
 import { ScopesTree } from './ScopesTree';
 import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
-import { NodesMap, SelectedScope, TreeScope } from './types';
+import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
 import { getBasicScope } from './utils';
 
 export interface ScopesFiltersSceneState extends SceneObjectState {
@@ -47,7 +47,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       nodes: {
         '': {
           name: '',
-          type: 'result',
+          reason: NodeReason.Result,
           nodeType: 'container',
           title: '',
           isExpandable: true,
@@ -126,7 +126,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
             .reduce<NodesMap>((acc, nodeName) => {
               acc[nodeName] = {
                 ...currentNode.nodes[nodeName],
-                type: 'persisted',
+                reason: NodeReason.Persisted,
               };
 
               return acc;

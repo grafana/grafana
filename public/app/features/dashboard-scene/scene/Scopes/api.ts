@@ -1,8 +1,8 @@
-import { Scope, ScopeSpec, ScopeNode, ScopeDashboardBinding } from '@grafana/data';
+import { Scope, ScopeDashboardBinding, ScopeNode, ScopeSpec } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 
-import { NodesMap, SelectedScope, SuggestedDashboard, TreeScope } from './types';
+import { NodeReason, NodesMap, SelectedScope, SuggestedDashboard, TreeScope } from './types';
 import { getBasicScope, mergeScopes } from './utils';
 
 const group = 'scope.grafana.app';
@@ -37,7 +37,7 @@ export async function fetchNodes(parent: string, query: string): Promise<NodesMa
       isSelectable: spec.linkType === 'scope',
       isExpanded: false,
       query: '',
-      type: 'result',
+      reason: NodeReason.Result,
       nodes: {},
     };
     return acc;

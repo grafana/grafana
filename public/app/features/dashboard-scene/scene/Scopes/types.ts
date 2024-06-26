@@ -1,8 +1,13 @@
 import { Scope, ScopeDashboardBinding, ScopeNodeSpec } from '@grafana/data';
 
+export enum NodeReason {
+  Persisted,
+  Result,
+}
+
 export interface Node extends ScopeNodeSpec {
   name: string;
-  type: 'persisted' | 'result';
+  reason: NodeReason;
   isExpandable: boolean;
   isSelectable: boolean;
   isExpanded: boolean;

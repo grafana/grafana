@@ -7,7 +7,7 @@ import { t } from 'app/core/internationalization';
 import { ScopesTree } from './ScopesTree';
 import { Node, TreeScope } from './types';
 
-export interface ScopesTreeLevelProps {
+export interface ScopesTreeItemProps {
   anyChildExpanded: boolean;
   anyChildSelected: boolean;
   isNodeLoading: boolean;
@@ -21,7 +21,7 @@ export interface ScopesTreeLevelProps {
   onNodeSelectToggle: (path: string[]) => void;
 }
 
-export function ScopesTreeLevel({
+export function ScopesTreeItem({
   anyChildExpanded,
   anyChildSelected,
   loadingNodeName,
@@ -32,7 +32,7 @@ export function ScopesTreeLevel({
   scopes,
   onNodeSelectToggle,
   onNodeUpdate,
-}: ScopesTreeLevelProps) {
+}: ScopesTreeItemProps) {
   const styles = useStyles2(getStyles);
 
   return (

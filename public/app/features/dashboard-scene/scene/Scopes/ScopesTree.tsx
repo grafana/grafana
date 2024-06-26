@@ -7,8 +7,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Input, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { ScopesTreeLevel } from './ScopesTreeLevel';
-import { Node, NodesMap, TreeScope } from './types';
+import { ScopesTreeItem } from './ScopesTreeItem';
+import { Node, NodeReason, NodesMap, TreeScope } from './types';
 
 export interface ScopesTreeProps {
   nodes: NodesMap;
@@ -35,12 +35,12 @@ export function ScopesTree({
 
   const { persistedNodes, resultsNodes } = childNodesArr.reduce<Record<string, Node[]>>(
     (acc, node) => {
-      switch (node.type) {
-        case 'persisted':
+      switch (node.reason) {
+        case NodeReason.Persisted:
           acc.persistedNodes.push(node);
           break;
 
-        case 'result':
+        case NodeReason.Result:
           acc.resultsNodes.push(node);
           break;
       }
@@ -78,7 +78,7 @@ export function ScopesTree({
         <Skeleton count={5} className={styles.loader} />
       ) : (
         <>
-          <ScopesTreeLevel
+          <ScopesTreeItem
             anyChildExpanded={anyChildExpanded}
             anyChildSelected={anyChildSelected}
             isNodeLoading={isNodeLoading}
@@ -102,7 +102,7 @@ export function ScopesTree({
             </h6>
           ) : null}
 
-          <ScopesTreeLevel
+          <ScopesTreeItem
             anyChildExpanded={anyChildExpanded}
             anyChildSelected={anyChildSelected}
             isNodeLoading={isNodeLoading}
