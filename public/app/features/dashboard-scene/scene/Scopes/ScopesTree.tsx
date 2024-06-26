@@ -57,7 +57,6 @@ export function ScopesTree({
 
   const scopeNames = scopes.map(({ scopeName }) => scopeName);
   const anyChildExpanded = childNodesArr.some(({ isExpanded }) => isExpanded);
-  const anyChildSelected = childNodesArr.some(({ linkId }) => linkId && scopeNames.includes(linkId!));
 
   const onQueryUpdate = useMemo(() => debounce(onNodeUpdate, 500), [onNodeUpdate]);
 
@@ -80,7 +79,6 @@ export function ScopesTree({
         <>
           <ScopesTreeItem
             anyChildExpanded={anyChildExpanded}
-            anyChildSelected={anyChildSelected}
             isNodeLoading={isNodeLoading}
             loadingNodeName={loadingNodeName}
             node={node}
@@ -104,7 +102,6 @@ export function ScopesTree({
 
           <ScopesTreeItem
             anyChildExpanded={anyChildExpanded}
-            anyChildSelected={anyChildSelected}
             isNodeLoading={isNodeLoading}
             loadingNodeName={loadingNodeName}
             node={node}

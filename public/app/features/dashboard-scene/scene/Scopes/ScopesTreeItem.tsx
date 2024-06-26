@@ -9,7 +9,6 @@ import { Node, TreeScope } from './types';
 
 export interface ScopesTreeItemProps {
   anyChildExpanded: boolean;
-  anyChildSelected: boolean;
   isNodeLoading: boolean;
   loadingNodeName: string | undefined;
   node: Node;
@@ -23,7 +22,6 @@ export interface ScopesTreeItemProps {
 
 export function ScopesTreeItem({
   anyChildExpanded,
-  anyChildSelected,
   loadingNodeName,
   node,
   nodePath,
