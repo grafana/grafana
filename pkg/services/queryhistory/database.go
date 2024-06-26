@@ -19,8 +19,9 @@ type DataQuery struct {
 }
 
 type QueryHistoryDatasourceIndex struct {
-	DatasourceUID      string `xorm:"datasource_uid"`
-	QueryHistoryItemID int64  `xorm:"query_history_item_id"`
+	ID                  int64  `xorm:"pk autoincr 'id'"`
+	DatasourceUID       string `xorm:"datasource_uid"`
+	QueryHistoryItemUID string `xorm:"query_history_item_uid"`
 }
 
 // createQuery adds a query into query history
@@ -60,8 +61,8 @@ func (s QueryHistoryService) createQuery(ctx context.Context, user *user.SignedI
 	var indexItems []QueryHistoryDatasourceIndex
 	for _, query := range queries {
 		indexItems = append(indexItems, QueryHistoryDatasourceIndex{
-			QueryHistoryItemID: queryHistory.ID,
-			DatasourceUID:      query.Datasource.UID,
+			QueryHistoryItemUID: queryHistory.UID,
+			DatasourceUID:       query.Datasource.UID,
 		})
 	}
 
@@ -132,6 +133,7 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.Signe
 		`)
 		writeStarredSQL(query, s.store, &countBuilder, true)
 		writeFiltersSQL(query, user, s.store, &countBuilder)
+
 		_, err = session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Get(&totalCount)
 		return err
 	})
@@ -317,8 +319,8 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 	var rowsCount int64
 
 	err := s.store.WithDbSession(ctx, func(session *db.Session) error {
-		sql := `DELETE 
-			FROM query_history 
+		sql := `DELETE
+			FROM query_history
 			WHERE uid IN (
 				SELECT uid FROM (
 					SELECT uid FROM query_history
@@ -372,17 +374,17 @@ func (s QueryHistoryService) enforceQueryHistoryRowLimit(ctx context.Context, li
 		if countRowsToDelete > 0 {
 			var sql string
 			if starredQueries {
-				sql = `DELETE FROM query_history_star 
+				sql = `DELETE FROM query_history_star
 					WHERE id IN (
 						SELECT id FROM (
 							SELECT id FROM query_history_star
-							ORDER BY id ASC 
+							ORDER BY id ASC
 							LIMIT ?
 						) AS q
 					)`
 			} else {
-				sql = `DELETE 
-					FROM query_history 
+				sql = `DELETE
+					FROM query_history
 					WHERE uid IN (
 						SELECT uid FROM (
 							SELECT uid FROM query_history
