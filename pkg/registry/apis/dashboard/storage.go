@@ -66,9 +66,3 @@ func newStorage(scheme *runtime.Scheme) (*storage, error) {
 		})
 	return &storage{Store: store}, nil
 }
-
-// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
-func (s *storage) Compare(storageObj, legacyObj runtime.Object) bool {
-	//TODO: define the comparison logic between a dashboard returned by the storage and a dashboard returned by the legacy storage
-	return false
-}

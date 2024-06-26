@@ -207,9 +207,3 @@ func SelectableScopeNodeFields(obj *scope.ScopeNode) fields.Set {
 		"spec.parentName": parentName,
 	})
 }
-
-// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
-func (s *storage) Compare(storageObj, legacyObj runtime.Object) bool {
-	//TODO: define the comparison logic between a scope returned by the storage and a scope returned by the legacy storage
-	return false
-}

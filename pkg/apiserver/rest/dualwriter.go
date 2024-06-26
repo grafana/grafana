@@ -1,7 +1,9 @@
 package rest
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -35,8 +37,6 @@ type Storage interface {
 	rest.CreaterUpdater
 	rest.GracefulDeleter
 	rest.CollectionDeleter
-	// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
-	Compare(storageObj, legacyObj runtime.Object) bool
 }
 
 // LegacyStorage is a storage implementation that writes to the Grafana SQL database.
@@ -206,4 +206,26 @@ func SetDualWritingMode(
 	// 	#TODO add support for other combinations of desired and current modes
 
 	return NewDualWriter(currentMode, legacy, storage, reg), nil
+}
+
+var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructuredConverter)
+
+// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
+func Compare(storageObj, legacyObj runtime.Object) bool {
+	return bytes.Equal(removeMeta(storageObj), removeMeta(legacyObj))
+}
+
+func removeMeta(obj runtime.Object) []byte {
+	cpy := obj.DeepCopyObject()
+	unstObj, err := defaultConverter.ToUnstructured(cpy)
+	if err != nil {
+		return nil
+	}
+	// we don't want to compare meta fields
+	delete(unstObj, "meta")
+	jsonObj, err := json.Marshal(cpy)
+	if err != nil {
+		return nil
+	}
+	return jsonObj
 }
