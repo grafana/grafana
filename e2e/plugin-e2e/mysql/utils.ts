@@ -1,8 +1,8 @@
-import { PlaywrightTestArgs } from "@playwright/test";
+import { PlaywrightTestArgs } from '@playwright/test';
 
-import { PluginFixture } from "@grafana/plugin-e2e";
+import { PluginFixture } from '@grafana/plugin-e2e';
 
-import { datasetResponse, fieldsResponse, tablesResponse } from "./mocks/mysql.mocks";
+import { datasetResponse, fieldsResponse, tablesResponse } from './mocks/mysql.mocks';
 
 export async function mockDataSourceRequest({ context, explorePage, selectors }: PlaywrightTestArgs & PluginFixture) {
   await explorePage.datasource.set('gdev-mysql');
