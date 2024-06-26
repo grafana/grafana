@@ -50,6 +50,16 @@ export const mocksScopes: Scope[] = [
     },
   },
   {
+    metadata: { name: 'slothClusterEast' },
+    spec: {
+      title: 'slothClusterEast',
+      type: 'cluster',
+      description: 'slothClusterEast',
+      category: 'clusters',
+      filters: [{ key: 'cluster', value: 'slothClusterEast', operator: 'equals' }],
+    },
+  },
+  {
     metadata: { name: 'slothPictureFactory' },
     spec: {
       title: 'slothPictureFactory',
@@ -215,6 +225,17 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
   },
   {
     parent: 'clusters',
+    metadata: { name: 'clusters-slothClusterEast' },
+    spec: {
+      nodeType: 'leaf',
+      title: 'slothClusterEast',
+      description: 'slothClusterEast',
+      linkType: 'scope',
+      linkId: 'slothClusterEast',
+    },
+  },
+  {
+    parent: 'clusters',
     metadata: { name: 'clusters.applications' },
     spec: {
       nodeType: 'container',
@@ -312,6 +333,10 @@ const selectors = {
     search: 'scopes-dashboards-search',
     loading: 'scopes-dashboards-loading',
     dashboard: (uid: string) => `scopes-dashboards-${uid}`,
+    notFoundNoScopes: 'scopes-dashboards-notFoundNoScopes',
+    notFoundForScope: 'scopes-dashboards-notFoundForScope',
+    notFoundForFilter: 'scopes-dashboards-notFoundForFilter',
+    notFoundForFilterClear: 'scopes-dashboards-notFoundForFilter-clear',
   },
 };
 
@@ -324,10 +349,15 @@ export const queryDashboardsExpand = () => screen.queryByTestId(selectors.dashbo
 export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
 export const queryDashboardsContainer = () => screen.queryByTestId(selectors.dashboards.container);
 export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
+export const queryDashboardsSearch = () => screen.queryByTestId(selectors.dashboards.search);
 export const getDashboardsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.dashboards.search);
 export const queryAllDashboard = (uid: string) => screen.queryAllByTestId(selectors.dashboards.dashboard(uid));
 export const queryDashboard = (uid: string) => screen.queryByTestId(selectors.dashboards.dashboard(uid));
 export const getDashboard = (uid: string) => screen.getByTestId(selectors.dashboards.dashboard(uid));
+export const getNotFoundNoScopes = () => screen.getByTestId(selectors.dashboards.notFoundNoScopes);
+export const getNotFoundForScope = () => screen.getByTestId(selectors.dashboards.notFoundForScope);
+export const getNotFoundForFilter = () => screen.getByTestId(selectors.dashboards.notFoundForFilter);
+export const getNotFoundForFilterClear = () => screen.getByTestId(selectors.dashboards.notFoundForFilterClear);
 
 export const getApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
 export const getApplicationsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search('applications'));
@@ -357,6 +387,8 @@ export const getClustersSlothClusterNorthRadio = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterNorth'));
 export const getClustersSlothClusterSouthRadio = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterSouth'));
+export const getClustersSlothClusterEastRadio = () =>
+  screen.getByTestId<HTMLInputElement>(selectors.tree.radio('clusters-slothClusterEast'));
 
 export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
   return new DashboardScene({
