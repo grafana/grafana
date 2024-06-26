@@ -228,5 +228,13 @@ func TestMetaAccessor(t *testing.T) {
 		}, obj2.GetAnnotations())
 
 		require.Equal(t, "xxx", meta.FindTitle("xxx"))
+
+		rt, ok := meta.GetRuntimeObject()
+		require.Equal(t, obj2, rt)
+		require.True(t, ok)
+
+		spec, err := meta.GetSpec()
+		require.Equal(t, obj2.Spec, spec)
+		require.NoError(t, err)
 	})
 }

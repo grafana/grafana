@@ -58,6 +58,7 @@ type GrafanaMetaAccessor interface {
 	metav1.Object
 
 	GetGroupVersionKind() schema.GroupVersionKind
+	GetRuntimeObject() (runtime.Object, bool)
 
 	// Helper to get resource versions as int64, however this is not required
 	// See: https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions
@@ -89,6 +90,8 @@ type GrafanaMetaAccessor interface {
 	GetOriginPath() string
 	GetOriginHash() string
 	GetOriginTimestamp() (*time.Time, error)
+
+	GetSpec() (any, error)
 
 	// Find a title in the object
 	// This will reflect the object and try to get:
@@ -131,6 +134,11 @@ func (m *grafanaMetaAccessor) GetResourceVersionInt64() (int64, error) {
 		return 0, nil
 	}
 	return strconv.ParseInt(v, 10, 64)
+}
+
+func (m *grafanaMetaAccessor) GetRuntimeObject() (runtime.Object, bool) {
+	obj, ok := m.raw.(runtime.Object)
+	return obj, ok
 }
 
 func (m *grafanaMetaAccessor) SetResourceVersionInt64(rv int64) {
@@ -484,6 +492,16 @@ func (m *grafanaMetaAccessor) GetGroupVersionKind() schema.GroupVersionKind {
 		}
 	}
 	return gvk
+}
+
+func (m *grafanaMetaAccessor) GetSpec() (spec any, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error reading spec")
+		}
+	}()
+	spec = m.r.FieldByName("Spec").Interface()
+	return
 }
 
 func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
