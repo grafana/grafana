@@ -43,8 +43,8 @@ function navigateToEditor(editorType: editorType, name: string): void {
   e2e.components.DataSourcePicker.container().should('be.visible').click();
   cy.contains(name).scrollIntoView().should('be.visible').click();
 }
-
-describe('Prometheus query editor', () => {
+// Skipping due to flakiness/race conditions with same old arch test e2e/various-suite/prometheus-editor.spec.ts
+describe.skip('Prometheus query editor', () => {
   it('should have a kickstart component', () => {
     navigateToEditor('Code', 'prometheus');
     e2e.components.QueryBuilder.queryPatterns().scrollIntoView().should('exist');
