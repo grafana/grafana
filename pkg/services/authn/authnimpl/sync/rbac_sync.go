@@ -51,11 +51,7 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 	}
 
 	// closure to get span of GroupScopesByAction
-	grouped := func(ctx context.Context) map[string][]string {
-		ctx, span := s.tracer.Start(ctx, "rbac.sync.SyncPermissionsHook.GroupScopesByAction")
-		defer span.End()
-		return accesscontrol.GroupScopesByAction(permissions)
-	}(ctx)
+	grouped := accesscontrol.GroupScopesByActionContext(ctx, permissions)
 
 	// Restrict access to the list of actions
 	actionsLookup := ident.ClientParams.FetchPermissionsParams.ActionsLookup

@@ -12,7 +12,12 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol")
 
 type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
@@ -232,19 +237,36 @@ func BuildPermissionsMap(permissions []Permission) map[string]bool {
 }
 
 // GroupScopesByAction will group scopes on action
+//
+// Deprecated: use GroupScopesByActionContext instead
 func GroupScopesByAction(permissions []Permission) map[string][]string {
+	return GroupScopesByActionContext(context.Background(), permissions)
+}
+
+// GroupScopesByAction will group scopes on action
+func GroupScopesByActionContext(ctx context.Context, permissions []Permission) map[string][]string {
+	ctx, span := tracer.Start(ctx, "accesscontrol.GroupScopesByActionContext", trace.WithAttributes(
+		attribute.Int("permissions_count", len(permissions)),
+	))
+	defer span.End()
+
 	// Use a map to deduplicate scopes.
 	// User can have the same permission from multiple sources (e.g. team, basic role, directly assigned etc).
 	// User will also have duplicate permissions if action sets are used, as we will be double writing permissions for a while.
 	m := make(map[string]map[string]struct{})
+	actionCount := 0
 	for i := range permissions {
 		if _, ok := m[permissions[i].Action]; !ok {
+			actionCount++
 			m[permissions[i].Action] = make(map[string]struct{})
 		}
 		m[permissions[i].Action][permissions[i].Scope] = struct{}{}
 	}
 
+	span.AddEvent("finished deduplicating permissions")
+
 	res := make(map[string][]string, len(m))
+	scopeCount := 0
 	for action, scopes := range m {
 		scopeList := make([]string, len(scopes))
 		i := 0
@@ -253,7 +275,16 @@ func GroupScopesByAction(permissions []Permission) map[string][]string {
 			i++
 		}
 		res[action] = scopeList
+		scopeCount += len(scopeList)
 	}
+
+	span.AddEvent("finished mapping actions")
+
+	span.SetAttributes(
+		attribute.Int("deduplicated_scope_count", scopeCount),
+		attribute.Int("scope_reduction", len(permissions)-scopeCount),
+		attribute.Int("actions_count", len(res)),
+	)
 
 	return res
 }
