@@ -7,5 +7,6 @@ trap "kill 0" EXIT
 
 # start storybook in the background and wait for it to respond
 yarn storybook &
+PORT=9001 ./scripts/grafana-server/wait-for-grafana
 
 PORT=9001 ./e2e/run-suite storybook true
