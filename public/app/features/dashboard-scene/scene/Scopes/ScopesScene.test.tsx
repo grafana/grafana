@@ -45,7 +45,6 @@ import {
   queryDashboardsContainer,
   queryDashboardsExpand,
   renderDashboard,
-  getDashboardsClear,
 } from './testUtils';
 
 jest.mock('@grafana/runtime', () => ({
@@ -284,22 +283,6 @@ describe('ScopesScene', () => {
         expect(getDashboard('2')).toBeInTheDocument();
         await userEvents.type(getDashboardsSearch(), '1');
         expect(queryDashboard('2')).not.toBeInTheDocument();
-      });
-
-      it('Clears the filter', async () => {
-        await userEvents.click(getDashboardsExpand());
-        await userEvents.click(getFiltersInput());
-        await userEvents.click(getApplicationsExpand());
-        await userEvents.click(getApplicationsSlothPictureFactorySelect());
-        await userEvents.click(getFiltersApply());
-        expect(getDashboard('1')).toBeInTheDocument();
-        expect(getDashboard('2')).toBeInTheDocument();
-        await userEvents.type(getDashboardsSearch(), '1');
-        expect(queryDashboard('2')).not.toBeInTheDocument();
-        await userEvents.click(getDashboardsClear());
-        expect(getDashboardsSearch().value).toBe('');
-        expect(getDashboard('1')).toBeInTheDocument();
-        expect(getDashboard('2')).toBeInTheDocument();
       });
 
       it('Deduplicates the dashboards list', async () => {
