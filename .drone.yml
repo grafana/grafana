@@ -572,6 +572,10 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
+  - yarn e2e:storybook
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-storybook-suite
+- commands:
   - apk add --update tar bash
   - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*amd64.tar.gz -C grafana
@@ -649,10 +653,6 @@ steps:
     HOST: grafana-server
   image: cypress/included:13.10.0
   name: end-to-end-tests-scenes/various-suite
-- commands:
-  - yarn e2e:storybook
-  image: cypress/included:13.10.0
-  name: end-to-end-tests-storybook-suite
 - commands:
   - cd /
   - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
@@ -1923,6 +1923,10 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
+  - yarn e2e:storybook
+  image: cypress/included:13.10.0
+  name: end-to-end-tests-storybook-suite
+- commands:
   - apk add --update tar bash
   - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*amd64.tar.gz -C grafana
@@ -2000,10 +2004,6 @@ steps:
     HOST: grafana-server
   image: cypress/included:13.10.0
   name: end-to-end-tests-scenes/various-suite
-- commands:
-  - yarn e2e:storybook
-  image: cypress/included:13.10.0
-  name: end-to-end-tests-storybook-suite
 - commands:
   - cd /
   - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
@@ -5071,6 +5071,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 5be918bef831ee6bf633c7a82ed2fc5c1b5ee52b6ebe83d1cb21369f0f745cba
+hmac: 0768f322989c3d08893b508d9321ed148a32b544c79540b78cd8761bd8b12b20
 
 ...
