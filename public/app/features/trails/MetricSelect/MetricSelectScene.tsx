@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
 import { useReducer } from 'react';
-import * as React from 'react';
 
 import { GrafanaTheme2, RawTimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
@@ -25,7 +24,8 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { InlineSwitch, Field, Alert, Icon, useStyles2, Tooltip, Input } from '@grafana/ui';
+import { Alert, Field, Icon, InlineSwitch, Input, Tooltip, useStyles2 } from '@grafana/ui';
+import { Select } from '@grafana/ui/';
 
 import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
@@ -61,11 +61,31 @@ export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneFlexLayout;
   rootGroup?: Node;
   showPreviews?: boolean;
+  displayAs?: (typeof metricSelectSceneDisplayOptions)[number]['value'];
   metricNames?: string[];
   metricNamesLoading?: boolean;
   metricNamesError?: string;
   metricNamesWarning?: string;
 }
+
+const metricSelectSceneDisplayOptions = [
+  {
+    label: 'Default',
+    value: 'all-metrics',
+  },
+  {
+    label: 'Nested Rows',
+    value: 'nested-rows',
+  },
+  {
+    label: 'Tab View',
+    value: 'tabs',
+  },
+  {
+    label: 'Prefix Filter',
+    value: 'prefix-filter',
+  },
+] as const;
 
 const ROW_PREVIEW_HEIGHT = '175px';
 
@@ -96,6 +116,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           children: [],
         }),
       showPreviews: true,
+      displayAs: 'all-metrics',
       ...state,
     });
 
@@ -439,6 +460,15 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               suffix={metricNamesWarningIcon}
             />
           </Field>
+          <Field label={'Select Display'} className={styles.displayOption}>
+            <Select
+              width={20}
+              onChange={(val) => {
+                console.log(val);
+              }}
+              options={metricSelectSceneDisplayOptions.map((o) => ({ label: o.label, value: o.value }))}
+            />
+          </Field>
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
         {metricNamesError && (
@@ -492,6 +522,10 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     searchField: css({
       flexGrow: 1,
+      marginBottom: 0,
+    }),
+    displayOption: css({
+      flexGrow: 0,
       marginBottom: 0,
     }),
     warningIcon: css({
