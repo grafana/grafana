@@ -42,7 +42,7 @@ Some example combinations:
 | No Basic Role | View              | Read access to all general silences. Read access to alert rules and their rule-specific silences _only_ in the given folder and subfolders.                              |
 | No Basic Role | Edit              | Above access and write access to alert rules (given necessary data source query permissions) and their rule-specific silences _only_ in the given folder and subfolders. |
 | Viewer        | -                 | Read access to alert rules and silences in all folders.                                                                                                                  |
-| Viewer        | Edit              | Read access to alert rules and silences in all folders. Write access to alert rules and their rule-specific silences **only** in the given folder and subfolders.        |
+| Viewer        | Edit              | Read access to alert rules and silences in all folders. Write access to alert rules and their rule-specific silences _only_ in the given folder and subfolders.          |
 | Editor        | View              | Read and write access to alert rules and silences in all folders. Access can only be extended.                                                                             |
 
 {{< admonition type="note" >}}
