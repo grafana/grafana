@@ -121,6 +121,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   secretsManagerPluginEnabled = false;
   supportBundlesEnabled = false;
   http2Enabled = false;
+  http1MaxParallelRequests = 30;
   dateFormats?: SystemDateFormatSettings;
   grafanaJavascriptAgent = {
     enabled: false,

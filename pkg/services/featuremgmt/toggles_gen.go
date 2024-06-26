@@ -818,4 +818,8 @@ const (
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
+
+	// FlagOodleInsight
+	// Enables Oodle Insight for Grafana
+	FlagOodleInsight = "oodleInsight"
 )

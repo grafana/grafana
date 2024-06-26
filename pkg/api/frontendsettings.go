@@ -270,6 +270,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RendererDefaultImageScale:        hs.Cfg.RendererDefaultImageScale,
 		SecretsManagerPluginEnabled:      secretsManagerPluginEnabled,
 		Http2Enabled:                     hs.Cfg.Protocol == setting.HTTP2Scheme,
+		Http1MaxParallelRequests:         hs.Cfg.HTTP1MaxParallelRequests,
 		GrafanaJavascriptAgent:           hs.Cfg.GrafanaJavascriptAgent,
 		PluginCatalogURL:                 hs.Cfg.PluginCatalogURL,
 		PluginAdminEnabled:               hs.Cfg.PluginAdminEnabled,

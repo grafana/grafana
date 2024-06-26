@@ -12,8 +12,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -34,6 +32,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type fakePluginRequestValidator struct {
@@ -47,6 +47,67 @@ type secretsErrorResponseBody struct {
 
 func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) error {
 	return rv.err
+}
+
+// `/ds/query` endpoint test
+func TestAPIEndpoint_Metrics_QueryMetricsV2_ForwardHeaders(t *testing.T) {
+	forwardHeader1 := "Header1"
+	forwardHeader2 := "Header2"
+	dontForwardHeader := "Header3"
+	forwardHeaderValues := "headerValue"
+	cfg := setting.NewCfg()
+	queryDataServiceWithAssert := func(assertQueryDataRequest func(req *backend.QueryDataRequest)) query.Service {
+		return query.ProvideService(
+			cfg,
+			nil,
+			nil,
+			&fakePluginRequestValidator{},
+			&fakePluginClient{
+				QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+					assertQueryDataRequest(req)
+					resp := backend.Responses{
+						"A": backend.DataResponse{
+							Status: http.StatusOK,
+						},
+					}
+					return &backend.QueryDataResponse{Responses: resp}, nil
+				},
+			},
+			plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{
+					{
+						JSONData: plugins.JSONData{
+							ID: "grafana",
+						},
+					},
+				},
+			}, &fakeDatasources.FakeCacheService{}, &fakeDatasources.FakeDataSourceService{},
+				pluginSettings.ProvideService(dbtest.NewFakeDB(), secretstest.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider()),
+		)
+	}
+
+	forwardHeadersAllowList = []string{forwardHeader1, forwardHeader2}
+	t.Run("Forward headers are added to the request to the plugin", func(t *testing.T) {
+		serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
+			assertQDR := func(req *backend.QueryDataRequest) {
+				assert.Equal(t, req.GetHTTPHeader(forwardHeader1), forwardHeaderValues)
+				assert.Equal(t, req.GetHTTPHeader(forwardHeader2), forwardHeaderValues)
+				assert.True(t, len(req.GetHTTPHeader(dontForwardHeader)) == 0)
+			}
+			hs.queryDataService = queryDataServiceWithAssert(assertQDR)
+			hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, true)
+			hs.QuotaService = quotatest.New(false, nil)
+		})
+		req := serverFeatureEnabled.NewPostRequest("/api/ds/query", strings.NewReader(reqValid))
+		req.Header.Set(forwardHeader1, forwardHeaderValues)
+		req.Header.Set(forwardHeader2, forwardHeaderValues)
+		req.Header.Set(dontForwardHeader, forwardHeaderValues)
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {datasources.ActionQuery: []string{datasources.ScopeAll}}}})
+		resp, err := serverFeatureEnabled.SendJSON(req)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	})
 }
 
 // `/ds/query` endpoint test

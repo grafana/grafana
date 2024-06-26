@@ -222,6 +222,7 @@ type FrontendSettingsDTO struct {
 	RendererDefaultImageScale        float64                        `json:"rendererDefaultImageScale"`
 	SecretsManagerPluginEnabled      bool                           `json:"secretsManagerPluginEnabled"`
 	Http2Enabled                     bool                           `json:"http2Enabled"`
+	Http1MaxParallelRequests         int                            `json:"http1MaxParallelRequests"`
 	GrafanaJavascriptAgent           setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent"`
 	PluginCatalogURL                 string                         `json:"pluginCatalogURL"`
 	PluginAdminEnabled               bool                           `json:"pluginAdminEnabled"`

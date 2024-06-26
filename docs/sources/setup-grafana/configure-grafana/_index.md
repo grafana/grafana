@@ -193,6 +193,10 @@ Folder that contains [provisioning]({{< relref "../../administration/provisionin
 
 `http`,`https`,`h2` or `socket`
 
+### http1_max_parallel_requests
+The maximum number of parallel requests that can be handled by the HTTP/1.1 server. Default is `30`.
+30
+
 ### min_tls_version
 
 The TLS Handshake requires a minimum TLS version. The available options are TLS1.2 and TLS1.3.

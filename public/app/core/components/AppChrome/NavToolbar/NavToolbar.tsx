@@ -100,7 +100,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     menuButton: css({
-      display: 'flex',
+      // display: 'flex',
+      display: 'none',
       alignItems: 'center',
       marginRight: theme.spacing(1),
     }),

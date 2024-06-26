@@ -104,6 +104,7 @@ type Cfg struct {
 	ServeFromSubPath  bool
 	StaticRootPath    string
 	Protocol          Scheme
+	HTTP1MaxParallelRequests int
 	SocketGid         int
 	SocketMode        int
 	SocketPath        string
@@ -1922,6 +1923,8 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
 		cfg.SocketPath = server.Key("socket").String()
 	}
+
+	cfg.HTTP1MaxParallelRequests = server.Key("http1_max_parallel_requests").MustInt(30)
 
 	cfg.MinTLSVersion = valueAsString(server, "min_tls_version", "TLS1.2")
 	if cfg.MinTLSVersion == "TLS1.0" || cfg.MinTLSVersion == "TLS1.1" {

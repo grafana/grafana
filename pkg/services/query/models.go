@@ -11,6 +11,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
+type queryDataConf struct {
+	// forwardHeaders are header values that should be forwarded to the data source.
+	forwardHeaders map[string]string
+}
+
+type queryDataOptions func(q *queryDataConf)
+
+// WithForwardHeaders is a helper function to set the forwardHeaders to queryDataConf.
+func WithForwardHeaders(forwardHeaders map[string]string) queryDataOptions {
+	return func(opts *queryDataConf) {
+		opts.forwardHeaders = forwardHeaders
+	}
+}
+
 type parsedQuery struct {
 	datasource *datasources.DataSource
 	query      backend.DataQuery
@@ -18,9 +32,10 @@ type parsedQuery struct {
 }
 
 type parsedRequest struct {
-	hasExpression bool
-	parsedQueries map[string][]parsedQuery
-	dsTypes       map[string]bool
+	forwardHeaders map[string]string
+	hasExpression  bool
+	parsedQueries  map[string][]parsedQuery
+	dsTypes        map[string]bool
 }
 
 func (pr parsedRequest) getFlattenedQueries() []parsedQuery {

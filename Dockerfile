@@ -2,7 +2,7 @@
 
 ARG BASE_IMAGE=alpine:3.19.1
 ARG JS_IMAGE=node:20-alpine
-ARG JS_PLATFORM=linux/amd64
+ARG JS_PLATFORM=linux/arm64
 ARG GO_IMAGE=golang:1.23.1-alpine
 
 ARG GO_SRC=go-builder
@@ -23,6 +23,8 @@ COPY LICENSE ./
 COPY conf/defaults.ini ./conf/defaults.ini
 
 RUN apk add --no-cache make build-base python3
+
+RUN apk add --no-cache git make clang build-base python3
 
 RUN yarn install --immutable
 

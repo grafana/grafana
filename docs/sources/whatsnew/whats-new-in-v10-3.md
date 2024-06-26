@@ -18,7 +18,7 @@ weight: -40
 
 # What’s new in Grafana v10.3
 
-Welcome to Grafana 10.3! Read on to learn about changes to navigation, visualizations and transformations, alerting, profiling, and logs.
+Welcome to Oodle 10.3! Read on to learn about changes to navigation, visualizations and transformations, alerting, profiling, and logs.
 
 We've also included here features released in Grafana 10.2.3, as well as breaking changes from that release. Features that were included in the 10.2.3 release are marked with an asterisk.
 

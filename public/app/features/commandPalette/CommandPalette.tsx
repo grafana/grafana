@@ -51,7 +51,7 @@ export function CommandPalette() {
     showing && reportInteraction('command_palette_opened');
   }, [showing]);
 
-  return actions.length > 0 ? (
+  return (actions.length > 0 && window.location.hostname !== 'play.oodle.ai') ? (
     <KBarPortal>
       <KBarPositioner className={styles.positioner}>
         <KBarAnimator className={styles.animator}>

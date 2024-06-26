@@ -451,6 +451,41 @@ func TestQueryDataMultipleSources(t *testing.T) {
 	})
 }
 
+func TestQueryDataHeaderForwarding(t *testing.T) {
+	t.Run("forward headers are sent to the datasource", func(t *testing.T) {
+		tc := setup(t)
+		query1, err := simplejson.NewJson([]byte(`{"datasource": {"type": "mysql","uid": "ds1"},"refId": "A"}`))
+		require.NoError(t, err)
+		queries := []*simplejson.Json{query1}
+		reqDTO := dtos.MetricRequest{
+			From:    "2022-01-01",
+			To:      "2022-01-02",
+			Queries: queries,
+			Debug:   false,
+		}
+
+		req, err := http.NewRequest("POST", "http://localhost:3000", nil)
+		require.NoError(t, err)
+		reqCtx := &contextmodel.ReqContext{
+			SkipQueryCache: false,
+			Context: &web.Context{
+				Resp: web.NewResponseWriter(http.MethodGet, httptest.NewRecorder()),
+				Req:  req,
+			},
+		}
+		ctx := ctxkey.Set(context.Background(), reqCtx)
+
+		headerKey := "X-forward-header"
+		headerVal := "headerVal"
+		_, err = tc.queryService.QueryData(ctx, tc.signedInUser, true, reqDTO, WithForwardHeaders(map[string]string{headerKey: headerVal}))
+		require.NoError(t, err)
+
+		header := contexthandler.FromContext(ctx).Resp.Header()
+		assert.Equal(t, len(header.Values(headerKey)), 1)
+		assert.Equal(t, header.Values(headerKey)[0], headerVal)
+	})
+}
+
 func setup(t *testing.T) *testContext {
 	dss := []*datasources.DataSource{
 		{UID: "gIEkMvIVz", Type: "postgres"},
@@ -568,6 +603,15 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 
 	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && reqCtx.Resp != nil {
 		reqCtx.Resp.Header().Add("test", fmt.Sprintf("header-%d", time.Now().Nanosecond()))
+
+		// Set all headers from the request to the response so that we can assert if necessary headers were
+		// forwarded to the destination.
+		for h, values := range req.GetHTTPHeaders() {
+			for _, v := range values {
+				reqCtx.Resp.Header().Add(h, v)
+			}
+		}
+
 	}
 
 	return &backend.QueryDataResponse{Responses: make(backend.Responses)}, nil

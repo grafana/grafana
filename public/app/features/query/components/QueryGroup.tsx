@@ -262,7 +262,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { data, queries } = this.state;
 
     return (
-      <div aria-label={selectors.components.QueryTab.content}>
+      <div data-testid={selectors.components.QueryTab.content}>
         <QueryEditorRows
           queries={queries}
           dsSettings={dsSettings}
@@ -404,6 +404,7 @@ export function QueryGroupTopSection({
 }: QueryGroupTopSectionProps) {
   const styles = getStyles();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+
   return (
     <>
       <div data-testid={selectors.components.QueryTab.queryGroupTopSection}>
@@ -446,7 +447,7 @@ export function QueryGroupTopSection({
                   <Button
                     variant="secondary"
                     onClick={onOpenQueryInspector}
-                    aria-label={selectors.components.QueryTab.queryInspectorButton}
+                    data-testid={selectors.components.QueryTab.queryInspectorButton}
                   >
                     Query inspector
                   </Button>

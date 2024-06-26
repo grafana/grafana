@@ -21,7 +21,7 @@ export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props
   };
 
   return (
-    <li className={styles.breadcrumbWrapper} style={{ flexGrow }}>
+    <li className={styles.breadcrumbWrapper} style={{ flexGrow, display: index === 0 ? 'none' : 'flex' }}>
       {isCurrent ? (
         <span
           data-testid={Components.Breadcrumbs.breadcrumb(text)}

@@ -1524,6 +1524,13 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
 		},
+		{
+			Name:        "oodleInsight",
+			Description: "Enables Oodle Insight for Grafana",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOodleSquad,
+			Expression:  "false",
+		},
 	}
 )
 

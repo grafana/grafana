@@ -14,8 +14,7 @@ interface WorkerEntry {
 
 export class FetchQueueWorker {
   constructor(fetchQueue: FetchQueue, responseQueue: ResponseQueue, config: GrafanaBootConfig) {
-    const maxParallelRequests = config?.http2Enabled ? 1000 : 5; // for tests that don't mock GrafanaBootConfig the config param will be undefined
-
+    const maxParallelRequests = config?.http2Enabled ? 1000 : config?.http1MaxParallelRequests; // for tests that don't mock GrafanaBootConfig the config param will be undefined
     // This will create an implicit live subscription for as long as this class lives.
     // But as FetchQueueWorker is used by the singleton backendSrv that also lives for as long as Grafana app lives
     // I think this ok. We could add some disposable pattern later if the need arises.

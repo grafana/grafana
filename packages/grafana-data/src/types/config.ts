@@ -206,6 +206,7 @@ export interface GrafanaConfig {
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
+  http1MaxParallelRequests: number;
   dateFormats?: SystemDateFormatSettings;
   grafanaJavascriptAgent: GrafanaJavascriptAgentConfig;
   customTheme?: any;

@@ -13,6 +13,9 @@ export interface Props {
 
 export function PanelHeaderMenu({ items }: Props) {
   const renderItems = (items: PanelMenuItem[]) => {
+    function sendEventToParent(data: { type: string; payload: { source: string; value: string } }) {
+      window.parent.postMessage(data, '*');
+    }
     return items.map((item) => {
       switch (item.type) {
         case 'divider':
@@ -31,7 +34,13 @@ export function PanelHeaderMenu({ items }: Props) {
               icon={item.iconClassName}
               childItems={item.subMenu ? renderItems(item.subMenu) : undefined}
               url={item.href}
-              onClick={item.onClick}
+              onClick={(e) => [
+                sendEventToParent({
+                  type: 'message',
+                  payload: { source: 'oodle-grafana', value: item.text.toLowerCase() + 'Panel' },
+                }),
+                item?.onClick && item?.onClick(e),
+              ]}
               shortcut={item.shortcut}
               testId={selectors.components.Panels.Panel.menuItems(item.text)}
             />

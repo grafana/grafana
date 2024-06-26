@@ -3139,6 +3139,18 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "oodleInsight",
+        "resourceVersion": "1721950968536",
+        "creationTimestamp": "2024-07-25T23:42:48Z"
+      },
+      "spec": {
+        "description": "Enables Oodle Insight for Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/oodle-squad"
+      }
     }
   ]
 }

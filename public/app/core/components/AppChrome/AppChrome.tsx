@@ -55,7 +55,8 @@ export function AppChrome({ children }: Props) {
   });
 
   const handleMegaMenu = () => {
-    chrome.setMegaMenuOpen(!state.megaMenuOpen);
+    // chrome.setMegaMenuOpen(!state.megaMenuOpen);
+    chrome.setMegaMenuOpen(false);
   };
 
   const { pathname, search } = locationService.getLocation();
@@ -122,25 +123,8 @@ export function AppChrome({ children }: Props) {
       )}
       <div className={contentClass}>
         <div className={styles.panes}>
-          {!isSingleTopNav && menuDockedAndOpen && (
-            <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
-          )}
-          {!state.chromeless && (
-            <div
-              className={cx(styles.scopesDashboardsContainer, {
-                [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
-              })}
-            >
-              <ScopesDashboards />
-            </div>
-          )}
-          <main
-            className={cx(styles.pageContainer, {
-              [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
-              [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-            })}
-            id="pageContent"
-          >
+
+          <main className={styles.pageContainer} id="pageContent">
             {children}
           </main>
         </div>
