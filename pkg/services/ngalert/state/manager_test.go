@@ -324,12 +324,16 @@ func TestProcessEvalResults(t *testing.T) {
 		ExecErrState:    models.ErrorErrState,
 	}
 
-	newEvaluation := func(evalTime time.Time, evalState eval.State) *state.Evaluation {
+	newEvaluationWithValues := func(evalTime time.Time, evalState eval.State, values map[string]float64) *state.Evaluation {
 		return &state.Evaluation{
 			EvaluationTime:  evalTime,
 			EvaluationState: evalState,
-			Values:          make(map[string]*float64),
+			Values:          values,
 		}
+	}
+
+	newEvaluation := func(evalTime time.Time, evalState eval.State) *state.Evaluation {
+		return newEvaluationWithValues(evalTime, evalState, make(map[string]float64))
 	}
 
 	baseRuleWith := func(mutators ...models.AlertRuleMutator) *models.AlertRule {
@@ -1378,6 +1382,74 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:                "expected Reduce and Math expression values",
+			alertRule:           baseRuleWith(),
+			expectedAnnotations: 1,
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(
+						eval.WithState(eval.Alerting),
+						eval.WithLabels(data.Labels{}),
+						eval.WithValues(map[string]eval.NumberValueCapture{
+							"A": {Var: "A", Labels: data.Labels{}, Value: util.Pointer(1.0)},
+							"B": {Var: "B", Labels: data.Labels{}, Value: util.Pointer(2.0)},
+						})),
+				},
+			},
+			expectedStates: []*state.State{
+				{
+					Labels:            labels["system + rule"],
+					ResultFingerprint: data.Labels{}.Fingerprint(),
+					State:             eval.Alerting,
+					LatestResult: newEvaluationWithValues(t1, eval.Alerting, map[string]float64{
+						"A": 1.0,
+						"B": 2.0,
+					}),
+					StartsAt:           t1,
+					EndsAt:             t1.Add(state.ResendDelay * 4),
+					LastEvaluationTime: t1,
+					Values: map[string]float64{
+						"A": 1.0,
+						"B": 2.0,
+					},
+				},
+			},
+		},
+		{
+			desc:                "expected Classic Condition values",
+			alertRule:           baseRuleWith(),
+			expectedAnnotations: 1,
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(
+						eval.WithState(eval.Alerting),
+						eval.WithLabels(data.Labels{}),
+						eval.WithValues(map[string]eval.NumberValueCapture{
+							"B0": {Var: "B", Labels: data.Labels{}, Value: util.Pointer(1.0)},
+							"B1": {Var: "B", Labels: data.Labels{}, Value: util.Pointer(2.0)},
+						})),
+				},
+			},
+			expectedStates: []*state.State{
+				{
+					Labels:            labels["system + rule"],
+					ResultFingerprint: data.Labels{}.Fingerprint(),
+					State:             eval.Alerting,
+					LatestResult: newEvaluationWithValues(t1, eval.Alerting, map[string]float64{
+						"B0": 1.0,
+						"B1": 2.0,
+					}),
+					StartsAt:           t1,
+					EndsAt:             t1.Add(state.ResendDelay * 4),
+					LastEvaluationTime: t1,
+					Values: map[string]float64{
+						"B0": 1.0,
+						"B1": 2.0,
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1485,6 +1557,47 @@ func TestProcessEvalResults(t *testing.T) {
 						`, results)
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_state_calculation_duration_seconds", "grafana_alerting_state_calculation_total")
 			require.NoError(t, err)
+		})
+
+		t.Run("converts values to NaN if not defined", func(t *testing.T) {
+			// We set up our own special test for this, since we need special comparison logic - NaN != NaN
+			fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
+			reg := prometheus.NewPedanticRegistry()
+			stateMetrics := metrics.NewStateMetrics(reg)
+			m := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+			store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, m)
+			annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
+			hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, m)
+			clk := clock.NewMock()
+			cfg := state.ManagerCfg{
+				Metrics:       stateMetrics,
+				ExternalURL:   nil,
+				InstanceStore: &state.FakeInstanceStore{},
+				Images:        &state.NotAvailableImageService{},
+				Clock:         clk,
+				Historian:     hist,
+				Tracer:        tracing.InitializeTracerForTest(),
+				Log:           log.New("ngalert.state.manager"),
+			}
+			st := state.NewManager(cfg, state.NewNoopPersister())
+			rule := baseRuleWith()
+			time := t1
+			res := eval.Results{newResult(
+				eval.WithState(eval.Alerting),
+				eval.WithLabels(data.Labels{}),
+				eval.WithValues(map[string]eval.NumberValueCapture{
+					"A": {Var: "A", Labels: data.Labels{}, Value: nil},
+				}),
+			)}
+
+			_ = st.ProcessEvalResults(context.Background(), time, rule, res, systemLabels)
+
+			states := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+			require.Len(t, states, 1)
+			state := states[0]
+			require.NotNil(t, state.Values)
+			require.Contains(t, state.Values, "A")
+			require.Truef(t, math.IsNaN(state.Values["A"]), "expected NaN but got %v", state.Values["A"])
 		})
 	}
 
@@ -1623,7 +1736,7 @@ func TestStaleResultsHandler(t *testing.T) {
 					LatestResult: &state.Evaluation{
 						EvaluationTime:  evaluationTime,
 						EvaluationState: eval.Normal,
-						Values:          make(map[string]*float64),
+						Values:          make(map[string]float64),
 						Condition:       "A",
 					},
 					StartsAt:           evaluationTime,

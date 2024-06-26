@@ -153,7 +153,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		return &Evaluation{
 			EvaluationTime:  evalTime,
 			EvaluationState: evalState,
-			Values:          make(map[string]*float64),
+			Values:          make(map[string]float64),
 		}
 	}
 
