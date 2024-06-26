@@ -314,7 +314,8 @@ export const getMock = jest
 
 const selectors = {
   tree: {
-    search: (nodeId: string) => `scopes-tree-${nodeId}-search`,
+    search: 'scopes-tree-search',
+    headline: 'scopes-tree-headline',
     select: (nodeId: string) => `scopes-tree-${nodeId}-checkbox`,
     radio: (nodeId: string) => `scopes-tree-${nodeId}-radio`,
     expand: (nodeId: string) => `scopes-tree-${nodeId}-expand`,
@@ -359,8 +360,9 @@ export const getNotFoundForScope = () => screen.getByTestId(selectors.dashboards
 export const getNotFoundForFilter = () => screen.getByTestId(selectors.dashboards.notFoundForFilter);
 export const getNotFoundForFilterClear = () => screen.getByTestId(selectors.dashboards.notFoundForFilterClear);
 
+export const getTreeSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search);
+export const getTreeHeadline = () => screen.getByTestId(selectors.tree.headline);
 export const getApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications'));
-export const getApplicationsSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search('applications'));
 export const queryApplicationsSlothPictureFactoryTitle = () =>
   screen.queryByTestId(selectors.tree.title('applications-slothPictureFactory'));
 export const getApplicationsSlothPictureFactoryTitle = () =>
@@ -374,8 +376,6 @@ export const getApplicationsSlothVoteTrackerSelect = () =>
 export const queryApplicationsClustersTitle = () => screen.queryByTestId(selectors.tree.title('applications.clusters'));
 export const getApplicationsClustersSelect = () => screen.getByTestId(selectors.tree.select('applications.clusters'));
 export const getApplicationsClustersExpand = () => screen.getByTestId(selectors.tree.expand('applications.clusters'));
-export const queryApplicationsClustersSlothClusterNorthTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications.clusters-slothClusterNorth'));
 export const getApplicationsClustersSlothClusterNorthSelect = () =>
   screen.getByTestId(selectors.tree.select('applications.clusters-slothClusterNorth'));
 export const getApplicationsClustersSlothClusterSouthSelect = () =>

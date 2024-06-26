@@ -48,7 +48,7 @@ export function ScopesTreeItem({
 
         return (
           <div key={childNode.name} role="treeitem" aria-selected={childNode.isExpanded}>
-            <div className={styles.itemTitle}>
+            <div className={styles.title}>
               {childNode.isSelectable && !childNode.isExpanded ? (
                 node.disableMultiSelect ? (
                   <RadioButtonDot
@@ -88,7 +88,7 @@ export function ScopesTreeItem({
               <span data-testid={`scopes-tree-${childNode.name}-title`}>{childNode.title}</span>
             </div>
 
-            <div className={styles.itemChildren}>
+            <div className={styles.children}>
               {childNode.isExpanded && (
                 <ScopesTree
                   nodes={node.nodes}
@@ -109,7 +109,7 @@ export function ScopesTreeItem({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    itemTitle: css({
+    title: css({
       alignItems: 'center',
       display: 'flex',
       gap: theme.spacing(1),
@@ -121,7 +121,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         gap: 0,
       }),
     }),
-    itemChildren: css({
+    children: css({
       paddingLeft: theme.spacing(4),
     }),
   };

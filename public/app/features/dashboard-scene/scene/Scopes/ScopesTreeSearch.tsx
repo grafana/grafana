@@ -8,13 +8,12 @@ import { t } from 'app/core/internationalization';
 
 export interface ScopesTreeSearchProps {
   anyChildExpanded: boolean;
-  nodeId: string;
   nodePath: string[];
   query: string;
   onNodeUpdate: (path: string[], isExpanded: boolean, query: string) => void;
 }
 
-export function ScopesTreeSearch({ anyChildExpanded, nodeId, nodePath, query, onNodeUpdate }: ScopesTreeSearchProps) {
+export function ScopesTreeSearch({ anyChildExpanded, nodePath, query, onNodeUpdate }: ScopesTreeSearchProps) {
   const styles = useStyles2(getStyles);
 
   const onQueryUpdate = useMemo(() => debounce(onNodeUpdate, 500), [onNodeUpdate]);
@@ -29,7 +28,7 @@ export function ScopesTreeSearch({ anyChildExpanded, nodeId, nodePath, query, on
       className={styles.input}
       placeholder={t('scopes.tree.search', 'Search')}
       defaultValue={query}
-      data-testid={`scopes-tree-${nodeId}-search`}
+      data-testid="scopes-tree-search"
       onInput={(evt) => onQueryUpdate(nodePath, true, evt.currentTarget.value)}
     />
   );

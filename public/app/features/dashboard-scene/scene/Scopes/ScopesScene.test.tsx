@@ -19,7 +19,6 @@ import {
   getApplicationsClustersSlothClusterNorthSelect,
   getApplicationsClustersSlothClusterSouthSelect,
   getApplicationsExpand,
-  getApplicationsSearch,
   getApplicationsSlothPictureFactorySelect,
   getApplicationsSlothPictureFactoryTitle,
   getApplicationsSlothVoteTrackerSelect,
@@ -35,6 +34,7 @@ import {
   getDashboardsExpand,
   getDashboardsSearch,
   getMock,
+  getTreeSearch,
   mocksScopes,
   queryAllDashboard,
   queryFiltersApply,
@@ -175,13 +175,13 @@ describe('ScopesScene', () => {
       it('Search works', async () => {
         await userEvents.click(getFiltersInput());
         await userEvents.click(getApplicationsExpand());
-        await userEvents.type(getApplicationsSearch(), 'Clusters');
+        await userEvents.type(getTreeSearch(), 'Clusters');
         await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(3));
         expect(queryApplicationsSlothPictureFactoryTitle()).not.toBeInTheDocument();
         expect(queryApplicationsSlothVoteTrackerTitle()).not.toBeInTheDocument();
         expect(getApplicationsClustersSelect()).toBeInTheDocument();
-        await userEvents.clear(getApplicationsSearch());
-        await userEvents.type(getApplicationsSearch(), 'sloth');
+        await userEvents.clear(getTreeSearch());
+        await userEvents.type(getTreeSearch(), 'sloth');
         await waitFor(() => expect(fetchNodesSpy).toHaveBeenCalledTimes(4));
         expect(getApplicationsSlothPictureFactoryTitle()).toBeInTheDocument();
         expect(getApplicationsSlothVoteTrackerSelect()).toBeInTheDocument();
