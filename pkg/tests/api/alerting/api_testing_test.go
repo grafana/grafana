@@ -93,9 +93,6 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		}
 	}
 
-	// # TODO: Fix this test https://drone.grafana.net/grafana/grafana/184565/1/7
-	t.Skip()
-
 	t.Run("valid rule should accept request", func(t *testing.T) {
 		status, body := apiCli.SubmitRuleForTesting(t, genRule(alertRuleGen()))
 		require.Equal(t, http.StatusOK, status)
