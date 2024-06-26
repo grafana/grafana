@@ -1671,6 +1671,7 @@
       "collapse": "Collapse",
       "expand": "Expand",
       "headline": {
+        "noResults": "No results found for your query",
         "recommended": "Recommended",
         "results": "Results"
       },
