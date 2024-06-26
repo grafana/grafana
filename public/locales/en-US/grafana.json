@@ -797,6 +797,18 @@
       "success": "Library panel saved"
     }
   },
+  "link": {
+    "share": {
+      "config-alert-description": "Updating your settings will modify the default copy link to include these changes.",
+      "config-alert-title": "Link configuration",
+      "config-description": "Create a personalized, direct link to share your dashboard within your organization, with the following customization settings:",
+      "copy-link-button": "Copy link",
+      "copy-to-clipboard": "Link copied to clipboard",
+      "short-url-label": "Shorten link",
+      "time-range-description": "Change the current relative time range to an absolute time range",
+      "time-range-label": "Lock time range"
+    }
+  },
   "login": {
     "error": {
       "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
@@ -1431,7 +1443,7 @@
     },
     "email-sharing": {
       "accept-button": "Accept",
-      "alert-text": "Effective immediately, sharing public dashboards by email incurs a cost per active user. Going forward, you’ll be prompted for payment whenever you add new users to your dashboard.",
+      "alert-text": "Sharing dashboards by email is billed per user for the duration of the 30-day token, regardless of how many dashboards are shared. Billing stops after 30 days unless you renew the token.",
       "bill-ack": "I understand that adding users requires payment.*",
       "cancel-button": "Cancel",
       "input-invalid-email-text": "Invalid email",
@@ -1440,7 +1452,7 @@
       "invite-field-desc": "Invite people by email",
       "invite-field-label": "Invite",
       "learn-more-button": "Learn more",
-      "recipient-email-placeholder": "Type in the recipient email address and press Enter",
+      "recipient-email-placeholder": "Email",
       "recipient-invalid-email-text": "Invalid email",
       "recipient-invitation-button": "Invite",
       "recipient-invitation-description": "Invite someone by email",
@@ -1500,16 +1512,15 @@
       "success-delete-old": "Public dashboard deleted!"
     },
     "share-configuration": {
-      "access-label": "can access",
       "share-type-label": "Link access"
     },
     "share-externally": {
       "copy-link-button": "Copy external link",
-      "email-share-type-option-description": "Only people with access can open with the link",
+      "email-share-type-option-description": "Only people with the link can access dashboard",
       "email-share-type-option-label": "Only specific people",
       "pause-access-button": "Pause access",
       "pause-access-tooltip": "Pausing will temporarily disable access to this dashboard for all users",
-      "public-share-type-option-description": "Anyone with the link can access",
+      "public-share-type-option-description": "Anyone with the link can access dashboard",
       "public-share-type-option-label": "Anyone with the link",
       "resume-access-button": "Resume access",
       "revoke-access-button": "Revoke access",
@@ -1587,6 +1598,9 @@
       "delete": "Delete permanently",
       "restore": "Restore"
     },
+    "page": {
+      "empty-state": "You haven't deleted any dashboards recently."
+    },
     "permanently-delete-modal": {
       "confirm-text": "Delete",
       "delete-button": "Delete",
@@ -1642,6 +1656,7 @@
       "title": "Select scopes"
     },
     "suggestedDashboards": {
+      "clear": "Clear search",
       "loading": "Loading dashboards",
       "search": "Search",
       "toggle": {
@@ -1701,7 +1716,9 @@
       "share-internally-description": "Advanced settings",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
-    }
+    },
+    "share-button": "Share",
+    "share-button-tooltip": "Copy shortened link"
   },
   "share-drawer": {
     "confirm-action": {

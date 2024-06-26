@@ -10,6 +10,7 @@ import (
 	"gocloud.dev/blob/fileblob"
 	"k8s.io/klog/v2"
 
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -124,7 +125,7 @@ func (b *entityBridge) Stop() {
 
 // Convert resource key to the entity key
 func toEntityKey(key *resource.ResourceKey) string {
-	e := entity.Key{
+	e := grafanaregistry.Key{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,

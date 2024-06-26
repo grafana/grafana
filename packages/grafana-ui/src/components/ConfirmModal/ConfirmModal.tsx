@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { IconName } from '@grafana/data';
 
@@ -44,6 +44,8 @@ export interface ConfirmModalProps {
   onDismiss(): void;
   /** Alternative action callback */
   onAlternative?(): void;
+  /** Disable the confirm button and the confirm text input if needed */
+  disabled?: boolean;
 }
 
 export const ConfirmModal = ({
@@ -63,6 +65,7 @@ export const ConfirmModal = ({
   onDismiss,
   onAlternative,
   confirmButtonVariant = 'destructive',
+  disabled,
 }: ConfirmModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
 
@@ -80,6 +83,7 @@ export const ConfirmModal = ({
         onConfirm={onConfirm}
         onDismiss={onDismiss}
         onAlternative={onAlternative}
+        disabled={disabled}
       />
     </Modal>
   );

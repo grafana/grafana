@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Menu } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import {
