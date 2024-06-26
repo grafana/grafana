@@ -137,8 +137,6 @@ const handlers = [
   rulerRuleHandler(),
   historyHandler(),
   updateRulerRuleNamespaceHandler(),
-  rulerRuleGroupHandler(),
   deleteRulerRuleGroupHandler(),
-  rulerRuleHandler(),
 ];
 export default handlers;
