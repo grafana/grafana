@@ -1657,6 +1657,10 @@
     },
     "suggestedDashboards": {
       "loading": "Loading dashboards",
+      "noResultsForFilter": "No results found for your query",
+      "noResultsForFilterClear": "Clear search",
+      "noResultsForScopes": "No dashboards found for the selected scopes",
+      "noResultsNoScopes": "No scopes selected",
       "search": "Search",
       "toggle": {
         "collapse": "Collapse scope filters",
