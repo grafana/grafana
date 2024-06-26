@@ -362,7 +362,13 @@ func jsonifyRow(line string) (json.RawMessage, error) {
 	return json.Marshal(entry)
 }
 
-func selectorString(query models.HistoryQuery, folderUIDs []string) string {
+// BuildLogQuery converts models.HistoryQuery and a list of folder UIDs to a Loki query.
+// If query size exceeds the `maxQuerySize` then it re-builds query ignoring the folderUIDs. If it's still bigger - returns ErrQueryTooLong.
+// Returns a tuple:
+// - loki query
+// - true if filter by folder UID was not added to the query ignored
+// - error if log query cannot be constructed, and ErrQueryTooLong if user-defined query exceeds maximum allowed size
+func BuildLogQuery(query models.HistoryQuery, folderUIDs []string, maxQuerySize int) (string, bool, error) {
 	orgIDstr := strconv.FormatInt(query.OrgID, 10)
 	b := strings.Builder{}
 	b.WriteString("{")
@@ -390,33 +396,30 @@ func selectorString(query models.HistoryQuery, folderUIDs []string) string {
 		b.WriteString("`")
 	}
 	b.WriteString("}")
-	return b.String()
-}
-
-// BuildLogQuery converts models.HistoryQuery and a list of folder UIDs to a Loki query.
-// If query size exceeds the `maxQuerySize` then it re-builds query ignoring the folderUIDs. If it's still bigger - returns ErrQueryTooLong.
-// Returns a tuple:
-// - loki query
-// - true if filter by folder UID was not added to the query ignored
-// - error if log query cannot be constructed, and ErrQueryTooLong if user-defined query exceeds maximum allowed size
-func BuildLogQuery(query models.HistoryQuery, folderUIDs []string, maxQuerySize int) (string, bool, error) {
-	logQL := selectorString(query, folderUIDs)
 
 	if queryHasLogFilters(query) {
-		logQL = fmt.Sprintf("%s | json", logQL)
+		b.WriteString(" | json")
 	}
 
 	if query.RuleUID != "" {
-		logQL = fmt.Sprintf("%s | ruleUID=%q", logQL, query.RuleUID)
+		b.WriteString(" | ruleUID=")
+		_, err := fmt.Fprintf(&b, "%q", query.RuleUID)
+		if err != nil {
+			return "", false, err
+		}
 	}
 	if query.DashboardUID != "" {
-		logQL = fmt.Sprintf("%s | dashboardUID=%q", logQL, query.DashboardUID)
+		b.WriteString(" | dashboardUID=")
+		_, err := fmt.Fprintf(&b, "%q", query.DashboardUID)
+		if err != nil {
+			return "", false, err
+		}
 	}
 	if query.PanelID != 0 {
-		logQL = fmt.Sprintf("%s | panelID=%d", logQL, query.PanelID)
+		b.WriteString(" | panelID=")
+		b.WriteString(strconv.FormatInt(query.PanelID, 10))
 	}
 
-	labelFilters := ""
 	labelKeys := make([]string, 0, len(query.Labels))
 	for k := range query.Labels {
 		labelKeys = append(labelKeys, k)
@@ -424,11 +427,16 @@ func BuildLogQuery(query models.HistoryQuery, folderUIDs []string, maxQuerySize 
 	// Ensure that all queries we build are deterministic.
 	sort.Strings(labelKeys)
 	for _, k := range labelKeys {
-		labelFilters += fmt.Sprintf(" | labels_%s=%q", k, query.Labels[k])
+		b.WriteString(" | labels_")
+		b.WriteString(k)
+		b.WriteString("=")
+		_, err := fmt.Fprintf(&b, "%q", query.Labels[k])
+		if err != nil {
+			return "", false, err
+		}
 	}
-	logQL += labelFilters
 
-	if len(logQL) > maxQuerySize {
+	if b.Len() > maxQuerySize {
 		// if request is too long, try to drop filter by folder UIDs.
 		if len(folderUIDs) > 0 {
 			logQL, tooLong, err := BuildLogQuery(query, nil, maxQuerySize)
@@ -441,10 +449,10 @@ func BuildLogQuery(query models.HistoryQuery, folderUIDs []string, maxQuerySize 
 			return logQL, true, nil
 		}
 		// if the query is too long even without filter by folders, then fail
-		return "", false, NewErrLokiQueryTooLong(logQL, maxQuerySize)
+		return "", false, NewErrLokiQueryTooLong(b.String(), maxQuerySize)
 	}
 
-	return logQL, false, nil
+	return b.String(), false, nil
 }
 
 func queryHasLogFilters(query models.HistoryQuery) bool {
