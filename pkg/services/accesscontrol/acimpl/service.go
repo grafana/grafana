@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -24,8 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -47,9 +46,8 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
 
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver, features featuremgmt.FeatureToggles,
-	tracer tracing.Tracer, zanzana zanzana.Client) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer, zanzana)
+	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (*Service, error) {
+	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
@@ -67,7 +65,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 	return service, nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver, cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer, zanzana zanzana.Client) *Service {
+func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver, cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
 	s := &Service{
 		actionResolver: actionResolver,
 		cache:          cache,
@@ -77,7 +75,6 @@ func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, actionResolv
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
 		tracer:         tracer,
-		zanzana:        zanzana,
 	}
 
 	return s
@@ -94,7 +91,6 @@ type Service struct {
 	roles          map[string]*accesscontrol.RoleDTO
 	store          accesscontrol.Store
 	tracer         tracing.Tracer
-	zanzana        zanzana.Client
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -426,16 +422,7 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 	return nil
 }
 
-func GetActionFilter(options accesscontrol.SearchOptions) func(action string) bool {
-	return func(action string) bool {
-		if options.ActionPrefix != "" {
-			return strings.HasPrefix(action, options.ActionPrefix)
-		} else {
-			return action == options.Action
-		}
-	}
-}
-
+// TODO potential changes needed here?
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
@@ -450,6 +437,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 
 		// Reroute to the user specific implementation of search permissions
 		// because it leverages the user permission cache.
+		// TODO
 		userPerms, err := s.SearchUserPermissions(ctx, usr.GetOrgID(), options)
 		if err != nil {
 			return nil, err
@@ -473,12 +461,6 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, usr.GetOrgID())
 	if err != nil {
 		return nil, err
-	}
-
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		options.ActionSets = s.actionResolver.ResolveAction(options.Action)
-		options.ActionSets = append(options.ActionSets,
-			s.actionResolver.ResolveActionPrefix(options.ActionPrefix)...)
 	}
 
 	// Get managed permissions (DB)
@@ -540,12 +522,6 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		}
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && len(options.ActionSets) > 0 {
-		for id, perms := range res {
-			res[id] = s.actionResolver.ExpandActionSetsWithFilter(perms, GetActionFilter(options))
-		}
-	}
-
 	return res, nil
 }
 
@@ -590,22 +566,12 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 		}
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		searchOptions.ActionSets = s.actionResolver.ResolveAction(searchOptions.Action)
-		searchOptions.ActionSets = append(searchOptions.ActionSets,
-			s.actionResolver.ResolveActionPrefix(searchOptions.ActionPrefix)...)
-	}
-
 	// Get permissions from the DB
 	dbPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, searchOptions)
 	if err != nil {
 		return nil, err
 	}
 	permissions = append(permissions, dbPermissions[userID]...)
-
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && len(searchOptions.ActionSets) != 0 {
-		permissions = s.actionResolver.ExpandActionSetsWithFilter(permissions, GetActionFilter(searchOptions))
-	}
 
 	key := accesscontrol.GetSearchPermissionCacheKey(&user.SignedInUser{UserID: userID, OrgID: orgID}, searchOptions)
 	s.cache.Set(key, permissions, cacheTTL)
