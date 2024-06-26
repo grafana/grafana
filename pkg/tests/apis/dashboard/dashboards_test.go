@@ -95,20 +95,6 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 					"patch",
 					"update"
 					]
-				},
-				{
-					"resource": "summary",
-					"responseKind": {
-					"group": "",
-					"kind": "DashboardSummary",
-					"version": ""
-					},
-					"scope": "Namespaced",
-					"singularResource": "summary",
-					"verbs": [
-					"get",
-					"list"
-					]
 				}
 				],
 				"version": "v0alpha1"
