@@ -17014,6 +17014,36 @@
         }
       }
     },
+    "NavLink": {
+      "type": "object",
+      "title": "NavLink defines model for NavLink.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "NavbarPreference": {
+      "type": "object",
+      "title": "NavbarPreference defines model for NavbarPreference.",
+      "properties": {
+        "savedItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NavLink"
+          }
+        }
+      }
+    },
     "NewApiKeyResult": {
       "type": "object",
       "properties": {
@@ -17576,6 +17606,9 @@
         },
         "language": {
           "type": "string"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
@@ -18167,6 +18200,9 @@
         "language": {
           "description": "Selected language (beta)",
           "type": "string"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
@@ -21418,6 +21454,9 @@
         },
         "language": {
           "type": "string"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
