@@ -48,7 +48,6 @@ export const SaveDashboardForm = ({
         }
         setSaving(true);
         options = { ...options, message };
-        debugger;
         const result = await onSubmit(saveModel.clone, options, dashboard);
         if (result.status === 'success') {
           onSuccess();
