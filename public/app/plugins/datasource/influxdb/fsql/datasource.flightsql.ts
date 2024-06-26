@@ -112,9 +112,27 @@ export class FlightSQLDatasource extends SqlDatasource {
         required: true,
         options: (query) => this.fetchFields(query),
       };
+      const intervalParam: FuncParameter = {
+        name: 'Interval',
+        required: true,
+        options: () => {
+          return Promise.resolve([{ label: '$__interval', value: '$__interval' }]);
+        },
+      };
 
-      // TODO: Add macro functions
-      return [...fns.map((fn) => ({ ...fn, parameters: [columnParam] }))];
+      return [
+        ...fns.map((fn) => ({ ...fn, parameters: [columnParam] })),
+        {
+          name: '$__timeGroup',
+          description: 'Time grouping function',
+          parameters: [columnParam, intervalParam],
+        },
+        {
+          name: '$__timeGroupAlias',
+          description: 'Time grouping function with time as alias',
+          parameters: [columnParam, intervalParam],
+        },
+      ];
     } else {
       return fns;
     }
