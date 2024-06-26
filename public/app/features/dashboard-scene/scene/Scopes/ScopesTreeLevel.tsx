@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Checkbox, Icon, IconButton, Input, RadioButtonDot, useStyles2 } from '@grafana/ui';
+import { Checkbox, FilterInput, IconButton, RadioButtonDot, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { NodesMap, TreeScope } from './types';
@@ -37,18 +37,24 @@ export function ScopesTreeLevel({
   const scopeNames = scopes.map(({ scopeName }) => scopeName);
   const anyChildExpanded = childNodesArr.some(({ isExpanded }) => isExpanded);
 
+  const [queryValue, setQueryValue] = useState(node.query);
+  useEffect(() => {
+    setQueryValue(node.query);
+  }, [node.query]);
   const onQueryUpdate = useMemo(() => debounce(onNodeUpdate, 500), [onNodeUpdate]);
 
   return (
     <>
       {!anyChildExpanded && (
-        <Input
-          prefix={<Icon name="filter" />}
-          className={styles.searchInput}
+        <FilterInput
           placeholder={t('scopes.tree.search', 'Search')}
-          defaultValue={node.query}
+          value={queryValue}
+          className={styles.searchInput}
           data-testid={`scopes-tree-${nodeId}-search`}
-          onInput={(evt) => onQueryUpdate(nodePath, true, evt.currentTarget.value)}
+          onChange={(value) => {
+            setQueryValue(value);
+            onQueryUpdate(nodePath, true, value);
+          }}
         />
       )}
 
