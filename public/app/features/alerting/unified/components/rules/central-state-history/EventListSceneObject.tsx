@@ -20,7 +20,6 @@ import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
-import { hashLabelsOrAnnotations } from '../../../utils/rule-id';
 import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
 import { LogRecord } from '../state-history/common';
@@ -91,7 +90,7 @@ function HistoryLogEvents({ logRecords }: HistoryLogEventsProps) {
       {logRecords.map((record) => {
         return (
           <EventRow
-            key={record.timestamp + hashLabelsOrAnnotations(record.line.labels ?? {}) + record.line.current}
+            key={record.timestamp + (record.line.fingerprint ?? '')}
             record={record}
           />
         );
