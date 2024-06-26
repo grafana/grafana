@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -65,13 +66,15 @@ func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Ser
 	actionSetRegistry plugins.ActionSetRegistry,
 	pluginEnvProvider envvars.Provider,
 	tracer tracing.Tracer) *initialization.Initialize {
+	// TODO: remove, just to skip the unused variable error
+	fmt.Printf("%v+", actionSetRegistry)
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
 			ExternalServiceRegistrationStep(cfg, externalServiceRegistry, tracer),
 			initialization.BackendClientInitStep(pluginEnvProvider, bp),
 			initialization.BackendProcessStartStep(pm),
 			RegisterPluginRolesStep(roleRegistry),
-			RegisterActionSetsStep(actionSetRegistry),
+			// RegisterActionSetsStep(actionSetRegistry),
 			ReportBuildMetrics,
 			initialization.PluginRegistrationStep(pr),
 		},
