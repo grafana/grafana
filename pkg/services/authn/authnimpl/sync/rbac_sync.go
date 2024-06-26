@@ -3,7 +3,6 @@ package sync
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -12,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 var (
@@ -52,14 +50,14 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 		ident.Permissions = make(map[int64]map[string][]string, 1)
 	}
 
-	start := time.Now()
-	grouped := accesscontrol.GroupScopesByAction(permissions)
-	elapsed := time.Since(start)
-
-	span.SetAttributes(attribute.Int("group_time_ms", int(elapsed.Milliseconds())))
+	// closure to get span of GroupScopesByAction
+	grouped := func(ctx context.Context) map[string][]string {
+		ctx, span := s.tracer.Start(ctx, "rbac.sync.SyncPermissionsHook.GroupScopesByAction")
+		defer span.End()
+		return accesscontrol.GroupScopesByAction(permissions)
+	}(ctx)
 
 	// Restrict access to the list of actions
-	start = time.Now()
 	actionsLookup := ident.ClientParams.FetchPermissionsParams.ActionsLookup
 	if len(actionsLookup) > 0 {
 		filtered := make(map[string][]string, len(actionsLookup))
@@ -70,11 +68,7 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 		}
 		grouped = filtered
 	}
-
 	ident.Permissions[ident.OrgID] = grouped
-	elapsed = time.Since(start)
-
-	span.SetAttributes(attribute.Int("filter_time_ms", int(elapsed.Milliseconds())))
 
 	return nil
 }
