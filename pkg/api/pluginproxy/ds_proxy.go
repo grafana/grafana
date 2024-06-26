@@ -375,13 +375,18 @@ func (proxy *DataSourceProxy) logRequest() {
 
 	panelPluginId := proxy.ctx.Req.Header.Get("X-Panel-Plugin-Id")
 
+	uri, err := util.SanitizeURI(proxy.ctx.Req.RequestURI)
+	if err == nil {
+		proxy.ctx.Logger.Error("Could not sanitize RequestURI", "error", err)
+	}
+
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	ctxLogger.Info("Proxying incoming request",
 		"userid", proxy.ctx.UserID,
 		"orgid", proxy.ctx.OrgID,
 		"username", proxy.ctx.Login,
 		"datasource", proxy.ds.Type,
-		"uri", proxy.ctx.Req.RequestURI,
+		"uri", uri,
 		"method", proxy.ctx.Req.Method,
 		"panelPluginId", panelPluginId,
 		"body", body)

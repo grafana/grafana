@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { SelectableValue, getDefaultTimeRange, toOption } from '@grafana/data';
 import { QueryBuilderOperationParamEditorProps, VisualQueryModeller } from '@grafana/experimental';

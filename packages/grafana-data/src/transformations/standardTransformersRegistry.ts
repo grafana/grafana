@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { DataFrame, DataTransformerInfo } from '../types';
 import { Registry, RegistryItem } from '../utils/Registry';

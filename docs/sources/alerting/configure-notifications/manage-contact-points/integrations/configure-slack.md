@@ -62,7 +62,7 @@ If you are using a Slack API Token, complete the following steps.
 If you are using a Webhook URL, follow steps 1 and 5 in the [Slack API Quickstart](https://api.slack.com/start/quickstart).
 
 {{< admonition type="note" >}}
-Make sure you copy the Slack app Webhook URL. You will need this when setting up your contact point integration in Grafana Alerting.
+Make sure you copy the Slack app Webhook URL. You need this when setting up your contact point integration in Grafana Alerting.
 {{< /admonition >}}
 
 ## Procedure
@@ -82,12 +82,13 @@ To create your Slack integration in Grafana Alerting, complete the following ste
 
 ## Next steps
 
-To add the contact point and integration you created to your default notification policy, complete the following steps.
+The Slack contact point is ready to receive alert notifications.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification policies**.
-1. In the **Default policy**, click the ellipsis icon (…) and then **Edit**.
-1. Change the default policy to the contact point you created.
-1. Click **Update default policy**.
+To add this contact point to your alert, complete the following steps.
 
-**Note:**
-If you have more than one contact point, add a new notification policy rather than edit the default one, so you can route specific alerts to Slack. For more information, refer to [Notification policies](ref:nested-policy).
+1. In Grafana, navigate to **Alerting** > **Alert rules**.
+1. Edit or create a new alert rule.
+1. Scroll down to the **Configure labels and notifications** section.
+1. Under Notifications click **Select contact point**.
+1. From the drop-down menu, select the previously created contact point.
+1. **Click Save rule and exit**.

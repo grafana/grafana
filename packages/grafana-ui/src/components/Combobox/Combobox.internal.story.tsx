@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { Chance } from 'chance';
-import React, { ComponentProps, useMemo, useState } from 'react';
+import { ComponentProps, useMemo, useState } from 'react';
 
 import { Combobox, Option, Value } from './Combobox';
 
