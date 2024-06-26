@@ -5,23 +5,23 @@ import (
 	"database/sql"
 	"fmt"
 	"path/filepath"
-	"strings"
+	"sync"
 	"time"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var (
@@ -29,6 +29,9 @@ var (
 )
 
 type dashboardRow struct {
+	// The numeric resource version for this dashboard
+	ResourceVersion int64
+
 	// Dashboard resource
 	Dash *dashboardsV0.Dashboard
 
@@ -37,9 +40,6 @@ type dashboardRow struct {
 
 	// The folder UID (needed for access control checks)
 	FolderUID string
-
-	// Needed for fast summary access
-	Tags []string
 
 	// Size (in bytes) of the dashboard payload
 	Bytes int
@@ -55,6 +55,10 @@ type dashboardSqlAccess struct {
 	namespacer   request.NamespaceMapper
 	dashStore    dashboards.Store
 	provisioning provisioning.ProvisioningService
+
+	// Typically one... the server wrapper
+	subscribers []chan *resource.WrittenEvent
+	mutex       sync.Mutex
 }
 
 func NewDashboardAccess(sql db.DB, namespacer request.NamespaceMapper, dashStore dashboards.Store, provisioning provisioning.ProvisioningService) DashboardAccess {
@@ -71,8 +75,8 @@ const selector = `SELECT
 	dashboard.org_id, dashboard.id,
 	dashboard.uid,slug,
 	dashboard.folder_uid,
-	dashboard.created,dashboard.created_by,CreatedUSER.login,
-	dashboard.updated,dashboard.updated_by,UpdatedUSER.login,
+	dashboard.created,dashboard.created_by,CreatedUSER.uid as created_uid,
+	dashboard.updated,dashboard.updated_by,UpdatedUSER.uid as updated_uid,
 	plugin_id,
 	dashboard_provisioning.name as origin_name,
 	dashboard_provisioning.external_id as origin_path,
@@ -87,50 +91,29 @@ const selector = `SELECT
   LEFT OUTER JOIN user AS UpdatedUSER ON dashboard.created_by = UpdatedUSER.id
   WHERE is_folder = false`
 
-func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery, onlySummary bool) (*rowsWrapper, int, error) {
-	if !query.Labels.Empty() {
-		return nil, 0, fmt.Errorf("label selection not yet supported")
-	}
-	if len(query.Requirements.SortBy) > 0 {
-		return nil, 0, fmt.Errorf("sorting not yet supported")
-	}
-	if query.Requirements.ListHistory != "" {
-		return nil, 0, fmt.Errorf("ListHistory not yet supported")
-	}
-	if query.Requirements.ListDeleted {
-		return nil, 0, fmt.Errorf("ListDeleted not yet supported")
+func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery) (*rowsWrapper, int, error) {
+	if len(query.Labels) > 0 {
+		return nil, 0, fmt.Errorf("labels not yet supported")
+		// if query.Requirements.Folder != nil {
+		// 	args = append(args, *query.Requirements.Folder)
+		// 	sqlcmd = fmt.Sprintf("%s AND dashboard.folder_uid=$%d", sqlcmd, len(args))
+		// }
 	}
 
-	token, err := readContinueToken(query)
-	if err != nil {
-		return nil, 0, err
-	}
+	args := []any{query.OrgID}
+	sqlcmd := fmt.Sprintf("%s AND dashboard.org_id=$%d", selector, len(args))
 
 	limit := query.Limit
 	if limit < 1 {
 		limit = 15 //
 	}
-	args := []any{query.OrgID}
 
-	sqlcmd := selector
-
-	// We can not do this yet because title + tags are in the body
-	if onlySummary && false {
-		sqlcmd = strings.Replace(sqlcmd, "dashboard.data", `"{}"`, 1)
-	}
-
-	sqlcmd = fmt.Sprintf("%s AND dashboard.org_id=$%d", sqlcmd, len(args))
 	if query.UID != "" {
 		args = append(args, query.UID)
 		sqlcmd = fmt.Sprintf("%s AND dashboard.uid=$%d", sqlcmd, len(args))
-	} else {
-		args = append(args, token.id)
+	} else if query.MinID > 0 {
+		args = append(args, query.MinID)
 		sqlcmd = fmt.Sprintf("%s AND dashboard.id>=$%d", sqlcmd, len(args))
-	}
-
-	if query.Requirements.Folder != nil {
-		args = append(args, *query.Requirements.Folder)
-		sqlcmd = fmt.Sprintf("%s AND dashboard.folder_uid=$%d", sqlcmd, len(args))
 	}
 
 	args = append(args, (limit + 2)) // add more so we can include a next token
@@ -146,51 +129,8 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery,
 	return rows, limit, err
 }
 
-// GetDashboards implements DashboardAccess.
-func (a *dashboardSqlAccess) GetDashboards(ctx context.Context, query *DashboardQuery) (*dashboardsV0.DashboardList, error) {
-	rows, limit, err := a.getRows(ctx, query, false)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rows.Close() }()
-
-	totalSize := 0
-	list := &dashboardsV0.DashboardList{}
-	for {
-		row, err := rows.Next()
-		if err != nil || row == nil {
-			return list, err
-		}
-
-		totalSize += row.Bytes
-		if len(list.Items) > 0 && (totalSize > query.MaxBytes || len(list.Items) >= limit) {
-			if query.Requirements.Folder != nil {
-				row.token.folder = *query.Requirements.Folder
-			}
-			list.Continue = row.token.String() // will skip this one but start here next time
-			return list, err
-		}
-		list.Items = append(list.Items, *row.Dash)
-	}
-}
-
-func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid string) (*dashboardsV0.Dashboard, error) {
-	r, err := a.GetDashboards(ctx, &DashboardQuery{
-		OrgID:  orgId,
-		UID:    uid,
-		Labels: labels.Everything(),
-	})
-	if err != nil {
-		return nil, err
-	}
-	if len(r.Items) > 0 {
-		return &r.Items[0], nil
-	}
-	return nil, fmt.Errorf("not found")
-}
-
 func (a *dashboardSqlAccess) doQuery(ctx context.Context, query string, args ...any) (*rowsWrapper, error) {
-	user, err := appcontext.User(ctx)
+	_, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +139,10 @@ func (a *dashboardSqlAccess) doQuery(ctx context.Context, query string, args ...
 		rows: rows,
 		a:    a,
 		// This looks up rules from the permissions on a user
-		canReadDashboard: accesscontrol.Checker(user, dashboards.ActionDashboardsRead),
+		canReadDashboard: func(scopes ...string) bool {
+			return true // ???
+		},
+		// accesscontrol.Checker(user, dashboards.ActionDashboardsRead),
 	}, err
 }
 
@@ -230,7 +173,7 @@ func (r *rowsWrapper) Next() (*dashboardRow, error) {
 			if !r.canReadDashboard(scopes...) {
 				continue
 			}
-			d.token.size = r.total // size before next!
+			d.token.bytes = r.total // size before next!
 			r.total += int64(d.Bytes)
 		}
 
@@ -243,7 +186,7 @@ func (r *rowsWrapper) Next() (*dashboardRow, error) {
 func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	dash := &dashboardsV0.Dashboard{
 		TypeMeta:   dashboardsV0.DashboardResourceInfo.TypeMeta(),
-		ObjectMeta: v1.ObjectMeta{Annotations: make(map[string]string)},
+		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string)},
 	}
 	row := &dashboardRow{Dash: dash}
 
@@ -253,11 +196,11 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var folder_uid sql.NullString
 	var updated time.Time
 	var updatedByID int64
-	var updatedByName sql.NullString
+	var updatedByUID sql.NullString
 
 	var created time.Time
 	var createdByID int64
-	var createdByName sql.NullString
+	var createdByUID sql.NullString
 
 	var plugin_id string
 	var origin_name sql.NullString
@@ -269,8 +212,8 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 	err := rows.Scan(&orgId, &dashboard_id, &dash.Name,
 		&slug, &folder_uid,
-		&created, &createdByID, &createdByName,
-		&updated, &updatedByID, &updatedByName,
+		&created, &createdByID, &createdByUID,
+		&updated, &updatedByID, &updatedByUID,
 		&plugin_id,
 		&origin_name, &origin_path, &origin_hash, &origin_ts,
 		&version,
@@ -279,10 +222,11 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 	row.token = &continueToken{orgId: orgId, id: dashboard_id}
 	if err == nil {
-		dash.ResourceVersion = fmt.Sprintf("%d", created.UnixMilli())
+		row.ResourceVersion = updated.UnixNano() + version
+		dash.ResourceVersion = fmt.Sprintf("%d", row.ResourceVersion)
 		dash.Namespace = a.namespacer(orgId)
 		dash.UID = gapiutil.CalculateClusterWideUID(dash)
-		dash.SetCreationTimestamp(v1.NewTime(created))
+		dash.SetCreationTimestamp(metav1.NewTime(created))
 		meta, err := utils.MetaAccessor(dash)
 		if err != nil {
 			return nil, err
@@ -290,10 +234,14 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 		meta.SetUpdatedTimestamp(&updated)
 		meta.SetSlug(slug)
 		if createdByID > 0 {
-			meta.SetCreatedBy(fmt.Sprintf("user:%d/%s", createdByID, createdByName.String))
+			meta.SetCreatedBy(identity.NewNamespaceID(identity.NamespaceUser, createdByID).String())
+		} else if createdByID < 0 {
+			meta.SetCreatedBy(identity.NewNamespaceID(identity.NamespaceProvisioning, 0).String())
 		}
 		if updatedByID > 0 {
-			meta.SetUpdatedBy(fmt.Sprintf("user:%d/%s", updatedByID, updatedByName.String))
+			meta.SetCreatedBy(identity.NewNamespaceID(identity.NamespaceUser, updatedByID).String())
+		} else if updatedByID < 0 {
+			meta.SetCreatedBy(identity.NewNamespaceID(identity.NamespaceProvisioning, 0).String())
 		}
 		if folder_uid.Valid {
 			meta.SetFolder(folder_uid.String)
@@ -333,7 +281,6 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 			}
 			dash.Spec.Set("id", dashboard_id) // add it so we can get it from the body later
 			row.Title = dash.Spec.GetNestedString("title")
-			row.Tags = dash.Spec.GetNestedStringSlice("tags")
 		}
 	}
 	return row, err
@@ -341,7 +288,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 // DeleteDashboard implements DashboardAccess.
 func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, uid string) (*dashboardsV0.Dashboard, bool, error) {
-	dash, err := a.GetDashboard(ctx, orgId, uid)
+	dash, _, err := a.GetDashboard(ctx, orgId, uid)
 	if err != nil {
 		return nil, false, err
 	}
@@ -404,6 +351,6 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	if out != nil {
 		created = (out.Created.Unix() == out.Updated.Unix()) // and now?
 	}
-	dash, err = a.GetDashboard(ctx, orgId, out.UID)
+	dash, _, err = a.GetDashboard(ctx, orgId, out.UID)
 	return dash, created, err
 }

@@ -9,7 +9,7 @@ import (
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 )
 
-func NewResourceStoreClientLocal(server ResourceStoreServer) ResourceStoreClient {
+func NewLocalResourceStoreClient(server ResourceStoreServer) ResourceStoreClient {
 	channel := &inprocgrpc.Channel{}
 
 	auth := &grpcUtils.Authenticator{}
@@ -25,6 +25,6 @@ func NewResourceStoreClientLocal(server ResourceStoreServer) ResourceStoreClient
 	return NewResourceStoreClient(grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor))
 }
 
-func NewEntityStoreClientGRPC(channel *grpc.ClientConn) ResourceStoreClient {
+func NewResourceStoreClientGRPC(channel *grpc.ClientConn) ResourceStoreClient {
 	return NewResourceStoreClient(grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor))
 }

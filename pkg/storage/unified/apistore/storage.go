@@ -285,6 +285,7 @@ func toListRequest(ctx context.Context, opts storage.ListOptions) (*resource.Lis
 		Options: &resource.ListOptions{
 			Key: key,
 		},
+		NextPageToken: predicate.Continue,
 	}
 
 	if opts.Predicate.Label != nil && !opts.Predicate.Label.Empty() {
@@ -409,7 +410,9 @@ func (s *Storage) GetList(ctx context.Context, _ string, opts storage.ListOption
 	if rsp.RemainingItemCount > 0 {
 		listAccessor.SetRemainingItemCount(&rsp.RemainingItemCount)
 	}
-	listAccessor.SetResourceVersion(strconv.FormatInt(rsp.ResourceVersion, 10))
+	if rsp.ResourceVersion > 0 {
+		listAccessor.SetResourceVersion(strconv.FormatInt(rsp.ResourceVersion, 10))
+	}
 	return nil
 }
 

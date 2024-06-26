@@ -272,8 +272,8 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-		store := resource.NewResourceStoreClientLocal(resourceServer)
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(s.cfg, store,
+		store := resource.NewLocalResourceStoreClient(resourceServer)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetter(store,
 			o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
 	case grafanaapiserveroptions.StorageTypeUnified:

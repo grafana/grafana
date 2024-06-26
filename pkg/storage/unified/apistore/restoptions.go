@@ -3,7 +3,6 @@
 package apistore
 
 import (
-	"encoding/json"
 	"path"
 	"time"
 
@@ -16,40 +15,31 @@ import (
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
 type RESTOptionsGetter struct {
-	cfg   *setting.Cfg
 	store resource.ResourceStoreClient
 	Codec runtime.Codec
 }
 
-func NewRESTOptionsGetter(cfg *setting.Cfg, store resource.ResourceStoreClient, codec runtime.Codec) *RESTOptionsGetter {
+func NewRESTOptionsGetter(store resource.ResourceStoreClient, codec runtime.Codec) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
-		cfg:   cfg,
 		store: store,
 		Codec: codec,
 	}
 }
 
 func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
-	// build connection string to uniquely identify the storage backend
-	connectionInfo, err := json.Marshal(f.cfg.SectionWithEnvOverrides("resource_store").KeysHash())
-	if err != nil {
-		return generic.RESTOptions{}, err
-	}
-
 	storageConfig := &storagebackend.ConfigForResource{
 		Config: storagebackend.Config{
 			Type:   "custom",
 			Prefix: "",
 			Transport: storagebackend.TransportConfig{
 				ServerList: []string{
-					string(connectionInfo),
+					// ??? string(connectionInfo),
 				},
 			},
 			Codec:                     f.Codec,
