@@ -204,18 +204,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
   }
 
-  public applyPluginOptionDefaults(plugin: PanelPlugin, isAfterPluginChange: boolean) {
-    const options = getPanelOptionsWithDefaults({
-      plugin,
-      currentOptions: this.options,
-      currentFieldConfig: this.fieldConfig,
-      isAfterPluginChange: isAfterPluginChange,
-    });
-
-    this.fieldConfig = options.fieldConfig;
-    this.options = options.options;
-  }
-
   public changePluginType(pluginId: string) {
     const {
       options: prevOptions,
