@@ -58,7 +58,7 @@ const RecentlyDeletedPage = memo(() => {
                 placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}
                 value={searchState.query}
                 escapeRegex={false}
-                onChange={(e) => stateManager.onQueryChange(e)}
+                onChange={stateManager.onQueryChange}
               />
               <ActionRow
                 state={searchState}
