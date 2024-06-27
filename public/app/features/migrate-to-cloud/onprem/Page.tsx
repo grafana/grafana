@@ -5,11 +5,14 @@ import { Alert, Box, Button, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import {
+  SnapshotDto,
+  useCreateSnapshotMutation,
   useDeleteSessionMutation,
-  useGetCloudMigrationRunListQuery,
-  useGetCloudMigrationRunQuery,
   useGetSessionListQuery,
+  useGetShapshotListQuery,
+  useGetSnapshotQuery,
   useRunCloudMigrationMutation,
+  useUploadSnapshotMutation,
 } from '../api';
 
 import { DisconnectModal } from './DisconnectModal';
@@ -32,7 +35,7 @@ import { ResourcesTable } from './ResourcesTable';
  *      2. call GetCloudMigrationRun with the ID from first step to list the result of that migration
  */
 
-function useGetLatestMigrationDestination() {
+function useGetLatestSession() {
   const result = useGetSessionListQuery();
   const latestMigration = result.data?.sessions?.at(-1);
 
@@ -42,64 +45,84 @@ function useGetLatestMigrationDestination() {
   };
 }
 
-function useGetLatestMigrationRun(migrationUid?: string) {
-  const listResult = useGetCloudMigrationRunListQuery(migrationUid ? { uid: migrationUid } : skipToken);
-  const latestMigrationRun = listResult.data?.runs?.at(-1);
+const SHOULD_POLL_STATUSES: Array<SnapshotDto['status']> = [
+  'INITIALIZING',
+  'CREATING',
+  'PENDING_UPLOAD',
+  'UPLOADING',
+  'PENDING_PROCESSING',
+  'PROCESSING',
+];
 
-  const runResult = useGetCloudMigrationRunQuery(
-    latestMigrationRun?.uid && migrationUid ? { runUid: latestMigrationRun.uid } : skipToken
-  );
+const STATUS_POLL_INTERVAL = 5 * 1000;
+
+function useGetLatestSnapshot(sessionUid?: string) {
+  const listResult = useGetShapshotListQuery(sessionUid ? { uid: sessionUid } : skipToken);
+  const lastItem = listResult.data?.snapshots?.at(-1); // TODO: account for pagination and ensure we're truely getting the last one
+
+  const getSnapshotQueryArgs = sessionUid && lastItem?.uid ? { uid: sessionUid, snapshotUid: lastItem.uid } : skipToken;
+
+  const snapshot = useGetSnapshotQuery(getSnapshotQueryArgs, {
+    pollingInterval: SHOULD_POLL_STATUSES.includes(lastItem?.status) ? STATUS_POLL_INTERVAL : undefined,
+    skipPollingIfUnfocused: true,
+  });
 
   return {
-    ...runResult,
+    ...snapshot,
 
-    data: runResult.data,
+    data: snapshot.data,
 
-    error: listResult.error || runResult.error,
+    error: listResult.error || snapshot.error,
 
-    isError: listResult.isError || runResult.isError,
-    isLoading: listResult.isLoading || runResult.isLoading,
-    isFetching: listResult.isFetching || runResult.isFetching,
+    isError: listResult.isError || snapshot.isError,
+    isLoading: listResult.isLoading || snapshot.isLoading,
+    isFetching: listResult.isFetching || snapshot.isFetching,
   };
 }
 
 export const Page = () => {
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
-  const migrationDestination = useGetLatestMigrationDestination();
-  const lastMigrationRun = useGetLatestMigrationRun(migrationDestination.data?.uid);
-  const [performRunMigration, runMigrationResult] = useRunCloudMigrationMutation();
+  const session = useGetLatestSession();
+  const snapshot = useGetLatestSnapshot(session.data?.uid);
+  const [performCreateSnapshot, createSnapshotResult] = useCreateSnapshotMutation();
+  const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
   const [performDisconnect, disconnectResult] = useDeleteSessionMutation();
+
+  console.log('session', session);
+  console.log('snapshot', snapshot);
+
+  const sessionUid = session.data?.uid;
+  const snapshotUid = snapshot.data?.uid;
 
   // isBusy is not a loading state, but indicates that the system is doing *something*
   // and all buttons should be disabled
   const isBusy =
-    runMigrationResult.isLoading ||
-    migrationDestination.isFetching ||
-    lastMigrationRun.isFetching ||
+    createSnapshotResult.isLoading ||
+    uploadSnapshotResult.isLoading ||
+    session.isFetching ||
+    snapshot.isFetching ||
     disconnectResult.isLoading;
 
-  const resources = lastMigrationRun.data?.items;
-  const migrationDestUID = migrationDestination.data?.uid;
+  const resources = snapshot.data?.results;
 
   const handleDisconnect = useCallback(async () => {
-    if (!migrationDestUID) {
-      return;
-    }
+    window.alert('TODO: Implement handleDisconnect');
+  }, []);
 
-    const resp = await performDisconnect({ uid: migrationDestUID });
-    if (!('error' in resp)) {
-      setDisconnectModalOpen(false);
+  const handleCreateSnapshot = useCallback(() => {
+    if (sessionUid) {
+      performCreateSnapshot({ uid: sessionUid });
     }
-  }, [migrationDestUID, performDisconnect]);
+  }, [performCreateSnapshot, sessionUid]);
 
-  const handleStartMigration = useCallback(() => {
-    if (migrationDestination.data?.uid) {
-      performRunMigration({ uid: migrationDestination.data?.uid });
+  const handleUploadSnapshot = useCallback(() => {
+    if (sessionUid && snapshotUid) {
+      performUploadSnapshot({ uid: sessionUid, snapshotUid: snapshotUid });
     }
-  }, [performRunMigration, migrationDestination]);
+  }, [performUploadSnapshot, sessionUid, snapshotUid]);
 
-  const migrationMeta = migrationDestination.data;
-  const isInitialLoading = migrationDestination.isLoading;
+  const migrationMeta = session.data;
+  const isInitialLoading = session.isLoading;
 
   if (isInitialLoading) {
     // TODO: better loading state
@@ -111,7 +134,7 @@ export const Page = () => {
   return (
     <>
       <Stack direction="column" gap={4}>
-        {runMigrationResult.isError && (
+        {createSnapshotResult.isError && (
           <Alert
             severity="error"
             title={t(
@@ -166,10 +189,18 @@ export const Page = () => {
 
             <Button
               disabled={isBusy}
-              onClick={handleStartMigration}
-              icon={runMigrationResult.isLoading ? 'spinner' : undefined}
+              onClick={handleCreateSnapshot}
+              icon={createSnapshotResult.isLoading ? 'spinner' : undefined}
             >
-              <Trans i18nKey="migrate-to-cloud.summary.start-migration">Upload everything</Trans>
+              <Trans i18nKey="migrate-to-cloud.summary.start-migration">Build snapshot</Trans>
+            </Button>
+
+            <Button
+              disabled={isBusy}
+              onClick={handleUploadSnapshot}
+              icon={createSnapshotResult.isLoading ? 'spinner' : undefined}
+            >
+              <Trans i18nKey="migrate-to-cloud.summary.upload-migration">Upload snapshot</Trans>
             </Button>
           </Box>
         )}
