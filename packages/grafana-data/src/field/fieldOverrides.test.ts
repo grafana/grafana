@@ -1,6 +1,6 @@
 import { ArrayDataFrame } from '../dataframe/ArrayDataFrame';
 import { createDataFrame, toDataFrame } from '../dataframe/processDataFrame';
-import { rangeUtil } from '../datetime';
+import { relativeToTimeRange } from '../datetime/rangeutil';
 import { createTheme } from '../themes';
 import { FieldMatcherID } from '../transformations/matchers/ids';
 import {
@@ -912,7 +912,7 @@ describe('getLinksSupplier', () => {
     });
 
     const datasourceUid = '1234';
-    const range = rangeUtil.relativeToTimeRange({ from: 600, to: 0 });
+    const range = relativeToTimeRange({ from: 600, to: 0 });
     const f0 = createDataFrame({
       name: 'A',
       fields: [

@@ -5,7 +5,6 @@
  */
 
 export * from './types';
-export * from './datetime';
 export * from './text';
 export * from './events';
 export * from './themes';
@@ -85,7 +84,6 @@ export {
 export { compareDataFrameStructures, compareArrayValues, shallowCompare } from './dataframe/frameComparisons';
 
 // Field
-
 export {
   getFieldColorModeForField,
   getFieldColorMode,
@@ -163,7 +161,6 @@ export {
 } from './field/overrides/processors';
 
 // Utils
-
 export { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from './utils/OptionsUIBuilders';
 export { getFlotPairs, getFlotPairsConstant } from './utils/flotPairs';
 export { locationUtil } from './utils/location';
@@ -222,7 +219,6 @@ export { store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
 
 // Tranformations
-
 export { standardTransformers } from './transformations/transformers';
 export {
   fieldMatchers,
@@ -273,7 +269,6 @@ export { applyNullInsertThreshold } from './transformations/transformers/nulls/n
 export { nullToValue } from './transformations/transformers/nulls/nullToValue';
 
 // ValueFormats
-
 export {
   type FormattedValue,
   type ValueFormatter,
@@ -294,6 +289,70 @@ export {
   getValueFormatterIndex,
   getValueFormats,
 } from './valueFormats/valueFormats';
+
+// datetime
+export * as dateMath from './datetime/datemath';
+export * as rangeUtil from './datetime/rangeutil';
+export {
+  ISO_8601,
+  type DateTimeBuiltinFormat,
+  type DateTimeInput,
+  type FormatInput,
+  type DurationInput,
+  type DurationUnit,
+  type DateTimeLocale,
+  type DateTimeDuration,
+  type DateTime,
+  setLocale,
+  getLocale,
+  getLocaleData,
+  isDateTimeInput,
+  isDateTime,
+  toUtc,
+  toDuration,
+  dateTime,
+  dateTimeAsMoment,
+  dateTimeForTimeZone,
+  getWeekdayIndex,
+  getWeekdayIndexByEnglishName,
+  setWeekStart,
+} from './datetime/moment_wrapper';
+export {
+  InternalTimeZones,
+  timeZoneFormatUserFriendly,
+  getZone,
+  type TimeZoneCountry,
+  type TimeZoneInfo,
+  type GroupedTimeZones,
+  getTimeZoneInfo,
+  getTimeZones,
+  getTimeZoneGroups,
+} from './datetime/timezones';
+export {
+  type SystemDateFormatSettings,
+  SystemDateFormatsState,
+  localTimeFormat,
+  systemDateFormats,
+} from './datetime/formats';
+export {
+  type DateTimeOptionsWithFormat,
+  dateTimeFormat,
+  dateTimeFormatISO,
+  dateTimeFormatTimeAgo,
+  dateTimeFormatWithAbbrevation,
+  timeZoneAbbrevation,
+} from './datetime/formatter';
+export { type DateTimeOptionsWhenParsing, dateTimeParse } from './datetime/parser';
+export {
+  intervalToAbbreviatedDurationString,
+  parseDuration,
+  addDurationToDate,
+  durationToMilliseconds,
+  isValidDate,
+  isValidDuration,
+  isValidGoDuration,
+  isValidGrafanaDuration,
+} from './datetime/durationutil';
 
 export {
   type ValueMatcherOptions,

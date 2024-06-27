@@ -1,4 +1,4 @@
-import { DateTime, toUtc } from '../datetime';
+import { DateTime, toUtc } from '../datetime/moment_wrapper';
 import { DataLink, FieldType, TimeRange } from '../types';
 
 import { mapInternalLinkToExplore } from './dataLinks';

@@ -1,4 +1,4 @@
-import { dateTime } from '../datetime';
+import { dateTime } from '../datetime/moment_wrapper';
 import { TimeZone } from '../types';
 import { DecimalCount } from '../types/displayValue';
 

@@ -1,4 +1,4 @@
-import { systemDateFormats } from '../datetime';
+import { systemDateFormats } from '../datetime/formats';
 import { createTheme } from '../themes';
 import { FieldConfig, FieldType, ThresholdsMode } from '../types';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';

@@ -2,7 +2,7 @@
  * @preserve jquery-param (c) 2015 KNOWLEDGECODE | MIT
  */
 
-import { isDateTime } from '../datetime';
+import { isDateTime } from '../datetime/moment_wrapper';
 import { URLRange, RawTimeRange } from '../types';
 import { ExploreUrlState } from '../types/explore';
 

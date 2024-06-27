@@ -1,4 +1,4 @@
-import { SystemDateFormatSettings } from '../datetime';
+import { SystemDateFormatSettings } from '../datetime/formats';
 import { MapLayerOptions } from '../geo/layer';
 import { GrafanaTheme2 } from '../themes';
 
