@@ -59,6 +59,9 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 		// TODO: use the new config from HGAPI after https://github.com/grafana/hosted-grafana/pull/5707
 		playlist.GROUPRESOURCE: 2,
 	}
+	o.StorageOptions.DualWriterDataSyncJobEnabled = map[string]bool{
+		playlist.RESOURCE + "." + playlist.GROUP: true,
+	}
 
 	// TODO: ensure backwards compatibility with production
 	// remove this after changing the unified_storage_mode key format in HGAPI
