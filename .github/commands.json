@@ -373,14 +373,6 @@
   },
   {
     "type": "label",
-    "name": "area/panel/icon",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/panel/piechart",
     "action": "addToProject",
     "addToProject": {
@@ -440,10 +432,26 @@
     "name": "area/panel/table",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/72"
+      "url": "https://github.com/orgs/grafana/projects/56"
     }
   },
-   {
+  {
+    "type": "label",
+    "name": "area/tooltip",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/legend",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
     "type": "label",
     "name": "grafana program",
     "action": "addToProject",

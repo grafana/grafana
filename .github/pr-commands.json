@@ -217,26 +217,10 @@
     "addLabel": "area/panel/candlestick"
   },
   {
-    "type": "label",
-    "name": "area/panel/candlestick",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
     "type": "changedfiles",
     "matches": ["public/app/plugins/panel/canvas/**/*", "/public/app/features/canvas/**/*"],
     "action": "updateLabel",
     "addLabel": "area/panel/canvas"
-  },
-  {
-    "type": "label",
-    "name": "area/panel/canvas",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
   },
   {
     "type": "changedfiles",
@@ -245,26 +229,10 @@
     "addLabel": "area/panel/barchart"
   },
   {
-    "type": "label",
-    "name": "area/panel/barchart",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
     "type": "changedfiles",
     "matches": ["public/app/plugins/panel/geomap/**/*", "/public/app/features/geo/**/*"],
     "action": "updateLabel",
     "addLabel": "area/panel/geomap"
-  },
-  {
-    "type": "label",
-    "name": "area/panel/geomap",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
   },
   {
     "type": "changedfiles",
@@ -273,26 +241,10 @@
     "addLabel": "area/panel/graph"
   },
   {
-    "type": "label",
-    "name": "area/panel/graph",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
     "type": "changedfiles",
     "matches": ["public/app/plugins/panel/heatmap/**/*"],
     "action": "updateLabel",
     "addLabel": "area/panel/heatmap"
-  },
-  {
-    "type": "label",
-    "name": "area/panel/heatmap",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
   },
   {
     "type": "changedfiles",
@@ -301,26 +253,10 @@
     "addLabel": "area/panel/histogram"
   },
   {
-    "type": "label",
-    "name": "area/panel/histogram",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
     "type": "changedfiles",
     "matches": ["public/app/plugins/panel/state-timeline/**/*"],
     "action": "updateLabel",
     "addLabel": "area/panel/state-timeline"
-  },
-  {
-    "type": "label",
-    "name": "area/panel/state-timeline",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
   },
   {
     "type": "changedfiles",
@@ -329,26 +265,10 @@
     "addLabel": "area/panel/status-history"
   },
   {
-    "type": "label",
-    "name": "area/panel/status-history",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
     "type": "changedfiles",
     "matches": ["public/app/plugins/panel/timeseries/**/*", "/packages/grafana-ui/src/components/TimeSeries/**/*"],
     "action": "updateLabel",
     "addLabel": "area/panel/timeseries"
-  },
-  {
-    "type": "label",
-    "name": "area/panel/timeseries",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
   },
   {
     "type": "changedfiles",
@@ -357,26 +277,10 @@
     "addLabel": "area/panel/xychart"
   },
   {
-    "type": "label",
-    "name": "area/panel/xychart",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
     "type": "changedfiles",
     "matches": ["public/app/plugins/panel/trend/**/*"],
     "action": "updateLabel",
     "addLabel": "area/panel/trend"
-  },
-  {
-    "type": "label",
-    "name": "area/panel/trend",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
   },
   {
     "type": "changedfiles",
@@ -385,26 +289,10 @@
     "addLabel": "area/legend"
   },
   {
-    "type": "label",
-    "name": "area/legend",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
     "type": "changedfiles",
     "matches": ["/packages/grafana-ui/src/components/VizTooltip/**/*", "public/app/feature/visualization/data-hover/**/*" ],
     "action": "updateLabel",
     "addLabel": "area/tooltip"
-  },
-  {
-    "type": "label",
-    "name": "area/tooltip",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
   },
   {
     "type": "changedfiles",
@@ -413,26 +301,10 @@
     "addLabel": "area/panel/gauge"
   },
   {
-    "type": "label",
-    "name": "area/panel/gauge",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
     "type": "changedfiles",
     "matches": ["public/app/plugins/panel/bargauge/**/*", "/packages/grafana-ui/src/components/BarGauge/**/*"],
     "action": "updateLabel",
-    "addLabel": "area/panel/gauge"
-  },
-  {
-    "type": "label",
-    "name": "area/panel/bargauge",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
+    "addLabel": "area/panel/bargauge"
   },
   {
     "type": "changedfiles",
@@ -441,25 +313,15 @@
     "addLabel": "area/panel/stat"
   },
   {
-    "type": "label",
-    "name": "area/panel/stat",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
     "type": "changedfiles",
     "matches": ["public/app/plugins/panel/piechart/**/*"],
     "action": "updateLabel",
     "addLabel": "area/panel/piechart"
   },
   {
-    "type": "label",
-    "name": "area/panel/piechart",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/table/**/*", "/packages/grafana-ui/src/components/Table/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/table"
   }
 ]
