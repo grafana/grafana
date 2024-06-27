@@ -49,12 +49,12 @@ load(
     "verify_drone",
 )
 load(
-    "scripts/drone/pipelines/verify_storybook.star",
-    "verify_storybook",
-)
-load(
     "scripts/drone/pipelines/verify_starlark.star",
     "verify_starlark",
+)
+load(
+    "scripts/drone/pipelines/verify_storybook.star",
+    "verify_storybook",
 )
 
 ver_mode = "pr"
