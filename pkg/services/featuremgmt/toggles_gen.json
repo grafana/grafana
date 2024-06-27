@@ -2098,7 +2098,8 @@
       "metadata": {
         "name": "scenes",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-07-07T06:53:02Z"
+        "creationTimestamp": "2022-07-07T06:53:02Z",
+        "deletionTimestamp": "2024-06-26T11:58:18Z"
       },
       "spec": {
         "description": "Experimental framework to build interactive dashboards",

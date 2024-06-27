@@ -185,6 +185,8 @@ export const DashNav = memo<Props>((props) => {
   };
 
   const renderLeftActions = () => {
+    const isDevEnv = config.buildInfo.env === 'development';
+
     const { dashboard, kioskMode } = props;
     const { canStar, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
@@ -222,7 +224,7 @@ export const DashNav = memo<Props>((props) => {
       );
     }
 
-    if (config.featureToggles.scenes) {
+    if (isDevEnv && config.featureToggles.dashboardScene) {
       buttons.push(
         <DashNavButton
           key="button-scenes"
