@@ -5,9 +5,9 @@ import { useMeasure } from 'react-use';
 import { DataFrameJSON, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, TextBoxVariable, VariableValue, sceneGraph } from '@grafana/scenes';
-import { Alert, Icon, LoadingBar, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import {
   GrafanaAlertStateWithReason,
   isAlertStateWithReason,
@@ -17,6 +17,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
+import { usePagination } from '../../../hooks/usePagination';
 import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
@@ -26,8 +27,10 @@ import { LogRecord } from '../state-history/common';
 import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
 import { LABELS_FILTER } from './CentralAlertHistoryScene';
+import { EventDetails } from './EventDetails';
 
-export const LIMIT_EVENTS = 5000; // limit is hard-capped at 5000 at the BE level.
+export const LIMIT_EVENTS = 5000; //Limit is hard-capped at 5000.
+const DEFAULT_PAGE_SIZE = 100;
 
 /**
  *
@@ -85,12 +88,22 @@ interface HistoryLogEventsProps {
   logRecords: LogRecord[];
 }
 function HistoryLogEvents({ logRecords }: HistoryLogEventsProps) {
+  const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, DEFAULT_PAGE_SIZE);
   return (
-    <ul>
-      {logRecords.map((record) => {
-        return <EventRow key={record.timestamp + (record.line.fingerprint ?? '')} record={record} />;
-      })}
-    </ul>
+    <Stack direction="column" gap={0}>
+      <ul>
+        {pageItems.map((record) => {
+          return (
+            <EventRow
+              key={record.timestamp + (record.line.fingerprint ?? '')}
+              record={record}
+              logRecords={logRecords}
+            />
+          );
+        })}
+      </ul>
+      <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
+    </Stack>
   );
 }
 
@@ -103,16 +116,23 @@ function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
     return <EntityNotFound entity="History" />;
   }
   const title = t('central-alert-history.error', 'Something went wrong loading the alert state history');
+  const errorStr = stringifyErrorLike(error);
 
-  return <Alert title={title}>{stringifyErrorLike(error)}</Alert>;
+  return (
+    <Alert title={title}>
+      <Trans i18nKey="central-alert-history.error-message" errorStr={errorStr}>
+        {errorStr}
+      </Trans>
+    </Alert>
+  );
 }
 
-function EventRow({ record }: { record: LogRecord }) {
+function EventRow({ record, logRecords }: { record: LogRecord; logRecords: LogRecord[] }) {
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useState(true);
   return (
-    <div>
-      <div className={styles.header} data-testid="event-row-header">
+    <Stack direction="column" gap={0}>
+      <div className={styles.header(isCollapsed)} data-testid="event-row-header">
         <CollapseToggle
           size="sm"
           className={styles.collapseToggle}
@@ -134,7 +154,12 @@ function EventRow({ record }: { record: LogRecord }) {
           </div>
         </Stack>
       </div>
-    </div>
+      {!isCollapsed && (
+        <div className={styles.expandedRow}>
+          <EventDetails record={record} logRecords={logRecords} />
+        </div>
+      )}
+    </Stack>
   );
 }
 
@@ -142,7 +167,14 @@ function AlertRuleName({ labels, ruleUID }: { labels: Record<string, string>; ru
   const styles = useStyles2(getStyles);
   const alertRuleName = labels['alertname'];
   if (!ruleUID) {
-    return <Text>{alertRuleName}</Text>;
+    return (
+      <Text>
+        <Trans i18nKey="central-alert-history.details.unknown-rule">Unknown</Trans>
+        <Trans i18nKey="central-alert-history.details.alert-name" alertRuleName={alertRuleName}>
+          {alertRuleName}
+        </Trans>
+      </Text>
+    );
   }
   return (
     <Tooltip content={alertRuleName ?? ''}>
@@ -150,7 +182,9 @@ function AlertRuleName({ labels, ruleUID }: { labels: Record<string, string>; ru
         href={`/alerting/${GRAFANA_RULES_SOURCE_NAME}/${ruleUID}/view?returnTo=${encodeURIComponent('/alerting/history')}`}
         className={styles.alertName}
       >
-        {alertRuleName}
+        <Trans i18nKey="central-alert-history.details.alert-name" alertRuleName={alertRuleName}>
+          {alertRuleName}
+        </Trans>
       </a>
     </Tooltip>
   );
@@ -170,13 +204,20 @@ function EventTransition({ previous, current }: EventTransitionProps) {
   );
 }
 
-function EventState({ state }: { state: GrafanaAlertStateWithReason }) {
+export function EventState({ state, showLabel }: { state: GrafanaAlertStateWithReason; showLabel?: boolean }) {
   const styles = useStyles2(getStyles);
 
   if (!isGrafanaAlertState(state) && !isAlertStateWithReason(state)) {
     return (
       <Tooltip content={'No recognized state'}>
-        <Icon name="exclamation-triangle" size="md" />
+        <Stack gap={0.5} direction={'row'} alignItems="center">
+          <Icon name="exclamation-triangle" size="md" />
+          {showLabel && (
+            <Text variant="body" weight="light">
+              <Trans i18nKey="central-alert-history.details.unknown-event-state">Unknown</Trans>
+            </Text>
+          )}
+        </Stack>
       </Tooltip>
     );
   }
@@ -187,33 +228,71 @@ function EventState({ state }: { state: GrafanaAlertStateWithReason }) {
     case 'Normal':
       return (
         <Tooltip content={Boolean(reason) ? `Normal (${reason})` : 'Normal'}>
-          <Icon name="check-circle" size="md" className={Boolean(reason) ? styles.warningColor : styles.normalColor} />
+          <Stack gap={0.5} direction={'row'} alignItems="center">
+            <Icon
+              name="check-circle"
+              size="md"
+              className={Boolean(reason) ? styles.warningColor : styles.normalColor}
+            />
+            {showLabel && (
+              <Text variant="body" weight="light">
+                <Trans i18nKey="central-alert-history.details.state.normal">Normal</Trans>
+              </Text>
+            )}
+          </Stack>
         </Tooltip>
       );
     case 'Alerting':
       return (
         <Tooltip content={'Alerting'}>
-          <Icon name="exclamation-circle" size="md" className={styles.alertingColor} />
+          <Stack gap={0.5} direction={'row'} alignItems="center">
+            <Icon name="exclamation-circle" size="md" className={styles.alertingColor} />
+            {showLabel && (
+              <Text variant="body" weight="light">
+                <Trans i18nKey="central-alert-history.details.state.alerting">Alerting</Trans>
+              </Text>
+            )}
+          </Stack>
         </Tooltip>
       );
     case 'NoData': //todo:change icon
       return (
         <Tooltip content={'Insufficient data'}>
-          <Icon name="exclamation-triangle" size="md" className={styles.warningColor} />
-          {/* no idea which icon to use */}
+          <Stack gap={0.5} direction={'row'} alignItems="center">
+            <Icon name="exclamation-triangle" size="md" className={styles.warningColor} />
+            {showLabel && (
+              <Text variant="body" weight="light">
+                <Trans i18nKey="central-alert-history.details.state.no-data">No data</Trans>
+              </Text>
+            )}
+          </Stack>
         </Tooltip>
       );
     case 'Error':
       return (
         <Tooltip content={'Error'}>
-          <Icon name="exclamation-circle" size="md" />
+          <Stack gap={0.5} direction={'row'} alignItems="center">
+            <Icon name="exclamation-circle" size="md" />
+            {showLabel && (
+              <Text variant="body" weight="light">
+                <Trans i18nKey="central-alert-history.details.state.error">Error</Trans>
+              </Text>
+            )}
+          </Stack>
         </Tooltip>
       );
 
     case 'Pending':
       return (
         <Tooltip content={Boolean(reason) ? `Pending (${reason})` : 'Pending'}>
-          <Icon name="circle" size="md" className={styles.warningColor} />
+          <Stack gap={0.5} direction={'row'} alignItems="center">
+            <Icon name="circle" size="md" className={styles.warningColor} />
+            {showLabel && (
+              <Text variant="body" weight="light">
+                <Trans i18nKey="central-alert-history.details.state.pending">Pending</Trans>
+              </Text>
+            )}
+          </Stack>
         </Tooltip>
       );
     default:
@@ -238,7 +317,9 @@ const Timestamp = ({ time }: TimestampProps) => {
 
   return (
     <Text variant="body" weight="light">
-      {formattedDate}
+      <Trans i18nKey="central-alert-history.details.timestamp" formattedDate={formattedDate}>
+        {formattedDate}
+      </Trans>
     </Text>
   );
 };
@@ -247,18 +328,19 @@ export default withErrorBoundary(HistoryEventsList, { style: 'page' });
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    header: css({
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
-      flexWrap: 'nowrap',
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    header: (isCollapsed: boolean) =>
+      css({
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
+        flexWrap: 'nowrap',
+        borderBottom: isCollapsed ? `1px solid ${theme.colors.border.weak}` : 'none',
 
-      '&:hover': {
-        backgroundColor: theme.components.table.rowHoverBackground,
-      },
-    }),
+        '&:hover': {
+          backgroundColor: theme.components.table.rowHoverBackground,
+        },
+      }),
 
     collapseToggle: css({
       background: 'none',
@@ -302,6 +384,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       display: 'block',
       color: theme.colors.text.link,
+    }),
+    expandedRow: css({
+      padding: theme.spacing(2),
+      marginLeft: theme.spacing(2),
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
     }),
   };
 };
