@@ -2,7 +2,7 @@ import { map } from 'rxjs/operators';
 
 import { TimeZone } from '@grafana/schema';
 
-import { cacheFieldDisplayNames } from '../../field';
+import { cacheFieldDisplayNames } from '../../field/fieldState';
 import { DataFrame, TransformationApplicabilityLevels } from '../../types';
 import { DataTransformContext, DataTransformerInfo } from '../../types/transformations';
 
