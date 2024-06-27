@@ -1101,7 +1101,10 @@ export class LokiDatasource
       },
     };
 
-    const exprWithAdHoc = this.addAdHocFilters(this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr), adhocFilters)
+    const exprWithAdHoc = this.addAdHocFilters(
+      this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr),
+      adhocFilters
+    );
 
     return {
       ...target,

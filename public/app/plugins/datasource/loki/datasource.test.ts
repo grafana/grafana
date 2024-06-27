@@ -290,7 +290,7 @@ describe('LokiDatasource', () => {
           value: 'v2',
         },
       ];
-      ds.applyTemplateVariables(query, {}, adhocFilters)
+      ds.applyTemplateVariables(query, {}, adhocFilters);
       expect(templateSrv.replace).toHaveBeenCalledWith(query.expr, expect.any(Object), expect.any(Function));
     });
   });
