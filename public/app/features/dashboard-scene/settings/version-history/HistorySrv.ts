@@ -18,8 +18,8 @@ export interface VersionModel {
 
 export interface HistorySrv {
   getHistoryList(dashboardUID: string, options: HistoryListOpts): Promise<VersionModel[]>;
-  getDashboardVersion(dashboardUID: string, version: number | string): Promise<Dashboard>; // Just the spec (for now)
-  restoreDashboard(dashboardUID: string, version: number | string): Promise<SaveDashboardResponseDTO>;
+  getDashboardVersion(dashboardUID: string, version: number | string): Promise<Dashboard | {}>; // Just the spec (for now)
+  restoreDashboard(dashboardUID: string, version: number | string): Promise<SaveDashboardResponseDTO | {}>;
 }
 
 class LegacyHistorySrv implements HistorySrv {
@@ -31,18 +31,18 @@ class LegacyHistorySrv implements HistorySrv {
     return getBackendSrv().get<VersionModel[]>(`api/dashboards/uid/${dashboardUID}/versions`, options);
   }
 
-  async getDashboardVersion(dashboardUID: string, version: number): Promise<Dashboard> {
+  async getDashboardVersion(dashboardUID: string, version: number): Promise<Dashboard | {}> {
     if (typeof dashboardUID !== 'string') {
-      return Promise.reject('invalid uid')
+      return Promise.resolve({})
     }
 
     const info = await getBackendSrv().get(`api/dashboards/uid/${dashboardUID}/versions/${version}`);
     return info.data; // the dashboard body
   }
 
-  restoreDashboard(dashboardUID: string, version: number): Promise<SaveDashboardResponseDTO> {
+  restoreDashboard(dashboardUID: string, version: number): Promise<SaveDashboardResponseDTO | {}> {
     if (typeof dashboardUID !== 'string') {
-      return Promise.reject('invalid uid')
+      return Promise.resolve({})
     }
 
     const url = `api/dashboards/uid/${dashboardUID}/restore`;
