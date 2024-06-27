@@ -1,6 +1,6 @@
 import { dateTime } from '../datetime/moment_wrapper';
-import { TimeZone } from '../types';
 import { DecimalCount } from '../types/displayValue';
+import { TimeZone } from '../types/time';
 
 import { toFixed, getValueFormat, scaledUnits, formattedValueToString } from './valueFormats';
 

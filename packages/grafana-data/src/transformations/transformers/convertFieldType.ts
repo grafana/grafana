@@ -3,8 +3,8 @@ import { map } from 'rxjs/operators';
 import { TimeZone } from '@grafana/schema';
 
 import { dateTimeParse, DateTimeOptionsWhenParsing } from '../../datetime/parser';
-import { SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, EnumFieldConfig, Field, FieldType } from '../../types/dataFrame';
+import { SynchronousDataTransformerInfo } from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 

@@ -1,5 +1,7 @@
 import { DateTime, toUtc } from '../datetime/moment_wrapper';
-import { DataLink, FieldType, TimeRange } from '../types';
+import { FieldType } from '../types/dataFrame';
+import { DataLink } from '../types/dataLink';
+import { TimeRange } from '../types/time';
 
 import { mapInternalLinkToExplore } from './dataLinks';
 
