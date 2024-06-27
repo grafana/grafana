@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { ReactElement, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrameJSON, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { DataFrameJSON, GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, TextBoxVariable, VariableValue, sceneGraph } from '@grafana/scenes';
 import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { Trans, t } from 'app/core/internationalization';
 import {
+  GrafanaAlertState,
   GrafanaAlertStateWithReason,
   isAlertStateWithReason,
   isGrafanaAlertState,
@@ -204,100 +205,92 @@ function EventTransition({ previous, current }: EventTransitionProps) {
   );
 }
 
+const StateIcon = ({
+  iconName,
+  iconColor,
+  tooltipContent,
+  labelText,
+  showLabel,
+}: {
+  iconName: IconName;
+  iconColor: string;
+  tooltipContent: string;
+  labelText: ReactElement;
+  showLabel: boolean;
+}) => (
+  <Tooltip content={tooltipContent}>
+    <Stack gap={0.5} direction={'row'} alignItems="center">
+      <Icon name={iconName} size="md" className={iconColor} />
+      {showLabel && (
+        <Text variant="body" weight="light">
+          {labelText}
+        </Text>
+      )}
+    </Stack>
+  </Tooltip>
+);
+
 export function EventState({ state, showLabel }: { state: GrafanaAlertStateWithReason; showLabel?: boolean }) {
   const styles = useStyles2(getStyles);
-
   if (!isGrafanaAlertState(state) && !isAlertStateWithReason(state)) {
     return (
-      <Tooltip content={'No recognized state'}>
-        <Stack gap={0.5} direction={'row'} alignItems="center">
-          <Icon name="exclamation-triangle" size="md" />
-          {showLabel && (
-            <Text variant="body" weight="light">
-              <Trans i18nKey="central-alert-history.details.unknown-event-state">Unknown</Trans>
-            </Text>
-          )}
-        </Stack>
-      </Tooltip>
+      <StateIcon
+        iconName="exclamation-triangle"
+        tooltipContent="No recognized state"
+        labelText={<Trans i18nKey="central-alert-history.details.unknown-event-state">Unknown</Trans>}
+        showLabel={Boolean(showLabel)}
+        iconColor={styles.warningColor}
+      />
     );
   }
-  const baseState = mapStateWithReasonToBaseState(state);
+  // typescript doesn't know that baseState is a GrafanaAlertState even though we've checked it above
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const baseState = mapStateWithReasonToBaseState(state) as GrafanaAlertState;
   const reason = mapStateWithReasonToReason(state);
-
-  switch (baseState) {
-    case 'Normal':
-      return (
-        <Tooltip content={Boolean(reason) ? `Normal (${reason})` : 'Normal'}>
-          <Stack gap={0.5} direction={'row'} alignItems="center">
-            <Icon
-              name="check-circle"
-              size="md"
-              className={Boolean(reason) ? styles.warningColor : styles.normalColor}
-            />
-            {showLabel && (
-              <Text variant="body" weight="light">
-                <Trans i18nKey="central-alert-history.details.state.normal">Normal</Trans>
-              </Text>
-            )}
-          </Stack>
-        </Tooltip>
-      );
-    case 'Alerting':
-      return (
-        <Tooltip content={'Alerting'}>
-          <Stack gap={0.5} direction={'row'} alignItems="center">
-            <Icon name="exclamation-circle" size="md" className={styles.alertingColor} />
-            {showLabel && (
-              <Text variant="body" weight="light">
-                <Trans i18nKey="central-alert-history.details.state.alerting">Alerting</Trans>
-              </Text>
-            )}
-          </Stack>
-        </Tooltip>
-      );
-    case 'NoData': //todo:change icon
-      return (
-        <Tooltip content={'Insufficient data'}>
-          <Stack gap={0.5} direction={'row'} alignItems="center">
-            <Icon name="exclamation-triangle" size="md" className={styles.warningColor} />
-            {showLabel && (
-              <Text variant="body" weight="light">
-                <Trans i18nKey="central-alert-history.details.state.no-data">No data</Trans>
-              </Text>
-            )}
-          </Stack>
-        </Tooltip>
-      );
-    case 'Error':
-      return (
-        <Tooltip content={'Error'}>
-          <Stack gap={0.5} direction={'row'} alignItems="center">
-            <Icon name="exclamation-circle" size="md" />
-            {showLabel && (
-              <Text variant="body" weight="light">
-                <Trans i18nKey="central-alert-history.details.state.error">Error</Trans>
-              </Text>
-            )}
-          </Stack>
-        </Tooltip>
-      );
-
-    case 'Pending':
-      return (
-        <Tooltip content={Boolean(reason) ? `Pending (${reason})` : 'Pending'}>
-          <Stack gap={0.5} direction={'row'} alignItems="center">
-            <Icon name="circle" size="md" className={styles.warningColor} />
-            {showLabel && (
-              <Text variant="body" weight="light">
-                <Trans i18nKey="central-alert-history.details.state.pending">Pending</Trans>
-              </Text>
-            )}
-          </Stack>
-        </Tooltip>
-      );
-    default:
-      return <Icon name="exclamation-triangle" size="md" />;
+  interface StateConfig {
+    iconName: IconName;
+    iconColor: string;
+    tooltipContent: string;
+    labelText: ReactElement;
   }
+  interface StateConfigMap {
+    [key: string]: StateConfig;
+  }
+  const stateConfig: StateConfigMap = {
+    Normal: {
+      iconName: 'check-circle',
+      iconColor: Boolean(reason) ? styles.warningColor : styles.normalColor,
+      tooltipContent: Boolean(reason) ? `Normal (${reason})` : 'Normal',
+      labelText: <Trans i18nKey="central-alert-history.details.state.normal">Normal</Trans>,
+    },
+    Alerting: {
+      iconName: 'exclamation-circle',
+      iconColor: styles.alertingColor,
+      tooltipContent: 'Alerting',
+      labelText: <Trans i18nKey="central-alert-history.details.state.alerting">Alerting</Trans>,
+    },
+    NoData: {
+      iconName: 'exclamation-triangle',
+      iconColor: styles.warningColor,
+      tooltipContent: 'Insufficient data',
+      labelText: <Trans i18nKey="central-alert-history.details.state.no-data">No data</Trans>,
+    },
+    Error: {
+      iconName: 'exclamation-circle',
+      tooltipContent: 'Error',
+      iconColor: styles.warningColor,
+      labelText: <Trans i18nKey="central-alert-history.details.state.error">Error</Trans>,
+    },
+    Pending: {
+      iconName: 'circle',
+      iconColor: styles.warningColor,
+      tooltipContent: Boolean(reason) ? `Pending (${reason})` : 'Pending',
+      labelText: <Trans i18nKey="central-alert-history.details.state.pending">Pending</Trans>,
+    },
+  };
+
+  const config = stateConfig[baseState] || { iconName: 'exclamation-triangle', tooltipContent: 'Unknown State' };
+  return <StateIcon {...config} showLabel={Boolean(showLabel)} />;
 }
 
 interface TimestampProps {
