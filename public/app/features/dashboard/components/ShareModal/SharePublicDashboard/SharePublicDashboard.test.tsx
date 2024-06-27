@@ -356,8 +356,8 @@ describe('SharePublic - Report interactions', () => {
     await renderSharePublicDashboard();
 
     await waitFor(() => {
-      expect(DashboardInteractions.sharingTabChanged).toHaveBeenCalledTimes(1);
-      expect(DashboardInteractions.sharingTabChanged).lastCalledWith({
+      expect(DashboardInteractions.sharingCategoryClicked).toHaveBeenCalledTimes(1);
+      expect(DashboardInteractions.sharingCategoryClicked).lastCalledWith({
         item: shareDashboardType.publicDashboard,
         shareResource: 'dashboard',
       });
