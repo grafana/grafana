@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -25,7 +26,8 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 	store := historian.NewAnnotationStore(&as, nil, metrics)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
-	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, metrics)
+	ac := &fakes.FakeRuleService{}
+	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, metrics, ac)
 	cfg := state.ManagerCfg{
 		Historian: hist,
 		Tracer:    tracing.InitializeTracerForTest(),
