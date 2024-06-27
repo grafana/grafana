@@ -292,6 +292,7 @@ export {
 // datetime
 export * as dateMath from './datetime/datemath';
 export * as rangeUtil from './datetime/rangeutil';
+export { type DateTimeOptions, setTimeZoneResolver, type TimeZoneResolver, getTimeZone } from './datetime/common';
 export {
   ISO_8601,
   type DateTimeBuiltinFormat,
@@ -498,18 +499,18 @@ export {
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
 } from './types/pluginExtensions';
-export type {
-  ScopeDashboardBindingSpec,
-  ScopeDashboardBinding,
-  ScopeFilterOperator,
+export {
+  type ScopeDashboardBindingSpec,
+  type ScopeDashboardBinding,
+  type ScopeFilterOperator,
+  type ScopeSpecFilter,
+  type ScopeSpec,
+  type Scope,
+  type ScopeNodeNodeType,
+  type ScopeNodeLinkType,
+  type ScopeNodeSpec,
+  type ScopeNode,
   scopeFilterOperatorMap,
-  ScopeSpecFilter,
-  ScopeSpec,
-  Scope,
-  ScopeNodeNodeType,
-  ScopeNodeLinkType,
-  ScopeNodeSpec,
-  ScopeNode,
 } from './types/scopes';
 export {
   PluginState,
