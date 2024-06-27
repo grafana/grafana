@@ -171,13 +171,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:         "scenes",
-			Description:  "Experimental framework to build interactive dashboards",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
-		},
-		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			Stage:           FeatureStageExperimental,
