@@ -1236,7 +1236,25 @@ def verify_linux_packages_step():
     return {
         "name": "verify-linux-packages",
         "image": "ubuntu:22.04",
-      
+        "environment": {},
+        "commands": [
+                'echo "Updating package lists..."',
+                'apt-get update >/dev/null 2>&1',
+                'echo "Installing prerequisites..."',
+                'DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common wget >/dev/null 2>&1',
+                'echo "Adding Grafana repository..."',
+                'mkdir -p /etc/apt/keyrings/',
+                'wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg > /dev/null',
+                'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
+                'apt-get update >/dev/null 2>&1',
+                'echo "Attempting to install Grafana version ${TAG}..."',
+                'if DEBIAN_FRONTEND=noninteractive apt-get -yqs install grafana=${TAG}; then',
+                '    echo "Successfully installed Grafana version ${TAG}"',
+                'else',
+                '    echo "Failed to install Grafana version ${TAG}"',
+                '    exit 1',
+                'fi',
+            ],
     }
 
 def verify_gen_cue_step():
