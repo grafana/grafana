@@ -657,7 +657,7 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-scenes/various-suite
 - commands:
-  - npx wait-on@7.0.1 http://$HOST:$PORT
+  - npx --loglevel verbose wait-on@7.0.1 http://$HOST:$PORT
   - yarn e2e:storybook
   depends_on:
   - start-storybook
@@ -2022,7 +2022,7 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-scenes/various-suite
 - commands:
-  - npx wait-on@7.0.1 http://$HOST:$PORT
+  - npx --loglevel verbose wait-on@7.0.1 http://$HOST:$PORT
   - yarn e2e:storybook
   depends_on:
   - start-storybook
@@ -5099,6 +5099,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d88df44dbcdd15fb70a885c3ace1ec83bc375494250a8334763906360cd57404
+hmac: a2d9d43ca0208de3f043dff37f6466b5df3a609724fe35db68913bce475b3046
 
 ...
