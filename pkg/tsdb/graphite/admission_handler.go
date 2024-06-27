@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ backend.AdmissionHandler      = (*Service)(nil)
+	_ backend.AdmissionHandler = (*Service)(nil)
 )
 
 // ValidateAdmission implements backend.AdmissionHandler.
