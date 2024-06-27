@@ -248,12 +248,21 @@ func (s *Storage) Watch(ctx context.Context, _ string, opts storage.ListOptions)
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *Storage) Get(ctx context.Context, _ string, opts storage.GetOptions, objPtr runtime.Object) error {
-	key, err := getKey(ctx)
+	var err error
+	req := &resource.ReadRequest{}
+	req.Key, err = getKey(ctx)
 	if err != nil {
 		return err
 	}
 
-	rsp, err := s.store.Read(ctx, &resource.ReadRequest{Key: key})
+	if opts.ResourceVersion != "" {
+		req.ResourceVersion, err = strconv.ParseInt(opts.ResourceVersion, 10, 64)
+		if err != nil {
+			return err
+		}
+	}
+
+	rsp, err := s.store.Read(ctx, req)
 	if err != nil {
 		return err
 	}

@@ -113,10 +113,9 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 	defer func() { _ = rows.Close() }()
 
 	row, err := rows.Next()
-	if err != nil {
+	if err != nil || row == nil {
 		return nil, 0, err
 	}
-
 	return row.Dash, row.Version, nil
 }
 

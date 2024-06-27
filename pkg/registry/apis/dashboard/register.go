@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 var _ builder.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
@@ -154,9 +155,10 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	storage[dash.StoragePath("dto")] = &DTOConnector{
 		builder: b,
 	}
-	storage[dash.StoragePath("versions")] = &VersionsREST{
-		search: b.store.server, // resource.NewLocalResourceSearchClient(b.store.server),
-	}
+	storage[dash.StoragePath("history")] = apistore.NewHistoryConnector(
+		b.store.server, // as client???
+		dashboard.DashboardResourceInfo.GroupResource(),
+	)
 
 	// // Dual writes if a RESTOptionsGetter is provided
 	// if desiredMode != grafanarest.Mode0 && optsGetter != nil {
