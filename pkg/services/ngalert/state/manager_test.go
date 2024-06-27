@@ -1409,6 +1409,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t1,
 					EndsAt:             t1.Add(state.ResendDelay * 4),
 					LastEvaluationTime: t1,
+					LastSentAt:         &t1,
 					Values: map[string]float64{
 						"A": 1.0,
 						"B": 2.0,
@@ -1443,6 +1444,7 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           t1,
 					EndsAt:             t1.Add(state.ResendDelay * 4),
 					LastEvaluationTime: t1,
+					LastSentAt:         &t1,
 					Values: map[string]float64{
 						"B0": 1.0,
 						"B1": 2.0,
@@ -1558,49 +1560,44 @@ func TestProcessEvalResults(t *testing.T) {
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_state_calculation_duration_seconds", "grafana_alerting_state_calculation_total")
 			require.NoError(t, err)
 		})
-
-		t.Run("converts values to NaN if not defined", func(t *testing.T) {
-			// We set up our own special test for this, since we need special comparison logic - NaN != NaN
-			fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-			reg := prometheus.NewPedanticRegistry()
-			stateMetrics := metrics.NewStateMetrics(reg)
-			m := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
-			store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, m)
-			annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
-			ac := &acfakes.FakeRuleService{}
-			hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, m, ac)
-			clk := clock.NewMock()
-			cfg := state.ManagerCfg{
-				Metrics:       stateMetrics,
-				ExternalURL:   nil,
-				InstanceStore: &state.FakeInstanceStore{},
-				Images:        &state.NotAvailableImageService{},
-				Clock:         clk,
-				Historian:     hist,
-				Tracer:        tracing.InitializeTracerForTest(),
-				Log:           log.New("ngalert.state.manager"),
-			}
-			st := state.NewManager(cfg, state.NewNoopPersister())
-			rule := baseRuleWith()
-			time := t1
-			res := eval.Results{newResult(
-				eval.WithState(eval.Alerting),
-				eval.WithLabels(data.Labels{}),
-				eval.WithValues(map[string]eval.NumberValueCapture{
-					"A": {Var: "A", Labels: data.Labels{}, Value: nil},
-				}),
-			)}
-
-			_ = st.ProcessEvalResults(context.Background(), time, rule, res, systemLabels, state.NoopSender)
-
-			states := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
-			require.Len(t, states, 1)
-			state := states[0]
-			require.NotNil(t, state.Values)
-			require.Contains(t, state.Values, "A")
-			require.Truef(t, math.IsNaN(state.Values["A"]), "expected NaN but got %v", state.Values["A"])
-		})
 	}
+
+	t.Run("converts values to NaN if not defined", func(t *testing.T) {
+		// We set up our own special test for this, since we need special comparison logic - NaN != NaN
+		instanceStore := &state.FakeInstanceStore{}
+		clk := clock.NewMock()
+		cfg := state.ManagerCfg{
+			Metrics:                 metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+			ExternalURL:             nil,
+			InstanceStore:           instanceStore,
+			Images:                  &state.NotAvailableImageService{},
+			Clock:                   clk,
+			Historian:               &state.FakeHistorian{},
+			Tracer:                  tracing.InitializeTracerForTest(),
+			Log:                     log.New("ngalert.state.manager"),
+			MaxStateSaveConcurrency: 1,
+		}
+		st := state.NewManager(cfg, state.NewNoopPersister())
+		rule := baseRuleWith()
+		time := t1
+		res := eval.Results{newResult(
+			eval.WithState(eval.Alerting),
+			eval.WithLabels(data.Labels{}),
+			eval.WithEvaluatedAt(t1),
+			eval.WithValues(map[string]eval.NumberValueCapture{
+				"A": {Var: "A", Labels: data.Labels{}, Value: nil},
+			}),
+		)}
+
+		_ = st.ProcessEvalResults(context.Background(), time, rule, res, systemLabels, state.NoopSender)
+
+		states := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+		require.Len(t, states, 1)
+		state := states[0]
+		require.NotNil(t, state.Values)
+		require.Contains(t, state.Values, "A")
+		require.Truef(t, math.IsNaN(state.Values["A"]), "expected NaN but got %v", state.Values["A"])
+	})
 
 	t.Run("should save state to database", func(t *testing.T) {
 		instanceStore := &state.FakeInstanceStore{}
