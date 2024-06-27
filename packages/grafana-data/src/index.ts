@@ -428,7 +428,7 @@ export type {
 } from './types/explore';
 export type { TraceKeyValuePair, TraceLog, TraceSpanReference, TraceSpanRow } from './types/trace';
 export type { FlotDataPoint } from './types/flot';
-export type { UserOrgDTO, OrgRole } from './types/orgs';
+export { type UserOrgDTO, OrgRole } from './types/orgs';
 export { GrafanaThemeType, type GrafanaThemeCommons, type GrafanaTheme } from './types/theme';
 export { FieldColorModeId, type FieldColor, type FieldColorSeriesByMode, FALLBACK_COLOR } from './types/fieldColor';
 export {
