@@ -1232,6 +1232,9 @@ def publish_linux_packages_step(package_manager = "deb"):
         },
     }
 
+def verify_linux_packages_step():
+
+
 def verify_gen_cue_step():
     return {
         "name": "verify-gen-cue",
