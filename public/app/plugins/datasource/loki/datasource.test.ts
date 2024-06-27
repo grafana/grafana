@@ -35,7 +35,6 @@ import {
 import { LokiVariableSupport } from './LokiVariableSupport';
 import { createLokiDatasource } from './__mocks__/datasource';
 import { createMetadataRequest } from './__mocks__/metadataRequest';
-import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { runSplitQuery } from './querySplitting';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
