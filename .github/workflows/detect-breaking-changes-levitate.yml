@@ -134,6 +134,23 @@ jobs:
       - name: Unzip artifact from base
         run: unzip -j base_built_packages.zip -d ./base && rm base_built_packages.zip
 
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.LEVITATE_SA }}
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          version: '>= 363.0.0'
+
+      - name: Run BigQuery query
+        run: |
+          # gcloud config set project YOUR_PROJECT_ID
+          # gcloud bigquery query --nouse_legacy_sql 'YOUR_BIGQUERY_SQL_QUERY'
+          gcloud info
+
       - name: Get link for the Github Action job
         id: job
         uses: actions/github-script@v6
