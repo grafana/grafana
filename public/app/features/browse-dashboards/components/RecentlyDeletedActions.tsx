@@ -117,6 +117,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     gap: theme.spacing(1),
-    marginBottom: theme.spacing(2),
+    margin: theme.spacing(2, 0),
+
+    [theme.breakpoints.up('md')]: {
+      marginTop: 0,
+    },
   }),
 });
