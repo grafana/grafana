@@ -23,7 +23,7 @@ func NewClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cf
 	return client.New(
 		ctx,
 		cc,
-		client.WithTenantID(fmt.Sprintf("stack-", cfg.StackID)),
+		client.WithTenantID(fmt.Sprintf("stack-%s", cfg.StackID)),
 		client.WithLogger(log.New("zanzana-client")),
 	)
 }

@@ -130,7 +130,6 @@ func (c *Client) getStore(ctx context.Context, name string) (*openfgav1.Store, e
 }
 
 func (c *Client) loadModel(ctx context.Context, storeID string, dsl string) (string, error) {
-
 	var continuationToken string
 
 	for {
