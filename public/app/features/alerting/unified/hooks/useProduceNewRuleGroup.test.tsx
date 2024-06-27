@@ -4,7 +4,7 @@ import { byRole, byText } from 'testing-library-selector';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { CombinedRule, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../mockApi';
@@ -20,10 +20,18 @@ import { grafanaRulerGroupName, grafanaRulerNamespace, grafanaRulerRule } from '
 import { setRulerRuleGroupHandler, setUpdateRulerRuleNamespaceHandler } from '../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from '../mocks/server/handlers/alertRules';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { stringifyErrorLike } from '../utils/misc';
 import { getRuleGroupLocationFromCombinedRule } from '../utils/rules';
 
-import { isSuccess, isUninitialized, useDeleteRuleFromGroup, usePauseRuleInGroup } from './useProduceNewRuleGroup';
+import {
+  isSuccess,
+  isUninitialized,
+  useDeleteRuleFromGroup,
+  usePauseRuleInGroup,
+  useRenameRuleGroup,
+  useUpdateRuleGroupConfiguration,
+} from './useProduceNewRuleGroup';
 
 const server = setupMswServer();
 
@@ -180,6 +188,70 @@ describe('delete rule', () => {
     expect(serializedRequests).toMatchSnapshot();
   });
 });
+
+describe('useUpdateRuleGroupConfiguration', () => {
+  it('should update a rule group interval', async () => {
+    const capture = captureRequests();
+
+    render(<UpdateRuleGroupComponent />);
+    await userEvent.click(byRole('button').get());
+    expect(await byText(/success/i).find()).toBeInTheDocument();
+
+    const requests = await capture;
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
+  });
+
+  it('should rename a rule group', async () => {
+    const capture = captureRequests();
+
+    render(<RenameRuleGroupComponent />);
+    await userEvent.click(byRole('button').get());
+    expect(await byText(/success/i).find()).toBeInTheDocument();
+
+    const requests = await capture;
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
+  });
+});
+
+const UpdateRuleGroupComponent = () => {
+  const [updateRuleGroup, requestState] = useUpdateRuleGroupConfiguration();
+
+  const ruleGroupID: RuleGroupIdentifier = {
+    dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+    groupName: grafanaRulerGroupName,
+    namespaceName: grafanaRulerNamespace.uid,
+  };
+
+  return (
+    <>
+      <button onClick={() => updateRuleGroup(ruleGroupID, '2m')} />
+      {requestState.loading && 'loading'}
+      {isSuccess(requestState) && 'success'}
+      {requestState.error && `error: ${stringifyErrorLike(requestState.error)}`}
+    </>
+  );
+};
+
+const RenameRuleGroupComponent = () => {
+  const [renameRuleGroup, requestState] = useRenameRuleGroup();
+
+  const ruleGroupID: RuleGroupIdentifier = {
+    dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+    groupName: grafanaRulerGroupName,
+    namespaceName: grafanaRulerNamespace.uid,
+  };
+
+  return (
+    <>
+      <button onClick={() => renameRuleGroup(ruleGroupID, 'another-group-name', '2m')} />
+      {requestState.loading && 'loading'}
+      {isSuccess(requestState) && 'success'}
+      {requestState.error && `error: ${stringifyErrorLike(requestState.error)}`}
+    </>
+  );
+};
 
 // this test component will cycle through the loading states
 const PauseTestComponent = (options: { rulerRule?: RulerGrafanaRuleDTO }) => {
