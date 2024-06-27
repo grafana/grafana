@@ -35,28 +35,22 @@ export default function GettingStarted() {
       </ContentBox>
       <ContentBox>
         <Stack direction="column" gap={1}>
-          <Text element="h3">Get started</Text>
-          <ul className={styles.list}>
-            <li>
-              <Text weight="bold">Create an alert rule</Text> by adding queries and expressions from multiple data
-              sources.
-            </li>
-            <li>
-              <Text weight="bold">Add labels</Text> to your alert rules{' '}
-              <Text weight="bold">to connect them to notification policies</Text>
-            </li>
-            <li>
-              <Text weight="bold">Configure contact points</Text> to define where to send your notifications to.
-            </li>
-            <li>
-              <Text weight="bold">Configure notification policies</Text> to route your alert instances to contact
-              points.
-            </li>
-          </ul>
-          <TextLink href="https://grafana.com/docs/grafana/latest/alerting/" icon="angle-right" inline={false} external>
-            Read more in the docs
-          </TextLink>
-        </Stack>
+            <Text element="h3">Get started</Text>
+            <ul className={styles.list}>
+              <li>
+                <Text weight="bold">Create alerts</Text> by querying a data source
+              </li>
+              <li>
+                <Text weight="bold">Route</Text> alert notifications to your Contact points
+              </li>
+              <li>
+                <Text weight="bold">Monitor</Text> your alerts in visualizations
+              </li>
+            </ul>
+            <TextLink href="https://grafana.com/tutorials/alerting-get-started/" icon="angle-right" inline={false} external>
+              Take our Get started with Grafana Alerting tutorial
+            </TextLink>
+          </Stack>
       </ContentBox>
     </div>
   );
