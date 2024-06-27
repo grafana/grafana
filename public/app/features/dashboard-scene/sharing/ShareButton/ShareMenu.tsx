@@ -25,7 +25,7 @@ export interface ShareDrawerMenuItem {
   label: string;
   description?: string;
   icon: IconName;
-  condition: boolean;
+  renderCondition: boolean;
   onClick: (d: DashboardScene) => void;
 }
 
@@ -56,7 +56,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       icon: 'building',
       label: t('share-dashboard.menu.share-internally-title', 'Share internally'),
       description: t('share-dashboard.menu.share-internally-description', 'Advanced settings'),
-      condition: true,
+      renderCondition: true,
       onClick: () =>
         onMenuItemClick(t('share-dashboard.menu.share-internally-title', 'Share internally'), ShareInternally),
     });
@@ -65,7 +65,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       testId: newShareButtonSelector.shareExternally,
       icon: 'share-alt',
       label: t('share-dashboard.menu.share-externally-title', 'Share externally'),
-      condition: !panel && isPublicDashboardsEnabled(),
+      renderCondition: !panel && isPublicDashboardsEnabled(),
       onClick: () => {
         onMenuItemClick(t('share-dashboard.menu.share-externally-title', 'Share externally'), ShareExternally);
       },
@@ -77,13 +77,13 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       testId: newShareButtonSelector.shareSnapshot,
       icon: 'camera',
       label: t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'),
-      condition: contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard(),
+      renderCondition: contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard(),
       onClick: () => {
         onMenuItemClick(t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'), ShareSnapshot);
       },
     });
 
-    return menuItems.filter((item) => item.condition);
+    return menuItems.filter((item) => item.renderCondition);
   }, [onMenuItemClick, dashboard, panel]);
 
   return (
