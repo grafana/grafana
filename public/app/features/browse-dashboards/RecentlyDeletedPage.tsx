@@ -1,7 +1,7 @@
 import { memo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { EmptyState } from '@grafana/ui';
+import { FilterInput, EmptyState, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { t } from 'app/core/internationalization';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
@@ -58,18 +58,26 @@ const RecentlyDeletedPage = memo(() => {
       <Page.Contents>
         {searchState.result && (
           <>
-            <ActionRow
-              state={searchState}
-              getTagOptions={stateManager.getTagOptions}
-              getSortOptions={getGrafanaSearcher().getSortOptions}
-              sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
-              onLayoutChange={stateManager.onLayoutChange}
-              onSortChange={stateManager.onSortChange}
-              onTagFilterChange={stateManager.onTagFilterChange}
-              onDatasourceChange={stateManager.onDatasourceChange}
-              onPanelTypeChange={stateManager.onPanelTypeChange}
-              onSetIncludePanels={stateManager.onSetIncludePanels}
-            />
+            <Stack direction="column">
+              <FilterInput
+                placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}
+                value={searchState.query}
+                escapeRegex={false}
+                onChange={stateManager.onQueryChange}
+              />
+              <ActionRow
+                state={searchState}
+                getTagOptions={stateManager.getTagOptions}
+                getSortOptions={getGrafanaSearcher().getSortOptions}
+                sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
+                onLayoutChange={stateManager.onLayoutChange}
+                onSortChange={stateManager.onSortChange}
+                onTagFilterChange={stateManager.onTagFilterChange}
+                onDatasourceChange={stateManager.onDatasourceChange}
+                onPanelTypeChange={stateManager.onPanelTypeChange}
+                onSetIncludePanels={stateManager.onSetIncludePanels}
+              />
+            </Stack>
             <RecentlyDeletedActions />
             <AutoSizer>
               {({ width, height }) => (
