@@ -1554,6 +1554,10 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 Sets a global limit on number of correlations that can be created. Default is -1 (unlimited).
 
+### alerting_rule_evaluation_results
+
+Limit the number of query evaluation results per alert rule. If the condition query of an alert rule produces more results than this limit, the evaluation results in an error. Default is -1 (unlimited).
+
 <hr>
 
 ## [unified_alerting]

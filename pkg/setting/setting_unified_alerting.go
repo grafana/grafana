@@ -91,6 +91,7 @@ type UnifiedAlertingSettings struct {
 	MaxAttempts                    int64
 	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
+	EvaluationResultLimit          int
 	DisableJitter                  bool
 	ExecuteAlerts                  bool
 	DefaultConfiguration           string
@@ -355,6 +356,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	quotas := iniFile.Section("quota")
 	uaCfg.RulesPerRuleGroupLimit = quotas.Key("alerting_rule_group_rules").MustInt64(100)
+	uaCfg.EvaluationResultLimit = quotas.Key("alerting_rule_evaluation_results").MustInt(-1)
 
 	remoteAlertmanager := iniFile.Section("remote.alertmanager")
 	uaCfgRemoteAM := RemoteAlertmanagerSettings{
