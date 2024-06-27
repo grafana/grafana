@@ -17,7 +17,11 @@ import { LogRecord } from '../state-history/common';
 
 import { EventState } from './EventListSceneObject';
 
-export function EventDetails({ record, logRecords }: { record: LogRecord; logRecords: LogRecord[] }) {
+interface EventDetailsProps {
+  record: LogRecord;
+  logRecords: LogRecord[];
+}
+export function EventDetails({ record, logRecords }: EventDetailsProps) {
   // get the rule from the ruleUID
   const ruleUID = record.line?.ruleUID ?? '';
   const identifier = useMemo(() => {
@@ -66,7 +70,10 @@ export function EventDetails({ record, logRecords }: { record: LogRecord; logRec
   );
 }
 
-function StateTransition({ record }: { record: LogRecord }) {
+interface StateTransitionProps {
+  record: LogRecord;
+}
+function StateTransition({ record }: StateTransitionProps) {
   return (
     <Stack gap={0.5} direction={'column'}>
       <Text variant="body" weight="light" color="secondary">
@@ -81,7 +88,10 @@ function StateTransition({ record }: { record: LogRecord }) {
   );
 }
 
-const Annotations = ({ rule }: { rule: CombinedRule }) => {
+interface AnnotationsProps {
+  rule: CombinedRule;
+}
+const Annotations = ({ rule }: AnnotationsProps) => {
   const styles = useStyles2(getStyles);
   const annotations = rule.annotations;
   if (!annotations) {
@@ -118,15 +128,12 @@ const Annotations = ({ rule }: { rule: CombinedRule }) => {
  * The graph is rendered only if the rule is a Grafana rule.
  *
  */
-const QueryVizualization = ({
-  ruleUID,
-  rule,
-  logRecords,
-}: {
+interface QueryVizualizationProps {
   ruleUID: string;
   rule: CombinedRule;
   logRecords: LogRecord[];
-}) => {
+}
+const QueryVizualization = ({ ruleUID, rule, logRecords }: QueryVizualizationProps) => {
   if (!isGrafanaRulerRule(rule?.rulerRule)) {
     return (
       <Text>
@@ -181,7 +188,10 @@ export function getPanelDataForRule(ruleUID: string, logRecords: LogRecord[], co
   return PanelDataObj;
 }
 
-function ValueInTransition({ record }: { record: LogRecord }) {
+interface ValueInTransitionProps {
+  record: LogRecord;
+}
+function ValueInTransition({ record }: ValueInTransitionProps) {
   const values = record.line.values
     ? JSON.stringify(record.line.values)
     : t('central-alert-history.details.no-values', 'No values');
@@ -198,8 +208,10 @@ function ValueInTransition({ record }: { record: LogRecord }) {
     </Stack>
   );
 }
-
-function NumberTransitions({ transitions }: { transitions: number }) {
+interface NumberTransitionsProps {
+  transitions: number;
+}
+function NumberTransitions({ transitions }: NumberTransitionsProps) {
   return (
     <Stack gap={0.5} direction={'column'} alignItems="flex-start" justifyContent={'center'}>
       <Text variant="body" weight="light" color="secondary">

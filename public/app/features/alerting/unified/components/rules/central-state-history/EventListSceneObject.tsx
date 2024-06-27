@@ -39,13 +39,14 @@ const DEFAULT_PAGE_SIZE = 100;
  * It fetches the events from the history api and displays them in a list.
  * The list is filtered by the labels in the filter variable and by the time range variable in the scene graph.
  */
+interface HistoryEventsListProps {
+  timeRange?: TimeRange;
+  valueInfilterTextBox: VariableValue;
+}
 export const HistoryEventsList = ({
   timeRange,
   valueInfilterTextBox,
-}: {
-  timeRange?: TimeRange;
-  valueInfilterTextBox: VariableValue;
-}) => {
+}: HistoryEventsListProps) => {
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
 
@@ -128,7 +129,11 @@ function HistoryErrorMessage({ error }: HistoryErrorMessageProps) {
   );
 }
 
-function EventRow({ record, logRecords }: { record: LogRecord; logRecords: LogRecord[] }) {
+interface EventRowProps {
+  record: LogRecord;
+  logRecords: LogRecord[];
+}
+function EventRow({ record, logRecords }: EventRowProps) {
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useState(true);
   return (
@@ -164,7 +169,11 @@ function EventRow({ record, logRecords }: { record: LogRecord; logRecords: LogRe
   );
 }
 
-function AlertRuleName({ labels, ruleUID }: { labels: Record<string, string>; ruleUID?: string }) {
+interface AlertRuleNameProps {
+  labels: Record<string, string>;
+  ruleUID?: string;
+}
+function AlertRuleName({ labels, ruleUID }: AlertRuleNameProps) {
   const styles = useStyles2(getStyles);
   const alertRuleName = labels['alertname'];
   if (!ruleUID) {
@@ -205,19 +214,20 @@ function EventTransition({ previous, current }: EventTransitionProps) {
   );
 }
 
+interface StateIconProps {
+  iconName: IconName;
+  iconColor: string;
+  tooltipContent: string;
+  labelText: ReactElement;
+  showLabel: boolean;
+}
 const StateIcon = ({
   iconName,
   iconColor,
   tooltipContent,
   labelText,
   showLabel,
-}: {
-  iconName: IconName;
-  iconColor: string;
-  tooltipContent: string;
-  labelText: ReactElement;
-  showLabel: boolean;
-}) => (
+}: StateIconProps) => (
   <Tooltip content={tooltipContent}>
     <Stack gap={0.5} direction={'row'} alignItems="center">
       <Icon name={iconName} size="md" className={iconColor} />
@@ -230,7 +240,11 @@ const StateIcon = ({
   </Tooltip>
 );
 
-export function EventState({ state, showLabel }: { state: GrafanaAlertStateWithReason; showLabel?: boolean }) {
+interface EventStateProps {
+  state: GrafanaAlertStateWithReason;
+  showLabel?: boolean;
+}
+export function EventState({ state, showLabel }: EventStateProps) {
   const styles = useStyles2(getStyles);
   if (!isGrafanaAlertState(state) && !isAlertStateWithReason(state)) {
     return (
