@@ -800,7 +800,7 @@ def e2e_storybook_step():
             "PORT": "9001",
         },
         "commands": [
-            "npx --loglevel verbose wait-on@7.0.1 http://$HOST:$PORT",
+            "npx --loglevel verbose wait-on@7.0.1 -lv http://$HOST:$PORT",
             "yarn e2e:storybook",
         ],
     }
