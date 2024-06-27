@@ -32,3 +32,6 @@ export interface SuggestedDashboard {
   dashboardTitle: string;
   items: ScopeDashboardBinding[];
 }
+
+export type OnNodeUpdate = (path: string[], isExpanded: boolean, query: string) => void;
+export type OnNodeSelectToggle = (path: string[]) => void;

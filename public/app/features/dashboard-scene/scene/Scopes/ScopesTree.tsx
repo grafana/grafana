@@ -1,18 +1,19 @@
+import { groupBy } from 'lodash';
 import { useMemo } from 'react';
 
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItem } from './ScopesTreeItem';
 import { ScopesTreeLoading } from './ScopesTreeLoading';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
-import { Node, NodeReason, NodesMap, TreeScope } from './types';
+import { NodeReason, NodesMap, OnNodeSelectToggle, OnNodeUpdate, TreeScope } from './types';
 
 export interface ScopesTreeProps {
   nodes: NodesMap;
   nodePath: string[];
   loadingNodeName: string | undefined;
   scopes: TreeScope[];
-  onNodeUpdate: (path: string[], isExpanded: boolean, query: string) => void;
-  onNodeSelectToggle: (path: string[]) => void;
+  onNodeUpdate: OnNodeUpdate;
+  onNodeSelectToggle: OnNodeSelectToggle;
 }
 
 export function ScopesTree({
@@ -29,30 +30,7 @@ export function ScopesTree({
   const isNodeLoading = loadingNodeName === nodeId;
   const scopeNames = scopes.map(({ scopeName }) => scopeName);
   const anyChildExpanded = childNodes.some(({ isExpanded }) => isExpanded);
-
-  const { persistedNodes, resultsNodes } = useMemo(
-    () =>
-      childNodes.reduce<Record<string, Node[]>>(
-        (acc, node) => {
-          switch (node.reason) {
-            case NodeReason.Persisted:
-              acc.persistedNodes.push(node);
-              break;
-
-            case NodeReason.Result:
-              acc.resultsNodes.push(node);
-              break;
-          }
-
-          return acc;
-        },
-        {
-          persistedNodes: [],
-          resultsNodes: [],
-        }
-      ),
-    [childNodes]
-  );
+  const groupedNodes = useMemo(() => groupBy(childNodes, 'reason'), [childNodes]);
 
   return (
     <>
@@ -70,7 +48,7 @@ export function ScopesTree({
           loadingNodeName={loadingNodeName}
           node={node}
           nodePath={nodePath}
-          nodes={persistedNodes}
+          nodes={groupedNodes[NodeReason.Persisted] ?? []}
           scopes={scopes}
           scopeNames={scopeNames}
           type="persisted"
@@ -78,7 +56,11 @@ export function ScopesTree({
           onNodeUpdate={onNodeUpdate}
         />
 
-        <ScopesTreeHeadline anyChildExpanded={anyChildExpanded} query={node.query} resultsNodes={resultsNodes} />
+        <ScopesTreeHeadline
+          anyChildExpanded={anyChildExpanded}
+          query={node.query}
+          resultsNodes={groupedNodes[NodeReason.Result] ?? []}
+        />
 
         <ScopesTreeItem
           anyChildExpanded={anyChildExpanded}
@@ -86,7 +68,7 @@ export function ScopesTree({
           loadingNodeName={loadingNodeName}
           node={node}
           nodePath={nodePath}
-          nodes={resultsNodes}
+          nodes={groupedNodes[NodeReason.Result] ?? []}
           scopes={scopes}
           scopeNames={scopeNames}
           type="result"

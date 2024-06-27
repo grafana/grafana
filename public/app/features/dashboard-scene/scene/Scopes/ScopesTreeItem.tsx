@@ -5,7 +5,7 @@ import { Checkbox, Icon, RadioButtonDot, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { ScopesTree } from './ScopesTree';
-import { Node, TreeScope } from './types';
+import { Node, OnNodeSelectToggle, OnNodeUpdate, TreeScope } from './types';
 
 export interface ScopesTreeItemProps {
   anyChildExpanded: boolean;
@@ -17,8 +17,8 @@ export interface ScopesTreeItemProps {
   scopeNames: string[];
   scopes: TreeScope[];
   type: 'persisted' | 'result';
-  onNodeUpdate: (path: string[], isExpanded: boolean, query: string) => void;
-  onNodeSelectToggle: (path: string[]) => void;
+  onNodeUpdate: OnNodeUpdate;
+  onNodeSelectToggle: OnNodeSelectToggle;
 }
 
 export function ScopesTreeItem({

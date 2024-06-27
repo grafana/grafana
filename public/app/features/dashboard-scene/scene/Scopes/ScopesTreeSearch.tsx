@@ -6,11 +6,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { OnNodeUpdate } from './types';
+
 export interface ScopesTreeSearchProps {
   anyChildExpanded: boolean;
   nodePath: string[];
   query: string;
-  onNodeUpdate: (path: string[], isExpanded: boolean, query: string) => void;
+  onNodeUpdate: OnNodeUpdate;
 }
 
 export function ScopesTreeSearch({ anyChildExpanded, nodePath, query, onNodeUpdate }: ScopesTreeSearchProps) {
