@@ -18,6 +18,7 @@ import (
 	notificationsModels "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	receiver "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/receiver"
 	timeInterval "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/timeinterval"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -86,8 +87,14 @@ func (t NotificationsAPIBuilder) GetAPIGroupInfo(
 		return nil, fmt.Errorf("failed to initialize time-interval storage: %w", err)
 	}
 
+	recvStorage, err := receiver.NewStorage(nil, t.namespacer, scheme, desiredMode, optsGetter, reg) // TODO: add receiver service
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize receiver storage: %w", err)
+	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[notificationsModels.VERSION] = map[string]rest.Storage{
 		notificationsModels.TimeIntervalResourceInfo.StoragePath(): intervals,
+		notificationsModels.ReceiverResourceInfo.StoragePath():     recvStorage,
 	}
 	return &apiGroupInfo, nil
 }
@@ -106,6 +113,8 @@ func (t NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			switch a.GetResource() {
 			case notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource:
 				return timeInterval.Authorize(ctx, t.authz, a)
+			case notificationsModels.ReceiverResourceInfo.GroupResource().Resource:
+				return receiver.Authorize(ctx, t.authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		})

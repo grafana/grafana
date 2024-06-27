@@ -14,12 +14,17 @@ import (
 
 type NotificationsV0alpha1Interface interface {
 	RESTClient() rest.Interface
+	ReceiversGetter
 	TimeIntervalsGetter
 }
 
 // NotificationsV0alpha1Client is used to interact with features provided by the notifications.alerting.grafana.app group.
 type NotificationsV0alpha1Client struct {
 	restClient rest.Interface
+}
+
+func (c *NotificationsV0alpha1Client) Receivers(namespace string) ReceiverInterface {
+	return newReceivers(c, namespace)
 }
 
 func (c *NotificationsV0alpha1Client) TimeIntervals(namespace string) TimeIntervalInterface {

@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestSetDualWritingMode(t *testing.T) {
@@ -56,5 +57,28 @@ func TestSetDualWritingMode(t *testing.T) {
 		assert.True(t, ok)
 		assert.NoError(t, err)
 		assert.Equal(t, val, fmt.Sprint(tt.expectedMode))
+	}
+}
+
+func TestCompare(t *testing.T) {
+	testCase := []struct {
+		name     string
+		input    runtime.Object
+		expected bool
+	}{
+		{
+			name:     "should return true when both objects are the same",
+			input:    exampleObj,
+			expected: true,
+		},
+		{
+			name:  "should return false when objects are different",
+			input: anotherObj,
+		},
+	}
+	for _, tt := range testCase {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, Compare(tt.input, exampleObj))
+		})
 	}
 }

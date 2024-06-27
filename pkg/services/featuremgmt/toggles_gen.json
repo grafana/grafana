@@ -605,14 +605,29 @@
     {
       "metadata": {
         "name": "dashboardRestore",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-05-16T17:36:26Z"
+        "resourceVersion": "1719321877748",
+        "creationTimestamp": "2024-05-16T17:36:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-06-25 13:24:37.748284 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables deleted dashboard restore feature",
+        "description": "Enables deleted dashboard restore feature (backend only)",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform",
+        "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardRestoreUI",
+        "resourceVersion": "1719321338253",
+        "creationTimestamp": "2024-06-25T13:15:38Z"
+      },
+      "spec": {
+        "description": "Enables the frontend to be able to restore a recently deleted dashboard",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
       }
     },
     {
@@ -2095,7 +2110,8 @@
       "metadata": {
         "name": "scenes",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-07-07T06:53:02Z"
+        "creationTimestamp": "2022-07-07T06:53:02Z",
+        "deletionTimestamp": "2024-06-26T11:58:18Z"
       },
       "spec": {
         "description": "Experimental framework to build interactive dashboards",
