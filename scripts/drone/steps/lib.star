@@ -1258,7 +1258,10 @@ def verify_linux_packages_step():
                 '    exit 1',
                 'fi',
             ],
-        "depends_on": ["publish-linux-packages-deb"],
+        "depends_on": [
+            "publish-linux-packages-deb",
+            "publish-linux-packages-rpm",
+        ],
     }
 
 def verify_gen_cue_step():
