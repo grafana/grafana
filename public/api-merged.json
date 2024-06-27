@@ -17014,24 +17014,6 @@
         }
       }
     },
-    "NavLink": {
-      "type": "object",
-      "title": "NavLink defines model for NavLink.",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "target": {
-          "type": "string"
-        },
-        "text": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        }
-      }
-    },
     "NavbarPreference": {
       "type": "object",
       "title": "NavbarPreference defines model for NavbarPreference.",
@@ -17039,7 +17021,7 @@
         "savedItems": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/NavLink"
+            "$ref": "#/definitions/PreferenceNavLink"
           }
         }
       }
@@ -18183,6 +18165,24 @@
           "additionalProperties": {
             "type": "string"
           }
+        }
+      }
+    },
+    "PreferenceNavLink": {
+      "type": "object",
+      "title": "PreferenceNavLink defines model for PreferenceNavLink.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
         }
       }
     },

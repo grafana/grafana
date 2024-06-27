@@ -7140,29 +7140,11 @@
         },
         "type": "object"
       },
-      "NavLink": {
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "target": {
-            "type": "string"
-          },
-          "text": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          }
-        },
-        "title": "NavLink defines model for NavLink.",
-        "type": "object"
-      },
       "NavbarPreference": {
         "properties": {
           "savedItems": {
             "items": {
-              "$ref": "#/components/schemas/NavLink"
+              "$ref": "#/components/schemas/PreferenceNavLink"
             },
             "type": "array"
           }
@@ -8310,6 +8292,24 @@
             "type": "object"
           }
         },
+        "type": "object"
+      },
+      "PreferenceNavLink": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "title": "PreferenceNavLink defines model for PreferenceNavLink.",
         "type": "object"
       },
       "Preferences": {
