@@ -1,4 +1,5 @@
-import { getDataSourceSrv } from '@grafana/runtime';
+import { css } from '@emotion/css';
+
 import {
   EmbeddedScene,
   PanelBuilders,
@@ -9,35 +10,64 @@ import {
   SceneReactObject,
   SceneRefreshPicker,
   SceneTimePicker,
+  SceneTimeRange,
+  SceneVariableSet,
+  TextBoxVariable,
+  VariableValueSelectors,
+  useUrlSync,
 } from '@grafana/scenes';
+import { GraphDrawStyle, VisibilityMode } from '@grafana/schema/dist/esm/index';
 import {
-  GraphDrawStyle,
   GraphGradientMode,
+  Icon,
   LegendDisplayMode,
   LineInterpolation,
   ScaleDistribution,
   StackingMode,
+  Tooltip,
   TooltipDisplayMode,
-  VisibilityMode,
-} from '@grafana/schema/dist/esm/index';
+  useStyles2,
+} from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
-import { DataSourceInformation, PANEL_STYLES } from '../../../home/Insights';
-import { SectionSubheader } from '../../../insights/SectionSubheader';
+import { DataSourceInformation } from '../../../home/Insights';
 
-import { HistoryEventsListObjectRenderer } from './CentralAlertHistory';
+import { alertStateHistoryDatasource, useRegisterHistoryRuntimeDataSource } from './CentralHistoryRuntimeDataSource';
+import { HistoryEventsListObject } from './EventListSceneObject';
+
+export const LABELS_FILTER = 'filter';
+/**
+ *
+ * This scene shows the history of the alert state changes.
+ * It shows a timeseries panel with the alert state changes and a list of the events.
+ * The events in the panel are fetched from the history api, through a runtime datasource.
+ * The events in the list are fetched direclty from the history api.
+ * Main scene renders two children scene objects, one for the timeseries panel and one for the list of events.
+ * Both share time range and filter variable from the parent scene.
+ */
 
 export const CentralAlertHistoryScene = () => {
-  const dataSourceSrv = getDataSourceSrv();
-  const alertStateHistoryDatasource: DataSourceInformation = {
-    type: 'loki',
-    uid: 'grafanacloud-alert-state-history',
-    settings: undefined,
-  };
+  const filterVariable = new TextBoxVariable({
+    name: LABELS_FILTER,
+    label: 'Filter by labels: ',
+  });
 
-  alertStateHistoryDatasource.settings = dataSourceSrv.getInstanceSettings(alertStateHistoryDatasource.uid);
+  useRegisterHistoryRuntimeDataSource(); // register the runtime datasource for the history api.
 
   const scene = new EmbeddedScene({
-    controls: [new SceneControlsSpacer(), new SceneTimePicker({}), new SceneRefreshPicker({})],
+    controls: [
+      new SceneReactObject({
+        component: FilterInfo,
+      }),
+      new VariableValueSelectors({}),
+      new SceneControlsSpacer(),
+      new SceneTimePicker({}),
+      new SceneRefreshPicker({}),
+    ],
+    $timeRange: new SceneTimeRange({}), //needed for using the time range sync in the url
+    $variables: new SceneVariableSet({
+      variables: [filterVariable],
+    }),
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
@@ -46,31 +76,35 @@ export const CentralAlertHistoryScene = () => {
           body: getEventsSceneObject(alertStateHistoryDatasource),
         }),
         new SceneFlexItem({
-          body: new SceneReactObject({
-            component: HistoryEventsListObjectRenderer,
-          }),
+          body: new HistoryEventsListObject(),
         }),
       ],
     }),
   });
+  // we need to call this to sync the url with the scene state
+  const isUrlSyncInitialized = useUrlSync(scene);
+
+  if (!isUrlSyncInitialized) {
+    return null;
+  }
 
   return <scene.Component model={scene} />;
 };
-
-function getEventsSceneObject(ashDs: DataSourceInformation) {
+/**
+ * Creates a SceneFlexItem with a timeseries panel that shows the events.
+ * The query uses a runtime datasource that fetches the events from the history api.
+ * @param alertStateHistoryDataSource the datasource information for the runtime datasource
+ */
+function getEventsSceneObject(alertStateHistoryDataSource: DataSourceInformation) {
   return new EmbeddedScene({
-    controls: [
-      new SceneReactObject({
-        component: SectionSubheader,
-      }),
-    ],
+    controls: [],
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
         new SceneFlexItem({
           ySizing: 'content',
           body: new SceneFlexLayout({
-            children: [getEventsScenesFlexItem(ashDs)],
+            children: [getEventsScenesFlexItem(alertStateHistoryDataSource)],
           }),
         }),
       ],
@@ -78,13 +112,18 @@ function getEventsSceneObject(ashDs: DataSourceInformation) {
   });
 }
 
+/**
+ * Creates a SceneQueryRunner with the datasource information for the runtime datasource.
+ * @param datasource the datasource information for the runtime datasource
+ * @returns the SceneQueryRunner
+ */
 function getSceneQuery(datasource: DataSourceInformation) {
   const query = new SceneQueryRunner({
-    datasource,
+    datasource: datasource,
     queries: [
       {
         refId: 'A',
-        expr: 'count_over_time({from="state-history"} |= `` [$__auto])',
+        expr: '',
         queryType: 'range',
         step: '10s',
       },
@@ -92,10 +131,13 @@ function getSceneQuery(datasource: DataSourceInformation) {
   });
   return query;
 }
-
+/**
+ * This function creates a SceneFlexItem with a timeseries panel that shows the events.
+ * The query uses a runtime datasource that fetches the events from the history api.
+ */
 export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
   return new SceneFlexItem({
-    ...PANEL_STYLES,
+    minHeight: 300,
     body: PanelBuilders.timeseries()
       .setTitle('Events')
       .setDescription('Alert events during the period of time.')
@@ -120,3 +162,39 @@ export function getEventsScenesFlexItem(datasource: DataSourceInformation) {
       .build(),
   });
 }
+
+export const FilterInfo = () => {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.container}>
+      <Tooltip
+        content={
+          <div>
+            <Trans i18nKey="central-alert-history.filter.info.label1">
+              Filter events using label querying without spaces, ex:
+            </Trans>
+            <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
+            <Trans i18nKey="central-alert-history.filter.info.label2">Invalid use of spaces:</Trans>
+            <pre>{`{severity= "critical"}`}</pre>
+            <pre>{`{severity ="critical"}`}</pre>
+            <Trans i18nKey="central-alert-history.filter.info.label3">Valid use of spaces:</Trans>
+            <pre>{`{severity=" critical"}`}</pre>
+            <Trans i18nKey="central-alert-history.filter.info.label4">
+              Filter alerts using label querying without braces, ex:
+            </Trans>
+            <pre>{`severity="critical", instance=~"cluster-us-.+"`}</pre>
+          </div>
+        }
+      >
+        <Icon name="info-circle" size="sm" />
+      </Tooltip>
+    </div>
+  );
+};
+
+const getStyles = () => ({
+  container: css({
+    padding: '0',
+    alignSelf: 'center',
+  }),
+});
