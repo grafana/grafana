@@ -49,6 +49,10 @@ load(
     "verify_drone",
 )
 load(
+    "scripts/drone/pipelines/verify_storybook.star",
+    "verify_storybook",
+)
+load(
     "scripts/drone/pipelines/verify_starlark.star",
     "verify_starlark",
 )
@@ -78,6 +82,12 @@ def pr_pipelines():
         verify_starlark(
             get_pr_trigger(
                 include_paths = ["scripts/drone/**", ".drone.star"],
+            ),
+            ver_mode,
+        ),
+        verify_storybook(
+            get_pr_trigger(
+                exclude_paths = ["pkg/**", "packaging/**", "go.sum", "go.mod"],
             ),
             ver_mode,
         ),

@@ -310,7 +310,6 @@ def e2e_tests_artifacts():
             "end-to-end-tests-panels-suite",
             "end-to-end-tests-smoke-tests-suite",
             "end-to-end-tests-various-suite",
-            "end-to-end-tests-storybook-suite",
         ],
         "failure": "ignore",
         "when": {
@@ -780,7 +779,7 @@ def start_storybook_step():
         "name": "start-storybook",
         "image": images["node"],
         "depends_on": [
-            "rgm-package",
+            "yarn-install",
         ],
         "commands": [
             "yarn storybook --quiet",
@@ -1265,7 +1264,6 @@ def end_to_end_tests_deps():
         "end-to-end-tests-panels-suite",
         "end-to-end-tests-smoke-tests-suite",
         "end-to-end-tests-various-suite",
-        "end-to-end-tests-storybook-suite",
     ]
 
 def compile_build_cmd():
