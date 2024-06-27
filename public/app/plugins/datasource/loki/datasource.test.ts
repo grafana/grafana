@@ -273,10 +273,13 @@ describe('LokiDatasource', () => {
     });
 
     it('should interpolate before adding adhoc filters', async () => {
+      const originalQuery = 'rate({bar="baz", job="foo"} |= "bar" [$__auto])';
+      const interpolatedQuery = 'rate({bar="baz", job="foo"} |= "bar" [5m])';
       const templateSrv = {
-        replace: jest.fn().mockImplementation((input: string) => input),
+        replace: jest.fn().mockImplementation((input: string) => interpolatedQuery),
         getVariables: () => [],
       };
+      const query: LokiQuery = { expr: originalQuery, refId: 'A' };
       const ds = createLokiDatasource(templateSrv);
       const adhocFilters = [
         {
@@ -290,8 +293,16 @@ describe('LokiDatasource', () => {
           value: 'v2',
         },
       ];
+      jest.spyOn(ds, 'addAdHocFilters');
+
       ds.applyTemplateVariables(query, {}, adhocFilters);
-      expect(templateSrv.replace).toHaveBeenCalledWith(query.expr, expect.any(Object), expect.any(Function));
+
+      expect(templateSrv.replace).toHaveBeenCalledWith(originalQuery, expect.any(Object), expect.any(Function));
+      expect(ds.addAdHocFilters).toHaveBeenCalledWith(interpolatedQuery, adhocFilters);
+
+      expect(ds.applyTemplateVariables(query, {}, adhocFilters).expr).toBe(
+        'rate({bar="baz", job="foo", k1="v1", k2!="v2"} |= "bar" [5m])'
+      );
     });
   });
 
