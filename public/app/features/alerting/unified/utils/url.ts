@@ -4,7 +4,7 @@ export function createUrl(path: string, queryParams?: string[][] | Record<string
   const searchParams = new URLSearchParams(queryParams);
   const searchParamsString = searchParams.toString();
 
-  return `${config.appSubUrl}${path}${searchParamsString ? `?${searchParamsString}` : ''}`;
+  return `${path}${searchParamsString ? `?${searchParamsString}` : ''}`;
 }
 
 export function createAbsoluteUrl(
