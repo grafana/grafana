@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -25,7 +26,7 @@ import (
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
 func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureToggles) (zanzana.Client, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		return zanzana.NoopClient{}, nil
+		return client.NewNoop(), nil
 	}
 
 	logger := log.New("zanzana")
@@ -37,7 +38,11 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 		if err != nil {
 			return nil, fmt.Errorf("failed to create zanzana client to remote server: %w", err)
 		}
-		client = zanzana.NewClient(conn)
+
+		client, err = zanzana.NewClient(context.Background(), conn, cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
+		}
 	case setting.ZanzanaModeEmbedded:
 		store, err := zanzana.NewEmbeddedStore(cfg, db, logger)
 		if err != nil {
@@ -51,7 +56,12 @@ func ProvideZanzana(cfg *setting.Cfg, db db.DB, features featuremgmt.FeatureTogg
 
 		channel := &inprocgrpc.Channel{}
 		openfgav1.RegisterOpenFGAServiceServer(channel, srv)
-		client = zanzana.NewClient(channel)
+
+		client, err = zanzana.NewClient(context.Background(), channel, cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
+		}
+
 	default:
 		return nil, fmt.Errorf("unsupported zanzana mode: %s", cfg.Zanzana.Mode)
 	}

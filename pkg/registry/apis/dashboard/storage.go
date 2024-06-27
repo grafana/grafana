@@ -54,14 +54,6 @@ func newStorage(scheme *runtime.Scheme) (*storage, error) {
 					}, nil
 				}
 			}
-			summary, ok := obj.(*v0alpha1.DashboardSummary)
-			if ok {
-				return []interface{}{
-					dash.Name,
-					summary.Spec.Title,
-					dash.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
-			}
 			return nil, fmt.Errorf("expected dashboard or summary")
 		})
 	return &storage{Store: store}, nil
