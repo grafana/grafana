@@ -30,10 +30,10 @@ func getDashboardFromEvent(event resource.WriteEvent) (*dashboard.Dashboard, err
 func isDashboardKey(key *resource.ResourceKey, requireName bool) error {
 	gr := dashboard.DashboardResourceInfo.GroupResource()
 	if key.Group != gr.Group {
-		return fmt.Errorf("expecting dashboard group")
+		return fmt.Errorf("expecting dashboard group (%s != %s)", key.Group, gr.Group)
 	}
 	if key.Resource != gr.Resource {
-		return fmt.Errorf("expecting dashboard resource")
+		return fmt.Errorf("expecting dashboard resource (%s != %s)", key.Resource, gr.Resource)
 	}
 	if requireName && key.Name == "" {
 		return fmt.Errorf("expecting dashboard name (uid)")
