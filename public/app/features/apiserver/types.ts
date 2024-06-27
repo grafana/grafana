@@ -37,9 +37,9 @@ export const AnnoKeyMessage = 'grafana.app/message';
 export const AnnoKeySlug = 'grafana.app/slug';
 
 // Identify where values came from
-const AnnoKeyOriginName = 'grafana.app/originName';
-const AnnoKeyOriginPath = 'grafana.app/originPath';
-const AnnoKeyOriginHash = 'grafana.app/originHash';
+export const AnnoKeyOriginName = 'grafana.app/originName';
+export const AnnoKeyOriginPath = 'grafana.app/originPath';
+export const AnnoKeyOriginHash = 'grafana.app/originHash';
 const AnnoKeyOriginTimestamp = 'grafana.app/originTimestamp';
 
 type GrafanaAnnotations = {

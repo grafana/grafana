@@ -55,6 +55,14 @@
     },
     "pause": "Pause evaluation"
   },
+  "alerting": {
+    "contact-points": {
+      "telegram": {
+        "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
+        "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
+      }
+    }
+  },
   "annotations": {
     "empty-state": {
       "button-title": "Add annotation query",
@@ -150,11 +158,12 @@
   "central-alert-history": {
     "error": "Something went wrong loading the alert state history",
     "filter": {
-      "button": {
-        "clear": "Clear"
-      },
-      "label": "Filter events",
-      "placeholder": "Filter events in the list with labels"
+      "info": {
+        "label1": "Filter events using label querying without spaces, ex:",
+        "label2": "Invalid use of spaces:",
+        "label3": "Valid use of spaces:",
+        "label4": "Filter alerts using label querying without braces, ex:"
+      }
     }
   },
   "clipboard-button": {
@@ -1457,7 +1466,7 @@
     },
     "email-sharing": {
       "accept-button": "Accept",
-      "alert-text": "Effective immediately, sharing public dashboards by email incurs a cost per active user. Going forward, you’ll be prompted for payment whenever you add new users to your dashboard.",
+      "alert-text": "Sharing dashboards by email is billed per user for the duration of the 30-day token, regardless of how many dashboards are shared. Billing stops after 30 days unless you renew the token.",
       "bill-ack": "I understand that adding users requires payment.*",
       "cancel-button": "Cancel",
       "input-invalid-email-text": "Invalid email",
@@ -1466,7 +1475,7 @@
       "invite-field-desc": "Invite people by email",
       "invite-field-label": "Invite",
       "learn-more-button": "Learn more",
-      "recipient-email-placeholder": "Type in the recipient email address and press Enter",
+      "recipient-email-placeholder": "Email",
       "recipient-invalid-email-text": "Invalid email",
       "recipient-invitation-button": "Invite",
       "recipient-invitation-description": "Invite someone by email",
@@ -1526,16 +1535,15 @@
       "success-delete-old": "Public dashboard deleted!"
     },
     "share-configuration": {
-      "access-label": "can access",
       "share-type-label": "Link access"
     },
     "share-externally": {
       "copy-link-button": "Copy external link",
-      "email-share-type-option-description": "Only people with access can open with the link",
+      "email-share-type-option-description": "Only people with the link can access dashboard",
       "email-share-type-option-label": "Only specific people",
       "pause-access-button": "Pause access",
       "pause-access-tooltip": "Pausing will temporarily disable access to this dashboard for all users",
-      "public-share-type-option-description": "Anyone with the link can access",
+      "public-share-type-option-description": "Anyone with the link can access dashboard",
       "public-share-type-option-label": "Anyone with the link",
       "resume-access-button": "Resume access",
       "revoke-access-button": "Revoke access",
@@ -1632,6 +1640,11 @@
       "title": "Restore Dashboards"
     }
   },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": "Search for dashboards"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
@@ -1671,8 +1684,11 @@
       "title": "Select scopes"
     },
     "suggestedDashboards": {
-      "clear": "Clear search",
       "loading": "Loading dashboards",
+      "noResultsForFilter": "No results found for your query",
+      "noResultsForFilterClear": "Clear search",
+      "noResultsForScopes": "No dashboards found for the selected scopes",
+      "noResultsNoScopes": "No scopes selected",
       "search": "Search",
       "toggle": {
         "collapse": "Collapse scope filters",
