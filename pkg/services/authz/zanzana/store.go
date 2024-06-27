@@ -115,13 +115,13 @@ func parseConfig(cfg *setting.Cfg, logger log.Logger) (*sqlstore.DatabaseConfig,
 	}
 
 	zanzanaDBCfg := &sqlcommon.Config{
-		Logger: newZanzanaLogger(logger),
-		// MaxTuplesPerWriteField: 0,
-		// MaxTypesPerModelField:  0,
-		MaxOpenConns:    grafanaDBCfg.MaxOpenConn,
-		MaxIdleConns:    grafanaDBCfg.MaxIdleConn,
-		ConnMaxLifetime: time.Duration(grafanaDBCfg.ConnMaxLifetime) * time.Second,
-		ExportMetrics:   sec.Key("instrument_queries").MustBool(false),
+		Logger:                 newZanzanaLogger(logger),
+		MaxTuplesPerWriteField: 100,
+		MaxTypesPerModelField:  100,
+		MaxOpenConns:           grafanaDBCfg.MaxOpenConn,
+		MaxIdleConns:           grafanaDBCfg.MaxIdleConn,
+		ConnMaxLifetime:        time.Duration(grafanaDBCfg.ConnMaxLifetime) * time.Second,
+		ExportMetrics:          sec.Key("instrument_queries").MustBool(false),
 	}
 
 	return grafanaDBCfg, zanzanaDBCfg, nil

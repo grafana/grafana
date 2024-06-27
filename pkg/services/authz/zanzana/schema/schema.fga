@@ -1,0 +1,24 @@
+model
+  schema 1.1
+
+type instance
+
+type user
+
+type org
+  relations
+    define instance: [instance]
+    define member: [user]
+    define viewer: [user]
+
+type role
+  relations
+    define org: [org]
+    define instance: [instance]
+    define assignee: [user, team#member, role#assignee]
+
+type team
+  relations
+    define org: [org]
+    define admin: [user]
+    define member: [user] or admin
