@@ -19,14 +19,6 @@ import {
 import { config, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 
 import {
-  createAnnotationResponse,
-  createDataRequest,
-  createDefaultPromResponse,
-  createEmptyAnnotationResponse,
-  fetchMockCalledWith,
-  getMockTimeRange,
-} from './__mocks__/datasource';
-import {
   alignRange,
   extractRuleMappingFromGroups,
   PrometheusDatasource,
@@ -34,6 +26,14 @@ import {
   prometheusSpecialRegexEscape,
 } from './datasource';
 import PromQlLanguageProvider from './language_provider';
+import {
+  createAnnotationResponse,
+  createDataRequest,
+  createDefaultPromResponse,
+  createEmptyAnnotationResponse,
+  fetchMockCalledWith,
+  getMockTimeRange,
+} from './test/__mocks__/datasource';
 import { PromApplication, PrometheusCacheLevel, PromOptions, PromQuery, PromQueryRequest } from './types';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
