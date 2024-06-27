@@ -61,12 +61,7 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 
 	c.storeID = store.GetId()
 
-	model, err := schema.TransformToModel(schema.DSL)
-	if err != nil {
-		return nil, err
-	}
-
-	modelID, err := c.loadModel(ctx, c.storeID, model)
+	modelID, err := c.loadModel(ctx, c.storeID, schema.DSL)
 	if err != nil {
 		return nil, err
 	}
@@ -135,35 +130,59 @@ func (c *Client) getStore(ctx context.Context, name string) (*openfgav1.Store, e
 	}
 }
 
-func (c *Client) loadModel(ctx context.Context, storeID string, model *openfgav1.AuthorizationModel) (string, error) {
-	// ReadAuthorizationModels returns authorization models for a store sorted in descending order of creation.
-	// So with a pageSize of 1 we will get the latest model.
-	readRes, err := c.client.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{
-		StoreId:  storeID,
-		PageSize: &wrapperspb.Int32Value{Value: 1},
-	})
+func (c *Client) loadModel(ctx context.Context, storeID string, dsl string) (string, error) {
 
-	if err != nil {
-		return "", fmt.Errorf("failed to load authorization model: %w", err)
-	}
+	var continuationToken string
 
-	if len(readRes.GetAuthorizationModels()) == 1 {
-		fmt.Println(schema.EqualModels(model, readRes.AuthorizationModels[0]))
-	}
-
-	/*
-		writeRes, err := c.client.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{
-			StoreId:         c.storeID,
-			TypeDefinitions: model.GetTypeDefinitions(),
-			SchemaVersion:   model.GetSchemaVersion(),
-			Conditions:      model.GetConditions(),
+	for {
+		// ReadAuthorizationModels returns authorization models for a store sorted in descending order of creation.
+		// So with a pageSize of 1 we will get the latest model.
+		res, err := c.client.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{
+			StoreId:           storeID,
+			PageSize:          &wrapperspb.Int32Value{Value: 20},
+			ContinuationToken: continuationToken,
 		})
 
 		if err != nil {
 			return "", fmt.Errorf("failed to load authorization model: %w", err)
 		}
 
-		return writeRes.GetAuthorizationModelId(), nil
-	*/
-	return "", nil
+		for _, model := range res.GetAuthorizationModels() {
+			// We need to first convert stored model into dsl and compare it to provided dsl.
+			storedDSL, err := schema.TransformToDSL(model)
+			if err != nil {
+				return "", err
+			}
+
+			// If provided dsl is equal to a stored dsl we use that as the authorization id
+			if schema.EqualModels(dsl, storedDSL) {
+				return res.AuthorizationModels[0].GetId(), nil
+			}
+		}
+
+		// If we have not found any matching authorization model we break the loop and create a new one
+		if res.GetContinuationToken() == "" {
+			break
+		}
+
+		continuationToken = res.GetContinuationToken()
+	}
+
+	model, err := schema.TransformToModel(dsl)
+	if err != nil {
+		return "", err
+	}
+
+	writeRes, err := c.client.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{
+		StoreId:         c.storeID,
+		TypeDefinitions: model.GetTypeDefinitions(),
+		SchemaVersion:   model.GetSchemaVersion(),
+		Conditions:      model.GetConditions(),
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("failed to load authorization model: %w", err)
+	}
+
+	return writeRes.GetAuthorizationModelId(), nil
 }

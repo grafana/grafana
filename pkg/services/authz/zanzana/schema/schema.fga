@@ -9,15 +9,16 @@ type org
   relations
     define instance: [instance]
     define member: [user]
+    define viewer: [user]
 
 type role
   relations
-    define assignee: [user, team#member, role#assignee]
-    define instance: [instance]
     define org: [org]
+    define instance: [instance]
+    define assignee: [user, team#member, role#assignee]
 
 type team
   relations
+    define org: [org]
     define admin: [user]
     define member: [user] or admin
-    define org: [org]
