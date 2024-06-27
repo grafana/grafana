@@ -565,6 +565,18 @@
     },
     {
       "metadata": {
+        "name": "cloudWatchRoundUpEndTime",
+        "resourceVersion": "1719324143210",
+        "creationTimestamp": "2024-06-25T14:02:23Z"
+      },
+      "spec": {
+        "description": "Round up end time for metric queries to the next minute to avoid missing data",
+        "stage": "GA",
+        "codeowner": "@grafana/aws-datasources"
+      }
+    },
+    {
+      "metadata": {
         "name": "configurableSchedulerTick",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-07-26T16:44:12Z"
