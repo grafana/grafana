@@ -153,6 +153,8 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByText('Share')).toBeInTheDocument();
       const newShareButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
       expect(newShareButton).not.toBeInTheDocument();
+      const newExportButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
+      expect(newExportButton).not.toBeInTheDocument();
     });
     it('Should show new share button when newDashboardSharingComponent FF is enabled', async () => {
       config.featureToggles.newDashboardSharingComponent = true;
@@ -167,12 +169,6 @@ describe('NavToolbarActions', () => {
       setup();
       const newExportButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
       expect(newExportButton).toBeInTheDocument();
-    });
-    it('Should not show new export button when newDashboardSharingComponent FF is disabled', async () => {
-      config.featureToggles.newDashboardSharingComponent = false;
-      setup();
-      const newExportButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
-      expect(newExportButton).not.toBeInTheDocument();
     });
   });
 
