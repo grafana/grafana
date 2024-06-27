@@ -6,8 +6,8 @@ import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 type VersionHistoryHeaderProps = {
   onClick?: () => void;
-  baseVersion?: number;
-  newVersion?: number;
+  baseVersion?: number | string;
+  newVersion?: number | string;
   isNewLatest?: boolean;
 };
 
