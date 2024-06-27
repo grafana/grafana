@@ -55,6 +55,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       settings: {
         integer: true,
       },
+      showIf: (options: T) => options.tooltip?.mode !== TooltipDisplayMode.None,
     });
   }
 
@@ -66,6 +67,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       settings: {
         integer: true,
       },
+      showIf: (options: T) => options.tooltip?.mode !== TooltipDisplayMode.None,
     })
     .addNumberInput({
       path: 'tooltip.maxHeight',
