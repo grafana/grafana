@@ -35,6 +35,7 @@ import {
 import { LokiVariableSupport } from './LokiVariableSupport';
 import { createLokiDatasource } from './__mocks__/datasource';
 import { createMetadataRequest } from './__mocks__/metadataRequest';
+import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { runSplitQuery } from './querySplitting';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
@@ -270,6 +271,28 @@ describe('LokiDatasource', () => {
       expect(ds.applyTemplateVariables(query, {}, adhocFilters).expr).toBe(
         'rate({bar="baz", job="foo", k1=~"v.*", k2=~"v\\\\\'.*"} |= "bar" [5m])'
       );
+    });
+
+    it('should interpolate before adding adhoc filters', async () => {
+      const templateSrv = {
+        replace: jest.fn().mockImplementation((input: string) => input),
+        getVariables: () => [],
+      };
+      const ds = createLokiDatasource(templateSrv);
+      const adhocFilters = [
+        {
+          key: 'k1',
+          operator: '=',
+          value: 'v1',
+        },
+        {
+          key: 'k2',
+          operator: '!=',
+          value: 'v2',
+        },
+      ];
+      ds.applyTemplateVariables(query, {}, adhocFilters)
+      expect(templateSrv.replace).toHaveBeenCalledWith(query.expr, expect.any(Object), expect.any(Function));
     });
   });
 
