@@ -779,11 +779,14 @@ def start_storybook_step():
     return {
         "name": "start-storybook",
         "image": images["node"],
+        "environment": {
+            "HOST": "grafana-server",
+        },
         "depends_on": [
             "build-frontend-packages",
         ],
         "commands": [
-            "yarn storybook",
+            "yarn storybook -h $HOST",
         ],
         "detach": True,
     }
@@ -796,7 +799,7 @@ def e2e_storybook_step():
             "start-storybook",
         ],
         "environment": {
-            "HOST": "localhost",
+            "HOST": "grafana-server",
             "PORT": "9001",
         },
         "commands": [

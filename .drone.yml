@@ -586,10 +586,12 @@ steps:
   image: alpine:3.19.1
   name: grafana-server
 - commands:
-  - yarn storybook
+  - yarn storybook -h $HOST
   depends_on:
   - build-frontend-packages
   detach: true
+  environment:
+    HOST: grafana-server
   image: node:20.9.0-alpine
   name: start-storybook
 - commands:
@@ -662,7 +664,7 @@ steps:
   depends_on:
   - start-storybook
   environment:
-    HOST: localhost
+    HOST: grafana-server
     PORT: "9001"
   image: cypress/included:13.10.0
   name: end-to-end-tests-storybook-suite
@@ -1951,10 +1953,12 @@ steps:
   image: alpine:3.19.1
   name: grafana-server
 - commands:
-  - yarn storybook
+  - yarn storybook -h $HOST
   depends_on:
   - build-frontend-packages
   detach: true
+  environment:
+    HOST: grafana-server
   image: node:20.9.0-alpine
   name: start-storybook
 - commands:
@@ -2027,7 +2031,7 @@ steps:
   depends_on:
   - start-storybook
   environment:
-    HOST: localhost
+    HOST: grafana-server
     PORT: "9001"
   image: cypress/included:13.10.0
   name: end-to-end-tests-storybook-suite
@@ -5099,6 +5103,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 5d13f6163083ca37357bc03a7bd41234cfe3db10a334b8385c961f8fd00cf74c
+hmac: 482ad80df5936bfe6569981734401fe0f4870ff243e4dd182d8112a889e54e78
 
 ...
