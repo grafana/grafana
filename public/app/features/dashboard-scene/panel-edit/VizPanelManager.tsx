@@ -9,7 +9,6 @@ import {
   GrafanaTheme2,
   PanelModel,
   filterFieldConfigOverrides,
-  getPanelOptionsWithDefaults,
   isStandardFieldProp,
   restoreCustomOverrideRules,
 } from '@grafana/data';
