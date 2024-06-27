@@ -39,7 +39,7 @@ export { TimePickerTooltip } from './DateTimePickers/TimeRangePicker';
 export { TimeRangeLabel } from './DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
-export { WeekStartPicker } from './DateTimePickers/WeekStartPicker';
+export { WeekStartPicker, getWeekStart, type WeekStart } from './DateTimePickers/WeekStartPicker';
 export { DatePicker, type DatePickerProps } from './DateTimePickers/DatePicker/DatePicker';
 export {
   DatePickerWithInput,
