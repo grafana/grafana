@@ -1235,7 +1235,7 @@ def publish_linux_packages_step(package_manager = "deb"):
 def verify_linux_packages_step():
     return {
         "name": "verify-linux-packages",
-        "image": "ubuntu:22.04",
+        "image": images["ubuntu"],
         "environment": {},
         "commands": [
                 'echo "Updating package lists..."',
