@@ -1258,7 +1258,18 @@ def verify_linux_DEB_packages_step():
                 '    exit 1',
                 'fi',
             ],
+            # JEV: will this name exist at transpile time?
         "depends_on": ["publish-linux-packages-deb"],
+    }
+
+def verify_linux_RPM_packages_step():
+    return {
+        "name": "verify-linux-packages",
+        "image": images["rocky"],
+        "environment": {},
+        
+            # JEV: will this name exist at transpile time?
+        "depends_on": ["publish-linux-packages-rpm"],
     }
 
 def verify_gen_cue_step():
