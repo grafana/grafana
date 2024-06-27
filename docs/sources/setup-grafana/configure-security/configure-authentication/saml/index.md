@@ -69,9 +69,11 @@ In terms of initiation, Grafana supports:
 By default, SP-initiated requests are enabled. For instructions on how to enable IdP-initiated logins, see [IdP-initiated Single Sign-On (SSO)]({{< relref "#idp-initiated-single-sign-on-sso" >}}).
 
 {{% admonition type="note" %}}
-It is possible to set up Grafana with SAML authentication using Azure AD. However, Azure AD limits the number of groups that can be sent in the SAML assertion to 150. If you have users who belong to more than 150 groups, Azure AD provides a Graph API link to retrieve the groups, which only works for OIDC/OAuth workflows.
+It is possible to set up Grafana with SAML authentication using Azure AD. However, if an Azure AD user belongs to more than 150 groups, a Graph API endpoint is shared instead.
 
-As of Grafana 11.2, the SAML integration offers interaction with Azure Graph API to retrieve the groups.
+Grafana versions 11.1 and below, do not support fetching the groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, it is recommended that you use OIDC/OAuth workflows,.
+
+As of Grafana 11.2, the SAML integration offers a mechanism to retrieve user groups from the Graph API.
 
 Related links:
 
