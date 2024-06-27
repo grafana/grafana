@@ -99,11 +99,11 @@ func GetPreferencesFor(ctx context.Context,
 
 		if preference.JSONData.Navbar.SavedItems != nil {
 			dto.Navbar = &preferences.NavbarPreference{
-				SavedItems: []preferences.NavLink{},
+				SavedItems: []preferences.PreferenceNavLink{},
 			}
 
 			for _, item := range preference.JSONData.Navbar.SavedItems {
-				dto.Navbar.SavedItems = append(dto.Navbar.SavedItems, preferences.NavLink{
+				dto.Navbar.SavedItems = append(dto.Navbar.SavedItems, preferences.PreferenceNavLink{
 					Id:     item.Id,
 					Target: item.Target,
 					Text:   item.Text,

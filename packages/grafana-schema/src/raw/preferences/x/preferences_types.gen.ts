@@ -22,14 +22,14 @@ export interface CookiePreferences {
 }
 
 export interface NavbarPreference {
-  savedItems: Array<NavLink>;
+  savedItems: Array<PreferenceNavLink>;
 }
 
 export const defaultNavbarPreference: Partial<NavbarPreference> = {
   savedItems: [],
 };
 
-export interface NavLink {
+export interface PreferenceNavLink {
   id: string;
   target: string;
   text: string;

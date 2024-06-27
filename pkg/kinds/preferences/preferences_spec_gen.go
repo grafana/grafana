@@ -16,17 +16,17 @@ type CookiePreferences struct {
 	Performance map[string]any `json:"performance,omitempty"`
 }
 
-// NavLink defines model for NavLink.
-type NavLink struct {
+// NavbarPreference defines model for NavbarPreference.
+type NavbarPreference struct {
+	SavedItems []PreferenceNavLink `json:"savedItems"`
+}
+
+// PreferenceNavLink defines model for PreferenceNavLink.
+type PreferenceNavLink struct {
 	Id     string `json:"id"`
 	Target string `json:"target"`
 	Text   string `json:"text"`
 	Url    string `json:"url"`
-}
-
-// NavbarPreference defines model for NavbarPreference.
-type NavbarPreference struct {
-	SavedItems []NavLink `json:"savedItems"`
 }
 
 // QueryHistoryPreference defines model for QueryHistoryPreference.
