@@ -50,8 +50,7 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 	}
 
 	if c.tenantID == "" {
-		// TODO what should be the default value?
-		c.tenantID = "default"
+		c.tenantID = "stack-default"
 	}
 
 	store, err := c.getOrCreateStore(ctx, c.tenantID)

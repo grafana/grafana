@@ -2,6 +2,7 @@ package zanzana
 
 import (
 	"context"
+	"fmt"
 
 	"google.golang.org/grpc"
 
@@ -22,7 +23,7 @@ func NewClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cf
 	return client.New(
 		ctx,
 		cc,
-		client.WithTenantID(cfg.StackID),
+		client.WithTenantID(fmt.Sprintf("stack-", cfg.StackID)),
 		client.WithLogger(log.New("zanzana-client")),
 	)
 }
