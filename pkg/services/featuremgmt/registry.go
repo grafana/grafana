@@ -1361,10 +1361,10 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "cloudwatchMetricInsightsCrossAccount",
-			Description: "Enables cross account observability for Cloudwatch Metric Insights",
-			Stage:       FeatureStageExperimental,
-			Owner:       awsDatasourcesSquad,
+			Name:         "cloudwatchMetricInsightsCrossAccount",
+			Description:  "Enables cross account observability for Cloudwatch Metric Insights",
+			Stage:        FeatureStageExperimental,
+			Owner:        awsDatasourcesSquad,
 			FrontendOnly: true,
 		},
 	}
