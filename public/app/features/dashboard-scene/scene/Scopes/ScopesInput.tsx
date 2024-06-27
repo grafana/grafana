@@ -3,8 +3,7 @@ import { groupBy } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, Input, Tooltip } from '@grafana/ui';
-import { useStyles2 } from '@grafana/ui/';
+import { IconButton, Input, Tooltip, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { NodesMap, SelectedScope } from './types';
