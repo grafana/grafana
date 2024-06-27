@@ -111,6 +111,9 @@ jobs:
     needs: ['buildPR', 'buildBase']
     env:
       GITHUB_STEP_NUMBER: 8
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
     steps:
       - uses: actions/checkout@v4
