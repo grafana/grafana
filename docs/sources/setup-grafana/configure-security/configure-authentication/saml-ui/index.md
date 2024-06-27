@@ -65,7 +65,7 @@ Follow these steps to configure and enable SAML integration:
 
    Use the [PKCS #8](https://en.wikipedia.org/wiki/PKCS_8) format to issue the private key.
 
-   For more information, refer to an [example on how to generate SAML credentials]({{< relref "../saml#example-of-how-to-generate-saml-credentials" >}}).
+   For more information, refer to an [example on how to generate SAML credentials]({{< relref "../saml#generate-private-key-for-saml-authentication" >}}).
 
 1. In the **Sign requests** field, specify whether you want the outgoing requests to be signed, and, if so, which signature algorithm should be used.
 
