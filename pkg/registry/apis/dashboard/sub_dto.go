@@ -99,7 +99,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		Resource:  dashboard.DashboardResourceInfo.GroupResource().Resource,
 		Name:      name,
 	}
-	store := r.builder.store.access
+	store := r.builder.legacy.access
 	rsp, err := store.Read(ctx, &resource.ReadRequest{Key: key})
 	if err != nil {
 		return nil, err

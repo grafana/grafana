@@ -8,20 +8,21 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/access"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type dashboardStorage struct {
 	resource       common.ResourceInfo
-	access         access.DashboardAccess
+	access         legacy.DashboardAccess
 	tableConverter rest.TableConvertor
 
 	server resource.ResourceServer
 }
 
-func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter) (rest.Storage, error) {
+func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter) (grafanarest.LegacyStorage, error) {
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Store:  s.access,
 		Search: s.access,

@@ -17,11 +17,12 @@ import (
 
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/access"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -39,7 +40,7 @@ type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
 
 	accessControl accesscontrol.AccessControl
-	store         *dashboardStorage
+	legacy        *dashboardStorage
 
 	log log.Logger
 }
@@ -65,9 +66,9 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		dashboardService: dashboardService,
 		accessControl:    accessControl,
 
-		store: &dashboardStorage{
+		legacy: &dashboardStorage{
 			resource: dashboard.DashboardResourceInfo,
-			access:   access.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
+			access:   legacy.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
 			tableConverter: gapiutil.NewTableConverter(
 				dashboard.DashboardResourceInfo.GroupResource(),
 				[]metav1.TableColumnDefinition{
@@ -144,8 +145,8 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(dashboard.GROUP, scheme, metav1.ParameterCodec, codecs)
 
-	dash := b.store.resource
-	legacyStore, err := b.store.newStore(scheme, optsGetter)
+	dash := b.legacy.resource
+	legacyStore, err := b.legacy.newStore(scheme, optsGetter)
 	if err != nil {
 		return nil, err
 	}
@@ -156,22 +157,23 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		builder: b,
 	}
 	storage[dash.StoragePath("history")] = apistore.NewHistoryConnector(
-		b.store.server, // as client???
+		b.legacy.server, // as client???
 		dashboard.DashboardResourceInfo.GroupResource(),
 	)
 
-	// // Dual writes if a RESTOptionsGetter is provided
-	// if desiredMode != grafanarest.Mode0 && optsGetter != nil {
-	// 	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
-	// 	if err := store.CompleteWithOptions(options); err != nil {
-	// 		return nil, err
-	// 	}
-	// 	storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(
-	// 		grafanarest.Mode1,
-	// 		store, //legacyStore,
-	// 		store,
-	// 		reg)
-	// }
+	// Dual writes if a RESTOptionsGetter is provided
+	if desiredMode != grafanarest.Mode0 && optsGetter != nil {
+		store, err := newStorage(scheme)
+		if err != nil {
+			return nil, err
+		}
+
+		options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
+		if err := store.CompleteWithOptions(options); err != nil {
+			return nil, err
+		}
+		storage[dash.StoragePath()] = grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, store, reg)
+	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[dashboard.VERSION] = storage
 	return &apiGroupInfo, nil
