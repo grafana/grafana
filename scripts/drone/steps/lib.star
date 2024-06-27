@@ -1239,13 +1239,16 @@ def verify_linux_packages_step():
         "environment": {},
         "commands": [
                 'echo "Updating package lists..."',
+                # Redirect superfluous outputs.
                 'apt-get update >/dev/null 2>&1',
                 'echo "Installing prerequisites..."',
+                # Redirect superfluous outputs.
                 'DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-transport-https software-properties-common wget >/dev/null 2>&1',
                 'echo "Adding Grafana repository..."',
                 'mkdir -p /etc/apt/keyrings/',
                 'wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg > /dev/null',
                 'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
+                # Redirect superfluous outputs.
                 'apt-get update >/dev/null 2>&1',
                 'echo "Attempting to install Grafana version ${TAG}..."',
                 'if DEBIAN_FRONTEND=noninteractive apt-get -yqs install grafana=${TAG}; then',
@@ -1255,6 +1258,7 @@ def verify_linux_packages_step():
                 '    exit 1',
                 'fi',
             ],
+        "depends_on": ["publish-linux-packages-deb"],
     }
 
 def verify_gen_cue_step():

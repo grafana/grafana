@@ -22,6 +22,7 @@ load(
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "verify_grafanacom_step",
+    "verify_linux_packages_step()",
     "wire_install_step",
     "yarn_install_step",
 )
@@ -205,6 +206,7 @@ def publish_packages_pipeline():
         publish_linux_packages_step(package_manager = "rpm"),
         publish_grafanacom_step(ver_mode = "release"),
         verify_grafanacom_step(),
+        verify_linux_packages_step(),
     ]
 
     deps = [
@@ -221,6 +223,16 @@ def publish_packages_pipeline():
             },
             steps = [
                 verify_grafanacom_step(depends_on = []),
+            ],
+        ),
+        pipeline(
+            name = "verify-linux-packages",
+            trigger = {
+                "event": ["promote"],
+                "target": "verify-linux-packages",
+            },
+            steps = [
+                verify_linux_packages_step(depends_on = []),
             ],
         ),
         pipeline(
