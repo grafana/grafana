@@ -16,6 +16,7 @@ var (
 	[auth.saml]
 	enabled = true
 	single_logout = true
+	access_token_url = http://localhost:8086/auth/realms/grafana/protocol/openid-connect/token
 	allow_sign_up = true
 	auto_login = false
 	certificate = devenv/docker/blocks/auth/saml-enterprise/cert.crt
@@ -45,7 +46,6 @@ var (
 	name_id_format = urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
 	skip_org_role_sync = false
 	role_values_none = guest disabled
-	token_url = http://localhost:8086/auth/realms/grafana/protocol/openid-connect/token
 	client_id = grafana
 	client_secret = grafana
 	force_use_graph_api = false
@@ -83,7 +83,7 @@ var (
 		"name_id_format":             "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
 		"skip_org_role_sync":         false,
 		"role_values_none":           "guest disabled",
-		"token_url":                  "http://localhost:8086/auth/realms/grafana/protocol/openid-connect/token",
+		"access_token_url":           "http://localhost:8086/auth/realms/grafana/protocol/openid-connect/token",
 		"client_id":                  "grafana",
 		"client_secret":              "grafana",
 		"force_use_graph_api":        false,

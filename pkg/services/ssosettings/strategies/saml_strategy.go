@@ -32,6 +32,7 @@ func (s *SAMLStrategy) GetProviderConfig(_ context.Context, provider string) (ma
 func (s *SAMLStrategy) loadSAMLSettings() map[string]any {
 	section := s.settingsProvider.Section("auth.saml")
 	result := map[string]any{
+		"access_token_url":           section.KeyValue("access_token_url").MustString(""),
 		"enabled":                    section.KeyValue("enabled").MustBool(false),
 		"single_logout":              section.KeyValue("single_logout").MustBool(false),
 		"allow_sign_up":              section.KeyValue("allow_sign_up").MustBool(false),
@@ -65,7 +66,6 @@ func (s *SAMLStrategy) loadSAMLSettings() map[string]any {
 		"skip_org_role_sync":         section.KeyValue("skip_org_role_sync").MustBool(false),
 		"client_id":                  section.KeyValue("client_id").MustString(""),
 		"client_secret":              section.KeyValue("client_secret").MustString(""),
-		"token_url":                  section.KeyValue("token_url").MustString(""),
 		"force_use_graph_api":        section.KeyValue("force_use_graph_api").MustBool(false),
 	}
 	return result
