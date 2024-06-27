@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -30,14 +29,11 @@ var (
 )
 
 type dashboardRow struct {
-	// The numeric resource version for this dashboard
-	ResourceVersion int64
+	// The numeric version for this dashboard
+	Version int64
 
 	// Dashboard resource
 	Dash *dashboardsV0.Dashboard
-
-	// Title -- this may come from saved metadata rather than the body
-	Title string
 
 	// The folder UID (needed for access control checks)
 	FolderUID string
@@ -56,7 +52,6 @@ type dashboardSqlAccess struct {
 	namespacer   request.NamespaceMapper
 	dashStore    dashboards.Store
 	provisioning provisioning.ProvisioningService
-	versions     dashver.Service
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
@@ -67,21 +62,19 @@ func NewDashboardAccess(sql db.DB,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
-	versions dashver.Service) DashboardAccess {
+) DashboardAccess {
 	return &dashboardSqlAccess{
 		sql:          sql,
 		sess:         sql.GetSqlxSession(),
 		namespacer:   namespacer,
 		dashStore:    dashStore,
 		provisioning: provisioning,
-		versions:     versions,
 	}
 }
 
 const selector = `SELECT
 	dashboard.org_id, dashboard.id,
-	dashboard.uid,slug,
-	dashboard.folder_uid,
+	dashboard.uid, dashboard.folder_uid,
 	dashboard.created,dashboard.created_by,CreatedUSER.uid as created_uid,
 	dashboard.updated,dashboard.updated_by,UpdatedUSER.uid as updated_uid,
 	plugin_id,
@@ -89,14 +82,29 @@ const selector = `SELECT
 	dashboard_provisioning.external_id as origin_path,
 	dashboard_provisioning.check_sum as origin_key,
 	dashboard_provisioning.updated as origin_ts,
-	dashboard.version,
-	title,
-	dashboard.data
+	dashboard.version, '', dashboard.data
   FROM dashboard
   LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
   LEFT OUTER JOIN user AS CreatedUSER ON dashboard.created_by = CreatedUSER.id
   LEFT OUTER JOIN user AS UpdatedUSER ON dashboard.created_by = UpdatedUSER.id
-  WHERE is_folder = false`
+  WHERE dashboard.is_folder = false`
+
+const history = `SELECT
+	dashboard.org_id, dashboard.id,
+	dashboard.uid, dashboard.folder_uid,
+	dashboard_version.created,dashboard_version.created_by,CreatedUSER.uid as created_uid,
+	dashboard_version.created,dashboard_version.created_by,CreatedUSER.uid as updated_uid,
+	plugin_id,
+	dashboard_provisioning.name as origin_name,
+	dashboard_provisioning.external_id as origin_path,
+	dashboard_provisioning.check_sum as origin_key,
+	dashboard_provisioning.updated as origin_ts,
+	dashboard_version.version, dashboard_version.message, dashboard_version.data
+  FROM dashboard
+  LEFT OUTER JOIN dashboard_provisioning ON dashboard.id = dashboard_provisioning.dashboard_id
+  LEFT OUTER JOIN dashboard_version  ON dashboard.id = dashboard_version.dashboard_id
+  LEFT OUTER JOIN user AS CreatedUSER ON dashboard_version.created_by = CreatedUSER.id
+  WHERE dashboard.is_folder = false`
 
 func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery) (*rowsWrapper, int, error) {
 	if len(query.Labels) > 0 {
@@ -107,24 +115,50 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 		// }
 	}
 
+	sqlcmd := selector
 	args := []any{query.OrgID}
-	sqlcmd := fmt.Sprintf("%s AND dashboard.org_id=$%d", selector, len(args))
 
 	limit := query.Limit
 	if limit < 1 {
 		limit = 15 //
 	}
 
-	if query.UID != "" {
+	if query.FromHistory {
+		sqlcmd = fmt.Sprintf("%s AND dashboard.org_id=$%d\n  ", history, len(args))
+
+		if query.UID == "" {
+			return nil, 0, fmt.Errorf("history query must have a UID")
+		}
+
 		args = append(args, query.UID)
 		sqlcmd = fmt.Sprintf("%s AND dashboard.uid=$%d", sqlcmd, len(args))
-	} else if query.MinID > 0 {
-		args = append(args, query.MinID)
-		sqlcmd = fmt.Sprintf("%s AND dashboard.id>=$%d", sqlcmd, len(args))
+
+		if query.Version > 0 {
+			args = append(args, query.Version)
+			sqlcmd = fmt.Sprintf("%s AND dashboard_version.version=$%d", sqlcmd, len(args))
+		} else if query.MinID > 0 {
+			args = append(args, query.MinID)
+			sqlcmd = fmt.Sprintf("%s AND dashboard_version.version<$%d", sqlcmd, len(args))
+		}
+
+		args = append(args, (limit + 2)) // add more so we can include a next token
+		sqlcmd = fmt.Sprintf("%s\n   ORDER BY dashboard_version.version desc LIMIT $%d", sqlcmd, len(args))
+	} else {
+		sqlcmd = fmt.Sprintf("%s AND dashboard.org_id=$%d\n  ", selector, len(args))
+
+		if query.UID != "" {
+			args = append(args, query.UID)
+			sqlcmd = fmt.Sprintf("%s AND dashboard.uid=$%d", sqlcmd, len(args))
+		} else if query.MinID > 0 {
+			args = append(args, query.MinID)
+			sqlcmd = fmt.Sprintf("%s AND dashboard.id>=$%d", sqlcmd, len(args))
+		}
+
+		args = append(args, (limit + 2)) // add more so we can include a next token
+		sqlcmd = fmt.Sprintf("%s\n   ORDER BY dashboard.id asc LIMIT $%d", sqlcmd, len(args))
 	}
 
-	args = append(args, (limit + 2)) // add more so we can include a next token
-	sqlcmd = fmt.Sprintf("%s ORDER BY dashboard.id asc LIMIT $%d", sqlcmd, len(args))
+	fmt.Printf("%s // %v\n", sqlcmd, args)
 
 	rows, err := a.doQuery(ctx, sqlcmd, args...)
 	if err != nil {
@@ -199,7 +233,6 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 	var dashboard_id int64
 	var orgId int64
-	var slug string
 	var folder_uid sql.NullString
 	var updated time.Time
 	var updatedByID int64
@@ -208,6 +241,7 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var created time.Time
 	var createdByID int64
 	var createdByUID sql.NullString
+	var message sql.NullString
 
 	var plugin_id string
 	var origin_name sql.NullString
@@ -217,20 +251,18 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 	var data []byte // the dashboard JSON
 	var version int64
 
-	err := rows.Scan(&orgId, &dashboard_id, &dash.Name,
-		&slug, &folder_uid,
+	err := rows.Scan(&orgId, &dashboard_id, &dash.Name, &folder_uid,
 		&created, &createdByID, &createdByUID,
 		&updated, &updatedByID, &updatedByUID,
 		&plugin_id,
 		&origin_name, &origin_path, &origin_hash, &origin_ts,
-		&version,
-		&row.Title, &data,
+		&version, &message, &data,
 	)
 
 	row.token = &continueToken{orgId: orgId, id: dashboard_id}
 	if err == nil {
-		row.ResourceVersion = updated.UnixNano() + version
-		dash.ResourceVersion = fmt.Sprintf("%d", row.ResourceVersion)
+		row.Version = version
+		dash.ResourceVersion = fmt.Sprintf("%d", version)
 		dash.Namespace = a.namespacer(orgId)
 		dash.UID = gapiutil.CalculateClusterWideUID(dash)
 		dash.SetCreationTimestamp(metav1.NewTime(created))
@@ -239,7 +271,6 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 			return nil, err
 		}
 		meta.SetUpdatedTimestamp(&updated)
-		meta.SetSlug(slug)
 		if createdByID > 0 {
 			meta.SetCreatedBy(identity.NewNamespaceID(identity.NamespaceUser, createdByID).String())
 		} else if createdByID < 0 {
@@ -249,6 +280,9 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 			meta.SetCreatedBy(identity.NewNamespaceID(identity.NamespaceUser, updatedByID).String())
 		} else if updatedByID < 0 {
 			meta.SetCreatedBy(identity.NewNamespaceID(identity.NamespaceProvisioning, 0).String())
+		}
+		if message.Valid && message.String != "" {
+			meta.SetMessage(message.String)
 		}
 		if folder_uid.Valid {
 			meta.SetFolder(folder_uid.String)
@@ -287,7 +321,6 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 				return row, err
 			}
 			dash.Spec.Set("id", dashboard_id) // add it so we can get it from the body later
-			row.Title = dash.Spec.GetNestedString("title")
 		}
 	}
 	return row, err

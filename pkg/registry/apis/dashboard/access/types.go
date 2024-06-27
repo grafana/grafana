@@ -16,6 +16,9 @@ type DashboardQuery struct {
 	MaxBytes int
 	MinID    int64 // from continue token
 
+	FromHistory bool
+	Version     int64
+
 	// The label requirements
 	Labels []*resource.Requirement
 }

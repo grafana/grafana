@@ -11,11 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func getDashbaordFromEvent(event resource.WriteEvent) (*dashboard.Dashboard, error) {
+func getDashboardFromEvent(event resource.WriteEvent) (*dashboard.Dashboard, error) {
 	obj, ok := event.Object.GetRuntimeObject()
 	if ok && obj != nil {
 		dash, ok := obj.(*dashboard.Dashboard)
@@ -60,7 +59,7 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 	// The difference depends on embedded internal ID
 	case resource.WatchEvent_ADDED, resource.WatchEvent_MODIFIED:
 		{
-			dash, err := getDashbaordFromEvent(event)
+			dash, err := getDashboardFromEvent(event)
 			if err != nil {
 				return 0, err
 			}
@@ -118,7 +117,7 @@ func (a *dashboardSqlAccess) GetDashboard(ctx context.Context, orgId int64, uid 
 		return nil, 0, err
 	}
 
-	return row.Dash, row.ResourceVersion, nil
+	return row.Dash, row.Version, nil
 }
 
 // Read implements ResourceStoreServer.
@@ -201,7 +200,7 @@ func (a *dashboardSqlAccess) List(ctx context.Context, req *resource.ListRequest
 			return list, err
 		}
 		list.Items = append(list.Items, &resource.ResourceWrapper{
-			ResourceVersion: row.ResourceVersion,
+			ResourceVersion: row.Version,
 			Value:           val,
 		})
 	}
@@ -267,46 +266,75 @@ func (a *dashboardSqlAccess) GetBlob(ctx context.Context, key *resource.Resource
 }
 
 func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
-	ns, err := request.ParseNamespace(req.Key.Namespace)
+	info, err := request.ParseNamespace(req.Key.Namespace)
 	if err == nil {
-		err = isDashboardKey(req.Key, true)
+		err = isDashboardKey(req.Key, false)
 	}
 	if err != nil {
 		return nil, err
 	}
-	versions, err := a.versions.List(ctx, &dashver.ListDashboardVersionsQuery{
-		OrgID:        ns.OrgID,
-		DashboardUID: req.Key.Name,
-		Limit:        100,
-	})
+
+	token, err := readContinueToken(req.NextPageToken)
 	if err != nil {
 		return nil, err
 	}
+	if token.orgId > 0 && token.orgId != info.OrgID {
+		return nil, fmt.Errorf("token and orgID mismatch")
+	}
 
-	rsp := &resource.HistoryResponse{}
-	for _, version := range versions {
-		partial := &metav1.PartialObjectMetadata{}
-		meta, err := utils.MetaAccessor(partial)
-		if err != nil {
-			return nil, err
-		}
-		meta.SetName(version.DashboardUID)
-		meta.SetCreationTimestamp(metav1.NewTime(version.Created)) // ???
-		meta.SetUpdatedTimestampMillis(version.Created.UnixMilli())
-		meta.SetMessage(version.Message)
-		meta.SetResourceVersionInt64(version.Created.UnixMilli())
+	query := &DashboardQuery{
+		OrgID:       info.OrgID,
+		Limit:       int(req.Limit),
+		MaxBytes:    2 * 1024 * 1024, // 2MB,
+		MinID:       token.id,
+		FromHistory: true,
+		UID:         req.Key.Name,
+	}
 
-		bytes, err := json.Marshal(partial)
-		if err != nil {
-			return nil, err
+	rows, limit, err := a.getRows(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	totalSize := 0
+	list := &resource.HistoryResponse{}
+	for {
+		row, err := rows.Next()
+		if err != nil || row == nil {
+			return list, err
 		}
-		rsp.Items = append(rsp.Items, &resource.ResourceMeta{
-			ResourceVersion:   version.Created.UnixMilli(),
-			PartialObjectMeta: bytes,
+
+		totalSize += row.Bytes
+		if len(list.Items) > 0 && (totalSize > query.MaxBytes || len(list.Items) >= limit) {
+			// if query.Requirements.Folder != nil {
+			// 	row.token.folder = *query.Requirements.Folder
+			// }
+			row.token.id = row.Version              // Use the version as the increment
+			list.NextPageToken = row.token.String() // will skip this one but start here next time
+			return list, err
+		}
+
+		partial := &metav1.PartialObjectMetadata{
+			ObjectMeta: row.Dash.ObjectMeta,
+		}
+		partial.UID = "" // it is not useful/helpful/accurate and just confusing now
+
+		val, err := json.Marshal(partial)
+		if err != nil {
+			return list, err
+		}
+		full, err := json.Marshal(row.Dash.Spec)
+		if err != nil {
+			return list, err
+		}
+		list.Items = append(list.Items, &resource.ResourceMeta{
+			ResourceVersion:   row.Version,
+			PartialObjectMeta: val,
+			Size:              int32(len(full)),
+			Hash:              "??", // hash the full?
 		})
 	}
-	return rsp, err
-
 }
 
 // Used for efficient provisioning

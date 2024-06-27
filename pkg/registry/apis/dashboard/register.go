@@ -15,7 +15,6 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -27,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
@@ -48,7 +46,6 @@ type DashboardsAPIBuilder struct {
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
-	dashboardVersionService dashver.Service,
 	accessControl accesscontrol.AccessControl,
 	provisioning provisioning.ProvisioningService,
 	dashStore dashboards.Store,
@@ -69,7 +66,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 
 		store: &dashboardStorage{
 			resource: dashboard.DashboardResourceInfo,
-			access:   access.NewDashboardAccess(sql, namespacer, dashStore, provisioning, dashboardVersionService),
+			access:   access.NewDashboardAccess(sql, namespacer, dashStore, provisioning),
 			tableConverter: gapiutil.NewTableConverter(
 				dashboard.DashboardResourceInfo.GroupResource(),
 				[]metav1.TableColumnDefinition{
@@ -78,7 +75,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 					{Name: "Created At", Type: "date"},
 				},
 				func(obj any) ([]interface{}, error) {
-					dash, ok := obj.(*v0alpha1.Dashboard)
+					dash, ok := obj.(*dashboard.Dashboard)
 					if ok {
 						if dash != nil {
 							return []interface{}{
@@ -97,7 +94,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return v0alpha1.DashboardResourceInfo.GroupVersion()
+	return dashboard.DashboardResourceInfo.GroupVersion()
 }
 
 func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
@@ -107,18 +104,18 @@ func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap 
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&v0alpha1.Dashboard{},
-		&v0alpha1.DashboardList{},
-		&v0alpha1.DashboardWithAccessInfo{},
-		&v0alpha1.DashboardVersionList{},
-		&v0alpha1.VersionsQueryOptions{},
+		&dashboard.Dashboard{},
+		&dashboard.DashboardList{},
+		&dashboard.DashboardWithAccessInfo{},
+		&dashboard.DashboardVersionList{},
+		&dashboard.VersionsQueryOptions{},
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	resourceInfo := v0alpha1.DashboardResourceInfo
+	resourceInfo := dashboard.DashboardResourceInfo
 	addKnownTypes(scheme, resourceInfo.GroupVersion())
 
 	// Link this version to the internal representation.
@@ -144,7 +141,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	desiredMode grafanarest.DualWriterMode,
 	reg prometheus.Registerer,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(dashboard.GROUP, scheme, metav1.ParameterCodec, codecs)
 
 	dash := b.store.resource
 	legacyStore, err := b.store.newStore(scheme, optsGetter)
@@ -174,12 +171,12 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	// 		reg)
 	// }
 
-	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[dashboard.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return v0alpha1.GetOpenAPIDefinitions
+	return dashboard.GetOpenAPIDefinitions
 }
 
 func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -190,8 +187,8 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 
 	// Hide the ability to list or watch across all tenants
-	delete(oas.Paths.Paths, root+v0alpha1.DashboardResourceInfo.GroupResource().Resource)
-	delete(oas.Paths.Paths, root+"watch/"+v0alpha1.DashboardResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+dashboard.DashboardResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+"watch/"+dashboard.DashboardResourceInfo.GroupResource().Resource)
 
 	// The root API discovery list
 	sub := oas.Paths.Paths[root]
