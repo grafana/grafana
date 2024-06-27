@@ -199,4 +199,5 @@ export interface FeatureToggles {
   alertingApiServer?: boolean;
   dashboardRestoreUI?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
+  cloudwatchMetricInsightsCrossAccount?: boolean;
 }
