@@ -5,10 +5,12 @@ on:
       version:
         required: true
         description: Needs to match, exactly, the name of a milestone (NO v prefix)
+        type: string
       latest:
         required: false
         default: false
         description: Mark this release as latest (`1`) or not (`0`, default)
+        type: string
       dry_run:
         required: false
         default: false
@@ -18,9 +20,11 @@ on:
       version:
         required: true
         description: Needs to match, exactly, the name of a milestone (NO v prefix)
+        type: string
       latest:
         required: false
         description: Mark this release as latest (`1`) or not (`0`, default)
+        type: string
       dry_run:
         required: false
         default: false
