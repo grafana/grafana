@@ -6,6 +6,7 @@ import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-ho
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Button, Field, Input, Label, LinkButton, Modal, useStyles2, Stack, Alert } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { dispatch } from 'app/store/store';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -15,7 +16,7 @@ import {
   useRenameRuleGroup,
   useUpdateRuleGroupConfiguration,
 } from '../../hooks/useProduceNewRuleGroup';
-import { rulesInSameGroupHaveInvalidFor } from '../../state/actions';
+import { fetchRulerRulesAction, rulesInSameGroupHaveInvalidFor } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { stringifyErrorLike } from '../../utils/misc';
@@ -238,6 +239,8 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
       await updateRuleGroup(ruleGroupIdentifier, updatedInterval);
       onClose(true);
     }
+
+    await dispatch(fetchRulerRulesAction({ rulesSourceName }));
   };
 
   const formAPI = useForm<FormValues>({

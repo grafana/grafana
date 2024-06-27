@@ -16,7 +16,7 @@ import {
   ruleGroupReducer,
   updateRuleGroupAction,
 } from '../reducers/ruler/ruleGroups';
-import { fetchRulerRulesAction, fetchRulesSourceBuildInfoAction, getDataSourceRulerConfig } from '../state/actions';
+import { fetchRulesSourceBuildInfoAction, getDataSourceRulerConfig } from '../state/actions';
 import { isGrafanaRulesSource } from '../utils/datasource';
 
 /**
@@ -208,9 +208,6 @@ export function useMoveRuleGroup() {
         namespace: oldNamespace,
         group: oldGroupName,
       }).unwrap();
-
-      // @TODO deprecate this once we've moved everything to RTKQ
-      await dispatch(fetchRulerRulesAction({ rulesSourceName: ruleGroup.dataSourceName }));
 
       return result;
     },

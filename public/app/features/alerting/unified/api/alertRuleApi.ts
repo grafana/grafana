@@ -231,7 +231,13 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
         return { url: path, params };
       },
-      providesTags: ['CombinedAlertRule'],
+      providesTags: (_result, _error, { namespace, group }) => [
+        {
+          type: 'RuleGroup',
+          id: `${namespace}/${group}`,
+        },
+        { type: 'RuleNamespace', id: namespace },
+      ],
     }),
 
     deleteRuleGroupFromNamespace: build.mutation<
@@ -242,7 +248,30 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
         return { url: path, params, method: 'DELETE' };
       },
-      invalidatesTags: ['CombinedAlertRule'],
+      invalidatesTags: (_result, _error, { namespace, group }) => [
+        {
+          type: 'RuleGroup',
+          id: `${namespace}/${group}`,
+        },
+        { type: 'RuleNamespace', id: namespace },
+      ],
+    }),
+
+    upsertRuleGroupForNamespace: build.mutation<
+      AlertGroupUpdated,
+      { rulerConfig: RulerDataSourceConfig; namespace: string; payload: PostableRulerRuleGroupDTO }
+    >({
+      query: ({ payload, namespace, rulerConfig }) => {
+        const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
+
+        return {
+          url: path,
+          params,
+          data: payload,
+          method: 'POST',
+        };
+      },
+      invalidatesTags: (_result, _error, { namespace }) => [{ type: 'RuleNamespace', id: namespace }],
     }),
 
     getAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string }>({
@@ -311,22 +340,6 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         responseType: 'text',
       }),
       keepUnusedDataFor: 0,
-    }),
-    upsertRuleGroupForNamespace: build.mutation<
-      AlertGroupUpdated,
-      { rulerConfig: RulerDataSourceConfig; namespace: string; payload: PostableRulerRuleGroupDTO }
-    >({
-      query: ({ payload, namespace, rulerConfig }) => {
-        const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
-
-        return {
-          url: path,
-          params,
-          data: payload,
-          method: 'POST',
-        };
-      },
-      invalidatesTags: ['CombinedAlertRule'],
     }),
   }),
 });
