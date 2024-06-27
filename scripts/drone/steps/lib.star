@@ -1233,7 +1233,11 @@ def publish_linux_packages_step(package_manager = "deb"):
     }
 
 def verify_linux_packages_step():
-
+    return {
+        "name": "verify-linux-packages",
+        "image": "ubuntu:22.04",
+      
+    }
 
 def verify_gen_cue_step():
     return {
