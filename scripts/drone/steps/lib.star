@@ -1232,7 +1232,7 @@ def publish_linux_packages_step(package_manager = "deb"):
         },
     }
 
-def verify_linux_packages_step():
+def verify_linux_DEB_packages_step():
     return {
         "name": "verify-linux-packages",
         "image": images["ubuntu"],
@@ -1258,10 +1258,7 @@ def verify_linux_packages_step():
                 '    exit 1',
                 'fi',
             ],
-        "depends_on": [
-            "publish-linux-packages-deb",
-            "publish-linux-packages-rpm",
-        ],
+        "depends_on": ["publish-linux-packages-deb"],
     }
 
 def verify_gen_cue_step():
