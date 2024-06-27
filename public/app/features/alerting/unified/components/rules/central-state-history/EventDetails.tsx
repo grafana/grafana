@@ -150,7 +150,7 @@ const QueryVizualization = ({
  * @param condition
  * @returns
  */
-function getPanelDataForRule(ruleUID: string, logRecords: LogRecord[], condition: string) {
+export function getPanelDataForRule(ruleUID: string, logRecords: LogRecord[], condition: string) {
     const ruleLogRecords = logRecords
         .filter((record) => record.line.ruleUID === ruleUID)
         // sort by timestamp as time series data is expected to be sorted by time
