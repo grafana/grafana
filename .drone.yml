@@ -586,9 +586,9 @@ steps:
   image: alpine:3.19.1
   name: grafana-server
 - commands:
-  - yarn storybook
+  - yarn storybook --quiet
   depends_on:
-  - build-frontend-packages
+  - rgm-package
   detach: true
   image: node:20.9.0-alpine
   name: start-storybook
@@ -657,7 +657,7 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-scenes/various-suite
 - commands:
-  - npx wait-on@7.0.1 -lv http://$HOST:$PORT
+  - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn e2e:storybook
   depends_on:
   - start-storybook
@@ -1951,9 +1951,9 @@ steps:
   image: alpine:3.19.1
   name: grafana-server
 - commands:
-  - yarn storybook
+  - yarn storybook --quiet
   depends_on:
-  - build-frontend-packages
+  - rgm-package
   detach: true
   image: node:20.9.0-alpine
   name: start-storybook
@@ -2022,7 +2022,7 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-scenes/various-suite
 - commands:
-  - npx wait-on@7.0.1 -lv http://$HOST:$PORT
+  - npx wait-on@7.0.1 http://$HOST:$PORT
   - yarn e2e:storybook
   depends_on:
   - start-storybook
@@ -5099,6 +5099,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: aa52a46685c10c7cbffaf1c98b5dd069f52ce2752c7541ba13e263ace1c6af32
+hmac: 1b5c4275d37162e8012eaa080d5120a1a543ad70b0d47f9c6f3ee0dea763d3f5
 
 ...

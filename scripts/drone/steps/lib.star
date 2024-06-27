@@ -780,10 +780,10 @@ def start_storybook_step():
         "name": "start-storybook",
         "image": images["node"],
         "depends_on": [
-            "build-frontend-packages",
+            "rgm-package",
         ],
         "commands": [
-            "yarn storybook",
+            "yarn storybook --quiet",
         ],
         "detach": True,
     }
@@ -800,7 +800,7 @@ def e2e_storybook_step():
             "PORT": "9001",
         },
         "commands": [
-            "npx wait-on@7.0.1 -lv http://$HOST:$PORT",
+            "npx wait-on@7.0.1 http://$HOST:$PORT",
             "yarn e2e:storybook",
         ],
     }
