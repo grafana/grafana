@@ -2,8 +2,6 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
 
-import { config } from '@grafana/runtime';
-
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import { GetDimensionKeysRequest } from '../../resources/types';
 import { VariableQueryType } from '../../types';
@@ -23,12 +21,6 @@ const defaultQuery = {
 };
 
 const ds = setupMockedDataSource();
-
-const originalFormFeatureToggleValue = config.featureToggles.awsDatasourcesNewFormStyling;
-
-const cleanupFeatureToggle = () => {
-  config.featureToggles.awsDatasourcesNewFormStyling = originalFormFeatureToggleValue;
-};
 
 ds.datasource.resources.getRegions = jest.fn().mockResolvedValue([
   { label: 'a1', value: 'a1' },
@@ -82,7 +74,6 @@ describe('VariableEditor', () => {
   beforeEach(() => {
     onChange.mockClear();
   });
-  function run() {
     describe('and a new variable is created', () => {
       it('should trigger a query using the first query type in the array', async () => {
         const props = defaultProps;
@@ -279,24 +270,4 @@ describe('VariableEditor', () => {
         expect(screen.queryByLabelText('Namespace')).not.toBeInTheDocument();
       });
     });
-  }
-
-  describe('variable editor with awsDatasourcesNewFormStyling feature toggle enabled', () => {
-    beforeAll(() => {
-      config.featureToggles.awsDatasourcesNewFormStyling = false;
-    });
-    afterAll(() => {
-      cleanupFeatureToggle();
-    });
-    run();
-    describe('variable editor with awsDatasourcesNewFormStyling feature toggle enabled', () => {
-      beforeAll(() => {
-        config.featureToggles.awsDatasourcesNewFormStyling = true;
-      });
-      afterAll(() => {
-        cleanupFeatureToggle();
-      });
-      run();
-    });
-  });
 });
