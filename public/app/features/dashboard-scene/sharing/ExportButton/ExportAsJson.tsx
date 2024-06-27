@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 import { ShareExportTab } from '../ShareExportTab';
@@ -28,6 +28,8 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
     return JSON.stringify(json, null, 2);
   }, [isSharingExternally]);
 
+  const switchLabel = t('export.json.export-externally-label', 'Export the dashboard to use in another instance');
+
   return (
     <>
       <p>
@@ -37,14 +39,13 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
       </p>
       <Stack gap={1} alignItems="center">
         <Switch
+          label={switchLabel}
           data-testid={selector.exportExternallyToggle}
           id="export-externally-toggle"
           value={isSharingExternally}
           onChange={model.onShareExternallyChange}
         />
-        <Label>
-          <Trans i18nKey="export.json.export-externally-label">Export the dashboard to use in another instance</Trans>
-        </Label>
+        <Label>{switchLabel}</Label>
       </Stack>
       <AutoSizer disableHeight className={styles.codeEditorBox} data-testid={selector.codeEditor}>
         {({ width }) => {

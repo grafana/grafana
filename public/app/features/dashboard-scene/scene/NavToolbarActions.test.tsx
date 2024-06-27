@@ -168,6 +168,12 @@ describe('NavToolbarActions', () => {
       const newExportButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
       expect(newExportButton).toBeInTheDocument();
     });
+    it('Should not show new export button when newDashboardSharingComponent FF is disabled', async () => {
+      config.featureToggles.newDashboardSharingComponent = false;
+      setup();
+      const newExportButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
+      expect(newExportButton).not.toBeInTheDocument();
+    });
   });
 
   describe('Snapshot', () => {
