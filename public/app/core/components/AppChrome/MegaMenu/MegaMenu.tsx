@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
 import { memo, forwardRef } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,6 +10,8 @@ import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/u
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
+
+import { PreferencesService } from '../../../services/PreferencesService';
 
 import { MegaMenuItem } from './MegaMenuItem';
 import { enrichWithInteractionTracking, getActiveItem } from './utils';
@@ -19,6 +22,7 @@ export interface Props extends DOMAttributes {
   onClose: () => void;
 }
 
+const service = new PreferencesService('user');
 export const MegaMenu = memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
     const navTree = useSelector((state) => state.navBarTree);
@@ -26,6 +30,9 @@ export const MegaMenu = memo(
     const location = useLocation();
     const { chrome } = useGrafana();
     const state = chrome.useState();
+    const [preferences, refetch] = useAsyncFn(async () => {
+      return service.load();
+    });
 
     // Remove profile + help from tree
     const navItems = navTree
@@ -79,8 +86,15 @@ export const MegaMenu = memo(
                   )}
                   <MegaMenuItem
                     link={link}
+                    isPinned={preferences.value?.navbar?.savedItems?.map((item) => item.id).includes(link.id)}
                     onClick={state.megaMenuDocked ? undefined : onClose}
                     activeItem={activeItem}
+                    onPin={async (item) => {
+                      const items = preferences.value?.navbar?.savedItems || [];
+                      const newItems = items.includes(item) ? items.filter((i) => i !== item) : [...items, item];
+                      await service.patch({ navbar: { savedItems: newItems } });
+                      refetch();
+                    }}
                   />
                 </Stack>
               ))}
