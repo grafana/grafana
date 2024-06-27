@@ -1,6 +1,5 @@
 import { Observable, map, of } from 'rxjs';
 
-import { AdHocVariableFilter, MetricFindValue } from '@grafana/data';
 import {
   MultiValueVariable,
   MultiValueVariableState,
@@ -13,13 +12,8 @@ import {
   VariableGetOptionsArgs,
 } from '@grafana/scenes';
 
-import { SnapshotFilterRenderer } from './SnapshotFilterRenderer';
-
 export interface SnapshotVariableState extends MultiValueVariableState {
   query?: string;
-  filters?: AdHocVariableFilter[];
-  baseFilters?: AdHocVariableFilter[];
-  defaultKeys?: MetricFindValue[];
 }
 
 export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> {
@@ -35,8 +29,6 @@ export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> 
       value: '',
       text: '',
       options: [],
-      filters: [],
-      name: '',
       ...initialState,
     });
   }
@@ -71,16 +63,16 @@ export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> 
   }
 
   public static Component = ({ model }: SceneComponentProps<MultiValueVariable<SnapshotVariableState>>) => {
-    //if filters are present, render the filter component
-    // model can have filters or not, so we need to check
-    if (model.state.filters && model.state.filters.length > 0) {
-      return model.state.filters.map((filter) => {
-        return SnapshotFilterRenderer({
-          filter,
-          datasource: { uid: '' },
-        });
-      });
-    }
+    // //if filters are present, render the filter component
+    // // model can have filters or not, so we need to check
+    // if (model.state.filters && model.state.filters.length > 0) {
+    //   return model.state.filters.map((filter) => {
+    //     return SnapshotFilterRenderer({
+    //       filter,
+    //       datasource: { uid: '' },
+    //     });
+    //   });
+    // }
     return renderSelectForVariable(model);
   };
   // we will always preserve the current value and text for snapshots

@@ -340,7 +340,25 @@ export function createVariableForSnapshots(variable: TypedVariableModel): SceneV
     return snapshotVariable;
   }
 
-  if (variable.type === 'adhoc' || variable.type === 'system' || variable.type === 'constant') {
+  if (variable.type === 'adhoc' && variable.filters) {
+    snapshotVariable = new AdHocFiltersVariable({
+      name: variable.name,
+      label: variable.label,
+      readOnly: true,
+      description: variable.description,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+      datasource: variable.datasource,
+      applyMode: 'auto',
+      filters: variable.filters ?? [],
+      baseFilters: variable.baseFilters ?? [],
+      defaultKeys: variable.defaultKeys,
+      useQueriesAsFilterForOptions: true,
+    });
+    return snapshotVariable;
+  }
+
+  if (variable.type === 'system' || variable.type === 'constant') {
     current = {
       value: '',
       text: '',
@@ -352,26 +370,13 @@ export function createVariableForSnapshots(variable: TypedVariableModel): SceneV
     };
   }
 
-  if (variable.type === 'adhoc' && variable.filters) {
-    filters = variable.filters;
-    baseFilters = variable.baseFilters ?? [];
-    defaultKeys = variable.defaultKeys ?? [];
-  } else {
-    filters = [];
-    baseFilters = [];
-    defaultKeys = [];
-  }
-
   snapshotVariable = new SnapshotVariable({
     name: variable.name,
     label: variable.label,
     description: variable.description,
     value: current?.value ?? '',
     text: current?.text ?? '',
-    filters: filters,
     hide: variable.hide,
-    baseFilters: baseFilters,
-    defaultKeys: defaultKeys,
   });
   return snapshotVariable;
 }
