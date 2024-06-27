@@ -24,6 +24,10 @@ on:
         required: false
         default: false
         type: bool
+      latest:
+        required: false
+        default: false
+        type: bool
 
 jobs:
   create-prs:
@@ -62,12 +66,24 @@ jobs:
       - name: Create PR without backports
         if: "${{ inputs.backport == '' }}"
         run: >
-          gh pr create --dry-run=${{ inputs.dry_run }} -B "${{ inputs.target }}" --title "Release: ${{ inputs.version }}" --body "These code changes must be merged after a release is complete"
+          gh pr create \
+            $( (( ${{ inputs.latest }} == "true" )) && printf %s '-l "release/latest"') \
+            --dry-run=${{ inputs.dry_run }} \
+            -B "${{ inputs.target }}" \
+            --title "Release: ${{ inputs.version }}" \
+            --body "These code changes must be merged after a release is complete"
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
       - name: Create PR with backports
         if: "${{ inputs.backport != '' }}"
         run: >
-          gh pr create -l "backport ${{ inputs.backport }}" -l "product-approved" --dry-run=${{ inputs.dry_run }} -B "${{ inputs.target }}" --title "Release: ${{ inputs.version }}" --body "These code changes must be merged after a release is complete"
+          gh pr create \
+            $( (( ${{ inputs.latest }} == "true" )) && printf %s '-l "release/latest"') \
+            -l "backport ${{ inputs.backport }}" \
+            -l "product-approved" \
+            --dry-run=${{ inputs.dry_run }} \
+            -B "${{ inputs.target }}" \
+            --title "Release: ${{ inputs.version }}" \
+            --body "These code changes must be merged after a release is complete"
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
