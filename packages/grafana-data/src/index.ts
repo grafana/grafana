@@ -4,7 +4,6 @@
  * @packageDocumentation
  */
 
-export * from './types';
 export * from './text';
 export * from './events';
 export * from './themes';
@@ -381,6 +380,404 @@ export {
 export { usePluginContext } from './context/plugins/usePluginContext';
 export { isDataSourcePluginContext } from './context/plugins/guards';
 export { getLinksSupplier } from './field/fieldOverrides';
+
+// Types
+export { isUnsignedPluginSignature } from './types/pluginSignature';
+export type {
+  CurrentUserDTO,
+  AnalyticsSettings,
+  BootData,
+  OAuth,
+  OAuthSettings,
+  AuthSettings,
+  GrafanaConfig,
+  BuildInfo,
+  LicenseInfo,
+} from './types/config';
+export { availableIconsIndex, type IconName, isIconName, toIconName } from './types/icon';
+export type { WithAccessControlMetadata } from './types/accesscontrol';
+export { AlertState, type AlertStateInfo } from './types/alerts';
+export type { CartesianCoords2D, Dimensions2D } from './types/geometry';
+export {
+  VariableSupportType,
+  VariableSupportBase,
+  StandardVariableSupport,
+  CustomVariableSupport,
+  DataSourceVariableSupport,
+  type StandardVariableQuery,
+} from './types/variables';
+export {
+  type AlertPayload,
+  type AlertErrorPayload,
+  AppEvents,
+  PanelEvents,
+  type LegacyGraphHoverEventPayload,
+  LegacyGraphHoverEvent,
+  LegacyGraphHoverClearEvent,
+} from './types/legacyEvents';
+export type {
+  URLRangeValue,
+  URLRange,
+  ExploreUrlState,
+  ExplorePanelsState,
+  ExploreCorrelationHelperData,
+  ExploreTracePanelState,
+  ExploreLogsPanelState,
+  SplitOpenOptions,
+  SplitOpen,
+} from './types/explore';
+export type { TraceKeyValuePair, TraceLog, TraceSpanReference, TraceSpanRow } from './types/trace';
+export type { FlotDataPoint } from './types/flot';
+export type { UserOrgDTO, OrgRole } from './types/orgs';
+export { GrafanaThemeType, type GrafanaThemeCommons, type GrafanaTheme } from './types/theme';
+export { FieldColorModeId, type FieldColor, type FieldColorSeriesByMode, FALLBACK_COLOR } from './types/fieldColor';
+export {
+  VariableRefresh,
+  VariableSort,
+  VariableHide,
+  type VariableType,
+  type VariableModel,
+  type TypedVariableModel,
+  type AdHocVariableFilter,
+  type AdHocVariableModel,
+  type GroupByVariableModel,
+  type VariableOption,
+  type IntervalVariableModel,
+  type CustomVariableModel,
+  type DataSourceVariableModel,
+  type QueryVariableModel,
+  type TextBoxVariableModel,
+  type ConstantVariableModel,
+  type VariableWithMultiSupport,
+  type VariableWithOptions,
+  type DashboardProps,
+  type DashboardVariableModel,
+  type OrgProps,
+  type OrgVariableModel,
+  type UserProps,
+  type UserVariableModel,
+  type SystemVariable,
+  type BaseVariableModel,
+} from './types/templateVars';
+export { type Threshold, ThresholdsMode, type ThresholdsConfig } from './types/thresholds';
+export {
+  LiveChannelScope,
+  LiveChannelType,
+  LiveChannelConnectionState,
+  LiveChannelEventType,
+  type LiveChannelStatusEvent,
+  type LiveChannelJoinEvent,
+  type LiveChannelLeaveEvent,
+  type LiveChannelMessageEvent,
+  type LiveChannelEvent,
+  type LiveChannelPresenceStatus,
+  type LiveChannelId,
+  type LiveChannelAddress,
+  isLiveChannelStatusEvent,
+  isLiveChannelJoinEvent,
+  isLiveChannelLeaveEvent,
+  isLiveChannelMessageEvent,
+  parseLiveChannelAddress,
+  isValidLiveChannelAddress,
+  toLiveChannelId,
+} from './types/live';
+export type { SliderMarks } from './types/slider';
+export type { FeatureToggles } from './types/featureToggles.gen';
+export {
+  PluginExtensionTypes,
+  PluginExtensionPoints,
+  type PluginExtension,
+  type PluginExtensionLink,
+  type PluginExtensionComponent,
+  type PluginExtensionConfig,
+  type PluginExtensionLinkConfig,
+  type PluginExtensionComponentConfig,
+  type PluginExtensionEventHelpers,
+  type PluginExtensionPanelContext,
+  type PluginExtensionDataSourceConfigContext,
+  type PluginExtensionCommandPaletteContext,
+  type PluginExtensionOpenModalOptions,
+} from './types/pluginExtensions';
+export type {
+  ScopeDashboardBindingSpec,
+  ScopeDashboardBinding,
+  ScopeFilterOperator,
+  scopeFilterOperatorMap,
+  ScopeSpecFilter,
+  ScopeSpec,
+  Scope,
+  ScopeNodeNodeType,
+  ScopeNodeLinkType,
+  ScopeNodeSpec,
+  ScopeNode,
+} from './types/scopes';
+export {
+  PluginState,
+  PluginType,
+  PluginSignatureStatus,
+  PluginSignatureType,
+  PluginErrorCode,
+  PluginIncludeType,
+  GrafanaPlugin,
+  type PluginError,
+  type AngularMeta,
+  type PluginMeta,
+  type PluginDependencies,
+  type PluginInclude,
+  type PluginBuildInfo,
+  type ScreenshotInfo,
+  type PluginMetaInfo,
+  type PluginConfigPageProps,
+  type PluginConfigPage,
+} from './types/plugin';
+export {
+  type InterpolateFunction,
+  type PanelPluginMeta,
+  type PanelData,
+  type PanelProps,
+  type PanelEditorProps,
+  type PanelMigrationHandler,
+  type PanelTypeChangedHandler,
+  type PanelOptionEditorsRegistry,
+  type PanelOptionsEditorProps,
+  type PanelOptionsEditorItem,
+  type PanelOptionsEditorConfig,
+  type PanelMenuItem,
+  type AngularPanelMenuItem,
+  type PanelPluginDataSupport,
+  type VisualizationSuggestion,
+  type PanelDataSummary,
+  type VisualizationSuggestionsSupplier,
+  VizOrientation,
+  VisualizationSuggestionScore,
+  VisualizationSuggestionsBuilder,
+  VisualizationSuggestionsListAppender,
+} from './types/panel';
+export {
+  type DataSourcePluginOptionsEditorProps,
+  type DataSourceQueryType,
+  type DataSourceOptionsType,
+  type DataSourcePluginMeta,
+  type DataSourcePluginComponents,
+  type DataSourceConstructor,
+  type DataSourceGetTagKeysOptions,
+  type DataSourceGetTagValuesOptions,
+  type MetadataInspectorProps,
+  type LegacyMetricFindQueryOptions,
+  type QueryEditorProps,
+  type QueryEditorHelpProps,
+  type LegacyResponseData,
+  type DataQueryResponseData,
+  type DataQueryResponse,
+  type TestDataSourceResponse,
+  type DataQueryError,
+  type DataQueryRequest,
+  type DataQueryTimings,
+  type QueryFix,
+  type QueryFixType,
+  type QueryFixAction,
+  type QueryHint,
+  type MetricFindValue,
+  type DataSourceJsonData,
+  type DataSourceSettings,
+  type DataSourceInstanceSettings,
+  type DataSourceSelectItem,
+  type AnnotationQueryRequest,
+  type HistoryItem,
+  type GetTagResponse,
+  DataSourcePlugin,
+  DataQueryErrorType,
+  ExploreMode,
+  LanguageProvider,
+  DataSourceApi,
+} from './types/datasource';
+export { CoreApp, type AppRootProps, type AppPluginMeta, AppPlugin, FeatureState } from './types/app';
+export { patchArrayVectorProrotypeMethods } from './types/vector';
+export {
+  type DynamicConfigValue,
+  type ConfigOverrideRule,
+  type SystemConfigOverrideRule,
+  isSystemOverrideWithRef,
+  isSystemOverride,
+  type FieldConfigSource,
+  type FieldOverrideContext,
+  type FieldConfigEditorProps,
+  type FieldOverrideEditorProps,
+  type FieldConfigEditorConfig,
+  type FieldConfigPropertyItem,
+  type DataLinkPostProcessorOptions,
+  type DataLinkPostProcessor,
+  type ApplyFieldOverrideOptions,
+  FieldConfigProperty,
+} from './types/fieldOverrides';
+export {
+  type MatcherConfig,
+  type DataTransformContext,
+  type TransformationApplicabilityScore,
+  TransformationApplicabilityLevels,
+  type DataTransformerInfo,
+  type CustomTransformOperator,
+  type SynchronousDataTransformerInfo,
+  type DataTransformerConfig,
+  type FrameMatcher,
+  type FieldMatcher,
+  type ValueMatcher,
+  type FieldMatcherInfo,
+  type FrameMatcherInfo,
+  type ValueMatcherInfo,
+  SpecialValue,
+} from './types/transformations';
+export type { ScopedVar, ScopedVars, DataContextScopedVar } from './types/ScopedVars';
+export type { YAxis, GraphSeriesValue, GraphSeriesXY, CreatePlotOverlay } from './types/graph';
+export type {
+  DisplayProcessor,
+  DisplayValue,
+  DisplayValueAlignmentFactors,
+  DecimalCount,
+  DecimalInfo,
+} from './types/displayValue';
+export {
+  MappingType,
+  type ValueMappingResult,
+  type ValueMap,
+  type RangeMapOptions,
+  type RangeMap,
+  type RegexMapOptions,
+  type RegexMap,
+  type SpecialValueOptions,
+  SpecialValueMatch,
+  type SpecialValueMap,
+  type ValueMapping,
+} from './types/valueMapping';
+export {
+  type RawTimeRange,
+  type TimeRange,
+  type RelativeTimeRange,
+  type AbsoluteTimeRange,
+  type IntervalValues,
+  type TimeOption,
+  type TimeZone,
+  type TimeZoneBrowser,
+  type TimeZoneUtc,
+  DefaultTimeZone,
+  type TimeOptions,
+  type TimeFragment,
+  TIME_FORMAT,
+  getDefaultTimeRange,
+  getDefaultRelativeTimeRange,
+  makeTimeRange,
+} from './types/time';
+export type { SelectableValue } from './types/select';
+export { type NavLinkDTO, type NavModelItem, type NavModel, type NavIndex, PageLayoutType } from './types/navModel';
+export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
+
+export {
+  LogLevel,
+  NumericLogLevel,
+  LogsMetaKind,
+  type LogsMetaItem,
+  type LogRowModel,
+  type LogsModel,
+  type LogSearchMatch,
+  type LogLabelStatsModel,
+  LogsDedupDescription,
+  type LogRowContextOptions,
+  LogRowContextQueryDirection,
+  type DataSourceWithLogsContextSupport,
+  hasLogsContextSupport,
+  SupplementaryQueryType,
+  type SupplementaryQueryOptions,
+  type LogsVolumeOption,
+  type LogsSampleOptions,
+  LogsVolumeType,
+  type LogsVolumeCustomMetaData,
+  type DataSourceWithSupplementaryQueriesSupport,
+  hasSupplementaryQuerySupport,
+  hasLogsContextUiSupport,
+  type QueryFilterOptions,
+  type ToggleFilterAction,
+  type DataSourceWithToggleableQueryFiltersSupport,
+  type DataSourceWithQueryModificationSupport,
+  hasToggleableQueryFiltersSupport,
+  hasQueryModificationSupport,
+} from './types/logs';
+export {
+  type AnnotationQuery,
+  type AnnotationEvent,
+  type AnnotationEventUIModel,
+  type AnnotationEventFieldMapping,
+  type AnnotationEventMappings,
+  type AnnotationSupport,
+  AnnotationEventFieldSource,
+} from './types/annotations';
+export {
+  DataTopic,
+  type DataQuery,
+  type DataSourceRef,
+  type AbstractQuery,
+  AbstractLabelOperator,
+  type AbstractLabelMatcher,
+  type DataSourceWithQueryImportSupport,
+  type DataSourceWithQueryExportSupport,
+  hasQueryImportSupport,
+  hasQueryExportSupport,
+} from './types/query';
+export { DashboardCursorSync, type PanelModel } from './types/dashboard';
+export {
+  type DataLink,
+  type DataLinkClickEvent,
+  type DataLinkTransformationConfig,
+  DataLinkConfigOrigin,
+  SupportedTransformationType,
+  type InternalDataLink,
+  type LinkTarget,
+  type LinkModel,
+  type LinkModelSupplier,
+  VariableOrigin,
+  type VariableSuggestion,
+  VariableSuggestionsScope,
+} from './types/dataLink';
+export { DataFrameType } from './types/dataFrameTypes';
+export {
+  FieldType,
+  type FieldConfig,
+  type FieldTypeConfig,
+  type EnumFieldConfig,
+  type ValueLinkConfig,
+  type Field,
+  type FieldState,
+  type NumericRange,
+  type DataFrame,
+  type DataFrameWithValue,
+  type FieldDTO,
+  type DataFrameDTO,
+  type FieldCalcs,
+  TIME_SERIES_VALUE_FIELD_NAME,
+  TIME_SERIES_TIME_FIELD_NAME,
+  TIME_SERIES_METRIC_FIELD_NAME,
+  type DataFrameFieldIndex,
+} from './types/dataFrame';
+export {
+  type KeyValue,
+  LoadingState,
+  preferredVisualizationTypes,
+  type PreferredVisualisationType,
+  type QueryResultMeta,
+  type QueryResultMetaStat,
+  type QueryResultMetaNotice,
+  type QueryResultBase,
+  type Labels,
+  type Column,
+  type TableData,
+  type TimeSeriesValue,
+  type TimeSeriesPoints,
+  type TimeSeries,
+  NullValueMode,
+  type DataConfigSource,
+  isTruthy,
+  isObject,
+} from './types/data';
+export { GAUGE_DEFAULT_MINIMUM, GAUGE_DEFAULT_MAXIMUM, DEFAULT_SAML_NAME } from './types/constants';
 
 // deprecated
 export { CircularVector } from './vector/CircularVector';
