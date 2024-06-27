@@ -1567,7 +1567,8 @@ func TestProcessEvalResults(t *testing.T) {
 			m := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 			store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, m)
 			annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
-			hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, m)
+			ac := &acfakes.FakeRuleService{}
+			hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, m, ac)
 			clk := clock.NewMock()
 			cfg := state.ManagerCfg{
 				Metrics:       stateMetrics,
@@ -1590,7 +1591,7 @@ func TestProcessEvalResults(t *testing.T) {
 				}),
 			)}
 
-			_ = st.ProcessEvalResults(context.Background(), time, rule, res, systemLabels)
+			_ = st.ProcessEvalResults(context.Background(), time, rule, res, systemLabels, state.NoopSender)
 
 			states := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.Len(t, states, 1)
