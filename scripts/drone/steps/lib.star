@@ -796,7 +796,7 @@ def e2e_storybook_step():
             "start-storybook",
         ],
         "environment": {
-            "HOST": "grafana-server",
+            "HOST": "start-storybook",
             "PORT": "9001",
         },
         "commands": [

@@ -662,7 +662,7 @@ steps:
   depends_on:
   - start-storybook
   environment:
-    HOST: grafana-server
+    HOST: start-storybook
     PORT: "9001"
   image: cypress/included:13.10.0
   name: end-to-end-tests-storybook-suite
@@ -2027,7 +2027,7 @@ steps:
   depends_on:
   - start-storybook
   environment:
-    HOST: grafana-server
+    HOST: start-storybook
     PORT: "9001"
   image: cypress/included:13.10.0
   name: end-to-end-tests-storybook-suite
@@ -5099,6 +5099,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d75c54fa34ddfb67b0d6211d016122a43ed5746467bdb3ea9d6777160ed6244e
+hmac: aa52a46685c10c7cbffaf1c98b5dd069f52ce2752c7541ba13e263ace1c6af32
 
 ...
