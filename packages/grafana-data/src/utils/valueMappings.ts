@@ -1,4 +1,4 @@
-import { getActiveThreshold } from '../field';
+import { getActiveThreshold } from '../field/thresholds';
 import { stringToJsRegex } from '../text/string';
 import {
   MappingType,

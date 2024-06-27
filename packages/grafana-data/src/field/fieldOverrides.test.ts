@@ -1,7 +1,8 @@
-import { ArrayDataFrame, createDataFrame, toDataFrame } from '../dataframe';
+import { ArrayDataFrame } from '../dataframe/ArrayDataFrame';
+import { createDataFrame, toDataFrame } from '../dataframe/processDataFrame';
 import { rangeUtil } from '../datetime';
 import { createTheme } from '../themes';
-import { FieldMatcherID } from '../transformations';
+import { FieldMatcherID } from '../transformations/matchers/ids';
 import {
   DataFrame,
   Field,
@@ -15,7 +16,8 @@ import {
   ScopedVars,
   ThresholdsMode,
 } from '../types';
-import { locationUtil, Registry } from '../utils';
+import { Registry } from '../utils/Registry';
+import { locationUtil } from '../utils/location';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';

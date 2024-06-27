@@ -4,6 +4,7 @@ import { DataFrameDTO, Field, FieldType, TableData, TimeSeries } from '../types/
 import { ArrayDataFrame } from './ArrayDataFrame';
 import {
   createDataFrame,
+  getFieldTypeFromValue,
   guessFieldTypeForField,
   guessFieldTypeFromValue,
   guessFieldTypes,
@@ -14,8 +15,6 @@ import {
   toDataFrame,
   toLegacyResponseData,
 } from './processDataFrame';
-
-import { getFieldTypeFromValue } from '.';
 
 describe('toDataFrame', () => {
   it('converts timeseries to series', () => {

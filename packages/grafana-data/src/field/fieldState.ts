@@ -1,4 +1,4 @@
-import { getFieldMatcher } from '../transformations';
+import { getFieldMatcher } from '../transformations/matchers';
 import {
   DataFrame,
   Field,

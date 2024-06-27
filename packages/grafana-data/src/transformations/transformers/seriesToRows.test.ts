@@ -1,4 +1,4 @@
-import { toDataFrame } from '../../dataframe';
+import { toDataFrame } from '../../dataframe/processDataFrame';
 import { DataTransformerConfig, Field, FieldType } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';

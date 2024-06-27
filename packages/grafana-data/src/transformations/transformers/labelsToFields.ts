@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import { getFieldDisplayName } from '../..';
+import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field, FieldType, SynchronousDataTransformerInfo } from '../../types';
 
 import { DataTransformerID } from './ids';

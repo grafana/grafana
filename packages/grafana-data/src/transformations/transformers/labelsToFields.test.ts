@@ -1,6 +1,6 @@
 import { Subscription } from 'rxjs';
 
-import { toDataFrame, toDataFrameDTO } from '../../dataframe';
+import { toDataFrame, toDataFrameDTO } from '../../dataframe/processDataFrame';
 import { DataFrame, DataTransformerConfig, FieldDTO, FieldType } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';

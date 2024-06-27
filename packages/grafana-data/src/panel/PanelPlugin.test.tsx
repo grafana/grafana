@@ -1,11 +1,11 @@
-import { PanelOptionsEditorBuilder } from '..';
+import { identityOverrideProcessor } from '../field/overrides/processors';
 import {
-  identityOverrideProcessor,
-  standardEditorsRegistry,
   StandardEditorsRegistryItem,
+  standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
-} from '../field';
+} from '../field/standardFieldConfigEditorRegistry';
 import { FieldConfigProperty, FieldConfigPropertyItem } from '../types';
+import { PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 
 import { PanelPlugin } from './PanelPlugin';
 

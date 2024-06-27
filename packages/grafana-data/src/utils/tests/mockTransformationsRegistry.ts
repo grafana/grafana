@@ -1,4 +1,4 @@
-import { standardTransformersRegistry } from '../../transformations';
+import { standardTransformersRegistry } from '../../transformations/standardTransformersRegistry';
 import { DataTransformerInfo } from '../../types';
 
 export const mockTransformationsRegistry = (transformers: DataTransformerInfo[]) => {

@@ -1,4 +1,4 @@
-import { getTimeField, sortDataFrame } from '../../dataframe';
+import { getTimeField, sortDataFrame } from '../../dataframe/processDataFrame';
 import { DataFrame, Field, FieldMatcher, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';

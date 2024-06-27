@@ -1,4 +1,4 @@
-import { displayNameOverrideProcessor, identityOverrideProcessor } from '../../field';
+import { displayNameOverrideProcessor, identityOverrideProcessor } from '../../field/overrides/processors';
 import { ThresholdsMode } from '../../types';
 
 export const mockStandardProperties = () => {

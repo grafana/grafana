@@ -1,4 +1,5 @@
-import { FieldType, createDataFrame } from '@grafana/data';
+import { createDataFrame } from '../../../dataframe/processDataFrame';
+import { FieldType } from '../../../types';
 
 import { applyNullInsertThreshold } from './nullInsertThreshold';
 

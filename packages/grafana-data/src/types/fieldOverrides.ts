@@ -1,6 +1,7 @@
 import { ComponentType } from 'react';
 
-import { StandardEditorProps, FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
+import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
+import { StandardEditorContext, StandardEditorProps } from '../field/standardFieldConfigEditorRegistry';
 import { GrafanaTheme2 } from '../themes';
 import {
   MatcherConfig,

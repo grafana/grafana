@@ -3,8 +3,8 @@ import { isEmpty } from 'lodash';
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { GrafanaTheme2 } from '../themes';
-import { getFieldMatcher } from '../transformations';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
+import { getFieldMatcher } from '../transformations/matchers';
 import { FieldMatcherID } from '../transformations/matchers/ids';
 import {
   DataFrame,
