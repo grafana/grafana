@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { DOMAttributes } from '@react-types/shared';
-import { memo, forwardRef } from 'react';
+import { memo, forwardRef, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAsyncFn } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { PreferenceNavLink } from '@grafana/schema/dist/esm/raw/preferences/x/preferences_types.gen';
 import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
@@ -30,10 +30,16 @@ export const MegaMenu = memo(
     const location = useLocation();
     const { chrome } = useGrafana();
     const state = chrome.useState();
-    const [preferences, refetch] = useAsyncFn(async () => {
-      return service.load();
-    });
+    const [pinnedItems, setPinnedItems] = useState<PreferenceNavLink[]>([]);
 
+    useEffect(() => {
+      const loadPreferences = async () => {
+        const preferences = await service.load();
+        setPinnedItems(preferences?.navbar?.savedItems || []);
+      };
+
+      loadPreferences();
+    }, []);
     // Remove profile + help from tree
     const navItems = navTree
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
@@ -51,6 +57,13 @@ export const MegaMenu = memo(
       setTimeout(() => {
         document.getElementById(state.megaMenuDocked ? 'mega-menu-toggle' : 'dock-menu-button')?.focus();
       });
+    };
+
+    const isPinned = (link: NavModelItem | PreferenceNavLink) => {
+      if (!link.id) {
+        return false;
+      }
+      return pinnedItems?.map((item) => item.id).includes(link.id);
     };
 
     return (
@@ -86,14 +99,15 @@ export const MegaMenu = memo(
                   )}
                   <MegaMenuItem
                     link={link}
-                    isPinned={preferences.value?.navbar?.savedItems?.map((item) => item.id).includes(link.id)}
+                    isPinned={isPinned}
                     onClick={state.megaMenuDocked ? undefined : onClose}
                     activeItem={activeItem}
                     onPin={async (item) => {
-                      const items = preferences.value?.navbar?.savedItems || [];
-                      const newItems = items.includes(item) ? items.filter((i) => i !== item) : [...items, item];
+                      const newItems = isPinned(item)
+                        ? pinnedItems.filter((i) => i.id !== item.id)
+                        : [...pinnedItems, item];
+                      setPinnedItems(newItems);
                       await service.patch({ navbar: { savedItems: newItems } });
-                      refetch();
                     }}
                   />
                 </Stack>

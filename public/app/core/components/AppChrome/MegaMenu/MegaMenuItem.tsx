@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
+import { PreferenceNavLink } from '@grafana/schema';
 import { useStyles2, Text, IconButton, Icon, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -19,8 +20,8 @@ interface Props {
   activeItem?: NavModelItem;
   onClick?: () => void;
   level?: number;
-  onPin?: (item: NavModelItem) => void;
-  isPinned?: boolean;
+  onPin?: (item: PreferenceNavLink) => void;
+  isPinned: (link: NavModelItem) => boolean;
 }
 
 const MAX_DEPTH = 2;
@@ -106,7 +107,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
             url={link.url}
             id={link.id}
             onPin={onPin}
-            isPinned={isPinned}
+            isPinned={isPinned(link)}
           >
             <div
               className={cx(styles.labelWrapper, {
@@ -133,6 +134,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
                   onClick={onClick}
                   level={level + 1}
                   onPin={onPin}
+                  isPinned={isPinned}
                 />
               ))
           ) : (

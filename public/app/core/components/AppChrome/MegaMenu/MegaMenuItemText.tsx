@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { PreferenceNavLink } from '@grafana/schema';
 import { Icon, Link, useTheme2 } from '@grafana/ui';
 
 export interface Props {
@@ -12,7 +13,7 @@ export interface Props {
   target?: HTMLAnchorElement['target'];
   url: string;
   id?: string;
-  onPin?: (item: NavModelItem) => void;
+  onPin?: (item: PreferenceNavLink) => void;
   isPinned?: boolean;
 }
 
@@ -20,10 +21,6 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, id,
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
-
-  const addPinnedItem = (item: NavModelItem) => {
-    onPin?.(item);
-  };
 
   const linkContent = (
     <div className={styles.linkContent}>
@@ -39,7 +36,9 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, id,
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          addPinnedItem({ id, target, text: '', url });
+          if (id && onPin) {
+            onPin({ id, target: target || '', text: '', url });
+          }
         }}
       />
     </div>
